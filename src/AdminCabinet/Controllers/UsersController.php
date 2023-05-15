@@ -23,9 +23,9 @@ use MikoPBX\Common\Models\Users;
 class UsersController extends BaseController {
 
     /**
-     * Проверка на доступность емейл адреса
+     * Check if the given email is available.
      *
-     * @param $email
+     * @param string $email The email to check availability for.
      */
     public function availableAction($email):void
     {

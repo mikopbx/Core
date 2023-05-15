@@ -27,7 +27,7 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  * Class Iax
  *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
- * @property \MikoPBX\Common\Models\Providers Providers
+ * @property Providers Providers
  *
  * @package MikoPBX\Common\Models
  */
@@ -71,7 +71,7 @@ class Iax extends ModelsBase
     public ?string $disabled = '0';
 
     /**
-     *  @Column(type="string", length=1, nullable=true, default="0")
+     * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $noregister = '0';
 
@@ -86,6 +86,9 @@ class Iax extends ModelsBase
     public ?string $description = '';
 
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_Iax');
@@ -95,25 +98,41 @@ class Iax extends ModelsBase
             Providers::class,
             'iaxuid',
             [
-                'alias'      => 'Providers',
+                'alias' => 'Providers',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::ACTION_CASCADE,
+                    'action' => Relation::ACTION_CASCADE,
                 ],
             ]
         );
     }
 
+    /**
+     * Get the manual attributes of the model.
+     *
+     * @return string The decoded manual attributes.
+     */
     public function getManualAttributes(): string
     {
         return base64_decode((string)$this->manualattributes);
     }
 
+    /**
+     * Set the manual attributes of the model.
+     *
+     * @param string $text The manual attributes text.
+     * @return void
+     */
     public function setManualAttributes($text): void
     {
         $this->manualattributes = base64_encode($text);
     }
 
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
     public function validation(): bool
     {
         $validation = new Validation();

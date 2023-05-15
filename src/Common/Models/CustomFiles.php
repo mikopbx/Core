@@ -37,41 +37,57 @@ class CustomFiles extends ModelsBase
     public $id;
 
     /**
+     * Filepath of the custom file
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $filepath = '';
 
     /**
+     * Content of the custom file
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $content = null;
 
     /**
-     * Режим подмены файла
-     * append - добавить в конец файла
-     * override - переопределить
-     * none - ничего не делать
+     * File replacement mode
+     * append - append to the end of the file
+     * override - override the file
+     * none - do nothing
      *
      * @Column(type="string", nullable=true, default="none") {'append'|'override'|'none'}
      */
     public ?string $mode = 'none';
 
     /**
+     * Indicates if the file has been changed
+     *
      * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $changed = '0';
 
     /**
+     * Description of the custom file
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_CustomFiles');
         parent::initialize();
     }
 
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
     public function validation(): bool
     {
         $validation = new Validation();
@@ -87,11 +103,22 @@ class CustomFiles extends ModelsBase
         return $this->validate($validation);
     }
 
+    /**
+     * Get the decoded content from the model.
+     *
+     * @return string The decoded content.
+     */
     public function getContent(): string
     {
         return base64_decode((string)$this->content);
     }
 
+    /**
+     * Set the encoded content for the model.
+     *
+     * @param string $text The content to be encoded and set.
+     * @return void
+     */
     public function setContent($text): void
     {
         $this->content = base64_encode($text);

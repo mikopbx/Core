@@ -93,12 +93,21 @@ class Storage extends ModelsBase
      */
     public ?string $check_when_booting = '';
 
+
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_Storage');
         parent::initialize();
     }
 
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
     public function validation(): bool
     {
         $validation = new Validation();

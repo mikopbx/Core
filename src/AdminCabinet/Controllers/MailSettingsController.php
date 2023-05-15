@@ -26,12 +26,16 @@ class MailSettingsController extends BaseController
 {
 
     /**
-     * Построение формы настроек почты
+     * Modify mail settings action.
+     *
+     * @return void
      */
     public function modifyAction(): void
     {
         $MailSettingsFields = [];
         $arrKeys = $this->getEmailSettingsArray();
+
+        // Retrieve the values of mail settings from PbxSettings
         foreach ($arrKeys as $key) {
             $MailSettingsFields[$key] = PbxSettings::getValueByKey($key);
         }
@@ -41,7 +45,7 @@ class MailSettingsController extends BaseController
     }
 
     /**
-     * Возвращает список ключей для настройки почты на станции
+     *  Get the list of keys for email settings on the station.
      *
      * @return array
      */
@@ -70,7 +74,7 @@ class MailSettingsController extends BaseController
     }
 
     /**
-     * Сохранение почтовых настроек
+     * Saves the email settings based on the POST data.
      */
     public function saveAction(): void
     {

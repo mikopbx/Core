@@ -110,7 +110,7 @@ class AsteriskManagersController extends BaseController
 
 
     /**
-     * Save Asterisk Manager User settings
+     * Save Asterisk Manager User settings into database
      */
     public function saveAction(): void
     {
@@ -156,7 +156,7 @@ class AsteriskManagersController extends BaseController
     }
 
     /**
-     * Deletes Asterisk Manager
+     * Deletes Asterisk Manager records from database
      *
      * @param string $amiId
      *
@@ -176,7 +176,7 @@ class AsteriskManagersController extends BaseController
     }
 
     /**
-     * Checks uniqueness for AMI username from JS.
+     * Checks uniqueness for AMI username from JS by ajax requests.
      *
      * @param string $username
      *

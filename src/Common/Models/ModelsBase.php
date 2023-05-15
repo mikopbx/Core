@@ -57,8 +57,8 @@ use Phalcon\Url;
  * @method static AdapterInterface getReadConnection()
  * @method  Simple|false getRelated(string $alias, $arguments = null)
  *
- * @property \Phalcon\Mvc\Model\Manager _modelsManager
- * @property \Phalcon\Di                di
+ * @property Model\Manager _modelsManager
+ * @property Di di
  *
  * @package MikoPBX\Common\Models
  */
@@ -69,6 +69,23 @@ class ModelsBase extends Model
      */
     public const MIN_MODULE_MODEL_VER = '2020.2.468';
 
+    /**
+     * Returns Cache key for the models cache service
+     *
+     * @param string $modelClass
+     * @param string $keyName
+     *
+     * @return string
+     */
+    public static function makeCacheKey(string $modelClass, string $keyName): string
+    {
+        $category = explode('\\', $modelClass)[3];
+        return "{$category}:{$keyName}";
+    }
+
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         self::setup(['orm.events' => true]);
@@ -79,7 +96,7 @@ class ModelsBase extends Model
 
         $eventsManager->attach(
             'model',
-            function (Event $event, $record){
+            function (Event $event, $record) {
                 $type = $event->getType();
                 switch ($type) {
                     case 'afterSave':
@@ -107,20 +124,20 @@ class ModelsBase extends Model
             $moduleDir = PbxExtensionUtils::getModuleDir($module['uniqid']);
 
             $moduleJson = "{$moduleDir}/module.json";
-            if ( ! file_exists($moduleJson)) {
+            if (!file_exists($moduleJson)) {
                 continue;
             }
-            $jsonString            = file_get_contents($moduleJson);
+            $jsonString = file_get_contents($moduleJson);
             $jsonModuleDescription = json_decode($jsonString, true);
-            $minPBXVersion         = $jsonModuleDescription['min_pbx_version'] ?? '1.0.0';
+            $minPBXVersion = $jsonModuleDescription['min_pbx_version'] ?? '1.0.0';
             if (version_compare($minPBXVersion, self::MIN_MODULE_MODEL_VER, '<')) {
                 continue;
             }
 
             $moduleModelsDir = "{$moduleDir}/Models";
-            $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
+            $results = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
             foreach ($results as $file) {
-                $className        = pathinfo($file)['filename'];
+                $className = pathinfo($file)['filename'];
                 $moduleModelClass = "\\Modules\\{$module['uniqid']}\\Models\\{$className}";
 
                 if (class_exists($moduleModelClass)
@@ -131,42 +148,148 @@ class ModelsBase extends Model
         }
     }
 
+    /**
+     * Sends changed fields and settings to backend worker WorkerModelsEvents
+     *
+     * @param $action string may be afterSave or afterDelete
+     */
+    private function processSettingsChanges(string $action): void
+    {
+        $doNotTrackThisDB = [
+            CDRDatabaseProvider::SERVICE_NAME,
+        ];
+
+        if (in_array($this->getReadConnectionService(), $doNotTrackThisDB)) {
+            return;
+        }
+
+        if (!$this->hasSnapshotData()) {
+            return;
+        } // nothing changed
+
+        $changedFields = $this->getUpdatedFields();
+        if (empty($changedFields) && $action === 'afterSave') {
+            return;
+        }
+        $this->sendChangesToBackend($action, $changedFields);
+    }
 
     /**
-     * Обработчик ошибок валидации, обычно сюда попадаем если неправильно
-     * сохраняются или удаляютмя модели или неправильно настроены зависимости между ними.
-     * Эта функция формирует список ссылок на объект который мы пытаемся удалить
+     * Sends changed fields and class to WorkerModelsEvents
      *
+     * @param $action
+     * @param $changedFields
+     */
+    private function sendChangesToBackend($action, $changedFields): void
+    {
+        // Add changed fields set to Beanstalkd queue
+        $queue = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
+        if ($queue === null) {
+            return;
+        }
+        if ($this instanceof PbxSettings) {
+            $idProperty = 'key';
+        } else {
+            $idProperty = 'id';
+        }
+        $id = $this->$idProperty;
+        $jobData = json_encode(
+            [
+                'source' => BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED,
+                'model' => get_class($this),
+                'recordId' => $id,
+                'action' => $action,
+                'changedFields' => $changedFields,
+            ]
+        );
+        $queue->publish($jobData);
+    }
+
+    /**
+     * Invalidates cached records contains model name in cache key value
+     *
+     * @param      $calledClass string full model class name
+     *
+     */
+    public static function clearCache(string $calledClass): void
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+
+        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
+            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+            $category = explode('\\', $calledClass)[3];
+            $keys = $managedCache->getKeys($category);
+            $prefix = $managedCache->getPrefix();
+            // Delete all items from the managed cache
+            foreach ($keys as $key) {
+                $cacheKey = str_ireplace($prefix, '', $key);
+                $managedCache->delete($cacheKey);
+            }
+        }
+        if ($di->has(ModelsCacheProvider::SERVICE_NAME)) {
+            $modelsCache = $di->getShared(ModelsCacheProvider::SERVICE_NAME);
+            $category = explode('\\', $calledClass)[3];
+            $keys = $modelsCache->getKeys($category);
+            $prefix = $modelsCache->getPrefix();
+            // Delete all items from the models cache
+            foreach ($keys as $key) {
+                $cacheKey = str_ireplace($prefix, '', $key);
+                $modelsCache->delete($cacheKey);
+            }
+        }
+
+    }
+
+    /**
+     * Error handler for validation failures.
+     * This function is called when a model fails to save or delete correctly,
+     * or when the dependencies between models are not properly configured.
+     * It generates a list of links to the objects that we are trying to delete.
      */
     public function onValidationFails(): void
     {
         $errorMessages = $this->getMessages();
         foreach ($errorMessages as $errorMessage) {
             if ($errorMessage->getType() === 'ConstraintViolation') {
+                // Extract the related model name from the error message
                 $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
                 if (count($arrMessageParts) === 2) {
                     $relatedModel = $arrMessageParts[1];
                 } else {
                     $relatedModel = $errorMessage->getMessage();
                 }
-                $relatedRecords  = $this->getRelated($relatedModel);
+
+                // Get the related records
+                $relatedRecords = $this->getRelated($relatedModel);
+
+                // Create a new error message template
                 $newErrorMessage = $this->t('ConstraintViolation');
                 $newErrorMessage .= "<ul class='list'>";
                 if ($relatedRecords === false) {
+                    // Throw an exception if there is an error in the model relationship
                     throw new Model\Exception('Error on models relationship ' . $errorMessage);
                 }
                 if ($relatedRecords instanceof Resultset) {
+                    // If there are multiple related records, iterate through them
                     foreach ($relatedRecords as $item) {
                         if ($item instanceof ModelsBase) {
+                            // Append each related record's representation to the error message
                             $newErrorMessage .= '<li>' . $item->getRepresent(true) . '</li>';
                         }
                     }
                 } elseif ($relatedRecords instanceof ModelsBase) {
+                    // If there is a single related record, append its representation to the error message
                     $newErrorMessage .= '<li>' . $relatedRecords->getRepresent(true) . '</li>';
                 } else {
+                    // If the related records are of an unknown type, indicate it in the error message
                     $newErrorMessage .= '<li>Unknown object</li>';
                 }
                 $newErrorMessage .= '</ul>';
+
+                // Set the new error message
                 $errorMessage->setMessage($newErrorMessage);
                 break;
             }
@@ -174,10 +297,10 @@ class ModelsBase extends Model
     }
 
     /**
-     * Функция для доступа к массиву переводов из моделей, используется для
-     * сообщений на понятном пользователю языке
+     * Function to access the translation array from models.
+     * It is used for messages in a user-friendly language.
      *
-     * @param       $message
+     * @param $message
      * @param array $parameters
      *
      * @return mixed
@@ -239,7 +362,6 @@ class ModelsBase extends Model
                 $name = $this->Extensions->getRepresent();
                 break;
             case Extensions::class:
-                // Для внутреннего номера бывают разные представления
                 if ($this->type === Extensions::TYPE_EXTERNAL) {
                     $icon = '<i class="icons"><i class="user outline icon"></i><i class="top right corner alternate mobile icon"></i></i>';
                 } else {
@@ -275,7 +397,7 @@ class ModelsBase extends Model
                             break;
                         case Extensions::TYPE_SYSTEM:
                             $name = '<i class="cogs icon"></i> '
-                                . $this->t('mo_SystemExten_'.$this->number);
+                                . $this->t('mo_SystemExten_' . $this->number);
                             break;
                         case Extensions::TYPE_EXTERNAL:
                         case Extensions::TYPE_SIP:
@@ -321,7 +443,7 @@ class ModelsBase extends Model
                 $name = '<i class="map signs icon"></i> ';
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementIncomingRoutingTable');
-                } elseif ( ! empty($this->rulename)) {
+                } elseif (!empty($this->rulename)) {
                     $name .= $this->t('repIncomingRoutingTable', ['represent' => $this->rulename]);
                 } else {
                     $name .= $this->t('repIncomingRoutingTableNumber', ['represent' => $this->id]);
@@ -345,7 +467,7 @@ class ModelsBase extends Model
                 $name = '<i class="random icon"></i> ';
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementOutgoingRoutingTable');
-                } elseif ( ! empty($this->rulename)) {
+                } elseif (!empty($this->rulename)) {
                     $name .= $this->t('repOutgoingRoutingTable', ['represent' => $this->rulename]);
                 } else {
                     $name .= $this->t('repOutgoingRoutingTableNumber', ['represent' => $this->id]);
@@ -403,9 +525,9 @@ class ModelsBase extends Model
         }
 
         if ($needLink) {
-            $link     = $this->getWebInterfaceLink();
+            $link = $this->getWebInterfaceLink();
             $category = explode('\\', static::class)[3];
-            $result   = $this->t(
+            $result = $this->t(
                 'rep' . $category,
                 [
                     'represent' => "<a href='{$link}'>{$name}</a>",
@@ -419,7 +541,7 @@ class ModelsBase extends Model
     }
 
     /**
-     * Укорачивает длинные имена
+     * Trims long names.
      *
      * @param $s
      *
@@ -431,7 +553,7 @@ class ModelsBase extends Model
 
         if (strlen($s) > $max_length) {
             $offset = ($max_length - 3) - strlen($s);
-            $s      = substr($s, 0, strrpos($s, ' ', $offset)) . '...';
+            $s = substr($s, 0, strrpos($s, ' ', $offset)) . '...';
         }
 
         return $s;
@@ -447,7 +569,7 @@ class ModelsBase extends Model
         $url = new Url();
 
         $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
-        $link    = '#';
+        $link = '#';
         switch (static::class) {
             case AsteriskManagerUsers::class:
                 $link = $url->get('asterisk-managers/modify/' . $this->id, null, null, $baseUri);
@@ -475,20 +597,20 @@ class ModelsBase extends Model
                 break;
             case ExternalPhones::class:
                 if ($this->Extensions->is_general_user_number === "1") {
-                    $parameters    = [
+                    $parameters = [
                         'conditions' => 'is_general_user_number="1" AND type="' . Extensions::TYPE_EXTERNAL . '" AND userid=:userid:',
-                        'bind'       => [
+                        'bind' => [
                             'userid' => $this->Extensions->userid,
                         ],
                     ];
                     $needExtension = Extensions::findFirst($parameters);
-                    $link          = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
+                    $link = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
                 } else {
-                    $link = '#';//TODO сделать если будет раздел для допоплнинельных номеров пользователя
+                    $link = '#';//TODO: Make representation if there is form to manage external numbers
                 }
                 break;
             case Fail2BanRules::class:
-                $link = '#';//TODO сделать если будет fail2ban
+                $link = $url->get('fail2-ban/index/');
                 break;
             case FirewallRules::class:
                 $link = $url->get('firewall/modify/' . $this->NetworkFilters->id, null, null, $baseUri);
@@ -533,20 +655,20 @@ class ModelsBase extends Model
                 $link = $url->get(Text::uncamelize($this->uniqid), null, null, $baseUri);
                 break;
             case Sip::class:
-                if ($this->Extensions) { // Это внутренний номер?
+                if ($this->Extensions) { // If it is internal extension?
                     if ($this->Extensions->is_general_user_number === "1") {
                         $link = $url->get('extensions/modify/' . $this->Extensions->id, null, null, $baseUri);
                     } else {
-                        $link = '#';//TODO сделать если будет раздел для допоплнинельных номеров пользователя
+                        $link = '#';//TODO: Make representation if there is form to manage external numbers
                     }
                 } elseif ($this->Providers) { // Это провайдер
                     $link = $url->get('providers/modifysip/' . $this->Providers->id, null, null, $baseUri);
                 }
                 break;
             case Users::class:
-                $parameters    = [
+                $parameters = [
                     'conditions' => 'userid=:userid:',
-                    'bind'       => [
+                    'bind' => [
                         'userid' => $this->id,
                     ],
                 ];
@@ -571,18 +693,18 @@ class ModelsBase extends Model
      */
     public function beforeValidationOnCreate(): void
     {
-        $metaData      = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
+        $metaData = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
         $defaultValues = $metaData->getDefaultValues($this);
         foreach ($defaultValues as $field => $value) {
-            if ( ! isset($this->{$field})) {
+            if (!isset($this->{$field})) {
                 $this->{$field} = $value;
             }
         }
     }
 
     /**
-     * Функция позволяет вывести список зависимостей с сылками,
-     * которые мешают удалению текущей сущности
+     * Checks if there are any dependencies that prevent the deletion of the current entity.
+     * It displays a list of related entities with links that hinder the deletion.
      *
      * @return bool
      */
@@ -605,27 +727,27 @@ class ModelsBase extends Model
         $relations = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
         foreach ($relations as $relation) {
             $foreignKey = $relation->getOption('foreignKey');
-            if ( ! array_key_exists('action', $foreignKey)) {
+            if (!array_key_exists('action', $foreignKey)) {
                 continue;
             }
             // Check if there are some record which restrict delete current record
-            $relatedModel             = $relation->getReferencedModel();
-            $mappedFields             = $relation->getFields();
-            $mappedFields             = is_array($mappedFields)
+            $relatedModel = $relation->getReferencedModel();
+            $mappedFields = $relation->getFields();
+            $mappedFields = is_array($mappedFields)
                 ? $mappedFields : [$mappedFields];
-            $referencedFields         = $relation->getReferencedFields();
-            $referencedFields         = is_array($referencedFields)
+            $referencedFields = $relation->getReferencedFields();
+            $referencedFields = is_array($referencedFields)
                 ? $referencedFields : [$referencedFields];
             $parameters['conditions'] = '';
-            $parameters['bind']       = [];
+            $parameters['bind'] = [];
             foreach ($referencedFields as $index => $referencedField) {
-                $parameters['conditions']             .= $index > 0
+                $parameters['conditions'] .= $index > 0
                     ? ' OR ' : '';
-                $parameters['conditions']             .= $referencedField
+                $parameters['conditions'] .= $referencedField
                     . '= :field'
                     . $index . ':';
                 $bindField
-                                                      = $mappedFields[$index];
+                    = $mappedFields[$index];
                 $parameters['bind']['field' . $index] = $currentDeleteRecord->$bindField;
             }
             $relatedRecords = $relatedModel::find($parameters);
@@ -649,7 +771,7 @@ class ModelsBase extends Model
                         $result = false;
                     }
                     break;
-                case Relation::ACTION_CASCADE: // Удалим все зависимые записи
+                case Relation::ACTION_CASCADE: // Delete all related records
                     foreach ($relatedRecords as $relatedRecord) {
                         if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
                             || serialize($relatedRecord) === serialize($currentDeleteRecord)
@@ -681,105 +803,6 @@ class ModelsBase extends Model
         return $result;
     }
 
-
-
-    /**
-     * Sends changed fields and settings to backend worker WorkerModelsEvents
-     *
-     * @param $action string may be afterSave or afterDelete
-     */
-    private function processSettingsChanges(string $action): void
-    {
-        $doNotTrackThisDB = [
-            CDRDatabaseProvider::SERVICE_NAME,
-        ];
-
-        if (in_array($this->getReadConnectionService(), $doNotTrackThisDB)) {
-            return;
-        }
-
-        if ( ! $this->hasSnapshotData()) {
-            return;
-        } // nothing changed
-
-        $changedFields = $this->getUpdatedFields();
-        if (empty($changedFields) && $action === 'afterSave') {
-            return;
-        }
-        $this->sendChangesToBackend($action, $changedFields);
-    }
-
-    /**
-     * Sends changed fields and class to WorkerModelsEvents
-     *
-     * @param $action
-     * @param $changedFields
-     */
-    private function sendChangesToBackend($action, $changedFields): void
-    {
-        // Add changed fields set to Beanstalkd queue
-        $queue = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
-        if ($queue === null) {
-            return;
-        }
-        if ($this instanceof PbxSettings) {
-            $idProperty = 'key';
-        } else {
-            $idProperty = 'id';
-        }
-        $id      = $this->$idProperty;
-        $jobData = json_encode(
-            [
-                'source'        => BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED,
-                'model'         => get_class($this),
-                'recordId'      => $id,
-                'action'        => $action,
-                'changedFields' => $changedFields,
-            ]
-        );
-        $queue->publish($jobData);
-    }
-
-    /**
-     * Invalidates cached records contains model name in cache key value
-     *
-     * @param      $calledClass string full model class name
-     *
-     */
-    public static function clearCache(string $calledClass): void
-    {
-        $di = Di::getDefault();
-        if ($di === null) {
-            return;
-        }
-
-        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
-            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
-            $category     = explode('\\', $calledClass)[3];
-            $keys         = $managedCache->getKeys($category);
-            $prefix      = $managedCache->getPrefix();
-            // Delete all items from the managed cache
-            foreach ($keys as $key)
-            {
-                $cacheKey = str_ireplace($prefix, '', $key);
-                $managedCache->delete($cacheKey);
-            }
-        }
-        if ($di->has(ModelsCacheProvider::SERVICE_NAME)) {
-            $modelsCache = $di->getShared(ModelsCacheProvider::SERVICE_NAME);
-            $category    = explode('\\', $calledClass)[3];
-            $keys        = $modelsCache->getKeys($category);
-            $prefix      = $modelsCache->getPrefix();
-            // Delete all items from the models cache
-            foreach ($keys as $key)
-            {
-                $cacheKey = str_ireplace($prefix, '', $key);
-                $modelsCache->delete($cacheKey);
-            }
-        }
-
-    }
-
     /**
      * Returns Identity field name for current model
      *
@@ -790,19 +813,5 @@ class ModelsBase extends Model
         $metaData = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
 
         return $metaData->getIdentityField($this);
-    }
-
-    /**
-     * Returns Cache key for the models cache service
-     *
-     * @param string $modelClass
-     * @param string $keyName
-     *
-     * @return string
-     */
-    public static function makeCacheKey(string $modelClass, string $keyName):string
-    {
-        $category    = explode('\\', $modelClass)[3];
-        return "{$category}:{$keyName}";
     }
 }

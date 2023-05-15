@@ -28,15 +28,18 @@ class CallDetailRecordsController extends BaseController
 
 
     /**
-     * Выборка записей из журнала звонков
+     * Retrieves records from the call log.
      *
+     * @return void
      */
     public function indexAction(): void
     {
     }
 
     /**
-     * Запрос нового пакета истории разговоров для DataTable JSON
+     * Requests new package of call history records for DataTable JSON.
+     *
+     * @return void
      */
     public function getNewRecordsAction(): void
     {
@@ -50,10 +53,10 @@ class CallDetailRecordsController extends BaseController
 
         $parameters = [];
         $parameters['columns'] = 'COUNT(DISTINCT(linkedid)) as rows';
-        // Посчитаем количество уникальных звонков с учетом фильтров
+        // Count the number of unique calls considering filters
         if ( ! empty($searchPhrase['value'])) {
             $this->prepareConditionsForSearchPhrases($searchPhrase['value'], $parameters);
-            // Если мы не смогли расшифровать строку запроса вернем пустой результата
+            // If we couldn't understand the search phrase, return empty result
             if (empty($parameters['conditions'])) {
                 return;
             }
@@ -61,7 +64,7 @@ class CallDetailRecordsController extends BaseController
         $recordsFilteredReq = CDRDatabaseProvider::getCdr($parameters);
         $this->view->recordsFiltered = $recordsFilteredReq[0]['rows']??0;
 
-        // Найдем все LinkedID подходящих под заданный фильтр
+        // Find all LinkedIDs that match the specified filter
         $parameters['columns'] = 'DISTINCT(linkedid) as linkedid';
         $parameters['order']   = ['start desc'];
         $parameters['limit']   = $recordsPerPage;
@@ -76,7 +79,7 @@ class CallDetailRecordsController extends BaseController
             return;
         }
 
-        // Получим все детальные записи для обработки и склеивания
+        // Retrieve all detailed records for processing and merging
         if (count($arrIDS) === 1) {
             $parameters = [
                 'conditions' => 'linkedid = :ids:',
@@ -167,11 +170,11 @@ class CallDetailRecordsController extends BaseController
     }
 
     /**
+     * Prepares query parameters for filtering CDR records.
      *
-     * Подготовка параметров запроса для фильтрации CDR записей
-     *
-     * @param string $searchPhrase поисковая фраза, которую ввел пользователь
-     * @param array $parameters   параметры запроса CDR
+     * @param string $searchPhrase The search phrase entered by the user.
+     * @param array $parameters The CDR query parameters.
+     * @return void
      */
     private function prepareConditionsForSearchPhrases(string &$searchPhrase, array &$parameters): void
     {

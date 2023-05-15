@@ -36,6 +36,9 @@ namespace MikoPBX\Common\Models;
  */
 class CallDetailRecords extends CallDetailRecordsBase
 {
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('cdr_general');

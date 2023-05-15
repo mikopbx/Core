@@ -27,7 +27,9 @@ use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, OutWorkTimesRouts, 
 class IncomingRoutesController extends BaseController
 {
     /**
-     * Построение списка входящих маршрутов
+     *  Builds the index page for incoming routes.
+     *
+     * @return void
      */
     public function indexAction(): void
     {
@@ -64,12 +66,12 @@ class IncomingRoutesController extends BaseController
         }
         usort($routingTable, [__CLASS__, 'sortArrayByPriority']);
 
-        // Create incoming rule with default action
+        // Create incoming rule with default action if it doesn't exist
         $defaultRule = IncomingRoutingTable::findFirstById(1);
         if ($defaultRule === null) {
             $defaultRule = IncomingRoutingTable::resetDefaultRoute();
         }
-        // Список всех используемых эктеншенов
+        // Get a list of all used extensions
         $forwardingExtensions     = [];
         $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
         $parameters               = [
@@ -93,15 +95,15 @@ class IncomingRoutesController extends BaseController
 
 
     /**
-     * Карточка редактирования входящего маршрута
+     * Edit page for incoming route.
      *
-     * @param string $ruleId Идентификатор правила маршрутизации
+     * @param string $ruleId The ID of the routing rule to edit.
      */
     public function modifyAction(string $ruleId = ''): void
     {
         if ((int)$ruleId === 1) {
             $this->forward('incoming-routes/index');
-        } // Первая строка маршрут по умолчанию, ее не трогаем.
+        } // First row is the default route, don't modify it.
 
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
         if ($rule === null) {
@@ -113,7 +115,7 @@ class IncomingRoutesController extends BaseController
             $rule->priority = (int)IncomingRoutingTable::maximum($parameters)+1;
         }
 
-        // Список провайдеров
+        // Get a list of providers
         $providersList         = [];
         $providersList['none'] = $this->translation->_('ir_AnyProvider');
         $providers             = Providers::find();
@@ -123,7 +125,7 @@ class IncomingRoutesController extends BaseController
             $providersList[$provByType->uniqid] = $provByType->getRepresent();
         }
 
-        // Список всех используемых эктеншенов
+        // Get a list of all used extensions
         $forwardingExtensions     = [];
         $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
         $parameters               = [
@@ -148,7 +150,11 @@ class IncomingRoutesController extends BaseController
 
 
     /**
-     * Сохранение входящего маршрута
+     * Save action for incoming route.
+     *
+     * This method is responsible for saving the incoming route data.
+     *
+     * @return void
      */
     public function saveAction(): void
     {
@@ -173,7 +179,7 @@ class IncomingRoutesController extends BaseController
                     break;
                 case 'priority':
                     if (empty($data[$name])) {
-                        // Найдем строчку с самым высоким приоиртетом, кроме 9999
+                        // Find the row with the highest priority, excluding 9999
                         $params      = [
                             'column'     => 'priority',
                             'conditions' => 'priority != 9999',
@@ -201,6 +207,7 @@ class IncomingRoutesController extends BaseController
             return;
         }
 
+        // Retrieve time conditions associated with the rule's number and provider
         $manager = $this->di->get('modelsManager');
         $providerCondition = empty($rule->provider)? 'provider IS NULL':'provider = "'.$rule->provider.'"';
         $options     = [
@@ -226,6 +233,8 @@ class IncomingRoutesController extends BaseController
         ];
         $query  = $manager->createBuilder($options)->getQuery();
         $result = array_merge(...$query->execute()->toArray());
+
+        // Create or update OutWorkTimesRouts records based on time conditions
         foreach ($result as $conditionId){
             $filter = [
                 'conditions' => 'timeConditionId=:timeConditionId: AND routId=:routId:',
@@ -247,21 +256,22 @@ class IncomingRoutesController extends BaseController
         $this->view->success = true;
         $this->db->commit();
 
-        // Если это было создание карточки то надо перегрузить страницу с указанием ID
+        // If this was the creation of a new rule, reload the page with the newly created rule's ID
         if (empty($data['id'])) {
             $this->view->reload = "incoming-routes/modify/{$rule->id}";
         }
     }
 
     /**
-     * Удаление входящего маршрута
+     * Delete an incoming routing rule.
      *
-     * @param string $ruleId
+     * @param string $ruleId The identifier of the routing rule to delete.
+     * @return void
      */
     public function deleteAction(string $ruleId)
     {
         if ((int)$ruleId === 1) {
-            $this->forward('incoming-routes/index'); // Первая строка маршрут по умолчанию, ее не трогаем.
+            $this->forward('incoming-routes/index'); // The first rule is the default route, do not delete it.
         }
 
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
@@ -273,8 +283,9 @@ class IncomingRoutesController extends BaseController
     }
 
     /**
-     * Changes rules priority
+     * Changes the priority of routing rules.
      *
+     * @return void
      */
     public function changePriorityAction(): void
     {

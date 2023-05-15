@@ -8,17 +8,6 @@
         <i class="content icon"></i>
         <span class="text">{{ t._("topMenu_SidebarButton") }}</span>
     </div>
-
-    {# <div class="item"> #}
-    {# CPU 20% #}
-    {# </div> #}
-    {# <div class="item"> #}
-    {# MEM 20% #}
-    {# </div> #}
-    {# <div class="item"> #}
-    {# HDD 20% #}
-    {# </div> #}
-
     <div class="ui right aligned selection dropdown search item" id="top-menu-search">
         <input type="hidden" name="search-result">
         <div class="ui inverted transparent icon input">

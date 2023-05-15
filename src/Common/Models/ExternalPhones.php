@@ -40,56 +40,78 @@ class ExternalPhones extends ModelsBase
     public $id;
 
     /**
+     * Extension number
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $extension = '';
 
     /**
+     * Unique ID for the external phone
+     *
      * @Primary
      * @Column(type="string", nullable=true)
      */
     public ?string $uniqid = '';
 
     /**
+     * Dial string for the external phone
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $dialstring = '';
 
     /**
+     * Manual dialplan for incoming calls on the external phone
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $manualdialplanincoming = '';
 
     /**
+     * Manual dialplan for outgoing calls from the external phone
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $manualdialplanoutgoing = '';
 
     /**
+     * Indicates if the external phone is disabled or enabled
+     *
      * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled = '0';
 
-
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_ExternalPhones');
         parent::initialize();
+
+        // Establish a belongsTo relationship with the Extensions model
         $this->belongsTo(
             'extension',
             Extensions::class,
             'number',
             [
-                'alias'      => 'Extensions',
+                'alias' => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION // Всегда сначала удаляем Extensions, а он удалит ExternalPhones
+                    'action' => Relation::NO_ACTION
+                    // The Extensions model will be deleted first, and it will delete the associated ExternalPhones
                 ],
             ]
         );
     }
 
-    public function validation()
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
+    public function validation(): bool
     {
         $validation = new Validation();
         $validation->add(

@@ -48,10 +48,10 @@ class PhpError
     /**
      * Record any warnings/errors by php
      *
-     * @param int        php error number
-     * @param string    php error description
-     * @param string    php file where the error occured
-     * @param int        php line where the error occured
+     * @param int $errNo php error number
+     * @param string $errStr php error description
+     * @param string $errFile php file where the error occured
+     * @param int $errLine php line where the error occured
      */
     public static function errorHandler($errNo, $errStr, $errFile, $errLine)
     {
@@ -63,10 +63,10 @@ class PhpError
     /**
      * Log error to syslog
      *
-     * @param int        php error number
-     * @param string    php error description
-     * @param string    php file where the error occured
-     * @param int        php line where the error occured
+     * @param int $errNo php error number
+     * @param string $errStr php error description
+     * @param string $errFile php file where the error occured
+     * @param int $errLine php line where the error occured
      *
      * @return bool
      */

@@ -45,32 +45,38 @@ class OutWorkTimesRouts extends ModelsBase
      */
     public $routId;
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_OutWorkTimesRouts');
         parent::initialize();
+
+        // Establish a belongsTo relationship with the OutWorkTimes model
         $this->belongsTo(
             'timeConditionId',
             OutWorkTimes::class,
             'id',
             [
-                'alias'      => 'OutWorkTimes',
+                'alias' => 'OutWorkTimes',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );
 
+        // Establish a hasOne relationship with the IncomingRoutingTable model
         $this->hasOne(
             'routId',
             IncomingRoutingTable::class,
             'id',
             [
-                'alias'      => 'IncomingRoutingTable',
+                'alias' => 'IncomingRoutingTable',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );

@@ -35,31 +35,42 @@ class Codecs extends ModelsBase
     public $id;
 
     /**
+     * Codec name.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $name = '';
 
     /**
-     * Audio or Video codec
+     * Type of the codec (audio or video).
      * @Column(type="string", nullable=true)
      */
-    public ?string $type='audio';
+    public ?string $type = 'audio';
 
     /**
+     * Priority of the codec.
+     *
      * @Column(type="integer", nullable=true, default="1")
      */
-    public ?string $priority='1';
+    public ?string $priority = '1';
 
     /**
+     * Indicator if the codec is disabled (0 for enabled, 1 for disabled).
+     *
      * @Column(type="string", length=1, nullable=true)
      */
-    public ?string $disabled='0';
+    public ?string $disabled = '0';
 
     /**
+     * Description of the codec.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_Codecs');

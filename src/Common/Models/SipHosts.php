@@ -27,7 +27,7 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  * Class SipHosts
  *
  * @package MikoPBX\Common\Models
- * @property \MikoPBX\Common\Models\Sip Sip
+ * @property Sip Sip
  */
 class SipHosts extends ModelsBase
 {
@@ -49,7 +49,7 @@ class SipHosts extends ModelsBase
     public ?string $address = '';
 
     /**
-     *
+     * Initialize the model.
      */
     public function initialize(): void
     {
@@ -60,10 +60,10 @@ class SipHosts extends ModelsBase
             Sip::class,
             'uniqid',
             [
-                'alias'      => 'Sip',
+                'alias' => 'Sip',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
 

@@ -23,12 +23,15 @@ class LocalizationController extends BaseController
 {
 
     /**
-     * Возвращает массив переводов для локализации в JavaScript
+     * Get the translated array for JavaScript localization.
      *
+     * @return void
      */
     public function getTranslatedArrayAction(): void
     {
         $arrStr = [];
+
+        // Iterate through the translated messages
         foreach ($this->di->getShared('messages') as $key => $value) {
             $arrStr[$key] = str_replace(["\n", "  ", '"'], ['', '', '\\"'], $value);
         }

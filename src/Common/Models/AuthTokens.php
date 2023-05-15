@@ -36,23 +36,29 @@ class AuthTokens extends ModelsBase
     public $id;
 
     /**
+     * Hashed token value
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $tokenHash = '';
 
     /**
+     * Serialized session parameters
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $sessionParams = '';
 
     /**
+     * Expiry date of the token
+     *
      * @Column(type="string", nullable=false)
      */
     public ?string $expiryDate = '';
 
 
     /**
-     * Class initialization
+     * Initialize the model.
      */
     public function initialize(): void
     {

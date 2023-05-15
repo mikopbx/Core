@@ -23,7 +23,7 @@ class RestartController extends BaseController
 {
 
     /**
-     * Форма с основными кнопками для перезагрузки и выключения станции
+     * Renders the form with main buttons for station reboot and shutdown.
      */
     public function indexAction(): void
     {

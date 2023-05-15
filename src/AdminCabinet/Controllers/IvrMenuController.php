@@ -27,7 +27,10 @@ class IvrMenuController extends BaseController
 
 
     /**
-     * Builds IVR menu representation
+     * Builds the IVR menu representation.
+     *
+     * This method retrieves IVR menu actions and IVR menus from the database and constructs the representation
+     * of the IVR menu, including its actions and related information.
      */
     public function indexAction(): void
     {
@@ -42,6 +45,8 @@ class IvrMenuController extends BaseController
 
         $records = IvrMenu::find();
         $ivrMenuList=[];
+
+        // Retrieve IVR menus and build the representation
         foreach ($records as $record) {
             usort($ivrMenuActions[$record->uniqid], [__CLASS__, 'sortArrayByDigits']);
             $ivrMenuList[]=[
@@ -57,12 +62,18 @@ class IvrMenuController extends BaseController
     }
 
     /**
-     * Карточка редактирования IVR меню
+     * Modify IVR menu action.
      *
-     * @param string $ivrmenuid идентификатор меню
+     * This method is responsible for modifying an IVR menu action. It retrieves the IVR menu and related data
+     * from the database, including IVR menu actions, sound files, and extensions. It constructs the form for
+     * modifying the IVR menu and populates it with the retrieved data. It assigns the form, IVR menu actions,
+     * representation, and extension to the view for rendering.
+     *
+     * @param string $ivrmenuid - The ID of the IVR menu to modify.
      */
-    public function modifyAction($ivrmenuid = ''): void
+    public function modifyAction(string $ivrmenuid = ''): void
     {
+        // Retrieve the IVR menu by ID
         $ivrmenu                = IvrMenu::findFirstByUniqid($ivrmenuid);
         $ivrActionsList         = [];
         $soundfilesList         = [];
@@ -71,6 +82,7 @@ class IvrMenuController extends BaseController
         $extensionList[""]      = $this->translation->_("ex_SelectNumber");
         $extensionListForFilter = [];
         if ($ivrmenu === null) {
+            // Create a new IVR menu if not found
             $ivrmenu                   = new IvrMenu();
             $ivrmenu->uniqid           = strtoupper('IVR-' . md5($ivrmenu->id . time()));
             $ivrmenu->number_of_repeat = 3;
@@ -79,7 +91,8 @@ class IvrMenuController extends BaseController
             $ivrmenu->timeout          = 7;
         } else {
             $extensionListForFilter[] = $ivrmenu->timeout_extension;
-            // Списк экстеншенов очереди
+
+            // Retrieve IVR menu actions related to the IVR menu
             $parameters = [
                 'conditions' => 'ivr_menu_id=:menu:',
                 'bind'       => [
@@ -89,6 +102,7 @@ class IvrMenuController extends BaseController
             $actions    = IvrMenuActions::find($parameters);
             foreach ($actions as $action) {
                 $represent = $action->Extensions===null?"ERROR":$action->Extensions->getRepresent();
+                // Build IVR menu actions array
                 $ivrActionsList[]         = [
                     'id'                 => $action->id,
                     'extension'          => $action->extension,
@@ -104,7 +118,6 @@ class IvrMenuController extends BaseController
         }
         usort($ivrActionsList, [__CLASS__, 'sortArrayByDigits']);
 
-        // Список всех эктеншенов выбранных ранее для правил адресации
         if (count($extensionListForFilter) > 0) {
             $parameters = [
                 'conditions' => 'number IN ({ids:array})',
@@ -118,18 +131,21 @@ class IvrMenuController extends BaseController
             }
         }
 
-        // Список звуковых файлов для IVR
+        // Retrieve custom sound files for IVR
         $soundFiles = SoundFiles::find('category="custom"');
         foreach ($soundFiles as $soundFile) {
             $soundfilesList[$soundFile->id] = $soundFile->getRepresent();
         }
 
+        // Construct the form for modifying the IVR menu
         $form                   = new IvrMenuEditForm(
             $ivrmenu, [
             'extensions' => $extensionList,
             'soundfiles' => $soundfilesList,
         ]
         );
+
+        // Assign data to the view for rendering
         $this->view->form       = $form;
         $this->view->ivractions = $ivrActionsList;
         $this->view->represent  = $ivrmenu->getRepresent();
@@ -157,7 +173,7 @@ class IvrMenuController extends BaseController
     }
 
     /**
-     * Сохранение ivr меню
+     * Saves the IVR menu
      */
     public function saveAction(): void
     {
@@ -171,7 +187,6 @@ class IvrMenuController extends BaseController
         $ivrMenuRecord = IvrMenu::findFirstByUniqid($data['uniqid']);
         if ($ivrMenuRecord === null) {
             $ivrMenuRecord = new IvrMenu();
-
             $extension                    = new Extensions();
             $extension->type              = Extensions::TYPE_IVR_MENU;
             $extension->number            = $data["extension"];
@@ -183,7 +198,7 @@ class IvrMenuController extends BaseController
             $extension = $ivrMenuRecord->Extensions;
         }
 
-        // Заполним параметры внутреннего номера
+        // Update IVR menu parameters
         if ( ! $this->updateExtension($extension, $data)) {
             $this->view->success = false;
             $this->db->rollback();
@@ -191,7 +206,7 @@ class IvrMenuController extends BaseController
             return;
         }
 
-        // Заполним параметры IVR меню
+        // Update IVR menu actions
         if ( ! $this->updateIVRMenu($ivrMenuRecord, $data)) {
             $this->view->success = false;
             $this->db->rollback();
@@ -199,7 +214,7 @@ class IvrMenuController extends BaseController
             return;
         }
 
-        // Заполним параметры участников IVR Меню
+        // Update IVR menu actions
         if ( ! $this->updateIVRMenuActions($data)) {
             $this->view->success = false;
             $this->db->rollback();
@@ -210,19 +225,19 @@ class IvrMenuController extends BaseController
         $this->view->success = true;
         $this->db->commit();
 
-        // Если это было создание карточки то надо перегрузить страницу с указанием ID
+        // If it was the creation of a new IVR menu, reload the page with the specified ID
         if (empty($data['id'])) {
             $this->view->reload = "ivr-menu/modify/{$data['uniqid']}";
         }
     }
 
     /**
-     * Обновление параметров внутреннего номера
+     * Update parameters of an internal extension.
      *
-     * @param \MikoPBX\Common\Models\Extensions $extension
-     * @param array                             $data массив полей из POST запроса
+     * @param \MikoPBX\Common\Models\Extensions $extension The extension object to update.
+     * @param array                             $data      An array of fields from the POST request.
      *
-     * @return bool update result
+     * @return bool The update result.
      */
     private function updateExtension(Extensions $extension, array $data): bool
     {
@@ -239,12 +254,12 @@ class IvrMenuController extends BaseController
     }
 
     /**
-     * Обновление параметров IVR меню
+     * Update parameters of an IVR menu.
      *
-     * @param \MikoPBX\Common\Models\IvrMenu $ivrMenu
-     * @param array                          $data массив полей из POST запроса
+     * @param \MikoPBX\Common\Models\IvrMenu $ivrMenu The IVR menu object to update.
+     * @param array                          $data    An array of fields from the POST request.
      *
-     * @return bool update result
+     * @return bool The update result.
      */
     private function updateIVRMenu(IvrMenu $ivrMenu, array $data): bool
     {
@@ -280,17 +295,17 @@ class IvrMenuController extends BaseController
     }
 
     /**
-     * Обновление действий в IVR меню
+     * Update parameters of IVR menu actions.
      *
-     * @param array $data массив полей из POST запроса
+     * @param array $data An array of fields from the POST request.
      *
-     * @return bool update result
+     * @return bool The update result.
      */
     private function updateIVRMenuActions(array $data): bool
     {
         $existDigits = [];
 
-        // Заполним параметры IvrMenuActions
+        // Update or create IVRMenuActions
         $arrActions = json_decode($data['actions']);
         foreach ($arrActions as $value) {
             $parameters = [
@@ -317,7 +332,7 @@ class IvrMenuController extends BaseController
             $existDigits[] = $value->digits;
         }
 
-        // Удалим лишние элементы меню
+        // Delete unnecessary IVRMenuActions
         $parameters = [
             'conditions' => 'digits NOT IN ({numbers:array}) AND ivr_menu_id=:uniqid:',
             'bind'       => [
@@ -338,16 +353,17 @@ class IvrMenuController extends BaseController
     }
 
     /**
-     * Удаление ivr меню
+     * Delete an IVR menu.
      *
-     * @param string $uniqid
+     * @param string $uniqid The unique ID of the IVR menu.
      */
-    public function deleteAction($uniqid = '')
+    public function deleteAction(string $uniqid = '')
     {
         if ($uniqid === '') {
             return;
         }
 
+        // Find the IVR menu by its unique ID
         $ivrMenu = IvrMenu::findFirstByUniqid($uniqid);
         if ($ivrMenu === null) {
             return;
@@ -355,11 +371,14 @@ class IvrMenuController extends BaseController
 
         $this->db->begin();
         $errors = false;
+
+        // Delete the associated extension
         $extension = $ivrMenu->Extensions;
         if ( ! $extension->delete()) {
             $errors = $extension->getMessages();
         }
 
+        // Check for errors during deletion
         if ($errors) {
             $this->flash->warning(implode('<br>', $errors));
             $this->db->rollback();
@@ -367,6 +386,7 @@ class IvrMenuController extends BaseController
             $this->db->commit();
         }
 
+        // Redirect to the IVR menu index page
         $this->forward('ivr-menu/index');
     }
 

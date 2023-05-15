@@ -27,23 +27,23 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  * Class Sip
  *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
- * @property \MikoPBX\Common\Models\SipHosts SipHosts
- * @property \MikoPBX\Common\Models\Providers Providers
- * @property \MikoPBX\Common\Models\Extensions Extensions
- * @property \MikoPBX\Common\Models\NetworkFilters NetworkFilters
+ * @property SipHosts SipHosts
+ * @property Providers Providers
+ * @property Extensions Extensions
+ * @property NetworkFilters NetworkFilters
  *
  * @package MikoPBX\Common\Models
  */
 class Sip extends ModelsBase
 {
     public const TRANSPORT_UDP_TCP = '';
-    public const TRANSPORT_UDP     = 'udp';
-    public const TRANSPORT_TCP     = 'tcp';
-    public const TRANSPORT_TLS     = 'tls';
+    public const TRANSPORT_UDP = 'udp';
+    public const TRANSPORT_TCP = 'tcp';
+    public const TRANSPORT_TLS = 'tls';
 
     public const REG_TYPE_OUTBOUND = 'outbound';
-    public const REG_TYPE_INBOUND  = 'inbound';
-    public const REG_TYPE_NONE     = 'none';
+    public const REG_TYPE_INBOUND = 'inbound';
+    public const REG_TYPE_NONE = 'none';
 
     /**
      * @Primary
@@ -175,73 +175,98 @@ class Sip extends ModelsBase
      */
     public ?string $enableRecording = '1';
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_Sip');
         parent::initialize();
+
+        // Establish a belongsTo relationship with the Extensions model
         $this->belongsTo(
             'extension',
             Extensions::class,
             'number',
             [
-                'alias'      => 'Extensions',
+                'alias' => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::NO_ACTION //Всегда сначала удаляем Extensions, а он удалит SIP
+                    'action' => Relation::NO_ACTION
+                    // Always delete Extensions first, and it will delete SIP records
                 ],
             ]
         );
 
+        // Establish a belongsTo relationship with the NetworkFilters model
         $this->belongsTo(
             'networkfilterid',
             NetworkFilters::class,
             'id',
             [
-                'alias'      => 'NetworkFilters',
+                'alias' => 'NetworkFilters',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );
 
+        // Establish a belongsTo relationship with the Providers model
         $this->belongsTo(
             'uniqid',
             Providers::class,
             'sipuid',
             [
-                'alias'      => 'Providers',
+                'alias' => 'Providers',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE,
+                    'action' => Relation::ACTION_CASCADE,
                 ],
             ]
         );
 
+        // Establish a hasMany relationship with the SipHosts model
         $this->hasMany(
             'uniqid',
             SipHosts::class,
             'provider_id',
             [
-                'alias'      => 'SipHosts',
+                'alias' => 'SipHosts',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::ACTION_CASCADE //Удалить подчиненные SipHosts
+                    'action' => Relation::ACTION_CASCADE
+                    // Delete associated SipHosts records
                 ],
             ]
         );
     }
 
+    /**
+     * Decode and retrieve the manual attributes.
+     *
+     * @return string The decoded manual attributes.
+     */
     public function getManualAttributes(): string
     {
         return base64_decode((string)$this->manualattributes);
     }
 
+    /**
+     * Encode and set the manual attributes.
+     *
+     * @param string $text The manual attributes text to be encoded and set.
+     */
     public function setManualAttributes($text): void
     {
         $this->manualattributes = base64_encode($text);
     }
 
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
     public function validation(): bool
     {
         $validation = new Validation();

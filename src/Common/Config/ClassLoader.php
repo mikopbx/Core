@@ -28,6 +28,9 @@ use function MikoPBX\Common\Config\appPath;
 
 class ClassLoader
 {
+    /**
+     * Initialize the application.
+     */
     public static function init(): void
     {
         require __DIR__ . '/functions.php';

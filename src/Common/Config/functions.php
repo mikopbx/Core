@@ -24,12 +24,12 @@ namespace MikoPBX\Common\Config;
 use function function_exists;
 
 if (true !== function_exists('MikoPBX\Common\Config\appPath')) {
+
     /**
      * Get the application path.
      *
-     * @param string $path
-     *
-     * @return string
+     * @param string $path The optional path to append to the application path.
+     * @return string The complete application path.
      */
     function appPath(string $path = ''): string
     {

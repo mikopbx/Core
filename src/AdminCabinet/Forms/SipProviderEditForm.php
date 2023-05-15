@@ -40,11 +40,6 @@ class SipProviderEditForm extends BaseForm
     {
         parent::initialize($entity, $options);
 
-        // Не нужны провайдеру
-        // Busylevel
-        // Extension
-        // Networkfilterid
-
         // ProviderType
         $this->add(new Hidden('providerType', ['value' => 'SIP']));
 

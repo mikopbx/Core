@@ -75,20 +75,24 @@ class OutgoingRoutingTable extends ModelsBase
      */
     public ?string $note = '';
 
-
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_OutgoingRoutingTable');
         parent::initialize();
+
+        // Establish a belongsTo relationship with the Providers model
         $this->belongsTo(
             'providerid',
             Providers::class,
             'uniqid',
             [
-                'alias'      => 'Providers',
+                'alias' => 'Providers',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );

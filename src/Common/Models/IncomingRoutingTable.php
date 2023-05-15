@@ -75,7 +75,30 @@ class IncomingRoutingTable extends ModelsBase
      */
     public ?string $note = '';
 
+    /**
+     * Resets default rule to busy action
+     */
+    public static function resetDefaultRoute(): IncomingRoutingTable
+    {
+        $defaultRule = self::find('priority=9999');
+        foreach ($defaultRule as $rule) {
+            $rule->delete();
+        }
+        $defaultRule = self::findFirstById(1);
+        if ($defaultRule === null) {
+            $defaultRule = new self();
+            $defaultRule->id = 1;
+        }
+        $defaultRule->action = 'busy';
+        $defaultRule->priority = 9999;
+        $defaultRule->rulename = 'default action';
+        $defaultRule->save();
+        return $defaultRule;
+    }
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_IncomingRoutingTable');
@@ -85,10 +108,10 @@ class IncomingRoutingTable extends ModelsBase
             Extensions::class,
             'number',
             [
-                'alias'      => 'Extensions',
+                'alias' => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );
@@ -98,34 +121,13 @@ class IncomingRoutingTable extends ModelsBase
             Providers::class,
             'uniqid',
             [
-                'alias'      => 'Providers',
+                'alias' => 'Providers',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );
-    }
-
-    /**
-     * Resets default rule to busy action
-     */
-    public static function resetDefaultRoute(): IncomingRoutingTable
-    {
-        $defaultRule = self::find('priority=9999');
-        foreach ($defaultRule as $rule){
-            $rule->delete();
-        }
-        $defaultRule = self::findFirstById(1);
-        if ($defaultRule === null) {
-            $defaultRule     = new self();
-            $defaultRule->id = 1;
-        }
-        $defaultRule->action   = 'busy';
-        $defaultRule->priority = 9999;
-        $defaultRule->rulename = 'default action';
-        $defaultRule->save();
-        return $defaultRule;
     }
 
 }

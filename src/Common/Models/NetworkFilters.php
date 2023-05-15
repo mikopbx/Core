@@ -27,9 +27,9 @@ use Phalcon\Mvc\Model\ResultsetInterface;
  * Class NetworkFilters
  *
  * @package MikoPBX\Common\Models
- * @property \MikoPBX\Common\Models\Sip Sip
- * @property \MikoPBX\Common\Models\FirewallRules FirewallRules
- * @property \MikoPBX\Common\Models\AsteriskManagerUsers AsteriskManagerUsers
+ * @property Sip Sip
+ * @property FirewallRules FirewallRules
+ * @property AsteriskManagerUsers AsteriskManagerUsers
  */
 class NetworkFilters extends ModelsBase
 {
@@ -74,16 +74,16 @@ class NetworkFilters extends ModelsBase
      */
     public static function getAllowedFiltersForType(array $arrTrafficCategory): ResultsetInterface
     {
-        $di         = DI::getDefault();
+        $di = DI::getDefault();
         $parameters = [
-            'models'     => [
+            'models' => [
                 'NetworkFilters' => __CLASS__,
             ],
             'conditions' => 'FirewallRules.category in ({arrkeys:array}) and FirewallRules.action="allow"',
-            'bind'       => [
+            'bind' => [
                 'arrkeys' => $arrTrafficCategory,
             ],
-            'joins'      => [
+            'joins' => [
                 'FirewallRules' => [
                     0 => FirewallRules::class,
                     1 => 'FirewallRules.networkfilterid=NetworkFilters.id',
@@ -92,11 +92,14 @@ class NetworkFilters extends ModelsBase
                 ],
             ],
         ];
-        $query      = $di->get('modelsManager')->createBuilder($parameters)->getQuery();
+        $query = $di->get('modelsManager')->createBuilder($parameters)->getQuery();
 
         return $query->execute();
     }
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_NetworkFilters');
@@ -106,10 +109,10 @@ class NetworkFilters extends ModelsBase
             Sip::class,
             'networkfilterid',
             [
-                'alias'      => 'Sip',
+                'alias' => 'Sip',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );
@@ -118,10 +121,10 @@ class NetworkFilters extends ModelsBase
             FirewallRules::class,
             'networkfilterid',
             [
-                'alias'      => 'FirewallRules',
+                'alias' => 'FirewallRules',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE,
+                    'action' => Relation::ACTION_CASCADE,
                 ],
             ]
         );
@@ -130,10 +133,10 @@ class NetworkFilters extends ModelsBase
             AsteriskManagerUsers::class,
             'networkfilterid',
             [
-                'alias'      => 'AsteriskManagerUsers',
+                'alias' => 'AsteriskManagerUsers',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );

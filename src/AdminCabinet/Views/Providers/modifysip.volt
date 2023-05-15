@@ -129,4 +129,4 @@
     </div>
 </div>
 {{ partial("partials/submitbutton",['indexurl':'providers/index/']) }}
-</form>
+{{ end_form() }}

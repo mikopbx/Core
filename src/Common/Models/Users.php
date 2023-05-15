@@ -25,7 +25,7 @@ use Phalcon\Mvc\Model\Relation;
  * Class Users
  *
  * @method static mixed findFirstByEmail(array|string|int $parameters = null)
- * @property \MikoPBX\Common\Models\Extensions Extensions
+ * @property Extensions Extensions
  * @package MikoPBX\Common\Models
  */
 class Users extends ModelsBase
@@ -65,7 +65,7 @@ class Users extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string  $voicemailpincode = '';
+    public ?string $voicemailpincode = '';
 
     /**
      * @Column(type="string", nullable=true)
@@ -77,11 +77,21 @@ class Users extends ModelsBase
      */
     public ?string $avatar = '';
 
+    /**
+     * Get the available role values.
+     *
+     * This static method returns an array of available role values, such as 'Admins' and 'Users'.
+     *
+     * @return array An array of available role values.
+     */
     public static function getRoleValues(): array
     {
         return ['Admins', 'Users'];
     }
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_Users');
@@ -91,18 +101,26 @@ class Users extends ModelsBase
             Extensions::class,
             'userid',
             [
-                'alias'      => 'Extensions',
+                'alias' => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::ACTION_CASCADE,
+                    'action' => Relation::ACTION_CASCADE,
                 ],
             ]
         );
     }
 
+    /**
+     * Perform actions after the model is saved.
+     *
+     * This method is called after the model is successfully saved. It updates the cache for selection lists
+     * if there are any changes to the employee's name or surname. It clears the cache for the Extensions model
+     * by calling the clearCache() method of the ModelsBase class.
+     *
+     * @return void
+     */
     public function afterSave(): void
     {
-        // Обновим кеш для списков выбора если поменяли имя, фамилию сотрудника
         ModelsBase::clearCache(Extensions::class);
     }
 

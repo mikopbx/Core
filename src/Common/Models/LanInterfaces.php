@@ -39,91 +39,131 @@ class LanInterfaces extends ModelsBase
     public $id;
 
     /**
+     * Name of the LAN interface
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $name = '';
 
     /**
+     * Interface system name
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $interface = '';
 
     /**
+     * VLAN ID
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $vlanid = '0';
 
     /**
+     * Subnet
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $subnet = '';
 
     /**
+     * IP address
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $ipaddr = '';
 
     /**
+     * Gateway
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $gateway = '';
 
     /**
+     * Topology
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $topology = '';
 
     /**
+     * External IP address
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $extipaddr = '';
 
     /**
+     * External hostname
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $exthostname = '';
 
     /**
+     * Hostname
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $hostname = '';
 
     /**
+     * Domain name
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $domain = '';
 
     /**
+     * Primary DNS server
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $primarydns = '';
 
     /**
+     * Secondary DNS server
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $secondarydns = '';
 
     /**
+     * DHCP enabled flag
+     *
      * @Column(type="string", length=1, nullable=false)
      */
     public ?string $dhcp = '1';
 
     /**
+     * The interface has the Internet connection flag
+     *
      * @Column(type="string", length=1, nullable=false)
      */
     public ?string $internet = '0';
 
     /**
+     * Disabled flag
+     *
      * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled = '0';
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_LanInterfaces');
         parent::initialize();
     }
 
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
     public function validation(): bool
     {
         $validation = new Validation();

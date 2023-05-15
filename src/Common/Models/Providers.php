@@ -26,10 +26,10 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 /**
  * Class Providers
  *
- * @property \MikoPBX\Common\Models\Iax Iax
- * @property \MikoPBX\Common\Models\Sip Sip
- * @property \MikoPBX\Common\Models\OutgoingRoutingTable OutgoingRouting
- *                                         
+ * @property Iax Iax
+ * @property Sip Sip
+ * @property OutgoingRoutingTable OutgoingRouting
+ *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
  *
  * @package MikoPBX\Common\Models
@@ -65,70 +65,86 @@ class Providers extends ModelsBase
     public ?string $iaxuid = '';
 
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_Providers');
         parent::initialize();
+
+        // Establish a hasOne relationship with the Sip model
         $this->hasOne(
             'sipuid',
             Sip::class,
             'uniqid',
             [
-                'alias'      => 'Sip',
+                'alias' => 'Sip',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION, //Эту учетную запись удалит автоматом если удалится SIP запись
+                    'action' => Relation::NO_ACTION,
+                    // This account will be automatically deleted if the SIP record is deleted
                 ],
             ]
         );
 
+        // Establish a hasOne relationship with the Iax model
         $this->hasOne(
             'iaxuid',
             Iax::class,
             'uniqid',
             [
-                'alias'      => 'Iax',
+                'alias' => 'Iax',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION, //Эту учетную запись удалит автоматом если удалится IAX запись
+                    'action' => Relation::NO_ACTION,
+                    // This account will be automatically deleted if the IAX record is deleted
                 ],
             ]
         );
+
+        // Establish a hasMany relationship with the OutgoingRoutingTable model
         $this->hasMany(
             'uniqid',
             OutgoingRoutingTable::class,
             'providerid',
             [
-                'alias'      => 'OutgoingRouting',
+                'alias' => 'OutgoingRouting',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'message'    => 'OutgoingRouting',
-                    'action'     => Relation::ACTION_CASCADE,
+                    'message' => 'OutgoingRouting',
+                    'action' => Relation::ACTION_CASCADE,
                 ],
-                'params'     => [
+                'params' => [
                     'order' => 'priority asc',
                 ],
             ]
         );
+
+        // Establish a hasMany relationship with the IncomingRoutingTable model
         $this->hasMany(
             'uniqid',
             IncomingRoutingTable::class,
             'provider',
             [
-                'alias'      => 'IncomingRouting',
+                'alias' => 'IncomingRouting',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'message'    => 'IncomingRouting',
-                    'action'     => Relation::NO_ACTION,
+                    'message' => 'IncomingRouting',
+                    'action' => Relation::NO_ACTION,
                 ],
-                'params'     => [
+                'params' => [
                     'order' => 'priority asc',
                 ],
             ]
         );
     }
 
-
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
     public function validation(): bool
     {
         $validation = new Validation();

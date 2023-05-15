@@ -234,7 +234,7 @@ class TopMenuSearchController extends BaseController
     }
 
     /**
-     * Сортировка массива extensions
+     * Sorts an array of items based on the 'sorter' value in each item.
      *
      * @param $a
      * @param $b

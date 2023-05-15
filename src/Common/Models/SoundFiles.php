@@ -39,16 +39,20 @@ class SoundFiles extends ModelsBase
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string  $name = '';
+    public ?string $name = '';
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string  $path = '';
+    public ?string $path = '';
     /**
      * @Column(type="string", nullable=true)
      */
-    public ?string  $category = '';
+    public ?string $category = '';
 
+
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_SoundFiles');
@@ -58,10 +62,10 @@ class SoundFiles extends ModelsBase
             CallQueues::class,
             'periodic_announce_sound_id',
             [
-                "alias"      => "CallQueues",
+                "alias" => "CallQueues",
                 "foreignKey" => [
                     "allowNulls" => true,
-                    "action"     => Relation::ACTION_RESTRICT,
+                    "action" => Relation::ACTION_RESTRICT,
                 ],
             ]
         );
@@ -70,10 +74,10 @@ class SoundFiles extends ModelsBase
             CallQueues::class,
             'moh_sound_id',
             [
-                "alias"      => "CallQueues",
+                "alias" => "CallQueues",
                 "foreignKey" => [
                     "allowNulls" => true,
-                    "action"     => Relation::ACTION_RESTRICT,
+                    "action" => Relation::ACTION_RESTRICT,
                 ],
             ]
         );
@@ -83,10 +87,10 @@ class SoundFiles extends ModelsBase
             OutWorkTimes::class,
             'audio_message_id',
             [
-                "alias"      => "OutWorkTimes",
+                "alias" => "OutWorkTimes",
                 "foreignKey" => [
                     "allowNulls" => true,
-                    "action"     => Relation::ACTION_RESTRICT,
+                    "action" => Relation::ACTION_RESTRICT,
                 ],
             ]
         );
@@ -95,10 +99,10 @@ class SoundFiles extends ModelsBase
             IvrMenu::class,
             'audio_message_id',
             [
-                "alias"      => "IvrMenu",
+                "alias" => "IvrMenu",
                 "foreignKey" => [
                     "allowNulls" => true,
-                    "action"     => Relation::ACTION_RESTRICT,
+                    "action" => Relation::ACTION_RESTRICT,
                 ],
             ]
         );

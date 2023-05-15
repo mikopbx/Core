@@ -23,7 +23,7 @@ class UpdateController extends BaseController
 {
 
     /**
-     * Обновление станции до нового релиза
+     * Display the update station page.
      *
      */
     public function indexAction(): void

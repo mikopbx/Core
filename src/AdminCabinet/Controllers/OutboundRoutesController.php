@@ -100,7 +100,7 @@ class OutboundRoutesController extends BaseController
     }
 
     /**
-     * Сохранение карточки исходящего маршрута
+     * Saves the outgoing routing table data based on the POST data.
      */
     public function saveAction(): void
     {
@@ -144,7 +144,7 @@ class OutboundRoutesController extends BaseController
         $this->view->success = true;
         $this->db->commit();
 
-        // Если это было создание карточки то надо перегрузить страницу с указанием ID
+        // If it was the creation of a new record, reload the page with the specified ID
         if (empty($data['id'])) {
             $this->view->reload = "outbound-routes/modify/{$rule->id}";
         }
@@ -152,11 +152,11 @@ class OutboundRoutesController extends BaseController
 
 
     /**
-     * Удаление исходящего маршрута из базы данных
+     * Deletes an outgoing route from the database.
      *
-     * @param string $id
+     * @param string $id The ID of the outgoing route to delete.
      */
-    public function deleteAction($id = ''): void
+    public function deleteAction(string $id = ''): void
     {
         $rule = OutgoingRoutingTable::findFirstByid($id);
         if ($rule !== null) {
@@ -167,8 +167,9 @@ class OutboundRoutesController extends BaseController
     }
 
     /**
-     * Changes rules priority
+     * Changes the priority of outgoing routes.
      *
+     * This action is typically called asynchronously via a POST request.
      */
     public function changePriorityAction(): void
     {
@@ -190,7 +191,7 @@ class OutboundRoutesController extends BaseController
     }
 
     /**
-     * Sort array by name and state
+     * Sorts an array by name and state.
      *
      * @param $a
      * @param $b

@@ -27,32 +27,57 @@ use MikoPBX\Core\System\Util;
 class GeneralSettingsController extends BaseController
 {
     /**
-     * Builds general settings form
+     * Builds the general settings form.
+     *
+     * This action is responsible for preparing the data required to populate the general settings form.
+     * It retrieves the audio and video codecs from the database, sorts them by priority, and assigns them to the view.
+     * It also retrieves all PBX settings and creates an instance of the GeneralSettingsEditForm.
+     *
+     * @return void
      */
     public function modifyAction(): void
     {
-        $audioCodecs     = Codecs::find(['conditions'=>'type="audio"'])->toArray();
+        // Retrieve and sort the audio codecs
+        $audioCodecs = Codecs::find(['conditions' => 'type="audio"'])->toArray();
         usort($audioCodecs, [__CLASS__, 'sortArrayByPriority']);
         $this->view->audioCodecs = $audioCodecs;
-        $videoCodecs     = Codecs::find(['conditions'=>'type="video"'])->toArray();
+
+        // Retrieve and sort the video codecs
+        $videoCodecs = Codecs::find(['conditions' => 'type="video"'])->toArray();
         usort($videoCodecs, [__CLASS__, 'sortArrayByPriority']);
         $this->view->videoCodecs = $videoCodecs;
-        $pbxSettings            = PbxSettings::getAllPbxSettings();
-        $this->view->form       = new GeneralSettingsEditForm(null, $pbxSettings);
+
+        // Retrieve all PBX settings
+        $pbxSettings = PbxSettings::getAllPbxSettings();
+
+        // Retrieve and assign the simple passwords data to the view
+        $this->view->simplePasswords = $this->getSimplePasswords($pbxSettings);
+
+        // Create an instance of the GeneralSettingsEditForm
+        $this->view->form = new GeneralSettingsEditForm(null, $pbxSettings);
         $this->view->submitMode = null;
 
-        $this->view->simplePasswords = $this->getSimplePasswords($pbxSettings);
     }
 
-    private function getSimplePasswords($data):array
+    /**
+     * Retrieves a list of simple passwords from the given data.
+     *
+     * This function checks if the SSHPassword and WebAdminPassword in the data array are simple passwords.
+     * It also checks if the CloudInstanceId matches any of these passwords.
+     * If a simple password or a matching CloudInstanceId is found, the corresponding password key is added to the list.
+     *
+     * @param array $data The data array containing the passwords and CloudInstanceId.
+     * @return array The list of password keys that failed the simple password check.
+     */
+    private function getSimplePasswords($data): array
     {
         $passwordCheckFail = [];
-        $CloudInstanceId = $data['CloudInstanceId']??'';
-        foreach (['SSHPassword', 'WebAdminPassword'] as $value){
-            if( !isset($data[$value]) ){
+        $CloudInstanceId = $data['CloudInstanceId'] ?? '';
+        foreach (['SSHPassword', 'WebAdminPassword'] as $value) {
+            if (!isset($data[$value])) {
                 continue;
             }
-            if($CloudInstanceId === $data[$value] || Util::isSimplePassword($data[$value])){
+            if ($CloudInstanceId === $data[$value] || Util::isSimplePassword($data[$value])) {
                 $passwordCheckFail[] = $value;
             }
         }
@@ -60,17 +85,20 @@ class GeneralSettingsController extends BaseController
     }
 
     /**
-     * Сохранение настроек системы
+     * Saves the general settings form data.
+     *
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (!$this->request->isPost()) {
             return;
         }
-        $data        = $this->request->getPost();
-        if($data['SSHDisablePasswordLogins' ] !== 'on'){
+        $data = $this->request->getPost();
+
+        // Perform a simple password check if SSHDisablePasswordLogins is not checked
+        if ($data['SSHDisablePasswordLogins'] !== 'on') {
             $passwordCheckFail = $this->getSimplePasswords($data);
-            if(!empty($passwordCheckFail)){
+            if (!empty($passwordCheckFail)) {
                 $this->view->message = [
                     'error' => $this->translation->_('gs_SetPasswordInfo')
                 ];
@@ -81,15 +109,17 @@ class GeneralSettingsController extends BaseController
         }
 
         $pbxSettings = PbxSettings::getDefaultArrayValues();
-        if(isset($data['SSHPassword'])){
-            // Если отправили пароль по-умолчанию, то сделаем его хэш равным хэш пароля WEB
-            if($data['SSHPassword'] === $pbxSettings['SSHPassword']){
+
+        // Process SSHPassword and set SSHPasswordHash accordingly
+        if (isset($data['SSHPassword'])) {
+            if ($data['SSHPassword'] === $pbxSettings['SSHPassword']) {
                 $data['SSHPasswordHash'] = md5($data['WebAdminPassword']);
-            }else{
+            } else {
                 $data['SSHPasswordHash'] = md5($data['SSHPassword']);
             }
         }
         $this->db->begin();
+        // Update PBX settings
         foreach ($pbxSettings as $key => $value) {
             switch ($key) {
                 case 'PBXRecordCalls':
@@ -106,7 +136,7 @@ class GeneralSettingsController extends BaseController
                     $newValue = ($data[$key] === 'on') ? '1' : '0';
                     break;
                 case 'SSHPassword':
-                    // Если отправили пароль по-умолчанию, то сделаем его равным паролю WEB
+                    // Set newValue as WebAdminPassword if SSHPassword is the same as the default value
                     if ($data[$key] === $value) {
                         $newValue = $data['WebAdminPassword'];
                     } else {
@@ -118,7 +148,7 @@ class GeneralSettingsController extends BaseController
                     $this->session->set('SendMetrics', $newValue);
                     break;
                 case 'PBXFeatureTransferDigitTimeout':
-                    $newValue = ceil((int)$data['PBXFeatureDigitTimeout']/1000);
+                    $newValue = ceil((int)$data['PBXFeatureDigitTimeout'] / 1000);
                     break;
                 default:
                     $newValue = $data[$key];
@@ -127,8 +157,8 @@ class GeneralSettingsController extends BaseController
             if (array_key_exists($key, $data)) {
                 $record = PbxSettings::findFirstByKey($key);
                 if ($record === null) {
-                    $record        = new PbxSettings();
-                    $record->key   = $key;
+                    $record = new PbxSettings();
+                    $record->key = $key;
                 } elseif ($record->key === $key
                     && $record->value === $newValue) {
                     continue;
@@ -147,11 +177,11 @@ class GeneralSettingsController extends BaseController
         }
 
         $codecs = json_decode($data['codecs'], true);
-        foreach ($codecs as $codec){
-           $record = Codecs::findFirstById($codec['codecId']);
-           $record->priority = $codec['priority'];
-           $record->disabled = $codec['disabled']===true?'1':'0';
-           $record->update();
+        foreach ($codecs as $codec) {
+            $record = Codecs::findFirstById($codec['codecId']);
+            $record->priority = $codec['priority'];
+            $record->disabled = $codec['disabled'] === true ? '1' : '0';
+            $record->update();
         }
 
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));

@@ -86,51 +86,62 @@ class OutWorkTimes extends ModelsBase
     public ?string $description = '';
 
     /**
-     * Разрешить ограничение действия правила для маршрутов.
+     * Allows restricting the action rule for routes.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $allowRestriction = '0';
 
+
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_OutWorkTimes');
         parent::initialize();
+
+        // Establish a belongsTo relationship with the Extensions model
         $this->belongsTo(
             'extension',
             Extensions::class,
             'number',
             [
-                'alias'      => 'Extensions',
+                'alias' => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );
 
+
+        // Establish a belongsTo relationship with the SoundFiles model
         $this->belongsTo(
             'audio_message_id',
             SoundFiles::class,
             'id',
             [
-                'alias'      => 'SoundFiles',
+                'alias' => 'SoundFiles',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
 
         );
 
+        // Establish a hasMany relationship with the OutWorkTimesRouts model
         $this->hasMany(
             'id',
             OutWorkTimesRouts::class,
             'timeConditionId',
             [
-                'alias'      => 'OutWorkTimesRouts',
+                'alias' => 'OutWorkTimesRouts',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::ACTION_CASCADE //Удалить подчиненные все OutWorkTimesRouts
+                    'action' => Relation::ACTION_CASCADE
+                    // Delete all related OutWorkTimesRouts when deleted
                 ],
             ]
         );

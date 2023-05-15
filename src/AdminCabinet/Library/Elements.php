@@ -430,7 +430,7 @@ class Elements extends Injectable
 
     /**
      * Modifies SSH console menu item
-     * @param $headerMenu
+     *
      * @return void
      */
     private function addMenuItemSSHMenu():void

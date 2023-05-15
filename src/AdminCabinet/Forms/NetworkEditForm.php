@@ -87,7 +87,7 @@ class NetworkEditForm extends BaseForm
                 )
             );
 
-            // Выбор подсети интерфейса
+            // Makes subnet select
             $arrMasks = [
                 "0" => "0 - 0.0.0.0",
                 "1" => "1 - 128.0.0.0",

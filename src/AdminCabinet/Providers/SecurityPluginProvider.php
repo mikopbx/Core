@@ -25,9 +25,6 @@ use MikoPBX\AdminCabinet\Plugins\SecurityPlugin;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
-/**
- *
- */
 class SecurityPluginProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'securityPlugin';

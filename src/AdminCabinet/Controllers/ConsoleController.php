@@ -22,7 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 /**
  * ConsoleController
  *
- * SSH консоль
+ * SSH Console
  */
 class ConsoleController extends BaseController
 {

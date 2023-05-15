@@ -41,7 +41,7 @@ class FirewallEditForm extends BaseForm
         $this->add(new Text('description'));
         $this->add(new Text('network', ['value' => $options['network']]));
 
-        // Выбор подсети интерфейса
+        // Makes subnet select
         $arrMasks = [
             "0" => "0 - 0.0.0.0",
             "1" => "1 - 128.0.0.0",

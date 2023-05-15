@@ -34,6 +34,10 @@ class SessionController extends BaseController
 {
     public const SESSION_ID = 'authAdmin';
 
+
+    /**
+     * Renders the login page with form and settings values.
+     */
     public function indexAction(): void
     {
         $this->view->NameFromSettings
@@ -44,8 +48,7 @@ class SessionController extends BaseController
     }
 
     /**
-     * This action authenticate and logs a user into the application
-     *
+     * Handles the login form submission and authentication.
      */
     public function startAction(): void
     {
@@ -60,6 +63,8 @@ class SessionController extends BaseController
 
         $userLoggedIn = false;
         $sessionParams = [];
+
+        // Check if the provided login and password match the stored values
         if ($password === $passFromUser && $login === $loginFromUser) {
             $sessionParams = [
                 'role' => 'admins',
@@ -69,6 +74,8 @@ class SessionController extends BaseController
         } else {
             // Try to authenticate user over additional module
             $additionalModules = PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::AUTHENTICATE_USER, [$loginFromUser, $passFromUser]);
+
+            // Check if any additional module successfully authenticated the user
             foreach ($additionalModules as $moduleUniqueId => $sessionData) {
                 if (!empty($sessionData)) {
                     $this->loggerAuth->info("User $login was authenticated over module $moduleUniqueId");
@@ -80,6 +87,7 @@ class SessionController extends BaseController
         }
 
         if ($userLoggedIn) {
+            // Register the session with the specified parameters
             $this->_registerSession($sessionParams);
             $this->updateSystemLanguage();
             $this->view->success = true;
@@ -90,6 +98,7 @@ class SessionController extends BaseController
                 $this->view->reload = 'index/index';
             }
         } else {
+            // Authentication failed
             $this->view->success = false;
             $this->flash->error($this->translation->_('auth_WrongLoginPassword'));
             $remoteAddress = $this->request->getClientAddress(true);

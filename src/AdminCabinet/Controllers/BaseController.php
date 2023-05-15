@@ -62,20 +62,23 @@ class BaseController extends Controller
     }
 
     /**
-     * Prepares some environments to every controller and view
+     * Prepares the view by setting necessary variables and configurations.
      *
+     * @return void
      */
     protected function prepareView(): void
     {
+        // Set the default timezone based on PBX settings
         date_default_timezone_set(PbxSettings::getValueByKey('PBXTimezone'));
-        $this->view->PBXVersion = PbxSettings::getValueByKey('PBXVersion');
-        $this->view->MetaTegHeadDescription = $this->translation->_('MetategHeadDescription');
-        $this->view->isExternalModuleController = $this->isExternalModuleController;
+
+        // Set PBXLicense view variable if session exists
         if ($this->session->has(SessionController::SESSION_ID)) {
             $this->view->PBXLicense = PbxSettings::getValueByKey('PBXLicense');
         } else {
             $this->view->PBXLicense = '';
         }
+
+        // Set URLs for Wiki and Support based on language
         $this->view->urlToWiki = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";
         if ($this->language === 'ru') {
             $this->view->urlToSupport = 'https://www.mikopbx.ru/support/?fromPBX=true';
@@ -83,11 +86,7 @@ class BaseController extends Controller
             $this->view->urlToSupport = 'https://www.mikopbx.com/support/?fromPBX=true';
         }
 
-        $this->view->WebAdminLanguage = PbxSettings::getValueByKey('WebAdminLanguage');
-        $this->view->AvailableLanguages = json_encode($this->elements->getAvailableWebAdminLanguages());
-        $this->view->submitMode = $this->session->get('SubmitMode') ?? 'SaveSettings';
-        $this->view->lastSentryEventId = $this->setLastSentryEventId();
-
+        // Set the title based on the current action
         $title = 'MikoPBX';
         switch ($this->actionName) {
             case'index':
@@ -101,13 +100,22 @@ class BaseController extends Controller
                 $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}{$this->actionName}");
         }
         Tag::setTitle($title);
+
+        // Set other view variables
         $this->view->t = $this->translation;
         $this->view->debugMode = $this->config->path('adminApplication.debugMode');
         $this->view->urlToLogo = $this->url->get('assets/img/logo-mikopbx.svg');
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent = '';
+        $this->view->WebAdminLanguage = PbxSettings::getValueByKey('WebAdminLanguage');
+        $this->view->AvailableLanguages = json_encode($this->elements->getAvailableWebAdminLanguages());
+        $this->view->submitMode = $this->session->get('SubmitMode') ?? 'SaveSettings';
+        $this->view->lastSentryEventId = $this->setLastSentryEventId();
+        $this->view->PBXVersion = PbxSettings::getValueByKey('PBXVersion');
+        $this->view->MetaTegHeadDescription = $this->translation->_('MetategHeadDescription');
+        $this->view->isExternalModuleController = $this->isExternalModuleController;
 
-        // Add module variables into view
+        // Add module variables into view if it is an external module controller
         if ($this->isExternalModuleController) {
             /** @var PbxExtensionModules $module */
             $module = PbxExtensionModules::findFirstByUniqid($this->controllerName);
@@ -117,8 +125,8 @@ class BaseController extends Controller
                 $module->name = 'Unknown module';
             }
             $this->view->setVar('module', $module);
-            // If it is module we have to use another volt template
             $this->view->setVar('globalModuleUniqueId', $module->uniqid);
+            // If it is module we have to use another volt template
             $this->view->setTemplateAfter('modules');
         } else {
             $this->view->setVar('globalModuleUniqueId', '');
@@ -127,7 +135,7 @@ class BaseController extends Controller
     }
 
     /**
-     * Changes the AJAX response by expected format
+     * Performs actions after executing the route and returns the response.
      *
      * @return \Phalcon\Http\ResponseInterface
      */
@@ -162,24 +170,30 @@ class BaseController extends Controller
     }
 
     /**
-     * Callback before execute any route
+     * Performs actions before executing the route.
+     *
+     * @return void
      */
     public function beforeExecuteRoute(): void
     {
         PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_EXECUTE_ROUTE,[$this]);
 
+        // Check if the request method is POST
         if ($this->request->isPost()) {
+            // Retrieve the 'submitMode' data from the request
             $data = $this->request->getPost('submitMode');
             if (!empty($data)) {
+                // Set the 'SubmitMode' session variable to the retrieved data
                 $this->session->set('SubmitMode', $data);
             }
         }
     }
 
     /**
-     * Change page without reload browser page
+     * Forwards the request to a different controller and action based on the provided URI.
      *
-     * @param string $uri
+     * @param string $uri The URI to forward to.
+     * @return void
      */
     protected function forward(string $uri): void
     {
@@ -197,10 +211,10 @@ class BaseController extends Controller
     }
 
     /**
-     * Removes all dangerous symbols from CallerID
-     * @param string $callerId
+     * Sanitizes the caller ID by removing any characters that are not alphanumeric or spaces.
      *
-     * @return string
+     * @param string $callerId The caller ID to sanitize.
+     * @return string The sanitized caller ID.
      */
     protected function sanitizeCallerId(string $callerId): string
     {
@@ -237,9 +251,9 @@ class BaseController extends Controller
     }
 
     /**
-     * Prepares Sentry parameters
+     * Sets the last Sentry event ID.
      *
-     * @return \Sentry\EventId|null
+     * @return \Sentry\EventId|null The last Sentry event ID, or null if metrics sending is disabled.
      */
     private function setLastSentryEventId(): ?\Sentry\EventId
     {

@@ -85,12 +85,52 @@ class PbxExtensionModules extends ModelsBase
      */
     public ?string $disabled = '1';
 
+    /**
+     * Prepares array of enabled modules params for reading
+     * @return array
+     */
+    public static function getEnabledModulesArray(): array
+    {
+        $parameters = [
+            'conditions' => 'disabled="0"',
+            'columns' => 'uniqid',
+            'cache' => [
+                'key' => ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray'),
+                'lifetime' => 3600,
+            ]
+        ];
+        return PbxExtensionModules::find($parameters)->toArray();
+    }
+
+    /**
+     * Prepares array of modules params for reading
+     * @return array
+     */
+    public static function getModulesArray(): array
+    {
+        $parameters = [
+            'cache' => [
+                'key' => ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray'),
+                'lifetime' => 3600,
+            ]
+        ];
+        return PbxExtensionModules::find($parameters)->toArray();
+    }
+
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_PbxExtensionModules');
         parent::initialize();
     }
 
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
     public function validation(): bool
     {
         $validation = new Validation();
@@ -122,38 +162,6 @@ class PbxExtensionModules extends ModelsBase
     {
         Util::sysLogMsg(__METHOD__, "After delete ", LOG_DEBUG);
         PBXConfModulesProvider::recreateModulesProvider();
-    }
-
-    /**
-     * Prepares array of enabled modules params for reading
-     * @return array
-     */
-    public static function getEnabledModulesArray(): array
-    {
-        $parameters = [
-            'conditions' => 'disabled="0"',
-            'columns' => 'uniqid',
-            'cache' => [
-                'key'=> ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray'),
-                'lifetime' => 3600,
-            ]
-        ];
-        return PbxExtensionModules::find($parameters)->toArray();
-    }
-
-    /**
-     * Prepares array of modules params for reading
-     * @return array
-     */
-    public static function getModulesArray(): array
-    {
-        $parameters = [
-            'cache' => [
-                'key'=> ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray'),
-                'lifetime' => 3600,
-            ]
-        ];
-        return PbxExtensionModules::find($parameters)->toArray();
     }
 }
 

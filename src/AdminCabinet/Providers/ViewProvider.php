@@ -55,13 +55,6 @@ class ViewProvider implements ServiceProviderInterface
                         '.volt' => 'volt',
                     ]
                 );
-//                $eventsManager = new EventsManager();
-//                //$eventsManager->attach('view::beforeRenderView', new ViewEventsPlugin());
-//                $eventsManager->attach('view:beforeRenderView', function(Event $event, $view) {
-//                    $msg = "before: {$view->getActiveRenderPath()}, {$view->getCurrentRenderLevel()}";
-//                    echo $msg;
-//                });
-//                $view->setEventsManager($eventsManager);
                 return $view;
             }
         );
