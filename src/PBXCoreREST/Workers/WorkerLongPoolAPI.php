@@ -31,19 +31,29 @@ use Throwable;
 
 use function clearstatcache;
 
-
-/*
-curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getRegistry' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
-curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getActiveChannels' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
-curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getActiveCalls' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
-curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/ping' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
-curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/common_channel' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
-curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/test' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
-*/
-
+/**
+ * The WorkerLongPoolAPI class is responsible for handling the long-polling API worker process.
+ *
+ * @package MikoPBX\PBXCoreREST\Workers
+ *
+ * @example
+ * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getRegistry' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+ * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getActiveChannels' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+ * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getActiveCalls' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+ * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/ping' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+ * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/common_channel' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+ * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/test' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+ */
 class WorkerLongPoolAPI extends WorkerBase
 {
 
+    /**
+     * Starts the worker.
+     *
+     * @param array $argv The command line arguments.
+     *
+     * @return void
+     */
     public function start($argv): void
     {
 
@@ -85,15 +95,10 @@ class WorkerLongPoolAPI extends WorkerBase
     }
 
     /**
-     * Проверяет наличие активных подписок LongPoll и отправляет с периодичностью новые данные.
-     */
-
-    /**
-     * Отправляет GET запрос по http. Возвращает ответ в виде массива.
+     * Retrieves data from a specified URL.
      *
-     * @param string $url
-     *
-     * @return array
+     * @param string $url The URL to retrieve data from.
+     * @return array The retrieved data as an associative array.
      */
     private function getData(string $url):array
     {
@@ -117,11 +122,13 @@ class WorkerLongPoolAPI extends WorkerBase
     }
 
     /**
+     * Sets the channels data.
      *
+     * @return void
      */
     private function setChannelsData(): void
     {
-        /** @var \MikoPBX\Common\Models\LongPollSubscribe $sub */
+        /** @var \MikoPBX\Common\Models\LongPollSubscribe[] $subscribes */
         $subscribes = LongPollSubscribe::find('enable=1');
 
         /** @var \MikoPBX\Common\Models\LongPollSubscribe $sub */
@@ -140,14 +147,13 @@ class WorkerLongPoolAPI extends WorkerBase
     }
 
     /**
-     * Выполнение метода API.
+     * Executes a function based on the specified channel and optional common channel.
      *
-     * @param $channel
-     * @param $common_chan
-     *
-     * @return array|false|string|null
+     * @param string $channel The channel to execute the function for.
+     * @param string|null $common_chan The optional common channel.
+     * @return string The data to send.
      */
-    private function execFunction($channel, $common_chan = null)
+    private function execFunction(string $channel, string $common_chan = null)
     {
         clearstatcache();
         if ( ! $this->checkAction($channel, $common_chan)) {
@@ -172,14 +178,13 @@ class WorkerLongPoolAPI extends WorkerBase
     }
 
     /**
-     * Проверка допустимости выполнения дейсвтия в данный момент времени.
+     * Checks if an action is enabled based on the specified channel and optional common channel.
      *
-     * @param $channel
-     * @param $common_chan
-     *
-     * @return bool
+     * @param string $channel The channel to check the action for.
+     * @param string|null $common_chan The optional common channel.
+     * @return bool Whether the action is enabled or not.
      */
-    private function checkAction($channel, $common_chan = null)
+    private function checkAction(string $channel, string $common_chan = null)
     {
         if ( ! $common_chan) {
             $actions = $GLOBALS['ACTIONS'];
@@ -207,12 +212,11 @@ class WorkerLongPoolAPI extends WorkerBase
     }
 
     /**
-     * Отправляет POST запрос по http. Возвращает ответ в виде массива.
+     * Posts data to the specified URL using HTTP POST.
      *
-     * @param string $url
-     * @param string $data
-     *
-     * @return array
+     * @param string $url The URL to post the data to.
+     * @param string $data The data to be posted.
+     * @return array The response data as an associative array.
      */
     private function postData(string $url, string $data): array
     {

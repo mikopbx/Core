@@ -38,6 +38,16 @@ use Throwable;
 
 require_once 'Globals.php';
 
+
+/**
+ * The WorkerApiCommands class is responsible for handling API command requests from the frontend.
+ *
+ * It handles API command requests, delegates the processing to the appropriate processor classes,
+ * and checks for restart requirements based on the received requests.
+ *
+ *
+ * @package MikoPBX\PBXCoreREST\Workers
+ */
 class WorkerApiCommands extends WorkerBase
 {
     /**
@@ -53,11 +63,15 @@ class WorkerApiCommands extends WorkerBase
     private array $processors;
 
     /**
-     * @param $argv
+     * Starts the worker.
      *
+     * @param array $argv The command line arguments.
+     *
+     * @return void
      */
     public function start($argv): void
     {
+        /** @var BeanstalkConnectionWorkerApiProvider $beanstalk */
         $beanstalk = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
         if($beanstalk->isConnected() === false){
             Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');

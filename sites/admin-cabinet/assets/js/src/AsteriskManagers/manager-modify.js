@@ -19,15 +19,16 @@
 /* global globalRootUrl,globalTranslate, Form */
 
 const manager = {
-	$formObj: $('#save-ami-form'),
-	$dropDowns: $('#save-ami-form .ui.dropdown'),
-	$masterCheckBoxes: $('#save-ami-form .list .master.checkbox'),
-	$childrenCheckBoxes: $('#save-ami-form .list .child.checkbox'),
-	$allCheckBoxes: $('#save-ami-form .list .checkbox'),
-	$unCheckButton: $('.uncheck.button'),
-	$username: $('#username'),
-	originalName:'',
+	$formObj: $('#save-ami-form'), // Form object
+	$dropDowns: $('#save-ami-form .ui.dropdown'), // Dropdown elements
+	$masterCheckBoxes: $('#save-ami-form .list .master.checkbox'), // Master checkbox elements
+	$childrenCheckBoxes: $('#save-ami-form .list .child.checkbox'),  // Child checkbox elements
+	$allCheckBoxes: $('#save-ami-form .list .checkbox'), // All checkbox elements
+	$unCheckButton: $('.uncheck.button'),  // Uncheck button element
+	$username: $('#username'),  // Username input field
+	originalName:'', // Original username value
 	validateRules: {
+		// Validation rules for the form fields
 		username: {
 			identifier: 'username',
 			rules: [
@@ -52,22 +53,27 @@ const manager = {
 		},
 	},
 	initialize() {
+		// Initialize dropdowns
 		manager.$dropDowns.dropdown();
+
+		// Initialize master checkboxes
 		manager.$masterCheckBoxes
 			.checkbox({
-				// check all children
+				// Check all children
 				onChecked() {
 					const
 						$childCheckbox = $(this).closest('.checkbox').siblings('.list').find('.checkbox');
 					$childCheckbox.checkbox('check');
 				},
-				// uncheck all children
+				// Uncheck all children
 				onUnchecked() {
 					const
 						$childCheckbox = $(this).closest('.checkbox').siblings('.list').find('.checkbox');
 					$childCheckbox.checkbox('uncheck');
 				},
 			});
+
+		// Initialize child checkboxes
 		manager.$childrenCheckBoxes
 			.checkbox({
 				// Fire on load to set parent value
@@ -79,7 +85,8 @@ const manager = {
 					const $checkbox = $listGroup.find('.checkbox');
 					let allChecked = true;
 					let allUnchecked = true;
-					// check to see if all other siblings are checked or unchecked
+
+					// Check if all other siblings are checked or unchecked
 					$checkbox.each(function () {
 						if ($(this).checkbox('is checked')) {
 							allUnchecked = false;
@@ -87,7 +94,8 @@ const manager = {
 							allChecked = false;
 						}
 					});
-					// set parent checkbox state, but dont trigger its onChange callback
+
+					// Set parent checkbox state, but don't trigger its onChange callback
 					if (allChecked) {
 						$parentCheckbox.checkbox('set checked');
 					} else if (allUnchecked) {
@@ -97,10 +105,14 @@ const manager = {
 					}
 				},
 			});
+
+		// Handle uncheck button click
 		manager.$unCheckButton.on('click', (e) => {
 			e.preventDefault();
 			manager.$allCheckBoxes.checkbox('uncheck');
 		});
+
+		// Handle username change
 		manager.$username.on('change', (value)=>{
 			const userId = manager.$formObj.form('get value','id');
 			const newValue = manager.$formObj.form('get value','username');
@@ -110,11 +122,12 @@ const manager = {
 		manager.originalName = manager.$formObj.form('get value','username');
 	},
 	/**
-	 * Checks if username doesn't exist in database
-	 * @param oldName
-	 * @param newName
-	 * @param cssClassName
-	 * @param userId
+	 * Checks if username
+	 doesn't exist in the database
+	 * @param {string} oldName - The old username
+	 * @param {string} newName - The new username
+	 * @param {string} cssClassName - The CSS class name
+	 * @param {string} userId - The user ID
 	 * @returns {*}
 	 */
 	checkAvailability(oldName, newName, cssClassName = 'username', userId = '') {
@@ -154,9 +167,10 @@ const manager = {
 		return result;
 	},
 	cbAfterSendForm() {
-
+		// Callback function after sending the form
 	},
 	initializeForm() {
+		// Initialize the form
 		Form.$formObj = manager.$formObj;
 		Form.url = `${globalRootUrl}asterisk-managers/save`;
 		Form.validateRules = manager.validateRules;
@@ -167,7 +181,7 @@ const manager = {
 
 };
 
-// Check uniqueness Username
+// Custom form validation rule for checking uniqueness of username
 $.fn.form.settings.rules.existRule = (value, parameter) => $(`#${parameter}`).hasClass('hidden');
 
 $(document).ready(() => {

@@ -28,6 +28,11 @@ use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use Throwable;
 
+/**
+ * The WorkerModuleInstaller class is responsible for handling the installation of a module from a file
+ *
+ * @package MikoPBX\PBXCoreREST\Workers
+ */
 class WorkerModuleInstaller extends WorkerBase
 {
 
@@ -35,14 +40,18 @@ class WorkerModuleInstaller extends WorkerBase
     private string $error_file = '';
 
     /**
-     * @param mixed $params
+     * Starts the module installation worker process.
+     *
+     * @param mixed $params The parameters for the worker.
+     * @return void
      */
     public function start($params): void
     {
         $settings_file = $params[2]??'';
+
+        // Check if the settings file exists
         if ( ! file_exists($settings_file)) {
             Util::sysLogMsg(__CLASS__, 'File with settings did not found', LOG_ERR);
-
             return;
         }
         $settings = json_decode(file_get_contents($settings_file), true);
@@ -60,8 +69,12 @@ class WorkerModuleInstaller extends WorkerBase
     }
 
     /**
-     * Starts module installation on separate php process
+     * Installs a new module from a file.
      *
+     * @param string $currentModuleDir The directory of the current module.
+     * @param string $filePath The path to the module file.
+     * @param string $moduleUniqueID The unique ID of the module.
+     * @return void
      */
     private function installNewModuleFromFile(
         string $currentModuleDir,
