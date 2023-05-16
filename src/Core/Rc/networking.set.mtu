@@ -39,7 +39,6 @@ if [ -f /sbin/shell_functions.sh ]; then
 fi
 # Получаем адрес маршрутизатора сети.
 host_main=$(/bin/busybox route -n | /bin/busybox grep "$eth" | /bin/busybox awk '{print $2}' | /bin/busybox grep -v '0.0.0.0' | /bin/busybox head -n 1);
-
 setMtu()
 {
   localEth="$1";
@@ -53,24 +52,20 @@ find_set_mtu()
     # $1 - host
     # $2 - eth name
     # Получаем текущее значение mtu;
-    mtu_main=$(/bin/busybox ip link show | grep mtu | grep "$2" | awk '{print $5}');
-    PKT_SIZE=$((mtu_main - 28));
-
+    mtu_main="$(/bin/busybox ip link show | grep mtu | grep "$2" | awk '{print $5}')";
+    PKT_SIZE="$mtu_main";
     n=0;
     while [ $n -lt 100 ]; do
         n=$((n + 1));
-        res=$(/bin/busybox ping "$1" -s "$PKT_SIZE" -w 1 -I "$2" | /bin/busybox grep loss | /bin/busybox awk '{print $7}');
-        echo ping "$1" -s "$PKT_SIZE" -w 1 -I "$2";
-        if [ "$?" = "1" ];then
-            /bin/busybox logger -t 'Set.MTU' "Error eth $2 not exists. (ping)";
-            return;
-        fi
-        if [ "$res" = "0%" ];then
-            mtu_main=$((PKT_SIZE + 28));
+        /sbin/ping -c 1 -s "$PKT_SIZE" -M do -I "$2" "$host_main" 2>&1 | /bin/busybox grep -i 'Message too long'
+        result="$?";
+        echo /sbin/ping -c 1 -s "$PKT_SIZE" -M do -I "$2" "$host_main";
+        if [ "$result" = "1" ];then
+            mtu_main="$PKT_SIZE";
             setMtu "$2" "$mtu_main";
             return;
         fi
-        PKT_SIZE=$((PKT_SIZE - 1));
+        PKT_SIZE=$((PKT_SIZE - 5));
     done
 }
 
