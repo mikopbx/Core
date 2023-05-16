@@ -38,60 +38,32 @@ class Storage extends ModelsBase
     public $id;
 
     /**
+     * Name of the mounted storage disk
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $name = '';
 
     /**
+     * Link to the system device for storing data
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $device = '';
 
     /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string $mountpoint = '';
-
-    /**
+     * Unique identifier of the storage device
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $uniqid = '';
 
     /**
+     * File system type
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $filesystemtype = '';
-
-    /**
-     * @Column(type="integer", nullable=true)
-     */
-    public ?string $media = '';
-
-    /**
-     * @Column(type="integer", nullable=true)
-     */
-    public ?string $persistence = '';
-
-    /**
-     * @Column(type="integer", nullable=true)
-     */
-    public ?string $astlogs = '';
-
-    /**
-     * @Column(type="integer", nullable=true)
-     */
-    public ?string $voicemailarchive = '';
-
-
-    /**
-     * @Column(type="integer", nullable=true)
-     */
-    public ?string $syslog = '';
-
-    /**
-     * @Column(type="integer", nullable=true)
-     */
-    public ?string $check_when_booting = '';
 
 
     /**

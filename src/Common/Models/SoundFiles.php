@@ -30,21 +30,31 @@ class SoundFiles extends ModelsBase
 {
     public const CATEGORY_MOH = 'moh';
     public const CATEGORY_CUSTOM = 'custom';
+
     /**
      * @Primary
      * @Identity
      * @Column(type="integer", nullable=false)
      */
     public $id;
+
     /**
+     * Human-readable name for the sound file displayed in the interface
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $name = '';
+
     /**
+     * Path to the sound file
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $path = '';
+
     /**
+     * Category of the sound file, either "moh" for music on hold or "custom" for a custom file
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $category = '';

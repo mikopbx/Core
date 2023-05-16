@@ -38,56 +38,32 @@ class Users extends ModelsBase
     public $id;
 
     /**
+     *  User's email address
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $email = '';
 
     /**
+     *  User's username
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $username = '';
 
     /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string $password = '';
-
-    /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string $role = '';
-
-    /**
+     * User's preferred language
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $language = '';
 
     /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string $voicemailpincode = '';
-
-    /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string $ldapauth = '';
-
-    /**
+     * User's avatar image path
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $avatar = '';
-
-    /**
-     * Get the available role values.
-     *
-     * This static method returns an array of available role values, such as 'Admins' and 'Users'.
-     *
-     * @return array An array of available role values.
-     */
-    public static function getRoleValues(): array
-    {
-        return ['Admins', 'Users'];
-    }
 
     /**
      * Initialize the model.

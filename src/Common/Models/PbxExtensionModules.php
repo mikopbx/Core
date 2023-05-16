@@ -41,46 +41,64 @@ class PbxExtensionModules extends ModelsBase
     public $id;
 
     /**
+     * Unique identifier of the external extension module
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $uniqid = '';
 
     /**
+     * Name of the external extension module
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $name = '';
 
     /**
+     * Version of the external extension module
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $version = '';
 
     /**
+     * Developer of the external extension module
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $developer = '';
 
     /**
+     * Developer's email of the external extension module
+     *
      * @Column(type="string", nullable=true, column="supportemail")
      */
     public ?string $support_email = '';
 
     /**
+     * Path where the external module is installed
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $path = '';
 
     /**
+     * Description of the external extension module
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';
 
     /**
+     * Links to the documentation of the external extension module
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $wiki_links = '';
 
     /**
+     * Flag indicating whether the module is disabled
+     *
      * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled = '1';

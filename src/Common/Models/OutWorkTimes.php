@@ -36,57 +36,77 @@ class OutWorkTimes extends ModelsBase
     public $id;
 
     /**
+     * Start date of the non-working time period
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $date_from = '';
 
     /**
+     * End date of the non-working time period
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $date_to = '';
 
     /**
+     * Weekday of the non-working time period starting from
+     *
      * @Column(type="integer", nullable=true)
      */
     public ?string $weekday_from = '';
 
     /**
+     * Weekday of the non-working time period ending at
+     *
      * @Column(type="integer", nullable=true)
      */
     public ?string $weekday_to = '';
 
     /**
+     * Start time of the non-working time period
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $time_from = '';
 
     /**
+     * End time of the non-working time period
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $time_to = '';
 
     /**
+     * Action to be taken during the specified non-working time period
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $action = '';
 
     /**
+     * Internal number to which the call will be forwarded during non-working time
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $extension = '';
 
     /**
+     * Sound file played during non-working time
+     *
      * @Column(type="integer", nullable=true)
      */
     public ?string $audio_message_id = '';
 
     /**
+     * Description of this non-working time rule
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';
 
     /**
-     * Allows restricting the action rule for routes.
+     * Enable restriction of this non-working time rule only for specific incoming routes
      *
      * @Column(type="string", nullable=true)
      */

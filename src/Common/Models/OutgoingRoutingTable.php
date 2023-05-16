@@ -29,6 +29,8 @@ use Phalcon\Mvc\Model\Relation;
 class OutgoingRoutingTable extends ModelsBase
 {
     /**
+     * The primary identifier for the outgoing routing table record
+     *
      * @Primary
      * @Identity
      * @Column(type="integer", nullable=false)
@@ -36,41 +38,60 @@ class OutgoingRoutingTable extends ModelsBase
     public $id;
 
     /**
+     *  The name of the outgoing routing rule
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $rulename = '';
 
     /**
+     * The ID of the provider associated with the outgoing route
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $providerid = '';
 
     /**
+     * The priority of the outgoing routing rule
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $priority = '0';
 
     /**
+     * This outgoing routing rule will be triggered
+     * if the dialed number starts with the pattern specified in this parameter.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $numberbeginswith = '';
 
     /**
+     * This outgoing routing rule will be triggered if the dialed number starts with the pattern
+     * specified in the $numberbeginswith parameter, and the remaining part of the number
+     * consists of the digits specified in this parameter.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $restnumbers = '9';
 
     /**
+     * The number of characters to trim from the beginning of the outgoing call number
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $trimfrombegin = '0';
 
     /**
+     * The number of characters to prepend to the outgoing call number
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $prepend = '';
 
     /**
+     * Additional notes or description for the outgoing routing rule
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $note = '';

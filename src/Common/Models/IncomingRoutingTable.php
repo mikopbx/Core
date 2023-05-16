@@ -36,41 +36,58 @@ class IncomingRoutingTable extends ModelsBase
     public $id;
 
     /**
+     * Name of the routing rule
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $rulename = '';
 
     /**
+     * DID (Direct Inward Dialing) of the call.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $number = '';
 
     /**
+     * Extension to which the call will be forwarded if this rule is triggered
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $extension = '';
 
     /**
+     * Provider associated with the routing rule
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $provider = '';
 
     /**
+     * Priority level of the routing rule
+     *
      * @Column(type="integer", nullable=true)
      */
     public ?string $priority = '0';
 
     /**
+     * Timeout, in seconds, during which the system will attempt to reach the internal extension.
+     * After the timeout expires, the call will be redirected to a rule with a higher priority or to the default rule
+     *
      * @Column(type="integer", nullable=true)
      */
     public ?string $timeout = '30';
 
     /**
+     * Action to be taken for the routing rule
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $action = '';
 
     /**
+     * Additional note or description for the routing rule
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $note = '';

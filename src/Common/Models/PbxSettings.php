@@ -33,12 +33,16 @@ class PbxSettings extends ModelsBase
 {
 
     /**
+     * Key by which the value is stored
+     *
      * @Primary
      * @Column(type="string", nullable=false)
      */
     public string $key = '';
 
     /**
+     * Stored value
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $value = null;

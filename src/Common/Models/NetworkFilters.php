@@ -41,26 +41,37 @@ class NetworkFilters extends ModelsBase
     public $id;
 
     /**
+     * Specifies the permitted IP addresses or networks.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $permit = '';
 
     /**
+     * Specifies the denied IP addresses or networks.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $deny = '';
 
     /**
+     * This flag means that this subnet is included in the trusted list,
+     * and addresses from this subnet will never be blocked by Fail2Ban.
+     *
      * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $newer_block_ip = '0';
 
     /**
+     * This flag indicates that this record describes addresses of the local subnet
+     *
      * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $local_network = '0';
 
     /**
+     * A description of the network filter.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';

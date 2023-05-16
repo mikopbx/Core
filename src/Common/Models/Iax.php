@@ -41,46 +41,64 @@ class Iax extends ModelsBase
     public $id;
 
     /**
+     * Unique identifier for the IAX setting
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $uniqid = '';
 
     /**
+     * IAX username
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $username = '';
 
     /**
+     * IAX secret/password
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $secret = '';
 
     /**
+     * IAX host
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $host = '';
 
     /**
+     * Qualify setting for IAX (0 or 1)
+     *
      * @Column(type="string", length=1, nullable=true)
      */
     public ?string $qualify = '';
 
     /**
+     *  Flag indicating whether this IAX record is disabled (0 or 1)
+     *
      * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled = '0';
 
     /**
+     * Flag indicating whether IAX registration is disabled (0 or 1)
+     *
      * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $noregister = '0';
 
     /**
+     * Manual attributes for IAX settings
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $manualattributes = '';
 
     /**
+     *  Description of the IAX setting
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';

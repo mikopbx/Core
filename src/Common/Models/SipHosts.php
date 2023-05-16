@@ -39,11 +39,15 @@ class SipHosts extends ModelsBase
     public $id;
 
     /**
+     * Link to the record of the associated SIP provider
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $provider_id = '';
 
     /**
+     * IP address of the host associated with the SIP provider
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $address = '';

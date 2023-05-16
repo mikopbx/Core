@@ -69,7 +69,9 @@ class IvrMenu extends ModelsBase
     public ?string $name = '';
 
     /**
-     * Timeout duration in seconds after playing the greeting message.
+     * Timeout during which the system waits for input of an internal extension or an IVR menu option,
+     * after which the call is transferred to the default extension specified in the $timeout_extension field.
+     *
      * Default is 7 seconds.
      *
      * @Column(type="integer", nullable=true, default="7")
@@ -90,9 +92,9 @@ class IvrMenu extends ModelsBase
      */
     public ?string $allow_enter_any_internal_extension = '0';
 
-
     /**
-     * Maximum number of menu repeats before forwarding to the default number.
+     * Maximum number of menu repeats before forwarding to the default number
+     * specified in the $timeout_extension field.
      *
      * @Column(type="integer", nullable=true, default="3")
      */

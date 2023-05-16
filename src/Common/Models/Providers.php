@@ -44,22 +44,30 @@ class Providers extends ModelsBase
     public $id;
 
     /**
+     * Unique identifier of the provider account
+     *
      * @Primary
      * @Column(type="string", nullable=true)
      */
     public ?string $uniqid = '';
 
     /**
+     * Type of the provider account (SIP or IAX)
+     *
      * @Column(type="string", nullable=true){'SIP'|'IAX'}
      */
     public ?string $type = 'SIP';
 
     /**
+     *  Reference to the SIP table with provider settings
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $sipuid = '';
 
     /**
+     *  Reference to the IAX table with provider settings
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $iaxuid = '';

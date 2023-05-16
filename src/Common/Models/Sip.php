@@ -36,7 +36,6 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class Sip extends ModelsBase
 {
-    public const TRANSPORT_UDP_TCP = '';
     public const TRANSPORT_UDP = 'udp';
     public const TRANSPORT_TCP = 'tcp';
     public const TRANSPORT_TLS = 'tls';
@@ -53,124 +52,169 @@ class Sip extends ModelsBase
     public $id;
 
     /**
+     * Unique identifier for the SIP account
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $uniqid = '';
 
     /**
+     * Flag indicating whether the SIP account is disabled or not
+     *
      * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled = '0';
 
     /**
+     * Internal number assigned to this SIP account
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $extension = '';
 
     /**
+     * Type of SIP account
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $type = '';
 
     /**
+     * Registration type of the SIP account (outbound, inbound, none)
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $registration_type = '';
 
     /**
+     * Host or IP address of the SIP server
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $host = '';
 
     /**
+     *  Port number for the SIP server (default: 5060)
+     *
      * @Column(type="integer", nullable=true)
      */
     public ?string $port = '5060';
 
     /**
+     * Username for authentication with the SIP server
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $username = '';
 
     /**
+     * Secret password for authentication with the SIP server
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $secret = '';
 
     /**
-     * TLS / UDP / TCP
+     * Transport protocol used for SIP communication (TLS / UDP / TCP)
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $transport = '';
 
     /**
-     * outbound_proxy
+     * Outbound proxy server for SIP communication
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $outbound_proxy = '';
 
     /**
+     *  From user identity for SIP messages
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $fromuser = '';
 
     /**
+     * From domain for SIP messages
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $fromdomain = '';
 
     /**
+     * NAT (Network Address Translation) settings for SIP communication
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $nat = '';
 
     /**
+     *  DTMF (Dual Tone Multi-Frequency) mode for SIP communication
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $dtmfmode = '';
 
     /**
+     * Frequency of SIP qualify requests in seconds
+     *
      * @Column(type="integer", nullable=true)
      */
     public ?int $qualifyfreq = 60;
 
     /**
+     * Flag indicating whether SIP qualify requests are enabled or disabled (1 = enabled, 0 = disabled)
+     *
      * @Column(type="string", length=1, nullable=true)
      */
     public ?string $qualify = '1';
 
     /**
+     * The network filter associated with the SIP account
+     *
      * @Column(type="integer", nullable=true)
      */
     public ?string $networkfilterid = '';
 
     /**
+     * Manual attributes for SIP configuration
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $manualattributes = '';
 
-
     /**
+     *  Flag indicating whether the "fromuser" field should be disabled (0 = enabled, 1 = disabled)
+     *
      * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $disablefromuser = '0';
 
     /**
+     * Flag indicating whether SIP registration is disabled (0 = enabled, 1 = disabled)
+     *
      * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $noregister = '0';
 
     /**
+     * Flag indicating whether to receive incoming calls without authentication (0 = disabled, 1 = enabled)
+     *
      * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $receive_calls_without_auth = '0';
 
     /**
+     * Description of the SIP account
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';
 
     /**
+     * Flag indicating whether call recording is enabled for the SIP account (0 = disabled, 1 = enabled)
+     *
      * @Column(type="integer", nullable=true, default="1")
      */
     public ?string $enableRecording = '1';

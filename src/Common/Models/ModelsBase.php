@@ -66,6 +66,7 @@ class ModelsBase extends Model
 {
     /**
      * All models with lover than this version in module.json won't be attached as children
+     * We use this constant to disable old modules that may not be compatible with the current version of MikoPBX
      */
     public const MIN_MODULE_MODEL_VER = '2020.2.468';
 
@@ -317,46 +318,39 @@ class ModelsBase extends Model
      *
      * @return string
      */
-    public function getRepresent($needLink = false): string
+    public function getRepresent(bool $needLink = false): string
     {
         switch (static::class) {
             case AsteriskManagerUsers::class:
                 $name = '<i class="asterisk icon"></i> ';
-                if (empty($this->id)) {
-                    $name .= $this->t('mo_NewElementAsteriskManagerUsers');
-                } else {
-                    $name .= $this->t('repAsteriskManagerUsers', ['represent' => $this->username]);
-                }
+                $name .= empty($this->id)
+                    ? $this->t('mo_NewElementAsteriskManagerUsers')
+                    : $this->t('repAsteriskManagerUsers', ['represent' => $this->username]);
                 break;
             case CallQueueMembers::class:
                 $name = $this->Extensions->getRepresent();
                 break;
             case CallQueues::class:
                 $name = '<i class="users icon"></i> ';
-                if (empty($this->id)) {
-                    $name .= $this->t('mo_NewElementCallQueues');
-                } else {
-                    $name .= $this->t('mo_CallQueueShort4Dropdown') . ': ' . $this->name;
-                }
+                $name .= empty($this->id)
+                    ? $this->t('mo_NewElementCallQueues')
+                    : $this->t('mo_CallQueueShort4Dropdown') . ': ' . $this->name;
                 break;
             case ConferenceRooms::class:
                 $name = '<i class="phone volume icon"></i> ';
-                if (empty($this->id)) {
-                    $name .= $this->t('mo_NewElementConferenceRooms');
-                } else {
-                    $name .= $this->t('mo_ConferenceRoomsShort4Dropdown') . ': ' . $this->name;
-                }
+                $name .= empty($this->id)
+                    ? $this->t('mo_NewElementConferenceRooms')
+                    : $this->t('mo_ConferenceRoomsShort4Dropdown') . ': ' . $this->name;
                 break;
             case CustomFiles::class:
                 $name = "<i class='file icon'></i> {$this->filepath}";
                 break;
             case DialplanApplications::class:
                 $name = '<i class="php icon"></i> ';
-                if (empty($this->id)) {
-                    $name .= $this->t('mo_NewElementDialplanApplications');
-                } else {
-                    $name .= $this->t('mo_ApplicationShort4Dropdown') . ': ' . $this->name;
-                }
+                $name .= empty($this->id)
+                    ? $this->t('mo_NewElementDialplanApplications')
+                    : $this->t('mo_ApplicationShort4Dropdown') . ': ' . $this->name;
+                break;
                 break;
             case ExtensionForwardingRights::class:
                 $name = $this->Extensions->getRepresent();
@@ -427,11 +421,9 @@ class ModelsBase extends Model
                 break;
             case IvrMenu::class:
                 $name = '<i class="sitemap icon"></i> ';
-                if (empty($this->id)) {
-                    $name .= $this->t('mo_NewElementIvrMenu');
-                } else {
-                    $name .= $this->t('mo_IVRMenuShort4Dropdown') . ': ' . $this->name;
-                }
+                $name .= empty($this->id)
+                    ? $this->t('mo_NewElementIvrMenu')
+                    : $this->t('mo_IVRMenuShort4Dropdown') . ': ' . $this->name;
                 break;
             case IvrMenuActions::class:
                 $name = $this->IvrMenu->name;
@@ -450,7 +442,6 @@ class ModelsBase extends Model
                 }
                 break;
             case LanInterfaces::class:
-                // LanInterfaces
                 $name = $this->name;
                 break;
             case NetworkFilters::class:
@@ -478,8 +469,7 @@ class ModelsBase extends Model
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementOutWorkTimes');
                 } else {
-                    // BreadcrumbCustomFilesmodify
-                    $name = $this->t('repOutWorkTimes', ['represent' => $this->t('BreadcrumbCustomFilesmodify')]);
+                    $name = $this->t('repOutWorkTimes', ['represent' => $this->id]);
                 }
                 break;
             case Providers::class:
@@ -513,12 +503,9 @@ class ModelsBase extends Model
                 break;
             case SoundFiles::class:
                 $name = '<i class="file audio outline icon"></i> ';
-                if (empty($this->id)) {
-                    $name .= $this->t('mo_NewElementSoundFiles');
-                } else {
-                    $name .= $this->t('repSoundFiles', ['represent' => $this->name]);
-                }
-
+                $name .= empty($this->id)
+                    ? $this->t('mo_NewElementSoundFiles')
+                    : $this->t('repSoundFiles', ['represent' => $this->name]);
                 break;
             default:
                 $name = 'Unknown';
@@ -655,13 +642,13 @@ class ModelsBase extends Model
                 $link = $url->get(Text::uncamelize($this->uniqid), null, null, $baseUri);
                 break;
             case Sip::class:
-                if ($this->Extensions) { // If it is internal extension?
+                if ($this->Extensions) {
                     if ($this->Extensions->is_general_user_number === "1") {
                         $link = $url->get('extensions/modify/' . $this->Extensions->id, null, null, $baseUri);
                     } else {
                         $link = '#';//TODO: Make representation if there is form to manage external numbers
                     }
-                } elseif ($this->Providers) { // Это провайдер
+                } elseif ($this->Providers) {
                     $link = $url->get('providers/modifysip/' . $this->Providers->id, null, null, $baseUri);
                 }
                 break;
@@ -714,12 +701,12 @@ class ModelsBase extends Model
     }
 
     /**
-     *  Check whether this object has unsatisfied relations or not
+     * Check whether this object has unsatisfied relations or not.
      *
-     * @param $theFirstDeleteRecord
-     * @param $currentDeleteRecord
+     * @param object $theFirstDeleteRecord The first delete record.
+     * @param object $currentDeleteRecord  The current delete record.
      *
-     * @return bool
+     * @return bool True if all relations are satisfied, false otherwise.
      */
     private function checkRelationsSatisfaction($theFirstDeleteRecord, $currentDeleteRecord): bool
     {
@@ -752,12 +739,14 @@ class ModelsBase extends Model
             }
             $relatedRecords = $relatedModel::find($parameters);
             switch ($foreignKey['action']) {
-                case Relation::ACTION_RESTRICT: // Restrict deletion and add message about unsatisfied undeleted links
+                case Relation::ACTION_RESTRICT:
+                    // Restrict deletion and add message about unsatisfied undeleted links
                     foreach ($relatedRecords as $relatedRecord) {
                         if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
                             || serialize($relatedRecord) === serialize($currentDeleteRecord)
                         ) {
-                            continue; // It is checked object
+                            continue;
+                            // It is the checked object
                         }
                         $message = new Message(
                             $theFirstDeleteRecord->t(
@@ -771,12 +760,14 @@ class ModelsBase extends Model
                         $result = false;
                     }
                     break;
-                case Relation::ACTION_CASCADE: // Delete all related records
+                case Relation::ACTION_CASCADE:
+                    // Delete all related records
                     foreach ($relatedRecords as $relatedRecord) {
                         if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
                             || serialize($relatedRecord) === serialize($currentDeleteRecord)
                         ) {
-                            continue; // It is checked object
+                            continue;
+                            // It is the checked object
                         }
                         $result = $result && $relatedRecord->checkRelationsSatisfaction(
                                 $theFirstDeleteRecord,
@@ -793,7 +784,8 @@ class ModelsBase extends Model
                         }
                     }
                     break;
-                case Relation::NO_ACTION: // Clear all refs
+                case Relation::NO_ACTION:
+                    // Clear all refs
                     break;
                 default:
                     break;
