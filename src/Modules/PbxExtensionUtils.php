@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,14 +33,18 @@ use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
 
+/**
+ * Utility class for managing extension modules.
+ *
+ * @package MikoPBX\Modules
+ */
 class PbxExtensionUtils
 {
     /**
-     * Checks module state by UniqueID
+     * Checks if a module is enabled by UniqueID.
      *
-     * @param string $moduleUniqueID
-     *
-     * @return bool
+     * @param string $moduleUniqueID The UniqueID of the module.
+     * @return bool True if the module is enabled, false otherwise.
      */
     public static function isEnabled(string $moduleUniqueID): bool
     {
@@ -61,15 +65,16 @@ class PbxExtensionUtils
     }
 
     /**
-     * Creates JS, CSS, IMG cache folders and links for module by UniqueID
+     * Creates symbolic links for JS, CSS, and IMG assets of a module.
      *
-     * @param string $moduleUniqueID
+     * @param string $moduleUniqueID The UniqueID of the module.
+     * @return void
      */
     public static function createAssetsSymlinks(string $moduleUniqueID): void
     {
         $moduleDir = self::getModuleDir($moduleUniqueID);
 
-        // IMG
+        // Create symlinks for IMG
         $moduleImageDir      = "{$moduleDir}/public/assets/img";
         $imgCacheDir         = appPath('sites/admin-cabinet/assets/img/cache');
         $moduleImageCacheDir = "{$imgCacheDir}/{$moduleUniqueID}";
@@ -79,7 +84,8 @@ class PbxExtensionUtils
         if (file_exists($moduleImageDir)) {
             symlink($moduleImageDir, $moduleImageCacheDir);
         }
-        // CSS
+
+        // Create symlinks for CSS
         $moduleCSSDir      = "{$moduleDir}/public/assets/css";
         $cssCacheDir       = appPath('sites/admin-cabinet/assets/css/cache');
         $moduleCSSCacheDir = "{$cssCacheDir}/{$moduleUniqueID}";
@@ -89,7 +95,8 @@ class PbxExtensionUtils
         if (file_exists($moduleCSSDir)) {
             symlink($moduleCSSDir, $moduleCSSCacheDir);
         }
-        // JS
+
+        // Create symlinks for JS
         $moduleJSDir      = "{$moduleDir}/public/assets/js";
         $jsCacheDir       = appPath('sites/admin-cabinet/assets/js/cache');
         $moduleJSCacheDir = "{$jsCacheDir}/{$moduleUniqueID}";
@@ -102,12 +109,10 @@ class PbxExtensionUtils
     }
 
     /**
-     * Returns module dir by UniqueID
+     * Retrieves the directory path of a module by UniqueID.
      *
-     * @param string $moduleUniqueID
-     *
-     * @return string
-     *
+     * @param string $moduleUniqueID The UniqueID of the module.
+     * @return string The directory path of the module.
      */
     public static function getModuleDir(string $moduleUniqueID): string
     {
@@ -122,9 +127,10 @@ class PbxExtensionUtils
     }
 
     /**
-     * Creates links to agi-bin files for module by UniqueID
+     * Creates symbolic links for agi-bin files of a module.
      *
-     * @param string $moduleUniqueID
+     * @param string $moduleUniqueID The UniqueID of the module.
+     * @return void
      */
     public static function createAgiBinSymlinks(string $moduleUniqueID): void
     {
@@ -150,7 +156,9 @@ class PbxExtensionUtils
     }
 
     /**
-     * Disables incompatible modules
+     * Disables incompatible modules.
+     *
+     * @return void
      */
     public static function disableOldModules(): void
     {
@@ -161,6 +169,8 @@ class PbxExtensionUtils
         foreach ($modules as $module) {
             $needDisable = false;
             $moduleDir   = PbxExtensionUtils::getModuleDir($module['uniqid']);
+
+            // Check if module.json file exists
             $moduleJson  = "{$moduleDir}/module.json";
             if ( ! file_exists($moduleJson)) {
                 $needDisable = true;
@@ -168,6 +178,8 @@ class PbxExtensionUtils
             $jsonString            = file_get_contents($moduleJson);
             $jsonModuleDescription = json_decode($jsonString, true);
             $minPBXVersion         = $jsonModuleDescription['min_pbx_version'] ?? '1.0.0';
+
+            // Check if module version is lower than the minimum supported version
             if (version_compare($minPBXVersion, ModelsBase::MIN_MODULE_MODEL_VER, '<')) {
                 $needDisable = true;
             }
@@ -178,6 +190,7 @@ class PbxExtensionUtils
                 } catch (Throwable $exception) {
                     Util::sysLogMsg(__CLASS__, "Can not disable module {$module['uniqid']} Message: {$exception}", LOG_ERR);
                 } finally {
+                    // Update module status to disabled if it was not already disabled
                     $currentModule           = PbxExtensionModules::findFirstByUniqid($module['uniqid']);
                     if ($currentModule->disabled==='0'){
                         $currentModule->disabled = '1';
@@ -189,9 +202,9 @@ class PbxExtensionUtils
     }
 
     /**
-     * Registers enabled modules with App/Module.php file as external module for application
+     * Registers enabled modules with App/Module.php file as external modules for the application.
      *
-     * @param Application $application
+     * @param Application $application The application instance.
      * @return void
      */
     public static function registerEnabledModulesInApp(Application &$application){

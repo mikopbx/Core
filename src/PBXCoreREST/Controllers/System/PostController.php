@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Http\Response;
 use Phalcon\Di;
 
 /**
@@ -35,17 +36,17 @@ use Phalcon\Di;
  *   curl -X POST -d timestamp=1602509882 http://127.0.0.1/pbxcore/api/system/setDate
  *
  * Send email
- *   curl -X POST -d '{"email": "apor@miko.ru", "subject":"Hi from mikopbx", "body":"Test message", "encode":""}' http://172.16.156.223/pbxcore/api/system/sendMail;
- *     'encode' - может быть пустой строкой или 'base64', на случай, если subject и body передаются в base64;
+ *   curl -X POST -d '{"email": "apor@miko.ru", "subject":"Hi from mikopbx", "body":"Test message", "encode":""}' http://127.0.0.1/pbxcore/api/system/sendMail;
+ *     'encode' -  can be an empty string or 'base64' in case subject and body are passed in base64;
  *
  * Unban IP address
- *   curl -X POST -d '{"ip": "172.16.156.1"}' http://172.16.156.212/pbxcore/api/system/unBanIp;
+ *   curl -X POST -d '{"ip": "172.16.156.1"}' http://127.0.0.1/pbxcore/api/system/unBanIp;
  *   Answer example:
  *   {"result":"Success","data":[{"jail":"asterisk","ip":"172.16.156.1","timeofban":1522326119}],"function":"getBanIp"}
  *
  * Get config file content
  *   curl -X POST -d '{"filename": "/etc/asterisk/asterisk.conf"}'
- *   http://172.16.156.212/pbxcore/api/system/fileReadContent;
+ *   http://127.0.0.1/pbxcore/api/system/fileReadContent;
  *
  * Answer example:
  *   {"result":"ERROR","message":"API action not found;","function":"fileReadContent"}
@@ -53,7 +54,7 @@ use Phalcon\Di;
  *
  * Convert audiofile:
  *   curl -X POST -d '{"filename": "/tmp/WelcomeMaleMusic.mp3"}'
- *   http://172.16.156.212/pbxcore/api/system/convertAudioFile; Пример ответа:
+ *   http://127.0.0.1/pbxcore/api/system/convertAudioFile; Пример ответа:
  *   {
  *      "result": "Success",
  *      "filename": "/tmp/WelcomeMaleMusic.wav",
@@ -63,7 +64,7 @@ use Phalcon\Di;
  *
  * Delete audiofile:
  *   curl -X POST -d '{"filename": "/storage/usbdisk1/mikopbx/tmp/2233333.wav"}'
- *   http://172.16.156.212/pbxcore/api/system/removeAudioFile;
+ *   http://127.0.0.1/pbxcore/api/system/removeAudioFile;
  *
  *
  * System upgrade (from file)
@@ -76,17 +77,17 @@ use Phalcon\Di;
  * System upgrade (over link)
  * curl -X POST -d '{"md5":"df7622068d0d58700a2a624d991b6c1f", "url":
  *   "https://www.askozia.ru/upload/update/firmware/6.2.96-9.0-svn-mikopbx-x86-64-cross-linux.img"}'
- *   http://172.16.156.223/pbxcore/api/system/upgradeOnline;
+ *   http://127.0.0.1/pbxcore/api/system/upgradeOnline;
  *
  *
  * Install new module with params by URL
  * curl -X POST -d '{"uniqid":"ModuleCTIClient", "md5":"fd9fbf38298dea83667a36d1d0464eae", "url":
  * "https://www.askozia.ru/upload/update/modules/ModuleCTIClient/ModuleCTIClientv01.zip"}'
- * http://172.16.156.223/pbxcore/api/modules/uploadNewModule;
+ * http://127.0.0.1/pbxcore/api/modules/uploadNewModule;
  *
  *
  * Receive uploading status
- * curl  -X POST -d '{"uniqid":"ModuleSmartIVR"} http://172.16.156.223/pbxcore/api/system/statusUploadingNewModule
+ * curl  -X POST -d '{"uniqid":"ModuleSmartIVR"} http://127.0.0.1/pbxcore/api/system/statusUploadingNewModule
  *
  *
  * Install new module from ZIP archive:
@@ -94,12 +95,17 @@ use Phalcon\Di;
  *
  *
  * Uninstall module:
- * curl -X POST -d '{"uniqid":"ModuleSmartIVR"} http://172.16.156.223/pbxcore/api/system/uninstallModule
+ * curl -X POST -d '{"uniqid":"ModuleSmartIVR"} http://127.0.0.1/pbxcore/api/system/uninstallModule
  *
  */
 class PostController extends BaseController
 {
-    public function callAction($actionName): void
+    /**
+     * Handles the call to different actions based on the action name
+     *
+     * @param string $actionName The name of the action
+     */
+    public function callAction(string $actionName): void
     {
         switch ($actionName) {
             case 'convertAudioFile':
@@ -130,7 +136,7 @@ class PostController extends BaseController
                 $data['filename'] = "{$mediaDir}/" . basename($data['temp_filename']);
                 break;
             default:
-                $this->sendError(400, 'Category not set');
+                $this->sendError(Response::BAD_REQUEST, 'Category not set');
         }
         $requestMessage = json_encode(
             [
@@ -145,7 +151,7 @@ class PostController extends BaseController
             $response = json_decode($response, true);
             $this->response->setPayloadSuccess($response);
         } else {
-            $this->sendError(500);
+            $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
 

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Controllers\Files;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Http\Response;
 
 /**
  * /pbxcore/api/files/{name}' Files management (POST).
@@ -73,7 +74,14 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
  */
 class PostController extends BaseController
 {
-    public function callAction($actionName): void
+
+    /**
+     * Calls the corresponding action for file management based on the provided $actionName.
+     *
+     * @param string $actionName The name of the action.
+     * @return void
+     */
+    public function callAction(string $actionName=''): void
     {
         switch ($actionName) {
             case 'fileReadContent':
@@ -89,8 +97,9 @@ class PostController extends BaseController
     }
 
     /**
-     * Parses content of file and puts it to answer
+     * Parses the content of a file and includes it in the response.
      *
+     * @return void
      */
     private function fileReadContent(): void
     {
@@ -115,12 +124,14 @@ class PostController extends BaseController
             }
             $this->response->setPayloadSuccess($response);
         } else {
-            $this->sendError(500);
+            $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
 
     /**
-     * Upload files by chunks
+     * Uploads files in chunks.
+     *
+     * @return void
      */
     public function uploadResumableAction(): void
     {
@@ -145,7 +156,7 @@ class PostController extends BaseController
                 ];
                 if ($file->getError()) {
                     $data['data'] = 'error ' . $file->getError() . ' in file ' . $file->getTempName();
-                    $this->sendError(400, $data['data']);
+                    $this->sendError(Response::BAD_REQUEST, $data['data']);
                     Util::sysLogMsg('UploadFile', 'error ' . $file->getError() . ' in file ' . $file->getTempName(), LOG_ERR);
                     return;
                 }

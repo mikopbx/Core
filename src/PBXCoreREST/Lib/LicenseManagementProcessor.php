@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,12 +40,11 @@ class LicenseManagementProcessor extends Injectable
 {
 
     /**
-     * Processes requests to licensing system
+     * Process the license callback.
      *
-     * @param array $request
+     * @param array $request The request data.
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     *
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -90,7 +89,7 @@ class LicenseManagementProcessor extends Injectable
     /**
      * Reset license key
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private function resetLicenseAction():PBXApiResult
     {
@@ -103,14 +102,12 @@ class LicenseManagementProcessor extends Injectable
         return $res;
     }
 
-
-
     /**
      * Check and update license key on database
      *
      * @param array $data
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private function processUserRequestAction(array $data): PBXApiResult
     {
@@ -165,11 +162,10 @@ class LicenseManagementProcessor extends Injectable
         return $res;
     }
 
-
     /**
      * Returns license info from license server by key
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private function getLicenseInfoAction(): PBXApiResult
     {
@@ -192,7 +188,7 @@ class LicenseManagementProcessor extends Injectable
     /**
      * Check for free MikoPBX base license
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private function getMikoPBXFeatureStatusAction(): PBXApiResult
     {
@@ -216,7 +212,7 @@ class LicenseManagementProcessor extends Injectable
      *
      * @param array $data
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private function captureFeatureForProductIdAction(array $data): PBXApiResult
     {
@@ -251,7 +247,7 @@ class LicenseManagementProcessor extends Injectable
     /**
      * Sends PBX metrics to the MIKO company
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private function sendMetricsAction(): PBXApiResult
     {

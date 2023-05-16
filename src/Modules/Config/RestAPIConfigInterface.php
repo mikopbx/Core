@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,13 @@ namespace MikoPBX\Modules\Config;
 
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
+/**
+ * Interface RestAPIConfigInterface
+ *
+ * This interface defines the configuration for a REST API module in PBX.
+ *
+ * @package MikoPBX\Modules\Config
+ */
 interface RestAPIConfigInterface
 {
     public const MODULE_RESTAPI_CALLBACK = 'moduleRestAPICallback';
@@ -44,7 +51,7 @@ interface RestAPIConfigInterface
      *
      * @param array $request GET/POST parameters
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public function moduleRestAPICallback(array $request): PBXApiResult;
 }

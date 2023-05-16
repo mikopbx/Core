@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,17 @@ namespace MikoPBX\PBXCoreREST\Controllers\Files;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 
 /**
- * /pbxcore/api/files/{name} Files management (GET)
- *
+ * Handles the GET request for file management at /pbxcore/api/files/{name}.
  */
 class GetController extends BaseController
 {
-    public function callAction($actionName): void
+    /**
+     * Calls the corresponding action for file management.
+     *
+     * @param string $actionName The name of the action.
+     * @return void
+     */
+    public function callAction(string $actionName): void
     {
         $this->sendRequestToBackendWorker('files', $actionName, $_REQUEST);
     }

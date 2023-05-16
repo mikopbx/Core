@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,14 +24,19 @@ use MikoPBX\Common\Models\Iax;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class IAXStackProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ */
 class IAXStackProcessor extends Injectable
 {
     /**
-     * Processes IAX requests
+     * Process the IAX callback request.
      *
-     * @param array $request
-     *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @param array $request The request data.
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -53,9 +58,9 @@ class IAXStackProcessor extends Injectable
     }
 
     /**
-     * Получение статусов регистраций IAX
+     * Get the IAX registry statuses.
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function getRegistry(): PBXApiResult
     {
@@ -83,7 +88,7 @@ class IAXStackProcessor extends Injectable
                 if ($key !== false) {
                     $currentPeer = &$peers[$key];
                     if ($currentPeer['noregister'] === '1') {
-                        // Пир без регистрации.
+                        // Peer without registration.
                         $arr_status                   = explode(' ', $amiPeer['Status']);
                         $currentPeer['state']         = strtoupper($arr_status[0]);
                         $currentPeer['time-response'] = strtoupper(str_replace(['(', ')'], '', $arr_status[1]));

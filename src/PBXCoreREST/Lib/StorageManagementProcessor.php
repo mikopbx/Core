@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,14 +24,23 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\Core\System\Storage;
 use Phalcon\Di\Injectable;
 
+
+/**
+ * Class StorageManagementProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ */
 class StorageManagementProcessor extends Injectable
 {
     /**
-     * Processes Storage requests
+     * Processes storage requests.
      *
-     * @param array $request
+     * @param array $request The request data.
+     *   - action: The action to be performed.
+     *   - data: Additional data related to the action.
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {

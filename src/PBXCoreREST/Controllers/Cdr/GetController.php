@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,57 +22,59 @@ namespace MikoPBX\PBXCoreREST\Controllers\Cdr;
 
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Http\Response;
 
 class GetController extends BaseController
 {
-    /**
-     * /pbxcore/api/cdr/ Запрос активных звонков.
-     *   curl http://172.16.156.223/pbxcore/api/cdr/getActiveCalls;
-     * Пример ответа:
-     * [{"start":"2018-02-27
-     * 10:45:07","answer":null,"src_num":"206","dst_num":"226","did":"","linkedid":"1519717507.24"}] Возвращает массив
-     * массивов со следующими полями:
-     * "start"         => 'TEXT',     // DataTime
-     * "answer"         => 'TEXT',     // DataTime
-     * "endtime"         => 'TEXT',     // DataTime
-     * "src_num"         => 'TEXT',
-     * "dst_num"         => 'TEXT',
-     * "linkedid"         => 'TEXT',
-     * "did"             => 'TEXT',
-     */
 
     /**
-     * /pbxcore/api/cdr/ Запрос активных звонков.
-     *   curl http://127.0.0.1/pbxcore/api/cdr/getActiveChannels;
-     * Пример ответа:
-     * [{"start":"2018-02-27
-     * 10:45:07","answer":null,"src_num":"206","dst_num":"226","did":"","linkedid":"1519717507.24"}] Возвращает массив
-     * массивов со следующими полями:
-     * "start"         => 'TEXT',     // DataTime
-     * "answer"         => 'TEXT',     // DataTime
-     * "endtime"         => 'TEXT',     // DataTime
-     * "src_num"         => 'TEXT',
-     * "dst_num"         => 'TEXT',
-     * "linkedid"         => 'TEXT',
-     * "did"             => 'TEXT',
+     * Retrieves active calls from CDR
      *
-     * @param $actionName
+     * /pbxcore/api/cdr/
+     *
+     * This method retrieves the list of active calls. The following command can be used to invoke this action:
+     *
+     * @example
+     *
+     * curl http://127.0.0.1/pbxcore/api/cdr/getActiveCalls;
+     * curl http://127.0.0.1/pbxcore/api/cdr/getActiveChannels;
+     *
+     * Example response:
+     * [{"start":"2018-02-27 10:45:07","answer":null,"src_num":"206","dst_num":"226","did":"","linkedid":"1519717507.24"}]
+     *
+     * The response is an array of arrays with the following fields:
+     * "start"     => 'TEXT',     // DateTime
+     * "answer"    => 'TEXT',     // DateTime
+     * "endtime"   => 'TEXT',     // DateTime
+     * "src_num"   => 'TEXT',
+     * "dst_num"   => 'TEXT',
+     * "linkedid"  => 'TEXT',
+     * "did"       => 'TEXT',
+     *
+     * @param string $actionName The name of the action.
+     * @return void
      */
-    public function callAction($actionName): void
+    public function callAction(string $actionName): void
     {
         $this->sendRequestToBackendWorker('cdr', $actionName);
     }
 
     /**
-     * Прослушивание файла записи с прокруткой.
-     * /pbxcore/api/cdr/v2/playback MIKO AJAM
+     * Performs playback of a recorded file with scrolling.
+     * /pbxcore/api/cdr/v2/playback
+     *
+     * This method performs playback of a recorded file with scrolling. The following API parameters are available:
+     * - view: Full path to the recording file.
+     * - download (optional): Specifies whether to download the recording or not.
+     * - filename (optional): Specifies a custom filename for the downloaded file.
+     *
+     * @example:
+     *
      * http://172.16.156.212/pbxcore/api/cdr/v2/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/05/11/16/mikopbx-1526043925.13_43T4MdXcpT.mp3
      * http://172.16.156.212/pbxcore/api/cdr/v2/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/06/01/17/mikopbx-1527865189.0_qrQeNUixcV.wav
      * http://172.16.156.223/pbxcore/api/cdr/v2/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/12/18/09/mikopbx-1545113960.4_gTvBUcLEYh.mp3&download=true&filename=test.mp3
-     * Итого имеем следующий набор параметров API:
-     *   * view* - полный путь к файлу записи разговора.
-     *  download - опциональный параметр, скачивать записи или нет
-     *  filename - опциональный параметр, красивое имя для файла, так файл будет назван при скачивании браузером
+     *
+     * @return void
      */
     public function playbackAction(): void
     {
@@ -108,15 +110,12 @@ class GetController extends BaseController
                 } else {
                     $start = (int)$range[0];
                     $end   = (int)$range[1];
-                    // if ($end >= $filesize || (! $start && (! $end || $end == ($filesize - 1)))){
-                    // $partial = false;
-                    // }
                 }
                 $length = $end - $start + 1;
 
                 $this->response->resetHeaders();
                 if ( ! $fp = fopen($filename, 'rb')) {
-                    $this->sendError(500);
+                    $this->sendError(Response::INTERNAL_SERVER_ERROR);
                 } else {
                     $this->response->setRawHeader('HTTP/1.1 206 Partial Content');
                     $this->response->setHeader('Content-type', $ctype);
@@ -139,7 +138,7 @@ class GetController extends BaseController
                 $this->response->setHeader('Content-type', $ctype);
                 $this->response->setContentLength($filesize);
                 $this->response->setHeader('Accept-Ranges', 'bytes');
-                $this->response->setStatusCode(200, 'OK');
+                $this->response->setStatusCode(Response::OK, 'OK');
                 $this->response->setFileToSend($filename);
             }
             $this->response->setHeader('Server', 'nginx');
@@ -158,9 +157,8 @@ class GetController extends BaseController
             }
             $this->response->sendRaw();
         } else {
-            $this->sendError(404);
+            $this->sendError(Response::NOT_FOUND);
         }
     }
-
 
 }

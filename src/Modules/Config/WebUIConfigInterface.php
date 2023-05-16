@@ -26,6 +26,13 @@ use Phalcon\Mvc\Controller;
 use Phalcon\Mvc\Router;
 use Phalcon\Mvc\View;
 
+/**
+ * Interface WebUIConfigInterface
+ *
+ * This interface defines web interface hooks
+ *
+ * @package MikoPBX\Modules\Config
+ */
 interface WebUIConfigInterface
 {
     public const AUTHENTICATE_USER = 'authenticateUser';
@@ -47,81 +54,81 @@ interface WebUIConfigInterface
 
 
     /**
-     * Authenticates user over external module
+     * Authenticates a user over an external module.
      *
-     * @param string $login
-     * @param string $password
-     * @return array session data
+     * @param string $login The user login.
+     * @param string $password The user password.
+     * @return array The session data.
      */
     public function authenticateUser(string $login, string $password): array;
 
     /**
-     * Prepares list of additional ACL roles and rules
+     * Prepares a list of additional ACL roles and rules.
      *
-     * @param  AclList $aclList
+     * @param AclList $aclList The ACL list.
      * @return void
      */
     public function onAfterACLPrepared(AclList $aclList):void;
 
 
     /**
-     * Modifies system menu
+     * Modifies the system menu.
      *
-     * @param array $menuItems
+     * @param array $menuItems The menu items.
      * @return void
      */
     public function onBeforeHeaderMenuShow(array &$menuItems):void;
 
 
     /**
-     * Modifies system routes
+     * Modifies the system routes.
      *
-     * @param Router $router
+     * @param Router $router The router.
      * @return void
      */
     public function onAfterRoutesPrepared(Router $router):void;
 
     /**
-     * Modifies system assets
+     * Modifies the system assets.
      *
-     * @param Manager $assets
+     * @param Manager $assets The assets manager.
      * @return void
      */
     public function onAfterAssetsPrepared(Manager $assets):void;
 
 
     /**
-     * Prepares include block within volt template
+     * Prepares the include block within a Volt template.
      *
-     * @param string $controller
-     * @param string $blockName
-     * @param View $view
-     * @return string
+     * @param string $controller The controller name.
+     * @param string $blockName The block name.
+     * @param View $view The view instance.
+     * @return string the volt partial file path without extension.
      */
     public function onVoltBlockCompile(string $controller, string $blockName, View $view):string;
 
     /**
-     * Calls from BaseForm before form initialized
+     * Called from BaseForm before the form is initialized.
      *
-     * @param Form $form
-     * @param $entity
-     * @param $options
+     * @param Form $form The form instance.
+     * @param mixed $entity The form entity.
+     * @param mixed $options The form options.
      * @return void
      */
     public function onBeforeFormInitialize(Form $form, $entity, $options):void;
 
     /**
-     * Calls from BaseController on beforeExecuteRoute function
+     * Called from BaseController before executing a route.
      *
-     * @param Controller $controller
+     * @param Controller $controller The controller instance.
      * @return void
      */
     public function onBeforeExecuteRoute(Controller $controller):void;
 
     /**
-     * Calls from BaseController on afterExecuteRoute function
+     * Called from BaseController after executing a route.
      *
-     * @param Controller $controller
+     * @param Controller $controller The controller instance.
      * @return void
      */
     public function onAfterExecuteRoute(Controller $controller):void;

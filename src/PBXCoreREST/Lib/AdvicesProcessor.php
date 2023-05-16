@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\Common\Models\{NetworkFilters, PbxSettings, Sip};
 use GuzzleHttp;
 use Phalcon\Di\Injectable;
@@ -37,16 +38,17 @@ use MikoPBX\Service\Main;
  * @property \MikoPBX\Common\Providers\LicenseProvider license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  * @property \Phalcon\Config                               config
+ *
  */
 class AdvicesProcessor extends Injectable
 {
 
     /**
-     * Processes Advices request
+     * Processes the Advices request.
      *
-     * @param array $request
+     * @param array $request The request data.
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -65,9 +67,9 @@ class AdvicesProcessor extends Injectable
 
 
     /**
-     * Makes list of notifications about system, firewall, passwords, wrong settings
+     * Generates a list of notifications about the system, firewall, passwords, and wrong settings.
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private function getAdvicesAction(): PBXApiResult
     {
@@ -131,9 +133,10 @@ class AdvicesProcessor extends Injectable
     }
 
     /**
-     * Check passwords quality
+     * Check the quality of passwords.
      *
-     * @return array
+     * @return array An array containing warning and needUpdate messages.
+     *
      * @noinspection PhpUnusedPrivateMethodInspection
      */
     private function checkPasswords(): array
@@ -210,10 +213,9 @@ class AdvicesProcessor extends Injectable
     }
 
     /**
-     * Check passwords quality
+     * Check for corrupted files.
      *
-     * @return array
-     * @noinspection PhpUnusedPrivateMethodInspection
+     * @return array An array containing warning messages.
      */
     private function checkCorruptedFiles(): array
     {
@@ -227,9 +229,9 @@ class AdvicesProcessor extends Injectable
     }
 
     /**
-     * Check firewall status
+     * Check the firewall status.
      *
-     * @return array
+     * @return array An array containing warning messages.
      * @noinspection PhpUnusedPrivateMethodInspection
      */
     private function checkFirewalls(): array
@@ -252,9 +254,9 @@ class AdvicesProcessor extends Injectable
     }
 
     /**
-     * Check storage is mount and how many space available
+     * Check storage status.
      *
-     * @return array
+     * @return array An array containing warning or error messages.
      *
      * @noinspection PhpUnusedPrivateMethodInspection
      */
@@ -284,10 +286,10 @@ class AdvicesProcessor extends Injectable
     }
 
     /**
-     * Check new version PBX
+     * Check for a new version PBX
      *
-     * @return array
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @return array An array containing information messages about available updates.
+     *
      * @noinspection PhpUnusedPrivateMethodInspection
      */
     private function checkUpdates(): array
@@ -309,11 +311,11 @@ class AdvicesProcessor extends Injectable
             );
             $code = $res->getStatusCode();
         }catch (\Throwable $e){
-            $code = 500;
+            $code = Response::INTERNAL_SERVER_ERROR;
             Util::sysLogMsg(static::class, $e->getMessage());
         }
 
-        if ( $code !== 200) {
+        if ( $code !== Response::OK) {
             return [];
         }
 

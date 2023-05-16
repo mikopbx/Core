@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,14 +24,22 @@ use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class SIPStackProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ */
 class SIPStackProcessor extends Injectable
 {
     /**
      * Processes SIP requests
      *
-     * @param array $request
+     * @param array $request The request data
+     *   - action: The action to be performed
+     *   - data: Additional data related to the action
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -61,9 +69,9 @@ class SIPStackProcessor extends Injectable
     }
 
     /**
-     * Получение статусов SIP пиров.
+     * Retrieves the statuses of SIP peers.
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function getPeersStatuses(): PBXApiResult
     {
@@ -78,11 +86,11 @@ class SIPStackProcessor extends Injectable
     }
 
     /**
-     * Gets peer status
+     * Retrieves the status of a SIP peer.
      *
-     * @param $peer
+     * @param string $peer The peer to retrieve the status for.
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function getPeerStatus($peer): PBXApiResult
     {
@@ -97,8 +105,9 @@ class SIPStackProcessor extends Injectable
     }
 
     /**
-     * Ger SIP Registry status
-     * @return PBXApiResult
+     * Retrieves the SIP registry status.
+     *
+     * @return PBXApiResult An object containing the result of the API call.
      * @throws \Phalcon\Exception
      */
     public static function getRegistry(): PBXApiResult

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,14 @@ use Phalcon\Mvc\Router;
 use Phalcon\Mvc\View;
 use ReflectionClass as ReflectionClassAlias;
 
+
+/**
+ * Abstract class ConfigClass
+ *
+ * Define all possible functions to make system hooks
+ *
+ * @package MikoPBX\Modules\Config
+ */
 abstract class ConfigClass extends Injectable implements SystemConfigInterface,
                              RestAPIConfigInterface,
                              WebUIConfigInterface
@@ -45,40 +53,39 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     protected string $description;
 
     /**
-     * Easy way to get or set the PbxSettings values
+     * Easy way to get or set the PbxSettings values.
      *
      * @var \MikoPBX\Core\System\MikoPBXConfig
      */
     protected MikoPBXConfig $mikoPBXConfig;
 
     /**
-     * Access to the /etc/inc/mikopbx-settings.json values
+     * Access to the /etc/inc/mikopbx-settings.json values.
      *
      * @var \Phalcon\Config
      */
     protected Config $config;
 
-
     /**
-     * Error and notice messages
+     * Error and notice messages.
      *
      * @var array
      */
     protected array $messages;
 
     /**
-     * Array of PbxSettings values
+     * Array of PbxSettings values.
      */
     protected array $generalSettings;
 
 
     /**
-     * External module UniqueID
+     * External module UniqueID.
      */
     public string $moduleUniqueId;
 
     /**
-     * Additional module directory
+     * Additional module directory.
      */
     protected string $moduleDir;
 
@@ -133,9 +140,9 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Returns array of additional routes for the PBXCoreREST interface from module
+     * Returns an array of additional routes for the PBXCoreREST interface from the module.
      *
-     * @return array
+     * @return array The array of additional routes.
      */
     public function getPBXCoreRESTAdditionalRoutes(): array
     {
@@ -143,11 +150,11 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Process PBXCoreREST requests under root rights
+     * Process PBXCoreREST requests under root rights.
      *
-     * @param array $request GET/POST parameters
+     * @param array $request The GET/POST parameters.
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public function moduleRestAPICallback(array $request): PBXApiResult
     {
@@ -167,27 +174,31 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * This method calls in the WorkerModelsEvents after receive each models change
+     * This method is called in the WorkerModelsEvents after each model change.
      *
-     * @param $data
+     * @param mixed $data The data related to the model change.
+     *
+     * @return void
      */
     public function modelsEventChangeData($data): void
     {
     }
 
     /**
-     * This method calls in the WorkerModelsEvents after finished process models changing
+     * This method is called in the WorkerModelsEvents after the models changing process is finished.
      *
-     * @param array $modified_tables list of modified models
+     * @param array $modified_tables The list of modified models.
+     *
+     * @return void
      */
     public function modelsEventNeedReload(array $modified_tables): void
     {
     }
 
     /**
-     * Returns array of workers classes for WorkerSafeScripts
+     * Returns an array of worker classes for WorkerSafeScripts.
      *
-     * @return array
+     * @return array The array of worker classes.
      */
     public function getModuleWorkers(): array
     {
@@ -195,9 +206,9 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Returns array of additional firewall rules for module
+     * Returns an array of additional firewall rules for the module.
      *
-     * @return array
+     * @return array The array of firewall rules.
      */
     public function getDefaultFirewallRules(): array
     {
@@ -205,9 +216,9 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Process module enable request
+     * Processes actions before enabling the module in the web interface.
      *
-     * @return bool
+     * @return bool Whether the module can be enabled.
      */
     public function onBeforeModuleEnable(): bool
     {
@@ -215,7 +226,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Process some actions after module enable
+     * Processes actions after enabling the module in the web interface.
      *
      * @return void
      */
@@ -224,9 +235,9 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Process module disable request
+     * Processes actions before disabling the module in the web interface.
      *
-     * @return bool
+     * @return bool Whether the module can be disabled.
      */
     public function onBeforeModuleDisable(): bool
     {
@@ -234,7 +245,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Process some actions after module disable
+     * Processes actions after disabling the module in the web interface.
      *
      * @return void
      */
@@ -243,9 +254,9 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Create additional Nginx locations from modules
+     * Creates additional Nginx locations from modules.
      *
-     * @return string
+     * @return string The generated Nginx locations.
      */
     public function createNginxLocations(): string
     {
@@ -253,9 +264,9 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Generates additional fail2ban jail conf rules from modules
+     * Generates additional fail2ban jail conf rules from modules.
      *
-     * @return string
+     * @return string The generated fail2ban jail conf rules.
      */
     public function generateFail2BanJails(): string
     {
@@ -263,9 +274,9 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Generates the modules.conf file
+     * Generates the modules.conf file.
      *
-     * @return string
+     * @return string The generated modules.conf file content.
      */
     public function generateModulesConf(): string
     {
@@ -273,28 +284,31 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Prepares crontab rules strings
+     * Prepares crontab rules strings.
      *
-     * @param array $tasks
+     * @param array $tasks The array of crontab tasks.
+     *
+     * @return void
      */
     public function createCronTasks(&$tasks): void
     {
     }
 
     /**
-     * This module's method calls after the asterisk service started
+     * This module's method is called after the Asterisk service has started.
+     *
+     * @return void
      */
     public function onAfterPbxStarted(): void
     {
     }
 
-
     /**
-     * Authenticates user over external module
+     * Authenticates user over external module.
      *
-     * @param string $login
-     * @param string $password
-     * @return array session data
+     * @param string $login The user login.
+     * @param string $password The user password.
+     * @return array The session data.
      */
     public function authenticateUser(string $login, string $password): array
     {
@@ -302,9 +316,9 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Prepares list of additional ACL roles and rules
+     * Prepares a list of additional ACL roles and rules.
      *
-     * @param  AclList $aclList
+     * @param  AclList $aclList The ACL list.
      * @return void
      */
     public function onAfterACLPrepared(AclList $aclList): void
@@ -312,9 +326,9 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Modifies system menu
+     * Modifies the system menu.
      *
-     * @param array $menuItems
+     * @param array $menuItems The array of menu items.
      * @return void
      */
     public function onBeforeHeaderMenuShow(array &$menuItems):void
@@ -322,9 +336,9 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Modifies system routes
+     * Modifies the system routes.
      *
-     * @param Router $router
+     * @param Router $router The router instance.
      * @return void
      */
     public function onAfterRoutesPrepared(Router $router):void
@@ -332,9 +346,9 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Modifies system assets
+     * Modifies the system assets.
      *
-     * @param Manager $assets
+     * @param Manager $assets The asset manager.
      * @return void
      */
     public function onAfterAssetsPrepared(Manager $assets):void
@@ -342,12 +356,12 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Prepares include block within volt template
+     * Prepares an include block within a Volt template.
      *
-     * @param string $controller
-     * @param string $blockName
-     * @param View $view
-     * @return string
+     * @param string $controller The controller name.
+     * @param string $blockName The block name.
+     * @param View $view The view instance.
+     * @return string the volt partial file path without extension.
      */
     public function onVoltBlockCompile(string $controller, string $blockName, View $view):string
     {
@@ -355,22 +369,21 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Calls from BaseForm before form initialized
+     * This method is called from BaseForm before the form is initialized.
      *
-     * @param Form $form
-     * @param $entity
-     * @param $options
+     * @param Form $form The form instance.
+     * @param mixed $entity The form entity.
+     * @param mixed $options The form options.
      * @return void
      */
     public function onBeforeFormInitialize(Form $form, $entity, $options):void
     {
     }
 
-
     /**
-     * Calls from BaseController on afterExecuteRoute function
+     * This method is called from BaseController on afterExecuteRoute function.
      *
-     * @param Controller $controller
+     * @param Controller $controller The controller instance.
      * @return void
      */
     public function onAfterExecuteRoute(Controller $controller):void
@@ -378,13 +391,12 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Calls from BaseController on beforeExecuteRoute function
+     * This method is called from BaseController on beforeExecuteRoute function.
      *
-     * @param Controller $controller
+     * @param Controller $controller The controller instance.
      * @return void
      */
     public function onBeforeExecuteRoute(Controller $controller):void
     {
-
     }
 }

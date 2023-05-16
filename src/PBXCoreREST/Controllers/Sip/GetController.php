@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,23 +21,34 @@ namespace MikoPBX\PBXCoreREST\Controllers\Sip;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 
+/**
+ * Controller for handling SIP-related actions.
+ *
+ * @example
+ * /pbxcore/api/sip/ Get information about SIP '/api/sip/{name}'
+ * SIP account statuses:
+ * curl http://127.0.0.1/pbxcore/api/sip/getPeersStatuses;
+ *
+ * Example response:
+ * {"result":"Success","data":[{"id":"204","state":"UNKNOWN"}]}
+ *
+ * Registration statuses:
+ * curl http://127.0.0.1/pbxcore/api/sip/getRegistry;
+ *
+ * Example response:
+ * {"result":"Success","data":[{"id":"SIP-PROVIDER-426304427564469b6c7755","state":"Registered"}]}
+ *
+ */
 class GetController extends BaseController
 {
     /**
-     * /pbxcore/api/sip/ Получение информации о SIP '/api/sip/{name}'
-     * Статусы SIP учеток:
-     *   curl http://172.16.156.223/pbxcore/api/sip/getPeersStatuses;
-     * Пример ответа:
-     *   {"result":"Success","data":[{"id":"204","state":"UNKNOWN"}]}
+     * Handles the call action for SIP.
      *
-     * Статусы регистраций:
-     *   curl http://172.16.156.212/pbxcore/api/sip/getRegistry;
-     * Пример ответа:
-     *   {"result":"Success","data":[{"id":"SIP-PROVIDER-426304427564469b6c7755","state":"Registered"}]}
+     * @param string $actionName The name of the action.
+     * @return void
      *
-     * @param $actionName
      */
-    public function callAction($actionName): void
+    public function callAction(string $actionName): void
     {
         $this->sendRequestToBackendWorker('sip', $actionName);
     }

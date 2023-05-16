@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,13 @@
 namespace MikoPBX\Modules\Config;
 
 
+/**
+ * Interface SystemConfigInterface
+ *
+ * This interface defines system configuration hooks
+ *
+ * @package MikoPBX\Modules\Config
+ */
 interface SystemConfigInterface
 {
 
@@ -54,78 +61,79 @@ interface SystemConfigInterface
     public function onAfterPbxStarted(): void;
 
     /**
-     * Adds crond rules
+     * Adds cron tasks.
      *
-     * @param $tasks
+     * @param array $tasks The array of cron tasks.
      */
     public function createCronTasks(&$tasks): void;
 
     /**
-     * Create additional Nginx locations from modules.
+     * Creates additional Nginx locations from modules.
      *
+     * @return string The generated Nginx locations.
      */
     public function createNginxLocations(): string;
 
     /**
-     * This method calls in the WorkerModelsEvents after receive each models change
+     * This method is called in the WorkerModelsEvents after each model change.
      *
-     * @param $data
+     * @param mixed $data The data related to the model change.
      */
     public function modelsEventChangeData($data): void;
 
     /**
-     * This method calls in the WorkerModelsEvents after finished process models changing
+     * This method is called in the WorkerModelsEvents after the models changing process is finished.
      *
-     * @param array $modified_tables list of modified models
+     * @param array $modified_tables The list of modified models.
      */
     public function modelsEventNeedReload(array $modified_tables): void;
 
     /**
-     * Returns array of workers classes for WorkerSafeScripts
+     * Returns an array of worker classes for WorkerSafeScripts.
      *
-     * @return array
+     * @return array The array of worker classes.
      */
     public function getModuleWorkers(): array;
 
     /**
-     * Returns array of additional firewall rules for module
+     * Returns an array of additional firewall rules for the module.
      *
-     * @return array
+     * @return array The array of firewall rules.
      */
     public function getDefaultFirewallRules(): array;
 
     /**
-     * Process before enable action in web interface
+     * Processes actions before enabling the module in the web interface.
      *
-     * @return bool
+     * @return bool Whether the module can be enabled.
      */
     public function onBeforeModuleEnable(): bool;
 
     /**
-     * Process after enable action in web interface
+     * Processes actions after enabling the module in the web interface.
      *
      * @return void
      */
     public function onAfterModuleEnable(): void;
 
     /**
-     * Process before disable action in web interface
+     * Processes actions before disabling the module in the web interface.
      *
-     * @return bool
+     * @return bool Whether the module can be disabled.
      */
     public function onBeforeModuleDisable(): bool;
 
     /**
-     * Process after disable action in web interface
+     * Processes actions after disabling the module in the web interface.
      *
      * @return void
      */
     public function onAfterModuleDisable(): void;
 
     /**
-     * Generates additional fail2ban jail conf rules
+     * Generates additional fail2ban jail conf rules.
      *
-     * @return string
+     * @return string The generated fail2ban jail conf rules.
      */
     public function generateFail2BanJails(): string;
 

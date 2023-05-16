@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,6 +53,13 @@ use MikoPBX\PBXCoreREST\Workers\WorkerModuleInstaller;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
+
+/**
+ * Class SystemManagementProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ */
 class SystemManagementProcessor extends Injectable
 {
     /**
@@ -60,7 +67,7 @@ class SystemManagementProcessor extends Injectable
      *
      * @param array $request
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      *
      * @throws \Exception
      */
@@ -148,13 +155,13 @@ class SystemManagementProcessor extends Injectable
     }
 
     /**
-     * Sends test email to admin address
+     * Sends an email notification.
      *
-     * @param                                       $data
+     * @param array $data The data containing email, subject, and body.
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult $res
+     * @return PBXApiResult An object containing the result of the API call.
      */
-    private static function sendMail($data): PBXApiResult
+    private static function sendMail(array $data): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -180,11 +187,11 @@ class SystemManagementProcessor extends Injectable
     }
 
     /**
-     * Upgrade MikoPBX from uploaded IMG file
+     * Upgrade the system from an image file.
      *
-     * @param string $tempFilename path to uploaded image
+     * @param string $tempFilename The path to the temporary image file.
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function upgradeFromImg(string $tempFilename): PBXApiResult
     {
@@ -208,7 +215,8 @@ class SystemManagementProcessor extends Injectable
         }
         $dev     = trim(file_get_contents('/var/etc/cfdevice'));
         $storage = new Storage();
-        // Генерим скрипт update
+
+        // Generate update script
         $cmd = '/bin/busybox grep "$(/bin/busybox  cat /var/etc/storage_device) " < /etc/fstab | /bin/busybox awk -F"[= ]" "{ print \$2}"';
         $storage_uuid = trim(shell_exec($cmd));
         $cf_uuid      = $storage->getUuid("{$dev}3");
@@ -217,7 +225,8 @@ class SystemManagementProcessor extends Injectable
                 "export storage_uuid='$storage_uuid';".PHP_EOL.
                 "export cf_uuid='$cf_uuid';".PHP_EOL.
                 "export updateFile='$tempFilename';".PHP_EOL;
-        // Монтируем boot раздел
+
+        // Mount boot partition
         $cmd = '/bin/lsblk -o UUID,PKNAME -p | /bin/busybox grep "'.$cf_uuid.'" | /bin/busybox cut -f 2 -d " "';
         $bootDisc = trim(shell_exec($cmd));
 
@@ -226,7 +235,7 @@ class SystemManagementProcessor extends Injectable
         $result = Util::mwExec("mount {$bootDisc}1 $systemDir");
         if($result === 0){
             file_put_contents("$systemDir/update.sh", $data);
-            // Перезагрузка АТС
+            // Reboot the system
             System::rebootSyncBg();
         }else{
             $res->success    = false;
@@ -237,12 +246,11 @@ class SystemManagementProcessor extends Injectable
     }
 
     /**
-     * Install new additional extension module
+     * Install a new additional extension module.
      *
-     * @param $filePath
+     * @param string $filePath The path to the module file.
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     *
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function installModule($filePath): PBXApiResult
     {
@@ -254,7 +262,7 @@ class SystemManagementProcessor extends Injectable
         }
 
         $moduleUniqueID = $resModuleMetadata->data['uniqid'];
-        // If it enabled send disable action first
+        // Disable the module if it's enabled
         if (PbxExtensionUtils::isEnabled($moduleUniqueID)){
             $res = self::disableModule($moduleUniqueID);
             if (!$res->success){
@@ -269,15 +277,22 @@ class SystemManagementProcessor extends Injectable
             self::uninstallModule($moduleUniqueID, true);
         }
 
-        // We will start the background process to install module
+        // Start the background process to install the module
         $temp_dir            = dirname($filePath);
+
+        // Create a progress file to track the installation progress
         file_put_contents( $temp_dir . '/installation_progress', '0');
+
+        // Create an error file to store any installation errors
         file_put_contents( $temp_dir . '/installation_error', '');
+
         $install_settings = [
             'filePath' => $filePath,
             'currentModuleDir' => $currentModuleDir,
             'uniqid' => $moduleUniqueID,
         ];
+
+        // Save the installation settings to a JSON file
         $settings_file  = "{$temp_dir}/install_settings.json";
         file_put_contents(
             $settings_file,
@@ -285,6 +300,8 @@ class SystemManagementProcessor extends Injectable
         );
         $phpPath               = Util::which('php');
         $workerFilesMergerPath = Util::getFilePathByClassName(WorkerModuleInstaller::class);
+
+        // Execute the background process to install the module
         Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
         $res->data['filePath']= $filePath;
         $res->success = true;
@@ -294,19 +311,19 @@ class SystemManagementProcessor extends Injectable
 
 
     /**
-     * Uninstall module
+     * Uninstall a module.
      *
-     * @param string $moduleUniqueID
+     * @param string $moduleUniqueID The unique ID of the module to uninstall.
+     * @param bool   $keepSettings   Indicates whether to keep the module settings.
      *
-     * @param bool   $keepSettings
-     *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function uninstallModule(string $moduleUniqueID, bool $keepSettings): PBXApiResult
     {
         $res              = new PBXApiResult();
         $res->processor   = __METHOD__;
         $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
+
         // Kill all module processes
         if (is_dir("{$currentModuleDir}/bin")) {
             $busyboxPath = Util::which('busybox');
@@ -315,29 +332,37 @@ class SystemManagementProcessor extends Injectable
             $grepPath    = Util::which('grep');
             $awkPath     = Util::which('awk');
             $uniqPath    = Util::which('uniq');
+
+            // Execute the command to kill all processes related to the module
             Processes::mwExec(
                 "{$busyboxPath} {$killPath} -9 $({$lsofPath} {$currentModuleDir}/bin/* |  {$busyboxPath} {$grepPath} -v COMMAND | {$busyboxPath} {$awkPath}  '{ print $2}' | {$busyboxPath} {$uniqPath})"
             );
         }
+
         // Uninstall module with keep settings and backup db
         $moduleClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
 
         try {
             if (class_exists($moduleClass)
                 && method_exists($moduleClass, 'uninstallModule')) {
+                // Instantiate the module setup class and call the uninstallModule method
                 $setup = new $moduleClass($moduleUniqueID);
             } else {
-                // Заглушка которая позволяет удалить модуль из базы данных, которого нет на диске
+
+                // Use a fallback class to uninstall the module from the database if it doesn't exist on disk
                 $moduleClass = PbxExtensionSetupFailure::class;
                 $setup       = new $moduleClass($moduleUniqueID);
             }
             $setup->uninstallModule($keepSettings);
         } finally {
             if (is_dir($currentModuleDir)) {
-                // Broken or very old module. Force uninstall.
+                // If the module directory still exists, force uninstallation
                 $rmPath = Util::which('rm');
+
+                // Remove the module directory recursively
                 Processes::mwExec("{$rmPath} -rf {$currentModuleDir}");
 
+                // Use the fallback class to unregister the module from the database
                 $moduleClass = PbxExtensionSetupFailure::class;
                 $setup       = new $moduleClass($moduleUniqueID);
                 $setup->unregisterModule();
@@ -353,7 +378,7 @@ class SystemManagementProcessor extends Injectable
      *
      * @param string $moduleUniqueID
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult $res
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private static function enableModule(string $moduleUniqueID): PBXApiResult
     {
@@ -377,7 +402,7 @@ class SystemManagementProcessor extends Injectable
      *
      * @param string $moduleUniqueID
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult $res
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private static function disableModule(string $moduleUniqueID): PBXApiResult
     {
@@ -396,7 +421,14 @@ class SystemManagementProcessor extends Injectable
         return $res;
     }
 
-    public static function preCleaning(&$res):void
+    /**
+     * Perform pre-cleaning operations on specific columns of certain models.
+     *
+     * @param PBXApiResult $res The result object to store any error messages.
+     *
+     * @return void
+     */
+    public static function preCleaning(PBXApiResult &$res):void
     {
         $preCleaning = [
             CallQueues::class => [
@@ -422,9 +454,16 @@ class SystemManagementProcessor extends Injectable
         }
     }
 
+    /**
+     * Perform cleaning operations on main tables.
+     *
+     * @param PBXApiResult $res The result object to store any error messages.
+     *
+     * @return void
+     */
     public static function cleaningMainTables(&$res):void
     {
-        // Pre delete some types
+        // Define the models and conditions for cleaning
         $clearThisModels = [
             [ExtensionForwardingRights::class => ''],
             [OutWorkTimes::class => ''],
@@ -442,16 +481,19 @@ class SystemManagementProcessor extends Injectable
             [CustomFiles::class => ''],
             [NetworkFilters::class=>'permit!="0.0.0.0/0" AND deny!="0.0.0.0/0"'] //Delete all other rules
         ];
+
+        // Iterate over each model and perform deletion based on conditions
         foreach ($clearThisModels as $modelParams) {
             foreach ($modelParams as $key => $value) {
                 $records = call_user_func([$key, 'find'], $value);
                 if (!$records->delete()) {
+                    // If deletion fails, add error messages to the result object
                     $res->messages[] = $records->getMessages();
                     $res->success    = false;
                 }
             }
         }
-        // Allow all connections for 0.0.0.0/0
+        // Allow all connections for 0.0.0.0/0 in firewall rules
         $firewallRules = FirewallRules::find();
         foreach ($firewallRules as $firewallRule){
             $firewallRule->action = 'allow';
@@ -459,9 +501,16 @@ class SystemManagementProcessor extends Injectable
         }
     }
 
+    /**
+     * Perform cleaning operations on other extensions.
+     *
+     * @param PBXApiResult $res The result object to store any error messages.
+     *
+     * @return void
+     */
     public static function cleaningOtherExtensions(&$res):void
     {
-        // Other extensions
+        // Define the parameters for querying the extensions to delete
         $parameters     = [
             'conditions' => 'not number IN ({ids:array})',
             'bind'       => [
@@ -491,6 +540,13 @@ class SystemManagementProcessor extends Injectable
         }
     }
 
+    /**
+     * Clean up custom sound files.
+     *
+     * @param PBXApiResult $res The result object to store any error messages.
+     *
+     * @return void
+     */
     public static function cleanSoundFiles(&$res):void
     {
         $rm     = Util::which('rm');
@@ -513,7 +569,9 @@ class SystemManagementProcessor extends Injectable
     }
 
     /**
-     * Deletes all settings and uploaded files
+     * Restore the default settings of the PBX.
+     *
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function restoreDefaultSettings(): PBXApiResult
     {
@@ -596,11 +654,10 @@ class SystemManagementProcessor extends Injectable
     }
 
     /**
-     * Converts file to wav file with 8000 bitrate
+     * Convert an audio file to different formats.
      *
-     * @param $filename
-     *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @param string $filename The path of the audio file to be converted.
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function convertAudioFile($filename): PBXApiResult
     {
@@ -625,17 +682,20 @@ class SystemManagementProcessor extends Injectable
         $trimmedFileName = Util::trimExtensionForFile($filename);
         $n_filename     = $trimmedFileName . ".wav";
         $n_filename_mp3 = $trimmedFileName . ".mp3";
-        // Convert file
+
+        // Convert file to wav format
         $tmp_filename = escapeshellcmd($tmp_filename);
         $n_filename   = escapeshellcmd($n_filename);
         $soxPath      = Util::which('sox');
         Processes::mwExec("{$soxPath} -v 0.99 -G '{$tmp_filename}' -c 1 -r 8000 -b 16 '{$n_filename}'", $out);
         $result_str = implode('', $out);
 
+        // Convert wav file to mp3 format
         $lamePath = Util::which('lame');
         Processes::mwExec("{$lamePath} -b 32 --silent '{$n_filename}' '{$n_filename_mp3}'", $out);
         $result_mp3 = implode('', $out);
 
+        // Convert the file to various codecs using Asterisk
         $codecs = ['alaw', 'ulaw', 'gsm', 'g722', 'wav'];
         $rmPath       = Util::which('rm');
         $asteriskPath = Util::which('asterisk');
@@ -645,10 +705,11 @@ class SystemManagementProcessor extends Injectable
                 shell_exec("$rmPath -rf /root/test.{$codec}");
             }
         }
-        // Чистим мусор.
+
+        // Remove temporary file
         unlink($tmp_filename);
         if ($result_str !== '' && $result_mp3 !== '') {
-            // Ошибка выполнения конвертации.
+            // Conversion failed
             $res->success    = false;
             $res->messages[] = $result_str;
 
@@ -658,6 +719,7 @@ class SystemManagementProcessor extends Injectable
         if (file_exists($filename)
             && $filename !== $n_filename
             && $filename !== $n_filename_mp3) {
+            // Remove the original file if it's different from the converted files
             unlink($filename);
         }
 
@@ -668,11 +730,10 @@ class SystemManagementProcessor extends Injectable
     }
 
     /**
-     * Returns Status of module installation process
+     * Check the status of a module installation.
      *
-     * @param string $filePath
-     *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @param string $filePath The path of the module installation file.
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function statusOfModuleInstallation(string $filePath): PBXApiResult
     {
@@ -706,7 +767,6 @@ class SystemManagementProcessor extends Injectable
             $res->data['i_status']          = 'INSTALLATION_IN_PROGRESS';
             $res->data['i_status_progress'] = file_get_contents($progress_file);
         }
-
 
         return $res;
     }

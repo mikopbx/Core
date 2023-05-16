@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,12 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCdr;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class CdrDBProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ */
 class CdrDBProcessor extends Injectable
 {
     /**
@@ -32,7 +38,7 @@ class CdrDBProcessor extends Injectable
      *
      * @param array $request
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      *
      */
     public static function callBack(array $request): PBXApiResult
@@ -59,9 +65,9 @@ class CdrDBProcessor extends Injectable
 
 
     /**
-     * Получение активных звонков по данным CDR.
-     * @return PBXApiResult
+     * Get active calls based on CDR data.
      *
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function getActiveCalls(): PBXApiResult
     {
@@ -84,9 +90,9 @@ class CdrDBProcessor extends Injectable
     }
 
     /**
-     * Получение активных каналов. Не завершенные звонки (endtime IS NULL).
-     * @return PBXApiResult
+     * Get active channels. These are the unfinished calls (endtime IS NULL).
      *
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function getActiveChannels(): PBXApiResult
     {
@@ -116,11 +122,11 @@ class CdrDBProcessor extends Injectable
                 unlink($result);
                 foreach ($data as $row) {
                     if ( ! isset($active_chans[$row['linkedid']])) {
-                        // Вызов уже не существует.
+                        // The call no longer exists.
                         continue;
                     }
                     if (empty($row['dst_chan']) && empty($row['src_chan'])) {
-                        // Это ошибочная ситуация. Игнорируем такой вызов.
+                        // This is an erroneous situation. Ignore such a call.
                         continue;
                     }
                     $channels = $active_chans[$row['linkedid']];

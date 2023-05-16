@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,12 +31,15 @@ use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
 
+
 /**
- * Class PbxExtensionSetupBase
- * Common procedures for module installation and removing
+ * Base class for module setup.
+ * Common procedures for module installation and removing external modules.
  *
  * @property \MikoPBX\Common\Providers\LicenseProvider license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ *
+ *  @package MikoPBX\Modules\Setup
  */
 abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionSetupInterface
 {
@@ -48,31 +51,31 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
     /**
      * Module version from the module.json
-     * @var string
+     * @var string|null
      */
     protected $version;
 
     /**
      * Minimal required version PBX from the module.json
-     * @var string
+     * @var string|null
      */
     protected $min_pbx_version;
 
     /**
      * Module developer name  from the module.json
-     * @var string
+     * @var string|null
      */
     protected $developer;
 
     /**
      * Module developer's email from module.json
-     * @var string
+     * @var string|null
      */
     protected $support_email;
 
     /**
      * PBX core general database
-     * @var \Phalcon\Db\Adapter\Pdo\Sqlite
+     * @var \Phalcon\Db\Adapter\Pdo\Sqlite|null
      */
     protected $db;
 
@@ -84,7 +87,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
     /**
      * Phalcon config service
-     * @var \Phalcon\Config
+     * @var \Phalcon\Config|null
      */
     protected $config;
 
@@ -96,25 +99,24 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
     /**
      * License worker
-     * @var \MikoPBX\Service\License
+     * @var \MikoPBX\Service\License|null
      */
     protected $license;
 
     /**
      * Trial product version identify number from the module.json
-     * @var int
+     * @var int|null
      */
     public $lic_product_id;
 
     /**
      * License feature identify number from the module.json
-     * @var int
+     * @var int|null
      */
     public $lic_feature_id;
 
-
     /**
-     * Массив ссылок на документацию
+     * Array of wiki links
      * @var array
      */
     public array $wiki_links = [];
@@ -122,7 +124,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     /**
      * PbxExtensionBase constructor.
      *
-     * @param string $moduleUniqueID
+     * @param string $moduleUniqueID The unique identifier for the module.
      */
     public function __construct(string $moduleUniqueID)
     {
@@ -242,9 +244,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Setups ownerships and folder rights
+     * Sets up ownerships and folder rights.
      *
-     * @return bool fixing result
+     * @return bool The fixing result.
      */
     public function fixFilesRights(): bool
     {
@@ -265,13 +267,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Creates database structure according to models annotations
+     * Creates the database structure according to model annotations.
+     * If necessary, it fills some default settings and changes the sidebar menu item representation for this module.
+     * After installation, it registers the module in the PbxExtensionModules model.
      *
-     * If it necessary, it fills some default settings, and change sidebar menu item representation for this module
-     *
-     * After installation it registers module on PbxExtensionModules model
-     *
-     * @return bool result of installation
+     * @return bool The result of the installation.
      */
     public function installDB(): bool
     {
@@ -289,11 +289,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
 
     /**
-     * The main function called by MikoPBX REST API for delete any module
+     * The main function called by the MikoPBX REST API to delete any module.
      *
-     * @param $keepSettings bool if it set to true, the function saves module database
+     * @param bool $keepSettings If set to true, the function saves the module database.
      *
-     * @return bool uninstall result
+     * @return bool The uninstall result.
      */
     public function uninstallModule(bool $keepSettings = false): bool
     {
@@ -316,12 +316,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Deletes some settings from database and links to the module
-     * If keepSettings set to true it copies database file to Backup folder
+     * Deletes some settings from the database and links to the module.
+     * If $keepSettings is set to true, it copies the database file to the backup folder.
      *
-     * @param  $keepSettings bool
+     * @param bool $keepSettings If set to true, the module database will be kept.
      *
-     * @return bool the uninstall result
+     * @return bool The uninstall result.
      */
     public function unInstallDB(bool $keepSettings = false): bool
     {
@@ -329,9 +329,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Deletes records from PbxExtensionModules
+     * Deletes records from PbxExtensionModules.
      *
-     * @return bool unregistration result
+     * @return bool The unregistration result.
      */
     public function unregisterModule(): bool
     {
@@ -345,12 +345,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Deletes the module files, folders, symlinks
-     * If keepSettings set to true it copies database file to Backup folder
+     * Deletes the module files, folders, and symlinks.
+     * If $keepSettings is set to true, it copies the database file to the backup folder.
      *
-     * @param $keepSettings bool
+     * @param bool $keepSettings If set to true, the module files will be kept.
      *
-     * @return bool delete result
+     * @return bool The delete result.
      */
     public function unInstallFiles(bool $keepSettings = false):bool
     {
@@ -394,9 +394,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Returns error messages
+     * Returns error messages.
      *
-     * @return array
+     * @return array The error messages.
      */
     public function getMessages(): array
     {
@@ -404,13 +404,13 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Registers module in the PbxExtensionModules table
+     * Registers the module in the PbxExtensionModules table.
      *
-     * @return bool
+     * @return bool The registration result.
      */
     public function registerNewModule(): bool
     {
-        // Проверим версию АТС и Модуля на совместимость
+        // Check the compatibility of the PBX version and the module.
         $currentVersionPBX = PbxSettings::getValueByKey('PBXVersion');
         $currentVersionPBX = str_replace('-dev', '', $currentVersionPBX);
         if (version_compare($currentVersionPBX, $this->min_pbx_version) < 0) {
@@ -441,12 +441,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * DEPRECATED
-     * Returns translated phrase
+     * Deprecated function to return translated phrases.
      *
-     * @param $stringId string  Phrase identifier
+     * @param string $stringId The phrase identifier.
      *
-     * @return string  перевод
+     * @return string The translated phrase.
+     * @deprecated
      */
     public function locString(string $stringId): string
     {
@@ -455,9 +455,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Traverses files with model descriptions and creates / modifies tables in the system database
+     * Traverses files with model descriptions and creates/updates tables in the system database.
      *
-     * @return bool the table modification result
+     * @return bool The table modification result.
      */
     public function createSettingsTableByModelsAnnotations(): bool
     {
@@ -484,9 +484,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
 
     /**
-     * Adds module to sidebar menu
+     * Adds the module to the sidebar menu.
      *
-     * @return bool
+     * @return bool The result of the addition.
      */
     public function addToSidebar(): bool
     {
@@ -499,7 +499,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         }
         $value               = [
             'uniqid'        => $this->moduleUniqueID,
-            'href'          => "/admin-cabinet/{$unCamelizedControllerName}",
+            'href'          => "/admin-cabinet/{$unCamelizedControllerName}", //TODO:: проверить, кажется это уже можно удалить
             'group'         => 'modules',
             'iconClass'     => 'puzzle',
             'caption'       => "Breadcrumb{$this->moduleUniqueID}",
@@ -511,7 +511,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Deletes old cache files
+     * Deletes old cache files.
      */
     private function cleanupCache()
     {

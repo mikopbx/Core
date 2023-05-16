@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,10 +40,15 @@ class PbxExtensionsProcessor extends Injectable
      * look at src/Modules/Config/RestAPIConfigInterface.php
      *
      * Every module config class can process requests under root rights,
-     * if it described in Config class
+     * if it is described in the Config class
+     *
+     * @var array An array of additional processors for modules
      */
     public array $additionalProcessors;
 
+    /**
+     * Creates a new instance of PbxExtensionsProcessor.
+     */
     public function __construct()
     {
         $additionalModules          = $this->getDI()->getShared(PBXConfModulesProvider::SERVICE_NAME);
@@ -60,12 +65,13 @@ class PbxExtensionsProcessor extends Injectable
     }
 
     /**
-     *  Processes modules API requests
+     * Processes modules API requests
      *
-     * @param array       $request
+     * @param array $request The request data
+     *   - action: The action to be performed
+     *   - module: The module identifier
      *
-     *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,120 +20,120 @@
 namespace MikoPBX\Modules\Setup;
 
 
+/**
+ * Interface PbxExtensionSetupInterface
+ * Represents the interface for the setup of PBX extensions.
+ *
+ * @package MikoPBX\Modules\Setup
+ */
 interface PbxExtensionSetupInterface
 {
     /**
-     * PbxExtensionBase constructor.
+     * PbxExtensionSetupInterface constructor.
      *
-     * @param  $moduleUniqueID string
-     *
-     * @throws \Phalcon\Exception
+     * @param string $moduleUniqueID The unique identifier of the module.
      */
     public function __construct(string $moduleUniqueID);
 
     /**
-     * The main module installation function called by PBXCoreRest after unzip module files
-     * It calls some private functions and setup error messages on the message variable
+     * Performs the main module installation process called by PBXCoreRest after unzipping module files.
+     * It invokes private functions and sets up error messages in the message variable.
      *
-     * @return bool - result of installation
+     * @return bool The result of the installation process.
      */
     public function installModule(): bool;
 
     /**
-     * Executes license activation only for commercial modules
+     * Activates the license, applicable only for commercial modules.
      *
-     * @return bool result of license activation
+     * @return bool The result of the license activation.
      */
     public function activateLicense(): bool;
 
     /**
-     * Copies files, creates folders and symlinks for module and restores previous backup settings
+     * Copies files, creates folders, and symlinks for the module and restores previous backup settings.
      *
-     * @return bool installation result
+     * @return bool The result of the installation process.
      */
     public function installFiles(): bool;
 
     /**
-     * Setups ownerships and folder rights
+     * Sets up ownerships and folder rights.
      *
-     * @return bool fixing result
+     * @return bool The result of the fixing process.
      */
     public function fixFilesRights(): bool;
 
     /**
-     * Creates database structure according to models annotations
+     * Creates the database structure according to models' annotations.
+     * If necessary, it fills some default settings and changes the sidebar menu item representation for this module.
+     * After installation, it registers the module on the PbxExtensionModules model.
      *
-     * If it necessary, it fills some default settings, and change sidebar menu item representation for this module
-     *
-     * After installation it registers module on PbxExtensionModules model
-     *
-     * @return bool result of installation
+     * @return bool The result of the installation process.
      */
     public function installDB(): bool;
 
     /**
-     * The main function called by MikoPBX REST API for delete any module
+     * Performs the main module uninstallation process called by MikoPBX REST API to delete any module.
      *
-     * @param $keepSettings bool if it set to true, the function saves module database
+     * @param bool $keepSettings If set to true, the function saves the module database.
      *
-     * @return bool uninstall result
+     * @return bool The result of the uninstallation process.
      */
     public function uninstallModule(bool $keepSettings = false): bool;
 
     /**
-     * Deletes some settings from database and links to the module
-     * If keepSettings set to true it copies database file to Backup folder
+     * Deletes some settings from the database and links to the module.
+     * If $keepSettings is set to true, it copies the database file to the Backup folder.
      *
-     * @param  $keepSettings bool
+     * @param bool $keepSettings If set to true, the module database is saved.
      *
-     * @return bool the uninstall result
+     * @return bool The result of the uninstallation process.
      */
     public function unInstallDB(bool $keepSettings = false): bool;
 
     /**
-     * Deletes records from PbxExtensionModules
+     * Deletes records from the PbxExtensionModules table.
      *
-     * @return bool  unregistration result
+     * @return bool The result of the unregistration process.
      */
     public function unregisterModule(): bool;
 
     /**
-     * Deletes the module files, folders, symlinks
-     * If keepSettings set to true it copies database file to Backup folder
+     * Deletes the module files, folders, and symlinks.
+     * If $keepSettings is set to true, it copies the database file to the Backup folder.
      *
-     * @param $keepSettings bool
+     * @param bool $keepSettings If set to true, the module database is saved.
      *
-     * @return bool delete result
+     * @return bool The result of the deletion process.
      */
     public function unInstallFiles(bool $keepSettings = false): bool;
 
     /**
-     * Returns error messages
+     * Returns error messages.
      *
-     * @return array
+     * @return array An array of error messages.
      */
     public function getMessages(): array;
 
     /**
-     * Registers module in the PbxExtensionModules table
+     * Registers the module in the PbxExtensionModules table.
      *
-     * @return bool
+     * @return bool The result of the registration process.
      */
     public function registerNewModule(): bool;
 
-
     /**
-     * Traverses files with model descriptions and creates / modifies tables in the system database
+     * Traverses files with model descriptions and creates/alters tables in the system database.
      *
-     * @return bool the table modification result
+     * @return bool The result of the table modification process.
      */
     public function createSettingsTableByModelsAnnotations(): bool;
 
-
     /**
-     * Adds module to sidebar menu
+     * Adds the module to the sidebar menu.
      *
-     * @return bool
+     * @return bool The result of the addition process.
      */
     public function addToSidebar(): bool;
 }

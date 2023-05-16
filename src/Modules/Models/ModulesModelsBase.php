@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,11 @@ use Phalcon\Text;
 use Phalcon\Url;
 use ReflectionClass as ReflectionClassAlias;
 
+/**
+ * Base class for module models.
+ *
+ * @package MikoPBX\Modules\Models
+ */
 class ModulesModelsBase extends ModelsBase
 {
     protected bool $initialized = false;
@@ -31,7 +36,7 @@ class ModulesModelsBase extends ModelsBase
 
     /**
      * Class initialization and create DB connection by Class and DB name,
-     * it uses on src/Common/Providers/ModulesDBConnectionsProvider.php
+     * it is used in src/Common/Providers/ModulesDBConnectionsProvider.php.
      */
     public function initialize(): void
     {
@@ -47,13 +52,13 @@ class ModulesModelsBase extends ModelsBase
     }
 
     /**
-     *  Returns module name in human readable form for error and notification messages
+     * Returns the module name in a human-readable form for error and notification messages.
      *
-     * @param bool $needLink
+     * @param bool $needLink Whether to include a link.
      *
-     * @return string
+     * @return string The module name.
      */
-    public function getRepresent($needLink = false): string
+    public function getRepresent(bool $needLink = false): string
     {
         if (!$this->initialized){
             $this->initialize();
@@ -90,9 +95,9 @@ class ModulesModelsBase extends ModelsBase
     }
 
     /**
-     * Return link on database record in web interface
+     * Returns the link to the database record in the web interface.
      *
-     * @return string
+     * @return string The web interface link.
      */
     public function getWebInterfaceLink(): string
     {

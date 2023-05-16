@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Controllers;
 
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
+use MikoPBX\PBXCoreREST\Http\Response;
 use Phalcon\Mvc\Controller;
 use Pheanstalk\Pheanstalk;
 use Throwable;
@@ -34,6 +35,20 @@ use Throwable;
  */
 class BaseController extends Controller
 {
+    /**
+     * Send a request to the backend worker.
+     *
+     * @param string $processor The name of the processor.
+     * @param string $actionName The name of the action.
+     * @param mixed|null $payload The payload data to send with the request.
+     * @param string $moduleName The name of the module (only for 'modules' processor).
+     * @param int $maxTimeout The maximum timeout for the request in seconds.
+     * @param int $priority The priority of the request.
+     *
+     * @return void
+     *
+     * @throws Throwable If an error occurs during the request.
+     */
     public function sendRequestToBackendWorker(
         string $processor,
         string $actionName,
@@ -59,10 +74,10 @@ class BaseController extends Controller
                 $response = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
                 $this->response->setPayloadSuccess($response);
             } else {
-                $this->sendError(500);
+                $this->sendError(Response::INTERNAL_SERVER_ERROR);
             }
         } catch (Throwable $e) {
-            $this->sendError(400, $e->getMessage());
+            $this->sendError(Response::BAD_REQUEST, $e->getMessage());
         }
     }
 
@@ -72,7 +87,7 @@ class BaseController extends Controller
      * @param int    $code
      * @param string $description
      */
-    protected function sendError(int $code, $description = ''): void
+    protected function sendError(int $code, string $description = ''): void
     {
         $this
             ->response

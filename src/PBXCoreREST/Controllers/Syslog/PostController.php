@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Controllers\Syslog;
 
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Http\Response;
 use Phalcon\Di;
 
 /**
@@ -41,7 +42,12 @@ use Phalcon\Di;
  */
 class PostController extends BaseController
 {
-    public function callAction($actionName): void
+    /**
+     * Handles the call to different actions based on the action name
+     *
+     * @param string $actionName The name of the action
+     */
+    public function callAction(string $actionName): void
     {
         switch ($actionName) {
             case 'getLogFromFile':
@@ -86,7 +92,7 @@ class PostController extends BaseController
 
             $this->response->setPayloadSuccess($response);
         } else {
-            $this->sendError(500);
+            $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -124,7 +130,7 @@ class PostController extends BaseController
             }
             $this->response->setPayloadSuccess($response);
         } else {
-            $this->sendError(500);
+            $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
 }

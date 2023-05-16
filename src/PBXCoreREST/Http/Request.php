@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,9 +31,15 @@ use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Http\Request as PhRequest;
 use Phalcon\Mvc\Micro;
 
+/**
+ * Class Request
+ * @package MikoPBX\PBXCoreREST\Http
+ */
 class Request extends PhRequest
 {
     /**
+     * Check if the request is coming from localhost.
+     *
      * @return bool
      */
     public function isLocalHostRequest(): bool
@@ -41,11 +47,21 @@ class Request extends PhRequest
         return ($_SERVER['REMOTE_ADDR'] === '127.0.0.1');
     }
 
+    /**
+     * Check if debug mode is enabled.
+     *
+     * @return bool
+     */
     public function isDebugModeEnabled(): bool
     {
         return ($this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.debugMode'));
     }
 
+    /**
+     * Check if the request has an authorized session.
+     *
+     * @return bool
+     */
     public function isAuthorizedSessionRequest(): bool
     {
         return $this->getDI()->getShared(SessionProvider::SERVICE_NAME)->has(SessionController::SESSION_ID);

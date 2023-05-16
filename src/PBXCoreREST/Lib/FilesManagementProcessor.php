@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,13 @@ use Phalcon\Di\Injectable;
 use Phalcon\Http\Message\StreamFactory;
 use Phalcon\Http\Message\UploadedFile;
 
+
+/**
+ * Class FilesManagementProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ */
 class FilesManagementProcessor extends Injectable
 {
     /**
@@ -36,7 +43,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @param array $request
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -83,11 +90,11 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Process resumable upload files
+     * Process resumable upload files.
      *
-     * @param array $parameters
+     * @param array $parameters The upload parameters.
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function uploadResumable(array $parameters): PBXApiResult
     {
@@ -223,7 +230,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @param array $postData
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function statusUploadFile(array $postData): PBXApiResult
     {
@@ -272,7 +279,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @param string $filePath
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function removeAudioFile(string $filePath): PBXApiResult
     {
@@ -319,7 +326,7 @@ class FilesManagementProcessor extends Injectable
      * @param string $filename
      * @param bool   $needOriginal
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function fileReadContent(string $filename, bool $needOriginal = true): PBXApiResult
     {
@@ -352,7 +359,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @param $data
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function downloadNewFirmware($data): PBXApiResult
     {
@@ -400,7 +407,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @param string $imgFileName
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function firmwareDownloadStatus(string $imgFileName): PBXApiResult
     {
@@ -463,7 +470,7 @@ class FilesManagementProcessor extends Injectable
      * @param $url
      * @param $md5
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function moduleStartDownload($module, $url, $md5): PBXApiResult
     {
@@ -513,7 +520,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @param string $moduleUniqueID
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function moduleDownloadStatus(string $moduleUniqueID): PBXApiResult
     {
@@ -579,7 +586,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @param string $filePath
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function getMetadataFromModuleFile(string $filePath): PBXApiResult
     {

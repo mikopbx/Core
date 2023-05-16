@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,12 @@ use MikoPBX\PBXCoreREST\Workers\WorkerMakeLogFilesArchive;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class SysLogsManagementProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ */
 class SysLogsManagementProcessor extends Injectable
 {
     public const DEFAULT_FILENAME = 'asterisk/messages';
@@ -36,7 +42,7 @@ class SysLogsManagementProcessor extends Injectable
      *
      * @param array $request
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      * @throws \Exception
      */
     public static function callBack(array $request): PBXApiResult
@@ -86,7 +92,7 @@ class SysLogsManagementProcessor extends Injectable
      * @param int    $lines
      * @param int    $offset
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function getLogFromFile(string $filename, string $filter = '', $lines = 500, $offset = 0): PBXApiResult
     {
@@ -135,7 +141,7 @@ class SysLogsManagementProcessor extends Injectable
      *
      * @param int $timeout
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      * @throws \Exception
      */
     private static function startLog($timeout = 300): PBXApiResult
@@ -166,7 +172,7 @@ class SysLogsManagementProcessor extends Injectable
      * Prepare log archive file
      *
      * @param bool $tcpdumpOnly
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private static function prepareLog(bool $tcpdumpOnly): PBXApiResult
     {
@@ -203,7 +209,7 @@ class SysLogsManagementProcessor extends Injectable
      *
      * @param string $resultFile
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      * @throws \Exception
      */
     private static function downloadLogsArchive(string $resultFile): PBXApiResult
@@ -240,7 +246,7 @@ class SysLogsManagementProcessor extends Injectable
      *
      * @param string $filename
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      * @throws \Exception
      */
     private static function downloadLogFile(string $filename): PBXApiResult
@@ -272,7 +278,7 @@ class SysLogsManagementProcessor extends Injectable
     /**
      * Returns list of log files to show them on web interface
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private static function getLogsList(): PBXApiResult
     {

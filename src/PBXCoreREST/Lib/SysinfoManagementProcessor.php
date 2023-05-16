@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,12 @@ use MikoPBX\Service\Main;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class SysinfoManagementProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ */
 class SysinfoManagementProcessor extends Injectable
 {
     /**
@@ -35,7 +41,7 @@ class SysinfoManagementProcessor extends Injectable
      *
      * @param array $request
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -63,7 +69,7 @@ class SysinfoManagementProcessor extends Injectable
     /**
      * Gets system information
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private static function getInfo(): PBXApiResult
     {
@@ -437,7 +443,7 @@ class SysinfoManagementProcessor extends Injectable
     /**
      * Returns public IP address of this system
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function getExternalIpInfo(): PBXApiResult
     {
