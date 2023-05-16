@@ -29,7 +29,7 @@ use SimpleXMLElement;
 use Throwable;
 
 /**
- * Class LicenseProvider
+ * The LicenseProvider class is responsible for registering the license service.
  *
  * @package MikoPBX\Common\Providers
  *
@@ -46,6 +46,7 @@ use Throwable;
  * @method  array releaseFeature(string $featureId)
  * @method  string translateLicenseErrorMessage(string $message)
  *
+ * @package MikoPBX\Common\Providers
  */
 class LicenseProvider implements ServiceProviderInterface
 {
@@ -54,7 +55,7 @@ class LicenseProvider implements ServiceProviderInterface
     /**
      * Register license service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

@@ -26,6 +26,8 @@ use Phalcon\Di\ServiceProviderInterface;
 
 /**
  * Main database connection is created based in the parameters defined in the configuration file
+ *
+ *  @package MikoPBX\Common\Providers
  */
 class MainDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
@@ -34,7 +36,7 @@ class MainDatabaseProvider extends DatabaseProviderBase implements ServiceProvid
     /**
      * Register db service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

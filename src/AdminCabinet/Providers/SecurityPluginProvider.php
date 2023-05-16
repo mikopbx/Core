@@ -25,6 +25,11 @@ use MikoPBX\AdminCabinet\Plugins\SecurityPlugin;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
+/**
+ * The SecurityPluginProvider class is responsible for registering the security plugin service.
+ *
+ * @package MikoPBX\AdminCabinet\Providers
+ */
 class SecurityPluginProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'securityPlugin';
@@ -32,7 +37,7 @@ class SecurityPluginProvider implements ServiceProviderInterface
     /**
      * Register security plugin provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

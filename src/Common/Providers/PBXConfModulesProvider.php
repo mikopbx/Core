@@ -29,17 +29,19 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * Main database connection is created based in the parameters defined in the configuration file
+ * Registers pbxConfModules service provider and provides methods to interact with additional modules.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class PBXConfModulesProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'pbxConfModules';
 
     /**
-     * Registers pbxConfModules service provider
-     * Creates array of external installed modules
+     * Registers pbxConfModules service provider.
+     * Creates an array of external installed modules.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
@@ -79,12 +81,12 @@ class PBXConfModulesProvider implements ServiceProviderInterface
     }
 
     /**
-     * Calls additional module method by name and returns array of results
+     * Calls additional module method by name and returns an array of results.
      *
-     * @param string $methodName
-     * @param array  $arguments
+     * @param string $methodName The method name to call.
+     * @param array  $arguments  The arguments to pass to the method.
      *
-     * @return array
+     * @return array The array of results.
      */
     public static function hookModulesMethod(string $methodName, array $arguments = []): array
     {

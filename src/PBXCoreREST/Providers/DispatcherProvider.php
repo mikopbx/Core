@@ -37,7 +37,7 @@ class DispatcherProvider implements ServiceProviderInterface
     /**
      * Register dispatcher service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

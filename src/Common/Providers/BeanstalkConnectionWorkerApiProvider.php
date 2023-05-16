@@ -28,7 +28,11 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- *  We register the beansTalk connection to process the REST API commands
+ * BeanstalkConnectionWorkerApiProvider
+ *
+ * This service provider registers the Beanstalk connection for processing REST API commands.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class BeanstalkConnectionWorkerApiProvider implements ServiceProviderInterface
 {
@@ -37,7 +41,7 @@ class BeanstalkConnectionWorkerApiProvider implements ServiceProviderInterface
     /**
      * Register beanstalkConnectionWorkerAPI service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

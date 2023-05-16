@@ -29,16 +29,18 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Mvc\Router;
 
 /**
- * Register Router service
+ * Registers the Router service.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class RouterProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'router';
 
     /**
-     * Register router service provider
+     * Register the router service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
@@ -59,7 +61,7 @@ class RouterProvider implements ServiceProviderInterface
                         'params'     => 3
                 ]);
 
-                // Add route for external modules which integrate its views into admin web ui
+                // Add route for external modules which integrate their views into admin web UI
                 $route = $router->add('/admin-cabinet/{namespace:module.*}/:controller/:action/:params', [
                     'module'     => 'admin-cabinet',
                     'namespace'  => 1,

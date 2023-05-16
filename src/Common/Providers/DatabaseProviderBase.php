@@ -31,15 +31,17 @@ use Phalcon\Logger\Adapter\Stream as FileLogger;
 
 /**
  * Main database connection is created based in the parameters defined in the configuration file
+ *
+ *  @package MikoPBX\Common\Providers
  */
 abstract class DatabaseProviderBase
 {
     /**
-     * Register db service provider
+     * Register the database service provider.
      *
      * @param string                  $serviceName Injection service name
-     * @param \Phalcon\Di\DiInterface $di
-     * @param array         $dbConfig
+     * @param \Phalcon\Di\DiInterface $di The DI container.
+     * @param array                   $dbConfig The database configuration.
      */
     public function registerDBService(string $serviceName, DiInterface $di, array $dbConfig): void
     {
@@ -68,7 +70,7 @@ abstract class DatabaseProviderBase
                         ]
                     );
                     $eventsManager = new EventsManager();
-                    // Слушаем все события базы данных
+                    // Listen to all database events
                     $eventsManager->attach(
                         'db',
                         function ($event, $connection) use ($logger) {
@@ -92,7 +94,7 @@ abstract class DatabaseProviderBase
                         }
                     );
 
-                    // Назначаем EventsManager экземпляру адаптера базы данных
+                    // Assign the EventsManager to the database adapter instance
                     $connection->setEventsManager($eventsManager);
                 }
 
@@ -107,7 +109,8 @@ abstract class DatabaseProviderBase
     public static function recreateDBConnections(): void
     {
         $dbProvidersList = [
-            ModelsCacheProvider::class, // Always recreate it before change DB providers
+            // Always recreate it before change DB providers
+            ModelsCacheProvider::class,
 
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,

@@ -33,7 +33,11 @@ use Phalcon\Mvc\Dispatcher;
 use Whoops\Handler\PrettyPageHandler;
 
 /**
- *  We register the events manager
+ * DispatcherProvider
+ *
+ * This service provider initializes the dispatcher for handling controller dispatching and event management.
+ *
+ * @package MikoPBX\AdminCabinet\Providers
  */
 class DispatcherProvider implements ServiceProviderInterface
 {
@@ -42,7 +46,7 @@ class DispatcherProvider implements ServiceProviderInterface
     /**
      * Register dispatcher service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

@@ -28,17 +28,19 @@ use Phalcon\Translate\InterpolatorFactory;
 use Phalcon\Translate\TranslateFactory;
 
 /**
- * Localization service
- * @method string _(string $translateKey, array $placeholders = array())
+ * Localization service.
+ * @method string _(string $translateKey, array $placeholders = [])
+ *
+ * @package MikoPBX\Common\Providers
  */
 class TranslationProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'translation';
 
     /**
-     * Register translation service provider
+     * Register the translation service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

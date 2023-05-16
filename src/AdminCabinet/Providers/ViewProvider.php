@@ -31,7 +31,9 @@ use Phalcon\Mvc\View;
 use function MikoPBX\Common\Config\appPath;
 
 /**
- * The URL component is used to generate all kind of urls in the application
+ * The ViewProvider class is responsible for registering the view service.
+ *
+ * @package MikoPBX\AdminCabinet\Providers
  */
 class ViewProvider implements ServiceProviderInterface
 {
@@ -40,7 +42,7 @@ class ViewProvider implements ServiceProviderInterface
     /**
      * Register view service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

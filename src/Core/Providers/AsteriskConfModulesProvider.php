@@ -39,7 +39,7 @@ class AsteriskConfModulesProvider implements ServiceProviderInterface
      * Registers asteriskConfModules service provider
      * Returns an array of Asterisk configuration objects sorted by priority.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

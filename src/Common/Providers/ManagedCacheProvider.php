@@ -28,7 +28,9 @@ use Phalcon\Storage\SerializerFactory;
 
 
 /**
- * Main database connection is created based in the parameters defined in the configuration file
+ * The ManagedCacheProvider class is responsible for registering the managedCache service.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class ManagedCacheProvider implements ServiceProviderInterface
 {
@@ -36,9 +38,9 @@ class ManagedCacheProvider implements ServiceProviderInterface
     public const CACHE_PREFIX = 'managed-cache';
 
     /**
-     * Register managedCache service provider
+     * Register the managedCache service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

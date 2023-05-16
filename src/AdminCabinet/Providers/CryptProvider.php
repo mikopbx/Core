@@ -28,7 +28,9 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * Register a crypt provider
+ * Initializes Crypt provider
+ *
+ * @package MikoPBX\AdminCabinet\Providers
  */
 class CryptProvider implements ServiceProviderInterface
 {
@@ -37,7 +39,7 @@ class CryptProvider implements ServiceProviderInterface
     /**
      * Register elements service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

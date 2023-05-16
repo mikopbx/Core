@@ -25,15 +25,19 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use function MikoPBX\Common\Config\appPath;
 
+/**
+ * The MessagesProvider class is responsible for registering the messages service.
+ *
+ * @package MikoPBX\Common\Providers
+ */
 class MessagesProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'messages';
 
-
     /**
-     * Register messages service provider
+     * Register the messages service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
@@ -43,6 +47,7 @@ class MessagesProvider implements ServiceProviderInterface
             function () use ($di, $coreConfig) {
                 $cacheKey = false;
                 $language = $di->get(LanguageProvider::SERVICE_NAME);
+
                 if (php_sapi_name() !== 'cli'){
                     $session  = $di->get(SessionProvider::SERVICE_NAME);
                     if ($session !== null && $session->has('versionHash')) {
@@ -50,7 +55,7 @@ class MessagesProvider implements ServiceProviderInterface
                     }
                 }
 
-                // Заглянем сначала в кеш переводов
+                // Check if translations exist in the cache
                 if ($cacheKey) {
                     $translates = $di->get(ManagedCacheProvider::SERVICE_NAME)->get($cacheKey, 3600);
                     if (is_array($translates)) {
@@ -59,7 +64,8 @@ class MessagesProvider implements ServiceProviderInterface
                 }
 
                 $translates = [];
-                // Возьмем английский интерфейс
+
+                // Load English translations
                 $enFilePath = appPath('/src/Common/Messages/en.php');
                 if (file_exists($enFilePath)) {
                     $translates = require $enFilePath;
@@ -67,18 +73,18 @@ class MessagesProvider implements ServiceProviderInterface
 
                 if ($language !== 'en') {
                     $additionalTranslates = [];
-                    // Check if we have a translation file for that lang
+                    // Check if translation file exists for the selected language
                     $langFile = appPath("/src/Common/Messages/{$language}.php");
                     if (file_exists($langFile)) {
                         $additionalTranslates = require $langFile;
                     }
-                    // Заменим английские переводы на выбранный админом язык
+                    // Replace English translations with the selected language translations
                     if ($additionalTranslates !== [[]]) {
                         $translates = array_merge($translates, $additionalTranslates);
                     }
                 }
 
-                // Возьмем английский перевод расширений
+                // Load English translations for extensions
                 $extensionsTranslates = [[]];
                 $results              = glob($coreConfig->modulesDir . '/*/{Messages}/en.php', GLOB_BRACE);
                 foreach ($results as $path) {

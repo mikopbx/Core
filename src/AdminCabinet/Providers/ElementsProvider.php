@@ -27,7 +27,9 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * Register a user component
+ * Initialize sidebar menu
+ *
+ * @package MikoPBX\AdminCabinet\Providers
  */
 class ElementsProvider implements ServiceProviderInterface
 {
@@ -36,7 +38,7 @@ class ElementsProvider implements ServiceProviderInterface
     /**
      * Register elements service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

@@ -30,7 +30,11 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * CDR database connection is created based in the parameters defined in the configuration file
+ * CDRDatabaseProvider
+ *
+ * This service provider creates a CDR database connection based on the parameters defined in the configuration file.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
@@ -39,7 +43,7 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
     /**
      * Register dbCDR service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param \Phalcon\Di\DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
@@ -48,9 +52,9 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
     }
 
     /**
-     * Возвращает все завершенные временные CDR.
-     * @param array $filter
-     * @return array
+     * Retrieves all completed temporary CDRs.
+     * @param array $filter  An array of filter parameters.
+     * @return array An array of CDR data.
      */
     public static function getCdr(array $filter = []): array
     {
@@ -89,8 +93,8 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
     }
 
     /**
-     * Возвращает все не завершенные CDR.
-     * @return array
+     * Retrieves all incomplete CDRs from the cache.
+     * @return array  An array of CDR data.
      */
     public static function getCacheCdr(): array
     {

@@ -30,16 +30,18 @@ use Phalcon\Mvc\Model\MetaData\Strategy\Annotations as StrategyAnnotations;
 use Phalcon\Storage\SerializerFactory;
 
 /**
- * Main database connection is created based in the parameters defined in the configuration file
+ * Registers the Models metadata service provider.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class ModelsMetadataProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'modelsMetadata';
 
     /**
-     * Register Models metadata service provider
+     * Register Models metadata service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

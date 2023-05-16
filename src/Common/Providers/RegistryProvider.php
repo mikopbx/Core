@@ -26,16 +26,18 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Registry;
 
 /**
- * Main database connection is created based in the parameters defined in the configuration file
+ * Registers the registry service provider.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class RegistryProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'registry';
 
     /**
-     * Register registry service provider
+     * Register the registry service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

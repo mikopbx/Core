@@ -24,13 +24,21 @@ use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
+/**
+ * Class AmiConnectionCommand
+ *
+ * Service provider for registering the AMI commander service in the DI container.
+ *
+ * @package MikoPBX\Common\Providers
+ */
 class AmiConnectionCommand implements ServiceProviderInterface{
 
     public const SERVICE_NAME = 'amiCommander';
+
     /**
-     * Register amiCommander service provider
+     * Register amiCommander service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param \Phalcon\Di\DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

@@ -28,6 +28,11 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
 
+/**
+ * The VoltProvider class is responsible for registering the Volt template engine service.
+ *
+ * @package MikoPBX\AdminCabinet\Providers
+ */
 class VoltProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'volt';
@@ -35,7 +40,7 @@ class VoltProvider implements ServiceProviderInterface
     /**
      * Register volt service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

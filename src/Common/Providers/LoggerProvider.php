@@ -29,6 +29,8 @@ use Phalcon\Logger\Formatter\Line;
 
 /**
  * Logger provider writes messages to main log file
+ *
+ *  @package MikoPBX\Common\Providers
  */
 class LoggerProvider implements ServiceProviderInterface
 {
@@ -37,7 +39,7 @@ class LoggerProvider implements ServiceProviderInterface
     /**
      * Register syslog service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

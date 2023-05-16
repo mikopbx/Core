@@ -28,16 +28,18 @@ use Phalcon\Cache\Adapter\Redis;
 use Phalcon\Storage\SerializerFactory;
 
 /**
- * Main database connection is created based in the parameters defined in the configuration file
+ * Registers the Models cache in REDIS service provider.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class ModelsCacheProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'modelsCache';
 
     /**
-     * Register Models cache service provider
+     * Register Models cache service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

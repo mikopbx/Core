@@ -27,7 +27,9 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Flash\Session as FlashSession;
 
 /**
- * Register the flash service with custom CSS classes
+ * The FlashProvider class is responsible for registering the flash service with custom CSS classes.
+ *
+ * @package MikoPBX\AdminCabinet\Providers
  */
 class FlashProvider implements ServiceProviderInterface
 {
@@ -36,10 +38,11 @@ class FlashProvider implements ServiceProviderInterface
     /**
      * Register flash service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
+
         $di->setShared(
             self::SERVICE_NAME,
             function () {

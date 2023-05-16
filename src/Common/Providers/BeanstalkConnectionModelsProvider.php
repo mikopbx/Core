@@ -28,7 +28,11 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- *  We register the beansTalk connection for send models changes to backend application
+ * Class BeanstalkConnectionModelsProvider
+ *
+ * Service provider for registering the Beanstalk connection for sending model changes to the backend application.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class BeanstalkConnectionModelsProvider implements ServiceProviderInterface
 {
@@ -37,10 +41,11 @@ class BeanstalkConnectionModelsProvider implements ServiceProviderInterface
     public const SOURCE_INVOKE_ACTION = 'WorkerModelsEvents->invokeAction';
 
     public const SOURCE_MODELS_CHANGED = 'ModelsBase->sendChangesToBackend';
+
     /**
-     * Register beanstalkConnectionModels service provider
+     * Register beanstalkConnectionModels service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param \Phalcon\Di\DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

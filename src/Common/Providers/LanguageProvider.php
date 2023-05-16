@@ -28,7 +28,9 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * The URL component is used to generate all kind of urls in the application
+ * The LanguageProvider class is responsible for registering the language service.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class LanguageProvider implements ServiceProviderInterface
 {
@@ -37,7 +39,7 @@ class LanguageProvider implements ServiceProviderInterface
     /**
      * Register language service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

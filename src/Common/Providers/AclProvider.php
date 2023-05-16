@@ -39,6 +39,8 @@ use Phalcon\Di\ServiceProviderInterface;
  * Finally, it uses the PBXConfModulesProvider class to allow modules to modify the ACL, and returns the modified ACL.
  *
  * @return AclList The Access Control List.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class AclProvider implements ServiceProviderInterface
 {
@@ -47,7 +49,7 @@ class AclProvider implements ServiceProviderInterface
     /**
      * Register ACL service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param \Phalcon\Di\DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

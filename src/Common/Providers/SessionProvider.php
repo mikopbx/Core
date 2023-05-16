@@ -30,7 +30,9 @@ use Phalcon\Storage\AdapterFactory;
 use Phalcon\Storage\SerializerFactory;
 
 /**
- * Start the session the first time some component request the session service
+ * Registers the session service provider.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class SessionProvider implements ServiceProviderInterface
 {
@@ -41,9 +43,9 @@ class SessionProvider implements ServiceProviderInterface
     public const VERSION_HASH = 'versionHash';
 
     /**
-     * Register session service provider
+     * Register the session service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

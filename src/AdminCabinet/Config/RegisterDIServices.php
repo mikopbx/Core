@@ -56,7 +56,7 @@ class RegisterDIServices
     /**
      * Initialize services on dependency injector
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public static function init(DiInterface $di): void
     {

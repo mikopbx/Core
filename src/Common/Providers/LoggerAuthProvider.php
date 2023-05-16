@@ -29,6 +29,8 @@ use Phalcon\Logger\Formatter\Line;
 
 /**
  * LoggerAuth provider writes messages to main log file
+ *
+ *  @package MikoPBX\Common\Providers
  */
 class LoggerAuthProvider implements ServiceProviderInterface
 {
@@ -37,7 +39,7 @@ class LoggerAuthProvider implements ServiceProviderInterface
     /**
      * Register syslog auth service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

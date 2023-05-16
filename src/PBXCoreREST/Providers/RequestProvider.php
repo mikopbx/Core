@@ -41,7 +41,7 @@ class RequestProvider implements ServiceProviderInterface
     /**
      * Register request service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

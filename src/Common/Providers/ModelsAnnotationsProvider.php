@@ -28,16 +28,18 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * Main database connection is created based in the parameters defined in the configuration file
+ * Registers the Models annotations service provider.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class ModelsAnnotationsProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'annotations';
 
     /**
-     * Register Models metadata service provider
+     * Registers the Models annotations service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

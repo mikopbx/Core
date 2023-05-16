@@ -34,6 +34,11 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Mvc\Dispatcher;
 use function MikoPBX\Common\Config\appPath;
 
+/**
+ * Prepares list of CSS and JS files according to called controller/action
+ *
+ * @package MikoPBX\AdminCabinet\Providers
+ */
 class AssetProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'assets';
@@ -54,7 +59,7 @@ class AssetProvider implements ServiceProviderInterface
     /**
      * Registers assets service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
@@ -267,7 +272,7 @@ class AssetProvider implements ServiceProviderInterface
     /**
      * Makes Language cache for browser JS scripts
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      * @param string $version
      */
     private function makeLocalizationAssets(DiInterface $di, string $version): void

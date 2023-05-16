@@ -30,18 +30,22 @@ use Phalcon\Exception;
 use Throwable;
 
 /**
- * Read the configuration
+ * Class ConfigProvider
+ *
+ * Service provider for registering the configuration provider in the DI container.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class ConfigProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'config';
 
     /**
-     * Register config provider
+     * Register config provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param \Phalcon\Di\DiInterface $di The DI container.
      *
-     * @throws \Phalcon\Exception
+     * @throws \Phalcon\Exception If the config file is not found or not readable.
      */
     public function register(DiInterface $di): void
     {

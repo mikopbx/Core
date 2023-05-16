@@ -27,16 +27,18 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Url;
 
 /**
- * The URL component is used to generate all kind of urls in the application
+ * The URL component is used to generate all kinds of URLs in the application.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class UrlProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'url';
 
     /**
-     * Register url service provider
+     * Register the URL service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
