@@ -19,7 +19,11 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
+/**
+ * Generates the configuration content for chan_dahdi.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class ChanDahdiConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -27,12 +31,16 @@ class ChanDahdiConf extends AsteriskConfigClass
 
     protected string $description = 'chan_dahdi.conf';
 
+    /**
+     * Generates the configuration content for chan_dahdi.conf.
+     */
     protected function generateConfigProtected(): void
     {
         $conf = "[trunkgroups]\n" .
             "[channels]\n" .
             "";
 
+        // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . '/chan_dahdi.conf', $conf);
     }
 

@@ -20,6 +20,11 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+/**
+ * Base interface for AsteriskConfig children
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 interface AsteriskConfigInterface
 {
     public const EXTENSION_GEN_HINTS = 'extensionGenHints';

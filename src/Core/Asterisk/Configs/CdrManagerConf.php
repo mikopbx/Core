@@ -22,6 +22,11 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
+/**
+ * Generates the configuration content for cdr_manager.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class CdrManagerConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -29,6 +34,9 @@ class CdrManagerConf extends AsteriskConfigClass
 
     protected string $description = 'cdr_manager.conf';
 
+    /**
+     * Generates the configuration content for cdr_manager.conf.
+     */
     protected function generateConfigProtected(): void
     {
         $conf = "[general]\n" .
@@ -38,6 +46,7 @@ class CdrManagerConf extends AsteriskConfigClass
             "linkedid => linkedid\n" .
             "recordingfile => recordingfile\n\n";
 
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . "/cdr_manager.conf", $conf);
     }
 }

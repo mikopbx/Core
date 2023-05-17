@@ -22,6 +22,13 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
+/**
+ * Class RtpConf
+ *
+ * This class represents the rtp.conf configuration file.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class RtpConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -29,6 +36,10 @@ class RtpConf extends AsteriskConfigClass
 
     protected string $description = 'rtp.conf';
 
+    /**
+     * Generates the content for the rtp.conf file based on the provided general settings and writes it to the file.
+     *
+     */
     protected function generateConfigProtected(): void
     {
         $stunConfig = '';
@@ -42,6 +53,7 @@ class RtpConf extends AsteriskConfigClass
             "rtpend={$this->generalSettings['RTPPortTo']}".PHP_EOL.
             PHP_EOL;
 
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/rtp.conf', $conf);
     }
 }

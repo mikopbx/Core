@@ -21,6 +21,13 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
+/**
+ * Class HttpConf
+ *
+ * Represents a configuration class for HTTP.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class HttpConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -28,6 +35,11 @@ class HttpConf extends AsteriskConfigClass
 
     protected string $description = 'http.conf';
 
+    /**
+     * Generates the configuration for the http.conf file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
         $enabled = ($this->generalSettings['AJAMEnabled'] === '1') ? 'yes' : 'no';
@@ -47,7 +59,7 @@ class HttpConf extends AsteriskConfigClass
             if ( ! empty($WEBHTTPSPublicKey) && ! empty($WEBHTTPSPrivateKey)) {
                 $s_data = "{$WEBHTTPSPublicKey}\n{$WEBHTTPSPrivateKey}";
             } else {
-                // Генерируем сертификат ssl.
+                // Generate SSL certificate
                 $data   = Util::generateSslCert();
                 $s_data = implode("\n", $data);
             }
@@ -57,6 +69,8 @@ class HttpConf extends AsteriskConfigClass
                 "tlsprivatekey={$keys_dir}/ajam.pem\n";
             Util::fileWriteContent("{$keys_dir}/ajam.pem", $s_data);
         }
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/http.conf', $conf);
     }
 }

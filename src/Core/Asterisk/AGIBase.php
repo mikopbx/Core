@@ -67,7 +67,9 @@ class AGIBase {
     }
 
     /**
-     * Считываем переданные скрипту переменные.
+     * Read the request data from the input stream.
+     *
+     * @return void
      */
     protected function readRequestData():void{
         if($this->in !== false){
@@ -89,9 +91,11 @@ class AGIBase {
     }
 
     /**
-     * Разбор ответа сервера.
-     * @param $str
-     * @param $ret
+     * Evaluate and parse the response string.
+     *
+     * @param string $str The response string to parse.
+     * @param array $ret The parsed response array.
+     * @return void
      */
     protected function evaluateParseResponse($str, &$ret):void{
         $ret['result'] = null;
@@ -127,10 +131,11 @@ class AGIBase {
     }
 
     /**
-     * Чтение ответа сервера.
-     * @param string $str
-     * @param array  $ret
-     * @return bool
+     * Evaluate and read the response from the AGI server.
+     *
+     * @param string $str The response string read from the AGI server.
+     * @param array $ret The parsed response array.
+     * @return bool Whether the evaluation and reading of the response was successful.
      */
     protected function evaluateReadResponse(string & $str, array & $ret): bool{
         $result = true;

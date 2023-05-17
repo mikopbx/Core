@@ -21,6 +21,13 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
+/**
+ * Class FeaturesConf
+ *
+ * Represents a configuration class for features.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class FeaturesConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -29,9 +36,9 @@ class FeaturesConf extends AsteriskConfigClass
     protected string $description = 'features.conf';
 
     /**
-     * Generates PICKUP_EXTEN into extensions.conf global section
+     * Generates the PICKUP_EXTEN into the extensions.conf global section.
      *
-     * @return string
+     * @return string The generated PICKUP_EXTEN configuration.
      */
     public function extensionGlobals(): string
     {
@@ -65,6 +72,8 @@ class FeaturesConf extends AsteriskConfigClass
 
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GET_FEATURE_MAP);
 
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/features.conf', $conf);
     }
 }

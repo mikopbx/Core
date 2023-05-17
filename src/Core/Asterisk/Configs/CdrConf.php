@@ -20,6 +20,11 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+/**
+ * Generates the configuration content for cdr.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class CdrConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -27,6 +32,9 @@ class CdrConf extends AsteriskConfigClass
 
     protected string $description = 'cdr.conf';
 
+    /**
+     * Generates the configuration content for cdr.conf.
+     */
     protected function generateConfigProtected(): void
     {
         $conf = "[general]\n" .
@@ -36,6 +44,8 @@ class CdrConf extends AsteriskConfigClass
             "usegmtime=no\n" .
             "loguniqueid=yes\n" .
             "loguserfield=yes\n";
+
+        // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . '/cdr.conf', $conf);
     }
 }

@@ -20,6 +20,13 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+/**
+ * Class QueueRulesConf
+ *
+ * Represents the queuerules.conf configuration file in Asterisk.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class QueueRulesConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -27,9 +34,17 @@ class QueueRulesConf extends AsteriskConfigClass
 
     protected string $description = 'queuerules.conf';
 
+
+    /**
+     * Generates the queuerules.conf configuration content and writes it to the file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
         $conf = '';
+
+        // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . '/queuerules.conf', $conf);
     }
 }

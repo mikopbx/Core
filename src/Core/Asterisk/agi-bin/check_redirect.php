@@ -31,7 +31,7 @@ $linkedid   = $agi->get_variable('CHANNEL(linkedid)', true);
 if ($chan === '' && 'ANSWER' === $DIALSTATUS) {
     exit;
 }
-// Обнуляем значение переменной.
+// Reset the value of the variable.
 $agi->set_variable('BLINDTRANSFER', '');
 
 try {

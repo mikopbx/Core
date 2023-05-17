@@ -22,6 +22,11 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
+/**
+ * Generates the configuration content for cel.conf and cel_beanstalkd.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class CelConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -30,6 +35,9 @@ class CelConf extends AsteriskConfigClass
     public const BEANSTALK_TUBE = 'asterisk-cel';
     protected string $description = 'cel.conf';
 
+    /**
+     * Generates the configuration content for cel.conf and cel_beanstalkd.conf
+     */
     protected function generateConfigProtected(): void
     {
         $config = $this->getDI()->get('config')->beanstalk;
@@ -40,6 +48,8 @@ class CelConf extends AsteriskConfigClass
             "dateformat = %F %T\n\n" .
             "[manager]\n" .
             "enabled = yes\n\n";
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/cel.conf', $conf);
 
         $conf = "[general]" .PHP_EOL.
@@ -48,6 +58,8 @@ class CelConf extends AsteriskConfigClass
                 "port = ".$config->port .PHP_EOL.
                 "priority = 1" .PHP_EOL.
                 "tube = asterisk-cel".PHP_EOL;
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/cel_beanstalkd.conf', $conf);
 
     }

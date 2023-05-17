@@ -23,6 +23,11 @@ use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
 use MikoPBX\Core\System\{Storage, Util};
 
+/**
+ * Represents the Asterisk configuration class for handling extensions.conf and 99-extensions-override.lua
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class ExtensionsConf extends AsteriskConfigClass
 {
     public int $priority = 500;
@@ -33,12 +38,12 @@ class ExtensionsConf extends AsteriskConfigClass
     protected string $description = 'extensions.conf';
 
     /**
-     * Sorts array by priority field
+     * Sorts an array by the priority field.
      *
-     * @param $a
-     * @param $b
+     * @param array $a The first array to compare.
+     * @param array $b The second array to compare.
      *
-     * @return int|null
+     * @return int The comparison result.
      */
     public static function sortArrayByPriority(array $a, array $b): int
     {
@@ -52,7 +57,7 @@ class ExtensionsConf extends AsteriskConfigClass
     }
 
     /**
-     * The main extensions.conf generator
+     * Generates the main extensions.conf configuration.
      */
     protected function generateConfigProtected(): void
     {
@@ -74,20 +79,21 @@ class ExtensionsConf extends AsteriskConfigClass
         $conf .= PHP_EOL.PHP_EOL;
         $conf .= "[general]".PHP_EOL;
 
-        // Контекст для внутренних вызовов.
+        // Context for internal calls.
         $conf .= InternalContexts::generate();
-        // Создаем диалплан внутренних учеток.
+        // Generate internal account dialplan.
         $this->generateOtherExten($conf);
-        // Контекст для внутренних переадресаций.
+        // Context for internal transfers.
         $this->generateInternalTransfer($conf);
-        // Создаем контекст хинтов.
+        // Generate SIP hints context.
         $this->generateSipHints($conf);
-        // Создаем контекст (исходящие звонки).
+        // Generate outgoing calls context.
         $conf .= OutgoingContext::generate();
 
-        // Описываем контекст для публичных входящих.
+        // Describe context for public incoming calls.
         $conf .= $this->generatePublicContext();
 
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/extensions.conf', $conf);
         $confLua =  '-- extensions["test-default"] = {'.PHP_EOL.
                     '--    ["100"] = function(context, extension)'.PHP_EOL.
@@ -95,17 +101,19 @@ class ExtensionsConf extends AsteriskConfigClass
                     '--    end;'.PHP_EOL.
                     '-- -- Forbidden to describe contexts defined in extensions.conf. This will cause a crash asterisk.'.PHP_EOL.
                     '-- };';
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.luaDialplanDir') . '/99-extensions-override.lua', $confLua);
     }
 
     /**
-     * Генератор прочих контекстов.
+     * Generates additional contexts.
      *
-     * @param $conf
+     * @param string $conf The current configuration.
      */
     private function generateOtherExten(&$conf): void
     {
-        // Контекст для AMI originate. Без него отображается не корректный CallerID.
+        // Context for AMI originate. Without it, the CallerID is not displayed correctly.
         $conf .= '[sipregistrations]' . "\n\n";
         // messages
         // https://community.asterisk.org/t/messagesend-to-all-pjsip-contacts/75485/5
@@ -118,6 +126,7 @@ class ExtensionsConf extends AsteriskConfigClass
                  'same => n,EndWhile' . PHP_EOL ."\t".
                  'same => n,HangUp()' . PHP_EOL .PHP_EOL;
 
+        // internal-originate context for AMI originate
         $conf .= '[internal-originate]' . PHP_EOL .
             'exten => '.self::ALL_EXTENSION.',1,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})' . PHP_EOL . "\t" .
             'same => n,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${pt1c_cid})' . PHP_EOL . "\t" .
@@ -138,12 +147,14 @@ class ExtensionsConf extends AsteriskConfigClass
             'exten => _[hit],1,Gosub(interception_bridge_result,${EXTEN},1)' . "\n\t".
             'same => n,Hangup' . "\n\n".
 
+            // internal-originate-queue context for AMI originate with queue support
             '[internal-originate-queue]' . PHP_EOL .
             'exten => '.self::ALL_EXTENSION.',1,Set(_NOCDR=1)' . PHP_EOL . "\t" .
             'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Queue(${SRC_QUEUE},kT,,,300,,,originate-answer-channel))' . PHP_EOL . PHP_EOL .
             'exten => _[hit],1,Hangup' . "\n\n".
 
+            // Additional contexts
             '[originate-create-channel] ' . PHP_EOL .
             'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup()'. PHP_EOL . "\t" .
             'same => n,ExecIf($["${PT1C_SIP_HEADER}x" != "x"]?Set(PJSIP_HEADER(add,${CUT(PT1C_SIP_HEADER,:,1)})=${CUT(PT1C_SIP_HEADER,:,2)})) ' . PHP_EOL . "\t" .
@@ -200,45 +211,57 @@ class ExtensionsConf extends AsteriskConfigClass
     }
 
     /**
-     * Генератор контекста для переадресаций.
+     * Generates the internal transfer configuration.
      *
-     * @param $conf
+     * @param string $conf The configuration string.
+     *
+     * @return void
      */
     private function generateInternalTransfer(&$conf): void
     {
         $conf              .= "[internal-transfer] \n";
+
+        // Call the hook method to include internal transfer configurations from modules
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GET_INCLUDE_INTERNAL_TRANSFER);
+
+        // Call the hook method to generate internal transfer extensions from modules
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GEN_INTERNAL_TRANSFER);
+
         $conf .= 'exten => h,1,Goto(transfer_dial_hangup,${EXTEN},1)' . "\n\n";
     }
 
     /**
-     * Генератор хинтов SIP.
+     * Generates SIP hints configuration.
      *
-     * @param $conf
+     * @param string $conf The configuration string.
+     *
+     * @return void
      */
     private function generateSipHints(&$conf): void
     {
         $conf .= "[internal-hints] \n";
+
+        // Call the hook method to generate SIP hints from modules
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GEN_HINTS);
         $conf .= "\n\n";
     }
 
     /**
-     * Контекст для входящих внешних звонков без авторизации.
+     * Generates the public context configuration for incoming external calls without authentication.
      *
+     * @return string The generated configuration.
      */
     public function generatePublicContext(): string
     {
         $conf              = "\n";
         $conf              .= IncomingContexts::generate('none');
         $conf              .= "[public-direct-dial] \n";
+
+        // Call the hook method to generate public context configurations from modules
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PUBLIC_CONTEXT);
+
         $filter = ["provider IS NULL AND priority<>9999"];
 
-        /**
-         * @var array
-         */
         $m_data = IncomingRoutingTable::find($filter);
         if (count($m_data->toArray()) > 0) {
             $conf .= 'include => none-incoming';
@@ -247,12 +270,19 @@ class ExtensionsConf extends AsteriskConfigClass
         return $conf;
     }
 
+    /**
+     * Get the extension by the provided DID.
+     *
+     * @param string $did The DID to get the extension for.
+     *
+     * @return string The generated extension.
+     */
     public static function getExtenByDid($did):string
     {
         if(mb_strpos($did, '_') === 0){
             $ext_prefix = '';
         }elseif(preg_match_all('/^[.|!|N|X|Z|0-9|\[|\]|\-]+$/m', $did, $matches, PREG_SET_ORDER) === 1){
-            // Это скорее всего шаблон EXTEN.
+            // It is likely an EXTEN pattern.
             $ext_prefix = '_';
         }else{
             $ext_prefix = '';

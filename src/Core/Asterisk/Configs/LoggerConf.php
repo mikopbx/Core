@@ -23,17 +23,43 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
+/**
+ * Class LoggerConf
+ *
+ * Represents the configuration for logger.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class LoggerConf extends AsteriskConfigClass
 {
-    // The module hook applying priority
+    /**
+     * The module hook applying priority.
+     *
+     * @var int
+     */
     public int $priority = 1000;
 
+    /**
+     * The description of the configuration.
+     *
+     * @var string
+     */
     protected string $description = 'logger.conf';
 
+
+    /**
+     * Generates the configuration for the logger.conf file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
         $logDir = System::getLogDir() . '/asterisk/';
+
+        // Create the log directory if it doesn't exist
         Util::mwMkdir($logDir);
+
+        // Generate the configuration content
         $conf = "[general]\n";
         $conf .= "queue_log = no\n";
         $conf .= "dateformat = %F %T\n";
@@ -46,6 +72,7 @@ class LoggerConf extends AsteriskConfigClass
         $conf .= "{$logDir}verbose => verbose(3),dtmf,fax,warning\n";
         $conf .= "\n";
 
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/logger.conf', $conf);
     }
 }

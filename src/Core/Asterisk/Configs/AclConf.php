@@ -24,17 +24,25 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\Util;
 
+/**
+ * Represents the AclConf class responsible for generating acl.conf configuration file.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class AclConf extends AsteriskConfigClass
 {
-    // The module hook applying priority
+    /**
+     * The module hook applying priority.
+     */
     public int $priority = 1000;
 
     protected string $description = 'acl.conf';
     protected array $data_peers;
 
     /**
+     * Returns the models that this class depends on.
      *
-     * @return array
+     * @return array The array of dependence models.
      */
     public function getDependenceModels(): array
     {
@@ -42,18 +50,18 @@ class AclConf extends AsteriskConfigClass
     }
 
     /**
-     * Получение настроек.
+     * Retrieves the settings.
      */
     public function getSettings(): void
     {
-        // Настройки для текущего класса.
+        // Settings for the current class.
         $this->data_peers = $this->getPeers();
     }
 
     /**
-     * Получение данных по SIP пирам.
+     * Retrieves the data for SIP peers.
      *
-     * @return array
+     * @return array The array of SIP peers data.
      */
     private function getPeers(): array
     {
@@ -74,6 +82,9 @@ class AclConf extends AsteriskConfigClass
         return $data;
     }
 
+    /**
+     * Generates the protected configuration content.
+     */
     protected function generateConfigProtected(): void
     {
         $conf_acl = '';

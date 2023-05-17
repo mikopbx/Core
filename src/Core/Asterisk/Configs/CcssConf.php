@@ -20,6 +20,11 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+/**
+ * Generates the configuration content for ccss.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class CcssConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -27,11 +32,15 @@ class CcssConf extends AsteriskConfigClass
 
     protected string $description = 'ccss.conf';
 
+    /**
+     * Generates the configuration content for ccss.conf.
+     */
     protected function generateConfigProtected(): void
     {
         $conf = "[general]\n" .
             "cc_max_requests = 20\n";
 
+        // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . '/ccss.conf', $conf);
     }
 

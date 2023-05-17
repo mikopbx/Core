@@ -29,6 +29,11 @@ use MikoPBX\Core\System\Util;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
 
+/**
+ * Base class for AsteriskConfig children
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 {
     // The module hook applying priority
@@ -72,7 +77,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     protected array $generalSettings;
 
     /**
-     * CoreConfigClass constructor.
+     * AsteriskConfigClass constructor.
      */
     public function __construct()
     {
@@ -85,12 +90,12 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
 
     /**
-     * Calls core and enabled additional modules method by name and returns plain text result
+     * Calls the specified method on each module object and returns the concatenated results as a string.
      *
-     * @param string $methodName
-     * @param array $arguments
+     * @param string $methodName The name of the method to call.
+     * @param array $arguments The arguments to pass to the method.
      *
-     * @return string
+     * @return string The concatenated results as a string.
      */
     public function hookModulesMethod(string $methodName, array $arguments = []): string
     {
@@ -140,11 +145,12 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     }
 
     /**
-     * Makes pretty module text block into config file
+     * Adds comments and separators around the provided addition to create a configuration block.
      *
-     * @param string $addition
-     * @param string $externalModuleUniqueId
-     * @return string
+     * @param string $addition The content to add within the block.
+     * @param string $externalModuleUniqueId The unique identifier of the external module (optional).
+     *
+     * @return string The content wrapped in a configuration block with comments.
      */
     protected function confBlockWithComments(string $addition, string $externalModuleUniqueId = ''): string
     {
@@ -162,20 +168,20 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
      */
     public function generateConfig(): void
     {
-        $this->echoGenerateConfig();
-        $this->getSettings();
-        $this->generateConfigProtected();
-        $this->echoDone();
+        $this->echoGenerateConfig(); // Display "Generating configuration" message
+        $this->getSettings(); // Retrieve the required settings
+        $this->generateConfigProtected(); // Generate the protected configuration content
+        $this->echoDone(); // Display "Configuration generated successfully" message
     }
 
     /**
-     * Shows boot message which module was started
+     * Displays a message indicating the start of the configuration generation process.
      */
     protected function echoGenerateConfig(): void
     {
         if ($this->booting === true && !empty($this->description)) {
             $this->stageMessage = "   |- generate config {$this->description}...";
-            Util::echoWithSyslog($this->stageMessage);
+            Util::echoWithSyslog($this->stageMessage);  // Output the message and log it in syslog
         }
     }
 
@@ -194,12 +200,12 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     }
 
     /**
-     * Shows boot message which module generator was finished
+     * Displays a message indicating the successful completion of the configuration generation process.
      */
     protected function echoDone(): void
     {
         if ($this->booting === true && !empty($this->description)) {
-            Util::echoResult($this->stageMessage);
+            Util::echoResult($this->stageMessage); // Output the completion message
             $this->stageMessage = '';
         }
     }

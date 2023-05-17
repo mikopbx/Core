@@ -23,6 +23,13 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
+/**
+ * Class HepConf
+ *
+ * Represents a configuration class for HEP (Homer Encapsulation Protocol).
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class HepConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -30,6 +37,11 @@ class HepConf extends AsteriskConfigClass
 
     protected string $description = 'cdr.conf';
 
+    /**
+     * Generates the configuration for the hep.conf file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
         $conf = "[general]\n" .
@@ -37,9 +49,16 @@ class HepConf extends AsteriskConfigClass
             "capture_address = 172.16.156.197:9060\n" .
             ";capture_password = foo\n" .
             "capture_id = 1234 \n";
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/hep.conf', $conf);
     }
 
+    /**
+     * Reloads the HEP module.
+     *
+     * @return void
+     */
     public static function reload()
     {
         $asteriskPath = Util::which('asterisk');

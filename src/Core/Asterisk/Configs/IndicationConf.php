@@ -23,6 +23,13 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\Util;
 use function MikoPBX\Common\Config\appPath;
 
+/**
+ * Class IndicationConf
+ *
+ * Represents a configuration class for indications.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class IndicationConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -30,12 +37,19 @@ class IndicationConf extends AsteriskConfigClass
 
     protected string $description = 'indications.conf';
 
+    /**
+     * Generates the configuration for the indications.conf file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
-        $country = 'ru';//TODO:: Добавить в интерфейс если это важная опция
+        $country = 'ru'; // TODO: Add to the interface if it's an important option
         $filePath = appPath('src/Core/Asterisk/Configs/Samples/indications.conf.sample');
         $data     = file_get_contents($filePath);
         $conf     = str_replace('{country}', $country, $data);
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/indications.conf', $conf);
     }
 

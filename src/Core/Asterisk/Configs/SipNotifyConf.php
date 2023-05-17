@@ -22,6 +22,13 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
+/**
+ * Class SipNotifyConf
+ *
+ * Represents the sip_notify.conf configuration file.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class SipNotifyConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -29,29 +36,40 @@ class SipNotifyConf extends AsteriskConfigClass
 
     protected string $description = 'sip_notify.conf';
 
+    /**
+     * Generate the configuration content for sip_notify.conf.
+     *
+     * This method generates the configuration content for the sip_notify.conf file,
+     * including the definitions for Yealink and Snom phone notifications.
+     */
     protected function generateConfigProtected(): void
     {
-        // Ребут телефонов Yealink.
+        // Yealink phone reboot notification
         // CLI> sip notify yealink-reboot autoprovision_user
-        // autoprovision_user - id sip учетной записи.
+        // autoprovision_user - id sip account
         $conf = '';
         $conf .= "[yealink-reboot]\n" .
             "Event=>check-sync\;reboot=true\n" .
             "Content-Length=>0\n" .
             "Content=>\n\n";
 
+        // Snom phone reboot notification
         $conf .= "[snom-reboot]\n" .
             "Event=>check-sync\;reboot=true\n" .
             "Content=>\n\n";
-        // Пример
-        // CLI> sip notify yealink-action-ok autoprovision_user
-        // http://support.yealink.com/faq/faqInfo?id=173
+
+        // Yealink action OK notification
         $conf .= "[yealink-action-ok]\n" .
             "Content-Type=>message/sipfrag\n" .
             "Event=>ACTION-URI\n" .
             "Content=>key=SPEAKER\n" .
             "Content=>\n\n";
 
+        // Example
+        // CLI> sip notify yealink-action-ok autoprovision_user
+        // http://support.yealink.com/faq/faqInfo?id=173
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/pjsip_notify.conf', $conf);
     }
 }

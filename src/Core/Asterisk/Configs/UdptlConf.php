@@ -20,6 +20,13 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+/**
+ * Class UdptlConf
+ *
+ * Represents the udptl.conf configuration file.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class UdptlConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -27,9 +34,17 @@ class UdptlConf extends AsteriskConfigClass
 
     protected string $description = 'udptl.conf';
 
+
+    /**
+     * Generate the configuration content for udptl.conf.
+     *
+     * This method generates the configuration content for the udptl.conf file.
+     */
     protected function generateConfigProtected(): void
     {
         $conf = '';
+
+        // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . '/udptl.conf', $conf);
     }
 }

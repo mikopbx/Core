@@ -23,9 +23,13 @@ use MikoPBX\Core\Asterisk\AGI;
 
 require_once 'Globals.php';
 
-// Функция позволяет получить активные каналы. 
-// Возвращает ассоциативный массив. Ключ - Linkedid, значение - массив каналов. 
-function getActiveIdChannels($EXTEN)
+/**
+ * Get active channels by extension.
+ *
+ * @param string $EXTEN The extension to retrieve active channels for.
+ * @return array An associative array where the key is the Linkedid and the value is an array of channels.
+ */
+function getActiveIdChannels(string $EXTEN)
 {
     $ParkeeChannel = '';
     $am            = Util::getAstManager('off');

@@ -20,6 +20,11 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+/**
+ * Generates the configuration content for cdr_sqlite3_custom.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 class CdrSqlite3CustomConf extends AsteriskConfigClass
 {
     // The module hook applying priority
@@ -27,6 +32,9 @@ class CdrSqlite3CustomConf extends AsteriskConfigClass
 
     protected string $description = 'cdr_sqlite3_custom.conf';
 
+    /**
+     * Generates the configuration content for cdr_sqlite3_custom.conf.
+     */
     protected function generateConfigProtected(): void
     {
         $cal     = 'start, answer, end, clid, src, dst, dnid, dcontext, channel, dstchannel, lastapp, lastdata, duration, billsec, disposition, amaflags, accountcode, uniqueid, userfield, recordingfile, linkedid';
@@ -42,6 +50,7 @@ class CdrSqlite3CustomConf extends AsteriskConfigClass
             "columns => $cal \n" .
             "values => $values \n";
 
+        // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . "/cdr_sqlite3_custom.conf", $conf);
     }
 }
