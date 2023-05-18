@@ -319,4 +319,4 @@ class WorkerCdr extends WorkerBase
 }
 
 // Start worker process
-WorkerCdr::startWorker($argv??null);
+WorkerCdr::startWorker($argv??[]);

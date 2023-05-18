@@ -120,6 +120,4 @@ class UpdateSystemConfig extends Di\Injectable
         return version_compare($a, $b);
     }
 
-
-
 }

@@ -29,16 +29,49 @@ use Throwable;
 
 use function GuzzleHttp\Psr7\str;
 
+/**
+ * Base class for workers. This class is responsible for basic worker management and
+ * includes methods for handling signals, saving PID files, and managing worker processes.
+ *
+ * @package MikoPBX\Core\Workers
+ */
 abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 {
+    /**
+     * Maximum number of processes that can be created.
+     *
+     * @var int
+     */
     public int $maxProc = 1;
+
+    /**
+     * Instance of the Asterisk Manager.
+     *
+     * @var AsteriskManager
+     */
     protected AsteriskManager $am;
+
+    /**
+     * Flag indicating whether the worker needs to be restarted.
+     *
+     * @var bool
+     */
     protected bool $needRestart = false;
+
+    /**
+     * Time the worker started.
+     *
+     * @var float
+     */
     protected float $workerStartTime;
 
     /**
-     * Workers shared constructor
-     * Do not remove FINAL there, use START function to add something
+     * Constructs a WorkerBase instance.
+     *
+     * It is declared as final to prevent overriding in child classes.
+     * Any additional initialization required in child classes should be done in the start() method.
+     *
+     * @return void
      */
     final public function __construct()
     {
@@ -54,7 +87,9 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     }
 
     /**
-     * Saves pid to pidfile
+     * Save PID to a file.
+     *
+     * @return void
      */
     private function savePidFile(): void
     {
@@ -78,7 +113,9 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     }
 
     /**
-     * Create PID file for worker
+     * Generate the PID file path for the worker.
+     *
+     * @return string The path to the PID file.
      */
     public function getPidFile(): string
     {
@@ -88,9 +125,11 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     }
 
     /**
-     * Process async system signal
+     * Handles the received signal.
      *
-     * @param int $signal
+     * @param int $signal The signal to handle.
+     *
+     * @return void
      */
     public function signalHandler(int $signal): void
     {
@@ -99,8 +138,9 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     }
 
     /**
-     * Process shutdown event
+     * Handles the shutdown event.
      *
+     * @return void
      */
     public function shutdownHandler(): void
     {
@@ -121,9 +161,11 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
 
 
     /**
-     * Ping callback for keep alive check
+     * Callback for the ping to keep the connection alive.
      *
-     * @param BeanstalkClient $message
+     * @param BeanstalkClient $message The received message.
+     *
+     * @return void
      */
     public function pingCallBack(BeanstalkClient $message): void
     {
@@ -131,11 +173,11 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     }
 
     /**
-     * If it was Ping request to check worker, we answer Pong and return True
+     * Replies to a ping request from the worker.
      *
-     * @param $parameters
+     * @param $parameters The parameters of the request.
      *
-     * @return bool
+     * @return bool True if the ping request was processed, false otherwise.
      */
     public function replyOnPingRequest($parameters): bool
     {
@@ -150,11 +192,11 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     }
 
     /**
-     * Makes ping tube from classname and ping word
+     * Generates the name for the ping tube based on the class name.
      *
-     * @param string $workerClassName
+     * @param string $workerClassName The class name of the worker.
      *
-     * @return string
+     * @return string The generated ping tube name.
      */
     public function makePingTubeName(string $workerClassName): string
     {
@@ -162,7 +204,9 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     }
 
     /**
-     * Deletes old PID files
+     * The destructor for the WorkerBase class.
+     *
+     * @return void
      */
     public function __destruct()
     {
@@ -170,24 +214,37 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     }
 
     /**
-     * @param      $argv
-     * @param bool $setProcName
+     * Starts the worker.
+     *
+     * @param array $argv The command-line arguments.
+     * @param bool $setProcName Flag to set the process name. Default is true.
+     *
+     * @return void
      */
-    public static function startWorker($argv, bool $setProcName = true):void{
+    public static function startWorker(array $argv, bool $setProcName = true):void{
+        // The action command parsed from command-line arguments
         $action = $argv[1]??'';
         if ($action === 'start') {
+
+            // Get the class name of the worker
             $workerClassname = static::class;
+
+            // Set process title if the flag is set to true
             if($setProcName){
                 cli_set_process_title($workerClassname);
             }
             try {
+                // Create a new worker instance and start it
                 $worker = new $workerClassname();
                 $worker->start($argv);
                 Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
             } catch (Throwable $e) {
+                // Handle exceptions, log error messages, and pause execution
                 global $errorLogger;
                 $errorLogger->captureException($e);
                 Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
+
+                // Pause execution for 1 second
                 sleep(1);
             }
         }

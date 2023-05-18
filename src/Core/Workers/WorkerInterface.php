@@ -43,8 +43,8 @@ interface WorkerInterface
     /**
      * Worker entry point
      *
-     * @param mixed $params
+     * @param array $params
      */
-    public function start($params): void;
+    public function start(array $params): void;
 
 }

@@ -25,15 +25,25 @@ use MikoPBX\Core\System\Configs\SSHConf;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp;
 
+/**
+ * Class CloudProvisioning
+ *
+ * Handles the provisioning process for cloud solutions.
+ *
+ * @package MikoPBX\Core\System
+ */
 class CloudProvisioning
 {
     public const PBX_SETTING_KEY = 'CloudProvisioning';
     public const HTTP_TIMEOUT = 10;
 
+    /**
+     * Starts the cloud provisioning process.
+     */
     public static function start():void
     {
         if(PbxSettings::findFirst('key="'.self::PBX_SETTING_KEY.'"')){
-            // Уже отработали ранее.
+            // Already processed before.
             return;
         }
         $cp = new self();
@@ -53,7 +63,7 @@ class CloudProvisioning
         }
         $cp->updatePbxSettings(self::PBX_SETTING_KEY, $resultProvisioning);
         if($resultProvisioning === '1'){
-            // Включаем firewall.
+            // Enable firewall.
             $cp->updatePbxSettings('PBXFirewallEnabled', '1');
             $cp->updatePbxSettings('PBXFail2BanEnabled', '1');
             $cp->checkConnectStorage();
@@ -61,14 +71,16 @@ class CloudProvisioning
     }
 
     /**
-     * Автоматическое подключение диска для хранения данных.
-     * @return void
+     * Checks and connects the storage disk automatically.
      */
     private function checkConnectStorage():void{
         $phpPath = Util::which('php');
         Processes::mwExec($phpPath.' -f /etc/rc/connect.storage auto');
     }
 
+    /**
+     * Updates the SSH password.
+     */
     private function updateSshPassword():void{
         $data = 'S'.md5(time());
         $this->updatePbxSettings('SSHPassword', $data);
@@ -78,11 +90,12 @@ class CloudProvisioning
     }
 
     /**
-     * Обновление пароля к SSH.
-     * @param $keyName
-     * @param $data
+     * Updates the PBX settings with the provided key and data.
+     *
+     * @param string $keyName The key name.
+     * @param mixed $data The data to be stored.
      */
-    private function updatePbxSettings($keyName, $data):void{
+    private function updatePbxSettings(string $keyName, $data):void{
         $setting = PbxSettings::findFirst('key="'.$keyName.'"');
         if(!$setting){
             $setting = new PbxSettings();
@@ -98,9 +111,11 @@ class CloudProvisioning
         unset($setting);
     }
 
+
     /**
-     * Обновление ключей ssh.
-     * @param string $data
+     * Updates the SSH keys.
+     *
+     * @param string $data The SSH keys data.
      */
     private function updateSSHKeys(string $data):void{
         if(empty($data)){
@@ -114,9 +129,12 @@ class CloudProvisioning
     }
 
     /**
-     * Обновление имени хост.
+     * Updates the LAN settings.
+     *
+     * @param string $hostname The hostname.
+     * @param string $extipaddr The external IP address.
      */
-    private function updateLanSettings($hostname, $extipaddr):void{
+    private function updateLanSettings(string $hostname, string $extipaddr):void{
         /** @var LanInterfaces $lanData */
         $lanData = LanInterfaces::findFirst();
         if($lanData){
@@ -139,7 +157,10 @@ class CloudProvisioning
     }
 
     /**
-     * Настройка машины для Google Cloud / Yandex Cloud.
+     * Performs the Google Cloud provisioning.
+     * Google Cloud / Yandex Cloud.
+     *
+     * @return bool True if the provisioning was successful, false otherwise.
      */
     public function googleProvisioning():bool
     {
@@ -166,7 +187,13 @@ class CloudProvisioning
         return true;
     }
 
-    private function getMetaDataMCS($url):string
+    /**
+     * Retrieves metadata from the MCS endpoint.
+     *
+     * @param string $url The URL of the metadata endpoint.
+     * @return string The response body.
+     */
+    private function getMetaDataMCS(string $url):string
     {
         $baseUrl = 'http://169.254.169.254/latest/meta-data/';
         $client  = new GuzzleHttp\Client();
@@ -195,8 +222,9 @@ class CloudProvisioning
     }
 
     /**
-     * Автонастройка для Mail (VK) Cloud Solutions
-     * @return bool
+     * Performs the Mail (VK) Cloud Solutions provisioning.
+     *
+     * @return bool True if the provisioning was successful, false otherwise.
      */
     public function mcsProvisioning():bool
     {
@@ -224,9 +252,9 @@ class CloudProvisioning
     }
 
     /**
-     * Устанавливает пароль к web интерфейсу исходя из имени инстанса и его идентификатора.
-     * @param $webPassword
-     * @return void
+     * Updates the web password based on the instance name and ID.
+     *
+     * @param string $webPassword The web password.
      */
     private function updateWebPassword($webPassword):void
     {
@@ -238,7 +266,9 @@ class CloudProvisioning
     }
 
     /**
-     * Настройка машины для Azure Cloud
+     * Performs the Azure Cloud provisioning.
+     *
+     * @return bool True if the provisioning was successful, false otherwise.
      */
     public function azureProvisioning():bool
     {
@@ -307,10 +337,11 @@ class CloudProvisioning
     }
 
     /**
-     * Возвращает строку XML для ответа о готовкности машины.
-     * @param $containerId
-     * @param $instanceId
-     * @return string
+     * Returns the Azure XML response string for machine readiness.
+     *
+     * @param string $containerId The container ID.
+     * @param string $instanceId The instance ID.
+     * @return string The XML response string.
      */
     private function getAzureXmlResponse($containerId, $instanceId):string
     {

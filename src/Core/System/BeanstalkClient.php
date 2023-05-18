@@ -25,6 +25,13 @@ use Pheanstalk\Job;
 use Pheanstalk\Pheanstalk;
 use Throwable;
 
+/**
+ * Class BeanstalkClient
+ *
+ * Represents a client for interacting with Beanstalkd server.
+ *
+ * @package MikoPBX\Core\System
+ */
 class BeanstalkClient extends Injectable
 {
     public const INBOX_PREFIX = 'INBOX_';
@@ -44,8 +51,8 @@ class BeanstalkClient extends Injectable
     /**
      * BeanstalkClient constructor.
      *
-     * @param string $tube
-     * @param string $port
+     * @param string $tube The name of the tube.
+     * @param string $port The port number for the Beanstalkd server.
      */
     public function __construct(string $tube = 'default', string $port = '')
     {
@@ -55,7 +62,7 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Recreates connection to the beanstalkd server
+     * Recreates connection to the Beanstalkd server.
      */
     public function reconnect(): void
     {
@@ -235,10 +242,9 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Job worker for loop cycles
+     * Waits for a job from the Beanstalkd server.
      *
-     * @param float $timeout
-     *
+     * @param float $timeout The timeout value in seconds.
      */
     public function wait(float $timeout = 5): void
     {
@@ -254,9 +260,9 @@ class BeanstalkClient extends Injectable
             $workTime = (microtime(true) - $start);
             if ($workTime < $timeout) {
                 usleep(100000);
-                // Если время ожидания $worktime меньше значения таймаута $timeout
-                // И задача не получена $job === null
-                // Что то не то, вероятно потеряна связь с сервером очередей
+                // If the work time $workTime is less than the timeout value $timeout
+                // and no job is received $job === null
+                // something is wrong, probably lost connection with the queue server
                 $this->reconnect();
             }
             if (is_array($this->timeout_handler)) {
@@ -299,7 +305,9 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * @param $job
+     * Buries a job in the Beanstalkd server.
+     *
+     * @param mixed $job The job to be buried.
      */
     private function buryJob($job):void
     {
@@ -314,16 +322,16 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Gets request body
+     * Returns the body of the message.
      *
-     * @return string
+     * @return string The body of the message.
      */
     public function getBody(): string
     {
         if (is_array($this->message)
             && isset($this->message['inbox_tube'])
             && count($this->message) === 2) {
-            // Это поступил request, треует ответа. Данные были переданы первым параметром массива.
+            // If it's a request that requires a response, the data was passed as the first element of the array.
             $message_data = $this->message[0];
         } else {
             $message_data = $this->message;
@@ -333,9 +341,10 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Sends response to queue
+     * Sends a reply message.
      *
-     * @param $response
+     * @param mixed $response The response message.
+     * @return void
      */
     public function reply($response): void
     {
@@ -347,8 +356,10 @@ class BeanstalkClient extends Injectable
     }
 
     /**
+     * Sets the error handler for the Beanstalk client.
      *
-     * @param $handler
+     * @param mixed $handler The error handler.
+     * @return void
      */
     public function setErrorHandler($handler): void
     {
@@ -356,7 +367,10 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * @param $handler
+     * Sets the timeout handler for the Beanstalk client.
+     *
+     * @param mixed $handler The timeout handler.
+     * @return void
      */
     public function setTimeoutHandler($handler): void
     {
@@ -364,7 +378,9 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * @return int
+     * Returns the number of times the Beanstalk client has reconnected.
+     *
+     * @return int The number of reconnects.
      */
     public function reconnectsCount(): int
     {
@@ -372,11 +388,10 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Gets all messages from tube and clean it
+     * Retrieves messages from a tube.
      *
-     * @param string $tube
-     *
-     * @return array
+     * @param string $tube The name of the tube. If empty, uses the default tube.
+     * @return array An array of messages retrieved from the tube.
      */
     public function getMessagesFromTube(string $tube = ''): array
     {

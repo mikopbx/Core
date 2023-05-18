@@ -67,6 +67,11 @@ class Storage extends ModelsBase
 
 
     /**
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $media = '';
+
+    /**
      * Initialize the model.
      */
     public function initialize(): void

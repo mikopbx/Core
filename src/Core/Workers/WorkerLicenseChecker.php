@@ -42,4 +42,4 @@ class WorkerLicenseChecker extends WorkerBase
 }
 
 // Start worker process
-WorkerLicenseChecker::startWorker($argv??null);
+WorkerLicenseChecker::startWorker($argv??[]);

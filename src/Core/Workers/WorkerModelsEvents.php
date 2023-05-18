@@ -1091,4 +1091,4 @@ class WorkerModelsEvents extends WorkerBase
 /**
  * The start point
  */
-WorkerModelsEvents::startWorker($argv ?? null);
+WorkerModelsEvents::startWorker($argv??[]);

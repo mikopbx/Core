@@ -17,55 +17,55 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-# $root_dir - каталог, файлы в котором доступны для скачивания через nginx.
+# $root_dir - a directory where files are available for download through nginx.
 #
-# Пример:
-#   Создадим файл и ссылку на него в $root_dir;
+# Example:
+#   Let's create a file and a symlink to it in $root_dir;
 #   echo privet > /tmp/test.txt; ln -s /tmp/test.txt /usr/www/sites/pbxcore/files/cache/test.txt;
-#   Ссылка будет уничтожена через 5 минут.
+#   The symlink will be destroyed after 5 minutes.
 #
-# Пример 2:
-#   Создадим файл и ссылку на него в $root_dir;
+# Example 2:
+#   Let's create a file and a symlink to it in $root_dir;
 #   echo privet > /tmp/temp-test.txt; ln -s /tmp/temp-test.txt /usr/www/sites/pbxcore/files/cache/test.txt;
-#   Ссылка И ФАЙЛ будут уничтожены через 5 минут.
-#   Если имя файла содержит "/temp-", то он также будет удален.
+#   Both the symlink and the file will be destroyed after 5 minutes.
+#   If the file name contains "/temp-", it will also be removed.
 
 root_dir=$(grep -rn 'downloadCacheDir' /etc/inc/mikopbx-settings.json | cut -d'"' -f4);
 if [ ! -d "${root_dir}" ]; then
     exit 2;
 fi
 
-# Получим все символические ссылки.
+# Get all symbolic links.
 links=$(/bin/find "${root_dir}" -mmin +2 -type l 2> /dev/null| head -n 1000);
 
 if [ ! "${links}x" = "x" ]; then
   filesForRemove=$(readlink "$links" | grep '/temp-');
-  # Получим все временные файлы.
+  # Get all temporary files.
   for file in $filesForRemove
   do
-    # Проверим, свободен ли файл.
+    # Check if the file is free.
     /usr/bin/lsof "$file"  > /dev/null 2> /dev/null;
-    # Файл должен существовать.
-    # Должен быть освобожден всеми процессами.
-    # Не являться корневой директорией $root_dir.
+    # The file must exist.
+    # It should be freed by all processes.
+    # It should not be the root directory $root_dir.
     if  [ $? -eq 1 ] && [ ! "${file}" = "${root_dir}" ] && [ -f "${file}" ]; then
       /usr/sbin/rm -rf "$file";
     fi
   done
 fi
 
-# Чистим директории, содержашие ссылки.
+# Clean directories that contain symlinks.
 for file in $links
 do
-  # Проверим, свободен ли файл.
+  # Check if the file is free.
   /usr/bin/lsof "$file"  > /dev/null 2> /dev/null;
   if  [ $? -eq 1 ]; then
       dir=$(/usr/bin/dirname "$file");
-      # Если Файл не является корневой директорией - удаляем.
+      # If the file is not the root directory, remove it.
       if [ ! "${file}" = "${root_dir}" ]; then
         /usr/sbin/rm -rf "${file}";
       fi
-      # Если директория не является корневой - удаляем.
+      #  If the directory is not the root directory, remove it.
       if [ ! "${dir}" = "${root_dir}" ]; then
         /usr/sbin/rm -rf "$dir";
       fi

@@ -23,7 +23,9 @@ use PHPMailer\PHPMailer\PHPMailer;
 use Throwable;
 
 /**
- * Уведомления.
+ * Class Notifications
+ *
+ * @package MikoPBX\Core\System
  */
 class Notifications
 {
@@ -57,7 +59,7 @@ class Notifications
     }
 
     /**
-     * Возвращает инициализированный объект PHPMailer.
+     * Returns an initialized PHPMailer object.
      * @return PHPMailer
      */
     public function getMailSender():PHPMailer
@@ -95,6 +97,11 @@ class Notifications
         return $mail;
     }
 
+    /**
+     * Checks the connection to the specified type of mail server.
+     * @param string $type The type of mail server.
+     * @return bool True if the connection is successful, false otherwise.
+     */
     public static function checkConnection($type):bool
     {
         $timeoutPath = Util::which('timeout');
@@ -108,14 +115,13 @@ class Notifications
     }
 
     /**
-     * Отправка сообщения с использованием PHPMailer
+     * Sends an email using PHPMailer.
      *
-     * @param      $to
-     * @param        $subject
-     * @param        $message
-     * @param string $filename
-     *
-     * @return bool
+     * @param string|array $to The recipient(s) of the email.
+     * @param string $subject The subject of the email.
+     * @param string $message The body of the email.
+     * @param string $filename The path to the file to be attached (optional).
+     * @return bool True if the email is sent successfully, false otherwise.
      */
     public function sendMail($to, $subject, $message, string $filename = ''):bool
     {
@@ -153,8 +159,8 @@ class Notifications
     }
 
     /**
-     * Отправка тестового сообщения.
-     * @return bool
+     * Sends a test email.
+     * @return bool True if the test email is sent successfully, false otherwise.
      */
     public function sendTestMail(): bool{
         if(!self::checkConnection(self::TYPE_PHP_MAILER)){
@@ -165,6 +171,10 @@ class Notifications
         return ($result===true);
     }
 
+    /**
+     * Tests the connection to the msmtp mail server.
+     * @return bool True if the connection is successful, false otherwise.
+     */
     public static function testConnectionMSMTP():bool
     {
         $path = Util::which('msmtp');
@@ -172,6 +182,10 @@ class Notifications
         return ($result === 0);
     }
 
+    /**
+     * Tests the connection to the PHPMailer mail server.
+     * @return bool True if the connection is successful, false otherwise.
+     */
     public function testConnectionPHPMailer():bool
     {
         $mail = $this->getMailSender();

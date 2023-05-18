@@ -129,4 +129,4 @@ class WorkerNotifyError extends WorkerBase
 
 
 // Start worker process
-WorkerNotifyError::startWorker($argv??null);
+WorkerNotifyError::startWorker($argv??[]);

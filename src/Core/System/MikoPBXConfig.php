@@ -23,20 +23,24 @@ use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Di\Injectable;
 
 /**
- * Class Config
+ * Class MikoPBXConfig
+ *
+ * Provides methods to manage MikoPBX general settings.
+ *
+ * @package MikoPBX\Core\System
  */
 class MikoPBXConfig extends Injectable
 {
 
     /**
-     * Saves GeneralSettings value
+     * Saves a value for a general setting.
      *
-     * @param $db_key
-     * @param $value
+     * @param string $db_key The key of the general setting.
+     * @param mixed $value The value to be saved.
      *
-     * @return mixed
+     * @return bool True if the value was successfully saved, false otherwise.
      */
-    public function setGeneralSettings($db_key, $value)
+    public function setGeneralSettings(string $db_key, $value): bool
     {
         $data = PbxSettings::findFirst("key = '$db_key'");
         if (null === $data) {
@@ -50,13 +54,13 @@ class MikoPBXConfig extends Injectable
     }
 
     /**
-     * Deletes GeneralSettings value
+     * Deletes a general setting value.
      *
-     * @param $db_key
+     * @param string $db_key The key of the general setting to be deleted.
      *
-     * @return bool
+     * @return bool True if the value was successfully deleted, false otherwise.
      */
-    public function deleteGeneralSettings($db_key): bool
+    public function deleteGeneralSettings(string $db_key): bool
     {
         $data = PbxSettings::findFirstByKey($db_key);
         if (null === $data) {
@@ -67,11 +71,11 @@ class MikoPBXConfig extends Injectable
     }
 
     /**
-     * Returns general settings array or value, if key was set
+     * Returns the array of general settings or the value of a specific key.
      *
-     * @param string $db_key
+     * @param string $db_key The key of the general setting. If empty, returns all settings.
      *
-     * @return array|string
+     * @return array|string The array of general settings or the value of the specified key.
      */
     public function getGeneralSettings(string $db_key = '')
     {

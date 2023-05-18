@@ -42,6 +42,11 @@ class SentryErrorLogger
     protected bool $enabled; // MikoPBX general settings "send errors to developers"
 
 
+    /**
+     * SentryErrorLogger constructor.
+     *
+     * @param string $libraryName The name of the library.
+     */
     public function __construct($libraryName)
     {
         $this->dsn         = 'https://07be0eff8a5c463fbac3e90ae5c7d039@sentry.miko.ru/1';
@@ -61,10 +66,9 @@ class SentryErrorLogger
     }
 
     /**
-     * Если в настройках PBX разрешено отправлять сообщения об ошибках на сервер,
-     * то функция инициализирует подпистему облачного логирования ошибок Sentry
+     * Initializes the Sentry error logging subsystem if error sending is enabled in the PBX settings.
      *
-     * @return Boolean - initialization result
+     * @return bool The initialization result.
      */
     public function init(): bool
     {
@@ -105,9 +109,9 @@ class SentryErrorLogger
     }
 
     /**
-     * Process errors and send it to sentry cloud
+     * Captures an exception and sends it to the Sentry cloud.
      *
-     * @param Throwable $e
+     * @param Throwable $e The exception to capture.
      */
     public function captureException(Throwable $e): void
     {

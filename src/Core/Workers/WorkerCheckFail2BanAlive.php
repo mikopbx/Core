@@ -44,7 +44,7 @@ class WorkerCheckFail2BanAlive extends WorkerBase
 }
 
 // Start worker process
-WorkerCheckFail2BanAlive::startWorker($argv??null);
+WorkerCheckFail2BanAlive::startWorker($argv??[]);
 
 
 

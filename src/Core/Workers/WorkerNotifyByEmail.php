@@ -119,4 +119,4 @@ class WorkerNotifyByEmail extends WorkerBase
 }
 
 // Start worker process
-WorkerNotifyByEmail::startWorker($argv??null);
+WorkerNotifyByEmail::startWorker($argv??[]);

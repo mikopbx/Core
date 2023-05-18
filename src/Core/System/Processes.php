@@ -23,17 +23,22 @@ namespace MikoPBX\Core\System;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use Phalcon\Di;
 
+/**
+ * Class Processes
+ *
+ * Manage system and PHP processes
+ *
+ * @package MikoPBX\Core\System
+ */
 class Processes
 {
-
     /**
-     * Kills process/daemon by name
+     * Kills a process/daemon by name.
      *
-     * @param $procName
-     *
-     * @return int|null
+     * @param string $procName The name of the process/daemon to kill.
+     * @return int|null The return code of the execution.
      */
-    public static function killByName($procName): ?int
+    public static function killByName(string $procName): ?int
     {
         $killallPath = Util::which('killall');
 
@@ -41,19 +46,18 @@ class Processes
     }
 
     /**
-     * Executes command exec().
+     * Executes a command using exec().
      *
-     * @param $command
-     * @param $outArr
-     * @param $retVal
-     *
-     * @return int
+     * @param string $command The command to execute.
+     * @param array|null $outArr Reference to an array to store the command output.
+     * @param int|null $retVal Reference to a variable to store the return value of the execution.
+     * @return int The return value of the execution.
      */
     public static function mwExec($command, &$outArr = null, &$retVal = null): int
     {
         $retVal = 0;
         $outArr = [];
-        $di     = Di::getDefault();
+        $di = Di::getDefault();
 
         if ($di !== null && $di->getShared('config')->path('core.debugMode')) {
             echo "mwExec(): $command\n";
@@ -64,11 +68,11 @@ class Processes
     }
 
     /**
-     * Executes command exec() as background process with an execution timeout.
+     * Executes a command as a background process with an execution timeout.
      *
-     * @param        $command
-     * @param int    $timeout
-     * @param string $logname
+     * @param string $command The command to execute.
+     * @param int $timeout The timeout value in seconds.
+     * @param string $logname The name of the log file to redirect the output.
      */
     public static function mwExecBgWithTimeout($command, $timeout = 4, $logname = '/dev/null'): void
     {
@@ -79,7 +83,7 @@ class Processes
 
             return;
         }
-        $nohupPath   = Util::which('nohup');
+        $nohupPath = Util::which('nohup');
         $timeoutPath = Util::which('timeout');
         exec("{$nohupPath} {$timeoutPath} {$timeout} {$command} > {$logname} 2>&1 &");
     }
@@ -87,15 +91,15 @@ class Processes
     /**
      * Executes multiple commands.
      *
-     * @param        $arr_cmds
-     * @param array  $out
-     * @param string $logname
+     * @param array $arr_cmds The array of commands to execute.
+     * @param array|null $out Reference to an array to store the output.
+     * @param string $logname The name of the log file to save the output.
      */
     public static function mwExecCommands($arr_cmds, &$out = [], $logname = ''): void
     {
         $out = [];
         foreach ($arr_cmds as $cmd) {
-            $out[]   = "$cmd;";
+            $out[] = "$cmd;";
             $out_cmd = [];
             self::mwExec($cmd, $out_cmd);
             $out = array_merge($out, $out_cmd);
@@ -108,48 +112,49 @@ class Processes
     }
 
     /**
-     * Restart all workers in separate process,
-     * we use this method after module install or delete
+     * Restarts all workers in a separate process.
+     * This method is used after module installation or deletion.
      */
     public static function restartAllWorkers(): void
     {
         $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
-        $phpPath               = Util::which('php');
-        $WorkerSafeScripts     = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
+        $phpPath = Util::which('php');
+        $WorkerSafeScripts = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
         self::mwExec($WorkerSafeScripts);
         Util::sysLogMsg(static::class, "Service asked for WorkerSafeScriptsCore restart", LOG_DEBUG);
     }
 
     /**
-     * Process PHP workers
+     * Manages a PHP worker process.
      *
-     * @param string $className
-     * @param string $paramForPHPWorker
-     * @param string $action
+     * @param string $className The class name of the PHP worker.
+     * @param string $paramForPHPWorker The parameter for the PHP worker.
+     * @param string $action The action to perform (start, stop, restart).
      */
     public static function processPHPWorker(
         string $className,
         string $paramForPHPWorker = 'start',
         string $action = 'restart'
-    ): void {
-        Util::sysLogMsg(__METHOD__, "processPHPWorker ". $className." action-".$action, LOG_DEBUG);
+    ): void
+    {
+        Util::sysLogMsg(__METHOD__, "processPHPWorker " . $className . " action-" . $action, LOG_DEBUG);
         $workerPath = Util::getFilePathByClassName($className);
         if (empty($workerPath)) {
             return;
         }
-        $command         = "php -f {$workerPath}";
-        $path_kill       = Util::which('kill');
+        $command = "php -f {$workerPath}";
+        $path_kill = Util::which('kill');
         $activeProcesses = self::getPidOfProcess($className);
-        $processes       = explode(' ', $activeProcesses);
+        $processes = explode(' ', $activeProcesses);
         if (empty($processes[0])) {
             array_shift($processes);
         }
         $currentProcCount = count($processes);
 
-        if ( ! class_exists($className)) {
+        if (!class_exists($className)) {
             return;
         }
-        $workerObject    = new $className();
+        $workerObject = new $className();
         $neededProcCount = $workerObject->maxProc;
 
         switch ($action) {
@@ -190,10 +195,10 @@ class Processes
                     $countProc4Kill = $neededProcCount - $currentProcCount;
                     // Send SIGUSR1 command to them
                     while ($countProc4Kill >= 0) {
-                        if ( ! isset($processes[$countProc4Kill])) {
+                        if (!isset($processes[$countProc4Kill])) {
                             break;
                         }
-                        // Kill old processes with timeout, maybe it is soft restart and worker die without any help
+                        // Kill old processes with timeout, maybe it is a soft restart and the worker dies without any help
                         self::mwExec("{$path_kill} -SIGUSR1 {$processes[$countProc4Kill]}  > /dev/null 2>&1 &");
                         self::mwExecBg("{$path_kill} -SIGTERM {$activeProcesses}", '/dev/null', 10);
                         $countProc4Kill--;
@@ -205,22 +210,21 @@ class Processes
     }
 
     /**
-     * Возвращает PID процесса по его имени.
+     * Retrieves the PID of a process by its name.
      *
-     * @param        $name
-     * @param string $exclude
-     *
-     * @return string
+     * @param string $name The name of the process.
+     * @param string $exclude The name of the process to exclude.
+     * @return string The PID of the process.
      */
-    public static function getPidOfProcess($name, $exclude = ''): string
+    public static function getPidOfProcess(string $name, string $exclude = ''): string
     {
-        $path_ps   = Util::which('ps');
+        $path_ps = Util::which('ps');
         $path_grep = Util::which('grep');
-        $path_awk  = Util::which('awk');
+        $path_awk = Util::which('awk');
 
-        $name       = addslashes($name);
+        $name = addslashes($name);
         $filter_cmd = '';
-        if ( ! empty($exclude)) {
+        if (!empty($exclude)) {
             $filter_cmd = "| $path_grep -v " . escapeshellarg($exclude);
         }
         $out = [];
@@ -233,17 +237,17 @@ class Processes
     }
 
     /**
-     * Executes command exec() as background process.
+     * Executes a command as a background process.
      *
-     * @param $command
-     * @param $out_file
-     * @param $sleep_time
+     * @param string $command The command to execute.
+     * @param string $out_file The path to the output file.
+     * @param int $sleep_time The sleep time in seconds.
      */
     public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
     {
         $nohupPath = Util::which('nohup');
-        $shPath    = Util::which('sh');
-        $rmPath    = Util::which('rm');
+        $shPath = Util::which('sh');
+        $rmPath = Util::which('rm');
         $sleepPath = Util::which('sleep');
         if ($sleep_time > 0) {
             $filename = '/tmp/' . time() . '_noop.sh';
@@ -256,20 +260,19 @@ class Processes
     }
 
     /**
-     * Manages a daemon/worker process
-     * Returns process statuses by name of it
+     * Manages a daemon/worker process.
+     * Returns process statuses by name.
      *
-     * @param $cmd
-     * @param $param
-     * @param $proc_name
-     * @param $action
-     * @param $out_file
-     *
-     * @return array | bool
+     * @param string $cmd The command to execute.
+     * @param string $param The parameter to pass to the command.
+     * @param string $proc_name The name of the process.
+     * @param string $action The action to perform (status, restart, stop, start).
+     * @param string $out_file The path to the output file.
+     * @return array|bool The status of the process.
      */
     public static function processWorker($cmd, $param, $proc_name, $action, $out_file = '/dev/null')
     {
-        $path_kill  = Util::which('kill');
+        $path_kill = Util::which('kill');
         $path_nohup = Util::which('nohup');
 
         $WorkerPID = self::getPidOfProcess($proc_name);
@@ -302,26 +305,27 @@ class Processes
     }
 
     /**
-     * Запуск демона с контролем аварийного завершения
-     * worker_reload - в случае падения пишет ошибку в syslog и рестартует сдемона.
-     * @param  string    $procName
-     * @param  string    $args
-     * @param  int       $attemptsCount
-     * @param  int       $timout
-     * @return bool
+     * Starts a daemon process with failure control.
+     * The method waits for the process to start and logs an error if it fails.
+     *
+     * @param string $procName The name of the process.
+     * @param string $args The arguments for the process.
+     * @param int $attemptsCount The number of attempts to start the process.
+     * @param int $timout The timeout between attempts in microseconds.
+     * @return bool True if the process starts successfully, false otherwise.
      */
-    public static function safeStartDaemon(string $procName, string $args, int $attemptsCount = 20, int $timout = 1000000):bool
+    public static function safeStartDaemon(string $procName, string $args, int $attemptsCount = 20, int $timout = 1000000): bool
     {
-        $result   = true;
+        $result = true;
         $baseName = "safe-{$procName}";
         $safeLink = "/sbin/{$baseName}";
         Util::createUpdateSymlink('/etc/rc/worker_reload', $safeLink);
         self::killByName($baseName);
         self::killByName($procName);
-        // Запускаем процесс в фоне.
+        // Start the process in the background.
         self::mwExecBg("{$safeLink} {$args}");
 
-        // Ожидаем запуска процесса.
+        // Wait for the process to start.
         $ch = 1;
         while ($ch < $attemptsCount) {
             $pid = self::getPidOfProcess($procName, $baseName);
@@ -329,9 +333,9 @@ class Processes
                 break;
             }
             usleep($timout);
-            $ch ++ ;
+            $ch++;
         }
-        if(empty($pid)){
+        if (empty($pid)) {
             Util::echoWithSyslog(" - Wait for start '{$procName}' fail" . PHP_EOL);
             $result = false;
         }

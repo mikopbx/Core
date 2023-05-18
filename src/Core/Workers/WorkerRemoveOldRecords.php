@@ -127,4 +127,4 @@ class WorkerRemoveOldRecords extends WorkerBase
 }
 
 // Start worker process
-WorkerRemoveOldRecords::startWorker($argv??null);
+WorkerRemoveOldRecords::startWorker($argv??[]);

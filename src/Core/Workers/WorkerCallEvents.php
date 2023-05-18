@@ -28,95 +28,116 @@ use MikoPBX\Core\Asterisk\Configs\CelConf;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
+use Phalcon\Exception;
 use Phalcon\Text;
 
+
+/**
+ * Class WorkerCallEvents
+ *
+ * Worker class that handles call events.
+ * It can add/remove/exist active channels, enable monitor,
+ * start/stop mix monitor, and update recording options among other things.
+ *
+ * @package MikoPBX\Core\Workers
+ */
 class WorkerCallEvents extends WorkerBase
 {
-    public    array $mixMonitorChannels = [];
-    protected bool  $record_calls       = true;
-    protected bool  $split_audio_thread = false;
-    public    array $checkChanHangupTransfer = [];
-    private   array $activeChannels = [];
+    public array $mixMonitorChannels = [];
+    protected bool $record_calls = true;
+    protected bool $split_audio_thread = false;
+    public array $checkChanHangupTransfer = [];
+    private array $activeChannels = [];
 
-    private array $innerNumbers       = [];
-    private array $exceptionsNumbers  = [];
-    private bool  $notRecInner        = false;
-    public const REC_DISABLE          = 'Conversation recording is disabled';
+    private array $innerNumbers = [];
+    private array $exceptionsNumbers = [];
+    private bool $notRecInner = false;
+    public const REC_DISABLE = 'Conversation recording is disabled';
 
     /**
-     * Наполняем кэш реальных каналов.
-     * @param string $channel
+     * Adds a new active channel to the cache.
+     *
+     * @param string $channel The name of the channel to be added.
+     *
      * @return void
      */
-    public function addActiveChan(string $channel):void
+    public function addActiveChan(string $channel): void
     {
-        if(stripos($channel, 'local') === 0){
+        // Exclude local channels
+        if (stripos($channel, 'local') === 0) {
             return;
         }
         $this->activeChannels[$channel] = true;
     }
 
     /**
-     * Очищаем кэш реальных каналов.
-     * @param string $channel
+     * Removes an active channel from the cache.
+     *
+     * @param string $channel The name of the channel to be removed.
+     *
      * @return void
      */
-    public function removeActiveChan(string $channel):void
+    public function removeActiveChan(string $channel): void
     {
         unset($this->activeChannels[$channel]);
     }
 
     /**
-     * Проверяет существует ли канал в кэш.
-     * @param string $channel
-     * @return void
+     * Checks whether a channel exists in the cache.
+     *
+     * @param string $channel The name of the channel to check.
+     *
+     * @return bool True if the channel exists, false otherwise.
      */
-    public function existsActiveChan(string $channel):bool
+    public function existsActiveChan(string $channel): bool
     {
         return isset($this->activeChannels[$channel]);
     }
 
     /**
-     * @param string $src
-     * @param string $dst
-     * @param string $error
-     * @return bool
+     * Determines whether to enable the monitor for a given source and destination.
+     *
+     * @param string $src Source.
+     * @param string $dst Destination.
+     *
+     * @return bool True if monitor should be enabled, false otherwise.
      */
-    public function enableMonitor(string $src, string $dst):bool
+    public function enableMonitor(string $src, string $dst): bool
     {
-        $src = substr($src,-9);
-        $dst = substr($dst,-9);
+        $src = substr($src, -9);
+        $dst = substr($dst, -9);
         $enable = true;
-        $isInner = in_array($src, $this->innerNumbers,true) && in_array($dst, $this->innerNumbers,true);
-        if(($this->notRecInner && $isInner) ||
-            in_array($src, $this->exceptionsNumbers,true) || in_array($dst, $this->exceptionsNumbers,true)){
+        $isInner = in_array($src, $this->innerNumbers, true) && in_array($dst, $this->innerNumbers, true);
+        if (($this->notRecInner && $isInner) ||
+            in_array($src, $this->exceptionsNumbers, true) || in_array($dst, $this->exceptionsNumbers, true)) {
             $enable = false;
         }
         return $enable;
     }
 
     /**
-     * Инициирует запись разговора на канале.
+     * Initiates the recording of a conversation on a channel.
      *
-     * @param string    $channel
-     * @param ?string   $file_name
-     * @param ?string   $sub_dir
-     * @param ?string   $full_name
+     * @param string $channel The name of the channel where recording will be initiated.
+     * @param ?string $file_name Optional name of the file where the recording will be saved.
+     * @param ?string $sub_dir Optional subdirectory where the recording file will be saved.
+     * @param ?string $full_name Optional full name for the recording file.
+     * @param string $actionID Optional action ID for the recording action.
      *
-     * @return string
+     * @return string The name of the result file.
      */
-    public function MixMonitor($channel, $file_name = null, $sub_dir = null, $full_name = null, string $actionID=''): string
+    public function MixMonitor(string $channel, $file_name = null, $sub_dir = null, $full_name = null, string $actionID = ''): string
     {
-        $resFile = $this->mixMonitorChannels[$channel]??'';
-        if($resFile !== ''){
+        $resFile = $this->mixMonitorChannels[$channel] ?? '';
+        if ($resFile !== '') {
             return $resFile;
         }
-        $resFile           = '';
+        $resFile = '';
         $file_name = str_replace('/', '_', $file_name);
         if ($this->record_calls) {
             [$f, $options] = $this->setMonitorFilenameOptions($full_name, $sub_dir, $file_name);
             $arr = $this->am->GetChannels(false);
-            if(!in_array($channel, $arr, true)){
+            if (!in_array($channel, $arr, true)) {
                 return '';
             }
             $srcFile = "{$f}.wav";
@@ -129,12 +150,18 @@ class WorkerCallEvents extends WorkerBase
     }
 
     /**
-     * @param string|null $full_name
-     * @param string|null $sub_dir
-     * @param string|null $file_name
-     * @return array
+     * Sets the file name options for the monitor.
+     *
+     * @param ?string $full_name The full name of the file. If it exists, it will be used as is.
+     * @param ?string $sub_dir The subdirectory where the file will be stored.
+     * @param ?string $file_name The name of the file.
+     *
+     * @return array An array containing the full file path and the options for the recording.
+     *               If $this->split_audio_thread is true, options will be set to split audio in two separate files (in/out).
+     *               Otherwise, 'ab' will be returned as options.
      */
-    public function setMonitorFilenameOptions(?string $full_name, ?string $sub_dir, ?string $file_name): array{
+    public function setMonitorFilenameOptions(?string $full_name, ?string $sub_dir, ?string $file_name): array
+    {
         if (!file_exists((string)$full_name)) {
             $monitor_dir = Storage::getMonitorDir();
             if ($sub_dir === null) {
@@ -153,15 +180,19 @@ class WorkerCallEvents extends WorkerBase
     }
 
     /**
-     * Останавливает запись разговора на канале.
-     * @param string $channel
-     * @param string $actionID
+     * Stops the MixMonitor (conversation recording) on a specified channel.
+     *
+     * @param string $channel The name of the channel on which the MixMonitor will be stopped.
+     * @param string $actionID (Optional) ActionID for the MixMonitor stop command, useful for tracking the request in Asterisk.
+     *                         Default is an empty string.
+     *
+     * @return void This function does not return any value.
      */
-    public function StopMixMonitor($channel, string $actionID=''): void
+    public function StopMixMonitor($channel, string $actionID = ''): void
     {
-        if(isset($this->mixMonitorChannels[$channel])){
+        if (isset($this->mixMonitorChannels[$channel])) {
             unset($this->mixMonitorChannels[$channel]);
-        }else{
+        } else {
             return;
         }
         if ($this->record_calls) {
@@ -170,78 +201,121 @@ class WorkerCallEvents extends WorkerBase
     }
 
     /**
+     * Starts the process, sets up initial options and worker subscribers.
      *
-     * @param $params
+     * @param array $params The parameters passed to the function.
+     *
+     * @return void This function does not return any value.
+     * @throws Exception
      */
-    public function start($params): void
+    public function start(array $params): void
     {
+        // Update the recording options for the worker
         $this->updateRecordingOptions();
-        $this->mixMonitorChannels       = [];
-        $this->checkChanHangupTransfer  = [];
-        $this->am                 = Util::getAstManager('off');
 
-        // PID сохраняем при начале работы Worker.
+        // Initialize the mixMonitorChannels and checkChanHangupTransfer arrays
+        $this->mixMonitorChannels = [];
+        $this->checkChanHangupTransfer = [];
+
+        // Get the asterisk manager interface
+        $this->am = Util::getAstManager('off');
+
+        // Create a new Beanstalk client
         $client = new BeanstalkClient(self::class);
-        if($client->isConnected() === false){
+        if ($client->isConnected() === false) {
+            // Log the failed connection and pause for 2 seconds before returning
             Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
             sleep(2);
             return;
         }
-        $client->subscribe(CelConf::BEANSTALK_TUBE,    [$this, 'callEventsWorker']);
-        $client->subscribe(self::class,                [$this, 'otherEvents']);
+
+        // Subscribe to different tubes for different worker tasks
+        $client->subscribe(CelConf::BEANSTALK_TUBE, [$this, 'callEventsWorker']);
+        $client->subscribe(self::class, [$this, 'otherEvents']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
         $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);
+
+        // Subscribe to ping tube for keep alive checks
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
+
+        // Set the error handler for the client
         $client->setErrorHandler([$this, 'errorHandler']);
 
+        // Keep the worker process running as long as a restart is not required
         while ($this->needRestart === false) {
             $client->wait();
         }
     }
 
     /**
-     * @return void
+     * This function is used to update the recording options of the system.
+     *
+     * @return void This function does not return any value.
      */
-    private function updateRecordingOptions():void
+    private function updateRecordingOptions(): void
     {
+        // Initialize an array to store users' numbers
         $usersNumbers = [];
+
+        // Initialize an array to store users' data
         $users = [];
+
+        // Define a filter to get specific data from Extensions
         $filter = [
             'conditions' => 'userid <> "" and userid>0 ',
             'columns' => 'userid,number,type',
             'order' => 'type DESC'
         ];
         $extensionsData = Extensions::find($filter);
+
+        // Loop through each extension
         /** @var Extensions $extension */
-        foreach ($extensionsData as $extension){
-            if($extension->type === "SIP"){
+        foreach ($extensionsData as $extension) {
+            if ($extension->type === "SIP") {
+                // If the extension type is SIP, store the number
                 $usersNumbers[$extension->number][] = $extension->number;
                 $users[$extension->userid] = $extension->number;
-            }else{
-                $internalNumber = $users[$extension->userid]??'';
-                if($internalNumber !==''){
+            } else {
+                // Otherwise, store the internal number
+                $internalNumber = $users[$extension->userid] ?? '';
+                if ($internalNumber !== '') {
                     $usersNumbers[$internalNumber][] = $extension->number;
                 }
             }
         }
+
+        // Clear the users and extensionsData arrays for memory efficiency
         unset($users, $extensionsData);
+
+        // Define a new filter to get specific data from Sip
         $filter = [
             'conditions' => 'type="peer"',
-            'columns'    => 'extension,enableRecording',
+            'columns' => 'extension,enableRecording',
         ];
+
         $peers = Sip::find($filter);
+
+        // Loop through each peer
         foreach ($peers as $peer) {
-            $numbers = $usersNumbers[$peer->extension]??[];
-            foreach ($numbers as $num){
-                $num = substr($num,-9);
+            // Get the numbers associated with this peer
+            $numbers = $usersNumbers[$peer->extension] ?? [];
+            foreach ($numbers as $num) {
+                // Trim the last 9 characters from the number
+                $num = substr($num, -9);
+
+                // Store the number
                 $this->innerNumbers[] = $num;
-                if($peer->enableRecording === '0'){
+
+                // If recording is not enabled for this peer, store it as an exception
+                if ($peer->enableRecording === '0') {
                     $this->exceptionsNumbers[] = $num;
                 }
             }
         }
-        $this->notRecInner        = PbxSettings::getValueByKey('PBXRecordCallsInner') === '0';
-        $this->record_calls       = PbxSettings::getValueByKey('PBXRecordCalls') === '1';
+
+        // Set some class properties based on the PbxSettings values
+        $this->notRecInner = PbxSettings::getValueByKey('PBXRecordCallsInner') === '0';
+        $this->record_calls = PbxSettings::getValueByKey('PBXRecordCalls') === '1';
         $this->split_audio_thread = PbxSettings::getValueByKey('PBXSplitAudioThread') === '1';
     }
 
@@ -257,76 +331,126 @@ class WorkerCallEvents extends WorkerBase
     }
 
     /**
-     * @param $tube
-     * @param $data
+     * Handles other events.
+     *
+     * @param $tube The tube object.
+     * @param array $data The data array (optional).
+     *
      * @return void
      */
-    public function otherEvents($tube, array $data=[]): void
+    public function otherEvents($tube, array $data = []): void
     {
-        if(empty($data)){
+        // If data array is empty, decode the body of the tube object
+        if (empty($data)) {
             $data = json_decode($tube->getBody(), true);
         }
-        $funcName = "Action_".$data['action']??'';
-        if ( method_exists($this, $funcName) ) {
+
+        // Construct the function name based on the action in the data array
+        $funcName = "Action_" . $data['action'] ?? '';
+
+        // Check if the function exists in the current class and call it
+        if (method_exists($this, $funcName)) {
             $this->$funcName($data);
         }
-        $className = __NAMESPACE__.'\Libs\WorkerCallEvents\\'.Text::camelize($funcName, '_');
-        if( method_exists($className, 'execute') ){
+
+        // Generate the class name based on the function name
+        $className = __NAMESPACE__ . '\Libs\WorkerCallEvents\\' . Text::camelize($funcName, '_');
+
+        // Check if the 'execute' method exists in the generated class and call it
+        if (method_exists($className, 'execute')) {
             $className::execute($this, $data);
         }
     }
 
     /**
-     * Обработчик событий изменения состояния звонка.
+     * Calls the events worker.
      *
-     * @param array | BeanstalkClient $tube
+     * @param  $tube The tube object.
+     *
+     * @return void
      */
     public function callEventsWorker($tube): void
     {
-        $data  = json_decode($tube->getBody(), true);
-        $event = $data['EventName']??'';
-        if('ANSWER' === $event){
+        // Decode the body of the tube object
+        $data = json_decode($tube->getBody(), true);
+
+        // Get the event name from the data array
+        $event = $data['EventName'] ?? '';
+
+        // If event is 'ANSWER', call ActionCelAnswer::execute and return
+        if ('ANSWER' === $event) {
             ActionCelAnswer::execute($this, $data);
             return;
-        }elseif('USER_DEFINED' !== $event){
+        }
+        // If event is not 'USER_DEFINED', return
+        elseif ('USER_DEFINED' !== $event) {
             return;
         }
+
+        // Try to decode the 'AppData' field from base64 and handle any errors
         try {
             $data = json_decode(
-                base64_decode($data['AppData']??''),
+                base64_decode($data['AppData'] ?? ''),
                 true,
                 512,
                 JSON_THROW_ON_ERROR
             );
-        }catch (\Throwable $e){
+        } catch (\Throwable $e) {
             $data = [];
         }
+
+        // Call the 'otherEvents' method with the updated data
         $this->otherEvents($tube, $data);
     }
 
     /**
-     * Получения CDR к обработке.
+     * Updates the CDR worker.
      *
-     * @param array | BeanstalkClient $tube
+     * @param $tube The tube object.
+     *
+     * @return void
      */
     public function updateCDRWorker($tube): void
     {
-        $task    = $tube->getBody();
+        // Get the task from the tube's body
+        $task = $tube->getBody();
+
+        // Decode the task into an associative array
         $data = json_decode($task, true);
+
+        // Execute the UpdateDataInDB class with the data
         UpdateDataInDB::execute($data);
+
+        // Reply with a JSON-encoded boolean value indicating success
         $tube->reply(json_encode(true));
     }
 
     /**
-     * @param array | BeanstalkClient $tube
+     * Selects the CDR worker.
+     *
+     * @param $tube The tube object.
+     *
+     * @return void
      */
     public function selectCDRWorker($tube): void
     {
-        $filter   = json_decode($tube->getBody(), true);
+        // Decode the filter from the tube's body
+        $filter = json_decode($tube->getBody(), true);
+
+        // Execute the SelectCDR class with the filter and get the result data
         $res_data = SelectCDR::execute($filter);
+
+        // Reply with the result data
         $tube->reply($res_data);
     }
 
+    /**
+     * Error handler.
+     *
+     * @param mixed $m The error message.
+     *
+     * @return void
+     */
     public function errorHandler($m): void
     {
         Util::sysLogMsg(self::class . '_ERROR', $m, LOG_ERR);
@@ -335,4 +459,4 @@ class WorkerCallEvents extends WorkerBase
 
 
 // Start worker process
-WorkerCallEvents::startWorker($argv??null);
+WorkerCallEvents::startWorker($argv ?? []);

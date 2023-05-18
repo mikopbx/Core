@@ -38,15 +38,17 @@ use function MikoPBX\Common\Config\appPath;
 /**
  * Class Storage
  *
+ * Manages storage-related operations.
+ *
  * @package MikoPBX\Core\System
  * @property \Phalcon\Config config
  */
 class Storage extends Di\Injectable
 {
     /**
-     * Возвращает директорию для хранения файлов записей разговоров.
+     * Returns the monitor directory path.
      *
-     * @return string
+     * @return string The monitor directory path.
      */
     public static function getMonitorDir(): string
     {
@@ -59,9 +61,9 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Возвращает директорию для хранения media файлов.
+     * Get the media directory path.
      *
-     * @return string
+     * @return string The media directory path.
      */
     public static function getMediaDir(): string
     {
@@ -70,20 +72,22 @@ class Storage extends Di\Injectable
             return $di->getConfig()->path('core.mediaMountPoint');
         }
 
+        // If the Dependency Injection container is not available or the configuration option is not set,
+        // return the default media directory path '/tmp'
         return '/tmp';
     }
 
 
     /**
-     * Прверяем является ли диск хранилищем.
+     * Check if a storage disk is valid.
      *
-     * @param $device
-     *
-     * @return bool
+     * @param string $device The device path of the storage disk.
+     * @return bool Returns true if the storage disk is valid, false otherwise.
      */
-    public static function isStorageDisk($device): bool
+    public static function isStorageDisk(string $device): bool
     {
         $result = false;
+        // Check if the device path exists
         if (!file_exists($device)) {
             return $result;
         }
@@ -95,6 +99,7 @@ class Storage extends Di\Injectable
         $storage = new self();
         $uid_part = 'UUID=' . $storage->getUuid($device) . '';
         $format = $storage->getFsType($device);
+        // If the file system type is not available, return false
         if ($format === '') {
             return false;
         }
@@ -104,14 +109,17 @@ class Storage extends Di\Injectable
 
         Processes::mwExec("{$mountPath} -t {$format} {$uid_part} {$tmp_dir}", $out);
         if (is_dir("{$tmp_dir}/mikopbx") && trim(implode('', $out)) === '') {
-            // $out - пустая строка, ошибок нет
-            // присутствует каталог mikopbx.
+            // $out - empty string, no errors
+            // mikopbx directory exists
             $result = true;
         }
+
+        // Check if the storage disk is mounted, and unmount if necessary
         if (self::isStorageDiskMounted($device)) {
             Processes::mwExec("{$umountPath} {$device}");
         }
 
+        // Check if the storage disk is unmounted, and remove the temporary directory
         if (!self::isStorageDiskMounted($device)) {
             Processes::mwExec("{$rmPath} -rf '{$tmp_dir}'");
         }
@@ -120,11 +128,10 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Получение идентификатора устройства.
+     * Get the UUID (Universally Unique Identifier) of a device.
      *
-     * @param $device
-     *
-     * @return string
+     * @param string $device The device path.
+     * @return string The UUID of the device.
      */
     public function getUuid($device): string
     {
@@ -134,6 +141,7 @@ class Storage extends Di\Injectable
         $lsBlkPath = Util::which('lsblk');
         $busyboxPath = Util::which('busybox');
 
+        // Build the command to retrieve the UUID of the device
         $cmd = "{$lsBlkPath} -r -o NAME,UUID | {$busyboxPath} grep " . basename($device) . " | {$busyboxPath} cut -d ' ' -f 2";
         $res = Processes::mwExec($cmd, $output);
         if ($res === 0 && count($output) > 0) {
@@ -146,11 +154,10 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Возвращает тип файловой системы блочного устройства.
+     * Get the file system type of a device.
      *
-     * @param $device
-     *
-     * @return string
+     * @param string $device The device path.
+     * @return string The file system type of the device.
      */
     public function getFsType($device): string
     {
@@ -160,13 +167,18 @@ class Storage extends Di\Injectable
         $grepPath = Util::which('grep');
         $awkPath = Util::which('awk');
 
+        // Remove '/dev/' from the device path
         $device = str_replace('/dev/', '', $device);
         $out = [];
+
+        // Execute the command to retrieve the file system type of the device
         Processes::mwExec(
             "{$blkidPath} -ofull /dev/{$device} | {$busyboxPath} {$sedPath} -r 's/[[:alnum:]]+=/\\n&/g' | {$busyboxPath} {$grepPath} \"^TYPE=\" | {$busyboxPath} {$awkPath} -F \"\\\"\" '{print $2}'",
             $out
         );
         $format = implode('', $out);
+
+        // Check if the format is 'msdosvfat' and replace it with 'msdos'
         if ($format === 'msdosvfat') {
             $format = 'msdos';
         }
@@ -175,30 +187,46 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Moves predefined sound files to storage disk
-     * Changes SoundFiles records
+     * Move read-only sounds to the storage.
+     * This function assumes a storage disk is mounted.
+     *
+     * @return void
      */
     public static function moveReadOnlySoundsToStorage(): void
     {
-        if(!self::isStorageDiskMounted()) {
+        // Check if a storage disk is mounted
+        if (!self::isStorageDiskMounted()) {
             return;
         }
         $di = Di::getDefault();
+
+        // Check if the Dependency Injection container is available
         if ($di === null) {
             return;
         }
+
+        // Create the current media directory if it doesn't exist
         $currentMediaDir = $di->getConfig()->path('asterisk.customSoundDir') . '/';
-        if ( !file_exists($currentMediaDir)) {
+        if (!file_exists($currentMediaDir)) {
             Util::mwMkdir($currentMediaDir);
         }
+
         $soundFiles = SoundFiles::find();
+
+        // Iterate through each sound file
         foreach ($soundFiles as $soundFile) {
             if (stripos($soundFile->path, '/offload/asterisk/sounds/other/') === 0) {
-                $newPath = $currentMediaDir.pathinfo($soundFile->path)['basename'];
+                $newPath = $currentMediaDir . pathinfo($soundFile->path)['basename'];
+
+                // Copy the sound file to the new path
                 if (copy($soundFile->path, $newPath)) {
                     SystemManagementProcessor::convertAudioFile($newPath);
+
+                    // Update the sound file path and extension
                     $soundFile->path = Util::trimExtensionForFile($newPath) . ".mp3";
-                    if(file_exists($soundFile->path)){
+
+                    // Update the sound file if the new path exists
+                    if (file_exists($soundFile->path)) {
                         $soundFile->update();
                     }
                 }
@@ -208,48 +236,64 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Copies MOH sound files to storage and creates record on SoundFiles table
+     * Copy MOH (Music on Hold) files to the storage.
+     * This function assumes a storage disk is mounted.
+     *
+     * @return void
      */
     public static function copyMohFilesToStorage(): void
     {
-        if(!self::isStorageDiskMounted()) {
+
+        // Check if a storage disk is mounted
+        if (!self::isStorageDiskMounted()) {
             return;
         }
+
+        // Check if the Dependency Injection container is available
         $di = Di::getDefault();
         if ($di === null) {
             return;
         }
-        $config        = $di->getConfig();
-        $oldMohDir     = $config->path('asterisk.astvarlibdir') . '/sounds/moh';
+        $config = $di->getConfig();
+        $oldMohDir = $config->path('asterisk.astvarlibdir') . '/sounds/moh';
         $currentMohDir = $config->path('asterisk.mohdir');
-        if ( ! file_exists($oldMohDir)||Util::mwMkdir($currentMohDir)) {
+
+        // If the old MOH directory doesn't exist or unable to create the current MOH directory, return
+        if (!file_exists($oldMohDir) || Util::mwMkdir($currentMohDir)) {
             return;
         }
+
+
         $files = scandir($oldMohDir);
+
+        // Iterate through each file in the old MOH directory
         foreach ($files as $file) {
             if (in_array($file, ['.', '..'])) {
                 continue;
             }
-            if (copy($oldMohDir.'/'.$file, $currentMohDir.'/'.$file)) {
-                $sound_file           = new SoundFiles();
-                $sound_file->path     = $currentMohDir . '/' . $file;
+
+            // Copy the file from the old MOH directory to the current MOH directory
+            if (copy($oldMohDir . '/' . $file, $currentMohDir . '/' . $file)) {
+                $sound_file = new SoundFiles();
+                $sound_file->path = $currentMohDir . '/' . $file;
                 $sound_file->category = SoundFiles::CATEGORY_MOH;
-                $sound_file->name     = $file;
+                $sound_file->name = $file;
                 $sound_file->save();
             }
         }
     }
 
     /**
-     * Проверка, смонтирован ли диск - хранилище.
+     * Check if a storage disk is mounted.
      *
-     * @param string $filter
-     * @param string $mount_dir
-     *
-     * @return bool
+     * @param string $filter Optional filter for the storage disk.
+     * @param string $mount_dir If the disk is mounted, the mount directory will be stored in this variable.
+     * @return bool Returns true if the storage disk is mounted, false otherwise.
      */
     public static function isStorageDiskMounted(string $filter = '', string &$mount_dir = ''): bool
     {
+
+        // Check if it's a T2Sde Linux and /storage/usbdisk1/ exists
         if (!Util::isT2SdeLinux()
             && file_exists('/storage/usbdisk1/')
         ) {
@@ -257,7 +301,11 @@ class Storage extends Di\Injectable
             return true;
         }
         if ('' === $filter) {
+
+
             $di = Di::getDefault();
+
+            // Check if the Dependency Injection container is available
             if ($di !== null) {
                 $varEtcDir = $di->getConfig()->path('core.varEtcDir');
             } else {
@@ -265,47 +313,56 @@ class Storage extends Di\Injectable
             }
 
             $filename = "{$varEtcDir}/storage_device";
+
+            // If the storage_device file exists, read its contents as the filter, otherwise use 'usbdisk1' as the filter
             if (file_exists($filename)) {
                 $filter = file_get_contents($filename);
             } else {
                 $filter = 'usbdisk1';
             }
         }
-        $grepPath   = Util::which('grep');
-        $mountPath  = Util::which('mount');
-        $awkPath    = Util::which('awk');
+        $grepPath = Util::which('grep');
+        $mountPath = Util::which('mount');
+        $awkPath = Util::which('awk');
 
         $filter = escapeshellarg($filter);
-        $out        = shell_exec("$mountPath | $grepPath $filter | {$awkPath} '{print $3}'");
-        $mount_dir  = trim($out);
+
+        // Execute the command to filter the mount points based on the filter
+        $out = shell_exec("$mountPath | $grepPath $filter | {$awkPath} '{print $3}'");
+        $mount_dir = trim($out);
         return ($mount_dir !== '');
     }
 
     /**
-     * Монитирование каталога с удаленного сервера SFTP.
+     * Mount an SFTP disk.
      *
-     * @param        $host
-     * @param int    $port
-     * @param string $user
-     * @param string $pass
-     * @param string $remout_dir
-     * @param string $local_dir
-     *
-     * @return bool
+     * @param string $host The SFTP server host.
+     * @param int $port The SFTP server port.
+     * @param string $user The SFTP server username.
+     * @param string $pass The SFTP server password.
+     * @param string $remote_dir The remote directory on the SFTP server.
+     * @param string $local_dir The local directory to mount the SFTP disk.
+     * @return bool Returns true if the SFTP disk is successfully mounted, false otherwise.
      */
     public static function mountSftpDisk($host, $port, $user, $pass, $remout_dir, $local_dir): bool
     {
+
+        // Create the local directory if it doesn't exist
         Util::mwMkdir($local_dir);
 
         $out = [];
         $timeoutPath = Util::which('timeout');
         $sshfsPath = Util::which('sshfs');
 
+        // Build the command to mount the SFTP disk
         $command = "{$timeoutPath} 3 {$sshfsPath} -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " . "{$user}@{$host}:{$remout_dir} {$local_dir} << EOF\n" . "{$pass}\n" . "EOF\n";
+
+        // Execute the command to mount the SFTP disk
         Processes::mwExec($command, $out);
         $response = trim(implode('', $out));
+
         if ('Terminated' === $response) {
-            // Удаленный сервер не ответил / или не корректно указан пароль.
+            // The remote server did not respond or an incorrect password was provided.
             unset($response);
         }
 
@@ -313,23 +370,24 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Монитирование каталога с удаленного сервера FTP.
+     * Mount an FTP disk.
      *
-     * @param        $host
-     * @param        $port
-     * @param        $user
-     * @param        $pass
-     * @param string $remout_dir
-     * @param        $local_dir
-     *
-     * @return bool
+     * @param string $host The FTP server host.
+     * @param int $port The FTP server port.
+     * @param string $user The FTP server username.
+     * @param string $pass The FTP server password.
+     * @param string $remote_dir The remote directory on the FTP server.
+     * @param string $local_dir The local directory to mount the FTP disk.
+     * @return bool Returns true if the FTP disk is successfully mounted, false otherwise.
      */
     public static function mountFtp($host, $port, $user, $pass, $remout_dir, $local_dir): bool
     {
+
+        // Create the local directory if it doesn't exist
         Util::mwMkdir($local_dir);
         $out = [];
 
-        // Собираем строку подключения к ftp.
+        // Build the authentication line for the FTP connection
         $auth_line = '';
         if (!empty($user)) {
             $auth_line .= 'user="' . $user;
@@ -339,6 +397,7 @@ class Storage extends Di\Injectable
             $auth_line .= '",';
         }
 
+        // Build the connect line for the FTP connection
         $connect_line = 'ftp://' . $host;
         if (!empty($port)) {
             $connect_line .= ":{$port}";
@@ -349,11 +408,15 @@ class Storage extends Di\Injectable
 
         $timeoutPath = Util::which('timeout');
         $curlftpfsPath = Util::which('curlftpfs');
+
+        // Build the command to mount the FTP disk
         $command = "{$timeoutPath} 3 {$curlftpfsPath}  -o allow_other -o {$auth_line}fsname={$host} {$connect_line} {$local_dir}";
+
+        // Execute the command to mount the FTP disk
         Processes::mwExec($command, $out);
         $response = trim(implode('', $out));
         if ('Terminated' === $response) {
-            // Удаленный сервер не ответил / или не корректно указан пароль.
+            // The remote server did not respond or an incorrect password was provided.
             unset($response);
         }
 
@@ -361,51 +424,61 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Монитирование каталога с удаленного сервера FTP.
+     * Mount a WebDAV disk.
      *
-     * @param        $host
-     * @param        $user
-     * @param        $pass
-     * @param        $dstDir
-     * @param        $local_dir
-     *
-     * @return bool
+     * @param string $host The WebDAV server host.
+     * @param string $user The WebDAV server username.
+     * @param string $pass The WebDAV server password.
+     * @param string $dstDir The destination directory on the WebDAV server.
+     * @param string $local_dir The local directory to mount the WebDAV disk.
+     * @return bool Returns true if the WebDAV disk is successfully mounted, false otherwise.
      */
     public static function mountWebDav($host, $user, $pass, $dstDir, $local_dir): bool
     {
         $host = trim($host);
         $dstDir = trim($dstDir);
-        if(substr($host, -1) === '/'){
+
+        // Remove trailing slash from host if present
+        if (substr($host, -1) === '/') {
             $host = substr($host, 0, -1);
         }
-        if($dstDir[0] === '/'){
+
+        // Remove leading slash from destination directory if present
+        if ($dstDir[0] === '/') {
             $dstDir = substr($dstDir, 1);
         }
+
+        // Create the local directory if it doesn't exist
         Util::mwMkdir($local_dir);
         $out = [];
-        $conf = 'dav_user www'.PHP_EOL.
-                'dav_group www'.PHP_EOL;
+        $conf = 'dav_user www' . PHP_EOL .
+            'dav_group www' . PHP_EOL;
 
+
+        // Write WebDAV credentials to secrets file
         file_put_contents('/etc/davfs2/secrets', "{$host}{$dstDir} $user $pass");
         file_put_contents('/etc/davfs2/davfs2.conf', $conf);
         $timeoutPath = Util::which('timeout');
         $mount = Util::which('mount.davfs');
+
+        // Build the command to mount the WebDAV disk
         $command = "$timeoutPath 3 yes | $mount {$host}{$dstDir} {$local_dir}";
+
+        // Execute the command to mount the WebDAV disk
         Processes::mwExec($command, $out);
         $response = trim(implode('', $out));
         if ('Terminated' === $response) {
-            // Удаленный сервер не ответил / или не корректно указан пароль.
+            // The remote server did not respond or an incorrect password was provided.
             unset($response);
         }
         return self::isStorageDiskMounted("$local_dir ");
     }
 
     /**
-     * Запускает процесс форматирования диска.
+     * Create a file system on a disk.
      *
-     * @param $dev
-     *
-     * @return array|bool
+     * @param string $dev The device path of the disk.
+     * @return bool Returns true if the file system creation process is initiated, false otherwise.
      */
     public static function mkfs_disk($dev)
     {
@@ -418,38 +491,40 @@ class Storage extends Di\Injectable
         $dir = '';
         self::isStorageDiskMounted($dev, $dir);
 
+        // If the disk is not mounted or successfully unmounted, proceed with the file system creation
         if (empty($dir) || self::umountDisk($dir)) {
-            // Диск размонтирован.
             $st = new Storage();
-            // Будет запущен процесс:
+            // Initiate the file system creation process
             $st->formatDiskLocal($dev, true);
             sleep(1);
 
             return (self::statusMkfs($dev) === 'inprogress');
         }
 
-        // Ошибка размонтирования диска.
+        // Error occurred during disk unmounting
         return false;
     }
 
     /**
-     * Размонтирует диск. Удаляет каталог в случае успеха.
+     * Unmount a disk.
      *
-     * @param $dir
-     *
-     * @return bool
+     * @param string $dir The mount directory of the disk.
+     * @return bool Returns true if the disk is successfully unmounted, false otherwise.
      */
     public static function umountDisk($dir): bool
     {
         $umountPath = Util::which('umount');
-        $rmPath     = Util::which('rm');
+        $rmPath = Util::which('rm');
+
+        // If the disk is mounted, terminate processes using the disk and unmount it
         if (self::isStorageDiskMounted($dir)) {
             Processes::mwExec("/sbin/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
             Processes::mwExec("{$umountPath} {$dir}");
         }
-        $result = ! self::isStorageDiskMounted($dir);
+        $result = !self::isStorageDiskMounted($dir);
+
+        // If the disk is successfully unmounted and the directory exists, remove the directory
         if ($result && file_exists($dir)) {
-            // Если диск не смонтирован, то удаляем каталог.
             Processes::mwExec("{$rmPath} -rf '{$dir}'");
         }
 
@@ -457,19 +532,22 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Разметка диска.
+     * Format a disk locally using parted command.
      *
-     * @param string $device
-     * @param bool   $bg
-     *
-     * @return mixed
+     * @param string $device The device path of the disk.
+     * @param bool $bg Whether to run the command in the background.
+     * @return bool Returns true if the disk formatting process is initiated, false otherwise.
      */
     public function formatDiskLocal($device, $bg = false)
     {
         $partedPath = Util::which('parted');
+
+        // Execute the parted command to format the disk with msdos partition table and ext4 partition
         $retVal = Processes::mwExec(
             "{$partedPath} --script --align optimal '{$device}' 'mklabel msdos mkpart primary ext4 0% 100%'"
         );
+
+        // Log the result of the parted command
         Util::sysLogMsg(__CLASS__, "{$partedPath} returned {$retVal}");
         if (false === $bg) {
             sleep(1);
@@ -479,15 +557,16 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Форматирование диска.
+     * Format a disk locally (part 2) using mkfs command.
      *
-     * @param string $device
-     * @param bool   $bg
-     *
-     * @return mixed
+     * @param string $device The device path of the disk.
+     * @param bool $bg Whether to run the command in the background.
+     * @return bool Returns true if the disk formatting process is successfully completed, false otherwise.
      */
     private function formatDiskLocalPart2($device, $bg = false): bool
     {
+
+        // Determine the device ID based on the last character of the device path
         if (is_numeric(substr($device, -1))) {
             $device_id = "";
         } else {
@@ -497,10 +576,12 @@ class Storage extends Di\Injectable
         $mkfsPath = Util::which("mkfs.{$format}");
         $cmd = "{$mkfsPath} {$device}{$device_id}";
         if ($bg === false) {
+            // Execute the mkfs command and check the return value
             $retVal = (Processes::mwExec("{$cmd} 2>&1") === 0);
             Util::sysLogMsg(__CLASS__, "{$mkfsPath} returned {$retVal}");
         } else {
             usleep(200000);
+            // Execute the mkfs command in the background
             Processes::mwExecBg($cmd);
             $retVal = true;
         }
@@ -509,11 +590,10 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Возвращает текущий статус форматирования диска.
+     * Get the status of mkfs process on a disk.
      *
-     * @param $dev
-     *
-     * @return string
+     * @param string $dev The device path of the disk.
+     * @return string Returns the status of mkfs process ('inprogress' or 'ended').
      */
     public static function statusMkfs($dev): string
     {
@@ -523,6 +603,8 @@ class Storage extends Di\Injectable
         $out = [];
         $psPath = Util::which('ps');
         $grepPath = Util::which('grep');
+
+        // Execute the command to check the status of mkfs process
         Processes::mwExec("{$psPath} -A -f | {$grepPath} {$dev} | {$grepPath} mkfs | {$grepPath} -v grep", $out);
         $mount_dir = trim(implode('', $out));
 
@@ -530,21 +612,24 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Возвращает все подключенные HDD.
+     * Get information about all HDD devices.
      *
-     * @param bool $mounted_only
-     *
-     * @return array
+     * @param bool $mounted_only Whether to include only mounted devices.
+     * @return array An array of HDD device information.
      */
     public function getAllHdd($mounted_only = false): array
     {
         $res_disks = [];
 
         if (Util::isDocker()) {
+
+            // Get disk information for /storage directory
             $out = [];
             $grepPath = Util::which('grep');
             $dfPath = Util::which('df');
             $awkPath = Util::which('awk');
+
+            // Execute the command to get disk information for /storage directory
             Processes::mwExec(
                 "{$dfPath} -k /storage | {$awkPath}  '{ print \$1 \"|\" $3 \"|\" \$4} ' | {$grepPath} -v 'Available'",
                 $out
@@ -552,6 +637,8 @@ class Storage extends Di\Injectable
             $disk_data = explode('|', implode(" ", $out));
             if (count($disk_data) === 3) {
                 $m_size = round(($disk_data[1] + $disk_data[2]) / 1024, 1);
+
+                // Add Docker disk information to the result
                 $res_disks[] = [
                     'id' => $disk_data[0],
                     'size' => "" . $m_size,
@@ -567,8 +654,9 @@ class Storage extends Di\Injectable
             return $res_disks;
         }
 
-        $cd_disks   = $this->cdromGetDevices();
-        $disks      = $this->diskGetDevices();
+        // Get CD-ROM and HDD devices
+        $cd_disks = $this->cdromGetDevices();
+        $disks = $this->diskGetDevices();
 
         $cf_disk = '';
         $varEtcDir = $this->config->path('core.varEtcDir');
@@ -578,12 +666,15 @@ class Storage extends Di\Injectable
         }
 
         foreach ($disks as $disk => $diskInfo) {
-            $type = $diskInfo['fstype']??'';
-            if($type === 'linux_raid_member'){
+            $type = $diskInfo['fstype'] ?? '';
+
+            // Skip Linux RAID member disks
+            if ($type === 'linux_raid_member') {
                 continue;
             }
+
+            // Skip CD-ROM disks
             if (in_array($disk, $cd_disks, true)) {
-                // Это CD-ROM.
                 continue;
             }
             unset($temp_vendor, $temp_size, $original_size);
@@ -600,9 +691,9 @@ class Storage extends Di\Injectable
                 $mb_size = $original_size;
             }
             if ($mb_size > 100) {
-                $temp_size   = sprintf("%.0f MB", $mb_size);
+                $temp_size = sprintf("%.0f MB", $mb_size);
                 $temp_vendor = $this->getVendorDisk($diskInfo);
-                $free_space  = $this->getFreeSpace($disk);
+                $free_space = $this->getFreeSpace($disk);
 
                 $arr_disk_info = $this->determineFormatFs($diskInfo);
 
@@ -616,6 +707,7 @@ class Storage extends Di\Injectable
                     }
                 }
 
+                // Add HDD device information to the result
                 $res_disks[] = [
                     'id' => $disk,
                     'size' => $mb_size,
@@ -632,9 +724,9 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Получение массива подключенныйх cdrom.
+     * Get CD-ROM devices.
      *
-     * @return array
+     * @return array An array of CD-ROM device names.
      */
     private function cdromGetDevices(): array
     {
@@ -643,6 +735,8 @@ class Storage extends Di\Injectable
         foreach ($blockDevices as $diskData) {
             $type = $diskData['type'] ?? '';
             $name = $diskData['name'] ?? '';
+
+            // Skip devices that are not CD-ROM
             if ($type !== 'rom' || $name === '') {
                 continue;
             }
@@ -652,9 +746,10 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Получение массива подключенныйх HDD.
-     * @param false $diskOnly
-     * @return array
+     * Get disk devices.
+     *
+     * @param bool $diskOnly Whether to include only disk devices.
+     * @return array An array of disk device information.
      */
     public function diskGetDevices($diskOnly = false): array
     {
@@ -685,12 +780,15 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Возвращает информацию о дисках.
-     * @return array
+     * Get disk information using lsblk command.
+     *
+     * @return array An array containing disk information.
      */
     private function getLsBlkDiskInfo(): array
     {
         $lsBlkPath = Util::which('lsblk');
+
+        // Execute lsblk command to get disk information in JSON format
         Processes::mwExec(
             "{$lsBlkPath} -J -b -o VENDOR,MODEL,SERIAL,LABEL,TYPE,FSTYPE,MOUNTPOINT,SUBSYSTEMS,NAME,UUID",
             $out
@@ -705,18 +803,19 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Проверка, смонтирован ли диск.
+     * Check if a disk is mounted.
      *
-     * @param $disk
-     * @param $filter
-     *
-     * @return string|bool
+     * @param string $disk The name of the disk.
+     * @param string $filter The filter to match the disk name.
+     * @return string|bool The mount point if the disk is mounted, or false if not mounted.
      */
-    public static function diskIsMounted($disk, $filter = '/dev/')
+    public static function diskIsMounted(string $disk, string $filter = '/dev/')
     {
         $out = [];
         $grepPath = Util::which('grep');
         $mountPath = Util::which('mount');
+
+        // Execute mount command and grep the output for the disk name
         Processes::mwExec("{$mountPath} | {$grepPath} '{$filter}{$disk}'", $out);
         if (count($out) > 0) {
             $res_out = end($out);
@@ -729,22 +828,25 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Получение сведений по диску.
+     * Get the vendor name for a disk.
      *
-     * @param $diskInfo
-     *
-     * @return string
+     * @param array $diskInfo The disk information.
+     * @return string The vendor name.
      */
     private function getVendorDisk($diskInfo): string
     {
         $temp_vendor = [];
         $keys = ['vendor', 'model', 'type'];
+
+        // Iterate through the keys to retrieve vendor-related data
         foreach ($keys as $key) {
             $data = $diskInfo[$key] ?? '';
             if ($data !== '') {
                 $temp_vendor[] = trim(str_replace(',', '', $data));
             }
         }
+
+        // If no vendor-related data is found, use the disk name
         if (count($temp_vendor) === 0) {
             $temp_vendor[] = $diskInfo['name'] ?? 'ERROR: NoName';
         }
@@ -752,21 +854,24 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Получаем свободное место на диске в Mb.
+     * Get the free space in megabytes for a given HDD.
      *
-     * @param $hdd
-     *
-     * @return mixed
+     * @param string $hdd The name of the HDD.
+     * @return int The free space in megabytes.
      */
-    public function getFreeSpace($hdd)
+    public function getFreeSpace(string $hdd)
     {
         $out = [];
         $hdd = escapeshellarg($hdd);
         $grepPath = Util::which('grep');
         $awkPath = Util::which('awk');
         $dfPath = Util::which('df');
+
+        // Execute df command to get the free space for the HDD
         Processes::mwExec("{$dfPath} -m | {$grepPath} {$hdd} | {$awkPath} '{print $4}'", $out);
         $result = 0;
+
+        // Sum up the free space values
         foreach ($out as $res) {
             if (!is_numeric($res)) {
                 continue;
@@ -777,11 +882,20 @@ class Storage extends Di\Injectable
         return $result;
     }
 
+    /**
+     * Get the disk partitions using the lsblk command.
+     *
+     * @param string $diskName The name of the disk.
+     * @return array An array of disk partition names.
+     */
     private function getDiskParted($diskName): array
     {
         $result = [];
         $lsBlkPath = Util::which('lsblk');
+
+        // Execute lsblk command to get disk partition information in JSON format
         Processes::mwExec("{$lsBlkPath} -J -b -o NAME,TYPE {$diskName}", $out);
+
         try {
             $data = json_decode(implode(PHP_EOL, $out), true, 512, JSON_THROW_ON_ERROR);
             $data = $data['blockdevices'][0] ?? [];
@@ -790,8 +904,10 @@ class Storage extends Di\Injectable
         }
 
         $type = $data['children'][0]['type'] ?? '';
+
+        // Check if the disk is not a RAID type
         if (strpos($type, 'raid') === false) {
-            $children = $data['children']??[];
+            $children = $data['children'] ?? [];
             foreach ($children as $child) {
                 $result[] = $child['name'];
             }
@@ -801,19 +917,20 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Определить формат файловой системы и размер дисков.
+     * Determine the format and file system information for a device.
      *
-     * @param $deviceInfo
-     *
-     * @return array|bool
+     * @param array $deviceInfo The device information.
+     * @return array An array containing format and file system information for each device partition.
      */
     public function determineFormatFs($deviceInfo)
     {
         $allow_formats = ['ext2', 'ext4', 'fat', 'ntfs', 'msdos'];
         $device = basename($deviceInfo['name'] ?? '');
 
-        $devices = $this->getDiskParted('/dev/'.$deviceInfo['name'] ?? '');
+        $devices = $this->getDiskParted('/dev/' . $deviceInfo['name'] ?? '');
         $result_data = [];
+
+        // Iterate through each device partition
         foreach ($devices as $dev) {
             if (empty($dev) || (count($devices) > 1 && $device === $dev) || is_dir("/sys/block/{$dev}")) {
                 continue;
@@ -824,6 +941,8 @@ class Storage extends Di\Injectable
             if (file_exists($tmp_path)) {
                 $path_size_info = $tmp_path;
             }
+
+            // If the size path is not found, try an alternate path
             if (empty($path_size_info)) {
                 $tmp_path = "/sys/block/" . substr($dev, 0, 3) . "/{$dev}/size";
                 if (file_exists($tmp_path)) {
@@ -831,6 +950,7 @@ class Storage extends Di\Injectable
                 }
             }
 
+            // Calculate the size in megabytes
             if (!empty($path_size_info)) {
                 $original_size = trim(file_get_contents($path_size_info));
                 $original_size = ($original_size * 512 / 1024 / 1024);
@@ -843,10 +963,14 @@ class Storage extends Di\Injectable
             $fs = null;
             $need_unmount = false;
             $mount_dir = '';
+
+            // Check if the device is currently mounted
             if (self::isStorageDiskMounted("/dev/{$dev} ", $mount_dir)) {
                 $grepPath = Util::which('grep');
                 $awkPath = Util::which('awk');
                 $mountPath = Util::which('mount');
+
+                // Get the file system type and free space of the mounted device
                 Processes::mwExec("{$mountPath} | {$grepPath} '/dev/{$dev}' | {$awkPath} '{print $5}'", $out);
                 $fs = trim(implode("", $out));
                 $fs = ($fs === 'fuseblk') ? 'ntfs' : $fs;
@@ -854,14 +978,20 @@ class Storage extends Di\Injectable
                 $used_space = $mb_size - $free_space;
             } else {
                 $format = $this->getFsType($device);
+
+                // Check if the detected format is allowed
                 if (in_array($format, $allow_formats)) {
                     $fs = $format;
                 }
+
+                // Mount the device and determine the used space
                 self::mountDisk($dev, $format, $tmp_dir);
 
                 $need_unmount = true;
                 $used_space = Util::getSizeOfFile($tmp_dir);
             }
+
+            // Store the partition information in the result array
             $result_data[] = [
                 "dev" => $dev,
                 'size' => round($mb_size, 2),
@@ -870,6 +1000,8 @@ class Storage extends Di\Injectable
                 "uuid" => $this->getUuid("/dev/{$dev} "),
                 "fs" => $fs,
             ];
+
+            // Unmount the temporary mount point if needed
             if ($need_unmount) {
                 self::umountDisk($tmp_dir);
             }
@@ -879,48 +1011,58 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Монтирует диск в указанный каталог.
+     * Mount a disk to a directory.
      *
-     * @param $dev
-     * @param $format
-     * @param $dir
-     *
-     * @return bool
+     * @param string $dev The device name.
+     * @param string $format The file system format.
+     * @param string $dir The directory to mount the disk.
+     * @return bool True if the disk was successfully mounted, false otherwise.
      */
     public static function mountDisk($dev, $format, $dir): bool
     {
+        // Check if the disk is already mounted
         if (self::isStorageDiskMounted("/dev/{$dev} ")) {
             return true;
         }
+
+        // Create the directory if it doesn't exist
         Util::mwMkdir($dir);
 
+        // Check if the directory was created successfully
         if (!file_exists($dir)) {
             Util::sysLogMsg('Storage', "Unable mount $dev $format to $dir. Unable create dir.");
 
             return false;
         }
+
+        // Remove the '/dev/' prefix from the device name
         $dev = str_replace('/dev/', '', $dev);
+
         if ('ntfs' === $format) {
+            // Mount NTFS disk using 'mount.ntfs-3g' command
             $mountNtfs3gPath = Util::which('mount.ntfs-3g');
             Processes::mwExec("{$mountNtfs3gPath} /dev/{$dev} {$dir}", $out);
         } else {
+            // Mount disk using specified file system format and UUID
             $storage = new self();
             $uid_part = 'UUID=' . $storage->getUuid("/dev/{$dev}") . '';
             $mountPath = Util::which('mount');
             Processes::mwExec("{$mountPath} -t {$format} {$uid_part} {$dir}", $out);
         }
 
+        // Check if the disk is now mounted
         return self::isStorageDiskMounted("/dev/{$dev} ");
     }
 
     /**
-     * Монтирование разделов диска с базой данных настроек.
+     * Configures the storage settings.
      */
     public function configure(): void
     {
         $varEtcDir = $this->config->path('core.varEtcDir');
         $storage_dev_file = "{$varEtcDir}/storage_device";
-        if(!Util::isT2SdeLinux()){
+        if (!Util::isT2SdeLinux()) {
+            // Configure for non-T2Sde Linux
             file_put_contents($storage_dev_file, "/storage/usbdisk1");
             $this->updateConfigWithNewMountPoint("/storage/usbdisk1");
             $this->createWorkDirs();
@@ -930,28 +1072,40 @@ class Storage extends Di\Injectable
 
         $cf_disk = '';
 
+        // Remove the storage_dev_file if it exists
         if (file_exists($storage_dev_file)) {
             unlink($storage_dev_file);
         }
 
+        // Check if cfdevice file exists and get its content
         if (file_exists($varEtcDir . '/cfdevice')) {
             $cf_disk = trim(file_get_contents($varEtcDir . '/cfdevice'));
         }
+
         $disks = $this->getDiskSettings();
         $conf = '';
+
+        // Loop through each disk
         foreach ($disks as $disk) {
             clearstatcache();
             $dev = $this->getStorageDev($disk, $cf_disk);
+
+            // Check if the disk exists
             if (!$this->hddExists($dev)) {
-                // Диск не существует.
                 continue;
             }
+
+            // Check if the disk is marked as media or storage_dev_file doesn't exist
             if ($disk['media'] === '1' || !file_exists($storage_dev_file)) {
+                // Update the storage_dev_file and the mount point configuration
                 file_put_contents($storage_dev_file, "/storage/usbdisk{$disk['id']}");
                 $this->updateConfigWithNewMountPoint("/storage/usbdisk{$disk['id']}");
             }
+
             $formatFs = $this->getFsType($dev);
-            if($formatFs !== $disk['filesystemtype'] && !($formatFs === 'ext4' && $disk['filesystemtype'] === 'ext2')){
+
+            // Check if the file system type matches the expected type
+            if ($formatFs !== $disk['filesystemtype'] && !($formatFs === 'ext4' && $disk['filesystemtype'] === 'ext2')) {
                 Util::sysLogMsg('Storage', "The file system type has changed {$disk['filesystemtype']} -> {$formatFs}. The disk will not be connected.");
                 continue;
             }
@@ -960,36 +1114,43 @@ class Storage extends Di\Injectable
             $mount_point = "/storage/usbdisk{$disk['id']}";
             Util::mwMkdir($mount_point);
         }
+
+        // Save the configuration to the fstab file
         $this->saveFstab($conf);
+
+        // Create necessary working directories
         $this->createWorkDirs();
+
+        // Setup the PHP log configuration
         PHPConf::setupLog();
     }
 
     /**
-     * Поиск Storage устройства.
-     * Возвращает полный путь к разделу.
-     * @param $disk
-     * @param $cf_disk
-     * @return string
+     * Retrieves the storage device for the given disk.
+     *
+     * @param array $disk The disk information.
+     * @param string $cfDisk The cf_disk information.
+     * @return string The storage device path.
      */
-    private function getStorageDev($disk, $cf_disk):string{
-        if(!empty($disk['uniqid']) && strpos($disk['uniqid'], 'STORAGE-DISK') === false){
-            // Ищим имя раздела по UID.
-            $lsBlkPath   = Util::which('lsblk');
+    private function getStorageDev($disk, $cf_disk): string
+    {
+        if (!empty($disk['uniqid']) && strpos($disk['uniqid'], 'STORAGE-DISK') === false) {
+            // Find the partition name by UID.
+            $lsBlkPath = Util::which('lsblk');
             $busyboxPath = Util::which('busybox');
             $cmd = "{$lsBlkPath} -r -o NAME,UUID | {$busyboxPath} grep {$disk['uniqid']} | {$busyboxPath} cut -d ' ' -f 1";
-            $dev = '/dev/'.trim(shell_exec($cmd));
+            $dev = '/dev/' . trim(shell_exec($cmd));
             if ($this->hddExists($dev)) {
-                // Диск существует.
+                // Disk exists.
                 return $dev;
             }
         }
-        // Определяем диск по его имени.
+        // Determine the disk by its name.
         if ($disk['device'] !== "/dev/{$cf_disk}") {
-            // Если это обычный диск, то раздел 1.
+            // If it's a regular disk, use partition 1.
             $part = "1";
         } else {
-            // Если это системный диск, то пытаемся подключить раздел 4.
+            // If it's a system disk, attempt to connect partition 4.
             $part = "4";
         }
         $devName = self::getDevPartName($disk['device'], $part);
@@ -997,19 +1158,19 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Получаем настройки диска из базы данных.
+     * Retrieves the disk settings from the database.
      *
-     * @param string $id
-     *
-     * @return array
+     * @param string $id The ID of the disk (optional).
+     * @return array The disk settings.
      */
-    public function getDiskSettings($id = ''): array
+    public function getDiskSettings(string $id = ''): array
     {
         $data = [];
         if ('' === $id) {
-            // Возвращаем данные до модификации.
+            // Return all disk settings.
             $data = StorageModel::find()->toArray();
         } else {
+            // Return disk settings for the specified ID.
             $pbxSettings = StorageModel::findFirst("id='$id'");
             if ($pbxSettings !== null) {
                 $data = $pbxSettings->toArray();
@@ -1020,15 +1181,14 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Проверяет, существует ли диск в массиве.
+     * Checks if the HDD exists.
      *
-     * @param $disk
-     *
-     * @return bool
+     * @param string $disk The HDD device.
+     * @return bool True if the HDD exists, false otherwise.
      */
-    private function hddExists($disk): bool
+    private function hddExists(string $disk): bool
     {
-        if(is_dir($disk)){
+        if (is_dir($disk)) {
             return false;
         }
         $result = false;
@@ -1040,10 +1200,12 @@ class Storage extends Di\Injectable
     }
 
     /**
+     * Updates the configuration file with the new mount point.
+     *
      * After mount storage we will change /mountpoint/ to new $mount_point value
      *
-     * @param string $mount_point
-     *
+     * @param string $mount_point The new mount point.
+     * @throws Error If the original configuration file has a broken format.
      */
     private function updateConfigWithNewMountPoint(string $mount_point): void
     {
@@ -1071,8 +1233,10 @@ class Storage extends Di\Injectable
 
 
     /**
-     * Recreates DI services and reloads config from JSON file
-     *
+     * Updates the environment after changing the mount point.
+     * - Recreates the config provider and updates the config variable.
+     * - Reloads classes from system and storage disks.
+     * - Reloads all providers.
      */
     private function updateEnvironmentAfterChangeMountPoint(): void
     {
@@ -1088,22 +1252,27 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Generates fstab file
-     * Mounts volumes
+     * Saves the fstab configuration.
      *
-     * @param string $conf
+     * @param string $conf Additional configuration to append to fstab
+     * @return void
      */
     public function saveFstab(string $conf = ''): void
     {
         $varEtcDir = $this->config->path('core.varEtcDir');
-        // Точка монтирования доп. дисков.
+
+        // Create the mount point directory for additional disks
         Util::mwMkdir('/storage');
         $chmodPath = Util::which('chmod');
         Processes::mwExec("{$chmodPath} 755 /storage");
+
+        // Check if cfdevice file exists
         if (!file_exists($varEtcDir . '/cfdevice')) {
             return;
         }
         $fstab = '';
+
+        // Read cfdevice file
         $file_data = file_get_contents($varEtcDir . '/cfdevice');
         $cf_disk = trim($file_data);
         if ('' === $cf_disk) {
@@ -1121,19 +1290,26 @@ class Storage extends Di\Injectable
         $fstab .= "{$uid_part3} /cf {$format_p3} rw 1 1\n";
         $fstab .= $conf;
 
+        // Write fstab file
         file_put_contents("/etc/fstab", $fstab);
-        // Дублируем для работы vmtoolsd.
+
+        // Duplicate for vmtoolsd
         file_put_contents("/etc/mtab", $fstab);
+
+        // Mount the file systems
         $mountPath = Util::which('mount');
         Processes::mwExec("{$mountPath} -a 2> /dev/null");
+
+        // Add regular www rights to /cf directory
         Util::addRegularWWWRights('/cf');
     }
 
     /**
-     * Возвращает имя раздела диска по имени и номеру.
-     * @param string $dev
-     * @param string $part
-     * @return string
+     * Retrieves the partition name of a device.
+     *
+     * @param string $dev The device name
+     * @param string $part The partition number
+     * @return string The partition name
      */
     public static function getDevPartName(string $dev, string $part): string
     {
@@ -1151,7 +1327,7 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Creates system folders according to config file
+     * Creates the necessary working directories and symlinks.
      *
      * @return void
      */
@@ -1162,7 +1338,8 @@ class Storage extends Di\Injectable
         Processes::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
 
         $isLiveCd = file_exists('/offload/livecd');
-        // Create dirs
+
+        // Create directories
         $arrConfig = $this->config->toArray();
         foreach ($arrConfig as $rootEntry) {
             foreach ($rootEntry as $key => $entry) {
@@ -1214,23 +1391,29 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Creates JS, CSS, IMG cache folders and links
+     * Creates symlinks for asset cache directories.
      *
+     * @return void
      */
     public function createAssetsSymlinks(): void
     {
+        // Create symlink for JS cache directory
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
         Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/js', $jsCacheDir);
 
+        // Create symlink for CSS cache directory
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
         Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/css', $cssCacheDir);
 
+        // Create symlink for image cache directory
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
         Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/img', $imgCacheDir);
     }
 
     /**
-     * Clears cache folders from old and orphaned files
+     * Clears the cache files for various directories.
+     *
+     * @return void
      */
     public function clearCacheFiles(): void
     {
@@ -1242,13 +1425,15 @@ class Storage extends Di\Injectable
         $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/img';
         $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
         $rmPath = Util::which('rm');
+
+        // Clear cache files for each directory
         foreach ($cacheDirs as $cacheDir) {
             if (!empty($cacheDir)) {
                 Processes::mwExec("{$rmPath} -rf {$cacheDir}/*");
             }
         }
 
-        // Delete boot cache folders
+        // Delete boot cache folders if storage disk is mounted
         if (is_dir('/mountpoint') && self::isStorageDiskMounted()) {
             Processes::mwExec("{$rmPath} -rf /mountpoint");
         }
@@ -1256,38 +1441,57 @@ class Storage extends Di\Injectable
 
     /**
      * Create system folders and links after upgrade and connect config DB
+     *
+     * @return void
      */
     public function createWorkDirsAfterDBUpgrade(): void
     {
+        // Remount /offload directory as read-write
         $mountPath = Util::which('mount');
         Processes::mwExec("{$mountPath} -o remount,rw /offload 2> /dev/null");
+
+        // Create symlinks for module caches
         $this->createModulesCacheSymlinks();
+
+        // Apply folder rights
         $this->applyFolderRights();
+
+        // Remount /offload directory as read-only
         Processes::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
     }
 
+
     /**
-     * Restore modules cache folders and symlinks
+     * Creates symlinks for module caches.
+     *
+     * @return void
      */
     public function createModulesCacheSymlinks(): void
     {
         $modules = PbxExtensionModules::getModulesArray();
         foreach ($modules as $module) {
+            // Create assets symlinks for the module
             PbxExtensionUtils::createAssetsSymlinks($module['uniqid']);
+
+            // Create AGI bin symlinks for the module
             PbxExtensionUtils::createAgiBinSymlinks($module['uniqid']);
         }
     }
 
     /**
-     * Fixes permissions for Folder and Files
+     * Applies folder rights to the appropriate directories.
+     *
+     * @return void
      */
     private function applyFolderRights(): void
     {
-        // Add Rights to the WWW dirs plus some core dirs
-        $www_dirs = [];
-        $exec_dirs = [];
+
+        $www_dirs = []; // Directories with WWW rights
+        $exec_dirs = []; // Directories with executable rights
 
         $arrConfig = $this->config->toArray();
+
+        // Get the directories for WWW rights from the configuration
         foreach ($arrConfig as $key => $entry) {
             if (in_array($key, ['www', 'adminApplication'])) {
                 foreach ($entry as $subKey => $subEntry) {
@@ -1299,10 +1503,11 @@ class Storage extends Di\Injectable
             }
         }
 
+        // Add additional directories with WWW rights
         $www_dirs[] = $this->config->path('core.tempDir');
         $www_dirs[] = $this->config->path('core.logsDir');
 
-        // Create empty log files with www rights
+        // Create empty log files with WWW rights
         $logFiles = [
             $this->config->path('database.debugLogFile'),
             $this->config->path('cdrDatabase.debugLogFile'),
@@ -1319,10 +1524,10 @@ class Storage extends Di\Injectable
         $www_dirs[] = '/etc/version';
         $www_dirs[] = appPath('/');
 
-        // Add read rights
+        // Add read rights to the directories
         Util::addRegularWWWRights(implode(' ', $www_dirs));
 
-        // Add executable rights
+        // Add executable rights to the directories
         $exec_dirs[] = appPath('src/Core/Asterisk/agi-bin');
         $exec_dirs[] = appPath('src/Core/Rc');
         Util::addExecutableRights(implode(' ', $exec_dirs));
@@ -1332,7 +1537,7 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Creates swap file on storage
+     * Mounts the swap file.
      */
     public function mountSwap(): void
     {
@@ -1352,14 +1557,16 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Создает swap файл на storage.
-     * @param $swapFile
+     * Creates a swap file.
+     *
+     * @param string $swapFile The path to the swap file.
      */
-    private function makeSwapFile($swapFile): void
+    private function makeSwapFile(string $swapFile): void
     {
         $swapLabel = Util::which('swaplabel');
+
+        // Check if swap file already exists
         if (Processes::mwExec("{$swapLabel} {$swapFile}") === 0) {
-            // Файл уже существует.
             return;
         }
         if (file_exists($swapFile)) {
@@ -1372,7 +1579,7 @@ class Storage extends Di\Injectable
         } elseif ($size > 1000) {
             $swapSize = 512;
         } else {
-            // Не достаточно свободного места.
+            // Not enough free space.
             return;
         }
         $bs = 1024;
@@ -1380,16 +1587,20 @@ class Storage extends Di\Injectable
         $ddCmd = Util::which('dd');
 
         Util::sysLogMsg('Swap', 'make swap ' . $swapFile, LOG_INFO);
+
+        // Create swap file using dd command
         Processes::mwExec("{$ddCmd} if=/dev/zero of={$swapFile} bs={$bs} count={$countBlock}");
 
         $mkSwapCmd = Util::which('mkswap');
+
+        // Set up swap space on the file
         Processes::mwExec("{$mkSwapCmd} {$swapFile}");
     }
 
     /**
-     * Returns free space on mounted storage disk
+     * Retrieves the amount of free storage space in megabytes.
      *
-     * @return int size in megabytes
+     * @return int The amount of free storage space in megabytes.
      */
     public function getStorageFreeSpaceMb(): int
     {
@@ -1410,10 +1621,11 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Сохраняем новые данные диска.
+     * Saves the disk settings to the database.
      *
-     * @param  array  $data
-     * @param  string $id
+     * @param array $data The disk settings data to be saved.
+     * @param string $id The ID of the disk settings to be updated (default: '1').
+     * @return void
      */
     public function saveDiskSettings(array $data, string $id = '1'): void
     {
@@ -1430,17 +1642,18 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Получение имени диска, смонтированного на conf.recover.
-     * @return string
+     * Retrieves the name of the disk used for recovery. (conf.recover.)
+     *
+     * @return string The name of the recovery disk (e.g., '/dev/sda').
      */
     public function getRecoverDiskName(): string
     {
         $disks = $this->diskGetDevices(true);
         foreach ($disks as $disk => $diskInfo) {
-            // RAID содержит вложенный массив "children"
+            // Check if the disk is a RAID or virtual device
             if (isset($diskInfo['children'][0]['children'])) {
                 $diskInfo = $diskInfo['children'][0];
-                // Корректируем имя диска. Это RAID или иной виртуальный device.
+                // Adjust the disk name for RAID or other virtual devices
                 $disk = $diskInfo['name'];
             }
             foreach ($diskInfo['children'] as $child) {

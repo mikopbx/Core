@@ -91,4 +91,4 @@ class WorkerLogRotate extends WorkerBase
 }
 
 // Start worker process
-WorkerLogRotate::startWorker($argv??null);
+WorkerLogRotate::startWorker($argv??[]);

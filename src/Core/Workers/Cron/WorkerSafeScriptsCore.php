@@ -40,8 +40,16 @@ use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Recoil\React\ReactKernel;
 use Throwable;
 
+/**
+ * Class WorkerSafeScriptsCore
+ *
+ * Represents the core worker for safe scripts.
+ *
+ * @package MikoPBX\Core\Workers\Cron
+ */
 class WorkerSafeScriptsCore extends WorkerBase
 {
+    // Constants to denote the methods of checking workers' statuses.
     public const CHECK_BY_BEANSTALK = 'checkWorkerBeanstalk';
 
     public const CHECK_BY_AMI = 'checkWorkerAMI';
@@ -49,13 +57,16 @@ class WorkerSafeScriptsCore extends WorkerBase
     public const CHECK_BY_PID_NOT_ALERT = 'checkPidNotAlert';
 
     /**
-     * Restart all registered workers
+     * Restarts all registered workers.
      *
      * @throws \Throwable
      */
     public function restart(): void
     {
+        // Prepare the list of workers to be restarted.
         $arrWorkers = $this->prepareWorkersList();
+
+        // Start the parallel execution of restart for all the workers.
         ReactKernel::start(
             function () use ($arrWorkers) {
                 // Parallel execution https://github.com/recoilphp/recoil
@@ -69,13 +80,15 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
 
     /**
-     * Prepare workers list to start and restart
-     * We collect core and modules workers
+     * Prepares the list of workers to start and restart.
+     * Collects core and module workers.
      *
-     * @return array
+     * @return array The prepared workers list.
      */
     private function prepareWorkersList(): array
     {
+        // Initialize the workers' list.
+        // Each worker type corresponds to a list of workers.
         $arrWorkers        = [
             self::CHECK_BY_AMI           =>
                 [
@@ -98,42 +111,53 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerRemoveOldRecords::class,
                 ],
         ];
+
+        // Get the list of module workers.
         $arrModulesWorkers = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GET_MODULE_WORKERS);
         $arrModulesWorkers = array_values($arrModulesWorkers);
         $arrModulesWorkers = array_merge(...$arrModulesWorkers);
+
+        // If there are module workers, add them to the workers' list.
         if (!empty($arrModulesWorkers)) {
             foreach ($arrModulesWorkers as $moduleWorker) {
                 $arrWorkers[$moduleWorker['type']][] = $moduleWorker['worker'];
             }
         }
 
+        // Return the prepared workers' list.
         return $arrWorkers;
     }
 
     /**
-     * Restart worker by class name
+     * Restarts a worker by class name.
      *
-     * @param $workerClassName
+     * @param string $workerClassName The class name of the worker.
      *
      * @return \Generator|null
      */
-    public function restartWorker($workerClassName): ?Generator
+    public function restartWorker(string $workerClassName): ?Generator
     {
+        // Restart the worker and yield control back to the calling code.
         Processes::processPHPWorker($workerClassName, 'start','restart');
         yield;
     }
 
     /**
-     * Start all workers or check them
+     * Starts all workers or checks them.
      *
-     * @param mixed $argv
+     * @param array $params The command-line arguments.
      *
      * @throws \Throwable
      */
-    public function start($argv): void
+    public function start(array $params): void
     {
+        // Wait for the system to fully boot.
         PBX::waitFullyBooted();
+
+        // Prepare the list of workers to be started.
         $arrWorkers = $this->prepareWorkersList();
+
+        // Start the parallel execution for starting or checking all workers.
         ReactKernel::start(
             function () use ($arrWorkers) {
                 // Parallel execution https://github.com/recoilphp/recoil
@@ -151,19 +175,22 @@ class WorkerSafeScriptsCore extends WorkerBase
             }
         );
 
+        // Check SSH configuration.
         SSHConf::checkPassword();
     }
 
     /**
-     * Ping worker to check it, if it dead we kill and start it again
-     * We use Beanstalk queue to send ping and check workers
+     * Pings a worker to check if it is dead. If it is, it is killed and started again.
+     * Uses Beanstalk queue to send ping and check workers.
      *
-     * @param $workerClassName string
+     * @param string $workerClassName The class name of the worker.
      *
      * @return \Generator|null
      */
     public function checkWorkerBeanstalk(string $workerClassName): ?Generator
     {
+        // Check if the worker is alive. If not, restart it.
+        // The check is done by pinging the worker using a Beanstalk queue.
         try {
             $start     = microtime(true);
             $WorkerPID = Processes::getPidOfProcess($workerClassName);
@@ -195,14 +222,15 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
 
     /**
-     * Checks PID worker and start it it died
+     * Checks the PID worker and starts it if it died.
      *
-     * @param $workerClassName string
+     * @param string $workerClassName The class name of the worker.
      *
-     * @return Generator
+     * @return \Generator|null
      */
     public function checkPidNotAlert(string $workerClassName): Generator
     {
+        // Check if the worker is alive based on its PID. If not, restart it.
         $start     = microtime(true);
         $WorkerPID = Processes::getPidOfProcess($workerClassName);
         $result    = ($WorkerPID !== '');
@@ -221,22 +249,24 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
 
     /**
-     * Ping worker to check it, if it dead we kill and start it again
-     * We use AMI UserEvent to send ping and check workers
+     * Pings a worker to check if it is dead. If it is, it is killed and started again.
+     * Uses AMI UserEvent to send ping and check workers.
      *
-     * @param $workerClassName string  service name
-     * @param $level           int  recursion level
+     * @param string $workerClassName The class name of the worker.
+     * @param int $level The recursion level.
      *
      * @return \Generator|null
      */
     public function checkWorkerAMI(string $workerClassName, int $level = 0): ?Generator
     {
+        // Check if the worker is alive. If not, restart it.
+        // The check is done by pinging the worker using an AMI UserEvent.
         try {
             $start     = microtime(true);
             $res_ping  = false;
             $WorkerPID = Processes::getPidOfProcess($workerClassName);
             if ($WorkerPID !== '') {
-                // We had service PID, so we will ping it
+                // We have the service PID, so we will ping it
                 $am       = Util::getAstManager();
                 $res_ping = $am->pingAMIListener($this->makePingTubeName($workerClassName));
                 if (false === $res_ping) {
@@ -273,6 +303,8 @@ class WorkerSafeScriptsCore extends WorkerBase
 // Start worker process
 $workerClassname = WorkerSafeScriptsCore::class;
 try {
+
+    // If command-line arguments are provided, set the process title and check for active processes.
     if (isset($argv) && count($argv) > 1) {
         cli_set_process_title("{$workerClassname} {$argv[1]}");
         $activeProcesses = Processes::getPidOfProcess("{$workerClassname} {$argv[1]}", posix_getpid());
@@ -281,6 +313,8 @@ try {
             return;
         }
         $worker = new $workerClassname();
+
+        // Depending on the command-line argument, start or restart the worker.
         if ($argv[1] === 'start') {
             $worker->start($argv);
             Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
@@ -290,6 +324,7 @@ try {
         }
     }
 } catch (Throwable $e) {
+    // If an exception is thrown, log it.
     global $errorLogger;
     $errorLogger->captureException($e);
     Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
