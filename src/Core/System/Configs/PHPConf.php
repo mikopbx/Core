@@ -27,11 +27,20 @@ use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class PHPConf
+ *
+ * Represents the PHP configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class PHPConf extends Injectable
 {
 
     /**
-     * Relocate PHP error log to storage mount
+     * Relocates PHP error log to the storage mount.
+     *
+     * @return void
      */
     public static function setupLog(): void
     {
@@ -48,8 +57,9 @@ class PHPConf extends Injectable
 
 
     /**
-     * Returns php error log filepath
-     * @return string
+     * Returns the PHP error log file path.
+     *
+     * @return string The log file path.
      */
     public static function getLogFile(): string
     {
@@ -59,7 +69,9 @@ class PHPConf extends Injectable
     }
 
     /**
-     * Rotate php error log
+     * Rotates the PHP error log.
+     *
+     * @return void
      */
     public static function rotateLog(): void
     {
@@ -80,7 +92,7 @@ class PHPConf extends Injectable
     postrotate
     endscript
 }";
-        // TODO::Доделать рестарт PHP-FPM после обновление лога
+        // TODO::Add restart PHP-FPM after rotation
         $di     = Di::getDefault();
         if ($di !== null){
             $varEtcDir = $di->getConfig()->path('core.varEtcDir');
@@ -99,7 +111,9 @@ class PHPConf extends Injectable
     }
 
     /**
-     * Setup timezone for PHP
+     * Sets up the timezone for PHP.
+     *
+     * @return void
      */
     public static function phpTimeZoneConfigure(): void
     {
@@ -115,15 +129,19 @@ class PHPConf extends Injectable
     }
 
     /**
-     *   Restart php-fpm
-     **/
+     * Restarts php-fpm.
+     *
+     * @return void
+     */
     public static function reStart(): void
     {
         $phpFPMPath = Util::which('php-fpm');
-        // Отправляем запрос на graceful shutdown;
+
+        // Send graceful shutdown signal
         Processes::mwExec('kill -SIGQUIT "$(cat /var/run/php-fpm.pid)"');
         usleep(100000);
-        // Принудительно завершаем.
+
+        // Forcefully terminate
         Processes::killByName('php-fpm');
         Processes::mwExec("{$phpFPMPath} -c /etc/php.ini");
     }

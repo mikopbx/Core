@@ -1,0 +1,212 @@
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace MikoPBX\Core\Rc;
+use MikoPBX\Common\Providers\MainDatabaseProvider;
+use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
+use MikoPBX\Core\System\{Configs\SyslogConf,
+    Processes,
+    System,
+    Upgrade\UpdateDatabase,
+    Util,
+    Storage,
+    PBX};
+use MikoPBX\Core\Asterisk\CdrDb;
+
+require_once('Globals.php');
+
+/**
+ * Selects the storage disk and performs the necessary configuration.
+ *
+ * @param string $automatic Flag to determine if the disk should be selected automatically
+ * @return bool Returns true on success, false otherwise
+ */
+function selectAndConfigureStorageDisk(string $automatic): bool
+{
+    // Open standard input in binary mode for interactive reading
+    $fp = fopen('php://stdin', 'rb');
+    $storage = new Storage();
+
+    // Check if the storage disk is already mounted
+    if(Storage::isStorageDiskMounted()){
+        echo "\n ".Util::translate('Storage disk is already mounted...')." \n\n";
+        sleep(2);
+        return true;
+    }
+
+    $validDisks = [];
+
+    // Get all available hard drives
+    $all_hdd = $storage->getAllHdd();
+
+    $system_disk   = '';
+
+    $selected_disk = ['size' => 0, 'id' => ''];
+
+    // Iterate through all available hard drives
+    foreach ($all_hdd as $disk) {
+        $additional       = '';
+        $devName          = Storage::getDevPartName($disk['id'], '4');
+        $isLiveCd         = ( $disk['sys_disk'] && file_exists('/offload/livecd') );
+        $isMountedSysDisk = (!empty($disk['mounted']) && $disk['sys_disk'] && file_exists("/dev/$devName"));
+
+        // Check if the disk is a system disk and is mounted
+        if($isMountedSysDisk  ||  $isLiveCd){
+            $system_disk = $disk['id'];
+            $additional.= "\033[31;1m [SYSTEM]\033[0m";
+        }elseif ($disk['mounted']){
+            // If disk is mounted but not a system disk, continue to the next iteration
+            continue;
+        }
+
+        // Check if the current disk is larger than the previously selected disk
+        if($selected_disk['size'] === 0 || $disk['size'] > $selected_disk['size'] ){
+            $selected_disk = $disk;
+        }
+
+        $part = $disk['sys_disk']?'4':'1';
+        $devName = Storage::getDevPartName($disk['id'], $part);
+        $devFour = '/dev/'.$devName;
+        if(Storage::isStorageDisk($devFour)){
+            $additional.= "\033[33;1m [STORAGE] \033[0m";
+        }
+
+        // Check if the disk is a system disk and has a valid partition
+        if($disk['sys_disk']){
+            $part4_found = false;
+            foreach ($disk['partitions'] as $partition){
+                if($partition['dev'] === $devName && $partition['size'] > 1000){
+                    $part4_found = true;
+                }
+            }
+            if($part4_found === false){
+                continue;
+            }
+        } elseif($disk['size'] < 1024){
+            // If disk size is less than 1024, continue to the next iteration
+            continue;
+        }
+
+        // Add the valid disk to the validDisks array
+        $validDisks[$disk['id']] = "  - {$disk['id']}, {$disk['size_text']}, {$disk['vendor']}$additional\n";
+    }
+
+    if(count($validDisks) === 0) {
+        // If no valid disks were found, log a message and return 0
+        echo "\n " . Util::translate('Valid disks not found...') . " \n";
+        sleep(3);
+        return false;
+    }
+
+    echo "\n ".Util::translate('Select the drive to store the data.');
+    echo "\n ".Util::translate('Selected disk:')."\033[33;1m [{$selected_disk['id']}] \033[0m \n\n";
+    echo "\n ".Util::translate('Valid disks are:')." \n\n";
+    foreach ($validDisks as $disk) {
+        echo $disk;
+    }
+    echo "\n";
+
+    // Check if the disk selection should be automatic
+    if($automatic === 'auto'){
+        $target_disk_storage = $selected_disk['id'];
+    }else{
+        // Otherwise, prompt the user to enter a disk
+        do {
+            echo "\n".Util::translate('Enter the device name:').Util::translate('(default value = ').$selected_disk['id'].') :';
+            $target_disk_storage = trim(fgets($fp));
+            if ($target_disk_storage === '') {
+                $target_disk_storage = $selected_disk['id'];
+            }
+        } while (!array_key_exists($target_disk_storage, $validDisks));
+    }
+
+    // Determine the disk partition and format if necessary
+    $dev_disk  = "/dev/$target_disk_storage";
+    if(!empty($system_disk) && $system_disk === $target_disk_storage){
+        $part = "4";
+    }else{
+        $part = "1";
+    }
+    $partName = Storage::getDevPartName($target_disk_storage, $part);
+    $part_disk = "/dev/$partName";
+    if($part === '1' && !Storage::isStorageDisk($part_disk)){
+        $storage->formatDiskLocal($dev_disk);
+        $partName = Storage::getDevPartName($target_disk_storage, $part);
+        $part_disk = "/dev/$partName";
+    }
+
+    // Create an array of disk data
+    $data=[
+        'device'         => $dev_disk,
+        'uniqid'         => $storage->getUuid($part_disk),
+        'filesystemtype' => 'ext4',
+        'name'           => 'Storage №1'
+    ];
+
+    // Save the disk settings
+    $storage->saveDiskSettings($data);
+    if(file_exists('/offload/livecd')) {
+        // Do not need to start the PBX, it's the station installation in LiveCD mode.
+        return true;
+    }
+    MainDatabaseProvider::recreateDBConnections();
+
+    // Configure the storage
+    $storage->configure();
+    MainDatabaseProvider::recreateDBConnections();
+    $success = Storage::isStorageDiskMounted();
+    if($success === true && $automatic === 'auto'){
+        System::rebootSync();
+        return true;
+    }
+
+    fclose(STDERR);
+    Util::echoWithSyslog(' - Update database ... '. PHP_EOL);
+
+    // Update the database
+    $dbUpdater = new UpdateDatabase();
+    $dbUpdater->updateDatabaseStructure();
+
+    $STDERR = fopen('php://stderr', 'wb');
+    CdrDb::checkDb();
+
+    // Restart syslog
+    $sysLog = new SyslogConf();
+    $sysLog->reStart();
+
+    // Configure PBX
+    $pbx = new PBX();
+    $pbx->configure();
+
+    // Restart processes related to storage
+    Processes::processPHPWorker(WorkerApiCommands::class);
+
+    // Check if the disk was mounted successfully
+    if($success === true){
+        echo "\n ".Util::translate('Storage disk was mounted successfully...')." \n\n";
+    }else{
+        echo "\n ".Util::translate('Failed to mount the disc...')." \n\n";
+    }
+
+    sleep(3);
+    fclose($STDERR);
+}
+
+// Call the function with the first command line argument, or '0' if no argument is provided
+selectAndConfigureStorageDisk($argv[1] ?? '0');

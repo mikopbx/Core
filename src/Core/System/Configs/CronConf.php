@@ -30,6 +30,13 @@ use Phalcon\Di\Injectable;
 
 use function MikoPBX\Common\Config\appPath;
 
+/**
+ * Class CronConf
+ *
+ * Represents the Cron configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class CronConf extends Injectable
 {
     public const PROC_NAME = 'crond';
@@ -45,9 +52,9 @@ class CronConf extends Injectable
     }
 
     /**
-     * Setups crond and restart it
+     * Setups crond and restarts it.
      *
-     * @return int
+     * @return int Returns 0 on success.
      */
     public function reStart(): int
     {
@@ -66,9 +73,9 @@ class CronConf extends Injectable
     }
 
     /**
-     * Generates crontab config
+     * Generates crontab config.
      *
-     * @param bool $boot
+     * @param bool $boot Indicates whether the config is generated during boot.
      */
     private function generateConfig(bool $boot = true): void
     {
@@ -87,13 +94,23 @@ class CronConf extends Injectable
         $dumpPath      = Util::which('dump-conf-db');
         $checkIpPath   = Util::which('check-out-ip');
 
+        // Restart every night if enabled
         if ($restart_night === '1') {
             $mast_have[] = '0 1 * * * ' . $asteriskPath . ' -rx"core restart now" > /dev/null 2> /dev/null'.PHP_EOL;
         }
+        // Update NTP time every 5 minutes
         $mast_have[] = '*/5 * * * * ' . $ntpdPath . ' -q > /dev/null 2> /dev/null'.PHP_EOL;
+
+        // Perform database dump every 5 minutes
         $mast_have[] = '*/5 * * * * ' . "$dumpPath > /dev/null 2> /dev/null".PHP_EOL;
+
+        // Check IP address every minute
         $mast_have[] = '*/1 * * * * ' . "$checkIpPath > /dev/null 2> /dev/null".PHP_EOL;
+
+        // Clean download links every 6 minutes
         $mast_have[] = '*/6 * * * * ' . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh > /dev/null 2> /dev/null".PHP_EOL;
+
+        // Run WorkerSafeScripts every minute
         $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts.PHP_EOL;
 
         // Add additional modules includes
@@ -101,9 +118,12 @@ class CronConf extends Injectable
         PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::CREATE_CRON_TASKS, [&$tasks]);
         $conf = implode('', array_merge($mast_have, $tasks));
 
+        // Execute WorkerSafeScripts during boot if enabled
         if ($boot === true) {
             Processes::mwExecBg($WorkerSafeScripts);
         }
+
+        // Write the generated config to the cron file
         Util::fileWriteContent($cron_filename, $conf);
     }
 }

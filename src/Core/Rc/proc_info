@@ -18,10 +18,18 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
+# Get the current timestamp
 time=$(date +%s);
+
+# Create a unique filename using the timestamp
 filename="/tmp/ps_result${time}";
+
+# Retrieve process information using 'ps' command and save it to the file
 /bin/ps -A -f -orss,pid,args | /bin/busybox grep -v '[0-9]m ' | /bin/busybox awk '{ print $1 "k ; " $2 " ; " $3 " " $4 " " $5 " " $6 " " $7 " " $8 }' > $filename;
 /bin/ps -A -f -orss,pid,args | /bin/busybox grep '[0-9]m ' | /bin/busybox awk '{ print $1 " ; " $2 " ; " $3 " " $4 " " $5 " " $6 " " $7 " " $8 }' >> $filename;
 
+# Sort the file contents in reverse order, ignoring lines with 0k or RSSk
 /bin/busybox cat $filename | /bin/sort -r -h -f | /usr/bin/column -t -s ';' | /bin/busybox grep -v "^0k" | grep -v "^RSSk";
+
+# Remove the temporary file
 /bin/busybox rm -rf $filename;

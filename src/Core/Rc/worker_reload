@@ -17,21 +17,26 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-# Путь и базовые параметры для запускаемого приложения.
-# Имя сервиса.
+# Path and basic parameters for the launched application.
+# Service name.
 NAMESAFE=$(/bin/busybox basename "$0");
 PATHTOBIN=$(/bin/busybox which "$(echo "$NAMESAFE" | /bin/busybox sed 's/safe-//g')");
 NAME=$(/bin/busybox basename "$PATHTOBIN");
 ARGS=$@;
-# Длительно ожидание перед новым запуском.
+
+# Duration to wait before the next launch.
 SLEEPSECS=1
 PIDFILE="/var/run/${NAMESAFE}.pid";
 
+
+# Function to display messages
 message() {
 	echo "$1" >&2
 	logger -t "$NAME" "$1"
 }
 
+
+# Function to run the binary
 run_bin()
 {
 	while :; do
@@ -51,6 +56,7 @@ run_bin()
 	done;
 }
 
+# Check if another instance of the script is already running
 if [ -f "$PIDFILE" ]; then
   message "Found another pid file.";
   resultGrep=$(/bin/busybox ps | /bin/busybox grep "$NAMESAFE" | grep "$(/bin/busybox cat "$PIDFILE")" | /bin/busybox grep -v grep);
@@ -59,14 +65,19 @@ if [ -f "$PIDFILE" ]; then
     exit 1;
   fi;
 fi;
+
+# Save the current process ID in the PID file
 echo $$ > "$PIDFILE";
 message "Starting $NAMESAFE...";
+
+# Check if there is another process running with the same binary path and terminate it
 pidOld=$(/bin/busybox ps | /bin/busybox grep "$(basename "$PATHTOBIN")" | /bin/busybox grep -v "$NAMESAFE" | /bin/busybox grep -v grep | /bin/busybox awk '{ print $1}');
 if [ -n "$pidOld" ]; then
   message "Completing another process ${PATHTOBIN}"
   /bin/busybox kill "$pidOld";
 fi;
-
+# Start running the binary in the background
 run_bin &
-# Обновляем PID фонового процесса.
+
+# Update the PID of the background process.
 echo $! > "$PIDFILE";

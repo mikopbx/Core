@@ -23,6 +23,13 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class ACPIDConf
+ *
+ * Represents the ACPID configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class ACPIDConf extends Injectable
 {
     public const PROC_NAME = 'acpid';

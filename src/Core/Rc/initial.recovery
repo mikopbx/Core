@@ -21,38 +21,98 @@ namespace MikoPBX\Core\Rc;
 use MikoPBX\Core\System\{Processes, Storage, Util};
 require_once('Globals.php');
 
-$REDON      = "\033[31;1m";
-$REDOFF     = "\033[0m";
-$GREENON    = "\033[32;1m";
-$GREENOFF   = "\033[0m";
-$fp         = fopen('php://stdin', 'r');
+/**
+ * Class PBXRecovery
+ *
+ * Class responsible for managing the recovery process of a PBX system.
+ *
+ * @package MikoPBX\Core\Rc
+ */
+class PBXRecovery
+{
+    // ASCII codes for colored output
+    const REDON    = "\033[31;1m";
+    const REDOFF   = "\033[0m";
+    const GREENON  = "\033[32;1m";
+    const GREENOFF = "\033[0m";
 
-$storage    = new Storage();
-$DEVICE     = $storage->getRecoverDiskName();
-$VERSION    = trim(file_get_contents('/offload/version'));
-system('clear');
-echo "\n";
-echo Util::translate("Install or recovery")."\n";
-echo "*******************************\n";
-echo "1) ".Util::translate('Install').".   ${REDON}".Util::translate('All settings will be lost!')."${REDOFF}\n";
-echo "2) ".Util::translate('Reinstall to')." ${VERSION}. ${GREENON}".Util::translate('All settings will be kept!')."${GREENOFF}\n";
-echo "3) ".Util::translate('Cancel')."\n\n";
-echo Util::translate('Enter a number').": ";
+    // Storage instance
+    private Storage $storage;
 
-$input = trim(fgets($fp));
-switch ($input) {
-    case 1:
-        file_put_contents('/tmp/ejectcd', '');
-        include '/etc/rc/initial.install';
-        sleep(300);
-        break;
-    case 2:
-        file_put_contents('/tmp/ejectcd', '');
-        $pbx_firmwarePath = Util::which('pbx_firmware');
-        Processes::mwExecBg("{$pbx_firmwarePath} /offload/firmware.img.gz ${DEVICE}");
-        sleep(600);
-        break;
-    case 3:
-        sleep(2);
-        break;
+    // Recover disk name
+    private string $DEVICE;
+
+    // Version info
+    private string $VERSION;
+
+    // File pointer
+    private $fp;
+
+    /**
+     * PBXRecovery constructor.
+     *
+     * Initializes file pointer, storage, disk name and version
+     */
+    public function __construct()
+    {
+        $this->fp      = fopen('php://stdin', 'r');
+        $this->storage = new Storage();
+        $this->DEVICE  = $this->storage->getRecoverDiskName();
+        $this->VERSION = trim(file_get_contents('/offload/version'));
+
+        $this->run();
+    }
+
+    /**
+     * Main runner method
+     *
+     * Clears the terminal and provides the user with recovery options.
+     * Handles the user's selection input.
+     */
+    public function run()
+    {
+        system('clear');
+        echo "\n";
+        echo Util::translate("Install or recovery")."\n";
+        echo "*******************************\n";
+        echo "1) ".Util::translate('Install').".   ".self::REDON.Util::translate('All settings will be lost!').self::REDOFF."\n";
+        echo "2) ".Util::translate('Reinstall to')." ".$this->VERSION. ". ".self::GREENON.Util::translate('All settings will be kept!').self::GREENOFF."\n";
+        echo "3) ".Util::translate('Cancel')."\n\n";
+        echo Util::translate('Enter a number').": ";
+
+        $input = trim(fgets($this->fp));
+        $this->handleInput($input);
+    }
+
+    /**
+     * Handle user input
+     *
+     * Executes the appropriate recovery process based on the user's selection.
+     *
+     * @param int $input User's selection input
+     */
+    private function handleInput($input)
+    {
+        switch ($input) {
+            case 1:
+                // Prepare for install
+                file_put_contents('/tmp/ejectcd', '');
+                include '/etc/rc/initial.install';
+                sleep(300);
+                break;
+            case 2:
+                // Prepare for reinstall
+                file_put_contents('/tmp/ejectcd', '');
+                $pbx_firmwarePath = Util::which('pbx_firmware');
+                Processes::mwExecBg("{$pbx_firmwarePath} /offload/firmware.img.gz {$this->DEVICE}");
+                sleep(600);
+                break;
+            case 3:
+                // Cancel operation
+                sleep(2);
+                break;
+        }
+    }
 }
+
+new PBXRecovery();

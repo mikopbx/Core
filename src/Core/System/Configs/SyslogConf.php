@@ -25,6 +25,13 @@ use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class SyslogConf
+ *
+ * Represents the Syslog configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class SyslogConf extends Injectable
 {
     public const CONF_FILE   ='/etc/rsyslog.conf';
@@ -32,7 +39,7 @@ class SyslogConf extends Injectable
     public const SYS_LOG_LINK='/var/log/messages';
 
     /**
-     * Restarts syslog daemon
+     * Restarts syslog daemon.
      */
     public function reStart(): void
     {
@@ -47,7 +54,7 @@ class SyslogConf extends Injectable
     }
 
     /**
-     * Генерация конфигурационного файла.
+     * Generates the configuration file.
      */
     private function generateConfigFile():void{
         $pathScript = $this->createRotateScript();
@@ -70,7 +77,8 @@ class SyslogConf extends Injectable
     }
 
     /**
-     * Returns Syslog file path
+     * Returns the path to the syslog file.
+     *
      * @return string
      */
     public static function getSyslogFile(): string
@@ -81,7 +89,8 @@ class SyslogConf extends Injectable
     }
 
     /**
-     * Скрипт ротации логов.
+     * Creates the log rotation script.
+     *
      * @return string
      */
     public function createRotateScript(): string

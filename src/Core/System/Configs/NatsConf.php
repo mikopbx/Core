@@ -27,6 +27,13 @@ use MikoPBX\Core\System\Processes;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class NatsConf
+ *
+ * Represents the Nats configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class NatsConf extends Injectable
 {
     private MikoPBXConfig $mikoPBXConfig;
@@ -38,8 +45,11 @@ class NatsConf extends Injectable
     {
         $this->mikoPBXConfig = new MikoPBXConfig();
     }
+
     /**
-     * Restarts gnats server
+     * Restarts the gnats server.
+     *
+     * @return void
      */
     public function reStart(): void
     {

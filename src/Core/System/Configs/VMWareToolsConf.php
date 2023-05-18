@@ -25,6 +25,13 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use phpDocumentor\Reflection\Types\True_;
 
+/**
+ * Class VMWareToolsConf
+ *
+ * Represents the VMWareTools configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class VMWareToolsConf
 {
     private MikoPBXConfig $mikoPBXConfig;
@@ -37,9 +44,10 @@ class VMWareToolsConf
         $this->mikoPBXConfig = new MikoPBXConfig();
     }
 
-
     /**
-     * Configure and starts VMWareTools
+     * Configure and start VMWareTools.
+     *
+     * @return bool
      */
     public function configure(): bool
     {

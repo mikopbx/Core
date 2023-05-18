@@ -27,6 +27,13 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class SSHConf
+ *
+ * Represents the SSH configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class SSHConf extends Injectable
 {
     private MikoPBXConfig $mikoPBXConfig;
@@ -41,8 +48,10 @@ class SSHConf extends Injectable
     }
 
     /**
-     * Configure SSH settings
-     **/
+     * Configures SSH settings.
+     *
+     * @return bool
+     */
     public function configure(): bool
     {
         $lofFile = '/var/log/lastlog';
@@ -92,7 +101,9 @@ class SSHConf extends Injectable
     }
 
     /**
-     * Stores authorized_keys from DB to files
+     * Stores authorized_keys from DB to files.
+     *
+     * @return void
      */
     public function generateAuthorizedKeys(): void
     {
@@ -103,8 +114,10 @@ class SSHConf extends Injectable
     }
 
     /**
-     * Setups root user password
-     **/
+     * Sets up the root user password.
+     *
+     * @return void
+     */
     public function updateShellPassword(): void
     {
         $password       = $this->mikoPBXConfig->getGeneralSettings('SSHPassword');
@@ -126,11 +139,13 @@ class SSHConf extends Injectable
     }
 
     /**
-     * @param $subject
-     * @param $messages
+     * Sends a notification email.
+     *
+     * @param string $subject
+     * @param array  $messages
      * @return void
      */
-    private function sendNotify($subject, $messages):void
+    private function sendNotify(string $subject, array $messages):void
     {
         if(!Notifications::checkConnection(Notifications::TYPE_PHP_MAILER)){
             return;
@@ -146,7 +161,8 @@ class SSHConf extends Injectable
     }
 
     /**
-     * Проверка пароля на случай, если он был изменен не обычным способом (взлом системы).
+     * Checks the password in case it was changed by an unauthorized means.
+     *
      * @return void
      */
     public static function checkPassword():void
@@ -167,11 +183,11 @@ class SSHConf extends Injectable
         $hashString = PbxSettings::getValueByKey('SSHPasswordHashString');
         $hashFile   = PbxSettings::getValueByKey('SSHPasswordHash');
         if($hashString !== md5($password)){
-            // Изменился пароль. Не обычным способом.
+            // The password has been changed in an unusual way.
             $messages[] = 'The SSH password was not changed from the web interface.';
         }
         if($hashFile   !== md5_file('/etc/passwd')){
-            // Системный пароль не соответствует тому, что установлен в конфигурационном файле.
+            // The system password does not match what is set in the configuration file.
             $messages[] = 'The system password does not match what is set in the configuration file.';
         }
         if(!empty($messages)){

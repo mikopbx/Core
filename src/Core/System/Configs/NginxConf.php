@@ -28,6 +28,13 @@ use MikoPBX\Core\System\Verify;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class NginxConf
+ *
+ * Represents the Nginx configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class NginxConf extends Injectable
 {
     public const  MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
@@ -61,6 +68,11 @@ class NginxConf extends Injectable
         }
     }
 
+    /**
+     * Retrieves the Nginx process ID.
+     *
+     * @return string The process ID.
+     */
     private static function getPid():string{
         $filePid = trim(file_get_contents(self::PID_FILE));
         if(!empty($filePid)) {
@@ -73,12 +85,14 @@ class NginxConf extends Injectable
     }
 
     /**
-     * Write additional settings the nginx.conf
+     * Writes additional settings to the nginx.conf.
      *
-     * @param bool $not_ssl
-     * @param int  $level
+     * @param bool $not_ssl Whether to generate the configuration for non-SSL.
+     * @param int $level The recursion level.
+     *
+     * @return void
      */
-    public function generateConf($not_ssl = false, $level = 0): void
+    public function generateConf(bool $not_ssl = false, int $level = 0): void
     {
         $configPath      = '/etc/nginx/mikopbx/conf.d';
         $httpConfigFile  = "{$configPath}/http-server.conf";
@@ -144,9 +158,9 @@ class NginxConf extends Injectable
     }
 
     /**
-     * Test current nginx config on errors
+     * Tests the current nginx config for errors.
      *
-     * @return bool
+     * @return bool Whether the config is valid or not.
      */
     private function testCurrentNginxConfig(): bool
     {
@@ -159,7 +173,9 @@ class NginxConf extends Injectable
     }
 
     /**
-     * Generate modules locations conf files
+     * Generates the modules locations conf files.
+     *
+     * @return void
      */
     public function generateModulesConfigs(): void
     {
@@ -176,10 +192,10 @@ class NginxConf extends Injectable
             $confFileName = "{$locationsPath}/{$moduleUniqueId}.conf";
             file_put_contents($confFileName, $locationContent);
             if ( $this->testCurrentNginxConfig()) {
-                // Тест прошел успешно.
+                // Test passed successfully.
                 continue;
             }
-            // Откат конфига.
+            // Config test failed. Rollback the config.
             Processes::mwExec("{$rmPath} {$confFileName}");
             Util::sysLogMsg('nginx', 'Failed test config file for module' . $moduleUniqueId, LOG_ERR);
         }

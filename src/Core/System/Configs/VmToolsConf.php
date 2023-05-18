@@ -18,34 +18,53 @@
  */
 
 namespace MikoPBX\Core\System\Configs;
+
 use MikoPBX\Core\System\Util;
 
+/**
+ * Class VmToolsConf
+ *
+ * Represents the VmTools configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class VmToolsConf
 {
-    public const VMWARE         = 'vmware';
-    public function configure():bool
+    public const VMWARE = 'vmware';
+
+    /**
+     * Configure VM tools.
+     *
+     * @return bool
+     */
+    public function configure(): bool
     {
         $result = true;
-        if(Util::isDocker()){
+        if (Util::isDocker()) {
             return $result;
         }
         $vars = [
             self::VMWARE => VMWareToolsConf::class
         ];
         $vendor = $this->getCpuVendor();
-        $className = $vars[$vendor]??'';
-        if(class_exists($className)){
-            $tools    = new $className();
-            $result   = $tools->configure();
+        $className = $vars[$vendor] ?? '';
+        if (class_exists($className)) {
+            $tools = new $className();
+            $result = $tools->configure();
         }
         return $result;
     }
 
-    private function getCpuVendor():string
+    /**
+     * Get the CPU vendor.
+     *
+     * @return string
+     */
+    private function getCpuVendor(): string
     {
-        $lsCpuPath  = Util::which('lscpu');
-        $grepPath   = Util::which('grep');
-        $awk        = Util::which('awk');
+        $lsCpuPath = Util::which('lscpu');
+        $grepPath = Util::which('grep');
+        $awk = Util::which('awk');
         $result = shell_exec("$lsCpuPath | $grepPath vendor | $awk -F ' ' '{ print $3}'");
         return strtolower(trim($result));
     }

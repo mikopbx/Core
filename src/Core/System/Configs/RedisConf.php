@@ -24,6 +24,13 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class RedisConf
+ *
+ * Represents the Redis configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class RedisConf extends Injectable
 {
     public const PROC_NAME = 'redis-server';
@@ -31,8 +38,11 @@ class RedisConf extends Injectable
     public const CONF_FILE = '/etc/redis.conf';
 
     public string $port = '';
+
     /**
-     * Restarts Redis server
+     * Restarts the Redis server.
+     *
+     * @return void
      */
     public function reStart(): void
     {
@@ -43,7 +53,7 @@ class RedisConf extends Injectable
         $ch = 0;
         do{
             $ch++;
-            // Ожидаем завершения работы redis;
+            // Wait for Redis to finish its work
             sleep(1);
             $pid1 = Processes::getPidOfProcess($mainRunner);
             $pid2 = Processes::getPidOfProcess(self::PROC_NAME);
@@ -62,7 +72,9 @@ class RedisConf extends Injectable
     }
 
     /**
-     * Setup redis daemon conf file
+     * Sets up the Redis daemon conf file.
+     *
+     * @return void
      */
     private function configure(): void
     {

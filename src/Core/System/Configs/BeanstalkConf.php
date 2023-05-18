@@ -23,12 +23,23 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class BeanstalkConf
+ *
+ * Represents the Beanstalk configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class BeanstalkConf extends Injectable
 {
     public const PROC_NAME = 'beanstalkd';
 
     /**
-     * Restarts Beanstalk server
+     * Restarts Beanstalk server.
+     *
+     * This method retrieves the Beanstalk configuration from the dependency injection container,
+     * and restarts the Beanstalk server using the retrieved configuration. If the server fails to start,
+     * it waits for 10 seconds and retries the startup process.
      */
     public function reStart(): void
     {

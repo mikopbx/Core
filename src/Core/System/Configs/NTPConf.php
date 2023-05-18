@@ -23,10 +23,19 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class NTPConf
+ *
+ * Represents the NTP configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class NTPConf extends Injectable
 {
     /**
-     * Setup ntp daemon conf file
+     * Configures the NTP daemon conf file.
+     *
+     * @return void
      */
     public static function configure(): void
     {
