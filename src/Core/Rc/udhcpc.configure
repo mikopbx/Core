@@ -2,7 +2,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,20 @@ use MikoPBX\Core\System\CloudProvisioning;
 
 require_once 'Globals.php';
 
+/**
+ * Get the action parameter from the command line arguments and convert it to lowercase.
+ */
 $action  = strtolower(trim($argv[1]));
+
+/**
+ * Create a new instance of the Network class.
+ */
 $network = new Network();
+
+/**
+ * Check if running inside a Docker container.
+ * If true, skip the action and exit the script.
+ */
 if(Util::isDocker()){
     Util::sysLogMsg(basename(__FILE__), "Skipped action {$action}... because of docker", LOG_DEBUG);
     exit(0);
@@ -34,12 +46,26 @@ if(Util::isDocker()){
 }
 
 if ($action === 'deconfig' && Util::isT2SdeLinux()) {
+    /**
+     * Perform deconfiguration for T2SDE Linux.
+     */
+
     $network->udhcpcConfigureDeconfig();
 } elseif ('bound' === $action || 'renew' === $action) {
     if (Util::isSystemctl()) {
+        /**
+         * Perform configuration renewal and bound actions using systemctl (systemd-based systems).
+         */
         $network->udhcpcConfigureRenewBoundSystemCtl();
     } elseif (Util::isT2SdeLinux()) {
+        /**
+         * Perform configuration renewal and bound actions for T2SDE Linux.
+         */
         $network->udhcpcConfigureRenewBound();
     }
+
+    /**
+     * Start the cloud provisioning process.
+     */
     CloudProvisioning::start();
 }

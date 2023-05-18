@@ -44,6 +44,9 @@ use MikoPBX\PBXCoreREST\Providers\{
     RouterProvider};
 use Phalcon\Di\DiInterface;
 
+/**
+ * Initialize services on dependency injector
+ */
 class RegisterDIServices
 {
     /**

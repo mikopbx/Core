@@ -17,23 +17,29 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * This script is used for CLI only.
+ */
+
 declare(strict_types=1);
 namespace MikoPBX\Core\Config;
 
 use MikoPBX\Core\System\SentryErrorLogger;
 use Phalcon\Di\FactoryDefault\Cli;
 
-if(PHP_SAPI !== "cli"){
-    // Этот скрипт только для CLI.
+if (PHP_SAPI !== "cli") {
+    // This script is only for CLI.
     return;
 }
+
+
 // Initialize dependency injector
 $di = new Cli();
 
-// Register classes, namespaces, additional libraries with lazzy load
+// Register classes, namespaces, additional libraries with lazy load
 require_once __DIR__ . '/../../../src/Common/Config/ClassLoader.php';
 
-// Initialize sentry error logger
+// Initialize Sentry error logger
 $errorLogger = new SentryErrorLogger('pbx-core-workers');
 $errorLogger->init();
 

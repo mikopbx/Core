@@ -2,7 +2,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,23 +24,46 @@ use MikoPBX\Core\System\{Processes, Util, Network};
 
 require_once('Globals.php');
 
+/**
+ * If running inside a Docker container, exit the script.
+ */
 if (Util::isDocker()) {
     exit(0);
 }
+
+/**
+ * Get the action parameter from the command line arguments.
+ * Default to an empty string if not provided.
+ */
 $action = $argv[1]??'';
 if ('start' === $action) {
     $network = new Network();
+
+    /**
+     * Generate the resolv.conf file for DNS configuration.
+     */
     $network->resolvConfGenerate();
     if (Util::isT2SdeLinux()) {
+        /**
+         * Configure the loopback interface for T2SDE Linux.
+         */
         $network->loConfigure();
     }
+    /**
+     * Configure the LAN interfaces.
+     */
     $network->lanConfigure();
 } elseif ('stop' === $action) {
     if (Util::isSystemctl()) {
+        /**
+         * Stop networking using systemctl (systemd-based systems).
+         */
         $systemctlPath = Util::which('systemctl');
         Processes::mwExec("{$systemctlPath} stop networking");
     } else {
-        // T2SDE
+        /**
+         * Stop networking on T2SDE (non-systemd) systems.
+         */
         $network      = new Network();
         $if_list      = $network->getInterfaces();
         $arr_commands = [];
@@ -48,6 +71,10 @@ if ('start' === $action) {
         foreach ($if_list as $if_name => $data) {
             $arr_commands[] = "{$ifconfigPath} $if_name down";
         }
+
+        /**
+         * Execute the stop commands for each interface.
+         */
         Processes::mwExecCommands($arr_commands, $out, 'net_stop');
     }
 }

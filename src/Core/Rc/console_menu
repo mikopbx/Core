@@ -2,7 +2,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,7 +42,12 @@ use MikoPBX\Core\System\{Configs\IptablesConf,
 use MikoPBX\Service\Main;
 require_once('Globals.php');
 
+// Set Cyrillic font for display
 Util::setCyrillicFont();
+
+/**
+ * Function to get the banner text
+ */
 function getBannerText()
 {
     $network = new Network();
@@ -52,6 +57,7 @@ function getBannerText()
         $livecd_text = Util::translate('PBX is running in Live or Recovery mode');
     }
 
+    // Determine version and build time
     if (file_exists('/offload/version')) {
         $version_file = '/offload/version';
     } else {
@@ -60,9 +66,13 @@ function getBannerText()
 
     $version        = trim(file_get_contents($version_file));
     $buildtime      = trim(file_get_contents('/etc/version.buildtime'));
+
+    // Copyright information
     $copyright_info = 'MikoPBX is Copyright (C) 2017-2023. All rights reserved.' . PHP_EOL .
         "   \033[01;31m" . $livecd_text . "\033[39m";
 
+
+    // Get enabled LAN interfaces
     $networks = $network->getEnabledLanInterfaces();
     $id_text  = 0;
 
@@ -74,6 +84,7 @@ function getBannerText()
         $if_data['interface']       = ($if_data['vlanid'] > 0) ? "vlan{$if_data['vlanid']}" : $if_data['interface'];
         $interface                  = $network->getInterface($if_data['interface']);
 
+        // Determine the IP line
         if ($if_data['dhcp'] === '1') {
             $ip_line = 'IP via DHCP';
         } elseif ($if_data['vlanid'] > 0) {
@@ -83,6 +94,7 @@ function getBannerText()
             $ip_line = 'Static IP  ';
         }
 
+        // Determine the IP info
         $ip_info = 'unassigned';
         if ( ! empty($interface['ipaddr'])) {
             $ip_info = "\033[01;33m{$interface['ipaddr']}\033[39m";
@@ -103,6 +115,7 @@ function getBannerText()
 
     }
 
+    // Check for system integrity
     $broken = function () {
         if ( Util::isT2SdeLinux()) {
             $files = Main::checkForCorruptedFiles();
@@ -115,35 +128,48 @@ function getBannerText()
             return '    Is Debian';
         }
     };
+
+    // Generate the banner text
     $result =   "*** ".Util::translate('this_is')."\033[01;32mMikoPBX v.{$version}\033[39m".PHP_EOL.
                 "   built on {$buildtime} for Generic (x64)".PHP_EOL.
                 "   ".$copyright_info. PHP_EOL;
 
+
+    // Create and populate the IP table
     $table = new ConsoleTable();
     foreach ($ipTable as $row){
         $table->addRow($row);
     }
+
+    // Add external address if available
     if(!empty($externAddress)){
         $table->addRow(['external:', '', $externAddress]);
         $id_text++;
     }
+
+    // Add empty rows if needed
     while ($id_text < 4){
         $table->addRow([' ', ' ']);
         $id_text++;
     }
 
+    // Append the IP table to the result
     $result.= $table->hideBorder()->getTable().PHP_EOL;
+
+    // Append system integrity information
     $result.= $broken();
     return $result;
 }
 
 $firewallWarning = function () {
+    // Check if firewall is disabled
     if (PbxSettings::getValueByKey('PBXFirewallEnabled') === '0') {
         return "\033[01;34m (" . Util::translate('Firewall disabled') . ") \033[39m";
     }
 };
 
 $storageWarning = function () {
+    // Check if storage disk is unmounted and not in livecd mode
     if ( ! Storage::isStorageDiskMounted() && ! file_exists('/offload/livecd')) {
         return "    \033[01;31m (" . Util::translate('Storage unmounted') . ") \033[39m";
     }
@@ -154,6 +180,7 @@ $setup_lan = function (CliMenuBuilder $b) {
         ->addItem(
             '[1] ' . Util::translate('Configuring using DHCP'),
             function (CliMenu $menu) {
+                // Action for DHCP configuration
                 echo Util::translate('The LAN interface will now be configured via DHCP...');
                 $network      = new Network();
                 $data['dhcp'] = 1;
@@ -168,24 +195,30 @@ $setup_lan = function (CliMenuBuilder $b) {
         ->addItem(
             '[2] ' . Util::translate('Manual setting'),
             function (CliMenu $menu) {
+                // Action for manual LAN setting
                 $network = new Network();
 
+                // Set style for input menu
                 $style = (new MenuStyle())
                     ->setBg('white')
                     ->setFg('black');
 
+                // Validate IP address input
                 $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
                     public function validate(string $value): bool
                     {
                         return Verify::isIpAddress($value);
                     }
                 };
+
+                // Prompt for new LAN IP address
                 $el_lanip = $input_ip
                     ->setPromptText(Util::translate('Enter the new LAN IP address: '))
                     ->setValidationFailedText(Util::translate('WARNING'))
                     ->ask();
                 $lanip    = $el_lanip->fetch();
 
+                // Prompt for subnet mask
                 $promt_text = Util::translate('Subnet masks are to be entered as bit counts (as in CIDR notation).');
                 $input_bits = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
                     public function validate(string $lanbits): bool
@@ -201,17 +234,21 @@ $setup_lan = function (CliMenuBuilder $b) {
                     ->ask();
                 $lanbits    = $el_lanip->fetch();
 
+                // Prompt for LAN gateway IP address
                 $el_lanip = $input_ip
                     ->setPromptText(Util::translate('Enter the LAN gateway IP address: '))
                     ->setValidationFailedText(Util::translate('WARNING'))
                     ->ask();
                 $gwip     = $el_lanip->fetch();
+
+                // Prompt for LAN DNS IP address
                 $el_lanip = $input_ip
                     ->setPromptText(Util::translate('Enter the LAN DNS IP address: '))
                     ->setValidationFailedText(Util::translate('WARNING'))
                     ->ask();
                 $dnsip    = $el_lanip->fetch();
 
+                // Update network settings and configure LAN
                 $data               = [];
                 $data['ipaddr']     = $lanip;
                 $data['subnet']     = $lanbits;
@@ -269,6 +306,7 @@ $setupLanguage = function (CliMenuBuilder $b) {
         ->enableAutoShortcuts()
         ->disableDefaultItems();
 
+    // Apply language selection
     $selectionApply = function ($language) {
         $mikoPBXConfig = new MikoPBXConfig();
         $mikoPBXConfig->setGeneralSettings('SSHLanguage', $language);
@@ -295,8 +333,11 @@ $setupLanguage = function (CliMenuBuilder $b) {
 
 $additional_items = [];
 $is_live_cd       = file_exists('/offload/livecd');
+
+// Add items for live CD options
 if ($is_live_cd) {
     if (file_exists('/conf.recover/conf')) {
+        // Option to install or recover
         $live_cd_text       = '[8] ' . Util::translate('Install or recover');
         $additional_items[] = [
             $live_cd_text,
@@ -309,6 +350,7 @@ if ($is_live_cd) {
             },
         ];
     } else {
+        // Option to install on hard drive
         $live_cd_text       = '[8] ' . Util::translate('Install on Hard Drive');
         $additional_items[] = [
             $live_cd_text,
@@ -326,7 +368,7 @@ if ($is_live_cd) {
 $additional_items[] = [
     '[9] ' . Util::translate('Console'),
     function (CliMenu $menu) {
-        // Включаем курсор.
+        // Enable cursor
         echo "\e[?25h";
         $menu->close();
         file_put_contents('/tmp/start_sh', '');
@@ -393,6 +435,7 @@ $menu = (new CliMenuBuilder())
     ->addItem(
         '[4] ' . Util::translate('Ping host'),
         function (CliMenu $menu) {
+            // Code for ping host option
             $style = (new MenuStyle())
                 ->setBg('white')
                 ->setFg('black');
@@ -418,6 +461,7 @@ $menu = (new CliMenuBuilder())
     ->addItem(
         '[5] ' . Util::translate('Firewall').$firewallWarning(),
         function (CliMenu $menu) {
+            // Code for firewall option
             $mikoPBXConfig   = new MikoPBXConfig();
             $firewall_enable = $mikoPBXConfig->getGeneralSettings('PBXFirewallEnabled');
 
@@ -464,6 +508,7 @@ $menu = (new CliMenuBuilder())
                 ->addItem(
                     '[1] ' . Util::translate('Connect storage'),
                     function (CliMenu $menu) {
+                        // Code for connecting storage
                         $menu->close();
                         include '/etc/rc/connect.storage';
                         sleep(1);
@@ -473,6 +518,7 @@ $menu = (new CliMenuBuilder())
                 ->addItem(
                     '[2] ' . Util::translate('Check storage'),
                     function (CliMenu $menu) {
+                        // Code for checking storage
                         /** @var \MikoPBX\Common\Models\Storage $data */
                         $data = StorageModel::findFirst();
                         if ($data === null) {
@@ -514,6 +560,8 @@ $menu = (new CliMenuBuilder())
                 ->addItem(
                     '[3] ' . Util::translate('Resize storage'),
                     function (CliMenu $menu) {
+                        // Code for resizing storage
+
                         /** @var \MikoPBX\Common\Models\Storage $data */
                         $data = StorageModel::findFirst();
                         if ($data === null) {
@@ -563,6 +611,7 @@ $menu = (new CliMenuBuilder())
     ->addItem(
         '[7] ' . Util::translate('Reset admin password'),
         function (CliMenu $menu) {
+            // Code for resetting admin password
             $style = (new MenuStyle())
                 ->setBg('white')
                 ->setFg('black');

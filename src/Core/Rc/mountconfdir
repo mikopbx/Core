@@ -2,7 +2,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,9 @@ use MikoPBX\Core\System\{Processes, Util, Storage};
 
 require_once('Globals.php');
 
+/**
+ * Error message displayed when the configuration file is not found.
+ */
 $NoCfDevice = <<<EOD
 
 *******************************************************************************
@@ -34,6 +37,9 @@ $NoCfDevice = <<<EOD
 
 EOD;
 
+/**
+ * Retrieves the Phalcon configuration and sets the necessary paths.
+ */
 $phalconConfig  = Di::getDefault()->get('config');
 $cfDir          = $phalconConfig->path('core.cfDir');
 $varEtcDir      = $phalconConfig->path('core.varEtcDir');
@@ -44,36 +50,42 @@ $sqlite3Path    = Util::which('sqlite3');
 $rmPath         = Util::which('rm');
 $mvPath         = Util::which('mv');
 
+/**
+ * The device containing the configuration file.
+ * Empty if no device is found.
+ *
+ * @var string
+ */
 $cfgdevice = '';
 /* check if there's already an fstab (NFS booting?) */
 if (file_exists('/etc/fstab')) {
-    return; // Обработка не требуется.
+    return; // No further processing required.
 }
 
 if (file_exists('/offload/livecd')) {
     $d_path_info = pathinfo($dbFile);
-    // Копируем файл базы данных настроек.
+    // Copy the configuration database file.
     copy('/offload/conf/mikopbx.db', $dbFile);
     Util::addRegularWWWRights($d_path_info);
     Util::addRegularWWWRights($dbFile);
-    return; // Обработка не требуется.
+    return; // No further processing required.
 }
 
 $storage = new Storage();
-/* iterate through the disks fdisk finds until one contains a mikopbx.db */
+/* Iterate through the disks fdisk finds until one contains a mikopbx.db */
 $attempts = 2;
 while ($attempts--) {
     $disks = $storage->diskGetDevices(true);
     foreach ($disks as $disk => $diskInfo) {
-        // RAID содержит вложенный массив "children"
+        // RAID contains a nested "children" array.
         if(isset($diskInfo['children'][0]['children'])){
             $diskInfo = $diskInfo['children'][0];
-            // Корректируем имя диска. это RAID.
+            // Adjust the disk name for RAID.
             $disk     = $diskInfo['name'];
         }
         $children = $diskInfo['children'];
         if(count($children)<3){
-            // Диск интересен только если содержит 3 и более раздела.
+            // Disk is only of interest if it contains 3 or more partitions.
             continue;
         }
         echo "\n - Found disk: {$disk}\n";
@@ -84,14 +96,14 @@ while ($attempts--) {
         if(empty($uuid) || empty($fsType)){
             continue;
         }
-        // Запустим проверку раздела диска
+        // Run partition check on the disk.
         $fsckPath = Util::which("fsck.{$fsType}");
-        // Проверка диска на ошлибки.
+        // Check disk for errors.
         Processes::mwExec("if [ -b /dev/{$partName} ]; then {$fsckPath} -f -p /dev/{$partName}; fi;");
-        // Монртируем диск.
+        // Mount the disk.
         $resultMount = Processes::mwExec("{$mountPath} -t {$fsType} -rw UUID=\"{$uuid}\" {$cfDir}");
         if ($resultMount !== 0) {
-            // Ошибка монтирования.
+            // Mounting error.
             continue;
         }
 
@@ -109,7 +121,7 @@ while ($attempts--) {
                 Processes::mwExec("{$rmPath} {$dbFile}*");
                 Processes::mwExec("{$mvPath} {$tmp_name} {$dbFile}");
             }
-            // Диск найден и смонтирован, выходим из цикла.
+            // Disk found and mounted, exit the loop.
             break;
         }
         Processes::mwExec("{$unmountPath} -f /dev/{$partName}");
@@ -126,12 +138,12 @@ while ($attempts--) {
 }
 
 if ( ! $cfgdevice) {
-    /* no device found, print an error and die */
+    /* No device found, print an error and halt */
     echo $NoCfDevice;
     sleep(5);
     $haltPath = Util::which('halt');
     Processes::mwExec($haltPath);
 } else {
-    // Запишем в файл имя подключенного устройства.
+    // Write the connected device name to a file.
     file_put_contents("{$varEtcDir}/cfdevice", $cfgdevice);
 }

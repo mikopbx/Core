@@ -44,7 +44,9 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use Phalcon\Di;
 
-
+/**
+ * Initialize services on dependency injector
+ */
 class RegisterDIServices
 {
     /**

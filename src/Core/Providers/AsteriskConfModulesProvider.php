@@ -30,6 +30,8 @@ use function MikoPBX\Common\Config\appPath;
 
 /**
  * Returns an array of Asterisk configuration objects sorted by priority.
+ *
+ * @package MikoPBX\Core\Providers
  */
 class AsteriskConfModulesProvider implements ServiceProviderInterface
 {
