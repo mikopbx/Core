@@ -177,7 +177,6 @@ class ExtensionsController extends BaseController
             $extension->number = $this->getNextInternalNumber();
 
             $extension->Users = new Users();
-            $extension->Users->role = 'user';
 
             $extension->ExtensionForwardingRights = new ExtensionForwardingRights();
 
