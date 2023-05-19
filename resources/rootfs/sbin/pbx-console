@@ -18,14 +18,24 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
+# First command line argument is treated as a subcommand
 subcmd=$1;
+
+# Get the name of the safe script from the cron jobs
 safeScript=$(crontab -l | cut -d ' ' -f8 | grep Safe);
+
+# Case switch for the subcommand
 case "${subcmd}" in
 services)
+   # Second command line argument is treated as an action
    action=$2;
+   # Case switch for the action when subcommand is services
    case "${action}" in
    stop-all)
+      # Get process IDs (PIDs) of PHP Worker services
       pids=$(ps | grep php | grep Worker | cut -d ' ' -f1);
+
+      # If PIDs exist, kill the processes
       if [ "${pids}x" != "x" ];then
         echo 'Killing all PBX services.';
         kill "$pids";
@@ -34,6 +44,7 @@ services)
       fi
       ;;
    start-all)
+     # If safe script exists, start it
      if [ -f "$safeScript" ]; then
        /usr/bin/php -f "$safeScript" start
      else
@@ -41,6 +52,7 @@ services)
      fi
      ;;
    restart-all)
+     # If safe script exists, restart it
      if [ -f "$safeScript" ]; then
        /usr/bin/php -f "$safeScript" restart
      else
@@ -50,7 +62,10 @@ services)
   esac
   ;;
 service)
+  # Get PIDs of specific service passed as second argument
   pids=$(ps | grep "$2" | grep -v grep | grep -v "$0" | cut -d ' ' -f1);
+
+  # If PIDs exist, kill the service
   if [ "${pids}x" != "x" ];then
     echo "Killing PBX service ${2}.";
     echo "${pids}" | xargs kill
@@ -59,31 +74,39 @@ service)
   fi
   ;;
 debug)
-  # завершаем работу сервиса
+  # Prepare for debugging specific script passed as second argument
   pbxConsole="$0";
   scriptName="$2";
-  ipDebager="$3";
+  ipDebugger="$3";
 
+  # Find the file to debug
   pathToFile=$(find /usr/www/src/ -name "${scriptName}.php")
   if [ ! -f "$pathToFile" ];then
     echo "File ${scriptName}.php not found.";
     exit 2;
   fi
 
+  # Stop cron and specific service
   "${pbxConsole}" cron stop;
   "${pbxConsole}" service "${scriptName}" stop;
-  export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_autostart=0 remote_port=9000 remote_host=${ipDebager} remote_connect_back=0";
 
+  # Configure xdebug
+  export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_autostart=0 remote_port=9000 remote_host=${ipDebugger} remote_connect_back=0";
+
+  # Enable xdebug in PHP if it's not enabled
   if [ ! -f /etc/php.d/15-xdebug.ini ]; then
     cp /etc/php.d/15-xdebug.ini.disabled /etc/php.d/15-xdebug.ini;
   fi;
 
+  # Start the PHP script with xdebug enabled
   php -f "$pathToFile" start;
   ;;
 cron)
+  # Handle actions related to cron
   action=$2;
   case "${action}" in
     stop)
+      # If cron is running, kill it
       ps | grep -v grep | grep crond > /dev/null;
       result=$?;
       if [ "$result" = "0" ];then
@@ -94,11 +117,13 @@ cron)
       fi
       ;;
     restart)
+       # Stop cron and then start it
       pbx-console cron stop;
       echo 'Starting cron.';
       /usr/sbin/crond -L /dev/null -l 8
       ;;
     start)
+      # If cron is not running, start it
       ps | grep -v grep | grep crond > /dev/null;
       result=$?;
       if [ "$result" = "1" ];then
@@ -109,6 +134,7 @@ cron)
       fi
       ;;
     show)
+      # Show the status of cron
       ps | head -n 1;
       ps | grep crond | grep -v grep;
       ;;

@@ -17,263 +17,416 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-MD5_BUILD_INFO=$(/bin/busybox md5sum /etc/version.buildtime 2>/dev/null | /bin/busybox cut -d ' ' -f 1 2>/dev/null);
+# Calculate the MD5 hash of the buildtime file and save it in a variable
+MD5_BUILD_INFO=$(/bin/busybox md5sum /etc/version.buildtime 2>/dev/null | /bin/busybox cut -d ' ' -f 1 2>/dev/null)
+
+# Define the system PATH variable
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
 
-# Подключаем библиотеку функций.
-. /sbin/shell_functions.sh;
+# Import shell functions
+. /sbin/shell_functions.sh
 
-createBootConfFiles()
-{
-  usrDir='/offload/rootfs/usr';
+# Function to create boot configuration files
+createBootConfFiles() {
+  # Define the root directory for the user
+  usrDir='/offload/rootfs/usr'
 
-  rcDir="${usrDir}/www/src/Core/Rc";
+  # Define the location of the rc directory
+  rcDir="${usrDir}/www/src/Core/Rc"
   if [ -d "${rcDir}" ]; then
-        echoToTeletype " - Create symlink for /etc/rc ..."
-        rm -rf /etc/rc;
-        ln -s "${rcDir}" /etc/rc;
+    # If it exists, create a symlink for /etc/rc
+    echoToTeletype " - Create symlink for /etc/rc ..."
+    rm -rf /etc/rc
+    ln -s "${rcDir}" /etc/rc
   fi
-  sleep 5;
+  sleep 5
 
-  confFile="${usrDir}/www/config/mikopbx-settings.json";
+  # Define the location of the config file
+  confFile="${usrDir}/www/config/mikopbx-settings.json"
   if [ -f "${confFile}" ]; then
-        echoToTeletype " - Copy phalcon config file to /etc/inc ..."
-        mkdir -p /etc/inc/;
-        cp "$confFile" /etc/inc/;
+    # If it exists, copy it to /etc/inc directory
+    echoToTeletype " - Copy phalcon config file to /etc/inc ..."
+    mkdir -p /etc/inc/
+    cp "$confFile" /etc/inc/
   fi
 }
 
-checkOffloadDisk()
-{
-  CHECK_RESULT=0; # Все ок
-  pathToFile="/offload/version.buildtime";
-  if [ ! -f "${pathToFile}"  ] ; then
-    echoToTeletype " - File ${pathToFile} not found";
-    CHECK_RESULT=1; # Файл не существует.
-	else
-    md5OffloadBI=$(/bin/busybox md5sum $pathToFile 2>/dev/null | /bin/busybox cut -d ' ' -f 1 2>/dev/null);
-    if [ ! "${md5OffloadBI}" = "${MD5_BUILD_INFO}" ] ; then
-      CHECK_RESULT=2; # Хэш сумма не сходится.
-      echoToTeletype " - Hash file ${pathToFile} verification failed";
-   fi
-	fi
-}
+# Function to check the existence and integrity of the offload disk
+checkOffloadDisk() {
+  CHECK_RESULT=0  # Initialize the result variable
 
-mountoffload()
-{
-	disk="$1";
-	uuid=$(/sbin/blkid -ofull "$disk" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
-  type=$(/sbin/blkid -ofull "$disk" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE="| /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
-	umount -f /offload 2> /dev/null
-  # Проверка размера диска.
-	size="$(/bin/lsblk "$disk" -P -o SIZE | cut -f 2 -d '"' | cut -f 1 -d 'M')";
-  if [ "$size" -le 600 ]; then
-    echo " - Start check: $disk";
-    "/sbin/fsck.${type}" -f -p "$disk" > /dev/null 2> /dev/null;
+  # Define the path to the version file
+  pathToFile="/offload/version.buildtime"
+
+  # Check if the file exists
+  if [ ! -f "${pathToFile}" ]; then
+     # If it doesn't exist, set the result variable to 1 and print an error message
+    echoToTeletype " - File ${pathToFile} not found"
+    CHECK_RESULT=1
   else
-    MOUNT_RESULT='cannot be offload, large size';
-    return;
-  fi
-	mount -t "${type}" -r UUID="$uuid" /offload 2> /dev/null;
+    # If it exists, calculate its MD5 hash and compare it with the stored MD5 hash
+    md5OffloadBI=$(/bin/busybox md5sum $pathToFile 2>/dev/null | /bin/busybox cut -d ' ' -f 1 2>/dev/null)
 
-  MOUNT_RESULT=$?;
-  checkOffloadDisk;
-  if [ ! "${CHECK_RESULT}" = "0" ] ; then
-	  umount -f /offload 2> /dev/null
-	  MOUNT_RESULT="${CHECK_RESULT}";
-    sleep 1;
+    # If the hashes don't match, set the result variable to 2 and print an error message
+    if [ ! "${md5OffloadBI}" = "${MD5_BUILD_INFO}" ]; then
+      CHECK_RESULT=2
+      echoToTeletype " - Hash file ${pathToFile} verification failed"
+    fi
   fi
-	createBootConfFiles
 }
 
-mountConfRecover()
-{
-	offloaddisk="$1";
-	echoToTeletype " - Attempting to mount existing configuration..."
-	
-	# Создаем каталог для монтирования (старая конфигурация). 
-	rec_dir='/conf.recover/';
-	mkdir -p "${rec_dir}";
-	
-	# Получаем список дисков. 
-	diskrs=$(/bin/lsblk -b -r -o NAME,TYPE  -n | /bin/busybox grep -e "disk$" -e 'raid'  | /bin/busybox cut -d ' ' -f 1 | /bin/busybox sort -u);
-	for diskr in $diskrs
-	do
-	  disk3=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$diskr")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u);
-		if [ "${diskr}" = "${offloaddisk}" ]; then
-			# Проверка на уже смонтированный диск.
-			echoToTeletype " - Skip ${diskr}, already mount..."
-			continue
-		fi
 
-		if [ ! -b "/dev/${disk3}" ]; then
-			echoToTeletype " - Skip ${diskr}, part 3 not found..."
-			continue
-		fi;
+#  This script is used to mount an offload disk. It will start by extracting the
+#  UUID and filesystem type of the disk. After that, it will attempt to unmount
+#  any previous mounts, then it checks the size of the disk. If the disk size is
+#  less than or equal to 600, it runs a filesystem check. If the disk size is larger,
+#  the function sets the MOUNT_RESULT to "cannot be offload, large size" and returns.
+#
+#  Afterwards, it will attempt to mount the disk, capture the return status in
+#  MOUNT_RESULT, and then perform a check on the offload disk. If the check
+#  doesn't pass, it will unmount the disk, set MOUNT_RESULT to the check's return
+#  status, and pause for 1 second.
+#
+#  Finally, it calls the `createBootConfFiles` function.
+#
+#  Parameters:
+#    disk: The disk to be mounted
+#
+#  Global Variables:
+#    MOUNT_RESULT: Contains the status of the last mount operation
+#
+#  Returns:
+#    No explicit return value. However, it may affect the global MOUNT_RESULT variable.
+#
+mountoffload() {
+  # Disk variable which takes the first argument of the function
+  disk="$1"
 
-	  type=$(/sbin/blkid -o full "/dev/${disk3}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
-		if [ -f "/sbin/fsck.${type}" ]; then
-		    "/sbin/fsck.${type}" -f -p "/dev/${disk3}" > /dev/null 2> /dev/null;
-		    echoToTeletype " - Trying fsck /dev/${disk3} ... returned: $?"
-		fi
+  # Get the UUID of the disk
+  uuid=$(/sbin/blkid -ofull "$disk" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1)
 
-    uuid=$(/sbin/blkid -o full "/dev/${disk3}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
-		mount -t "${type}" -r UUID="${uuid}" "${rec_dir}"
-		echoToTeletype " - Trying mount ${diskr} fs ${type} ... returned: $?"
-		if [ -d "${rec_dir}conf" ] && [ ! -f "${rec_dir}livecd"  ] ; then
-			echoToTeletype " - Found existing configuration on ${disk3}!"
-			exit 0
-		else
-			umount -f "${rec_dir}" > /dev/null 2> /dev/null;
-			rm -rf "${rec_dir}";
-		fi
-	done
-	
+   # Get the type of the filesystem of the disk
+  type=$(/sbin/blkid -ofull "$disk" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE=" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1)
+
+  # Unmount the /offload directory forcefully if it's already mounted
+  umount -f /offload 2>/dev/null
+
+  # Check the size of the disk.
+  size="$(/bin/lsblk "$disk" -P -o SIZE | cut -f 2 -d '"' | cut -f 1 -d 'M')"
+
+  # If the size of the disk is less than or equal to 600MB, it will perform a filesystem check
+  if [ "$size" -le 600 ]; then
+    echo " - Start check: $disk"
+    "/sbin/fsck.${type}" -f -p "$disk" >/dev/null 2>/dev/null
+  else
+    # If the disk size is larger than 600MB, return with the message "cannot be offload, large size"
+    MOUNT_RESULT='cannot be offload, large size'
+    return
+  fi
+
+  # Mount the disk read-only using its UUID to /offload
+  mount -t "${type}" -r UUID="$uuid" /offload 2>/dev/null
+
+  # Save the exit status of the mount command to MOUNT_RESULT
+  MOUNT_RESULT=$?
+
+  # Check if the disk is properly mounted
+  checkOffloadDisk
+
+  # If the disk isn't properly mounted, unmount it and update MOUNT_RESULT with CHECK_RESULT
+  if [ ! "${CHECK_RESULT}" = "0" ]; then
+    umount -f /offload 2>/dev/null
+    MOUNT_RESULT="${CHECK_RESULT}"
+    sleep 1
+  fi
+
+  # Create configuration files for boot
+  createBootConfFiles
 }
 
-rm -rf /tmp/freeoffload;
+
+# This script attempts to mount an existing configuration. It will create a
+# directory for mounting, and then it will get a list of disks. For each disk,
+# it checks whether it's already mounted or if it has a third partition. If not,
+# it will skip to the next disk. If so, it will attempt a filesystem check and
+# mount the disk read-only to the created directory. If the directory has a
+# "conf" subdirectory and no "livecd" file, the script will exit. If not, it
+# will unmount the directory and remove it before moving on to the next disk.
+#
+# Parameters:
+#   offloaddisk: The disk to be mounted
+#
+# Returns:
+#  0 if an existing configuration was found and mounted successfully, nothing otherwise.
+mountConfRecover() {
+
+  # Disk variable which takes the first argument of the function
+  offloaddisk="$1"
+  echoToTeletype " - Attempting to mount existing configuration..."
+
+   # Create a directory for mounting (old config)
+  rec_dir='/conf.recover/'
+  mkdir -p "${rec_dir}"
+
+  # Get a list of disks
+  diskrs=$(/bin/lsblk -b -r -o NAME,TYPE -n | /bin/busybox grep -e "disk$" -e 'raid' | /bin/busybox cut -d ' ' -f 1 | /bin/busybox sort -u)
+  for diskr in $diskrs; do
+    disk3=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$diskr")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u)
+
+     # Skip if the disk is already mounted
+    if [ "${diskr}" = "${offloaddisk}" ]; then
+      echoToTeletype " - Skip ${diskr}, already mount..."
+      continue
+    fi
+
+    # Skip if the disk does not have a third partition
+    if [ ! -b "/dev/${disk3}" ]; then
+      echoToTeletype " - Skip ${diskr}, part 3 not found..."
+      continue
+    fi
+
+    # Get the type of the filesystem of the partition and run filesystem check if possible
+    type=$(/sbin/blkid -o full "/dev/${disk3}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1)
+    if [ -f "/sbin/fsck.${type}" ]; then
+      "/sbin/fsck.${type}" -f -p "/dev/${disk3}" >/dev/null 2>/dev/null
+      echoToTeletype " - Trying fsck /dev/${disk3} ... returned: $?"
+    fi
+
+    # Get the UUID of the partition and attempt to mount it read-only to the created directory
+    uuid=$(/sbin/blkid -o full "/dev/${disk3}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1)
+    mount -t "${type}" -r UUID="${uuid}" "${rec_dir}"
+    echoToTeletype " - Trying mount ${diskr} fs ${type} ... returned: $?"
+
+     # If the directory has a "conf" subdirectory and no "livecd" file, exit
+    if [ -d "${rec_dir}conf" ] && [ ! -f "${rec_dir}livecd" ]; then
+      echoToTeletype " - Found existing configuration on ${disk3}!"
+      exit 0
+    else
+      # If not, unmount the directory and remove it before moving on to the next disk
+      umount -f "${rec_dir}" >/dev/null 2>/dev/null
+      rm -rf "${rec_dir}"
+    fi
+  done
+
+}
+
+# Clear the freeoffload temporary directory if it exists
+rm -rf /tmp/freeoffload
 
 ################################################################################
 # LIVE CD-ROM / LIVE USB
 ################################################################################
-echoToTeletype " - Waiting for connect device....."
-busybox sleep 4;
 
-cddev=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "rom$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
+# Start of the block for LIVE CD-ROM / LIVE USB
+echoToTeletype " - Waiting for connect device....."
+busybox sleep 4
+
+# Attempt to identify CD-ROM drives
+cddev=$(/bin/lsblk -b -d -r -o NAME,TYPE -n | /bin/busybox grep "rom$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox uniq)
 length=0
-/sbin/blkid "/dev/${cddev}" > /dev/null 2>&1
-blkResult="$?";
+
+# Attempt to identify device by UUID
+/sbin/blkid "/dev/${cddev}" >/dev/null 2>&1
+blkResult="$?"
+
+# If a CD-ROM drive is found, update length with its identifier length
 if [ "$blkResult" -eq 0 ]; then
-	length=${#cddev}
+  length=${#cddev}
 fi
 echoToTeletype " - Attempting to mount /boot partition..."
+
+# If the length of the identifier is more than 2, it means we have identified a CD-ROM drive,
+# and we should use this for subsequent operations. Otherwise, try to identify regular disks.
 if [ "$length" -gt 2 ]; then
-	disks=${cddev}
+  disks=${cddev}
 else
-	disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
+  disks=$(/bin/lsblk -b -d -r -o NAME,TYPE -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox uniq)
 fi
-for disk in $disks
-do
-	if [ "$length" -gt 2 ]; then
-	  diskPath="/dev/${disk}";
-	else
-	  partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "1$");
-		diskPath="/dev/${partitionName}";
-	fi
 
-	if [ ! -b "$diskPath" ]; then
-	    continue;
-	fi
-	mountoffload "$diskPath";
+# For each identified disk (or the CD-ROM drive), attempt to mount it as an offload disk.
+for disk in $disks; do
+  if [ "$length" -gt 2 ]; then
+    diskPath="/dev/${disk}"
+  else
+    partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "1$")
+    diskPath="/dev/${partitionName}"
+  fi
 
-	echoToTeletype " - Trying ${disk} mount returned: $MOUNT_RESULT"
-	if [ -f /offload/livecd ]; then
-		echoToTeletype " - Found LIVECD flag file...";
-		createBootConfFiles
-		mountConfRecover "$disk";
-		# Все, что необходимо было смонтировано. 
-		exit 0
-	fi
-	umount -f /offload 2> /dev/null
+  # Check if the disk or partition exists
+  if [ ! -b "$diskPath" ]; then
+    continue
+  fi
+
+  # Attempt to mount the disk or partition as an offload disk
+  mountoffload "$diskPath"
+
+  echoToTeletype " - Trying ${disk} mount returned: $MOUNT_RESULT"
+
+  # Check for the presence of a "livecd" flag file in the root of the offload disk.
+  if [ -f /offload/livecd ]; then
+    echoToTeletype " - Found LIVECD flag file..."
+
+    # Call function to create boot configuration files and recover configuration from the offload disk
+    createBootConfFiles
+    mountConfRecover "$disk"
+    # Exit after successfully mounting the offload disk
+    exit 0
+  fi
+
+  # If the "livecd" flag file was not found, unmount the offload disk and continue with the next one
+  umount -f /offload 2>/dev/null
 done
 
-
 ################################################################################
-# RAID
+# Start of the block for RAID disks
 ################################################################################
 
 echoToTeletype
 echoToTeletype " - Attempting to mount /offload partition..."
-disks=$(/bin/lsblk -b -r -o NAME,TYPE  -n | /bin/busybox grep "raid" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox sort -u)
-for disk in $disks
-do
-	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$" | /bin/busybox sort -u);
-	diskPath="/dev/${partitionName}";
-	if [ ! -b "$diskPath" ]; then
-	    continue;
-	fi
-	mountoffload "$diskPath";
-	echoToTeletype " - Trying ${disk} mount returned: $MOUNT_RESULT"
-	if [ -d /offload/rootfs ]; then
-		echoToTeletype " - Found rootfs!"
-		exit 0
-	fi
-	umount -f /offload > /dev/null
-	echoToTeletype " - Failed to find rootfs!"
+
+# Identify RAID drives
+disks=$(/bin/lsblk -b -r -o NAME,TYPE -n | /bin/busybox grep "raid" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox sort -u)
+for disk in $disks; do
+
+  # Get the second partition from the RAID disk
+  partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$" | /bin/busybox sort -u)
+  diskPath="/dev/${partitionName}"
+
+   # Check if the partition exists
+  if [ ! -b "$diskPath" ]; then
+    continue
+  fi
+
+  # Attempt to mount the partition as an offload disk
+  mountoffload "$diskPath"
+  echoToTeletype " - Trying ${disk} mount returned: $MOUNT_RESULT"
+
+   # Check for the presence of a "rootfs" directory in the root of the offload disk
+  if [ -d /offload/rootfs ]; then
+    echoToTeletype " - Found rootfs!"
+    exit 0
+  fi
+
+   # If the "rootfs" directory was not found, unmount the offload disk and continue with the next one
+  umount -f /offload >/dev/null
+  echoToTeletype " - Failed to find rootfs!"
 done
 
 ################################################################################
-# HDD
+# Start of the block for Hard Disk Drives (HDDs)
 ################################################################################
 
 echoToTeletype
 echoToTeletype " - Attempting to mount /offload partition..."
-disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
-for disk in $disks
-do
-	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$");
-	diskPath="/dev/${partitionName}";
-	if [ ! -b "$diskPath" ]; then
-	    continue;
-	fi
-	mountoffload "$diskPath";
-	echoToTeletype " - Trying ${disk} mount returned: $MOUNT_RESULT"
-	if [ -d /offload/rootfs ]; then
-		echoToTeletype " - Found rootfs!"
-		exit 0
-	fi
-	umount -f /offload > /dev/null
-	echoToTeletype " - Failed to find rootfs!"
+
+# Identify HDDs
+disks=$(/bin/lsblk -b -d -r -o NAME,TYPE -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox uniq)
+
+# Iterate over each identified disk
+for disk in $disks; do
+
+   # Get the second partition of the HDD
+  partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$")
+
+  # Construct the path of the disk partition
+  diskPath="/dev/${partitionName}"
+
+  # Check if the partition exists
+  if [ ! -b "$diskPath" ]; then
+    continue
+  fi
+
+   # Attempt to mount the partition as an offload disk
+  mountoffload "$diskPath"
+  echoToTeletype " - Trying ${disk} mount returned: $MOUNT_RESULT"
+
+  # Check if a directory named "rootfs" exists in the root of the offload disk
+  if [ -d /offload/rootfs ]; then
+    echoToTeletype " - Found rootfs!"
+    exit 0
+  fi
+
+   # If the "rootfs" directory was not found, unmount the offload disk and log failure to find "rootfs"
+  umount -f /offload >/dev/null
+  echoToTeletype " - Failed to find rootfs!"
 done
 
 ################################################################################
-# USB 
+# Start of the block for Universal Serial Bus (USB) devices
 ################################################################################
 
 echoToTeletype
 echoToTeletype " - Waiting for disks to settle and trying again..."
+
+# Sleep for 10 seconds to give disks time to settle
 /bin/busybox sleep 10
 
 echoToTeletype " - checking for liveusb..."
 echoToTeletype " - attempting to mount /boot partition..."
-disks=$(/bin/lsblk -b -d -r -o NAME,TYPE  -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 |/bin/busybox uniq)
-for disk in $disks
-do
-	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "1$");
-	diskPath="/dev/${partitionName}";
-	if [ ! -b "$diskPath" ]; then
-	    continue;
-	fi
-	mountoffload "$diskPath";
 
-	echoToTeletype " - trying ${disk} mount returned: $MOUNT_RESULT"
-	if [ -f /offload/livecd ]; then
-		echoToTeletype " - found LIVE USB flag file...";
-		mountConfRecover "$disk";
-		exit 0
-	fi
-	umount -f /offload
+# Identify USB devices
+disks=$(/bin/lsblk -b -d -r -o NAME,TYPE -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox uniq)
+
+# Iterate over each identified disk
+for disk in $disks; do
+
+   # Get the first partition of the USB device
+  partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "1$")
+
+  # Construct the path of the disk partition
+  diskPath="/dev/${partitionName}"
+
+  # Check if the partition exists
+  if [ ! -b "$diskPath" ]; then
+    continue
+  fi
+
+  # Attempt to mount the partition as an offload disk
+  mountoffload "$diskPath"
+  echoToTeletype " - trying ${disk} mount returned: $MOUNT_RESULT"
+
+  # Check if a file named "livecd" exists in the root of the offload disk
+  if [ -f /offload/livecd ]; then
+    echoToTeletype " - found LIVE USB flag file..."
+    mountConfRecover "$disk"
+    exit 0
+  fi
+
+   # If the "livecd" file was not found, unmount the offload disk
+  umount -f /offload
 done
 
+# Checking for a rootfs directory on the second partition of each USB device
 echoToTeletype
-for disk in $disks
-do
-	partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$");
-  diskPath="/dev/${partitionName}";
-	if [ ! -b "$diskPath" ]; then
-	    continue;
-	fi
-	mountoffload "$diskPath";
+for disk in $disks; do
 
-	echoToTeletype " - trying ${disk} mount returned: $MOUNT_RESULT"
-	if [ -d /offload/rootfs ]; then
-		echoToTeletype " - found rootfs!"
-		exit 0
-	fi
-	echoToTeletype " - failed to find rootfs!"
+  # Get the second partition of the USB device
+  partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$disk")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "2$")
+
+  # Construct the path of the disk partition
+  diskPath="/dev/${partitionName}"
+
+  # Check if the partition exists
+  if [ ! -b "$diskPath" ]; then
+    continue
+  fi
+
+  # Attempt to mount the partition as an offload disk
+  mountoffload "$diskPath"
+
+  echoToTeletype " - trying ${disk} mount returned: $MOUNT_RESULT"
+
+  # Check if a directory named "rootfs" exists in the root of the offload disk
+  if [ -d /offload/rootfs ]; then
+    echoToTeletype " - found rootfs!"
+    exit 0
+  fi
+  echoToTeletype " - failed to find rootfs!"
 done
 
+
+# Log message indicating failure to find the /offload partition
 echoToTeletype
 echoToTeletype "The system was unable to find the /offload partition!"
 echoToTeletype

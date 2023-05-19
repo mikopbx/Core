@@ -24,6 +24,9 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use function MikoPBX\Common\Config\appPath;
 
+/**
+ * The entry point class for MikoPBX.
+ */
 class Entrypoint
 {
     private array  $env;
@@ -33,20 +36,25 @@ class Entrypoint
     public  const  PATH_DB = '/cf/conf/mikopbx.db';
     private const  pathInc = '/etc/inc/mikopbx-settings.json';
 
+    /**
+     * Constructs the Entrypoint class.
+     */
     public function __construct()
     {
         pcntl_async_signals(true);
         register_shutdown_function([$this, 'shutdownHandler']);
 
         $this->env = [
-            // Идентификация WWW пользователя.
+            // Identification of the WWW user.
             'ID_WWW_USER'     => '',
             'ID_WWW_GROUP'    => '',
+
             //
             'BEANSTALK_PORT'  => 'beanstalk',
             'REDIS_PORT'      => 'redis',
             'GNATS_PORT'      => 'gnats',
-            // General Settings.
+
+            // General settings.
             'SSH_PORT'        => 'SSHPort',
             'WEB_PORT'        => 'WEBPort',
             'WEB_HTTPS_PORT'  => 'WEBHTTPSPort',
@@ -60,10 +68,9 @@ class Entrypoint
             'AJAM_PORT_TLS'   => 'AJAMPortTLS',
         ];
     }
-    
+
     /**
-     * Process shutdown event
-     *
+     * Handles the shutdown event.
      */
     public function shutdownHandler(): void
     {
@@ -77,11 +84,14 @@ class Entrypoint
         }
     }
 
+    /**
+     * Starts the MikoPBX system.
+     */
     public function start():void
     {
         $this->workerStartTime = microtime(true);
         $sysLogdPath = Util::which('syslogd');
-        // Запуск системного лога.
+        // Start the system log.
         Processes::mwExecBg($sysLogdPath.' -S -C512');
         $out = [];
         Processes::mwExec('sqlite3 '.self::PATH_DB.' .tables', $out);
@@ -99,7 +109,8 @@ class Entrypoint
     }
 
     /**
-     * Изменение ID пользователя www.
+     * Changes the ID of the WWW user.
+     *
      * @param string $newUserId
      * @param string $newGroupId
      */
@@ -153,7 +164,7 @@ class Entrypoint
     }
 
     /**
-     * Инициализация настроек. Необходима для проверки и обновления настроек портов.
+     * Initializes the settings. Required for checking and updating port settings.
      */
     private function initSettings():void{
         $jsonString     = file_get_contents(self::pathInc);
@@ -181,8 +192,7 @@ class Entrypoint
     }
 
     /**
-     * Проверяем есть ли указание применить кастомное значение порта.
-     * Вызывеем функцию обновления сохраненной настройки.
+     * Checks if there is an indication to apply a custom port value and calls the updateSetting function.
      */
     public function checkUpdate():void
     {
@@ -216,6 +226,13 @@ class Entrypoint
         $this->changeWwwUserID($this->env['ID_WWW_USER'], $this->env['ID_WWW_GROUP']);
     }
 
+    /**
+     * Updates a setting with a new value.
+     *
+     * @param string $dataPath
+     * @param mixed $newValue
+     * @param bool $isInc
+     */
     private function updateSetting($dataPath, $newValue, $isInc):void
     {
         $msg = " - Update $dataPath (port) to '$newValue' ...". PHP_EOL;

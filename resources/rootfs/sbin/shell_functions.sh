@@ -17,11 +17,15 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-# Пример вызова метода библиотеки:
+# Example:
 # /sbin/shell_functions.sh 'killprocesses' '/storage/usbdisk1' -TERM 3
-# $1 - имя метода
-# $2 ... $4 - параметры метода
+# $1 - method name
+# $2 ... $4 - parameters
 
+
+# echoToTeletype: Prints a message to the console and the serial port if available.
+# Args:
+#   $1: Message to be printed.
 echoToTeletype()
 {
   echo "$1";
@@ -38,6 +42,10 @@ echoToTeletype()
   fi;
 }
 
+# kill_by_pids: Kills processes by their PIDs.
+# Args:
+#   $1: List of process PIDs.
+#   $2: Signal to send to the processes.
 kill_by_pids()
 {
     handles=$1;
@@ -45,7 +53,7 @@ kill_by_pids()
         for handle in $handles
         do
             if [ "$MAIN_PID" = "$handle" ] || [ "$REBOOT_PID" = "$handle" ]; then
-                # Это ID основного процесса. Его не трогаем.
+                # Ignore the ID of the main process.
                 echo "---- IGNORE PID - $MAIN_PID ----"
             else
                 kill "$2" "${handle}" > /dev/null 2>&1
@@ -61,6 +69,11 @@ kill_by_pids()
     fi
 }
 
+# killprocesses: Kills processes by name.
+# Args:
+#   $1: Process name.
+#   $2: Signal to send to the processes.
+#   $3: Sleep time after killing processes.
 killprocesses()
 {
     proc_name=$1;
@@ -69,6 +82,11 @@ killprocesses()
     sleep "$3"
 }
 
+# killprocess_by_name: Kills processes by name.
+# Args:
+#   $1: Process name.
+#   $2: Signal to send to the processes.
+#   $3: Sleep time after killing processes.
 killprocess_by_name()
 {
     proc_name=$1;
@@ -77,6 +95,9 @@ killprocess_by_name()
     sleep "$3"
 }
 
+# freeSwapByName: Deactivates swap partitions by name.
+# Args:
+#   $1: Storage name.
 freeSwapByName(){
   storage=$1;
   handles=$(/sbin/swapon -s | /bin/busybox grep "$storage" | /bin/busybox awk  '{ print $1}');
@@ -89,6 +110,9 @@ freeSwapByName(){
   done
 }
 
+# f_umount: Unmounts a device or a file.
+# Args:
+#   $1: Device or file to be unmounted.
 f_umount()
 {
     if [ -f '/.dockerenv' ]; then
@@ -122,6 +146,10 @@ f_umount()
     fi
 }
 
+# mountDiskPart: Mounts a disk partition by UUID.
+# Args:
+#   $1: UUID of the disk partition.
+#   $2: Mount point.
 mountDiskPart()
 {
   uuid="$1";
@@ -140,6 +168,9 @@ mountDiskPart()
   fi
 }
 
+# mountImg: Mounts an image file.
+# Args:
+#   $1: Path to the image file.
 mountImg() (
   img="$1"
   dev="$( losetup --show -f -P "$img")"
@@ -155,6 +186,9 @@ mountImg() (
   done
 )
 
+# umountImg: Unmounts a previously mounted image file.
+# Args:
+#   $1: Loop device number.
 umountImg() (
   dev="/dev/loop$1"
   for part in "$dev"?*; do
@@ -167,6 +201,7 @@ umountImg() (
   losetup -d "$dev"
 )
 
+# Check if a function name is passed as argument, then call that function.
 if [ "${1}x" != "x" ]; then
     "$1" "$2" "$3" "$4" 2>/dev/null;
 fi

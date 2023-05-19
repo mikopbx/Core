@@ -18,48 +18,70 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
+# Define the configuration file path
 configFile='/etc/inc/mikopbx-settings.json';
+
+# Extract log directory from the configuration file
 logDir=$(grep -rn 'logsDir' "$configFile" | cut -d'"' -f4);
+
+# Extract Asterisk log directory from the configuration file
 astlogdir=$(grep -rn 'astlogdir' "$configFile" | cut -d'"' -f4);
+
+# Extract database directory from the configuration file
 dbDir=$(grep -rn 'astdbdir' "$configFile" | cut -d'"' -f4);
 
+# Initialize crash counter and timestamp variables
 nfilename="/tmp/ac_counter"
 n=0
 timestamp=0
+
+# Ensure the crash counter file exists
 touch $nfilename
+
+# Source the crash counter file (values should be stored in it)
 # shellcheck source=/tmp/ac_counter
 . "$nfilename"
 
+# Calculate the time since last crash
 time_now=$(date +%s);
 last_crash=$((time_now - timestamp));
 timestamp=$(date +%s);
 
+# Increment crash counter
 n=$((n + 1))
+
+# Set the current timestamp
 ctime=$(date +%Y-%d-%m_%H-%M);
+
+# Log the crash event
 echo "${ctime}: Asterisk crashed (last: ${last_crash}): ${ctime}.log" >> /tmp/ac_log
 
+# Capture system and application logs related to the crash
 dmesg | tail -n 20 > "/tmp/ac_log_$ctime.log"
 tail -n 60 "$logDir/system/messages" >> "/tmp/ac_log_$ctime.log"
 tail -n 500 "$logDir/php/error.log" >> "/tmp/ac_log_$ctime.log"
 
+
+# If the crash occurred too quickly, it may be due to a corrupted database
 if [ $last_crash -lt 15 ]; then
-	# asterisk crashes too fast (maybe on execution)
-	# maybe the astdb is corrupted (sometimes happens)
 	if [ -d "$dbDir" ]; then
 		sqlite3 "$dbDir/astdb.sqlite3" 'vacuum';
 		resultCheck=$?;
     if test "$resultCheck" != "0" ; then
+      # If the database vacuum operation fails, remove the database as it might be corrupted
 		  rm -f "$dbDir/*"
 		  echo "$ctime: Removed astdb from $dbDir (maybe corrupted)" >> /tmp/ac_log;
 		fi
 	fi
 fi
 
+# Add a delay after the 5th crash
 if [ $n -eq 5 ]; then
 	echo "$ctime: Wait a few seconds after saving sip phone" >> /tmp/ac_log
 	sleep 5;
 fi
 
+# After the 8th crash, create a backup of the log files
 if [ $n -eq 8 ]; then
 	if [ -d "$logDir" ]; then
 		tar -czf "$astlogdir/asterisk_log_backup_$ctime.tar.gz" "$logDir/asterisk/verbose $logDir/asterisk/messages $logDir/asterisk/error"
@@ -67,9 +89,11 @@ if [ $n -eq 8 ]; then
 	fi
 fi
 
+# After the 20th crash, reset the crash counter
 if [ $n -eq 20 ]; then
 	n=0
 fi
 
+# Write updated crash counter and timestamp back to the crash counter file
 echo "n=$n
 timestamp=$timestamp" > $nfilename

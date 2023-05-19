@@ -23,12 +23,13 @@
 # RAID
 mdadmPath=$(/sbin/which mdadm)
 if [ -n "$mdadmPath" ]; then
+  # Stop any running RAID arrays
   "$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop >/dev/null 2>/dev/null
 fi
 # RAID END
 
 if [ -f /tmp/ejectcd ]; then
-  # Попробуем изъять диск.
+  # Try to eject the CD from the drive
   cddev=$(/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3)
   echo "Eject CD from drive ${cddev}..."
   /bin/busybox eject "/dev/${cddev}" >/dev/null 2>/dev/null

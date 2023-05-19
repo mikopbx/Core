@@ -110,7 +110,6 @@ trap '' PIPE
 #
 # Run scripts to set any environment variables or do any other system-specific setup needed
 #
-
 if test -d /etc/asterisk/startup.d ; then
   startScript='/etc/asterisk/startup.d/startup.sh';
   if test -r "${startScript}" ; then

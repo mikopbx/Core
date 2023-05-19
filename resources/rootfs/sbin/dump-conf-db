@@ -17,18 +17,31 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
+# Extract the media mount point from the configuration file
 mntPoint="$(/bin/busybox grep "mediaMountPoint" < /etc/inc/mikopbx-settings.json | /bin/busybox cut -f 4 -d '"')";
+
+# Extract the path to the database from the configuration file
 dbPath="$(/bin/busybox grep "mikopbx.db" < /etc/inc/mikopbx-settings.json | /bin/busybox cut -f 4 -d '"')";
+
+# Define the backup directory path
 backupDir="${mntPoint}/mikopbx/backup/db"
+
+# Ensure the backup directory exists
 mkdir -p "$backupDir";
 
+# Calculate the MD5 checksum of the database dump
 md5="$(/usr/bin/sqlite3 "$dbPath" .dump | /bin/gzip -c | /usr/bin/md5sum | cut -f 1 -d ' ')" ;
 
+# Check if a backup with the same MD5 checksum already exists
 /usr/bin/md5sum /storage/usbdisk1/mikopbx/backup/db/*_mikopbx.db.gz | /bin/busybox grep "$md5"> /dev/null 2> /dev/null
 result="$?"
+
+# If no matching backup is found, create a new backup
 if [ "$result" = "1" ];then
   /usr/bin/sqlite3 "$dbPath" .dump | /bin/gzip -c > "$backupDir/$(date '+%Y-%m-%d_h%H_m%M_s%S')_mikopbx.db.gz"
 fi;
+
+# Remove the oldest backups, keeping only the 5 most recent ones
 (
   cd "$backupDir" || exit;
   /bin/busybox ls -1tr | /bin/busybox head -n-5 | /bin/xargs /bin/busybox rm 2> /dev/null
