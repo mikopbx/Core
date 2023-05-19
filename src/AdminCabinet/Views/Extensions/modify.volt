@@ -12,7 +12,6 @@
 
 {{ form.render('mobile_uniqid') }}
 
-{{ form.render('user_role') }}
 {{ form.render('user_avatar') }}
 {{ form.render('user_id') }}
 <input type="file" name="file-select" id="file-select" style="display: none"/>

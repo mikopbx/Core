@@ -18,29 +18,62 @@
 
 /* global globalRootUrl, globalWebAdminLanguage, sessionStorage, $, globalTranslate */
 
+/**
+ * Advices Worker module.
+ * @module advicesWorker
+ */
 const advicesWorker = {
+	/**
+	 * Time in milliseconds before fetching new advices.
+	 * @type {number}
+	 */
 	timeOut: 300000,
+
+	/**
+	 * Timeout handle for advices worker.
+	 * @type {number}
+	 */
 	timeOutHandle: '',
+
+	/**
+	 * jQuery element for advices container.
+	 * @type {jQuery}
+	 */
 	$advices: $('#advices'),
+
+	/**
+	 * jQuery element for advices bell button.
+	 * @type {jQuery}
+	 */
 	$advicesBellButton: $('#show-advices-button'),
+
+	/**
+	 * Initializes the advices worker.
+	 */
 	initialize() {
 		advicesWorker.showPreviousAdvice();
 		// Let's initiate the retrieval of new advices.
 		advicesWorker.restartWorker();
 		window.addEventListener('ConfigDataChanged', advicesWorker.cbOnDataChanged);
 	},
+
+	/**
+	 * Restarts the advices worker.
+	 */
 	restartWorker() {
 		window.clearTimeout(advicesWorker.timeoutHandle);
 		advicesWorker.worker();
 	},
+
 	/**
-	 * Handling the event of language or data change.
+	 * Event handler for language or data change.
 	 */
 	cbOnDataChanged() {
 		sessionStorage.removeItem(`previousAdvice${globalWebAdminLanguage}`);
 		sessionStorage.removeItem(`previousAdviceBell${globalWebAdminLanguage}`);
 		setTimeout(advicesWorker.restartWorker,3000);
 	},
+
 	/**
 	 * Shows old advice until receiving an update from the station.
 	 */
@@ -54,9 +87,18 @@ const advicesWorker = {
 			advicesWorker.$advices.html(previousAdvice);
 		}
 	},
+
+	/**
+	 * Worker function for fetching advices.
+	 */
 	worker() {
 		PbxApi.AdvicesGetList(advicesWorker.cbAfterResponse);
 	},
+
+	/**
+	 * Callback function after receiving the response.
+	 * @param {object} response - Response object from the API.
+	 */
 	cbAfterResponse(response) {
 		if (response === false) {
 			return;

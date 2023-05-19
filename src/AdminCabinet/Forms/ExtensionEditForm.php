@@ -84,9 +84,6 @@ class ExtensionEditForm extends BaseForm
         // ID
         $this->add(new Hidden('user_id', ["value" => $user->id]));
 
-        // User role
-        $this->add(new Hidden('user_role', ["value" => $user->role]));
-
         // Username
         $this->add(new Text('user_username', ["value" => $user->username, 'autocomplete' => 'off']));
 

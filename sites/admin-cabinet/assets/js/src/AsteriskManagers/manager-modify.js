@@ -18,17 +18,64 @@
 
 /* global globalRootUrl,globalTranslate, Form */
 
+/**
+ * Manager module.
+ * @module manager
+ */
 const manager = {
-	$formObj: $('#save-ami-form'), // Form object
-	$dropDowns: $('#save-ami-form .ui.dropdown'), // Dropdown elements
-	$masterCheckBoxes: $('#save-ami-form .list .master.checkbox'), // Master checkbox elements
-	$childrenCheckBoxes: $('#save-ami-form .list .child.checkbox'),  // Child checkbox elements
-	$allCheckBoxes: $('#save-ami-form .list .checkbox'), // All checkbox elements
-	$unCheckButton: $('.uncheck.button'),  // Uncheck button element
-	$username: $('#username'),  // Username input field
-	originalName:'', // Original username value
+	/**
+	 * jQuery object for the form.
+	 * @type {jQuery}
+	 */
+	$formObj: $('#save-ami-form'),
+
+	/**
+	 * jQuery objects for dropdown elements.
+	 * @type {jQuery}
+	 */
+	$dropDowns: $('#save-ami-form .ui.dropdown'),
+
+	/**
+	 * jQuery objects for master checkbox elements.
+	 * @type {jQuery}
+	 */
+	$masterCheckBoxes: $('#save-ami-form .list .master.checkbox'),
+
+	/**
+	 * jQuery objects for child checkbox elements.
+	 * @type {jQuery}
+	 */
+	$childrenCheckBoxes: $('#save-ami-form .list .child.checkbox'),
+
+	/**
+	 * jQuery objects for all checkbox elements.
+	 * @type {jQuery}
+	 */
+	$allCheckBoxes: $('#save-ami-form .list .checkbox'),
+
+	/**
+	 * jQuery object for the uncheck button.
+	 * @type {jQuery}
+	 */
+	$unCheckButton: $('.uncheck.button'),
+
+	/**
+	 * jQuery object for the username input field.
+	 * @type {jQuery}
+	 */
+	$username: $('#username'),
+
+	/**
+	 * Original username value.
+	 * @type {string}
+	 */
+	originalName:'',
+
+	/**
+	 * Validation rules for the form fields.
+	 * @type {object}
+	 */
 	validateRules: {
-		// Validation rules for the form fields
 		username: {
 			identifier: 'username',
 			rules: [
@@ -52,6 +99,10 @@ const manager = {
 			],
 		},
 	},
+
+	/**
+	 * Initializes the manager module.
+	 */
 	initialize() {
 		// Initialize dropdowns
 		manager.$dropDowns.dropdown();
@@ -121,14 +172,13 @@ const manager = {
 		manager.initializeForm();
 		manager.originalName = manager.$formObj.form('get value','username');
 	},
+
 	/**
-	 * Checks if username
-	 doesn't exist in the database
-	 * @param {string} oldName - The old username
-	 * @param {string} newName - The new username
-	 * @param {string} cssClassName - The CSS class name
-	 * @param {string} userId - The user ID
-	 * @returns {*}
+	 * Checks if the username doesn't exist in the database.
+	 * @param {string} oldName - The old username.
+	 * @param {string} newName - The new username.
+	 * @param {string} cssClassName - The CSS class name.
+	 * @param {string} userId - The user ID.
 	 */
 	checkAvailability(oldName, newName, cssClassName = 'username', userId = '') {
 		if (oldName === newName) {
@@ -161,16 +211,29 @@ const manager = {
 			},
 		});
 	},
+
+	/**
+	 * Callback function before sending the form.
+	 * @param {object} settings - Settings object for the AJAX request.
+	 * @returns {object} - Modified settings object.
+	 */
 	cbBeforeSendForm(settings) {
 		const result = settings;
 		result.data = manager.$formObj.form('get values');
 		return result;
 	},
+
+	/**
+	 * Callback function after sending the form.
+	 */
 	cbAfterSendForm() {
 		// Callback function after sending the form
 	},
+
+	/**
+	 * Initializes the form.
+	 */
 	initializeForm() {
-		// Initialize the form
 		Form.$formObj = manager.$formObj;
 		Form.url = `${globalRootUrl}asterisk-managers/save`;
 		Form.validateRules = manager.validateRules;

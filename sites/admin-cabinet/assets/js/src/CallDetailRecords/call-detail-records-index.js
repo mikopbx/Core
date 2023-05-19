@@ -17,32 +17,37 @@
  */
 
 /* global globalRootUrl, SemanticLocalization, Extensions, moment, globalTranslate */
+
+
 /**
- * Класс динамически создаваемых проигрываетелй для CDR
- *
+ * CDRPlayer class.
  */
 class CDRPlayer {
+
+	/**
+	 * Creates an instance of CDRPlayer.
+	 * @param {string} id - The ID of the player.
+	 */
 	constructor(id) {
 		this.id = id;
 		this.html5Audio = document.getElementById(`audio-player-${id}`);
 		const $row = $(`#${id}`);
-		this.$pButton = $row.find('i.play'); // play button
-		this.$dButton = $row.find('i.download'); // download button
-		this.$slider = $row.find('div.cdr-player');
-		this.$spanDuration = $row.find('span.cdr-duration');
+		this.$pButton = $row.find('i.play'); // Play button
+		this.$dButton = $row.find('i.download'); // Download button
+		this.$slider = $row.find('div.cdr-player'); // Slider element
+		this.$spanDuration = $row.find('span.cdr-duration'); // Duration span element
 		this.html5Audio.removeEventListener('timeupdate', this.cbOnMetadataLoaded, false);
 		this.html5Audio.removeEventListener('loadedmetadata', this.cbTimeUpdate, false);
 		this.$pButton.unbind();
 		this.$dButton.unbind();
 
-
-		// play button event listenter
+		// Play button event listener
 		this.$pButton.on('click', (e) => {
 			e.preventDefault();
 			this.play();
 		});
 
-		// download button event listenter
+		// Download button event listener
 		this.$dButton.on('click', (e) => {
 			e.preventDefault();
 			window.location = $(e.target).attr('data-value');
@@ -68,7 +73,7 @@ class CDRPlayer {
 	}
 
 	/**
-	 * Обработчик подгрузки метаданных
+	 * Callback for metadata loaded event.
 	 */
 	cbOnMetadataLoaded() {
 		if (Number.isFinite(this.duration)) {
@@ -92,9 +97,9 @@ class CDRPlayer {
 	}
 
 	/**
-	 * Колбек на сдвиг слайдера проигрывателя
-	 * @param newVal
-	 * @param meta
+	 * Callback for slider change event.
+	 * @param {number} newVal - The new value of the slider.
+	 * @param {object} meta - Additional metadata.
 	 */
 	cbOnSliderChange(newVal, meta) {
 		if (meta.triggeredByUser && Number.isFinite(this.html5Audio.duration)) {
@@ -123,7 +128,7 @@ class CDRPlayer {
 	}
 
 	/**
-	 * Колбек на изменение позиции проигрываемого файла из HTML5 аудиотега
+	 * Callback for time update event.
 	 */
 	cbTimeUpdate() {
 		if (Number.isFinite(this.duration)) {
@@ -138,8 +143,7 @@ class CDRPlayer {
 	}
 
 	/**
-	 * Запуск и остановка воспроизведения аудио файла
-	 * по клику на иконку Play
+	 * Plays or pauses the audio file.
 	 */
 	play() {
 		// start music
@@ -155,22 +159,52 @@ class CDRPlayer {
 	}
 
 	/**
-	 * Обработка ошибки полученя звукового файла
+	 * Callback for src media error event.
 	 */
 	cbOnSrcMediaError() {
 		$(this).closest('tr').addClass('disabled');
 	}
 }
 
+
 /**
- * Класс страницы с CDR
+ * callDetailRecords module.
+ * @module callDetailRecords
  */
 const callDetailRecords = {
+	/**
+	 * The call detail records table element.
+	 * @type {JQuery<HTMLElement>}
+	 */
 	$cdrTable: $('#cdr-table'),
+
+	/**
+	 * The global search input element.
+	 * @type {JQuery<HTMLElement>}
+	 */
 	$globalSearch: $('#globalsearch'),
+
+	/**
+	 * The date range selector element.
+	 * @type {JQuery<HTMLElement>}
+	 */
 	$dateRangeSelector: $('#date-range-selector'),
+
+	/**
+	 * The data table object.
+	 * @type {Object}
+	 */
 	dataTable: {},
+
+	/**
+	 * An array of players.
+	 * @type {Array}
+	 */
 	players: [],
+
+	/**
+	 * Initializes the call detail records.
+	 */
 	initialize() {
 		callDetailRecords.initializeDateRangeSelector();
 
@@ -201,10 +235,11 @@ const callDetailRecords = {
 			pageLength: 17,
 			// scrollCollapse: true,
 			// scroller: true,
+
 			/**
-			 * Конструктор строки CDR
-			 * @param row
-			 * @param data
+			 * Constructs the CDR row.
+			 * @param {HTMLElement} row - The row element.
+			 * @param {Array} data - The row data.
 			 */
 			createdRow(row, data) {
 				if (data.DT_RowClass === 'detailed') {
@@ -226,6 +261,7 @@ const callDetailRecords = {
 				}
 				$('td', row).eq(4).html(duration).addClass('right aligned');
 			},
+
 			/**
 			 * Draw event - fired once the table has completed a draw.
 			 */
@@ -247,6 +283,7 @@ const callDetailRecords = {
 				window.location = `${globalRootUrl}system-diagnostic/index/?filename=asterisk/verbose&filter=${ids}`;
 			}
 		});
+
 		// Add event listener for opening and closing details
 		callDetailRecords.$cdrTable.on('click', 'tr.detailed', (e) => {
 			let ids = $(e.target).attr('data-ids');
@@ -273,8 +310,11 @@ const callDetailRecords = {
 			}
 		});
 	},
+
 	/**
-	 * Отрисовывает набор с записями разговоров при клике на строку
+	 * Shows a set of call records when a row is clicked.
+	 * @param {Array} data - The row data.
+	 * @returns {string} The HTML representation of the call records.
 	 */
 	showRecords(data) {
 		let htmlPlayer = '<table class="ui very basic table cdr-player"><tbody>';
@@ -335,8 +375,10 @@ const callDetailRecords = {
 		htmlPlayer += '</tbody></table>';
 		return htmlPlayer;
 	},
+
+
 	/**
-	 *
+	 * Initializes the date range selector.
 	 */
 	initializeDateRangeSelector() {
 		const options = {};
@@ -372,18 +414,22 @@ const callDetailRecords = {
 			callDetailRecords.cbDateRangeSelectorOnSelect,
 		);
 	},
+
+
 	/**
-	 * Обработчик выбора периода
-	 * @param start
-	 * @param end
-	 * @param label
+	 * Handles the date range selector select event.
+	 * @param {moment.Moment} start - The start date.
+	 * @param {moment.Moment} end - The end date.
+	 * @param {string} label - The label.
 	 */
 	cbDateRangeSelectorOnSelect(start, end, label) {
 		const text = `${start.format('DD/MM/YYYY')} ${end.format('DD/MM/YYYY')} ${callDetailRecords.$globalSearch.val()}`;
 		callDetailRecords.applyFilter(text);
 	},
+
 	/**
-	 *
+	 * Applies the filter to the data table.
+	 * @param {string} text - The filter text.
 	 */
 	applyFilter(text) {
 		callDetailRecords.dataTable.search(text).draw();

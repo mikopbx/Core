@@ -17,7 +17,14 @@
  */
 /* global globalRootUrl */
 
+/**
+ * Managers Table module.
+ * @module managersTable
+ */
 const managersTable = {
+	/**
+	 * Initializes the managers table.
+	 */
 	initialize() {
 		$('.user-row td').on('dblclick', (e) => {
 			const id = $(e.target).closest('tr').attr('id');
