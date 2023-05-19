@@ -1,5 +1,21 @@
 <?php
-
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
@@ -7,9 +23,23 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\Util;
 
-class InsertDataToDB {
 
-    public static function execute($data):void
+/**
+ * Class InsertDataToDB
+ * This class is responsible for inserting data into the database for call events.
+ *
+ *  @package MikoPBX\Core\Workers\Libs\WorkerCallEvents
+ */
+class InsertDataToDB
+{
+
+    /*
+     * Execute the insertion of data into the database.
+     *
+     * @param array $data The data to be inserted.
+     * @return void
+     */
+    public static function execute($data): void
     {
         if (empty($data['UNIQUEID'])) {
             Util::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data), LOG_DEBUG);
@@ -22,18 +52,18 @@ class InsertDataToDB {
             [
                 "UNIQUEID=:id: AND linkedid=:linkedid:",
                 'bind' => [
-                    'id'       => $data['UNIQUEID'],
+                    'id' => $data['UNIQUEID'],
                     'linkedid' => $data['linkedid']
                 ],
             ]
         );
         if ($m_data === null) {
-            // Создаем новую строку истории.
+            // Create a new call record.
             $m_data = new CallDetailRecordsTmp();
             $is_new = true;
         } elseif (self::isOriginateDial($data)) {
             self::processingOriginateData($data, $m_data);
-            // Дальнейшая обработка не требуется.
+            // Further processing is not required.
             return;
         }
 
@@ -41,65 +71,77 @@ class InsertDataToDB {
     }
 
     /**
-     * Обработка данных Originate. При Dial этот пакет может прийти дважды.
-     * @param $data
-     * @param $m_data
+     * Check if the data represents an originate dial
+     *
+     * @param array $data The data to be checked
+     * @return bool
      */
-    private static function processingOriginateData($data, $m_data):void
+    private static function isOriginateDial($data): bool
+    {
+        return isset($data['IS_ORGNT']) && $data['IS_ORGNT'] !== false && $data['action'] === 'dial';
+    }
+
+    /**
+     * Process the originate data. This package can come twice during dial.
+     *
+     * @param array $data The originate data.
+     * @param CallDetailRecordsTmp $m_data The call detail records.
+     *
+     * @return void
+     */
+    private static function processingOriginateData($data, $m_data): void
     {
         if (empty($m_data->endtime)) {
-            // Если это оригинация dial может прийти дважды.
-            if(!empty($m_data->src_num) && $m_data->src_num === $data['dst_num']){
+            // If it's an originate dial, it can come twice.
+            if (!empty($m_data->src_num) && $m_data->src_num === $data['dst_num']) {
                 $m_data->dst_num = $data['src_num'];
                 $m_data->save();
             }
-        }else{
-            // Предыдущие звонки завершены. Текущий вызов новый, к примеру через резервного провайдера.
-            // Меняем идентификатор предыдущих звонков.
+        } else {
+            // Previous calls are completed. The current call is new, for example, through a backup provider.
+            // Change the identifier of the previous calls.
             $m_data->UNIQUEID .= Util::generateRandomString(5);
-            // Чистим путь к файлу записи.
+            // Clear the recording file path.
             $m_data->recordingfile = "";
             $m_data->save();
 
-            $new_m_data               = new CallDetailRecordsTmp();
-            $new_m_data->UNIQUEID     = $data['UNIQUEID'];
-            $new_m_data->start        = $data['start'];
-            $new_m_data->src_chan     = $m_data->src_chan;
-            $new_m_data->src_num      = $m_data->src_num;
-            $new_m_data->dst_num      = $data['src_num'];
-            $new_m_data->did          = $data['did'];
+            $new_m_data = new CallDetailRecordsTmp();
+            $new_m_data->UNIQUEID = $data['UNIQUEID'];
+            $new_m_data->start = $data['start'];
+            $new_m_data->src_chan = $m_data->src_chan;
+            $new_m_data->src_num = $m_data->src_num;
+            $new_m_data->dst_num = $data['src_num'];
+            $new_m_data->did = $data['did'];
             $new_m_data->from_account = $data['from_account'];
-            $new_m_data->linkedid     = $data['linkedid'];
-            $new_m_data->transfer     = $data['transfer'];
+            $new_m_data->linkedid = $data['linkedid'];
+            $new_m_data->transfer = $data['transfer'];
 
             $res = $new_m_data->save();
-            if ( ! $res) {
+            if (!$res) {
                 Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
             }
         }
     }
 
     /**
-     * Проверка данных на Originate.
-     * @param $data
-     * @return bool
+     * Fill Call Detail Records data.
+     *
+     * @param CallDetailRecordsTmp $m_data The CallDetailRecordsTmp object to fill with data.
+     * @param array $data The data to fill the CallDetailRecordsTmp object with.
+     * @param bool $is_new Indicates whether it's a new record.
+     * @return void
      */
-    private static function isOriginateDial($data): bool{
-        return isset($data['IS_ORGNT']) && $data['IS_ORGNT'] !== false && $data['action'] === 'dial';
-    }
-
-    /**
-     * @param CallDetailRecordsTmp $m_data
-     * @param                      $data
-     * @param bool                 $is_new
-     */
-    private static function fillCdrData(CallDetailRecordsTmp $m_data, $data, bool $is_new): void{
+    private static function fillCdrData(CallDetailRecordsTmp $m_data, $data, bool $is_new): void
+    {
         $f_list = $m_data->toArray();
-        // Заполняем данные истроии звонков.
+
+        // Fill call history data.
         foreach ($data as $attribute => $value) {
             if (!array_key_exists($attribute, $f_list)) {
                 continue;
             }
+
+            // Skip filling UNIQUEID attribute if it's not a new record.
             if ($is_new === false && 'UNIQUEID' === $attribute) {
                 continue;
             }

@@ -59,7 +59,7 @@ class WorkerSafeScriptsCore extends WorkerBase
     /**
      * Restarts all registered workers.
      *
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function restart(): void
     {
@@ -89,11 +89,11 @@ class WorkerSafeScriptsCore extends WorkerBase
     {
         // Initialize the workers' list.
         // Each worker type corresponds to a list of workers.
-        $arrWorkers        = [
-            self::CHECK_BY_AMI           =>
+        $arrWorkers = [
+            self::CHECK_BY_AMI =>
                 [
                 ],
-            self::CHECK_BY_BEANSTALK     =>
+            self::CHECK_BY_BEANSTALK =>
                 [
                     WorkerApiCommands::class,
                     WorkerCdr::class,
@@ -129,25 +129,11 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
 
     /**
-     * Restarts a worker by class name.
-     *
-     * @param string $workerClassName The class name of the worker.
-     *
-     * @return \Generator|null
-     */
-    public function restartWorker(string $workerClassName): ?Generator
-    {
-        // Restart the worker and yield control back to the calling code.
-        Processes::processPHPWorker($workerClassName, 'start','restart');
-        yield;
-    }
-
-    /**
      * Starts all workers or checks them.
      *
      * @param array $params The command-line arguments.
      *
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function start(array $params): void
     {
@@ -185,16 +171,16 @@ class WorkerSafeScriptsCore extends WorkerBase
      *
      * @param string $workerClassName The class name of the worker.
      *
-     * @return \Generator|null
+     * @return Generator|null
      */
     public function checkWorkerBeanstalk(string $workerClassName): ?Generator
     {
         // Check if the worker is alive. If not, restart it.
         // The check is done by pinging the worker using a Beanstalk queue.
         try {
-            $start     = microtime(true);
+            $start = microtime(true);
             $WorkerPID = Processes::getPidOfProcess($workerClassName);
-            $result    = false;
+            $result = false;
             if ($WorkerPID !== '') {
                 // We had service PID, so we will ping it
                 $queue = new BeanstalkClient($this->makePingTubeName($workerClassName));
@@ -205,7 +191,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                 Processes::processPHPWorker($workerClassName);
                 Util::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
             }
-            $timeElapsedSecs = round(microtime(true) - $start,2);
+            $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 10) {
                 Util::sysLogMsg(
                     __METHOD__,
@@ -226,18 +212,18 @@ class WorkerSafeScriptsCore extends WorkerBase
      *
      * @param string $workerClassName The class name of the worker.
      *
-     * @return \Generator|null
+     * @return Generator|null
      */
     public function checkPidNotAlert(string $workerClassName): Generator
     {
         // Check if the worker is alive based on its PID. If not, restart it.
-        $start     = microtime(true);
+        $start = microtime(true);
         $WorkerPID = Processes::getPidOfProcess($workerClassName);
-        $result    = ($WorkerPID !== '');
+        $result = ($WorkerPID !== '');
         if (false === $result) {
             Processes::processPHPWorker($workerClassName);
         }
-        $timeElapsedSecs = round(microtime(true) - $start,2);
+        $timeElapsedSecs = round(microtime(true) - $start, 2);
         if ($timeElapsedSecs > 10) {
             Util::sysLogMsg(
                 __CLASS__,
@@ -255,19 +241,19 @@ class WorkerSafeScriptsCore extends WorkerBase
      * @param string $workerClassName The class name of the worker.
      * @param int $level The recursion level.
      *
-     * @return \Generator|null
+     * @return Generator|null
      */
     public function checkWorkerAMI(string $workerClassName, int $level = 0): ?Generator
     {
         // Check if the worker is alive. If not, restart it.
         // The check is done by pinging the worker using an AMI UserEvent.
         try {
-            $start     = microtime(true);
-            $res_ping  = false;
+            $start = microtime(true);
+            $res_ping = false;
             $WorkerPID = Processes::getPidOfProcess($workerClassName);
             if ($WorkerPID !== '') {
                 // We have the service PID, so we will ping it
-                $am       = Util::getAstManager();
+                $am = Util::getAstManager();
                 $res_ping = $am->pingAMIListener($this->makePingTubeName($workerClassName));
                 if (false === $res_ping) {
                     Util::sysLogMsg(__METHOD__, 'Restart...', LOG_ERR);
@@ -283,7 +269,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                 // Check service again
                 $this->checkWorkerAMI($workerClassName, $level + 1);
             }
-            $timeElapsedSecs = round(microtime(true) - $start,2);
+            $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 10) {
                 Util::sysLogMsg(
                     __METHOD__,
@@ -298,6 +284,20 @@ class WorkerSafeScriptsCore extends WorkerBase
         }
         yield;
     }
+
+    /**
+     * Restarts a worker by class name.
+     *
+     * @param string $workerClassName The class name of the worker.
+     *
+     * @return Generator|null
+     */
+    public function restartWorker(string $workerClassName): ?Generator
+    {
+        // Restart the worker and yield control back to the calling code.
+        Processes::processPHPWorker($workerClassName, 'start', 'restart');
+        yield;
+    }
 }
 
 // Start worker process
@@ -308,7 +308,7 @@ try {
     if (isset($argv) && count($argv) > 1) {
         cli_set_process_title("{$workerClassname} {$argv[1]}");
         $activeProcesses = Processes::getPidOfProcess("{$workerClassname} {$argv[1]}", posix_getpid());
-        if (!empty($activeProcesses)){
+        if (!empty($activeProcesses)) {
             Util::sysLogMsg($workerClassname, "WARNING: Other started process {$activeProcesses} with parameter: {$argv[1]} is working now...", LOG_DEBUG);
             return;
         }

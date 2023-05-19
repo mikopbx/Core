@@ -23,23 +23,42 @@ require_once 'Globals.php';
 use MikoPBX\Common\Providers\LicenseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 
+/**
+ * WorkerLicenseChecker is a worker class responsible for checking the license status of the PBX and its modules.
+ *
+ * @package MikoPBX\Core\Workers
+ */
 class WorkerLicenseChecker extends WorkerBase
 {
 
-    public function start($argv): void
+    /**
+     * Starts the license checker worker.
+     *
+     * @param array $params The command-line arguments passed to the worker.
+     * @return void
+     */
+    public function start(array $params): void
     {
-        $cacheKey =  'Workers:WorkerLicenseChecker:lastLicenseCheck';
+        $cacheKey = 'Workers:WorkerLicenseChecker:lastLicenseCheck';
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
+
+        // Retrieve the last license check timestamp from the cache
         $lastLicenseCheck = $managedCache->get($cacheKey);
-        if ($lastLicenseCheck===null){
-            $lic =  $this->di->getShared(LicenseProvider::SERVICE_NAME);
+        if ($lastLicenseCheck === null) {
+            $lic = $this->di->getShared(LicenseProvider::SERVICE_NAME);
+
+            // Perform PBX license check
             $lic->checkPBX();
+
+            // Perform module license check
             $lic->checkModules();
-            $managedCache->set($cacheKey, time(), 3600);
+
+            // Store the current timestamp in the cache to track the last license check
+            $managedCache->set($cacheKey, time(), 3600); // Check every hour
         }
     }
 
 }
 
 // Start worker process
-WorkerLicenseChecker::startWorker($argv??[]);
+WorkerLicenseChecker::startWorker($argv ?? []);

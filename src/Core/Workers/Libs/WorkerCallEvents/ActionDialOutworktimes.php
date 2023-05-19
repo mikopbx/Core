@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,9 +22,23 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
+/**
+ * Class ActionDialOutworktimes
+ * This class handles the execution of a dial action during out-of-work times.
+ *
+ *  @package MikoPBX\Core\Workers\Libs\WorkerCallEvents
+ */
 class ActionDialOutworktimes
 {
-    public static function execute(WorkerCallEvents $worker, $data):void
+    /**
+     * Executes the dial action during out-of-work times.
+     *
+     * @param WorkerCallEvents $worker The worker instance.
+     * @param array $data The data containing call details.
+     *
+     * @return void
+     */
+    public static function execute(WorkerCallEvents $worker, $data): void
     {
         InsertDataToDB::execute($data);
     }

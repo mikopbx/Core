@@ -45,7 +45,7 @@ class WorkerBeanstalkdTidyUp extends WorkerBase
     public function start(array $params): void
     {
         // Define the cache key
-        $cacheKey =  'Workers:WorkerBeanstalkdTidyUp:lastTubesCheck';
+        $cacheKey = 'Workers:WorkerBeanstalkdTidyUp:lastTubesCheck';
 
         // Get an instance of the ManagedCacheProvider
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
@@ -55,7 +55,7 @@ class WorkerBeanstalkdTidyUp extends WorkerBase
 
         // If the last check was not performed or it was performed more than 5 minutes ago,
         // clean the tubes and update the last check time in the cache
-        if ($lastTubesCheck === null){
+        if ($lastTubesCheck === null) {
 
             // Clean the tubes
             $client = new BeanstalkClient();
@@ -69,4 +69,4 @@ class WorkerBeanstalkdTidyUp extends WorkerBase
 }
 
 // Start worker process
-WorkerBeanstalkdTidyUp::startWorker($argv??[]);
+WorkerBeanstalkdTidyUp::startWorker($argv ?? []);

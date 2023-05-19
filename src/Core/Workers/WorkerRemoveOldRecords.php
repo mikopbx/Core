@@ -22,25 +22,34 @@ require_once 'Globals.php';
 
 use MikoPBX\Core\System\{Processes, Storage, Util};
 
+
+/**
+ * WorkerRemoveOldRecords is a worker class responsible for cleaning monitor records.
+ *
+ * @package MikoPBX\Core\Workers
+ */
 class WorkerRemoveOldRecords extends WorkerBase
 {
     private const MIN_SPACE_MB = 500;
     private const MIN_SPACE_MB_ALERT = 200;
 
     /**
-     * Проверка свободного места на дисках. Уведомление в случае проблем.
-     * @param mixed $params
+     * Starts the worker and checks disk space. Sends notifications in case of problems.
+     *
+     * @param mixed $params The parameters.
+     * @return void
      */
-    public function start($params): void
+    public function start(array $params): void
     {
         $util = new Util();
         $storage = new Storage();
-        $hdd  = $storage->getAllHdd(true);
-        // Создание больщого файла для тестов.
-        // head -c 1500MB /dev/urandom > /storage/usbdisk1/big_file.mp3
+        $hdd = $storage->getAllHdd(true);
+
+        // Check disk space for each disk
         foreach ($hdd as $disk) {
-            if ($disk['sys_disk'] === true && ! Storage::isStorageDiskMounted("{$disk['id']}4")) {
-                // Это системный диск (4ый раздел). Он не смонтирован.
+            if ($disk['sys_disk'] === true && !Storage::isStorageDiskMounted("{$disk['id']}4")) {
+
+                // Skip the system disk (4th partition) if it's not mounted
                 continue;
             }
             [$need_alert, $need_clean, $test_alert] = $this->check($disk);
@@ -51,69 +60,24 @@ class WorkerRemoveOldRecords extends WorkerBase
                     'Directoire - ' => $disk['mounted'],
                     'Desciption - ' => $test_alert,
                 ];
-                // Добавляем задачу на уведомление.
+
+                // Add a notification task
                 $util->addJobToBeanstalk('WorkerNotifyError_storage', $data);
             }
-            if($need_clean){
+            if ($need_clean) {
                 $this->cleanStorage();
             }
         }
     }
 
-    private function cleanStorage():void
-    {
-        $varEtcDir = $this->di->getShared('config')->path('core.varEtcDir');
-        $filename   = "{$varEtcDir}/storage_device";
-        if (file_exists($filename)) {
-            $mount_point = file_get_contents($filename);
-        } else {
-            return;
-        }
-        $out = [];
-        $busyboxPath = Util::which('busybox');
-        $mountPath   = Util::which('mount');
-        $grepPath    = Util::which('grep');
-        $headPath    = Util::which('head');
-        $sortPath    = Util::which('sort');
-        $findPath    = Util::which('find');
-        $awkPath     = Util::which('awk');
-
-        Processes::mwExec("{$mountPath} | {$busyboxPath} {$grepPath} {$mount_point} | {$busyboxPath} {$awkPath} '{print $1}' | {$headPath} -n 1", $out);
-        $dev = implode('', $out);
-
-        $s          = new Storage();
-        $free_space = $s->getFreeSpace($dev);
-        if ($free_space > self::MIN_SPACE_MB) {
-            // Очистка диска не требуется.
-            return;
-        }
-        $monitor_dir = Storage::getMonitorDir();
-        $out         = [];
-        Processes::mwExec(
-            "{$findPath} {$monitor_dir}/*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | {$sortPath} | {$headPath} -n 10 | {$busyboxPath} {$awkPath} '{print $2}'",
-            $out
-        );
-        $busyboxPath = Util::which('busybox');
-        $rmPath      = Util::which('rm');
-
-        foreach ($out as $dir_info) {
-            if ( ! is_dir($dir_info)) {
-                continue;
-            }
-            $free_space = $s->getFreeSpace($dev);
-            if ($free_space > self::MIN_SPACE_MB) {
-                // Очистка диска не требуется.
-                break;
-            }
-            Processes::mwExec("{$busyboxPath} {$rmPath} -rf {$dir_info}");
-        }
-    }
-
     /**
-     * @param $disk
-     * @return array
+     * Checks the disk space and determines if an alert or cleanup is needed.
+     *
+     * @param array $disk The disk information.
+     * @return array The result of the check: [need_alert, need_clean, test_alert].
      */
-    private function check($disk): array{
+    private function check(array $disk): array
+    {
         $need_alert = false;
         $need_clean = false;
         $test_alert = '';
@@ -124,7 +88,64 @@ class WorkerRemoveOldRecords extends WorkerBase
         }
         return array($need_alert, $need_clean, $test_alert);
     }
+
+    /**
+     * Cleans up storage when disk space is low.
+     *
+     * @return void
+     */
+    private function cleanStorage(): void
+    {
+        $varEtcDir = $this->di->getShared('config')->path('core.varEtcDir');
+        $filename = "{$varEtcDir}/storage_device";
+        if (file_exists($filename)) {
+            $mount_point = file_get_contents($filename);
+        } else {
+            return;
+        }
+        $out = [];
+        $busyboxPath = Util::which('busybox');
+        $mountPath = Util::which('mount');
+        $grepPath = Util::which('grep');
+        $headPath = Util::which('head');
+        $sortPath = Util::which('sort');
+        $findPath = Util::which('find');
+        $awkPath = Util::which('awk');
+
+        // Get the device for the mount point
+        Processes::mwExec("{$mountPath} | {$busyboxPath} {$grepPath} {$mount_point} | {$busyboxPath} {$awkPath} '{print $1}' | {$headPath} -n 1", $out);
+        $dev = implode('', $out);
+
+        $s = new Storage();
+        $free_space = $s->getFreeSpace($dev);
+        if ($free_space > self::MIN_SPACE_MB) {
+            // Disk cleanup is not required
+            return;
+        }
+        $monitor_dir = Storage::getMonitorDir();
+        $out = [];
+
+        // Get the oldest directories in the monitor directory
+        Processes::mwExec(
+            "{$findPath} {$monitor_dir}/*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | {$sortPath} | {$headPath} -n 10 | {$busyboxPath} {$awkPath} '{print $2}'",
+            $out
+        );
+        $busyboxPath = Util::which('busybox');
+        $rmPath = Util::which('rm');
+
+        foreach ($out as $dir_info) {
+            if (!is_dir($dir_info)) {
+                continue;
+            }
+            $free_space = $s->getFreeSpace($dev);
+            if ($free_space > self::MIN_SPACE_MB) {
+                // Disk cleanup is not required
+                break;
+            }
+            Processes::mwExec("{$busyboxPath} {$rmPath} -rf {$dir_info}");
+        }
+    }
 }
 
 // Start worker process
-WorkerRemoveOldRecords::startWorker($argv??[]);
+WorkerRemoveOldRecords::startWorker($argv ?? []);

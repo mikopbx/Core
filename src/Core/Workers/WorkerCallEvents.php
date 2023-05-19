@@ -30,6 +30,7 @@ use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
 use Phalcon\Exception;
 use Phalcon\Text;
+use Throwable;
 
 
 /**
@@ -43,16 +44,15 @@ use Phalcon\Text;
  */
 class WorkerCallEvents extends WorkerBase
 {
+    public const REC_DISABLE = 'Conversation recording is disabled';
     public array $mixMonitorChannels = [];
+    public array $checkChanHangupTransfer = [];
     protected bool $record_calls = true;
     protected bool $split_audio_thread = false;
-    public array $checkChanHangupTransfer = [];
     private array $activeChannels = [];
-
     private array $innerNumbers = [];
     private array $exceptionsNumbers = [];
     private bool $notRecInner = false;
-    public const REC_DISABLE = 'Conversation recording is disabled';
 
     /**
      * Adds a new active channel to the cache.
@@ -331,6 +331,46 @@ class WorkerCallEvents extends WorkerBase
     }
 
     /**
+     * Calls the events worker.
+     *
+     * @param  $tube The tube object.
+     *
+     * @return void
+     */
+    public function callEventsWorker($tube): void
+    {
+        // Decode the body of the tube object
+        $data = json_decode($tube->getBody(), true);
+
+        // Get the event name from the data array
+        $event = $data['EventName'] ?? '';
+
+        // If event is 'ANSWER', call ActionCelAnswer::execute and return
+        if ('ANSWER' === $event) {
+            ActionCelAnswer::execute($this, $data);
+            return;
+        } // If event is not 'USER_DEFINED', return
+        elseif ('USER_DEFINED' !== $event) {
+            return;
+        }
+
+        // Try to decode the 'AppData' field from base64 and handle any errors
+        try {
+            $data = json_decode(
+                base64_decode($data['AppData'] ?? ''),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+        } catch (Throwable $e) {
+            $data = [];
+        }
+
+        // Call the 'otherEvents' method with the updated data
+        $this->otherEvents($tube, $data);
+    }
+
+    /**
      * Handles other events.
      *
      * @param $tube The tube object.
@@ -360,47 +400,6 @@ class WorkerCallEvents extends WorkerBase
         if (method_exists($className, 'execute')) {
             $className::execute($this, $data);
         }
-    }
-
-    /**
-     * Calls the events worker.
-     *
-     * @param  $tube The tube object.
-     *
-     * @return void
-     */
-    public function callEventsWorker($tube): void
-    {
-        // Decode the body of the tube object
-        $data = json_decode($tube->getBody(), true);
-
-        // Get the event name from the data array
-        $event = $data['EventName'] ?? '';
-
-        // If event is 'ANSWER', call ActionCelAnswer::execute and return
-        if ('ANSWER' === $event) {
-            ActionCelAnswer::execute($this, $data);
-            return;
-        }
-        // If event is not 'USER_DEFINED', return
-        elseif ('USER_DEFINED' !== $event) {
-            return;
-        }
-
-        // Try to decode the 'AppData' field from base64 and handle any errors
-        try {
-            $data = json_decode(
-                base64_decode($data['AppData'] ?? ''),
-                true,
-                512,
-                JSON_THROW_ON_ERROR
-            );
-        } catch (\Throwable $e) {
-            $data = [];
-        }
-
-        // Call the 'otherEvents' method with the updated data
-        $this->otherEvents($tube, $data);
     }
 
     /**

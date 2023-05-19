@@ -19,21 +19,27 @@
 
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
+
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
 use Throwable;
 
-
+/**
+ * WorkerNotifyByEmail is a worker class responsible for sending notifications.
+ *
+ * @package MikoPBX\Core\Workers
+ */
 class WorkerNotifyByEmail extends WorkerBase
 {
     /**
-     * Entry point
+     * Entry point for the worker.
      *
-     * @param $argv
+     * @param array $params The command-line arguments.
+     * @return void
      */
-    public function start($argv): void
+    public function start(array $params): void
     {
         $client = new BeanstalkClient(__CLASS__);
-        if($client->isConnected() === false){
+        if ($client->isConnected() === false) {
             Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
             sleep(2);
             return;
@@ -46,7 +52,69 @@ class WorkerNotifyByEmail extends WorkerBase
         }
     }
 
-    private function replaceParams(string $src, array $params):string
+    /**
+     * The main worker method for sending email notifications.
+     *
+     * @param mixed $message The message received from Beanstalkd.
+     * @return void
+     */
+    public function workerNotifyByEmail($message): void
+    {
+        $notifier = new Notifications();
+        $config = new MikoPBXConfig();
+        $settings = $config->getGeneralSettings();
+
+        /** @var BeanstalkClient $message */
+        $data = json_decode($message->getBody(), true);
+
+        $template_body = $settings['MailTplMissedCallBody'];
+        $template_subject = $settings['MailTplMissedCallSubject'];
+
+        // Set default subject if not provided
+        if (empty($template_subject)) {
+            $template_subject = Util::translate("You have missing call") . ' <-- NOTIFICATION_CALLERID';
+        }
+        $template_Footer = $settings['MailTplMissedCallFooter'];
+        $emails = [];
+
+        $tmpArray = [];
+        foreach ($data as $call) {
+            $keyHash = $call['email'] . $call['start'] . $call['from_number'] . $call['to_number'];
+
+            // Skip duplicate emails
+            if (in_array($keyHash, $tmpArray, true)) {
+                continue;
+            }
+            $tmpArray[] = $keyHash;
+            if (!isset($emails[$call['email']])) {
+                $emails[$call['email']] = [
+                    'subject' => $this->replaceParams($template_subject, $call),
+                    'body' => '',
+                    'footer' => $this->replaceParams($template_Footer, $call),
+                ];
+            }
+            if (!empty($template_body)) {
+                $email = $this->replaceParams($template_body, $call);
+                $emails[$call['email']]['body'] .= "$email <br><hr><br>";
+            }
+        }
+
+        foreach ($emails as $to => $email) {
+            $subject = $email['subject'];
+            $body = "{$email['body']}<br>{$email['footer']}";
+            $notifier->sendMail($to, $subject, $body);
+        }
+        sleep(1);
+    }
+
+    /**
+     * Replaces the placeholders in the source string with the provided parameters.
+     *
+     * @param string $src The source string.
+     * @param array $params The parameters to replace.
+     * @return string The modified string.
+     */
+    private function replaceParams(string $src, array $params): string
     {
         return str_replace(
             [
@@ -67,56 +135,7 @@ class WorkerNotifyByEmail extends WorkerBase
             ],
             $src);
     }
-
-    /**
-     * Main worker
-     * @param $message
-     */
-    public function workerNotifyByEmail($message): void
-    {
-        $notifier = new Notifications();
-        $config   = new MikoPBXConfig();
-        $settings = $config->getGeneralSettings();
-
-        /** @var BeanstalkClient $message */
-        $data = json_decode($message->getBody(), true);
-
-        $template_body    = $settings['MailTplMissedCallBody'];
-        $template_subject = $settings['MailTplMissedCallSubject'];
-        if(empty($template_subject)){
-            $template_subject = Util::translate("You have missing call") . ' <-- NOTIFICATION_CALLERID';
-        }
-        $template_Footer  = $settings['MailTplMissedCallFooter'];
-        $emails           = [];
-
-        $tmpArray = [];
-        foreach ($data as $call) {
-            $keyHash = $call['email'].$call['start'].$call['from_number'].$call['to_number'];
-            if(in_array($keyHash, $tmpArray, true)){
-                continue;
-            }
-            $tmpArray[] = $keyHash;
-            if (!isset($emails[$call['email']])) {
-                $emails[$call['email']] = [
-                    'subject' => $this->replaceParams($template_subject, $call),
-                    'body'    => '',
-                    'footer'  => $this->replaceParams($template_Footer, $call),
-                ];
-            }
-            if (!empty($template_body)) {
-                $email = $this->replaceParams($template_body, $call);
-                $emails[$call['email']]['body'] .= "$email <br><hr><br>";
-            }
-        }
-
-        foreach ($emails as $to => $email) {
-            $subject = $email['subject'];
-            $body = "{$email['body']}<br>{$email['footer']}";
-            $notifier->sendMail($to, $subject, $body);
-        }
-        sleep(1);
-    }
 }
 
 // Start worker process
-WorkerNotifyByEmail::startWorker($argv??[]);
+WorkerNotifyByEmail::startWorker($argv ?? []);

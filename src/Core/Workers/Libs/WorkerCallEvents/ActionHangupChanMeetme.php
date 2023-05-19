@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,19 +24,27 @@ use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
+/**
+ * Class ActionHangupChanMeetme
+ * Handles the termination/destruction of a channel in a MeetMe conference.
+ *
+ *  @package MikoPBX\Core\Workers\Libs\WorkerCallEvents
+ */
 class ActionHangupChanMeetme
 {
     /**
-     * Завершение / уничтожение канала.
-     * @param $worker
-     * @param $data
+     * Executes the hangup channel action for a MeetMe conference.
+     *
+     * @param WorkerCallEvents $worker The worker instance.
+     * @param mixed $data The data containing call details.
+     * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data):void
+    public static function execute(WorkerCallEvents $worker, $data): void
     {
         clearstatcache();
         $recordingfile = '';
-        $dest_chan     = "MeetMe:{$data['conference']}";
-        // Отбираем все строки по текущей конференции. Не завершенные вызовы.
+        $dest_chan = "MeetMe:{$data['conference']}";
+        // Retrieve all rows for the current conference that are not completed.
         $filter = [
             'dst_chan=:dst_chan: AND (linkedid=:linkedid: OR linkedid=:meetmeid:)',
             'bind' => [
@@ -49,25 +57,25 @@ class ActionHangupChanMeetme
         /** @var CallDetailRecordsTmp $row */
         foreach ($m_data as $row) {
             if ($dest_chan === $row->dst_chan) {
-                $is_local        = (stripos($data['src_chan'], 'local/') !== false);
+                $is_local = (stripos($data['src_chan'], 'local/') !== false);
                 $is_stored_local = (stripos($row->src_chan, 'local/') !== false);
-                if ($row->UNIQUEID === $data['UNIQUEID'] && $is_local && ! $is_stored_local) {
+                if ($row->UNIQUEID === $data['UNIQUEID'] && $is_local && !$is_stored_local) {
                     $data['src_chan'] = $row->src_chan;
                 }
                 if (file_exists($row->recordingfile) || file_exists(
-                    Util::trimExtensionForFile($row->recordingfile) . '.wav'
+                        Util::trimExtensionForFile($row->recordingfile) . '.wav'
                     )) {
-                    // Переопределим путь к файлу записи разговора. Для конферецнии файл один.
+                    // Override the recording file path. The conference has only one recording file.
                     $recordingfile = $row->recordingfile;
                 }
             }
             if ($row->linkedid === $data['meetme_id']) {
                 continue;
             }
-            // Подменим ID на идентификатор конференции.
+            // Substitute the ID with the conference identifier.
             $row->writeAttribute('linkedid', $data['meetme_id']);
             $res = $row->save();
-            if ( ! $res) {
+            if (!$res) {
                 Util::sysLogMsg('Action_hangup_chan_meetme', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
@@ -79,16 +87,16 @@ class ActionHangupChanMeetme
             if ($row->src_chan !== $data['src_chan']) {
                 continue;
             }
-            // Заполняем данные для текущего оповещения.
+            // Fill in the data for the current notification.
             $row->writeAttribute('endtime', $data['end']);
             $row->writeAttribute('transfer', 0);
             $row->writeAttribute('linkedid', $data['meetme_id']);
 
-            if ( ! empty($recordingfile)) {
+            if (!empty($recordingfile)) {
                 $row->writeAttribute('recordingfile', $recordingfile);
             }
             $res = $row->save();
-            if ( ! $res) {
+            if (!$res) {
                 Util::sysLogMsg('Action_hangup_chan_meetme', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }

@@ -19,9 +19,15 @@
 
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
+
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
 use Throwable;
 
+/**
+ * WorkerNotifyError is a worker class responsible for sending notifications.
+ *
+ * @package MikoPBX\Core\Workers
+ */
 class WorkerNotifyError extends WorkerBase
 {
     private array $queue = [];
@@ -29,14 +35,15 @@ class WorkerNotifyError extends WorkerBase
     private int $interval = 28800;
 
     /**
-     * Наполняем очередь уведомлениями.
+     * Starts the worker and subscribes to notification channels.
      *
-     * @param $argv
+     * @param array $params The command-line arguments.
+     * @return void
      */
-    public function start($argv): void
+    public function start($params): void
     {
         $client = new BeanstalkClient('WorkerNotifyError_license');
-        if($client->isConnected() === false){
+        if ($client->isConnected() === false) {
             Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
             sleep(2);
             return;
@@ -51,9 +58,10 @@ class WorkerNotifyError extends WorkerBase
     }
 
     /**
-     * Обработчик пинга. Тут же проверка необходимости оповещения.
+     * Callback function for ping events. Checks if notification needs to be sent.
      *
-     * @param BeanstalkClient $message
+     * @param BeanstalkClient $message The message received from Beanstalkd.
+     * @return void
      */
     public function pingCallBack($message): void
     {
@@ -61,17 +69,19 @@ class WorkerNotifyError extends WorkerBase
         if (count($this->queue) > 0 && (time() - $this->starting_point) > $this->interval) {
             $this->sendNotify();
             $this->starting_point = time();
-            $this->queue          = [];
+            $this->queue = [];
         }
     }
 
     /**
-     * Отправка уведомления об ошибке лицензии.
+     * Sends notification
+     *
+     * @return void
      */
     private function sendNotify()
     {
         $config = new MikoPBXConfig();
-        $to     = $config->getGeneralSettings('SystemNotificationsEmail');
+        $to = $config->getGeneralSettings('SystemNotificationsEmail');
         if (empty($to)) {
             return;
         }
@@ -81,7 +91,7 @@ class WorkerNotifyError extends WorkerBase
                 continue;
             }
             if (Util::isJson($text_error)) {
-                $data       = json_decode($text_error, true);
+                $data = json_decode($text_error, true);
                 $test_email .= "<hr>";
                 $test_email .= "{$section}";
                 $test_email .= "<hr>";
@@ -95,33 +105,40 @@ class WorkerNotifyError extends WorkerBase
         }
 
         $notifier = new Notifications();
-        $notifier->sendMail($to, 'Askozia Errors', $test_email);
+        $notifier->sendMail($to, 'MikoPBX Errors', $test_email);
     }
 
     /**
-     * @param BeanstalkClient $message $message
+     * Handles the license error event.
+     *
+     * @param BeanstalkClient $message The message received from Beanstalkd.
+     * @return void
      */
-    public function onLicenseError($message)
+    public function onLicenseError(BeanstalkClient $message)
     {
         $body = $message->getBody();
         if (empty($body)) {
             return;
         }
-        // Наполняем массив уникальными даными.
+        // Add unique data to the queue
         $this->queue[$body] = 'License error:';
     }
 
     /**
-     * @param BeanstalkClient $message $message
+     * Handles the storage error event.
+     *
+     * @param BeanstalkClient $message The message received from Beanstalkd.
+     * @return void
      */
-    public function onStorageError($message)
+    public function onStorageError(BeanstalkClient $message)
     {
         $body = $message->getBody();
         if (empty($body)) {
             return;
         }
         $mail_body = trim($body);
-        // Наполняем массив уникальными даными.
+
+        // Add unique data to the queue
         $this->queue[$mail_body] = 'Storage error:';
     }
 
@@ -129,4 +146,4 @@ class WorkerNotifyError extends WorkerBase
 
 
 // Start worker process
-WorkerNotifyError::startWorker($argv??[]);
+WorkerNotifyError::startWorker($argv ?? []);

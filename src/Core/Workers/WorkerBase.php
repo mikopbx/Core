@@ -94,13 +94,13 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     private function savePidFile(): void
     {
         $activeProcesses = Processes::getPidOfProcess(static::class);
-        $processes       = explode(' ', $activeProcesses);
+        $processes = explode(' ', $activeProcesses);
         if (count($processes) === 1) {
             file_put_contents($this->getPidFile(), $activeProcesses);
         } else {
             $pidFilesDir = dirname($this->getPidFile());
-            $baseName    = (string)pathinfo($this->getPidFile(), PATHINFO_BASENAME);
-            $pidFile     = $pidFilesDir . '/' . $baseName;
+            $baseName = (string)pathinfo($this->getPidFile(), PATHINFO_BASENAME);
+            $pidFile = $pidFilesDir . '/' . $baseName;
             // Delete old PID files
             $rm = Util::which('rm');
             Processes::mwExec("{$rm} -rf {$pidFile}*");
@@ -125,6 +125,44 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     }
 
     /**
+     * Starts the worker.
+     *
+     * @param array $argv The command-line arguments.
+     * @param bool $setProcName Flag to set the process name. Default is true.
+     *
+     * @return void
+     */
+    public static function startWorker(array $argv, bool $setProcName = true): void
+    {
+        // The action command parsed from command-line arguments
+        $action = $argv[1] ?? '';
+        if ($action === 'start') {
+
+            // Get the class name of the worker
+            $workerClassname = static::class;
+
+            // Set process title if the flag is set to true
+            if ($setProcName) {
+                cli_set_process_title($workerClassname);
+            }
+            try {
+                // Create a new worker instance and start it
+                $worker = new $workerClassname();
+                $worker->start($argv);
+                Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
+            } catch (Throwable $e) {
+                // Handle exceptions, log error messages, and pause execution
+                global $errorLogger;
+                $errorLogger->captureException($e);
+                Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
+
+                // Pause execution for 1 second
+                sleep(1);
+            }
+        }
+    }
+
+    /**
      * Handles the received signal.
      *
      * @param int $signal The signal to handle.
@@ -144,7 +182,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function shutdownHandler(): void
     {
-        $timeElapsedSecs = round(microtime(true) - $this->workerStartTime,2);
+        $timeElapsedSecs = round(microtime(true) - $this->workerStartTime, 2);
 
         $e = error_get_last();
         if ($e === null) {
@@ -158,7 +196,6 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
             );
         }
     }
-
 
     /**
      * Callback for the ping to keep the connection alive.
@@ -211,42 +248,5 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     public function __destruct()
     {
         $this->savePidFile();
-    }
-
-    /**
-     * Starts the worker.
-     *
-     * @param array $argv The command-line arguments.
-     * @param bool $setProcName Flag to set the process name. Default is true.
-     *
-     * @return void
-     */
-    public static function startWorker(array $argv, bool $setProcName = true):void{
-        // The action command parsed from command-line arguments
-        $action = $argv[1]??'';
-        if ($action === 'start') {
-
-            // Get the class name of the worker
-            $workerClassname = static::class;
-
-            // Set process title if the flag is set to true
-            if($setProcName){
-                cli_set_process_title($workerClassname);
-            }
-            try {
-                // Create a new worker instance and start it
-                $worker = new $workerClassname();
-                $worker->start($argv);
-                Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
-            } catch (Throwable $e) {
-                // Handle exceptions, log error messages, and pause execution
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
-
-                // Pause execution for 1 second
-                sleep(1);
-            }
-        }
     }
 }

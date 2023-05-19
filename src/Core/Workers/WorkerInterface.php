@@ -21,29 +21,38 @@ namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Core\System\BeanstalkClient;
 
+/**
+ * WorkerInterface is an interface for worker classes.
+ *
+ * @package MikoPBX\Core\Workers
+ */
 interface WorkerInterface
 {
     /**
-     * Workers constructor
+     * WorkerInterface constructor.
      */
     public function __construct();
 
     /**
-     * Ping callback for keep alive check
+     * Ping callback for keep alive check.
      *
-     * @param BeanstalkClient $message
+     * @param BeanstalkClient $message The message received from the Beanstalk client.
+     * @return void
      */
     public function pingCallBack(BeanstalkClient $message): void;
 
     /**
-     * Create PID file for worker
+     * Get the PID file for the worker.
+     *
+     * @return string The path to the PID file.
      */
     public function getPidFile(): string;
 
     /**
-     * Worker entry point
+     * Worker entry point.
      *
-     * @param array $params
+     * @param array $params The parameters passed to the worker.
+     * @return void
      */
     public function start(array $params): void;
 
