@@ -119,4 +119,4 @@ class WorkerMergeUploadedFile extends WorkerBase
 }
 
 // Start worker process
-WorkerMergeUploadedFile::startWorker($argv??null);
+WorkerMergeUploadedFile::startWorker($argv??[]);

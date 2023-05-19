@@ -180,4 +180,4 @@ class WorkerApiCommands extends WorkerBase
 }
 
 // Start worker process
-WorkerApiCommands::startWorker($argv??null);
+WorkerApiCommands::startWorker($argv??[]);

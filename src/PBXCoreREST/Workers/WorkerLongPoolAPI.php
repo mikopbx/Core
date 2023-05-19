@@ -241,4 +241,4 @@ class WorkerLongPoolAPI extends WorkerBase
 }
 
 // Start worker process
-WorkerLongPoolAPI::startWorker($argv??null);
+WorkerLongPoolAPI::startWorker($argv??[]);

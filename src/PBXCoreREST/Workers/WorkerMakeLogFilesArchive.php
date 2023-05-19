@@ -107,4 +107,4 @@ class WorkerMakeLogFilesArchive extends WorkerBase
 }
 
 // Start the log files archiving worker process
-WorkerMakeLogFilesArchive::startWorker($argv ?? null);
+WorkerMakeLogFilesArchive::startWorker($argv ?? []);
