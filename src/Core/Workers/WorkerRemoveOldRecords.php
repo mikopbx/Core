@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{Processes, Storage, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Processes, Storage, Util};
 
 
 /**
@@ -41,7 +41,8 @@ class WorkerRemoveOldRecords extends WorkerBase
      */
     public function start(array $params): void
     {
-        $util = new Util();
+        // Establish connection with Beanstalk queue
+        $clientQueue = new BeanstalkClient(WorkerNotifyError::STORAGE_ERROR_TUBE);
         $storage = new Storage();
         $hdd = $storage->getAllHdd(true);
 
@@ -62,7 +63,7 @@ class WorkerRemoveOldRecords extends WorkerBase
                 ];
 
                 // Add a notification task
-                $util->addJobToBeanstalk('WorkerNotifyError_storage', $data);
+                $clientQueue->publish(json_encode($data), WorkerNotifyError::STORAGE_ERROR_TUBE);
             }
             if ($need_clean) {
                 $this->cleanStorage();

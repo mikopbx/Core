@@ -232,7 +232,7 @@ class SystemManagementProcessor extends Injectable
 
         $systemDir = '/system';
         Util::mwMkdir($systemDir);
-        $result = Util::mwExec("mount {$bootDisc}1 $systemDir");
+        $result = Processes::mwExec("mount {$bootDisc}1 $systemDir");
         if($result === 0){
             file_put_contents("$systemDir/update.sh", $data);
             // Reboot the system

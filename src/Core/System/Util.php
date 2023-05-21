@@ -143,7 +143,7 @@ class Util
      *
      * @return string The generated random string.
      */
-    public static function generateRandomString($length = 10): string
+    public static function generateRandomString(int $length = 10): string
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $charactersLength = strlen($characters);
@@ -201,7 +201,7 @@ class Util
      *
      * @return string The string with 'X' characters.
      */
-    public static function getExtensionX($length): string
+    public static function getExtensionX(int $length): string
     {
         $extension = '';
         for ($i = 0; $i < $length; $i++) {
@@ -218,7 +218,7 @@ class Util
      *
      * @return bool True if the file exists and has a non-zero size, false otherwise.
      */
-    public static function recFileExists($filename): ?bool
+    public static function recFileExists(string $filename): ?bool
     {
         return (file_exists($filename) && filesize($filename) > 0);
     }
@@ -249,7 +249,7 @@ class Util
      *
      * @return void
      */
-    public static function fileWriteContent($filename, $data): void
+    public static function fileWriteContent(string $filename, $data): void
     {
         /** @var CustomFiles $res */
         $res = CustomFiles::findFirst("filepath = '{$filename}'");
@@ -340,7 +340,6 @@ class Util
      */
     public static function trimExtensionForFile(string $filename, string $delimiter = '.'): string
     {
-        // Отсечем расширение файла.
         $tmp_arr = explode((string)$delimiter, $filename);
         if (count($tmp_arr) > 1) {
             unset($tmp_arr[count($tmp_arr) - 1]);
@@ -351,13 +350,12 @@ class Util
     }
 
     /**
-     * Получаем размер файла / директории.
+     * Get the size of a file in kilobytes.
      *
-     * @param $filename
-     *
-     * @return float
+     * @param string $filename The path to the file.
+     * @return float The size of the file in kilobytes.
      */
-    public static function getSizeOfFile($filename): float
+    public static function getSizeOfFile(string $filename): float
     {
         $result = 0;
         if (file_exists($filename)) {
@@ -417,23 +415,6 @@ class Util
     }
 
     /**
-     * DEPRECATED
-     * Executes a command using exec().
-     *
-     * @param string $command The command to execute.
-     * @param array|null $outArr Reference to an array to store the output (default: null).
-     * @param int|null $retVal Reference to a variable to store the return value (default: null).
-     *
-     * @return int The return value of the command execution.
-     */
-    public static function mwExec($command, &$outArr = null, &$retVal = null): int
-    {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
-
-        return Processes::mwExec($command, $outArr, $retVal);
-    }
-
-    /**
      * Checks if a password is simple based on a dictionary.
      *
      * @param string $value The password to check.
@@ -480,7 +461,6 @@ class Util
         }
         return $text;
     }
-
 
     /**
      * Recursively deletes a directory.
@@ -925,147 +905,5 @@ class Util
 
         return $filename;
     }
-
-    /**
-     * DEPRICATED
-     * Возвращает PID процесса по его имени.
-     *
-     * @param        $name
-     * @param string $exclude
-     *
-     * @return string
-     *
-     * @deprecated
-     */
-    public static function getPidOfProcess($name, $exclude = ''): string
-    {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
-
-        return Processes::getPidOfProcess($name, $exclude);
-    }
-
-    /**
-     * DEPRICATED
-     * Manages a daemon/worker process
-     * Returns process statuses by name of it
-     *
-     * @param $cmd
-     * @param $param
-     * @param $proc_name
-     * @param $action
-     * @param $out_file
-     *
-     * @return array | bool
-     *
-     * @deprecated
-     */
-    public static function processWorker($cmd, $param, $proc_name, $action, $out_file = '/dev/null')
-    {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
-
-        return Processes::processWorker($cmd, $param, $proc_name, $action, $out_file);
-    }
-
-    /**
-     * DEPRICATED
-     * Process PHP workers
-     *
-     * @param string $className
-     * @param string $param
-     * @param string $action
-     *
-     * @deprecated
-     */
-    public static function processPHPWorker(
-        string $className,
-        string $param = 'start',
-        string $action = 'restart'
-    ): void
-    {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
-        Processes::processPHPWorker($className, $param, $action);
-    }
-
-    /**
-     * DEPRICATED
-     * Kills process/daemon by name
-     *
-     * @param $procName
-     *
-     * @return int|null
-     *
-     * @deprecated
-     */
-    public static function killByName($procName): ?int
-    {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
-
-        return Processes::killByName($procName);
-    }
-
-    /**
-     * DEPRICATED
-     * Executes command exec() as background process.
-     *
-     * @param $command
-     * @param $out_file
-     * @param $sleep_time
-     *
-     * @deprecated
-     */
-    public static function mwExecBg($command, $out_file = '/dev/null', $sleep_time = 0): void
-    {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
-        Processes::mwExecBg($command, $out_file, $sleep_time);
-    }
-
-    /**
-     * DEPRICATED
-     * Executes command exec() as background process with an execution timeout.
-     *
-     * @param        $command
-     * @param int $timeout
-     * @param string $logname
-     *
-     * @deprecated
-     */
-    public static function mwExecBgWithTimeout($command, $timeout = 4, $logname = '/dev/null'): void
-    {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
-        Processes::mwExecBgWithTimeout($command, $timeout, $logname);
-    }
-
-    /**
-     * Depricated
-     *
-     * Executes commands.
-     *
-     * @param array $arr_cmds An array of commands to be executed.
-     * @param array &$out A reference parameter to store the command output.
-     * @param string $logname The name of the log file.
-     *
-     * @return void
-     * @deprecated
-     */
-    public static function mwExecCommands($arr_cmds, &$out = [], $logname = ''): void
-    {
-        self::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
-        Processes::mwExecCommands($arr_cmds, $out, $logname);
-    }
-
-    /**
-     * Adds a job to the Beanstalk queue.
-     *
-     * @param string $tube The name of the Beanstalk tube to add the job to.
-     * @param mixed $data The data to be added as a job in the queue.
-     *
-     * @return void
-     */
-    public function addJobToBeanstalk(string $tube, $data): void
-    {
-        $queue = new BeanstalkClient($tube);
-        $queue->publish(json_encode($data));
-    }
-
 
 }

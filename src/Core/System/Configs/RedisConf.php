@@ -47,8 +47,8 @@ class RedisConf extends Injectable
     public function reStart(): void
     {
         $mainRunner = 'safe-'.self::PROC_NAME;
-        Util::killByName($mainRunner);
-        Util::killByName(self::PROC_NAME);
+        Processes::killByName($mainRunner);
+        Processes::killByName(self::PROC_NAME);
 
         $ch = 0;
         do{

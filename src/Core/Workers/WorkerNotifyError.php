@@ -34,6 +34,11 @@ class WorkerNotifyError extends WorkerBase
     private int $starting_point = 0;
     private int $interval = 28800;
 
+    // Tube names for Beanstalk queues.
+    public const LICENSE_ERROR_TUBE = 'WorkerNotifyError_license';
+
+    public const STORAGE_ERROR_TUBE = 'WorkerNotifyError_storage';
+
     /**
      * Starts the worker and subscribes to notification channels.
      *
@@ -48,8 +53,8 @@ class WorkerNotifyError extends WorkerBase
             sleep(2);
             return;
         }
-        $client->subscribe('WorkerNotifyError_license', [$this, 'onLicenseError']);
-        $client->subscribe('WorkerNotifyError_storage', [$this, 'onStorageError']);
+        $client->subscribe(self::LICENSE_ERROR_TUBE, [$this, 'onLicenseError']);
+        $client->subscribe(self::STORAGE_ERROR_TUBE, [$this, 'onStorageError']);
         $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
         while ($this->needRestart === false) {

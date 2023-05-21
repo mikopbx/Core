@@ -42,7 +42,7 @@ class WorkerCdr extends WorkerBase
     public const UPDATE_CDR_TUBE = 'update_cdr_tube';
 
     // Define properties
-    private BeanstalkClient $client_queue;
+    private BeanstalkClient $clientQueue;
     private array $internal_numbers = [];
     private array $no_answered_calls = [];
     private string $emailForMissed = '';
@@ -55,8 +55,8 @@ class WorkerCdr extends WorkerBase
     public function start(array $params): void
     {
         // Establish connection with Beanstalk queue
-        $this->client_queue = new BeanstalkClient(self::SELECT_CDR_TUBE);
-        $this->client_queue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
+        $this->clientQueue = new BeanstalkClient(self::SELECT_CDR_TUBE);
+        $this->clientQueue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
         // Initialize system settings
         $this->initSettings();
@@ -67,7 +67,7 @@ class WorkerCdr extends WorkerBase
             if (!empty($result)) {
                 $this->updateCdr($result);
             }
-            $this->client_queue->wait();
+            $this->clientQueue->wait();
         }
     }
 
@@ -389,7 +389,7 @@ class WorkerCdr extends WorkerBase
             unset($data['tmp_linked_id']);
 
             // Publish the updated CDR to the queue
-            $this->client_queue->publish(json_encode($data), self::UPDATE_CDR_TUBE);
+            $this->clientQueue->publish(json_encode($data), self::UPDATE_CDR_TUBE);
         }
 
         // Clean up memory by removing answered calls from the non-answered calls list
@@ -410,7 +410,7 @@ class WorkerCdr extends WorkerBase
         foreach ($this->no_answered_calls as $call) {
 
             // Publish the call details to a queue for a worker that will send the notification email
-            $this->client_queue->publish(json_encode($call), WorkerNotifyByEmail::class);
+            $this->clientQueue->publish(json_encode($call), WorkerNotifyByEmail::class);
         }
 
         // After all calls have been processed, reset the list of unanswered calls
