@@ -38,16 +38,19 @@ interface RestAPIConfigInterface
     /**
      * Returns array of additional routes for PBXCoreREST interface from module
      * [ControllerClass, ActionMethod, RequestTemplate, HttpMethod, RootUrl, NoAuth ]
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getpbxcorerestadditionalroutes
      *
      * @return array
      * @example
      *  [[GetController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'get', '/', false],
      *  [PostController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'post', '/', false]]
+     *
      */
     public function getPBXCoreRESTAdditionalRoutes(): array;
 
     /**
      * Process PBXCoreREST requests under root rights
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modulerestapicallback
      *
      * @param array $request GET/POST parameters
      *

@@ -114,6 +114,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Allows overriding the execution priority of a method when called through hookModulesMethod.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getmethodpriority
      *
      * @param string $methodName
      * @return int
@@ -131,6 +132,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Returns the messages variable
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#other
      *
      * @return array
      */
@@ -140,9 +142,15 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Returns an array of additional routes for the PBXCoreREST interface from the module.
+     * Returns array of additional routes for PBXCoreREST interface from module
+     * [ControllerClass, ActionMethod, RequestTemplate, HttpMethod, RootUrl, NoAuth ]
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getpbxcorerestadditionalroutes
      *
-     * @return array The array of additional routes.
+     * @return array
+     * @example
+     *  [[GetController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'get', '/', false],
+     *  [PostController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'post', '/', false]]
+     *
      */
     public function getPBXCoreRESTAdditionalRoutes(): array
     {
@@ -150,9 +158,10 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Process PBXCoreREST requests under root rights.
+     * Process PBXCoreREST requests under root rights
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modulerestapicallback
      *
-     * @param array $request The GET/POST parameters.
+     * @param array $request GET/POST parameters
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -175,6 +184,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * This method is called in the WorkerModelsEvents after each model change.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modelseventchangedata
      *
      * @param mixed $data The data related to the model change.
      *
@@ -186,6 +196,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * This method is called in the WorkerModelsEvents after the models changing process is finished.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modelseventneedreload
      *
      * @param array $modified_tables The list of modified models.
      *
@@ -197,6 +208,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Returns an array of worker classes for WorkerSafeScripts.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getmoduleworkers
      *
      * @return array The array of worker classes.
      */
@@ -207,6 +219,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Returns an array of additional firewall rules for the module.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getdefaultfirewallrules
      *
      * @return array The array of firewall rules.
      */
@@ -217,6 +230,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Processes actions before enabling the module in the web interface.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforemoduleenable
      *
      * @return bool Whether the module can be enabled.
      */
@@ -226,7 +240,8 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Processes actions after enabling the module in the web interface.
+     * Processes actions after enabling the module in the web interface
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onaftermoduleenable
      *
      * @return void
      */
@@ -236,6 +251,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Processes actions before disabling the module in the web interface.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforemoduledisable
      *
      * @return bool Whether the module can be disabled.
      */
@@ -246,6 +262,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Processes actions after disabling the module in the web interface.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onaftermoduledisable
      *
      * @return void
      */
@@ -255,6 +272,7 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Creates additional Nginx locations from modules.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#createnginxlocations
      *
      * @return string The generated Nginx locations.
      */
@@ -264,7 +282,8 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Generates additional fail2ban jail conf rules from modules.
+     * Generates additional fail2ban jail conf rules.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatefail2banjails
      *
      * @return string The generated fail2ban jail conf rules.
      */
@@ -274,19 +293,10 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Generates the modules.conf file.
+     * Adds cron tasks.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#createcrontasks
      *
-     * @return string The generated modules.conf file content.
-     */
-    public function generateModulesConf(): string
-    {
-        return '';
-    }
-
-    /**
-     * Prepares crontab rules strings.
-     *
-     * @param array $tasks The array of crontab tasks.
+     * @param array $tasks The array of cron tasks.
      *
      * @return void
      */
@@ -295,7 +305,8 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * This module's method is called after the Asterisk service has started.
+     * The callback function will execute after PBX started.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterpbxstarted
      *
      * @return void
      */
@@ -304,10 +315,12 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Authenticates user over external module.
+     * Authenticates a user over an external module.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#authenticateuser
      *
-     * @param string $login The user login.
-     * @param string $password The user password.
+     * @param string $login The user login entered on the login page.
+     * @param string $password The user password entered on the login page.
+     *
      * @return array The session data.
      */
     public function authenticateUser(string $login, string $password): array
@@ -317,8 +330,10 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Prepares a list of additional ACL roles and rules.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafteraclprepared
      *
-     * @param  AclList $aclList The ACL list.
+     * @param AclList $aclList The ACL list for modifications.
+     *
      * @return void
      */
     public function onAfterACLPrepared(AclList $aclList): void
@@ -327,8 +342,10 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Modifies the system menu.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforeheadermenushow
      *
-     * @param array $menuItems The array of menu items.
+     * @param array $menuItems The menu items for modifications.
+     *
      * @return void
      */
     public function onBeforeHeaderMenuShow(array &$menuItems):void
@@ -337,8 +354,10 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Modifies the system routes.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterroutesprepared
      *
-     * @param Router $router The router instance.
+     * @param Router $router The router ready for extra routes from modules.
+     *
      * @return void
      */
     public function onAfterRoutesPrepared(Router $router):void
@@ -347,8 +366,10 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
 
     /**
      * Modifies the system assets.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterassetsprepared
      *
-     * @param Manager $assets The asset manager.
+     * @param Manager $assets The assets manager for additional modifications from module.
+     *
      * @return void
      */
     public function onAfterAssetsPrepared(Manager $assets):void
@@ -356,11 +377,13 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * Prepares an include block within a Volt template.
+     * Prepares the include block within a Volt template.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onvoltblockcompile
      *
-     * @param string $controller The controller name.
-     * @param string $blockName The block name.
+     * @param string $controller The called controller name.
+     * @param string $blockName The named in volt template block name.
      * @param View $view The view instance.
+     *
      * @return string the volt partial file path without extension.
      */
     public function onVoltBlockCompile(string $controller, string $blockName, View $view):string
@@ -369,11 +392,13 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * This method is called from BaseForm before the form is initialized.
+     * Called from BaseForm before the form is initialized.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforeforminitialize
      *
-     * @param Form $form The form instance.
-     * @param mixed $entity The form entity.
-     * @param mixed $options The form options.
+     * @param Form $form The called form instance.
+     * @param mixed $entity The called form entity.
+     * @param mixed $options The called form options.
+     *
      * @return void
      */
     public function onBeforeFormInitialize(Form $form, $entity, $options):void
@@ -381,22 +406,26 @@ abstract class ConfigClass extends Injectable implements SystemConfigInterface,
     }
 
     /**
-     * This method is called from BaseController on afterExecuteRoute function.
+     * Called from BaseController before executing a route.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforeexecuteroute
      *
-     * @param Controller $controller The controller instance.
+     * @param Controller $controller The called controller instance.
+     *
      * @return void
      */
-    public function onAfterExecuteRoute(Controller $controller):void
+    public function onBeforeExecuteRoute(Controller $controller):void
     {
     }
 
     /**
-     * This method is called from BaseController on beforeExecuteRoute function.
+     * Called from BaseController after executing a route.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterexecuteroute
      *
-     * @param Controller $controller The controller instance.
+     * @param Controller $controller The called controller instance.
+     *
      * @return void
      */
-    public function onBeforeExecuteRoute(Controller $controller):void
+    public function onAfterExecuteRoute(Controller $controller):void
     {
     }
 }

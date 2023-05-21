@@ -38,6 +38,7 @@ interface PbxExtensionSetupInterface
     /**
      * Performs the main module installation process called by PBXCoreRest after unzipping module files.
      * It invokes private functions and sets up error messages in the message variable.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#installmodule
      *
      * @return bool The result of the installation process.
      */
@@ -45,6 +46,7 @@ interface PbxExtensionSetupInterface
 
     /**
      * Activates the license, applicable only for commercial modules.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#activatelicense
      *
      * @return bool The result of the license activation.
      */
@@ -52,6 +54,7 @@ interface PbxExtensionSetupInterface
 
     /**
      * Copies files, creates folders, and symlinks for the module and restores previous backup settings.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#installfiles
      *
      * @return bool The result of the installation process.
      */
@@ -59,6 +62,7 @@ interface PbxExtensionSetupInterface
 
     /**
      * Sets up ownerships and folder rights.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#fixfilesrights
      *
      * @return bool The result of the fixing process.
      */
@@ -68,6 +72,7 @@ interface PbxExtensionSetupInterface
      * Creates the database structure according to models' annotations.
      * If necessary, it fills some default settings and changes the sidebar menu item representation for this module.
      * After installation, it registers the module on the PbxExtensionModules model.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#fixfilesrights
      *
      * @return bool The result of the installation process.
      */
@@ -75,6 +80,7 @@ interface PbxExtensionSetupInterface
 
     /**
      * Performs the main module uninstallation process called by MikoPBX REST API to delete any module.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#uninstallmodule
      *
      * @param bool $keepSettings If set to true, the function saves the module database.
      *
@@ -85,6 +91,7 @@ interface PbxExtensionSetupInterface
     /**
      * Deletes some settings from the database and links to the module.
      * If $keepSettings is set to true, it copies the database file to the Backup folder.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#uninstalldb
      *
      * @param bool $keepSettings If set to true, the module database is saved.
      *
@@ -94,6 +101,7 @@ interface PbxExtensionSetupInterface
 
     /**
      * Deletes records from the PbxExtensionModules table.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#unregistermodule
      *
      * @return bool The result of the unregistration process.
      */
@@ -102,6 +110,7 @@ interface PbxExtensionSetupInterface
     /**
      * Deletes the module files, folders, and symlinks.
      * If $keepSettings is set to true, it copies the database file to the Backup folder.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#uninstallfiles
      *
      * @param bool $keepSettings If set to true, the module database is saved.
      *
@@ -111,6 +120,7 @@ interface PbxExtensionSetupInterface
 
     /**
      * Returns error messages.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#getmessages
      *
      * @return array An array of error messages.
      */
@@ -118,6 +128,7 @@ interface PbxExtensionSetupInterface
 
     /**
      * Registers the module in the PbxExtensionModules table.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#registernewmodule
      *
      * @return bool The result of the registration process.
      */
@@ -125,6 +136,7 @@ interface PbxExtensionSetupInterface
 
     /**
      * Traverses files with model descriptions and creates/alters tables in the system database.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#createsettingstablebymodelsannotations
      *
      * @return bool The result of the table modification process.
      */
@@ -132,6 +144,7 @@ interface PbxExtensionSetupInterface
 
     /**
      * Adds the module to the sidebar menu.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#addtosidebar
      *
      * @return bool The result of the addition process.
      */

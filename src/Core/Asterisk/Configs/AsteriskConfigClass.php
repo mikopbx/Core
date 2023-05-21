@@ -26,6 +26,7 @@ use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
 
@@ -87,7 +88,6 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
         $this->messages = [];
     }
-
 
     /**
      * Calls the specified method on each module object and returns the concatenated results as a string.
@@ -165,6 +165,9 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Generates core modules config files with cli messages before and after generation
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateconfig
+     *
+     * @return void
      */
     public function generateConfig(): void
     {
@@ -187,6 +190,9 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares settings dataset for a PBX module
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#other
+     *
+     * @return void
      */
     public function getSettings(): void
     {
@@ -212,6 +218,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional includes for [internal] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getincludeinternal
      *
      * @return string
      */
@@ -221,7 +228,19 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     }
 
     /**
+     * Generates the modules.conf file.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatemodulesconf
+     *
+     * @return string The generated modules.conf file content.
+     */
+    public function generateModulesConf(): string
+    {
+        return '';
+    }
+
+    /**
      * Prepares additional rules for [internal] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongeninternal
      *
      * @return string
      */
@@ -232,6 +251,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional rules for [internal-users] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongeninternaluserspredial
      *
      * @return string
      */
@@ -242,6 +262,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional rules for [all_peers] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongenallpeerscontext
      *
      * @return string
      */
@@ -252,6 +273,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional includes for [internal-transfer] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getincludeinternaltransfer
      *
      * @return string
      */
@@ -262,6 +284,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional rules for [internal-transfer] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongeninternaltransfer
      *
      * @return string
      */
@@ -272,6 +295,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional contexts sections in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongencontexts
      *
      * @return string
      */
@@ -282,6 +306,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional hints for [internal-hints] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongenhints
      *
      * @return string
      */
@@ -292,6 +317,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional parameters for [globals] section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensionglobals
      *
      * @return string
      */
@@ -302,6 +328,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional parameters for [featuremap] section in the features.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getfeaturemap
      *
      * @return string returns additional Star codes
      */
@@ -312,6 +339,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional parameters for [public-direct-dial] section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatepubliccontext
      *
      * @return string
      */
@@ -323,19 +351,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     /**
      * Prepares additional parameters for each incoming context for each incoming route before dial in the
      * extensions.conf file
-     *
-     * @param string $rout_number
-     *
-     * @return string
-     */
-    public function generateIncomingRoutBeforeDialSystem(string $rout_number): string
-    {
-        return '';
-    }
-
-    /**
-     * Prepares additional parameters for each incoming context for each incoming route before dial in the
-     * extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateincomingroutbeforedialpresystem
      *
      * @param string $rout_number
      *
@@ -349,6 +365,21 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     /**
      * Prepares additional parameters for each incoming context for each incoming route before dial in the
      * extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateincomingroutbeforedialsystem
+     *
+     * @param string $rout_number
+     *
+     * @return string
+     */
+    public function generateIncomingRoutBeforeDialSystem(string $rout_number): string
+    {
+        return '';
+    }
+
+    /**
+     * Prepares additional parameters for each incoming context for each incoming route before dial in the
+     * extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateincomingroutbeforedial
      *
      * @param string $rout_number
      *
@@ -361,6 +392,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Returns the messages variable
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#other
      *
      * @return array
      */
@@ -371,6 +403,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Returns models list of models which affect the current module settings
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#other
      *
      * @return array
      */
@@ -382,6 +415,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     /**
      * Prepares additional parameters for each outgoing route context
      * before dial call in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateoutroutcontext
      *
      * @param array $rout
      *
@@ -394,9 +428,10 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Override pjsip options for provider in the pjsip.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#overrideproviderpjsipoptions
      *
-     * @param string $uniqid the provider unique identifier
-     * @param array $options list of pjsip options
+     * @param string $uniqid  the provider unique identifier
+     * @param array  $options list of pjsip options
      *
      * @return array
      */
@@ -407,9 +442,10 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Override pjsip options for peer in the pjsip.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#overridepjsipoptions
      *
      * @param string $extension the endpoint extension
-     * @param array $options list of pjsip options
+     * @param array  $options   list of pjsip options
      *
      * @return array
      */
@@ -421,6 +457,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     /**
      * Prepares additional parameters for each outgoing route context
      * after dial call in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateoutroutafterdialcontext
      *
      * @param array $rout
      *
@@ -433,6 +470,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional pjsip options on endpoint section in the pjsip.conf file for peer
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatepeerpjadditionaloptions
      *
      * @param array $peer information about peer
      *
@@ -445,6 +483,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional AMI users data in the manager.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatemanagerconf
      *
      * @return string
      */
@@ -456,6 +495,8 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     /**
      * Prepares additional parameters for each incoming context
      * and incoming route after dial command in an extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateincomingroutafterdialcontext
+     *
      *
      * @param string $uniqId
      *
@@ -468,6 +509,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Prepares additional peers data in the pjsip.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatepeerspj
      *
      * @return string
      */
@@ -478,8 +520,10 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
 
     /**
      * Allows overriding the execution priority of a method when called through hookModulesMethod.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getmethodpriority
      *
      * @param string $methodName
+     *
      * @return int
      */
     public function getMethodPriority(string $methodName = ''): int

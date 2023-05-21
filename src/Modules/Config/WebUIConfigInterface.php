@@ -50,85 +50,100 @@ interface WebUIConfigInterface
     public const ON_BEFORE_FORM_INITIALIZE = 'onBeforeFormInitialize';
 
     public const ON_BEFORE_EXECUTE_ROUTE = 'onBeforeExecuteRoute';
-    public const ON_AFTER_EXECUTE_ROUTE = 'onAfterExecuteRoute';
 
+    public const ON_AFTER_EXECUTE_ROUTE = 'onAfterExecuteRoute';
 
     /**
      * Authenticates a user over an external module.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#authenticateuser
      *
-     * @param string $login The user login.
-     * @param string $password The user password.
+     * @param string $login The user login entered on the login page.
+     * @param string $password The user password entered on the login page.
+     *
      * @return array The session data.
      */
     public function authenticateUser(string $login, string $password): array;
 
     /**
      * Prepares a list of additional ACL roles and rules.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafteraclprepared
      *
-     * @param AclList $aclList The ACL list.
+     * @param AclList $aclList The ACL list for modifications.
+     *
      * @return void
      */
     public function onAfterACLPrepared(AclList $aclList):void;
 
-
     /**
      * Modifies the system menu.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforeheadermenushow
      *
-     * @param array $menuItems The menu items.
+     * @param array $menuItems The menu items for modifications.
+     *
      * @return void
      */
     public function onBeforeHeaderMenuShow(array &$menuItems):void;
 
-
     /**
      * Modifies the system routes.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterroutesprepared
      *
-     * @param Router $router The router.
+     * @param Router $router The router ready for extra routes from modules.
+     *
      * @return void
      */
     public function onAfterRoutesPrepared(Router $router):void;
 
     /**
      * Modifies the system assets.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterassetsprepared
      *
-     * @param Manager $assets The assets manager.
+     * @param Manager $assets The assets manager for additional modifications from module.
+     *
      * @return void
      */
     public function onAfterAssetsPrepared(Manager $assets):void;
 
-
     /**
      * Prepares the include block within a Volt template.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onvoltblockcompile
      *
-     * @param string $controller The controller name.
-     * @param string $blockName The block name.
+     * @param string $controller The called controller name.
+     * @param string $blockName The named in volt template block name.
      * @param View $view The view instance.
+     *
      * @return string the volt partial file path without extension.
      */
     public function onVoltBlockCompile(string $controller, string $blockName, View $view):string;
 
     /**
      * Called from BaseForm before the form is initialized.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforeforminitialize
      *
-     * @param Form $form The form instance.
-     * @param mixed $entity The form entity.
-     * @param mixed $options The form options.
+     * @param Form $form The called form instance.
+     * @param mixed $entity The called form entity.
+     * @param mixed $options The called form options.
+     *
      * @return void
      */
     public function onBeforeFormInitialize(Form $form, $entity, $options):void;
 
     /**
      * Called from BaseController before executing a route.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforeexecuteroute
      *
-     * @param Controller $controller The controller instance.
+     * @param Controller $controller The called controller instance.
+     *
      * @return void
      */
     public function onBeforeExecuteRoute(Controller $controller):void;
 
     /**
      * Called from BaseController after executing a route.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterexecuteroute
      *
-     * @param Controller $controller The controller instance.
+     * @param Controller $controller The called controller instance.
+     *
      * @return void
      */
     public function onAfterExecuteRoute(Controller $controller):void;

@@ -57,18 +57,25 @@ interface SystemConfigInterface
 
     /**
      * The callback function will execute after PBX started.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterpbxstarted
+     *
+     * @return void
      */
     public function onAfterPbxStarted(): void;
 
     /**
      * Adds cron tasks.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#createcrontasks
      *
      * @param array $tasks The array of cron tasks.
+     *
+     * @return void
      */
     public function createCronTasks(&$tasks): void;
 
     /**
      * Creates additional Nginx locations from modules.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#createnginxlocations
      *
      * @return string The generated Nginx locations.
      */
@@ -76,20 +83,27 @@ interface SystemConfigInterface
 
     /**
      * This method is called in the WorkerModelsEvents after each model change.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modelseventchangedata
      *
      * @param mixed $data The data related to the model change.
+     *
+     * @return void
      */
     public function modelsEventChangeData($data): void;
 
     /**
      * This method is called in the WorkerModelsEvents after the models changing process is finished.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modelseventneedreload
      *
      * @param array $modified_tables The list of modified models.
+     *
+     * @return void
      */
     public function modelsEventNeedReload(array $modified_tables): void;
 
     /**
      * Returns an array of worker classes for WorkerSafeScripts.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getmoduleworkers
      *
      * @return array The array of worker classes.
      */
@@ -97,6 +111,7 @@ interface SystemConfigInterface
 
     /**
      * Returns an array of additional firewall rules for the module.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getdefaultfirewallrules
      *
      * @return array The array of firewall rules.
      */
@@ -104,13 +119,15 @@ interface SystemConfigInterface
 
     /**
      * Processes actions before enabling the module in the web interface.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforemoduleenable
      *
      * @return bool Whether the module can be enabled.
      */
     public function onBeforeModuleEnable(): bool;
 
     /**
-     * Processes actions after enabling the module in the web interface.
+     * Processes actions after enabling the module in the web interface
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onaftermoduleenable
      *
      * @return void
      */
@@ -118,6 +135,7 @@ interface SystemConfigInterface
 
     /**
      * Processes actions before disabling the module in the web interface.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforemoduledisable
      *
      * @return bool Whether the module can be disabled.
      */
@@ -125,6 +143,7 @@ interface SystemConfigInterface
 
     /**
      * Processes actions after disabling the module in the web interface.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onaftermoduledisable
      *
      * @return void
      */
@@ -132,9 +151,20 @@ interface SystemConfigInterface
 
     /**
      * Generates additional fail2ban jail conf rules.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatefail2banjails
      *
      * @return string The generated fail2ban jail conf rules.
      */
     public function generateFail2BanJails(): string;
+
+    /**
+     * Allows overriding the execution priority of a method when called through hookModulesMethod.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getmethodpriority
+     *
+     * @param string $methodName
+     *
+     * @return int
+     */
+    public function getMethodPriority(string $methodName = ''): int;
 
 }
