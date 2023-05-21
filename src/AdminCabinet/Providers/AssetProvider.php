@@ -235,7 +235,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/delete-something.js', true)
                 ->addJs('js/pbx/main/user-message.js', true)
                 ->addJs('js/pbx/Extensions/extensions.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-menu-addition.js', true)
+                ->addJs('js/pbx/main/sidebar-menu-show-active.js', true)
                 ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true)
                 ->addJs('js/pbx/WikiLinksReplacement/wiki-links-replacement-worker.js', true);
 
@@ -350,8 +350,10 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/semantic/dropdown.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index.js', true)
+                ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-showlogs-worker.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-showlogs.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-sysinfo.js', true)
+                ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-logscapture-worker.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-logcapture.js', true);
             $this->footerCollectionACE
                 ->addJs('js/vendor/ace/ace.js', true)
@@ -468,7 +470,8 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'index') {
             $this->footerCollectionJS
-                ->addJs('js/pbx/Restart/restart-index.js', true);
+                ->addJs('js/pbx/Restart/restart-index.js', true)
+                ->addJs('js/pbx/Restart/current-calls-worker.js',true);
         }
     }
 
@@ -489,7 +492,8 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/debugger-info.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
-                ->addJs('js/pbx/Providers/providers-index.js', true);
+                ->addJs('js/pbx/Providers/providers-index.js', true)
+                ->addJs('js/pbx/Providers/providers-status-worker.js', true);
         } elseif ($action === 'modifysip' || $action === 'modifyiax') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
@@ -831,6 +835,10 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJS('js/vendor/datepicker/daterangepicker.js', true);
 
             $this->footerCollectionJS
+                ->addJs(
+                    'js/pbx/CallDetailRecords/call-detail-records-player.js',
+                    true
+                )
                 ->addJs(
                     'js/pbx/CallDetailRecords/call-detail-records-index.js',
                     true

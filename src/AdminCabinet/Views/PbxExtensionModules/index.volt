@@ -30,7 +30,7 @@
         <div class="bar">
             <div class="progress"></div>
         </div>
-        <div class="label"></div>
+        <div class="label" id="upload-progress-bar-label"></div>
     </div>
 </div>
 

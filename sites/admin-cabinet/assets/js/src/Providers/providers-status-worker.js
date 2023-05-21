@@ -16,6 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+/** global: DebuggerInfo, sessionStorage, PbxApi */
 
 /**
  * Object representing the provider status loop worker.
