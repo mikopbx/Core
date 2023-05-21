@@ -18,21 +18,49 @@
 
 /* global globalRootUrl */
 
-const sessionEnd={
+
+/**
+ * The sessionEnd object handles the session end functionality.
+ *
+ * @module sessionEnd
+ */
+const sessionEnd = {
+
+    /**
+     * Time in milliseconds before redirect to login page.
+     * @type {number}
+     */
     timeOut: 5000,
-    timeOutHandle: '',
+
+    /**
+     * The id of the timer function.
+     * @type {number}
+     */
+    timeOutHandle: 0,
+
+
+    /**
+     * Initializes the session end functionality.
+     */
     initialize() {
         sessionEnd.timeoutHandle = window.setTimeout(
             sessionEnd.cbAfterTimeout,
             sessionEnd.timeOut,
         );
     },
-    cbAfterTimeout(){
+
+    /**
+     * Callback function triggered after the timeout.
+     * Redirects the user to the session index page.
+     */
+    cbAfterTimeout() {
         window.location = `${globalRootUrl}session/index`;
     },
 }
 
-// attach ready event
+/**
+ * Initializes the logout form on document ready.
+ */
 $(document).ready(() => {
     sessionEnd.initialize();
 });

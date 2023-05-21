@@ -18,98 +18,161 @@
 
 /* global globalRootUrl,globalTranslate, Extensions, Form */
 
-// Если выбран вариант переадресации на номер, а сам номер не выбран
-//
-$.fn.form.settings.rules.extensionRule = function (value) {
-	if (($('#action').val() === 'extension') &&
-		(value === -1 || value === '')) {
-		return false;
-	}
-	return true;
-};
 
+/**
+ * Object for managing incoming routes table
+ *
+ * @module incomingRoutes
+ */
 const incomingRoutes = {
-	$formObj: $('#default-rule-form'),
-	$actionDropdown: $('#action'),
-	validateRules: {
-		extension: {
-			identifier: 'extension',
-			rules: [
-				{
-					type: 'extensionRule',
-					prompt: globalTranslate.ir_ValidateForwardingToBeFilled,
-				},
-			],
-		},
-	},
-	initialize() {
-		$('#routingTable').tableDnD({
-			onDrop: incomingRoutes.cbOnDrop,
-			onDragClass: 'hoveringRow',
-			dragHandle: '.dragHandle',
-		});
+    /**
+     * jQuery object for the form.
+     * @type {jQuery}
+     */
+    $formObj: $('#default-rule-form'),
 
-		incomingRoutes.$actionDropdown.dropdown({
-			onChange: incomingRoutes.toggleDisabledFieldClass
-		});
+    $actionDropdown: $('#action'),
 
-		incomingRoutes.toggleDisabledFieldClass();
+    /**
+     * Validation rules for the form fields before submission.
+     *
+     * @type {object}
+     */
+    validateRules: {
+        extension: {
+            identifier: 'extension',
+            rules: [
+                {
+                    type: 'extensionRule',
+                    prompt: globalTranslate.ir_ValidateForwardingToBeFilled,
+                },
+            ],
+        },
+    },
 
-		incomingRoutes.initializeForm();
-		$('.forwarding-select').dropdown(Extensions.getDropdownSettingsForRouting());
+    /**
+     * Initialize the object
+     */
+    initialize() {
+        // Initialize table drag-and-drop with the appropriate callbacks
+        $('#routingTable').tableDnD({
+            onDrop: incomingRoutes.cbOnDrop, // Callback on dropping an item
+            onDragClass: 'hoveringRow', // CSS class while dragging
+            dragHandle: '.dragHandle',  // Handle for dragging
+        });
 
-		$('.rule-row td').on('dblclick', (e) => {
-			const id = $(e.target).closest('tr').attr('id');
-			window.location = `${globalRootUrl}incoming-routes/modify/${id}`;
-		});
-	},
-	cbOnDrop() {
-		let priorityWasChanged = false;
-		const priorityData = {};
-		$('.rule-row').each((index, obj) => {
-			const ruleId = $(obj).attr('id');
-			const oldPriority = parseInt($(obj).attr('data-value'), 10);
-			const newPriority = obj.rowIndex;
-			if (oldPriority !== newPriority) {
-				priorityWasChanged = true;
-				priorityData[ruleId] = newPriority;
-			}
-		});
-		if (priorityWasChanged) {
-			$.api({
-				on: 'now',
-				url: `${globalRootUrl}incoming-routes/changePriority`,
-				method: 'POST',
-				data: priorityData,
-			});
-		}
-	},
-	toggleDisabledFieldClass() {
-		if (incomingRoutes.$formObj.form('get value', 'action') === 'extension') {
-			$('#extension-group').show();
-		} else {
-			$('#extension-group').hide();
-			$('#extension').dropdown('clear');
-		}
-	},
-	cbBeforeSendForm(settings) {
-		const result = settings;
-		result.data = incomingRoutes.$formObj.form('get values');
-		return result;
-	},
-	cbAfterSendForm() {
+        // Setup the dropdown with callback on change
+        incomingRoutes.$actionDropdown.dropdown({
+            onChange: incomingRoutes.toggleDisabledFieldClass
+        });
 
-	},
-	initializeForm() {
-		Form.$formObj = incomingRoutes.$formObj;
-		Form.url = `${globalRootUrl}incoming-routes/save`;
-		Form.validateRules = incomingRoutes.validateRules;
-		Form.cbBeforeSendForm = incomingRoutes.cbBeforeSendForm;
-		Form.cbAfterSendForm = incomingRoutes.cbAfterSendForm;
-		Form.initialize();
-	},
+        // Apply initial class change based on dropdown selection
+        incomingRoutes.toggleDisabledFieldClass();
+
+        // Initialize the form
+        incomingRoutes.initializeForm();
+
+        // Setup the dropdown for forwarding select with options
+        $('.forwarding-select').dropdown(Extensions.getDropdownSettingsForRouting());
+
+        // Add double click listener to table cells
+        $('.rule-row td').on('dblclick', (e) => {
+            // When cell is double clicked, navigate to corresponding modify page
+            const id = $(e.target).closest('tr').attr('id');
+            window.location = `${globalRootUrl}incoming-routes/modify/${id}`;
+        });
+    },
+
+    /**
+     * Callback to execute after dropping an element
+     */
+    cbOnDrop() {
+        let priorityWasChanged = false;
+        const priorityData = {};
+        $('.rule-row').each((index, obj) => {
+            const ruleId = $(obj).attr('id');
+            const oldPriority = parseInt($(obj).attr('data-value'), 10);
+            const newPriority = obj.rowIndex;
+            if (oldPriority !== newPriority) {
+                priorityWasChanged = true;
+                priorityData[ruleId] = newPriority;
+            }
+        });
+        if (priorityWasChanged) {
+            $.api({
+                on: 'now',
+                url: `${globalRootUrl}incoming-routes/changePriority`,
+                method: 'POST',
+                data: priorityData,
+            });
+        }
+    },
+
+    /**
+     * Toggle class for disabled field based on dropdown selection
+     */
+    toggleDisabledFieldClass() {
+        if (incomingRoutes.$formObj.form('get value', 'action') === 'extension') {
+            $('#extension-group').show();
+        } else {
+            $('#extension-group').hide();
+            $('#extension').dropdown('clear');
+        }
+    },
+
+    /**
+     * Callback function to be called before the form is sent
+     * @param {Object} settings - The current settings of the form
+     * @returns {Object} - The updated settings of the form
+     */
+    cbBeforeSendForm(settings) {
+        const result = settings;
+        result.data = incomingRoutes.$formObj.form('get values');
+        return result;
+    },
+
+    /**
+     * Callback function to be called after the form has been sent.
+     * @param {Object} response - The response from the server after the form is sent
+     */
+    cbAfterSendForm(response) {
+
+    },
+
+    /**
+     * Initialize the form with custom settings
+     */
+    initializeForm() {
+        Form.$formObj = incomingRoutes.$formObj;
+        Form.url = `${globalRootUrl}incoming-routes/save`; // Form submission URL
+        Form.validateRules = incomingRoutes.validateRules; // Form validation rules
+        Form.cbBeforeSendForm = incomingRoutes.cbBeforeSendForm; // Callback before form is sent
+        Form.cbAfterSendForm = incomingRoutes.cbAfterSendForm; // Callback after form is sent
+        Form.initialize();
+    },
 };
 
+/**
+ * Form validation rule for checking if the 'extension' option is chosen and a number is selected.
+ *
+ * @param {string} value - The value to be checked
+ * @returns {boolean} - Returns false if 'extension' is selected but no number is provided. Otherwise, returns true.
+ */
+$.fn.form.settings.rules.extensionRule = function (value) {
+    // If 'extension' is selected and no number is provided (-1 or empty string), return false.
+    if (($('#action').val() === 'extension') &&
+        (value === -1 || value === '')) {
+        return false;
+    }
+
+    // If conditions aren't met, return true.
+    return true;
+};
+
+
+/**
+ *  Initialize incoming routes on document ready
+ */
 $(document).ready(() => {
-	incomingRoutes.initialize();
+    incomingRoutes.initialize();
 });

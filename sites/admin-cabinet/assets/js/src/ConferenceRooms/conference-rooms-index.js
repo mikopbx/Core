@@ -17,16 +17,31 @@
  */
 /* global globalRootUrl */
 
+/**
+ * Module handling interactions with the conference room table.
+ * @module conferenceTable
+ */
 const conferenceTable = {
-	initialize() {
-		$('.record-row td').on('dblclick', (e) => {
-			const id = $(e.target).closest('tr').attr('id');
-			window.location = `${globalRootUrl}conference-rooms/modify/${id}`;
-		});
-	},
+
+    /**
+     * Initializes module functionality.
+     * Specifically, it adds a double click event handler to the rows of the conference table.
+     */
+    initialize() {
+
+        // Attach double-click event handler to each cell in the conference room table
+        // The handler redirects to a URL specific to the conference room for editing
+        $('.record-row td').on('dblclick', (e) => {
+            const id = $(e.target).closest('tr').attr('id');
+            window.location = `${globalRootUrl}conference-rooms/modify/${id}`;
+        });
+    },
 };
 
+/**
+ *  Initialize conference rooms table on document ready
+ */
 $(document).ready(() => {
-	conferenceTable.initialize();
+    conferenceTable.initialize();
 });
 

@@ -18,7 +18,13 @@
 
 /* global globalDebugMode */
 
+
+/**
+ * Object for managing global Config
+ *
+ * @module Config
+ */
 const Config = {
-	pbxUrl: globalDebugMode ? '//172.16.32.72' : '',
-	updateUrl: 'https://releases.mikopbx.com/releases/v1/mikopbx/',
+    pbxUrl: globalDebugMode ? '//172.16.32.72' : '',
+    updateUrl: 'https://releases.mikopbx.com/releases/v1/mikopbx/',
 };

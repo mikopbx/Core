@@ -16,19 +16,44 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-
+/**
+ * Responsive object with methods for handling sidebar and elements visibility based on screen size.
+ * @module responsive
+ */
 const responsive = {
+    /**
+     * Sidebar element.
+     * @type {jQuery}
+     */
     $sidebar: $('#sidebar-menu'),
+
+    /**
+     * Sidebar menu button element.
+     * @type {jQuery}
+     */
     $sidebarMenuButton: $('#sidebar-menu-button'),
+
+    /**
+     * Elements hidden on mobile.
+     * @type {jQuery}
+     */
     $hideOnMobileElements: $('.hide-on-mobile'),
+
+    /**
+     * Initializes the responsive object.
+     */
     initialize() {
         responsive.$sidebar.sidebar('setting', 'transition', 'overlay');
         responsive.$sidebar.sidebar('attach events', '#sidebar-menu-button');
         window.addEventListener('resize', responsive.toggleSidebar);
         responsive.toggleSidebar();
     },
-    toggleSidebar()
-    {
+
+    /**
+     * Toggles the sidebar and elements visibility based on the screen size.
+     * 
+     */
+    toggleSidebar() {
         if (window.innerWidth <= 768) {
             responsive.$sidebar.sidebar('hide');
             responsive.$sidebarMenuButton.show();
@@ -41,7 +66,7 @@ const responsive = {
     }
 }
 
-// attach ready event
+// When the document is ready, initialize the responsive form view
 $(document).ready(() => {
     responsive.initialize();
 });

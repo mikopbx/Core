@@ -18,60 +18,64 @@
 
 /* global Config, globalWebAdminLanguage, globalPBXLicense, globalPBXVersion */
 
-/** @scrutinizer ignore-unused */ const UpdateApi = {
-	/**
-	 * Asks for available modules versions
-	 * @returns {boolean}
-	 */
-	getModulesUpdates(cbSuccess) {
-		const requestData = {
-			PBXVER: globalPBXVersion.replace(/-dev/i, ''),
-			LANGUAGE: globalWebAdminLanguage,
-		};
-		$.api({
-			url: `${Config.updateUrl}getAvailableModules`,
-			on: 'now',
-			method: 'POST',
-			data: requestData,
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result === 'SUCCESS';
-			},
-			onSuccess: cbSuccess,
-		});
-	},
-	/**
-	 * Asks for installation link
-	 * @param params
-	 * @param cbSuccess
-	 * @param cbFailure
-	 * @returns {boolean}
-	 * @constructor
-	 */
-	GetModuleInstallLink(params, cbSuccess, cbFailure) {
-		const requestData = {
-			LICENSE: globalPBXLicense,
-			RELEASEID: params.releaseId,
-		};
-		$.api({
-			url: `${Config.updateUrl}getModuleLink`,
-			on: 'now',
-			method: 'POST',
-			data: requestData,
-			successTest(response) {
-				// test whether a JSON response is valid
-				return response !== undefined
-					&& Object.keys(response).length > 0
-					&& response.result === 'SUCCESS';
-			},
-			onSuccess(response) {
-				cbSuccess(params, response);
-			},
-			onFailure() {
-				cbFailure(params);
-			},
-		});
-	},
+/**
+ * Object for managing API updates firmware.
+ */
+const UpdateApi = {
+    /**
+     * Retrieves available module versions.
+     * @param {function} cbSuccess - The callback function to execute on success.
+     * @returns {boolean} Returns true.
+     */
+    getModulesUpdates(cbSuccess) {
+        const requestData = {
+            PBXVER: globalPBXVersion.replace(/-dev/i, ''),
+            LANGUAGE: globalWebAdminLanguage,
+        };
+        $.api({
+            url: `${Config.updateUrl}getAvailableModules`,
+            on: 'now',
+            method: 'POST',
+            data: requestData,
+            successTest(response) {
+                // Test whether a JSON response is valid
+                return response !== undefined
+                    && Object.keys(response).length > 0
+                    && response.result === 'SUCCESS';
+            },
+            onSuccess: cbSuccess,
+        });
+    },
+
+    /**
+     * Retrieves the installation link for a module.
+     * @param {object} params - The parameters for retrieving the installation link.
+     * @param {function} cbSuccess - The callback function to execute on success.
+     * @param {function} cbFailure - The callback function to execute on failure.
+     * @returns {boolean} Returns true.
+     */
+    GetModuleInstallLink(params, cbSuccess, cbFailure) {
+        const requestData = {
+            LICENSE: globalPBXLicense,
+            RELEASEID: params.releaseId,
+        };
+        $.api({
+            url: `${Config.updateUrl}getModuleLink`,
+            on: 'now',
+            method: 'POST',
+            data: requestData,
+            successTest(response) {
+                // Test whether a JSON response is valid
+                return response !== undefined
+                    && Object.keys(response).length > 0
+                    && response.result === 'SUCCESS';
+            },
+            onSuccess(response) {
+                cbSuccess(params, response);
+            },
+            onFailure() {
+                cbFailure(params);
+            },
+        });
+    },
 };

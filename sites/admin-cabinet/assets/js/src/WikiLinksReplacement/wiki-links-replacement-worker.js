@@ -18,47 +18,81 @@
 
 /* global globalRootUrl, globalModuleUniqueId, $ */
 
+/**
+ * Worker object for replacing dynamic wiki links.
+ *
+ * @module WikiLinksReplacementWorker
+ */
 const WikiLinksReplacementWorker = {
-	timeOut: 300000,
-	timeOutHandle: '',
-	initialize() {
-		WikiLinksReplacementWorker.restartWorker();
-		window.addEventListener('ConfigDataChanged', WikiLinksReplacementWorker.cbOnDataChanged);
-	},
-	restartWorker() {
-		window.clearTimeout(WikiLinksReplacementWorker.timeoutHandle);
-		WikiLinksReplacementWorker.worker();
-	},
-	/**
-	 * Handling the event of language or data change.
-	 */
-	cbOnDataChanged() {
-		setTimeout(WikiLinksReplacementWorker.restartWorker,3000);
-	},
-	worker() {
-		$.api({
-			url: `${globalRootUrl}wiki-links/get-wiki-links-replacement`,
-			on: 'now',
-			data: { globalModuleUniqueId },
-			method: 'POST',
-			onSuccess: WikiLinksReplacementWorker.cbAfterResponse
-		});
-	},
-	cbAfterResponse(response) {
-		if (response === false) {
-			return;
-		}
-		const arr = Object.entries(response.message);
-		arr.forEach(([oldHref, newHref])  => {
-			$(`a[href="${oldHref}"]`).attr('href', newHref);
-		});
-		WikiLinksReplacementWorker.timeoutHandle = window.setTimeout(
-			WikiLinksReplacementWorker.worker,
-			WikiLinksReplacementWorker.timeOut,
-		);
-	},
+
+    /**
+     * Time in milliseconds before fetching new wiki links request.
+     * @type {number}
+     */
+    timeOut: 300000,
+
+    /**
+     * The id of the timer function for the worker.
+     * @type {number}
+     */
+    timeOutHandle: 0,
+
+    /**
+     * Initializes the wiki links replacement worker.
+     */
+    initialize() {
+        WikiLinksReplacementWorker.restartWorker();
+        window.addEventListener('ConfigDataChanged', WikiLinksReplacementWorker.cbOnDataChanged);
+    },
+
+    /**
+     * Restarts the wiki links replacement worker.
+     */
+    restartWorker() {
+        window.clearTimeout(WikiLinksReplacementWorker.timeoutHandle);
+        WikiLinksReplacementWorker.worker();
+    },
+
+    /**
+     * Handles the event of language or data change.
+     */
+    cbOnDataChanged() {
+        setTimeout(WikiLinksReplacementWorker.restartWorker, 3000);
+    },
+
+    /**
+     * Worker function for fetching wiki links replacement.
+     */
+    worker() {
+        $.api({
+            url: `${globalRootUrl}wiki-links/get-wiki-links-replacement`,
+            on: 'now',
+            data: {globalModuleUniqueId},
+            method: 'POST',
+            onSuccess: WikiLinksReplacementWorker.cbAfterResponse
+        });
+    },
+
+    /**
+     * Callback function after receiving a response from the server.
+     * @param {Object} response - The response object from the server.
+     */
+    cbAfterResponse(response) {
+        if (response === false) {
+            return;
+        }
+        const arr = Object.entries(response.message);
+        arr.forEach(([oldHref, newHref]) => {
+            $(`a[href="${oldHref}"]`).attr('href', newHref);
+        });
+        WikiLinksReplacementWorker.timeoutHandle = window.setTimeout(
+            WikiLinksReplacementWorker.worker,
+            WikiLinksReplacementWorker.timeOut,
+        );
+    },
 };
 
+// When the document is ready, initialize the dynamic wiki links replacer
 $(document).ready(() => {
-	WikiLinksReplacementWorker.initialize();
+    WikiLinksReplacementWorker.initialize();
 });

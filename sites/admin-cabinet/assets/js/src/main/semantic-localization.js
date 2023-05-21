@@ -18,85 +18,91 @@
 
 /* global globalTranslate */
 
+/**
+ * System localisation
+ *
+ * @module SemanticLocalization
+ */
 const SemanticLocalization = {
-	initialize() {
-		$.fn.dropdown.settings.message = {
-			addResult: 'Add <b>{term}</b>',
-			count: '{count} selected',
-			maxSelections: 'Max {maxCount} selections',
-			noResults: globalTranslate.loc_NoResult,
-			serverError: 'There was an error contacting the server',
-		};
-	},
-	// Настройки календаря
-	calendarFirstDayOfWeek: 1,
-	calendarText: {
-		days: [
-			globalTranslate.ShortDaySunday,
-			globalTranslate.ShortDayMonday,
-			globalTranslate.ShortDayTuesday,
-			globalTranslate.ShortDayWednesday,
-			globalTranslate.ShortDayThursday,
-			globalTranslate.ShortDayFriday,
-			globalTranslate.ShortDaySaturday,
-		],
-		months: [
-			globalTranslate.January,
-			globalTranslate.February,
-			globalTranslate.March,
-			globalTranslate.April,
-			globalTranslate.May,
-			globalTranslate.June,
-			globalTranslate.July,
-			globalTranslate.August,
-			globalTranslate.September,
-			globalTranslate.October,
-			globalTranslate.November,
-			globalTranslate.December,
-		],
-		monthsShort: [
-			globalTranslate.Jan,
-			globalTranslate.Feb,
-			globalTranslate.Mar,
-			globalTranslate.Apr,
-			globalTranslate.May,
-			globalTranslate.Jun,
-			globalTranslate.Jul,
-			globalTranslate.Aug,
-			globalTranslate.Sep,
-			globalTranslate.Oct,
-			globalTranslate.Nov,
-			globalTranslate.Dec,
-		],
-		today: globalTranslate.Today,
-		now: globalTranslate.Now,
-		am: 'AM',
-		pm: 'PM',
-	},
-	regExp: {
-		dateWords: /[^A-Za-zА-Яа-я]+/g,
-		dateNumbers: /[^\d:]+/g,
-	},
-	/**
-	 * Перевод фраз для DataTable
-	 */
-	dataTableLocalisation: {
-		// search: `_INPUT_<label>${globalTranslate.dt_Search}:</label>`,
-		search: '_INPUT_<i class="search icon"></i>',
-		searchPlaceholder: globalTranslate.dt_Search,
-		info: globalTranslate.dt_Info,
-		infoEmpty: globalTranslate.dt_InfoEmpty,
-		infoFiltered: '',
-		zeroRecords: globalTranslate.dt_TableIsEmpty,
-		paginate: {
-			first: globalTranslate.dt_First,
-			previous: globalTranslate.dt_Previous,
-			next: globalTranslate.dt_Next,
-			last: globalTranslate.dt_Last,
-		},
-	},
+    initialize() {
+        $.fn.dropdown.settings.message = {
+            addResult: 'Add <b>{term}</b>',
+            count: '{count} selected',
+            maxSelections: 'Max {maxCount} selections',
+            noResults: globalTranslate.loc_NoResult,
+            serverError: 'There was an error contacting the server',
+        };
+    },
+    // Calendar settings
+    calendarFirstDayOfWeek: 1,
+    calendarText: {
+        days: [
+            globalTranslate.ShortDaySunday,
+            globalTranslate.ShortDayMonday,
+            globalTranslate.ShortDayTuesday,
+            globalTranslate.ShortDayWednesday,
+            globalTranslate.ShortDayThursday,
+            globalTranslate.ShortDayFriday,
+            globalTranslate.ShortDaySaturday,
+        ],
+        months: [
+            globalTranslate.January,
+            globalTranslate.February,
+            globalTranslate.March,
+            globalTranslate.April,
+            globalTranslate.May,
+            globalTranslate.June,
+            globalTranslate.July,
+            globalTranslate.August,
+            globalTranslate.September,
+            globalTranslate.October,
+            globalTranslate.November,
+            globalTranslate.December,
+        ],
+        monthsShort: [
+            globalTranslate.Jan,
+            globalTranslate.Feb,
+            globalTranslate.Mar,
+            globalTranslate.Apr,
+            globalTranslate.May,
+            globalTranslate.Jun,
+            globalTranslate.Jul,
+            globalTranslate.Aug,
+            globalTranslate.Sep,
+            globalTranslate.Oct,
+            globalTranslate.Nov,
+            globalTranslate.Dec,
+        ],
+        today: globalTranslate.Today,
+        now: globalTranslate.Now,
+        am: 'AM',
+        pm: 'PM',
+    },
+    regExp: {
+        dateWords: /[^A-Za-zА-Яа-я]+/g,
+        dateNumbers: /[^\d:]+/g,
+    },
+    /**
+     * Translations for dataTables DataTable
+     */
+    dataTableLocalisation: {
+        // search: `_INPUT_<label>${globalTranslate.dt_Search}:</label>`,
+        search: '_INPUT_<i class="search icon"></i>',
+        searchPlaceholder: globalTranslate.dt_Search,
+        info: globalTranslate.dt_Info,
+        infoEmpty: globalTranslate.dt_InfoEmpty,
+        infoFiltered: '',
+        zeroRecords: globalTranslate.dt_TableIsEmpty,
+        paginate: {
+            first: globalTranslate.dt_First,
+            previous: globalTranslate.dt_Previous,
+            next: globalTranslate.dt_Next,
+            last: globalTranslate.dt_Last,
+        },
+    },
 };
 
+// When the document is ready, initialize the system localisation process
 $(document).ready(() => {
-	SemanticLocalization.initialize();
+    SemanticLocalization.initialize();
 });

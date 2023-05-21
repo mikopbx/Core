@@ -18,45 +18,105 @@
 
 /* global PbxApi, globalDebugMode */
 
+/**
+ * The connectionCheckWorker object is responsible for periodically checking
+ * the connection status with back end by pinging the PBX API
+ *
+ * @module connectionCheckWorker
+ */
 const connectionCheckWorker = {
-	timeOut: 1000,
-	timeOutHandle: '',
-	errorCounts: 0,
-	$connectionDimmer: $('#connection-dimmer'),
-	initialize() {
-		// Запустим обновление статуса провайдера
-		connectionCheckWorker.restartWorker();
-	},
-	restartWorker() {
-		window.clearTimeout(connectionCheckWorker.timeoutHandle);
-		connectionCheckWorker.worker();
-	},
-	worker() {
-		PbxApi.PingPBX(connectionCheckWorker.cbAfterResponse);
-		connectionCheckWorker.timeoutHandle = window.setTimeout(
-			connectionCheckWorker.worker,
-			connectionCheckWorker.timeOut,
-		);
-	},
-	cbAfterResponse(result) {
-		if (result === true) {
-			connectionCheckWorker.$connectionDimmer.dimmer('hide');
-			connectionCheckWorker.timeOut = 3000;
-			if (connectionCheckWorker.errorCounts > 5) window.location.reload();
-			connectionCheckWorker.errorCounts = 0;
-		} else if (connectionCheckWorker.errorCounts > 3) {
-			connectionCheckWorker.$connectionDimmer.dimmer('show');
-			connectionCheckWorker.timeOut = 1000;
-			connectionCheckWorker.errorCounts += 1;
-		} else {
-			connectionCheckWorker.timeOut = 1000;
-			connectionCheckWorker.errorCounts += 1;
-		}
-	},
+
+    /**
+     * Time in milliseconds before fetching new connection request.
+     * @type {number}
+     */
+    timeOut: 1000,
+
+    /**
+     * The id of the timer function for the worker.
+     * @type {number}
+     */
+    timeOutHandle: 0,
+
+    // Counter for error counts
+    errorCounts: 0,
+
+    /**
+     * jQuery object for the connection dimmer element
+     * @type {jQuery}
+     */
+    $connectionDimmer: $('#connection-dimmer'),
+
+    /**
+     * Initialize the connection check worker.
+     *
+     */
+    initialize() {
+        connectionCheckWorker.restartWorker();
+    },
+
+    /**
+     * Restart the connection check worker.
+     * Clears the previous timeout and starts the worker.
+     */
+    restartWorker() {
+        window.clearTimeout(connectionCheckWorker.timeoutHandle);
+        connectionCheckWorker.worker();
+    },
+
+    /**
+     * Worker function that pings the PBX API and executes the callback.
+     */
+    worker() {
+        PbxApi.PingPBX(connectionCheckWorker.cbAfterResponse);
+        connectionCheckWorker.timeoutHandle = window.setTimeout(
+            connectionCheckWorker.worker,
+            connectionCheckWorker.timeOut,
+        );
+    },
+
+    /**
+     * Callback function after receiving the response from the PBX API.
+     * @param {boolean} result - The result of the connection check.
+     */
+    cbAfterResponse(result) {
+        if (result === true) {
+            // If the connection is successful, hide the connection dimmer
+            connectionCheckWorker.$connectionDimmer.dimmer('hide');
+
+            // Set a longer timeout for the next check
+            connectionCheckWorker.timeOut = 3000;
+
+            // Reload the page if the error count exceeds a certain threshold
+            if (connectionCheckWorker.errorCounts > 5) {
+                window.location.reload();
+            }
+
+            // Reset the error count
+            connectionCheckWorker.errorCounts = 0;
+        } else if (connectionCheckWorker.errorCounts > 3) {
+            // If the connection is unsuccessful and error count exceeds a threshold, show the connection dimmer
+            connectionCheckWorker.$connectionDimmer.dimmer('show');
+
+            // Set a shorter timeout for the next check
+            connectionCheckWorker.timeOut = 1000;
+
+            // Increment the error count
+            connectionCheckWorker.errorCounts += 1;
+        } else {
+
+            // If the connection is unsuccessful but error count is within the threshold, set a default timeout
+            connectionCheckWorker.timeOut = 1000;
+
+            // Increment the error count
+            connectionCheckWorker.errorCounts += 1;
+        }
+    },
 };
 
+// When the document is ready, initialize the connection check worker
 $(document).ready(() => {
-	if (!globalDebugMode) {
-		connectionCheckWorker.initialize();
-	}
+    if (!globalDebugMode) {
+        connectionCheckWorker.initialize();
+    }
 });

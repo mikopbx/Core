@@ -22,18 +22,21 @@
  * @module managersTable
  */
 const managersTable = {
-	/**
-	 * Initializes the managers table.
-	 */
-	initialize() {
-		$('.user-row td').on('dblclick', (e) => {
-			const id = $(e.target).closest('tr').attr('id');
-			window.location = `${globalRootUrl}asterisk-managers/modify/${id}`;
-		});
-	},
+    /**
+     * Initializes the managers table.
+     */
+    initialize() {
+        $('.user-row td').on('dblclick', (e) => {
+            const id = $(e.target).closest('tr').attr('id');
+            window.location = `${globalRootUrl}asterisk-managers/modify/${id}`;
+        });
+    },
 };
 
+/**
+ *  Initialize Asterisk Managers table on document ready
+ */
 $(document).ready(() => {
-	managersTable.initialize();
+    managersTable.initialize();
 });
 

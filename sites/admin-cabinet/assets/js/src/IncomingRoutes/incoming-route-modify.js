@@ -18,53 +18,99 @@
 
 /* global globalRootUrl,globalTranslate, Extensions, Form */
 
-const incomingRouteModify = {
-	$formObj: $('#incoming-route-form'),
-	$providerDropDown: $('#provider'),
-	$forwardingSelectDropdown: $('#incoming-route-form .forwarding-select'),
-	validateRules: {
-		extension: {
-			identifier: 'extension',
-			rules: [
-				{
-					type: 'empty',
-					prompt: globalTranslate.ir_ValidateForwardingToBeFilled,
-				},
-			],
-		},
-		timeout: {
-			identifier: 'timeout',
-			rules: [
-				{
-					type: 'integer[3..600]',
-					prompt: globalTranslate.ir_ValidateTimeoutOutOfRange,
-				},
-			],
-		},
-	},
-	initialize() {
-		incomingRouteModify.$providerDropDown.dropdown();
-		incomingRouteModify.initializeForm();
-		incomingRouteModify.$forwardingSelectDropdown.dropdown(Extensions.getDropdownSettingsForRouting());
-	},
-	cbBeforeSendForm(settings) {
-		const result = settings;
-		result.data = incomingRouteModify.$formObj.form('get values');
-		return result;
-	},
-	cbAfterSendForm() {
 
-	},
-	initializeForm() {
-		Form.$formObj = incomingRouteModify.$formObj;
-		Form.url = `${globalRootUrl}incoming-routes/save`;
-		Form.validateRules = incomingRouteModify.validateRules;
-		Form.cbBeforeSendForm = incomingRouteModify.cbBeforeSendForm;
-		Form.cbAfterSendForm = incomingRouteModify.cbAfterSendForm;
-		Form.initialize();
-	},
+/**
+ * Object for managing incoming route record
+ *
+ * @module incomingRouteModify
+ */
+const incomingRouteModify = {
+    /**
+     * jQuery object for the form.
+     * @type {jQuery}
+     */
+    $formObj: $('#incoming-route-form'),
+
+    $providerDropDown: $('#provider'),
+    $forwardingSelectDropdown: $('#incoming-route-form .forwarding-select'),
+
+    /**
+     * Validation rules for the form fields before submission.
+     *
+     * @type {object}
+     */
+    validateRules: {
+        extension: {
+            identifier: 'extension',
+            rules: [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.ir_ValidateForwardingToBeFilled,
+                },
+            ],
+        },
+        timeout: {
+            identifier: 'timeout',
+            rules: [
+                {
+                    type: 'integer[3..600]',
+                    prompt: globalTranslate.ir_ValidateTimeoutOutOfRange,
+                },
+            ],
+        },
+    },
+
+    /**
+     * Initialize the object
+     */
+    initialize() {
+
+        // Setup the dropdown for provider field
+        incomingRouteModify.$providerDropDown.dropdown();
+
+        // Initialize the form
+        incomingRouteModify.initializeForm();
+
+        // Setup the dropdown for forwarding select with options
+        incomingRouteModify.$forwardingSelectDropdown.dropdown(Extensions.getDropdownSettingsForRouting());
+    },
+
+    /**
+     * Callback function to be called before the form is sent
+     * @param {Object} settings - The current settings of the form
+     * @returns {Object} - The updated settings of the form
+     */
+    cbBeforeSendForm(settings) {
+        const result = settings;
+        result.data = incomingRouteModify.$formObj.form('get values');
+        return result;
+    },
+
+    /**
+     * Callback function to be called after the form has been sent.
+     * @param {Object} response - The response from the server after the form is sent
+     */
+    cbAfterSendForm(response) {
+
+    },
+
+    /**
+     * Initialize the form with custom settings
+     */
+    initializeForm() {
+        Form.$formObj = incomingRouteModify.$formObj;
+        Form.url = `${globalRootUrl}incoming-routes/save`; // Form submission URL
+        Form.validateRules = incomingRouteModify.validateRules; // Form validation rules
+        Form.cbBeforeSendForm = incomingRouteModify.cbBeforeSendForm; // Callback before form is sent
+        Form.cbAfterSendForm = incomingRouteModify.cbAfterSendForm; // Callback after form is sent
+        Form.initialize();
+    },
 };
 
+
+/**
+ *  Initialize incoming route edit form on document ready
+ */
 $(document).ready(() => {
-	incomingRouteModify.initialize();
+    incomingRouteModify.initialize();
 });

@@ -16,36 +16,55 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-
+/**
+ * The PasswordScore object is responsible for calculating passwords scores
+ *
+ * @module PasswordScore
+ */
 const PasswordScore = {
-	scorePassword(pass) {
-		let score = 0;
-		if (!pass) {
-			return score;
-		}
-		if(pass.length > 5){
-			score = 2;
-		}
-		const variations = {
-			digits: /\d/.test(pass),
-			lower: /[a-z]/.test(pass),
-			upper: /[A-Z]/.test(pass),
-			nonWords: /\W/.test(pass),
-		};
-		for (const check in variations) {
-			score += (variations[check] === true) ? 2 : 0;
-		}
-		return score * 10;
-	},
-	checkPassStrength(param) {
-		const score = PasswordScore.scorePassword(param.pass);
-		param.bar.progress({
-			percent: Math.min(score, 100),
-			showActivity: false,
-		});
-		param.section.show(); 
-		return '';
-	},
+
+    /**
+     * Calculates the score for a given password.
+     * @param {string} pass - The password to score.
+     * @returns {number} The password score.
+     */
+    scorePassword(pass) {
+        let score = 0;
+        if (!pass) {
+            return score;
+        }
+        if (pass.length > 5) {
+            score = 2;
+        }
+        const variations = {
+            digits: /\d/.test(pass),
+            lower: /[a-z]/.test(pass),
+            upper: /[A-Z]/.test(pass),
+            nonWords: /\W/.test(pass),
+        };
+        for (const check in variations) {
+            score += (variations[check] === true) ? 2 : 0;
+        }
+        return score * 10;
+    },
+
+    /**
+     * Checks the strength of a password and updates the progress bar and section visibility.
+     * @param {object} param - The parameters for checking password strength.
+     * @param {string} param.pass - The password to check.
+     * @param {jQuery} param.bar - The progress bar element.
+     * @param {jQuery} param.section - The section element.
+     * @returns {string} An empty string.
+     */
+    checkPassStrength(param) {
+        const score = PasswordScore.scorePassword(param.pass);
+        param.bar.progress({
+            percent: Math.min(score, 100),
+            showActivity: false,
+        });
+        param.section.show();
+        return '';
+    },
 };
 
 // export default PasswordScore;

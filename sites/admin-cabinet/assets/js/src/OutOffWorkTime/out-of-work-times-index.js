@@ -18,38 +18,54 @@
 
 /* global globalRootUrl,$ */
 
+/**
+ * Object for managing the Out-of-Work Times table.
+ *
+ * @module OutOfWorkTimesTable
+ */
 const OutOfWorkTimesTable = {
-	initialize() {
-		$('.frame-row td').on('dblclick', (e) => {
-			const id = $(e.target).closest('tr').attr('id');
-			window.location = `${globalRootUrl}out-off-work-time/modify/${id}`;
-		});
 
-		$('#time-frames-table').DataTable({
-			lengthChange: false,
-			paging: false,
-			columns: [
-				null,
-				{orderable: false},
-				null,
-				null,
-				{orderable: false},
-			],
-			autoWidth: false,
-			order: [1, 'asc'],
-			language: SemanticLocalization.dataTableLocalisation,
-			"drawCallback": function( settings ) {
-				$("[data-content!=''][data-content]").popup();
-			}
-		});
+    /**
+     * Initializes the Out-of-Work Times table.
+     */
+    initialize() {
 
-		$('#add-new-button').appendTo($('div.eight.column:eq(0)'));
+        // Bind double-click event to table cells
+        $('.frame-row td').on('dblclick', (e) => {
+            const id = $(e.target).closest('tr').attr('id');
+            window.location = `${globalRootUrl}out-off-work-time/modify/${id}`;
+        });
 
-	},
+        // Initialize DataTable
+        $('#time-frames-table').DataTable({
+            lengthChange: false,
+            paging: false,
+            columns: [
+                null,
+                {orderable: false},
+                null,
+                null,
+                {orderable: false},
+            ],
+            autoWidth: false,
+            order: [1, 'asc'],
+            language: SemanticLocalization.dataTableLocalisation,
+            "drawCallback": function (settings) {
+                $("[data-content!=''][data-content]").popup();
+            }
+        });
+
+        // Move the "Add New" button to the first eight-column div
+        $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
+
+    },
 
 };
 
+/**
+ *  Initialize out of work table on document ready
+ */
 $(document).ready(() => {
-	OutOfWorkTimesTable.initialize();
+    OutOfWorkTimesTable.initialize();
 });
 
