@@ -552,7 +552,7 @@ class Util
      */
     public static function isT2SdeLinux(): bool
     {
-        return !self::isSystemctl() && !self::isDocker();
+        return file_exists('/etc/t2-sde-build');
     }
 
     /**
