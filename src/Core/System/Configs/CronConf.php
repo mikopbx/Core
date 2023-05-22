@@ -93,6 +93,7 @@ class CronConf extends Injectable
         $shPath        = Util::which('sh');
         $dumpPath      = Util::which('dump-conf-db');
         $checkIpPath   = Util::which('check-out-ip');
+        $recordsCleaner   = Util::which('records-cleaner');
 
         // Restart every night if enabled
         if ($restart_night === '1') {
@@ -103,6 +104,7 @@ class CronConf extends Injectable
 
         // Perform database dump every 5 minutes
         $mast_have[] = '*/5 * * * * ' . "$dumpPath > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/30 * * * * ' . "$recordsCleaner > /dev/null 2> /dev/null".PHP_EOL;
 
         // Check IP address every minute
         $mast_have[] = '*/1 * * * * ' . "$checkIpPath > /dev/null 2> /dev/null".PHP_EOL;

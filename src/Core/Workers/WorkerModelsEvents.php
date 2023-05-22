@@ -140,6 +140,7 @@ class WorkerModelsEvents extends WorkerBase
     private const R_MOH = 'reloadMoh';
 
     private const R_NTP = 'reloadNtp';
+    private const R_UPDATE_REC_SAVE_PERIOD = 'updateRecordSavePeriod';
 
     private int $last_change;
     private array $modified_tables;
@@ -195,6 +196,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_VOICEMAIL,
             self::R_MOH,
             self::R_CALL_EVENTS_WORKER,
+            self::R_UPDATE_REC_SAVE_PERIOD,
         ];
 
         $this->modified_tables = [];
@@ -433,6 +435,14 @@ class WorkerModelsEvents extends WorkerBase
             'functions' => [
                 self::R_LICENSE,
                 self::R_NATS,
+            ],
+        ];        // LicenseSettings
+        $tables[] = [
+            'settingName' => [
+                'PBXRecordSavePeriod',
+            ],
+            'functions' => [
+                self::R_UPDATE_REC_SAVE_PERIOD,
             ],
         ];
 
@@ -1010,6 +1020,14 @@ class WorkerModelsEvents extends WorkerBase
     public function reloadNtp(): void
     {
         NTPConf::configure();
+    }
+
+    /**
+     * Update record save period
+     */
+    public function updateRecordSavePeriod(): void
+    {
+        PBX::updateSavePeriod();
     }
 
     /**

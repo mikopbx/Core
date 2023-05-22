@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\Codecs;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
@@ -364,6 +365,7 @@ class PBX extends Injectable
         if ( ! $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting) {
             $this->stop();
         }
+        self::updateSavePeriod();
         /**
          * Create configuration files.
          */
@@ -404,6 +406,19 @@ class PBX extends Injectable
             Processes::mwExec("{$path_asterisk} -rx 'dialplan reload'");
             Processes::mwExec("{$path_asterisk} -rx 'module reload pbx_lua.so'");
         }
+    }
+
+    /**
+     * Сохраняем информацию по периоду хранения записей разговоров.
+     * @param string $value
+     * @return void
+     */
+    public static function updateSavePeriod(string $value = ''):void{
+        if(empty($value)){
+            $value = PbxSettings::getValueByKey('PBXRecordSavePeriod');
+        }
+        $filename   = '/var/etc/record-save-period';
+        file_put_contents($filename, $value);
     }
 
 }
