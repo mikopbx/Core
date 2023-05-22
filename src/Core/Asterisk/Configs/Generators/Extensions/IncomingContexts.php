@@ -57,7 +57,7 @@ class IncomingContexts extends AsteriskConfigClass
      *
      * @return string
      */
-    public static function generate($provider, $login = '', $uniqId = ''): string
+    public static function generate($provider, string $login = '', string $uniqId = ''): string
     {
         $generator           = new self();
         $generator->provider = $provider;
@@ -340,7 +340,7 @@ class IncomingContexts extends AsteriskConfigClass
     private function multiplyExtensionsInDialplan(): void
     {
         // If the login is a string, call the specific function to handle it.
-        if (is_string($this->login)) {
+        if (!empty($this->login)) {
             $this->multiplyExtensionsInDialplanStringLogin();
         }
 

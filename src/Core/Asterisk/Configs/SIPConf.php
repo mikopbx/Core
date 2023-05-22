@@ -217,7 +217,7 @@ class SIPConf extends AsteriskConfigClass
                 $conf .= IncomingContexts::generate($provider['uniqid'], $provider['username']);
             } elseif ( ! in_array($provider['context_id'], $contexts, true)) {
                 $context_id = str_replace('-incoming','',$provider['context_id']);
-                $conf      .= IncomingContexts::generate($contextsData, null, $context_id);
+                $conf      .= IncomingContexts::generate($contextsData, '', $context_id);
                 $contexts[] = $provider['context_id'];
             }
         }
