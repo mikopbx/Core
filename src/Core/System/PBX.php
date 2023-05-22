@@ -409,7 +409,7 @@ class PBX extends Injectable
     }
 
     /**
-     * Сохраняем информацию по периоду хранения записей разговоров.
+     * Save information on the period of storage of conversation recordings.
      * @param string $value
      * @return void
      */

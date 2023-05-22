@@ -140,6 +140,7 @@ class WorkerModelsEvents extends WorkerBase
     private const R_MOH = 'reloadMoh';
 
     private const R_NTP = 'reloadNtp';
+
     private const R_UPDATE_REC_SAVE_PERIOD = 'updateRecordSavePeriod';
 
     private int $last_change;
@@ -250,6 +251,16 @@ class WorkerModelsEvents extends WorkerBase
             ],
             'functions' => [
                 self::R_DIALPLAN,
+            ],
+        ];
+
+        // CallRecordSettings / The period of storing conversation records
+        $tables[] = [
+            'settingName' => [
+                'PBXRecordSavePeriod',
+            ],
+            'functions' => [
+                self::R_UPDATE_REC_SAVE_PERIOD,
             ],
         ];
 
@@ -435,14 +446,6 @@ class WorkerModelsEvents extends WorkerBase
             'functions' => [
                 self::R_LICENSE,
                 self::R_NATS,
-            ],
-        ];        // LicenseSettings
-        $tables[] = [
-            'settingName' => [
-                'PBXRecordSavePeriod',
-            ],
-            'functions' => [
-                self::R_UPDATE_REC_SAVE_PERIOD,
             ],
         ];
 
