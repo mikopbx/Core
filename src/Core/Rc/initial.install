@@ -47,6 +47,10 @@ class PBXInstaller extends Di\Injectable
     private array $selected_disk = ['size' => 0, 'id' => ''];
     private string $target_disk = '';
 
+    // Path to system commands mount and umount
+    private string $mountPath = '';
+    private string $uMountPath = '';
+
     // File pointer
     private $fp;
 
@@ -61,6 +65,9 @@ class PBXInstaller extends Di\Injectable
         $this->config = Di::getDefault()->getShared(ConfigProvider::SERVICE_NAME);
 
         $this->fp = fopen('php://stdin', 'rb');
+
+        $this->mountPath = Util::which('mount');
+        $this->uMountPath = Util::which('umount');
 
         $this->run();
     }
@@ -210,8 +217,7 @@ class PBXInstaller extends Di\Injectable
         $this->mountStorage();
         $this->copyConfiguration();
 
-        $umountPath = Util::which('umount');
-        Processes::mwExec("{$umountPath} /mnttmp");
+        Processes::mwExec("{$this->uMountPath} /mnttmp");
         echo "done\n";
 
         // Reboot
@@ -225,20 +231,18 @@ class PBXInstaller extends Di\Injectable
     private function unmountPartitions()
     {
         echo " - Unmounting partitions...\n";
-        $mountPath = Util::which('mount');
         $grepPath = Util::which('grep');
         $busyboxPath = Util::which('busybox');
         $awkPath = Util::which('awk');
-        $umountPath = Util::which('umount');
 
         // Get all mounted partitions
         $mnt_dirs = [];
-        Processes::mwExec("{$mountPath} | {$grepPath} '^/dev/{$this->target_disk}' | {$busyboxPath} {$awkPath} '{print $3}'", $mnt_dirs);
+        Processes::mwExec("{$this->mountPath} | {$grepPath} '^/dev/{$this->target_disk}' | {$busyboxPath} {$awkPath} '{print $3}'", $mnt_dirs);
         foreach ($mnt_dirs as $mnt) {
             // Terminate all related processes.
             Processes::mwExec("/sbin/shell_functions.sh killprocesses '$mnt' -TERM 0;");
             // Unmount.
-            Processes::mwExec("{$umountPath} {$mnt}");
+            Processes::mwExec("{$this->uMountPath} {$mnt}");
         }
     }
 
