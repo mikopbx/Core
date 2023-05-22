@@ -206,6 +206,8 @@ function selectAndConfigureStorageDisk(string $automatic): bool
 
     sleep(3);
     fclose($STDERR);
+    
+    return $success;
 }
 
 // Call the function with the first command line argument, or '0' if no argument is provided

@@ -19,6 +19,8 @@
 
 namespace MikoPBX\Core\Rc;
 
+use MikoPBX\Common\Providers\ConfigProvider;
+use Phalcon\Config;
 use Phalcon\Di;
 use MikoPBX\Core\System\{Processes, Util, Storage, System, MikoPBXConfig};
 
@@ -29,10 +31,17 @@ require_once('Globals.php');
  * Handles the installation of MikoPBX onto a selected drive
  * @package MikoPBX\Core\Rc
  */
-class PBXInstaller
+class PBXInstaller extends Di\Injectable
 {
     // Storage instance
     private Storage $storage;
+
+    /**
+     * Access to the /etc/inc/mikopbx-settings.json values
+     *
+     * @var \Phalcon\Config
+     */
+    private Config $config;
 
     private array $valid_disks = [];
     private array $selected_disk = ['size' => 0, 'id' => ''];
@@ -48,6 +57,9 @@ class PBXInstaller
     public function __construct()
     {
         $this->storage = new Storage();
+
+        $this->config = Di::getDefault()->getShared(ConfigProvider::SERVICE_NAME);
+
         $this->fp = fopen('php://stdin', 'rb');
 
         $this->run();
@@ -187,11 +199,8 @@ class PBXInstaller
      */
     private function proceedInstallation()
     {
-        // Get default configuration
-        $config = Di::getDefault()->getConfig();
-
         // Save the target disk to a file
-        file_put_contents($config->path('core.varEtcDir') . '/cfdevice', $this->target_disk);
+        file_put_contents( $this->config->path('core.varEtcDir') . '/cfdevice', $this->target_disk);
 
         // Start the installation process
         echo "Installing PBX...\n";
