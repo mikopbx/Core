@@ -169,6 +169,7 @@ class InternalContexts extends AsteriskConfigClass
         // Set forwarding status and handle forwarding if set.
         $conf .= 'same => n,Set(fw=${DB(${dstatus}/${EXTEN})})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Wait(1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Goto(internal,${fw},1))' . "\n\t";
 
         // Handle blind transfer.
