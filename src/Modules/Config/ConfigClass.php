@@ -20,6 +20,8 @@
 namespace MikoPBX\Modules\Config;
 
 use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
+use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Acl\Adapter\Memory as AclList;
@@ -32,7 +34,6 @@ use Phalcon\Mvc\Router;
 use Phalcon\Mvc\View;
 use ReflectionClass as ReflectionClassAlias;
 
-
 /**
  * Abstract class ConfigClass
  *
@@ -40,9 +41,11 @@ use ReflectionClass as ReflectionClassAlias;
  *
  * @package MikoPBX\Modules\Config
  */
-abstract class ConfigClass extends Injectable implements SystemConfigInterface,
+abstract class ConfigClass extends AsteriskConfigClass implements
+                             SystemConfigInterface,
                              RestAPIConfigInterface,
-                             WebUIConfigInterface
+                             WebUIConfigInterface,
+                             AsteriskConfigInterface
 {
     // The module hook applying priority
     protected int $priority = 10000;
