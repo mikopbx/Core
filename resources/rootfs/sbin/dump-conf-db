@@ -26,23 +26,48 @@ dbPath="$(/bin/busybox grep "mikopbx.db" < /etc/inc/mikopbx-settings.json | /bin
 # Define the backup directory path
 backupDir="${mntPoint}/mikopbx/backup/db"
 
+# Catalog for daily backups
+backupDirDay="${mntPoint}/mikopbx/backup/db/day"
+
 # Ensure the backup directory exists
-mkdir -p "$backupDir";
+mkdir -p "$backupDirDay";
+
+# A file for temporary storage of a backup copy
+tmpBackup="$backupDir/tmp.dmp";
+/usr/bin/sqlite3 "$dbPath" .dump > "$tmpBackup";
 
 # Calculate the MD5 checksum of the database dump
-md5="$(/usr/bin/sqlite3 "$dbPath" .dump | /bin/gzip -c | /usr/bin/md5sum | cut -f 1 -d ' ')" ;
+md5="$(/bin/busybox cat "$tmpBackup" | /bin/gzip -c | /usr/bin/md5sum | cut -f 1 -d ' ')" ;
 
 # Check if a backup with the same MD5 checksum already exists
-/usr/bin/md5sum /storage/usbdisk1/mikopbx/backup/db/*_mikopbx.db.gz | /bin/busybox grep "$md5"> /dev/null 2> /dev/null
+/usr/bin/md5sum "$backupDir"/*_mikopbx.db.gz | /bin/busybox grep "$md5"> /dev/null 2> /dev/null
 result="$?"
 
 # If no matching backup is found, create a new backup
 if [ "$result" = "1" ];then
-  /usr/bin/sqlite3 "$dbPath" .dump | /bin/gzip -c > "$backupDir/$(date '+%Y-%m-%d_h%H_m%M_s%S')_mikopbx.db.gz"
+  /bin/busybox cat "$tmpBackup"  | /bin/gzip -c > "$backupDir/$(date '+%Y-%m-%d_h%H_m%M_s%S')_mikopbx.db.gz"
 fi;
 
 # Remove the oldest backups, keeping only the 5 most recent ones
 (
   cd "$backupDir" || exit;
-  /bin/busybox ls -1tr | /bin/busybox head -n-5 | /bin/xargs /bin/busybox rm 2> /dev/null
+  /bin/busybox ls -1tr | grep 'db.gz' | /bin/busybox head -n-5 | /bin/xargs /bin/busybox rm 2> /dev/null
 )
+
+# Daily backup
+# Check if a backup with the same MD5 checksum already exists
+/usr/bin/md5sum "$backupDirDay"/*_mikopbx.db.gz | /bin/busybox grep "$md5"> /dev/null 2> /dev/null
+result="$?"
+
+# If no matching backup is found, create a new backup
+if [ "$result" = "1" ];then
+  /bin/busybox cat "$tmpBackup" | /bin/gzip -c > "$backupDirDay/$(date '+%Y-%m-%d')_mikopbx.db.gz"
+fi;
+
+# Remove the oldest backups, keeping only the 5 most recent ones
+(
+  cd "$backupDirDay" || exit;
+  /bin/busybox ls -1tr | /bin/busybox head -n-7 | /bin/xargs /bin/busybox rm 2> /dev/null
+)
+
+rm -rf "$tmpBackup";
