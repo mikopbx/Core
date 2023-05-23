@@ -41,6 +41,7 @@ use MikoPBX\Common\Models\Users;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\Notifications;
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
@@ -551,7 +552,7 @@ class SystemManagementProcessor extends Injectable
      *
      * @return void
      */
-    public static function cleanSoundFiles(&$res):void
+    public static function cleaningSoundFiles(&$res):void
     {
         $rm     = Util::which('rm');
         $parameters = [
@@ -569,6 +570,22 @@ class SystemManagementProcessor extends Injectable
                     $res->success    = false;
                 }
             }
+        }
+    }
+
+    /**
+     * Deleting Backups
+     * @return void
+     */
+    public static function cleaningBackups():void
+    {
+        $di = Di::getDefault();
+        $dir = $di->getShared('config')->path('core.mediaMountPoint').'/mikopbx/backup';
+        if(file_exists($dir)){
+            $chAttr     = Util::which('chattr');
+            Processes::mwExec("$chAttr -i -R $dir");
+            $rm     = Util::which('rm');
+            Processes::mwExec("$rm -rf $dir/*");
         }
     }
 
@@ -595,7 +612,8 @@ class SystemManagementProcessor extends Injectable
 
         self::cleaningMainTables($res);
         self::cleaningOtherExtensions($res);
-        self::cleanSoundFiles($res);
+        self::cleaningSoundFiles($res);
+        self::cleaningBackups();
 
         // PbxExtensions
         $records = PbxExtensionModules::find();
@@ -652,8 +670,10 @@ class SystemManagementProcessor extends Injectable
             Processes::mwExec("{$rm} -rf {$callRecordsPath}/*");
         }
 
+        // Restart PBX
         $pbxConsole = Util::which('pbx-console');
         shell_exec("$pbxConsole services restart-all");
+        PBX::coreRestart();
         return $res;
     }
 
