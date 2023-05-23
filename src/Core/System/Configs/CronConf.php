@@ -86,14 +86,13 @@ class CronConf extends Injectable
         $phpPath               = Util::which('php');
         $WorkerSafeScripts     = "$phpPath -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
 
-        $workersPath = appPath('src/Core/Workers');
         $restart_night = $this->mikoPBXConfig->getGeneralSettings('RestartEveryNight');
         $asteriskPath  = Util::which('asterisk');
         $ntpdPath      = Util::which('ntpd');
-        $shPath        = Util::which('sh');
         $dumpPath      = Util::which('dump-conf-db');
         $checkIpPath   = Util::which('check-out-ip');
         $recordsCleaner= Util::which('records-cleaner');
+        $cleanerLinks  = Util::which('cleaner-download-links');
 
         // Restart every night if enabled
         if ($restart_night === '1') {
@@ -111,7 +110,7 @@ class CronConf extends Injectable
         $mast_have[] = '*/1 * * * * ' . "$checkIpPath > /dev/null 2> /dev/null".PHP_EOL;
 
         // Clean download links every 6 minutes
-        $mast_have[] = '*/6 * * * * ' . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/6 * * * * ' . "$cleanerLinks > /dev/null 2> /dev/null".PHP_EOL;
 
         // Run WorkerSafeScripts every minute
         $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts.PHP_EOL;

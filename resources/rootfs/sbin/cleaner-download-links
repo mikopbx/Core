@@ -71,3 +71,5 @@ do
       fi
   fi
 done
+
+/bin/find "${root_dir}" -type l ! -exec test -e {} \; -delete

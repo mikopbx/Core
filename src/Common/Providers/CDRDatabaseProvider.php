@@ -86,6 +86,13 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
             } catch (\Throwable $e) {
                 Util::sysLogMsg('SELECT_CDR_TUBE', 'Error parse response.');
             }
+
+            $di = Di::getDefault();
+            if($di !== null){
+                $findPath = Util::which('find');
+                $downloadCacheDir = $di->getShared('config')->path('www.downloadCacheDir');
+                shell_exec("$findPath -L $downloadCacheDir -samefile  $filename -delete");
+            }
             unlink($filename);
         }
 
