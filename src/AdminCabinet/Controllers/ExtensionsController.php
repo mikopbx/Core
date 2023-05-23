@@ -128,7 +128,7 @@ class ExtensionsController extends BaseController
      *
      * @return void
      */
-    private function base64ToJpeg($base64_string, $output_file): void
+    private function base64ToJpeg(string $base64_string, string $output_file): void
     {
         // Open the output file for writing
         $ifp = fopen($output_file, 'wb');

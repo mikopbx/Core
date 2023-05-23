@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Injectable;
@@ -145,6 +146,9 @@ class PbxExtensionState extends Injectable
             $this->messages = array_merge($this->messages, $this->configClass->getMessages());
         }
 
+        // Cleanup volt cache, because them module can interact with volt templates
+        $this->cleanupVoltCache();
+
         return true;
     }
 
@@ -264,6 +268,9 @@ class PbxExtensionState extends Injectable
                 }
             }
         }
+
+        // Cleanup volt cache, because them module can interact with volt templates
+        $this->cleanupVoltCache();
 
         return true;
     }
@@ -513,4 +520,20 @@ class PbxExtensionState extends Injectable
         return $success;
     }
 
+    /**
+     * Deletes old cache files.
+     *
+     * @return void
+     */
+    private function cleanupVoltCache():void
+    {
+        $cacheDirs = [];
+        $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
+        $rmPath = Util::which('rm');
+        foreach ($cacheDirs as $cacheDir) {
+            if (!empty($cacheDir)) {
+                Processes::mwExec("{$rmPath} -rf {$cacheDir}/*");
+            }
+        }
+    }
 }

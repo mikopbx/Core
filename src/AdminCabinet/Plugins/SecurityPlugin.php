@@ -118,10 +118,12 @@ class SecurityPlugin extends Injectable
     function controllerExists(Dispatcher $dispatcher): bool
     {
         $controllerName = $dispatcher->getControllerName();
-        $namespaceName = $dispatcher->getNamespaceName();
+        $namespace = $dispatcher->getNamespaceName();
         $handlerSuffix = $dispatcher->getHandlerSuffix();
 
-        return class_exists($namespaceName . '\\' . Text::camelize($controllerName) . $handlerSuffix);
+        $classForCheck = $namespace.'\\'. Text::camelize($controllerName).$handlerSuffix;
+
+        return class_exists($classForCheck);
     }
 
 

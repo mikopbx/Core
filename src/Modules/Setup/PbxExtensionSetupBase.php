@@ -256,7 +256,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         }
 
         // Volt
-        $this->cleanupCache();
+        $this->cleanupVoltCache();
 
         return true;
     }
@@ -411,7 +411,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         }
 
         // Volt
-        $this->cleanupCache();
+        $this->cleanupVoltCache();
 
         return true;
     }
@@ -527,7 +527,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      *
      * @return void
      */
-    private function cleanupCache():void
+    private function cleanupVoltCache():void
     {
         $cacheDirs = [];
         $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
