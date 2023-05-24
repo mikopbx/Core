@@ -538,4 +538,18 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
             }
         }
     }
+
+    /**
+     * Deprecated function to return translated phrases.
+     *
+     * @param string $stringId The phrase identifier.
+     *
+     * @return string The translated phrase.
+     * @deprecated
+     */
+    public function locString(string $stringId): string
+    {
+        Util::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
+        return $this->translation->_($stringId);
+    }
 }
