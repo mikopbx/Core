@@ -1089,7 +1089,6 @@ class Storage extends Di\Injectable
         foreach ($disks as $disk) {
             clearstatcache();
             $dev = $this->getStorageDev($disk, $cf_disk);
-
             // Check if the disk exists
             if (!$this->hddExists($dev)) {
                 continue;
@@ -1178,6 +1177,47 @@ class Storage extends Di\Injectable
         }
 
         return $data;
+    }
+
+    /**
+     * Returns candidates to storage
+     * @return array
+     */
+    public function getStorageCandidate():array
+    {
+        $disks = $this->getLsBlkDiskInfo();
+        $storages = [];
+        foreach ($disks as $disk){
+            if($disk['type'] !== 'disk'){
+                continue;
+            }
+            $children = $disk['children']??[];
+            if(count($children) === 0){
+                continue;
+            }
+            if(count($children) === 1){
+                $part = '1';
+            }else{
+                $part = '4';
+            }
+
+            $dev = ''; $fs = '';
+            foreach ($children as $child){
+                if( $child['fstype'] !== 'ext4' && $child['fstype'] !== 'ext2') {
+                    continue;
+                }
+                if( $disk['name'].$part === $child['name']){
+                    $dev = '/dev/'.$child['name'];
+                    $fs = $child['fstype'];
+                    break;
+                }
+            }
+            if(!empty($dev) && !empty($fs)){
+                $storages[$dev] = $fs;
+            }
+        }
+
+        return $storages;
     }
 
     /**

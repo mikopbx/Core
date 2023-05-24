@@ -54,6 +54,72 @@ class System extends Di\Injectable
     }
 
     /**
+     * Is the configuration default?
+     * @return bool
+     */
+    public function isDefaultConf():bool
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            return false;
+        }
+        $sqlite3 = Util::which('sqlite3');
+        $md5sum = Util::which('md5sum');
+        $busybox = Util::which('busybox');
+        $md5_1 = shell_exec("$sqlite3 ".$di->getConfig()->path('database.dbfile')." .dump | $md5sum | $busybox cut -f 1 -d ' '");
+        $md5_2 = shell_exec("$sqlite3 /conf.default/mikopbx.db .dump | $md5sum | $busybox cut -f 1 -d ' '");
+        return $md5_1 === $md5_2;
+    }
+
+    /**
+     * Trying to restore the backup
+     * @return void
+     */
+    public function tryRestoreConf():void
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        $storage = new Storage();
+        $storages = $storage->getStorageCandidate();
+        $tmpMountDir = '/tmp/mnt';
+        $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'],['',''],$di->getConfig()->path('core.confBackupDir'));
+        $confFile    = $di->getConfig()->path('database.dbfile');
+        foreach ($storages as $dev => $fs){
+            Util::teletypeEcho("    - mount $dev ..."."\n");
+            Util::mwMkdir($tmpMountDir."/$dev");
+            $res = Storage::mountDisk($dev, $fs, $tmpMountDir."/$dev");
+            if(!$res){
+                Util::teletypeEcho("    - fail mount $dev ..."."\n");
+            }
+        }
+        $pathBusybox = Util::which('busybox');
+        $pathFind    = Util::which('find');
+        $pathMount   = Util::which('umount');
+        $pathRm    = Util::which('rm');
+        $pathGzip    = Util::which('gzip');
+        $pathSqlite3    = Util::which('sqlite3');
+        $lastBackUp  = trim(shell_exec("$pathFind $tmpMountDir/dev/*$backupDir -type f -printf '%T@ %p\\n' | $pathBusybox sort -n | $pathBusybox tail -1 | $pathBusybox cut -f2- -d' '"));
+        if(empty($lastBackUp)){
+            return;
+        }
+        Util::teletypeEcho("    - Restore $lastBackUp ..."."\n");
+        shell_exec("$pathRm -rf {$confFile}*");
+        shell_exec("$pathGzip -c -d $lastBackUp | sqlite3 $confFile");
+        Processes::mwExec("$pathSqlite3 $confFile 'select * from m_Storage'", $out, $ret);
+        if($ret !== 0){
+            Util::teletypeEcho("    - fail restore $lastBackUp ..."."\n");
+            copy('/conf.default/mikopbx.db', $confFile);
+        }elseif(!$this->isDefaultConf()){
+            self::rebootSync();
+        }
+        foreach ($storages as $dev => $fs){
+            shell_exec("$pathMount $dev");
+        }
+    }
+
+    /**
      * Returns the directory where logs are stored.
      *
      * @return string - Directory path where logs are stored.

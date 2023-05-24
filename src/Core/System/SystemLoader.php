@@ -88,6 +88,15 @@ class SystemLoader extends Di\Injectable
      */
     public function startSystem(): bool
     {
+        $system = new System();
+        // Is the configuration default?
+        // Try restore config...
+        if($system->isDefaultConf()){
+            $this->echoStartMsg(' - Try restore backup of settings... ');
+            $system->tryRestoreConf();
+            $this->echoResultMsg();
+        }
+
         // Check if the system is running on T2SDELinux
         $itIsT2SDELinux = Util::isT2SdeLinux();
 
@@ -114,7 +123,6 @@ class SystemLoader extends Di\Injectable
         $this->echoResultMsg();
 
         // Configure the system timezone
-        $system = new System();
         $this->echoStartMsg(' - Configuring timezone...');
         $system::timezoneConfigure();
         $this->echoResultMsg();
