@@ -51,6 +51,7 @@
     "varEtcDir": "/var/etc",
     "modulesDir": "/mountpoint/mikopbx/custom_modules",
     "tempDir": "/mountpoint/mikopbx/tmp",
+    "confBackupDir": "/mountpoint/mikopbx/backup/db",
     "logsDir": "/mountpoint/mikopbx/log",
     "mediaMountPoint": "/mountpoint",
     "fail2banDbDir": "/mountpoint/mikopbx/fail2ban"

@@ -18,16 +18,16 @@
 #
 
 # Extract the media mount point from the configuration file
-mntPoint="$(/bin/busybox grep "mediaMountPoint" < /etc/inc/mikopbx-settings.json | /bin/busybox cut -f 4 -d '"')";
+confBackupDir="$(/bin/busybox grep "confBackupDir" < /etc/inc/mikopbx-settings.json | /bin/busybox cut -f 4 -d '"')";
 
 # Extract the path to the database from the configuration file
 dbPath="$(/bin/busybox grep "mikopbx.db" < /etc/inc/mikopbx-settings.json | /bin/busybox cut -f 4 -d '"')";
 
 # Define the backup directory path
-backupDir="${mntPoint}/mikopbx/backup/db"
+backupDir="${confBackupDir}"
 
 # Catalog for daily backups
-backupDirDay="${mntPoint}/mikopbx/backup/db/day"
+backupDirDay="${confBackupDir}/day"
 
 # Ensure the backup directory exists
 mkdir -p "$backupDirDay";
