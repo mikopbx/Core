@@ -56,7 +56,9 @@ if [ -f /offload/livecd ]; then
   echoToTeletype " - unmounting /conf.recover...";
   /bin/umount -f /conf.recover;
 else
-  # Copy the configuration to the backup directory
+  # Backup of settings to a disk for data storage
+  /sbin/dump-conf-db
+  # Copy the configuration to the tmp (RAM) directory
   /bin/busybox cp -R /cf/conf/* /tmp/configbak;
 
   mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
@@ -76,9 +78,6 @@ else
     rm -rf "$backupDir"; mkdir -p "$backupDir";
 
     # Copy the configuration to the storage and backup the system image
-    echoToTeletype " - copy conf to storage ...";
-    /bin/busybox cp -R /cf/conf/* "$backupDir";
-
     echoToTeletype " - backup system img to storage ...";
     /bin/pv -p "/dev/$(/bin/busybox basename "$(cat /var/etc/cfdevice)")" | /bin/gzip | dd of="$backupImg" bs=512 >/dev/null 2>&1;
   else
