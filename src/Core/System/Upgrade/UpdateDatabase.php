@@ -277,6 +277,14 @@ class UpdateDatabase extends Di\Injectable
             'indexes' => $indexes,
         ];
 
+        // Let's describe the directory for storing temporary tables and data
+        $tempDir = $this->di->getShared('config')->path('core.tempDir');
+        $sqliteTempStore = $connectionService->fetchColumn('PRAGMA temp_store');
+        $sqliteTempDir   = $connectionService->fetchColumn('PRAGMA temp_store_directory');
+        $connectionService->execute('PRAGMA temp_store = FILE;');
+        $connectionService->execute("PRAGMA temp_store_directory = '$tempDir';");
+
+        // Starting the transaction
         $connectionService->begin();
 
         if ( ! $connectionService->tableExists($tableName)) {
@@ -336,6 +344,9 @@ DROP TABLE  {$tableName}";
             $connectionService->rollback();
         }
 
+        // Restoring PRAGMA values
+        $connectionService->execute("PRAGMA temp_store = $sqliteTempStore;");
+        $connectionService->execute("PRAGMA temp_store_directory = '$sqliteTempDir';");
         return $result;
     }
 
