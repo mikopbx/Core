@@ -43,6 +43,22 @@ Add gap on middle screen size
     }
 }
 
+
+@media only screen and (min-width: 1000px) and (max-width: 1220px) {
+    #top-menu-search {
+        min-width: 350px;
+    }
+}
+@media only screen and (min-width: 768px) and (max-width: 1000px) {
+    #top-menu-search {
+        min-width: 400px;
+    }
+    .hide-on-mobile {
+        display: none;
+    }
+}
+
+
 /* Sidebar menu */
 #sidebar-menu-button {
     display: none;
@@ -70,6 +86,10 @@ Add gap on middle screen size
     #main {
         padding-left: 5px;
         padding-right: 5px;
+    }
+
+    .hide-on-mobile {
+        display: none;
     }
 }
 

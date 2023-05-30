@@ -54,7 +54,7 @@ const responsive = {
      * 
      */
     toggleSidebar() {
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 1000) {
             responsive.$sidebar.sidebar('hide');
             responsive.$sidebarMenuButton.show();
             responsive.$hideOnMobileElements.hide();
