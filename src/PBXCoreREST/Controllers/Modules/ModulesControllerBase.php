@@ -28,6 +28,8 @@ use MikoPBX\PBXCoreREST\Http\Response;
  *
  * @package MikoPBX\PBXCoreREST\Controllers\Modules
  *
+ * @RoutePrefix("/pbxcore/api/modules/{moduleUniqueID}/{action}")
+ *
  * @example
  * API for additional modules.
  * Module check:
@@ -61,7 +63,6 @@ class ModulesControllerBase extends BaseController
      * @param string $moduleName The name of the module.
      * @param string $actionName The name of the action.
      * @return void
-     *
      */
     public function callActionForModule(string $moduleName, string $actionName): void
     {
@@ -119,4 +120,5 @@ class ModulesControllerBase extends BaseController
             $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
+
 }

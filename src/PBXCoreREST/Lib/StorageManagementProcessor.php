@@ -71,8 +71,6 @@ class StorageManagementProcessor extends Injectable
                 $res->data['status'] = Storage::statusMkfs($data['dev']);
                 break;
             default:
-                $res             = new PBXApiResult();
-                $res->processor = __METHOD__;
                 $res->messages[] = "Unknown action - {$action} in storageCallBack";
         }
 

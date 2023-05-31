@@ -355,14 +355,13 @@ class System extends Di\Injectable
     }
 
     /**
-     * Shutdown the system
+     * Shutdown the system.
      */
     public static function shutdown(): void
     {
         $shutdownPath = Util::which('shutdown');
         Processes::mwExec("{$shutdownPath} > /dev/null 2>&1");
     }
-
 
     /**
      * Configures the system timezone according to the PBXTimezone setting.

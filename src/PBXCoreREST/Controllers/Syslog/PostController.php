@@ -22,12 +22,15 @@ namespace MikoPBX\PBXCoreREST\Controllers\Syslog;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Lib\SysLogsManagementProcessor;
 use Phalcon\Di;
 
 /**
- * /pbxcore/api/syslog/{name}' Get system logs (POST).
+ * Get system logs (POST).
  *
- * Get logfiles strings partially and filtered
+ * @RoutePrefix("/pbxcore/api/syslog")
+ *
+ * Gets partially filtered log file strings.
  *   curl -X POST -d '{"filename": "asterisk/messages","filter":"","lines":"500"}'
  *   http://127.0.0.1/pbxcore/api/syslog/getLogFromFile;
  *
@@ -46,6 +49,16 @@ class PostController extends BaseController
      * Handles the call to different actions based on the action name
      *
      * @param string $actionName The name of the action
+     *
+     * Gets partially filtered log file strings.
+     * @Post("/getLogFromFile")
+     *
+     * Prepares a downloadable link for a log file with the provided name.
+     * @Post("/downloadLogFile")
+     *
+     * Requests a zipped archive containing logs and PCAP file
+     * Checks if archive ready it returns download link.
+     * @Post("/downloadLogsArchive")
      */
     public function callAction(string $actionName): void
     {
@@ -59,7 +72,7 @@ class PostController extends BaseController
                 break;
             default:
                 $data = $this->request->getPost();
-                $this->sendRequestToBackendWorker('syslog', $actionName, $data);
+                $this->sendRequestToBackendWorker(SysLogsManagementProcessor::class, $actionName, $data);
         }
     }
 
@@ -70,7 +83,7 @@ class PostController extends BaseController
     {
         $requestMessage = json_encode(
             [
-                'processor' => 'syslog',
+                'processor' => SysLogsManagementProcessor::class,
                 'data'      => $this->request->getPost(),
                 'action'    => 'getLogFromFile',
             ]
@@ -105,7 +118,7 @@ class PostController extends BaseController
     {
         $requestMessage = json_encode(
             [
-                'processor' => 'syslog',
+                'processor' => SysLogsManagementProcessor::class,
                 'data'      => $this->request->getPost(),
                 'action'    => $actionName,
             ]

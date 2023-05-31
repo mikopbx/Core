@@ -57,10 +57,6 @@ class WorkerApiCommands extends WorkerBase
      */
     public int $maxProc = 2;
 
-    /**
-     * Available REST API processors
-     */
-    private array $processors;
 
     /**
      * Starts the worker.
@@ -80,31 +76,10 @@ class WorkerApiCommands extends WorkerBase
         }
         $beanstalk->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $beanstalk->subscribe(__CLASS__, [$this, 'prepareAnswer']);
-        $this->registerProcessors();
 
         while ($this->needRestart === false) {
             $beanstalk->wait();
         }
-    }
-
-    /**
-     * Prepares list of available processors
-     */
-    private function registerProcessors(): void
-    {
-        $this->processors = [
-            'advices' => AdvicesProcessor::class,
-            'cdr'     => CdrDBProcessor::class,
-            'iax'     => IAXStackProcessor::class,
-            'license' => LicenseManagementProcessor::class,
-            'sip'     => SIPStackProcessor::class,
-            'storage' => StorageManagementProcessor::class,
-            'system'  => SystemManagementProcessor::class,
-            'syslog'  => SysLogsManagementProcessor::class,
-            'sysinfo' => SysinfoManagementProcessor::class,
-            'files'   => FilesManagementProcessor::class,
-            'modules' => PbxExtensionsProcessor::class
-        ];
     }
 
     /**
@@ -121,8 +96,8 @@ class WorkerApiCommands extends WorkerBase
             $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $processor = $request['processor'];
 
-            if (array_key_exists($processor, $this->processors)) {
-                $res = $this->processors[$processor]::callback($request);
+            if (method_exists($processor, 'callback')) {
+                $res = $processor::callback($request);
             } else {
                 $res->success    = false;
                 $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
@@ -168,7 +143,7 @@ class WorkerApiCommands extends WorkerBase
     private function getNeedRestartActions(): array
     {
         return [
-            'system'  => [
+            SystemManagementProcessor::class  => [
                  'enableModule',
                  'disableModule',
                  'uninstallModule',

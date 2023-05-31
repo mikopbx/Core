@@ -23,28 +23,24 @@ use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
 
 /**
- * /pbxcore/api/files/{name}' Files management (POST).
+ * Files management (POST).
  *
- * Get config file content
+ * @RoutePrefix("/pbxcore/api/files")
+ *
+ * @package MikoPBX\PBXCoreREST\Controllers\Files
+ *
+ * @examples
+ *
+ * Get config file content:
  *   curl -X POST -d '{"filename": "/etc/asterisk/asterisk.conf"}'
- *   http://172.16.156.212/pbxcore/api/files/fileReadContent;
+ *   http://172.16.156.212/pbxcore/api/files/getFileContent;
  *
  * Answer example:
- *   {"result":"ERROR","message":"API action not found;","function":"fileReadContent"}
- *   {"result":"Success","data":"W2RpcmVj","function":"fileReadContent"}
- *
- * Convert audiofile:
- *   curl -X POST -d '{"filename": "/tmp/WelcomeMaleMusic.mp3"}'
- *   http://172.16.156.212/pbxcore/api/files/convertAudioFile;
- *
- *  Answer example:
- *   {
- *      "result": "Success",
- *      "filename": "/tmp/WelcomeMaleMusic.wav",
- *      "function": "convertAudioFile"
- *   }
+ *   {"result":"ERROR","message":"API action not found;","function":"getFileContent"}
+ *   {"result":"Success","data":"W2RpcmVj","function":"getFileContent"}
  *
  *
  * Delete Audio file:
@@ -52,25 +48,6 @@ use MikoPBX\PBXCoreREST\Http\Response;
  *   http://172.16.156.212/pbxcore/api/files/removeAudioFile;
  *
  *
- * Install new module with params by URL
- * curl -X POST -d '{"uniqid":"ModuleCTIClient", "md5":"fd9fbf38298dea83667a36d1d0464eae", "url":
- * "https://www.askozia.ru/upload/update/modules/ModuleCTIClient/ModuleCTIClientv01.zip"}'
- * http://172.16.156.223/pbxcore/api/files/uploadNewModule;
- *
- *
- * Receive uploading status
- * curl  -X POST -d '{"uniqid":"ModuleSmartIVR"} http://172.16.156.223/pbxcore/api/files/statusUploadingNewModule
- *
- * Install new module from ZIP archive:
- * curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/files/uploadNewModule;
- *
- * Uninstall module:
- * curl -X POST -d '{"uniqid":"ModuleSmartIVR"} http://172.16.156.223/pbxcore/api/files/uninstallModule
- *
- * Upload file:
- *   curl -X POST -d '{"id": "1531474060"}' http://127.0.0.1/pbxcore/api/files/statusUpload; -H 'Cookie:
- *
- *   XDEBUG_SESSION=PHPSTORM'
  */
 class PostController extends BaseController
 {
@@ -79,20 +56,39 @@ class PostController extends BaseController
      * Calls the corresponding action for file management based on the provided $actionName.
      *
      * @param string $actionName The name of the action.
+     *
+     * Get the content of config file by it name
+     * @Post("/getFileContent")
+     *
+     * Delete audio files (mp3, wav, alaw ) by name its name.
+     * @Post("/removeAudioFile")
+     *
+     * Upload files into the system by chunks.
+     * @Post("/uploadFile")
+     *
+     * Returns Status of uploading and merging process.
+     * @Post("/statusUpload")
+     *
+     * Downloads the firmware file from the provided URL.
+     * @Post ("/downloadNewFirmware")
+     *
+     * Get the progress status of the firmware file download.
+     * @Post ("/firmwareDownloadStatus")
+     *
      * @return void
      */
     public function callAction(string $actionName=''): void
     {
         switch ($actionName) {
-            case 'fileReadContent':
-                $this->fileReadContent();
+            case 'getFileContent':
+                $this->getFileContent();
                 break;
-            case 'uploadResumable':
-                $this->uploadResumableAction();
+            case 'uploadFile':
+                $this->uploadFile();
                 break;
             default:
                 $data = $this->request->getPost();
-                $this->sendRequestToBackendWorker('files', $actionName, $data);
+                $this->sendRequestToBackendWorker(FilesManagementProcessor::class, $actionName, $data);
         }
     }
 
@@ -101,13 +97,13 @@ class PostController extends BaseController
      *
      * @return void
      */
-    private function fileReadContent(): void
+    private function getFileContent(): void
     {
         $requestMessage = json_encode(
             [
-                'processor' => 'files',
+                'processor' => FilesManagementProcessor::class,
                 'data'      => $this->request->getPost(),
-                'action'    => 'fileReadContent',
+                'action'    => 'getFileContent',
             ]
         );
         $connection     = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
@@ -133,7 +129,7 @@ class PostController extends BaseController
      *
      * @return void
      */
-    public function uploadResumableAction(): void
+    private function uploadFile(): void
     {
         $data   = $this->request->getPost();
         $data['result'] = 'ERROR';
@@ -164,7 +160,7 @@ class PostController extends BaseController
             usleep(100000);
         }
 
-        $this->sendRequestToBackendWorker('files', 'uploadResumable', $data);
+        $this->sendRequestToBackendWorker(FilesManagementProcessor::class, 'uploadFile', $data);
     }
 
 }

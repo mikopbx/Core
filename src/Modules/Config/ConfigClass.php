@@ -33,6 +33,7 @@ use Phalcon\Mvc\Controller;
 use Phalcon\Mvc\Router;
 use Phalcon\Mvc\View;
 use ReflectionClass as ReflectionClassAlias;
+use function Symfony\Component\String\b;
 
 /**
  * Abstract class ConfigClass
@@ -116,7 +117,14 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     }
 
     /**
-     * Allows overriding the execution priority of a method when called through hookModulesMethod.
+     * This method allows overriding the execution priority of a method when called through hookModulesMethod.
+     * By defining this method in the Conf class of a module, you can flexibly control
+     * the execution priority of HOOK methods.
+     * This provides the ability to specify a high priority for a method that generates CRON tasks
+     * in an external module, and a low priority for a method that generates peers for pjsip.conf.
+     *
+     * By changing the priority, you can control the order in which module methods are applied.
+     *
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getmethodpriority
      *
      * @param string $methodName
@@ -124,13 +132,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      */
     public function getMethodPriority(string $methodName=''):int
     {
-        switch ($methodName){
-            case SystemConfigInterface::CREATE_CRON_TASKS:
-                //...
-            default:
-                $result = $this->priority;
-        }
-        return $result;
+        return $this->priority;
     }
 
     /**

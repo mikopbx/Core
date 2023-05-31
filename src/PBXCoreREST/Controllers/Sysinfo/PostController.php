@@ -20,11 +20,13 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Sysinfo;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 
 /**
  * This controller handles POST requests related to system information.
  *
- * /pbxcore/api/sysinfo/{name}' Get system logs (POST).
+ * @RoutePrefix("/pbxcore/api/sysinfo")
+ *
  */
 class PostController extends BaseController
 {
@@ -36,7 +38,7 @@ class PostController extends BaseController
     public function callAction(string $actionName): void
     {
         $data = $this->request->getPost();
-        $this->sendRequestToBackendWorker('sysinfo', $actionName, $data);
+        $this->sendRequestToBackendWorker(SysinfoManagementProcessor::class, $actionName, $data);
     }
 
 }

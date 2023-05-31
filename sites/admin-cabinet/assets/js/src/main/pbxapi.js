@@ -23,54 +23,74 @@
  * @module PbxApi
  */
 const PbxApi = {
-    pbxPing: `${Config.pbxUrl}/pbxcore/api/system/ping`, // URL for pinging the backend.
-    pbxGetHistory: `${Config.pbxUrl}/pbxcore/api/cdr/get_history`, // URL for getting the history of calls.
-    pbxGetSipRegistry: `${Config.pbxUrl}/pbxcore/api/sip/getRegistry`,
-    pbxGetIaxRegistry: `${Config.pbxUrl}/pbxcore/api/iax/getRegistry`,
-    pbxGetPeersStatus: `${Config.pbxUrl}/pbxcore/api/sip/getPeersStatuses`,
-    pbxGetPeerStatus: `${Config.pbxUrl}/pbxcore/api/sip/getSipPeer`,
-    pbxGetActiveCalls: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveCalls`, // Get active calls.
-    pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`,  // Get active channels.
-    syslogPrepareLog: `${Config.pbxUrl}/pbxcore/api/syslog/prepareLog`,
-    syslogStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/startLog`,
-    syslogStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/stopLog`,
-    syslogGetLogsList: `${Config.pbxUrl}/pbxcore/api/syslog/getLogsList`, // Get logs list. (curl http://127.0.0.1/pbxcore/api/system/getLogsList)
-    syslogGetLogFromFile: `${Config.pbxUrl}/pbxcore/api/syslog/getLogFromFile`,
-    syslogDownloadLogFile: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogFile`, //Download logfile by name
-    syslogDownloadLogsArchive: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogsArchive`, // Ask for zipped logs and PCAP file
+
+    // AdvicesProcessor
+    advicesGetList: `${Config.pbxUrl}/pbxcore/api/advices/getList`, // Generates a list of notifications about the system, firewall, passwords, and wrong settings.
+
+    // CdrDBProcessor
+    pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`,  //  Get active channels. These are the unfinished calls (endtime IS NULL).
+
+    // SystemManagementProcessor
+    systemPing: `${Config.pbxUrl}/pbxcore/api/system/ping`, // Ping backend (described in nginx.conf)
     systemReboot: `${Config.pbxUrl}/pbxcore/api/system/reboot`, // Reboot the operating system.
-    systemShutDown: `${Config.pbxUrl}/pbxcore/api/system/shutdown`, // Shut down the system.
-    systemGetBannedIp: `${Config.pbxUrl}/pbxcore/api/system/getBanIp`, // Get banned IP addresses.
-    systemUnBanIp: `${Config.pbxUrl}/pbxcore/api/system/unBanIp`, //  Remove ban for an IP address. curl -X POST -d '{"ip": "172.16.156.1"}'
-    systemGetDateTime: `${Config.pbxUrl}/pbxcore/api/system/getDate`, // Get the system date. (curl http://127.0.0.1/pbxcore/api/system/getDate)
-    systemSetDateTime: `${Config.pbxUrl}/pbxcore/api/system/setDate`, // Set system date.  (curl -X POST -d timestamp=1602509882 http://127.0.0.1/pbxcore/api/system/setDate)
-    systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/sendMail`, //  Send email.
-    systemRestoreDefaultSettings: `${Config.pbxUrl}/pbxcore/api/system/restoreDefault`, // Delete all system settings
-    systemConvertAudioFile: `${Config.pbxUrl}/pbxcore/api/system/convertAudioFile`,
-    systemUpdateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`,
-    systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Upgrade the PBX using a file.
-    systemInstallModule: `${Config.pbxUrl}/pbxcore/api/system/installNewModule`,
-    systemGetModuleInstallationStatus: `${Config.pbxUrl}/pbxcore/api/system/statusOfModuleInstallation`,
-    systemDeleteModule: `${Config.pbxUrl}/pbxcore/api/system/uninstallModule`,
-    systemDisableModule: `${Config.pbxUrl}/pbxcore/api/system/disableModule`,
-    systemEnableModule: `${Config.pbxUrl}/pbxcore/api/system/enableModule`,
-    filesUploadFile: `${Config.pbxUrl}/pbxcore/api/files/uploadResumable`,
-    filesStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/files/statusUploadFile`,
-    filesGetFileContent: `${Config.pbxUrl}/pbxcore/api/files/fileReadContent`,  // Get the content of a file by its name.
-    filesRemoveAudioFile: `${Config.pbxUrl}/pbxcore/api/files/removeAudioFile`,
-    filesDownloadNewFirmware: `${Config.pbxUrl}/pbxcore/api/files/downloadNewFirmware`, // Download new firmware for the PBX online.
-    filesFirmwareDownloadStatus: `${Config.pbxUrl}/pbxcore/api/files/firmwareDownloadStatus`, // Get the status of the firmware update.
-    filesDownloadNewModule: `${Config.pbxUrl}/pbxcore/api/files/downloadNewModule`,
-    filesModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/files/moduleDownloadStatus`,
-    sysinfoGetInfo: `${Config.pbxUrl}/pbxcore/api/sysinfo/getInfo`, // Get system information.
-    sysinfoGetExternalIP: `${Config.pbxUrl}/pbxcore/api/sysinfo/getExternalIpInfo`, // Get external IP address.
-    advicesGetList: `${Config.pbxUrl}/pbxcore/api/advices/getList`,
-    licenseResetKey: `${Config.pbxUrl}/pbxcore/api/license/resetKey`,
-    licenseProcessUserRequest: `${Config.pbxUrl}/pbxcore/api/license/processUserRequest`,
-    licenseGetLicenseInfo: `${Config.pbxUrl}/pbxcore/api/license/getLicenseInfo`,
-    licenseGetMikoPBXFeatureStatus: `${Config.pbxUrl}/pbxcore/api/license/getMikoPBXFeatureStatus`,
-    licenseCaptureFeatureForProductId: `${Config.pbxUrl}/pbxcore/api/license/captureFeatureForProductId`,
-    licenseSendPBXMetrics: `${Config.pbxUrl}/pbxcore/api/license/sendPBXMetrics`,
+    systemShutDown: `${Config.pbxUrl}/pbxcore/api/system/shutdown`, // Shutdown the system.
+    systemGetDateTime: `${Config.pbxUrl}/pbxcore/api/system/getDate`, // Retrieves the system date and time.
+    systemSetDateTime: `${Config.pbxUrl}/pbxcore/api/system/setDate`, // Updates the system date and time.
+    systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/sendMail`, //  Sends an email notification.
+    systemRestoreDefaultSettings: `${Config.pbxUrl}/pbxcore/api/system/restoreDefault`, // Restore default system settings
+    systemConvertAudioFile: `${Config.pbxUrl}/pbxcore/api/system/convertAudioFile`, // Convert the audio file to various codecs using Asterisk.
+    systemUpdateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`, // Tries to send a test email.
+    systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Upgrade the PBX using uploaded IMG file.
+
+    // ModulesManagementProcessor
+    modulesModuleStartDownload: `${Config.pbxUrl}/pbxcore/api/modules/core/moduleStartDownload`, // Starts the module download in a separate background process
+    modulesModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/modules/core/moduleDownloadStatus`, // Returns the download status of a module.
+    modulesInstallModule: `${Config.pbxUrl}/pbxcore/api/modules/core/installNewModule`, // Installs a new additional extension module from an early uploaded zip archive.
+    modulesGetModuleInstallationStatus: `${Config.pbxUrl}/pbxcore/api/modules/core/statusOfModuleInstallation`, // Checks the status of a module installation by the provided zip file path.
+    modulesEnableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/enableModule`, // Enables extension module.
+    modulesDisableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/disableModule`, // Disables extension module.
+    modulesUnInstallModule: `${Config.pbxUrl}/pbxcore/api/modules/core/uninstallModule`, // Uninstall extension module.
+
+    // FirewallManagementProcessor
+    firewallGetBannedIp: `${Config.pbxUrl}/pbxcore/api/firewall/getBannedIp`, // Retrieve a list of banned IP addresses or get data for a specific IP address.
+    firewallUnBanIp: `${Config.pbxUrl}/pbxcore/api/firewall/unBanIp`, //  Remove an IP address from the fail2ban ban list.
+
+    // SIPStackProcessor
+    sipGetRegistry: `${Config.pbxUrl}/pbxcore/api/sip/getRegistry`, //  Retrieves the statuses of SIP providers registration.
+    sipGetPeersStatus: `${Config.pbxUrl}/pbxcore/api/sip/getPeersStatuses`, // Retrieves the statuses of SIP peers.
+    sipGetPeerStatus: `${Config.pbxUrl}/pbxcore/api/sip/getSipPeer`, //  Retrieves the status of provided SIP peer.
+
+    // IAXStackProcessor
+    iaxGetRegistry: `${Config.pbxUrl}/pbxcore/api/iax/getRegistry`, // Retrieves the statuses of IAX providers registration.
+
+    // SysLogsManagementProcessor
+    syslogStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/startLog`, // Starts the collection of logs and captures TCP packets.
+    syslogStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/stopLog`, // Stops tcpdump and starts creating a log files archive for download.
+    syslogPrepareLog: `${Config.pbxUrl}/pbxcore/api/syslog/prepareLog`, // Starts creating a log files archive for download.
+    syslogDownloadLogsArchive: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogsArchive`, //  Checks if archive ready then create download link containing logs and PCAP file.
+    syslogGetLogsList: `${Config.pbxUrl}/pbxcore/api/syslog/getLogsList`, // Returns list of log files to show them on web interface
+    syslogGetLogFromFile: `${Config.pbxUrl}/pbxcore/api/syslog/getLogFromFile`, // Gets partially filtered log file strings.
+    syslogDownloadLogFile: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogFile`, //  Prepares a downloadable link for a log file with the provided name.
+
+    // FilesManagementProcessor
+    filesUploadFile: `${Config.pbxUrl}/pbxcore/api/files/uploadFile`, // Upload files into the system by chunks
+    filesStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/files/statusUploadFile`, // Returns Status of uploading and merging process
+    filesGetFileContent: `${Config.pbxUrl}/pbxcore/api/files/getFileContent`,  // Get the content of config file by it name.
+    filesRemoveAudioFile: `${Config.pbxUrl}/pbxcore/api/files/removeAudioFile`, // Delete audio files (mp3, wav, alaw ..) by name its name.
+    filesDownloadNewFirmware: `${Config.pbxUrl}/pbxcore/api/files/downloadNewFirmware`, // Downloads the firmware file from the provided URL.
+    filesFirmwareDownloadStatus: `${Config.pbxUrl}/pbxcore/api/files/firmwareDownloadStatus`, // Get the progress status of the firmware file download..
+
+    // SysinfoManagementProcessor
+    sysinfoGetInfo: `${Config.pbxUrl}/pbxcore/api/sysinfo/getInfo`, // Gets collection of the system information.
+    sysinfoGetExternalIP: `${Config.pbxUrl}/pbxcore/api/sysinfo/getExternalIpInfo`, //  Gets an external IP address of the system.
+
+    // LicenseManagementProcessor
+    licenseResetKey: `${Config.pbxUrl}/pbxcore/api/license/resetKey`, // Reset license key settings.
+    licenseProcessUserRequest: `${Config.pbxUrl}/pbxcore/api/license/processUserRequest`, // Update license key, get new one, activate coupon
+    licenseGetLicenseInfo: `${Config.pbxUrl}/pbxcore/api/license/getLicenseInfo`, // Retrieves license information from the license server.
+    licenseGetMikoPBXFeatureStatus: `${Config.pbxUrl}/pbxcore/api/license/getMikoPBXFeatureStatus`, // Checks whether the license system is working properly or not.
+    licenseCaptureFeatureForProductId: `${Config.pbxUrl}/pbxcore/api/license/captureFeatureForProductId`, // Tries to capture a feature for a product.
+    licenseSendPBXMetrics: `${Config.pbxUrl}/pbxcore/api/license/sendPBXMetrics`, // Make an API call to send PBX metrics
 
     /**
      * Tries to parse a JSON string.
@@ -111,14 +131,15 @@ const PbxApi = {
 
     /**
      * Checks the connection with the PBX.
+     * Ping backend (described in nginx.conf)
      *
      * @param {function} callback - The callback function to be called after checking the PBX connection.
      *                              It will receive `true` in case of successful connection or `false` otherwise.
      * @returns {void}
      */
-    PingPBX(callback) {
+    SystemPingPBX(callback) {
         $.api({
-            url: PbxApi.pbxPing,
+            url: PbxApi.systemPing,
             on: 'now',
             dataType: 'text',
             timeout: 2000,
@@ -143,9 +164,9 @@ const PbxApi = {
      *                              It will receive the response data or `false` in case of failure.
      * @returns {void}
      */
-    SystemGetBannedIp(callback) {
+    FirewallGetBannedIp(callback) {
         $.api({
-            url: PbxApi.systemGetBannedIp,
+            url: PbxApi.firewallGetBannedIp,
             on: 'now',
             successTest: PbxApi.successTest,
             onSuccess(response) {
@@ -168,9 +189,9 @@ const PbxApi = {
      *                              It will receive the response data or `false` in case of failure.
      * @returns {boolean} - Always returns `true`.
      */
-    SystemUnBanIp(ipAddress, callback) {
+    FirewallUnBanIp(ipAddress, callback) {
         $.api({
-            url: PbxApi.systemUnBanIp,
+            url: PbxApi.firewallUnBanIp,
             on: 'now',
             method: 'POST',
             data: {ip: ipAddress},
@@ -188,7 +209,7 @@ const PbxApi = {
     },
 
     /**
-     * Retrieves the registration status of peers.
+     * Retrieves the statuses of SIP peers.
      *
      * @param {function} callback - The callback function to be called after retrieving the peers' status.
      *                              It will receive the response data.
@@ -196,7 +217,7 @@ const PbxApi = {
      */
     GetPeersStatus(callback) {
         $.api({
-            url: PbxApi.pbxGetPeersStatus,
+            url: PbxApi.sipGetPeersStatus,
             on: 'now',
             successTest: PbxApi.successTest,
             onSuccess(response) {
@@ -214,7 +235,7 @@ const PbxApi = {
     },
 
     /**
-     * Retrieves the registration status of a peer.
+     *  Retrieves the status of provided SIP peer.
      *
      * @param {Object} data - The data object containing the necessary information to retrieve the peer status.
      * @param {function} callback - The callback function to be called after retrieving the peer status.
@@ -223,7 +244,7 @@ const PbxApi = {
      */
     GetPeerStatus(data, callback) {
         $.api({
-            url: PbxApi.pbxGetPeerStatus,
+            url: PbxApi.sipGetPeerStatus,
             on: 'now',
             method: 'POST',
             data: JSON.stringify(data),
@@ -251,7 +272,7 @@ const PbxApi = {
      */
     GetSipProvidersStatuses(callback) {
         $.api({
-            url: PbxApi.pbxGetSipRegistry,
+            url: PbxApi.sipGetRegistry,
             on: 'now',
             successTest: PbxApi.successTest,
             onSuccess(response) {
@@ -274,7 +295,7 @@ const PbxApi = {
      */
     GetIaxProvidersStatuses(callback) {
         $.api({
-            url: PbxApi.pbxGetIaxRegistry,
+            url: PbxApi.iaxGetRegistry,
             on: 'now',
             successTest: PbxApi.successTest,
             onSuccess(response) {
@@ -313,7 +334,7 @@ const PbxApi = {
     },
 
     /**
-     * Updates the mail settings.
+     * Tries to send a test email.
      *
      * @param {function} callback - The callback function to be called after updating the mail settings.
      *                              It will receive the response data or `false` in case of failure.
@@ -358,7 +379,7 @@ const PbxApi = {
     },
 
     /**
-     * Retrieves the Linux date and time.
+     * Retrieves the system date and time.
      *
      * @param {function} callback - The callback function to be called after retrieving the date and time information.
      *                              It will receive the response data or `false` in case of failure.
@@ -379,7 +400,7 @@ const PbxApi = {
     },
 
     /**
-     * Updates the Linux date and time.
+     * Updates the system date and time.
      *
      * @param {Object} data - The data object containing the updated date and time information.
      * @returns {void}
@@ -394,7 +415,7 @@ const PbxApi = {
     },
 
     /**
-     * Retrieves the information about the external IP of the station.
+     * Gets an external IP address of the system.
      *
      * @param {function} callback - The callback function to be called after retrieving the information.
      *                              It will receive the response data or `false` in case of failure.
@@ -415,13 +436,13 @@ const PbxApi = {
     },
 
     /**
-     * Retrieves the list of active calls.
+     * Retrieves active calls based on CDR data.
      *
      * @param {function} callback - The callback function to be called after retrieving the list of active calls.
      *                              It will receive the response data or `false` in case of no active calls.
      * @returns {void}
      */
-    GetCurrentCalls(callback) {
+    GetActiveChannels(callback) {
         $.api({
             url: PbxApi.pbxGetActiveChannels,
             on: 'now',
@@ -442,7 +463,7 @@ const PbxApi = {
     },
 
     /**
-     * Reboots the server.
+     * Reboot the operating system.
      *
      * @returns {void}
      */
@@ -454,7 +475,7 @@ const PbxApi = {
     },
 
     /**
-     * Shuts down the server.
+     * Shutdown the system.
      *
      * @returns {void}
      */
@@ -466,7 +487,7 @@ const PbxApi = {
     },
 
     /**
-     * Gets system information.
+     * Gets collection of the system information.
      *
      * @param {function} callback - The callback function to be called after retrieving the system information.
      *                              It will receive the response data or `false` in case of failure.
@@ -490,7 +511,7 @@ const PbxApi = {
     },
 
     /**
-     * Starts the collection of logs and picks up TCP packages.
+     * Starts the collection of logs and captures TCP packets.
      *
      * @param {function} callback - The callback function to be called after starting the logs capture.
      *                              It will receive the response data or `false` in case of failure.
@@ -514,7 +535,7 @@ const PbxApi = {
     },
 
     /**
-     * Starts the collection of logs.
+     * Starts creating a log files archive for download.
      *
      * @param {function} callback - The callback function to be called after starting the logs collection.
      *                              It will receive the response data or `false` in case of failure.
@@ -538,7 +559,7 @@ const PbxApi = {
     },
 
     /**
-     * Stops the TCP dump and starts making the log file available for download.
+     * Stops tcpdump and starts creating a log files archive for download.
      *
      * @param {function} callback - The callback function to be called after stopping the logs capture.
      *                              It will receive the response data or `false` in case of failure.
@@ -623,7 +644,7 @@ const PbxApi = {
     },
 
     /**
-     * Downloads a log file by its name.
+     *  Prepares a downloadable link for a log file with the provided name.
      *
      * @param {string} filename - The name of the log file to be downloaded.
      * @param {function} callback - The callback function to be called after downloading the log file.
@@ -651,6 +672,7 @@ const PbxApi = {
 
     /**
      * Requests a zipped archive containing logs and PCAP file.
+     * Checks if archive ready it returns download link
      *
      * @param {string} filename - The name of the file to be downloaded.
      * @param {function} callback - The callback function to be called after requesting the logs archive.
@@ -677,7 +699,7 @@ const PbxApi = {
     },
 
     /**
-     * Starts the system upgrade.
+     * Upgrade the PBX using uploaded IMG file.
      *
      * @param {string} filePath - The temporary file path for the upgrade.
      * @param {function} callback - The callback function to be called after starting the system upgrade.
@@ -704,7 +726,7 @@ const PbxApi = {
     },
 
     /**
-     * Converts an audio file to WAV format with a bitrate of 8000.
+     * Convert the audio file to various codecs using Asterisk.
      *
      * @param {string} filePath - The uploaded file path.
      * @param {string} category - The category of the audio file (e.g., 'moh', 'custom', etc.).
@@ -757,16 +779,16 @@ const PbxApi = {
     },
 
     /**
-     * Installs the uploaded module.
+     * Installs a new additional extension module from an early uploaded zip archive.
      *
      * @param {string} filePath - The file path of the module to be installed.
      * @param {function} callback - The callback function to be called after attempting to install the module.
      *                              It will receive the response object.
      * @returns {void}
      */
-    SystemInstallModule(filePath, callback) {
+    ModulesInstallModule(filePath, callback) {
         $.api({
-            url: PbxApi.systemInstallModule,
+            url: PbxApi.modulesInstallModule,
             on: 'now',
             method: 'POST',
             data: {
@@ -786,16 +808,16 @@ const PbxApi = {
     },
 
     /**
-     * Gets the installation status.
+     * Checks the status of a module installation by the provided zip file path.
      *
      * @param {string} filePath - The file path of the module.
      * @param {function} callback - The callback function to be called with the installation status and response data.
      *                              It will receive a boolean indicating the success of the operation and the response data.
      * @returns {void}
      */
-    SystemGetModuleInstallationStatus(filePath, callback) {
+    ModulesGetModuleInstallationStatus(filePath, callback) {
         $.api({
-            url: PbxApi.systemGetModuleInstallationStatus,
+            url: PbxApi.modulesGetModuleInstallationStatus,
             on: 'now',
             method: 'POST',
             data: {filePath: filePath},
@@ -813,7 +835,7 @@ const PbxApi = {
     },
 
     /**
-     * Uploads a module as JSON with a link by POST request.
+     * Starts the module download in a separate background process.
      *
      * @param {Object} params - The parameters required for uploading the module.
      * @param {string} params.uniqid - The unique ID of the module.
@@ -824,9 +846,9 @@ const PbxApi = {
      *                              It will receive a boolean indicating the success of the operation.
      * @returns {void}
      */
-    FilesDownloadNewModule(params, callback) {
+    ModulesModuleStartDownload(params, callback) {
         $.api({
-            url: PbxApi.filesDownloadNewModule,
+            url: PbxApi.modulesModuleStartDownload,
             on: 'now',
             method: 'POST',
             data: {
@@ -849,7 +871,7 @@ const PbxApi = {
     },
 
     /**
-     * Deletes an extension module.
+     * Uninstall extension module.
      *
      * @param {string} moduleName - The ID of the module to be deleted.
      * @param {boolean} keepSettings - Whether to keep the module settings or not.
@@ -857,9 +879,9 @@ const PbxApi = {
      *                              It will receive a boolean indicating the success of the operation.
      * @returns {void}
      */
-    SystemDeleteModule(moduleName, keepSettings, callback) {
+    ModulesUnInstallModule(moduleName, keepSettings, callback) {
         $.api({
-            url: PbxApi.systemDeleteModule,
+            url: PbxApi.modulesUnInstallModule,
             on: 'now',
             method: 'POST',
             data: {
@@ -887,9 +909,9 @@ const PbxApi = {
      * @param {function} failureCallback - The callback function to be called in case of failure or timeout.
      * @returns {void}
      */
-    FilesModuleDownloadStatus(moduleUniqueID, callback, failureCallback) {
+    ModulesModuleDownloadStatus(moduleUniqueID, callback, failureCallback) {
         $.api({
-            url: PbxApi.filesModuleDownloadStatus,
+            url: PbxApi.modulesModuleDownloadStatus,
             on: 'now',
             timeout: 3000,
             method: 'POST',
@@ -911,16 +933,16 @@ const PbxApi = {
     },
 
     /**
-     * Disable the pbxExtension module.
+     * Disables extension module.
      *
      * @param {string} moduleUniqueID - The unique ID of the module to be disabled.
      * @param {function} callback - The callback function to be called after attempting to disable the module.
      *                              It will receive the response object and a boolean indicating the success of the operation.
      * @returns {void}
      */
-    SystemDisableModule(moduleUniqueID, callback) {
+    ModulesDisableModule(moduleUniqueID, callback) {
         $.api({
-            url: PbxApi.systemDisableModule,
+            url: PbxApi.modulesDisableModule,
             on: 'now',
             method: 'POST',
             data: {uniqid: moduleUniqueID},
@@ -939,16 +961,16 @@ const PbxApi = {
     },
 
     /**
-     * Disable the pbxExtension module.
+     * Enables extension module.
      *
      * @param {string} moduleUniqueID - The unique ID of the module to be disabled.
      * @param {function} callback - The callback function to be called after attempting to disable the module.
      *                              It will receive the response object and a boolean indicating the success of the operation.
      * @returns {void}
      */
-    SystemEnableModule(moduleUniqueID, callback) {
+    ModulesEnableModule(moduleUniqueID, callback) {
         $.api({
-            url: PbxApi.systemEnableModule,
+            url: PbxApi.modulesEnableModule,
             on: 'now',
             method: 'POST',
             data: {uniqid: moduleUniqueID},
@@ -1002,7 +1024,7 @@ const PbxApi = {
     },
 
     /**
-     * Gets the firmware download status.
+     * Get the progress status of the firmware file download.
      *
      * @param {string} filename - The name of the firmware file.
      * @param {function} callback - The callback function to be called with the response data or `false` in case of failure.
@@ -1179,7 +1201,7 @@ const PbxApi = {
     },
 
     /**
-     * Delete all system settings.
+     * Restore default system settings.
      *
      * @param {function} callback - The callback function to be called after the operation completes.
      *                              It will receive a boolean value indicating the success of the operation.
@@ -1201,7 +1223,7 @@ const PbxApi = {
 
 
     /**
-     * Makes the list of notifications about system, firewall, passwords, wrong settings.
+     * Generates a list of notifications about the system, firewall, passwords, and wrong settings.
      *
      * @param {function} callback - The callback function to be called with the response data or `false` in case of failure.
      * @returns {void}
@@ -1247,6 +1269,7 @@ const PbxApi = {
 
     /**
      * Update license key, get new one, activate coupon
+     *
      * @param {Object} formData - The data for the license update request.
      * @param {function} callback - The callback function to handle the response.
      * @returns {void}

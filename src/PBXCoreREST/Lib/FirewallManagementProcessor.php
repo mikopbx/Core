@@ -20,7 +20,6 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 
-use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -38,6 +37,37 @@ use Throwable;
  */
 class FirewallManagementProcessor extends Injectable
 {
+
+    /**
+     * Processes Firewall requests
+     *
+     * @param array $request
+     *
+     * @return PBXApiResult An object containing the result of the API call.
+     *
+     * @throws \Exception
+     */
+    public static function callBack(array $request): PBXApiResult
+    {
+        $action         = $request['action'];
+        $data           = $request['data'];
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        switch ($action) {
+            case 'unBanIp':
+                $res = self::fail2banUnbanAll($data['ip']);
+                break;
+            case 'getBannedIp':
+                $res = self::getBannedIp();
+                break;
+            default:
+                $res->messages[] = "Unknown action - {$action} in systemCallBack";
+        }
+        $res->function = $action;
+
+        return $res;
+    }
+
     /**
      * Remove an IP address from the fail2ban ban list.
      *
@@ -73,7 +103,7 @@ class FirewallManagementProcessor extends Injectable
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function getBanIp(?string $ip = null): PBXApiResult
+    public static function getBannedIp(?string $ip = null): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;

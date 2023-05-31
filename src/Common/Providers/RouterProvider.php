@@ -78,20 +78,20 @@ class RouterProvider implements ServiceProviderInterface
                 );
 
 
-                // Add route for external modules which integrate their views into admin web UI
-                // if controller name starts with 'module-' and namespace didn't provide
-                $router->add('/admin-cabinet/{controller:module-[\w-]+}/((?!module)[a-zA-Z0-9_-]+)/:params', [
-                    'module'     => 'admin-cabinet',
-                    'namespace' => 1,
-                    'controller' => 1,
-                    'action'     => 2,
-                    'params'     => 3,
-                ])->convert(
-                    'namespace',
-                    function ($namespace) {
-                        $camelizedNameSpace = \Phalcon\Text::Camelize($namespace);
-                        return "\\Modules\\{$camelizedNameSpace}\\App\\Controllers";
-                    });
+//                // Add route for external modules which integrate their views into admin web UI
+//                // if controller name starts with 'module-' and namespace didn't provide
+//                $router->add('/admin-cabinet/{controller:module-[\w-]+}/((?!module)[a-zA-Z0-9_-]+)/:params', [
+//                    'module'     => 'admin-cabinet',
+//                    'namespace' => 1,
+//                    'controller' => 1,
+//                    'action'     => 2,
+//                    'params'     => 3,
+//                ])->convert(
+//                    'namespace',
+//                    function ($namespace) {
+//                        $camelizedNameSpace = \Phalcon\Text::Camelize($namespace);
+//                        return "\\Modules\\{$camelizedNameSpace}\\App\\Controllers";
+//                    });
 
                 // Register additional app modules from external enabled modules
                 PbxExtensionUtils::registerEnabledModulesInRouter($router);

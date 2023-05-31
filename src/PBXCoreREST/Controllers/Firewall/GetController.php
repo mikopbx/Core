@@ -17,39 +17,35 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Controllers\License;
+namespace MikoPBX\PBXCoreREST\Controllers\Firewall;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\FirewallManagementProcessor;
 
 /**
- * Handles the GET request for license-related actions.
+ * Firewall management (GET)
  *
- * @RoutePrefix("/pbxcore/api/license")
+ * @RoutePrefix("/pbxcore/api/firewall")
+ *
+ * @examples
+ * Get list of banned IP by fail2ban
+ *   curl http://127.0.0.1/pbxcore/api/system/getBannedIp;
+ *
  */
 class GetController extends BaseController
 {
     /**
-     * Calls the corresponding action for license service based on the provided $actionName.
+     * Handles the call to different actions based on the action name
      *
-     * @param string $actionName The name of the action.
+     * @param string $actionName The name of the action
      *
-     * Reset license key settings.
-     * @Get("/resetKey")
-     *
-     * Retrieves license information from the license server.
-     * @Get("/getLicenseInfo")
-     *
-     * Checks whether the license system is working properly or not.
-     * @Get("/getMikoPBXFeatureStatus")
-     *
-     * Make an API call to send PBX metrics
-     * @Get("/sendPBXMetrics")
+     * Retrieve a list of banned IP addresses or get data for a specific IP address.
+     * @Get ("/getBannedIp")
      *
      * @return void
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker(LicenseManagementProcessor::class, $actionName);
+        $this->sendRequestToBackendWorker(FirewallManagementProcessor::class, $actionName, $_REQUEST);
     }
 }

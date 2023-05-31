@@ -20,12 +20,15 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Iax;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;
 
 
 /**
- * Handles the GET request for IAX registrations at /api/iax/{name}.
+ * Handles the GET request for IAX registrations.
  *
- * @example
+ * @RoutePrefix("/pbxcore/api/iax")
+ *
+ * @examples
  * curl http://172.16.156.212/pbxcore/api/iax/getRegistry;
  */
 class GetController extends BaseController
@@ -35,10 +38,14 @@ class GetController extends BaseController
      * Calls the corresponding action for IAX registrations based on the provided $actionName.
      *
      * @param string $actionName The name of the action.
+     *
+     * Retrieves the statuses of IAX providers registration.
+     * @Get("/getRegistry")
+     *
      * @return void
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker('iax', $actionName);
+        $this->sendRequestToBackendWorker(IAXStackProcessor::class, $actionName);
     }
 }

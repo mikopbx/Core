@@ -20,9 +20,14 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Advices;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 
 /**
  * Controller for handling advices and notifications related actions.
+ *
+ * @RoutePrefix("/pbxcore/api/advices")
+ *
+ * @package MikoPBX\PBXCoreREST\Controllers\Advices
  *
  * @example
  *
@@ -32,17 +37,18 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 class GetController extends BaseController
 {
     /**
-     * Retrieves advices and notifications from /pbxcore/api/advices/
-     *
      * This method retrieves the list of notifications regarding the system, firewall, passwords, and wrong settings.
      * The following command can be used to invoke this action:
      *
      * @param string $actionName The name of the action.
-     * @return void
      *
+     * Generates a list of notifications about the system, firewall, passwords, and wrong settings.
+     * @Get("/getList")
+     *
+     * @return void
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker('advices', $actionName, [],'', 10, 2048);
+        $this->sendRequestToBackendWorker(AdvicesProcessor::class, $actionName, [],'', 10, 2048);
     }
 }

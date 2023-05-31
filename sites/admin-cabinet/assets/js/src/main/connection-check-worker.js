@@ -68,7 +68,7 @@ const connectionCheckWorker = {
      * Worker function that pings the PBX API and executes the callback.
      */
     worker() {
-        PbxApi.PingPBX(connectionCheckWorker.cbAfterResponse);
+        PbxApi.SystemPingPBX(connectionCheckWorker.cbAfterResponse);
         connectionCheckWorker.timeoutHandle = window.setTimeout(
             connectionCheckWorker.worker,
             connectionCheckWorker.timeOut,

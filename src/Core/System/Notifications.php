@@ -162,7 +162,8 @@ class Notifications
      * Sends a test email.
      * @return bool True if the test email is sent successfully, false otherwise.
      */
-    public function sendTestMail(): bool{
+    public function sendTestMail(): bool
+    {
         if(!self::checkConnection(self::TYPE_PHP_MAILER)){
             return false;
         }

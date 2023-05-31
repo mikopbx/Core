@@ -4,7 +4,7 @@
         <img src="{{ urlToLogo }}" class="ui small image"/>
     </a>
 
-    <div class="ui item black launch right attached fixed button" id="sidebar-menu-button">
+    <div class="ui item black launch left floated fixed button" id="sidebar-menu-button">
         <i class="content icon"></i>
         <span class="text">{{ t._("topMenu_SidebarButton") }}</span>
     </div>

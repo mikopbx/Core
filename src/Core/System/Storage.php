@@ -133,7 +133,7 @@ class Storage extends Di\Injectable
      * @param string $device The device path.
      * @return string The UUID of the device.
      */
-    public function getUuid($device): string
+    public function getUuid(string $device): string
     {
         if (empty($device)) {
             return '';
@@ -159,7 +159,7 @@ class Storage extends Di\Injectable
      * @param string $device The device path.
      * @return string The file system type of the device.
      */
-    public function getFsType($device): string
+    public function getFsType(string $device): string
     {
         $blkidPath = Util::which('blkid');
         $busyboxPath = Util::which('busybox');
@@ -344,7 +344,7 @@ class Storage extends Di\Injectable
      * @param string $local_dir The local directory to mount the SFTP disk.
      * @return bool Returns true if the SFTP disk is successfully mounted, false otherwise.
      */
-    public static function mountSftpDisk($host, $port, $user, $pass, $remout_dir, $local_dir): bool
+    public static function mountSftpDisk(string $host, string $port, string $user, string $pass, string $remout_dir, string $local_dir): bool
     {
 
         // Create the local directory if it doesn't exist
@@ -373,14 +373,14 @@ class Storage extends Di\Injectable
      * Mount an FTP disk.
      *
      * @param string $host The FTP server host.
-     * @param int $port The FTP server port.
+     * @param string $port The FTP server port.
      * @param string $user The FTP server username.
      * @param string $pass The FTP server password.
      * @param string $remote_dir The remote directory on the FTP server.
      * @param string $local_dir The local directory to mount the FTP disk.
      * @return bool Returns true if the FTP disk is successfully mounted, false otherwise.
      */
-    public static function mountFtp($host, $port, $user, $pass, $remout_dir, $local_dir): bool
+    public static function mountFtp(string $host, string $port, string $user, string $pass, string $remout_dir, string $local_dir): bool
     {
 
         // Create the local directory if it doesn't exist
@@ -433,7 +433,7 @@ class Storage extends Di\Injectable
      * @param string $local_dir The local directory to mount the WebDAV disk.
      * @return bool Returns true if the WebDAV disk is successfully mounted, false otherwise.
      */
-    public static function mountWebDav($host, $user, $pass, $dstDir, $local_dir): bool
+    public static function mountWebDav(string $host, string $user, string $pass, string $dstDir, string $local_dir): bool
     {
         $host = trim($host);
         $dstDir = trim($dstDir);
@@ -480,7 +480,7 @@ class Storage extends Di\Injectable
      * @param string $dev The device path of the disk.
      * @return bool Returns true if the file system creation process is initiated, false otherwise.
      */
-    public static function mkfs_disk($dev)
+    public static function mkfs_disk(string $dev)
     {
         if (!file_exists($dev)) {
             $dev = "/dev/{$dev}";
@@ -511,7 +511,7 @@ class Storage extends Di\Injectable
      * @param string $dir The mount directory of the disk.
      * @return bool Returns true if the disk is successfully unmounted, false otherwise.
      */
-    public static function umountDisk($dir): bool
+    public static function umountDisk(string $dir): bool
     {
         $umountPath = Util::which('umount');
         $rmPath = Util::which('rm');
@@ -538,7 +538,7 @@ class Storage extends Di\Injectable
      * @param bool $bg Whether to run the command in the background.
      * @return bool Returns true if the disk formatting process is initiated, false otherwise.
      */
-    public function formatDiskLocal($device, $bg = false)
+    public function formatDiskLocal(string $device, bool $bg = false)
     {
         $partedPath = Util::which('parted');
 
@@ -563,7 +563,7 @@ class Storage extends Di\Injectable
      * @param bool $bg Whether to run the command in the background.
      * @return bool Returns true if the disk formatting process is successfully completed, false otherwise.
      */
-    private function formatDiskLocalPart2($device, $bg = false): bool
+    private function formatDiskLocalPart2(string $device, bool $bg = false): bool
     {
 
         // Determine the device ID based on the last character of the device path
@@ -595,7 +595,7 @@ class Storage extends Di\Injectable
      * @param string $dev The device path of the disk.
      * @return string Returns the status of mkfs process ('inprogress' or 'ended').
      */
-    public static function statusMkfs($dev): string
+    public static function statusMkfs(string $dev): string
     {
         if (!file_exists($dev)) {
             $dev = "/dev/{$dev}";
@@ -617,7 +617,7 @@ class Storage extends Di\Injectable
      * @param bool $mounted_only Whether to include only mounted devices.
      * @return array An array of HDD device information.
      */
-    public function getAllHdd($mounted_only = false): array
+    public function getAllHdd(bool $mounted_only = false): array
     {
         $res_disks = [];
 
@@ -751,7 +751,7 @@ class Storage extends Di\Injectable
      * @param bool $diskOnly Whether to include only disk devices.
      * @return array An array of disk device information.
      */
-    public function diskGetDevices($diskOnly = false): array
+    public function diskGetDevices(bool $diskOnly = false): array
     {
         $disks = [];
         $blockDevices = $this->getLsBlkDiskInfo();
@@ -833,7 +833,7 @@ class Storage extends Di\Injectable
      * @param array $diskInfo The disk information.
      * @return string The vendor name.
      */
-    private function getVendorDisk($diskInfo): string
+    private function getVendorDisk(array $diskInfo): string
     {
         $temp_vendor = [];
         $keys = ['vendor', 'model', 'type'];
@@ -888,7 +888,7 @@ class Storage extends Di\Injectable
      * @param string $diskName The name of the disk.
      * @return array An array of disk partition names.
      */
-    private function getDiskParted($diskName): array
+    private function getDiskParted(string $diskName): array
     {
         $result = [];
         $lsBlkPath = Util::which('lsblk');
@@ -922,7 +922,7 @@ class Storage extends Di\Injectable
      * @param array $deviceInfo The device information.
      * @return array An array containing format and file system information for each device partition.
      */
-    public function determineFormatFs($deviceInfo)
+    public function determineFormatFs(array $deviceInfo)
     {
         $allow_formats = ['ext2', 'ext4', 'fat', 'ntfs', 'msdos'];
         $device = basename($deviceInfo['name'] ?? '');
@@ -1018,7 +1018,7 @@ class Storage extends Di\Injectable
      * @param string $dir The directory to mount the disk.
      * @return bool True if the disk was successfully mounted, false otherwise.
      */
-    public static function mountDisk($dev, $format, $dir): bool
+    public static function mountDisk(string $dev, string $format, string $dir): bool
     {
         // Check if the disk is already mounted
         if (self::isStorageDiskMounted("/dev/{$dev} ")) {

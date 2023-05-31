@@ -20,29 +20,33 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Sip;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
 
 /**
  * Controller for handling SIP-related actions using POST requests.
  *
+ * @RoutePrefix("/pbxcore/api/sip")
+ *
  * @example
  *
- * Get information about a SIP peer
+ * Retrieves the status of provided SIP peer.
  * curl -X POST -d '{"peer": "212"}' http://127.0.0.1/pbxcore/api/sip/getSipPeer;
  */
 class PostController extends BaseController
 {
     /**
      * Handles the call action for SIP using POST requests.
-     * '/api/sip/{name}'
+     *
+     * Retrieves the status of provided SIP peer.
+     * @Post("/getSipPeer")
      *
      * @param string $actionName The name of the action.
      * @return void
-     *
      */
     public function callAction(string $actionName): void
     {
         $raw_data = $this->request->getRawBody();
         $data     = json_decode($raw_data, true);
-        $this->sendRequestToBackendWorker('sip', $actionName, $data);
+        $this->sendRequestToBackendWorker(SIPStackProcessor::class, $actionName, $data);
     }
 }

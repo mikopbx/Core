@@ -19,39 +19,12 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\Common\Models\AsteriskManagerUsers;
-use MikoPBX\Common\Models\CallQueueMembers;
-use MikoPBX\Common\Models\CallQueues;
-use MikoPBX\Common\Models\CustomFiles;
-use MikoPBX\Common\Models\ExtensionForwardingRights;
-use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\FirewallRules;
-use MikoPBX\Common\Models\Iax;
-use MikoPBX\Common\Models\IncomingRoutingTable;
-use MikoPBX\Common\Models\IvrMenu;
-use MikoPBX\Common\Models\IvrMenuActions;
-use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Models\OutgoingRoutingTable;
-use MikoPBX\Common\Models\OutWorkTimes;
-use MikoPBX\Common\Models\PbxExtensionModules;
-use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\Sip;
-use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Common\Models\Users;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\Notifications;
-use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
-use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\PbxExtensionState;
-use MikoPBX\Modules\PbxExtensionUtils;
-use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
-use MikoPBX\PBXCoreREST\Workers\WorkerModuleInstaller;
-use Phalcon\Di;
+use MikoPBX\PBXCoreREST\Lib\System\RestoreDefaultSettings;
 use Phalcon\Di\Injectable;
 
 
@@ -101,41 +74,14 @@ class SystemManagementProcessor extends Injectable
             case 'sendMail':
                 $res = self::sendMail($data);
                 break;
-            case 'unBanIp':
-                $res = FirewallManagementProcessor::fail2banUnbanAll($data['ip']);
-                break;
-            case 'getBanIp':
-                $res = FirewallManagementProcessor::getBanIp();
-                break;
             case 'upgrade':
                 $res = self::upgradeFromImg($data['temp_filename']);
-                break;
-            case 'installNewModule':
-                $filePath = $request['data']['filePath'];
-                $res      = self::installModule($filePath);
-                break;
-            case 'statusOfModuleInstallation':
-                $filePath = $request['data']['filePath'];
-                $res      = self::statusOfModuleInstallation($filePath);
-                break;
-            case 'enableModule':
-                $moduleUniqueID = $request['data']['uniqid'];
-                $res            = self::enableModule($moduleUniqueID);
-                break;
-            case 'disableModule':
-                $moduleUniqueID = $request['data']['uniqid'];
-                $res            = self::disableModule($moduleUniqueID);
-                break;
-            case 'uninstallModule':
-                $moduleUniqueID = $request['data']['uniqid'];
-                $keepSettings   = $request['data']['keepSettings'] === 'true';
-                $res            = self::uninstallModule($moduleUniqueID, $keepSettings);
                 break;
             case 'restoreDefault':
                 $ch = 0;
                 do{
                     $ch++;
-                    $res = self::restoreDefaultSettings();
+                    $res = RestoreDefaultSettings::main();
                     sleep(1);
                 }while($ch <= 10 && !$res->success);
                 break;
@@ -145,8 +91,6 @@ class SystemManagementProcessor extends Injectable
                 $res = self::convertAudioFile($request['data']['filename']);
                 break;
             default:
-                $res             = new PBXApiResult();
-                $res->processor  = __METHOD__;
                 $res->messages[] = "Unknown action - {$action} in systemCallBack";
         }
 
@@ -188,9 +132,9 @@ class SystemManagementProcessor extends Injectable
     }
 
     /**
-     * Upgrade the system from an image file.
+     * Upgrade the PBX using uploaded IMG file.
      *
-     * @param string $tempFilename The path to the temporary image file.
+     * @param string $tempFilename The path to the uploaded image file.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -246,444 +190,14 @@ class SystemManagementProcessor extends Injectable
         return $res;
     }
 
-    /**
-     * Install a new additional extension module.
-     *
-     * @param string $filePath The path to the module file.
-     *
-     * @return PBXApiResult An object containing the result of the API call.
-     */
-    public static function installModule($filePath): PBXApiResult
-    {
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $resModuleMetadata = FilesManagementProcessor::getMetadataFromModuleFile($filePath);
-        if ( ! $resModuleMetadata->success) {
-            return $resModuleMetadata;
-        }
-
-        $moduleUniqueID = $resModuleMetadata->data['uniqid'];
-        // Disable the module if it's enabled
-        if (PbxExtensionUtils::isEnabled($moduleUniqueID)){
-            $res = self::disableModule($moduleUniqueID);
-            if (!$res->success){
-                return $res;
-            }
-        }
-
-        $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
-        $needBackup       = is_dir($currentModuleDir);
-
-        if ($needBackup) {
-            self::uninstallModule($moduleUniqueID, true);
-        }
-
-        // Start the background process to install the module
-        $temp_dir            = dirname($filePath);
-
-        // Create a progress file to track the installation progress
-        file_put_contents( $temp_dir . '/installation_progress', '0');
-
-        // Create an error file to store any installation errors
-        file_put_contents( $temp_dir . '/installation_error', '');
-
-        $install_settings = [
-            'filePath' => $filePath,
-            'currentModuleDir' => $currentModuleDir,
-            'uniqid' => $moduleUniqueID,
-        ];
-
-        // Save the installation settings to a JSON file
-        $settings_file  = "{$temp_dir}/install_settings.json";
-        file_put_contents(
-            $settings_file,
-            json_encode($install_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
-        );
-        $phpPath               = Util::which('php');
-        $workerFilesMergerPath = Util::getFilePathByClassName(WorkerModuleInstaller::class);
-
-        // Execute the background process to install the module
-        Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
-        $res->data['filePath']= $filePath;
-        $res->success = true;
-
-        return $res;
-    }
-
 
     /**
-     * Uninstall a module.
-     *
-     * @param string $moduleUniqueID The unique ID of the module to uninstall.
-     * @param bool   $keepSettings   Indicates whether to keep the module settings.
-     *
-     * @return PBXApiResult An object containing the result of the API call.
-     */
-    public static function uninstallModule(string $moduleUniqueID, bool $keepSettings): PBXApiResult
-    {
-        $res              = new PBXApiResult();
-        $res->processor   = __METHOD__;
-        $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
-
-        // Kill all module processes
-        if (is_dir("{$currentModuleDir}/bin")) {
-            $busyboxPath = Util::which('busybox');
-            $killPath    = Util::which('kill');
-            $lsofPath    = Util::which('lsof');
-            $grepPath    = Util::which('grep');
-            $awkPath     = Util::which('awk');
-            $uniqPath    = Util::which('uniq');
-
-            // Execute the command to kill all processes related to the module
-            Processes::mwExec(
-                "{$busyboxPath} {$killPath} -9 $({$lsofPath} {$currentModuleDir}/bin/* |  {$busyboxPath} {$grepPath} -v COMMAND | {$busyboxPath} {$awkPath}  '{ print $2}' | {$busyboxPath} {$uniqPath})"
-            );
-        }
-
-        // Uninstall module with keep settings and backup db
-        $moduleClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
-
-        try {
-            if (class_exists($moduleClass)
-                && method_exists($moduleClass, 'uninstallModule')) {
-                // Instantiate the module setup class and call the uninstallModule method
-                $setup = new $moduleClass($moduleUniqueID);
-            } else {
-
-                // Use a fallback class to uninstall the module from the database if it doesn't exist on disk
-                $moduleClass = PbxExtensionSetupFailure::class;
-                $setup       = new $moduleClass($moduleUniqueID);
-            }
-            $setup->uninstallModule($keepSettings);
-        } finally {
-            if (is_dir($currentModuleDir)) {
-                // If the module directory still exists, force uninstallation
-                $rmPath = Util::which('rm');
-
-                // Remove the module directory recursively
-                Processes::mwExec("{$rmPath} -rf {$currentModuleDir}");
-
-                // Use the fallback class to unregister the module from the database
-                $moduleClass = PbxExtensionSetupFailure::class;
-                $setup       = new $moduleClass($moduleUniqueID);
-                $setup->unregisterModule();
-            }
-        }
-        $res->success = true;
-
-        return $res;
-    }
-
-    /**
-     * Enables extension module
-     *
-     * @param string $moduleUniqueID
-     *
-     * @return PBXApiResult An object containing the result of the API call.
-     */
-    private static function enableModule(string $moduleUniqueID): PBXApiResult
-    {
-        $res                  = new PBXApiResult();
-        $res->processor       = __METHOD__;
-        $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
-        if ($moduleStateProcessor->enableModule() === false) {
-            $res->success  = false;
-            $res->messages = $moduleStateProcessor->getMessages();
-        } else {
-            PBXConfModulesProvider::recreateModulesProvider();
-            $res->data    = $moduleStateProcessor->getMessages();
-            $res->success = true;
-        }
-
-        return $res;
-    }
-
-    /**
-     * Disables extension module
-     *
-     * @param string $moduleUniqueID
-     *
-     * @return PBXApiResult An object containing the result of the API call.
-     */
-    private static function disableModule(string $moduleUniqueID): PBXApiResult
-    {
-        $res                  = new PBXApiResult();
-        $res->processor       = __METHOD__;
-        $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
-        if ($moduleStateProcessor->disableModule() === false) {
-            $res->success  = false;
-            $res->messages = $moduleStateProcessor->getMessages();
-        } else {
-            PBXConfModulesProvider::recreateModulesProvider();
-            $res->data    = $moduleStateProcessor->getMessages();
-            $res->success = true;
-        }
-
-        return $res;
-    }
-
-    /**
-     * Perform pre-cleaning operations on specific columns of certain models.
-     *
-     * @param PBXApiResult $res The result object to store any error messages.
-     *
-     * @return void
-     */
-    public static function preCleaning(PBXApiResult &$res):void
-    {
-        $preCleaning = [
-            CallQueues::class => [
-                'redirect_to_extension_if_empty',
-                'redirect_to_extension_if_unanswered',
-                'redirect_to_extension_if_repeat_exceeded'
-            ],
-            IvrMenu::class => [
-                'timeout_extension'
-            ]
-        ];
-        foreach ($preCleaning as $class => $columns) {
-            $records = call_user_func([$class, 'find']);
-            foreach ($records as $record){
-                foreach ($columns as $column){
-                    $record->$column = '';
-                }
-                if ( ! $record->save()) {
-                    $res->messages[] = $record->getMessages();
-                    $res->success    = false;
-                }
-            }
-        }
-    }
-
-    /**
-     * Perform cleaning operations on main tables.
-     *
-     * @param PBXApiResult $res The result object to store any error messages.
-     *
-     * @return void
-     */
-    public static function cleaningMainTables(&$res):void
-    {
-        // Define the models and conditions for cleaning
-        $clearThisModels = [
-            [ExtensionForwardingRights::class => ''],
-            [OutWorkTimes::class => ''],
-            [IvrMenuActions::class => ''],
-            [CallQueueMembers::class => ''],
-            [OutgoingRoutingTable::class => ''],
-            [IncomingRoutingTable::class => 'id>1'],
-            [Sip::class => ''], // All SIP providers
-            [Iax::class => ''], // All IAX providers
-            [AsteriskManagerUsers::class => ''],
-            [Extensions::class => 'type="' . Extensions::TYPE_IVR_MENU . '"'],  // IVR Menu
-            [Extensions::class => 'type="' . Extensions::TYPE_CONFERENCE . '"'],  // CONFERENCE
-            [Extensions::class => 'type="' . Extensions::TYPE_QUEUE . '"'],  // QUEUE
-            [Users::class => 'id>"1"'], // All except root with their extensions
-            [CustomFiles::class => ''],
-            [NetworkFilters::class=>'permit!="0.0.0.0/0" AND deny!="0.0.0.0/0"'] //Delete all other rules
-        ];
-
-        // Iterate over each model and perform deletion based on conditions
-        foreach ($clearThisModels as $modelParams) {
-            foreach ($modelParams as $key => $value) {
-                $records = call_user_func([$key, 'find'], $value);
-                if (!$records->delete()) {
-                    // If deletion fails, add error messages to the result object
-                    $res->messages[] = $records->getMessages();
-                    $res->success    = false;
-                }
-            }
-        }
-        // Allow all connections for 0.0.0.0/0 in firewall rules
-        $firewallRules = FirewallRules::find();
-        foreach ($firewallRules as $firewallRule){
-            $firewallRule->action = 'allow';
-            $firewallRule->save();
-        }
-    }
-
-    /**
-     * Perform cleaning operations on other extensions.
-     *
-     * @param PBXApiResult $res The result object to store any error messages.
-     *
-     * @return void
-     */
-    public static function cleaningOtherExtensions(&$res):void
-    {
-        // Define the parameters for querying the extensions to delete
-        $parameters     = [
-            'conditions' => 'not number IN ({ids:array})',
-            'bind'       => [
-                'ids' => [
-                    '000063',   // Reads back the extension
-                    '000064',   // 0000MILLI
-                    '10003246', // Echo test
-                    'hangup',   // System Extension
-                    'busy',     // System Extension
-                    'did2user', // System Extension
-                    'voicemail',// System Extension
-                ],
-            ],
-        ];
-        $stopDeleting   = false;
-        $countRecords   = Extensions::count($parameters);
-        $deleteAttempts = 0;
-        while ($stopDeleting === false) {
-            $record = Extensions::findFirst($parameters);
-            if ($record === null) {
-                $stopDeleting = true;
-                continue;
-            }
-            if ( ! $record->delete()) {
-                $deleteAttempts += 1;
-            }
-            if ($deleteAttempts > $countRecords * 10) {
-                $stopDeleting    = true; // Prevent loop
-                $res->messages[] = $record->getMessages();
-            }
-        }
-    }
-
-    /**
-     * Clean up custom sound files.
-     *
-     * @param PBXApiResult $res The result object to store any error messages.
-     *
-     * @return void
-     */
-    public static function cleaningSoundFiles(&$res):void
-    {
-        $rm     = Util::which('rm');
-        $parameters = [
-            'conditions' => 'category = :custom:',
-            'bind'       => [
-                'custom' => SoundFiles::CATEGORY_CUSTOM,
-            ],
-        ];
-        $records    = SoundFiles::find($parameters);
-        foreach ($records as $record) {
-            if (stripos($record->path, '/storage/usbdisk1/mikopbx') !== false) {
-                Processes::mwExec("{$rm} -rf {$record->path}");
-                if ( ! $record->delete()) {
-                    $res->messages[] = $record->getMessages();
-                    $res->success    = false;
-                }
-            }
-        }
-    }
-
-    /**
-     * Deleting Backups
-     * @return void
-     */
-    public static function cleaningBackups():void
-    {
-        $di = Di::getDefault();
-        $dir = $di->getShared('config')->path('core.mediaMountPoint').'/mikopbx/backup';
-        if(file_exists($dir)){
-            $chAttr     = Util::which('chattr');
-            Processes::mwExec("$chAttr -i -R $dir");
-            $rm     = Util::which('rm');
-            Processes::mwExec("$rm -rf $dir/*");
-        }
-    }
-
-    /**
-     * Restore the default settings of the PBX.
-     *
-     * @return PBXApiResult An object containing the result of the API call.
-     */
-    public static function restoreDefaultSettings(): PBXApiResult
-    {
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $di             = DI::getDefault();
-        if ($di === null) {
-            $res->messages[] = 'Error on DI initialize';
-            return $res;
-        }
-        $rm     = Util::which('rm');
-        $res->success = true;
-
-        // Change incoming rule to default action
-        IncomingRoutingTable::resetDefaultRoute();
-        self::preCleaning($res);
-
-        self::cleaningMainTables($res);
-        self::cleaningOtherExtensions($res);
-        self::cleaningSoundFiles($res);
-        self::cleaningBackups();
-
-        // PbxExtensions
-        $records = PbxExtensionModules::find();
-        foreach ($records as $record) {
-            $moduleDir = PbxExtensionUtils::getModuleDir($record->uniqid);
-            Processes::mwExec("{$rm} -rf {$moduleDir}");
-            if ( ! $record->delete()) {
-                $res->messages[] = $record->getMessages();
-                $res->success    = false;
-            }
-        }
-
-        // Fill PBXSettingsByDefault
-        $defaultValues = PbxSettings::getDefaultArrayValues();
-        $fixedKeys = [
-            'Name',
-            'Description',
-            'SSHPassword',
-            'SSHRsaKey',
-            'SSHDssKey',
-            'SSHAuthorizedKeys',
-            'SSHecdsaKey',
-            'SSHLanguage',
-            'WEBHTTPSPublicKey',
-            'WEBHTTPSPrivateKey',
-            'RedirectToHttps',
-            'PBXLanguage',
-            'PBXVersion',
-            'WebAdminLogin',
-            'WebAdminPassword',
-            'WebAdminLanguage',
-        ];
-        foreach ($defaultValues as $key=>$defaultValue){
-            if (in_array($key, $fixedKeys, true)){
-                continue;
-            }
-            $record = PbxSettings::findFirstByKey($key);
-            if ($record===null){
-                $record = new PbxSettings();
-                $record->key = $key;
-            }
-            $record->value = $defaultValue;
-        }
-
-        // Delete CallRecords from database
-        $cdr = CdrDb::getPathToDB();
-        Processes::mwExec("{$rm} -rf {$cdr}*");
-        $dbUpdater = new UpdateDatabase();
-        $dbUpdater->updateDatabaseStructure();
-
-        // Delete CallRecords sound files
-        $callRecordsPath = $di->getShared('config')->path('asterisk.monitordir');
-        if (stripos($callRecordsPath, '/storage/usbdisk1/mikopbx') !== false) {
-            Processes::mwExec("{$rm} -rf {$callRecordsPath}/*");
-        }
-
-        // Restart PBX
-        $pbxConsole = Util::which('pbx-console');
-        shell_exec("$pbxConsole services restart-all");
-        PBX::coreRestart();
-        return $res;
-    }
-
-    /**
-     * Convert an audio file to different formats.
+     * Convert the audio file to various codecs using Asterisk.
      *
      * @param string $filename The path of the audio file to be converted.
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function convertAudioFile($filename): PBXApiResult
+    public static function convertAudioFile(string $filename): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -753,45 +267,4 @@ class SystemManagementProcessor extends Injectable
         return $res;
     }
 
-    /**
-     * Check the status of a module installation.
-     *
-     * @param string $filePath The path of the module installation file.
-     * @return PBXApiResult An object containing the result of the API call.
-     */
-    public static function statusOfModuleInstallation(string $filePath): PBXApiResult
-    {
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $di             = Di::getDefault();
-        if ($di === null) {
-            $res->messages[] = 'Dependency injector does not initialized';
-
-            return $res;
-        }
-        $temp_dir            = dirname($filePath);
-        $progress_file = $temp_dir . '/installation_progress';
-        $error_file = $temp_dir . '/installation_error';
-        if (!file_exists($error_file)|| !file_exists($progress_file)){
-            $res->success                   = false;
-            $res->data['i_status']          = 'PROGRESS_FILE_NOT_FOUND';
-            $res->data['i_status_progress'] = '0';
-        }
-        elseif (file_get_contents($error_file)!=='') {
-            $res->success                   = false;
-            $res->data['i_status']          = 'INSTALLATION_ERROR';
-            $res->data['i_status_progress'] = '0';
-            $res->messages[]                = file_get_contents($error_file);
-        } elseif ('100' === file_get_contents($progress_file)) {
-            $res->success                   = true;
-            $res->data['i_status_progress'] = '100';
-            $res->data['i_status']          = 'INSTALLATION_COMPLETE';
-        } else {
-            $res->success                   = true;
-            $res->data['i_status']          = 'INSTALLATION_IN_PROGRESS';
-            $res->data['i_status_progress'] = file_get_contents($progress_file);
-        }
-
-        return $res;
-    }
 }

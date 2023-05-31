@@ -23,60 +23,85 @@ namespace MikoPBX\PBXCoreREST\Controllers\Cdr;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
+use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
 
+
+/**
+ * Class GetController
+ * @RoutePrefix("/pbxcore/api/cdr")
+ *
+ * @package MikoPBX\PBXCoreREST\Controllers\Cdr
+ *
+ * @examples
+ *
+ * The following command can be used to invoke this action:
+ * curl http://127.0.0.1/pbxcore/api/cdr/getActiveChannels;
+ *
+ * Example response:
+ * [{"start":"2018-02-27 10:45:07","answer":null,"src_num":"206","dst_num":"226","did":"","linkedid":"1519717507.24"}]
+ *
+ * The response is an array of arrays with the following fields:
+ * "start"     => 'TEXT',     // DateTime
+ * "answer"    => 'TEXT',     // DateTime
+ * "endtime"   => 'TEXT',     // DateTime
+ * "src_num"   => 'TEXT',
+ * "dst_num"   => 'TEXT',
+ * "linkedid"  => 'TEXT',
+ * "did"       => 'TEXT'
+ *
+ *
+ * Playback sound
+ *
+ * http://172.16.156.212/pbxcore/api/cdr/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/05/11/16/mikopbx-1526043925.13_43T4MdXcpT.mp3
+ * http://172.16.156.212/pbxcore/api/cdr/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/06/01/17/mikopbx-1527865189.0_qrQeNUixcV.wav
+ * http://172.16.156.223/pbxcore/api/cdr/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/12/18/09/mikopbx-1545113960.4_gTvBUcLEYh.mp3&download=true&filename=test.mp3
+ *
+ *
+ */
 class GetController extends BaseController
 {
 
     /**
-     * Retrieves active calls from CDR
-     *
-     * /pbxcore/api/cdr/
-     *
-     * This method retrieves the list of active calls. The following command can be used to invoke this action:
-     *
-     * @example
-     *
-     * curl http://127.0.0.1/pbxcore/api/cdr/getActiveCalls;
-     * curl http://127.0.0.1/pbxcore/api/cdr/getActiveChannels;
-     *
-     * Example response:
-     * [{"start":"2018-02-27 10:45:07","answer":null,"src_num":"206","dst_num":"226","did":"","linkedid":"1519717507.24"}]
-     *
-     * The response is an array of arrays with the following fields:
-     * "start"     => 'TEXT',     // DateTime
-     * "answer"    => 'TEXT',     // DateTime
-     * "endtime"   => 'TEXT',     // DateTime
-     * "src_num"   => 'TEXT',
-     * "dst_num"   => 'TEXT',
-     * "linkedid"  => 'TEXT',
-     * "did"       => 'TEXT',
+     * This method retrieves the list of active calls  from CDR.
      *
      * @param string $actionName The name of the action.
+     *
+     * Get active channels based on CDR data. These are the unfinished calls (endtime IS NULL).
+     * @Get("/getActiveChannels")
+     *
+     * This method performs playback of a recorded file with scrolling
+     * @Get("/playback")
+     *
+     * New method through Nginx only (TODO::Check auth by lua) (described in nginx.conf)
+     * @Get("/v2/playback")
+     *
      * @return void
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker('cdr', $actionName);
+        switch ($actionName) {
+            case 'playback':
+                $this->playback();
+                break;
+            default:
+                $data = $this->request->getPost();
+                $this->sendRequestToBackendWorker(FilesManagementProcessor::class, $actionName, $data);
+        }
+
+        $this->sendRequestToBackendWorker(CdrDBProcessor::class, $actionName);
     }
 
     /**
-     * Performs playback of a recorded file with scrolling.
-     * /pbxcore/api/cdr/v2/playback
-     *
-     * This method performs playback of a recorded file with scrolling. The following API parameters are available:
+     * This method performs playback of a recorded file with scrolling.
+     * The following API parameters are available:
      * - view: Full path to the recording file.
      * - download (optional): Specifies whether to download the recording or not.
      * - filename (optional): Specifies a custom filename for the downloaded file.
      *
-     * @example:
-     *
-     * http://172.16.156.212/pbxcore/api/cdr/v2/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/05/11/16/mikopbx-1526043925.13_43T4MdXcpT.mp3
-     * http://172.16.156.212/pbxcore/api/cdr/v2/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/06/01/17/mikopbx-1527865189.0_qrQeNUixcV.wav
-     * http://172.16.156.223/pbxcore/api/cdr/v2/playback?view=/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2018/12/18/09/mikopbx-1545113960.4_gTvBUcLEYh.mp3&download=true&filename=test.mp3
-     *
      * @return void
      */
-    public function playbackAction(): void
+    private function playback(): void
     {
         $filename  = $this->request->get('view');
         $extension = Util::getExtensionOfFile($filename);

@@ -87,7 +87,7 @@ class LicenseManagementProcessor extends Injectable
     }
 
     /**
-     * Reset license key
+     * Reset license key.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -103,7 +103,7 @@ class LicenseManagementProcessor extends Injectable
     }
 
     /**
-     * Check and update license key on database
+     * Check and update license key on database.
      *
      * @param array $data
      *
@@ -163,7 +163,7 @@ class LicenseManagementProcessor extends Injectable
     }
 
     /**
-     * Returns license info from license server by key
+     * Returns license info from license server by key.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -186,7 +186,7 @@ class LicenseManagementProcessor extends Injectable
     }
 
     /**
-     * Check for free MikoPBX base license
+     * Check for free MikoPBX base license.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -245,7 +245,7 @@ class LicenseManagementProcessor extends Injectable
     }
 
     /**
-     * Sends PBX metrics to the MIKO company
+     * Sends PBX metrics to the license server company.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */

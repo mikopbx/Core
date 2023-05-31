@@ -20,12 +20,12 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use Phalcon\Di\Injectable;
 
 
 /**
- * Class PbxExtensionsProcessor
+ * Class PbxExtensionsProcessor delegate REST API processing into external modules
  *
  * @package MikoPBX\PBXCoreREST\Lib
  *
@@ -54,11 +54,11 @@ class PbxExtensionsProcessor extends Injectable
         $additionalModules          = $this->getDI()->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $this->additionalProcessors = [];
         foreach ($additionalModules as $moduleConfigObject) {
-            if (method_exists($moduleConfigObject, ConfigClass::MODULE_RESTAPI_CALLBACK)) {
+            if (method_exists($moduleConfigObject, RestAPIConfigInterface::MODULE_RESTAPI_CALLBACK)) {
                 $this->additionalProcessors[] = [
                     $moduleConfigObject->moduleUniqueId,
                     $moduleConfigObject,
-                    ConfigClass::MODULE_RESTAPI_CALLBACK,
+                    RestAPIConfigInterface::MODULE_RESTAPI_CALLBACK,
                 ];
             }
         }

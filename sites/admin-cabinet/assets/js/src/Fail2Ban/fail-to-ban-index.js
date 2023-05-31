@@ -71,10 +71,10 @@ const fail2BanIndex = {
 
     // This method initializes the Fail2Ban management interface.
     initialize() {
-        PbxApi.SystemGetBannedIp(fail2BanIndex.cbGetBannedIpList);
+        PbxApi.FirewallGetBannedIp(fail2BanIndex.cbGetBannedIpList);
         fail2BanIndex.$bannedIpList.on('click', fail2BanIndex.$unbanButons, (e) => {
             const unbannedIp = $(e.target).attr('data-value');
-            PbxApi.SystemUnBanIp(unbannedIp, fail2BanIndex.cbAfterUnBanIp);
+            PbxApi.FirewallUnBanIp(unbannedIp, fail2BanIndex.cbAfterUnBanIp);
         });
 
         fail2BanIndex.$enableCheckBox.checkbox({
@@ -144,7 +144,7 @@ const fail2BanIndex = {
 
     // This callback method is used after an IP has been unbanned.
     cbAfterUnBanIp() {
-        PbxApi.SystemGetBannedIp(fail2BanIndex.cbGetBannedIpList);
+        PbxApi.FirewallGetBannedIp(fail2BanIndex.cbGetBannedIpList);
     },
 
     /**

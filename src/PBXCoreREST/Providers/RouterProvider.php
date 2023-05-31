@@ -22,7 +22,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Providers;
 
-use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
+use MikoPBX\PBXCoreREST\Controllers\
+{
+    Cdr\GetController as CdrGetController,
     Iax\GetController as IaxGetController,
     Modules\ModulesControllerBase,
     Sip\GetController as SipGetController,
@@ -35,11 +37,19 @@ use MikoPBX\PBXCoreREST\Controllers\{Cdr\GetController as CdrGetController,
     Sysinfo\PostController as SysinfoPostController,
     System\GetController as SystemGetController,
     System\PostController as SystemPostController,
+    Firewall\GetController as FirewallGetController,
+    Firewall\PostController as FirewallPostController,
     Files\GetController as FilesGetController,
     Files\PostController as FilesPostController,
     Advices\GetController as AdvicesGetController,
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController
+};
+
+use MikoPBX\PBXCoreREST\Controllers\Modules\Core\
+{
+    GetController as ModulesCoreGetController,
+    PostController as ModulesCorePostController
 };
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
@@ -126,7 +136,9 @@ class RouterProvider implements ServiceProviderInterface
             [IaxGetController::class, 'callAction', '/pbxcore/api/iax/{actionName}', 'get', '/'],
 
             [CdrGetController::class, 'callAction', '/pbxcore/api/cdr/{actionName}', 'get', '/'],
-            [CdrGetController::class, 'playbackAction', '/pbxcore/api/cdr/playback', 'get', '/'],
+
+            [FirewallGetController::class, 'callAction', '/pbxcore/api/firewall/{actionName}', 'get', '/'],
+            [FirewallPostController::class, 'callAction', '/pbxcore/api/firewall/{actionName}', 'post', '/'],
 
             [StorageGetController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'get', '/'],
             [StoragePostController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'post', '/'],
@@ -148,6 +160,10 @@ class RouterProvider implements ServiceProviderInterface
             [LicenseGetController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'get', '/'],
             [LicensePostController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'post', '/'],
 
+            [ModulesCoreGetController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'get', '/'],
+            [ModulesCorePostController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'post', '/'],
+
+            // External modules actions
             [
                 ModulesControllerBase::class,
                 'callActionForModule',
@@ -162,6 +178,7 @@ class RouterProvider implements ServiceProviderInterface
                 'post',
                 '/',
             ],
+
         ];
     }
 

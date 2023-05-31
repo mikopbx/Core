@@ -86,7 +86,7 @@ const installStatusLoopWorker = {
      */
     worker() {
         window.clearTimeout(installStatusLoopWorker.timeoutHandle);
-        PbxApi.SystemGetModuleInstallationStatus(
+        PbxApi.ModulesGetModuleInstallationStatus(
             installStatusLoopWorker.filePath,
             installStatusLoopWorker.cbAfterReceiveNewStatus
         );
@@ -122,7 +122,7 @@ const installStatusLoopWorker = {
         } else if (response.i_status === 'INSTALLATION_COMPLETE') {
             if (installStatusLoopWorker.needEnableAfterInstall) {
                 // Enable the installed module and redirect to the module index page
-                PbxApi.SystemEnableModule(
+                PbxApi.ModulesEnableModule(
                     installStatusLoopWorker.moduleUniqid,
                     () => {
                         window.location = `${globalRootUrl}pbx-extension-modules/index/`;

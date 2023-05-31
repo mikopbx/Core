@@ -101,7 +101,7 @@ const mergingCheckWorker = {
         // Check the status of the merging process
         if (response.d_status === 'UPLOAD_COMPLETE') {
             mergingCheckWorker.$progressBarLabel.text(globalTranslate.ext_InstallationInProgress);
-            PbxApi.SystemInstallModule(mergingCheckWorker.filePath, mergingCheckWorker.cbAfterModuleInstall);
+            PbxApi.ModulesInstallModule(mergingCheckWorker.filePath, mergingCheckWorker.cbAfterModuleInstall);
             window.clearTimeout(mergingCheckWorker.timeoutHandle);
         } else if (response.d_status !== undefined) {
             mergingCheckWorker.$progressBarLabel.text(globalTranslate.ext_UploadInProgress);

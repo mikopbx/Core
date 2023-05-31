@@ -20,19 +20,23 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Sip;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
 
 /**
  * Controller for handling SIP-related actions.
  *
- * @example
- * /pbxcore/api/sip/ Get information about SIP '/api/sip/{name}'
- * SIP account statuses:
+ * @RoutePrefix("/pbxcore/api/sip")
+ *
+ * @examples
+ *
+ * Retrieves the statuses of SIP peers:
  * curl http://127.0.0.1/pbxcore/api/sip/getPeersStatuses;
  *
  * Example response:
  * {"result":"Success","data":[{"id":"204","state":"UNKNOWN"}]}
  *
- * Registration statuses:
+ *
+ * Retrieves the statuses of SIP providers registration:
  * curl http://127.0.0.1/pbxcore/api/sip/getRegistry;
  *
  * Example response:
@@ -45,11 +49,18 @@ class GetController extends BaseController
      * Handles the call action for SIP.
      *
      * @param string $actionName The name of the action.
+     *
+     * Retrieves the statuses of SIP providers registration.
+     * @Get("/getRegistry")
+     *
+     * Retrieves the statuses of SIP peers.
+     * @Get("/getPeersStatuses")
+     *
      * @return void
      *
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker('sip', $actionName);
+        $this->sendRequestToBackendWorker(SIPStackProcessor::class, $actionName);
     }
 }

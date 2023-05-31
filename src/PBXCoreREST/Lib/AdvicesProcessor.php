@@ -37,7 +37,7 @@ use MikoPBX\Service\Main;
  *
  * @property \MikoPBX\Common\Providers\LicenseProvider license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
- * @property \Phalcon\Config                               config
+ * @property \Phalcon\Config config
  *
  */
 class AdvicesProcessor extends Injectable
@@ -52,19 +52,18 @@ class AdvicesProcessor extends Injectable
      */
     public static function callBack(array $request): PBXApiResult
     {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
         $action = $request['action'];
-        if('getList' === $action){
+        if ('getList' === $action) {
             $proc = new self();
-            $res  = $proc->getAdvicesAction();
-        }else{
-            $res             = new PBXApiResult();
-            $res->processor  = __METHOD__;
+            $res = $proc->getAdvicesAction();
+        } else {
             $res->messages[] = "Unknown action - {$action} in advicesCallBack";
         }
         $res->function = $action;
         return $res;
     }
-
 
     /**
      * Generates a list of notifications about the system, firewall, passwords, and wrong settings.
@@ -73,62 +72,66 @@ class AdvicesProcessor extends Injectable
      */
     private function getAdvicesAction(): PBXApiResult
     {
-        $res            = new PBXApiResult();
+        $res = new PBXApiResult();
         $res->processor = __METHOD__;
+        try {
+            $arrMessages = [];
+            $arrAdvicesTypes = [
+                ['type' => 'isConnected', 'cacheTime' => 15],
+                ['type' => 'checkCorruptedFiles', 'cacheTime' => 15],
+                ['type' => 'checkPasswords', 'cacheTime' => 3],
+                ['type' => 'checkFirewalls', 'cacheTime' => 15],
+                ['type' => 'checkStorage', 'cacheTime' => 120],
+                ['type' => 'checkUpdates', 'cacheTime' => 3600],
+                ['type' => 'checkRegistration', 'cacheTime' => 86400],
+            ];
+            $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
+            $language = PbxSettings::getValueByKey('WebAdminLanguage');
 
-        $arrMessages     = [];
-        $arrAdvicesTypes = [
-            ['type' => 'isConnected', 'cacheTime' => 15],
-            ['type' => 'checkCorruptedFiles', 'cacheTime' => 15],
-            ['type' => 'checkPasswords', 'cacheTime' => 3],
-            ['type' => 'checkFirewalls', 'cacheTime' => 15],
-            ['type' => 'checkStorage', 'cacheTime' => 120],
-            ['type' => 'checkUpdates', 'cacheTime' => 3600],
-            ['type' => 'checkRegistration', 'cacheTime' => 86400],
-        ];
-        $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $language = PbxSettings::getValueByKey('WebAdminLanguage');
-
-        foreach ($arrAdvicesTypes as $adviceType) {
-            $currentAdvice = $adviceType['type'];
-            $cacheTime     = $adviceType['cacheTime'];
-            $cacheKey      = 'AdvicesProcessor:getAdvicesAction:'.$currentAdvice;
-            if ($managedCache->has($cacheKey)) {
-                $oldResult = json_decode($managedCache->get($cacheKey), true, 512, JSON_THROW_ON_ERROR);
-                if ($language === $oldResult['LastLanguage']) {
-                    $arrMessages[] = $oldResult['LastMessage'];
-                    continue;
-                }
-            }
-            $newResult = $this->$currentAdvice();
-            if ( ! empty($newResult)) {
-                $arrMessages[] = $newResult;
-            }
-            $managedCache->set(
-                $cacheKey,
-                json_encode([
-                                'LastLanguage' => $language,
-                                'LastMessage' => $newResult,
-                            ], JSON_THROW_ON_ERROR),
-                $cacheTime
-            );
-        }
-        $res->success = true;
-        $result       = [];
-        foreach ($arrMessages as $message) {
-            foreach ($message as $key => $value) {
-                if(is_array($value)){
-                    if(!isset($result[$key])){
-                        $result[$key] = [];
+            foreach ($arrAdvicesTypes as $adviceType) {
+                $currentAdvice = $adviceType['type'];
+                $cacheTime = $adviceType['cacheTime'];
+                $cacheKey = 'AdvicesProcessor:getAdvicesAction:' . $currentAdvice;
+                if ($managedCache->has($cacheKey)) {
+                    $oldResult = json_decode($managedCache->get($cacheKey), true, 512, JSON_THROW_ON_ERROR);
+                    if ($language === $oldResult['LastLanguage']) {
+                        $arrMessages[] = $oldResult['LastMessage'];
+                        continue;
                     }
-                    $result[$key] = array_merge($result[$key], $value);
-                }elseif ( ! empty($value)) {
-                    $result[$key][] = $value;
+                }
+                $newResult = $this->$currentAdvice();
+                if (!empty($newResult)) {
+                    $arrMessages[] = $newResult;
+                }
+                $managedCache->set(
+                    $cacheKey,
+                    json_encode([
+                        'LastLanguage' => $language,
+                        'LastMessage' => $newResult,
+                    ], JSON_THROW_ON_ERROR),
+                    $cacheTime
+                );
+            }
+            $res->success = true;
+            $result = [];
+            foreach ($arrMessages as $message) {
+                foreach ($message as $key => $value) {
+                    if (is_array($value)) {
+                        if (!isset($result[$key])) {
+                            $result[$key] = [];
+                        }
+                        $result[$key] = array_merge($result[$key], $value);
+                    } elseif (!empty($value)) {
+                        $result[$key][] = $value;
+                    }
                 }
             }
-        }
-        $res->data['advices'] = $result;
+            $res->data['advices'] = $result;
 
+        } catch (\Throwable $e) {
+            $res->success = false;
+            $res->messages[] = $e->getMessage();
+        }
         return $res;
     }
 
@@ -141,21 +144,21 @@ class AdvicesProcessor extends Injectable
      */
     private function checkPasswords(): array
     {
-        $messages           = [
+        $messages = [
             'warning' => [],
             'needUpdate' => []
         ];
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
         $fields = [
-            'WebAdminPassword'  => [
-                'url'  => 'general-settings/modify/#/passwords',
+            'WebAdminPassword' => [
+                'url' => 'general-settings/modify/#/passwords',
                 'type' => 'gs_WebPasswordFieldName',
-                'value'=> PbxSettings::getValueByKey('WebAdminPassword')
+                'value' => PbxSettings::getValueByKey('WebAdminPassword')
             ],
-            'SSHPassword'       => [
-                'url'  => 'general-settings/modify/#/ssh',
+            'SSHPassword' => [
+                'url' => 'general-settings/modify/#/ssh',
                 'type' => 'gs_SshPasswordFieldName',
-                'value'=> PbxSettings::getValueByKey('SSHPassword')
+                'value' => PbxSettings::getValueByKey('SSHPassword')
             ],
         ];
         if ($arrOfDefaultValues['WebAdminPassword'] === PbxSettings::getValueByKey('WebAdminPassword')) {
@@ -173,7 +176,7 @@ class AdvicesProcessor extends Injectable
             );
             unset($fields['SSHPassword']);
             $messages['needUpdate'][] = 'SSHPassword';
-        }elseif(PbxSettings::getValueByKey('SSHPasswordHash') !== md5_file('/etc/passwd')){
+        } elseif (PbxSettings::getValueByKey('SSHPasswordHash') !== md5_file('/etc/passwd')) {
             $messages['warning'][] = $this->translation->_(
                 'gs_SSHPPasswordCorrupt',
                 ['url' => $this->url->get('general-settings/modify/#/ssh')]
@@ -181,31 +184,31 @@ class AdvicesProcessor extends Injectable
         }
 
         $peersData = Sip::find([
-               "type = 'peer' AND ( disabled <> '1')",
-               'columns' => 'id,extension,secret']
+                "type = 'peer' AND ( disabled <> '1')",
+                'columns' => 'id,extension,secret']
         );
-        foreach ($peersData as $peer){
+        foreach ($peersData as $peer) {
             $fields[$peer['extension']] = [
-                'url'  => '/admin-cabinet/extensions/modify/'.$peer['id'],
+                'url' => $this->url->get('extensions/modify/') . $peer['id'],
                 'type' => 'gs_UserPasswordFieldName',
-                'value'=> $peer['secret']
+                'value' => $peer['secret']
             ];
         }
 
         $cloudInstanceId = PbxSettings::getValueByKey('CloudInstanceId');
-        foreach ($fields as $key => $value){
-            if($cloudInstanceId !== $value['value'] && !Util::isSimplePassword($value['value'])){
+        foreach ($fields as $key => $value) {
+            if ($cloudInstanceId !== $value['value'] && !Util::isSimplePassword($value['value'])) {
                 continue;
             }
 
-            if(in_array($key, ['WebAdminPassword', 'SSHPassword'], true)){
+            if (in_array($key, ['WebAdminPassword', 'SSHPassword'], true)) {
                 $messages['needUpdate'][] = $key;
             }
             $messages['warning'][] = $this->translation->_(
                 'adv_isSimplePassword',
                 [
-                    'type'      => $this->translation->_($value['type'], ['extension' => $key]),
-                    'url'       => $this->url->get($value['url']),
+                    'type' => $this->translation->_($value['type'], ['extension' => $key]),
+                    'url' => $this->url->get($value['url']),
                 ]
             );
         }
@@ -219,10 +222,10 @@ class AdvicesProcessor extends Injectable
      */
     private function checkCorruptedFiles(): array
     {
-        $messages           = [];
+        $messages = [];
         $files = Main::checkForCorruptedFiles();
         if (count($files) !== 0) {
-            $messages['warning'] = $this->translation->_('The integrity of the system is broken', ['url' => '']).'. '.$this->translation->_('systemBrokenComment', ['url' => '']);
+            $messages['warning'] = $this->translation->_('The integrity of the system is broken', ['url' => '']) . '. ' . $this->translation->_('systemBrokenComment', ['url' => '']);
         }
 
         return $messages;
@@ -262,10 +265,10 @@ class AdvicesProcessor extends Injectable
      */
     private function checkStorage(): array
     {
-        $messages           = [];
-        $st                 = new Storage();
+        $messages = [];
+        $st = new Storage();
         $storageDiskMounted = false;
-        $disks              = $st->getAllHdd();
+        $disks = $st->getAllHdd();
         foreach ($disks as $disk) {
             if (array_key_exists('mounted', $disk)
                 && strpos($disk['mounted'], '/storage/usbdisk') !== false) {
@@ -294,12 +297,12 @@ class AdvicesProcessor extends Injectable
      */
     private function checkUpdates(): array
     {
-        $messages   = [];
+        $messages = [];
         $PBXVersion = PbxSettings::getValueByKey('PBXVersion');
 
         $client = new GuzzleHttp\Client();
         try {
-            $res    = $client->request(
+            $res = $client->request(
                 'POST',
                 'https://releases.mikopbx.com/releases/v1/mikopbx/ifNewReleaseAvailable',
                 [
@@ -310,12 +313,12 @@ class AdvicesProcessor extends Injectable
                 ]
             );
             $code = $res->getStatusCode();
-        }catch (\Throwable $e){
+        } catch (\Throwable $e) {
             $code = Response::INTERNAL_SERVER_ERROR;
             Util::sysLogMsg(static::class, $e->getMessage());
         }
 
-        if ( $code !== Response::OK) {
+        if ($code !== Response::OK) {
             return [];
         }
 
@@ -341,8 +344,8 @@ class AdvicesProcessor extends Injectable
     private function checkRegistration(): array
     {
         $messages = [];
-        $licKey   = PbxSettings::getValueByKey('PBXLicense');
-        if ( ! empty($licKey)) {
+        $licKey = PbxSettings::getValueByKey('PBXLicense');
+        if (!empty($licKey)) {
             $this->license->featureAvailable(33);
             $licenseInfo = $this->license->getLicenseInfo($licKey);
             if ($licenseInfo instanceof SimpleXMLElement) {
@@ -363,8 +366,8 @@ class AdvicesProcessor extends Injectable
     {
         $messages = [];
         $pathTimeout = Util::which('timeout');
-        $pathCurl    = Util::which('curl');
-        $retCode     = Processes::mwExec("$pathTimeout 2 $pathCurl 'https://www.google.com/'");
+        $pathCurl = Util::which('curl');
+        $retCode = Processes::mwExec("$pathTimeout 2 $pathCurl 'https://www.google.com/'");
         if ($retCode !== 0) {
             $messages['warning'] = $this->translation->_('adv_ProblemWithInternetConnection');
         }

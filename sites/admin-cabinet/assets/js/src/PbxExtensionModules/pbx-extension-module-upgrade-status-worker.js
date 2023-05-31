@@ -85,7 +85,7 @@ const upgradeStatusLoopWorker = {
      */
     worker() {
         window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
-        PbxApi.FilesModuleDownloadStatus(
+        PbxApi.ModulesModuleDownloadStatus(
             upgradeStatusLoopWorker.moduleUniqid,
             upgradeStatusLoopWorker.cbRefreshModuleStatus,
             upgradeStatusLoopWorker.restartWorker,
@@ -123,7 +123,7 @@ const upgradeStatusLoopWorker = {
             upgradeStatusLoopWorker.oldPercent = response.d_status_progress;
         } else if (response.d_status === 'DOWNLOAD_COMPLETE') {
             $('i.loading.redo').closest('a').find('.percent').text('100%');
-            PbxApi.SystemInstallModule(response.filePath, upgradeStatusLoopWorker.cbAfterModuleInstall);
+            PbxApi.ModulesInstallModule(response.filePath, upgradeStatusLoopWorker.cbAfterModuleInstall);
             window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
         }
     },

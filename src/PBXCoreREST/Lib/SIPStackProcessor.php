@@ -44,8 +44,9 @@ class SIPStackProcessor extends Injectable
     public static function callBack(array $request): PBXApiResult
     {
         $action = $request['action'];
-        $data   = $request['data'];
-
+        $data = $request['data'];
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
         switch ($action) {
             case 'getPeersStatuses':
                 $res = self::getPeersStatuses();
@@ -57,8 +58,6 @@ class SIPStackProcessor extends Injectable
                 $res = self::getRegistry();
                 break;
             default:
-                $res             = new PBXApiResult();
-                $res->processor = __METHOD__;
                 $res->messages[] = "Unknown action - {$action} in sipCallBack";
                 break;
         }
@@ -75,13 +74,18 @@ class SIPStackProcessor extends Injectable
      */
     public static function getPeersStatuses(): PBXApiResult
     {
-        $am     = Util::getAstManager('off');
-        $peers  = $am->getPjSipPeers();
-
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $res->success = true;
-        $res->data = $peers;
+        try {
+            $am = Util::getAstManager('off');
+            $peers = $am->getPjSipPeers();
+            $res->success = true;
+            $res->data = $peers;
+        } catch (\Throwable $e) {
+            $res->success = false;
+            $res->messages[] = $e->getMessage();
+        }
+
         return $res;
     }
 
@@ -92,65 +96,74 @@ class SIPStackProcessor extends Injectable
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function getPeerStatus($peer): PBXApiResult
+    public static function getPeerStatus(string $peer): PBXApiResult
     {
-        $am = Util::getAstManager('off');
-        $peers = $am->getPjSipPeer($peer);
-
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $res->success = true;
-        $res->data = $peers;
+        try {
+            $am = Util::getAstManager('off');
+            $peers = $am->getPjSipPeer($peer);
+            $res->success = true;
+            $res->data = $peers;
+        } catch (\Throwable $e) {
+            $res->success = false;
+            $res->messages[] = $e->getMessage();
+        }
+
         return $res;
     }
 
     /**
-     * Retrieves the SIP registry status.
+     * Retrieves the statuses of SIP providers registration.
      *
      * @return PBXApiResult An object containing the result of the API call.
-     * @throws \Phalcon\Exception
      */
     public static function getRegistry(): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $am         = Util::getAstManager('off');
-        $peers      = $am->getPjSipRegistry();
-        $providers  = Sip::find("type = 'friend'");
-        foreach ($providers as $provider) {
-            if ($provider->disabled === '1') {
-                $peers[] = [
-                    'state'    => 'OFF',
-                    'id'       => $provider->uniqid,
-                    'username' => $provider->username,
-                    'host'     => $provider->host,
-                ];
-                continue;
-            }
-            if ($provider->registration_type === Sip::REG_TYPE_INBOUND || $provider->registration_type === Sip::REG_TYPE_NONE) {
-                $peers_status = $am->getPjSipPeer($provider->uniqid);
-                $peers[] = [
-                    'state'    => ($peers_status['state']==='OK' && $provider->registration_type === Sip::REG_TYPE_INBOUND)?'REGISTERED':$peers_status['state'],
-                    'id'       => $provider->uniqid,
-                    'username' => $provider->username,
-                    'host'     => $provider->host,
-                ];
-                continue;
-            }
-            foreach ($peers as &$peer) {
-                if(!empty($peer['id'])){
+
+        try {
+            $am = Util::getAstManager('off');
+            $peers = $am->getPjSipRegistry();
+            $providers = Sip::find("type = 'friend'");
+            foreach ($providers as $provider) {
+                if ($provider->disabled === '1') {
+                    $peers[] = [
+                        'state' => 'OFF',
+                        'id' => $provider->uniqid,
+                        'username' => $provider->username,
+                        'host' => $provider->host,
+                    ];
                     continue;
                 }
-                if ($peer['host'] !== $provider->host || $peer['username'] !== $provider->username) {
+                if ($provider->registration_type === Sip::REG_TYPE_INBOUND || $provider->registration_type === Sip::REG_TYPE_NONE) {
+                    $peers_status = $am->getPjSipPeer($provider->uniqid);
+                    $peers[] = [
+                        'state' => ($peers_status['state'] === 'OK' && $provider->registration_type === Sip::REG_TYPE_INBOUND) ? 'REGISTERED' : $peers_status['state'],
+                        'id' => $provider->uniqid,
+                        'username' => $provider->username,
+                        'host' => $provider->host,
+                    ];
                     continue;
                 }
-                $peer['id'] = $provider->uniqid;
+                foreach ($peers as &$peer) {
+                    if (!empty($peer['id'])) {
+                        continue;
+                    }
+                    if ($peer['host'] !== $provider->host || $peer['username'] !== $provider->username) {
+                        continue;
+                    }
+                    $peer['id'] = $provider->uniqid;
+                }
+                unset($peer);
             }
-            unset($peer);
+            $res->data = $peers;
+            $res->success = true;
+        } catch (\Throwable $e) {
+            $res->success = false;
+            $res->messages[] = $e->getMessage();
         }
-        $res->data = $peers;
-        $res->success = true;
-        $res->processor = __METHOD__;
         return $res;
     }
 }

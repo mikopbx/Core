@@ -38,12 +38,12 @@ class SysLogsManagementProcessor extends Injectable
     public const DEFAULT_FILENAME = 'asterisk/messages';
 
     /**
-     * Processes System requests
+     * Processes syslog requests
      *
      * @param array $request
      *
      * @return PBXApiResult An object containing the result of the API call.
-     * @throws \Exception
+     *
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -85,7 +85,7 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Gets log file content partially
+     * Gets partially filtered log file strings.
      *
      * @param string $filename
      * @param string $filter
@@ -137,14 +137,11 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Starts logs record
-     *
-     * @param int $timeout
+     * Starts the collection of logs and captures TCP packets.
      *
      * @return PBXApiResult An object containing the result of the API call.
-     * @throws \Exception
      */
-    private static function startLog($timeout = 300): PBXApiResult
+    private static function startLog(): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -156,6 +153,7 @@ class SysLogsManagementProcessor extends Injectable
         $network     = new Network();
         $arr_eth     = $network->getInterfacesNames();
         $tcpdumpPath = Util::which('tcpdump');
+        $timeout = 300;
         foreach ($arr_eth as $eth) {
             Processes::mwExecBgWithTimeout(
                 "{$tcpdumpPath} -i {$eth} -n -s 0 -vvv -w {$tcpDumpDir}/{$eth}.pcap",
@@ -169,9 +167,10 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Prepare log archive file
+     * Stops tcpdump and starts creating a log files archive for download.
      *
-     * @param bool $tcpdumpOnly
+     * @param bool $tcpdumpOnly Indicates whether to include only tcpdump logs.
+     *
      * @return PBXApiResult An object containing the result of the API call.
      */
     private static function prepareLog(bool $tcpdumpOnly): PBXApiResult
@@ -205,12 +204,12 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Checks if archive ready then create download link
+     * Requests a zipped archive containing logs and PCAP file
+     * Checks if archive ready it returns download link.
      *
      * @param string $resultFile
      *
      * @return PBXApiResult An object containing the result of the API call.
-     * @throws \Exception
      */
     private static function downloadLogsArchive(string $resultFile): PBXApiResult
     {
@@ -242,12 +241,12 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Prepares downloadable log file
+     * Prepares a downloadable link for a log file with the provided name.
      *
-     * @param string $filename
+     * @param string $filename The name of the log file.
      *
      * @return PBXApiResult An object containing the result of the API call.
-     * @throws \Exception
+     *
      */
     private static function downloadLogFile(string $filename): PBXApiResult
     {

@@ -23,6 +23,7 @@ namespace MikoPBX\PBXCoreREST\Controllers;
 
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use Phalcon\Mvc\Controller;
 use Pheanstalk\Pheanstalk;
 use Throwable;
@@ -47,13 +48,12 @@ class BaseController extends Controller
      *
      * @return void
      *
-     * @throws Throwable If an error occurs during the request.
      */
     public function sendRequestToBackendWorker(
         string $processor,
         string $actionName,
         $payload = null,
-        string $modulename='',
+        string $moduleName='',
         int $maxTimeout = 10,
         int $priority = Pheanstalk::DEFAULT_PRIORITY
     ): void
@@ -63,8 +63,8 @@ class BaseController extends Controller
             'data'      => $payload,
             'action'    => $actionName
         ];
-        if ($processor==='modules'){
-            $requestMessage['module'] = $modulename;
+        if ($processor === PbxExtensionsProcessor::class || $processor==='modules'){
+            $requestMessage['module'] = $moduleName;
         }
         try {
             $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);

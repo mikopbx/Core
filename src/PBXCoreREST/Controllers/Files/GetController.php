@@ -20,9 +20,14 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Files;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
 
 /**
- * Handles the GET request for file management at /pbxcore/api/files/{name}.
+ * Handles the GET request for file management.
+ *
+ * @RoutePrefix("/pbxcore/api/files")
+ *
+ * @package MikoPBX\PBXCoreREST\Controllers\Files
  */
 class GetController extends BaseController
 {
@@ -30,10 +35,11 @@ class GetController extends BaseController
      * Calls the corresponding action for file management.
      *
      * @param string $actionName The name of the action.
+     *
      * @return void
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker('files', $actionName, $_REQUEST);
+        $this->sendRequestToBackendWorker(FilesManagementProcessor::class, $actionName, $_REQUEST);
     }
 }

@@ -70,7 +70,7 @@ class PbxExtensionStatus {
         $('a.button').addClass('disabled');
         this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
         const cbAfterModuleEnable = $.proxy(this.cbAfterModuleEnable, this);
-        PbxApi.SystemEnableModule(this.uniqid, cbAfterModuleEnable);
+        PbxApi.ModulesEnableModule(this.uniqid, cbAfterModuleEnable);
     }
 
     /**
@@ -82,7 +82,7 @@ class PbxExtensionStatus {
         $('a.button').addClass('disabled');
         this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
         const cbAfterModuleDisable = $.proxy(this.cbAfterModuleDisable, this);
-        PbxApi.SystemDisableModule(this.uniqid, cbAfterModuleDisable);
+        PbxApi.ModulesDisableModule(this.uniqid, cbAfterModuleDisable);
     }
 
     /**

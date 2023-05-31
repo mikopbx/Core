@@ -62,7 +62,7 @@ const currentCallsWorker = {
      * The main worker function that fetches current calls information.
      */
     worker() {
-        PbxApi.GetCurrentCalls(currentCallsWorker.cbGetCurrentCalls);
+        PbxApi.GetActiveChannels(currentCallsWorker.cbGetActiveChannels);
         currentCallsWorker.timeoutHandle
             = window.setTimeout(currentCallsWorker.worker, currentCallsWorker.timeOut);
     },
@@ -71,7 +71,7 @@ const currentCallsWorker = {
      * Callback function for processing the current calls response.
      * @param {Object} response - The response object containing current calls information.
      */
-    cbGetCurrentCalls(response) {
+    cbGetActiveChannels(response) {
         currentCallsWorker.$currentCallsInfo.empty();
         if (response === false || typeof response !== 'object') return;
         const respObject = response;

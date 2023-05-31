@@ -46,7 +46,7 @@ class SysinfoManagementProcessor extends Injectable
     public static function callBack(array $request): PBXApiResult
     {
         $action         = $request['action'];
-        $res            = new PBXApiResult();
+        $res = new PBXApiResult();
         $res->processor = __METHOD__;
         switch ($action) {
             case 'getInfo':
@@ -56,18 +56,14 @@ class SysinfoManagementProcessor extends Injectable
                 $res = self::getExternalIpInfo();
                 break;
             default:
-                $res             = new PBXApiResult();
-                $res->processor  = __METHOD__;
                 $res->messages[] = "Unknown action - {$action} in sysinfoCallBack";
         }
-
         $res->function = $action;
-
         return $res;
     }
 
     /**
-     * Gets system information
+     * Gets collection of the system information and put it into temp file.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -441,7 +437,7 @@ class SysinfoManagementProcessor extends Injectable
     }
 
     /**
-     * Returns public IP address of this system
+     * Gets an external IP address of the system
      *
      * @return PBXApiResult An object containing the result of the API call.
      */

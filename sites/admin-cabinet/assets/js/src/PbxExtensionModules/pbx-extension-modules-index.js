@@ -293,7 +293,7 @@ const extensionModules = {
         // Check if the module is enabled, if so, disable it
         const status = $(`#${params.uniqid}`).find('.checkbox').checkbox('is checked');
         if (status === true) {
-            PbxApi.SystemDisableModule(params.uniqid, () => {
+            PbxApi.ModulesDisableModule(params.uniqid, () => {
                 extensionModules.installModule(params, true);
             });
         } else {
@@ -307,7 +307,7 @@ const extensionModules = {
      * @param {boolean} needEnable - Whether to enable the module after installation.
      */
     installModule(params, needEnable) {
-        PbxApi.FilesDownloadNewModule(params, (response) => {
+        PbxApi.ModulesModuleStartDownload(params, (response) => {
             if (response === true) {
                 upgradeStatusLoopWorker.initialize(params.uniqid, needEnable);
             } else {
@@ -343,15 +343,15 @@ const extensionModules = {
                     const status = $(`#${params.uniqid}`).find('.checkbox').checkbox('is checked');
                     const keepSettings = extensionModules.$keepSettingsCheckbox.checkbox('is checked');
                     if (status === true) {
-                        PbxApi.SystemDisableModule(params.uniqid, () => {
-                            PbxApi.SystemDeleteModule(
+                        PbxApi.ModulesDisableModule(params.uniqid, () => {
+                            PbxApi.ModulesUnInstallModule(
                                 params.uniqid,
                                 keepSettings,
                                 extensionModules.cbAfterDelete,
                             );
                         });
                     } else {
-                        PbxApi.SystemDeleteModule(params.uniqid, keepSettings, extensionModules.cbAfterDelete);
+                        PbxApi.ModulesUnInstallModule(params.uniqid, keepSettings, extensionModules.cbAfterDelete);
                     }
                     return true;
                 },

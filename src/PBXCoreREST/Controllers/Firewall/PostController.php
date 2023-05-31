@@ -17,39 +17,41 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Controllers\License;
+namespace MikoPBX\PBXCoreREST\Controllers\Firewall;
+
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\FirewallManagementProcessor;
 
 /**
- * Handles the GET request for license-related actions.
+ * Firewall management (POST).
  *
- * @RoutePrefix("/pbxcore/api/license")
+ * @RoutePrefix("/pbxcore/api/firewall")
+ *
+ * @examples
+ *
+ * Unban IP address
+ *   curl -X POST -d '{"ip": "172.16.156.1"}' http://127.0.0.1/pbxcore/api/firewall/unBanIp;
+ *   Answer example:
+ *   {"result":"Success","data":[{"jail":"asterisk","ip":"172.16.156.1","timeofban":1522326119}],"function":"getBanIp"}
+ *
  */
-class GetController extends BaseController
+class PostController extends BaseController
 {
     /**
-     * Calls the corresponding action for license service based on the provided $actionName.
+     * Handles the call to different actions based on the action name
      *
-     * @param string $actionName The name of the action.
+     * @param string $actionName The name of the action
      *
-     * Reset license key settings.
-     * @Get("/resetKey")
-     *
-     * Retrieves license information from the license server.
-     * @Get("/getLicenseInfo")
-     *
-     * Checks whether the license system is working properly or not.
-     * @Get("/getMikoPBXFeatureStatus")
-     *
-     * Make an API call to send PBX metrics
-     * @Get("/sendPBXMetrics")
+     * Remove an IP address from the fail2ban ban list.
+     * @Post ("/unBanIp")
      *
      * @return void
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker(LicenseManagementProcessor::class, $actionName);
+        $data = $this->request->getPost();
+        $this->sendRequestToBackendWorker(FirewallManagementProcessor::class, $actionName, $data);
     }
+
 }

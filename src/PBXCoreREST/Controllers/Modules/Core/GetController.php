@@ -17,39 +17,31 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Controllers\License;
+namespace MikoPBX\PBXCoreREST\Controllers\Modules\Core;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
 
 /**
- * Handles the GET request for license-related actions.
+ * Modules management (GET)
  *
- * @RoutePrefix("/pbxcore/api/license")
+ * @RoutePrefix("/pbxcore/api/modules/core")
+ *
+ * @examples
+ *
  */
 class GetController extends BaseController
 {
     /**
-     * Calls the corresponding action for license service based on the provided $actionName.
+     * Handles the call to different actions based on the action name
      *
-     * @param string $actionName The name of the action.
+     * @param string $actionName The name of the action
      *
-     * Reset license key settings.
-     * @Get("/resetKey")
-     *
-     * Retrieves license information from the license server.
-     * @Get("/getLicenseInfo")
-     *
-     * Checks whether the license system is working properly or not.
-     * @Get("/getMikoPBXFeatureStatus")
-     *
-     * Make an API call to send PBX metrics
-     * @Get("/sendPBXMetrics")
      *
      * @return void
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker(LicenseManagementProcessor::class, $actionName);
+        $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $_REQUEST);
     }
 }

@@ -20,12 +20,14 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Storage;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 
 /**
  * Controller for handling storage-related actions using GET requests.
+ * @RoutePrefix("/pbxcore/api/storage")
  *
  * @example
- * /api/storage/{name}
+ *
  * Get list of connected disks.
  * curl http://172.16.156.212/pbxcore/api/storage/list
  */
@@ -35,10 +37,14 @@ class GetController extends BaseController
     * Handles the call action for storage using GET requests.
     *
     * @param string $actionName The name of the action.
+     *
+     * Get information about all HDD devices.
+     * @Get("/list")
+     *
     * @return void
     */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker('storage', $actionName, $_REQUEST);
+        $this->sendRequestToBackendWorker(StorageManagementProcessor::class, $actionName, $_REQUEST);
     }
 }

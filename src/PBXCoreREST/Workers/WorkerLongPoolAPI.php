@@ -39,7 +39,6 @@ use function clearstatcache;
  * @example
  * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getRegistry' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
  * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getActiveChannels' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
- * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getActiveCalls' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
  * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/ping' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
  * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/common_channel' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
  * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/test' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
@@ -164,8 +163,6 @@ class WorkerLongPoolAPI extends WorkerBase
             $data_for_send = 'PONG';
         } elseif ('getActiveChannels' === $channel) {
             $data_for_send = CdrDBProcessor::getActiveChannels()->getResult();
-        } elseif ('getActiveCalls' === $channel) {
-            $data_for_send = CdrDBProcessor::getActiveCalls()->getResult();
         } elseif ('getRegistry' === $channel) {
             $result        = [
                 'SIP' => SIPStackProcessor::getRegistry()->getResult(),

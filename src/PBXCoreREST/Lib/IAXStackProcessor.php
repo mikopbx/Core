@@ -40,14 +40,14 @@ class IAXStackProcessor extends Injectable
      */
     public static function callBack(array $request): PBXApiResult
     {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
         $action = $request['action'];
         switch ($action) {
             case 'getRegistry':
                 $res = IAXStackProcessor::getRegistry();
                 break;
             default:
-                $res             = new PBXApiResult();
-                $res->processor = __METHOD__;
                 $res->messages[] = "Unknown action - {$action} in iaxCallBack";
                 break;
         }
@@ -58,7 +58,7 @@ class IAXStackProcessor extends Injectable
     }
 
     /**
-     * Get the IAX registry statuses.
+     * Retrieves the statuses of IAX providers registration.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -66,52 +66,58 @@ class IAXStackProcessor extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $peers  = [];
-        $providers = Iax::find();
-        foreach ($providers as $provider) {
-            $peers[] = [
-                'state'      => 'OFF',
-                'id'         => $provider->uniqid,
-                'username'   => trim($provider->username),
-                'host'       => trim($provider->host),
-                'noregister' => $provider->noregister,
-            ];
-        }
 
-        if (Iax::findFirst("disabled = '0'") !== null) {
-            // Find them over AMI
-            $am       = Util::getAstManager('off');
-            $amiRegs  = $am->IAXregistry(); // Registrations
-            $amiPeers = $am->IAXpeerlist(); // Peers
-            foreach ($amiPeers as $amiPeer) {
-                $key = array_search($amiPeer['ObjectName'], array_column($peers, 'id'), true);
-                if ($key !== false) {
-                    $currentPeer = &$peers[$key];
-                    if ($currentPeer['noregister'] === '1') {
-                        // Peer without registration.
-                        $arr_status                   = explode(' ', $amiPeer['Status']);
-                        $currentPeer['state']         = strtoupper($arr_status[0]);
-                        $currentPeer['time-response'] = strtoupper(str_replace(['(', ')'], '', $arr_status[1]));
-                    } else {
-                        $currentPeer['state'] = 'Error register.';
-                        // Parse active registrations
-                        foreach ($amiRegs as $reg) {
-                            if (
-                                strcasecmp($reg['Addr'], $currentPeer['host']) === 0
-                                && strcasecmp($reg['Username'], $currentPeer['username']) === 0
-                            ) {
-                                $currentPeer['state'] = $reg['State'];
-                                break;
+
+        try {
+            $peers = [];
+            $providers = Iax::find();
+            foreach ($providers as $provider) {
+                $peers[] = [
+                    'state' => 'OFF',
+                    'id' => $provider->uniqid,
+                    'username' => trim($provider->username),
+                    'host' => trim($provider->host),
+                    'noregister' => $provider->noregister,
+                ];
+            }
+
+            if (Iax::findFirst("disabled = '0'") !== null) {
+                // Find them over AMI
+                $am = Util::getAstManager('off');
+                $amiRegs = $am->IAXregistry(); // Registrations
+                $amiPeers = $am->IAXpeerlist(); // Peers
+                foreach ($amiPeers as $amiPeer) {
+                    $key = array_search($amiPeer['ObjectName'], array_column($peers, 'id'), true);
+                    if ($key !== false) {
+                        $currentPeer = &$peers[$key];
+                        if ($currentPeer['noregister'] === '1') {
+                            // Peer without registration.
+                            $arr_status = explode(' ', $amiPeer['Status']);
+                            $currentPeer['state'] = strtoupper($arr_status[0]);
+                            $currentPeer['time-response'] = strtoupper(str_replace(['(', ')'], '', $arr_status[1]));
+                        } else {
+                            $currentPeer['state'] = 'Error register.';
+                            // Parse active registrations
+                            foreach ($amiRegs as $reg) {
+                                if (
+                                    strcasecmp($reg['Addr'], $currentPeer['host']) === 0
+                                    && strcasecmp($reg['Username'], $currentPeer['username']) === 0
+                                ) {
+                                    $currentPeer['state'] = $reg['State'];
+                                    break;
+                                }
                             }
                         }
                     }
                 }
             }
+
+            $res->data = $peers;
+            $res->success = true;
+        } catch (\Throwable $e) {
+            $res->success = false;
+            $res->messages[] = $e->getMessage();
         }
-
-        $res->data = $peers;
-        $res->success = true;
-
         return $res;
     }
 }
