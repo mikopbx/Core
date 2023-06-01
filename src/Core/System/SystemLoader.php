@@ -91,7 +91,7 @@ class SystemLoader extends Di\Injectable
         $system = new System();
         // Is the configuration default?
         // Try restore config...
-        if($system->isDefaultConf()){
+        if($system->isDefaultConf() && !file_exists('/offload/livecd')){
             $this->echoStartMsg(' - Try restore backup of settings... ');
             $system->tryRestoreConf();
             $this->echoResultMsg();
