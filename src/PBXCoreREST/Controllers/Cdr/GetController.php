@@ -70,6 +70,9 @@ class GetController extends BaseController
      * Get active channels based on CDR data. These are the unfinished calls (endtime IS NULL).
      * @Get("/getActiveChannels")
      *
+     * Get active calls based on CDR data.
+     * @Get("/getActiveCalls")
+     *
      * This method performs playback of a recorded file with scrolling
      * @Get("/playback")
      *

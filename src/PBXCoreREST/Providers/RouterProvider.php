@@ -160,9 +160,6 @@ class RouterProvider implements ServiceProviderInterface
             [LicenseGetController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'get', '/'],
             [LicensePostController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'post', '/'],
 
-            [ModulesCoreGetController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'get', '/'],
-            [ModulesCorePostController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'post', '/'],
-
             // External modules actions
             [
                 ModulesControllerBase::class,
@@ -178,6 +175,10 @@ class RouterProvider implements ServiceProviderInterface
                 'post',
                 '/',
             ],
+
+            // Module installation, upgrading, downloading, removing
+            [ModulesCoreGetController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'get', '/'],
+            [ModulesCorePostController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'post', '/'],
 
         ];
     }

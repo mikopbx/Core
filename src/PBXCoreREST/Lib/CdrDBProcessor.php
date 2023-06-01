@@ -50,6 +50,9 @@ class CdrDBProcessor extends Injectable
             case 'getActiveChannels':
                 $res = self::getActiveChannels();
                 break;
+            case 'getActiveCalls':
+                $res = self::getActiveCalls();
+                break;
             default:
                 $res->messages[] = "Unknown action - {$action} in cdrCallBack";
                 break;
@@ -115,4 +118,30 @@ class CdrDBProcessor extends Injectable
         }
         return $res;
     }
+
+    /**
+     * Get active calls based on CDR data.
+     *
+     * @return PBXApiResult An object containing the result of the API call.
+     */
+    public static function getActiveCalls(): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $res->success = true;
+        $filter  = [
+            'order'       => 'id',
+            'columns'     => 'start,answer,endtime,src_num,dst_num,did,linkedid',
+            'miko_tmp_db' => true,
+        ];
+        $client  = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
+        $message = $client->request(json_encode($filter), 2);
+        if ($message === false) {
+            $res->data = [];
+        }else{
+            $res->data[] = $message;
+        }
+        return $res;
+    }
+
 }
