@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -17,55 +18,43 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Controllers\Modules\Core;
+namespace MikoPBX\PBXCoreREST\Controllers\Modules;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
 
 /**
- * Modules management (POST).
+ * Handles the POST request for module manipulation actions.
  *
  * @RoutePrefix("/pbxcore/api/modules/core")
- *
- * @examples
- *
- * Enables an extension module.
- * curl -X POST -d '{"uniqid":"ModuleSmartIVR"} http://127.0.0.1/pbxcore/api/system/enableModule
- *
- * Disables an extension module.
- * curl -X POST -d '{"uniqid":"ModuleSmartIVR"} http://127.0.0.1/pbxcore/api/system/disableModule
- *
- * Uninstall an extension module.
- * curl -X POST -d '{"uniqid":"ModuleSmartIVR"} http://127.0.0.1/pbxcore/api/system/uninstallModule
- *
  */
-class PostController extends BaseController
+class CorePostController extends BaseController
 {
     /**
-     * Handles the call to different actions based on the action name
+     * Handles the call to different actions based on the action name for core
      *
      * @param string $actionName The name of the action
      *
      * Starts the module download in a separate background process.
-     * @Post ("/moduleStartDownload")
+     * @Post("/moduleStartDownload")
      *
      * Returns the download status of a module.
-     * @Post ("/moduleDownloadStatus")
+     * @Post("/moduleDownloadStatus")
      *
      * Installs a new additional extension module from an early uploaded zip archive.
-     * @Post ("/installNewModule")
+     * @Post("/installNewModule")
      *
      * Checks the status of a module installation by the provided zip file path.
-     * @Post ("/statusOfModuleInstallation")
+     * @Post("/statusOfModuleInstallation")
      *
      * Enables an extension module.
-     * @Post ("/enableModule")
+     * @Post("/enableModule")
      *
      * Disables an extension module.
-     * @Post ("/disableModule")
+     * @Post("/disableModule")
      *
      * Uninstall an extension module.
-     * @Post ("/uninstallModule")
+     * @Post("/uninstallModule")
      *
      * @return void
      */
@@ -74,5 +63,4 @@ class PostController extends BaseController
         $data = $this->request->getPost();
         $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data);
     }
-
 }

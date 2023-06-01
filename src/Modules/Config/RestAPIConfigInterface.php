@@ -40,6 +40,12 @@ interface RestAPIConfigInterface
      * [ControllerClass, ActionMethod, RequestTemplate, HttpMethod, RootUrl, NoAuth ]
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getpbxcorerestadditionalroutes
      *
+     * Add the annotations to add the endpoint into ACL
+     * @RoutePrefix("/pbxcore/api/backup")
+     * @Get("/something1")
+     * @Get("/something2")
+     * @Post("/something3")
+     *
      * @return array
      * @example
      *  [[GetController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'get', '/', false],
@@ -53,6 +59,11 @@ interface RestAPIConfigInterface
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modulerestapicallback
      *
      * @param array $request GET/POST parameters
+     *
+     * Add the annotations to add the endpoint into ACL
+     * @Get("/something1")
+     * @Get("/something2")
+     * @Post("/something3")
      *
      * @return PBXApiResult An object containing the result of the API call.
      */

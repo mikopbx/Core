@@ -56,7 +56,6 @@ use MikoPBX\PBXCoreREST\Http\Response;
  */
 class ModulesControllerBase extends BaseController
 {
-
     /**
      * Handles the call action for a specific module.
      *
@@ -120,5 +119,4 @@ class ModulesControllerBase extends BaseController
             $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
-
 }

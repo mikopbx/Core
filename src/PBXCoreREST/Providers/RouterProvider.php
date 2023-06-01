@@ -27,6 +27,7 @@ use MikoPBX\PBXCoreREST\Controllers\
     Cdr\GetController as CdrGetController,
     Iax\GetController as IaxGetController,
     Modules\ModulesControllerBase,
+    Modules\CorePostController as ModulesCorePostController,
     Sip\GetController as SipGetController,
     Sip\PostController as SipPostController,
     Storage\GetController as StorageGetController,
@@ -46,11 +47,6 @@ use MikoPBX\PBXCoreREST\Controllers\
     License\PostController as LicensePostController
 };
 
-use MikoPBX\PBXCoreREST\Controllers\Modules\Core\
-{
-    GetController as ModulesCoreGetController,
-    PostController as ModulesCorePostController
-};
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
@@ -177,7 +173,6 @@ class RouterProvider implements ServiceProviderInterface
             ],
 
             // Module installation, upgrading, downloading, removing
-            [ModulesCoreGetController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'get', '/'],
             [ModulesCorePostController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'post', '/'],
 
         ];

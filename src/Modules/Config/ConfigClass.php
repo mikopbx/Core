@@ -99,6 +99,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      */
     public function __construct()
     {
+
         $this->config          = $this->di->getShared(ConfigProvider::SERVICE_NAME);
         $this->mikoPBXConfig   = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
@@ -151,6 +152,11 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * [ControllerClass, ActionMethod, RequestTemplate, HttpMethod, RootUrl, NoAuth ]
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getpbxcorerestadditionalroutes
      *
+     * @RoutePrefix("/pbxcore/api/backup")
+     * @Get("/something1")
+     * @Get("/something2")
+     * @Post("/something3")
+     *
      * @return array
      * @example
      *  [[GetController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'get', '/', false],
@@ -167,6 +173,11 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modulerestapicallback
      *
      * @param array $request GET/POST parameters
+     *
+     * Add the annotations to add the endpoint into ACL
+     * @Get("/something1")
+     * @Get("/something2")
+     * @Post("/something3")
      *
      * @return PBXApiResult An object containing the result of the API call.
      */

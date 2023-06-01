@@ -44,7 +44,7 @@ class PostController extends BaseController
      * @param string $actionName The name of the action
      *
      * Remove an IP address from the fail2ban ban list.
-     * @Post ("/unBanIp")
+     * @Post("/unBanIp")
      *
      * @return void
      */

@@ -40,7 +40,7 @@ class GetController extends BaseController
      * @param string $actionName The name of the action
      *
      * Retrieve a list of banned IP addresses or get data for a specific IP address.
-     * @Get ("/getBannedIp")
+     * @Get("/getBannedIp")
      *
      * @return void
      */

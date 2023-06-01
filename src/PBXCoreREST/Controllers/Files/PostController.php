@@ -70,10 +70,10 @@ class PostController extends BaseController
      * @Post("/statusUpload")
      *
      * Downloads the firmware file from the provided URL.
-     * @Post ("/downloadNewFirmware")
+     * @Post("/downloadNewFirmware")
      *
      * Get the progress status of the firmware file download.
-     * @Post ("/firmwareDownloadStatus")
+     * @Post("/firmwareDownloadStatus")
      *
      * @return void
      */
