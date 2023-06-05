@@ -140,13 +140,13 @@ class Elements extends Injectable
                         'param' => '',
                         'style' => '',
                     ],
-                    'licensing' => [
-                        'caption' => 'mm_PaidModulesAccessNew',
-                        'iconclass' => 'key',
-                        'action' => 'modify',
-                        'param' => '',
-                        'style' => '',
-                    ],
+//                    'licensing' => [
+//                        'caption' => 'mm_PaidModulesAccessNew',
+//                        'iconclass' => 'key',
+//                        'action' => 'modify',
+//                        'param' => '',
+//                        'style' => '',
+//                    ],
                 ],
             ],
 

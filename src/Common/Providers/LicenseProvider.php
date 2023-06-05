@@ -45,6 +45,7 @@ use Throwable;
  * @method  array featureAvailable(string $featureId)
  * @method  array releaseFeature(string $featureId)
  * @method  string translateLicenseErrorMessage(string $message)
+ * @method  array ping()
  *
  * @package MikoPBX\Common\Providers
  */

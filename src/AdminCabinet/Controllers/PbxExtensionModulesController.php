@@ -19,6 +19,9 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
+use MikoPBX\AdminCabinet\Forms\LicensingChangeLicenseKeyForm;
+use MikoPBX\AdminCabinet\Forms\LicensingGetKeyForm;
 use MikoPBX\AdminCabinet\Forms\PbxExtensionModuleSettingsForm;
 use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
@@ -31,12 +34,8 @@ class PbxExtensionModulesController extends BaseController
      */
     public function indexAction(): void
     {
-        $licKey = PbxSettings::getValueByKey('PBXLicense');
-        if (strlen($licKey) !== 28
-            || ! Text::startsWith($licKey, 'MIKO-')) {
-            $licKey = '';
-        }
 
+        // Installed modules tab //
         $modules     = PbxExtensionModules::getModulesArray();
         $modulesList = [];
         foreach ($modules as $module) {
@@ -53,7 +52,26 @@ class PbxExtensionModulesController extends BaseController
             ];
         }
         $this->view->modulelist = $modulesList;
-        $this->view->licenseKey = $licKey;
+
+        // License key management tab //
+        $licKey = PbxSettings::getValueByKey('PBXLicense');
+        if (strlen($licKey) !== 28
+            || ! Text::startsWith($licKey, 'MIKO-')) {
+            $licKey = '';
+        }
+
+        // License key form
+        $this->view->setVar('changeLicenseKeyForm',
+            new LicensingChangeLicenseKeyForm(null, ['licKey' => $licKey]));
+
+        // Coupon form
+        $this->view->setVar('activateCouponForm', new LicensingActivateCouponForm());
+
+        // Get new license key form
+        $this->view->setVar('getKeyForm', new LicensingGetKeyForm());
+
+        $this->view->setVar('submitMode', null);
+
     }
 
     /**

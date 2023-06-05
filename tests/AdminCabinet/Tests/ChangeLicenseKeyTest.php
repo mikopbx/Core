@@ -33,8 +33,8 @@ class ChangeLicenseKeyTest extends MikoPBXTestsBase
      */
     public function testFillLicenseKey($licenseKey):void
     {
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/licensing/modify/');
-        $this->changeTabOnCurrentPage('management');
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
+        $this->changeTabOnCurrentPage('licensing');
 
         // Сбрасываем привязку к ключу
         $xpath = "id('reset-license')";
@@ -42,15 +42,15 @@ class ChangeLicenseKeyTest extends MikoPBXTestsBase
         $resetButton->click();
         $this->waitForAjax();
 
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/licensing/modify/');
-        $this->changeTabOnCurrentPage('management');
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
+        $this->changeTabOnCurrentPage('licensing');
         $licKey = str_ireplace('MIKO-','', $licenseKey);
         $this->changeInputField('licKey', $licKey);
 
         $this->submitForm('licencing-modify-form');
 
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/licensing/modify/');
-        $this->changeTabOnCurrentPage('management');
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
+        $this->changeTabOnCurrentPage('licensing');
         $this->assertInputFieldValueEqual('licKey', $licenseKey);
 
     }

@@ -18,7 +18,11 @@
 
 /* global globalRootUrl, PbxApi, globalTranslate, UpdateApi, UserMessage, globalPBXVersion, SemanticLocalization, upgradeStatusLoopWorker, PbxExtensionStatus */
 
-
+/**
+ * Represents list of extension modules.
+ * @class extensionModules
+ * @memberof module:PbxExtensionModules
+ */
 const extensionModules = {
     $checkboxes: $('.module-row .checkbox'),
     $deleteModalForm: $('#delete-modal-form'),
@@ -26,7 +30,23 @@ const extensionModules = {
     $modulesTable: $('#modules-table'),
     pbxVersion: globalPBXVersion.replace(/-dev/i, ''),
     checkBoxes: [],
+
+    /**
+     * jQuery object for the tabular menu.
+     * @type {jQuery}
+     */
+    $tabMenuItems: $('#pbx-extensions-tab-menu .item'),
+
+    /**
+     * Initialize extensionModules list
+     */
     initialize() {
+        // Enable tab navigation with history support
+        extensionModules.$tabMenuItems.tab({
+            history: true,
+            historyType: 'hash',
+        });
+
         extensionModules.$deleteModalForm.modal();
         extensionModules.initializeDataTable();
         UpdateApi.getModulesUpdates(extensionModules.cbParseModuleUpdates);
@@ -37,6 +57,7 @@ const extensionModules = {
             extensionModules.checkBoxes.push(pageStatus);
         });
     },
+
     /**
      * Initialize data tables on table
      */
@@ -58,7 +79,6 @@ const extensionModules = {
         // Move the "Add New" button to the first eight-column div
         $('.add-new').appendTo($('div.eight.column:eq(0)'));
     },
-
 
     /**
      * Callback function to process the list of modules received from the website.
@@ -171,13 +191,13 @@ const extensionModules = {
             promoLink = `<br><a href="${obj.promo_link}" target="_blank">${globalTranslate.ext_ExternalDescription}</a>`;
         }
 
-        let additionalIcon = '';
+        let additionalIcon = '<i class="puzzle piece icon"></i>';
         if (obj.commercial !== '0') {
-            additionalIcon = '<i class="icon red cart arrow down"></i>';
+            additionalIcon = '<i class="ui donate icon"></i>';
         }
         const dymanicRow = `
 			<tr class="new-module-row" id="${obj.uniqid}">
-						<td>${decodeURIComponent(obj.name)}<br>
+						<td>${additionalIcon} ${decodeURIComponent(obj.name)}<br>
 						<span class="features">${decodeURIComponent(obj.description)} ${promoLink}</span>
 						</td>
 						<td>${decodeURIComponent(obj.developer)}</td>
@@ -191,7 +211,6 @@ const extensionModules = {
 									data-productId = "${obj.lic_product_id}"
 									data-featureId = "${obj.lic_feature_id}" 
 									data-id ="${obj.release_id}">
-									` + additionalIcon + `
 									<i class="icon download blue"></i> 
 									<span class="percent"></span>
 								</a>

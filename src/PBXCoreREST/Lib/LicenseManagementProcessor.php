@@ -77,6 +77,10 @@ class LicenseManagementProcessor extends Injectable
                 $proc = new LicenseManagementProcessor();
                 $res = $proc->sendMetricsAction();
                 break;
+            case 'ping':
+                $proc = new LicenseManagementProcessor();
+                $res = $proc->pingAction();
+                break;
             default:
                 $res->messages[] = "Unknown action - {$action} in licenseCallBack";
         }
@@ -245,7 +249,7 @@ class LicenseManagementProcessor extends Injectable
     }
 
     /**
-     * Sends PBX metrics to the license server company.
+     * Sends PBX metrics to the license server.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -275,6 +279,20 @@ class LicenseManagementProcessor extends Injectable
 
         $this->license->sendLicenseMetrics($licenseKey, $dataMetrics);
 
+        return $res;
+    }
+
+    /**
+     * Sends ping request to the license server.
+     *
+     * @return PBXApiResult An object containing the result of the API call.
+     */
+    private function pingAction(): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $result = $this->license->ping();
+        $res->success= $result['success'] === true;
         return $res;
     }
 }

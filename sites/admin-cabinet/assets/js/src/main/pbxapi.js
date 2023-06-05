@@ -85,6 +85,7 @@ const PbxApi = {
     sysinfoGetExternalIP: `${Config.pbxUrl}/pbxcore/api/sysinfo/getExternalIpInfo`, //  Gets an external IP address of the system.
 
     // LicenseManagementProcessor
+    licensePing: `${Config.pbxUrl}/pbxcore/api/license/ping`, // Check connection with license server.
     licenseResetKey: `${Config.pbxUrl}/pbxcore/api/license/resetKey`, // Reset license key settings.
     licenseProcessUserRequest: `${Config.pbxUrl}/pbxcore/api/license/processUserRequest`, // Update license key, get new one, activate coupon
     licenseGetLicenseInfo: `${Config.pbxUrl}/pbxcore/api/license/getLicenseInfo`, // Retrieves license information from the license server.
@@ -1235,6 +1236,28 @@ const PbxApi = {
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response.data);
+            },
+            onFailure() {
+                callback(false);
+            },
+            onError() {
+                callback(false);
+            },
+        });
+    },
+
+    /**
+     * Check connection with license server.
+     * @param {Function} callback - The callback function to be executed after the check operation.
+     * @returns {void}
+     */
+    LicensePing(callback) {
+        $.api({
+            url: PbxApi.licensePing,
+            on: 'now',
+            successTest: PbxApi.successTest,
+            onSuccess() {
+                callback(true);
             },
             onFailure() {
                 callback(false);

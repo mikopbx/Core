@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -894,7 +912,7 @@ return [
     'lic_LastQuestionAnswer' => 'На звонки это не влияет, но может повлиять на установленные модули.<br>Проверьте вашу лицензию в личном кабинете на сайте <a href="https://lm.miko.ru">https://lm.miko.ru</a><br>Если проблема осталась посмотрите наш <a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">FAQ</a> или напишите запрос на <a href="mailto:lic@miko.ru">lic@miko.ru</a> мы обязательно поможем это исправить.',
     'lic_NoInetHeader' => 'Нет доступа к серверу лицензирования.',
     'lic_NoInet' => 'Возможно с сервера MikoPBX нет доступа в интернет',
-    'lic_NoInetLicMiko' => 'Возможно ограничен доступ к ресурсу <b>lic.miko.ru</b>',
+    'lic_NoInetLicMiko' => 'Возможно ограничен доступ к ресурсу <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "Проверьте настройки <b>DNS</b> и <b>Gateway</b> в настройках <a href='/admin-cabinet/network/modify/'>сети</a>",
     'lic_ReloadPage'=>'Обновить страницу...',
     'er_Home' => 'Перейти в начало',
@@ -988,6 +1006,9 @@ return [
     'ext_InstallationInProgress' => 'Установка модуля …',
     'ext_ModuleChangeStatusError' => 'Проблемы при изменении статуса модуля',
     'ext_InstallationError' => 'Ошибка при установке модуля',
+    'ext_InstalledModules' => 'Установленные модули',
+    'ext_Marketplace' => 'Маркетплейс',
+    'ext_Licensing' => 'Управление лицензией',
     'DimmerWaitForPBXIsOnline' => 'Разрыв связи с ядром PBX …',
     'DimmerWaitForPBXOnlineDescription' => 'Это нормально, если станция перезагружается. <br>Как только связь восстановится страница обновится автоматически!',
     'loc_NoResult' => 'Ничего не найдено',

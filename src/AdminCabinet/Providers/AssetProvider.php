@@ -517,13 +517,21 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Update/update-api.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/resumable.js', true)
+                ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-upgrade-status-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-install-status-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-merging-status-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-modules-index.js', true)
                 ->addJs('js/vendor/semantic/progress.min.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-add-new.js', true);
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-ping-lic-worker.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-add-new.js', true)
+                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
+                ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
+                ->addJs('js/vendor/inputmask/init.js', true)
+                ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/Licensing/licensing-modify.js', true);
+
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
                 ->addCss('css/vendor/semantic/modal.min.css', true)
@@ -607,23 +615,6 @@ class AssetProvider implements ServiceProviderInterface
         }
     }
 
-    /**
-     * Makes assets for the Licensing controller
-     *
-     * @param string $action
-     */
-    private function makeLicensingAssets(string $action): void
-    {
-        if ($action === 'modify') {
-            $this->footerCollectionJS
-                //->addJs('js/vendor/inputmask/inputmask.js', true)
-                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
-                ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
-                ->addJs('js/vendor/inputmask/init.js', true)
-                ->addJs('js/pbx/main/form.js', true)
-                ->addJs('js/pbx/Licensing/licensing-modify.js', true);
-        }
-    }
 
     /**
      * Makes assets for the IvrMenu controller

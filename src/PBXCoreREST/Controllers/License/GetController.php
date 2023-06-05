@@ -46,6 +46,9 @@ class GetController extends BaseController
      * Make an API call to send PBX metrics
      * @Get("/sendPBXMetrics")
      *
+     * Check connection with license server
+     * @Get("/ping")
+     *
      * @return void
      */
     public function callAction(string $actionName): void

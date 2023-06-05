@@ -36,10 +36,9 @@ const licensingModify = {
      * @type {jQuery}
      */
     $dirrtyField: $('#dirrty'),
-
-    $goToLicenseManagementBTN: $('#changePageToLicensing'),
-    $emptyLicenseKeyInfo: $('#empty-license-key-info'),
-    $filledLicenseKeyInfo: $('#filled-license-key-info'),
+    $emptyLicenseKeyInfo: $('.empty-license-key-info'),
+    $filledLicenseKeyHeader: $('.filled-license-key-header'),
+    $filledLicenseKeyInfo: $('.filled-license-key-info'),
     $getNewKeyLicenseSection: $('#getNewKeyLicenseSection'),
     $couponSection: $('#couponSection'),
     $formErrorMessages: $('#form-error-messages'),
@@ -50,7 +49,6 @@ const licensingModify = {
     $licenseDetailInfo: $('#licenseDetailInfo'),
     $resetButton: $('#reset-license'),
     $productDetails: $('#productDetails'),
-    $licensingMenu: $('#licensing-menu .item'),
     $accordions: $('#licencing-modify-form .ui.accordion'),
     defaultLicenseKey: null,
 
@@ -112,18 +110,6 @@ const licensingModify = {
 
     // Initialize the licensing page.
     initialize() {
-
-        licensingModify.$licensingMenu.tab({
-            historyType: 'hash',
-        });
-
-        // Check if the license key info is filled
-        if (licensingModify.$filledLicenseKeyInfo.length === 0) {
-            licensingModify.$licensingMenu.tab('change tab', 'management');
-            // No internet connection. Form is not rendered.
-            return;
-        }
-
         licensingModify.$accordions.accordion();
         licensingModify.$licenseDetailInfo.hide();
 
@@ -158,24 +144,15 @@ const licensingModify = {
             licensingModify.$filledLicenseKeyInfo
                 .html(`${licensingModify.defaultLicenseKey} <i class="spinner loading icon"></i>`)
                 .show();
+            licensingModify.$filledLicenseKeyHeader.show();
             PbxApi.LicenseGetMikoPBXFeatureStatus(licensingModify.cbAfterGetMikoPBXFeatureStatus);
             PbxApi.LicenseGetLicenseInfo(licensingModify.cbAfterGetLicenseInfo);
             licensingModify.$emptyLicenseKeyInfo.hide();
         } else {
+            licensingModify.$filledLicenseKeyHeader.hide();
             licensingModify.$filledLicenseKeyInfo.hide();
             licensingModify.$emptyLicenseKeyInfo.show();
         }
-
-        // Switch to the management tab if a license key is present
-        if (licensingModify.defaultLicenseKey !== '') {
-            licensingModify.$licensingMenu.tab('change tab', 'management');
-        }
-
-        // Handle "Go to License Management" button click
-        licensingModify.$goToLicenseManagementBTN.on('click', (e) => {
-            e.preventDefault();
-            licensingModify.$licensingMenu.tab('change tab', 'management');
-        });
 
     },
 
@@ -206,6 +183,7 @@ const licensingModify = {
             // MikoPBX feature status is true (valid)
             licensingModify.$formObj.removeClass('error').addClass('success');
             licensingModify.$filledLicenseKeyInfo.after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
+            licensingModify.$filledLicenseKeyHeader.show();
         } else {
             // MikoPBX feature status is false or an error occurred
             licensingModify.$formObj.addClass('error').removeClass('success');
@@ -213,10 +191,12 @@ const licensingModify = {
                 // Failed to check license status (response is false or no messages available)
                 $('#licFailInfo').remove();
                 licensingModify.$filledLicenseKeyInfo.after(`<div id="licFailInfo" class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${globalTranslate.lic_FailedCheckLicenseNotPbxResponse}</div>`);
+                licensingModify.$filledLicenseKeyHeader.show();
             } else {
                 // Failed to check license status with error messages
                 $('#licFailInfoMsg').remove();
                 licensingModify.$filledLicenseKeyInfo.after(`<div id="licFailInfoMsg" class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${response.messages}</div>`);
+                licensingModify.$filledLicenseKeyHeader.show();
             }
         }
     },
