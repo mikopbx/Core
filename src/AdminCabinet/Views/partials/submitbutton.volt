@@ -29,7 +29,7 @@
         </div>
     </div>
 {% else %}
-    <div class="ui left labeled icon large positive right floated button  {{ class }}" id="submitbutton" data-value="save">
+    <div class="ui left labeled icon large positive right floated button prevent-word-wrap {{ class }}" id="submitbutton" data-value="save">
         {% if submitBtnText is empty %}
             <i class="save icon"></i>
             {{ t._('bt_SaveSettings') }}
