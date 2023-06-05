@@ -37,7 +37,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
     public function testInstallModule(array $params): void
     {
         $this->clickSidebarMenuItemByHref("/admin-cabinet/pbx-extension-modules/index/");
-
+        $this->changeTabOnCurrentPage('installed');
         // Delete old module
         $xpath = '//tr[@id="' . $params['moduleId'] . '"]//a[contains(@href,"delete")]';
         try {
@@ -53,6 +53,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         }
 
         // Install new one
+        $this->changeTabOnCurrentPage('marketplace');
         $xpath = '//a[contains(@data-uniqid,"' . $params['moduleId'] . '")]';
         try {
             $tableButtonInstall = self::$driver->findElement(WebDriverBy::xpath($xpath));
@@ -65,6 +66,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         }
 
         // Wait the installation and test it
+        $this->changeTabOnCurrentPage('installed');
         $maximumWaitTime = 120;
         $waitTime = 0;
         $xpath = '//tr[@id="' . $params['moduleId'] . '"]//a[contains(@href,"delete")]';
