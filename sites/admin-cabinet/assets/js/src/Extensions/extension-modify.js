@@ -46,7 +46,12 @@ const extension = {
      */
     $formObj: $('#extensions-form'),
 
+    /**
+     * jQuery object for the tabular menu.
+     * @type {jQuery}
+     */
     $tabMenuItems: $('#extensions-menu .item'),
+
     forwardingSelect: '#extensions-form .forwarding-select',
 
     /**

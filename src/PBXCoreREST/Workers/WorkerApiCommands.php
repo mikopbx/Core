@@ -96,6 +96,11 @@ class WorkerApiCommands extends WorkerBase
             $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $processor = $request['processor'];
 
+            // Old style, we can remove it in 2025
+            if ($processor === 'modules'){
+                $processor = PbxExtensionsProcessor::class;
+            }
+
             if (method_exists($processor, 'callback')) {
                 $res = $processor::callback($request);
             } else {

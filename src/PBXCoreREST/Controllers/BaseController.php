@@ -58,12 +58,17 @@ class BaseController extends Controller
         int $priority = Pheanstalk::DEFAULT_PRIORITY
     ): void
     {
+        // Old style modules, we can remove it after 2025
+        if ($processor === 'modules'){
+            $processor = PbxExtensionsProcessor::class;
+        }
+
         $requestMessage = [
             'processor' => $processor,
             'data'      => $payload,
             'action'    => $actionName
         ];
-        if ($processor === PbxExtensionsProcessor::class || $processor==='modules'){
+        if ($processor === PbxExtensionsProcessor::class){
             $requestMessage['module'] = $moduleName;
         }
         try {

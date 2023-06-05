@@ -46,6 +46,41 @@ class NormalizeControllerNamePlugin extends Injectable
         }
         $dispatcher->setControllerName(ucfirst($controller));
 
+
+        // Check if it is an old style module link without namespace in URL
+        //
+        // @examples
+        // /admin-cabinet/module-users-groups/index
+        // /admin-cabinet/module-users-groups/modify/1
+        if(stripos($dispatcher->getNamespaceName(),'\Modules')===0){
+            $checkNamespace = $dispatcher->getNamespaceName();
+            $checkController = Text::camelize($dispatcher->getControllerName(),'_');
+            $checkAction = $dispatcher->getActionName();
+            $actionSuffix = $dispatcher->getActionSuffix();
+            $controllerSuffix = $dispatcher->getHandlerSuffix();
+            $controllerClass = "{$checkNamespace}\\{$checkController}{$controllerSuffix}";
+            $actionMethod = "{$checkAction}{$actionSuffix}";
+            if (!method_exists($controllerClass, $actionMethod)){
+                // Url is broken, try to add namespace into it
+                // @examples
+                // /admin-cabinet/module-users-groups/module-users-groups/index
+                // /admin-cabinet/module-users-groups/module-users-groups/modify/1
+                $checkController = ucfirst(Text::camelize($dispatcher->getParam('moduleUniqueId'),'-'));
+                $checkAction = $dispatcher->getControllerName();
+                $controllerClass = "{$checkNamespace}\\{$checkController}{$controllerSuffix}";
+                $actionMethod = "{$checkAction}{$actionSuffix}";
+                if (method_exists($controllerClass, $actionMethod)){
+                    $params = $dispatcher->getActionName();
+                    $dispatcher->forward([
+                        'controller' => $checkController,
+                        'action' => $checkAction,
+                        'namespace'=> $checkNamespace,
+                        'params'=> [$params]
+                    ]);
+                }
+            }
+        }
+
     }
 
     /**

@@ -54,15 +54,45 @@ class RouterProvider implements ServiceProviderInterface
                 $router->setDefaultController('extensions');
                 $router->setDefaultAction('index');
 
-                $router->add('/admin-cabinet/:controller/:action/:params', [
+                $router->add('/admin-cabinet/((?!module)[a-zA-Z0-9_-]+)/:action/:params', [
                         'module'     => 'admin-cabinet',
                         'controller' => 1,
                         'action'     => 2,
                         'params'     => 3
                 ]);
 
-                // Add route for external modules which integrate their views into admin web UI
-                $router->add('/admin-cabinet/{moduleName:module-[\w-]+}/:controller/:action/:params', [
+                /** Add route for external modules which integrate their views into admin web UI
+                 * Old style, without namespace
+                 *
+                 * @examples
+                 * /admin-cabinet/module-users-groups/index
+                 * /admin-cabinet/module-users-groups/modify/1
+                 *
+                 */
+                $router->add('/admin-cabinet/{moduleUniqueId:module-[\w-]+}/:action/:params', [
+                    'module'     => 'admin-cabinet',
+                    'namespace'  => 1,
+                    'controller' => 1,
+                    'action'     => 2,
+                    'params'     => 3,
+                ])->convert(
+                    'namespace',
+                    function ($namespace) {
+                        $camelizedNameSpace = \Phalcon\Text::Camelize($namespace);
+                        return "\\Modules\\{$camelizedNameSpace}\\App\\Controllers";
+                    }
+                );
+
+                /** Add route for external modules which integrate their views into admin web UI
+                * New style, with namespace
+                 *
+                * @examples
+                * /admin-cabinet/module-users-groups/module-users-groups/modify/1
+                * /admin-cabinet/module-users-groups/access-groups/modify/1
+                * /admin-cabinet/module-users-groups/access-groups/index
+                *
+                */
+                $router->add('/admin-cabinet/{moduleUniqueId:module-[\w-]+}/:controller/:action/:params', [
                     'module'     => 'admin-cabinet',
                     'namespace'  => 1,
                     'controller' => 2,
@@ -75,21 +105,6 @@ class RouterProvider implements ServiceProviderInterface
                         return "\\Modules\\{$camelizedNameSpace}\\App\\Controllers";
                     }
                 );
-
-                // Add route for external modules which integrate their views into admin web UI
-                // if controller name starts with 'module-' and namespace didn't provide
-                $router->add('/admin-cabinet/{controller:module-[\w-]+}/((?!module)[a-zA-Z0-9_-]+)/:params', [
-                    'module'     => 'admin-cabinet',
-                    'namespace' => 1,
-                    'controller' => 1,
-                    'action'     => 2,
-                    'params'     => 3,
-                ])->convert(
-                    'namespace',
-                    function ($namespace) {
-                        $camelizedNameSpace = \Phalcon\Text::Camelize($namespace);
-                        return "\\Modules\\{$camelizedNameSpace}\\App\\Controllers";
-                    });
 
                 // Register additional app modules from external enabled modules
                 PbxExtensionUtils::registerEnabledModulesInRouter($router);
