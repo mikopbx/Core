@@ -22,13 +22,14 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Exception;
 use Facebook\WebDriver\Exception\NoSuchElementException;
+use Facebook\WebDriver\Interactions\WebDriverActions;
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
 class InstallModulesTest extends MikoPBXTestsBaseAlias
 {
     /**
-     * @depends testLogin
+     * @depends      testLogin
      * @dataProvider additionProvider
      *
      * @param array $params
@@ -38,7 +39,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         $this->clickSidebarMenuItemByHref("/admin-cabinet/pbx-extension-modules/index/");
 
         // Delete old module
-        $xpath = '//tr[@id="'.$params['moduleId'].'"]//a[contains(@href,"delete")]';
+        $xpath = '//tr[@id="' . $params['moduleId'] . '"]//a[contains(@href,"delete")]';
         try {
             $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tableButtonModify->click();
@@ -50,9 +51,9 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         } catch (Exception $e) {
             echo('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
-        // Install new one
 
-        $xpath = '//a[contains(@data-uniqid,"'.$params['moduleId'].'")]';
+        // Install new one
+        $xpath = '//a[contains(@data-uniqid,"' . $params['moduleId'] . '")]';
         try {
             $tableButtonInstall = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tableButtonInstall->click();
@@ -66,58 +67,111 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         // Wait the installation and test it
         $maximumWaitTime = 120;
         $waitTime = 0;
-        $xpath = '//tr[@id="'.$params['moduleId'].'"]//a[contains(@href,"delete")]';
+        $xpath = '//tr[@id="' . $params['moduleId'] . '"]//a[contains(@href,"delete")]';
         $found = false;
-        while ($waitTime<$maximumWaitTime){
+        while ($waitTime < $maximumWaitTime) {
             $els = self::$driver->findElements((WebDriverBy::xpath($xpath)));
-            if (count($els)>0) {
+            if (count($els) > 0) {
                 $found = true;
                 break;
             }
             sleep(5);
-            $waitTime+=5;
+            $waitTime += 5;
         }
-        if (!$found){
-            $this->fail("Not found element by " .$xpath. PHP_EOL);
+        if (!$found) {
+            $this->fail("Not found element by " . $xpath . PHP_EOL);
         } else {
             // increment assertion counter
             $this->assertTrue(true);
         }
 
+        // Enable installed module
+        $this->changeModuleState($params['moduleId']);
+
+        // Enable or disable the module according to the settings
+        $this->changeModuleState($params['moduleId'], $params['enable']);
+    }
+
+    /**
+     * Changes the state of a module.
+     *
+     * @param string $moduleId The ID of the module.
+     * @param bool $enable (Optional) Whether to enable or disable the module. Defaults to true.
+     *
+     * @return void
+     */
+    private function changeModuleState(string $moduleId, bool $enable = true):void
+    {
+        $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]';
+        $checkBoxItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        foreach ($checkBoxItems as $checkBoxItem) {
+            $changed = false;
+
+            if (($enable && !$checkBoxItem->isSelected()) || (!$enable && $checkBoxItem->isSelected())) {
+                // Find the checkbox item's parent div and perform necessary actions
+                $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]/parent::div';
+                $checkBoxItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
+                $actions = new WebDriverActions(self::$driver);
+                $actions->moveToElement($checkBoxItem);
+                $actions->perform();
+                $checkBoxItem->click();
+            }
+
+            // Check if module is enabled or disabled
+            $maximumWaitTime = 45;
+            $waitTime = 0;
+            while ($waitTime < $maximumWaitTime) {
+                if (($enable && $checkBoxItem->isSelected()) || (!$enable && !$checkBoxItem->isSelected())) {
+                    $changed = true;
+                    break;
+                }
+                sleep(5);
+                $waitTime += 5;
+            }
+
+            if (!$changed) {
+                $this->fail("Module {$moduleId} state was not changed during {$maximumWaitTime} seconds" . PHP_EOL);
+            } else {
+                // Increment assertion counter
+                $this->assertTrue(true);
+            }
+        }
     }
 
     public function additionProvider(): array
     {
-        $params=[];
+        $params = [];
         $params[] = [[
-            'moduleId'=>'ModuleAutoprovision',
+            'moduleId' => 'ModuleAutoprovision',
+            'enable' => true,
         ]];
         $params[] = [[
-            'moduleId'=>'ModuleBackup',
-        ]];
-        // $params[] = [[
-        //     'moduleId'=>'ModuleBitrix24Integration',
-        // ]];
-        // $params[] = [[
-        //     'moduleId'=>'ModuleCallTracking',
-        // ]];
-        $params[] = [[
-            'moduleId'=>'ModuleCTIClient',
+            'moduleId' => 'ModuleBackup',
+            'enable' => true,
         ]];
         $params[] = [[
-            'moduleId'=>'ModuleDocker',
+            'moduleId' => 'ModuleCTIClient',
+            'enable' => false,
         ]];
         $params[] = [[
-            'moduleId'=>'ModulePhoneBook',
+            'moduleId' => 'ModuleDocker',
+            'enable' => false,
         ]];
         $params[] = [[
-            'moduleId'=>'ModuleSmartIVR',
+            'moduleId' => 'ModulePhoneBook',
+            'enable' => true,
         ]];
         $params[] = [[
-            'moduleId'=>'ModuleTelegramNotify',
+            'moduleId' => 'ModuleSmartIVR',
+            'enable' => true,
         ]];
         $params[] = [[
-            'moduleId'=>'ModuleUsersGroups',
+            'moduleId' => 'ModuleTelegramNotify',
+            'enable' => false,
+        ]];
+        $params[] = [[
+            'moduleId' => 'ModuleUsersGroups',
+            'enable' => true,
         ]];
 
         return $params;
