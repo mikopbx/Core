@@ -1,11 +1,29 @@
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /*!
- * # Semantic UI 2.4.1 - Ad
- * http://github.com/semantic-org/semantic-ui/
+ * # Fomantic-UI 2.9.2 - Ad
+ * https://github.com/fomantic/Fomantic-UI/
  *
  *
  * Copyright 2013 Contributors
  * Released under the MIT license
- * http://opensource.org/licenses/MIT
+ * https://opensource.org/licenses/MIT
  *
  */
 
@@ -17,25 +35,24 @@
 .ui.ad {
   display: block;
   overflow: hidden;
-  margin: 1em 0em;
+  margin: 1em 0;
 }
 .ui.ad:first-child {
-  margin: 0em;
+  margin: 0;
 }
 .ui.ad:last-child {
-  margin: 0em;
+  margin: 0;
 }
 .ui.ad iframe {
-  margin: 0em;
-  padding: 0em;
+  margin: 0;
+  padding: 0;
   border: none;
   overflow: hidden;
 }
 
-/*--------------
+/* --------------
      Common
----------------*/
-
+--------------- */
 
 /* Leaderboard */
 .ui.leaderboard.ad {
@@ -61,10 +78,9 @@
   height: 600px;
 }
 
-/*--------------
-     Square
----------------*/
-
+/* --------------
+         Square
+    --------------- */
 
 /* Square */
 .ui.square.ad {
@@ -78,10 +94,9 @@
   height: 200px;
 }
 
-/*--------------
-    Rectangle
----------------*/
-
+/* --------------
+        Rectangle
+    --------------- */
 
 /* Small Rectangle */
 .ui[class*="small rectangle"].ad {
@@ -95,10 +110,9 @@
   height: 400px;
 }
 
-/*--------------
-     Button
----------------*/
-
+/* --------------
+         Button
+    --------------- */
 .ui.button.ad {
   width: 120px;
   height: 90px;
@@ -112,10 +126,9 @@
   height: 60px;
 }
 
-/*--------------
-   Skyscrapers
----------------*/
-
+/* --------------
+       Skyscrapers
+    --------------- */
 
 /* Skyscraper */
 .ui.skyscraper.ad {
@@ -128,10 +141,9 @@
   width: 160px;
 }
 
-/*--------------
-     Banners
----------------*/
-
+/* --------------
+         Banners
+    --------------- */
 
 /* Banner */
 .ui.banner.ad {
@@ -157,10 +169,9 @@
   height: 60px;
 }
 
-/*--------------
+/* --------------
     Boards
----------------*/
-
+--------------- */
 
 /* Leaderboard */
 .ui[class*="large leaderboard"].ad {
@@ -174,10 +185,9 @@
   height: 250px;
 }
 
-/*--------------
-    Panorama
----------------*/
-
+/* --------------
+        Panorama
+    --------------- */
 
 /* Panorama */
 .ui.panorama.ad {
@@ -185,10 +195,9 @@
   height: 120px;
 }
 
-/*--------------
-     Netboard
----------------*/
-
+/* --------------
+         Netboard
+    --------------- */
 
 /* Netboard */
 .ui.netboard.ad {
@@ -196,10 +205,9 @@
   height: 400px;
 }
 
-/*--------------
-     Mobile
----------------*/
-
+/* --------------
+         Mobile
+    --------------- */
 
 /* Large Mobile Banner */
 .ui[class*="large mobile banner"].ad {
@@ -215,15 +223,15 @@
 
 
 /*******************************
-             Types
-*******************************/
+                 Types
+    *******************************/
 
 
 /* Mobile Sizes */
 .ui.mobile.ad {
   display: none;
 }
-@media only screen and (max-width: 767px) {
+@media only screen and (max-width: 767.98px) {
   .ui.mobile.ad {
     display: block;
   }
@@ -242,23 +250,22 @@
   position: relative;
   background: #545454;
 }
-.ui.test.ad:after {
+.ui.test.ad::after {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 100%;
   text-align: center;
-  -webkit-transform: translateX(-50%) translateY(-50%);
-          transform: translateX(-50%) translateY(-50%);
-  content: 'Ad';
-  color: #FFFFFF;
+  transform: translateX(-50%) translateY(-50%);
+  content: "Ad";
+  color: #fff;
   font-size: 1em;
   font-weight: bold;
 }
-.ui.mobile.test.ad:after {
+.ui.mobile.test.ad::after {
   font-size: 0.85714286em;
 }
-.ui.test.ad[data-text]:after {
+.ui.test.ad[data-text]::after {
   content: attr(data-text);
 }
 

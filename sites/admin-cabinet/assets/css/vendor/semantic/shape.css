@@ -1,10 +1,28 @@
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /*!
- * # Semantic UI 2.4.0 - Shape
- * http://github.com/semantic-org/semantic-ui/
+ * # Fomantic-UI 2.9.2 - Shape
+ * https://github.com/fomantic/Fomantic-UI/
  *
  *
  * Released under the MIT license
- * http://opensource.org/licenses/MIT
+ * https://opensource.org/licenses/MIT
  *
  */
 
@@ -17,26 +35,20 @@
   position: relative;
   vertical-align: top;
   display: inline-block;
-  -webkit-perspective: 2000px;
-          perspective: 2000px;
-  -webkit-transition: left 0.6s ease-in-out, width 0.6s ease-in-out, height 0.6s ease-in-out, -webkit-transform 0.6s ease-in-out;
-  transition: left 0.6s ease-in-out, width 0.6s ease-in-out, height 0.6s ease-in-out, -webkit-transform 0.6s ease-in-out;
+  perspective: 2000px;
   transition: transform 0.6s ease-in-out, left 0.6s ease-in-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
-  transition: transform 0.6s ease-in-out, left 0.6s ease-in-out, width 0.6s ease-in-out, height 0.6s ease-in-out, -webkit-transform 0.6s ease-in-out;
 }
+.ui.shape .side,
 .ui.shape .sides {
-  -webkit-transform-style: preserve-3d;
-          transform-style: preserve-3d;
-}
-.ui.shape .side {
-  opacity: 1;
-  width: 100%;
-  margin: 0em !important;
-  -webkit-backface-visibility: hidden;
-          backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 .ui.shape .side {
   display: none;
+  opacity: 1;
+  width: 100%;
+  margin: 0 !important;
+  -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
 }
 .ui.shape .side * {
   -webkit-backface-visibility: visible !important;
@@ -52,10 +64,9 @@
   min-width: 15em;
   height: 15em;
   padding: 2em;
-  background-color: #E6E6E6;
+  background-color: #e6e6e6;
   color: rgba(0, 0, 0, 0.87);
-  -webkit-box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.3);
-          box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
 }
 .ui.cube.shape .side > .content {
   width: 100%;
@@ -63,7 +74,6 @@
   display: table;
   text-align: center;
   -webkit-user-select: text;
-     -moz-user-select: text;
       -ms-user-select: text;
           user-select: text;
 }
@@ -94,24 +104,22 @@
 *******************************/
 
 
-/*--------------
-    Loading
----------------*/
-
+/* --------------
+        Loading
+    --------------- */
 .ui.loading.shape {
   position: absolute;
   top: -9999px;
   left: -9999px;
 }
 
-/*--------------
+/* --------------
     Animating
----------------*/
-
+--------------- */
 .ui.shape .animating.side {
   position: absolute;
-  top: 0px;
-  left: 0px;
+  top: 0;
+  left: 0;
   display: block;
   z-index: 100;
 }
@@ -119,28 +127,24 @@
   opacity: 0.6;
 }
 
-/*--------------
+/* --------------
       CSS
----------------*/
-
+--------------- */
 .ui.shape.animating .sides {
   position: absolute;
-}
-.ui.shape.animating .sides {
-  -webkit-transition: left 0.6s ease-in-out, width 0.6s ease-in-out, height 0.6s ease-in-out, -webkit-transform 0.6s ease-in-out;
-  transition: left 0.6s ease-in-out, width 0.6s ease-in-out, height 0.6s ease-in-out, -webkit-transform 0.6s ease-in-out;
   transition: transform 0.6s ease-in-out, left 0.6s ease-in-out, width 0.6s ease-in-out, height 0.6s ease-in-out;
-  transition: transform 0.6s ease-in-out, left 0.6s ease-in-out, width 0.6s ease-in-out, height 0.6s ease-in-out, -webkit-transform 0.6s ease-in-out;
 }
 .ui.shape.animating .side {
-  -webkit-transition: opacity 0.6s ease-in-out;
   transition: opacity 0.6s ease-in-out;
 }
+.ui.shape .animating.side *,
+.ui.shape.animating .side * {
+  transition: none;
+}
 
-/*--------------
+/* --------------
      Active
----------------*/
-
+--------------- */
 .ui.shape .active.side {
   display: block;
 }

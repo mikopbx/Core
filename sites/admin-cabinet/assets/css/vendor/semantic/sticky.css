@@ -1,10 +1,28 @@
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /*!
- * # Semantic UI 2.4.0 - Sticky
- * http://github.com/semantic-org/semantic-ui/
+ * # Fomantic-UI 2.9.2 - Sticky
+ * https://github.com/fomantic/Fomantic-UI/
  *
  *
  * Released under the MIT license
- * http://opensource.org/licenses/MIT
+ * https://opensource.org/licenses/MIT
  *
  */
 
@@ -15,7 +33,6 @@
 
 .ui.sticky {
   position: static;
-  -webkit-transition: none;
   transition: none;
   z-index: 800;
 }
@@ -43,13 +60,13 @@
 /* Bound/Fixed Position */
 .ui.sticky.bound.top,
 .ui.sticky.fixed.top {
-  top: 0px;
+  top: 0;
   bottom: auto;
 }
 .ui.sticky.bound.bottom,
 .ui.sticky.fixed.bottom {
   top: auto;
-  bottom: 0px;
+  bottom: 0;
 }
 
 
@@ -58,10 +75,6 @@
 *******************************/
 
 .ui.native.sticky {
-  position: -webkit-sticky;
-  position: -moz-sticky;
-  position: -ms-sticky;
-  position: -o-sticky;
   position: sticky;
 }
 

@@ -1,10 +1,28 @@
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /*!
- * # Semantic UI 2.4.1 - Breadcrumb
- * http://github.com/semantic-org/semantic-ui/
+ * # Fomantic-UI 2.9.2 - Breadcrumb
+ * https://github.com/fomantic/Fomantic-UI/
  *
  *
  * Released under the MIT license
- * http://opensource.org/licenses/MIT
+ * https://opensource.org/licenses/MIT
  *
  */
 
@@ -14,16 +32,16 @@
 *******************************/
 
 .ui.breadcrumb {
-  line-height: 1;
+  line-height: 1.4285em;
   display: inline-block;
-  margin: 0em 0em;
+  margin: 0 0;
   vertical-align: middle;
 }
 .ui.breadcrumb:first-child {
-  margin-top: 0em;
+  margin-top: 0;
 }
 .ui.breadcrumb:last-child {
-  margin-bottom: 0em;
+  margin-bottom: 0;
 }
 
 
@@ -36,7 +54,7 @@
 .ui.breadcrumb .divider {
   display: inline-block;
   opacity: 0.7;
-  margin: 0em 0.21428571rem 0em;
+  margin: 0 0.21428571rem;
   font-size: 0.92857143em;
   color: rgba(0, 0, 0, 0.4);
   vertical-align: baseline;
@@ -44,7 +62,7 @@
 
 /* Link */
 .ui.breadcrumb a {
-  color: #4183C4;
+  color: #4183c4;
 }
 .ui.breadcrumb a:hover {
   color: #1e70bf;
@@ -62,14 +80,25 @@
 }
 .ui.breadcrumb .section {
   display: inline-block;
-  margin: 0em;
-  padding: 0em;
+  margin: 0;
+  padding: 0;
 }
 
 /* Loose Coupling */
 .ui.breadcrumb.segment {
   display: inline-block;
   padding: 0.78571429em 1em;
+}
+
+/* Inverted */
+.ui.inverted.breadcrumb {
+  color: #dcddde;
+}
+.ui.inverted.breadcrumb > .active.section {
+  color: #fff;
+}
+.ui.inverted.breadcrumb > .divider {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 
@@ -86,6 +115,9 @@
            Variations
 *******************************/
 
+.ui.breadcrumb {
+  font-size: 1rem;
+}
 .ui.mini.breadcrumb {
   font-size: 0.78571429rem;
 }
@@ -94,9 +126,6 @@
 }
 .ui.small.breadcrumb {
   font-size: 0.92857143rem;
-}
-.ui.breadcrumb {
-  font-size: 1rem;
 }
 .ui.large.breadcrumb {
   font-size: 1.14285714rem;

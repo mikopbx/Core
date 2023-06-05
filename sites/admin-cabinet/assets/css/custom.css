@@ -31,6 +31,12 @@ body {
 /* Search field */
 #top-menu-search {
     min-width: 500px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.prevent-word-wrap {
+    white-space: nowrap;
 }
 
 /**
