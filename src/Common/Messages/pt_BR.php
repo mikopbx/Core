@@ -1142,4 +1142,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_StoreAllPossibleRecords' => '∞',
     'ex_UserPhotography' => 'foto do funcionário',
     'topMenu_SidebarButton' => 'Cardápio',
+    'ext_InstalledModules' => 'Módulos instalados',
+    'ext_Marketplace' => 'Mercado',
+    'ext_Licensing' => 'Gerenciamento de licenças',
 ];

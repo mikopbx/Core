@@ -1146,4 +1146,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'gs_Store1MonthOfRecords' => '1 month',
     'ex_UserPhotography' => 'Employee photo',
     'topMenu_SidebarButton' => 'Menu',
+    'ext_Licensing' => 'License management',
+    'ext_InstalledModules' => 'Installed modules',
+    'ext_Marketplace' => 'Marketplace',
 ];

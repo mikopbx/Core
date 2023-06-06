@@ -1143,4 +1143,7 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'gs_Store1MonthOfRecords' => '1 mes',
     'ex_UserPhotography' => 'foto de empleado',
     'topMenu_SidebarButton' => 'Menú',
+    'ext_InstalledModules' => 'módulos instalados',
+    'ext_Marketplace' => 'Mercado',
+    'ext_Licensing' => 'Gestión de licencias',
 ];

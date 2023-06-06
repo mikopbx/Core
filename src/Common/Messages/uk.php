@@ -1143,4 +1143,7 @@ return [
     'gs_Store1YearOfRecords' => '1 рік',
     'ex_UserPhotography' => 'Фотографія співробітника',
     'topMenu_SidebarButton' => 'Меню',
+    'ext_InstalledModules' => 'Встановлені модулі',
+    'ext_Marketplace' => 'Маркетплейс',
+    'ext_Licensing' => 'Управління ліцензією',
 ];

@@ -1143,4 +1143,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'gs_Store1MonthOfRecords' => '1 mois',
     'ex_UserPhotography' => 'Photo de l\'employé',
     'topMenu_SidebarButton' => 'Menu',
+    'ext_InstalledModules' => 'Modules installés',
+    'ext_Marketplace' => 'Marché',
+    'ext_Licensing' => 'Gestion des licences',
 ];

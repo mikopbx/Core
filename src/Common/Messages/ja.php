@@ -1143,4 +1143,7 @@ return [
     'gs_Store1MonthOfRecords' => '1ヶ月',
     'ex_UserPhotography' => '社員写真',
     'topMenu_SidebarButton' => 'メニュー',
+    'ext_Marketplace' => '市場',
+    'ext_Licensing' => 'ライセンス管理',
+    'ext_InstalledModules' => 'インストールされているモジュール',
 ];

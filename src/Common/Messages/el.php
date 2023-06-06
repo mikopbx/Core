@@ -1143,4 +1143,7 @@ return [
     'gs_StoreAllPossibleRecords' => '∞',
     'ex_UserPhotography' => 'Φωτογραφία υπαλλήλου',
     'topMenu_SidebarButton' => 'Μενού',
+    'ext_InstalledModules' => 'Εγκατεστημένες μονάδες',
+    'ext_Marketplace' => 'Αγορά',
+    'ext_Licensing' => 'Διαχείριση αδειών',
 ];

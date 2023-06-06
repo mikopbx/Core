@@ -1143,4 +1143,7 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'gs_StoreAllPossibleRecords' => '∞',
     'ex_UserPhotography' => 'Zdjęcie pracownika',
     'topMenu_SidebarButton' => 'Menu',
+    'ext_InstalledModules' => 'Zainstalowane moduły',
+    'ext_Marketplace' => 'Rynek',
+    'ext_Licensing' => 'Zarządzanie licencjami',
 ];

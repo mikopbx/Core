@@ -1143,4 +1143,7 @@ return [
     'gs_StoreAllPossibleRecords' => '∞',
     'ex_UserPhotography' => '员工合影',
     'topMenu_SidebarButton' => '菜单',
+    'ext_InstalledModules' => '安装的模块',
+    'ext_Marketplace' => '市场',
+    'ext_Licensing' => '许可证管理',
 ];

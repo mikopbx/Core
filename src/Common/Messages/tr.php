@@ -1143,4 +1143,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'gs_Store1YearOfRecords' => '1 yıl',
     'ex_UserPhotography' => 'Çalışan fotoğrafı',
     'topMenu_SidebarButton' => 'Menü',
+    'ext_InstalledModules' => 'Kurulu modüller',
+    'ext_Marketplace' => 'pazar yeri',
+    'ext_Licensing' => 'Lisans yönetimi',
 ];

@@ -1143,4 +1143,7 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_Store1MonthOfRecords' => '1 måned',
     'ex_UserPhotography' => 'Medarbejder foto',
     'topMenu_SidebarButton' => 'Menu',
+    'ext_Marketplace' => 'Markedsplads',
+    'ext_InstalledModules' => 'Installerede moduler',
+    'ext_Licensing' => 'Administration af licens',
 ];

@@ -1143,4 +1143,7 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_Store1MonthOfRecords' => '1 mese',
     'ex_UserPhotography' => 'Foto del dipendente',
     'topMenu_SidebarButton' => 'Menù',
+    'ext_InstalledModules' => 'Moduli installati',
+    'ext_Marketplace' => 'Mercato',
+    'ext_Licensing' => 'Gestione delle licenze',
 ];

@@ -1143,4 +1143,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_StoreAllPossibleRecords' => '∞',
     'ex_UserPhotography' => 'Anställd foto',
     'topMenu_SidebarButton' => 'Meny',
+    'ext_InstalledModules' => 'Installerade moduler',
+    'ext_Marketplace' => 'Marknad',
+    'ext_Licensing' => 'Licenshantering',
 ];

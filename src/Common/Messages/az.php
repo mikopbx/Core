@@ -1143,4 +1143,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'gs_Store6MonthsOfRecords' => '6 ay',
     'ex_UserPhotography' => 'İşçi şəkli',
     'topMenu_SidebarButton' => 'Menyu',
+    'ext_InstalledModules' => 'Quraşdırılmış modullar',
+    'ext_Marketplace' => 'Bazar yeri',
+    'ext_Licensing' => 'Lisenziya idarəetməsi',
 ];

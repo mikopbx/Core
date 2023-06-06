@@ -1143,4 +1143,7 @@ return [
     'gs_StoreAllPossibleRecords' => '∞',
     'ex_UserPhotography' => 'თანამშრომლის ფოტო',
     'topMenu_SidebarButton' => 'მენიუ',
+    'ext_InstalledModules' => 'დაინსტალირებული მოდულები',
+    'ext_Marketplace' => 'ბაზარი',
+    'ext_Licensing' => 'ლიცენზიის მენეჯმენტი',
 ];

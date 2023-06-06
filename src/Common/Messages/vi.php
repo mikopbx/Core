@@ -1143,4 +1143,7 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'gs_StoreAllPossibleRecords' => '∞',
     'ex_UserPhotography' => 'ảnh nhân viên',
     'topMenu_SidebarButton' => 'Thực đơn',
+    'ext_InstalledModules' => 'các mô-đun đã cài đặt',
+    'ext_Marketplace' => 'Thương trường',
+    'ext_Licensing' => 'Quản lý Giấy phép',
 ];

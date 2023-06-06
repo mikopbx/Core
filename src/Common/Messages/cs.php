@@ -1143,4 +1143,7 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'gs_PBXRecordSavePeriodLabel' => 'Doba uložení záznamů konverzace',
     'ex_UserPhotography' => 'Fotka zaměstnance',
     'topMenu_SidebarButton' => 'Jídelní lístek',
+    'ext_InstalledModules' => 'Instalované moduly',
+    'ext_Marketplace' => 'Tržiště',
+    'ext_Licensing' => 'Správa licencí',
 ];

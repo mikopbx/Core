@@ -1146,4 +1146,7 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'gs_StoreAllPossibleRecords' => '∞',
     'ex_UserPhotography' => 'Mitarbeiterfoto',
     'topMenu_SidebarButton' => 'Speisekarte',
+    'ext_InstalledModules' => 'Installierte Module',
+    'ext_Marketplace' => 'Marktplatz',
+    'ext_Licensing' => 'Lizenzverwaltung',
 ];
