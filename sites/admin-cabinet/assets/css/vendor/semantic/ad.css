@@ -17,13 +17,13 @@
  */
 
 /*!
- * # Fomantic-UI 2.9.2 - Ad
- * https://github.com/fomantic/Fomantic-UI/
+ * # Semantic UI 2.4.1 - Ad
+ * http://github.com/semantic-org/semantic-ui/
  *
  *
  * Copyright 2013 Contributors
  * Released under the MIT license
- * https://opensource.org/licenses/MIT
+ * http://opensource.org/licenses/MIT
  *
  */
 
@@ -35,24 +35,25 @@
 .ui.ad {
   display: block;
   overflow: hidden;
-  margin: 1em 0;
+  margin: 1em 0em;
 }
 .ui.ad:first-child {
-  margin: 0;
+  margin: 0em;
 }
 .ui.ad:last-child {
-  margin: 0;
+  margin: 0em;
 }
 .ui.ad iframe {
-  margin: 0;
-  padding: 0;
+  margin: 0em;
+  padding: 0em;
   border: none;
   overflow: hidden;
 }
 
-/* --------------
+/*--------------
      Common
---------------- */
+---------------*/
+
 
 /* Leaderboard */
 .ui.leaderboard.ad {
@@ -78,9 +79,10 @@
   height: 600px;
 }
 
-/* --------------
-         Square
-    --------------- */
+/*--------------
+     Square
+---------------*/
+
 
 /* Square */
 .ui.square.ad {
@@ -94,9 +96,10 @@
   height: 200px;
 }
 
-/* --------------
-        Rectangle
-    --------------- */
+/*--------------
+    Rectangle
+---------------*/
+
 
 /* Small Rectangle */
 .ui[class*="small rectangle"].ad {
@@ -110,9 +113,10 @@
   height: 400px;
 }
 
-/* --------------
-         Button
-    --------------- */
+/*--------------
+     Button
+---------------*/
+
 .ui.button.ad {
   width: 120px;
   height: 90px;
@@ -126,9 +130,10 @@
   height: 60px;
 }
 
-/* --------------
-       Skyscrapers
-    --------------- */
+/*--------------
+   Skyscrapers
+---------------*/
+
 
 /* Skyscraper */
 .ui.skyscraper.ad {
@@ -141,9 +146,10 @@
   width: 160px;
 }
 
-/* --------------
-         Banners
-    --------------- */
+/*--------------
+     Banners
+---------------*/
+
 
 /* Banner */
 .ui.banner.ad {
@@ -169,9 +175,10 @@
   height: 60px;
 }
 
-/* --------------
+/*--------------
     Boards
---------------- */
+---------------*/
+
 
 /* Leaderboard */
 .ui[class*="large leaderboard"].ad {
@@ -185,9 +192,10 @@
   height: 250px;
 }
 
-/* --------------
-        Panorama
-    --------------- */
+/*--------------
+    Panorama
+---------------*/
+
 
 /* Panorama */
 .ui.panorama.ad {
@@ -195,9 +203,10 @@
   height: 120px;
 }
 
-/* --------------
-         Netboard
-    --------------- */
+/*--------------
+     Netboard
+---------------*/
+
 
 /* Netboard */
 .ui.netboard.ad {
@@ -205,9 +214,10 @@
   height: 400px;
 }
 
-/* --------------
-         Mobile
-    --------------- */
+/*--------------
+     Mobile
+---------------*/
+
 
 /* Large Mobile Banner */
 .ui[class*="large mobile banner"].ad {
@@ -223,15 +233,15 @@
 
 
 /*******************************
-                 Types
-    *******************************/
+             Types
+*******************************/
 
 
 /* Mobile Sizes */
 .ui.mobile.ad {
   display: none;
 }
-@media only screen and (max-width: 767.98px) {
+@media only screen and (max-width: 767px) {
   .ui.mobile.ad {
     display: block;
   }
@@ -250,22 +260,23 @@
   position: relative;
   background: #545454;
 }
-.ui.test.ad::after {
+.ui.test.ad:after {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 100%;
   text-align: center;
-  transform: translateX(-50%) translateY(-50%);
-  content: "Ad";
-  color: #fff;
+  -webkit-transform: translateX(-50%) translateY(-50%);
+          transform: translateX(-50%) translateY(-50%);
+  content: 'Ad';
+  color: #FFFFFF;
   font-size: 1em;
   font-weight: bold;
 }
-.ui.mobile.test.ad::after {
+.ui.mobile.test.ad:after {
   font-size: 0.85714286em;
 }
-.ui.test.ad[data-text]::after {
+.ui.test.ad[data-text]:after {
   content: attr(data-text);
 }
 

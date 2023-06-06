@@ -17,12 +17,12 @@
  */
 
 /*!
- * # Fomantic-UI 2.9.2 - Container
- * https://github.com/fomantic/Fomantic-UI/
+ * # Semantic UI 2.4.1 - Container
+ * http://github.com/semantic-org/semantic-ui/
  *
  *
  * Released under the MIT license
- * https://opensource.org/licenses/MIT
+ * http://opensource.org/licenses/MIT
  *
  */
 
@@ -35,78 +35,78 @@
 /* All Sizes */
 .ui.container {
   display: block;
-  max-width: 100%;
+  max-width: 100% !important;
 }
 
 /* Mobile */
-@media only screen and (max-width: 767.98px) {
-  .ui.ui.ui.container:not(.fluid) {
-    width: auto;
-    margin-left: 1em;
-    margin-right: 1em;
+@media only screen and (max-width: 767px) {
+  .ui.container {
+    width: auto !important;
+    margin-left: 1em !important;
+    margin-right: 1em !important;
   }
-  .ui.ui.ui.grid.container {
-    width: auto;
+  .ui.grid.container {
+    width: auto !important;
   }
-  .ui.ui.ui.relaxed.grid.container {
-    width: auto;
+  .ui.relaxed.grid.container {
+    width: auto !important;
   }
-  .ui.ui.ui.very.relaxed.grid.container {
-    width: auto;
+  .ui.very.relaxed.grid.container {
+    width: auto !important;
   }
 }
 
 /* Tablet */
-@media only screen and (min-width: 768px) and (max-width: 991.98px) {
-  .ui.ui.ui.container:not(.fluid) {
+@media only screen and (min-width: 768px) and (max-width: 991px) {
+  .ui.container {
     width: 723px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
-  .ui.ui.ui.grid.container {
-    width: calc(723px + 2rem);
+  .ui.grid.container {
+    width: calc( 723px  +  2rem ) !important;
   }
-  .ui.ui.ui.relaxed.grid.container {
-    width: calc(723px + 3rem);
+  .ui.relaxed.grid.container {
+    width: calc( 723px  +  3rem ) !important;
   }
-  .ui.ui.ui.very.relaxed.grid.container {
-    width: calc(723px + 5rem);
+  .ui.very.relaxed.grid.container {
+    width: calc( 723px  +  5rem ) !important;
   }
 }
 
 /* Small Monitor */
-@media only screen and (min-width: 992px) and (max-width: 1199.98px) {
-  .ui.ui.ui.container:not(.fluid) {
+@media only screen and (min-width: 992px) and (max-width: 1199px) {
+  .ui.container {
     width: 933px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
-  .ui.ui.ui.grid.container {
-    width: calc(933px + 2rem);
+  .ui.grid.container {
+    width: calc( 933px  +  2rem ) !important;
   }
-  .ui.ui.ui.relaxed.grid.container {
-    width: calc(933px + 3rem);
+  .ui.relaxed.grid.container {
+    width: calc( 933px  +  3rem ) !important;
   }
-  .ui.ui.ui.very.relaxed.grid.container {
-    width: calc(933px + 5rem);
+  .ui.very.relaxed.grid.container {
+    width: calc( 933px  +  5rem ) !important;
   }
 }
 
 /* Large Monitor */
 @media only screen and (min-width: 1200px) {
-  .ui.ui.ui.container:not(.fluid) {
+  .ui.container {
     width: 1127px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
-  .ui.ui.ui.grid.container {
-    width: calc(1127px + 2rem);
+  .ui.grid.container {
+    width: calc( 1127px  +  2rem ) !important;
   }
-  .ui.ui.ui.relaxed.grid.container {
-    width: calc(1127px + 3rem);
+  .ui.relaxed.grid.container {
+    width: calc( 1127px  +  3rem ) !important;
   }
-  .ui.ui.ui.very.relaxed.grid.container {
-    width: calc(1127px + 5rem);
+  .ui.very.relaxed.grid.container {
+    width: calc( 1127px  +  5rem ) !important;
   }
 }
 
@@ -118,27 +118,12 @@
 
 /* Text Container */
 .ui.text.container {
-  font-family: "Lato", system-ui, -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  max-width: 700px;
+  font-family: 'Lato', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+  max-width: 700px !important;
   line-height: 1.5;
+}
+.ui.text.container {
   font-size: 1.14285714rem;
-}
-
-/* Wide Container */
-@media only screen and (min-width: 768px) and (max-width: 991.98px) {
-  .ui.ui.ui.wide.container {
-    width: 867.6px;
-  }
-}
-@media only screen and (min-width: 992px) and (max-width: 1199.98px) {
-  .ui.ui.ui.wide.container {
-    width: 1119.6px;
-  }
-}
-@media only screen and (min-width: 1200px) {
-  .ui.ui.ui.wide.container {
-    width: 1352.4px;
-  }
 }
 
 /* Fluid */
@@ -165,83 +150,6 @@
   -webkit-hyphens: auto;
       -ms-hyphens: auto;
           hyphens: auto;
-}
-
-/* --------------
-      Scrolling
-    --------------- */
-.ui.scrolling.container {
-  overflow: auto;
-  -ms-scroll-chaining: none;
-      overscroll-behavior: none;
-}
-@media only screen and (max-width: 767.98px) {
-  .ui.scrolling.container.short {
-    max-height: 11.25em;
-  }
-  .ui.scrolling.container[class*="very short"] {
-    max-height: 7.5em;
-  }
-  .ui.scrolling.container {
-    max-height: 15em;
-  }
-  .ui.scrolling.container.long {
-    max-height: 30em;
-  }
-  .ui.scrolling.container[class*="very long"] {
-    max-height: 45em;
-  }
-}
-@media only screen and (min-width: 768px) {
-  .ui.scrolling.container.short {
-    max-height: 13.5em;
-  }
-  .ui.scrolling.container[class*="very short"] {
-    max-height: 9em;
-  }
-  .ui.scrolling.container {
-    max-height: 18em;
-  }
-  .ui.scrolling.container.long {
-    max-height: 36em;
-  }
-  .ui.scrolling.container[class*="very long"] {
-    max-height: 54em;
-  }
-}
-@media only screen and (min-width: 992px) {
-  .ui.scrolling.container.short {
-    max-height: 18em;
-  }
-  .ui.scrolling.container[class*="very short"] {
-    max-height: 12em;
-  }
-  .ui.scrolling.container {
-    max-height: 24em;
-  }
-  .ui.scrolling.container.long {
-    max-height: 48em;
-  }
-  .ui.scrolling.container[class*="very long"] {
-    max-height: 72em;
-  }
-}
-@media only screen and (min-width: 1920px) {
-  .ui.scrolling.container.short {
-    max-height: 22.5em;
-  }
-  .ui.scrolling.container[class*="very short"] {
-    max-height: 15em;
-  }
-  .ui.scrolling.container {
-    max-height: 30em;
-  }
-  .ui.scrolling.container.long {
-    max-height: 60em;
-  }
-  .ui.scrolling.container[class*="very long"] {
-    max-height: 90em;
-  }
 }
 
 

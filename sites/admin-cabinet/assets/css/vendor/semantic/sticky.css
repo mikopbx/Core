@@ -17,12 +17,12 @@
  */
 
 /*!
- * # Fomantic-UI 2.9.2 - Sticky
- * https://github.com/fomantic/Fomantic-UI/
+ * # Semantic UI 2.4.0 - Sticky
+ * http://github.com/semantic-org/semantic-ui/
  *
  *
  * Released under the MIT license
- * https://opensource.org/licenses/MIT
+ * http://opensource.org/licenses/MIT
  *
  */
 
@@ -33,6 +33,7 @@
 
 .ui.sticky {
   position: static;
+  -webkit-transition: none;
   transition: none;
   z-index: 800;
 }
@@ -60,13 +61,13 @@
 /* Bound/Fixed Position */
 .ui.sticky.bound.top,
 .ui.sticky.fixed.top {
-  top: 0;
+  top: 0px;
   bottom: auto;
 }
 .ui.sticky.bound.bottom,
 .ui.sticky.fixed.bottom {
   top: auto;
-  bottom: 0;
+  bottom: 0px;
 }
 
 
@@ -75,6 +76,10 @@
 *******************************/
 
 .ui.native.sticky {
+  position: -webkit-sticky;
+  position: -moz-sticky;
+  position: -ms-sticky;
+  position: -o-sticky;
   position: sticky;
 }
 

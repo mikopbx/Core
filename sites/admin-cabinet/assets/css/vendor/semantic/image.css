@@ -17,12 +17,12 @@
  */
 
 /*!
- * # Fomantic-UI 2.9.2 - Image
- * https://github.com/fomantic/Fomantic-UI/
+ * # Semantic UI 2.4.1 - Image
+ * http://github.com/semantic-org/semantic-ui/
  *
  *
  * Released under the MIT license
- * https://opensource.org/licenses/MIT
+ * http://opensource.org/licenses/MIT
  *
  */
 
@@ -54,7 +54,7 @@ img.ui.image {
 *******************************/
 
 .ui.hidden.images,
-.ui.ui.hidden.image {
+.ui.hidden.image {
   display: none;
 }
 .ui.hidden.transition.images,
@@ -78,52 +78,46 @@ img.ui.image {
 *******************************/
 
 
-/* --------------
-         Inline
-    --------------- */
+/*--------------
+     Inline
+---------------*/
+
 .ui.inline.image,
 .ui.inline.image svg,
 .ui.inline.image img {
   display: inline-block;
 }
 
-/* ------------------
-      Vertical Aligned
-    ------------------- */
+/*------------------
+  Vertical Aligned
+-------------------*/
+
+.ui.top.aligned.images .image,
 .ui.top.aligned.image,
 .ui.top.aligned.image svg,
 .ui.top.aligned.image img {
   display: inline-block;
   vertical-align: top;
 }
+.ui.middle.aligned.images .image,
 .ui.middle.aligned.image,
 .ui.middle.aligned.image svg,
 .ui.middle.aligned.image img {
   display: inline-block;
   vertical-align: middle;
 }
+.ui.bottom.aligned.images .image,
 .ui.bottom.aligned.image,
 .ui.bottom.aligned.image svg,
 .ui.bottom.aligned.image img {
   display: inline-block;
   vertical-align: bottom;
 }
-.ui.top.aligned.images .image,
-.ui.images .ui.top.aligned.image {
-  align-self: flex-start;
-}
-.ui.middle.aligned.images .image,
-.ui.images .ui.middle.aligned.image {
-  align-self: center;
-}
-.ui.bottom.aligned.images .image,
-.ui.images .ui.bottom.aligned.image {
-  align-self: flex-end;
-}
 
-/* --------------
-         Rounded
-    --------------- */
+/*--------------
+     Rounded
+---------------*/
+
 .ui.rounded.images .image,
 .ui.rounded.image,
 .ui.rounded.images .image > *,
@@ -131,9 +125,10 @@ img.ui.image {
   border-radius: 0.3125em;
 }
 
-/* --------------
-        Bordered
-    --------------- */
+/*--------------
+    Bordered
+---------------*/
+
 .ui.bordered.images .image,
 .ui.bordered.images img,
 .ui.bordered.images svg,
@@ -143,9 +138,10 @@ img.ui.bordered.image {
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* --------------
-        Circular
-    --------------- */
+/*--------------
+    Circular
+---------------*/
+
 .ui.circular.images,
 .ui.circular.image {
   overflow: hidden;
@@ -157,9 +153,10 @@ img.ui.bordered.image {
   border-radius: 500rem;
 }
 
-/* --------------
-         Fluid
-    --------------- */
+/*--------------
+     Fluid
+---------------*/
+
 .ui.fluid.images,
 .ui.fluid.image,
 .ui.fluid.images img,
@@ -171,9 +168,10 @@ img.ui.bordered.image {
   height: auto;
 }
 
-/* --------------
-         Avatar
-    --------------- */
+/*--------------
+     Avatar
+---------------*/
+
 .ui.avatar.images .image,
 .ui.avatar.images img,
 .ui.avatar.images svg,
@@ -187,9 +185,10 @@ img.ui.bordered.image {
   border-radius: 500rem;
 }
 
-/* -------------------
-           Spaced
-    -------------------- */
+/*-------------------
+       Spaced
+--------------------*/
+
 .ui.spaced.image {
   display: inline-block !important;
   margin-left: 0.5em;
@@ -197,16 +196,17 @@ img.ui.bordered.image {
 }
 .ui[class*="left spaced"].image {
   margin-left: 0.5em;
-  margin-right: 0;
+  margin-right: 0em;
 }
 .ui[class*="right spaced"].image {
-  margin-left: 0;
+  margin-left: 0em;
   margin-right: 0.5em;
 }
 
-/* -------------------
-           Floated
-    -------------------- */
+/*-------------------
+       Floated
+--------------------*/
+
 .ui.floated.image,
 .ui.floated.images {
   float: left;
@@ -216,37 +216,24 @@ img.ui.bordered.image {
 .ui.right.floated.images,
 .ui.right.floated.image {
   float: right;
-  margin-right: 0;
+  margin-right: 0em;
   margin-bottom: 1em;
   margin-left: 1em;
 }
 .ui.floated.images:last-child,
 .ui.floated.image:last-child {
-  margin-bottom: 0;
+  margin-bottom: 0em;
 }
+.ui.centered.images,
 .ui.centered.image {
-  display: block;
   margin-left: auto;
   margin-right: auto;
 }
-.ui.centered.images {
-  display: flex;
-  flex-flow: row wrap;
-  align-items: stretch;
-  justify-content: center;
-}
 
-/* --------------
+/*--------------
      Sizes
---------------- */
-.ui.medium.images .image,
-.ui.medium.images img,
-.ui.medium.images svg,
-.ui.medium.image {
-  width: 300px;
-  height: auto;
-  font-size: 1rem;
-}
+---------------*/
+
 .ui.mini.images .image,
 .ui.mini.images img,
 .ui.mini.images svg,
@@ -270,6 +257,14 @@ img.ui.bordered.image {
   width: 150px;
   height: auto;
   font-size: 0.92857143rem;
+}
+.ui.medium.images .image,
+.ui.medium.images img,
+.ui.medium.images svg,
+.ui.medium.image {
+  width: 300px;
+  height: auto;
+  font-size: 1rem;
 }
 .ui.large.images .image,
 .ui.large.images img,
@@ -306,18 +301,18 @@ img.ui.bordered.image {
 
 
 /*******************************
-                  Groups
-    *******************************/
+              Groups
+*******************************/
 
 .ui.images {
-  font-size: 0;
-  margin: 0 -0.25rem;
+  font-size: 0em;
+  margin: 0em -0.25rem 0rem;
 }
 .ui.images .image,
 .ui.images > img,
 .ui.images > svg {
   display: inline-block;
-  margin: 0 0.25rem 0.5rem;
+  margin: 0em 0.25rem 0.5rem;
 }
 
 
