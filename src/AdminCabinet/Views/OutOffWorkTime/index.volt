@@ -17,18 +17,18 @@
         {% endif %}
 
         <tr class="frame-row" id="{{ record['id'] }}">
-            <td class="collapsing">
+            <td>
                 {% if (record['allowRestriction']=='1') %}
                     <div class="ui basic icon button" data-variation="wide" data-content="{{ t._('tf_AllowRestriction') }}" data-position="top right">
-                        <i class="exclamation circle icon"></i>
+                        <i class="map signs icon"></i>
                     </div>
                 {% endif %}
             </td>
-            <td>
+            <td class="collapsing">
                 <div class="ui bulleted list">
 
                 {% if (record['date_from']!='') %}
-                    <div class="item"><i class="icon calendar alternate"></i>
+                    <div class="item"><i class="icon outline calendar alternate"></i>
                     {{ record['date_from'] }}
                     {% if record['date_from']!=record['date_to'] %}
                     - {{ record['date_to'] }}
@@ -36,7 +36,7 @@
                     </div>
                 {% endif %}
                 {% if (record['weekday_from']!='') %}
-                    <div class="item"><i class="icon calendar minus"></i>
+                    <div class="item"><i class="icon outline calendar minus"></i>
                     {{ record['weekday_from'] }}
                     {% if record['weekday_from']!=record['weekday_to'] %}
                      - {{ record['weekday_to'] }}
@@ -53,11 +53,11 @@
                 {% endif %}
                 </div>
             </td>
-            <td class="collapsing hide-on-mobile">
+            <td class="hide-on-mobile">
                 {% if not (record['description'] is empty) %}
                     <div class="ui basic icon button" data-variation="wide" data-content="{{ record['description'] }}" data-position="top right">
                         <i class="file text  icon"></i>
-                         {{record['shot_description']}}
+                        {{record['shot_description']}}
                     </div>
                 {% endif %}
             </td>

@@ -138,7 +138,10 @@ const outOfWorkTimeRecord = {
             type: 'time',
             inline: false,
             disableMinute: true,
-            ampm: false,
+            formatter: {
+                time: 'H:mm',
+                cellTime: 'H:mm'
+            },
         });
 
         // Initialize the calendar for range time end
@@ -149,7 +152,10 @@ const outOfWorkTimeRecord = {
             type: 'time',
             inline: false,
             disableMinute: true,
-            ampm: false,
+            formatter: {
+                time: 'H:mm',
+                cellTime: 'H:mm'
+            },
             onChange: (newTimeTo) => {
                 // Handle the change event for range time end
                 let oldTimeTo = outOfWorkTimeRecord.$time_to.attr('value');
@@ -234,6 +240,9 @@ const outOfWorkTimeRecord = {
         // Initialize audio-message-select dropdown
         $('#save-outoffwork-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
 
+        // Change the date format from linuxtime to local representation
+        outOfWorkTimeRecord.changeDateFormat();
+
         // Initialize the form
         outOfWorkTimeRecord.initializeForm();
 
@@ -242,9 +251,6 @@ const outOfWorkTimeRecord = {
 
         // Toggle disabled field class based on action value
         outOfWorkTimeRecord.toggleDisabledFieldClass();
-
-        // Change the date format from linuxtime to local representation
-        outOfWorkTimeRecord.changeDateFormat();
 
         // Bind checkbox change event for inbound rules table
         $('#inbound-rules-table .ui.checkbox').checkbox({
@@ -284,13 +290,16 @@ const outOfWorkTimeRecord = {
     changeDateFormat() {
         const dateFrom = outOfWorkTimeRecord.$date_from.attr('value');
         const dateTo = outOfWorkTimeRecord.$date_to.attr('value');
+        const currentOffset = new Date().getTimezoneOffset();
+        const serverOffset = parseInt(outOfWorkTimeRecord.$formObj.form('get value', 'serverOffset'));
+        const offsetDiff = serverOffset + currentOffset;
         if (dateFrom !== undefined && dateFrom.length > 0) {
-            outOfWorkTimeRecord.$rangeDaysStart.calendar('set date', new Date(dateFrom * 1000));
-            // outOfWorkTimeRecord.$formObj.form('set value', 'date_from', dateFrom);
+            const dateFromInBrowserTZ = dateFrom * 1000 + offsetDiff * 60 * 1000;
+            outOfWorkTimeRecord.$rangeDaysStart.calendar('set date', new Date(dateFromInBrowserTZ));
         }
         if (dateTo !== undefined && dateTo.length > 0) {
-            outOfWorkTimeRecord.$rangeDaysEnd.calendar('set date', new Date(dateTo * 1000));
-            // outOfWorkTimeRecord.$formObj.form('set value', 'date_to', dateTo);
+            const dateToInBrowserTZ = dateTo * 1000 + offsetDiff * 60 * 1000;
+            outOfWorkTimeRecord.$rangeDaysEnd.calendar('set date', new Date(dateToInBrowserTZ));
         }
     },
 
@@ -376,12 +385,12 @@ const outOfWorkTimeRecord = {
         const dateFrom = outOfWorkTimeRecord.$rangeDaysStart.calendar('get date');
         if (dateFrom !== null) {
             dateFrom.setHours(0, 0, 0, 0);
-            result.data.date_from = Math.round(dateFrom.getTime() / 1000);
+            result.data.date_from = outOfWorkTimeRecord.$rangeDaysStart.calendar('get date');
         }
         const dateTo = outOfWorkTimeRecord.$rangeDaysEnd.calendar('get date');
         if (dateTo !== null) {
             dateTo.setHours(23, 59, 59, 0);
-            result.data.date_to = Math.round(dateTo.getTime() / 1000);
+            result.data.date_to = outOfWorkTimeRecord.$rangeDaysEnd.calendar('get date');
         }
         return outOfWorkTimeRecord.customValidateForm(result);
     },

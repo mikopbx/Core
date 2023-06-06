@@ -1,32 +1,38 @@
 {{ form('out-off-work-time/save', 'role': 'form', 'class': 'ui large form', 'id':'save-outoffwork-form') }}
 {{ form.render('id') }}
+<input type="hidden" name="serverOffset" id="serverOffset" value="{{ serverOffset }}" />
 <div class="field">
     <label>{{ t._('tf_Description') }}</label>
     {{ form.render('description') }}
 </div>
 <div class="ui top attached tabular menu" id="out-time-modify-menu">
-    <a class="item active" data-tab="general">{{ t._('ex_GeneralSettings') }}</a>
-    <a class="item" data-tab="rules">{{ t._('tf_RoutsRestriction') }}</a>
+    <a class="item active" data-tab="general">{{ t._('tf_TabGeneralSettings') }}</a>
+    <a class="item" data-tab="rules">{{ t._('tf_TabRoutsRestriction') }}</a>
     {{ partial("PbxExtensionModules/hookVoltBlock",
         ['arrayOfPartials':hookVoltBlock('TabularMenu')])
     }}
 </div>
 
 <div class="ui bottom attached tab segment active" data-tab="general">
+    <div class="ten wide field">
+        <div class="ui toggle checkbox">
+            {{ form.render('allowRestriction') }}
+            <label for="allowRestriction">{{ t._('tf_AllowRestriction') }}</label>
+        </div>
+    </div>
     <div class="two fields">
         <div class="field">
             <div class="field">
                 <label>{{ t._('tf_DateDaysFrom') }}</label>
                 <div class="two fields">
-
-                    <div class=" field calendar-select" id="range-days-start">
+                    <div class="field calendar-select" id="range-days-start">
                         <div class="ui input left icon calendar">
                             <i class="calendar icon"></i>
                             {{ form.render('date_from') }}
                         </div>
                     </div>
 
-                    <div class=" field calendar-select" id="range-days-end">
+                    <div class="field calendar-select" id="range-days-end">
                         <div class="ui input left icon calendar">
                             <i class="calendar icon"></i>
                             {{ form.render('date_to') }}
@@ -41,7 +47,6 @@
                 <label>{{ t._('tf_WeekDaysFrom') }}</label>
                 <div class="two fields">
                     <div class="field">
-
                         {{ form.render('weekday_from') }}
                     </div>
                     <div class="field">
@@ -56,15 +61,14 @@
 
                 <label>{{ t._('tf_TimePeriodFrom') }}</label>
                 <div class="two fields">
-
-                    <div class=" field time-select" id="range-time-start">
+                    <div class="field time-select" id="range-time-start">
                         <div class="ui input left icon calendar">
                             <i class="time icon"></i>
                             {{ form.render('time_from') }}
                         </div>
                     </div>
 
-                    <div class=" field time-select" id="range-time-end">
+                    <div class="field time-select" id="range-time-end">
                         <div class="ui input left icon calendar">
                             <i class="time icon"></i>
                             {{ form.render('time_to') }}
@@ -75,12 +79,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="ten wide field">
-        <div class="ui toggle checkbox">
-            {{ form.render('allowRestriction') }}
-            <label>{{ t._('tf_AllowRestriction') }}</label>
         </div>
     </div>
     <div class="two fields">
@@ -105,10 +103,8 @@
         <thead>
         <tr>
             <th></th>
-            <th>DID</th>
-            <th>{{ t._('or_TableColumnProvider') }}</th>
-            <th></th>
-            <th></th>
+            <th>{{ t._('ir_TableColumnDetails') }}</th>
+            <th class="hide-on-mobile">{{ t._('ir_TableColumnNote') }}</th>
         </tr>
         </thead>
         <tbody>
@@ -116,16 +112,10 @@
 
     <tr class="rule-row" id="{{ rule['id'] }}">
         <td class="collapsing">
-            <div class="ui fitted toggle checkbox" data-did="{{ rule['number'] }}-{{ rule['provider-uniqid'] }}">
+            <div class="ui fitted checkbox" data-did="{{ rule['number'] }}-{{ rule['provider-uniqid'] }}">
                 <input type="checkbox" {% if rule['status']!=='disabled' %} checked {% endif %} name="rule-{{ rule['id'] }}" data-value="{{ rule['id'] }}" >
-                <label></label>
+                <label for="rule-{{ rule['id'] }}"></label>
             </div>
-        </td>
-        <td class="collapsing">
-            {{ rule['number'] }}
-        </td>
-       <td class="collapsing">
-            {{ rule['provider'] }}
         </td>
         <td class="{% if rule['disabled']==1 %}disabled{% endif %}">
             {% if rule['number'] is empty AND rule['provider'] is empty %}
@@ -158,8 +148,15 @@
                     ]) }}
             {% endif %}
         </td>
-        <td>
-            {{ rule['note'] }}
+        <td class="hide-on-mobile">
+            {% if not (rule['note'] is empty) and rule['note']|length>20 %}
+                <div class="ui basic icon button" data-content="{{ rule['note'] }}" data-variation="wide"
+                     data-position="top right">
+                    <i class="file text icon"></i>
+                </div>
+            {% else %}
+                {{ rule['note'] }}
+            {% endif %}
         </td>
     </tr>
     {% if loop.last %}

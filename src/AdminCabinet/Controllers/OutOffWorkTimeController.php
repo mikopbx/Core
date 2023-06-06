@@ -24,11 +24,13 @@ use MikoPBX\Common\Models\{Extensions,
     IncomingRoutingTable,
     OutWorkTimes,
     OutWorkTimesRouts,
+    PbxSettings,
     Sip,
     SoundFiles};
 
 class OutOffWorkTimeController extends BaseController
 {
+
 
     /**
      * This function retrieves OutWorkTimes data and formats it into an array that is used to display on the index page.
@@ -48,14 +50,13 @@ class OutOffWorkTimeController extends BaseController
 
         // Iterate over each OutWorkTimes record and format it into an array for displaying on the index page.
         foreach ($timeFrames as $timeFrame) {
-            // If the description is less than 50 characters, use the entire string.
-            // Otherwise, truncate it to 50 characters and add an ellipsis.
-            if(mb_strlen($timeFrame->description) < 50){
+            // If the description is less than 45 characters, use the entire string.
+            // Otherwise, truncate it to 45 characters and add an ellipsis.
+            if(mb_strlen($timeFrame->description) < 45){
                 $shot_description = $timeFrame->description;
-            }else{
-                $shot_description = trim(mb_substr($timeFrame->description, 0 , 50)).'...';
+            } else {
+                $shot_description = trim(mb_substr($timeFrame->description, 0 , 45)).'...';
             }
-
             // Add the formatted OutWorkTimes record to the array of records to be displayed on the index page.
             $timeframesTable[] = [
                 'id'               => $timeFrame->id,
@@ -190,6 +191,10 @@ class OutOffWorkTimeController extends BaseController
         }
 
         $this->view->rules = $routingTable;
+
+        // Prepare time zone offset
+        $dateTime = new \DateTime();
+        $this->view->setVar('serverOffset', $dateTime->getOffset() / 60);
     }
 
     /**
@@ -239,7 +244,23 @@ class OutOffWorkTimeController extends BaseController
                     if ( ! array_key_exists($name, $data)) {
                         $timeFrame->$name = '';
                     } else {
-                        $timeFrame->$name = $data[$name];
+                        // Создаем объект DateTime из строки даты
+                        $dateTime =  \DateTime::createFromFormat('D M d Y H:i:s e+', $data[$name]);
+                        if ($dateTime){
+                            // Извлекаем необходимые компоненты даты и времени
+                            $day = $dateTime->format('d'); // День (в формате 01-31)
+                            $year = $dateTime->format('Y'); // Год (в формате YYYY)
+                            $time = $dateTime->format('H:i:s'); // Время (в формате 00:00:00)
+
+                            // Формируем новую строку даты без учета часового пояса
+                            $newDateString = $day . ' ' . $dateTime->format('M') . ' ' . $year . ' ' . $time;
+
+                            // Преобразуем новую строку даты в Linux Timestamp
+                            $timeFrame->$name = strtotime($newDateString);
+                        } else {
+                            $timeFrame->$name = $data[$name];
+                        }
+
                     }
                     break;
                 default:

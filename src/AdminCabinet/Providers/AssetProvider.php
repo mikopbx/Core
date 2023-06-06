@@ -191,7 +191,7 @@ class AssetProvider implements ServiceProviderInterface
             ->addJs('js/pbx/main/language-select.js', true);
 
         $this->semanticCollectionJS
-            ->addJs('js/vendor/semantic/form.min.js', true)
+            ->addJs('js/vendor/semantic/2.4.1/form.min.js', true)
             ->addJs('js/vendor/semantic/api.min.js', true)
             ->addJs('js/vendor/semantic/site.min.js', true)
             ->addJs('js/vendor/semantic/popup.min.js', true)
