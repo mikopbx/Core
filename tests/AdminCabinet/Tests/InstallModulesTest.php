@@ -90,6 +90,8 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         // Enable installed module
         $this->changeModuleState($params['moduleId']);
 
+        sleep(10);
+
         // Enable or disable the module according to the settings
         $this->changeModuleState($params['moduleId'], $params['enable']);
     }
@@ -107,8 +109,6 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]';
         $checkBoxItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($checkBoxItems as $checkBoxItem) {
-            $changed = false;
-
             if (($enable && !$checkBoxItem->isSelected()) || (!$enable && $checkBoxItem->isSelected())) {
                 // Find the checkbox item's parent div and perform necessary actions
                 $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]/parent::div';
@@ -118,7 +118,12 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
                 $actions->perform();
                 $checkBoxItem->click();
             }
+        }
 
+
+        // Assert result of clicking
+        foreach ($checkBoxItems as $checkBoxItem) {
+            $changed = false;
             // Check if module is enabled or disabled
             $maximumWaitTime = 45;
             $waitTime = 0;
