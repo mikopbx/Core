@@ -1129,7 +1129,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_ElevenDigthts' => '11 cifre',
     'cr_pinCode' => 'Konference PIN',
     'tf_AllowRestriction' => 'Anvend kun på visse indgående ruter',
-    'tf_RoutsRestriction' => 'Rutebegrænsninger',
     'ex_CallRecording' => 'Opkaldsoptagelse',
     'ex_enableRecording' => 'Give lov til',
     'gs_PBXRecordCallsInner' => 'Optagelse af interne samtaler',

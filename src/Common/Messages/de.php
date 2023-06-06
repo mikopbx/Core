@@ -1132,7 +1132,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'gs_ElevenDigthts' => '11 Ziffern',
     'cr_pinCode' => 'Konferenz-PIN',
     'tf_AllowRestriction' => 'Bewerben Sie sich nur für bestimmte eingehende Routen',
-    'tf_RoutsRestriction' => 'Streckenbeschränkungen',
     'ex_CallRecording' => 'Anrufaufzeichnung',
     'ex_enableRecording' => 'Erlauben',
     'gs_PBXRecordCallsInner' => 'Interne Gespräche aufzeichnen',

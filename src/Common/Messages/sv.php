@@ -1129,7 +1129,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_ElevenDigthts' => '11 siffror',
     'cr_pinCode' => 'Konferens-PIN',
     'tf_AllowRestriction' => 'Gäller endast vissa inkommande rutter',
-    'tf_RoutsRestriction' => 'Ruttbegränsningar',
     'ex_CallRecording' => 'Samtalsinspelning',
     'ex_enableRecording' => 'Tillåta',
     'gs_PBXRecordCallsInner' => 'Spela in interna konversationer',

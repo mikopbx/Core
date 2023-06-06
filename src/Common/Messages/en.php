@@ -1132,7 +1132,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'gs_ElevenDigthts' => '11 digits',
     'cr_pinCode' => 'Conference PIN',
     'tf_AllowRestriction' => 'Apply only to certain incoming routes',
-    'tf_RoutsRestriction' => 'Route restrictions',
     'ex_CallRecording' => 'Call Recording',
     'ex_enableRecording' => 'allow',
     'gs_PBXRecordCallsInner' => 'Recording internal conversations',

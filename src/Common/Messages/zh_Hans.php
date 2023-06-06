@@ -1129,7 +1129,6 @@ return [
     'gs_ElevenDigthts' => '11位',
     'cr_pinCode' => '会议密码',
     'tf_AllowRestriction' => '仅适用于某些传入路由',
-    'tf_RoutsRestriction' => '路线限制',
     'ex_CallRecording' => '通话录音',
     'ex_enableRecording' => '允许',
     'gs_PBXRecordCallsInner' => '记录内部对话',

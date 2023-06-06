@@ -1129,7 +1129,6 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_ElevenDigthts' => '11 cifre',
     'cr_pinCode' => 'PIN conferenza',
     'tf_AllowRestriction' => 'Si applica solo a determinate rotte in entrata',
-    'tf_RoutsRestriction' => 'Restrizioni di percorso',
     'ex_CallRecording' => 'Registrazione delle chiamate',
     'ex_enableRecording' => 'Permettere',
     'gs_PBXRecordCallsInner' => 'Registrazione di conversazioni interne',

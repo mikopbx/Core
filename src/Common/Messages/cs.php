@@ -1129,7 +1129,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'gs_ElevenDigthts' => '11 číslic',
     'cr_pinCode' => 'Konferenční PIN',
     'tf_AllowRestriction' => 'Použít pouze na určité příchozí trasy',
-    'tf_RoutsRestriction' => 'Omezení trasy',
     'ex_CallRecording' => 'Nahrávání hovorů',
     'ex_enableRecording' => 'Dovolit',
     'gs_PBXRecordCallsInner' => 'Nahrávání interních rozhovorů',

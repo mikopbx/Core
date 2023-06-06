@@ -1129,7 +1129,6 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'gs_ElevenDigthts' => '11 dígitos',
     'cr_pinCode' => 'PIN de conferencia',
     'tf_AllowRestriction' => 'Aplicar solo a ciertas rutas entrantes',
-    'tf_RoutsRestriction' => 'Restricciones de ruta',
     'ex_enableRecording' => 'Permitir',
     'ex_CallRecording' => 'Grabacion de llamada',
     'gs_PBXRecordCallsInner' => 'Grabación de conversaciones internas',

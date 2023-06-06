@@ -1129,7 +1129,6 @@ return [
     'gs_ElevenDigthts' => '11 ციფრი',
     'cr_pinCode' => 'კონფერენციის PIN',
     'tf_AllowRestriction' => 'ვრცელდება მხოლოდ გარკვეულ შემომავალ მარშრუტებზე',
-    'tf_RoutsRestriction' => 'მარშრუტის შეზღუდვები',
     'ex_CallRecording' => 'ზარის ჩაწერა',
     'ex_enableRecording' => 'დაშვება',
     'gs_PBXRecordCallsInner' => 'შიდა საუბრების ჩაწერა',

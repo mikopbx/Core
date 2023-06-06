@@ -1129,7 +1129,6 @@ return [
     'gs_ElevenDigthts' => '11桁',
     'cr_pinCode' => '会議暗証番号',
     'tf_AllowRestriction' => '特定の着信ルートにのみ適用',
-    'tf_RoutsRestriction' => 'ルート制限',
     'ex_CallRecording' => '通話録音',
     'ex_enableRecording' => '許可する',
     'gs_PBXRecordCallsInner' => '社内会話の録音',
