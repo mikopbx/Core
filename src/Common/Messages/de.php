@@ -1148,4 +1148,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'ext_InstalledModules' => 'Installierte Module',
     'ext_Marketplace' => 'Marktplatz',
     'ext_Licensing' => 'Lizenzverwaltung',
+    'tf_TabGeneralSettings' => 'Grundeinstellungen',
+    'tf_TabRoutsRestriction' => 'Gültig für ausgewählte Routen',
 ];

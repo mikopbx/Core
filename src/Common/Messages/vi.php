@@ -1145,4 +1145,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'ext_InstalledModules' => 'các mô-đun đã cài đặt',
     'ext_Marketplace' => 'Thương trường',
     'ext_Licensing' => 'Quản lý Giấy phép',
+    'tf_TabGeneralSettings' => 'cài đặt cơ bản',
+    'tf_TabRoutsRestriction' => 'Hợp lệ cho các tuyến đường đã chọn',
 ];

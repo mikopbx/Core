@@ -1145,4 +1145,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ext_InstalledModules' => 'Modules installés',
     'ext_Marketplace' => 'Marché',
     'ext_Licensing' => 'Gestion des licences',
+    'tf_TabGeneralSettings' => 'Paramètres de base',
+    'tf_TabRoutsRestriction' => 'Valable pour les itinéraires sélectionnés',
 ];

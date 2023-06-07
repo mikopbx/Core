@@ -1145,4 +1145,6 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'ext_InstalledModules' => 'Moduli installati',
     'ext_Marketplace' => 'Mercato',
     'ext_Licensing' => 'Gestione delle licenze',
+    'tf_TabGeneralSettings' => 'impostazioni di base',
+    'tf_TabRoutsRestriction' => 'Valido per percorsi selezionati',
 ];

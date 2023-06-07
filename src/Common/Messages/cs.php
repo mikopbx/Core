@@ -1145,4 +1145,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'ext_InstalledModules' => 'Instalované moduly',
     'ext_Marketplace' => 'Tržiště',
     'ext_Licensing' => 'Správa licencí',
+    'tf_TabGeneralSettings' => 'základní nastavení',
+    'tf_TabRoutsRestriction' => 'Platí pro vybrané trasy',
 ];

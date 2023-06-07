@@ -1145,4 +1145,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ext_InstalledModules' => 'Installerade moduler',
     'ext_Marketplace' => 'Marknad',
     'ext_Licensing' => 'Licenshantering',
+    'tf_TabGeneralSettings' => 'grund inställningar',
+    'tf_TabRoutsRestriction' => 'Gäller för utvalda rutter',
 ];

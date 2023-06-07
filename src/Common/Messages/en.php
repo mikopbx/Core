@@ -1148,4 +1148,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'ext_Licensing' => 'License management',
     'ext_InstalledModules' => 'Installed modules',
     'ext_Marketplace' => 'Marketplace',
+    'tf_TabGeneralSettings' => 'basic settings',
+    'tf_TabRoutsRestriction' => 'Valid for selected routes',
 ];

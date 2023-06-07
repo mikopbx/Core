@@ -1145,4 +1145,6 @@ return [
     'ext_InstalledModules' => 'Εγκατεστημένες μονάδες',
     'ext_Marketplace' => 'Αγορά',
     'ext_Licensing' => 'Διαχείριση αδειών',
+    'tf_TabGeneralSettings' => 'βασικές ρυθμίσεις',
+    'tf_TabRoutsRestriction' => 'Ισχύει για επιλεγμένες διαδρομές',
 ];

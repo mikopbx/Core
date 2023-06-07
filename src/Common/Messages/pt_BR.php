@@ -1144,4 +1144,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ext_InstalledModules' => 'Módulos instalados',
     'ext_Marketplace' => 'Mercado',
     'ext_Licensing' => 'Gerenciamento de licenças',
+    'tf_TabGeneralSettings' => 'configurações básicas',
+    'tf_TabRoutsRestriction' => 'Válido para rotas selecionadas',
 ];

@@ -1145,4 +1145,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'ext_InstalledModules' => 'Zainstalowane moduły',
     'ext_Marketplace' => 'Rynek',
     'ext_Licensing' => 'Zarządzanie licencjami',
+    'tf_TabGeneralSettings' => 'podstawowe ustawienia',
+    'tf_TabRoutsRestriction' => 'Obowiązuje na wybrane trasy',
 ];

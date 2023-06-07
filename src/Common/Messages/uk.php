@@ -1145,4 +1145,6 @@ return [
     'ext_InstalledModules' => 'Встановлені модулі',
     'ext_Marketplace' => 'Маркетплейс',
     'ext_Licensing' => 'Управління ліцензією',
+    'tf_TabGeneralSettings' => 'Основні налаштування',
+    'tf_TabRoutsRestriction' => 'Діє для вибраних маршрутів',
 ];

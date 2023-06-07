@@ -1145,4 +1145,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'ext_InstalledModules' => 'Kurulu modüller',
     'ext_Marketplace' => 'pazar yeri',
     'ext_Licensing' => 'Lisans yönetimi',
+    'tf_TabGeneralSettings' => 'temel ayarlar',
+    'tf_TabRoutsRestriction' => 'Seçilen rotalar için geçerli',
 ];

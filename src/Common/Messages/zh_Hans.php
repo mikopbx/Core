@@ -1145,4 +1145,6 @@ return [
     'ext_InstalledModules' => '安装的模块',
     'ext_Marketplace' => '市场',
     'ext_Licensing' => '许可证管理',
+    'tf_TabGeneralSettings' => '基本设置',
+    'tf_TabRoutsRestriction' => '适用于选定的路线',
 ];

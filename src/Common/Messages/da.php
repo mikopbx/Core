@@ -1145,4 +1145,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'ext_Marketplace' => 'Markedsplads',
     'ext_InstalledModules' => 'Installerede moduler',
     'ext_Licensing' => 'Administration af licens',
+    'tf_TabRoutsRestriction' => 'Gælder for udvalgte ruter',
+    'tf_TabGeneralSettings' => 'grundlæggende indstillinger',
 ];

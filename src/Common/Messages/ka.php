@@ -1145,4 +1145,6 @@ return [
     'ext_InstalledModules' => 'დაინსტალირებული მოდულები',
     'ext_Marketplace' => 'ბაზარი',
     'ext_Licensing' => 'ლიცენზიის მენეჯმენტი',
+    'tf_TabGeneralSettings' => 'ძირითადი პარამეტრები',
+    'tf_TabRoutsRestriction' => 'მოქმედებს არჩეული მარშრუტებისთვის',
 ];

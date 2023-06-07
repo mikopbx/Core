@@ -1145,4 +1145,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ext_InstalledModules' => 'Quraşdırılmış modullar',
     'ext_Marketplace' => 'Bazar yeri',
     'ext_Licensing' => 'Lisenziya idarəetməsi',
+    'tf_TabGeneralSettings' => 'əsas parametrlər',
+    'tf_TabRoutsRestriction' => 'Seçilmiş marşrutlar üçün etibarlıdır',
 ];

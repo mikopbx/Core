@@ -1145,4 +1145,6 @@ return [
     'ext_Marketplace' => '市場',
     'ext_Licensing' => 'ライセンス管理',
     'ext_InstalledModules' => 'インストールされているモジュール',
+    'tf_TabGeneralSettings' => '基本設定',
+    'tf_TabRoutsRestriction' => '選択したルートに有効',
 ];
