@@ -49,7 +49,6 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
         //$this->clickDeleteButtonOnRowWithText($params['note']);
 
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
-        $this->changeInputField('rulename', $params['rulename']);
         $this->changeTextAreaValue('note', $params['note']);
         if ( ! empty($params['providerName'])) {
             $params['provider'] = $this->selectDropdownItemByName('provider', $params['providerName']);
@@ -70,7 +69,6 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
 
         //Asserts
         $this->assertTextAreaValueIsEqual('note', $params['note']);
-        $this->assertInputFieldValueEqual('rulename', $params['rulename']);
         $this->assertMenuItemSelected('provider', $params['provider']);
         $this->assertInputFieldValueEqual('number', $params['number']);
         $this->assertMenuItemSelected('extension', $params['extension']);
