@@ -184,16 +184,6 @@ class TopMenuSearchController extends BaseController
         ];
 
         $items[] = [
-            'name'          => $elements->getIconByController('licensing') . ' ' . $this->translation->_(
-                    'mm_Licensing'
-                ),
-            'value'         => $this->url->get('licensing/modify'),
-            'type'          => 'MENUITEMS',
-            'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
-            'sorter'        => strip_tags($this->translation->_('mm_Licensing')),
-        ];
-
-        $items[] = [
             'name'          => $elements->getIconByController('pbx-extension-modules') . ' ' . $this->translation->_(
                     'BreadcrumbPbxExtensionModules'
                 ),

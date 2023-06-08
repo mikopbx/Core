@@ -138,10 +138,7 @@ const outOfWorkTimeRecord = {
             type: 'time',
             inline: false,
             disableMinute: true,
-            formatter: {
-                time: 'H:mm',
-                cellTime: 'H:mm'
-            },
+            ampm: false,
         });
 
         // Initialize the calendar for range time end
@@ -152,10 +149,7 @@ const outOfWorkTimeRecord = {
             type: 'time',
             inline: false,
             disableMinute: true,
-            formatter: {
-                time: 'H:mm',
-                cellTime: 'H:mm'
-            },
+            ampm: false,
             onChange: (newTimeTo) => {
                 // Handle the change event for range time end
                 let oldTimeTo = outOfWorkTimeRecord.$time_to.attr('value');

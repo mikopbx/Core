@@ -469,7 +469,40 @@ class ModelsBase extends Model
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementOutWorkTimes');
                 } else {
-                    $name = $this->t('repOutWorkTimes', ['represent' => $this->id]);
+                    $represent = '';
+                    if (!empty($this->date_from)) {
+                        $represent .= "<i class='icon outline calendar alternate' ></i>";
+                        $date_from = date("d.m.Y", $this->date_from);
+                        $represent .= "$date_from";
+                        $date_to = date("d.m.Y", $this->date_to)??$date_from;
+                        if ($date_from !== $date_to){
+                            $represent .= " - $date_to";
+                        }
+                    }
+                    if (!empty($this->weekday_from)) {
+                        if (!empty($represent)){
+                            $represent.=' ';
+                        }
+                        $weekday_from = $this->t(date('D',strtotime("Sunday +{$this->weekday_from} days")));
+                        $represent .= "<i class='icon outline calendar minus' ></i>";
+                        $represent .= "$weekday_from";
+                        if (!empty($this->weekday_to) && $this->weekday_from !== $this->weekday_to){
+                            $weekday_to = $this->t(date('D',strtotime("Sunday +{$this->weekday_to} days")));
+                            $represent .= " - $weekday_to";
+                        }
+                    }
+
+                    if (!empty($this->time_from)) {
+                        if (!empty($represent)){
+                            $represent.=' ';
+                        }
+                        $represent .= "<i class='icon clock outline' ></i>";
+                        $represent .= "$this->time_from";
+                        if ($this->time_from !== $this->time_to){
+                            $represent .= " - $this->time_to";
+                        }
+                    }
+                    $name = $this->t('repOutWorkTimes', ['represent' => $represent]);
                 }
                 break;
             case Providers::class:
