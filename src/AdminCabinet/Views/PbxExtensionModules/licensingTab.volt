@@ -1,6 +1,5 @@
-{{ form('licensing/modify', 'role': 'form', 'class': 'ui form large', 'id':'licencing-modify-form') }}
+{{ form('licensing/modify', 'role': 'form', 'class': 'ui form large disable-if-no-internet', 'id':'licencing-modify-form') }}
 <input type="hidden" name="dirrty" id="dirrty"/>
-<div class="only-if-internet-connected">
     <div id="licenseKeySection" class="disabled">
         <h2 class="ui header">{{ t._('lic_LicenseKey') }}</h2>
         <div class="empty-license-key-info">
@@ -16,7 +15,6 @@
                 <i class="icon dropdown"></i>
                 {{ t._('lic_CurrentLicenseInfo') }}
             </div>
-
             <div class="content field">
                 <h2 class="ui header">{{ t._('lic_LicenseKeyOwner') }}</h2>
                 <div class="ui list">
@@ -97,29 +95,10 @@
         {{ t._('lic_LastQuestionAnswer') }}
         <div class="ui hidden divider"></div>
         {{ partial("partials/submitbutton",['indexurl':'']) }}
-        <button class="ui labeled icon large button prevent-word-wrap" id="reset-license">
+        <button class="ui labeled icon large button prevent-word-wrap disable-if-no-internet" id="reset-license">
             <i class="recycle icon"></i>
             {{ t._('lic_ResetLicenseSettings') }}
         </button>
 
     </div>
-</div>
-
-<div class="only-if-internet-disconnected">
-    <div class="ui negative message">
-        <div class="header">
-            {{ t._('lic_NoInetHeader') }}
-        </div>
-        <ul class="list">
-            <li>{{ t._('lic_NoInet') }}</li>
-            <li>{{ t._('lic_NoInetLicMiko') }}</li>
-            <li>{{ t._('lic_NoInetNetSettings') }}</li>
-        </ul>
-        <br>
-        <b><a href='#' onclick='window.location.reload()'>{{ t._('lic_ReloadPage') }}</a></b>
-    </div>
-
-    <h2 class="ui header filled-license-key-header">{{ t._('lic_LicenseKey') }}</h2>
-    <div class="filled-license-key-info confidential-field"></div>
-</div>
 {{ end_form() }}

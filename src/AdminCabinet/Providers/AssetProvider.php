@@ -514,7 +514,6 @@ class AssetProvider implements ServiceProviderInterface
         if ($action === 'index') {
             $this->semanticCollectionJS->addJs('js/vendor/semantic/modal.min.js', true);
             $this->footerCollectionJS
-                ->addJs('js/pbx/Update/update-api.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/resumable.js', true)
                 ->addJs('js/vendor/jquery.address.min.js', true)

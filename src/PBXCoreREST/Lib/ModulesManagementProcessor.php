@@ -19,16 +19,21 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionState;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
+use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Workers\WorkerDownloader;
 use MikoPBX\PBXCoreREST\Workers\WorkerModuleInstaller;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
+use GuzzleHttp;
 
 
 /**
@@ -36,6 +41,7 @@ use Phalcon\Di\Injectable;
  *
  * Manages external modules for download, install, uninstall, enable, disable.
  *
+ * @property Di di
  * @package MikoPBX\PBXCoreREST\Lib
  */
 class ModulesManagementProcessor extends Injectable
@@ -85,6 +91,13 @@ class ModulesManagementProcessor extends Injectable
                     $moduleUniqueID = $data['uniqid'];
                     $keepSettings = $data['keepSettings'] === 'true';
                     $res = self::uninstallModule($moduleUniqueID, $keepSettings);
+                    break;
+                case 'getAvailableModules':
+                    $res = self::getAvailableModules();
+                    break;
+                case 'getModuleLink':
+                    $moduleReleaseId = $data['releaseId'];
+                    $res = self::getModuleLink($moduleReleaseId);
                     break;
                 default:
                     $res->messages[] = "Unknown action - {$action} in modulesCoreCallBack";
@@ -326,7 +339,7 @@ class ModulesManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         $di = Di::getDefault();
         if ($di !== null) {
-            $tempDir = $di->getConfig()->path('www.uploadDir');
+            $tempDir = $di->getShared(ConfigProvider::SERVICE_NAME)->path('www.uploadDir');
         } else {
             $tempDir = '/tmp';
         }
@@ -377,7 +390,7 @@ class ModulesManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         $di = Di::getDefault();
         if ($di !== null) {
-            $tempDir = $di->getConfig()->path('www.uploadDir');
+            $tempDir = $di->getShared(ConfigProvider::SERVICE_NAME)->path('www.uploadDir');
         } else {
             $tempDir = '/tmp';
         }
@@ -466,4 +479,118 @@ class ModulesManagementProcessor extends Injectable
 
         return $res;
     }
+
+    /**
+     * Retrieves available modules on MIKO repository.
+     *
+     * @return PBXApiResult
+     */
+    public static function getAvailableModules(): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+
+        $di = Di::getDefault();
+        if ($di === null) {
+            $res->success    = false;
+            $res->messages[] = 'Dependency injector does not initialized';
+            return $res;
+        }
+
+        $cacheKey = 'ModulesManagementProcessor:getAvailableModules';
+        $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
+        if ($managedCache->has($cacheKey)){
+            $body = $managedCache->get($cacheKey);
+        } else {
+            $PBXVersion = PbxSettings::getValueByKey('PBXVersion');
+            $PBXVersion = (string)str_ireplace('-dev', '', $PBXVersion);
+            $WebUiLanguage = PbxSettings::getValueByKey('WebAdminLanguage');
+            $body = '';
+            $client = new GuzzleHttp\Client();
+            try {
+                $request = $client->request(
+                    'POST',
+                    'https://releases.mikopbx.com/releases/v1/mikopbx/getAvailableModules',
+                    [
+                        'headers' => [
+                            'Content-Type' => 'application/json; charset=utf-8',
+                        ],
+                        'json' => [
+                            'PBXVER' => $PBXVersion,
+                            'LANGUAGE'=> $WebUiLanguage,
+                        ],
+                        'timeout' => 5,
+                    ]
+                );
+                $code = $request->getStatusCode();
+                if ($code === Response::OK){
+                    $body = $request->getBody()->getContents();
+                    $managedCache->set($cacheKey, $body, 3600);
+                }
+            } catch (\Throwable $e) {
+                $code = Response::INTERNAL_SERVER_ERROR;
+                Util::sysLogMsg(static::class, $e->getMessage());
+                $res->messages[] = $e->getMessage();
+            }
+
+            if ($code !== Response::OK) {
+                return $res;
+            }
+        }
+        $res->data = json_decode($body, true)??[];
+        $res->success = true;
+
+        return $res;
+    }
+
+    /**
+     * Retrieves the installation link for a module.
+     *
+     * @param string $moduleReleaseId The module release unique id retrieved on getAvailableModules
+     *
+     * @return PBXApiResult
+     */
+    public static function getModuleLink(string $moduleReleaseId): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+
+        $licenseKey = PbxSettings::getValueByKey('PBXLicense');
+
+        $client = new GuzzleHttp\Client();
+        $body = '';
+        try {
+            $request = $client->request(
+                'POST',
+                'https://releases.mikopbx.com/releases/v1/mikopbx/getModuleLink',
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json; charset=utf-8',
+                    ],
+                    'json' => [
+                        'LICENSE' => $licenseKey,
+                        'RELEASEID'=> $moduleReleaseId,
+                    ],
+                    'timeout' => 5,
+                ]
+            );
+            $code = $request->getStatusCode();
+            if ($code === Response::OK){
+                $body = $request->getBody()->getContents();
+            }
+        } catch (\Throwable $e) {
+            $code = Response::INTERNAL_SERVER_ERROR;
+            Util::sysLogMsg(static::class, $e->getMessage());
+            $res->messages[] = $e->getMessage();
+        }
+
+        if ($code !== Response::OK) {
+            return $res;
+        }
+
+        $res->data = json_decode($body, true)??[];
+        $res->success = true;
+        return $res;
+    }
+
 }

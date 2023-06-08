@@ -318,7 +318,7 @@ return [
     'ir_RuleAssignIf' => 'Правило сработает при звонке на',
     'ir_DidNumber' => 'Дополнительный номер (DID)',
     'ir_CallTransferTo' => 'Вызов будет переадресован на',
-    'ir_Extension' => 'телефонный номер',
+    'ir_Extension' => 'номер',
     'ir_ValidateForwardingToBeFilled' => 'Не указан номер для переадресации',
     'ir_ValidateForwardingDefaultToBeFilled' => 'Не указан номер для переадресации по умолчанию',
     'ir_ValidationPleaseEnterRuleName' => 'Введите название правила',

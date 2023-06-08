@@ -24,46 +24,24 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
 
 /**
- * Handles the POST request for module manipulation actions.
+ * Handles the GET request for module manipulation actions.
  *
  * @RoutePrefix("/pbxcore/api/modules/core")
  */
-class CorePostController extends BaseController
+class CoreGetController extends BaseController
 {
     /**
      * Handles the call to different actions based on the action name for core
      *
      * @param string $actionName The name of the action
      *
-     * Starts the module download in a separate background process.
-     * @Post("/moduleStartDownload")
-     *
-     * Returns the download status of a module.
-     * @Post("/moduleDownloadStatus")
-     *
-     * Installs a new additional extension module from an early uploaded zip archive.
-     * @Post("/installNewModule")
-     *
-     * Checks the status of a module installation by the provided zip file path.
-     * @Post("/statusOfModuleInstallation")
-     *
-     * Enables an extension module.
-     * @Post("/enableModule")
-     *
-     * Disables an extension module.
-     * @Post("/disableModule")
-     *
-     * Uninstall an extension module.
-     * @Post("/uninstallModule")
-     *
-     * Retrieves the installation link for a module.
-     * @Post("/getModuleLink")
+     * Retrieves available modules on MIKO repository.
+     * @Post("/getAvailableModules")
      *
      * @return void
      */
     public function callAction(string $actionName): void
     {
-        $data = $this->request->getPost();
-        $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data);
+        $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName);
     }
 }

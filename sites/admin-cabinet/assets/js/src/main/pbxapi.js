@@ -50,6 +50,9 @@ const PbxApi = {
     modulesEnableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/enableModule`, // Enables extension module.
     modulesDisableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/disableModule`, // Disables extension module.
     modulesUnInstallModule: `${Config.pbxUrl}/pbxcore/api/modules/core/uninstallModule`, // Uninstall extension module.
+    modulesGetAvailable: `${Config.pbxUrl}/pbxcore/api/modules/core/getAvailableModules`, // Retrieves available modules on MIKO repository.
+    modulesGetLink: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleLink`, // Retrieves the installation link for a module.
+
 
     // FirewallManagementProcessor
     firewallGetBannedIp: `${Config.pbxUrl}/pbxcore/api/firewall/getBannedIp`, // Retrieve a list of banned IP addresses or get data for a specific IP address.
@@ -988,6 +991,58 @@ const PbxApi = {
 
         });
     },
+
+    /**
+     * Retrieves available modules on MIKO repository.
+     *
+     * @param {function} callback - The callback function to execute on success.
+     * @returns {void} Returns true.
+     */
+    ModulesGetAvailable(callback) {
+        $.api({
+            url: PbxApi.modulesGetAvailable,
+            on: 'now',
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response.data, true);
+            },
+            onFailure(response) {
+                callback(response, false);
+            },
+            onError(response) {
+                callback(response, false);
+            },
+        });
+    },
+
+    /**
+     * Retrieves the installation link for a module.
+     *
+     * @param {object} params - The parameters for retrieving the installation link.
+     * @param {function} cbSuccess - The callback function to execute on success.
+     * @param {function} cbFailure - The callback function to execute on failure.
+     *
+     * @returns {void} Returns true.
+     */
+    ModulesGetModuleLink(params, cbSuccess, cbFailure) {
+        $.api({
+            url: PbxApi.modulesGetLink,
+            on: 'now',
+            method: 'POST',
+            data: {releaseId: params.releaseId},
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                cbSuccess(params, response.data);
+            },
+            onFailure(response) {
+                cbFailure(params);
+            },
+            onError(response) {
+                cbFailure(params);
+            },
+        });
+    },
+
 
     /**
      * Downloads new firmware from the provided URL.
