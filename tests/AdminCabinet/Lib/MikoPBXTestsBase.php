@@ -530,7 +530,7 @@ class MikoPBXTestsBase extends BrowserStackTest
     protected function changeTabOnCurrentPage($anchor): void
     {
         try {
-            $xpath = "//div[contains(@class, 'tabular') and contains(@class, 'menu')]//a[contains(@data-tab,'{$anchor}')]";
+            $xpath = "//div[contains(@class, 'menu')]//a[contains(@data-tab,'{$anchor}')]";
             $tab   = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $actions = new WebDriverActions(self::$driver);
             $actions->moveToElement($tab);

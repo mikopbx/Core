@@ -19,7 +19,7 @@
 /* global globalRootUrl, PbxApi */
 
 /**
- * Worker object for checking internet connection.
+ * Worker object for checking connection to licensing and repository server.
  *
  * @module PbxExtensionModules
  */
@@ -107,11 +107,11 @@ const PingLicenseServerWorker = {
         if (isConnected === 'false') {
             // The internet is not available
             PingLicenseServerWorker.$noInternet.show();
-           // $(PingLicenseServerWorker.disableIfNoInternetClass).addClass('disabled');
+            $(PingLicenseServerWorker.disableIfNoInternetClass).addClass('disabled');
         } else {
             // The internet is available
             PingLicenseServerWorker.$noInternet.hide();
-           // $(PingLicenseServerWorker.disableIfNoInternetClass).removeClass('disabled');
+            $(PingLicenseServerWorker.disableIfNoInternetClass).removeClass('disabled');
         }
     }
 };

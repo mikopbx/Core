@@ -66,12 +66,13 @@ class AuthenticationMiddleware implements MiddlewareInterface
             $this->halt(
                 $api,
                 $response::UNAUTHORIZED,
-                'You are not authenticated '
+                'You are not authenticated'
             );
             return false;
         }
 
-        if (true !== $request->isAllowedAction($api)) {
+        if (true !== $request->isLocalHostRequest()
+         && true !== $request->isAllowedAction($api)) {
              $this->halt(
                 $api,
                 $response::FORBIDDEN,
@@ -79,7 +80,6 @@ class AuthenticationMiddleware implements MiddlewareInterface
             );
             return false;
         }
-
 
         return true;
     }
