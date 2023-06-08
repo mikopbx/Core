@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate, UpdateApi, UserMessage, globalPBXVersion, SemanticLocalization, upgradeStatusLoopWorker, PbxExtensionStatus */
+/* global globalRootUrl, PbxApi, globalPBXLicense, globalTranslate, UserMessage, globalPBXVersion, SemanticLocalization, upgradeStatusLoopWorker, PbxExtensionStatus */
 
 /**
  * Represents list of extension modules.
@@ -24,11 +24,39 @@
  * @memberof module:PbxExtensionModules
  */
 const extensionModules = {
+
+    /**
+     * jQuery object for the table with available modules.
+     * @type {jQuery}
+     */
+    $marketplaceTable: $('#new-modules-table'),
+
+    /**
+     * jQuery object for the loader instead of available modules.
+     * @type {jQuery}
+     */
+    $marketplaceLoader: $('#new-modules-loader'),
+
+    /**
+     * jQuery object for the table with installed modules.
+     * @type {jQuery}
+     */
+    $installedModulesTable: $('#installed-modules-table'),
+
+    /**
+     * jQuery object for the checkboxes.
+     * @type {jQuery}
+     */
     $checkboxes: $('.module-row .checkbox'),
+
     $deleteModalForm: $('#delete-modal-form'),
+
     $keepSettingsCheckbox: $('#keepModuleSettings'),
-    $modulesTable: $('#modules-table'),
+
     pbxVersion: globalPBXVersion.replace(/-dev/i, ''),
+
+    pbxLicense: globalPBXLicense.trim(),
+
     checkBoxes: [],
 
     /**
@@ -48,8 +76,10 @@ const extensionModules = {
         });
 
         extensionModules.$deleteModalForm.modal();
+
         extensionModules.initializeDataTable();
-        UpdateApi.getModulesUpdates(extensionModules.cbParseModuleUpdates);
+
+        PbxApi.ModulesGetAvailable(extensionModules.cbParseModuleUpdates);
         extensionModules.$checkboxes.each((index, obj) => {
             const uniqId = $(obj).attr('data-value');
             const pageStatus = new PbxExtensionStatus();
@@ -62,7 +92,7 @@ const extensionModules = {
      * Initialize data tables on table
      */
     initializeDataTable() {
-        extensionModules.$modulesTable.DataTable({
+        extensionModules.$installedModulesTable.DataTable({
             lengthChange: false,
             paging: false,
             columns: [
@@ -85,6 +115,7 @@ const extensionModules = {
      * @param {object} response - The response containing the list of modules.
      */
     cbParseModuleUpdates(response) {
+        extensionModules.$marketplaceLoader.hide();
         response.modules.forEach((obj) => {
             // Check if this module is compatible with the PBX based on version number
             const minAppropriateVersionPBX = obj.min_pbx_version;
@@ -133,8 +164,8 @@ const extensionModules = {
             params.licFeatureId = $aLink.attr('data-featureid');
             params.action = 'install';
             params.aLink = $aLink;
-            if ($('#license-key').val().trim() === '' && params.commercial !== '0') {
-                window.location = `${globalRootUrl}licensing/modify/pbx-extension-modules`;
+            if (extensionModules.pbxLicense === '') {
+                window.location = `${globalRootUrl}pbx-extension-modules/index#/licensing`;
             } else {
                 PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
             }
@@ -157,8 +188,9 @@ const extensionModules = {
             params.uniqid = $aLink.attr('data-uniqid');
             params.size = $aLink.attr('data-size');
             params.aLink = $aLink;
-            if ($('#license-key').val().trim() === '' && params.commercial !== '0') {
-                window.location = `${globalRootUrl}licensing/modify/pbx-extension-modules`;
+            if (extensionModules.pbxLicense === '')
+            {
+                window.location = `${globalRootUrl}pbx-extension-modules/index#/licensing`;
             } else {
                 PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
             }
@@ -185,7 +217,7 @@ const extensionModules = {
      * @param {Object} obj - The module object containing information.
      */
     addModuleDescription(obj) {
-        $('#online-updates-block').show();
+        extensionModules.$marketplaceTable.show();
         let promoLink = '';
         if (obj.promo_link !== undefined && obj.promo_link !== null) {
             promoLink = `<br><a href="${obj.promo_link}" target="_blank">${globalTranslate.ext_ExternalDescription}</a>`;
@@ -204,7 +236,7 @@ const extensionModules = {
 						<td class="center aligned version">${obj.version}</td>
 						<td class="right aligned collapsing">
     						<div class="ui small basic icon buttons action-buttons">
-    							<a href="#" class="ui button download" 
+    							<a href="#" class="ui button download disable-if-no-internet" 
 									data-content= "${globalTranslate.ext_InstallModule}"
 									data-uniqid = "${obj.uniqid}"
 									data-size = "${obj.size}"
@@ -235,7 +267,7 @@ const extensionModules = {
         }
         $currentUpdateButton.remove();
         const dynamicButton
-            = `<a href="#" class="ui button update popuped" 
+            = `<a href="#" class="ui button update popuped disable-if-no-internet" 
 			data-content="${globalTranslate.ext_UpdateModule}"
 			data-ver ="${obj.version}"
 			data-uniqid ="${obj.uniqid}" 
@@ -257,7 +289,7 @@ const extensionModules = {
      */
     cbAfterLicenseCheck(params, result) {
         if (result === true) {
-            UpdateApi.GetModuleInstallLink(
+            PbxApi.ModulesGetModuleLink(
                 params,
                 extensionModules.cbGetModuleInstallLinkSuccess,
                 extensionModules.cbGetModuleInstallLinkFailure,
@@ -271,6 +303,7 @@ const extensionModules = {
         }
 
     },
+
     /**
      * Callback function after successfully obtaining the module installation link from the website.
      * @param {Object} params - The parameters for the request.
@@ -290,6 +323,7 @@ const extensionModules = {
             }
         });
     },
+
     /**
      * Callback function when the website fails to provide the module installation link due to the required feature not being captured.
      * @param {Object} params - The parameters for the request.
@@ -377,6 +411,7 @@ const extensionModules = {
             })
             .modal('show');
     },
+
     /**
      * Callback function after deleting a module.
      * If successful, reload the page; if not, display an error message.
@@ -393,6 +428,7 @@ const extensionModules = {
             UserMessage.showMultiString(errorMessage, globalTranslate.ext_DeleteModuleError);
         }
     },
+
     /**
      * Compare versions of modules.
      * @param {string} v1 - The first version to compare.

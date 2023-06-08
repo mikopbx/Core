@@ -26,28 +26,22 @@
 const PingLicenseServerWorker = {
 
     /**
+     * Stores in session the last connection status
+     * @type {string}
+     */
+    cacheKey:'InternetConnectionStatus',
+
+    /**
      * jQuery object for the div with information if no internet.
      * @type {jQuery}
      */
-    $noInternet: $('div.only-if-internet-disconnected'),
+    $noInternet: $('div.show-if-no-internet'),
 
     /**
-     * jQuery object for the div with license form
-     * @type {jQuery}
+     * Class name that should be disabled if no internet connection.
+     * @type {string}
      */
-    $withInternet: $('div.only-if-internet-connected'),
-
-    /**
-     * jQuery object for the div with marketplace tab
-     * @type {jQuery}
-     */
-    $marketplaceTab:  $("a[data-tab='marketplace']"),
-
-    /**
-     * jQuery object for the div with installed tab
-     * @type {jQuery}
-     */
-    $installedTab:  $("a[data-tab='installed']"),
+    disableIfNoInternetClass:  '.disable-if-no-internet',
 
     /**
      * Time in milliseconds before fetching new check internet request.
@@ -65,8 +59,7 @@ const PingLicenseServerWorker = {
      * Initializes the worker.
      */
     initialize() {
-        PingLicenseServerWorker.$noInternet.hide();
-        PingLicenseServerWorker.$withInternet.show();
+        PingLicenseServerWorker.changeTabsAvailability();
         PingLicenseServerWorker.restartWorker();
     },
 
@@ -87,25 +80,40 @@ const PingLicenseServerWorker = {
 
     /**
      * Callback function after receiving a response from the server.
-     * @param isConnection - connection result.
+     * @param isConnected - connection result.
      */
-    cbAfterResponse(isConnection) {
-        if (isConnection === true) {
+    cbAfterResponse(isConnected) {
+        if (isConnected === true) {
             // The internet is available
-            PingLicenseServerWorker.$noInternet.hide();
-            PingLicenseServerWorker.$withInternet.show();
-            PingLicenseServerWorker.$marketplaceTab.removeClass('disabled');
+            sessionStorage.setItem(PingLicenseServerWorker.cacheKey, 'true');
         } else {
             // The internet is not available
-            PingLicenseServerWorker.$noInternet.show();
-            PingLicenseServerWorker.$withInternet.hide();
-            PingLicenseServerWorker.$marketplaceTab.addClass('disabled');
+            sessionStorage.setItem(PingLicenseServerWorker.cacheKey, 'false');
         }
+        PingLicenseServerWorker.changeTabsAvailability();
         PingLicenseServerWorker.timeoutHandle = window.setTimeout(
             PingLicenseServerWorker.worker,
             PingLicenseServerWorker.timeOut,
         );
     },
+
+    /**
+     * Change the availability of tabs based on the internet connection status.
+     */
+    changeTabsAvailability()
+    {
+        let isConnected = sessionStorage.getItem(PingLicenseServerWorker.cacheKey);
+
+        if (isConnected === 'false') {
+            // The internet is not available
+            PingLicenseServerWorker.$noInternet.show();
+           // $(PingLicenseServerWorker.disableIfNoInternetClass).addClass('disabled');
+        } else {
+            // The internet is available
+            PingLicenseServerWorker.$noInternet.hide();
+           // $(PingLicenseServerWorker.disableIfNoInternetClass).removeClass('disabled');
+        }
+    }
 };
 
 // When the document is ready, initialize the internet connection worker
