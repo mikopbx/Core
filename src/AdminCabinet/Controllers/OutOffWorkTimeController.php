@@ -244,23 +244,7 @@ class OutOffWorkTimeController extends BaseController
                     if ( ! array_key_exists($name, $data)) {
                         $timeFrame->$name = '';
                     } else {
-                        // Создаем объект DateTime из строки даты
-                        $dateTime =  \DateTime::createFromFormat('D M d Y H:i:s e+', $data[$name]);
-                        if ($dateTime){
-                            // Извлекаем необходимые компоненты даты и времени
-                            $day = $dateTime->format('d'); // День (в формате 01-31)
-                            $year = $dateTime->format('Y'); // Год (в формате YYYY)
-                            $time = $dateTime->format('H:i:s'); // Время (в формате 00:00:00)
-
-                            // Формируем новую строку даты без учета часового пояса
-                            $newDateString = $day . ' ' . $dateTime->format('M') . ' ' . $year . ' ' . $time;
-
-                            // Преобразуем новую строку даты в Linux Timestamp
-                            $timeFrame->$name = strtotime($newDateString);
-                        } else {
-                            $timeFrame->$name = $data[$name];
-                        }
-
+                        $timeFrame->$name = $data[$name];
                     }
                     break;
                 default:

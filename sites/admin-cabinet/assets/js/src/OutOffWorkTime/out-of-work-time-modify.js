@@ -379,14 +379,17 @@ const outOfWorkTimeRecord = {
         $('.form .error.message').html('').hide();
         result.data = outOfWorkTimeRecord.$formObj.form('get values');
         const dateFrom = outOfWorkTimeRecord.$rangeDaysStart.calendar('get date');
-        if (dateFrom !== null) {
-            dateFrom.setHours(0, 0, 0, 0);
-            result.data.date_from = outOfWorkTimeRecord.$rangeDaysStart.calendar('get date');
-        }
         const dateTo = outOfWorkTimeRecord.$rangeDaysEnd.calendar('get date');
-        if (dateTo !== null) {
+        const currentOffset = new Date().getTimezoneOffset();
+        const serverOffset = parseInt(outOfWorkTimeRecord.$formObj.form('get value', 'serverOffset'));
+        const offsetDiff = serverOffset + currentOffset;
+        if (dateFrom) {
+            dateFrom.setHours(0, 0, 0, 0);
+            result.data.date_from = Math.floor(dateFrom.getTime()/1000) - offsetDiff * 60;
+        }
+        if (dateTo) {
             dateTo.setHours(23, 59, 59, 0);
-            result.data.date_to = outOfWorkTimeRecord.$rangeDaysEnd.calendar('get date');
+            result.data.date_to = Math.floor(dateTo.getTime()/1000) - offsetDiff * 60;
         }
         return outOfWorkTimeRecord.customValidateForm(result);
     },
