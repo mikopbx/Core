@@ -58,7 +58,8 @@ class CronConf extends Injectable
      */
     public function reStart(): int
     {
-        $this->generateConfig($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting);
+        $booting = $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting??false;
+        $this->generateConfig($booting);
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
             Processes::mwExec("{$systemctlPath} restart ".self::PROC_NAME);
