@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -830,25 +848,11 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'qf_QualifyInstructions' => '<div class = \'ui message\'>
             Quando essa opção está ativada, o Asterisk envia pacotes de opções SIP com a frequência especificada. Isso é necessário para dar suporte ao encapsulamento NAT no seu roteador.
         </div>',
-    'qf_NatModeInstructions' => '<div class = \'ui message\'>
-            <div class = \'lista com marcadores da interface do usuário\'>
-                <div class = \'item\'><b>não</b> não executa nenhum processamento NAT especial, exceto o especificado na RFC 3581
-                </div>
-                <div class = \'item\'><b>force_rport</b> mesmo que nenhum parâmetro rport tenha sido especificado, aja como se fosse
-                </div>
-                <div class = \'item\'><b>comedia</b> envia pacotes RTP de volta para a porta da qual foram recebidos, ignorando a porta necessária no cabeçalho do SDP
-                </div>
-                <div class = \'item\'><b>auto_comedia</b> se o Asterisk puder determinar que o dispositivo está atrás do NAT, defina a opção de comedia
-                </div>
-                <div class = \'item\'> opção <b> force_rport, comedia</b> substituindo nat = yes
-                </div>
-            </div>
-        </div>',
     'qf_Frequency' => 'Frequência de envio em seg.',
     'qf_Qualify' => 'Sessão NAT de suporte',
     'qf_NatMode' => 'Modo NAT',
     'Loading' => 'A carregar',
-    'MetategHeadDescription' => 'Sistema de telefone comercial',
+    'MetaTegHeadDescription' => 'Sistema de telefone comercial',
     'Now' => 'Agora',
     'Today' => 'Hoje',
     'ShortDaySaturday' => 'Sáb',

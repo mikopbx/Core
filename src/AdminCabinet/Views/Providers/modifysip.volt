@@ -7,26 +7,26 @@
 {{ form.render('type') }}
 {{ form.render('disabled') }}
 {{ form.render('providerType') }}
-<div class="ten wide required field">
-    <label>{{ t._('pr_ProviderName') }}</label>
+<div class="required field max-width-500">
+    <label for="description">{{ t._('pr_ProviderName') }}</label>
     {{ form.render('description') }}
 </div>
-<div class="six wide field">
-    <label>{{ t._('sip_registration_type') }}</label>
+<div class="field max-width-500">
+    <label for="registration_type">{{ t._('sip_registration_type') }}</label>
     {{ form.render('registration_type') }}
 </div>
-<div id='elHost' class="five wide field required">
-    <label>{{ t._('pr_ProviderHostOrIPAddress') }}</label>
+<div id='elHost' class="field required max-width-500">
+    <label for="host">{{ t._('pr_ProviderHostOrIPAddress') }}</label>
     {{ form.render('host') }}
 </div>
 
-<div id='elUsername' class="ten wide field">
-    <label>{{ t._('pr_ProviderLogin') }}</label>
+<div id='elUsername' class="field max-width-500">
+    <label for="username">{{ t._('pr_ProviderLogin') }}</label>
     {{ form.render('username') }}
 </div>
 
-<div id='elSecret' class="seven wide field">
-    <label>{{ t._('pr_ProviderPassword') }}</label>
+<div id='elSecret' class="field max-width-500">
+    <label for="secret">{{ t._('pr_ProviderPassword') }}</label>
     <div class="ui action input">
         {{ form.render('secret') }}
         <div class="ui icon button" id="generate-new-password">
@@ -40,9 +40,11 @@
     </div>
 </div>
 
-<div class="five wide field">
-    <label>{{ t._('pr_DTMFMode') }}</label>
-    {{ form.render('dtmfmode') }}
+<div class="field">
+    <label for="dtmfmode">{{ t._('pr_DTMFMode') }}</label>
+    <div class="field max-width-200">
+        {{ form.render('dtmfmode') }}
+    </div>
 </div>
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
@@ -53,9 +55,9 @@
     </div>
 
     <div class="content field">
-        <div class="two fields">
-            <div id="elAdditionalHosts" class="six wide field">
-                <label>{{ t._('pr_EnterHostOrIp') }}</label>
+        <div class="field max-width-500">
+            <div id="elAdditionalHosts" class="field">
+                <label for="additional-host">{{ t._('pr_EnterHostOrIp') }}</label>
                 <div class="ui input" id="additional-host">
                     <input type="text" name="additional-host" placeholder="{{ t._('pr_EnterHostOrIpPlaceholder') }}" />
                 </div>
@@ -76,48 +78,56 @@
                                 <div class="ui icon small button delete-row-button"><i class="icon trash red"></i></div>
                             </td>
                         </tr>
+                        <tr class="dummy" style="display: none">
+                            <td colspan="2" class="center aligned">
+                                {{ t._('pr_NoAnyAdditionalHosts')}}
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
+
             </div>
         </div>
-        <div class="five wide field">
+        <div class="field">
             <label for="port">{{ t._('pr_SIPPort') }}</label>
-            {{ form.render('port') }}
+            <div class="field max-width-200">
+                {{ form.render('port') }}
+            </div>
         </div>
-        <div class="five wide field">
-            <label>{{ t._('ex_Transport') }}</label>
-            {{ form.render('transport') }}
+        <div class="field">
+            <label for="transport">{{ t._('ex_Transport') }}</label>
+            <div class="field max-width-200">
+                {{ form.render('transport') }}
+            </div>
         </div>
-        <div class="five wide field">
-            <label>{{ t._('ex_OutboundProxy') }}</label>
-            {{ form.render('outbound_proxy') }}
+        <div class="field">
+            <label for="outbound_proxy">{{ t._('ex_OutboundProxy') }}</label>
+            <div class="field max-width-500">
+                {{ form.render('outbound_proxy') }}
+            </div>
         </div>
         {{ partial("partials/natqualify") }}
 
-        <label>{{ t._('pr_RedefinitionFromUser') }}</label>
+        <label for="disablefromuser">{{ t._('pr_RedefinitionFromUser') }}</label>
         <div class="field">
             <div class="ui toggle checkbox" id="disablefromuser">
                 {{ form.render('disablefromuser') }}
-                <label>{{ t._('pr_DisableFromUser') }}</label>
+                <label for="disablefromuser">{{ t._('pr_DisableFromUser') }}</label>
             </div>
         </div>
         <div class="field">
-            <div class="two fields">
-                <div id="divFromUser" class="four wide field">
-                    <h5><label for="fromuser">{{ t._('pr_FromUser_v2') }}:</label>
+            <div class="two fields ">
+                <div id="divFromUser" class="field max-width-250">
+                    <label for="fromuser">{{ t._('pr_FromUser_v2') }}:</label>
                     {{ form.render('fromuser') }}
-                    </h5>
                 </div>
-                <div class="four wide field">
-                    <h5><label for="fromdomain">{{ t._('pr_FromDomain_v2') }}:</label>
+                <div class="field max-width-250">
+                    <label for="fromdomain">{{ t._('pr_FromDomain_v2') }}:</label>
                     {{ form.render('fromdomain') }}
-                     </h5>
                 </div>
             </div>
-            <p>
-                <label>{{ t._('pr_CustomFieldsDescriptions') }}</label>
-            </p>
+            <div class='ui message'>{{ t._('pr_CustomFieldsDescriptions') }}</div>
         </div>
 
         <h3 class="ui dividing header ">{{ t._("pr_ManualAdditionalAtributes") }}</h3>

@@ -72,28 +72,11 @@ return [
     'ShortDaySaturday' => 'Сб',
     'Today' => 'Сегодня',
     'Now' => 'Сейчас',
-    'MetategHeadDescription' => 'Телефонная система для бизнеса',
+    'MetaTegHeadDescription' => 'Телефонная система для бизнеса',
     'Loading' => 'Загрузка',
-    'qf_NatMode' => 'Режим NAT',
     'qf_Qualify' => 'Поддерживать NAT сессию',
-    'qf_Frequency' => 'Частота отправки в сек.',
-    'qf_NatModeInstructions' => '<div class=\'ui message \'>
-            <div class=\'ui bulleted list\'>
-                <div class=\'item\'><b>no</b> не выполнять никакой специальной обработки NAT, кроме той что указана в RFC 3581
-                </div>
-                <div class=\'item\'><b>force_rport</b> даже если ни одного параметра rport не было указано, действовать, так, как если бы он был
-                </div>
-                <div class=\'item\'><b>comedia</b> отправлять RTP пакеты обратно к порту с которого они были получены, игнорируя требуемый порт в SDP заголовке
-                </div>
-                <div class=\'item\'><b>auto_comedia</b> если Asterisk сможет определить, что устройство находится за NAT, установить опцию comedia
-                </div>
-                <div class=\'item\'><b>force_rport,comedia</b> опция заменяющая nat=yes
-                </div>
-            </div>
-        </div>',
-    'qf_QualifyInstructions' => '<div class=\'ui message \'>
-            При включение этой опции АТС будет отправлять SIP OPTIONS пакеты с указанной частотой. Это необходимо для поддержки NAT туннелирования на вашем маршрутизаторе.  
-        </div>',
+    'qf_Frequency' => 'Частота отправки в секундах:',
+    'qf_QualifyInstructions' => 'При включение этой опции АТС будет отправлять SIP OPTIONS пакеты с указанной частотой. Это необходимо для поддержки NAT туннелирования на вашем маршрутизаторе.',
     'AdvancedOptions' => 'Расширенные настройки',
     'ConnectionSettings' => 'Настройки соединения',
     'BreadcrumbHome' => 'В начало',
@@ -138,13 +121,13 @@ return [
     'BreadcrumbDialplanApplicationsmodify' => 'Настройка приложения',
     'SubHeaderDialplanApplications' => 'Программируемые голосовые приложения на PHP и Asterisk Dialplan',
     'BreadcrumbConferenceRooms' => 'Конференции',
-    'SubHeaderConferenceRooms' => 'Организация комнат для многосторонних аудиоконференций',
+    'SubHeaderConferenceRooms' => 'Организация комнат для многосторонних аудио-конференций',
     'BreadcrumbConferenceRoomsmodify' => 'Настройка параметров',
     'BreadcrumbCallDetailRecords' => 'История вызовов',
     'SubHeaderCallDetailRecords' => 'Журнал записей разговоров и лог звонков',
     'BreadcrumbCustomFilesmodify' => 'Редактирование',
     'BreadcrumbCustomFiles' => 'Системные файлы',
-    'SubHeaderCustomFiles' => 'Касотмизация файлов конфигурации системы и Asterisk',
+    'SubHeaderCustomFiles' => 'Кастомизация файлов конфигурации системы и Asterisk',
     'BreadcrumbSoundFiles' => 'Звуковые файлы',
     'SubHeaderSoundFiles' => 'Используются в различных сценариях звонков и интерактивных голосовых меню',
     'BreadcrumbLicensing' => 'Лицензирование',
@@ -260,8 +243,8 @@ return [
     'pr_AddSIPProvider' => 'Подключить SIP',
     'pr_AddIAXProvider' => 'Подключить IAX',
     'pr_QualifyInstructionsIAX' => 'При включение этой опции Asterisk будет отправлять SIP Options пакеты. Это необходимо для поддержки NAT туннелирования на вашем маршрутизаторе.',
-    'pr_CustomFieldsDescriptions' => '<div class=\'ui message\'>В большинстве случаев поля переопределений нужно оставлять пустыми. 
-    Только если у вас не работают звонки, и провайдер требует особенных настроек, тогда эти поля необходимо заполнять согласно рекомендациям провайдера.</div>',
+    'pr_CustomFieldsDescriptions' => 'В большинстве случаев поля переопределений нужно оставлять пустыми. 
+    Только если у вас не работают звонки, и провайдер требует особенных настроек, тогда эти поля необходимо заполнять согласно рекомендациям провайдера.',
     'pr_ReceiveCallsWithoutAuth' => 'Принимать вызовы без аутентификации',
     'pr_ValidationProviderPortRange' => 'Порт провайдера должен быть в пределах {ruleValue}',
     'pr_DeleteTitle' => 'Удаление провайдера',
@@ -269,7 +252,7 @@ return [
     'pr_Cancel' => 'Отмена',
     'pr_Delete' => 'Удалить',
     'pr_EnterHostOrIp' => 'Дополнительные адреса провайдера',
-    'pr_EnterHostOrIpPlaceholder' => 'Введите IP адрес или подсеть',
+    'pr_EnterHostOrIpPlaceholder' => 'Введите IP адрес или подсеть и нажмите Enter',
     'pr_NoAnyAdditionalHosts' => 'Не указано дополнительных адресов для этого провайдера',
     'or_RuleName' => 'Название правила',
     'or_Note' => 'Заметка',
@@ -323,7 +306,7 @@ return [
     'ir_ValidateForwardingDefaultToBeFilled' => 'Не указан номер для переадресации по умолчанию',
     'ir_ValidationPleaseEnterRuleName' => 'Введите название правила',
     'ir_ValidateTimeoutOutOfRange' => 'Не верно указан таймаут переадресации. Он должен быть между {ruleValue}',
-    'ir_DidNumberDescription' => 'Провайдер может передать дополнительный номер, это необязательное поле, но в некоторых случаях можно более точно маршутизировать вызовы.',
+    'ir_DidNumberDescription' => 'Провайдер может передать дополнительный номер, это необязательное поле, но в некоторых случаях можно более точно маршрутизировать вызовы.',
     'ir_TimeoutToTransferDefault' => 'Время в секундах, после которого вызов будет направлен на следующее по приоритету правило',
     'ir_AddNewRule' => 'Добавить новое правило',
     'ir_AnyProvider' => 'Любой провайдер',
@@ -544,7 +527,7 @@ return [
     'fw_icmpDescription' => 'ICMP - проверка связи командой ping',
     'fw_ValidatePermitAddress' => 'Неправильно указан адрес подсети. Попробуйте конструкцию подобную 192.168.1.0/24',
     'fw_ValidateRuleName' => 'Введите название для подсети',
-    'fw_NewerBlockIp' => 'Никогда не блокировать адреса из этой сети, ингорировать ошибки авторизации телефонов и ошибки ввода пароля в Web интерфейсе',
+    'fw_NewerBlockIp' => 'Никогда не блокировать адреса из этой сети, игнорировать ошибки авторизации телефонов и ошибки ввода пароля в Web интерфейсе',
     'fw_ItIsLocalNetwork' => 'Это VPN или локальная сеть, телефоны из этой сети подключаются к станции напрямую без NAT маршрутизации',
     'fw_AllNetworksRule' => 'Все доступные сети',
     'fw_LocalNetworksRule' => 'Подсеть, где находится АТС',
@@ -580,7 +563,7 @@ return [
     'nw_ValidateVlanRange' => 'Неправильно заполнено значение VLAN. Выбирайте между {ruleValue}',
     'nw_Hostname' => 'Локальное имя хоста',
     'nw_ValidateExtIppaddrNotRight' => 'Ошибка заполнения внешнего IP адреса маршрутизатора',
-    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Небоходимо заполнить или внешний IP маршрутизатора, или его DNS имя',
+    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Необходимо заполнить или внешний IP маршрутизатора, или его DNS имя',
     'nw_ValidateVlanCross' => 'Ошибки в настройках VLAN у интерфейсов, проверьте пересечение параметров',
     'nw_ValidateIppaddrIsEmpty' => 'Не заполнен IP адрес сетевого интерфейса',
     'nw_ValidateIppaddrNotRight' => 'IP адрес сетевого интерфейса указан некорректно',
@@ -806,8 +789,8 @@ return [
     'cf_Path' => 'Путь к файлу',
     'cf_Description' => 'Комментарий для чего сделаны изменения',
     'cf_Mode' => 'Режим',
-    'mo_BeforeDeleteFirst' => 'Есть ссыки на объект - %represent%',
-    'ConstraintViolation' => '<div class=\'header\'>Нарушение логической целостности</div>',
+    'mo_BeforeDeleteFirst' => 'Есть ссылки на объект - %represent%',
+    'ConstraintViolation' => 'Нарушение логической целостности',
     'repAsteriskManagerUsers' => 'AMI запись - %represent%',
     'repCallQueues' => 'Очередь вызовов - %represent%',
     'repCallQueueMembers' => 'Участник очереди вызовов - %represent%',
@@ -850,7 +833,7 @@ return [
     'sf_MusicOnHold' => 'Музыка на удержании',
     'sf_UploadError' => 'Ошибка при загрузке аудиофайла',
     'lic_ValidateCompanyNameEmpty' => 'Не заполнено обязательное поле - название компании',
-    'lic_ValidateContactEmail' => 'Не заполнено обязательное поле - email коннтактного лица',
+    'lic_ValidateContactEmail' => 'Не заполнено обязательное поле - email контактного лица',
     'lic_ValidateContactName' => 'Не заполнено обязательное поле - контактное лицо',
     'lic_ValidateCouponEmpty' => 'Не заполнено обязательное поле - купон',
     'lic_ValidateLicenseKeyEmpty' => 'Не заполнено обязательное поле - Лицензионный ключ',
@@ -867,14 +850,12 @@ return [
     'lic_SaveLicenseKeyButton' => 'Сохранить ключ',
     'lic_GetTrialErrorCheckInternet' => 'Не удалось пройти регистрацию, проверьте наличие Internet на MikoPBX',
     'lic_SuccessfulСuponActivation' => 'Купон успешно активирован',
-    'lic_LicenseKeyMessage' => '<div class=\'ui message \'>Лицензионный ключ используется для хранения всех ваших лицензий от любых продуктов МИКО.<br>
+    'lic_LicenseKeyMessage' => 'Лицензионный ключ используется для хранения всех ваших лицензий от любых продуктов МИКО.<br>
 Если у вас уже есть ключ, вы можете просто вписать его в это поле.<br>
 Если ключ у вас был, но вы его забыли, поищите в почте входящие письма по адресу lic@miko.ru<br>
-Получить новый ключ можно автоматически, заполнив регистрационную форму.<br>
-</div>',
-    'lic_CouponMessage' => '<div class=\'ui message \'>Купон используется при расширении функционала АТС или при покупке лицензии.<br>
-Его можно активировать один раз, после чего купон становится погашенным.
-</div>',
+Получить новый ключ можно автоматически, заполнив регистрационную форму.<br>',
+    'lic_CouponMessage' => 'Купон используется при расширении функционала АТС или при покупке лицензии.<br>
+Его можно активировать один раз, после чего купон становится погашенным.',
     'lic_CurrentLicenseInfo' => 'Подробная информация о продуктах в лицензионном ключе',
     'lic_Expired' => 'Срок действия продукта истек',
     'lic_ExpiredAfter' => 'Срок действия лицензии истекает после %expired%',
@@ -884,12 +865,10 @@ return [
     'lic_LicenseKeyOwner' => 'Владелец лицензии',
     'lic_ResetLicenseSettings' => 'Отменить привязку к ключу',
     'lic_LicenseKeyValid' => 'Программа зарегистрирована',
-    'lic_LicenseWarningHeader' => 'Эта копия программы не зарегистрирована',
-    'lic_LicenseWarningText' => 'Перейдите в <a href=\'/admin-cabinet/licensing/modify/\'>раздел лицензирования</a> и выполните необходимые действия для регистрации вашей системы',
     'lic_FailedToGetTrialKey2051' => '(2051) Не удалось зарегистрировать эту копию, т.к. вы уже использовали регистрационный номер с другим Email на этой машине.<br>
- Используйте ключ отправленый вам ранее с адреса lic@miko.ru',
+ Используйте ключ отправленный вам ранее с адреса lic@miko.ru',
     'lic_FailedToGetTrialKey2022' => '(2022) Не удалось зарегистрировать эту копию. На указанный email уже был сгененрирован регистрационный номер для другой компании.<br>
- Используйте ключ отправленый вам ранее с адреса lic@miko.ru или укажите корректное название компании.',
+ Используйте ключ отправленный вам ранее с адреса lic@miko.ru или укажите корректное название компании.',
     'lic_FailedActivateCoupon2057' => '(2057) Этот купон заблокирован, обратитесь по адресу lic@miko.ru',
     'lic_FailedActivateCoupon2040' => '(2040) Такого купона не существует, проверьте корректность ввода',
     'lic_FailedActivateCoupon2041' => '(2041) Этот купон уже был активирован ранее',
@@ -904,7 +883,7 @@ return [
     'lic_IntroductionTabHeader' => 'О лицензировании маркетплейса',
     'lic_ManagementTabHeader' => 'Регистрация и управление лицензией',
     'lic_FirstQuestionHeader' => 'Обязательно ли регистрироваться',
-    'lic_FirstQuestionAnswer' => 'Базовый фукционал MikoPBX полностью бесплатный и не ограничен лицензией. Отсутствие лицензии никак не влияет на звонки.<br> Вы в любой момент можете зарегистрироваться, а также отменить регистрацию в Marketplace.',
+    'lic_FirstQuestionAnswer' => 'Базовый функционал MikoPBX полностью бесплатный и не ограничен лицензией. Отсутствие лицензии никак не влияет на звонки.<br> Вы в любой момент можете зарегистрироваться, а также отменить регистрацию в Marketplace.',
     'lic_MarketplaceHeader' => 'Marketplace - это дополнительные возможности',
     'lic_MarketplaceText' => 'Регистрация в Marketplace даст вам доступ к дополнительным модулям и расширениям.<br>Есть бесплатные модули, который мы вынесли из базового функционала для упрощения первоначальной настройки, а также платные модули от нас и других разрабочиков.<br>Если вы разработчик, то можете связаться <a href="mailto:developers@mikopbx.com">с нами</a> для получения инструкций о том, как разработать собственный модуль и добавить его в Marketplace.',
     'lic_MarketplaceImageHeader' => 'Картинка из нашего Marketplace',
@@ -914,7 +893,7 @@ return [
     'lic_NoInetHeader' => 'Нет доступа к серверу лицензирования.',
     'lic_NoInet' => 'Возможно с сервера MikoPBX нет доступа в интернет',
     'lic_NoInetLicMiko' => 'Возможно ограничен доступ к ресурсу <b>lic.mikopbx.com</b>',
-    'lic_NoInetNetSettings' => "Проверьте настройки <b>DNS</b> и <b>Gateway</b> в настройках <a href='/admin-cabinet/network/modify/'>сети</a>",
+    'lic_NoInetNetSettings' => "Проверьте настройки <b>DNS</b> и <b>Gateway</b> в настройках <a href='%url$'>сети</a>",
     'lic_ReloadPage'=>'Обновить страницу...',
     'er_Home' => 'Перейти в начало',
     'rs_RestartPhoneSystem' => 'Перезагрузить АТС',
@@ -931,8 +910,8 @@ return [
     'auth_SubmitButton' => 'Авторизоваться',
     'auth_WrongLoginPassword' => 'Ошибка авторизации',
     'auth_RememberMe' => 'Запомнить меня',
-    'log_CaptureMessage' => '<div class=\'ui message \'>Запустите сбор сетевых пакетов и выполните звонок или другое действие, приводящее к сбою. 
-<br>Система сохранит все пакеты проходящие в этот момент через сетевую карту для дальнейшего анализа.</div>',
+    'log_CaptureMessage' => 'Запустите сбор сетевых пакетов и выполните звонок или другое действие, приводящее к сбою. 
+<br>Система сохранит все пакеты проходящие в этот момент через сетевую карту для дальнейшего анализа.',
     'log_StartCapturePCAP' => 'Старт',
     'log_StopCapturePCAP' => 'Остановить и скачать',
     'log_DownloadLogs' => 'Скачать все системные логи',
@@ -1041,12 +1020,12 @@ return [
     'pass_CheckSSHPasswordSimple'=> 'Пароль для SSH слишком простой.',
     'adv_FirewallDisabled' => 'В системе отключен сетевой экран - <a href=\'%url%\'>изменить</a>',
     'adv_StorageDiskUnMounted' => 'Не подключен диск для хранения настроек и данных!',
-    'adv_NetworksNotConfigured' => 'Не настроены параметры разрешенных подсетей  - <a href=\'%url%\'>изменить</a>',
-    'adv_AvailableNewVersionPBX' => 'Доступна новая версия PBX  - <a href=\'%url%\'>%ver%</a>',
+    'adv_NetworksNotConfigured' => 'Не настроены параметры разрешенных подсетей - <a href=\'%url%\'>изменить</a>',
+    'adv_AvailableNewVersionPBX' => 'Доступна новая версия PBX - <a href=\'%url%\'>%ver%</a>',
     'adv_ThisCopyIsNotRegistered' => 'Эта копия программы не лицензирована - <a href=\'%url%\'>Бесплатная активация</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'На диске для хранения заканчивается свободное место (%free% Mb)</a>',
     'adv_ThisCopyHasLicensingTroubles' => 'Проблема с лицензией PBX: %error%  - <a target="_blank" href=\'%url%\'>как исправить</a>',
-    'adv_ProblemWithInternetConnection' => 'Отсутсвует подключение к Internet. Возможны проблемы в работе платных модулей.',
+    'adv_ProblemWithInternetConnection' => 'Отсутствует подключение к Internet. Возможны проблемы в работе платных модулей.',
     'сal_Today' => 'Сегодня',
     'сal_Yesterday' => 'Вчера',
     'сal_LastWeek' => 'Последние 7 дней',
@@ -1066,7 +1045,7 @@ return [
     'sntry_LabelSubmit' => 'Отправить',
     'sntry_ErrorGeneric' => 'Неизвестная ошибка при отправке. Попробуйте еще раз!',
     'sntry_ErrorFormEntry' => 'Не заполнены поля, откорректируйте и попробуйте отправить еще раз!',
-    'sntry_SuccessMessage' => 'Спасибо за вашу помошь!',
+    'sntry_SuccessMessage' => 'Спасибо за вашу помощь!',
     'lang_HelpWithTranslateIt' => 'Помочь с переводом MikoPBX',
     'topMenu_Support' => 'Поддержка',
     'topMenu_SearchPlaceholder' => 'Введите поисковый запрос',

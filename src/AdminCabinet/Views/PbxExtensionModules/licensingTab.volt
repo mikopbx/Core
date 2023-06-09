@@ -5,7 +5,7 @@
             <div class="field">
                 {{ changeLicenseKeyForm.render('licKey') }}
             </div>
-            {{ t._('lic_LicenseKeyMessage') }}
+            <div class='ui message'>{{ t._('lic_LicenseKeyMessage') }}</div>
         </div>
         <div class="filled-license-key-info confidential-field"></div>
         <div class="ui hidden divider"></div>
@@ -87,7 +87,7 @@
             <div class="field">
                 {{ activateCouponForm.render('coupon') }}
             </div>
-            {{ t._('lic_CouponMessage') }}
+            <div class="ui message">{{ t._('lic_CouponMessage') }}</div>
             <div class="ui hidden divider"></div>
         </div>
         <div class="ui header">{{ t._('lic_LastQuestionHeader') }}</div>

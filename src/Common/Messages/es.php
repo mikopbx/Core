@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -56,26 +74,12 @@ return [
     'ShortDaySaturday' => 'Sáb',
     'Today' => 'Hoy',
     'Now' => 'Ahora',
-    'MetategHeadDescription' => 'Sistema telefónico comercial',
+    'MetaTegHeadDescription' => 'Sistema telefónico comercial',
     'Loading' => 'Cargando',
     'qf_NatMode' => 'Modo NAT',
     'qf_Qualify' => 'Apoye la sesión NAT',
     'qf_Frequency' => 'Frecuencia de envío en seg.',
     'mm_Restart' => 'Reiniciar',
-    'qf_NatModeInstructions' => '<div class = \'mensaje ui\'>
-            <div class = \'ui bulleted list\'>
-                <div class = \'item\'><b>no</b> no realiza ningún procesamiento NAT especial, excepto el especificado en RFC 3581
-                </div>
-                <div class = \'item\'><b>force_rport</b> incluso si no se especificó ningún parámetro rport, actúa como si fuera
-                </div>
-                <div class = \'item\'><b>comedia</b> envía los paquetes RTP de vuelta al puerto desde el que se recibieron, ignorando el puerto requerido en el encabezado SDP
-                </div>
-                <div class = \'item\'><b>auto_comedia</b> si Asterisk puede determinar que el dispositivo está detrás de NAT, configure la opción de comedia
-                </div>
-                <div class = \'item\'><b>force_rport, comedia</b> opción reemplazando nat = yes
-                </div>
-            </div>
-        </div>',
     'qf_QualifyInstructions' => '<div class = \'mensaje ui\'>
             Cuando esta opción está habilitada, Asterisk enviará paquetes de opciones SIP con la frecuencia especificada. Esto es necesario para admitir el túnel NAT en su enrutador.
         </div>',

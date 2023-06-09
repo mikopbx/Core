@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -41,25 +59,11 @@ return [
     'ShortDaySaturday' => '土',
     'Today' => '今日は',
     'Now' => '今',
-    'MetategHeadDescription' => 'ビジネス電話システム',
+    'MetaTegHeadDescription' => 'ビジネス電話システム',
     'Loading' => '読み込み中',
     'qf_NatMode' => 'NATモード',
     'qf_Qualify' => 'NATセッションをサポート',
     'qf_Frequency' => '秒単位の送信頻度。',
-    'qf_NatModeInstructions' => '<div class = \'uiメッセージ\'>
-            <div class = \'ui箇条書き\'>
-                <div class = \'item\'><b>いいえ</b>は、RFC 3581で指定されているものを除き、特別なNAT処理を実行しません
-                </div>
-                <div class = \'item\'><b>force_rport</b>は、rportパラメータが指定されていなくても、あたかもそのように動作します
-                </div>
-                <div class = \'item\'><b>comedia</b>は、RTPパケットを受信元のポートに送り返し、SDPヘッダーの必要なポートは無視します
-                </div>
-                <div class = \'item\'><b>auto_comedia</b>デバイスがNATの背後にあるとアスタリスクが判断できる場合は、comediaオプションを設定します
-                </div>
-                <div class = \'item\'> nat = yesを<b>force_rport、comedia</b>オプションで置き換え
-                </div>
-            </div>
-        </div>',
     'qf_QualifyInstructions' => '<div class = \'uiメッセージ\'>
             このオプションを有効にすると、アスタリスクは指定された頻度でSIPオプションパケットを送信します。これは、ルーターでNATトンネリングをサポートするために必要です。
         </div>',

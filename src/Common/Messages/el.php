@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -1021,25 +1039,11 @@ return [
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
             Όταν αυτή η επιλογή είναι ενεργοποιημένη, το Asterisk θα στέλνει πακέτα SIP Options στην καθορισμένη συχνότητα. Αυτό απαιτείται για την υποστήριξη της διοχέτευσης NAT στο δρομολογητή σας.
         </div>',
-    'qf_NatModeInstructions' => '<div class=\'ui message \'>
-            <div class=\'ui bulleted list\'>
-                <div class=\'item\'><b>no</b> δεν κάνει κανένα ειδικό χειρισμό NAT εκτός από αυτό που καθορίζεται στο RFC 3581
-                </div>
-                <div class=\'item\'><b>force_rport</b> ακόμα κι αν δεν έχει καθοριστεί παράμετρος rport, ενεργήστε σαν να ήταν
-                </div>
-                <div class=\'item\'><b>commedia</b> στέλνει πακέτα RTP πίσω στη θύρα από την οποία ελήφθησαν, αγνοώντας την απαιτούμενη θύρα στην κεφαλίδα SDP
-                </div>
-                <div class=\'item\'><b>auto_commedia</b> εάν το Asterisk μπορεί να εντοπίσει ότι η συσκευή βρίσκεται πίσω από το NAT, ορίστε την επιλογή comemedia
-                </div>
-                <div class=\'item\'><b>force_rport,comedia</b> επιλογή που αντικαθιστά το nat=yes
-                </div>
-            </div>
-        </div>',
     'qf_Frequency' => 'Συχνότητα αποστολής σε δευτερόλεπτα.',
     'qf_Qualify' => 'Διατήρηση συνεδρίας NAT',
     'qf_NatMode' => 'Λειτουργία NAT',
     'Loading' => 'Φόρτωση',
-    'MetategHeadDescription' => 'Τηλεφωνικό σύστημα για επιχειρήσεις',
+    'MetaTegHeadDescription' => 'Τηλεφωνικό σύστημα για επιχειρήσεις',
     'ShortDaySaturday' => 'Σάβ',
     'ShortDayFriday' => 'Παρ',
     'ShortDayThursday' => 'Πέμ',

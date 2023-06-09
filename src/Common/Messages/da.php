@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -33,25 +51,11 @@ return [
     'ShortDaySaturday' => 'Lør',
     'Today' => 'i dag',
     'Now' => 'lige nu',
-    'MetategHeadDescription' => 'Forretningstelefonsystem',
+    'MetaTegHeadDescription' => 'Forretningstelefonsystem',
     'Loading' => 'lastning',
     'qf_NatMode' => 'NAT-tilstand',
     'qf_Qualify' => 'Support NAT-session',
     'qf_Frequency' => 'Sendefrekvens i sek.',
-    'qf_NatModeInstructions' => '<div class=\'ui message \'>
-            <div class=\'ui bulleted list\'>
-                <div class=\'item\'> <b> nej </b> Udfør ingen særlig NAT-håndtering bortset fra RFC 3581
-                </div>
-                <div class=\'item\'> <b> force_rport </b> selvom der ikke var angivet noget portparameter, skal du handle som om det var
-                </div>
-                <div class=\'item\'> <b> comedia </b> sender RTP-pakker tilbage til den port, hvorfra de blev modtaget, idet den nødvendige port i SDP-headeren ignoreres
-                </div>
-                <div class=\'item\'> <b> auto_comedia </b> Hvis stjerne kan bestemme, at enheden er bag NAT, skal du indstille comedia-indstillingen
-                </div>
-                <div class=\'item\'> <b> force_rport, comedia </b> mulighed for at erstatte nat = ja
-                </div>
-            </div>
-        </div>',
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
             Når denne indstilling er aktiveret, sender Asterisk SIP-optionspakker med den angivne frekvens. Dette er nødvendigt for at understøtte NAT-tunneling på din router.
         </div>',

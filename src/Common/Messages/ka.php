@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -38,20 +56,6 @@ return [
     'ext_Version' => 'ვერსია',
     'msg_WarningHeader' => 'ყურადღება',
     'msg_infoHeader' => 'ინფორმაცია',
-    'qf_NatModeInstructions' => '<div class=\'ui message \'>
-            <div class=\'ui bulleted list\'>
-                <div class=\'item\'> <b> არა </b> არ შეასრულოთ სპეციალური NAT დამუშავება, გარდა RFC 3581
-                </div>
-                <div class=\'item\'> <b> force_rport </b> მაშინაც კი, თუ არ იყო მითითებული rport პარამეტრი, ისე მოიქეცი, თითქოს ეს
-                </div>
-                <div class=\'item\'> <b> კომედია </b> გაგზავნის RTP პაკეტებს პორტში, საიდანაც ისინი მიიღეს, SDP სათაურის საჭირო პორტის უგულებელყოფით
-                </div>
-                <div class=\'item\'> <b> auto_comedia </b> თუ Asterisk- ს შეუძლია დაადგინოს, რომ მოწყობილობა დგას NAT- ის უკან, დააყენეთ კომედიის ვარიანტი
-                </div>
-                <div class=\'item\'> <b> force_rport, comedia </b> ვარიანტი შეცვლის nat = დიახ
-                </div>
-            </div>
-        </div>',
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
             როდესაც ეს პარამეტრი ჩართულია, Asterisk გამოგიგზავნით SIP პარამეტრები პაკეტებს მითითებულ სიხშირეზე. ეს საჭიროა თქვენს როუტერზე NAT გვირაბის გასაზრდელად.
         </div>',
@@ -87,7 +91,7 @@ return [
     'ShortDaySaturday' => 'შაბათს',
     'Today' => 'დღეს',
     'Now' => 'ახლა',
-    'MetategHeadDescription' => 'ბიზნეს სატელეფონო სისტემა',
+    'MetaTegHeadDescription' => 'ბიზნეს სატელეფონო სისტემა',
     'Loading' => 'Ჩატვირთვა',
     'SubHeaderProviders' => 'ანგარიშების შექმნა გარე შემომავალი და გამავალი კავშირების ორგანიზებისთვის',
     'SubHeaderAsteriskManagers' => 'სადგურის AMI ინტერფეისზე დაშვების უფლებების დაყენება',

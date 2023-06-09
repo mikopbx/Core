@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -72,25 +90,11 @@ return [
     'ShortDaySaturday' => 'Сб',
     'Today' => 'Сьогодні',
     'Now' => 'Зараз',
-    'MetategHeadDescription' => 'Телефонна система для бізнесу',
+    'MetaTegHeadDescription' => 'Телефонна система для бізнесу',
     'Loading' => 'Завантаження',
     'qf_NatMode' => 'Режим NAT',
     'qf_Qualify' => 'Підтримувати NAT сесію',
     'qf_Frequency' => 'Частота відправки в сек.',
-    'qf_NatModeInstructions' => '<div class=\'ui message \'>
-            <div class=\'ui bulleted list\'>
-                <div class=\'item\'><b>no</b> не виконувати ніякої спеціальної обробки NAT, крім тієї що вказана в RFC 3581
-                </div>
-                <div class=\'item\'><b>force_rport</b> навіть якщо жодного параметра rport не було вказано, діяти так, як якщо б він був
-                </div>
-                <div class=\'item\'><b>comedia</b> відправляти RTP пакети назад до порту з якого вони були отримані, ігноруючи необхідний порт в SDP заголовку
-                </div>
-                <div class=\'item\'><b>auto_comedia</b> якщо Asterisk зможе визначити, що пристрій знаходиться за NAT, встановити опцію comedia
-                </div>
-                <div class=\'item\'><b>force_rport,comedia</b> опція замінює nat=yes
-                </div>
-            </div>
-        </div>',
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
             При включенні цієї опції Asterisk буде відправляти SIP Options пакети з вказаною частотою. Це необхідно для підтримки NAT тунелювання на вашому маршрутизаторі.  
         </div>',

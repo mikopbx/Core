@@ -112,7 +112,7 @@ class BaseController extends Controller
         $this->view->submitMode = $this->session->get('SubmitMode') ?? 'SaveSettings';
         $this->view->lastSentryEventId = $this->setLastSentryEventId();
         $this->view->PBXVersion = PbxSettings::getValueByKey('PBXVersion');
-        $this->view->MetaTegHeadDescription = $this->translation->_('MetategHeadDescription');
+        $this->view->MetaTegHeadDescription = $this->translation->_('MetaTegHeadDescription');
         $this->view->isExternalModuleController = $this->isExternalModuleController;
 
         // Add module variables into view if it is an external module controller

@@ -8,7 +8,7 @@
         <ul class="list">
             <li>{{ t._('lic_NoInet') }}</li>
             <li>{{ t._('lic_NoInetLicMiko') }}</li>
-            <li>{{ t._('lic_NoInetNetSettings') }}</li>
+            <li>{{ t._('lic_NoInetNetSettings', ['url':'/admin-cabinet/network/modify/']) }}</li>
         </ul>
         <br>
         <b><a href='#' onclick='window.location.reload()'>{{ t._('lic_ReloadPage') }}</a></b>

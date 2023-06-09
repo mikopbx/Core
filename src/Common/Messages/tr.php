@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -378,24 +396,10 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'ShortDaySaturday' => 'Cts',
     'Today' => 'bugün',
     'Now' => 'hemen şimdi',
-    'MetategHeadDescription' => 'İş Telefonu Sistemi',
+    'MetaTegHeadDescription' => 'İş Telefonu Sistemi',
     'Loading' => 'yükleme',
     'qf_NatMode' => 'NAT modu',
     'qf_Frequency' => 'Saniyede gönderme frekansı.',
-    'qf_NatModeInstructions' => '<div class = \'ui mesajı\'>
-            <div class = \'ui madde işaretli liste\'>
-                <div class = \'item\'> <b> hayır </b>, RFC 3581\'de belirtilen dışında özel bir NAT işlemi gerçekleştirmez
-                </div>
-                <div class = \'item\'> <b> force_rport </b>, herhangi bir rport parametresi belirtilmemiş olsa bile, sanki
-                </div>
-                <div class = \'item\'> <b> comedia </b>, RTP paketlerini alındıkları bağlantı noktasına geri göndererek SDP başlığında gerekli bağlantı noktasını yok sayar
-                </div>
-                <div class = \'item\'> <b> auto_comedia </b> Asterisk cihazın NAT arkasında olduğunu belirleyebiliyorsa, comedia seçeneğini belirleyin
-                </div>
-                nat = yes yerine <div class = \'item\'> <b> force_rport, comedia </b> seçeneği
-                </div>
-            </div>
-        </div>',
     'qf_QualifyInstructions' => '<div class = \'ui mesajı\'>
             Bu seçenek etkinleştirildiğinde, Yıldız işareti belirtilen sıklıkta SIP Seçenekleri paketleri gönderir. Bu, yönlendiricinizdeki NAT tünellemesini desteklemek için gereklidir.
         </div>',

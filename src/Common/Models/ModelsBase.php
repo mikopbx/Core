@@ -267,7 +267,7 @@ class ModelsBase extends Model
                 $relatedRecords = $this->getRelated($relatedModel);
 
                 // Create a new error message template
-                $newErrorMessage = $this->t('ConstraintViolation');
+                $newErrorMessage = '<div class="ui header">'.$this->t('ConstraintViolation').'</div>';
                 $newErrorMessage .= "<ul class='list'>";
                 if ($relatedRecords === false) {
                     // Throw an exception if there is an error in the model relationship

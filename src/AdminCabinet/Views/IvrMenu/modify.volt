@@ -5,11 +5,11 @@
     <i class="phone icon"></i> {{ extension }}
 </div>
 <h3 class="ui hidden header "></h3>
-<div class="ten wide field">
-    <label>{{ t._('iv_Name') }}</label>
+<div class="field max-width-500">
+    <label for="name">{{ t._('iv_Name') }}</label>
     {{ form.render('name') }}
 </div>
-<div class="ten wide field">
+<div class="field">
     <label>{{ t._('iv_Description') }}</label>
     {{ form.render('description') }}
 </div>
@@ -42,36 +42,36 @@
 
 </div>
 
-<div class="field">
-    <label>{{ t._('iv_NumberOfRepeat') }}</label>
+<div class="inline field">
     {{ form.render('number_of_repeat') }}
+    <label for="number_of_repeat">{{ t._('iv_NumberOfRepeat') }}</label>
 </div>
-<div class="ten wide field">
-    <label>{{ t._('iv_TimeoutToRedirect') }}</label>
+<div class="inline field">
     {{ form.render('timeout') }}
+    <label for="timeout">{{ t._('iv_TimeoutToRedirect') }}</label>
 </div>
-<div class="ten wide field">
-    <label>{{ t._('iv_TimeoutExtension') }}</label>
+<div class="field">
+    <label for="timeout_extension">{{ t._('iv_TimeoutExtension') }}</label>
     {{ form.render('timeout_extension') }}
 </div>
 
-<div class="ten wide field">
-    <div class="ui segment">
-        <div class="ui toggle checkbox">
-            {{ form.render('allow_enter_any_internal_extension') }}
-            <label>{{ t._('iv_AllowEnterAnyInternalExtension') }}</label>
-        </div>
+<div class="field">
+    <div class="ui toggle checkbox">
+        {{ form.render('allow_enter_any_internal_extension') }}
+        <label for="allow_enter_any_internal_extension">{{ t._('iv_AllowEnterAnyInternalExtension') }}</label>
     </div>
 </div>
-<div class="four wide field">
-    <label>{{ t._('iv_Extensions') }}</label>
-    <div class="ui icon input extension">
-        <i class="search icon"></i>
-        {{ form.render('extension') }}
-    </div>
+<div class="field">
+    <label for="extension">{{ t._('iv_Extensions') }}</label>
+    <div class="field max-width-250">
+        <div class="ui icon input extension">
+            <i class="search icon"></i>
+            {{ form.render('extension') }}
+        </div>
 
-    <div class="ui top pointing red label hidden" id="extension-error">
-        {{ t._("iv_ThisNumberIsNotFree") }}
+        <div class="ui top pointing red label hidden" id="extension-error">
+            {{ t._("iv_ThisNumberIsNotFree") }}
+        </div>
     </div>
 </div>
 
@@ -82,5 +82,5 @@
 
 
 <script type="application/javascript">
-	var ivrActions = '{{ ivractions|json_encode }}';
+    var ivrActions = '{{ ivractions|json_encode }}';
 </script>

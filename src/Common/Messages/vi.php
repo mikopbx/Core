@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -128,25 +146,11 @@ return [
     'ShortDaySaturday' => 'Thứ bảy',
     'Today' => 'Hôm nay',
     'Now' => 'Bây giờ',
-    'MetategHeadDescription' => 'Hệ thống điện thoại doanh nghiệp',
+    'MetaTegHeadDescription' => 'Hệ thống điện thoại doanh nghiệp',
     'Loading' => 'Đang tải',
     'qf_NatMode' => 'Chế độ NAT',
     'qf_Qualify' => 'Hỗ trợ phiên NAT',
     'qf_Frequency' => 'Gửi tần số trong giây.',
-    'qf_NatModeInstructions' => '<div class = \'ui tin nhắn\'>
-            <div class = \'ui danh sách gạch đầu dòng\'>
-                <div class = \'item\'> <b> no</b> không thực hiện bất kỳ xử lý NAT đặc biệt nào ngoại trừ quy trình được chỉ định trong RFC 3581
-                </div>
-                <div class = \'item\'> <b> force_rport</b> ngay cả khi không có tham số rport nào được chỉ định, hãy hành động như thể nó là
-                </div>
-                <div class = \'item\'> <b> comedia</b> gửi các gói RTP trở lại cổng mà chúng được nhận, bỏ qua cổng được yêu cầu trong tiêu đề SDP
-                </div>
-                <div class = \'item\'> <b> auto_comedia</b> nếu Asterisk có thể xác định rằng thiết bị nằm sau NAT, hãy đặt tùy chọn comedia
-                </div>
-                Tùy chọn <div class = \'item\'> <b> force_rport, comedia</b> thay thế nat = yes
-                </div>
-            </div>
-        </div>',
     'qf_QualifyInstructions' => '<div class = \'ui tin nhắn\'>
             Khi tùy chọn này được bật, Asterisk sẽ gửi các gói Tùy chọn SIP với tần suất được chỉ định. Điều này là cần thiết để hỗ trợ NAT đường hầm trên bộ định tuyến của bạn.
         </div>',

@@ -1,8 +1,26 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'December' => 'dekabr',
     'Loading' => 'Yüklənir',
-    'MetategHeadDescription' => 'Biznes üçün telefon sistemi',
+    'MetaTegHeadDescription' => 'Biznes üçün telefon sistemi',
     'qf_Frequency' => 'Tezliyi saniyədə göndərin.',
     'SubHeaderTimeSettings' => 'Saatın və təqvimin qurulması',
     'BreadcrumbTimeSettings' => 'Sistem vaxtı',
@@ -1055,20 +1073,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'AdvancedOptions' => 'Qabaqcıl parametrlər',
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
             Bu seçim aktiv olduqda, PBX SIP OPTIONS paketlərini müəyyən olunmuş tezlikdə göndərəcək. Bu, marşrutlaşdırıcınızda NAT tunelini dəstəkləmək üçün tələb olunur.
-        </div>',
-    'qf_NatModeInstructions' => '<div class=\'ui message \'>
-            <div class=\'ui bulleted list\'>
-                <div class=\'item\'><b>yox</b> RFC 3581-də göstərildiyindən başqa heç bir xüsusi NAT əməliyyatı etmir
-                </div>
-                <div class=\'item\'><b>force_rport</b> hətta heç bir rport parametri göstərilməsə belə, elə hərəkət edin
-                </div>
-                <div class=\'item\'><b>comediya</b> SDP başlığında tələb olunan porta məhəl qoymadan RTP paketlərini qəbul etdikləri porta geri göndərir
-                </div>
-                <div class=\'item\'><b>auto_commedia</b> əgər Asterisk cihazın NAT-ın arxasında olduğunu aşkar edərsə, komediya seçimini təyin edin
-                </div>
-                <div class=\'item\'><b>force_rport,comediya</b> seçimi nat=bəli əvəz edir
-                </div>
-            </div>
         </div>',
     'qf_Qualify' => 'NAT sessiyasını qoruyun',
     'qf_NatMode' => 'NAT rejimi',

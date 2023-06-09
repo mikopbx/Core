@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -53,25 +71,11 @@ return [
     'ShortDaySaturday' => 'Sa',
     'Today' => 'Heute',
     'Now' => 'Jetzt',
-    'MetategHeadDescription' => 'TelefonSysteme für den professionellen Einsatz',
+    'MetaTegHeadDescription' => 'TelefonSysteme für den professionellen Einsatz',
     'Loading' => 'Lade',
     'qf_NatMode' => 'NAT Modus',
     'qf_Qualify' => 'NAT Session',
     'qf_Frequency' => 'Intervall zum Auffrischen der NAT Session. Beachten Sie ggf. Mindestwerte Ihres Providers.',
-    'qf_NatModeInstructions' => '<div class=\'ui message \'>
-            <div class=\'ui bulleted list\'>
-                <div class=\'item\'><b>nein</b> keine spezielle Berücksichtigung des NAT, nur nach RFC 3581
-                </div>
-                <div class=\'item\'><b>force_rport</b> auch wenn kein \'rport\' angegeben wurde, trotzdem so behandeln
-                </div>
-                <div class=\'item\'><b>comedia</b> sende RTP Pakete an den Port zurück, von welchem sie empgangen wurden, unabhängig vom im SDP Header angegebenen Port
-                </div>
-                <div class=\'item\'><b>auto_comedia</b> wenn Asterisk festellen kann, dass es sich hinter einem NAT befindet, ist diese Option zu wählen
-                </div>
-                <div class=\'item\'><b>force_rport,comedia</b> die Option \'nat=yes\' wird gewählt
-                </div>
-            </div>
-        </div>',
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
             Wenn diese Option aktiviert ist, sendet Asterisk regelmäßig SIP-Anfragen and den HOST. Dies ist notwendig, um den NAT-Tunnel am Router aufrechtzuerhalten. 
         </div>',

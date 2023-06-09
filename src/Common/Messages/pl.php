@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -519,7 +537,7 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'ShortDaySaturday' => 'Sob',
     'Today' => 'Dzisiaj',
     'Now' => 'Teraz',
-    'MetategHeadDescription' => 'System telefonu biznesowego',
+    'MetaTegHeadDescription' => 'System telefonu biznesowego',
     'Loading' => 'Ładowanie',
     'qf_NatMode' => 'Tryb NAT',
     'qf_Qualify' => 'Obsługa sesji NAT',
@@ -530,20 +548,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'adv_YouUseDefaultSSHPassword' => 'Do uzyskania dostępu do SSH używasz domyślnego hasła - <a href=\'%url%\'> zmień </a>',
     'adv_FirewallDisabled' => 'Wyłączona zapora w systemie - <a href=\'%url%\'> zmień </a>',
     'adv_StorageDiskUnMounted' => 'Nie podłączony dysk do przechowywania ustawień i danych!',
-    'qf_NatModeInstructions' => '<div class = \'ui message\'>
-            <div class = \'ulet bulleted list\'>
-                <div class = \'item\'> <b> no</b> nie wykonuj żadnego specjalnego przetwarzania NAT poza tym określonym w RFC 3581
-                </div>
-                <div class = \'item\'> <b> force_rport</b> nawet jeśli nie określono parametru rport, postępuj tak, jakby
-                </div>
-                <div class = \'item\'> <b> comedia</b> wysyłają pakiety RTP z powrotem do portu, z którego je otrzymano, ignorując wymagany port w nagłówku SDP
-                </div>
-                <div class = \'item\'> <b> auto_comedia</b> jeśli gwiazdka może stwierdzić, że urządzenie ma NAT, ustaw opcję comedia
-                </div>
-                <div class = \'item\'> <b> force_rport, comedia</b> opcja zastępująca nat = yes
-                </div>
-            </div>
-        </div>',
     'qf_QualifyInstructions' => '<div class = \'ui message\'>
             Gdy ta opcja jest włączona, gwiazdka wyśle pakiety opcji SIP z określoną częstotliwością. Jest to konieczne do obsługi tunelowania NAT na routerze.
         </div>',

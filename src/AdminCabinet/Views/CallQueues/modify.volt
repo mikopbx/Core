@@ -5,29 +5,23 @@
     <i class="phone icon"></i> {{ extension }}
 </div>
 <h3 class="ui dividing header ">{{ t._("cq_QueueSetup") }}</h3>
-<div class="wide field">
-    <label>{{ t._('cq_Name') }}</label>
-    <div class="twelve wide field">
-        {{ form.render('name') }}
-    </div>
+<div class="field max-width-500">
+    <label for="name">{{ t._('cq_Name') }}</label>
+    {{ form.render('name') }}
 </div>
 
 <div class="field">
-    <label>{{ t._('cq_Description') }}</label>
-    <div class="twelve wide field">
-        {{ form.render('description') }}
-    </div>
+    <label for="description">{{ t._('cq_Description') }}</label>
+    {{ form.render('description') }}
 </div>
 
 <h3 class="ui dividing header ">{{ t._("cq_QueueMembers") }}</h3>
-<div class="field">
-    <label>{{ t._('cq_SelectAgentForAddToQueue') }}</label>
-<div class="six wide field">
+<div class="field max-width-500">
+    <label for="extensionselect">{{ t._('cq_SelectAgentForAddToQueue') }}</label>
     <div class="ui selection dropdown search" id="extensionselect">
         <div class="default text">{{ t._('ex_SelectNumber') }}</div>
         <i class="dropdown icon"></i>
     </div>
-</div>
 </div>
 <div class="ui basic compact segment">
     <table class="ui selectable small very compact unstackable table" id="extensionsTable">
@@ -67,8 +61,8 @@
 
     <div class="content">
         <div class="field">
-            <label>{{ t._('cd_Extensions') }}</label>
-            <div class="six wide field">
+            <label for="extension">{{ t._('cd_Extensions') }}</label>
+            <div class="field max-width-200">
                 <div class="ui icon input extension">
                     <i class="search icon"></i>
                     {{ form.render('extension') }}
@@ -80,8 +74,8 @@
         </div>
 
         <div class="field">
-            <label>{{ t._('cq_CallerIDPrefix') }}</label>
-            <div class="six wide field">
+            <label for="callerid_prefix">{{ t._('cq_CallerIDPrefix') }}</label>
+            <div class="field max-width-200">
                 {{ form.render('callerid_prefix') }}
             </div>
         </div>
@@ -97,22 +91,21 @@
 
         <div class="inline field">
             {{ form.render('seconds_for_wrapup') }}
-            <label>{{ t._('cq_WrapupTime') }}</label>
+            <label for="seconds_for_wrapup">{{ t._('cq_WrapupTime') }}</label>
         </div>
 
         <div class="field">
             <div class="ui toggle checkbox">
                 {{ form.render('recive_calls_while_on_a_call') }}
-                <label>{{ t._('cq_ReciveCallWhileOnCall') }}</label>
+                <label for="recive_calls_while_on_a_call">{{ t._('cq_ReciveCallWhileOnCall') }}</label>
             </div>
         </div>
 
         <div class="ui hidden divider"></div>
         <h3 class="ui dividing header ">{{ t._("cq_QueueCallerSettings") }}</h3>
 
-
         <div class="inline field">
-            <label>{{ t._('cq_CallerHearOnQueued') }}</label>
+            <label for="caller_hear">{{ t._('cq_CallerHearOnQueued') }}</label>
             {{ form.render('caller_hear') }}
         </div>
         {{ partial("partials/playAddNewSound", ['label': t._('cq_PereodicAnonceMohSoundFile'), 'id':'moh_sound_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}

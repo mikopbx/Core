@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -40,7 +58,7 @@ return [
     'Jun' => 'Jun',
     'qf_NatMode' => 'Modo NAT',
     'Loading' => 'Carregando',
-    'MetategHeadDescription' => 'Sistema de telefone comercial',
+    'MetaTegHeadDescription' => 'Sistema de telefone comercial',
     'Now' => 'Agora',
     'Today' => 'Hoje',
     'ShortDaySaturday' => 'Sáb',
@@ -1005,20 +1023,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'AdvancedOptions' => 'Configurações avançadas',
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
             Quando esta opção é habilitada, o Asterisk enviará pacotes de Opções SIP na freqüência especificada. Isso é necessário para oferecer suporte ao túnel NAT em seu roteador.
-        </div>',
-    'qf_NatModeInstructions' => '<div class=\'ui message \'>
-            <div class=\'ui bulleted list\'>
-                <div class=\'item\'> <b> não </b> Não execute nenhum tratamento especial de NAT além do RFC 3581
-                </div>
-                <div class=\'item\'> <b> force_rport </b> mesmo que nenhum parâmetro rport tenha sido especificado, agir como se fosse
-                </div>
-                <div class=\'item\'> <b> comedia </b> enviar pacotes RTP de volta para a porta de onde foram recebidos, ignorando a porta necessária no cabeçalho SDP
-                </div>
-                <div class=\'item\'> <b> auto_comedia </b> se o Asterisk puder determinar que o dispositivo está atrás de NAT, defina a opção de comédia
-                </div>
-                <div class=\'item\'> <b> force_rport, comedia </b> opção para substituir nat = yes
-                </div>
-            </div>
         </div>',
     'qf_Qualify' => 'Manter sessão NAT',
     'log_StopCapturePCAP' => 'Pare e baixe',

@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
@@ -51,25 +69,11 @@ return [
     'ShortDaySaturday' => '周六',
     'Today' => '今天',
     'Now' => '现在',
-    'MetategHeadDescription' => '商务电话系统',
+    'MetaTegHeadDescription' => '商务电话系统',
     'Loading' => '载入中',
     'qf_NatMode' => 'NAT模式',
     'qf_Qualify' => '支持NAT会话',
     'qf_Frequency' => '发送频率（以秒为单位）。',
-    'qf_NatModeInstructions' => '<div class =\'ui消息\'>
-            <div class =\'ui项目符号列表\'>
-                <div class =\'item\'> <b>否</b>除了RFC 3581中指定的处理之外，不执行任何特殊的NAT处理。
-                </div>
-                <div class =\'item\'> <b> force_rport</b>即使未指定任何rport参数，其作用也与
-                </div>
-                <div class =\'item\'> <b> comedia</b>将RTP数据包发送回接收它们的端口，而忽略了SDP标头中的所需端口
-                </div>
-                <div class =\'item\'> <b> auto_comedia</b>如果Asterisk可以确定设备位于NAT之后，请设置comedia选项
-                </div>
-                <div class =\'item\'> <b> force_rport，comedia</b>选项替换为nat = yes
-                </div>
-            </div>
-        </div>',
     'qf_QualifyInstructions' => '<div class =\'ui消息\'>
             启用此选项后，Asterisk将以指定的频率发送SIP选项数据包。这是支持路由器上NAT隧道所必需的。
         </div>',
