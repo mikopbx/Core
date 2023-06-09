@@ -38,6 +38,12 @@ const Form = {
      */
     validateRules: {},
 
+    /**
+     * Dirty check field, for checking if something on the form was changed
+     * @type {jQuery}
+     */
+    $dirrtyField: $('#dirrty'),
+
     url: '',
     cbBeforeSendForm: '',
     cbAfterSendForm: '',
@@ -146,6 +152,17 @@ const Form = {
         } else {
             Form.$submitButton.removeClass('disabled');
             Form.$dropdownSubmit.removeClass('disabled');
+        }
+    },
+
+    /**
+     *  Changes the value of '$dirrtyField' to trigger
+     *  the 'change' form event and enable submit button.
+     */
+    dataChanged(){
+        if (Form.enableDirrity) {
+            Form.$dirrtyField.val(Math.random());
+            Form.$dirrtyField.trigger('change');
         }
     },
 

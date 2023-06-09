@@ -31,12 +31,6 @@ const callQueue = {
     // The input field for the extension number
     $extension: $('#extension'),
 
-    /**
-     * Dirty check field, for checking if something on the form was changed
-     * @type {jQuery}
-     */
-    $dirrtyField: $('#dirrty'),
-
     // List of available members for this call queue
     AvailableMembersList: [],
 
@@ -149,11 +143,7 @@ const callQueue = {
             $(e.target).closest('tr').remove();
             callQueue.reinitializeExtensionSelect();
             callQueue.updateExtensionTableView();
-
-            // Change the value of '$dirrtyField' to trigger
-            // the 'change' form event and enable submit button.
-            callQueue.$dirrtyField.val(Math.random());
-            callQueue.$dirrtyField.trigger('change');
+            Form.dataChanged();
 
             return false;
         });
@@ -239,10 +229,7 @@ const callQueue = {
                     callQueue.reinitializeExtensionSelect();
                     callQueue.updateExtensionTableView();
 
-                    // Change the value of '$dirrtyField' to trigger
-                    // the 'change' form event and enable submit button.
-                    callQueue.$dirrtyField.val(Math.random());
-                    callQueue.$dirrtyField.trigger('change');
+                    Form.dataChanged();
                 }
             },
             // Set the values for the dropdown
@@ -259,10 +246,8 @@ const callQueue = {
             onDragClass: 'hoveringRow',  // CSS class to be applied while a row is being dragged
             dragHandle: '.dragHandle',  // Class of the handler to initiate the drag action
             onDrop: () => { // Callback to be executed after a row has been dropped
-                // Change the value of '$dirrtyField' to trigger
-                // the 'change' form event and enable submit button.
-                callQueue.$dirrtyField.val(Math.random());
-                callQueue.$dirrtyField.trigger('change'); // Trigger change event to acknowledge the modification
+                // Trigger change event to acknowledge the modification
+                Form.dataChanged();
             },
         });
     },

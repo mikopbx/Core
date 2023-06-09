@@ -1,6 +1,4 @@
 {{ form('licensing/modify', 'role': 'form', 'class': 'ui form large', 'id':'licencing-modify-form') }}
-<input type="hidden" name="dirrty" id="dirrty"/>
-
 <div class="ui top attached tabular menu" id="licensing-menu">
     <a class="item active" data-tab="intro">{{ t._('lic_IntroductionTabHeader') }}</a>
     <a class="item" data-tab="management">{{ t._('lic_ManagementTabHeader') }}</a>

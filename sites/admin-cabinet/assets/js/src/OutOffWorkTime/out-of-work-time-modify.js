@@ -124,6 +124,7 @@ const outOfWorkTimeRecord = {
                     oldDateTo = new Date(oldDateTo * 1000);
                     if ((newDateTo - oldDateTo) !== 0) {
                         outOfWorkTimeRecord.$date_from.trigger('change');
+                        Form.dataChanged();
                     }
                 }
             },
@@ -157,6 +158,7 @@ const outOfWorkTimeRecord = {
                     oldTimeTo = new Date(oldTimeTo * 1000);
                     if ((newTimeTo - oldTimeTo) !== 0) {
                         outOfWorkTimeRecord.$time_to.trigger('change');
+                        Form.dataChanged();
                     }
                 }
             },

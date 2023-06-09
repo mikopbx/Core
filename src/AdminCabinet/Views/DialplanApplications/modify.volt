@@ -1,5 +1,4 @@
 {{ form('dialplan-applications/save', 'role': 'form', 'class': 'ui form large', 'id':'dialplan-application-form') }}
-<input type="hidden" name="dirrty" id="dirrty"/>
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
 {{ form.render('applicationlogic') }}

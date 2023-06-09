@@ -1,4 +1,7 @@
 <div class="ui error message" id="form-error-messages"></div>
+
+<input type="hidden" name="dirrty" id="dirrty"/>
+
 {% if  indexurl is not empty %}
     {{ link_to(indexurl, "<i class='list icon'></i>"~t._('bt_BackToList'), "class": "ui labeled large icon button", "id":"back-to-list-button") }}
 {% endif %}

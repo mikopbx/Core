@@ -1,6 +1,5 @@
 {{ form('licensing/modify', 'role': 'form', 'class': 'ui form large disable-if-no-internet', 'id':'licencing-modify-form') }}
-<input type="hidden" name="dirrty" id="dirrty"/>
-    <div id="licenseKeySection" class="disabled">
+ <div id="licenseKeySection" class="disabled">
         <h2 class="ui header">{{ t._('lic_LicenseKey') }}</h2>
         <div class="empty-license-key-info">
             <div class="field">

@@ -7,7 +7,6 @@
 {{ form.render('type') }}
 {{ form.render('disabled') }}
 {{ form.render('providerType') }}
-<input type="hidden" name="dirrty" id="dirrty"/>
 <div class="ten wide required field">
     <label>{{ t._('pr_ProviderName') }}</label>
     {{ form.render('description') }}

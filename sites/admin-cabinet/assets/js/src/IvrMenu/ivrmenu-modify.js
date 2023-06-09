@@ -29,12 +29,6 @@ const ivrMenu = {
     $dropDowns: $('#ivr-menu-form .ui.dropdown'),
     $number: $('#extension'),
 
-    /**
-     * Dirty check field, for checking if something on the form was changed
-     * @type {jQuery}
-     */
-    $dirrtyField: $('#dirrty'),
-
     $errorMessages: $('#form-error-messages'),
     $rowTemplate: $('#row-template'),
     defaultExtension: '',
@@ -121,10 +115,8 @@ const ivrMenu = {
             ivrMenu.addNewActionRow();
             ivrMenu.rebuildActionExtensionsDropdown();
 
-            // Change the value of '$dirrtyField' to trigger
-            // the 'change' form event and enable submit button.
-            ivrMenu.$dirrtyField.val(Math.random());
-            ivrMenu.$dirrtyField.trigger('change');
+            // Trigger change event to acknowledge the modification
+            Form.dataChanged();
 
             el.preventDefault();
         })
@@ -277,10 +269,8 @@ const ivrMenu = {
             // Remove the row with the corresponding id
             $(`#row-${id}`).remove();
 
-            // Change the value of '$dirrtyField' to trigger
-            // the 'change' form event and enable submit button.
-            ivrMenu.$dirrtyField.val(Math.random());
-            ivrMenu.$dirrtyField.trigger('change');
+            // Trigger change event to acknowledge the modification
+            Form.dataChanged();
         });
     },
 
@@ -331,11 +321,8 @@ const ivrMenu = {
      * It generates a random number and triggers a change event.
      */
     cbOnExtensionSelect() {
-
-        // Change the value of '$dirrtyField' to trigger
-        // the 'change' form event and enable submit button.
-        ivrMenu.$dirrtyField.val(Math.random());
-        ivrMenu.$dirrtyField.trigger('change');
+        // Trigger change event to acknowledge the modification
+        Form.dataChanged();
     },
 
     /**

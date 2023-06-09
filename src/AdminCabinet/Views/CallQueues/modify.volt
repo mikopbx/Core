@@ -1,6 +1,4 @@
 {{ form('call-queues/save', 'role': 'form', 'class': 'ui large form','id':'queue-form') }}
-
-<input type="hidden" name="dirrty" id="dirrty"/>
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
 <div class="ui ribbon label" id="queue-extension-number">

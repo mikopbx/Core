@@ -1,6 +1,4 @@
 {{ form('ivr-menu/save', 'role': 'form', 'class': 'ui large form','id':'ivr-menu-form') }}
-<input type="hidden" name="dirrty" id="dirrty"/>
-
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
 <div class="ui ribbon label" id="ivr-menu-extension-number">

@@ -24,12 +24,6 @@
  */
 const generalSettingsModify = {
     /**
-     * Dirty check field, for checking if something on the form was changed
-     * @type {jQuery}
-     */
-    $dirrtyField: $('#dirrty'),
-
-    /**
      * jQuery object for the form.
      * @type {jQuery}
      */
@@ -237,10 +231,8 @@ const generalSettingsModify = {
         // Enable table drag-n-drop functionality
         $('#audio-codecs-table, #video-codecs-table').tableDnD({
             onDrop() {
-                // Change the value of '$dirrtyField' to trigger
-                // the 'change' form event and enable submit button.
-                generalSettingsModify.$dirrtyField.val(Math.random());
-                generalSettingsModify.$dirrtyField.trigger('change');
+                // Trigger change event to acknowledge the modification
+                Form.dataChanged();
             },
             onDragClass: 'hoveringRow',
             dragHandle: '.dragHandle',
@@ -329,10 +321,8 @@ const generalSettingsModify = {
         // Set the form value for 'PBXRecordSavePeriod' to the selected save period.
         generalSettingsModify.$formObj.form('set value', 'PBXRecordSavePeriod', savePeriod);
 
-        // Change the value of '$dirrtyField' to trigger
-        // the 'change' form event and enable submit button.
-        generalSettingsModify.$dirrtyField.val(Math.random());
-        generalSettingsModify.$dirrtyField.trigger('change');
+        // Trigger change event to acknowledge the modification
+        Form.dataChanged();
     },
 
     /**

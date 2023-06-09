@@ -37,12 +37,6 @@ const dialplanApplication = {
 
     $typeSelectDropDown: $('#dialplan-application-form .type-select'),
 
-    /**
-     * Dirty check field, for checking if something on the form was changed
-     * @type {jQuery}
-     */
-    $dirrtyField: $('#dirrty'),
-
     $tabMenuItems: $('#application-code-menu .item'),
 
     // Ace editor instance
@@ -128,10 +122,8 @@ const dialplanApplication = {
         dialplanApplication.editor.setTheme('ace/theme/monokai');
         dialplanApplication.editor.resize();
         dialplanApplication.editor.getSession().on('change', () => {
-            // Change the value of '$dirrtyField' to trigger
-            // the 'change' form event and enable submit button.
-            dialplanApplication.$dirrtyField.val(Math.random());
-            dialplanApplication.$dirrtyField.trigger('change');
+            // Trigger change event to acknowledge the modification
+            Form.dataChanged();
         });
         dialplanApplication.editor.setOptions({
             maxLines: rowsCount,

@@ -1,5 +1,4 @@
 {{ form('general-settings/save', 'role': 'form', 'class': 'ui form large', 'id':'general-settings-form') }}
-<input type="hidden" name="dirrty" id="dirrty"/>
 <div class="ui grid">
     <div class="four wide column">
         <div class="ui vertical fluid tabular menu" id="general-settings-menu">

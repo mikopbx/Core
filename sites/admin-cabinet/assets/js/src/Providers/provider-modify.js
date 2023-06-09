@@ -38,13 +38,6 @@ const provider = {
      */
     $secret: $('#secret'),
 
-    /**
-     * Dirty check field, for checking if something on the form was changed
-     * @type {jQuery}
-     */
-    $dirrtyField: $('#dirrty'),
-
-
     providerType: $('#providerType').val(),
     $checkBoxes: $('#save-provider-form .checkbox'),
     $accordions: $('#save-provider-form .ui.accordion'),
@@ -134,12 +127,7 @@ const provider = {
             e.preventDefault();
             $(e.target).closest('tr').remove();
             provider.updateHostsTableView();
-
-            // Change the value of '$dirrtyField' to trigger
-            // the 'change' form event and enable submit button.
-            provider.$dirrtyField.val(Math.random());
-            provider.$dirrtyField.trigger('change');
-
+            Form.dataChanged();
             return false;
         });
         provider.initializeForm();
@@ -283,11 +271,7 @@ const provider = {
                     $(provider.hostRow).last().after($clone);
                 }
                 provider.updateHostsTableView();
-
-                // Change the value of '$dirrtyField' to trigger
-                // the 'change' form event and enable submit button.
-                provider.$dirrtyField.val(Math.random());
-                provider.$dirrtyField.trigger('change');
+                Form.dataChanged();
             }
             provider.$additionalHostInput.val('');
         }

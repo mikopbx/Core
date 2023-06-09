@@ -31,11 +31,6 @@ const licensingModify = {
      */
     $formObj: $('#licencing-modify-form'),
 
-    /**
-     * Dirty check field, for checking if something on the form was changed
-     * @type {jQuery}
-     */
-    $dirrtyField: $('#dirrty'),
     $emptyLicenseKeyInfo: $('.empty-license-key-info'),
     $filledLicenseKeyHeader: $('.filled-license-key-header'),
     $filledLicenseKeyInfo: $('.filled-license-key-info'),
@@ -352,10 +347,8 @@ const licensingModify = {
             UserMessage.showError(globalTranslate.lic_GetTrialErrorCheckInternet);
         }
 
-        // Change the value of '$dirrtyField' to trigger
-        // the 'change' form event and enable submit button.
-        licensingModify.$dirrtyField.val(Math.random());
-        licensingModify.$dirrtyField.trigger('change');
+        // Trigger change event to acknowledge the modification
+        Form.dataChanged();
     },
 
     /**

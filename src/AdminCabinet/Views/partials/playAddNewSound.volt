@@ -1,5 +1,5 @@
 <div class="{{ fieldClass }}" id ='{{ fieldID }}'>
-    <label> {{ label }}</label>
+    <label for="{{ id }}"> {{ label }}</label>
     <div class="unstackable fields">
         <div class="twelve wide field">
             {{ form.render(id) }}

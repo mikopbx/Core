@@ -41,12 +41,6 @@ const customFile = {
     $appCodeFromServer: $('#application-code-readonly'),
 
     /**
-     * Dirty check field, for checking if something on the form was changed
-     * @type {jQuery}
-     */
-    $dirrtyField: $('#dirrty'),
-
-    /**
      * Ace editor instances
      * `editor` is for input and `viewer` is for display, and they are initialized in `initializeAce`.
      */
@@ -132,11 +126,8 @@ const customFile = {
                 customFile.editor.setValue(customFile.$formObj.form('get value', 'content'));
                 customFile.$appCode.show();
                 customFile.editor.getSession().on('change', () => {
-
-                    // Change the value of '$dirrtyField' to trigger
-                    // the 'change' form event and enable submit button.
-                    customFile.$dirrtyField.val(Math.random());
-                    customFile.$dirrtyField.trigger('change');
+                    // Trigger change event to acknowledge the modification
+                    Form.dataChanged();
                 });
                 break;
             case 'override':
@@ -155,11 +146,8 @@ const customFile = {
                 });
                 customFile.editor.resize()
                 customFile.editor.getSession().on('change', () => {
-
-                    // Change the value of '$dirrtyField' to trigger
-                    // the 'change' form event and enable submit button.
-                    customFile.$dirrtyField.val(Math.random());
-                    customFile.$dirrtyField.trigger('change');
+                    // Trigger change event to acknowledge the modification
+                    Form.dataChanged();
                 });
                 break;
             default:
