@@ -469,3 +469,24 @@ Hide module status toggle by default, it will show from pbx-extension-module-sta
 #module-status-toggle-segment {
     display: none;
 }
+
+/*
+Limit fields width
+ */
+.field.max-width-200{
+    max-width: 200px;
+}
+.field.max-width-250{
+    max-width: 250px;
+}
+.field.max-width-300{
+    max-width: 300px;
+}
+.field.max-width-400{
+    max-width: 400px;
+}
+.field.max-width-500{
+    max-width: 500px;
+}
+
+
