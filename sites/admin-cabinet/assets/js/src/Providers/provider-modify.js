@@ -38,6 +38,8 @@ const provider = {
      */
     $secret: $('#secret'),
 
+    $additionalHostsDummy: $('#additional-hosts-table .dummy'),
+
     providerType: $('#providerType').val(),
     $checkBoxes: $('#save-provider-form .checkbox'),
     $accordions: $('#save-provider-form .ui.accordion'),
@@ -101,7 +103,7 @@ const provider = {
         provider.$checkBoxes.checkbox();
         provider.$accordions.accordion();
         provider.$dropDowns.dropdown();
-
+        provider.updateHostsTableView();
         /**
          * Callback function called when the qualify toggle changes.
          */
@@ -281,12 +283,10 @@ const provider = {
      * Updates the hosts table view based on the presence of additional hosts or shows dummy if there is no records
      */
     updateHostsTableView() {
-        const dummy = `<tr class="dummy"><td colspan="4" class="center aligned">${globalTranslate.pr_NoAnyAdditionalHosts}</td></tr>`;
-
         if ($(provider.hostRow).length === 0) {
-            $('#additional-hosts-table tbody').append(dummy);
+            provider.$additionalHostsDummy.show();
         } else {
-            $('#additional-hosts-table tbody .dummy').remove();
+            provider.$additionalHostsDummy.hide();
         }
     },
 

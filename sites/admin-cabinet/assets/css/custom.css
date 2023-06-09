@@ -279,6 +279,7 @@ span.features {
 .ui.form .fields .field > .selection.dropdown.forwarding-select,
 .ui.form .field > .selection.dropdown.forwarding-select {
     min-width: 400px;
+    max-width: 500px;
 }
 
 /* PBX Version */
@@ -487,6 +488,9 @@ Limit fields width
 }
 .field.max-width-500{
     max-width: 500px;
+}
+.field.max-width-800{
+    max-width: 800px;
 }
 
 
