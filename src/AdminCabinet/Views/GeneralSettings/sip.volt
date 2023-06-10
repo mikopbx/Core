@@ -1,28 +1,27 @@
 <h4 class="ui header">{{ t._('gs_SIPPortSettings') }}</h4>
-<div class="two fields">
-    <div class="field">
-        <label>{{ t._('gs_SIPPort') }}</label>
-        {{ form.render('SIPPort') }}
-    </div>
-    <div class="field">
-        <label>{{ t._('gs_TLS_PORT') }}</label>
-        {{ form.render('TLS_PORT') }}
-    </div>
+
+<div class="inline field">
+    {{ form.render('SIPPort') }}
+    <label>{{ t._('gs_SIPPort') }}</label>
 </div>
-<div class="two fields">
-    <div class="field">
-        <label>{{ t._('gs_RTPPortFrom') }}</label>
-        {{ form.render('RTPPortFrom') }}
-    </div>
-    <div class="field">
-        <label>{{ t._('gs_RTPPortTo') }}</label>
-        {{ form.render('RTPPortTo') }}
-    </div>
+<div class="inline field">
+    {{ form.render('TLS_PORT') }}
+    <label>{{ t._('gs_TLS_PORT') }}</label>
 </div>
+
+
+<div class="inline field">
+    {{ form.render('RTPPortFrom') }}-&nbsp;&nbsp;&nbsp;
+    {{ form.render('RTPPortTo') }} &nbsp;
+    <label>{{ t._('gs_RTPPortRange') }}</label>
+</div>
+
 
 <div class="field">
     <label>{{ t._('gs_RTPStunServer') }}</label>
-    {{ form.render('RTPStunServer') }}
+    <div class="field max-width-400">
+        {{ form.render('RTPStunServer') }}
+    </div>
 </div>
 <div class="field">
     <div class="ui segment">
@@ -35,16 +34,12 @@
 
 <h4 class="ui header">{{ t._('gs_KeepAliveHeader') }}</h4>
 <div class="inline field">
-    <label>{{ t._('gs_SIPDefaultExpiry') }}</label>
     {{ form.render('SIPDefaultExpiry') }}
+    <label>{{ t._('gs_SIPDefaultExpiry') }}</label>
 </div>
-<div class="two fields">
-    <div class="field">
-        <label>{{ t._('gs_SIPMinExpiry') }}</label>
-        {{ form.render('SIPMinExpiry') }}
-    </div>
-    <div class="field">
-        <label>{{ t._('gs_SIPMaxExpiry') }}</label>
-        {{ form.render('SIPMaxExpiry') }}
-    </div>
+
+<div class="inline field">
+    {{ form.render('SIPMinExpiry') }}-&nbsp;&nbsp;&nbsp;
+    {{ form.render('SIPMaxExpiry') }}&nbsp;
+    <label>{{ t._('gs_SIPExpiryRange') }}</label>
 </div>

@@ -66,7 +66,7 @@ class GeneralSettingsEditForm extends BaseForm
                 case 'PBXFeatureDigitTimeout':
                 case 'PBXFeatureAtxferNoAnswerTimeout':
                 case '***ALL NUMBERIC ABOVE***':
-                    $this->add(new Numeric($key, ['value' => $value]));
+                    $this->add(new Numeric($key, ['value' => $value, 'style'=>'width:100px;']));
                     break;
                 case 'SSHPassword':
                     $this->add(new Password($key, ['value' => $value]));

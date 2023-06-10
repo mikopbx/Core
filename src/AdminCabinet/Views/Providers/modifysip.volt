@@ -57,7 +57,7 @@
     <div class="content field">
         <div class="field max-width-500">
             <div id="elAdditionalHosts" class="field">
-                <label for="additional-host">{{ t._('pr_EnterHostOrIp') }}</label>
+                <h4 class="ui dividing header ">{{ t._('pr_EnterHostOrIp') }}</h4>
                 <div class="ui input" id="additional-host">
                     <input type="text" name="additional-host" placeholder="{{ t._('pr_EnterHostOrIpPlaceholder') }}" />
                 </div>
@@ -86,7 +86,6 @@
                         </tbody>
                     </table>
                 </div>
-
             </div>
         </div>
         <div class="field">
@@ -109,7 +108,8 @@
         </div>
         {{ partial("partials/natqualify") }}
 
-        <label for="disablefromuser">{{ t._('pr_RedefinitionFromUser') }}</label>
+
+        <h4 class="ui dividing header ">{{ t._('pr_RedefinitionFromUser') }}</h4>
         <div class="field">
             <div class="ui toggle checkbox" id="disablefromuser">
                 {{ form.render('disablefromuser') }}
@@ -118,19 +118,19 @@
         </div>
         <div class="field">
             <div class="two fields ">
-                <div id="divFromUser" class="field max-width-250">
+                <div id="divFromUser" class="field max-width-400">
                     <label for="fromuser">{{ t._('pr_FromUser_v2') }}:</label>
                     {{ form.render('fromuser') }}
                 </div>
-                <div class="field max-width-250">
+                <div class="field max-width-400">
                     <label for="fromdomain">{{ t._('pr_FromDomain_v2') }}:</label>
                     {{ form.render('fromdomain') }}
                 </div>
             </div>
-            <div class='ui message'>{{ t._('pr_CustomFieldsDescriptions') }}</div>
+            <div class='ui info message'>{{ t._('pr_CustomFieldsDescriptions') }}</div>
         </div>
 
-        <h3 class="ui dividing header ">{{ t._("pr_ManualAdditionalAtributes") }}</h3>
+        <h4 class="ui dividing header ">{{ t._("pr_ManualAdditionalAtributes") }}</h4>
         <div class="field">
             {{ form.render('manualattributes') }}
         </div>

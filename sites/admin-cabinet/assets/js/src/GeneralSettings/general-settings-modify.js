@@ -360,6 +360,7 @@ const generalSettingsModify = {
         }
         generalSettingsModify.checkDeleteAllConditions();
     },
+
     initRules() {
         if ($('#SSHDisablePasswordLogins').parent().checkbox('is checked')) {
             generalSettingsModify.validateRules.SSHPassword.rules = generalSettingsModify.additionalSshValidRulesNoPass;

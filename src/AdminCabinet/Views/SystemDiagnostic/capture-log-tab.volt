@@ -6,7 +6,7 @@
         <i class="download icon"></i>
         {{ t._('log_DownloadLogs') }}
     </button>
-    <div class="ui message">{{ t._('log_CaptureMessage') }}</div>
+    <div class="ui info message">{{ t._('log_CaptureMessage') }}</div>
     <button class="ui labeled icon small button" id="start-capture-button">
         <i class="circle icon"></i>
         {{ t._('log_StartCapturePCAP') }}

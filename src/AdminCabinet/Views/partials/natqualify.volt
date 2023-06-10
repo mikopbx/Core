@@ -1,4 +1,4 @@
-<label>{{ t._('qf_Qualify') }}</label>
+<h4 class="ui dividing header ">{{ t._('qf_Qualify') }}</h4>
 <div class="inline fields">
     <div class="ui toggle checkbox" id="qualify">
         {{ form.render('qualify') }}
@@ -8,6 +8,6 @@
         {{ form.render('qualifyfreq') }}
     </div>
 </div>
-<div class='ui message'>
+<div class='ui info message'>
     {{ t._('qf_QualifyInstructions') }}
 </div>

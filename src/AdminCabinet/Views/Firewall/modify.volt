@@ -6,14 +6,18 @@
     <label>{{ t._('fw_Description') }}</label>
     {{ form.render('description') }}
 </div>
-<div class="two fields">
+<div class="fields">
     <div class="field">
         <label>{{ t._('fw_Permit') }}</label>
-        {{ form.render('network') }}
+        <div class="field max-width-400">
+            {{ form.render('network') }}
+        </div>
     </div>
     <div class="field">
         <label>{{ t._('fw_Subnet') }}</label>
-        {{ form.render('subnet') }}
+        <div class="field max-width-400">
+            {{ form.render('subnet') }}
+        </div>
     </div>
 </div>
 <div class="field">

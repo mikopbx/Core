@@ -9,4 +9,4 @@
 <div class="ui hidden divider"></div>
 <div id="current-calls-info"></div>
 
-<div class="ui message">{{ t._('rs_ShutdownRebootMessage') }}</div>
+<div class="ui info message">{{ t._('rs_ShutdownRebootMessage') }}</div>

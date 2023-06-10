@@ -146,7 +146,8 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Check('qualify', $cheskarr));
 
         // Qualifyfreq
-        $this->add(new Numeric('qualifyfreq'));
+        $this->add(new Numeric('qualifyfreq',["maxlength" => 3,
+            "style" => "width: 80px;"]));
 
         // Fromuser
         $this->add(new Text('fromuser'));

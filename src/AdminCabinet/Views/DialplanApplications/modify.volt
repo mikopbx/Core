@@ -17,14 +17,19 @@
 
     <div class="field">
         <label>{{ t._('da_Name') }}</label>
+        <div class="field max-width-800">
         {{ form.render('name') }}
+        </div>
     </div>
     <div class="field">
         <label>{{ t._('da_Description') }}</label>
+        <div class="field max-width-800">
         {{ form.render('description') }}
+        </div>
     </div>
-    <div class="four wide field">
+    <div class="field">
         <label>{{ t._('da_Extensions') }}</label>
+        <div class="field max-width-200">
         <div class="ui icon input extension">
             <i class="search icon"></i>
             {{ form.render('extension') }}
@@ -33,10 +38,13 @@
         <div class="ui top pointing red label hidden" id="extension-error">
             {{ t._("da_ThisNumberIsNotFree") }}
         </div>
+        </div>
     </div>
     <div class="field">
         <label>{{ t._('da_Type') }}</label>
+        <div class="field max-width-300">
         {{ form.render('type') }}
+        </div>
     </div>
 
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainTabFields')]) }}
