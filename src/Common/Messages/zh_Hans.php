@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -71,7 +70,6 @@ return [
     'Now' => '现在',
     'MetaTegHeadDescription' => '商务电话系统',
     'Loading' => '载入中',
-    'qf_NatMode' => 'NAT模式',
     'qf_Qualify' => '支持NAT会话',
     'qf_Frequency' => '发送频率（以秒为单位）。',
     'qf_QualifyInstructions' => '<div class =\'ui消息\'>
@@ -524,7 +522,6 @@ return [
     'gs_PBXRecordCalls' => '通话录音',
     'gs_RestartEveryNight' => '每晚重启PBX',
     'gs_PBXCallParkingExt' => '停车位',
-    'gs_PBXCallParkingStartSlot' => '初始停车位',
     'gs_PBXCallParkingEndSlot' => '末端停车位',
     'gs_PBXFeatureAttendedTransfer' => '咨询翻译组合',
     'gs_PBXFeatureBlindTransfer' => '组合无条件转移',
@@ -532,9 +529,7 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => '咨询转接后无人接听时的回电时间',
     'gs_SIPPort' => 'SIP端口，用于在此站注册电话',
     'gs_SIPDefaultExpiry' => '发送保持活动状态的标准时间（以秒为单位）',
-    'gs_SIPMinExpiry' => '最短时间（以秒为单位）',
     'gs_SIPMaxExpiry' => '最长时间（以秒为单位）',
-    'gs_RTPPortFrom' => '第一个RTP端口',
     'gs_RTPPortTo' => '最后一个RTP端口',
     'gs_AMIEnabled' => '使用AMI界面',
     'gs_AMIPort' => 'AMI端口',
@@ -737,7 +732,6 @@ return [
     'lic_LicenseKeyOwner' => '执照持有人',
     'lic_ResetLicenseSettings' => '取消连结键',
     'lic_LicenseKeyValid' => '该程序已注册',
-    'lic_LicenseWarningHeader' => '该程序的副本未注册',
     'lic_LicenseWarningText' => '转到<a href=\'/admin-cabinet/licensing/modify/\'>许可部分</a>，并按照必要的步骤注册系统',
     'lic_FailedToGetTrialKey2051' => '（2051）无法注册该副本，因为您已经在此机器上将注册号与其他电子邮件一起使用。<br>
  使用之前从lic@miko.ru发送给您的密钥',

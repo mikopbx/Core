@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -39,7 +38,6 @@ return [
     'ex_Czech' => 'Čeština',
     'ex_Turkish' => 'Türk',
     'ex_Georgian' => 'ქართველი',
-    'qf_NatMode' => 'NAT რეჟიმი',
     'qf_Qualify' => 'შეინარჩუნეთ NAT სესია',
     'qf_Frequency' => 'წამში სიხშირის გაგზავნა.',
     'AdvancedOptions' => 'დამატებითი პარამეტრები',
@@ -561,7 +559,6 @@ return [
     'gs_PBXRecordCalls' => 'ზარის ჩაწერა',
     'gs_RestartEveryNight' => 'გადატვირთეთ PBX ყოველ საღამოს',
     'gs_PBXCallParkingExt' => 'პარკინგის ნომერი',
-    'gs_PBXCallParkingStartSlot' => 'პარკირების საწყისი ჭრილი',
     'gs_PBXCallParkingEndSlot' => 'პარკინგის საბოლოო სლოტი',
     'gs_PBXFeatureAttendedTransfer' => 'კომბინაცია საკონსულტაციო თარგმანისთვის',
     'gs_PBXFeatureBlindTransfer' => 'კომბინაცია უპირობო თარგმნისთვის',
@@ -573,10 +570,8 @@ return [
     'gs_SIPPort' => 'SIP პორტი ამ სადგურზე ტელეფონების რეგისტრაციისთვის',
     'gs_KeepAliveHeader' => 'რეგისტრაციის ხანგრძლივობის პარამეტრები',
     'gs_SIPDefaultExpiry' => 'სტანდარტული დრო წამებში გააგზავნეთ Keep- ცოცხალი',
-    'gs_SIPMinExpiry' => 'მინიმალური დრო წამებში',
     'gs_SIPMaxExpiry' => 'მაქსიმალური დრო წამებში',
     'gs_SIPPortSettings' => 'პორტის პარამეტრები SIP სიგნალისა და RTP დიაპაზონისთვის',
-    'gs_RTPPortFrom' => 'პირველი RTP პორტი',
     'gs_RTPPortTo' => 'ბოლო RTP პორტი',
     'gs_AMIEnabled' => 'გამოიყენეთ AMI ინტერფეისი',
     'gs_AMIPort' => 'AMI პორტი',
@@ -807,7 +802,6 @@ return [
     'lic_LicenseKeyOwner' => 'ლიცენზიის მფლობელი',
     'lic_ResetLicenseSettings' => 'გახსენით გასაღები',
     'lic_LicenseKeyValid' => 'პროგრამა დარეგისტრირებულია',
-    'lic_LicenseWarningHeader' => 'პროგრამის ეს ასლი არ არის რეგისტრირებული',
     'lic_LicenseWarningText' => 'გადადით <a href=\'/admin-cabinet/licensing/modify/\'> ლიცენზირების განყოფილებაში </a> და გაატარეთ აუცილებელი ზომები თქვენი სისტემის რეგისტრაციისთვის',
     'lic_FailedToGetTrialKey2051' => '(2051) ამ ასლის რეგისტრაცია ვერ მოხერხდა, რადგან თქვენ უკვე გამოიყენეთ სარეგისტრაციო ნომერი სხვა ელ.ფოსტით ამ აპარატზე. <br>
  გამოიყენეთ თქვენთვის ადრე გამოგზავნილი გასაღები მისამართის lic@miko.ru– დან',

@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -73,7 +72,6 @@ return [
     'Now' => 'Jetzt',
     'MetaTegHeadDescription' => 'TelefonSysteme für den professionellen Einsatz',
     'Loading' => 'Lade',
-    'qf_NatMode' => 'NAT Modus',
     'qf_Qualify' => 'NAT Session',
     'qf_Frequency' => 'Intervall zum Auffrischen der NAT Session. Beachten Sie ggf. Mindestwerte Ihres Providers.',
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
@@ -526,7 +524,6 @@ return [
     'gs_PBXRecordCalls' => 'Anrufaufzeichnung',
     'gs_RestartEveryNight' => 'Neustart der Anlage jede Nacht',
     'gs_PBXCallParkingExt' => 'Nebenstelle/Extension zum Anruf-Parken',
-    'gs_PBXCallParkingStartSlot' => 'Park-Bereich beginnt',
     'gs_PBXCallParkingEndSlot' => 'Park-Bereich endet',
     'gs_PBXFeatureAttendedTransfer' => 'Tastenkombination für \'Attended Transfer\' (Rücksprache vor Übergabe)',
     'gs_PBXFeatureBlindTransfer' => 'Tastenkombination für \'Blind Transfer\' (Übergabe ohne Rücksprache)',
@@ -534,9 +531,7 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Rufen Sie die Rückgabezeit an, wenn nach der Überweisung keine Antwort erfolgt',
     'gs_SIPPort' => 'SIP-Port zur Registrierung von Telefonen an dieser Station',
     'gs_SIPDefaultExpiry' => 'Standardzeit in Sekunden zum Senden von Keep-Alive',
-    'gs_SIPMinExpiry' => 'Mindestzeit in Sekunden',
     'gs_SIPMaxExpiry' => 'Maximale Zeit in Sekunden',
-    'gs_RTPPortFrom' => 'Erster RTP Port',
     'gs_RTPPortTo' => 'Letzter RTP Port',
     'gs_AMIEnabled' => 'AMI Interface erreichbar',
     'gs_AMIPort' => 'AMI Port',
@@ -740,7 +735,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'lic_LicenseKeyOwner' => 'Lizenzschlüssel für',
     'lic_ResetLicenseSettings' => 'Einstellungen zurücksetzen',
     'lic_LicenseKeyValid' => 'Lizenzschlüssel ist in Ordnung',
-    'lic_LicenseWarningHeader' => 'Diese Installation der Software ist nicht lizenziert',
     'lic_LicenseWarningText' => 'Gehen Sie zu <a href=\'/admin-cabinet/licensing/modify/\'>Lizenz</a> und folgen Sie den Schritten zur Registrierung Ihres Systems',
     'lic_FailedToGetTrialKey2051' => '(2051) Diese Kopie konnte nicht registriert werden, weil Sie haben auf diesem Computer bereits eine Registrierungsnummer mit einer anderen E-Mail-Adresse verwendet. <br>
  Verwenden Sie den Schlüssel, den Sie zuvor von der Adresse lic@miko.ru erhalten haben',

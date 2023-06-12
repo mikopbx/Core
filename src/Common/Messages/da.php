@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -53,7 +52,6 @@ return [
     'Now' => 'lige nu',
     'MetaTegHeadDescription' => 'Forretningstelefonsystem',
     'Loading' => 'lastning',
-    'qf_NatMode' => 'NAT-tilstand',
     'qf_Qualify' => 'Support NAT-session',
     'qf_Frequency' => 'Sendefrekvens i sek.',
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
@@ -526,7 +524,6 @@ return [
     'gs_PBXRecordCalls' => 'Opkald til opkald',
     'gs_RestartEveryNight' => 'Genstart PBX hver aften',
     'gs_PBXCallParkingExt' => 'Parkeringsnummer',
-    'gs_PBXCallParkingStartSlot' => 'Første parkeringsplads',
     'gs_PBXCallParkingEndSlot' => 'Afslut parkeringsplads',
     'gs_PBXFeatureAttendedTransfer' => 'Kombination til rådgivende oversættelse',
     'gs_PBXFeatureBlindTransfer' => 'Kombination til ubetinget overførsel',
@@ -534,9 +531,7 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Ring tilbage tid, hvis intet svar efter rådgivende overførsel',
     'gs_SIPPort' => 'SIP-port til registrering af telefoner på denne station',
     'gs_SIPDefaultExpiry' => 'Standard tid i sekunder for at sende Keep-alive',
-    'gs_SIPMinExpiry' => 'Minimum tid i sekunder',
     'gs_SIPMaxExpiry' => 'Maksimal tid i sekunder',
-    'gs_RTPPortFrom' => 'Første RTP-port',
     'gs_RTPPortTo' => 'Sidste RTP-port',
     'gs_AMIEnabled' => 'Brug AMI-interface',
     'gs_AMIPort' => 'AMI Port',
@@ -740,7 +735,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'lic_LicenseKeyOwner' => 'Licensindehaver',
     'lic_ResetLicenseSettings' => 'Fjern linket',
     'lic_LicenseKeyValid' => 'Programmet er registreret',
-    'lic_LicenseWarningHeader' => 'Denne kopi af programmet er ikke registreret',
     'lic_LicenseWarningText' => 'Gå til <a href=\'/admin-cabinet/licensing/modify/\'> licensafsnittet </a>, og følg de nødvendige trin for at registrere dit system',
     'lic_FailedToGetTrialKey2051' => '(2051) Kunne ikke registrere denne kopi, fordi Du har allerede brugt et registreringsnummer med en anden e-mail på denne maskine. <br>
  Brug nøglen, der blev sendt til dig tidligere fra lic@miko.ru',

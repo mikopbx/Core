@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -67,7 +66,6 @@ return [
     'gs_WebTab' => 'Web arayüzü',
     'gs_PBXName' => 'PBX sistem adı',
     'gs_PBXDescription' => 'Ek açıklama',
-    'gs_PBXCallParkingStartSlot' => 'İlk Park Yuvası',
     'gs_SSHPort' => 'SSH bağlantı noktası',
     'gs_WebPort' => 'HTTP bağlantı noktası',
     'gs_WebHTTPSPort' => 'HTTPs bağlantı noktası',
@@ -229,16 +227,13 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'gs_PBXRecordCalls' => 'Çağrı kaydı',
     'gs_RestartEveryNight' => 'PBX\'i her gece yeniden başlat',
     'gs_PBXCallParkingExt' => 'Park numarası',
-    'gs_PBXCallParkingEndSlot' => 'Son park yeri',
     'gs_PBXFeatureAttendedTransfer' => 'Danışma çevirisi için kombinasyon',
     'gs_PBXFeatureBlindTransfer' => 'Koşulsuz aktarım için kombinasyon',
     'gs_PBXFeatureDigitTimeout' => 'Dahili numara girilirken rakamlar arasındaki maksimum zaman aşımı (milisaniye cinsinden)',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Danışma aktarımından sonra cevap yoksa çağrı geri dönüş süresi',
     'gs_SIPPort' => 'Bu istasyonda telefonları kaydetmek için SIP bağlantı noktası',
     'gs_SIPDefaultExpiry' => 'Canlı Tut\'u göndermek için saniye cinsinden standart süre',
-    'gs_SIPMaxExpiry' => 'Saniye cinsinden maksimum süre',
     'gs_RTPPortFrom' => 'İlk RTP Bağlantı Noktası',
-    'gs_RTPPortTo' => 'Son RTP Bağlantı Noktası',
     'gs_AMIEnabled' => 'AMI arayüzünü kullan',
     'gs_AMIPort' => 'AMI Bağlantı Noktası',
     'gs_AJAMEnabled' => 'AJAM arayüzünü kullanma',
@@ -398,7 +393,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'Now' => 'hemen şimdi',
     'MetaTegHeadDescription' => 'İş Telefonu Sistemi',
     'Loading' => 'yükleme',
-    'qf_NatMode' => 'NAT modu',
     'qf_Frequency' => 'Saniyede gönderme frekansı.',
     'qf_QualifyInstructions' => '<div class = \'ui mesajı\'>
             Bu seçenek etkinleştirildiğinde, Yıldız işareti belirtilen sıklıkta SIP Seçenekleri paketleri gönderir. Bu, yönlendiricinizdeki NAT tünellemesini desteklemek için gereklidir.
@@ -717,7 +711,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'Fri' => 'Cuma',
     'mo_BeforeDeleteNetworkFilterDeleteSipFirst' => '%extension% adresindeki Çalışanlar listesinde bu kurala bir bağlantı bulundu',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Sistem zaten aynı VLAN\'a sahip bir arayüze sahip',
-    'gs_SIPMinExpiry' => 'Saniye cinsinden minimum süre',
     'gs_WebAdminPassword' => 'şifre',
     'gs_WebAdminPasswordRepeat' => 'Parolayı Yeniden Yazın',
     'ms_VoicemailSubject' => 'Sesli mesaj - konu satırı',
@@ -774,7 +767,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'lic_LicenseKeyProducts' => 'Aktif ürünler',
     'lic_LicenseKeyOwner' => 'Lisans sahibi',
     'lic_LicenseKeyValid' => 'Program kaydedildi',
-    'lic_LicenseWarningHeader' => 'Programın bu kopyası kayıtlı değil',
     'lic_LicenseWarningText' => '<a href=\'/admin-cabinet/licensing/modify/\'> lisans bölümüne </a> gidin ve sisteminizi kaydetmek için gerekli adımları izleyin',
     'lic_FailedToGetTrialKey2051' => '(2051) Bu kopya kaydedilemedi çünkü Bu makinede zaten farklı bir E-posta ile bir kayıt numarası kullandınız. <br>
  Lic@miko.ru adresinden size daha önce gönderilen anahtarı kullanın',

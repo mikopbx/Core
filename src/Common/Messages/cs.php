@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -65,9 +64,8 @@ return [
     'ShortDaySaturday' => 'So',
     'Today' => 'Dnes',
     'Now' => 'Teď',
-    'MetaTegHeadDescription' =>'',
+    'MetaTegHeadDescription' => '',
     'Loading' => 'Načítání',
-    'qf_NatMode' => 'Režim NAT',
     'qf_Qualify' => 'Podpora NAT Session',
     'qf_Frequency' => 'Frekvence odesílání v sec.',
     'qf_QualifyInstructions' => '<div class = \'ui message\'>
@@ -301,7 +299,6 @@ return [
     'cq_leastrecent' => 'Hovor dorazí k účastníkovi fronty, který nepřijal hovory nejdéle',
     'cq_fewestcalls' => 'Hovor dorazí k účastníkovi fronty, který zpracoval nejmenší počet hovorů ',
     'cq_random' => 'Hovor přijde k libovolnému účastníkovi fronty zdarma',
-    'lic_LicenseWarningHeader' => 'Tato kopie programu není zaregistrována',
     'cq_rrmemory' => 'Hovor dorazí k libovolnému bezplatnému účastníkovi ve frontě s výjimkou účastníka, který zpracoval poslední hovor',
     'cq_linear' => 'Hovor přichází v pořadí každého účastníka fronty',
     'cq_QueueSetup' => 'Klíčové parametry',
@@ -531,14 +528,11 @@ return [
     'gs_PBXInternalExtensionLength' => 'Maximální délka interních čísel',
     'gs_PBXRecordCalls' => 'Nahrávání hovorů',
     'gs_RestartEveryNight' => 'Restartujte PBX každou noc',
-    'gs_PBXCallParkingStartSlot' => 'Počáteční parkovací slot',
     'gs_PBXCallParkingEndSlot' => 'Koncové parkovací místo',
     'gs_PBXFeatureAttendedTransfer' => 'Kombinace pro poradenský překlad',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Volejte čas návratu, pokud po poradním přepojení žádná odpověď',
     'gs_SIPDefaultExpiry' => 'Standardní čas v sekundách pro odeslání Keep-alive',
-    'gs_SIPMinExpiry' => 'Minimální čas v sekundách',
     'gs_SIPMaxExpiry' => 'Maximální čas v sekundách',
-    'gs_RTPPortFrom' => 'První port RTP',
     'gs_RTPPortTo' => 'Poslední port RTP',
     'gs_AMIEnabled' => 'Použijte rozhraní AMI',
     'gs_AJAMEnabled' => 'Použijte rozhraní AJAM',
@@ -714,7 +708,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'lic_LicenseKeyOwner' => 'Držitel licence',
     'lic_ResetLicenseSettings' => 'Odpojit klíč',
     'lic_LicenseKeyValid' => 'Program je registrován',
-    'lic_LicenseWarningText' => 'Přejděte do <a href=\'/admin-cabinet/licensing/modify/\'> licenční části </a> a postupujte podle pokynů k registraci systému',
     'lic_FailedToGetTrialKey2051' => '(2051) Nepodařilo se zaregistrovat tuto kopii, protože Na tomto stroji jste již použili registrační číslo s jiným e-mailem. <br>
  Použijte klíč, který vám byl zaslán dříve z lic@miko.ru',
     'lic_FailedToGetTrialKey2022' => '(2022) Nepodařilo se zaregistrovat tuto kopii. Registrační číslo jiné společnosti již bylo na zadaný e-mail vygenerováno. <br>

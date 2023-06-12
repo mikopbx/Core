@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -61,7 +60,6 @@ return [
     'Now' => '今',
     'MetaTegHeadDescription' => 'ビジネス電話システム',
     'Loading' => '読み込み中',
-    'qf_NatMode' => 'NATモード',
     'qf_Qualify' => 'NATセッションをサポート',
     'qf_Frequency' => '秒単位の送信頻度。',
     'qf_QualifyInstructions' => '<div class = \'uiメッセージ\'>
@@ -525,7 +523,6 @@ return [
     'gs_PBXRecordCalls' => '通話録音',
     'gs_RestartEveryNight' => 'PBXを毎晩再起動する',
     'gs_PBXCallParkingExt' => '駐車場番号',
-    'gs_PBXCallParkingStartSlot' => '最初の駐車スロット',
     'gs_PBXCallParkingEndSlot' => 'エンドパーキングスロット',
     'gs_PBXFeatureAttendedTransfer' => 'アドバイザリー翻訳の組み合わせ',
     'gs_PBXFeatureBlindTransfer' => '無条件転送の組み合わせ',
@@ -533,9 +530,7 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'アドバイザリー転送後に応答がない場合は、折り返し時間を呼び出します',
     'gs_SIPPort' => 'このステーションで電話を登録するためのSIPポート',
     'gs_SIPDefaultExpiry' => 'キープアライブを送信するための標準時間（秒単位）',
-    'gs_SIPMinExpiry' => '秒単位の最小時間',
     'gs_SIPMaxExpiry' => '秒単位の最大時間',
-    'gs_RTPPortFrom' => '最初のRTPポート',
     'gs_RTPPortTo' => '最後のRTPポート',
     'gs_AMIEnabled' => 'AMIインターフェイスを使用する',
     'gs_AMIPort' => 'AMIポート',
@@ -740,7 +735,6 @@ return [
     'lic_LicenseKeyOwner' => 'ライセンス保有者',
     'lic_ResetLicenseSettings' => 'リンク解除キー',
     'lic_LicenseKeyValid' => 'プログラムが登録されました',
-    'lic_LicenseWarningHeader' => 'このプログラムのコピーは登録されていません',
     'lic_LicenseWarningText' => '<a href=\'/admin-cabinet/licensing/modify/\'>ライセンスセクション</a>にアクセスし、必要な手順に従ってシステムを登録します',
     'lic_FailedToGetTrialKey2051' => '（2051）次の理由により、このコピーの登録に失敗しましたこのマシンでは、すでに別のメールアドレスで登録番号を使用しています。<br>
  lic@miko.ruから先に送信されたキーを使用します',

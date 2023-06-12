@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -148,7 +147,6 @@ return [
     'Now' => 'Bây giờ',
     'MetaTegHeadDescription' => 'Hệ thống điện thoại doanh nghiệp',
     'Loading' => 'Đang tải',
-    'qf_NatMode' => 'Chế độ NAT',
     'qf_Qualify' => 'Hỗ trợ phiên NAT',
     'qf_Frequency' => 'Gửi tần số trong giây.',
     'qf_QualifyInstructions' => '<div class = \'ui tin nhắn\'>
@@ -602,7 +600,6 @@ return [
     'gs_PBXRecordCalls' => 'Ghi âm cuộc gọi',
     'gs_RestartEveryNight' => 'Khởi động lại tổng đài mỗi tối',
     'gs_PBXCallParkingExt' => 'Số chỗ đậu xe',
-    'gs_PBXCallParkingStartSlot' => 'Chỗ đậu xe ban đầu',
     'gs_PBXCallParkingEndSlot' => 'Kết thúc chỗ đậu xe',
     'gs_PBXFeatureAttendedTransfer' => 'Kết hợp cho dịch thuật tư vấn',
     'gs_PBXFeatureBlindTransfer' => 'Kết hợp để chuyển nhượng vô điều kiện',
@@ -610,9 +607,7 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Gọi lại thời gian nếu không có câu trả lời sau khi chuyển tư vấn',
     'gs_SIPPort' => 'Cổng SIP để đăng ký điện thoại tại trạm này',
     'gs_SIPDefaultExpiry' => 'Thời gian chuẩn tính bằng giây để gửi Keep-live',
-    'gs_SIPMinExpiry' => 'Thời gian tối thiểu tính bằng giây',
     'gs_SIPMaxExpiry' => 'Thời gian tối đa tính bằng giây',
-    'gs_RTPPortFrom' => 'Cổng RTP đầu tiên',
     'gs_RTPPortTo' => 'Cổng RTP cuối cùng',
     'gs_AMIEnabled' => 'Sử dụng giao diện AMI',
     'gs_AMIPort' => 'Cảng AMI',
@@ -814,7 +809,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'lic_LicenseKeyOwner' => 'Chủ giấy phép',
     'lic_ResetLicenseSettings' => 'Bỏ liên kết khóa',
     'lic_LicenseKeyValid' => 'Chương trình được đăng ký',
-    'lic_LicenseWarningHeader' => 'Bản sao của chương trình này không được đăng ký',
     'lic_LicenseWarningText' => 'Truy cập <a href=\'/admin-cabinet/licensing/modify/\'> phần cấp phép </a> và làm theo các bước cần thiết để đăng ký hệ thống của bạn',
     'lic_FailedToGetTrialKey2051' => '(2051) Không thể đăng ký bản sao này vì Bạn đã sử dụng số đăng ký với một Email khác trên máy này. <br>
  Sử dụng khóa được gửi cho bạn trước đó từ lic@miko.ru',

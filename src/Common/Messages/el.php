@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -248,7 +247,6 @@ return [
  Χρησιμοποιήστε το κλειδί που σας έχει αποσταλεί νωρίτερα από τη διεύθυνση lic@miko.ru ή πληκτρολογήστε το σωστό όνομα εταιρείας.',
     'lic_FailedToGetTrialKey2051' => '(2051) Απέτυχε ο έλεγχος σε αυτό το αντίγραφο. έχετε ήδη χρησιμοποιήσει τον αριθμό εγγραφής με άλλο email σε αυτό το μηχάνημα.<br>
  Χρησιμοποιήστε το κλειδί που σας έστειλε νωρίτερα από το lic@miko.ru',
-    'lic_LicenseWarningText' => 'Μεταβείτε στην ενότητα <a href=\'/admin-cabinet/licensing/modify/\'>licensing</a> και ακολουθήστε τα βήματα για να καταχωρήσετε το σύστημά σας',
     'lic_LicenseWarningHeader' => 'Αυτό το αντίγραφο του προγράμματος δεν έχει καταχωρηθεί',
     'lic_LicenseKeyValid' => 'Το πρόγραμμα έχει καταχωρηθεί',
     'lic_ResetLicenseSettings' => 'Αποσύνδεση σε κλειδί',
@@ -556,10 +554,8 @@ return [
     'gs_AJAMEnabled' => 'Χρησιμοποιήστε τη διεπαφή AJAM',
     'gs_AMIPort' => 'Θύρα AMI',
     'gs_AMIEnabled' => 'Χρησιμοποιήστε τη διεπαφή AMI',
-    'gs_RTPPortTo' => 'Τελευταία θύρα RTP',
     'gs_RTPPortFrom' => 'Πρώτη θύρα RTP',
     'gs_SIPPortSettings' => 'Ρυθμίσεις θύρας για σηματοδότηση SIP και εύρος RTP',
-    'gs_SIPMaxExpiry' => 'Μέγιστος χρόνος σε δευτερόλεπτα',
     'gs_SIPMinExpiry' => 'Ελάχιστος χρόνος σε δευτερόλεπτα',
     'gs_SIPDefaultExpiry' => 'Τυπικός χρόνος σε δευτερόλεπτα για να στείλετε ένα Keep-alive',
     'gs_KeepAliveHeader' => 'Ρυθμίσεις διάρκειας εγγραφής',
@@ -570,7 +566,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Μέγιστο χρονικό όριο μεταξύ ψηφίων κατά την εισαγωγή μιας επέκτασης (σε χιλιοστά του δευτερολέπτου)',
     'gs_PBXFeatureBlindTransfer' => 'Συνδυασμός για άνευ όρων μεταφορά',
     'gs_PBXFeatureAttendedTransfer' => 'Συνδυασμός για συμβουλευτική μετάφραση',
-    'gs_PBXCallParkingEndSlot' => 'Τερματισμός θέσης στάθμευσης',
     'gs_PBXCallParkingStartSlot' => 'Αρχική θέση στάθμευσης',
     'gs_PBXCallParkingExt' => 'Αριθμός στάθμευσης',
     'gs_RestartEveryNight' => 'Επανεκκινήστε το PBX κάθε βράδυ',
@@ -1041,7 +1036,6 @@ return [
         </div>',
     'qf_Frequency' => 'Συχνότητα αποστολής σε δευτερόλεπτα.',
     'qf_Qualify' => 'Διατήρηση συνεδρίας NAT',
-    'qf_NatMode' => 'Λειτουργία NAT',
     'Loading' => 'Φόρτωση',
     'MetaTegHeadDescription' => 'Τηλεφωνικό σύστημα για επιχειρήσεις',
     'ShortDaySaturday' => 'Σάβ',

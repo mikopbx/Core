@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -76,7 +75,6 @@ return [
     'Now' => 'Ahora',
     'MetaTegHeadDescription' => 'Sistema telefónico comercial',
     'Loading' => 'Cargando',
-    'qf_NatMode' => 'Modo NAT',
     'qf_Qualify' => 'Apoye la sesión NAT',
     'qf_Frequency' => 'Frecuencia de envío en seg.',
     'mm_Restart' => 'Reiniciar',
@@ -509,7 +507,6 @@ return [
     'gs_PBXRecordCalls' => 'Grabación de llamadas',
     'gs_RestartEveryNight' => 'Reinicie PBX todas las noches',
     'gs_PBXCallParkingExt' => 'Número de estacionamiento',
-    'gs_PBXCallParkingStartSlot' => 'Ranura de estacionamiento inicial',
     'gs_PBXCallParkingEndSlot' => 'Ranura de estacionamiento final',
     'gs_PBXFeatureAttendedTransfer' => 'Combinación para traducción asesora',
     'gs_PBXFeatureBlindTransfer' => 'Combinación para transferencia incondicional',
@@ -517,9 +514,7 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Llame a la hora de devolución si no hay respuesta después de la transferencia de aviso',
     'gs_SIPPort' => 'Puerto SIP para registrar teléfonos en esta estación',
     'gs_SIPDefaultExpiry' => 'Tiempo estándar en segundos para enviar Keep-Alive',
-    'gs_SIPMinExpiry' => 'Tiempo mínimo en segundos',
     'gs_SIPMaxExpiry' => 'Tiempo máximo en segundos',
-    'gs_RTPPortFrom' => 'Primer puerto RTP',
     'gs_RTPPortTo' => 'Último puerto RTP',
     'gs_AMIEnabled' => 'Usar interfaz AMI',
     'gs_AMIPort' => 'Puerto AMI',
@@ -724,7 +719,6 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'lic_ResetLicenseSettings' => 'Desvincular clave',
     'lic_LicenseKeyValid' => 'El programa esta registrado',
     'rs_CurrentCalls' => 'Llamadas activas',
-    'lic_LicenseWarningHeader' => 'Esta copia del programa no está registrada',
     'lic_LicenseWarningText' => 'Vaya a la <a href=\'/admin-cabinet/licensing/modify/\'> sección de licencias </a> y siga los pasos necesarios para registrar su sistema',
     'lic_FailedToGetTrialKey2051' => '(2051) Error al registrar esta copia porque Ya ha utilizado un número de registro con un correo electrónico diferente en esta máquina. <br>
  Use la clave que le enviamos anteriormente de lic@miko.ru',

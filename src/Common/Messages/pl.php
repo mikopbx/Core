@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -130,7 +129,6 @@ return [
     'gs_SSHTab' => 'Ssh',
     'gs_WebTab' => 'Interfejs sieciowy',
     'gs_PBXName' => 'Nazwa systemu PBX',
-    'gs_SIPMaxExpiry' => 'Maksymalny czas w sekundach',
     'gs_RTPPortFrom' => 'Pierwszy port RTP',
     'gs_PBXDescription' => 'Dodatkowy opis',
     'gs_PBXLanguage' => 'Język komunikatów audio systemu',
@@ -138,7 +136,6 @@ return [
     'gs_PBXRecordCalls' => 'Nagrywanie połączeń',
     'gs_RestartEveryNight' => 'Zrestartuj PBX co noc',
     'gs_PBXCallParkingExt' => 'Numer parkingowy',
-    'gs_PBXCallParkingStartSlot' => 'Początkowe miejsce parkingowe',
     'gs_PBXCallParkingEndSlot' => 'Zakończ miejsce parkingowe',
     'gs_PBXFeatureAttendedTransfer' => 'Kombinacja tłumaczeń doradczych',
     'gs_PBXFeatureBlindTransfer' => 'Kombinacja dla bezwarunkowego przeniesienia',
@@ -146,7 +143,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Czas powrotu połączenia, jeśli brak odpowiedzi po przekazaniu informacji',
     'gs_SIPPort' => 'Port SIP do rejestracji telefonów na tej stacji',
     'gs_SIPDefaultExpiry' => 'Standardowy czas w sekundach na wysłanie Keep-alive',
-    'gs_SIPMinExpiry' => 'Minimalny czas w sekundach',
     'gs_RTPPortTo' => 'Ostatni port RTP',
     'gs_AMIEnabled' => 'Użyj interfejsu AMI',
     'gs_AMIPort' => 'Port AMI',
@@ -342,7 +338,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'lic_LicenseKeyOwner' => 'Posiadacz licencji',
     'lic_ResetLicenseSettings' => 'Odłącz klucz',
     'lic_LicenseKeyValid' => 'Program jest zarejestrowany',
-    'lic_LicenseWarningHeader' => 'Ta kopia programu nie jest zarejestrowana',
     'lic_LicenseWarningText' => 'Przejdź do <a href=\'/admin-cabinet/licensing/modify/\'> sekcji licencjonowania </a> i wykonaj czynności niezbędne do zarejestrowania systemu',
     'adv_ThisCopyHasLicensingTroubles' => 'Problem z licencją PBX: %error% - <a target="_blank" href=\'%url%\'> jak naprawić </a>',
     'сal_Today' => 'Dzisiaj',
@@ -539,7 +534,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'Now' => 'Teraz',
     'MetaTegHeadDescription' => 'System telefonu biznesowego',
     'Loading' => 'Ładowanie',
-    'qf_NatMode' => 'Tryb NAT',
     'qf_Qualify' => 'Obsługa sesji NAT',
     'qf_Frequency' => 'Częstotliwość wysyłania w sek.',
     'adv_MessagesHeader' => 'Zwróć uwagę',

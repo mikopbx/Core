@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'December' => 'dekabr',
     'Loading' => 'Yüklənir',
     'MetaTegHeadDescription' => 'Biznes üçün telefon sistemi',
@@ -94,7 +93,6 @@ return [
     'nw_LookUpExternalIp' => 'Xarici IP tapın',
     'nw_UseDHCP' => 'Şəbəkə parametrlərini əldə etmək üçün DHCP istifadə edin',
     'gs_PBXFeatureAttendedTransfer' => 'Məsləhətçi tərcümə üçün kombinasiya',
-    'gs_PBXCallParkingEndSlot' => 'Dayanacaq yeri bitir',
     'gs_PBXCallParkingStartSlot' => 'İlkin dayanacaq yeri',
     'gs_PBXFeaturePickupExten' => 'Daxil olan zəngləri qəbul etmək üçün kombinasiya',
     'gs_PBXFeatureDigitTimeout' => 'Uzatma daxil edərkən rəqəmlər arasında maksimum fasilə (millisaniyələrlə)',
@@ -365,7 +363,6 @@ Bir dəfə aktivləşdirilə bilər, bundan sonra kupon geri alınır.
     'lic_FailedActivateCoupon2057' => '(2057) Bu kupon bloklanıb, lic@miko.ru ilə əlaqə saxlayın',
     'lic_FailedToGetTrialKey2022' => '(2022) Bu nüsxəni qeydiyyatdan keçirmək alınmadı. Göstərilən e-poçt üçün başqa şirkət üçün qeydiyyat nömrəsi artıq yaradılıb.<br>
  Daha əvvəl lic@miko.ru ünvanından sizə göndərilən açardan istifadə edin və ya düzgün şirkət adını daxil edin.',
-    'lic_LicenseWarningText' => '<a href=\'/admin-cabinet/licensing/modify/\'>lisenziyalaşdırma bölməsinə</a> gedin və sisteminizi qeydiyyatdan keçirmək üçün addımları izləyin',
     'lic_LicenseWarningHeader' => 'Proqramın bu nüsxəsi qeydiyyata alınmayıb',
     'lic_LicenseKeyValid' => 'Proqram qeydiyyatdan keçib',
     'lic_ResetLicenseSettings' => 'Açarla əlaqəni açın',
@@ -912,10 +909,8 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'gs_AJAMEnabled' => 'AJAM interfeysindən istifadə edin',
     'gs_AMIPort' => 'AMI portu',
     'gs_AMIEnabled' => 'AMI interfeysindən istifadə edin',
-    'gs_RTPPortTo' => 'Son RTP Portu',
     'gs_RTPPortFrom' => 'İlk RTP portu',
     'gs_SIPPortSettings' => 'SIP siqnalı və RTP diapazonu üçün port parametrləri',
-    'gs_SIPMaxExpiry' => 'Saniyədə maksimum vaxt',
     'gs_SIPMinExpiry' => 'Saniyədə minimum vaxt',
     'gs_SIPDefaultExpiry' => 'Saniyəni göndərmək üçün standart vaxt',
     'gs_KeepAliveHeader' => 'Qeydiyyat müddəti parametrləri',
@@ -1075,7 +1070,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
             Bu seçim aktiv olduqda, PBX SIP OPTIONS paketlərini müəyyən olunmuş tezlikdə göndərəcək. Bu, marşrutlaşdırıcınızda NAT tunelini dəstəkləmək üçün tələb olunur.
         </div>',
     'qf_Qualify' => 'NAT sessiyasını qoruyun',
-    'qf_NatMode' => 'NAT rejimi',
     'Now' => 'İndi',
     'Today' => 'Bu gün',
     'ShortDaySaturday' => 'şənbə',

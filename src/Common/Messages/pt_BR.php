@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -56,7 +55,6 @@ return [
     'February' => 'Fevereiro',
     'January' => 'Janeiro',
     'Jun' => 'Jun',
-    'qf_NatMode' => 'Modo NAT',
     'Loading' => 'Carregando',
     'MetaTegHeadDescription' => 'Sistema de telefone comercial',
     'Now' => 'Agora',
@@ -216,10 +214,8 @@ return [
     'gs_AJAMEnabled' => 'Use a interface AJAM',
     'gs_AMIPort' => 'Porta AMI',
     'gs_AMIEnabled' => 'Use a interface AMI',
-    'gs_RTPPortTo' => 'Última porta RTP',
     'gs_RTPPortFrom' => 'Primeira porta RTP',
     'gs_SIPPortSettings' => 'Configurações de porta para sinalização SIP e faixa RTP',
-    'gs_SIPMaxExpiry' => 'Tempo máximo em segundos',
     'gs_SIPMinExpiry' => 'Tempo mínimo em segundos',
     'gs_SIPDefaultExpiry' => 'Tempo padrão em segundos para enviar Keep-alive',
     'gs_KeepAliveHeader' => 'Configurações de duração do registro',
@@ -230,7 +226,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Tempo limite máximo entre dígitos ao inserir um número do ramal (em milissegundos)',
     'gs_PBXFeatureBlindTransfer' => 'Combinação para transferência incondicional',
     'gs_PBXFeatureAttendedTransfer' => 'Combinação para transferência consultiva',
-    'gs_PBXCallParkingEndSlot' => 'Vaga de estacionamento final',
     'gs_PBXCallParkingStartSlot' => 'Vaga de estacionamento inicial',
     'gs_PBXCallParkingExt' => 'Número de estacionamento',
     'gs_RestartEveryNight' => 'Reinicie o PBX todas as noites',
@@ -668,7 +663,6 @@ return [
  Use a chave enviada a você anteriormente do endereço lic@miko.ru ou digite o nome correto da empresa.',
     'lic_FailedToGetTrialKey2051' => '(2051) Falha ao registrar esta cópia porque você já usou um número de registro com um e-mail diferente nesta máquina. <br>
  Use a chave enviada a você anteriormente do endereço lic@miko.ru',
-    'lic_LicenseWarningText' => 'Vá para a <a href=\'/admin-cabinet/licensing/modify/\'> seção de licenciamento </a> e execute as etapas necessárias para registrar seu sistema',
     'lic_LicenseWarningHeader' => 'Esta cópia do programa não está registrada',
     'lic_LicenseKeyValid' => 'O programa está registrado',
     'lic_ResetLicenseSettings' => 'Desvincular a uma chave',

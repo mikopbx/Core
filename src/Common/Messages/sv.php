@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -222,7 +221,6 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'gs_PBXInternalExtensionLength' => 'Maximal längd på interna nummer',
     'gs_RestartEveryNight' => 'Starta om PBX varje natt',
     'gs_PBXCallParkingExt' => 'Parkeringsnummer',
-    'gs_PBXCallParkingStartSlot' => 'Inledande parkeringsplats',
     'gs_PBXCallParkingEndSlot' => 'Avsluta parkeringsplatsen',
     'gs_PBXFeatureAttendedTransfer' => 'Kombination för rådgivande översättning',
     'gs_PBXFeatureBlindTransfer' => 'Kombination för ovillkorlig överföring',
@@ -230,9 +228,7 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Ring returtid om inget svar efter rådgivande överföring',
     'gs_SIPPort' => 'SIP-port för registrering av telefoner på denna station',
     'gs_SIPDefaultExpiry' => 'Standardtid i sekunder för att skicka Keep-alive',
-    'gs_SIPMinExpiry' => 'Minsta tid i sekunder',
     'gs_SIPMaxExpiry' => 'Maximal tid i sekunder',
-    'gs_RTPPortFrom' => 'Första RTP-porten',
     'gs_RTPPortTo' => 'Sista RTP-port',
     'gs_AMIEnabled' => 'Använd AMI-gränssnitt',
     'gs_AMIPort' => 'AMI Port',
@@ -415,7 +411,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'lic_LicenseKeyOwner' => 'Licenshavare',
     'lic_ResetLicenseSettings' => 'Koppla bort nyckeln',
     'lic_LicenseKeyValid' => 'Programmet är registrerat',
-    'lic_LicenseWarningHeader' => 'Denna kopia av programmet är inte registrerad',
     'lic_LicenseWarningText' => 'Gå till <a href=\'/admin-cabinet/licensing/modify/\'> licensavsnitt </a> och följ de nödvändiga stegen för att registrera ditt system',
     'lic_FailedToGetTrialKey2051' => '(2051) Det gick inte att registrera denna kopia eftersom Du har redan använt ett registreringsnummer med ett annat e-postmeddelande på den här maskinen. <br>
  Använd nyckeln som skickades till dig tidigare från lic@miko.ru',
@@ -538,7 +533,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'Now' => 'just nu',
     'MetaTegHeadDescription' => 'Business Phone System',
     'Loading' => 'lastning',
-    'qf_NatMode' => 'NAT-läge',
     'qf_Qualify' => 'Stöd NAT-sessionen',
     'qf_Frequency' => 'Skickfrekvens i sek.',
     'qf_QualifyInstructions' => '<div class = \'ui meddelande\'>

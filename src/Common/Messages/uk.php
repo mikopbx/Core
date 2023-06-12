@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -92,7 +91,6 @@ return [
     'Now' => 'Зараз',
     'MetaTegHeadDescription' => 'Телефонна система для бізнесу',
     'Loading' => 'Завантаження',
-    'qf_NatMode' => 'Режим NAT',
     'qf_Qualify' => 'Підтримувати NAT сесію',
     'qf_Frequency' => 'Частота відправки в сек.',
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
@@ -538,7 +536,6 @@ return [
     'gs_PBXRecordCalls' => 'Запис розмов',
     'gs_RestartEveryNight' => 'Перезапуск PBX щоночі',
     'gs_PBXCallParkingExt' => 'Номер для паркування',
-    'gs_PBXCallParkingStartSlot' => 'Початковий паркувальний слот',
     'gs_PBXCallParkingEndSlot' => 'Кінцевий паркувальний слот',
     'gs_PBXFeatureAttendedTransfer' => 'Комбінація для консультативного переводу',
     'gs_PBXFeatureBlindTransfer' => 'Комбінація для безумовного переводу',
@@ -546,9 +543,7 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Час повернення виклику, якщо немає відповіді після консультативного перекладу',
     'gs_SIPPort' => 'Порт SIP для реєстрації телефонів на цій станції',
     'gs_SIPDefaultExpiry' => 'Стандартний час в секундах для відправки Keep-alive',
-    'gs_SIPMinExpiry' => 'Мінімальний час в секундах',
     'gs_SIPMaxExpiry' => 'Максимальний час в секундах',
-    'gs_RTPPortFrom' => 'Перший RTP порт',
     'gs_RTPPortTo' => 'Останній RTP порт',
     'gs_AMIEnabled' => 'Використовувати AMI інтерфейс',
     'gs_AMIPort' => 'Порт AMI',
@@ -749,7 +744,6 @@ return [
     'lic_LicenseKeyProducts' => 'Активовані продукти',
     'lic_ResetLicenseSettings' => 'Скасувати прив\'язку до ключа',
     'lic_LicenseKeyValid' => 'Програма зареєстрована',
-    'lic_LicenseWarningHeader' => 'Ця копія програми не зареєстрована',
     'lic_LicenseWarningText' => 'Перейдіть до <a href=\'/admin-cabinet/licensing/modify/\'>розділу ліцензування</a> та виконайте необхідні дії для реєстрації вашої системи',
     'lic_FailedToGetTrialKey2051' => '(2051) Не вдалося зареєструвати цю копію, тому що ви вже використовували реєстраційний номер з іншим Email на цій машині.<br>
  Використовуйте ключ відправлення вам раніше з адреси lic@miko.ru',

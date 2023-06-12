@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -168,7 +167,6 @@ return [
  Use a chave enviada anteriormente para lic@miko.ru ou especifique o nome correto da empresa.',
     'lic_FailedToGetTrialKey2051' => '(2051) Falha ao registrar esta cópia porque Você já usou um número de registro com um e-mail diferente nesta máquina. <br>
  Use a chave que lhe foi enviada anteriormente por lic@miko.ru',
-    'lic_LicenseWarningText' => 'Vá para a <a href=\'/admin-cabinet/licensing/modify/\'> seção de licenciamento </a> e siga as etapas necessárias para registrar seu sistema',
     'lic_LicenseWarningHeader' => 'Esta cópia do programa não está registrada',
     'lic_LicenseKeyValid' => 'O programa está registrado',
     'lic_ResetLicenseSettings' => 'Desvincular chave',
@@ -249,9 +247,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_AJAMEnabled' => 'Use a interface AJAM',
     'gs_AMIPort' => 'Porta AMI',
     'gs_AMIEnabled' => 'Usar interface AMI',
-    'gs_RTPPortTo' => 'Última porta RTP',
     'gs_RTPPortFrom' => 'Primeira porta RTP',
-    'gs_SIPMaxExpiry' => 'Tempo máximo em segundos',
     'gs_SIPMinExpiry' => 'Tempo mínimo em segundos',
     'gs_SIPDefaultExpiry' => 'Tempo padrão em segundos para enviar Keep-alive',
     'gs_SIPPort' => 'Porta SIP para registrar telefones nesta estação',
@@ -259,7 +255,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_PBXFeatureDigitTimeout' => 'Tempo limite máximo entre dígitos ao inserir um número de ramal (em milissegundos)',
     'gs_PBXFeatureBlindTransfer' => 'Combinação para transferência incondicional',
     'gs_PBXFeatureAttendedTransfer' => 'Combinação para tradução consultiva',
-    'gs_PBXCallParkingEndSlot' => 'Slot de estacionamento final',
     'gs_PBXCallParkingStartSlot' => 'Slot de estacionamento inicial',
     'gs_PBXCallParkingExt' => 'Número de estacionamento',
     'gs_RestartEveryNight' => 'Reinicie o PBX todas as noites',
@@ -850,7 +845,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
         </div>',
     'qf_Frequency' => 'Frequência de envio em seg.',
     'qf_Qualify' => 'Sessão NAT de suporte',
-    'qf_NatMode' => 'Modo NAT',
     'Loading' => 'A carregar',
     'MetaTegHeadDescription' => 'Sistema de telefone comercial',
     'Now' => 'Agora',

@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -73,7 +72,6 @@ return [
     'Now' => 'Now',
     'MetaTegHeadDescription' => 'Telephone system for business',
     'Loading' => 'Load',
-    'qf_NatMode' => 'NAT Mode',
     'qf_Qualify' => 'Support NAT session',
     'qf_Frequency' => 'The frequency of the send to sec.',
     'qf_QualifyInstructions' => '<div class=\'ui message \'>
@@ -531,7 +529,6 @@ return [
     'gs_PBXRecordCalls' => 'Call recording',
     'gs_RestartEveryNight' => 'The PBX is restarted every night',
     'gs_PBXCallParkingExt' => 'Park Extension',
-    'gs_PBXCallParkingStartSlot' => 'Initial parking slot',
     'gs_PBXCallParkingEndSlot' => 'End parking slot',
     'gs_PBXFeatureAttendedTransfer' => 'This key combination activates an attended transfer',
     'gs_PBXFeatureBlindTransfer' => 'This key combination activates a blind transfer',
@@ -539,9 +536,7 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Call return time if no answer after advisory transfer',
     'gs_SIPPort' => 'SIP port for phone registration at this station',
     'gs_SIPDefaultExpiry' => 'Default expiration time in seconds for contacts that are dynamically bound to an AoR',
-    'gs_SIPMinExpiry' => 'Minimum keep alive time for an AoR',
     'gs_SIPMaxExpiry' => 'Maximum time to keep an AoR',
-    'gs_RTPPortFrom' => 'First RTP port',
     'gs_RTPPortTo' => 'Last RTP port',
     'gs_AMIEnabled' => 'Use the AMI interface',
     'gs_AMIPort' => 'AMI port',
@@ -747,7 +742,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_LicenseKeyOwner' => 'License key owner',
     'lic_ResetLicenseSettings' => 'Reset license key',
     'lic_LicenseKeyValid' => 'Registration number is OK',
-    'lic_LicenseWarningHeader' => 'This copy of the program is not registered',
     'lic_LicenseWarningText' => 'Go to <a href=\'/admin-cabinet/licensing/modify/\'>licensing</a> and follow the steps to registered your system',
     'lic_FailedToGetTrialKey2051' => '(2051) Failed to register this copy because you have already used a registration number with a different Email on this machine. <br>
  Use the key sent to you earlier from the address lic@miko.ru',
