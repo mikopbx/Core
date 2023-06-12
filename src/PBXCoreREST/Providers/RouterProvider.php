@@ -133,6 +133,7 @@ class RouterProvider implements ServiceProviderInterface
             [IaxGetController::class, 'callAction', '/pbxcore/api/iax/{actionName}', 'get', '/'],
 
             [CdrGetController::class, 'callAction', '/pbxcore/api/cdr/{actionName}', 'get', '/'],
+            [CdrGetController::class, 'callAction', '/pbxcore/api/cdr/v2/{actionName}', 'get', '/'],
 
             [FirewallGetController::class, 'callAction', '/pbxcore/api/firewall/{actionName}', 'get', '/'],
             [FirewallPostController::class, 'callAction', '/pbxcore/api/firewall/{actionName}', 'post', '/'],

@@ -24,8 +24,6 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
-use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
-
 
 /**
  * Class GetController
@@ -76,8 +74,11 @@ class GetController extends BaseController
      * This method performs playback of a recorded file with scrolling
      * @Get("/playback")
      *
-     * New method through Nginx only (TODO::Check auth by lua) (described in nginx.conf)
+     * New method through Nginx only but use the location check rights
      * @Get("/v2/playback")
+     *
+     * New method through Nginx only but use the location check rights
+     * @Get("/v2/getRecordFile")
      *
      * @return void
      */
@@ -87,12 +88,12 @@ class GetController extends BaseController
             case 'playback':
                 $this->playback();
                 break;
+            case 'getRecordFile':
+                $this->response->setStatusCode(Response::OK);
+                break;
             default:
-                $data = $this->request->getPost();
-                $this->sendRequestToBackendWorker(FilesManagementProcessor::class, $actionName, $data);
+                $this->sendRequestToBackendWorker(CdrDBProcessor::class, $actionName, $_REQUEST);
         }
-
-        $this->sendRequestToBackendWorker(CdrDBProcessor::class, $actionName);
     }
 
     /**
@@ -185,7 +186,7 @@ class GetController extends BaseController
             }
             $this->response->sendRaw();
         } else {
-            $this->sendError(Response::NOT_FOUND);
+            $this->sendError(Response::NOT_FOUND, $filename);
         }
     }
 

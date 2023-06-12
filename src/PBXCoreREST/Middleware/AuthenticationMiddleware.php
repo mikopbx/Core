@@ -66,7 +66,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
             $this->halt(
                 $api,
                 $response::UNAUTHORIZED,
-                'You are not authenticated'
+                'The user isn\'t authenticated.'
             );
             return false;
         }

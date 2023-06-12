@@ -40,7 +40,7 @@ class NotFoundMiddleware extends Injectable implements MiddlewareInterface
     /**
      * Checks if the resource was found
      */
-    public function beforeNotFound()
+    public function beforeNotFound(): bool
     {
         $this->halt(
             $this->application,
@@ -58,7 +58,7 @@ class NotFoundMiddleware extends Injectable implements MiddlewareInterface
      *
      * @return bool
      */
-    public function call(Micro $api)
+    public function call(Micro $api): bool
     {
         return true;
     }
