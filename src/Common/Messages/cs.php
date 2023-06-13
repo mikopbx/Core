@@ -531,7 +531,6 @@ return [
     'gs_PBXFeatureAttendedTransfer' => 'Kombinace pro poradenský překlad',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Volejte čas návratu, pokud po poradním přepojení žádná odpověď',
     'gs_SIPDefaultExpiry' => 'Standardní čas v sekundách pro odeslání Keep-alive',
-    'gs_RTPPortTo' => 'Poslední port RTP',
     'gs_AMIEnabled' => 'Použijte rozhraní AMI',
     'gs_AJAMEnabled' => 'Použijte rozhraní AJAM',
     'gs_AJAMPort' => 'Port AJAM',

@@ -297,7 +297,6 @@ return [
     'gs_AJAMEnabled' => 'Utiliser l\'interface AJAM',
     'gs_AMIPort' => 'Port AMI',
     'gs_AMIEnabled' => 'Utiliser l\'interface AMI',
-    'gs_SIPMinExpiry' => 'Temps minimum en secondes',
     'gs_SIPDefaultExpiry' => 'Heure standard en secondes pour envoyer Keep-Alive',
     'gs_SIPPort' => 'Port SIP pour l\'enregistrement des téléphones sur cette station',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Heure de retour de l\'appel si aucune réponse après le transfert d\'avis',

@@ -513,7 +513,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Llame a la hora de devolución si no hay respuesta después de la transferencia de aviso',
     'gs_SIPPort' => 'Puerto SIP para registrar teléfonos en esta estación',
     'gs_SIPDefaultExpiry' => 'Tiempo estándar en segundos para enviar Keep-Alive',
-    'gs_RTPPortTo' => 'Último puerto RTP',
     'gs_AMIEnabled' => 'Usar interfaz AMI',
     'gs_AMIPort' => 'Puerto AMI',
     'gs_AJAMEnabled' => 'Utilice la interfaz AJAM',

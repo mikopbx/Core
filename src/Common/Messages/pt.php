@@ -246,7 +246,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_AJAMEnabled' => 'Use a interface AJAM',
     'gs_AMIPort' => 'Porta AMI',
     'gs_AMIEnabled' => 'Usar interface AMI',
-    'gs_SIPMinExpiry' => 'Tempo mínimo em segundos',
     'gs_SIPDefaultExpiry' => 'Tempo padrão em segundos para enviar Keep-alive',
     'gs_SIPPort' => 'Porta SIP para registrar telefones nesta estação',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Hora de retorno da ligação se não houver resposta após a transferência de aconselhamento',

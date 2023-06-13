@@ -530,7 +530,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Ring tilbage tid, hvis intet svar efter rådgivende overførsel',
     'gs_SIPPort' => 'SIP-port til registrering af telefoner på denne station',
     'gs_SIPDefaultExpiry' => 'Standard tid i sekunder for at sende Keep-alive',
-    'gs_RTPPortTo' => 'Sidste RTP-port',
     'gs_AMIEnabled' => 'Brug AMI-interface',
     'gs_AMIPort' => 'AMI Port',
     'gs_AJAMEnabled' => 'Brug AJAM-interface',

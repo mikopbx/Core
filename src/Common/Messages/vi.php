@@ -606,7 +606,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Gọi lại thời gian nếu không có câu trả lời sau khi chuyển tư vấn',
     'gs_SIPPort' => 'Cổng SIP để đăng ký điện thoại tại trạm này',
     'gs_SIPDefaultExpiry' => 'Thời gian chuẩn tính bằng giây để gửi Keep-live',
-    'gs_RTPPortTo' => 'Cổng RTP cuối cùng',
     'gs_AMIEnabled' => 'Sử dụng giao diện AMI',
     'gs_AMIPort' => 'Cảng AMI',
     'gs_AJAMEnabled' => 'Sử dụng giao diện AJAM',

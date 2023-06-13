@@ -529,7 +529,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'アドバイザリー転送後に応答がない場合は、折り返し時間を呼び出します',
     'gs_SIPPort' => 'このステーションで電話を登録するためのSIPポート',
     'gs_SIPDefaultExpiry' => 'キープアライブを送信するための標準時間（秒単位）',
-    'gs_RTPPortTo' => '最後のRTPポート',
     'gs_AMIEnabled' => 'AMIインターフェイスを使用する',
     'gs_AMIPort' => 'AMIポート',
     'gs_AJAMEnabled' => 'AJAMインターフェースを使用する',

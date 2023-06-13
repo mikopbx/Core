@@ -530,7 +530,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Rufen Sie die Rückgabezeit an, wenn nach der Überweisung keine Antwort erfolgt',
     'gs_SIPPort' => 'SIP-Port zur Registrierung von Telefonen an dieser Station',
     'gs_SIPDefaultExpiry' => 'Standardzeit in Sekunden zum Senden von Keep-Alive',
-    'gs_RTPPortTo' => 'Letzter RTP Port',
     'gs_AMIEnabled' => 'AMI Interface erreichbar',
     'gs_AMIPort' => 'AMI Port',
     'gs_AJAMEnabled' => 'AJAM Interface erreichbar',

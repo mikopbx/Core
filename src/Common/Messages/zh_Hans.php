@@ -528,7 +528,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => '咨询转接后无人接听时的回电时间',
     'gs_SIPPort' => 'SIP端口，用于在此站注册电话',
     'gs_SIPDefaultExpiry' => '发送保持活动状态的标准时间（以秒为单位）',
-    'gs_RTPPortTo' => '最后一个RTP端口',
     'gs_AMIEnabled' => '使用AMI界面',
     'gs_AMIPort' => 'AMI端口',
     'gs_AJAMEnabled' => '使用AJAM界面',

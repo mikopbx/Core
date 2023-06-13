@@ -227,7 +227,6 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Ring returtid om inget svar efter rådgivande överföring',
     'gs_SIPPort' => 'SIP-port för registrering av telefoner på denna station',
     'gs_SIPDefaultExpiry' => 'Standardtid i sekunder för att skicka Keep-alive',
-    'gs_RTPPortTo' => 'Sista RTP-port',
     'gs_AMIEnabled' => 'Använd AMI-gränssnitt',
     'gs_AMIPort' => 'AMI Port',
     'gs_SSHPassword' => 'Ssh-lösenord',

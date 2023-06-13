@@ -542,7 +542,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Час повернення виклику, якщо немає відповіді після консультативного перекладу',
     'gs_SIPPort' => 'Порт SIP для реєстрації телефонів на цій станції',
     'gs_SIPDefaultExpiry' => 'Стандартний час в секундах для відправки Keep-alive',
-    'gs_RTPPortTo' => 'Останній RTP порт',
     'gs_AMIEnabled' => 'Використовувати AMI інтерфейс',
     'gs_AMIPort' => 'Порт AMI',
     'gs_AJAMEnabled' => 'Використовувати AJAM інтерфейс',

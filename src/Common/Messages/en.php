@@ -535,7 +535,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Call return time if no answer after advisory transfer',
     'gs_SIPPort' => 'SIP port for phone registration at this station',
     'gs_SIPDefaultExpiry' => 'Default expiration time in seconds for contacts that are dynamically bound to an AoR',
-    'gs_RTPPortTo' => 'Last RTP port',
     'gs_AMIEnabled' => 'Use the AMI interface',
     'gs_AMIPort' => 'AMI port',
     'gs_AJAMEnabled' => 'Use the AJAM interface',
