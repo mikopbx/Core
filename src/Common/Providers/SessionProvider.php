@@ -40,8 +40,6 @@ class SessionProvider implements ServiceProviderInterface
 
     public const CACHE_PREFIX = '_PHCM_SESS:';
 
-    public const VERSION_HASH = 'versionHash';
-
     /**
      * Register the session service provider.
      *

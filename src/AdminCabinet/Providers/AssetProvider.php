@@ -25,6 +25,7 @@ use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\AdminCabinet\Plugins\AssetManager as Manager;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
@@ -70,12 +71,9 @@ class AssetProvider implements ServiceProviderInterface
                 $session = $di->get(SessionProvider::SERVICE_NAME);
 
                 $assets = new AssetProvider();
+
                 // Module and PBX version caching for proper PBX operation when installing modules.
-                $version = $session->get(SessionProvider::VERSION_HASH) ?? '';
-                if (empty($version)) {
-                    $version = $assets->getVersionsHash();
-                    $session->set(SessionProvider::VERSION_HASH, $version);
-                }
+                $version = PBXConfModulesProvider::getVersionsHash();
                 $assets->initializeClassVariables($version);
                 $dispatcher = $di->get(DispatcherProvider::SERVICE_NAME);
                 $controller = $dispatcher->getControllerName();
@@ -851,20 +849,6 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/AsteriskManagers/manager-modify.js', true);
         }
-    }
-
-    /**
-     * Generates common hash sum for correct combine CSS and JS according to installed modules
-     *
-     */
-    private function getVersionsHash(): string
-    {
-        $result = PbxSettings::getValueByKey('PBXVersion');
-        $modulesVersions = PbxExtensionModules::getModulesArray();
-        foreach ($modulesVersions as $module) {
-            $result .= "{$module['id']}{$module['version']}";
-        }
-        return md5($result);
     }
 
 }

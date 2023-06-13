@@ -47,13 +47,8 @@ class MessagesProvider implements ServiceProviderInterface
             function () use ($di, $coreConfig) {
                 $cacheKey = false;
                 $language = $di->get(LanguageProvider::SERVICE_NAME);
-
-                if (php_sapi_name() !== 'cli'){
-                    $session  = $di->get(SessionProvider::SERVICE_NAME);
-                    if ($session !== null && $session->has('versionHash')) {
-                        $cacheKey = 'LocalisationArray:' . $session->get('versionHash') .':'. $language;
-                    }
-                }
+                $version = PBXConfModulesProvider::getVersionsHash();;
+                $cacheKey = 'LocalisationArray:' . $version .':'. $language;
 
                 // Check if translations exist in the cache
                 if ($cacheKey) {
@@ -66,10 +61,7 @@ class MessagesProvider implements ServiceProviderInterface
                 $translates = [];
 
                 // Load English translations
-                $enFilePath = appPath('/src/Common/Messages/en.php');
-                if (file_exists($enFilePath)) {
-                    $translates = require $enFilePath;
-                }
+                $translates = require appPath('/src/Common/Messages/en.php');
 
                 if ($language !== 'en') {
                     $additionalTranslates = [];
@@ -77,9 +69,6 @@ class MessagesProvider implements ServiceProviderInterface
                     $langFile = appPath("/src/Common/Messages/{$language}.php");
                     if (file_exists($langFile)) {
                         $additionalTranslates = require $langFile;
-                    }
-                    // Replace English translations with the selected language translations
-                    if ($additionalTranslates !== [[]]) {
                         $translates = array_merge($translates, $additionalTranslates);
                     }
                 }
@@ -106,10 +95,8 @@ class MessagesProvider implements ServiceProviderInterface
                         $langArr = require $path;
                         if (is_array($langArr)) {
                             $additionalTranslates[] = $langArr;
+                            $translates = array_merge($translates, ...$additionalTranslates);
                         }
-                    }
-                    if ($additionalTranslates !== [[]]) {
-                        $translates = array_merge($translates, ...$additionalTranslates);
                     }
                 }
                 if ($cacheKey) {

@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
@@ -149,6 +150,9 @@ class PbxExtensionState extends Injectable
         // Cleanup volt cache, because them module can interact with volt templates
         $this->cleanupVoltCache();
 
+        // Recreate version hash for js files and translations
+        PBXConfModulesProvider::getVersionsHash(true);
+
         return true;
     }
 
@@ -272,6 +276,8 @@ class PbxExtensionState extends Injectable
         // Cleanup volt cache, because them module can interact with volt templates
         $this->cleanupVoltCache();
 
+        // Recreate version hash for js files and translations
+        PBXConfModulesProvider::getVersionsHash(true);
         return true;
     }
 
