@@ -65,6 +65,8 @@
     "debugMode": false,
     "baseUri": "/admin-cabinet/",
     "assetsCacheDir": "/var/tmp/www_cache",
-    "voltCacheDir": "/var/tmp/www_cache/volt"
+    "voltCacheDir": "/var/tmp/www_cache/volt",
+    "combineCSS": false,
+    "combineJS": false
   }
 }

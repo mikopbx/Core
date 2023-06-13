@@ -20,6 +20,7 @@
 namespace MikoPBX\AdminCabinet\Plugins;
 
 
+use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Assets\Manager;
 use function MikoPBX\Common\Config\appPath;
 
@@ -86,6 +87,16 @@ class AssetManager extends Manager
             'headerJS'
         ];
 
+        $needCombineJS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineJS')??false;
+        if (!$needCombineJS){
+            $resultTags = '';
+            foreach ($headerJSCollections as $collectionName){
+                $resultTags .= $this->outputJS($collectionName).PHP_EOL;
+            }
+            return $resultTags;
+        }
+
+        // Need to combine and minify all JS files in one and save it as cached file
         $combinedJsFilePath = "{$jsCachePath}/{$controller}-{$action}-header.js";
         if (!file_exists($combinedJsFilePath)){
             file_put_contents($combinedJsFilePath, '', LOCK_EX);
@@ -118,6 +129,16 @@ class AssetManager extends Manager
             'footerPBXJS'
         ];
 
+        $needCombineJS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineJS')??false;
+        if (!$needCombineJS){
+            $resultTags = '';
+            foreach ($headerJSCollections as $collectionName){
+                $resultTags .= $this->outputJS($collectionName).PHP_EOL;
+            }
+            return $resultTags;
+        }
+
+        // Need to combine and minify all JS files in one and save it as cached file
         $combinedJsFilePath = "{$jsCachePath}/{$controller}-{$action}-footer.js";
         if (!file_exists($combinedJsFilePath)){
             file_put_contents($combinedJsFilePath, '', LOCK_EX);
@@ -148,6 +169,16 @@ class AssetManager extends Manager
             'headerCSS'
         ];
 
+        $needCombineCSS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineCSS')??false;
+        if (!$needCombineCSS){
+            $resultTags = '';
+            foreach ($headerJSCollections as $collectionName){
+                $resultTags .= $this->outputCss($collectionName).PHP_EOL;
+            }
+            return $resultTags;
+        }
+
+        // Need to combine and minify all CSS files in one and save it as cached file
         $combinedCSSFilePath = "{$CSSCachePath}/{$controller}-{$action}.css";
         if (!file_exists($combinedCSSFilePath)){
             file_put_contents($combinedCSSFilePath, '', LOCK_EX);
@@ -158,28 +189,9 @@ class AssetManager extends Manager
                     $sourceCSSPath = appPath('sites/admin-cabinet/assets/').$resource->getPath();
                     $sourceCSSContent = file_get_contents($sourceCSSPath);
                     $sourceCSSContent = str_replace(
-                        [   './themes/default/assets/fonts/',
-                            'url(icons.woff)',
-                            'url(icons.woff2)',
-                            'url(outline-icons.woff2)',
-                            'url(outline-icons.woff)',
-                            'url(brand-icons.woff2)',
-                            'url(brand-icons.woff)',
-                            'url(../themes/default/assets/images/flags.png)',
-                            'font/lato-v15-latin',
-                            'font/lato-v14-latin',
-                        ],
+                        [   '../themes/default/assets',],
                         [
-                            './../vendor/themes/default/assets/fonts/',
-                            'url("./../vendor/themes/default/assets/fonts/icons.woff")',
-                            'url("./../vendor/themes/default/assets/fonts/icons.woff2")',
-                            'url("./../vendor/themes/default/assets/fonts/outline-icons.woff2")',
-                            'url("./../vendor/themes/default/assets/fonts/outline-icons.woff")',
-                            'url("./../vendor/themes/default/assets/fonts/brand-icons.woff2")',
-                            'url("./../vendor/themes/default/assets/fonts/brand-icons.woff")',
-                            'url(./../../vendor/themes/default/assets/images/flags.png)',
-                            './../../vendor/semantic/font/lato-v15-latin',
-                            './../../vendor/semantic/font/lato-v14-latin'
+                            './../../vendor/themes/default/assets',
                         ],
                         $sourceCSSContent
                     );
