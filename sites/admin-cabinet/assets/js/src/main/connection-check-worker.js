@@ -16,76 +16,54 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalDebugMode */
+/* global globalDebugMode */
 
 /**
- * The connectionCheckWorker object is responsible for periodically checking
- * the connection status with back end by pinging the PBX API
+ * The connectionCheckWorker object is responsible for checking
+ * the connection status with backend
  *
  * @module connectionCheckWorker
  */
 const connectionCheckWorker = {
 
-    /**
-     * Time in milliseconds before fetching new connection request.
-     * @type {number}
-     */
-    timeOut: 1000,
-
-    /**
-     * The id of the timer function for the worker.
-     * @type {number}
-     */
-    timeOutHandle: 0,
-
     // Counter for error counts
     errorCounts: 0,
 
     /**
-     * jQuery object for the connection dimmer element
+     * jQuery object for the no connection dimmer element.
      * @type {jQuery}
      */
     $connectionDimmer: $('#connection-dimmer'),
 
     /**
+     * EventSource object for the connection check.
+     * @type {EventSource}
+     */
+    eventSource: null,
+
+    /**
      * Initialize the connection check worker.
-     *
      */
     initialize() {
-        connectionCheckWorker.restartWorker();
+        connectionCheckWorker.eventSource = new EventSource('/connection-check');
+
+        connectionCheckWorker.eventSource.addEventListener('error', function(event) {
+            connectionCheckWorker.cbAfterResponse(false);
+        });
+
+        connectionCheckWorker.eventSource.addEventListener('open', function(event) {
+            connectionCheckWorker.cbAfterResponse(true);
+        });
     },
 
     /**
-     * Restart the connection check worker.
-     * Clears the previous timeout and starts the worker.
-     */
-    restartWorker() {
-        window.clearTimeout(connectionCheckWorker.timeoutHandle);
-        connectionCheckWorker.worker();
-    },
-
-    /**
-     * Worker function that pings the PBX API and executes the callback.
-     */
-    worker() {
-        PbxApi.SystemPingPBX(connectionCheckWorker.cbAfterResponse);
-        connectionCheckWorker.timeoutHandle = window.setTimeout(
-            connectionCheckWorker.worker,
-            connectionCheckWorker.timeOut,
-        );
-    },
-
-    /**
-     * Callback function after receiving the response from the PBX API.
+     * Callback function after receiving the response from the connection check.
      * @param {boolean} result - The result of the connection check.
      */
     cbAfterResponse(result) {
         if (result === true) {
             // If the connection is successful, hide the connection dimmer
             connectionCheckWorker.$connectionDimmer.dimmer('hide');
-
-            // Set a longer timeout for the next check
-            connectionCheckWorker.timeOut = 3000;
 
             // Reload the page if the error count exceeds a certain threshold
             if (connectionCheckWorker.errorCounts > 5) {
@@ -94,19 +72,15 @@ const connectionCheckWorker = {
 
             // Reset the error count
             connectionCheckWorker.errorCounts = 0;
+
         } else if (connectionCheckWorker.errorCounts > 3) {
+
             // If the connection is unsuccessful and error count exceeds a threshold, show the connection dimmer
             connectionCheckWorker.$connectionDimmer.dimmer('show');
-
-            // Set a shorter timeout for the next check
-            connectionCheckWorker.timeOut = 1000;
 
             // Increment the error count
             connectionCheckWorker.errorCounts += 1;
         } else {
-
-            // If the connection is unsuccessful but error count is within the threshold, set a default timeout
-            connectionCheckWorker.timeOut = 1000;
 
             // Increment the error count
             connectionCheckWorker.errorCounts += 1;
