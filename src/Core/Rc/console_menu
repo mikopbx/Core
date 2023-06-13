@@ -133,7 +133,15 @@ class ConsoleMenu{
                 if (count($files) !== 0) {
                     return "   \033[01;31m" . Util::translate('The integrity of the system is broken') . "\033[39m";
                 }
+            } elseif(php_uname('m') === 'x86_64' && Util::isDocker()) {
+                $files  = Main::checkForCorruptedFiles();
+                $result = '    Is Docker';
+                if (count($files) !== 0) {
+                    $result.= ": \033[01;31m" . Util::translate('The integrity of the system is broken') . "\033[39m";
+                }
+                return $result;
             } elseif(Util::isDocker()) {
+                // ARM and other platform...
                 return '    Is Docker';
             } else {
                 return '    Is Debian';
