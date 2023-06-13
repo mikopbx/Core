@@ -524,14 +524,12 @@ return [
     'gs_PBXRecordCalls' => 'Opkald til opkald',
     'gs_RestartEveryNight' => 'Genstart PBX hver aften',
     'gs_PBXCallParkingExt' => 'Parkeringsnummer',
-    'gs_PBXCallParkingEndSlot' => 'Afslut parkeringsplads',
     'gs_PBXFeatureAttendedTransfer' => 'Kombination til rådgivende oversættelse',
     'gs_PBXFeatureBlindTransfer' => 'Kombination til ubetinget overførsel',
     'gs_PBXFeatureDigitTimeout' => 'Maksimal timeout mellem cifre ved indtastning af et lokalnummer (i millisekunder)',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Ring tilbage tid, hvis intet svar efter rådgivende overførsel',
     'gs_SIPPort' => 'SIP-port til registrering af telefoner på denne station',
     'gs_SIPDefaultExpiry' => 'Standard tid i sekunder for at sende Keep-alive',
-    'gs_SIPMaxExpiry' => 'Maksimal tid i sekunder',
     'gs_RTPPortTo' => 'Sidste RTP-port',
     'gs_AMIEnabled' => 'Brug AMI-interface',
     'gs_AMIPort' => 'AMI Port',
@@ -735,7 +733,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'lic_LicenseKeyOwner' => 'Licensindehaver',
     'lic_ResetLicenseSettings' => 'Fjern linket',
     'lic_LicenseKeyValid' => 'Programmet er registreret',
-    'lic_LicenseWarningText' => 'Gå til <a href=\'/admin-cabinet/licensing/modify/\'> licensafsnittet </a>, og følg de nødvendige trin for at registrere dit system',
     'lic_FailedToGetTrialKey2051' => '(2051) Kunne ikke registrere denne kopi, fordi Du har allerede brugt et registreringsnummer med en anden e-mail på denne maskine. <br>
  Brug nøglen, der blev sendt til dig tidligere fra lic@miko.ru',
     'lic_FailedToGetTrialKey2022' => '(2022) Kunne ikke registrere denne kopi. Et registreringsnummer for et andet firma er allerede genereret til den specificerede e-mail. <br>

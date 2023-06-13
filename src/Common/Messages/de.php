@@ -524,14 +524,12 @@ return [
     'gs_PBXRecordCalls' => 'Anrufaufzeichnung',
     'gs_RestartEveryNight' => 'Neustart der Anlage jede Nacht',
     'gs_PBXCallParkingExt' => 'Nebenstelle/Extension zum Anruf-Parken',
-    'gs_PBXCallParkingEndSlot' => 'Park-Bereich endet',
     'gs_PBXFeatureAttendedTransfer' => 'Tastenkombination für \'Attended Transfer\' (Rücksprache vor Übergabe)',
     'gs_PBXFeatureBlindTransfer' => 'Tastenkombination für \'Blind Transfer\' (Übergabe ohne Rücksprache)',
     'gs_PBXFeatureDigitTimeout' => 'Maximales Zeitlimit zwischen den Ziffern bei der Eingabe einer Nebenstellennummer (in Millisekunden)',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Rufen Sie die Rückgabezeit an, wenn nach der Überweisung keine Antwort erfolgt',
     'gs_SIPPort' => 'SIP-Port zur Registrierung von Telefonen an dieser Station',
     'gs_SIPDefaultExpiry' => 'Standardzeit in Sekunden zum Senden von Keep-Alive',
-    'gs_SIPMaxExpiry' => 'Maximale Zeit in Sekunden',
     'gs_RTPPortTo' => 'Letzter RTP Port',
     'gs_AMIEnabled' => 'AMI Interface erreichbar',
     'gs_AMIPort' => 'AMI Port',
@@ -735,7 +733,6 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'lic_LicenseKeyOwner' => 'Lizenzschlüssel für',
     'lic_ResetLicenseSettings' => 'Einstellungen zurücksetzen',
     'lic_LicenseKeyValid' => 'Lizenzschlüssel ist in Ordnung',
-    'lic_LicenseWarningText' => 'Gehen Sie zu <a href=\'/admin-cabinet/licensing/modify/\'>Lizenz</a> und folgen Sie den Schritten zur Registrierung Ihres Systems',
     'lic_FailedToGetTrialKey2051' => '(2051) Diese Kopie konnte nicht registriert werden, weil Sie haben auf diesem Computer bereits eine Registrierungsnummer mit einer anderen E-Mail-Adresse verwendet. <br>
  Verwenden Sie den Schlüssel, den Sie zuvor von der Adresse lic@miko.ru erhalten haben',
     'lic_FailedToGetTrialKey2022' => '(2022) Diese Kopie konnte nicht registriert werden. Eine Registrierungsnummer für ein anderes Unternehmen wurde bereits an die angegebene E-Mail-Adresse generiert. <br>

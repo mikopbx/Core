@@ -600,14 +600,12 @@ return [
     'gs_PBXRecordCalls' => 'Ghi âm cuộc gọi',
     'gs_RestartEveryNight' => 'Khởi động lại tổng đài mỗi tối',
     'gs_PBXCallParkingExt' => 'Số chỗ đậu xe',
-    'gs_PBXCallParkingEndSlot' => 'Kết thúc chỗ đậu xe',
     'gs_PBXFeatureAttendedTransfer' => 'Kết hợp cho dịch thuật tư vấn',
     'gs_PBXFeatureBlindTransfer' => 'Kết hợp để chuyển nhượng vô điều kiện',
     'gs_PBXFeatureDigitTimeout' => 'Thời gian chờ tối đa giữa các chữ số khi nhập số máy lẻ (tính bằng mili giây)',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Gọi lại thời gian nếu không có câu trả lời sau khi chuyển tư vấn',
     'gs_SIPPort' => 'Cổng SIP để đăng ký điện thoại tại trạm này',
     'gs_SIPDefaultExpiry' => 'Thời gian chuẩn tính bằng giây để gửi Keep-live',
-    'gs_SIPMaxExpiry' => 'Thời gian tối đa tính bằng giây',
     'gs_RTPPortTo' => 'Cổng RTP cuối cùng',
     'gs_AMIEnabled' => 'Sử dụng giao diện AMI',
     'gs_AMIPort' => 'Cảng AMI',
@@ -809,7 +807,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'lic_LicenseKeyOwner' => 'Chủ giấy phép',
     'lic_ResetLicenseSettings' => 'Bỏ liên kết khóa',
     'lic_LicenseKeyValid' => 'Chương trình được đăng ký',
-    'lic_LicenseWarningText' => 'Truy cập <a href=\'/admin-cabinet/licensing/modify/\'> phần cấp phép </a> và làm theo các bước cần thiết để đăng ký hệ thống của bạn',
     'lic_FailedToGetTrialKey2051' => '(2051) Không thể đăng ký bản sao này vì Bạn đã sử dụng số đăng ký với một Email khác trên máy này. <br>
  Sử dụng khóa được gửi cho bạn trước đó từ lic@miko.ru',
     'lic_FailedToGetTrialKey2022' => '(2022) Không thể đăng ký bản sao này. Số đăng ký cho một công ty khác đã được tạo cho email được chỉ định. <br>

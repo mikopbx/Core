@@ -528,14 +528,12 @@ return [
     'gs_PBXRecordCalls' => 'Registrazione delle chiamate',
     'gs_RestartEveryNight' => 'Riavvia il PBX ogni notte',
     'gs_PBXCallParkingExt' => 'Numero di parcheggio',
-    'gs_PBXCallParkingEndSlot' => 'Fine parcheggio',
     'gs_PBXFeatureAttendedTransfer' => 'Combinazione per la traduzione di consulenza',
     'gs_PBXFeatureBlindTransfer' => 'Combinazione per trasferimento incondizionato',
     'gs_PBXFeatureDigitTimeout' => 'Timeout massimo tra le cifre durante l\'immissione di un numero di interno (in millisecondi)',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Tempo di ritorno della chiamata in caso di mancata risposta dopo il trasferimento con avviso',
     'gs_SIPPort' => 'Porta SIP per la registrazione dei telefoni in questa stazione',
     'gs_SIPDefaultExpiry' => 'Tempo standard in secondi per inviare Keep-Alive',
-    'gs_SIPMaxExpiry' => 'Tempo massimo in secondi',
     'gs_RTPPortTo' => 'Ultima porta RTP',
     'gs_AMIEnabled' => 'Usa l\'interfaccia AMI',
     'gs_AJAMEnabled' => 'Usa l\'interfaccia AJAM',
@@ -734,7 +732,6 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'lic_LicenseKeyOwner' => 'Titolare della licenza',
     'lic_ResetLicenseSettings' => 'Scollega chiave',
     'lic_LicenseKeyValid' => 'Il programma è registrato',
-    'lic_LicenseWarningText' => 'Vai alla <a href=\'/admin-cabinet/licensing/modify/\'> sezione licenze </a> e segui i passaggi necessari per registrare il tuo sistema',
     'lic_FailedToGetTrialKey2051' => '(2051) Impossibile registrare questa copia perché Hai già utilizzato un numero di registrazione con un\'altra e-mail su questa macchina. <br>
  Usa la chiave che ti è stata inviata in precedenza da lic@miko.ru',
     'lic_FailedToGetTrialKey2022' => '(2022) Impossibile registrare questa copia. Un numero di registrazione per un\'altra società è già stato generato nell\'email specificata. <br>

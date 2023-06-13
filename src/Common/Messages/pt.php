@@ -167,7 +167,6 @@ return [
  Use a chave enviada anteriormente para lic@miko.ru ou especifique o nome correto da empresa.',
     'lic_FailedToGetTrialKey2051' => '(2051) Falha ao registrar esta cópia porque Você já usou um número de registro com um e-mail diferente nesta máquina. <br>
  Use a chave que lhe foi enviada anteriormente por lic@miko.ru',
-    'lic_LicenseWarningHeader' => 'Esta cópia do programa não está registrada',
     'lic_LicenseKeyValid' => 'O programa está registrado',
     'lic_ResetLicenseSettings' => 'Desvincular chave',
     'lic_LicenseKeyOwner' => 'Titular da licença',
@@ -247,7 +246,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_AJAMEnabled' => 'Use a interface AJAM',
     'gs_AMIPort' => 'Porta AMI',
     'gs_AMIEnabled' => 'Usar interface AMI',
-    'gs_RTPPortFrom' => 'Primeira porta RTP',
     'gs_SIPMinExpiry' => 'Tempo mínimo em segundos',
     'gs_SIPDefaultExpiry' => 'Tempo padrão em segundos para enviar Keep-alive',
     'gs_SIPPort' => 'Porta SIP para registrar telefones nesta estação',
@@ -255,7 +253,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_PBXFeatureDigitTimeout' => 'Tempo limite máximo entre dígitos ao inserir um número de ramal (em milissegundos)',
     'gs_PBXFeatureBlindTransfer' => 'Combinação para transferência incondicional',
     'gs_PBXFeatureAttendedTransfer' => 'Combinação para tradução consultiva',
-    'gs_PBXCallParkingStartSlot' => 'Slot de estacionamento inicial',
     'gs_PBXCallParkingExt' => 'Número de estacionamento',
     'gs_RestartEveryNight' => 'Reinicie o PBX todas as noites',
     'gs_PBXRecordCalls' => 'Gravação de chamadas',

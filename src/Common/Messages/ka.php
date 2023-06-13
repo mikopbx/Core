@@ -559,7 +559,6 @@ return [
     'gs_PBXRecordCalls' => 'ზარის ჩაწერა',
     'gs_RestartEveryNight' => 'გადატვირთეთ PBX ყოველ საღამოს',
     'gs_PBXCallParkingExt' => 'პარკინგის ნომერი',
-    'gs_PBXCallParkingEndSlot' => 'პარკინგის საბოლოო სლოტი',
     'gs_PBXFeatureAttendedTransfer' => 'კომბინაცია საკონსულტაციო თარგმანისთვის',
     'gs_PBXFeatureBlindTransfer' => 'კომბინაცია უპირობო თარგმნისთვის',
     'gs_PBXFeatureDigitTimeout' => 'მაქსიმალური შეყოვნება ციფრებს შორის, გაფართოების ნომრის შეტანისას (მილიწამებში)',
@@ -570,9 +569,7 @@ return [
     'gs_SIPPort' => 'SIP პორტი ამ სადგურზე ტელეფონების რეგისტრაციისთვის',
     'gs_KeepAliveHeader' => 'რეგისტრაციის ხანგრძლივობის პარამეტრები',
     'gs_SIPDefaultExpiry' => 'სტანდარტული დრო წამებში გააგზავნეთ Keep- ცოცხალი',
-    'gs_SIPMaxExpiry' => 'მაქსიმალური დრო წამებში',
     'gs_SIPPortSettings' => 'პორტის პარამეტრები SIP სიგნალისა და RTP დიაპაზონისთვის',
-    'gs_RTPPortTo' => 'ბოლო RTP პორტი',
     'gs_AMIEnabled' => 'გამოიყენეთ AMI ინტერფეისი',
     'gs_AMIPort' => 'AMI პორტი',
     'gs_AJAMEnabled' => 'გამოიყენეთ AJAM ინტერფეისი',
@@ -802,7 +799,6 @@ return [
     'lic_LicenseKeyOwner' => 'ლიცენზიის მფლობელი',
     'lic_ResetLicenseSettings' => 'გახსენით გასაღები',
     'lic_LicenseKeyValid' => 'პროგრამა დარეგისტრირებულია',
-    'lic_LicenseWarningText' => 'გადადით <a href=\'/admin-cabinet/licensing/modify/\'> ლიცენზირების განყოფილებაში </a> და გაატარეთ აუცილებელი ზომები თქვენი სისტემის რეგისტრაციისთვის',
     'lic_FailedToGetTrialKey2051' => '(2051) ამ ასლის რეგისტრაცია ვერ მოხერხდა, რადგან თქვენ უკვე გამოიყენეთ სარეგისტრაციო ნომერი სხვა ელ.ფოსტით ამ აპარატზე. <br>
  გამოიყენეთ თქვენთვის ადრე გამოგზავნილი გასაღები მისამართის lic@miko.ru– დან',
     'lic_FailedToGetTrialKey2022' => '(2022) ამ ასლის რეგისტრაცია ვერ მოხერხდა. სხვა კომპანიის რეგისტრაციის ნომერი უკვე შეიქმნა მითითებულ ელექტრონულ მისამართზე. <br>

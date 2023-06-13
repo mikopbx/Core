@@ -297,7 +297,6 @@ return [
     'gs_AJAMEnabled' => 'Utiliser l\'interface AJAM',
     'gs_AMIPort' => 'Port AMI',
     'gs_AMIEnabled' => 'Utiliser l\'interface AMI',
-    'gs_RTPPortFrom' => 'Premier port RTP',
     'gs_SIPMinExpiry' => 'Temps minimum en secondes',
     'gs_SIPDefaultExpiry' => 'Heure standard en secondes pour envoyer Keep-Alive',
     'gs_SIPPort' => 'Port SIP pour l\'enregistrement des téléphones sur cette station',
@@ -305,7 +304,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Délai maximum entre les chiffres lors de la saisie d\'un numéro de poste (en millisecondes)',
     'gs_PBXFeatureBlindTransfer' => 'Combinaison pour transfert inconditionnel',
     'gs_PBXFeatureAttendedTransfer' => 'Combinaison pour la traduction consultative',
-    'gs_PBXCallParkingStartSlot' => 'Emplacement de stationnement initial',
     'gs_PBXCallParkingExt' => 'Numéro de parking',
     'gs_RestartEveryNight' => 'Redémarrez le PBX tous les soirs',
     'gs_PBXRecordCalls' => 'Enregistrement d\'appel',
@@ -509,7 +507,6 @@ return [
  Utilisez la clé qui vous a été envoyée plus tôt par lic@miko.ru ou indiquez le nom correct de l\'entreprise.',
     'lic_FailedToGetTrialKey2051' => '(2051) Échec de l\'enregistrement de cette copie car Vous avez déjà utilisé un numéro d\'enregistrement avec un autre e-mail sur cette machine. <br>
  Utilisez la clé qui vous a été envoyée plus tôt par lic@miko.ru',
-    'lic_LicenseWarningHeader' => 'Cette copie du programme n\'est pas enregistrée',
     'lic_LicenseKeyValid' => 'Le programme est enregistré',
     'lic_ResetLicenseSettings' => 'Dissocier la clé',
     'lic_LicenseKeyOwner' => 'Titulaire de licence',

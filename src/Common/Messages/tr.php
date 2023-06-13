@@ -233,7 +233,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Danışma aktarımından sonra cevap yoksa çağrı geri dönüş süresi',
     'gs_SIPPort' => 'Bu istasyonda telefonları kaydetmek için SIP bağlantı noktası',
     'gs_SIPDefaultExpiry' => 'Canlı Tut\'u göndermek için saniye cinsinden standart süre',
-    'gs_RTPPortFrom' => 'İlk RTP Bağlantı Noktası',
     'gs_AMIEnabled' => 'AMI arayüzünü kullan',
     'gs_AMIPort' => 'AMI Bağlantı Noktası',
     'gs_AJAMEnabled' => 'AJAM arayüzünü kullanma',
@@ -767,7 +766,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'lic_LicenseKeyProducts' => 'Aktif ürünler',
     'lic_LicenseKeyOwner' => 'Lisans sahibi',
     'lic_LicenseKeyValid' => 'Program kaydedildi',
-    'lic_LicenseWarningText' => '<a href=\'/admin-cabinet/licensing/modify/\'> lisans bölümüne </a> gidin ve sisteminizi kaydetmek için gerekli adımları izleyin',
     'lic_FailedToGetTrialKey2051' => '(2051) Bu kopya kaydedilemedi çünkü Bu makinede zaten farklı bir E-posta ile bir kayıt numarası kullandınız. <br>
  Lic@miko.ru adresinden size daha önce gönderilen anahtarı kullanın',
     'lic_FailedToGetTrialKey2022' => '(2022) Bu kopya kaydedilemedi. Belirtilen e-postaya başka bir şirket için bir kayıt numarası zaten oluşturuldu. <br>

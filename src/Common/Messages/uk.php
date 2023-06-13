@@ -536,14 +536,12 @@ return [
     'gs_PBXRecordCalls' => 'Запис розмов',
     'gs_RestartEveryNight' => 'Перезапуск PBX щоночі',
     'gs_PBXCallParkingExt' => 'Номер для паркування',
-    'gs_PBXCallParkingEndSlot' => 'Кінцевий паркувальний слот',
     'gs_PBXFeatureAttendedTransfer' => 'Комбінація для консультативного переводу',
     'gs_PBXFeatureBlindTransfer' => 'Комбінація для безумовного переводу',
     'gs_PBXFeatureDigitTimeout' => 'Максимальний таймаут між цифрами при введенні додаткового номера (в мілісекундах)',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Час повернення виклику, якщо немає відповіді після консультативного перекладу',
     'gs_SIPPort' => 'Порт SIP для реєстрації телефонів на цій станції',
     'gs_SIPDefaultExpiry' => 'Стандартний час в секундах для відправки Keep-alive',
-    'gs_SIPMaxExpiry' => 'Максимальний час в секундах',
     'gs_RTPPortTo' => 'Останній RTP порт',
     'gs_AMIEnabled' => 'Використовувати AMI інтерфейс',
     'gs_AMIPort' => 'Порт AMI',
@@ -744,7 +742,6 @@ return [
     'lic_LicenseKeyProducts' => 'Активовані продукти',
     'lic_ResetLicenseSettings' => 'Скасувати прив\'язку до ключа',
     'lic_LicenseKeyValid' => 'Програма зареєстрована',
-    'lic_LicenseWarningText' => 'Перейдіть до <a href=\'/admin-cabinet/licensing/modify/\'>розділу ліцензування</a> та виконайте необхідні дії для реєстрації вашої системи',
     'lic_FailedToGetTrialKey2051' => '(2051) Не вдалося зареєструвати цю копію, тому що ви вже використовували реєстраційний номер з іншим Email на цій машині.<br>
  Використовуйте ключ відправлення вам раніше з адреси lic@miko.ru',
     'lic_FailedToGetTrialKey2022' => '(2022) Не вдалося зареєструвати цю копію. На вказаний email вже був сгенерований реєстраційний номер для іншої компанії.<br>

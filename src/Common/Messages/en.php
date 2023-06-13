@@ -529,14 +529,12 @@ return [
     'gs_PBXRecordCalls' => 'Call recording',
     'gs_RestartEveryNight' => 'The PBX is restarted every night',
     'gs_PBXCallParkingExt' => 'Park Extension',
-    'gs_PBXCallParkingEndSlot' => 'End parking slot',
     'gs_PBXFeatureAttendedTransfer' => 'This key combination activates an attended transfer',
     'gs_PBXFeatureBlindTransfer' => 'This key combination activates a blind transfer',
     'gs_PBXFeatureDigitTimeout' => 'Maximum timeout between digits when entering an extension number (in milliseconds)',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Call return time if no answer after advisory transfer',
     'gs_SIPPort' => 'SIP port for phone registration at this station',
     'gs_SIPDefaultExpiry' => 'Default expiration time in seconds for contacts that are dynamically bound to an AoR',
-    'gs_SIPMaxExpiry' => 'Maximum time to keep an AoR',
     'gs_RTPPortTo' => 'Last RTP port',
     'gs_AMIEnabled' => 'Use the AMI interface',
     'gs_AMIPort' => 'AMI port',
@@ -742,7 +740,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_LicenseKeyOwner' => 'License key owner',
     'lic_ResetLicenseSettings' => 'Reset license key',
     'lic_LicenseKeyValid' => 'Registration number is OK',
-    'lic_LicenseWarningText' => 'Go to <a href=\'/admin-cabinet/licensing/modify/\'>licensing</a> and follow the steps to registered your system',
     'lic_FailedToGetTrialKey2051' => '(2051) Failed to register this copy because you have already used a registration number with a different Email on this machine. <br>
  Use the key sent to you earlier from the address lic@miko.ru',
     'lic_FailedToGetTrialKey2022' => '(2022) Failed to register this copy. A registration number for another company has already been generated to the specified email address. <br>
