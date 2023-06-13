@@ -48,10 +48,12 @@ require_once('Globals.php');
 class ConsoleMenu{
 
     private bool $isLiveCd;
+    private bool $isDocker;
 
     public function __construct()
     {
         $this->isLiveCd = file_exists('/offload/livecd');
+        $this->isDocker = Util::isDocker();
     }
 
     /**
@@ -681,7 +683,6 @@ class ConsoleMenu{
 
         // Set Cyrillic font for display
         Util::setCyrillicFont();
-
         $separator      = '-';
         $titleWidth     = 75;
         $title          = str_repeat($separator, 2) . '  ' . Util::translate("PBX console setup") . '  ';
@@ -703,21 +704,30 @@ class ConsoleMenu{
             )
             ->setWidth($titleWidth)
             ->addItem(' ', static function (CliMenu $menu) {})
-            ->addSubMenu('[1] Change language', Closure::fromCallable([$this, 'setupLanguage']))
-            ->addSubMenu('[2] ' . Util::translate('Set up LAN IP address'), Closure::fromCallable([$this, 'setupLan']))
-            ->addSubMenu('[3] ' . Util::translate('Reboot system'),Closure::fromCallable([$this, 'setupReboot']))
-            ->addItem('[4] ' . Util::translate('Ping host'),Closure::fromCallable([$this, 'pingAction']))
-            ->addItem('[5] ' . Util::translate('Firewall').$this->firewallWarning(), Closure::fromCallable([$this, 'setupFirewall']))
-            ->addSubMenu('[6] ' . Util::translate('Storage').$this->storageWarning(), Closure::fromCallable([$this, 'setupStorage']))
-            ->addItem( '[7] ' . Util::translate('Reset admin password'), Closure::fromCallable([$this, 'resetPassword']) );
+            ->addSubMenu('[1] Change language', Closure::fromCallable([$this, 'setupLanguage']));
 
-        // Add items for live CD options
-        if ($this->isLiveCd) {
+        if($this->isDocker){
+            $menu->addSubMenu('[3] ' . Util::translate('Reboot system'),Closure::fromCallable([$this, 'setupReboot']))
+                ->addItem('[4] ' . Util::translate('Ping host'),Closure::fromCallable([$this, 'pingAction']))
+                ->addItem('[5] ' . Util::translate('Firewall').$this->firewallWarning(), Closure::fromCallable([$this, 'setupFirewall']))
+                ->addItem( '[7] ' . Util::translate('Reset admin password'), Closure::fromCallable([$this, 'resetPassword']) );
+        }elseif ($this->isLiveCd){
+            $menu->addSubMenu('[2] ' . Util::translate('Set up LAN IP address'), Closure::fromCallable([$this, 'setupLan']))
+                ->addSubMenu('[3] ' . Util::translate('Reboot system'),Closure::fromCallable([$this, 'setupReboot']))
+                ->addItem('[4] ' . Util::translate('Ping host'),Closure::fromCallable([$this, 'pingAction']));
+            // Add items for live CD options
             if (file_exists('/conf.recover/conf')) {
                 $menu->addItem('[8] ' . Util::translate('Install or recover'), Closure::fromCallable([$this, 'installRecoveryAction']));
             } else {
                 $menu->addItem('[8] ' . Util::translate('Install on Hard Drive'), Closure::fromCallable([$this, 'installAction']));
             }
+        }else{
+            $menu->addSubMenu('[2] ' . Util::translate('Set up LAN IP address'), Closure::fromCallable([$this, 'setupLan']))
+                ->addSubMenu('[3] ' . Util::translate('Reboot system'),Closure::fromCallable([$this, 'setupReboot']))
+                ->addItem('[4] ' . Util::translate('Ping host'),Closure::fromCallable([$this, 'pingAction']))
+                ->addItem('[5] ' . Util::translate('Firewall').$this->firewallWarning(), Closure::fromCallable([$this, 'setupFirewall']))
+                ->addSubMenu('[6] ' . Util::translate('Storage').$this->storageWarning(), Closure::fromCallable([$this, 'setupStorage']))
+                ->addItem( '[7] ' . Util::translate('Reset admin password'), Closure::fromCallable([$this, 'resetPassword']) );
         }
         $menu->addItem('[9] ' . Util::translate('Console'),Closure::fromCallable([$this, 'consoleAction']))
              ->disableDefaultItems();
