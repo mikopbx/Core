@@ -1,10 +1,14 @@
+{% set controller=dispatcher.getControllerName() %}
+{% set action=dispatcher.getActionName() %}
+
 <!DOCTYPE html>
-<html>
+<html lang="{{ WebAdminLanguage }}">
 <head>
     <meta charset="utf-8">
     <title>{{ get_title() }}</title>
-    {{ assets.outputCss('SemanticUICSS') }}
-    {{ assets.outputCss('headerCSS') }}
+    {{ assets.outputCombinedHeaderCSS(controller, action) }}
+{#    {{ assets.outputCss('SemanticUICSS') }}#}
+{#    {{ assets.outputCss('headerCSS') }}#}
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url() }}assets/img/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url() }}assets/img/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url() }}assets/img/favicon-16x16.png">
@@ -30,18 +34,20 @@
 		var globalAvailableLanguages = '{{ AvailableLanguages }}';
     </script>
 
-    {{ assets.outputJs('headerSentryJS') }}
-    {{ assets.outputJs('headerPBXJS') }}
-    {{ assets.outputJs('headerJS') }}
+    {{ assets.outputCombinedHeaderJs(controller, action) }}
+{#    {{ assets.outputJs('headerSentryJS') }}#}
+{#    {{ assets.outputJs('headerPBXJS') }}#}
+{#    {{ assets.outputJs('headerJS') }}#}
 
 </head>
 <body class="pushable">
 {{ content() }}
 
-{{ assets.outputJs('SemanticUIJS') }}
-{{ assets.outputJs('footerACE') }}
-{{ assets.outputJs('footerLoc') }}
-{{ assets.outputJs('footerPBXJS') }}
+{{ assets.outputCombinedFooterJs(controller, action) }}
+{#{{ assets.outputJs('SemanticUIJS') }}#}
+{#{{ assets.outputJs('footerACE') }}#}
+{#{{ assets.outputJs('footerLoc') }}#}
+{#{{ assets.outputJs('footerPBXJS') }}#}
 {{ assets.outputInlineJs() }}
 {{ assets.outputJs('footerJS') }}
 

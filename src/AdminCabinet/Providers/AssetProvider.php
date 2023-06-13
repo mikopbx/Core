@@ -119,6 +119,7 @@ class AssetProvider implements ServiceProviderInterface
 
         $this->headerCollectionJSForExtensions = $this->manager->collection('headerJS');
         $this->headerCollectionJSForExtensions->setPrefix('assets/');
+
         $this->footerCollectionJSForExtensions = $this->manager->collection('footerJS');
         $this->footerCollectionJSForExtensions->setPrefix('assets/');
         $this->headerCollectionJS = $this->manager->collection('headerPBXJS');
