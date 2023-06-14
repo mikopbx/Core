@@ -28,16 +28,14 @@ const sidebarMenuShowActive = {
      * jQuery object for the sidebar menu.
      * @type {jQuery}
      */
-    $sidebarMenu: $('#sidebar-menu'),
+    $sidebarMenu: $('#toc'),
 
     /**
      * Initializes the sidebar menu and sets the active menu item.
      */
     initialize() {
-        sidebarMenuShowActive.$sidebarMenu
-            .sidebar({})
-            .sidebar('setting', 'transition', 'push')
-            .sidebar('setting', 'dimPage', false);
+        sidebarMenuShowActive.$sidebarMenu.sidebar('setting', 'transition', 'overlay');
+        sidebarMenuShowActive.$sidebarMenu.sidebar('attach events', '#sidebar-menu-button');
         sidebarMenuShowActive.makeMenuActiveElement();
     },
 
@@ -46,7 +44,7 @@ const sidebarMenuShowActive = {
      */
     makeMenuActiveElement() {
         const current = window.location.href;
-        $.each($('#sidebar-menu a'), (index, value) => {
+        $.each($('.sidebar-menu a'), (index, value) => {
             const $this = $(value);
             $this.removeClass('active');
             // if the current path is like this link, make it active

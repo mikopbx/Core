@@ -40,7 +40,7 @@
 {#    {{ assets.outputJs('headerJS') }}#}
 
 </head>
-<body class="pushable">
+<body>
 {{ content() }}
 
 {{ assets.outputCombinedFooterJs(controller, action) }}

@@ -17,7 +17,7 @@
  */
 
 div.pusher {
-    padding-top: 55px
+    padding-top: 40px
 }
 
 body > .grid {
@@ -43,12 +43,8 @@ body {
 Add gap on middle screen size
  */
 @media only screen and (min-width: 600px) and (max-width: 1400px) {
-    #main {
-        padding-left: 10px;
-        padding-right: 10px;
-    }
-}
 
+}
 
 @media only screen and (min-width: 1000px) and (max-width: 1220px) {
     #top-menu-search {
@@ -75,9 +71,85 @@ Add gap on middle screen size
     padding-bottom: 50px;
 }
 
-.ui.sidebar.visible ~ .pusher {
-    width: calc(100% - 260px);
+/*.ui.sidebar.visible ~ .pusher {*/
+/*    width: calc(100% - 260px);*/
+/*}*/
+
+.pusher {
+    display: block;
+    min-height: 0;
+    flex-direction: initial;
 }
+.pusher > .full.height {
+    display: block;
+    flex: none !important;
+}
+
+
+/*******************************
+         Sidebar Layout
+*******************************/
+
+#example > .pusher > .full.height {
+    display: flex;
+    flex-direction: row;
+}
+#example:not(.site) > .pusher > .full.height {
+    background-color: #FFFFFF;
+}
+
+/* page layout */
+.full.height > .toc {
+    position: fixed;
+    z-index: 1;
+    background-color: #1b1c1d;
+    width: 260px;
+    flex: 0 0 auto;
+}
+.full.height > .toc .ui.menu {
+    border-radius: 0;
+    border-width: 0 1px 0 0;
+    box-shadow: none;
+    margin: 0;
+    width: inherit;
+    will-change: transform;
+    max-height: 100vh;
+    overflow: auto;
+}
+.article {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: 265px;
+    margin-right: 5px;
+    padding-top: 20px;
+}
+
+.full.height > .toc .ui.menu::-webkit-scrollbar {
+    -webkit-appearance: none;
+}
+.full.height > .toc .ui.menu::-webkit-scrollbar-track {
+    background-color: rgba(255, 255, 255, 0);
+}
+.full.height > .toc .ui.menu::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0);
+}
+.full.height > .toc .ui.menu:hover::-webkit-scrollbar-track {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.full.height > .toc .ui.menu:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.pusher > .footer,
+.article > .footer {
+    border-top: 1px solid #DDDDDD;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.08) inset;
+    background-color: #FAFAFA;
+    padding-top: 2em;
+}
+
+
+
 
 @media only screen and (max-width: 768px) {
     #top-left-logo {
@@ -89,11 +161,6 @@ Add gap on middle screen size
     #top-menu-search {
         min-width: 300px;
     }
-    #main {
-        padding-left: 5px;
-        padding-right: 5px;
-    }
-
     .hide-on-mobile {
         display: none;
     }
@@ -497,3 +564,37 @@ Limit fields width
 }
 
 
+/* Remove Fixed Sidebar /  Show Top Bar */
+@media only screen and (max-width: 1144px) {
+
+    /* Hide Fixed Sidebar */
+    .full.height > .toc {
+        display: none;
+    }
+    .full.height > .article {
+        margin-left: 0px;
+    }
+
+    /* Less Left Padding */
+    .main.container,
+    .fixed.menu > .container {
+        margin-left: 2em !important;
+    }
+
+
+    /* 100% Menu Width */
+    .fixed.menu > .container {
+        margin-left: 0em !important;
+        margin-right: 0em !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+
+    #top-left-logo {
+        display: none;
+    }
+
+    #sidebar-menu-button {
+        display: block;
+    }
+}
