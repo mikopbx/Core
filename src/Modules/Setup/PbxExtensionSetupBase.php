@@ -20,6 +20,7 @@
 namespace MikoPBX\Modules\Setup;
 
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
@@ -258,6 +259,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         // Volt
         $this->cleanupVoltCache();
 
+        // Recreate version hash for js files and translations
+        PBXConfModulesProvider::getVersionsHash(true);
+
         return true;
     }
 
@@ -412,6 +416,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
         // Volt
         $this->cleanupVoltCache();
+
+        // Recreate version hash for js files and translations
+        PBXConfModulesProvider::getVersionsHash(true);
 
         return true;
     }
