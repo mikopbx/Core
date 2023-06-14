@@ -1141,4 +1141,7 @@ return [
     'ext_Licensing' => 'ლიცენზიის მენეჯმენტი',
     'tf_TabGeneralSettings' => 'ძირითადი პარამეტრები',
     'tf_TabRoutsRestriction' => 'მოქმედებს არჩეული მარშრუტებისთვის',
+    'gs_PBXCallParkingSlotRange' => 'პარკირების ადგილების დიაპაზონი',
+    'gs_SIPExpiryRange' => 'მინიმალური და მაქსიმალური დრო წამებში',
+    'gs_RTPPortRange' => 'RTP პორტის დიაპაზონი',
 ];

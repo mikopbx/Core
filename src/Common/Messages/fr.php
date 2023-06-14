@@ -1141,4 +1141,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ext_Licensing' => 'Gestion des licences',
     'tf_TabGeneralSettings' => 'Paramètres de base',
     'tf_TabRoutsRestriction' => 'Valable pour les itinéraires sélectionnés',
+    'gs_PBXCallParkingSlotRange' => 'Gamme de places de stationnement',
+    'gs_SIPExpiryRange' => 'Temps minimum et maximum en secondes',
+    'gs_RTPPortRange' => 'Plage de ports RTP',
 ];

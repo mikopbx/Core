@@ -64,7 +64,7 @@ return [
     'ShortDaySaturday' => 'So',
     'Today' => 'Dnes',
     'Now' => 'Teď',
-    'MetaTegHeadDescription' => '',
+    'MetaTegHeadDescription' => 'Telefonní systém pro podnikání',
     'Loading' => 'Načítání',
     'qf_Qualify' => 'Podpora NAT Session',
     'qf_Frequency' => 'Frekvence odesílání v sec.',
@@ -1141,4 +1141,7 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'ext_Licensing' => 'Správa licencí',
     'tf_TabGeneralSettings' => 'základní nastavení',
     'tf_TabRoutsRestriction' => 'Platí pro vybrané trasy',
+    'gs_PBXCallParkingSlotRange' => 'Nabídka parkovacích míst',
+    'gs_SIPExpiryRange' => 'Minimální a maximální čas v sekundách',
+    'gs_RTPPortRange' => 'Rozsah portů RTP',
 ];

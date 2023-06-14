@@ -1144,4 +1144,7 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'ext_Licensing' => 'Lizenzverwaltung',
     'tf_TabGeneralSettings' => 'Grundeinstellungen',
     'tf_TabRoutsRestriction' => 'Gültig für ausgewählte Routen',
+    'gs_PBXCallParkingSlotRange' => 'Auswahl an Parkplätzen',
+    'gs_SIPExpiryRange' => 'Minimale und maximale Zeit in Sekunden',
+    'gs_RTPPortRange' => 'RTP-Portbereich',
 ];

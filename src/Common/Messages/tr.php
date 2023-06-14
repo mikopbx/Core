@@ -1141,4 +1141,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'ext_Licensing' => 'Lisans yönetimi',
     'tf_TabGeneralSettings' => 'temel ayarlar',
     'tf_TabRoutsRestriction' => 'Seçilen rotalar için geçerli',
+    'gs_SIPExpiryRange' => 'Saniye cinsinden minimum ve maksimum süre',
+    'gs_RTPPortRange' => 'RTP bağlantı noktası aralığı',
+    'gs_PBXCallParkingSlotRange' => 'Park yeri aralığı',
 ];

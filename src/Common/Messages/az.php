@@ -1141,4 +1141,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ext_Licensing' => 'Lisenziya idarəetməsi',
     'tf_TabGeneralSettings' => 'əsas parametrlər',
     'tf_TabRoutsRestriction' => 'Seçilmiş marşrutlar üçün etibarlıdır',
+    'gs_PBXCallParkingSlotRange' => 'Dayanacaq yerlərinin çeşidi',
+    'gs_SIPExpiryRange' => 'Saniyədə minimum və maksimum vaxt',
+    'gs_RTPPortRange' => 'RTP port diapazonu',
 ];

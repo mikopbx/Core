@@ -1141,4 +1141,7 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'ext_Licensing' => 'Administration af licens',
     'tf_TabRoutsRestriction' => 'Gælder for udvalgte ruter',
     'tf_TabGeneralSettings' => 'grundlæggende indstillinger',
+    'gs_RTPPortRange' => 'RTP-portområde',
+    'gs_PBXCallParkingSlotRange' => 'Udvalg af parkeringspladser',
+    'gs_SIPExpiryRange' => 'Minimum og maksimum tid i sekunder',
 ];

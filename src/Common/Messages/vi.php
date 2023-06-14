@@ -1141,4 +1141,7 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'ext_Licensing' => 'Quản lý Giấy phép',
     'tf_TabGeneralSettings' => 'cài đặt cơ bản',
     'tf_TabRoutsRestriction' => 'Hợp lệ cho các tuyến đường đã chọn',
+    'gs_RTPPortRange' => 'Phạm vi cổng RTP',
+    'gs_SIPExpiryRange' => 'Thời gian tối thiểu và tối đa tính bằng giây',
+    'gs_PBXCallParkingSlotRange' => 'Phạm vi chỗ đậu xe',
 ];

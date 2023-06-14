@@ -1141,4 +1141,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ext_Licensing' => 'Licenshantering',
     'tf_TabGeneralSettings' => 'grund inställningar',
     'tf_TabRoutsRestriction' => 'Gäller för utvalda rutter',
+    'gs_SIPExpiryRange' => 'Minsta och maximala tid i sekunder',
+    'gs_RTPPortRange' => 'RTP-portintervall',
+    'gs_PBXCallParkingSlotRange' => 'Utbud av parkeringsplatser',
 ];

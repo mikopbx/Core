@@ -1141,4 +1141,7 @@ return [
     'ext_Licensing' => '许可证管理',
     'tf_TabGeneralSettings' => '基本设置',
     'tf_TabRoutsRestriction' => '适用于选定的路线',
+    'gs_PBXCallParkingSlotRange' => '车位范围',
+    'gs_SIPExpiryRange' => '以秒为单位的最小和最大时间',
+    'gs_RTPPortRange' => 'RTP端口范围',
 ];

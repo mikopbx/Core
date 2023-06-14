@@ -1141,4 +1141,7 @@ return [
     'ext_Licensing' => 'Управління ліцензією',
     'tf_TabGeneralSettings' => 'Основні налаштування',
     'tf_TabRoutsRestriction' => 'Діє для вибраних маршрутів',
+    'gs_RTPPortRange' => 'Діапазон RTP портів',
+    'gs_PBXCallParkingSlotRange' => 'Діапазон слотів для паркування',
+    'gs_SIPExpiryRange' => 'Мінімальний та максимальний час у секундах',
 ];

@@ -1141,4 +1141,7 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'ext_Licensing' => 'Gestión de licencias',
     'tf_TabGeneralSettings' => 'ajustes básicos',
     'tf_TabRoutsRestriction' => 'Válido para rutas seleccionadas',
+    'gs_RTPPortRange' => 'Rango de puertos RTP',
+    'gs_PBXCallParkingSlotRange' => 'Gama de plazas de aparcamiento',
+    'gs_SIPExpiryRange' => 'Tiempo mínimo y máximo en segundos',
 ];

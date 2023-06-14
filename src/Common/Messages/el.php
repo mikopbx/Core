@@ -1141,4 +1141,7 @@ return [
     'ext_Licensing' => 'Διαχείριση αδειών',
     'tf_TabGeneralSettings' => 'βασικές ρυθμίσεις',
     'tf_TabRoutsRestriction' => 'Ισχύει για επιλεγμένες διαδρομές',
+    'gs_SIPExpiryRange' => 'Ελάχιστος και μέγιστος χρόνος σε δευτερόλεπτα',
+    'gs_PBXCallParkingSlotRange' => 'Εύρος θέσεων στάθμευσης',
+    'gs_RTPPortRange' => 'Εύρος θύρας RTP',
 ];

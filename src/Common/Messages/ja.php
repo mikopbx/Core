@@ -1141,4 +1141,7 @@ return [
     'ext_InstalledModules' => 'インストールされているモジュール',
     'tf_TabGeneralSettings' => '基本設定',
     'tf_TabRoutsRestriction' => '選択したルートに有効',
+    'gs_PBXCallParkingSlotRange' => '駐車枠の範囲',
+    'gs_SIPExpiryRange' => '最小時間と最大時間（秒）',
+    'gs_RTPPortRange' => 'RTP ポート範囲',
 ];

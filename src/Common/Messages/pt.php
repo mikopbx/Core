@@ -1141,4 +1141,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ext_Licensing' => 'Gerenciamento de licenças',
     'tf_TabGeneralSettings' => 'configurações básicas',
     'tf_TabRoutsRestriction' => 'Válido para rotas selecionadas',
+    'gs_PBXCallParkingSlotRange' => 'Gama de lugares de estacionamento',
+    'gs_SIPExpiryRange' => 'Tempo mínimo e máximo em segundos',
+    'gs_RTPPortRange' => 'Intervalo de portas RTP',
 ];

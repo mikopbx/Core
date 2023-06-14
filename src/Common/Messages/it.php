@@ -1141,4 +1141,7 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'ext_Licensing' => 'Gestione delle licenze',
     'tf_TabGeneralSettings' => 'impostazioni di base',
     'tf_TabRoutsRestriction' => 'Valido per percorsi selezionati',
+    'gs_PBXCallParkingSlotRange' => 'Gamma di parcheggi',
+    'gs_SIPExpiryRange' => 'Tempo minimo e massimo in secondi',
+    'gs_RTPPortRange' => 'Intervallo di porte RTP',
 ];

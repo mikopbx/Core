@@ -1144,4 +1144,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'ext_Marketplace' => 'Marketplace',
     'tf_TabGeneralSettings' => 'basic settings',
     'tf_TabRoutsRestriction' => 'Valid for selected routes',
+    'gs_RTPPortRange' => 'RTP port range',
+    'gs_PBXCallParkingSlotRange' => 'Range of parking slots',
+    'gs_SIPExpiryRange' => 'Minimum and maximum time in seconds',
 ];

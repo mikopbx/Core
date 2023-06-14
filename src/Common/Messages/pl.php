@@ -1141,4 +1141,7 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'ext_Licensing' => 'Zarządzanie licencjami',
     'tf_TabGeneralSettings' => 'podstawowe ustawienia',
     'tf_TabRoutsRestriction' => 'Obowiązuje na wybrane trasy',
+    'gs_RTPPortRange' => 'Zakres portów RTP',
+    'gs_PBXCallParkingSlotRange' => 'Zakres miejsc parkingowych',
+    'gs_SIPExpiryRange' => 'Minimalny i maksymalny czas w sekundach',
 ];
