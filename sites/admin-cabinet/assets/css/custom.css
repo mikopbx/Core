@@ -58,6 +58,11 @@ Add gap on middle screen size
     .hide-on-mobile {
         display: none;
     }
+
+    .hide-on-tablet{
+        display: none;
+    }
+
 }
 
 
@@ -147,9 +152,6 @@ Add gap on middle screen size
     background-color: #FAFAFA;
     padding-top: 2em;
 }
-
-
-
 
 @media only screen and (max-width: 768px) {
     #top-left-logo {
@@ -597,4 +599,9 @@ Limit fields width
     #sidebar-menu-button {
         display: block;
     }
+
+    .hide-on-tablet{
+        display: none;
+    }
+
 }

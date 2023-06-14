@@ -41,7 +41,50 @@
 
 </head>
 <body>
-{{ content() }}
+{% set controller=dispatcher.getControllerName() %}
+{% set action=dispatcher.getActionName() %}
+
+{% if (controller!="Session") %}
+    {{ partial("partials/topMenu") }}
+    <div class="ui vertical menu left inverted sidebar sidebar-menu" id="toc">
+        <a class="item logo top-left-logo" href="{{ url.get('index') }}">
+            <img src="{{ urlToLogo }}" class="ui small image"/>
+        </a>
+        {{ elements.getMenu() }}
+    </div>
+    <div id="main" class="ui main-content-wrapper pusher">
+        <div class="full height">
+            <div class="toc">
+                {{ partial("partials/leftsidebar") }}
+            </div>
+            <!-- ARTICLE-->
+            <div class="article">
+                <div id="debug-info"></div>
+
+                {{ content() }}
+                <!--CONNECTION DIMMER-->
+                <div class="ui page dimmer transition hidden" id="connection-dimmer">
+                    <div class="content">
+                        <h2 class="ui inverted icon header">
+                            <i class="asterisk loading icon"></i>
+                            {{ t._("DimmerWaitForPBXIsOnline") }}
+                        </h2>
+                        <div>{{ t._("DimmerWaitForPBXOnlineDescription") }}</div>
+                    </div>
+                </div>
+                <!--/ CONNECTION DIMMER-->
+            </div>
+            <!-- /ARTICLE-->
+        </div>
+    </div>
+{% else %}
+    <div class="ui middle aligned grid">
+        <div class="column">
+            {{ content() }}
+        </div>
+    </div>
+    <div id="pbx-version">MIKOPBX ver: {{ PBXVersion }}</div>
+{% endif %}
 
 {{ assets.outputCombinedFooterJs(controller, action) }}
 {#{{ assets.outputJs('SemanticUIJS') }}#}
