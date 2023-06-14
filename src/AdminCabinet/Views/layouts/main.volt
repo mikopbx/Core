@@ -1,5 +1,7 @@
 {% set controller=dispatcher.getControllerName() %}
 {% set action=dispatcher.getActionName() %}
+
+{% if (controller!="Session") %}
 <div class="ui container" id="main-content-container">
 
     <!--ADVICES-->
@@ -61,4 +63,6 @@
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Footer')]) }}
     <div id="pbx-version">MIKOPBX ver: {{ PBXVersion }}</div>
 </div>
-
+{% else %}
+    {{ content() }}
+{% endif %}
