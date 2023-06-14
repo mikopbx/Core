@@ -120,14 +120,19 @@ class SSHConf extends Injectable
      */
     public function updateShellPassword(): void
     {
-        $password       = $this->mikoPBXConfig->getGeneralSettings('SSHPassword');
-        $hashString     = $this->mikoPBXConfig->getGeneralSettings('SSHPasswordHashString');
+        $password           = $this->mikoPBXConfig->getGeneralSettings('SSHPassword');
+        $hashString         = $this->mikoPBXConfig->getGeneralSettings('SSHPasswordHashString');
+        $disablePassLogin   = $this->mikoPBXConfig->getGeneralSettings('SSHDisablePasswordLogins');
+
         $echoPath       = Util::which('echo');
         $chPasswdPath   = Util::which('chpasswd');
         $passwdPath   = Util::which('passwd');
-        Processes::mwExec("{$echoPath} 'root:$password' | {$chPasswdPath}");
-
         Processes::mwExec("{$passwdPath} -l www");
+        if($disablePassLogin === '1'){
+            Processes::mwExec("{$passwdPath} -l root");
+        }else{
+            Processes::mwExec("{$echoPath} 'root:$password' | {$chPasswdPath}");
+        }
         $this->mikoPBXConfig->setGeneralSettings('SSHPasswordHash',       md5_file('/etc/passwd'));
         if($hashString !== md5($password)){
             $this->mikoPBXConfig->setGeneralSettings('SSHPasswordHashString', md5($password));

@@ -81,8 +81,8 @@ class CloudProvisioning
     /**
      * Updates the SSH password.
      */
-    private function updateSshPassword():void{
-        $data = 'S'.md5(time());
+    private function updateSshPassword($hashSalt):void{
+        $data = md5(shell_exec(Util::which('ifconfig')).$hashSalt.time());
         $this->updatePbxSettings('SSHPassword', $data);
         $this->updatePbxSettings('SSHDisablePasswordLogins', '1');
         $confSsh = new SSHConf();
@@ -182,8 +182,10 @@ class CloudProvisioning
         $hostname = $data['name']??'';
         $extIp= $data['networkInterfaces'][0]['accessConfigs'][0]['externalIp']??'';
         $this->updateLanSettings($hostname, $extIp);
-        $this->updateSshPassword();
-        $this->updateWebPassword($data['id']??'');
+
+        $id = $data['id']??'';
+        $this->updateSshPassword($id);
+        $this->updateWebPassword($id);
         return true;
     }
 
@@ -243,11 +245,10 @@ class CloudProvisioning
         }
         $this->updateSSHKeys($sshKey);
         $this->updateLanSettings($hostname, $extIp);
-        $this->updateSshPassword();
 
-        $webPassword = $this->getMetaDataMCS('instance-id');
-        $this->updateWebPassword($webPassword);
-
+        $id = $this->getMetaDataMCS('instance-id');
+        $this->updateSshPassword($id);
+        $this->updateWebPassword($id);
         return true;
     }
 
@@ -332,7 +333,7 @@ class CloudProvisioning
             $arrKeys[]= $keeData['keyData'];
         }
         $this->updateSSHKeys(implode(PHP_EOL, $arrKeys));
-        $this->updateSshPassword();
+        $this->updateSshPassword($resultRequest);
         return $result;
     }
 

@@ -61,6 +61,10 @@ mount -t devpts -o gid=5,mode=620 devpts /dev/pts
 # Setting up loopback network interface
 /bin/busybox ifconfig lo 127.0.0.1
 
+# Disable password login for root user
+# The login will be configured later when setting the password
+/bin/busybox passwd -l root
+
 # Setting kernel parameters
 /sbin/sysctl -w kernel.printk="3 4 1 6" >/dev/null 2>/dev/null
 /sbin/sysctl -w net.ipv6.conf.all.disable_ipv6=1 >/dev/null 2>/dev/null
