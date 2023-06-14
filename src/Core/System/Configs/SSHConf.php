@@ -89,9 +89,9 @@ class SSHConf extends Injectable
             }
         }
         $ssh_port = escapeshellcmd($this->mikoPBXConfig->getGeneralSettings('SSHPort'));
-        // Restart dropbear
+        // Set root password
         $this->updateShellPassword();
-
+        // Restart ssh  server
         Processes::killByName('dropbear');
         usleep(500000);
         $result = Processes::mwExec("{$dropbearPath} -p '{$ssh_port}' $options -c /etc/rc/hello > /var/log/dropbear_start.log");
