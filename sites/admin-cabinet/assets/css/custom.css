@@ -110,6 +110,7 @@ Add gap on middle screen size
     background-color: #1b1c1d;
     width: 260px;
     flex: 0 0 auto;
+    height: 100vh;
 }
 .full.height > .toc .ui.menu {
     border-radius: 0;
