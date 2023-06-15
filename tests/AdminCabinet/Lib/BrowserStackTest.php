@@ -82,6 +82,9 @@ class BrowserStackTest extends TestCase
         // Create a new WebDriver instance with the specified URL and capabilities
         self::$driver = RemoteWebDriver::create($url, $caps);
 
+        // Maximize Browser size
+        self::$driver->manage()->window()->maximize();
+
         // Set the initial test result and failure conditions variables
         self::$testResult = true;
         self::$failureConditions = [];
