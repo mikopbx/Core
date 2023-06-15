@@ -46,16 +46,11 @@
 
 {% if (controller!="Session") %}
     {{ partial("partials/topMenu") }}
-    <div class="ui vertical menu left inverted sidebar sidebar-menu" id="toc">
-        <a class="item logo top-left-logo" href="{{ url.get('index') }}">
-            <img src="{{ urlToLogo }}" class="ui small image"/>
-        </a>
-        {{ elements.getMenu() }}
-    </div>
+    {{ partial("partials/leftsidebar",['sidebarId':'toc', 'sidebarClass':'sidebar sidebar-menu', 'showLogo':true]) }}
     <div id="main" class="ui main-content-wrapper pusher">
         <div class="full height">
             <div class="toc">
-                {{ partial("partials/leftsidebar") }}
+                {{ partial("partials/leftsidebar",['sidebarId':'sidebar-menu',  'sidebarClass':'sidebar-menu', 'showLogo':false]) }}
             </div>
             <!-- ARTICLE-->
             <div class="article">

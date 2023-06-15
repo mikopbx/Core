@@ -39,46 +39,15 @@ body {
     white-space: nowrap;
 }
 
-/**
-Add gap on middle screen size
- */
-@media only screen and (min-width: 600px) and (max-width: 1400px) {
 
-}
-
-@media only screen and (min-width: 1000px) and (max-width: 1220px) {
-    #top-menu-search {
-        min-width: 350px;
-    }
-}
-@media only screen and (min-width: 768px) and (max-width: 1000px) {
-    #top-menu-search {
-        min-width: 400px;
-    }
-    .hide-on-mobile {
-        display: none;
-    }
-
-    .hide-on-tablet{
-        display: none;
-    }
-
-}
-
-
-/* Sidebar menu */
+/* Sidebar menu button */
 #sidebar-menu-button {
     display: none;
 }
 
-#sidebar-menu {
-    top: 40px;
+.sidebar-menu {
     padding-bottom: 50px;
 }
-
-/*.ui.sidebar.visible ~ .pusher {*/
-/*    width: calc(100% - 260px);*/
-/*}*/
 
 .pusher {
     display: block;
@@ -152,21 +121,6 @@ Add gap on middle screen size
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.08) inset;
     background-color: #FAFAFA;
     padding-top: 2em;
-}
-
-@media only screen and (max-width: 768px) {
-    #top-left-logo {
-        display: none;
-    }
-    #sidebar-menu-button {
-        display: block;
-    }
-    #top-menu-search {
-        min-width: 300px;
-    }
-    .hide-on-mobile {
-        display: none;
-    }
 }
 
 /* Drag and prop tables point view BEGIN*/
@@ -574,6 +528,7 @@ Limit fields width
     .full.height > .toc {
         display: none;
     }
+
     .full.height > .article {
         margin-left: 0px;
     }
@@ -601,8 +556,43 @@ Limit fields width
         display: block;
     }
 
-    .hide-on-tablet{
+}
+
+@media only screen and (min-width: 1000px) and (max-width: 1220px) {
+    #top-menu-search {
+        min-width: 350px;
+    }
+}
+
+@media only screen and (min-width: 768px) and (max-width: 1000px) {
+    #top-menu-search {
+        min-width: 400px;
+    }
+    .hide-on-mobile {
         display: none;
     }
 
+    .ui.inverted.menu .item.hide-on-tablet{
+        display: none;
+    }
+
+}
+
+
+@media only screen and (max-width: 768px) {
+    #top-left-logo {
+        display: none;
+    }
+    #sidebar-menu-button {
+        display: block;
+    }
+    #top-menu-search {
+        min-width: 300px;
+    }
+    .hide-on-mobile {
+        display: none;
+    }
+    .ui.inverted.menu .item.hide-on-tablet{
+        display: none;
+    }
 }

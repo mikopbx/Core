@@ -17,7 +17,7 @@
         </div>
         <div class="results"></div>
     </div>
-    <a class="item hide-on-mobile" href="{{ urlToWiki }}" target="_blank" data-content="{{ t._("GoToWikiDocumentation") }}"
+    <a class="item hide-on-mobile hide-on-tablet" href="{{ urlToWiki }}" target="_blank" data-content="{{ t._("GoToWikiDocumentation") }}"
        data-variation="wide">
         <i class="question icon"></i>
     </a>
