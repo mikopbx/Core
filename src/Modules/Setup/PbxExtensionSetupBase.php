@@ -205,6 +205,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $this->messages[] = ' Apply files rights error';
                 $result           = false;
             }
+
+            // Recreate version hash for js files and translations
+            PBXConfModulesProvider::getVersionsHash(true);
+
         } catch (Throwable $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
@@ -258,9 +262,6 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
         // Volt
         $this->cleanupVoltCache();
-
-        // Recreate version hash for js files and translations
-        PBXConfModulesProvider::getVersionsHash(true);
 
         return true;
     }
@@ -331,6 +332,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 $this->messages[] = ' unInstallFiles error';
                 $result           = false;
             }
+
+            // Recreate version hash for js files and translations
+            PBXConfModulesProvider::getVersionsHash(true);
+
         } catch (Throwable $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
@@ -416,9 +421,6 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
         // Volt
         $this->cleanupVoltCache();
-
-        // Recreate version hash for js files and translations
-        PBXConfModulesProvider::getVersionsHash(true);
 
         return true;
     }
