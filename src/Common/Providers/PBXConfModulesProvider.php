@@ -133,7 +133,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         $version = $cache->get(PBXConfModulesProvider::VERSION_HASH) ?? '';
         if (empty($version) or $recreate){
             $result = PbxSettings::getValueByKey('PBXVersion');
-            $modulesVersions = PbxExtensionModules::getEnabledModulesArray();
+            $modulesVersions = PbxExtensionModules::getModulesArray();
             foreach ($modulesVersions as $module) {
                 $result .= "{$module['id']}{$module['version']}";
             }

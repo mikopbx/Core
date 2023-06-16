@@ -47,7 +47,7 @@ class MessagesProvider implements ServiceProviderInterface
             function () use ($di, $coreConfig) {
                 $cacheKey = false;
                 $language = $di->get(LanguageProvider::SERVICE_NAME);
-                $version = PBXConfModulesProvider::getVersionsHash();;
+                $version = PBXConfModulesProvider::getVersionsHash();
                 $cacheKey = 'LocalisationArray:' . $version .':'. $language;
 
                 // Check if translations exist in the cache

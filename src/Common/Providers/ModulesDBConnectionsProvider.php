@@ -28,7 +28,6 @@ use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager;
-use phpDocumentor\Reflection\DocBlock\Tags\See;
 use ReflectionClass;
 use ReflectionException;
 

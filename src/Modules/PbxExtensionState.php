@@ -521,7 +521,7 @@ class PbxExtensionState extends Injectable
     }
 
     /**
-     * Deletes old cache files.
+     * Deletes volt cache files.
      *
      * @return void
      */

@@ -530,7 +530,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Deletes old cache files.
+     * Deletes volt cache files.
      *
      * @return void
      */

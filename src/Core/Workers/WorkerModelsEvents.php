@@ -1132,6 +1132,7 @@ class WorkerModelsEvents extends WorkerBase
         // Recreate database connections
         ModulesDBConnectionsProvider::recreateModulesDBConnections();
 
+        // Hook module methods if they change system configs
         $className = str_replace('Module', '', $pbxModuleRecord['uniqid']);
         $configClassName = "\\Modules\\{$pbxModuleRecord['uniqid']}\\Lib\\{$className}Conf";
         if (class_exists($configClassName)) {
