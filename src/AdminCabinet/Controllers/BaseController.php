@@ -114,7 +114,11 @@ class BaseController extends Controller
         $this->view->PBXVersion = PbxSettings::getValueByKey('PBXVersion');
         $this->view->MetaTegHeadDescription = $this->translation->_('MetaTegHeadDescription');
         $this->view->isExternalModuleController = $this->isExternalModuleController;
-        $this->view->setTemplateAfter('main');
+
+        if ($this->controllerName!=='Session'){
+            $this->view->setTemplateAfter('main');
+        }
+
         $this->view->globalModuleUniqueId = '';
         $this->view->actionName = $this->dispatcher->getActionName();
         $this->view->controllerName = $this->controllerName;
