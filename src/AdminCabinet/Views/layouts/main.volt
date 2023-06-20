@@ -24,10 +24,6 @@
                 {% endif %}
                 <!--/ HEADER-->
 
-                <!--LOADER-->
-                {{ partial("partials/mainLoader") }}
-                <!--/ LOADER-->
-
                 <!--MAIN CONTENT-->
                 <div class="row" id="content-frame">
                     <div id="ajax-messages"></div>

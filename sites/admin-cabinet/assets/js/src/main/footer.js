@@ -36,7 +36,4 @@ if (typeof Number.isFinite !== 'function') {
 $(document).ready(() => {
     $('.popuped').popup();
     $('div[data-content], a[data-content]').popup();
-    $('#loader').removeClass('active');
-    $('#loader-row').hide();
-    $('#content-frame').show();
 });
