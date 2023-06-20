@@ -94,8 +94,8 @@ body {
 .article {
     flex: 1 1 auto;
     min-width: 0;
-    margin-left: 265px;
-    margin-right: 5px;
+    margin-left: 280px;
+    margin-right: 10px;
     padding-top: 20px;
 }
 
