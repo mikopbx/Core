@@ -114,23 +114,22 @@ class BaseController extends Controller
         $this->view->PBXVersion = PbxSettings::getValueByKey('PBXVersion');
         $this->view->MetaTegHeadDescription = $this->translation->_('MetaTegHeadDescription');
         $this->view->isExternalModuleController = $this->isExternalModuleController;
+        $this->view->setTemplateAfter('main');
+        $this->view->globalModuleUniqueId = '';
+        $this->view->actionName = $this->dispatcher->getActionName();
+        $this->view->controllerName = $this->controllerName;
 
         // Add module variables into view if it is an external module controller
         if ($this->isExternalModuleController) {
             /** @var PbxExtensionModules $module */
-            $module = PbxExtensionModules::findFirstByUniqid($this->controllerName);
+            $module = PbxExtensionModules::findFirstByUniqid($this->getModuleUniqueId());
             if ($module === null) {
                 $module = new PbxExtensionModules();
                 $module->disabled = '1';
                 $module->name = 'Unknown module';
             }
-            $this->view->setVar('module', $module);
-            $this->view->setVar('globalModuleUniqueId', $module->uniqid);
-            // If it is module we have to use another volt template
-            $this->view->setTemplateAfter('modules');
-        } else {
-            $this->view->setVar('globalModuleUniqueId', '');
-            $this->view->setTemplateAfter('main');
+            $this->view->module = $module->toArray();
+            $this->view->globalModuleUniqueId = $module->uniqid;
         }
     }
 
@@ -266,5 +265,18 @@ class BaseController extends Controller
             unlink('/etc/sendmetrics');
         }
         return $result;
+    }
+
+    /**
+     *  Returns the unique ID of the module parsing controller namespace;
+     * @return string
+     */
+    private function getModuleUniqueId():string
+    {
+        // Split the namespace into an array using the backslash as a separator
+        $parts = explode('\\', get_class($this));
+
+        // Get the second part of the namespace
+        return $parts[1];
     }
 }

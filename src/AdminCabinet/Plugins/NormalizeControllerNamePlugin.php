@@ -71,6 +71,8 @@ class NormalizeControllerNamePlugin extends Injectable
                 $actionMethod = "{$checkAction}{$actionSuffix}";
                 if (method_exists($controllerClass, $actionMethod)){
                     $params = $dispatcher->getActionName();
+
+                    $checkController = Text::uncamelize($checkController,'_');
                     $dispatcher->forward([
                         'controller' => $checkController,
                         'action' => $checkAction,
@@ -78,6 +80,10 @@ class NormalizeControllerNamePlugin extends Injectable
                         'params'=> [$params]
                     ]);
                 }
+            } else {
+                $moduleParams = $dispatcher->getParams();
+                unset($moduleParams['moduleUniqueId']);
+                $dispatcher->setParams($moduleParams);
             }
         }
 

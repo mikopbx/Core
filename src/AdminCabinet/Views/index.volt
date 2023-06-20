@@ -7,8 +7,6 @@
     <meta charset="utf-8">
     <title>{{ get_title() }}</title>
     {{ assets.outputCombinedHeaderCSS(controller, action) }}
-{#    {{ assets.outputCss('SemanticUICSS') }}#}
-{#    {{ assets.outputCss('headerCSS') }}#}
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url() }}assets/img/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url() }}assets/img/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url() }}assets/img/favicon-16x16.png">
@@ -35,60 +33,14 @@
     </script>
 
     {{ assets.outputCombinedHeaderJs(controller, action) }}
-{#    {{ assets.outputJs('headerSentryJS') }}#}
-{#    {{ assets.outputJs('headerPBXJS') }}#}
-{#    {{ assets.outputJs('headerJS') }}#}
 
 </head>
 <body>
-{% set controller=dispatcher.getControllerName() %}
-{% set action=dispatcher.getActionName() %}
-
-{% if (controller!="Session") %}
-    {{ partial("partials/topMenu") }}
-    {{ partial("partials/leftsidebar",['sidebarId':'toc', 'sidebarClass':'sidebar sidebar-menu', 'showLogo':true]) }}
-    <div id="main" class="ui main-content-wrapper pusher">
-        <div class="full height">
-            <div class="toc">
-                {{ partial("partials/leftsidebar",['sidebarId':'sidebar-menu',  'sidebarClass':'sidebar-menu', 'showLogo':false]) }}
-            </div>
-            <!-- ARTICLE-->
-            <div class="article">
-                <div id="debug-info"></div>
-
-                {{ content() }}
-                <!--CONNECTION DIMMER-->
-                <div class="ui page dimmer transition hidden" id="connection-dimmer">
-                    <div class="content">
-                        <h2 class="ui inverted icon header">
-                            <i class="asterisk loading icon"></i>
-                            {{ t._("DimmerWaitForPBXIsOnline") }}
-                        </h2>
-                        <div>{{ t._("DimmerWaitForPBXOnlineDescription") }}</div>
-                    </div>
-                </div>
-                <!--/ CONNECTION DIMMER-->
-            </div>
-            <!-- /ARTICLE-->
-        </div>
-    </div>
-{% else %}
-    <div class="ui middle aligned grid">
-        <div class="column">
-            {{ content() }}
-        </div>
-    </div>
-    <div id="pbx-version">MIKOPBX ver: {{ PBXVersion }}</div>
-{% endif %}
+{{ content() }}
 
 {{ assets.outputCombinedFooterJs(controller, action) }}
-{#{{ assets.outputJs('SemanticUIJS') }}#}
-{#{{ assets.outputJs('footerACE') }}#}
-{#{{ assets.outputJs('footerLoc') }}#}
-{#{{ assets.outputJs('footerPBXJS') }}#}
 {{ assets.outputInlineJs() }}
 {{ assets.outputJs('footerJS') }}
-
 </body>
 </html>
 
