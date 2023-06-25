@@ -106,7 +106,7 @@ class IvrMenuEditForm extends BaseForm
         $this->add(new Check('allow_enter_any_internal_extension', $cheskarr));
 
         // Description
-        $this->addTextArea('description', $entity->description, 65);
+        $this->addTextArea('description', $entity->description??'', 65);
 
     }
 }

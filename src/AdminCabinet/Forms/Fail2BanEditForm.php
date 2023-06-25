@@ -51,7 +51,7 @@ class Fail2BanEditForm extends BaseForm
                     $this->add(new Numeric($key));
                     break;
                 case "whitelist":
-                    $this->addTextArea($key, $value, 95);
+                    $this->addTextArea($key, $value??'', 95);
                     break;
                 default:
                     $this->add(new Text($key));

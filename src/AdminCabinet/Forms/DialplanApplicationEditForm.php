@@ -44,7 +44,7 @@ class DialplanApplicationEditForm extends BaseForm
                     $this->add(new Hidden($key));
                     break;
                 case "description":
-                    $this->addTextArea($key, $value, 95);
+                    $this->addTextArea($key, $value??'', 95);
                     break;
                 case "type":
                     $select = new Select(

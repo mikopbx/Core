@@ -78,7 +78,7 @@ class AsteriskManagerEditForm extends BaseForm
         $this->add($networkfilterid);
 
         // Description
-        $this->addTextArea('description', $entity->description, 65);
+        $this->addTextArea('description', $entity->description??'', 65);
 
     }
 }

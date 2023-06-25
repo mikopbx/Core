@@ -47,7 +47,7 @@ class OutgoingRouteEditForm extends BaseForm
         $this->add(new Text('rulename'));
 
         // Note
-        $this->addTextArea('note', $entity->note, 65);
+        $this->addTextArea('note', $entity->note??'', 65);
 
         // Numberbeginswith
         $this->add(new Text('numberbeginswith'));

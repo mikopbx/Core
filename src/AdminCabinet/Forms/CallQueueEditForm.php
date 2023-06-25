@@ -246,6 +246,6 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Text('callerid_prefix'));
 
         // Description
-        $this->addTextArea('description', $entity->description, 65);
+        $this->addTextArea('description', $entity->description??'', 65);
     }
 }

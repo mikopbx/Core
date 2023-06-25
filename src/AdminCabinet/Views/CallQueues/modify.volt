@@ -10,7 +10,7 @@
     {{ form.render('name') }}
 </div>
 
-<div class="field">
+<div class="field max-width-800">
     <label for="description">{{ t._('cq_Description') }}</label>
     {{ form.render('description') }}
 </div>

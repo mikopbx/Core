@@ -104,7 +104,7 @@ class TimeFrameEditForm extends BaseForm
                     $this->add($action);
                     break;
                 case 'description' :
-                    $this->addTextArea($key, $value, 65);
+                    $this->addTextArea($key, $value??'', 65);
                     break;
                 default :
                     $this->add(new Text($key, ['autocomplete' => 'off']));

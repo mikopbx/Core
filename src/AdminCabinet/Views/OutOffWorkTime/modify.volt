@@ -1,7 +1,7 @@
 {{ form('out-off-work-time/save', 'role': 'form', 'class': 'ui large form', 'id':'save-outoffwork-form') }}
 {{ form.render('id') }}
 <input type="hidden" name="serverOffset" id="serverOffset" value="{{ serverOffset }}"/>
-<div class="field">
+<div class="field max-width-800">
     <label for="description">{{ t._('tf_Description') }}</label>
     {{ form.render('description') }}
 </div>

@@ -46,7 +46,7 @@ class CustomFilesEditForm extends BaseForm
                     $this->add(new Hidden($key));
                     break;
                 case "description":
-                    $this->addTextArea($key, $value, 65);
+                    $this->addTextArea($key, $value??'', 65);
                     break;
                 case "mode":
                     $select = new Select(

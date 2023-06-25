@@ -9,7 +9,7 @@
     <label for="name">{{ t._('iv_Name') }}</label>
     {{ form.render('name') }}
 </div>
-<div class="field">
+<div class="field max-width-800">
     <label>{{ t._('iv_Description') }}</label>
     {{ form.render('description') }}
 </div>

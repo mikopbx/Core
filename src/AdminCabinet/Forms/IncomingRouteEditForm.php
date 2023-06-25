@@ -53,7 +53,7 @@ class IncomingRouteEditForm extends BaseForm
         $this->add(new Text('number'));
 
         // Note
-        $this->addTextArea('note', $entity->note, 65);
+        $this->addTextArea('note', $entity->note??'', 65);
 
         // Timeout
         $this->add(new Numeric('timeout', ['maxlength' => 3, 'style' => 'width: 80px;', 'defaultValue' => 120]));

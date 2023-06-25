@@ -94,7 +94,7 @@ class GeneralSettingsEditForm extends BaseForm
                 case 'WEBHTTPSPublicKey':
                 case 'WEBHTTPSPrivateKey':
                 case '***ALL TEXTAREA ABOVE***':
-                    $this->addTextArea($key, $value, 65);
+                    $this->addTextArea($key, $value??'', 65);
                     break;
                 case 'PBXLanguage':
                     $language = new Select(
