@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -187,7 +186,6 @@ return [
     'mm_CallDetailRecords' => 'Historie hovorů',
     'mm_CustomFiles' => 'Přizpůsobení systémových souborů',
     'mm_SoundFiles' => 'Zvukové soubory',
-    'mm_Licensing' => 'Licencování',
     'mm_Restart' => 'Restartujte',
     'mm_PbxExtensionModules' => 'Moduly',
     'mm_Maintenance' => 'Služba',
@@ -1131,7 +1129,6 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'pr_FromUser_v2' => 'uživatel',
     'pr_FromDomain_v2' => 'Doména',
     'mo_SystemExten_voicemail' => 'Hlasová pošta',
-    'mm_PaidModulesAccessNew' => 'Přístup k placeným modulům',
     'f2b_Jail_asterisk_public_v2' => 'Chyby autorizace SIP (veřejné)',
     'f2b_Jail_asterisk_ami_v2' => 'Chyby autorizace AMI nebo AJAM',
     'f2b_Jail_asterisk_v2' => 'Chyby autorizace SIP',

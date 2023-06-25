@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -640,7 +639,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'mm_CallDetailRecords' => 'Samtalshistorik',
     'mm_CustomFiles' => 'Anpassning av systemfiler',
     'mm_SoundFiles' => 'Ljudfiler',
-    'mm_Licensing' => 'licensiering',
     'mm_Restart' => 'omstart',
     'mm_PbxExtensionModules' => 'moduler',
     'mm_Maintenance' => 'tjänsten',
@@ -1131,7 +1129,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'pr_FromDomain_v2' => 'domän',
     'pr_FromUser_v2' => 'användare',
     'mo_SystemExten_voicemail' => 'Röstbrevlåda',
-    'mm_PaidModulesAccessNew' => 'Tillgång till betalda moduler',
     'f2b_Jail_asterisk_ami_v2' => 'AMI- eller AJAM-auktoriseringsfel',
     'f2b_Jail_asterisk_v2' => 'SIP-auktoriseringsfel',
     'f2b_Jail_asterisk_security_log_v2' => 'SIP-auktoriseringsfel (security_log)',

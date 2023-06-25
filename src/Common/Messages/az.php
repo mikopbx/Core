@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -991,7 +990,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'mm_Maintenance' => 'Xidmət',
     'mm_PbxExtensionModules' => 'Modullar',
     'mm_Restart' => 'Yenidən başladın',
-    'mm_PaidModulesAccessNew' => 'Ödənişli modullara giriş',
     'mm_Licensing' => 'Lisenziyalaşdırma',
     'mm_SoundFiles' => 'Səs faylları',
     'mm_CustomFiles' => 'Sistem fayllarının fərdiləşdirilməsi',

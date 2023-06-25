@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -505,7 +504,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'mm_CallDetailRecords' => 'Çağrı geçmişi',
     'mm_CustomFiles' => 'Sistem dosyalarının özelleştirilmesi',
     'mm_SoundFiles' => 'Ses dosyaları',
-    'mm_Licensing' => 'ruhsat verme',
     'mm_Restart' => 'reboot',
     'mm_PbxExtensionModules' => 'modüller',
     'mm_Maintenance' => 'hizmet',
@@ -1131,7 +1129,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'pr_FromUser_v2' => 'kullanıcı',
     'pr_FromDomain_v2' => 'alan adı',
     'mo_SystemExten_voicemail' => 'sesli posta',
-    'mm_PaidModulesAccessNew' => 'Ücretli modüllere erişim',
     'f2b_Jail_asterisk_public_v2' => 'SIP yetkilendirme hataları (genel)',
     'f2b_Jail_asterisk_ami_v2' => 'AMI veya AJAM yetkilendirme hataları',
     'f2b_Jail_asterisk_v2' => 'SIP yetkilendirme hataları',

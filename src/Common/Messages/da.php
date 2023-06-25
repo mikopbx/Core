@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -161,7 +160,6 @@ return [
     'mm_CallDetailRecords' => 'Opkaldshistorik',
     'mm_CustomFiles' => 'Tilpasning af systemfiler',
     'mm_SoundFiles' => 'Lydfiler',
-    'mm_Licensing' => 'licens',
     'mm_Restart' => 'genstart',
     'mm_Maintenance' => 'service',
     'mm_Logout' => 'frakørsel',
@@ -1131,7 +1129,6 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'pr_FromUser_v2' => 'bruger',
     'pr_FromDomain_v2' => 'domæne',
     'mo_SystemExten_voicemail' => 'Voice mail',
-    'mm_PaidModulesAccessNew' => 'Adgang til betalte moduler',
     'f2b_Jail_asterisk_ami_v2' => 'AMI- eller AJAM-autorisationsfejl',
     'f2b_Jail_asterisk_v2' => 'SIP-godkendelsesfejl',
     'f2b_Jail_asterisk_security_log_v2' => 'SIP-godkendelsesfejl (security_log)',

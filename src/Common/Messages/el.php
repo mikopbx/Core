@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -953,7 +952,6 @@ return [
     'mm_Maintenance' => 'Υπηρεσία',
     'mm_PbxExtensionModules' => 'Ενότητες',
     'mm_Restart' => 'Επανεκκίνηση',
-    'mm_Licensing' => 'Αδειοδότηση',
     'mm_SoundFiles' => 'Αρχεία ήχου',
     'mm_CustomFiles' => 'Προσαρμογή αρχείων συστήματος',
     'mm_CallDetailRecords' => 'Ιστορικό κλήσεων',
@@ -1131,7 +1129,6 @@ return [
     'pr_FromUser_v2' => 'χρήστης',
     'pr_FromDomain_v2' => 'τομέα',
     'mo_SystemExten_voicemail' => 'Φωνητικό ταχυδρομείο',
-    'mm_PaidModulesAccessNew' => 'Πρόσβαση σε μονάδες επί πληρωμή',
     'f2b_Jail_asterisk_ami_v2' => 'Σφάλματα εξουσιοδότησης AMI ή AJAM',
     'f2b_Jail_asterisk_v2' => 'Σφάλματα εξουσιοδότησης SIP',
     'f2b_Jail_asterisk_security_log_v2' => 'Σφάλματα εξουσιοδότησης SIP (security_log)',

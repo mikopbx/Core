@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -165,7 +164,6 @@ return [
     'mm_CallDetailRecords' => 'Historial de llamadas',
     'mm_CustomFiles' => 'Personalización de archivos del sistema',
     'mm_SoundFiles' => 'Archivos de sonido',
-    'mm_Licensing' => 'Licencia',
     'bt_ToolTipUpgradeOnline' => 'Actualización en línea',
     'ms_SuccessfulSaved' => 'Configuraciones guardadas',
     'ms_SuccessfulDeleted' => 'Datos eliminados',
@@ -1131,7 +1129,6 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'pr_FromUser_v2' => 'usuario',
     'pr_FromDomain_v2' => 'dominio',
     'mo_SystemExten_voicemail' => 'Mensaje de voz',
-    'mm_PaidModulesAccessNew' => 'Acceso a módulos de pago',
     'f2b_Jail_asterisk_public_v2' => 'Errores de autorización SIP (público)',
     'f2b_Jail_asterisk_ami_v2' => 'Errores de autorización de AMI o AJAM',
     'f2b_Jail_asterisk_security_log_v2' => 'Errores de autorización SIP (security_log)',

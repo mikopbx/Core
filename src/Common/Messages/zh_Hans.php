@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -184,7 +183,6 @@ return [
     'mm_CallDetailRecords' => '通话记录',
     'mm_CustomFiles' => '定制系统文件',
     'mm_SoundFiles' => '声音文件',
-    'mm_Licensing' => '发牌',
     'mm_Restart' => '重新开机',
     'mm_PbxExtensionModules' => '模组',
     'mm_Maintenance' => '服务专区',
@@ -1131,7 +1129,6 @@ return [
     'pr_FromUser_v2' => '用户',
     'pr_FromDomain_v2' => '领域',
     'mo_SystemExten_voicemail' => '语音信箱',
-    'mm_PaidModulesAccessNew' => '访问付费模块',
     'f2b_Jail_asterisk_ami_v2' => 'AMI 或 AJAM 授权错误',
     'f2b_Jail_asterisk_v2' => 'SIP 授权错误',
     'f2b_Jail_asterisk_public_v2' => 'SIP 授权错误（公共）',

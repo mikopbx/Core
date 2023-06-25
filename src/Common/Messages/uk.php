@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -205,7 +204,6 @@ return [
     'mm_CallDetailRecords' => 'Історія викликів',
     'mm_CustomFiles' => 'Кастомізація системних файлів',
     'mm_SoundFiles' => 'Звукові файли',
-    'mm_Licensing' => 'Ліцензування',
     'mm_Restart' => 'Перезавантаження',
     'mm_PbxExtensionModules' => 'Модулі',
     'mm_Maintenance' => 'Обслуговування',
@@ -1131,7 +1129,6 @@ return [
     'pr_FromUser_v2' => 'User',
     'pr_FromDomain_v2' => 'Domain',
     'mo_SystemExten_voicemail' => 'Голосова пошта',
-    'mm_PaidModulesAccessNew' => 'Доступ до платних модулів',
     'f2b_Jail_asterisk_ami_v2' => 'Помилки авторизації AMI чи AJAM',
     'f2b_Jail_asterisk_v2' => 'Помилки авторизації SIP',
     'f2b_Jail_asterisk_security_log_v2' => 'Помилки авторизації SIP (security_log)',

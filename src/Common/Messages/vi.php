@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -261,7 +260,6 @@ return [
     'mm_CallDetailRecords' => 'Lịch sử cuộc gọi',
     'mm_CustomFiles' => 'Tùy chỉnh các tập tin hệ thống',
     'mm_SoundFiles' => 'Tập tin âm thanh',
-    'mm_Licensing' => 'Cấp phép',
     'mm_Restart' => 'Khởi động lại',
     'mm_PbxExtensionModules' => 'Mô-đun',
     'mm_Maintenance' => 'Dịch vụ',
@@ -1131,7 +1129,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'pr_FromUser_v2' => 'người sử dụng',
     'pr_FromDomain_v2' => 'miền',
     'mo_SystemExten_voicemail' => 'Hộp thư thoại',
-    'mm_PaidModulesAccessNew' => 'Truy cập vào các mô-đun trả phí',
     'f2b_Jail_asterisk_ami_v2' => 'Lỗi ủy quyền AMI hoặc AJAM',
     'f2b_Jail_asterisk_v2' => 'Lỗi ủy quyền SIP',
     'f2b_Jail_asterisk_error_v2' => 'Lỗi ủy quyền SIP (lỗi)',

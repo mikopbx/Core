@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -186,7 +185,6 @@ return [
     'mm_CallDetailRecords' => 'Call detail records (CDR)',
     'mm_CustomFiles' => 'System file customization',
     'mm_SoundFiles' => 'Sound files',
-    'mm_Licensing' => 'Registration',
     'mm_Restart' => 'Reboot',
     'mm_PbxExtensionModules' => 'Modules',
     'mm_Maintenance' => 'Maintenance',
@@ -1134,7 +1132,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'pr_FromUser_v2' => 'user',
     'pr_FromDomain_v2' => 'domain',
     'mo_SystemExten_voicemail' => 'Voice mail',
-    'mm_PaidModulesAccessNew' => 'Access to paid modules',
     'f2b_Jail_asterisk_security_log_v2' => 'SIP authorization errors (security_log)',
     'f2b_Jail_asterisk_ami_v2' => 'AMI or AJAM authorization errors',
     'f2b_Jail_asterisk_v2' => 'SIP authorization errors',

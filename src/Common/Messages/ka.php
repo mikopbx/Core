@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -194,7 +193,6 @@ return [
     'mm_CallDetailRecords' => 'ზარის ისტორია',
     'mm_CustomFiles' => 'სისტემის ფაილის პერსონალიზაცია',
     'mm_SoundFiles' => 'ხმოვანი ფაილები',
-    'mm_Licensing' => 'ლიცენზირება',
     'mm_Restart' => 'გადატვირთეთ',
     'mm_PbxExtensionModules' => 'მოდულები',
     'mm_Maintenance' => 'მომსახურება',
@@ -1131,7 +1129,6 @@ return [
     'pr_FromUser_v2' => 'მომხმარებელი',
     'pr_FromDomain_v2' => 'დომენი',
     'mo_SystemExten_voicemail' => 'Ხმოვანი შეტყობინება',
-    'mm_PaidModulesAccessNew' => 'ფასიან მოდულებზე წვდომა',
     'f2b_Jail_asterisk_ami_v2' => 'AMI ან AJAM ავტორიზაციის შეცდომები',
     'f2b_Jail_asterisk_v2' => 'SIP ავტორიზაციის შეცდომები',
     'f2b_Jail_asterisk_security_log_v2' => 'SIP ავტორიზაციის შეცდომები (security_log)',

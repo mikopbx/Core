@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -939,7 +938,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'mm_Maintenance' => 'Serviço',
     'mm_PbxExtensionModules' => 'Módulos',
     'mm_Restart' => 'Reiniciar',
-    'mm_Licensing' => 'Licenciamento',
     'mm_SoundFiles' => 'Arquivos de som',
     'mm_CustomFiles' => 'Personalização de arquivo do sistema',
     'mm_CallDetailRecords' => 'Histórico de chamadas',
@@ -1130,7 +1128,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'pr_FromUser_v2' => 'usuário',
     'pr_FromDomain_v2' => 'domínio',
     'mo_SystemExten_voicemail' => 'Correio de voz',
-    'mm_PaidModulesAccessNew' => 'Acesso a módulos pagos',
     'f2b_Jail_asterisk_ami_v2' => 'Erros de autorização AMI ou AJAM',
     'f2b_Jail_asterisk_v2' => 'Erros de autorização SIP',
     'f2b_Jail_asterisk_security_log_v2' => 'Erros de autorização SIP (security_log)',
