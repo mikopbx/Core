@@ -89,7 +89,7 @@ const pbxExtensionModuleModify = {
      */
     initializeForm() {
         Form.$formObj = pbxExtensionModuleModify.$formObj;
-        Form.url = `${globalRootUrl}pbx-extension-modules/saveModuleSettings`; // Form submission URL
+        Form.url = `${globalRootUrl}pbx-extension-modules/save`; // Form submission URL
         Form.validateRules = pbxExtensionModuleModify.validateRules; // Form validation rules
         Form.cbBeforeSendForm = pbxExtensionModuleModify.cbBeforeSendForm; // Callback before form is sent
         Form.cbAfterSendForm = pbxExtensionModuleModify.cbAfterSendForm; // Callback after form is sent
