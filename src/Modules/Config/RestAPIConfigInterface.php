@@ -41,15 +41,15 @@ interface RestAPIConfigInterface
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getpbxcorerestadditionalroutes
      *
      * Add the annotations to add the endpoint into ACL
-     * @RoutePrefix("/pbxcore/api/backup")
+     * @RoutePrefix("/pbxcore/api/someendpoint")
      * @Get("/something1")
      * @Get("/something2")
      * @Post("/something3")
      *
      * @return array
      * @example
-     *  [[GetController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'get', '/', false],
-     *  [PostController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'post', '/', false]]
+     *  [[GetController::class, 'callAction', '/pbxcore/api/someendpoint/{actionName}', 'get', '/', false],
+     *  [PostController::class, 'callAction', '/pbxcore/api/someendpoint/{actionName}', 'post', '/', false]]
      *
      */
     public function getPBXCoreRESTAdditionalRoutes(): array;
@@ -59,11 +59,6 @@ interface RestAPIConfigInterface
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modulerestapicallback
      *
      * @param array $request GET/POST parameters
-     *
-     * Add the annotations to add the endpoint into ACL
-     * @Get("/something1")
-     * @Get("/something2")
-     * @Post("/something3")
      *
      * @return PBXApiResult An object containing the result of the API call.
      */

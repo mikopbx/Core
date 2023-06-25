@@ -27,13 +27,11 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Assets\Manager;
 use Phalcon\Config;
-use Phalcon\Di\Injectable;
 use Phalcon\Forms\Form;
 use Phalcon\Mvc\Controller;
 use Phalcon\Mvc\Router;
 use Phalcon\Mvc\View;
 use ReflectionClass as ReflectionClassAlias;
-use function Symfony\Component\String\b;
 
 /**
  * Abstract class ConfigClass
@@ -152,15 +150,15 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * [ControllerClass, ActionMethod, RequestTemplate, HttpMethod, RootUrl, NoAuth ]
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getpbxcorerestadditionalroutes
      *
-     * @RoutePrefix("/pbxcore/api/backup")
+     * @RoutePrefix("/pbxcore/api/someendpoint")
      * @Get("/something1")
      * @Get("/something2")
      * @Post("/something3")
      *
      * @return array
      * @example
-     *  [[GetController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'get', '/', false],
-     *  [PostController::class, 'callAction', '/pbxcore/api/backup/{actionName}', 'post', '/', false]]
+     *  [[GetController::class, 'callAction', '/pbxcore/api/someendpoint/{actionName}', 'get', '/', false],
+     *  [PostController::class, 'callAction', '/pbxcore/api/someendpoint/{actionName}', 'post', '/', false]]
      *
      */
     public function getPBXCoreRESTAdditionalRoutes(): array
@@ -173,11 +171,6 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modulerestapicallback
      *
      * @param array $request GET/POST parameters
-     *
-     * Add the annotations to add the endpoint into ACL
-     * @Get("/something1")
-     * @Get("/something2")
-     * @Post("/something3")
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
