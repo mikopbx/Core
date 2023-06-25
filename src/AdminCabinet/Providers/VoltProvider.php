@@ -44,13 +44,13 @@ class VoltProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $view      = $di->getShared('view');
+        $view = $di->getShared('view');
         $appConfig = $di->getShared('config')->adminApplication;
         $di->setShared(
             self::SERVICE_NAME,
             function () use ($view, $di, $appConfig) {
                 $voltCacheDir = $appConfig->voltCacheDir . '/';
-                $volt         = new VoltEngine($view, $di);
+                $volt = new VoltEngine($view, $di);
                 $volt->setOptions(
                     [
                         'path' => $voltCacheDir,
@@ -59,10 +59,14 @@ class VoltProvider implements ServiceProviderInterface
 
                 $compiler = $volt->getCompiler();
                 $compiler->addFunction('in_array', 'in_array');
+                $compiler->addFunction('is_a', 'is_a');
+                $compiler->addFunction('count', function ($key) {
+                    return "count({$key})";
+                });
 
                 if ($appConfig->debugMode === true) {
                     $cacheFiles = glob($appConfig->voltCacheDir . '/*.php');
-                    if ($cacheFiles!==false){
+                    if ($cacheFiles !== false) {
                         array_map(
                             'unlink',
                             $cacheFiles
@@ -78,19 +82,21 @@ class VoltProvider implements ServiceProviderInterface
                 // Allows use isAllowed within volt templates
                 $compiler->addFunction(
                     'isAllowed',
-                    function ($action, $controller='') use ($view) {
-                        if (empty($controller)){
+                    function ($action, $controller = '') use ($view) {
+                        if (empty($controller)) {
                             $controller = $view->getControllerName();
                         }
-                        return '$this->di->get("'.SecurityPluginProvider::SERVICE_NAME.'",["' . $controller . '",' . $action . '])';
+                        return '$this->di->get("' . SecurityPluginProvider::SERVICE_NAME . '",["' . $controller . '",' . $action . '])';
                     }
                 );
+
+                // Allows use hookVoltBlock within volt templates
                 $compiler->addFunction(
                     'hookVoltBlock',
                     function ($blockName) use ($view, $volt) {
                         $controller = $view->getControllerName();
-                        $blockNameWithoutQuotes = str_replace(['"','\''], '', $blockName);
-                        $modulesVoltBlocks =  PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_VOLT_BLOCK_COMPILE, [$controller, $blockNameWithoutQuotes, $view]);
+                        $blockNameWithoutQuotes = str_replace(['"', '\''], '', $blockName);
+                        $modulesVoltBlocks = PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_VOLT_BLOCK_COMPILE, [$controller, $blockNameWithoutQuotes, $view]);
                         $string = '[';
                         foreach ($modulesVoltBlocks as $key => $value) {
                             $string .= "'$key'=> '$value', ";

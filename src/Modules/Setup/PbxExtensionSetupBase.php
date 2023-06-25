@@ -249,7 +249,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         // Create cache links for JS, CSS, IMG folders
         PbxExtensionUtils::createAssetsSymlinks($this->moduleUniqueID);
 
-        // Create cache links for agi-bin scripts
+        // Create links for the module view templates
+        PbxExtensionUtils::createViewSymlinks($this->moduleUniqueID);
+
+        // Create links for agi-bin scripts
         PbxExtensionUtils::createAgiBinSymlinks($this->moduleUniqueID);
 
         // Restore database settings

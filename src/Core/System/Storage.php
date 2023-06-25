@@ -1407,24 +1407,14 @@ class Storage extends Di\Injectable
         }
 
         $this->createAssetsSymlinks();
+        $this->createViewSymlinks();
+        $this->createAGIBINSymlinks($isLiveCd);
+
         Util::createUpdateSymlink($this->config->path('www.uploadDir'), '/ultmp');
 
         $filePath = appPath('src/Core/Asterisk/Configs/lua/extensions.lua');
         Util::createUpdateSymlink($filePath, '/etc/asterisk/extensions.lua');
 
-        // Create symlinks to AGI-BIN
-        $agiBinDir = $this->config->path('asterisk.astagidir');
-        if ($isLiveCd && strpos($agiBinDir, '/offload/') !== 0) {
-            Util::mwMkdir($agiBinDir);
-        }
-
-        $roAgiBinFolder = appPath('src/Core/Asterisk/agi-bin');
-        $files = glob("{$roAgiBinFolder}/*.{php}", GLOB_BRACE);
-        foreach ($files as $file) {
-            $fileInfo = pathinfo($file);
-            $newFilename = "{$agiBinDir}/{$fileInfo['filename']}.{$fileInfo['extension']}";
-            Util::createUpdateSymlink($file, $newFilename);
-        }
         $this->clearCacheFiles();
         $this->applyFolderRights();
         Processes::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
@@ -1448,6 +1438,40 @@ class Storage extends Di\Injectable
         // Create symlink for image cache directory
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
         Util::createUpdateSymlink($this->config->path('adminApplication.assetsCacheDir') . '/img', $imgCacheDir);
+
+    }
+
+    /**
+     * Creates symlinks for modules view.
+     *
+     * @return void
+     */
+    public function createViewSymlinks(): void
+    {
+        $viewCacheDir = appPath('src/AdminCabinet/Views/Modules');
+        Util::createUpdateSymlink($this->config->path('adminApplication.viewCacheDir'), $viewCacheDir);
+    }
+
+    /**
+     * Creates AGI bin symlinks for extension modules.
+     *
+     * @param bool $isLiveCd Whether the system loaded on LiveCD mode.
+     * @return void
+     */
+    public function createAGIBINSymlinks(bool $isLiveCd): void
+    {
+        $agiBinDir = $this->config->path('asterisk.astagidir');
+        if ($isLiveCd && strpos($agiBinDir, '/offload/') !== 0) {
+            Util::mwMkdir($agiBinDir);
+        }
+
+        $roAgiBinFolder = appPath('src/Core/Asterisk/agi-bin');
+        $files = glob("{$roAgiBinFolder}/*.{php}", GLOB_BRACE);
+        foreach ($files as $file) {
+            $fileInfo = pathinfo($file);
+            $newFilename = "{$agiBinDir}/{$fileInfo['filename']}.{$fileInfo['extension']}";
+            Util::createUpdateSymlink($file, $newFilename);
+        }
     }
 
     /**
@@ -1463,6 +1487,7 @@ class Storage extends Di\Injectable
         $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/js';
         $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/css';
         $cacheDirs[] = $this->config->path('adminApplication.assetsCacheDir') . '/img';
+        $cacheDirs[] = $this->config->path('adminApplication.viewCacheDir');
         $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
         $rmPath = Util::which('rm');
 
@@ -1510,8 +1535,11 @@ class Storage extends Di\Injectable
     {
         $modules = PbxExtensionModules::getModulesArray();
         foreach ($modules as $module) {
-            // Create assets symlinks for the module
+            // Create cache links for JS, CSS, IMG folders
             PbxExtensionUtils::createAssetsSymlinks($module['uniqid']);
+
+            // Create links for the module view templates
+            PbxExtensionUtils::createViewSymlinks($module['uniqid']);
 
             // Create AGI bin symlinks for the module
             PbxExtensionUtils::createAgiBinSymlinks($module['uniqid']);
@@ -1706,4 +1734,6 @@ class Storage extends Di\Injectable
         }
         return '';
     }
+
+
 }

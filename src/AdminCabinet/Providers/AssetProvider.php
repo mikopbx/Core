@@ -44,6 +44,17 @@ class AssetProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'assets';
 
+    public const HEADER_JS = 'headerJS';
+    public const HEADER_CSS = 'headerCSS';
+    public const HEADER_PBX_JS = 'headerPBXJS';
+    public const HEADER_SENTRY_JS = 'headerSentryJS';
+    public const SEMANTIC_UI_CSS = 'SemanticUICSS';
+    public const SEMANTIC_UI_JS = 'SemanticUIJS';
+    public const FOOTER_ACE = 'footerACE';
+    public const FOOTER_LOC = 'footerLoc';
+    public const FOOTER_JS = 'footerJS';
+    public const FOOTER_PBX_JS = 'footerPBXJS';
+
     private Collection $headerCollectionJSForExtensions;
     private Collection $footerCollectionJSForExtensions;
     private Collection $headerCollectionJS;
@@ -115,25 +126,25 @@ class AssetProvider implements ServiceProviderInterface
 
         $this->jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
 
-        $this->headerCollectionJSForExtensions = $this->manager->collection('headerJS');
+        $this->headerCollectionJSForExtensions = $this->manager->collection(self::HEADER_JS);
         $this->headerCollectionJSForExtensions->setPrefix('assets/');
 
-        $this->footerCollectionJSForExtensions = $this->manager->collection('footerJS');
+        $this->footerCollectionJSForExtensions = $this->manager->collection(self::FOOTER_JS);
         $this->footerCollectionJSForExtensions->setPrefix('assets/');
-        $this->headerCollectionJS = $this->manager->collection('headerPBXJS');
+        $this->headerCollectionJS = $this->manager->collection(self::HEADER_PBX_JS);
         $this->headerCollectionJS->setPrefix('assets/');
-        $this->headerCollectionCSS = $this->manager->collection('headerCSS');
+        $this->headerCollectionCSS = $this->manager->collection(self::HEADER_CSS);
         $this->headerCollectionCSS->setPrefix('assets/');
-        $this->footerCollectionJS = $this->manager->collection('footerPBXJS');
+        $this->footerCollectionJS = $this->manager->collection(self::FOOTER_PBX_JS);
         $this->footerCollectionJS->setPrefix('assets/');
-        $this->headerCollectionSentryJS = $this->manager->collection('headerSentryJS');
-        $this->semanticCollectionCSS = $this->manager->collection('SemanticUICSS');
+        $this->headerCollectionSentryJS = $this->manager->collection(self::HEADER_SENTRY_JS);
+        $this->semanticCollectionCSS = $this->manager->collection(self::SEMANTIC_UI_CSS);
         $this->semanticCollectionCSS->setPrefix('assets/');
-        $this->semanticCollectionJS = $this->manager->collection('SemanticUIJS');
+        $this->semanticCollectionJS = $this->manager->collection(self::SEMANTIC_UI_JS);
         $this->semanticCollectionJS->setPrefix('assets/');
-        $this->footerCollectionACE = $this->manager->collection('footerACE');
+        $this->footerCollectionACE = $this->manager->collection(self::FOOTER_ACE);
         $this->footerCollectionACE->setPrefix('assets/');
-        $this->footerCollectionLoc = $this->manager->collection('footerLoc');
+        $this->footerCollectionLoc = $this->manager->collection(self::FOOTER_LOC);
         $this->footerCollectionLoc->setPrefix('assets/');
     }
 
@@ -466,10 +477,10 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeRestartAssets(string $action): void
     {
-        if ($action === 'index') {
+        if ($action === 'manage') {
             $this->footerCollectionJS
-                ->addJs('js/pbx/Restart/restart-index.js', true)
-                ->addJs('js/pbx/Restart/current-calls-worker.js',true);
+                ->addJs('js/pbx/Restart/restart-manage.js', true)
+                ->addJs('js/pbx/Restart/current-calls-worker.js', true);
         }
     }
 

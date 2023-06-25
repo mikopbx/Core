@@ -22,11 +22,8 @@ declare(strict_types=1);
 namespace MikoPBX\AdminCabinet\Providers;
 
 
-use MikoPBX\AdminCabinet\Plugins\ViewEventsPlugin;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Events\Event;
-use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Mvc\View;
 use function MikoPBX\Common\Config\appPath;
 
@@ -57,6 +54,7 @@ class ViewProvider implements ServiceProviderInterface
                         '.volt' => 'volt',
                     ]
                 );
+
                 return $view;
             }
         );
