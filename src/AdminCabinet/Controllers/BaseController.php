@@ -27,6 +27,7 @@ use Phalcon\Mvc\{Controller, View};
 use Phalcon\Tag;
 use Phalcon\Text;
 use Sentry\SentrySdk;
+use function MikoPBX\Common\Config\appPath;
 
 /**
  * @property \Phalcon\Session\Manager session
@@ -120,7 +121,7 @@ class BaseController extends Controller
         }
 
         $this->view->globalModuleUniqueId = '';
-        $this->view->actionName = $this->dispatcher->getActionName();
+        $this->view->actionName = $this->actionName;
         $this->view->controllerName = $this->controllerName;
 
         // Add module variables into view if it is an external module controller
@@ -134,6 +135,7 @@ class BaseController extends Controller
             }
             $this->view->module = $module->toArray();
             $this->view->globalModuleUniqueId = $module->uniqid;
+            $this->view->pick("Modules/{$module->uniqid}/{$this->controllerName}/{$this->actionName}");
         }
     }
 
