@@ -156,6 +156,31 @@ class PbxExtensionUtils
     }
 
     /**
+     * Creates symbolic links for view templates of a module.
+     *
+     * @param string $moduleUniqueID The UniqueID of the module.
+     * @return void
+     */
+    public static function createViewSymlinks(string $moduleUniqueID): void
+    {
+        $moduleDir = self::getModuleDir($moduleUniqueID);
+
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        $moduleViewDir      = "{$moduleDir}/App/Views";
+        $viewCacheDir       = appPath('src/AdminCabinet/Views/Modules');
+        $moduleViewCacheDir = "{$viewCacheDir}/{$moduleUniqueID}";
+        if (file_exists($moduleViewCacheDir)) {
+            unlink($moduleViewCacheDir);
+        }
+        if (file_exists($moduleViewDir)) {
+            symlink($moduleViewDir, $moduleViewCacheDir);
+        }
+    }
+
+    /**
      * Disables incompatible modules.
      *
      * @return void
