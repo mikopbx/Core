@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -604,7 +622,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'mm_Setup' => 'telefoni',
     'mm_Extensions' => 'personal',
     'mm_CallQueues' => 'Ring köer',
-    'mm_DialplanApplication' => 'Dialplan-applikationer',
+    'mm_DialplanApplications' => 'Dialplan-applikationer',
     'mm_Routing' => 'routing',
     'mm_Providers' => 'Telefonileverantörer',
     'mm_IncomingRoutes' => 'Inkommande rutter',
@@ -612,23 +630,23 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'mm_System' => 'Systemet',
     'mm_NetworkSettings' => 'Nätverk och brandvägg',
     'mm_GeneralSettings' => 'Allmänna inställningar',
-    'mm_SystemClock' => 'Datum och tid',
+    'mm_TimeSettings' => 'Datum och tid',
     'mm_Network' => 'Nätverksgränssnitt',
     'mm_Firewall' => 'brandvägg',
     'mm_MailSettings' => 'Mail och meddelanden',
-    'mm_AsteriskManagerInterface' => 'AMI Access',
+    'mm_AsteriskManagers' => 'AMI Access',
     'mm_IvrMenu' => 'IVR-meny',
-    'mm_Conferences' => 'konferens',
+    'mm_ConferenceRooms' => 'konferens',
     'mm_CallDetailRecords' => 'Samtalshistorik',
     'mm_CustomFiles' => 'Anpassning av systemfiler',
     'mm_SoundFiles' => 'Ljudfiler',
     'mm_Licensing' => 'licensiering',
     'mm_Restart' => 'omstart',
-    'mm_Modules' => 'moduler',
+    'mm_PbxExtensionModules' => 'moduler',
     'mm_Maintenance' => 'tjänsten',
     'mm_Logout' => 'exit',
     'mm_SystemDiagnostic' => 'Systemloggar',
-    'mm_BruteForceProtection' => 'Hackningsskydd',
+    'mm_Fail2Ban' => 'Hackningsskydd',
     'mm_UpdateSystem' => 'PBX-uppdatering',
     'mm_ModuleManager' => 'Modulhantering',
     'mm_SSHConsole' => 'SSH-konsol',

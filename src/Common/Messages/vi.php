@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -224,7 +242,7 @@ return [
     'mm_Setup' => 'Điện thoại',
     'mm_Extensions' => 'Nhân viên',
     'mm_CallQueues' => 'Hàng đợi cuộc gọi',
-    'mm_DialplanApplication' => 'Ứng dụng quay số',
+    'mm_DialplanApplications' => 'Ứng dụng quay số',
     'mm_Routing' => 'Định tuyến',
     'mm_Providers' => 'Nhà cung cấp điện thoại',
     'mm_IncomingRoutes' => 'Các tuyến đến',
@@ -233,23 +251,23 @@ return [
     'mm_System' => 'Hệ thống',
     'mm_NetworkSettings' => 'Mạng và tường lửa',
     'mm_GeneralSettings' => 'Cài đặt chung',
-    'mm_SystemClock' => 'Ngày giờ',
+    'mm_TimeSettings' => 'Ngày giờ',
     'mm_Network' => 'Giao diện mạng',
     'mm_Firewall' => 'Tường lửa',
     'mm_MailSettings' => 'Thư và thông báo',
-    'mm_AsteriskManagerInterface' => 'Truy cập AMI',
+    'mm_AsteriskManagers' => 'Truy cập AMI',
     'mm_IvrMenu' => 'Menu IVR',
-    'mm_Conferences' => 'Hội nghị',
+    'mm_ConferenceRooms' => 'Hội nghị',
     'mm_CallDetailRecords' => 'Lịch sử cuộc gọi',
     'mm_CustomFiles' => 'Tùy chỉnh các tập tin hệ thống',
     'mm_SoundFiles' => 'Tập tin âm thanh',
     'mm_Licensing' => 'Cấp phép',
     'mm_Restart' => 'Khởi động lại',
-    'mm_Modules' => 'Mô-đun',
+    'mm_PbxExtensionModules' => 'Mô-đun',
     'mm_Maintenance' => 'Dịch vụ',
     'mm_Logout' => 'Thoát',
     'mm_SystemDiagnostic' => 'Nhật ký hệ thống',
-    'mm_BruteForceProtection' => 'Bảo vệ hack',
+    'mm_Fail2Ban' => 'Bảo vệ hack',
     'mm_UpdateSystem' => 'Cập nhật tổng đài',
     'mm_ModuleManager' => 'Quản lý mô-đun',
     'mm_SSHConsole' => 'Bảng điều khiển SSH',

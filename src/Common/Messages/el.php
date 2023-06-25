@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -929,23 +947,23 @@ return [
     'bt_Clear' => 'Σαφή',
     'bt_Edit' => 'Αλλαγή',
     'mm_UpdateSystem' => 'Ενημέρωση PBX',
-    'mm_BruteForceProtection' => 'Προστασία από hack',
+    'mm_Fail2Ban' => 'Προστασία από hack',
     'mm_SystemDiagnostic' => 'Αρχεία καταγραφής συστήματος',
     'mm_Logout' => 'Εξοδος',
     'mm_Maintenance' => 'Υπηρεσία',
-    'mm_Modules' => 'Ενότητες',
+    'mm_PbxExtensionModules' => 'Ενότητες',
     'mm_Restart' => 'Επανεκκίνηση',
     'mm_Licensing' => 'Αδειοδότηση',
     'mm_SoundFiles' => 'Αρχεία ήχου',
     'mm_CustomFiles' => 'Προσαρμογή αρχείων συστήματος',
     'mm_CallDetailRecords' => 'Ιστορικό κλήσεων',
-    'mm_Conferences' => 'Συνέδρια',
+    'mm_ConferenceRooms' => 'Συνέδρια',
     'mm_IvrMenu' => 'Μενού IVR',
-    'mm_AsteriskManagerInterface' => 'Πρόσβαση AMI',
+    'mm_AsteriskManagers' => 'Πρόσβαση AMI',
     'mm_MailSettings' => 'Ταχυδρομείο και ειδοποιήσεις',
     'mm_Firewall' => 'Τείχος προστασίας',
     'mm_Network' => 'Διεπαφές δικτύου',
-    'mm_SystemClock' => 'Ημερομηνία και ώρα',
+    'mm_TimeSettings' => 'Ημερομηνία και ώρα',
     'mm_GeneralSettings' => 'Γενικές Ρυθμίσεις',
     'mm_NetworkSettings' => 'Δίκτυο και Τείχος προστασίας',
     'mm_System' => 'Σύστημα',
@@ -954,7 +972,7 @@ return [
     'mm_IncomingRoutes' => 'Εισερχόμενες κλήσεις',
     'mm_Providers' => 'Πάροχοι',
     'mm_Routing' => 'Δρομολόγηση',
-    'mm_DialplanApplication' => 'Εφαρμογές Dialplan',
+    'mm_DialplanApplications' => 'Εφαρμογές Dialplan',
     'mm_CallQueues' => 'Ουρές κλήσεων',
     'mm_Extensions' => 'Εσωτερικά',
     'mm_Setup' => 'Τηλεφωνία',

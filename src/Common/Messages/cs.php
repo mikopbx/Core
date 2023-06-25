@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -141,7 +159,7 @@ return [
     'mm_Setup' => 'Telefonování',
     'mm_Extensions' => 'Zaměstnanci',
     'mm_CallQueues' => 'Volat fronty',
-    'mm_DialplanApplication' => 'Aplikace Dialplan',
+    'mm_DialplanApplications' => 'Aplikace Dialplan',
     'mm_Routing' => 'Směrování',
     'mm_Providers' => 'Poskytovatelé telefonních služeb',
     'mm_IncomingRoutes' => 'Příchozí trasy',
@@ -150,7 +168,7 @@ return [
     'mm_System' => 'Systém',
     'mm_NetworkSettings' => 'Síť a Firewall',
     'mm_GeneralSettings' => 'Obecná nastavení',
-    'mm_SystemClock' => 'Datum a čas',
+    'mm_TimeSettings' => 'Datum a čas',
     'mm_Network' => 'Síťová rozhraní',
     'mm_Firewall' => 'Firewall',
     'January' => 'Leden',
@@ -162,20 +180,20 @@ return [
     'BreadcrumbHome' => 'Na začátek',
     'BreadcrumbGeneralSettings' => 'Nastavení systému',
     'mm_MailSettings' => 'Pošta a oznámení',
-    'mm_AsteriskManagerInterface' => 'AMI Access',
+    'mm_AsteriskManagers' => 'AMI Access',
     'mm_IvrMenu' => 'IVR menu',
-    'mm_Conferences' => 'Konference',
+    'mm_ConferenceRooms' => 'Konference',
     'pr_RTPPortFrom' => 'S',
     'mm_CallDetailRecords' => 'Historie hovorů',
     'mm_CustomFiles' => 'Přizpůsobení systémových souborů',
     'mm_SoundFiles' => 'Zvukové soubory',
     'mm_Licensing' => 'Licencování',
     'mm_Restart' => 'Restartujte',
-    'mm_Modules' => 'Moduly',
+    'mm_PbxExtensionModules' => 'Moduly',
     'mm_Maintenance' => 'Služba',
     'mm_Logout' => 'Konec',
     'mm_SystemDiagnostic' => 'Systémové protokoly',
-    'mm_BruteForceProtection' => 'Ochrana proti hackerům',
+    'mm_Fail2Ban' => 'Ochrana proti hackerům',
     'mm_UpdateSystem' => 'Aktualizace ústředny',
     'mm_ModuleManager' => 'Správa modulů',
     'mm_SSHConsole' => 'Konzola SSH',

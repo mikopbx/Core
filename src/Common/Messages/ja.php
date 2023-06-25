@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -136,7 +154,7 @@ return [
     'mm_Setup' => 'テレフォニー',
     'mm_Extensions' => '従業員',
     'mm_CallQueues' => '通話キュー',
-    'mm_DialplanApplication' => 'ダイヤルプランアプリケーション',
+    'mm_DialplanApplications' => 'ダイヤルプランアプリケーション',
     'mm_Routing' => 'ルーティング',
     'mm_Providers' => 'テレフォニープロバイダー',
     'mm_IncomingRoutes' => '着信ルート',
@@ -145,23 +163,23 @@ return [
     'mm_System' => 'システム',
     'mm_NetworkSettings' => 'ネットワークとファイアウォール',
     'mm_GeneralSettings' => '一般設定',
-    'mm_SystemClock' => '日時',
+    'mm_TimeSettings' => '日時',
     'mm_Network' => 'ネットワークインターフェース',
     'mm_Firewall' => 'ファイアウォール',
     'mm_MailSettings' => 'メールと通知',
-    'mm_AsteriskManagerInterface' => 'AMIアクセス',
+    'mm_AsteriskManagers' => 'AMIアクセス',
     'mm_IvrMenu' => 'IVRメニュー',
-    'mm_Conferences' => 'カンファレンス',
+    'mm_ConferenceRooms' => 'カンファレンス',
     'mm_CallDetailRecords' => '通話履歴',
     'mm_CustomFiles' => 'システムファイルのカスタマイズ',
     'mm_SoundFiles' => 'サウンドファイル',
     'mm_Licensing' => 'ライセンシング',
     'mm_Restart' => '再起動',
-    'mm_Modules' => 'モジュール',
+    'mm_PbxExtensionModules' => 'モジュール',
     'mm_Maintenance' => 'サービス',
     'mm_Logout' => '終了',
     'mm_SystemDiagnostic' => 'システムログ',
-    'mm_BruteForceProtection' => 'ハッキング保護',
+    'mm_Fail2Ban' => 'ハッキング保護',
     'mm_UpdateSystem' => 'PBXアップデート',
     'mm_ModuleManager' => 'モジュール管理',
     'mm_SSHConsole' => 'SSHコンソール',

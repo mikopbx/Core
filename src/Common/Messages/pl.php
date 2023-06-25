@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -609,7 +627,7 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'SubHeaderPbxExtensionModules' => 'Moduły rozszerzają funkcjonalność systemu',
     'mm_Extensions' => 'Pracownicy',
     'mm_CallQueues' => 'Kolejki połączeń',
-    'mm_DialplanApplication' => 'Aplikacje Dialplan',
+    'mm_DialplanApplications' => 'Aplikacje Dialplan',
     'mm_Routing' => 'Routing',
     'mm_Providers' => 'Dostawcy telefonii',
     'mm_IncomingRoutes' => 'Nadchodzące trasy',
@@ -618,23 +636,23 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'mm_System' => 'System',
     'mm_NetworkSettings' => 'Sieć i zapora ogniowa',
     'mm_GeneralSettings' => 'Ustawienia ogólne',
-    'mm_SystemClock' => 'Data i godzina',
+    'mm_TimeSettings' => 'Data i godzina',
     'mm_Network' => 'Interfejsy sieciowe',
     'mm_Firewall' => 'Zapora ogniowa',
     'mm_MailSettings' => 'Poczta i powiadomienia',
-    'mm_AsteriskManagerInterface' => 'Dostęp AMI',
+    'mm_AsteriskManagers' => 'Dostęp AMI',
     'mm_IvrMenu' => 'Menu IVR',
-    'mm_Conferences' => 'Konferencje',
+    'mm_ConferenceRooms' => 'Konferencje',
     'mm_CallDetailRecords' => 'Historia połączeń',
     'mm_CustomFiles' => 'Dostosowywanie plików systemowych',
     'mm_SoundFiles' => 'Pliki dźwiękowe',
     'mm_Licensing' => 'Licencjonowanie',
     'mm_Restart' => 'Uruchom ponownie',
-    'mm_Modules' => 'Moduły',
+    'mm_PbxExtensionModules' => 'Moduły',
     'mm_Maintenance' => 'Service',
     'mm_Logout' => 'Wyjdź',
     'mm_SystemDiagnostic' => 'Dzienniki systemowe',
-    'mm_BruteForceProtection' => 'Ochrona przed włamaniem',
+    'mm_Fail2Ban' => 'Ochrona przed włamaniem',
     'mm_UpdateSystem' => 'Aktualizacja PBX',
     'mm_ModuleManager' => 'Zarządzanie modułami',
     'mm_SSHConsole' => 'Konsola SSH',

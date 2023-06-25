@@ -25,7 +25,7 @@ class RestartController extends BaseController
     /**
      * Renders the form with main buttons for station reboot and shutdown.
      */
-    public function indexAction(): void
+    public function manageAction(): void
     {
     }
 }

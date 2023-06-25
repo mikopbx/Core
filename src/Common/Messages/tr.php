@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -468,7 +486,7 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'mm_Setup' => 'telefonculuk',
     'mm_Extensions' => 'personel',
     'mm_CallQueues' => 'Çağrı Kuyrukları',
-    'mm_DialplanApplication' => 'Dialplan Uygulamaları',
+    'mm_DialplanApplications' => 'Dialplan Uygulamaları',
     'mm_Routing' => 'yönlendirme',
     'mm_Providers' => 'Telefon Sağlayıcıları',
     'mm_IncomingRoutes' => 'Gelen rotalar',
@@ -477,23 +495,23 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'mm_System' => 'Sistem',
     'mm_NetworkSettings' => 'Ağ ve Güvenlik Duvarı',
     'mm_GeneralSettings' => 'Genel ayarlar',
-    'mm_SystemClock' => 'Tarih ve saat',
+    'mm_TimeSettings' => 'Tarih ve saat',
     'mm_Network' => 'Ağ arayüzleri',
     'mm_Firewall' => 'Firewall',
     'mm_MailSettings' => 'Posta ve Bildirimler',
-    'mm_AsteriskManagerInterface' => 'AMI Erişimi',
+    'mm_AsteriskManagers' => 'AMI Erişimi',
     'mm_IvrMenu' => 'IVR menüsü',
-    'mm_Conferences' => 'konferans',
+    'mm_ConferenceRooms' => 'konferans',
     'mm_CallDetailRecords' => 'Çağrı geçmişi',
     'mm_CustomFiles' => 'Sistem dosyalarının özelleştirilmesi',
     'mm_SoundFiles' => 'Ses dosyaları',
     'mm_Licensing' => 'ruhsat verme',
     'mm_Restart' => 'reboot',
-    'mm_Modules' => 'modüller',
+    'mm_PbxExtensionModules' => 'modüller',
     'mm_Maintenance' => 'hizmet',
     'mm_Logout' => 'çıkış',
     'mm_SystemDiagnostic' => 'Sistem Günlükleri',
-    'mm_BruteForceProtection' => 'Bilgisayar korsanlığı koruması',
+    'mm_Fail2Ban' => 'Bilgisayar korsanlığı koruması',
     'mm_UpdateSystem' => 'PBX Güncellemesi',
     'mm_ModuleManager' => 'Modül yönetimi',
     'mm_SSHConsole' => 'SSH konsolu',

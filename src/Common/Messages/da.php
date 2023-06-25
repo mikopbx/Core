@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -124,7 +142,7 @@ return [
     'mm_Setup' => 'telefoni',
     'mm_Extensions' => 'personale',
     'mm_CallQueues' => 'Opkaldskøer',
-    'mm_DialplanApplication' => 'Dialplan-applikationer',
+    'mm_DialplanApplications' => 'Dialplan-applikationer',
     'mm_Routing' => 'routing',
     'mm_Providers' => 'Telefoniudbydere',
     'mm_IncomingRoutes' => 'Indgående ruter',
@@ -133,13 +151,13 @@ return [
     'mm_System' => 'Systemet',
     'mm_NetworkSettings' => 'Netværk og firewall',
     'mm_GeneralSettings' => 'Generelle indstillinger',
-    'mm_SystemClock' => 'Dato og klokkeslæt',
+    'mm_TimeSettings' => 'Dato og klokkeslæt',
     'mm_Network' => 'Netværksgrænseflader',
     'mm_Firewall' => 'Firewall',
     'mm_MailSettings' => 'Mail og meddelelser',
-    'mm_AsteriskManagerInterface' => 'AMI Access',
+    'mm_AsteriskManagers' => 'AMI Access',
     'mm_IvrMenu' => 'IVR-menu',
-    'mm_Conferences' => 'konference',
+    'mm_ConferenceRooms' => 'konference',
     'mm_CallDetailRecords' => 'Opkaldshistorik',
     'mm_CustomFiles' => 'Tilpasning af systemfiler',
     'mm_SoundFiles' => 'Lydfiler',
@@ -148,7 +166,7 @@ return [
     'mm_Maintenance' => 'service',
     'mm_Logout' => 'frakørsel',
     'mm_SystemDiagnostic' => 'Systemlogfiler',
-    'mm_BruteForceProtection' => 'Hacking beskyttelse',
+    'mm_Fail2Ban' => 'Hacking beskyttelse',
     'mm_UpdateSystem' => 'PBX-opdatering',
     'mm_ModuleManager' => 'Modulstyring',
     'mm_SSHConsole' => 'SSH-konsol',
@@ -300,7 +318,7 @@ return [
     'BreadcrumbProvidersmodifysip' => 'Konfigurer SIP-udbyder',
     'BreadcrumbCallQueues' => 'Opkaldskøer',
     'BreadcrumbConferenceRooms' => 'konference',
-    'mm_Modules' => 'moduler',
+    'mm_PbxExtensionModules' => 'moduler',
     'pr_ValidationProviderLoginIsEmpty' => 'Indtast login for tilladelse hos udbyderen',
     'ir_Provider' => 'udbyder',
     'cq_Name' => 'Kønavn',

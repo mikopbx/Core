@@ -20,6 +20,7 @@
 namespace MikoPBX\AdminCabinet\Plugins;
 
 
+use MikoPBX\AdminCabinet\Providers\AssetProvider;
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Assets\Manager;
 use function MikoPBX\Common\Config\appPath;
@@ -82,9 +83,9 @@ class AssetManager extends Manager
         }
 
         $headerJSCollections = [
-            'headerSentryJS',
-            'headerPBXJS',
-            'headerJS'
+            AssetProvider::HEADER_SENTRY_JS,
+            AssetProvider::HEADER_PBX_JS,
+            AssetProvider::HEADER_JS
         ];
 
         $needCombineJS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineJS')??false;
@@ -123,10 +124,10 @@ class AssetManager extends Manager
         }
 
         $headerJSCollections = [
-            'SemanticUIJS',
-            'footerACE',
-            'footerLoc',
-            'footerPBXJS'
+            AssetProvider::SEMANTIC_UI_JS,
+            AssetProvider::FOOTER_ACE,
+            AssetProvider::FOOTER_LOC,
+            AssetProvider::FOOTER_PBX_JS
         ];
 
         $needCombineJS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineJS')??false;
@@ -165,8 +166,8 @@ class AssetManager extends Manager
         }
 
         $headerJSCollections = [
-            'SemanticUICSS',
-            'headerCSS'
+            AssetProvider::SEMANTIC_UI_CSS,
+            AssetProvider::HEADER_CSS,
         ];
 
         $needCombineCSS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineCSS')??false;

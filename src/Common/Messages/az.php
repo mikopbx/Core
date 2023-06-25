@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -967,24 +985,24 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'mm_SSHConsole' => 'ssh konsolu',
     'mm_ModuleManager' => 'Modul idarəetməsi',
     'mm_UpdateSystem' => 'PBX yeniləməsi',
-    'mm_BruteForceProtection' => 'Oğurluqdan qorunma',
+    'mm_Fail2Ban' => 'Oğurluqdan qorunma',
     'mm_SystemDiagnostic' => 'Sistem qeydləri',
     'mm_Logout' => 'Çıx',
     'mm_Maintenance' => 'Xidmət',
-    'mm_Modules' => 'Modullar',
+    'mm_PbxExtensionModules' => 'Modullar',
     'mm_Restart' => 'Yenidən başladın',
     'mm_PaidModulesAccessNew' => 'Ödənişli modullara giriş',
     'mm_Licensing' => 'Lisenziyalaşdırma',
     'mm_SoundFiles' => 'Səs faylları',
     'mm_CustomFiles' => 'Sistem fayllarının fərdiləşdirilməsi',
     'mm_CallDetailRecords' => 'Zəng tarixçəsi',
-    'mm_Conferences' => 'Konfranslar',
+    'mm_ConferenceRooms' => 'Konfranslar',
     'mm_IvrMenu' => 'IVR menyusu',
-    'mm_AsteriskManagerInterface' => 'AMI Girişi',
+    'mm_AsteriskManagers' => 'AMI Girişi',
     'mm_MailSettings' => 'Poçt və bildirişlər',
     'mm_Firewall' => 'Firewall',
     'mm_Network' => 'Şəbəkə interfeysləri',
-    'mm_SystemClock' => 'Tarix və saat',
+    'mm_TimeSettings' => 'Tarix və saat',
     'mm_GeneralSettings' => 'Ümumi parametrlər',
     'mm_NetworkSettings' => 'Şəbəkə və Firewall',
     'mm_System' => 'Sistem',
@@ -993,7 +1011,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'mm_IncomingRoutes' => 'Gələn marşrutlar',
     'mm_Providers' => 'Telefon provayderləri',
     'mm_Routing' => 'Marşrutlaşdırma',
-    'mm_DialplanApplication' => 'Dialplan Tətbiqləri',
+    'mm_DialplanApplications' => 'Dialplan Tətbiqləri',
     'mm_CallQueues' => 'Zəng növbələri',
     'mm_Extensions' => 'İşçilər',
     'mm_Setup' => 'Telefoniya',

@@ -774,7 +774,7 @@ class ExtensionsController extends BaseController
     }
 
     /**
-     * Возвращает представление для списка нормеров телефонов по AJAX запросу
+     * Retrieves the view for the phone numbers list via AJAX request.
      *
      * @return void
      */
@@ -796,7 +796,7 @@ class ExtensionsController extends BaseController
     }
 
     /**
-     * Retrieves the view for the phone numbers list via AJAX request.
+     * Retrieves the view for the phone number via AJAX request.
      *
      * @return void
      */
@@ -893,7 +893,7 @@ class ExtensionsController extends BaseController
         $extensions = Extensions::find($parameters);
         foreach ($extensions as $record) {
             $type = ($record->userid > 0) ? ' USER'
-                : $record->type; // Пользователи будут самыми первыми в списке
+                : $record->type; // Users will be the very first in the list.
             $type = Text::underscore(strtoupper($type));
 
             if ($type === Extensions::TYPE_MODULES) {

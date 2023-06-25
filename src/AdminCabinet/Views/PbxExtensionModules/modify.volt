@@ -1,4 +1,4 @@
-{{ form('pbx-extension-modules/save-module-settings', 'role': 'form', 'class': 'ui large form','id':'pbx-extension-modify-form') }}
+{{ form('pbx-extension-modules/save', 'role': 'form', 'class': 'ui large form','id':'pbx-extension-modify-form') }}
 <div class="ui header">{{ title }}</div>
 {{ form.render('key') }}
 {{ form.render('href') }}

@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -168,7 +186,7 @@ return [
     'mm_Setup' => 'Телефонія',
     'mm_Extensions' => 'Співробітники',
     'mm_CallQueues' => 'Черги викликів',
-    'mm_DialplanApplication' => 'Застосунки діалпланів',
+    'mm_DialplanApplications' => 'Застосунки діалпланів',
     'mm_Routing' => 'Маршрутизація',
     'mm_Providers' => 'Провайдери телефонії',
     'mm_IncomingRoutes' => 'Вхідні маршрути',
@@ -177,23 +195,23 @@ return [
     'mm_System' => 'Система',
     'mm_NetworkSettings' => 'Мережа та Firewall',
     'mm_GeneralSettings' => 'Загальні налаштування',
-    'mm_SystemClock' => 'Дата і час',
+    'mm_TimeSettings' => 'Дата і час',
     'mm_Network' => 'Мережеві інтерфейси',
     'mm_Firewall' => 'Мережевий екран',
     'mm_MailSettings' => 'Пошта та повідомлення',
-    'mm_AsteriskManagerInterface' => 'Доступ до AMI',
+    'mm_AsteriskManagers' => 'Доступ до AMI',
     'mm_IvrMenu' => 'IVR меню',
-    'mm_Conferences' => 'Конференції',
+    'mm_ConferenceRooms' => 'Конференції',
     'mm_CallDetailRecords' => 'Історія викликів',
     'mm_CustomFiles' => 'Кастомізація системних файлів',
     'mm_SoundFiles' => 'Звукові файли',
     'mm_Licensing' => 'Ліцензування',
     'mm_Restart' => 'Перезавантаження',
-    'mm_Modules' => 'Модулі',
+    'mm_PbxExtensionModules' => 'Модулі',
     'mm_Maintenance' => 'Обслуговування',
     'mm_Logout' => 'Вихід',
     'mm_SystemDiagnostic' => 'Системні логи',
-    'mm_BruteForceProtection' => 'Захист від злому',
+    'mm_Fail2Ban' => 'Захист від злому',
     'mm_UpdateSystem' => 'Оновлення PBX',
     'mm_ModuleManager' => 'Управління модулями',
     'mm_SSHConsole' => 'SSH консоль',

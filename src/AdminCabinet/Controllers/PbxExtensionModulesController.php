@@ -113,7 +113,7 @@ class PbxExtensionModulesController extends BaseController
     /**
      * Saves how to show the module in sidebar settings into PbxSettings
      */
-    public function saveModuleSettingsAction(): void
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;

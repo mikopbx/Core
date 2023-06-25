@@ -65,7 +65,7 @@ class Elements extends Injectable
                         'style' => '',
                     ],
                     'conference-rooms' => [
-                        'caption' => 'mm_Conferences',
+                        'caption' => 'mm_ConferenceRooms',
                         'iconclass' => 'phone volume',
                         'action' => 'index',
                         'param' => '',
@@ -123,11 +123,11 @@ class Elements extends Injectable
             ],
 
             'modules' => [
-                'caption' => 'mm_Modules',
+                'caption' => 'mm_PbxExtensionModules',
                 'iconclass' => '',
                 'submenu' => [
                     'dialplan-applications' => [
-                        'caption' => 'mm_DialplanApplication',
+                        'caption' => 'mm_DialplanApplications',
                         'iconclass' => 'php',
                         'action' => 'index',
                         'param' => '',
@@ -178,7 +178,7 @@ class Elements extends Injectable
                     'restart' => [
                         'caption' => 'mm_Restart',
                         'iconclass' => 'power off',
-                        'action' => 'index',
+                        'action' => 'manage',
                         'param' => '',
                         'style' => '',
                     ],
@@ -203,7 +203,7 @@ class Elements extends Injectable
                         'style' => '',
                     ],
                     'fail2-ban' => [
-                        'caption' => 'mm_BruteForceProtection',
+                        'caption' => 'mm_Fail2Ban',
                         'iconclass' => 'user secret',
                         'action' => 'index',
                         'param' => '',
@@ -223,7 +223,7 @@ class Elements extends Injectable
                         'style' => '',
                     ],
                     'time-settings' => [
-                        'caption' => 'mm_SystemClock',
+                        'caption' => 'mm_TimeSettings',
                         'iconclass' => 'time',
                         'action' => 'modify',
                         'param' => '',
@@ -237,7 +237,7 @@ class Elements extends Injectable
                         'style' => '',
                     ],
                     'asterisk-managers' => [
-                        'caption' => 'mm_AsteriskManagerInterface',
+                        'caption' => 'mm_AsteriskManagers',
                         'iconclass' => 'asterisk',
                         'action' => 'index',
                         'param' => '',

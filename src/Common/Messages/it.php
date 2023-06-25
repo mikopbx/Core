@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -167,7 +185,7 @@ return [
     'mm_Setup' => 'telefonia',
     'mm_Extensions' => 'personale',
     'mm_CallQueues' => 'Code di chiamata',
-    'mm_DialplanApplication' => 'Applicazioni dialplan',
+    'mm_DialplanApplications' => 'Applicazioni dialplan',
     'mm_Routing' => 'instradamento',
     'mm_Providers' => 'Fornitori di telefonia',
     'mm_IncomingRoutes' => 'Percorsi in entrata',
@@ -176,23 +194,23 @@ return [
     'mm_System' => 'Il sistema',
     'mm_NetworkSettings' => 'Rete e firewall',
     'mm_GeneralSettings' => 'Impostazioni generali',
-    'mm_SystemClock' => 'Data e ora',
+    'mm_TimeSettings' => 'Data e ora',
     'mm_Network' => 'Interfacce di rete',
     'mm_Firewall' => 'Firewall',
     'mm_MailSettings' => 'Posta e notifiche',
-    'mm_AsteriskManagerInterface' => 'Accesso AMI',
+    'mm_AsteriskManagers' => 'Accesso AMI',
     'mm_IvrMenu' => 'Menu IVR',
-    'mm_Conferences' => 'conferenza',
+    'mm_ConferenceRooms' => 'conferenza',
     'mm_CallDetailRecords' => 'Cronologia chiamate',
     'mm_CustomFiles' => 'Personalizzazione dei file di sistema',
     'mm_SoundFiles' => 'File audio',
     'mm_Licensing' => 'licenza',
     'mm_Restart' => 'riavvio',
-    'mm_Modules' => 'moduli',
+    'mm_PbxExtensionModules' => 'moduli',
     'mm_Maintenance' => 'servizio',
     'mm_Logout' => 'uscita',
     'mm_SystemDiagnostic' => 'Registri di sistema',
-    'mm_BruteForceProtection' => 'Protezione dagli hacker',
+    'mm_Fail2Ban' => 'Protezione dagli hacker',
     'mm_UpdateSystem' => 'Aggiornamento PBX',
     'mm_ModuleManager' => 'Gestione del modulo',
     'mm_SSHConsole' => 'Console SSH',

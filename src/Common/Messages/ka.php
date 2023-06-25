@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -157,7 +175,7 @@ return [
     'mm_Setup' => 'ტელეფონია',
     'mm_Extensions' => 'პერსონალი',
     'mm_CallQueues' => 'ზარის რიგები',
-    'mm_DialplanApplication' => 'Dialplan პროგრამები',
+    'mm_DialplanApplications' => 'Dialplan პროგრამები',
     'mm_Routing' => 'მარშრუტიზაცია',
     'mm_Providers' => 'სატელეფონო პროვაიდერები',
     'mm_IncomingRoutes' => 'შემომავალი მარშრუტები',
@@ -166,23 +184,23 @@ return [
     'mm_System' => 'სისტემა',
     'mm_NetworkSettings' => 'ქსელი და Firewall',
     'mm_GeneralSettings' => 'Ძირითადი პარამეტრები',
-    'mm_SystemClock' => 'თარიღი და დრო',
+    'mm_TimeSettings' => 'თარიღი და დრო',
     'mm_Network' => 'ქსელის ინტერფეისი',
     'mm_Firewall' => 'Firewall',
     'mm_MailSettings' => 'ფოსტა და შეტყობინებები',
-    'mm_AsteriskManagerInterface' => 'AMI წვდომა',
+    'mm_AsteriskManagers' => 'AMI წვდომა',
     'mm_IvrMenu' => 'IVR მენიუ',
-    'mm_Conferences' => 'კონფერენციები',
+    'mm_ConferenceRooms' => 'კონფერენციები',
     'mm_CallDetailRecords' => 'ზარის ისტორია',
     'mm_CustomFiles' => 'სისტემის ფაილის პერსონალიზაცია',
     'mm_SoundFiles' => 'ხმოვანი ფაილები',
     'mm_Licensing' => 'ლიცენზირება',
     'mm_Restart' => 'გადატვირთეთ',
-    'mm_Modules' => 'მოდულები',
+    'mm_PbxExtensionModules' => 'მოდულები',
     'mm_Maintenance' => 'მომსახურება',
     'mm_Logout' => 'გამომავალი',
     'mm_SystemDiagnostic' => 'სისტემის ჟურნალები',
-    'mm_BruteForceProtection' => 'ძარცვის დაცვა',
+    'mm_Fail2Ban' => 'ძარცვის დაცვა',
     'mm_UpdateSystem' => 'PBX განახლება',
     'mm_ModuleManager' => 'მოდულის მართვა',
     'mm_SSHConsole' => 'SSH კონსოლი',

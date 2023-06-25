@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -149,30 +167,30 @@ return [
     'mm_Setup' => '电话技术',
     'mm_Extensions' => '员工人数',
     'mm_CallQueues' => '呼叫队列',
-    'mm_DialplanApplication' => 'Dialplan应用',
+    'mm_DialplanApplications' => 'Dialplan应用',
     'mm_Routing' => '路由选择',
     'mm_Providers' => '电话提供商',
     'mm_IncomingRoutes' => '进站路线',
     'mm_OutboundRoutes' => '外发路线',
     'mm_OutOffWorkTime' => '非工作时间',
     'mm_GeneralSettings' => '常规设置',
-    'mm_SystemClock' => '日期和时间',
+    'mm_TimeSettings' => '日期和时间',
     'mm_Network' => '网络接口',
     'mm_Firewall' => '防火墙功能',
     'mm_MailSettings' => '邮件和通知',
-    'mm_AsteriskManagerInterface' => 'AMI访问',
+    'mm_AsteriskManagers' => 'AMI访问',
     'mm_IvrMenu' => 'IVR菜单',
-    'mm_Conferences' => '会议活动',
+    'mm_ConferenceRooms' => '会议活动',
     'mm_CallDetailRecords' => '通话记录',
     'mm_CustomFiles' => '定制系统文件',
     'mm_SoundFiles' => '声音文件',
     'mm_Licensing' => '发牌',
     'mm_Restart' => '重新开机',
-    'mm_Modules' => '模组',
+    'mm_PbxExtensionModules' => '模组',
     'mm_Maintenance' => '服务专区',
     'mm_Logout' => '退出',
     'mm_SystemDiagnostic' => '系统日志',
-    'mm_BruteForceProtection' => '骇客防护',
+    'mm_Fail2Ban' => '骇客防护',
     'mm_UpdateSystem' => 'PBX更新',
     'mm_ModuleManager' => '模块管理',
     'mm_SSHConsole' => 'SSH控制台',

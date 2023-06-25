@@ -141,12 +141,12 @@ class TopMenuSearchController extends BaseController
         ];
         $items[] = [
             'name'          => $elements->getIconByController('time-settings') . ' ' . $this->translation->_(
-                    'mm_SystemClock'
+                    'mm_TimeSettings'
                 ),
             'value'         => $this->url->get('time-settings/modify'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
-            'sorter'        => strip_tags($this->translation->_('mm_SystemClock')),
+            'sorter'        => strip_tags($this->translation->_('mm_TimeSettings')),
         ];
         $items[] = [
             'name'          => $elements->getIconByController('network') . ' ' . $this->translation->_('mm_Network'),
@@ -205,12 +205,12 @@ class TopMenuSearchController extends BaseController
 
         $items[] = [
             'name'          => $elements->getIconByController('fail2-ban') . ' ' . $this->translation->_(
-                    'mm_BruteForceProtection'
+                    'mm_Fail2Ban'
                 ),
             'value'         => $this->url->get('fail2-ban/index'),
             'type'          => 'MENUITEMS',
             'typeLocalized' => $this->translation->_('ex_dropdownCategory_MENUITEMS'),
-            'sorter'        => strip_tags($this->translation->_('mm_BruteForceProtection')),
+            'sorter'        => strip_tags($this->translation->_('mm_Fail2Ban')),
         ];
         $items[] = [
             'name'          => $elements->getIconByController('update') . ' ' . $this->translation->_(

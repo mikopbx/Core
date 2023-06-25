@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -915,23 +933,23 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'mm_SSHConsole' => 'Console SSH',
     'mm_ModuleManager' => 'Gerenciamento de Módulo',
     'mm_UpdateSystem' => 'Atualização de PBX',
-    'mm_BruteForceProtection' => 'Bloqueios',
+    'mm_Fail2Ban' => 'Bloqueios',
     'mm_SystemDiagnostic' => 'Logs do sistema',
     'mm_Logout' => 'Saída',
     'mm_Maintenance' => 'Serviço',
-    'mm_Modules' => 'Módulos',
+    'mm_PbxExtensionModules' => 'Módulos',
     'mm_Restart' => 'Reiniciar',
     'mm_Licensing' => 'Licenciamento',
     'mm_SoundFiles' => 'Arquivos de som',
     'mm_CustomFiles' => 'Personalização de arquivo do sistema',
     'mm_CallDetailRecords' => 'Histórico de chamadas',
-    'mm_Conferences' => 'Conferências',
+    'mm_ConferenceRooms' => 'Conferências',
     'mm_IvrMenu' => 'Menu IVR',
-    'mm_AsteriskManagerInterface' => 'Acesso AMI',
+    'mm_AsteriskManagers' => 'Acesso AMI',
     'mm_MailSettings' => 'Correio e notificações',
     'mm_Firewall' => 'Firewall',
     'mm_Network' => 'Interfaces de rede',
-    'mm_SystemClock' => 'Data e Hora',
+    'mm_TimeSettings' => 'Data e Hora',
     'mm_GeneralSettings' => 'Configurações Gerais',
     'mm_NetworkSettings' => 'Rede e Firewall',
     'mm_System' => 'Sistema',
@@ -940,7 +958,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'mm_IncomingRoutes' => 'Rotas de entrada',
     'mm_Providers' => 'Provedores de telefonia',
     'mm_Routing' => 'Encaminhamento',
-    'mm_DialplanApplication' => 'Aplicativos Dialplan',
+    'mm_DialplanApplications' => 'Aplicativos Dialplan',
     'mm_CallQueues' => 'Filas de chamadas',
     'mm_Extensions' => 'Ramais',
     'mm_Setup' => 'Telefonia',

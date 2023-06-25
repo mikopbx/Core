@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -149,7 +167,7 @@ return [
     'mm_Setup' => 'Telefonie',
     'mm_Extensions' => 'Nebenstellen/Extensions',
     'mm_CallQueues' => 'Warteschlange/Queue',
-    'mm_DialplanApplication' => 'Applikationen/DialPlan',
+    'mm_DialplanApplications' => 'Applikationen/DialPlan',
     'mm_Routing' => 'Anruf Regeln (Routing)',
     'mm_Providers' => 'Telefonie Provider',
     'mm_IncomingRoutes' => 'Eingehende Regeln',
@@ -158,23 +176,23 @@ return [
     'mm_System' => 'Einstellungen',
     'mm_NetworkSettings' => 'Netzwerk und Firewall',
     'mm_GeneralSettings' => 'Allgemeine Einstellungen',
-    'mm_SystemClock' => 'Uhrzeit/Datum',
+    'mm_TimeSettings' => 'Uhrzeit/Datum',
     'mm_Network' => 'Netzwerkschnittstellen',
     'mm_Firewall' => 'Firewall',
     'mm_MailSettings' => 'E-Mail Einstellungen',
-    'mm_AsteriskManagerInterface' => 'Asterisk Manager Interface (AMI)',
+    'mm_AsteriskManagers' => 'Asterisk Manager Interface (AMI)',
     'mm_IvrMenu' => 'IVR Menü',
-    'mm_Conferences' => 'Konferenzen',
+    'mm_ConferenceRooms' => 'Konferenzen',
     'mm_CallDetailRecords' => 'Anruf-Historie (CDR)',
     'mm_CustomFiles' => 'System-Dateien anpassen (conf)',
     'mm_SoundFiles' => 'Audio-Dateien',
     'mm_Licensing' => 'Lizenzen',
     'mm_Restart' => 'Neustart',
-    'mm_Modules' => 'Module',
+    'mm_PbxExtensionModules' => 'Module',
     'mm_Maintenance' => 'Wartung & Pflege',
     'mm_Logout' => 'Abmelden',
     'mm_SystemDiagnostic' => 'System-Log Einträge',
-    'mm_BruteForceProtection' => 'FAIL2BAN / Antihacking',
+    'mm_Fail2Ban' => 'FAIL2BAN / Antihacking',
     'mm_UpdateSystem' => 'PBX Update',
     'mm_ModuleManager' => 'Erweiterungsmodule verwalten',
     'mm_SSHConsole' => 'SSH-Konsole',

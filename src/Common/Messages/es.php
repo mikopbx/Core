@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -175,7 +193,7 @@ return [
     'pr_TableColumnProviderName' => 'Proveedor',
     'pr_TableColumnProviderStatus' => 'Estado',
     'pr_ValidateRTPOutOfRange' => 'Rango de puerto RTP no válido Los valores deben estar entre {ruleValue}',
-    'mm_Modules' => 'Módulos',
+    'mm_PbxExtensionModules' => 'Módulos',
     'pr_RTPPortRange' => 'Rango de puerto RTP',
     'pr_RTPPortFrom' => 'Con',
     'pr_RTPPortTo' => 'por',
@@ -238,7 +256,7 @@ return [
     'ir_ExtensionSelect' => 'Para numerar',
     'ir_RuleAssignIf' => 'La regla funcionará cuando llame',
     'ir_DidNumber' => 'Número adicional (DID)',
-    'mm_BruteForceProtection' => 'Protección contra piratería',
+    'mm_Fail2Ban' => 'Protección contra piratería',
     'mm_UpdateSystem' => 'Actualización de PBX',
     'mm_ModuleManager' => 'Gestión de módulos',
     'bt_Edit' => 'Editar',
@@ -393,7 +411,7 @@ return [
     'mm_Setup' => 'Telefonía',
     'mm_Extensions' => 'Empleados',
     'mm_CallQueues' => 'Colas de llamadas',
-    'mm_DialplanApplication' => 'Aplicaciones de Dialplan',
+    'mm_DialplanApplications' => 'Aplicaciones de Dialplan',
     'mm_Routing' => 'Enrutamiento',
     'mm_Providers' => 'Proveedores de telefonía',
     'mm_IncomingRoutes' => 'Rutas entrantes',
@@ -778,7 +796,7 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'mm_System' => 'El sistema',
     'mm_NetworkSettings' => 'Red y cortafuegos',
     'mm_GeneralSettings' => 'Configuraciones generales',
-    'mm_SystemClock' => 'Fecha y hora',
+    'mm_TimeSettings' => 'Fecha y hora',
     'upd_FileName' => 'Seleccionar archivo de actualización',
     'upd_UpdateSystem' => 'Aplicar actualización',
     'upd_VersionColumn' => 'Versión',
@@ -869,9 +887,9 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'sntry_SuccessMessage' => 'Gracias por tu ayuda!',
     'mm_Firewall' => 'Cortafuegos',
     'mm_MailSettings' => 'Correo y notificaciones',
-    'mm_AsteriskManagerInterface' => 'Acceso AMI',
+    'mm_AsteriskManagers' => 'Acceso AMI',
     'mm_IvrMenu' => 'Menú IVR',
-    'mm_Conferences' => 'Conferencias',
+    'mm_ConferenceRooms' => 'Conferencias',
     'ex_Status' => 'Estado',
     'January' => 'Enero',
     'gs_WebAdminLanguage' => 'Idioma de la interfaz web',
