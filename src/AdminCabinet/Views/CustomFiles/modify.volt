@@ -2,13 +2,15 @@
 {{ form.render('id') }}
         {{ form.render('content') }}
 {{ form.render('filepath') }}
-<div class="field">
+<div class="field max-width-800">
     <label>{{ t._('cf_Description') }}</label>
     {{ form.render('description') }}
 </div>
-<div class="field">
+<div class="field ">
     <label>{{ t._('cf_Mode') }}</label>
-    {{ form.render('mode') }}
+    <div class="field max-width-400">
+        {{ form.render('mode') }}
+    </div>
 </div>
 <div id="application-code-readonly" class="application-code">
     <pre>{{ content|e }}</pre>

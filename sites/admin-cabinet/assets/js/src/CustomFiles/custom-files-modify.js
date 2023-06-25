@@ -41,6 +41,12 @@ const customFile = {
     $appCodeFromServer: $('#application-code-readonly'),
 
     /**
+     * jQuery element for the main content container.
+     * @type {jQuery}
+     */
+    $mainContainer: $('#main-content-container'),
+
+    /**
      * Ace editor instances
      * `editor` is for input and `viewer` is for display, and they are initialized in `initializeAce`.
      */
@@ -69,6 +75,8 @@ const customFile = {
      * Sets up the dropdown, initializes Ace editor, form, and retrieves file content from the server.
      */
     initialize() {
+        customFile.$mainContainer.removeClass('container');
+
         customFile.$typeSelectDropDown.dropdown({
             onChange() {
                 // Hide or show code depending on the file type
@@ -99,10 +107,9 @@ const customFile = {
         const rowsCount = Math.round(aceHeight / 16.3);
 
         // Set minimum height for the code sections on window load
-        $(window).load(function () {
-            $('.application-code-readonly').css('min-height', `${aceHeight}px`);
+        // $(window).load(function () {
             $('.application-code').css('min-height', `${aceHeight}px`);
-        });
+        //});
 
         // Retrieve 'mode' value from the form
         const mode = customFile.$formObj.form('get value', 'mode');
@@ -115,7 +122,7 @@ const customFile = {
                 customFile.$appCodeFromServer.show();
                 customFile.$appCode.hide();
                 customFile.viewer.setOptions({
-                    maxLines: rowsCount,
+                    minLines: rowsCount,
                 });
                 customFile.viewer.resize()
                 break;
@@ -125,6 +132,9 @@ const customFile = {
                 customFile.viewer.navigateFileEnd();
                 customFile.editor.setValue(customFile.$formObj.form('get value', 'content'));
                 customFile.$appCode.show();
+                customFile.editor.setOptions({
+                    minLines: rowsCount,
+                });
                 customFile.editor.getSession().on('change', () => {
                     // Trigger change event to acknowledge the modification
                     Form.dataChanged();
@@ -142,7 +152,7 @@ const customFile = {
                 }
                 customFile.$appCode.show();
                 customFile.editor.setOptions({
-                    maxLines: rowsCount,
+                    minLines: rowsCount,
                 });
                 customFile.editor.resize()
                 customFile.editor.getSession().on('change', () => {

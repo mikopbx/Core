@@ -182,7 +182,7 @@ td.disabled img {
 .application-code {
     position: relative;
     width: 100%;
-    height: 600px;
+    min-height: 600px;
 }
 
 /* Hide interface until it not full loaded */
