@@ -1159,4 +1159,7 @@ return [
     'gs_SIPExpiryRange' => 'Ελάχιστος και μέγιστος χρόνος σε δευτερόλεπτα',
     'gs_PBXCallParkingSlotRange' => 'Εύρος θέσεων στάθμευσης',
     'gs_RTPPortRange' => 'Εύρος θύρας RTP',
+    'BreadcrumbAdminCabinet' => 'Διοικητική διεπαφή',
+    'BreadcrumbPBXCoreREST' => 'REST API',
+    'BreadcrumbRestartmanage' => 'Επανεκκίνηση συστήματος',
 ];

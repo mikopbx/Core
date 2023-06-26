@@ -1162,4 +1162,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'gs_RTPPortRange' => 'RTP port range',
     'gs_PBXCallParkingSlotRange' => 'Range of parking slots',
     'gs_SIPExpiryRange' => 'Minimum and maximum time in seconds',
+    'BreadcrumbPBXCoreREST' => 'REST API',
+    'BreadcrumbRestartmanage' => 'System reboot',
+    'BreadcrumbAdminCabinet' => 'Administrative interface',
 ];

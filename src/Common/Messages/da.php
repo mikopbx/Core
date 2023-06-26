@@ -1159,4 +1159,7 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'gs_RTPPortRange' => 'RTP-portområde',
     'gs_PBXCallParkingSlotRange' => 'Udvalg af parkeringspladser',
     'gs_SIPExpiryRange' => 'Minimum og maksimum tid i sekunder',
+    'BreadcrumbAdminCabinet' => 'Administrativ grænseflade',
+    'BreadcrumbPBXCoreREST' => 'REST API',
+    'BreadcrumbRestartmanage' => 'System genstart',
 ];

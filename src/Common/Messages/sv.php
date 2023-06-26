@@ -1159,4 +1159,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_SIPExpiryRange' => 'Minsta och maximala tid i sekunder',
     'gs_RTPPortRange' => 'RTP-portintervall',
     'gs_PBXCallParkingSlotRange' => 'Utbud av parkeringsplatser',
+    'BreadcrumbAdminCabinet' => 'Administrativt gränssnitt',
+    'BreadcrumbPBXCoreREST' => 'REST API',
+    'BreadcrumbRestartmanage' => 'Systemstart',
 ];

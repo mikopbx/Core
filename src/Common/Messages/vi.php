@@ -1159,4 +1159,7 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'gs_RTPPortRange' => 'Phạm vi cổng RTP',
     'gs_SIPExpiryRange' => 'Thời gian tối thiểu và tối đa tính bằng giây',
     'gs_PBXCallParkingSlotRange' => 'Phạm vi chỗ đậu xe',
+    'BreadcrumbAdminCabinet' => 'Giao diện quản trị',
+    'BreadcrumbPBXCoreREST' => 'API REST',
+    'BreadcrumbRestartmanage' => 'Khởi động lại hệ thống',
 ];

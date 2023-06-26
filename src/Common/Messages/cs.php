@@ -1159,4 +1159,7 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'gs_PBXCallParkingSlotRange' => 'Nabídka parkovacích míst',
     'gs_SIPExpiryRange' => 'Minimální a maximální čas v sekundách',
     'gs_RTPPortRange' => 'Rozsah portů RTP',
+    'BreadcrumbAdminCabinet' => 'Administrativní rozhraní',
+    'BreadcrumbPBXCoreREST' => 'REST API',
+    'BreadcrumbRestartmanage' => 'Restart systému',
 ];

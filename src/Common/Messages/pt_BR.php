@@ -1158,4 +1158,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_RTPPortRange' => 'Intervalo de portas RTP',
     'gs_PBXCallParkingSlotRange' => 'Gama de lugares de estacionamento',
     'gs_SIPExpiryRange' => 'Tempo mínimo e máximo em segundos',
+    'BreadcrumbAdminCabinet' => 'Interface administrativa',
+    'BreadcrumbPBXCoreREST' => 'API REST',
+    'BreadcrumbRestartmanage' => 'Reinicialização do sistema',
 ];

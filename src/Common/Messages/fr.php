@@ -1159,4 +1159,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'gs_PBXCallParkingSlotRange' => 'Gamme de places de stationnement',
     'gs_SIPExpiryRange' => 'Temps minimum et maximum en secondes',
     'gs_RTPPortRange' => 'Plage de ports RTP',
+    'BreadcrumbAdminCabinet' => 'Interface administrative',
+    'BreadcrumbPBXCoreREST' => 'API REST',
+    'BreadcrumbRestartmanage' => 'Redémarrage du système',
 ];

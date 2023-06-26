@@ -1159,4 +1159,7 @@ return [
     'gs_PBXCallParkingSlotRange' => '车位范围',
     'gs_SIPExpiryRange' => '以秒为单位的最小和最大时间',
     'gs_RTPPortRange' => 'RTP端口范围',
+    'BreadcrumbAdminCabinet' => '管理界面',
+    'BreadcrumbPBXCoreREST' => '休息API',
+    'BreadcrumbRestartmanage' => '系统重启',
 ];

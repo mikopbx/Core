@@ -1159,4 +1159,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'gs_SIPExpiryRange' => 'Saniye cinsinden minimum ve maksimum süre',
     'gs_RTPPortRange' => 'RTP bağlantı noktası aralığı',
     'gs_PBXCallParkingSlotRange' => 'Park yeri aralığı',
+    'BreadcrumbRestartmanage' => 'Sistem yeniden başlatma',
+    'BreadcrumbAdminCabinet' => 'İdari arayüz',
+    'BreadcrumbPBXCoreREST' => 'DİNLENME API\'SI',
 ];

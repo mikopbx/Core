@@ -1159,4 +1159,7 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'gs_PBXCallParkingSlotRange' => 'Gamma di parcheggi',
     'gs_SIPExpiryRange' => 'Tempo minimo e massimo in secondi',
     'gs_RTPPortRange' => 'Intervallo di porte RTP',
+    'BreadcrumbAdminCabinet' => 'Interfaccia amministrativa',
+    'BreadcrumbPBXCoreREST' => 'API REST',
+    'BreadcrumbRestartmanage' => 'Riavvio del sistema',
 ];

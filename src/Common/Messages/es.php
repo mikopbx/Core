@@ -1159,4 +1159,7 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'gs_RTPPortRange' => 'Rango de puertos RTP',
     'gs_PBXCallParkingSlotRange' => 'Gama de plazas de aparcamiento',
     'gs_SIPExpiryRange' => 'Tiempo mínimo y máximo en segundos',
+    'BreadcrumbAdminCabinet' => 'Interfaz administrativa',
+    'BreadcrumbPBXCoreREST' => 'API REST',
+    'BreadcrumbRestartmanage' => 'Reinicio del sistema',
 ];

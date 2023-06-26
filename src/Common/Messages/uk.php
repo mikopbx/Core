@@ -1159,4 +1159,7 @@ return [
     'gs_RTPPortRange' => 'Діапазон RTP портів',
     'gs_PBXCallParkingSlotRange' => 'Діапазон слотів для паркування',
     'gs_SIPExpiryRange' => 'Мінімальний та максимальний час у секундах',
+    'BreadcrumbRestartmanage' => 'Перезавантаження системи',
+    'BreadcrumbAdminCabinet' => 'Адміністративний інтерфейс',
+    'BreadcrumbPBXCoreREST' => 'REST API',
 ];

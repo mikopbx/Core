@@ -1159,4 +1159,7 @@ return [
     'gs_PBXCallParkingSlotRange' => 'პარკირების ადგილების დიაპაზონი',
     'gs_SIPExpiryRange' => 'მინიმალური და მაქსიმალური დრო წამებში',
     'gs_RTPPortRange' => 'RTP პორტის დიაპაზონი',
+    'BreadcrumbAdminCabinet' => 'ადმინისტრაციული ინტერფეისი',
+    'BreadcrumbPBXCoreREST' => 'REST API',
+    'BreadcrumbRestartmanage' => 'სისტემის გადატვირთვა',
 ];

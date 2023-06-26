@@ -990,7 +990,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'mm_Maintenance' => 'Xidmət',
     'mm_PbxExtensionModules' => 'Modullar',
     'mm_Restart' => 'Yenidən başladın',
-    'mm_Licensing' => 'Lisenziyalaşdırma',
     'mm_SoundFiles' => 'Səs faylları',
     'mm_CustomFiles' => 'Sistem fayllarının fərdiləşdirilməsi',
     'mm_CallDetailRecords' => 'Zəng tarixçəsi',
@@ -1160,4 +1159,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'gs_PBXCallParkingSlotRange' => 'Dayanacaq yerlərinin çeşidi',
     'gs_SIPExpiryRange' => 'Saniyədə minimum və maksimum vaxt',
     'gs_RTPPortRange' => 'RTP port diapazonu',
+    'BreadcrumbAdminCabinet' => 'İnzibati interfeys',
+    'BreadcrumbRestartmanage' => 'Sistemin yenidən başlaması',
+    'BreadcrumbPBXCoreREST' => 'REST API',
 ];

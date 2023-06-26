@@ -1159,4 +1159,7 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'gs_RTPPortRange' => 'Zakres portów RTP',
     'gs_PBXCallParkingSlotRange' => 'Zakres miejsc parkingowych',
     'gs_SIPExpiryRange' => 'Minimalny i maksymalny czas w sekundach',
+    'BreadcrumbAdminCabinet' => 'Interfejs administracyjny',
+    'BreadcrumbPBXCoreREST' => 'REST API',
+    'BreadcrumbRestartmanage' => 'Ponowne uruchomienie systemu',
 ];
