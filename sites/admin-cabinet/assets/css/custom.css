@@ -39,6 +39,11 @@ body {
     white-space: nowrap;
 }
 
+/* No internet warning on license page */
+div.show-if-no-internet {
+    display: none;
+}
+
 
 /* Sidebar menu button */
 #sidebar-menu-button {
