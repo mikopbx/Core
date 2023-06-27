@@ -15,8 +15,9 @@
         "ext-sockets": "*",
         "ext-sqlite3": "*",
         "ext-zip": "*",
-        "filp/whoops": "^2.12.1",
-        "guzzlehttp/guzzle": "^7.0",
+        "ext-ldap": "*",
+        "filp/whoops": "^2.15.2",
+        "guzzlehttp/guzzle": "^7.5.3",
         "pda/pheanstalk": "^4.0",
         "php-mime-mail-parser/php-mime-mail-parser": "^7.0",
         "php-school/cli-menu": "^4.0",
@@ -26,14 +27,14 @@
         "recoil/react": "^1.0",
         "recoil/recoil": "^1.0",
         "repejota/nats": "0.8.4",
-        "sentry/sdk": "^3.1.0"
+        "sentry/sdk": "^3.3.0"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master",
         "phpunit/phpunit-selenium": "^8.0",
-        "php-webdriver/webdriver": "^1.11.1",
+        "php-webdriver/webdriver": "^1.14.0",
         "browserstack/browserstack-local": "^v1.1.0",
-        "blackfire/php-sdk": "^v1.25.1",
+        "blackfire/php-sdk": "^v1.33.0",
         "phalcon/incubator-test": "v1.0.0-alpha.1"
     },
     "autoload": {

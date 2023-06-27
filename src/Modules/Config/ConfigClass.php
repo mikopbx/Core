@@ -437,4 +437,17 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     public function onAfterExecuteRoute(Controller $controller):void
     {
     }
+
+    /**
+     * Adds an extra filters before execute request to CDR table.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#applyaclfilterstocdrquery
+     *
+     * @param array $parameters The array of parameters prepared for execute query.
+     *
+     * @return void
+     */
+    public function applyACLFiltersToCDRQuery(array &$parameters): void
+    {
+        // Implement $parameters modifications
+    }
 }
