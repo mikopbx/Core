@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
+use Phalcon\Loader;
 use Phalcon\Mvc\Application;
 
 use Phalcon\Mvc\Router;
@@ -279,6 +280,28 @@ class PbxExtensionUtils
                 ]);
             }
         }
+    }
+
+    /**
+     * Register modules composer autoloader in the provided loader.
+     *
+     * @param Loader $loader The loader instance to register modules in.
+     * @return void
+     */
+    public static function registerModulesComposterInLoader(Loader $loader){
+        $di = Di::getDefault();
+        $modulesDir = $di->getShared('config')->path('core.modulesDir');
+        $results = glob($modulesDir . '/*/vendor/autoload.php', GLOB_NOSORT);
+
+        $modulesComposerLoaders = [];
+        foreach ($results as $moduleComposerLoader) {
+            // Check if the module's composer loader file exists
+            if (file_exists($moduleComposerLoader)) {
+                $modulesComposerLoaders[]=$moduleComposerLoader;
+            }
+        }
+        // Register the module composer loaders in the provided loader
+        $loader->registerFiles($modulesComposerLoaders,true);
     }
 
 }
