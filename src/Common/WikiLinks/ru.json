@@ -1,3 +1,7 @@
 {
-  "links-version": "1.0"
+  "links-version": "1.0",
+  "https://wiki.mikopbx.com/extensions": "https://docs.mikopbx.com/mikopbx/manual/telefoniya/extensions",
+  "https://wiki.mikopbx.com/call-queues": "https://docs.mikopbx.com/mikopbx/manual/telefoniya/call-queues",
+  "https://wiki.mikopbx.com/ivr-menu": "https://docs.mikopbx.com/mikopbx/manual/telefoniya/ivr-menu",
+  "https://wiki.mikopbx.com/conference-rooms": "https://docs.mikopbx.com/mikopbx/manual/telefoniya/conference-rooms"
 }

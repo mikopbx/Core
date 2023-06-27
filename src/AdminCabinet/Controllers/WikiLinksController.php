@@ -25,20 +25,17 @@ use MikoPBX\Core\System\Util;
 use Phalcon\Cache\Adapter\Redis;
 use Exception;
 use GuzzleHttp;
+use function MikoPBX\Common\Config\appPath;
 
 class WikiLinksController extends BaseController
 {
-    private const WIKI_LINKS_CACHE_KEY = 'WIKI_LINKS';
-
-    private const WIKI_LINKS = '/var/etc/wiki-links-LANG.json';
-
     /**
      * Prepares array of new wiki links and return ajax answer
      *
      */
     public function getWikiLinksReplacementAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (!$this->request->isPost()) {
             return;
         }
         $moduleUniqueId = $this->request->getPost('globalModuleUniqueId');
@@ -47,7 +44,6 @@ class WikiLinksController extends BaseController
         } else {
             $this->customWikiLinks();
         }
-
     }
 
     /**
@@ -58,12 +54,19 @@ class WikiLinksController extends BaseController
     {
         /** @var Redis $redis */
         $redis = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $links = $redis->get(self::WIKI_LINKS_CACHE_KEY);
+        $language = 'en';
+        if ($this->language === 'ru') {
+            $language = 'ru';
+        }
+        $cacheKey = 'WIKI_LINKS:' . $language;
 
-        if ($links === null) {
+        $links = $redis->get($cacheKey) ?? [];
+
+        if ($links === []) {
             $ttl = 86400;
             $client = new GuzzleHttp\Client();
-            $url = 'https://raw.githubusercontent.com/mikopbx/Core/master/src/Common/WikiLinks/' . $this->language . '.json';
+            $url = 'https://raw.githubusercontent.com/mikopbx/Core/master/src/Common/WikiLinks/' . $language . '.json';
+
             try {
                 $res = $client->request('GET', $url, ['timeout' => 5, 'connect_timeout' => 5, 'read_timeout' => 5]);
             } catch (GuzzleHttp\Exception\GuzzleException $e) {
@@ -73,7 +76,6 @@ class WikiLinksController extends BaseController
                     Util::sysLogMsg('WikiLinksController', 'Error access to raw.githubusercontent.com');
                 }
             }
-            $links = null;
             if ($res && $res->getStatusCode() === 200) {
                 try {
                     $links = json_decode($res->getBody(), true, 512, JSON_THROW_ON_ERROR);
@@ -84,10 +86,11 @@ class WikiLinksController extends BaseController
             if (!is_array($links)) {
                 $links = [];
             }
-            $redis->set(self::WIKI_LINKS_CACHE_KEY, $links, $ttl);
+            $redis->set($cacheKey, $links, $ttl);
         }
         if (empty($links)) {
-            $filename = str_replace('LANG', $this->language, self::WIKI_LINKS);
+
+            $filename = appPath(str_replace('LANG', $language, 'src/Common/WikiLinks/LANG.json'));
             if (file_exists($filename)) {
                 try {
                     $links = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
@@ -109,7 +112,7 @@ class WikiLinksController extends BaseController
     {
         $module = PbxExtensionModules::findFirstByUniqid($uniqid);
         $links = [];
-        if ($module!==null){
+        if ($module !== null) {
             try {
                 $links = json_decode($module->wiki_links, true, 512, JSON_THROW_ON_ERROR);
             } catch (\JsonException $e) {
@@ -117,6 +120,6 @@ class WikiLinksController extends BaseController
             }
         }
         $this->view->success = true;
-        $this->view->message = $links[$this->language]??[];
+        $this->view->message = $links[$this->language] ?? [];
     }
 }
