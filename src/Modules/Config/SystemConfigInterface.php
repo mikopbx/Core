@@ -71,7 +71,7 @@ interface SystemConfigInterface
      *
      * @return void
      */
-    public function createCronTasks(&$tasks): void;
+    public function createCronTasks(array &$tasks): void;
 
     /**
      * Creates additional Nginx locations from modules.
