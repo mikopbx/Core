@@ -86,7 +86,7 @@ class Request extends PhRequest
         $action = $api->router->getMatches()[1]??'';
         $partsOfPattern = explode('/', $pattern);
         if (count($partsOfPattern)===5){
-            $role = $api->getSharedService(SessionProvider::SERVICE_NAME)->get(SessionController::SESSION_ID)['role'] ?? 'guest';
+            $role = $api->getSharedService(SessionProvider::SERVICE_NAME)->get(SessionController::SESSION_ID)[SessionController::ROLE] ?? AclProvider::ROLE_GUESTS;
             $acl =  $api->getSharedService(AclProvider::SERVICE_NAME);
             $controller = "/$partsOfPattern[1]/$partsOfPattern[2]/$partsOfPattern[3]";
             $allowed = $acl->isAllowed($role, $controller, $action);

@@ -175,7 +175,7 @@ class SecurityPlugin extends Injectable
      * Checks if an action is allowed for the current user.
      *
      * This method checks if the specified $action is allowed for the current user based on their role. It gets the user's
-     * role from the session or sets it to 'guest' if no role is set. It then gets the Access Control List (ACL) and checks
+     * role from the session or sets it to 'guests' if no role is set. It then gets the Access Control List (ACL) and checks
      * if the $action is allowed for the current user's role. If the user is a guest or if the $action is not allowed,
      * the method returns false. Otherwise, it returns true.
      *
@@ -185,7 +185,7 @@ class SecurityPlugin extends Injectable
      */
     public function isAllowedAction(string $controller, string $action): bool
     {
-        $role = $this->session->get(SessionController::SESSION_ID)['role'] ?? 'guest';
+        $role = $this->session->get(SessionController::SESSION_ID)[SessionController::ROLE] ?? AclProvider::ROLE_GUESTS;
 
         if (strpos($controller, '_') > 0) {
             $controller = str_replace('_', '-', $controller);

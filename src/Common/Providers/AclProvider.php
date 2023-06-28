@@ -46,6 +46,10 @@ class AclProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'ACL';
 
+    public const ROLE_ADMINS = 'admins';
+    public const ROLE_GUESTS = 'guests';
+
+
     /**
      * Register ACL service provider
      *
@@ -60,12 +64,12 @@ class AclProvider implements ServiceProviderInterface
                 $acl->setDefaultAction(AclEnum::DENY);
 
                 // Register roles
-                $acl->addRole(new AclRole('admins', 'Admins'));
-                $acl->addRole(new AclRole('guest', 'Guests'));
+                $acl->addRole(new AclRole(AclProvider::ROLE_ADMINS, 'Admins'));
+                $acl->addRole(new AclRole(AclProvider::ROLE_GUESTS, 'Guests'));
 
                 // Default permissions
-                $acl->allow('admins', '*', '*');
-                $acl->deny('guest', '*', '*');
+                $acl->allow(AclProvider::ROLE_ADMINS, '*', '*');
+                $acl->deny(AclProvider::ROLE_GUESTS, '*', '*');
 
                 // Modules HOOK
                 PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_ACL_LIST_PREPARED, [&$acl]);

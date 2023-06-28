@@ -23,9 +23,6 @@ namespace MikoPBX\AdminCabinet\Providers;
 
 use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\AdminCabinet\Plugins\AssetManager as Manager;
-use MikoPBX\Common\Models\PbxExtensionModules;
-use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;

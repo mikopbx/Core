@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 
@@ -32,8 +33,13 @@ use MikoPBX\Modules\Config\WebUIConfigInterface;
  */
 class SessionController extends BaseController
 {
-    public const SESSION_ID = 'authAdmin';
+    public const SESSION_ID = 'authAdminCabinet';
 
+    public const ROLE = 'role';
+
+    public const HOME_PAGE = 'homePage';
+
+    public const WEB_ADMIN_LANGUAGE = 'WebAdminLanguage';
 
     /**
      * Renders the login page with form and settings values.
@@ -67,8 +73,8 @@ class SessionController extends BaseController
         // Check if the provided login and password match the stored values
         if ($password === $passFromUser && $login === $loginFromUser) {
             $sessionParams = [
-                'role' => 'admins',
-                'homePage'=>'extensions/index'
+                SessionController::ROLE => AclProvider::ROLE_ADMINS,
+                SessionController::HOME_PAGE => 'extensions/index'
             ];
             $userLoggedIn = true;
         } else {
@@ -182,7 +188,7 @@ class SessionController extends BaseController
      */
     private function updateSystemLanguage(): void
     {
-        $newLanguage = $this->session->get('WebAdminLanguage');
+        $newLanguage = $this->session->get(SessionController::WEB_ADMIN_LANGUAGE);
         if (!isset($newLanguage)) {
             return;
         }
@@ -205,7 +211,7 @@ class SessionController extends BaseController
     {
         $newLanguage = $this->request->getPost('newLanguage', 'string');
         if (array_key_exists($newLanguage, $this->elements->getAvailableWebAdminLanguages())) {
-            $this->session->set('WebAdminLanguage', $newLanguage);
+            $this->session->set(SessionController::WEB_ADMIN_LANGUAGE, $newLanguage);
             if ($this->session->has(self::SESSION_ID)) {
                 $this->updateSystemLanguage();
             }
