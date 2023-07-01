@@ -107,19 +107,17 @@ const installStatusLoopWorker = {
             && installStatusLoopWorker.iterations < 50) {
             window.clearTimeout(installStatusLoopWorker.timeoutHandle);
         } else if (installStatusLoopWorker.iterations > 50
-            || response.i_status === 'INSTALLATION_ERROR'
-            || response.i_status === 'PROGRESS_FILE_NOT_FOUND'
+            || response.data.i_status === 'INSTALLATION_ERROR'
+            || response.data.i_status === 'PROGRESS_FILE_NOT_FOUND'
         ) {
             window.clearTimeout(installStatusLoopWorker.timeoutHandle);
-            let errorMessage = (response.i_error !== undefined) ? response.i_error : '';
-            errorMessage = errorMessage.replace(/\n/g, '<br>');
-            UserMessage.showMultiString(errorMessage, globalTranslate.ext_InstallationError);
-        } else if (response.i_status === 'INSTALLATION_IN_PROGRESS') {
-            if (installStatusLoopWorker.oldPercent !== response.i_status_progress) {
+            UserMessage.showMultiString(response.messages, globalTranslate.ext_InstallationError);
+        } else if (response.data.i_status === 'INSTALLATION_IN_PROGRESS') {
+            if (installStatusLoopWorker.oldPercent !== response.data.i_status_progress) {
                 installStatusLoopWorker.iterations = 0;
             }
-            installStatusLoopWorker.oldPercent = response.d_status_progress;
-        } else if (response.i_status === 'INSTALLATION_COMPLETE') {
+            installStatusLoopWorker.oldPercent = response.data.i_status_progress;
+        } else if (response.data.i_status === 'INSTALLATION_COMPLETE') {
             if (installStatusLoopWorker.needEnableAfterInstall) {
                 // Enable the installed module and redirect to the module index page
                 PbxApi.ModulesEnableModule(

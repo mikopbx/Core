@@ -303,11 +303,11 @@ class ModulesManagementProcessor extends Injectable
         $progress_file = $temp_dir . '/installation_progress';
         $error_file = $temp_dir . '/installation_error';
         if (!file_exists($error_file) || !file_exists($progress_file)) {
-            $res->success = false;
+            $res->success = true;
             $res->data['i_status'] = 'PROGRESS_FILE_NOT_FOUND';
             $res->data['i_status_progress'] = '0';
         } elseif (file_get_contents($error_file) !== '') {
-            $res->success = false;
+            $res->success = true;
             $res->data['i_status'] = 'INSTALLATION_ERROR';
             $res->data['i_status_progress'] = '0';
             $res->messages[] = file_get_contents($error_file);
@@ -496,15 +496,14 @@ class ModulesManagementProcessor extends Injectable
             $res->messages[] = 'Dependency injector does not initialized';
             return $res;
         }
-
-        $cacheKey = 'ModulesManagementProcessor:getAvailableModules';
+        $WebUiLanguage = PbxSettings::getValueByKey('WebAdminLanguage');
+        $cacheKey = "ModulesManagementProcessor:getAvailableModules:$WebUiLanguage";
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
         if ($managedCache->has($cacheKey)){
             $body = $managedCache->get($cacheKey);
         } else {
             $PBXVersion = PbxSettings::getValueByKey('PBXVersion');
             $PBXVersion = (string)str_ireplace('-dev', '', $PBXVersion);
-            $WebUiLanguage = PbxSettings::getValueByKey('WebAdminLanguage');
             $body = '';
             $client = new GuzzleHttp\Client();
             try {

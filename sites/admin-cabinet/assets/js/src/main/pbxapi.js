@@ -827,7 +827,7 @@ const PbxApi = {
             data: {filePath: filePath},
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(true, response.data);
+                callback(true, response);
             },
             onFailure(response) {
                 callback(false, response);
