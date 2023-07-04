@@ -43,19 +43,15 @@ abstract class BaseForm extends Form
      *
      * @return void
      */
-    public function addTextArea(string $areaName, string $areaValue, int $areaWidth = 90): void
+    public function addTextArea(string $areaName, string $areaValue, int $areaWidth = 90, $options=[]): void
     {
         $rows = 1;
         $strings = explode("\n", $areaValue);
         foreach ($strings as $string) {
             $rows += ceil(strlen($string) / $areaWidth);
         }
-        $this->add(new TextArea($areaName,
-                [
-                    "rows" => max($rows, 2),
-                    "value" => $areaValue
-                ])
-        );
-
+        $options["rows"]=max($rows, 2);
+        $options["value"] = $areaValue;
+        $this->add(new TextArea($areaName, $options));
     }
 }

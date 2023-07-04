@@ -61,7 +61,7 @@ class ClassLoader
         $loader->registerFiles($libraryFiles);
 
         // Add vendor autoload for external modules
-        PbxExtensionUtils::registerModulesComposterInLoader($loader);
+        // PbxExtensionUtils::registerModulesComposterInLoader($loader);
 
         $loader->registerNamespaces($nameSpaces);
         $loader->register();
