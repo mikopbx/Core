@@ -7,25 +7,27 @@
 
 # sh /root/mikopbx-testing/start.sh
 #
-
 echo -e "\e[01;35mInit asterisk...\e[0m";
 dirName="$(realpath "$(dirname "$0")")";
 /bin/mount -o remount,rw /offload/
 
-
 ############################################################
 ##### Setup configs
+# Убиваем старый процесс.
 echo -e "\e[01;35mSetup configs...\e[0m";
 dumpConfFile='/storage/usbdisk1/mikopbx/tmp/mikopbx.db';
 confFile='/cf/conf/mikopbx.db';
 testConfFile="$dirName/db/mikopbx.db";
 cp "$confFile" "$dumpConfFile"
-sqlite3 "$testConfFile" 'delete from m_LanInterfaces';
-sqlite3 "$dumpConfFile" .dump | grep m_LanInterfaces | grep 'INTO m_LanInterfaces' | sqlite3 "$testConfFile"
-cp "$testConfFile" "$confFile"
-php -f "$dirName/db/updateDb.php" /dev/null 2> /dev/null;
-sleep 5;
-asterisk -rx 'core waitfullybooted' /dev/null 2> /dev/null;
+
+if [ "${1}x" = 'x' ]; then
+  sqlite3 "$testConfFile" 'delete from m_LanInterfaces';
+  sqlite3 "$dumpConfFile" .dump | grep m_LanInterfaces | grep 'INTO m_LanInterfaces' | sqlite3 "$testConfFile"
+  cp "$testConfFile" "$confFile"
+  php -f "$dirName/db/updateDb.php" /dev/null 2> /dev/null;
+  sleep 5;
+  asterisk -rx 'core waitfullybooted' /dev/null 2> /dev/null;
+fi;
 ############################################################
 
 pidDir="${dirName}/run/asterisk.pid";
@@ -78,5 +80,8 @@ fi;
 ##### Restore configs
 echo -e "\e[01;35mRestore configs...\e[0m";
 cp "$dumpConfFile" "$confFile";
-php -f "$dirName/db/updateDb.php" /dev/null 2> /dev/null;
+if [ "${1}x" = 'x' ]; then
+  php -f "$dirName/db/updateDb.php" /dev/null 2> /dev/null;
+fi;
+
 ############################################################
