@@ -364,7 +364,7 @@ class TestCallsBase {
                 }
             }
             if(!$ok){
-                self::printError("Index row".json_encode($cdrS));
+                self::printError("Index row".json_encode($row));
                 break;
             }
 
