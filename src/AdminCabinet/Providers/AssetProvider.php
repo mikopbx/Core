@@ -106,7 +106,7 @@ class AssetProvider implements ServiceProviderInterface
                 $assetsManager = $assets->manager;
 
                 // Register additional assets from external enabled modules
-                PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_ASSETS_PREPARED, [$assetsManager]);
+                PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_ASSETS_PREPARED, [$assetsManager, $dispatcher]);
 
                 return $assetsManager;
             }

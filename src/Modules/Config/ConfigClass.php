@@ -29,6 +29,7 @@ use Phalcon\Assets\Manager;
 use Phalcon\Config;
 use Phalcon\Forms\Form;
 use Phalcon\Mvc\Controller;
+use Phalcon\Mvc\Dispatcher;
 use Phalcon\Mvc\Router;
 use Phalcon\Mvc\View;
 use ReflectionClass as ReflectionClassAlias;
@@ -378,10 +379,11 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterassetsprepared
      *
      * @param Manager $assets The assets manager for additional modifications from module.
+     * @param Dispatcher $dispatcher The dispatcher instance.
      *
      * @return void
      */
-    public function onAfterAssetsPrepared(Manager $assets):void
+    public function onAfterAssetsPrepared(Manager $assets, Dispatcher $dispatcher):void
     {
     }
 

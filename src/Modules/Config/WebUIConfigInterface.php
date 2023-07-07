@@ -23,6 +23,7 @@ use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Assets\Manager;
 use Phalcon\Forms\Form;
 use Phalcon\Mvc\Controller;
+use Phalcon\Mvc\Dispatcher;
 use Phalcon\Mvc\Router;
 use Phalcon\Mvc\View;
 
@@ -99,10 +100,11 @@ interface WebUIConfigInterface
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterassetsprepared
      *
      * @param Manager $assets The assets manager for additional modifications from module.
+     * @param Dispatcher $dispatcher The dispatcher instance.
      *
      * @return void
      */
-    public function onAfterAssetsPrepared(Manager $assets):void;
+    public function onAfterAssetsPrepared(Manager $assets, Dispatcher $dispatcher):void;
 
     /**
      * Prepares the include block within a Volt template.
