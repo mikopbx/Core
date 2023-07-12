@@ -1301,9 +1301,13 @@ function event_queue_start()
     -- Retrieve the FROM_DID variable
     local FROM_DID   = get_variable('FROM_DID');
 
-    if(id ~= '' and FROM_DID == '') then
-        -- It is an internal call as FROM_DID is empty
+    if(id ~= '' and ISTRANSFER ~= '') then
+        -- Getting a new call ID for the queue
+        id         = get_variable('UNIQUEID')..'_'..generateRandomString(6);
         time_start = getNowDate();
+    elseif(id ~= '' and FROM_DID == '') then
+        time_start = getNowDate();
+        -- It is an internal call as FROM_DID is empty
         -- Generate a new unique ID and start timestamp
         set_variable("pt1c_UNIQUEID", "");
     elseif(id == '' or ISTRANSFER ~= '') then
