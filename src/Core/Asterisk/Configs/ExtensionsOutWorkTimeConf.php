@@ -65,8 +65,9 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
     public function generateIncomingRoutBeforeDialSystem(string $rout_number): string
     {
         // Check the schedule for incoming external calls.
-        return 'same => n,ExecIf($["${contextID}x" == "x"]?Set(contextID=${CONTEXT}))' . PHP_EOL . "\t" .
-            'same => n,GosubIf($["${IGNORE_TIME}" != "1"]?' . self::OUT_WORK_TIME_CONTEXT . ',${EXTEN},1)' . PHP_EOL . "\t";
+        return  'same => n,ExecIf($["${CONTEXT}" == "public-direct-dial"]?Set(contextID=none-incoming))' . PHP_EOL . "\t" .
+                'same => n,ExecIf($["${contextID}x" == "x"]?Set(contextID=${CONTEXT}))' . PHP_EOL . "\t" .
+                'same => n,GosubIf($["${IGNORE_TIME}" != "1"]?' . self::OUT_WORK_TIME_CONTEXT . ',${EXTEN},1)' . PHP_EOL . "\t";
     }
 
     /**
