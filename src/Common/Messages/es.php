@@ -255,7 +255,6 @@ return [
     'ir_RuleAssignIf' => 'La regla funcionará cuando llame',
     'ir_DidNumber' => 'Número adicional (DID)',
     'mm_Fail2Ban' => 'Protección contra piratería',
-    'mm_UpdateSystem' => 'Actualización de PBX',
     'mm_ModuleManager' => 'Gestión de módulos',
     'bt_Edit' => 'Editar',
     'ir_CallTransferTo' => 'La llamada se reenviará a',

@@ -137,7 +137,6 @@ return [
     'mm_Logout' => 'Uitgang',
     'mm_SystemDiagnostic' => 'Systeemlogboeken',
     'mm_Fail2Ban' => 'Inbraakbeveiliging',
-    'mm_UpdateSystem' => 'PBX-update',
     'mm_ModuleManager' => 'Modulebeheer',
     'mm_SSHConsole' => 'ssh-console',
     'bt_Edit' => 'Wijziging',

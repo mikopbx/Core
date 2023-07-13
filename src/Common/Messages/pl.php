@@ -651,7 +651,6 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'mm_Logout' => 'Wyjdź',
     'mm_SystemDiagnostic' => 'Dzienniki systemowe',
     'mm_Fail2Ban' => 'Ochrona przed włamaniem',
-    'mm_UpdateSystem' => 'Aktualizacja PBX',
     'mm_ModuleManager' => 'Zarządzanie modułami',
     'mm_SSHConsole' => 'Konsola SSH',
     'bt_Clear' => 'Wyczyść',

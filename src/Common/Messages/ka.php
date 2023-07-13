@@ -199,7 +199,6 @@ return [
     'mm_Logout' => 'გამომავალი',
     'mm_SystemDiagnostic' => 'სისტემის ჟურნალები',
     'mm_Fail2Ban' => 'ძარცვის დაცვა',
-    'mm_UpdateSystem' => 'PBX განახლება',
     'mm_ModuleManager' => 'მოდულის მართვა',
     'mm_SSHConsole' => 'SSH კონსოლი',
     'bt_Edit' => 'რედაქტირება',

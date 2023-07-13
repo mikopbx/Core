@@ -178,7 +178,6 @@ return [
     'mm_Logout' => '終了',
     'mm_SystemDiagnostic' => 'システムログ',
     'mm_Fail2Ban' => 'ハッキング保護',
-    'mm_UpdateSystem' => 'PBXアップデート',
     'mm_ModuleManager' => 'モジュール管理',
     'mm_SSHConsole' => 'SSHコンソール',
     'bt_Edit' => '編集する',

@@ -210,7 +210,6 @@ return [
     'mm_Logout' => 'Вихід',
     'mm_SystemDiagnostic' => 'Системні логи',
     'mm_Fail2Ban' => 'Захист від злому',
-    'mm_UpdateSystem' => 'Оновлення PBX',
     'mm_ModuleManager' => 'Управління модулями',
     'mm_SSHConsole' => 'SSH консоль',
     'bt_Edit' => 'Змінити',

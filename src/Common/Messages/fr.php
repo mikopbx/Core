@@ -754,7 +754,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'bt_Edit' => 'Modifier',
     'mm_SSHConsole' => 'Console SSH',
     'mm_ModuleManager' => 'Gestion des modules',
-    'mm_UpdateSystem' => 'Mise à jour PBX',
     'mm_Fail2Ban' => 'Protection contre le piratage',
     'mm_SystemDiagnostic' => 'Journaux système',
     'mm_Logout' => 'Quitter',

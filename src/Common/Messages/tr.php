@@ -510,7 +510,6 @@ Bir kez etkinleştirilebilir, bundan sonra kupon kullanılır.
     'mm_Logout' => 'çıkış',
     'mm_SystemDiagnostic' => 'Sistem Günlükleri',
     'mm_Fail2Ban' => 'Bilgisayar korsanlığı koruması',
-    'mm_UpdateSystem' => 'PBX Güncellemesi',
     'mm_ModuleManager' => 'Modül yönetimi',
     'mm_SSHConsole' => 'SSH konsolu',
     'bt_Edit' => 'değiştirmek',

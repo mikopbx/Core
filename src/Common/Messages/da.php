@@ -165,7 +165,6 @@ return [
     'mm_Logout' => 'frakørsel',
     'mm_SystemDiagnostic' => 'Systemlogfiler',
     'mm_Fail2Ban' => 'Hacking beskyttelse',
-    'mm_UpdateSystem' => 'PBX-opdatering',
     'mm_ModuleManager' => 'Modulstyring',
     'mm_SSHConsole' => 'SSH-konsol',
     'bt_Edit' => 'ændre',

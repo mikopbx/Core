@@ -645,7 +645,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'mm_Logout' => 'exit',
     'mm_SystemDiagnostic' => 'Systemloggar',
     'mm_Fail2Ban' => 'Hackningsskydd',
-    'mm_UpdateSystem' => 'PBX-uppdatering',
     'mm_ModuleManager' => 'Modulhantering',
     'mm_SSHConsole' => 'SSH-konsol',
     'bt_Edit' => 'ändra',

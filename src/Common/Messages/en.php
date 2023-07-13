@@ -191,7 +191,6 @@ return [
     'mm_Logout' => 'Logout',
     'mm_SystemDiagnostic' => 'System log entries',
     'mm_Fail2Ban' => 'Anti brute force',
-    'mm_UpdateSystem' => 'PBX update',
     'mm_ModuleManager' => 'Extensions and plugins',
     'mm_SSHConsole' => 'SSH console',
     'bt_Edit' => 'Edit',

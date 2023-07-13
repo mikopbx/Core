@@ -945,7 +945,6 @@ return [
     'bt_Delete' => 'Διαγράφω',
     'bt_Clear' => 'Σαφή',
     'bt_Edit' => 'Αλλαγή',
-    'mm_UpdateSystem' => 'Ενημέρωση PBX',
     'mm_Fail2Ban' => 'Προστασία από hack',
     'mm_SystemDiagnostic' => 'Αρχεία καταγραφής συστήματος',
     'mm_Logout' => 'Εξοδος',

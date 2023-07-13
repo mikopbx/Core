@@ -931,7 +931,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'bt_Edit' => 'Mudar',
     'mm_SSHConsole' => 'Console SSH',
     'mm_ModuleManager' => 'Gerenciamento de Módulo',
-    'mm_UpdateSystem' => 'Atualização de PBX',
     'mm_Fail2Ban' => 'Bloqueios',
     'mm_SystemDiagnostic' => 'Logs do sistema',
     'mm_Logout' => 'Saída',

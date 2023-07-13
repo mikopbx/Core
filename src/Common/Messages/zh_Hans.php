@@ -189,7 +189,6 @@ return [
     'mm_Logout' => '退出',
     'mm_SystemDiagnostic' => '系统日志',
     'mm_Fail2Ban' => '骇客防护',
-    'mm_UpdateSystem' => 'PBX更新',
     'mm_ModuleManager' => '模块管理',
     'mm_SSHConsole' => 'SSH控制台',
     'bt_Edit' => '编辑',

@@ -191,7 +191,6 @@ return [
     'mm_Logout' => 'Abmelden',
     'mm_SystemDiagnostic' => 'System-Log Einträge',
     'mm_Fail2Ban' => 'FAIL2BAN / Antihacking',
-    'mm_UpdateSystem' => 'PBX Update',
     'mm_ModuleManager' => 'Erweiterungsmodule verwalten',
     'mm_SSHConsole' => 'SSH-Konsole',
     'bt_Edit' => 'Ändern',

@@ -266,7 +266,6 @@ return [
     'mm_Logout' => 'Thoát',
     'mm_SystemDiagnostic' => 'Nhật ký hệ thống',
     'mm_Fail2Ban' => 'Bảo vệ hack',
-    'mm_UpdateSystem' => 'Cập nhật tổng đài',
     'mm_ModuleManager' => 'Quản lý mô-đun',
     'mm_SSHConsole' => 'Bảng điều khiển SSH',
     'bt_Edit' => 'Chỉnh sửa',

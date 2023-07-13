@@ -192,7 +192,6 @@ return [
     'mm_Logout' => 'Konec',
     'mm_SystemDiagnostic' => 'Systémové protokoly',
     'mm_Fail2Ban' => 'Ochrana proti hackerům',
-    'mm_UpdateSystem' => 'Aktualizace ústředny',
     'mm_ModuleManager' => 'Správa modulů',
     'mm_SSHConsole' => 'Konzola SSH',
     'bt_Edit' => 'Upravit',

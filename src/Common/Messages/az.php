@@ -983,7 +983,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'bt_Edit' => 'Dəyişmək',
     'mm_SSHConsole' => 'ssh konsolu',
     'mm_ModuleManager' => 'Modul idarəetməsi',
-    'mm_UpdateSystem' => 'PBX yeniləməsi',
     'mm_Fail2Ban' => 'Oğurluqdan qorunma',
     'mm_SystemDiagnostic' => 'Sistem qeydləri',
     'mm_Logout' => 'Çıx',

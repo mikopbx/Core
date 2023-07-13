@@ -209,7 +209,6 @@ return [
     'mm_Logout' => 'uscita',
     'mm_SystemDiagnostic' => 'Registri di sistema',
     'mm_Fail2Ban' => 'Protezione dagli hacker',
-    'mm_UpdateSystem' => 'Aggiornamento PBX',
     'mm_ModuleManager' => 'Gestione del modulo',
     'mm_SSHConsole' => 'Console SSH',
     'bt_Edit' => 'emendare',
