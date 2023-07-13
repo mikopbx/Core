@@ -79,7 +79,7 @@ class RouterProvider implements ServiceProviderInterface
                     'namespace',
                     function ($namespace) {
                         $camelizedNameSpace = \Phalcon\Text::Camelize($namespace);
-                        return "\\Modules\\{$camelizedNameSpace}\\App\\Controllers";
+                        return "Modules\\{$camelizedNameSpace}\\App\\Controllers";
                     }
                 );
 
@@ -102,7 +102,7 @@ class RouterProvider implements ServiceProviderInterface
                     'namespace',
                     function ($namespace) {
                         $camelizedNameSpace = \Phalcon\Text::Camelize($namespace);
-                        return "\\Modules\\{$camelizedNameSpace}\\App\\Controllers";
+                        return "Modules\\{$camelizedNameSpace}\\App\\Controllers";
                     }
                 );
 

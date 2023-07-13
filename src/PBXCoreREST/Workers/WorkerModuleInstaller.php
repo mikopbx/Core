@@ -82,15 +82,18 @@ class WorkerModuleInstaller extends WorkerBase
         string $moduleUniqueID
     ): void {
 
+        file_put_contents( $this->progress_file, '25');
         // Unzip module folder
         $semZaPath = Util::which('7za');
-        Processes::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
-
-        ModulesDBConnectionsProvider::recreateModulesDBConnections();
-
-        Util::addRegularWWWRights($currentModuleDir);
+        $exitCode = Processes::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
+        if ($exitCode !== 0) {
+            file_put_contents($this->error_file, 'Error occurred during module extraction.', FILE_APPEND);
+            return;
+        }
         file_put_contents( $this->progress_file, '50');
-        $pbxExtensionSetupClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
+        Util::addRegularWWWRights($currentModuleDir);
+        $pbxExtensionSetupClass = "Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
         if (class_exists($pbxExtensionSetupClass)
             && method_exists($pbxExtensionSetupClass, 'installModule')) {
             try {

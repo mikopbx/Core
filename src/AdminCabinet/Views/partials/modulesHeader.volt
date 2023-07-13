@@ -2,7 +2,7 @@
 <div class="ui grid">
     <div class="ui left floated middle aligned thirteen wide column">
         <h1 class="ui header">
-            {{ elements.getIconByController(controllerName) }}
+            {{ elements.getIconByController(controllerClass) }}
             <div class="content">
                 {{ t._('Breadcrumb'~controllerName) }}
                 <div class="sub header">{{ t._('SubHeader'~controllerName) }}

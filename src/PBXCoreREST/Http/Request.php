@@ -89,6 +89,7 @@ class Request extends PhRequest
             $role = $api->getSharedService(SessionProvider::SERVICE_NAME)->get(SessionController::SESSION_ID)[SessionController::ROLE] ?? AclProvider::ROLE_GUESTS;
             $acl =  $api->getSharedService(AclProvider::SERVICE_NAME);
             $controller = "/$partsOfPattern[1]/$partsOfPattern[2]/$partsOfPattern[3]";
+            $action = "/$partsOfPattern[4]";
             $allowed = $acl->isAllowed($role, $controller, $action);
             if ($allowed != AclEnum::ALLOW) {
                 return false;

@@ -62,6 +62,13 @@ const installStatusLoopWorker = {
     needEnableAfterInstall: false,
 
     /**
+     * The progress bar label element.
+     * @type {jQuery}
+     */
+    $progressBar: $('#upload-progress-bar'),
+
+
+    /**
      * Initializes the installStatusLoopWorker object.
      * @param {string} filePath - The file path of the module being installed.
      * @param {boolean} [needEnable=false] - Flag indicating if enabling is needed after installation.
@@ -113,11 +120,17 @@ const installStatusLoopWorker = {
             window.clearTimeout(installStatusLoopWorker.timeoutHandle);
             UserMessage.showMultiString(response.messages, globalTranslate.ext_InstallationError);
         } else if (response.data.i_status === 'INSTALLATION_IN_PROGRESS') {
+            installStatusLoopWorker.$progressBar.progress({
+                percent: parseInt(response.data.i_status_progress, 10),
+            });
             if (installStatusLoopWorker.oldPercent !== response.data.i_status_progress) {
                 installStatusLoopWorker.iterations = 0;
             }
             installStatusLoopWorker.oldPercent = response.data.i_status_progress;
         } else if (response.data.i_status === 'INSTALLATION_COMPLETE') {
+            installStatusLoopWorker.$progressBar.progress({
+                percent: 100,
+            });
             if (installStatusLoopWorker.needEnableAfterInstall) {
                 // Enable the installed module and redirect to the module index page
                 PbxApi.ModulesEnableModule(

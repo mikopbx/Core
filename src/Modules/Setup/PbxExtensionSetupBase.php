@@ -493,7 +493,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $dbUpgrade = new UpdateDatabase();
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
             $upgradeResult = $dbUpgrade->createUpdateDbTableByAnnotations($moduleModelClass);
             if (!$upgradeResult){
                 return false;

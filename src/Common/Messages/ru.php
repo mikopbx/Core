@@ -177,7 +177,7 @@ return [
     'mm_Logout' => 'Выход',
     'mm_SystemDiagnostic' => 'Системные логи',
     'mm_Fail2Ban' => 'Защита от взлома',
-    'mm_UpdateSystem' => 'Обновление PBX',
+    'mm_Update' => 'Обновление PBX',
     'mm_ModuleManager' => 'Управление модулями',
     'mm_SSHConsole' => 'SSH консоль',
     'bt_Edit' => 'Изменить',

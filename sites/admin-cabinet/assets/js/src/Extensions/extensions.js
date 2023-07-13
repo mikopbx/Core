@@ -109,7 +109,6 @@ const Extensions = {
             templates: {
                 menu: Extensions.customDropdownMenu,
             },
-
         };
     },
 

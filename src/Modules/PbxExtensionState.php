@@ -96,7 +96,7 @@ class PbxExtensionState extends Injectable
     private function reloadConfigClass(): void
     {
         $class_name      = str_replace('Module', '', $this->moduleUniqueID);
-        $configClassName = "\\Modules\\{$this->moduleUniqueID}\\Lib\\{$class_name}Conf";
+        $configClassName = "Modules\\{$this->moduleUniqueID}\\Lib\\{$class_name}Conf";
         if (class_exists($configClassName)) {
             $this->configClass = new $configClassName();
         } else {
@@ -309,7 +309,7 @@ class PbxExtensionState extends Injectable
         $modelsFiles = glob("{$this->modulesRoot}/{$this->moduleUniqueID}/Models/*.php", GLOB_NOSORT);
         foreach ($modelsFiles as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
             try {
                 if ( ! class_exists($moduleModelClass)) {
                     continue;
@@ -463,7 +463,7 @@ class PbxExtensionState extends Injectable
         $translator  = $this->di->getShared('translation');
         foreach ($modelsFiles as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
 
             try {
                 if ( ! class_exists($moduleModelClass)) {

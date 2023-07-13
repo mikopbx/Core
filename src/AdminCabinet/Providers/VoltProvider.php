@@ -26,6 +26,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+use Phalcon\Mvc\Dispatcher;
 use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
 
 /**
@@ -83,10 +84,12 @@ class VoltProvider implements ServiceProviderInterface
                 $compiler->addFunction(
                     'isAllowed',
                     function ($action, $controller = '') use ($view) {
-                        if (empty($controller)) {
-                            $controller = $view->getControllerName();
+                        // If we don't provide the second parameter
+                        // there is some array with parameters instead of empty string.
+                        if (is_array($controller)){
+                            $controller = '$this->dispatcher->getHandlerClass()';
                         }
-                        return '$this->di->get("' . SecurityPluginProvider::SERVICE_NAME . '",["' . $controller . '",' . $action . '])';
+                        return '$this->di->get("' . SecurityPluginProvider::SERVICE_NAME . '",[' . $controller . ',' . $action . '])';
                     }
                 );
 

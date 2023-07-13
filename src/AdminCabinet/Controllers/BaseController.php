@@ -44,6 +44,7 @@ class BaseController extends Controller
 {
     protected string $actionName;
     protected string $controllerName;
+    protected string $controllerClass;
     protected string $controllerNameUnCamelized;
     protected bool $isExternalModuleController;
 
@@ -53,9 +54,10 @@ class BaseController extends Controller
     public function initialize(): void
     {
         $this->actionName = $this->dispatcher->getActionName();
+        $this->controllerClass = $this->dispatcher->getHandlerClass();
         $this->controllerName = Text::camelize($this->dispatcher->getControllerName(), '_');
         $this->controllerNameUnCamelized = Text::uncamelize($this->controllerName, '-');
-        $this->isExternalModuleController = str_starts_with($this->dispatcher->getNamespaceName(), '\\Module');
+        $this->isExternalModuleController = str_starts_with($this->dispatcher->getNamespaceName(), 'Modules');
 
         if ($this->request->isAjax() === false) {
             $this->prepareView();
@@ -123,6 +125,7 @@ class BaseController extends Controller
         $this->view->globalModuleUniqueId = '';
         $this->view->actionName = $this->actionName;
         $this->view->controllerName = $this->controllerName;
+        $this->view->controllerClass = $this->controllerClass;
 
         // Add module variables into view if it is an external module controller
         if ($this->isExternalModuleController) {
@@ -284,5 +287,29 @@ class BaseController extends Controller
 
         // Get the second part of the namespace
         return $parts[1];
+    }
+
+    /**
+     * Save an entity and handle success or error messages.
+     *
+     * @param mixed $entity The entity to be saved.
+     * @return bool True if the entity was successfully saved, false otherwise.
+     */
+    protected function saveEntity($entity): bool
+    {
+        $success = $entity->save();
+
+        if (!$success) {
+            $errors = $entity->getMessages();
+            $this->flash->error(implode('<br>', $errors));
+        } elseif (!$this->request->isAjax()) {
+            $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
+        }
+
+        if ($this->request->isAjax()) {
+            $this->view->success = $success;
+        }
+
+        return $success;
     }
 }

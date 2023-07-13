@@ -256,7 +256,7 @@ class ExtensionsController extends BaseController
      *
      * @return string The next internal number.
      */
-    private function getNextInternalNumber()
+    private function getNextInternalNumber():string
     {
         $parameters = [
             'conditions' => 'type = "' . Extensions::TYPE_SIP . '"',
@@ -342,7 +342,6 @@ class ExtensionsController extends BaseController
             return;
         }
 
-
         // Fill in forwarding rights parameters
         if (!$this->saveForwardingRights($fwdEntity, $data)) {
             $this->view->success = false;
@@ -414,7 +413,7 @@ class ExtensionsController extends BaseController
      *
      * @return bool save result
      */
-    private function saveUser(Users $userEntity, array $data)
+    private function saveUser(Users $userEntity, array $data): bool
     {
         // Fill in user parameters
         foreach ($userEntity as $name => $value) {
@@ -434,40 +433,36 @@ class ExtensionsController extends BaseController
             }
         }
 
-        if ($userEntity->save() === false) {
-            $errors = $userEntity->getMessages();
-            $this->flash->error(implode('<br>', $errors));
-
-            return false;
-        }
-
-        return true;
+        return $this->saveEntity($userEntity);
     }
 
     /**
-     * Save parameters to the Extensions table
+     * Save the extension for a user.
      *
-     * @param Extensions $extension
-     * @param Users $userEntity
-     * @param array $data - POST data
-     * @param bool $isMobile - is it a mobile phone
-     *
-     * @return bool save result
+     * @param Extensions $extension The extension model.
+     * @param Users $userEntity The user entity.
+     * @param array $data The data to be saved.
+     * @param bool $isMobile Flag indicating if it's a mobile extension.
+     * @return bool True if the extension is saved successfully, false otherwise.
      */
-    private function saveExtension(Extensions $extension, Users $userEntity, array $data, $isMobile = false): bool
+    private function saveExtension(Extensions $extension, Users $userEntity, array $data, bool $isMobile = false): bool
     {
         foreach ($extension as $name => $value) {
             switch ($name) {
                 case 'id':
+                    // Skip saving the 'id' field
                     break;
                 case 'show_in_phonebook':
                 case 'is_general_user_number':
+                    // Set 'show_in_phonebook' and 'is_general_user_number' to '1'
                     $extension->$name = '1';
                     break;
                 case 'type':
+                    // Set the 'type' based on the value of $isMobile
                     $extension->$name = $isMobile ? Extensions::TYPE_EXTERNAL : Extensions::TYPE_SIP;
                     break;
                 case 'public_access':
+                    // Set 'public_access' based on the value of $data[$name]
                     if (array_key_exists($name, $data)) {
                         $extension->$name = ($data[$name] === 'on') ? '1' : '0';
                     } else {
@@ -475,38 +470,34 @@ class ExtensionsController extends BaseController
                     }
                     break;
                 case 'callerid':
+                    // Sanitize the caller ID based on 'user_username'
                     $extension->$name = $this->sanitizeCallerId($data['user_username']);
                     break;
                 case 'userid':
+                    // Set 'userid' to the ID of the user entity
                     $extension->$name = $userEntity->id;
                     break;
                 case 'number':
+                    // Set 'number' based on the value of $data['mobile_number'] or $data['number']
                     $extension->$name = $isMobile ? $data['mobile_number'] : $data['number'];
                     break;
                 default:
                     if (array_key_exists($name, $data)) {
+                        // Set other fields based on the values in $data
                         $extension->$name = $data[$name];
                     }
             }
         }
 
-        if ($extension->save() === false) {
-            $errors = $extension->getMessages();
-            $this->flash->error(implode('<br>', $errors));
-
-            return false;
-        }
-
-        return true;
+        return $this->saveEntity($extension);
     }
 
     /**
-     * Сохранение параметров в таблицу SIP
+     * Save the SIP entity with the provided data.
      *
-     * @param Sip $sipEntity
-     * @param array $data - POST дата
-     *
-     * @return bool результат сохранения
+     * @param Sip $sipEntity The SIP entity to be saved.
+     * @param array $data The data to be saved.
+     * @return bool True if the SIP entity is saved successfully, false otherwise.
      */
     private function saveSip(Sip $sipEntity, array $data): bool
     {
@@ -514,6 +505,7 @@ class ExtensionsController extends BaseController
             switch ($name) {
                 case 'qualify':
                     if (array_key_exists($name, $data)) {
+                        // Set 'qualify' based on the value of $data[$name]
                         $sipEntity->$name = ($data[$name] === 'on') ? '1' : '0';
                     } else {
                         $sipEntity->$name = "0";
@@ -523,6 +515,7 @@ class ExtensionsController extends BaseController
                 case 'enableRecording':
                 case 'disablefromuser':
                     if (array_key_exists('sip_' . $name, $data)) {
+                        // Set 'disabled', 'enableRecording', and 'disablefromuser' based on the value of $data['sip_' . $name]
                         $sipEntity->$name = ($data['sip_' . $name] === 'on') ? '1' : '0';
                     } else {
                         $sipEntity->$name = "0";
@@ -530,6 +523,7 @@ class ExtensionsController extends BaseController
                     break;
                 case 'networkfilterid':
                     if (!array_key_exists('sip_' . $name, $data)) {
+                        // Skip saving 'networkfilterid' if it doesn't exist in $data
                         continue 2;
                     }
                     if ($data['sip_' . $name] === 'none') {
@@ -539,63 +533,57 @@ class ExtensionsController extends BaseController
                     }
                     break;
                 case 'extension':
+                    // Set 'extension' based on the value of $data['number']
                     $sipEntity->$name = $data['number'];
                     break;
                 case 'description':
+                    // Set 'description' based on the value of $data['user_username']
                     $sipEntity->$name = $data['user_username'];
                     break;
                 case 'manualattributes':
+                    // Set 'manualattributes' using the value of $data['sip_manualattributes']
                     $sipEntity->setManualAttributes($data['sip_manualattributes']);
                     break;
                 default:
                     if (array_key_exists('sip_' . $name, $data)) {
+                        // Set other fields based on the values in $data
                         $sipEntity->$name = $data['sip_' . $name];
                     }
             }
         }
-        if ($sipEntity->save() === false) {
-            $errors = $sipEntity->getMessages();
-            $this->flash->error(implode('<br>', $errors));
 
-            return false;
-        }
-
-        return true;
+        return $this->saveEntity($sipEntity);
     }
 
     /**
-     * Save forwarding rights parameters
+     * Save the ExtensionForwardingRights entity with the provided data.
      *
-     * @param ExtensionForwardingRights $forwardingRight
-     * @param array $data - POST data
-     *
-     * @return bool save result
+     * @param ExtensionForwardingRights $forwardingRight The ExtensionForwardingRights entity to be saved.
+     * @param mixed $data The data to be saved.
+     * @return bool True if the ExtensionForwardingRights entity is saved successfully, false otherwise.
      */
     private function saveForwardingRights(ExtensionForwardingRights $forwardingRight, $data): bool
     {
         foreach ($forwardingRight as $name => $value) {
             switch ($name) {
                 case 'extension':
+                    // Set 'extension' based on the value of $data['number']
                     $forwardingRight->$name = $data['number'];
                     break;
                 default:
                     if (array_key_exists('fwd_' . $name, $data)) {
+                        // Set other fields based on the values in $data
+                        // Use an empty string if the value is -1
                         $forwardingRight->$name = ($data['fwd_' . $name] === -1) ? '' : $data['fwd_' . $name];
                     }
             }
         }
+        // Set 'ringlength' to null if 'forwarding' is empty
         if (empty($forwardingRight->forwarding)) {
             $forwardingRight->ringlength = null;
         }
 
-        if ($forwardingRight->save() === false) {
-            $errors = $forwardingRight->getMessages();
-            $this->flash->error(implode('<br>', $errors));
-
-            return false;
-        }
-
-        return true;
+        return $this->saveEntity($forwardingRight);
     }
 
     /**
@@ -629,14 +617,8 @@ class ExtensionsController extends BaseController
                     }
             }
         }
-        if ($externalPhone->save() === false) {
-            $errors = $externalPhone->getMessages();
-            $this->flash->error(implode('<br>', $errors));
 
-            return false;
-        }
-
-        return true;
+        return $this->saveEntity($externalPhone);
     }
 
     /**

@@ -201,7 +201,7 @@ class ModulesManagementProcessor extends Injectable
         }
 
         // Uninstall module with keep settings and backup db
-        $moduleClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
+        $moduleClass = "Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
 
         try {
             if (class_exists($moduleClass)

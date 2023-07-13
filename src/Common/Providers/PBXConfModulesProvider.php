@@ -55,7 +55,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
                 $modules = PbxExtensionModules::getEnabledModulesArray();
                 foreach ($modules as $value) {
                     $className      = str_replace('Module', '', $value['uniqid']);
-                    $fullClassName = "\\Modules\\{$value['uniqid']}\\Lib\\{$className}Conf";
+                    $fullClassName = "Modules\\{$value['uniqid']}\\Lib\\{$className}Conf";
                     if (class_exists($fullClassName)) {
                         $object = new $fullClassName();
                         if ($object instanceof ConfigClass){

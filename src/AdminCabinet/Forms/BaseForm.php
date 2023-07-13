@@ -20,7 +20,6 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 
-use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Forms\Element\TextArea;

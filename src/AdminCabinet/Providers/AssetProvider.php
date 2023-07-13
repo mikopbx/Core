@@ -246,7 +246,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/WikiLinksReplacement/wiki-links-replacement-worker.js', true);
 
             // We can disable module status toggle from module controller, using the showModuleStatusToggle variable
-            $isExternalModulePage = str_starts_with($dispatcher->getNamespaceName(), '\\Module');
+            $isExternalModulePage = str_starts_with($dispatcher->getNamespaceName(), 'Modules');
 
             if ($isExternalModulePage) {
                 $currentControllerObject = $dispatcher->getActiveController();

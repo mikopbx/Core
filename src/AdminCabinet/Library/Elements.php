@@ -19,6 +19,30 @@
 
 namespace MikoPBX\AdminCabinet\Library;
 
+use MikoPBX\AdminCabinet\Controllers\AsteriskManagersController;
+use MikoPBX\AdminCabinet\Controllers\CallDetailRecordsController;
+use MikoPBX\AdminCabinet\Controllers\CallQueuesController;
+use MikoPBX\AdminCabinet\Controllers\ConferenceRoomsController;
+use MikoPBX\AdminCabinet\Controllers\ConsoleController;
+use MikoPBX\AdminCabinet\Controllers\CustomFilesController;
+use MikoPBX\AdminCabinet\Controllers\DialplanApplicationsController;
+use MikoPBX\AdminCabinet\Controllers\ExtensionsController;
+use MikoPBX\AdminCabinet\Controllers\Fail2BanController;
+use MikoPBX\AdminCabinet\Controllers\FirewallController;
+use MikoPBX\AdminCabinet\Controllers\GeneralSettingsController;
+use MikoPBX\AdminCabinet\Controllers\IncomingRoutesController;
+use MikoPBX\AdminCabinet\Controllers\IvrMenuController;
+use MikoPBX\AdminCabinet\Controllers\MailSettingsController;
+use MikoPBX\AdminCabinet\Controllers\NetworkController;
+use MikoPBX\AdminCabinet\Controllers\OutboundRoutesController;
+use MikoPBX\AdminCabinet\Controllers\OutOffWorkTimeController;
+use MikoPBX\AdminCabinet\Controllers\PbxExtensionModulesController;
+use MikoPBX\AdminCabinet\Controllers\ProvidersController;
+use MikoPBX\AdminCabinet\Controllers\RestartController;
+use MikoPBX\AdminCabinet\Controllers\SoundFilesController;
+use MikoPBX\AdminCabinet\Controllers\SystemDiagnosticController;
+use MikoPBX\AdminCabinet\Controllers\TimeSettingsController;
+use MikoPBX\AdminCabinet\Controllers\UpdateController;
 use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
@@ -43,42 +67,42 @@ class Elements extends Injectable
                 'caption' => 'mm_Setup',
                 'iconclass' => '',
                 'submenu' => [
-                    'extensions' => [
+                    ExtensionsController::class => [
                         'caption' => 'mm_Extensions',
                         'iconclass' => 'user outline',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'call-queues' => [
+                    CallQueuesController::class => [
                         'caption' => 'mm_CallQueues',
                         'iconclass' => 'users',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'ivr-menu' => [
+                    IvrMenuController::class => [
                         'caption' => 'mm_IvrMenu',
                         'iconclass' => 'sitemap',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'conference-rooms' => [
+                    ConferenceRoomsController::class => [
                         'caption' => 'mm_ConferenceRooms',
                         'iconclass' => 'phone volume',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'sound-files' => [
+                    SoundFilesController::class => [
                         'caption' => 'mm_SoundFiles',
                         'iconclass' => 'sound',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'call-detail-records' => [
+                    CallDetailRecordsController::class => [
                         'caption' => 'mm_CallDetailRecords',
                         'iconclass' => 'list ul',
                         'action' => 'index',
@@ -91,28 +115,28 @@ class Elements extends Injectable
                 'caption' => 'mm_Routing',
                 'iconclass' => '',
                 'submenu' => [
-                    'providers' => [
+                    ProvidersController::class => [
                         'caption' => 'mm_Providers',
                         'iconclass' => 'server',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'incoming-routes' => [
+                    IncomingRoutesController::class => [
                         'caption' => 'mm_IncomingRoutes',
                         'iconclass' => 'map signs',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'outbound-routes' => [
+                    OutboundRoutesController::class => [
                         'caption' => 'mm_OutboundRoutes',
                         'iconclass' => 'random',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'out-off-work-time' => [
+                    OutOffWorkTimeController::class => [
                         'caption' => 'mm_OutOffWorkTime',
                         'iconclass' => 'calendar times outline',
                         'action' => 'index',
@@ -126,27 +150,20 @@ class Elements extends Injectable
                 'caption' => 'mm_PbxExtensionModules',
                 'iconclass' => '',
                 'submenu' => [
-                    'dialplan-applications' => [
+                    DialplanApplicationsController::class => [
                         'caption' => 'mm_DialplanApplications',
                         'iconclass' => 'php',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'pbx-extension-modules' => [
+                    PbxExtensionModulesController::class => [
                         'caption' => 'mm_ModuleManager',
                         'iconclass' => 'puzzle piece',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-//                    'licensing' => [
-//                        'caption' => 'mm_PaidModulesAccessNew',
-//                        'iconclass' => 'key',
-//                        'action' => 'modify',
-//                        'param' => '',
-//                        'style' => '',
-//                    ],
                 ],
             ],
 
@@ -154,28 +171,28 @@ class Elements extends Injectable
                 'caption' => 'mm_Maintenance',
                 'iconclass' => '',
                 'submenu' => [
-                    'update' => [
-                        'caption' => 'mm_UpdateSystem',
+                    UpdateController::class => [
+                        'caption' => 'mm_Update',
                         'iconclass' => 'sync',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'system-diagnostic' => [
+                    SystemDiagnosticController::class => [
                         'caption' => 'mm_SystemDiagnostic',
                         'iconclass' => 'stethoscope',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'console' => [
+                    ConsoleController::class => [
                         'caption' => 'mm_SSHConsole',
                         'iconclass' => 'terminal',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'restart' => [
+                    RestartController::class => [
                         'caption' => 'mm_Restart',
                         'iconclass' => 'power off',
                         'action' => 'manage',
@@ -188,21 +205,21 @@ class Elements extends Injectable
                 'caption' => 'mm_NetworkSettings',
                 'iconclass' => '',
                 'submenu' => [
-                    'network' => [
+                    NetworkController::class => [
                         'caption' => 'mm_Network',
                         'iconclass' => 'globe',
                         'action' => 'modify',
                         'param' => '',
                         'style' => '',
                     ],
-                    'firewall' => [
+                    FirewallController::class => [
                         'caption' => 'mm_Firewall',
                         'iconclass' => 'shield alternate',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'fail2-ban' => [
+                    Fail2BanController::class => [
                         'caption' => 'mm_Fail2Ban',
                         'iconclass' => 'user secret',
                         'action' => 'index',
@@ -215,35 +232,35 @@ class Elements extends Injectable
                 'caption' => 'mm_System',
                 'iconclass' => '',
                 'submenu' => [
-                    'general-settings' => [
+                    GeneralSettingsController::class => [
                         'caption' => 'mm_GeneralSettings',
                         'iconclass' => 'cogs',
                         'action' => 'modify',
                         'param' => '',
                         'style' => '',
                     ],
-                    'time-settings' => [
+                    TimeSettingsController::class => [
                         'caption' => 'mm_TimeSettings',
                         'iconclass' => 'time',
                         'action' => 'modify',
                         'param' => '',
                         'style' => '',
                     ],
-                    'mail-settings' => [
+                    MailSettingsController::class => [
                         'caption' => 'mm_MailSettings',
                         'iconclass' => 'envelope outline',
                         'action' => 'modify',
                         'param' => '',
                         'style' => '',
                     ],
-                    'asterisk-managers' => [
+                    AsteriskManagersController::class => [
                         'caption' => 'mm_AsteriskManagers',
                         'iconclass' => 'asterisk',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    'custom-files' => [
+                    CustomFilesController::class => [
                         'caption' => 'mm_CustomFiles',
                         'iconclass' => 'linux',
                         'action' => 'index',
@@ -281,10 +298,10 @@ class Elements extends Injectable
                 foreach ($groupparams['submenu'] as $controller => $option) {
                     $isAllowed = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controller, $option['action']]);
                     if ($isAllowed) {
-                        $link = $this->url->get($controller . '/' . $option['action'] . '/' . $option['param']);
+                        $link = $this->getLinkToControllerAction($controller,  $option['action'], $option['param']);
                         $caption = $this->translation->_($option['caption']);
                         $groupHtml .= "<a class='item {$option['style']}' href='{$link}'";
-                        if (isset($option['data-value'])){
+                        if (isset($option['data-value'])) {
                             $groupHtml .= " data-value='{$option['data-value']}'";
                         }
                         $groupHtml .= ">
@@ -299,7 +316,7 @@ class Elements extends Injectable
             } else {
                 $isAllowedGroup = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$group, $groupparams['action'] ?? 'index']);
                 if ($isAllowedGroup) {
-                    $link = $this->url->get($group . '/' . $groupparams['action'] . '/' . $groupparams['param']);
+                    $link = $this->getLinkToControllerAction($group,  $groupparams['action'], $groupparams['param']);
                     $caption = $this->translation->_($groupparams['caption']);
                     $groupHtml .= "<a class='item {$groupparams['style']}' href='{$link}'>
                     	    <i class='{$groupparams['iconclass']} icon'></i>{$caption}
@@ -315,27 +332,26 @@ class Elements extends Injectable
     }
 
     /**
-     * Returns icon html by controller name
+     * Returns icon html by controller full class name
      *
-     * @param $controllerName
+     * @param $controllerClass
      *
      * @return string
      */
-    public function getIconByController($controllerName): string
+    public function getIconByController($controllerClass): string
     {
-        $uncamelizeControllerName = Text::uncamelize($controllerName, '-');
         $result = '';
         foreach ($this->_headerMenu as $index => $group) {
-            if ($index === $uncamelizeControllerName
-                && array_key_exists('iconclass', $group[$uncamelizeControllerName])
-                && !empty($group[$uncamelizeControllerName]['iconclass'])
+            if ($index === $controllerClass
+                && array_key_exists('iconclass', $group[$controllerClass])
+                && !empty($group[$controllerClass]['iconclass'])
             ) {
-                $result = "<i class='{$group[$uncamelizeControllerName]['iconclass']} icon'></i>";
+                $result = "<i class='{$group[$controllerClass]['iconclass']} icon'></i>";
                 break;
             }
             if (array_key_exists('submenu', $group)) {
                 foreach ($group['submenu'] as $index2 => $submenu) {
-                    if ($index2 === $uncamelizeControllerName
+                    if ($index2 === $controllerClass
                         && !empty($submenu['iconclass'])) {
                         $result = "<i class='{$submenu['iconclass']} icon'></i>";
                         break;
@@ -404,23 +420,23 @@ class Elements extends Injectable
     {
         $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $module) {
-            $unCamelizedControllerName = Text::uncamelize($module['uniqid'], '-');
-            $isAllowed = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$unCamelizedControllerName]);
-            if ($isAllowed) {
-                $menuSettings = "AdditionalMenuItem{$module['uniqid']}";
-                $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
-                if ($previousMenuSettings !== null) {
-                    $menuItem = json_decode($previousMenuSettings->value, true);
-                    if ($menuItem['showAtSidebar']) {
-                        $controllerUrl = "$unCamelizedControllerName\\$unCamelizedControllerName";
-                        $this->_headerMenu[$menuItem['group']]['submenu'][$controllerUrl] = [
-                            'caption' => $menuItem['caption'],
-                            'iconclass' => $menuItem['iconClass'],
-                            'action' => 'index',
-                            'param' => '',
-                            'style' => '',
-                        ];
-                    }
+            $moduleUniqId = $module['uniqid'];
+            $moduleMainController = "Modules\\{$moduleUniqId}\\App\\Controllers\\{$moduleUniqId}Controller";
+            if (!class_exists($moduleMainController) || !method_exists($moduleMainController, 'indexAction')) {
+                continue;
+            }
+            $menuSettingsKey = "AdditionalMenuItem{$moduleUniqId}";
+            $menuSettings = PbxSettings::findFirstByKey($menuSettingsKey);
+            if ($menuSettings !== null) {
+                $menuItem = json_decode($menuSettings->value, true);
+                if ($menuItem['showAtSidebar']) {
+                    $this->_headerMenu[$menuItem['group']]['submenu'][$moduleMainController] = [
+                        'caption' => $menuItem['caption'],
+                        'iconclass' => $menuItem['iconClass'],
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
+                    ];
                 }
             }
         }
@@ -433,14 +449,44 @@ class Elements extends Injectable
      *
      * @return void
      */
-    private function addMenuItemSSHMenu():void
+    private function addMenuItemSSHMenu(): void
     {
-        if (PbxSettings::getValueByKey('SSHDisablePasswordLogins')!=='1'){
+        if (PbxSettings::getValueByKey('SSHDisablePasswordLogins') !== '1') {
             $sshPort = PbxSettings::getValueByKey('SSHPort');
-            $this->_headerMenu['maintenance']['submenu']['console']['data-value']="root@{$_SERVER['SERVER_ADDR']}:$sshPort";
+            $this->_headerMenu['maintenance']['submenu'][ConsoleController::class]['data-value'] = "root@{$_SERVER['SERVER_ADDR']}:$sshPort";
         } else {
-            unset ($this->_headerMenu['maintenance']['submenu']['console']);
+            unset ($this->_headerMenu['maintenance']['submenu'][ConsoleController::class]);
         }
+    }
+
+    /**
+     * Get the link to a controller action.
+     *
+     * @param string $controller The controller namespace.
+     * @param string $action The action name.
+     * @param string $param The parameter value.
+     *
+     * @return string The generated link.
+     */
+    private function getLinkToControllerAction(string $controller, string $action, string $param): string
+    {
+        $controllerParts = explode('\\', $controller);
+        $controllerName = end($controllerParts);
+        // Remove the "Controller" suffix if present
+        $controllerName = str_replace("Controller", "", $controllerName);
+
+        // Convert the controller name to a dash-separated format
+        $controllerName = Text::uncamelize($controllerName, '-');
+
+        if ($controllerParts[0]==='Module'){
+            // Convert the module name to a dash-separated format
+            $moduleName = Text::uncamelize($controllerParts[1], '-');
+            $url = $this->url->get("$moduleName/$controllerName/$action/$param");
+        } else {
+            $url = $this->url->get("$controllerName/$action/$param");
+        }
+
+        return $url;
     }
 
 }

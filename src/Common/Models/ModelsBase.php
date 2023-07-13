@@ -19,6 +19,24 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\AdminCabinet\Controllers\AsteriskManagersController;
+use MikoPBX\AdminCabinet\Controllers\BaseController;
+use MikoPBX\AdminCabinet\Controllers\CallQueuesController;
+use MikoPBX\AdminCabinet\Controllers\ConferenceRoomsController;
+use MikoPBX\AdminCabinet\Controllers\CustomFilesController;
+use MikoPBX\AdminCabinet\Controllers\DialplanApplicationsController;
+use MikoPBX\AdminCabinet\Controllers\ExtensionsController;
+use MikoPBX\AdminCabinet\Controllers\Fail2BanController;
+use MikoPBX\AdminCabinet\Controllers\FirewallController;
+use MikoPBX\AdminCabinet\Controllers\GeneralSettingsController;
+use MikoPBX\AdminCabinet\Controllers\IncomingRoutesController;
+use MikoPBX\AdminCabinet\Controllers\IvrMenuController;
+use MikoPBX\AdminCabinet\Controllers\NetworkController;
+use MikoPBX\AdminCabinet\Controllers\OutboundRoutesController;
+use MikoPBX\AdminCabinet\Controllers\OutOffWorkTimeController;
+use MikoPBX\AdminCabinet\Controllers\ProvidersController;
+use MikoPBX\AdminCabinet\Controllers\SoundFilesController;
+use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
@@ -139,7 +157,7 @@ class ModelsBase extends Model
             $results = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
             foreach ($results as $file) {
                 $className = pathinfo($file)['filename'];
-                $moduleModelClass = "\\Modules\\{$module['uniqid']}\\Models\\{$className}";
+                $moduleModelClass = "Modules\\{$module['uniqid']}\\Models\\{$className}";
 
                 if (class_exists($moduleModelClass)
                     && method_exists($moduleModelClass, 'getDynamicRelations')) {
@@ -586,37 +604,36 @@ class ModelsBase extends Model
      */
     public function getWebInterfaceLink(): string
     {
-        $url = new Url();
-
-        $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
         $link = '#';
+
         switch (static::class) {
             case AsteriskManagerUsers::class:
-                $link = $url->get('asterisk-managers/modify/' . $this->id, null, null, $baseUri);
+                $link = $this->buildRecordUrl(AsteriskManagersController::class, 'modify',  $this->id);
                 break;
             case CallQueueMembers::class:
-                $link = $url->get('call-queues/modify/' . $this->CallQueues->uniqid, null, null, $baseUri);
+                $link = $this->buildRecordUrl(CallQueuesController::class, 'modify',  $this->CallQueues->uniqid);
                 break;
             case CallQueues::class:
-                $link = $url->get('call-queues/modify/' . $this->uniqid, null, null, $baseUri);
+                $link = $this->buildRecordUrl(CallQueuesController::class, 'modify',  $this->uniqid);
                 break;
             case ConferenceRooms::class:
-                $link = $url->get('conference-rooms/modify/' . $this->uniqid, null, null, $baseUri);
+                $link = $this->buildRecordUrl(ConferenceRoomsController::class, 'modify',  $this->uniqid);
                 break;
             case CustomFiles::class:
-                $link = $url->get('custom-files/modify/' . $this->id, null, null, $baseUri);
+                $link = $this->buildRecordUrl(CustomFilesController::class, 'modify',  $this->id);
                 break;
             case DialplanApplications::class:
-                $link = $url->get('dialplan-applications/modify/' . $this->uniqid, null, null, $baseUri);
+                $link = $this->buildRecordUrl(DialplanApplicationsController::class, 'modify',  $this->uniqid);
                 break;
             case ExtensionForwardingRights::class:
 
                 break;
             case Extensions::class:
-                $link = $url->get('extensions/modify/' . $this->id, null, null, $baseUri);
+                $link = $this->buildRecordUrl(ExtensionsController::class, 'modify',  $this->id);
                 break;
             case ExternalPhones::class:
-                if ($this->Extensions->is_general_user_number === "1") {
+                if ( $this->di->get(SecurityPluginProvider::SERVICE_NAME, [static::class, 'modify'])
+                    && $this->Extensions->is_general_user_number === "1") {
                     $parameters = [
                         'conditions' => 'is_general_user_number="1" AND type="' . Extensions::TYPE_EXTERNAL . '" AND userid=:userid:',
                         'bind' => [
@@ -624,65 +641,65 @@ class ModelsBase extends Model
                         ],
                     ];
                     $needExtension = Extensions::findFirst($parameters);
-                    $link = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
-                } else {
-                    $link = '#';//TODO: Make representation if there is form to manage external numbers
+                    $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $needExtension->id);
                 }
                 break;
             case Fail2BanRules::class:
-                $link = $url->get('fail2-ban/index/');
+                $link = $this->buildRecordUrl(Fail2BanController::class, 'index');
                 break;
             case FirewallRules::class:
-                $link = $url->get('firewall/modify/' . $this->NetworkFilters->id, null, null, $baseUri);
+                $link = $this->buildRecordUrl(FirewallController::class, 'modify', $this->NetworkFilters->id);
                 break;
             case Iax::class:
-                $link = $url->get('providers/modifyiax/' . $this->Providers->id, null, null, $baseUri);
+                $link = $this->buildRecordUrl(ProvidersController::class, 'modifyiax', $this->Providers->id);
                 break;
             case IvrMenu::class:
-                $link = $url->get('ivr-menu/modify/' . $this->uniqid, null, null, $baseUri);
+                $link = $this->buildRecordUrl(IvrMenuController::class, 'modify', $this->uniqid);
                 break;
             case IvrMenuActions::class:
-                $link = $url->get('ivr-menu/modify/' . $this->IvrMenu->uniqid, null, null, $baseUri);
-                break;
-            case Codecs::class:
+                $link = $this->buildRecordUrl(IvrMenuController::class, 'modify', $this->IvrMenu->uniqid);
                 break;
             case IncomingRoutingTable::class:
-                $link = $url->get('incoming-routes/modify/' . $this->id, null, null, $baseUri);
+                $link = $this->buildRecordUrl(IncomingRoutesController::class, 'modify', $this->id);
                 break;
             case LanInterfaces::class:
-                $link = $url->get('network/index/', null, null, $baseUri);
+                $link = $this->buildRecordUrl(NetworkController::class, 'modify');
                 break;
             case NetworkFilters::class:
-                $link = $url->get('firewall/modify/' . $this->id, null, null, $baseUri);
+                $link = $this->buildRecordUrl(FirewallController::class, 'modify', $this->id);
                 break;
             case OutgoingRoutingTable::class:
-                $link = $url->get('outbound-routes/modify/' . $this->id, null, null, $baseUri);
+                $link = $this->buildRecordUrl(OutboundRoutesController::class, 'modify', $this->id);
                 break;
             case OutWorkTimes::class:
-                $link = $url->get('out-off-work-time/modify/' . $this->id, null, null, $baseUri);
+                $link = $this->buildRecordUrl(OutOffWorkTimeController::class, 'modify', $this->id);
                 break;
             case Providers::class:
                 if ($this->type === "IAX") {
-                    $link = $url->get('providers/modifyiax/' . $this->uniqid, null, null, $baseUri);
+                    $link = $this->buildRecordUrl(ProvidersController::class, 'modifyiax', $this->uniqid);
                 } else {
-                    $link = $url->get('providers/modifysip/' . $this->uniqid, null, null, $baseUri);
+                    $link = $this->buildRecordUrl(ProvidersController::class, 'modifysip', $this->uniqid);
                 }
                 break;
             case PbxSettings::class:
-                $link = $url->get('general-settings/index');
+                $link = $this->buildRecordUrl(GeneralSettingsController::class, 'index');
                 break;
             case PbxExtensionModules::class:
-                $link = $url->get(Text::uncamelize($this->uniqid), null, null, $baseUri);
+                $moduleMainController = "Modules\\{$this->uniqid}\\App\\Controllers\\{$this->uniqid}Controller";
+                if ($this->di->get(SecurityPluginProvider::SERVICE_NAME, [$moduleMainController, 'index'])) {
+                    $url = new Url();
+                    $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
+                    $unCamelizedModuleId = Text::uncamelize($this->uniqid, '-');
+                    $link = $url->get("$unCamelizedModuleId/$unCamelizedModuleId/index", null, null, $baseUri);
+                }
                 break;
             case Sip::class:
                 if ($this->Extensions) {
                     if ($this->Extensions->is_general_user_number === "1") {
-                        $link = $url->get('extensions/modify/' . $this->Extensions->id, null, null, $baseUri);
-                    } else {
-                        $link = '#';//TODO: Make representation if there is form to manage external numbers
+                        $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $this->Extensions->id);
                     }
                 } elseif ($this->Providers) {
-                    $link = $url->get('providers/modifysip/' . $this->Providers->id, null, null, $baseUri);
+                    $link = $this->buildRecordUrl(ProvidersController::class, 'modifysip', $this->Providers->id);
                 }
                 break;
             case Users::class:
@@ -694,17 +711,42 @@ class ModelsBase extends Model
                 ];
                 $needExtension = Extensions::findFirst($parameters);
                 if ($needExtension === null) {
-                    $link = $url->get('extensions/index/', null, null, $baseUri);
+                    $link = $this->buildRecordUrl(ExtensionsController::class, 'index');
                 } else {
-                    $link = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
+                    $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $needExtension->id);
                 }
                 break;
             case SoundFiles::class:
-                $link = $url->get('sound-files/modify/' . $this->id, null, null, $baseUri);
+                $link = $this->buildRecordUrl(SoundFilesController::class, 'modify',$this->id);
                 break;
             default:
         }
 
+        return $link;
+    }
+
+    /**
+     * Build a record URL based on the controller class, action, and record ID.
+     *
+     * @param string $controllerClass The controller class name.
+     * @param string $action The action name.
+     * @param string $recordId The record ID (optional).
+     *
+     * @return string The generated record URL.
+     */
+    private function buildRecordUrl(string $controllerClass, string  $action, string $recordId=''):string
+    {
+        $link = '#';
+        if ($this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controllerClass, $action])) {
+            $url = new Url();
+            $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
+            $controllerParts = explode('\\', $controllerClass);
+            $controllerName = end($controllerParts);
+            // Remove the "Controller" suffix if present
+            $controllerName = str_replace("Controller", "", $controllerName);
+            $unCamelizedControllerName = Text::uncamelize($controllerName, '-');
+            $link = $url->get("{$unCamelizedControllerName}//{$action}//{$recordId}", null, null, $baseUri);
+        }
         return $link;
     }
 

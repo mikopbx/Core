@@ -1134,7 +1134,7 @@ class WorkerModelsEvents extends WorkerBase
 
         // Hook module methods if they change system configs
         $className = str_replace('Module', '', $pbxModuleRecord['uniqid']);
-        $configClassName = "\\Modules\\{$pbxModuleRecord['uniqid']}\\Lib\\{$className}Conf";
+        $configClassName = "Modules\\{$pbxModuleRecord['uniqid']}\\Lib\\{$className}Conf";
         if (class_exists($configClassName)) {
             $configClassObj = new $configClassName();
 

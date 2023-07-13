@@ -53,7 +53,6 @@ const PbxApi = {
     modulesGetAvailable: `${Config.pbxUrl}/pbxcore/api/modules/core/getAvailableModules`, // Retrieves available modules on MIKO repository.
     modulesGetLink: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleLink`, // Retrieves the installation link for a module.
 
-
     // FirewallManagementProcessor
     firewallGetBannedIp: `${Config.pbxUrl}/pbxcore/api/firewall/getBannedIp`, // Retrieve a list of banned IP addresses or get data for a specific IP address.
     firewallUnBanIp: `${Config.pbxUrl}/pbxcore/api/firewall/unBanIp`, //  Remove an IP address from the fail2ban ban list.

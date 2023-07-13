@@ -1,6 +1,6 @@
 <h1 class="ui {% if (actionName=='index') %}dividing{% endif %} header">
     {% if represent is empty %}
-        {{ elements.getIconByController(controllerName) }}
+        {{ elements.getIconByController(controllerClass) }}
         <div class="content">
             {{ t._('Breadcrumb'~controllerName) }}
             <div class="sub header">{{ t._('SubHeader'~controllerName) }}

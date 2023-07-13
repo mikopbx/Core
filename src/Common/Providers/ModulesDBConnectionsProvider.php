@@ -73,7 +73,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
             $modelsFiles = glob("{$modulesDir}/{$moduleUniqueId}/Models/*.php", GLOB_NOSORT);
             foreach ($modelsFiles as $file) {
                 $className = pathinfo($file)['filename'];
-                $moduleModelClass = "\\Modules\\{$moduleUniqueId}\\Models\\{$className}";
+                $moduleModelClass = "Modules\\{$moduleUniqueId}\\Models\\{$className}";
 
                 // Test whether this class abstract or not
                 try {

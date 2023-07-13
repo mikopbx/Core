@@ -74,7 +74,7 @@ class SessionController extends BaseController
         if ($password === $passFromUser && $login === $loginFromUser) {
             $sessionParams = [
                 SessionController::ROLE => AclProvider::ROLE_ADMINS,
-                SessionController::HOME_PAGE => 'extensions/index'
+                SessionController::HOME_PAGE => $this->url->get('extensions/index')
             ];
             $userLoggedIn = true;
         } else {

@@ -79,51 +79,42 @@ class SecurityPlugin extends Injectable
         // Check if the authenticated user is allowed to access the requested controller and action
         if ($isLoggedIn) {
             // Check if the desired controller exists or show the extensions page
-            if (!$this->controllerExists($dispatcher)) {
+            $controllerClass = $this->dispatcher->getHandlerClass();
+            if (!class_exists($controllerClass)) {
                 // Redirect to home page if controller does not set
-                $homePath = $this->session->get(SessionController::SESSION_ID)['homePage'] ?? 'extensions/index';
-                $controller = explode('/', $homePath)[0];
-                $action = explode('/', $homePath)[1];
+                $homePath = $this->session->get(SessionController::SESSION_ID)[SessionController::HOME_PAGE];
+                if (empty($homePath)){
+                    $dispatcher->forward([
+                        'module' => 'admin-cabinet',
+                        'controller' => 'extensions',
+                        'action' => 'index',
+                        'namespace' => 'MikoPBX\AdminCabinet\Controllers'
+                    ]);
+                    return true;
+                }
+                $module = explode('/', $homePath)[1];
+                $controller = explode('/', $homePath)[2];
+                $action = explode('/', $homePath)[3];
                 $dispatcher->forward([
+                    'module' => $module,
                     'controller' => $controller,
                     'action' => $action
                 ]);
                 return true;
             }
-
-            if (!$this->isAllowedAction($controller, $action)) {
+            if (!$this->isAllowedAction($controllerClass, $action)) {
                 // Show a 401 error if not allowed
                 $dispatcher->forward([
+                    'module' => 'admin-cabinet',
                     'controller' => 'errors',
-                    'action' => 'show401'
+                    'action' => 'show401',
+                    'namespace' => 'MikoPBX\AdminCabinet\Controllers'
                 ]);
                 return true;
             }
         }
 
         return true;
-    }
-
-    /**
-     *
-     * Checks if the controller class exists.
-     *
-     * This method checks if the controller class exists by concatenating the controller name, namespace name, and handler
-     * suffix obtained from the $dispatcher object. The method returns true if the class exists, false otherwise.
-     *
-     * @param Dispatcher $dispatcher The dispatcher object.
-     * @return bool true if the controller class exists, false otherwise.
-     */
-    private
-    function controllerExists(Dispatcher $dispatcher): bool
-    {
-        $controllerName = $dispatcher->getControllerName();
-        $namespace = $dispatcher->getNamespaceName();
-        $handlerSuffix = $dispatcher->getHandlerSuffix();
-
-        $classForCheck = $namespace.'\\'. Text::camelize($controllerName).$handlerSuffix;
-
-        return class_exists($classForCheck);
     }
 
 
@@ -179,23 +170,15 @@ class SecurityPlugin extends Injectable
      * if the $action is allowed for the current user's role. If the user is a guest or if the $action is not allowed,
      * the method returns false. Otherwise, it returns true.
      *
-     * @param string $controller The name of the controller.
+     * @param string $controller The full name of the controller class.
      * @param string $action The name of the action to check.
      * @return bool true if the action is allowed for the current user, false otherwise.
      */
     public function isAllowedAction(string $controller, string $action): bool
     {
         $role = $this->session->get(SessionController::SESSION_ID)[SessionController::ROLE] ?? AclProvider::ROLE_GUESTS;
-
-        if (strpos($controller, '_') > 0) {
-            $controller = str_replace('_', '-', $controller);
-        }
-        $controller = Text::camelize($controller);
-
         $acl = $this->di->get(AclProvider::SERVICE_NAME);
-
         $allowed = $acl->isAllowed($role, $controller, $action);
-
         if ($allowed != AclEnum::ALLOW) {
             return false;
         } else {

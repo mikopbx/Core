@@ -52,15 +52,13 @@ class NormalizeControllerNamePlugin extends Injectable
         // @examples
         // /admin-cabinet/module-users-groups/index
         // /admin-cabinet/module-users-groups/modify/1
-        if(stripos($dispatcher->getNamespaceName(),'\Modules')===0){
-            $checkNamespace = $dispatcher->getNamespaceName();
-            $checkController = Text::camelize($dispatcher->getControllerName(),'_');
-            $checkAction = $dispatcher->getActionName();
-            $actionSuffix = $dispatcher->getActionSuffix();
-            $controllerSuffix = $dispatcher->getHandlerSuffix();
-            $controllerClass = "{$checkNamespace}\\{$checkController}{$controllerSuffix}";
-            $actionMethod = "{$checkAction}{$actionSuffix}";
+        if(stripos($dispatcher->getNamespaceName(),'Modules')===0){
+            $controllerClass =  $dispatcher->getHandlerClass();
+            $actionMethod = $dispatcher->getActiveMethod();
             if (!method_exists($controllerClass, $actionMethod)){
+                $actionSuffix = $dispatcher->getActionSuffix();
+                $controllerSuffix = $dispatcher->getHandlerSuffix();
+                $checkNamespace = $dispatcher->getNamespaceName();
                 // Url is broken, try to add namespace into it
                 // @examples
                 // /admin-cabinet/module-users-groups/module-users-groups/index
