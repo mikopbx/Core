@@ -46,6 +46,7 @@ class WorkerCdr extends WorkerBase
     private array $internal_numbers = [];
     private array $no_answered_calls = [];
     private string $emailForMissed = '';
+    private int $lastCheckCdr = 0;
 
     /**
      * The main entry point for the worker.
@@ -63,9 +64,12 @@ class WorkerCdr extends WorkerBase
 
         // Process call data records
         while ($this->needRestart === false) {
-            $result = CDRDatabaseProvider::getCdr();
-            if (!empty($result)) {
-                $this->updateCdr($result);
+            if(time() - $this->lastCheckCdr > 5){
+                $result = CDRDatabaseProvider::getCdr();
+                if (!empty($result)) {
+                    $this->updateCdr($result);
+                }
+                $this->lastCheckCdr = time();
             }
             $this->clientQueue->wait();
         }
