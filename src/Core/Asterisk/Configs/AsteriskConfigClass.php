@@ -316,6 +316,17 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     }
 
     /**
+     * Adds priorities ащк [dial_create_chan] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongenhints
+     *
+     * @return string
+     */
+    public function extensionGenCreateChannelDialplan(): string
+    {
+        return '';
+    }
+
+    /**
      * Prepares additional parameters for [globals] section in the extensions.conf file
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensionglobals
      *

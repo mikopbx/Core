@@ -175,6 +175,8 @@ class ExtensionsConf extends AsteriskConfigClass
         $conf .= 'same => n,ExecIf($["${PT1C_SIP_HEADER}x" != "x"]?Set(PJSIP_HEADER(add,${CUT(PT1C_SIP_HEADER,:,1)})=${CUT(PT1C_SIP_HEADER,:,2)}))' . " \n\t";
         $conf .= 'same => n,Set(__PT1C_SIP_HEADER=${UNDEFINED})' . " \n\t";
         $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . " \n\t";
+        $conf .= 'same => n,ExecIf($[${DIALPLAN_EXISTS(${CONTEXT}-custom,s,1)}]?Gosub(${CONTEXT}-custom,s,1))' . " \n\t";
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSIONS_GEN_CREATE_CHANNEL_DIALPLAN);
         $conf .= 'same => n,return' . " \n\n";
 
         $conf .= '[hangup_handler]' . "\n";

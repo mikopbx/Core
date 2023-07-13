@@ -29,6 +29,8 @@ interface AsteriskConfigInterface
 {
     public const EXTENSION_GEN_HINTS = 'extensionGenHints';
 
+    public const EXTENSIONS_GEN_CREATE_CHANNEL_DIALPLAN = 'extensionGenCreateChannelDialplan';
+
     public const GENERATE_PUBLIC_CONTEXT = 'generatePublicContext';
 
     public const EXTENSION_GEN_INTERNAL_TRANSFER = 'extensionGenInternalTransfer';
@@ -165,6 +167,14 @@ interface AsteriskConfigInterface
      * @return string
      */
     public function extensionGenHints(): string;
+
+    /**
+     * Adds priorities for [dial_create_chan] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensionGenCreateChannelDialplan
+     *
+     * @return string
+     */
+    public function extensionGenCreateChannelDialplan(): string;
 
     /**
      * Prepares additional parameters for [globals] section in the extensions.conf file
