@@ -22,7 +22,6 @@ require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Storage, Util};
 
-
 /**
  * WorkerRemoveOldRecords is a worker class responsible for cleaning monitor records.
  *

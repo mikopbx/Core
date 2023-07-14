@@ -26,7 +26,6 @@ use MikoPBX\Core\System\System;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
-use Throwable;
 
 
 /**

@@ -20,8 +20,6 @@
 namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class SipHosts

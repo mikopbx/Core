@@ -53,7 +53,6 @@ use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
-use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use MikoPBX\Core\System\{BeanstalkClient,
     Configs\CronConf,

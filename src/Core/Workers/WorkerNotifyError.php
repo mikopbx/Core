@@ -21,7 +21,6 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
-use Throwable;
 
 /**
  * WorkerNotifyError is a worker class responsible for sending notifications.

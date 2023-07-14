@@ -22,8 +22,6 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Middleware;
 
 use MikoPBX\Common\Providers\LoggerAuthProvider;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Providers\RequestProvider;

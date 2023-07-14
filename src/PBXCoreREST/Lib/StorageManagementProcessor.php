@@ -19,8 +19,6 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-
-
 use MikoPBX\Core\System\Storage;
 use Phalcon\Di\Injectable;
 

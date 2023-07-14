@@ -19,9 +19,9 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 require_once 'Globals.php';
+
 use MikoPBX\Common\Models\LongPollSubscribe;
 use MikoPBX\Core\System\BeanstalkClient;
-use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
 use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;

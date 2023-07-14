@@ -26,7 +26,6 @@ use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
 

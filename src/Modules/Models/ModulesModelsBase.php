@@ -19,7 +19,6 @@
 
 namespace MikoPBX\Modules\Models;
 
-use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Text;

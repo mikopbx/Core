@@ -23,7 +23,6 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
-use phpDocumentor\Reflection\Types\True_;
 
 /**
  * Class VMWareToolsConf

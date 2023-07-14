@@ -20,7 +20,6 @@
 namespace MikoPBX\Common\Models;
 
 use MikoPBX\AdminCabinet\Controllers\AsteriskManagersController;
-use MikoPBX\AdminCabinet\Controllers\BaseController;
 use MikoPBX\AdminCabinet\Controllers\CallQueuesController;
 use MikoPBX\AdminCabinet\Controllers\ConferenceRoomsController;
 use MikoPBX\AdminCabinet\Controllers\CustomFilesController;

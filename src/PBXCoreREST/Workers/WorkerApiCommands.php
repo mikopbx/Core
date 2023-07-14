@@ -22,18 +22,9 @@ namespace MikoPBX\PBXCoreREST\Workers;
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\Workers\WorkerBase;
-use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
-use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
-use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;
-use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
-use MikoPBX\PBXCoreREST\Lib\SysLogsManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
-use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
-use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
-use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
 use Throwable;
 
 require_once 'Globals.php';

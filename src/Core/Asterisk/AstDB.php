@@ -19,10 +19,8 @@
 
 namespace MikoPBX\Core\Asterisk;
 
-use Throwable;
 use MikoPBX\Core\System\{Util};
 use Phalcon\Di;
-use SQLite3;
 
 class AstDB extends Di\Injectable
 {

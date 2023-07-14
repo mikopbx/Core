@@ -20,10 +20,8 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\{LanInterfaces, PbxSettings};
-use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di\Injectable;
-use Phalcon\Mvc\Model;
 use Throwable;
 
 /**

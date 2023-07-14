@@ -37,8 +37,6 @@ use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
 use Phalcon\Di;
 
-
-
 /**
  * SystemLoader class
  *

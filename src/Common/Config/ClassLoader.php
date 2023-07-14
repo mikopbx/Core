@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Config;
 
 use MikoPBX\Common\Providers\ConfigProvider;
-use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Di;
 use Phalcon\Loader;
 use function MikoPBX\Common\Config\appPath;

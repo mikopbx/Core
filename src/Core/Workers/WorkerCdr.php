@@ -24,7 +24,6 @@ require_once 'Globals.php';
 use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
-use Throwable;
 
 /**
  * Class WorkerCdr

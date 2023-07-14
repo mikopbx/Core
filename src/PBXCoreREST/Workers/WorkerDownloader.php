@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 require_once 'Globals.php';
+
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use GuzzleHttp;
