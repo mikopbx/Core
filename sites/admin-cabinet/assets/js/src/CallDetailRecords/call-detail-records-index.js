@@ -25,19 +25,19 @@
 const callDetailRecords = {
     /**
      * The call detail records table element.
-     * @type {JQuery<HTMLElement>}
+     * @type {jQuery}
      */
     $cdrTable: $('#cdr-table'),
 
     /**
      * The global search input element.
-     * @type {JQuery<HTMLElement>}
+     * @type {jQuery}
      */
     $globalSearch: $('#globalsearch'),
 
     /**
      * The date range selector element.
-     * @type {JQuery<HTMLElement>}
+     * @type {jQuery}
      */
     $dateRangeSelector: $('#date-range-selector'),
 
@@ -79,7 +79,7 @@ const callDetailRecords = {
                 type: 'POST',
             },
             paging: true,
-            scrollY: $(window).height() - callDetailRecords.$cdrTable.offset().top - 420,
+            scrollY: $(window).height() - callDetailRecords.$cdrTable.offset().top-150,
             // stateSave: true,
             sDom: 'rtip',
             deferRender: true,
