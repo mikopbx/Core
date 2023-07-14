@@ -324,7 +324,7 @@ class CallDetailRecordsController extends BaseController
     private function selectCDRRecordsWithFilters(array $parameters): array
     {
         // Apply ACL filters to CDR query using hook method
-        PBXConfModulesProvider::hookModulesMethod(CDRConfigInterface::APPLY_ACL_FILTERS_TO_CDR_QUERY, [$parameters]);
+        PBXConfModulesProvider::hookModulesMethod(CDRConfigInterface::APPLY_ACL_FILTERS_TO_CDR_QUERY, [&$parameters]);
 
         // Retrieve CDR records based on the filtered parameters
         return CDRDatabaseProvider::getCdr($parameters);
