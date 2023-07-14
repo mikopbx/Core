@@ -1161,4 +1161,5 @@ return [
     'BreadcrumbAdminCabinet' => '管理インターフェース',
     'BreadcrumbPBXCoreREST' => 'REST API',
     'BreadcrumbRestartmanage' => 'システムの再起動',
+    'mm_Update' => 'PBXの更新',
 ];

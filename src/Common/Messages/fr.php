@@ -1161,4 +1161,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'BreadcrumbAdminCabinet' => 'Interface administrative',
     'BreadcrumbPBXCoreREST' => 'API REST',
     'BreadcrumbRestartmanage' => 'Redémarrage du système',
+    'mm_Update' => 'Mise à jour du PABX',
 ];

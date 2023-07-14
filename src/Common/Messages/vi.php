@@ -1161,4 +1161,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'BreadcrumbAdminCabinet' => 'Giao diện quản trị',
     'BreadcrumbPBXCoreREST' => 'API REST',
     'BreadcrumbRestartmanage' => 'Khởi động lại hệ thống',
+    'mm_Update' => 'cập nhật tổng đài',
 ];

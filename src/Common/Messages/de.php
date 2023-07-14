@@ -1164,4 +1164,5 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'BreadcrumbAdminCabinet' => 'Verwaltungsschnittstelle',
     'BreadcrumbPBXCoreREST' => 'REST-API',
     'BreadcrumbRestartmanage' => 'Systemneustart',
+    'mm_Update' => 'PBX-Update',
 ];

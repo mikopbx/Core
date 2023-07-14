@@ -1161,4 +1161,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'BreadcrumbAdminCabinet' => 'Administrativt gränssnitt',
     'BreadcrumbPBXCoreREST' => 'REST API',
     'BreadcrumbRestartmanage' => 'Systemstart',
+    'mm_Update' => 'PBX-uppdatering',
 ];

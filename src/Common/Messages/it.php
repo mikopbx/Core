@@ -1161,4 +1161,5 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'BreadcrumbAdminCabinet' => 'Interfaccia amministrativa',
     'BreadcrumbPBXCoreREST' => 'API REST',
     'BreadcrumbRestartmanage' => 'Riavvio del sistema',
+    'mm_Update' => 'Aggiornamento centralino',
 ];

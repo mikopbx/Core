@@ -1161,4 +1161,5 @@ return [
     'BreadcrumbAdminCabinet' => 'Διοικητική διεπαφή',
     'BreadcrumbPBXCoreREST' => 'REST API',
     'BreadcrumbRestartmanage' => 'Επανεκκίνηση συστήματος',
+    'mm_Update' => 'Ενημέρωση PBX',
 ];

@@ -1161,4 +1161,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'BreadcrumbAdminCabinet' => 'İnzibati interfeys',
     'BreadcrumbRestartmanage' => 'Sistemin yenidən başlaması',
     'BreadcrumbPBXCoreREST' => 'REST API',
+    'mm_Update' => 'PBX yeniləməsi',
 ];

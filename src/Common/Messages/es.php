@@ -1161,4 +1161,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'BreadcrumbAdminCabinet' => 'Interfaz administrativa',
     'BreadcrumbPBXCoreREST' => 'API REST',
     'BreadcrumbRestartmanage' => 'Reinicio del sistema',
+    'mm_Update' => 'actualización centralita',
 ];

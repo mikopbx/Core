@@ -1161,4 +1161,5 @@ Można go aktywować raz, po czym kupon zostanie wykorzystany.
     'BreadcrumbAdminCabinet' => 'Interfejs administracyjny',
     'BreadcrumbPBXCoreREST' => 'REST API',
     'BreadcrumbRestartmanage' => 'Ponowne uruchomienie systemu',
+    'mm_Update' => 'Aktualizacja centrali PBX',
 ];

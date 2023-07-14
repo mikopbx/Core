@@ -1161,4 +1161,5 @@ return [
     'BreadcrumbAdminCabinet' => 'ადმინისტრაციული ინტერფეისი',
     'BreadcrumbPBXCoreREST' => 'REST API',
     'BreadcrumbRestartmanage' => 'სისტემის გადატვირთვა',
+    'mm_Update' => 'PBX განახლება',
 ];

@@ -1161,4 +1161,5 @@ return [
     'BreadcrumbRestartmanage' => 'Перезавантаження системи',
     'BreadcrumbAdminCabinet' => 'Адміністративний інтерфейс',
     'BreadcrumbPBXCoreREST' => 'REST API',
+    'mm_Update' => 'Оновлення PBX',
 ];

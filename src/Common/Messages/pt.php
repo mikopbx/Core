@@ -1161,4 +1161,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'BreadcrumbRestartmanage' => 'Reinicialização do sistema',
     'BreadcrumbAdminCabinet' => 'Interface administrativa',
     'BreadcrumbPBXCoreREST' => 'API REST',
+    'mm_Update' => 'Atualização de PABX',
 ];

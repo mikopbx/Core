@@ -1161,4 +1161,5 @@ return [
     'BreadcrumbAdminCabinet' => '管理界面',
     'BreadcrumbPBXCoreREST' => '休息API',
     'BreadcrumbRestartmanage' => '系统重启',
+    'mm_Update' => '集团电话更新',
 ];

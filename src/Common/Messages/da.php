@@ -1161,4 +1161,5 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'BreadcrumbAdminCabinet' => 'Administrativ grænseflade',
     'BreadcrumbPBXCoreREST' => 'REST API',
     'BreadcrumbRestartmanage' => 'System genstart',
+    'mm_Update' => 'PBX-opdatering',
 ];

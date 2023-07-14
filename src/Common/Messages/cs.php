@@ -1161,4 +1161,5 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'BreadcrumbAdminCabinet' => 'Administrativní rozhraní',
     'BreadcrumbPBXCoreREST' => 'REST API',
     'BreadcrumbRestartmanage' => 'Restart systému',
+    'mm_Update' => 'Aktualizace PBX',
 ];

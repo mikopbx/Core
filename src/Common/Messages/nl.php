@@ -1100,4 +1100,5 @@ Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
     'The LAN interface will now be configured ...' => "De LAN-interface instellen…",
     'Enter the new LAN IP address: ' => 'Voer een nieuw LAN IP-adres in:',
     'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Subnetmasker in CIDR-indeling (1-32)',
+    'mm_Update' => 'PBX-update',
 ];

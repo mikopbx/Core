@@ -1161,4 +1161,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'BreadcrumbRestartmanage' => 'Sistem yeniden başlatma',
     'BreadcrumbAdminCabinet' => 'İdari arayüz',
     'BreadcrumbPBXCoreREST' => 'DİNLENME API\'SI',
+    'mm_Update' => 'PBX güncellemesi',
 ];

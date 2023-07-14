@@ -1164,4 +1164,5 @@ It can be activated once, after which the coupon becomes redeemed.
     'BreadcrumbPBXCoreREST' => 'REST API',
     'BreadcrumbRestartmanage' => 'System reboot',
     'BreadcrumbAdminCabinet' => 'Administrative interface',
+    'mm_Update' => 'PBX update',
 ];
