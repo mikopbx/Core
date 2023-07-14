@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Acl\Component;

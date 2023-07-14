@@ -27,7 +27,6 @@ use Phalcon\Mvc\{Controller, View};
 use Phalcon\Tag;
 use Phalcon\Text;
 use Sentry\SentrySdk;
-use function MikoPBX\Common\Config\appPath;
 
 /**
  * @property \Phalcon\Session\Manager session

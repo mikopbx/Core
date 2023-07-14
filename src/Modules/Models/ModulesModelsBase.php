@@ -19,7 +19,9 @@
 
 namespace MikoPBX\Modules\Models;
 
+use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\ModelsBase;
+use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Text;
 use Phalcon\Url;
 use ReflectionClass as ReflectionClassAlias;
@@ -41,14 +43,14 @@ class ModulesModelsBase extends ModelsBase
     public function initialize(): void
     {
         // Get child class parameters and define module UniqueID
-        $reflector        = new ReflectionClassAlias(static::class);
+        $reflector = new ReflectionClassAlias(static::class);
         $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
         if (count($partsOfNameSpace) === 3 && $partsOfNameSpace[0] === 'Modules') {
             $this->moduleUniqueId = $partsOfNameSpace[1];
             $this->setConnectionService("{$this->moduleUniqueId}_module_db");
         }
         parent::initialize();
-        $this->initialized=true;
+        $this->initialized = true;
     }
 
     /**
@@ -60,7 +62,7 @@ class ModulesModelsBase extends ModelsBase
      */
     public function getRepresent(bool $needLink = false): string
     {
-        if (!$this->initialized){
+        if (!$this->initialized) {
             $this->initialize();
         }
 
@@ -101,12 +103,14 @@ class ModulesModelsBase extends ModelsBase
      */
     public function getWebInterfaceLink(): string
     {
-        if (!$this->initialized){
+        if (!$this->initialized) {
             $this->initialize();
         }
         if (isset($this->moduleUniqueId)) {
-            $url  = new Url();
-            $link = $url->get(Text::uncamelize($this->moduleUniqueId, '-'));
+            $url = new Url();
+            $baseUri = $this->di->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.baseUri');
+            $unCamelizedModuleId = Text::uncamelize($this->moduleUniqueId, '-');
+            $link = $url->get("$unCamelizedModuleId/$unCamelizedModuleId/index", null, null, $baseUri);
         } else {
             $link = '#';
         }

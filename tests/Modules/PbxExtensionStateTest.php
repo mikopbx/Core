@@ -28,18 +28,18 @@ class PbxExtensionStateTest extends AbstractUnitTest
 
     public function testDisableModule():void
     {
-        $this->state = new PbxExtensionState('ModuleSmartIVR');
+        $this->state = new PbxExtensionState('ModuleUsersUI');
         $result = $this->state->disableModule();
         if ($result===true){
             $this->assertTrue(true);
         } else {
-           $this->assertTrue(false, implode(' ', $this->state->getMessages()));
+            $this->assertTrue(false, implode(' ', $this->state->getMessages()));
         }
     }
 
     public function testEnableModule():void
     {
-        $this->state = new PbxExtensionState('ModuleSmartIVR');
+        $this->state = new PbxExtensionState('ModuleUsersUI');
         $result = $this->state->enableModule();
         if ($result===true){
             $this->assertTrue(true);

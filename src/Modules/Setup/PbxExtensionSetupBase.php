@@ -27,7 +27,6 @@ use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
-use Phalcon\Text;
 use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
@@ -515,7 +514,6 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     public function addToSidebar(): bool
     {
         $menuSettingsKey           = "AdditionalMenuItem{$this->moduleUniqueID}";
-        $unCamelizedControllerName = Text::uncamelize($this->moduleUniqueID, '-');
         $menuSettings              = PbxSettings::findFirstByKey($menuSettingsKey);
         if ($menuSettings === null) {
             $menuSettings      = new PbxSettings();
@@ -523,7 +521,6 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         }
         $value               = [
             'uniqid'        => $this->moduleUniqueID,
-            'href'          => "/admin-cabinet/{$unCamelizedControllerName}", //TODO:: проверить, кажется это уже можно удалить
             'group'         => 'modules',
             'iconClass'     => 'puzzle',
             'caption'       => "Breadcrumb{$this->moduleUniqueID}",

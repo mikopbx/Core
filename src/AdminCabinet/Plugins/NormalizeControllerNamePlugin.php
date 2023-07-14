@@ -52,7 +52,7 @@ class NormalizeControllerNamePlugin extends Injectable
         // @examples
         // /admin-cabinet/module-users-groups/index
         // /admin-cabinet/module-users-groups/modify/1
-        if(stripos($dispatcher->getNamespaceName(),'Modules')===0){
+        if(str_starts_with($dispatcher->getNamespaceName(), 'Modules')){
             $controllerClass =  $dispatcher->getHandlerClass();
             $actionMethod = $dispatcher->getActiveMethod();
             if (!method_exists($controllerClass, $actionMethod)){

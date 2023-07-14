@@ -783,7 +783,7 @@ class ModelsBase extends Model
      *
      * @return bool True if all relations are satisfied, false otherwise.
      */
-    private function checkRelationsSatisfaction($theFirstDeleteRecord, $currentDeleteRecord): bool
+    private function checkRelationsSatisfaction(object $theFirstDeleteRecord, object $currentDeleteRecord): bool
     {
         $result = true;
         $relations = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
