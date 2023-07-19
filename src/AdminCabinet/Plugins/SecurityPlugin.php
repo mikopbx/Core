@@ -80,14 +80,15 @@ class SecurityPlugin extends Injectable
         if ($isLoggedIn) {
             // Check if the desired controller exists or show the extensions page
             $controllerClass = $this->dispatcher->getHandlerClass();
-            if (!class_exists($controllerClass)) {
-                // Redirect to home page if controller does not set
+            if (!class_exists($controllerClass)
+                || (strtoupper($controller) === 'SESSION' && strtoupper($action) !== 'END')) {
+                // Redirect to home page if controller does not set or user logged in but still on session page
                 $homePath = $this->session->get(SessionController::SESSION_ID)[SessionController::HOME_PAGE];
                 if (empty($homePath)){
                     $dispatcher->forward([
                         'module' => 'admin-cabinet',
-                        'controller' => 'extensions',
-                        'action' => 'index',
+                        'controller' => 'errors',
+                        'action' => 'show404',
                         'namespace' => 'MikoPBX\AdminCabinet\Controllers'
                     ]);
                     return true;
@@ -102,7 +103,9 @@ class SecurityPlugin extends Injectable
                 ]);
                 return true;
             }
-            if (!$this->isAllowedAction($controllerClass, $action)) {
+            if (!$this->isAllowedAction($controllerClass, $action)
+                && !in_array(strtoupper($controller), ['ERRORS','SESSION'])
+            ) {
                 // Show a 401 error if not allowed
                 $dispatcher->forward([
                     'module' => 'admin-cabinet',
