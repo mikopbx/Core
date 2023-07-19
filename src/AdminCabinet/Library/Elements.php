@@ -360,6 +360,9 @@ class Elements extends Injectable
             }
         }
 
+        if (empty($result)) {
+            $result = "<i class='puzzle icon'></i>";
+        }
         return $result;
     }
 
