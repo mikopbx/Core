@@ -87,6 +87,16 @@ const advicesWorker = {
         const previousAdvice = sessionStorage.getItem(`previousAdvice${globalWebAdminLanguage}`);
         if (previousAdvice) {
             advicesWorker.$advices.html(previousAdvice);
+            advicesWorker.$advicesBellButton.popup({
+                    position: 'bottom left',
+                    popup: advicesWorker.$advices,
+                    delay: {
+                        show: 300,
+                        hide: 10000,
+                    },
+                    on: 'click',
+                    movePopup: false,
+                });
         }
     },
 
@@ -110,6 +120,7 @@ const advicesWorker = {
             let htmlMessages = '';
             let countMessages = 0;
             let iconBellClass = '';
+            htmlMessages += `<div class="ui header">${globalTranslate.adv_PopupHeader}</div>`;
             htmlMessages += '<div class="ui relaxed divided list">';
 
             if (response.advices.needUpdate !== undefined
@@ -122,7 +133,7 @@ const advicesWorker = {
                 $.each(response.advices.error, (key, value) => {
                     htmlMessages += '<div class="item">';
                     htmlMessages += '<i class="frown outline red icon"></i>';
-                    htmlMessages += `<b>${value}</b>`;
+                    htmlMessages += `${value}`;
                     htmlMessages += '</div>';
                     countMessages += 1;
                 });
@@ -132,7 +143,7 @@ const advicesWorker = {
                 $.each(response.advices.warning, (key, value) => {
                     htmlMessages += '<div class="item yellow">';
                     htmlMessages += '<i class="meh outline yellow icon"></i>';
-                    htmlMessages += `<b>${value}</b>`;
+                    htmlMessages += `${value}`;
                     htmlMessages += '</div>';
                     countMessages += 1;
                 });
@@ -142,7 +153,7 @@ const advicesWorker = {
                 $.each(response.advices.info, (key, value) => {
                     htmlMessages += '<div class="item">';
                     htmlMessages += '<i class="smile outline blue icon"></i>';
-                    htmlMessages += `<b>${value}</b>`;
+                    htmlMessages += `${value}`;
                     htmlMessages += '</div>';
                     countMessages += 1;
                 });
@@ -150,7 +161,7 @@ const advicesWorker = {
 
             if (response.advices.error !== undefined
                 && response.advices.error.length > 0) {
-                iconBellClass = 'red large icon bell';
+                iconBellClass = 'red icon bell';
             } else if (response.advices.warning !== undefined
                 && response.advices.warning.length > 0) {
                 iconBellClass = 'yellow icon bell';
@@ -159,8 +170,6 @@ const advicesWorker = {
                 && response.advices.info.length > 0) {
                 iconBellClass = 'blue icon bell';
             }
-
-
             htmlMessages += '</div>';
             advicesWorker.$advices.html(htmlMessages);
             sessionStorage.setItem(`previousAdvice${globalWebAdminLanguage}`, htmlMessages);
@@ -175,7 +184,8 @@ const advicesWorker = {
                             show: 300,
                             hide: 10000,
                         },
-                        movePopup: false
+                        on: 'click',
+                        movePopup: false,
                     });
                 advicesWorker.$advicesBellButton.find('i')
                     .transition('set looping')

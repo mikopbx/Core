@@ -485,6 +485,13 @@ Sets minimum width for advices bell on main menu header
 }
 
 /**
+Sets minimum width for advices popup
+ */
+#advices {
+    min-width: 800px !important;
+}
+
+/**
 Sets padding to correct show slider labels inside segment block
  */
 #pbx-records-term-slider {
@@ -561,6 +568,9 @@ Limit fields width
         display: block;
     }
 
+    #advices {
+        min-width: 500px !important;
+    }
 }
 
 @media only screen and (min-width: 1000px) and (max-width: 1220px) {
@@ -581,6 +591,9 @@ Limit fields width
         display: none;
     }
 
+    #advices {
+        min-width: 500px !important;
+    }
 }
 
 
@@ -594,6 +607,9 @@ Limit fields width
     #top-menu-search {
         min-width: 300px;
     }
+    /*#advices {*/
+    /*    min-width: 700px !important;*/
+    /*}*/
     .hide-on-mobile {
         display: none;
     }
