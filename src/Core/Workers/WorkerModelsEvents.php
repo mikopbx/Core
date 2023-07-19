@@ -71,6 +71,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
 };
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Modules\Config\SystemConfigInterface;
+use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di;
 use Pheanstalk\Contract\PheanstalkInterface;
@@ -142,6 +143,8 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_UPDATE_REC_SAVE_PERIOD = 'updateRecordSavePeriod';
 
+    private const R_ADVICES = 'cleanupAdvicesCache';
+
     private int $last_change;
     private array $modified_tables;
 
@@ -197,6 +200,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_MOH,
             self::R_CALL_EVENTS_WORKER,
             self::R_UPDATE_REC_SAVE_PERIOD,
+            self::R_ADVICES,
         ];
 
         $this->modified_tables = [];
@@ -475,6 +479,18 @@ class WorkerModelsEvents extends WorkerBase
             ],
         ];
 
+        // Advices
+        $tables[] = [
+            'settingName' => [
+                'WebAdminPassword',
+                'SSHPassword',
+                'PBXFirewallEnabled',
+            ],
+            'functions' => [
+                self::R_ADVICES,
+            ],
+        ];
+
         $this->pbxSettingsDependencyTable = $tables;
     }
 
@@ -490,6 +506,7 @@ class WorkerModelsEvents extends WorkerBase
             ],
             'functions' => [
                 self::R_MANAGERS,
+                self::R_ADVICES,
             ],
         ];
 
@@ -534,6 +551,7 @@ class WorkerModelsEvents extends WorkerBase
             ],
             'functions' => [
                 self::R_CUSTOM_F,
+                self::R_ADVICES,
             ],
         ];
 
@@ -545,6 +563,7 @@ class WorkerModelsEvents extends WorkerBase
                 self::R_SIP,
                 self::R_DIALPLAN,
                 self::R_FIREWALL,
+                self::R_ADVICES,
             ],
         ];
 
@@ -607,6 +626,7 @@ class WorkerModelsEvents extends WorkerBase
                 self::R_NETWORK,
                 self::R_IAX,
                 self::R_SIP,
+                self::R_ADVICES,
             ],
         ];
 
@@ -628,6 +648,7 @@ class WorkerModelsEvents extends WorkerBase
                 self::R_FIREWALL,
                 self::R_SIP,
                 self::R_MANAGERS,
+                self::R_ADVICES,
             ],
         ];
 
@@ -1117,6 +1138,16 @@ class WorkerModelsEvents extends WorkerBase
     {
         Processes::processPHPWorker(WorkerCallEvents::class);
     }
+
+    /**
+     * Cleanup advices cache
+     * @return void
+     */
+    private function cleanupAdvicesCache(): void
+    {
+        AdvicesProcessor::cleanupCache();
+    }
+
 
     /**
      * Process after PBXExtension state changes

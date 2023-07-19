@@ -1,39 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1074,16 +1058,16 @@ return [
     'ex_ImpossibleToDeleteExtension' => '従業員を削除することはできません。次のリンクがあります',
     'cq_PereodicAnonceMohSoundFile' => '身元音楽（MOH）',
     'gs_SSHDisablePasswordLogins' => 'パスワード認証を無効にする',
-    'systemBrokenComment' => '重要なシステムファイルが変更されました。システムの復元/更新を実行する必要があります。',
-    'gs_SSHPPasswordCorrupt' => 'Webインターフェイスで設定されたsshパスワードが、システムの現在のパスワードと一致しません。',
+    'adv_SystemBrokenComment' => '重要なシステムファイルが変更されました。システムの復元/更新を実行する必要があります。',
+    'adv_SSHPPasswordCorrupt' => 'Webインターフェイスで設定されたsshパスワードが、システムの現在のパスワードと一致しません。',
     'Attention! SSH password changed!' => "注意！ SSHパスワードが変更されました！",
     'The password for SSH access to the PBX has been changed' => "MikoPBXにアクセスするためのSSHパスワードが変更されました！",
     'The SSH password was not changed from the web interface.' => 'SSHパスワードがMikoPBXWebインターフェイスの外部で変更されました',
     'The system password does not match what is set in the configuration file.' => 'SSH MikoPBXパスワードは、構成ファイルで設定されているものとは異なります。おそらく、PBXコンソールから手動で変更された可能性があります。',
-    'gs_WebPasswordFieldName' => 'Webインターフェイス',
+    'adv_WebPasswordFieldName' => 'Webインターフェイス',
     'adv_isSimplePassword' => '「%type%」に使用される安全でないパスワード-<a href=\'%url%\'>change</a>',
-    'gs_SshPasswordFieldName' => 'SSH',
-    'gs_UserPasswordFieldName' => '拡張機能<%extension%>',
+    'adv_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
     'gs_PasswordSimple' => '設定するパスワードが単純すぎます。',
     'gs_SetPassword' => '新しいパスワードを設定する',
     'gs_SetPasswordInfo' => 'パスワードが単純すぎます。新しいパスワードには、数字、小文字、大文字が含まれている必要があります。',

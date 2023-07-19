@@ -1,39 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1074,16 +1058,16 @@ Lze jej aktivovat jednou, poté se kupón vyplatí.
     'ex_ImpossibleToDeleteExtension' => 'Není možné smazat zaměstnance, protože jsou zde následující odkazy',
     'cq_PereodicAnonceMohSoundFile' => 'Hudba na pozadí (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Zakázat ověřování heslem',
-    'systemBrokenComment' => 'Kritické systémové soubory byly upraveny. Musíte provést obnovu/aktualizaci systému.',
-    'gs_SSHPPasswordCorrupt' => 'Ssh heslo nastavené ve webovém rozhraní neodpovídá aktuálnímu v systému.',
+    'adv_SystemBrokenComment' => 'Kritické systémové soubory byly upraveny. Musíte provést obnovu/aktualizaci systému.',
+    'adv_SSHPPasswordCorrupt' => 'Ssh heslo nastavené ve webovém rozhraní neodpovídá aktuálnímu v systému.',
     'Attention! SSH password changed!' => "Pozornost! Heslo SSH bylo změněno!",
     'The system password does not match what is set in the configuration file.' => 'Heslo SSH MikoPBX se liší od hesla nastaveného v konfiguračním souboru. Možná to bylo změněno ručně z konzole PBX.',
     'The password for SSH access to the PBX has been changed' => "Heslo SSH pro přístup k MikoPBX bylo změněno!",
     'The SSH password was not changed from the web interface.' => 'SSH heslo bylo změněno mimo webové rozhraní MikoPBX',
     'adv_isSimplePassword' => 'Nezabezpečené heslo použité pro "%type%" - <a href=\'%url%\'>změnit</a>',
-    'gs_WebPasswordFieldName' => 'webové rozhraní',
-    'gs_SshPasswordFieldName' => 'SSH',
-    'gs_UserPasswordFieldName' => 'Rozšíření <%extension%>',
+    'adv_WebPasswordFieldName' => 'webové rozhraní',
+    'adv_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
     'gs_PasswordSimple' => 'Nastavované heslo je příliš jednoduché.',
     'gs_SetPassword' => 'Nastavte nové heslo',
     'gs_SetPasswordInfo' => 'Heslo je příliš jednoduché. Nové heslo musí obsahovat čísla, malá a velká písmena.',

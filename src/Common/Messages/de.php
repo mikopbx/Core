@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -17,23 +35,7 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
+
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1077,16 +1079,16 @@ Ein Coupon kann nur einmal aktiviert werden und verfällt danach.
     'ex_ImpossibleToDeleteExtension' => 'Es ist nicht möglich, einen Mitarbeiter zu löschen, weil Es gibt folgende Links',
     'cq_PereodicAnonceMohSoundFile' => 'Hintergrundmusik (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Deaktivieren Sie die Kennwortautorisierung',
-    'systemBrokenComment' => 'Kritische Systemdateien wurden geändert. Sie müssen eine Systemwiederherstellung/-aktualisierung durchführen.',
-    'gs_SSHPPasswordCorrupt' => 'Das im Webinterface eingestellte ssh-Passwort stimmt nicht mit dem aktuellen im System überein.',
+    'adv_SystemBrokenComment' => 'Kritische Systemdateien wurden geändert. Sie müssen eine Systemwiederherstellung/-aktualisierung durchführen.',
+    'adv_SSHPPasswordCorrupt' => 'Das im Webinterface eingestellte ssh-Passwort stimmt nicht mit dem aktuellen im System überein.',
     'Attention! SSH password changed!' => "Aufmerksamkeit! Das SSH-Passwort wurde geändert!",
     'The password for SSH access to the PBX has been changed' => "Das SSH-Passwort für den Zugriff auf MikoPBX wurde geändert!",
     'The SSH password was not changed from the web interface.' => 'Das SSH-Passwort wurde außerhalb der MikoPBX-Weboberfläche geändert',
     'The system password does not match what is set in the configuration file.' => 'Das SSH-MikoPBX-Passwort unterscheidet sich von dem in der Konfigurationsdatei festgelegten. Möglicherweise wurde es manuell von der PBX-Konsole aus geändert.',
     'adv_isSimplePassword' => 'Unsicheres Passwort für „%type%“ verwendet – <a href=\'%url%\'>change</a>',
-    'gs_WebPasswordFieldName' => 'Webinterface',
-    'gs_SshPasswordFieldName' => 'SSH',
-    'gs_UserPasswordFieldName' => 'Erweiterung <%extension%>',
+    'adv_WebPasswordFieldName' => 'Webinterface',
+    'adv_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
     'gs_PasswordSimple' => 'Das festgelegte Passwort ist zu einfach.',
     'gs_SetPassword' => 'Legen Sie ein neues Passwort fest',
     'pass_CheckWebAdminPasswordDontMatch' => 'Eingegebene Passwörter für WEB stimmen nicht überein',

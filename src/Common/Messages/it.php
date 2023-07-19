@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -17,23 +35,7 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
+
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1074,16 +1076,16 @@ Può essere attivato una volta, dopo di che il coupon viene riscattato.
     'ex_ImpossibleToDeleteExtension' => 'Non è possibile eliminare un dipendente perché ci sono i seguenti link',
     'cq_PereodicAnonceMohSoundFile' => 'Musica di sottofondo (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Disabilita l\'autenticazione della password',
-    'systemBrokenComment' => 'I file di sistema critici sono stati modificati. È necessario eseguire un ripristino/aggiornamento del sistema.',
-    'gs_SSHPPasswordCorrupt' => 'La password ssh impostata nell\'interfaccia web non corrisponde a quella corrente nel sistema.',
+    'adv_SystemBrokenComment' => 'I file di sistema critici sono stati modificati. È necessario eseguire un ripristino/aggiornamento del sistema.',
+    'adv_SSHPPasswordCorrupt' => 'La password ssh impostata nell\'interfaccia web non corrisponde a quella corrente nel sistema.',
     'Attention! SSH password changed!' => "Attenzione! La password SSH è stata modificata!",
     'The password for SSH access to the PBX has been changed' => "La password SSH per l'accesso a MikoPBX è stata modificata!",
     'The SSH password was not changed from the web interface.' => 'La password SSH è stata modificata al di fuori dell\'interfaccia web di MikoPBX',
     'The system password does not match what is set in the configuration file.' => 'La password SSH MikoPBX è diversa da quella impostata nel file di configurazione. Forse è stato modificato manualmente dalla console del PBX.',
     'adv_isSimplePassword' => 'Password non sicura utilizzata per "%type%" - <a href=\'%url%\'>cambia</a>',
-    'gs_WebPasswordFieldName' => 'interfaccia web',
-    'gs_SshPasswordFieldName' => 'SSH',
-    'gs_UserPasswordFieldName' => 'Estensione <%extension%>',
+    'adv_WebPasswordFieldName' => 'interfaccia web',
+    'adv_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
     'gs_PasswordSimple' => 'La password impostata è troppo semplice.',
     'gs_SetPassword' => 'Imposta una nuova password',
     'pass_CheckWebAdminPasswordSimple' => 'La password WEB è troppo semplice.',

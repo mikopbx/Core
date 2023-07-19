@@ -1,39 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -556,7 +540,7 @@ return [
     'gs_AJAMPort' => 'AJAM port',
     'gs_AJAMPortTLS' => 'Secure AJAM port',
     'gs_SSHPort' => 'SSH port',
-    'gs_SSHPPasswordCorrupt' => 'The ssh password set in the web interface does not match the one set in the system. Security is at risk.',
+    'adv_SSHPPasswordCorrupt' => 'The ssh password set in the web interface does not match the one set in the system. Security is at risk.',
     'gs_SSHPassword' => 'SSH password',
     'gs_SSHAuthorizedKeys' => 'SSH Authorized Keys',
     'gs_SSHDisablePasswordLogins' => 'Disable password logins',
@@ -989,7 +973,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'Install or recover' => 'Install / Repair',
     'PBX console setup' => 'PBX console',
     'The integrity of the system is broken' => 'System files integrity is compromised',
-    'systemBrokenComment' => 'Critical system files have been modified. It is necessary to perform a system restore/update.',
+    'adv_SystemBrokenComment' => 'Critical system files have been modified. It is necessary to perform a system restore/update.',
     'VLAN IP address assigned via' => 'VLAN IP: works through',
     'LAN IP address' => 'LAN IP set manually',
     'LAN IP address assigned via DHCP' => 'LAN IP assigned through DHCP server',
@@ -1084,9 +1068,9 @@ It can be activated once, after which the coupon becomes redeemed.
     'The SSH password was not changed from the web interface.' => 'The SSH password was changed outside the MikoPBX web interface',
     'The system password does not match what is set in the configuration file.' => 'The SSH MikoPBX password is different from the one set in the configuration file. Perhaps it was changed manually from the PBX console.',
     'adv_isSimplePassword' => 'Insecure password used for "%type%" - <a href=\'%url%\'>change</a>',
-    'gs_WebPasswordFieldName' => 'web interface',
-    'gs_SshPasswordFieldName' => 'SSH',
-    'gs_UserPasswordFieldName' => 'Extension <%extension%>',
+    'adv_WebPasswordFieldName' => 'web interface',
+    'adv_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
     'gs_SetPassword' => 'Set a new password',
     'pass_CheckWebAdminPasswordSimple' => 'WEB password is too simple.',
     'pass_CheckWebAdminPasswordDontMatch' => 'Entered passwords for WEB do not match',

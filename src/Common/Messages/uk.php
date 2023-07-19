@@ -1,39 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1074,15 +1058,15 @@ return [
     'ex_ImpossibleToDeleteExtension' => 'Неможливо видалити працівника, т.к. існують наступні посилання',
     'cq_PereodicAnonceMohSoundFile' => 'Фонова музика (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Вимкнути авторизацію за паролем',
-    'systemBrokenComment' => 'Критично важливі системні файли були модифіковані. Необхідно виконати відновлення/оновлення системи.',
-    'gs_SSHPPasswordCorrupt' => 'Пароль ssh, встановлений у web інтерфейсі, не збігається з чинним у системі.',
+    'adv_SystemBrokenComment' => 'Критично важливі системні файли були модифіковані. Необхідно виконати відновлення/оновлення системи.',
+    'adv_SSHPPasswordCorrupt' => 'Пароль ssh, встановлений у web інтерфейсі, не збігається з чинним у системі.',
     'Attention! SSH password changed!' => "Увага! Пароль SSH змінено!",
     'The password for SSH access to the PBX has been changed' => "Пароль SSH для доступу до MikoPBX було змінено!",
     'The SSH password was not changed from the web interface.' => 'Пароль SSH був змінений поза веб-інтерфейсом MikoPBX',
     'The system password does not match what is set in the configuration file.' => 'Пароль SSH MikoPBX відрізняється від встановленого у конфігураційному файлі. Можливо, він був змінений вручну з консолі АТС.',
-    'gs_WebPasswordFieldName' => 'Web інтерфейс',
-    'gs_SshPasswordFieldName' => 'SSH',
-    'gs_UserPasswordFieldName' => 'Внутрішній номер <%extension%>',
+    'adv_WebPasswordFieldName' => 'Web інтерфейс',
+    'adv_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
     'adv_isSimplePassword' => 'Використовується небезпечний пароль для "%type%" - <a href=\'%url%\'>змінити</a>',
     'gs_PasswordSimple' => 'Пароль, що встановлюється, занадто простий.',
     'gs_SetPassword' => 'Встановіть новий пароль',

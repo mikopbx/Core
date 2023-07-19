@@ -1,39 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1074,16 +1058,16 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'ex_ImpossibleToDeleteExtension' => 'Bir çalışanı silmek mümkün değildir çünkü aşağıdaki linkler var',
     'cq_PereodicAnonceMohSoundFile' => 'Fon müziği (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Şifre kimlik doğrulamasını devre dışı bırak',
-    'systemBrokenComment' => 'Kritik sistem dosyaları değiştirildi. Bir sistem geri yükleme/güncelleme yapmanız gerekir.',
-    'gs_SSHPPasswordCorrupt' => 'Web arayüzünde ayarlanan ssh şifresi, sistemdeki mevcut şifre ile eşleşmiyor.',
+    'adv_SystemBrokenComment' => 'Kritik sistem dosyaları değiştirildi. Bir sistem geri yükleme/güncelleme yapmanız gerekir.',
+    'adv_SSHPPasswordCorrupt' => 'Web arayüzünde ayarlanan ssh şifresi, sistemdeki mevcut şifre ile eşleşmiyor.',
     'Attention! SSH password changed!' => "Dikkat! SSH şifresi değiştirildi!",
     'The password for SSH access to the PBX has been changed' => "MikoPBX'e giriş için SSH şifresi değiştirildi!",
     'The SSH password was not changed from the web interface.' => 'SSH şifresi MikoPBX web arayüzü dışında değiştirildi',
     'The system password does not match what is set in the configuration file.' => 'SSH MikoPBX şifresi, konfigürasyon dosyasında ayarlanandan farklıdır. Belki de PBX konsolundan manuel olarak değiştirildi.',
     'adv_isSimplePassword' => '"%type%" için kullanılan güvenli olmayan şifre - <a href=\'%url%\'>değişim</a>',
-    'gs_WebPasswordFieldName' => 'web arayüzü',
-    'gs_SshPasswordFieldName' => 'SSH',
-    'gs_UserPasswordFieldName' => 'Uzantı <%extension%>',
+    'adv_WebPasswordFieldName' => 'web arayüzü',
+    'adv_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
     'gs_SetPasswordInfo' => 'Şifre çok basit. Yeni şifre rakam, küçük ve büyük harf içermelidir.',
     'gs_PasswordSimple' => 'Ayarlanan parola çok basit.',
     'gs_SetPassword' => 'Yeni bir şifre belirleyin',

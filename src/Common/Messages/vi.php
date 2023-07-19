@@ -1,39 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1074,16 +1058,16 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'ex_ImpossibleToDeleteExtension' => 'Không thể xóa nhân viên vì có những liên kết sau',
     'cq_PereodicAnonceMohSoundFile' => 'Nhạc nền (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Tắt xác thực mật khẩu',
-    'systemBrokenComment' => 'Các tệp hệ thống quan trọng đã được sửa đổi. Bạn cần thực hiện khôi phục / cập nhật hệ thống.',
-    'gs_SSHPPasswordCorrupt' => 'Mật khẩu ssh được đặt trong giao diện web không khớp với mật khẩu hiện tại trong hệ thống.',
+    'adv_SystemBrokenComment' => 'Các tệp hệ thống quan trọng đã được sửa đổi. Bạn cần thực hiện khôi phục / cập nhật hệ thống.',
+    'adv_SSHPPasswordCorrupt' => 'Mật khẩu ssh được đặt trong giao diện web không khớp với mật khẩu hiện tại trong hệ thống.',
     'Attention! SSH password changed!' => "Chú ý! Mật khẩu SSH đã được thay đổi!",
     'The password for SSH access to the PBX has been changed' => "Mật khẩu SSH để truy cập MikoPBX đã được thay đổi!",
     'The SSH password was not changed from the web interface.' => 'Mật khẩu SSH đã được thay đổi bên ngoài giao diện web MikoPBX',
     'The system password does not match what is set in the configuration file.' => 'Mật khẩu SSH MikoPBX khác với mật khẩu được đặt trong tệp cấu hình. Có lẽ nó đã được thay đổi thủ công từ bảng điều khiển PBX.',
     'adv_isSimplePassword' => 'Mật khẩu không an toàn được sử dụng cho "%type%" - <a href=\'%url%\'> thay đổi </a>',
-    'gs_WebPasswordFieldName' => 'giao diện web',
-    'gs_SshPasswordFieldName' => 'SSH',
-    'gs_UserPasswordFieldName' => 'Phần mở rộng <%extension%>',
+    'adv_WebPasswordFieldName' => 'giao diện web',
+    'adv_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
     'gs_PasswordSimple' => 'Mật khẩu được đặt quá đơn giản.',
     'gs_SetPassword' => 'Đặt mật khẩu mới',
     'gs_SetPasswordInfo' => 'Mật khẩu quá đơn giản. Mật khẩu mới phải chứa số, chữ thường và chữ hoa.',

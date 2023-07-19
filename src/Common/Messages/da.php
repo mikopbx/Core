@@ -1,39 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1074,16 +1058,16 @@ Det kan aktiveres en gang, hvorefter kuponen indløses.
     'ex_ImpossibleToDeleteExtension' => 'Det er ikke muligt at slette en medarbejder pga der er følgende links',
     'cq_PereodicAnonceMohSoundFile' => 'Baggrundsmusik (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Deaktiver adgangskodegodkendelse',
-    'systemBrokenComment' => 'Kritiske systemfiler er blevet ændret. Du skal udføre en systemgendannelse/-opdatering.',
-    'gs_SSHPPasswordCorrupt' => 'Ssh-adgangskoden, der er angivet i webgrænsefladen, svarer ikke til den aktuelle i systemet.',
+    'adv_SystemBrokenComment' => 'Kritiske systemfiler er blevet ændret. Du skal udføre en systemgendannelse/-opdatering.',
+    'adv_SSHPPasswordCorrupt' => 'Ssh-adgangskoden, der er angivet i webgrænsefladen, svarer ikke til den aktuelle i systemet.',
     'The SSH password was not changed from the web interface.' => 'SSH-adgangskoden blev ændret uden for MikoPBX-webgrænsefladen',
     'The system password does not match what is set in the configuration file.' => 'SSH MikoPBX-adgangskoden er forskellig fra den, der er angivet i konfigurationsfilen. Måske blev det ændret manuelt fra PBX-konsollen.',
     'Attention! SSH password changed!' => "Opmærksomhed! SSH-adgangskoden er blevet ændret!",
     'The password for SSH access to the PBX has been changed' => "SSH-adgangskoden til at få adgang til MikoPBX er blevet ændret!",
     'adv_isSimplePassword' => 'Usikker adgangskode brugt til "%type%" - <a href=\'%url%\'>skift</a>',
-    'gs_WebPasswordFieldName' => 'webgrænseflade',
-    'gs_SshPasswordFieldName' => 'SSH',
-    'gs_UserPasswordFieldName' => 'Udvidelse <%extension%>',
+    'adv_WebPasswordFieldName' => 'webgrænseflade',
+    'adv_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
     'gs_PasswordSimple' => 'Adgangskoden, der indstilles, er for enkel.',
     'gs_SetPassword' => 'Indstil en ny adgangskode',
     'pass_CheckWebAdminPasswordSimple' => 'WEB-adgangskoden er for enkel.',

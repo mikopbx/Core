@@ -257,7 +257,7 @@ class CloudProvisioning
      *
      * @param string $webPassword The web password.
      */
-    private function updateWebPassword($webPassword):void
+    private function updateWebPassword(string $webPassword):void
     {
         if(empty($webPassword)){
             return;

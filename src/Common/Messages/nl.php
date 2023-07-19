@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     'March' => 'maart',
     'February' => 'februari',
@@ -518,7 +536,7 @@ return [
     'gs_AJAMPort' => 'AJAM-poort',
     'gs_AJAMPortTLS' => 'Versleutelde AJAM-poort',
     'gs_SSHPort' => 'ssh-poort',
-    'gs_SSHPPasswordCorrupt' => 'Het ssh-wachtwoord dat is ingesteld in de webinterface komt niet overeen met het huidige wachtwoord in het systeem.',
+    'adv_SSHPPasswordCorrupt' => 'Het ssh-wachtwoord dat is ingesteld in de webinterface komt niet overeen met het huidige wachtwoord in het systeem.',
     'gs_SSHPassword' => 'ssh-wachtwoord',
     'gs_SSHAuthorizedKeys' => 'SSH-geautoriseerde sleutels',
     'gs_SSHecdsaKey' => 'SSH ECDSA-sleutel',
@@ -936,9 +954,9 @@ Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
     'f2b_Fail2BanSwitch' => 'Gebruik het actieve blokkeersysteem Fail2Ban',
     'adv_YouUseDefaultSSHPassword' => 'U gebruikt het standaardwachtwoord voor SSH-toegang - <a href=\'%url%\'>wijzigen</a>',
     'adv_isSimplePassword' => 'Onveilig wachtwoord gebruikt voor "%type%" - <a href=\'%url%\'>wijzigen</a>',
-    'gs_WebPasswordFieldName' => 'webinterface',
-    'gs_SshPasswordFieldName' => 'SSH',
-    'gs_UserPasswordFieldName' => 'Extensie <%extension%>',
+    'adv_WebPasswordFieldName' => 'webinterface',
+    'adv_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
     'pass_CheckWebAdminPasswordSimple' => 'Het WEB-wachtwoord is te eenvoudig.',
     'pass_CheckWebAdminPasswordDontMatch' => 'Ingevoerde wachtwoorden voor WEB komen niet overeen',
     'pass_CheckWebAdminPasswordEmpty' => 'Het veld is leeg: WEB-wachtwoord',
@@ -984,7 +1002,7 @@ Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
     'LAN IP address' => 'LAN IP handmatig ingesteld',
     'VLAN IP address assigned via' => 'VLAN IP: werkt door',
     'The integrity of the system is broken' => 'Systeemintegriteit aangetast',
-    'systemBrokenComment' => 'Kritieke systeembestanden zijn gewijzigd. U moet een systeemherstel/update uitvoeren.',
+    'adv_SystemBrokenComment' => 'Kritieke systeembestanden zijn gewijzigd. U moet een systeemherstel/update uitvoeren.',
     'Enter the new LAN subnet bit count: ' => "Voer de maskerwaarde in:",
     'Enter the LAN gateway IP address: ' => "Voer het gateway-adres in (IP-adres LAN-gateway):",
     'Enter the LAN DNS IP address: ' => 'Voer DNS-serveradres in:',

@@ -1,39 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1074,16 +1058,16 @@ return [
     'ex_ImpossibleToDeleteExtension' => 'შეუძლებელია თანამშრომლის წაშლა იმიტომ არის შემდეგი ლინკები',
     'cq_PereodicAnonceMohSoundFile' => 'ფონური მუსიკა (MOH)',
     'gs_SSHDisablePasswordLogins' => 'პაროლის ავტორიზაციის გამორთვა',
-    'systemBrokenComment' => 'კრიტიკული სისტემის ფაილები შეიცვალა. თქვენ უნდა შეასრულოთ სისტემის აღდგენა/განახლება.',
-    'gs_SSHPPasswordCorrupt' => 'ვებ ინტერფეისში მითითებული ssh პაროლი არ ემთხვევა სისტემაში არსებულს.',
+    'adv_SystemBrokenComment' => 'კრიტიკული სისტემის ფაილები შეიცვალა. თქვენ უნდა შეასრულოთ სისტემის აღდგენა/განახლება.',
+    'adv_SSHPPasswordCorrupt' => 'ვებ ინტერფეისში მითითებული ssh პაროლი არ ემთხვევა სისტემაში არსებულს.',
     'Attention! SSH password changed!' => "ყურადღება! SSH პაროლი შეიცვალა!",
     'The SSH password was not changed from the web interface.' => 'SSH პაროლი შეიცვალა MikoPBX ვებ ინტერფეისის გარეთ',
     'The password for SSH access to the PBX has been changed' => "SSH პაროლი MikoPBX-ზე წვდომისთვის შეიცვალა!",
     'The system password does not match what is set in the configuration file.' => 'SSH MikoPBX პაროლი განსხვავდება კონფიგურაციის ფაილში მითითებული პაროლისგან. შესაძლოა ის ხელით შეიცვალა PBX კონსოლიდან.',
-    'gs_WebPasswordFieldName' => 'ვებ ინტერფეისი',
-    'gs_SshPasswordFieldName' => 'SSH',
+    'adv_WebPasswordFieldName' => 'ვებ ინტერფეისი',
+    'adv_SshPasswordFieldName' => 'SSH',
     'adv_isSimplePassword' => '"%type%"-ისთვის გამოყენებული დაუცველი პაროლი - <a href=\'%url%\'>შეცვლა</a>',
-    'gs_UserPasswordFieldName' => 'გაფართოება <%extension%>',
+    'adv_UserPasswordFieldName' => '%record%',
     'pass_CheckWebAdminPasswordSimple' => 'WEB პაროლი ძალიან მარტივია.',
     'pass_CheckWebAdminPasswordDontMatch' => 'WEB-ისთვის შეყვანილი პაროლები არ ემთხვევა',
     'pass_CheckSSHPasswordEmpty' => 'ველი ცარიელი: SSH',

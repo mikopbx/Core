@@ -421,7 +421,7 @@ class Util
      *
      * @return bool True if the password is found in the dictionary, false otherwise.
      */
-    public static function isSimplePassword($value): bool
+    public static function isSimplePassword(string $value): bool
     {
         $passwords = [];
         Processes::mwExec('/bin/zcat /usr/share/wordlists/rockyou.txt.gz', $passwords);

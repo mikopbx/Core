@@ -24,8 +24,9 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Http\Response;
-use MikoPBX\Common\Models\{NetworkFilters, PbxSettings, Sip};
+use MikoPBX\Common\Models\{AsteriskManagerUsers, Extensions, NetworkFilters, PbxSettings, Sip, Users};
 use GuzzleHttp;
+use Phalcon\Di;
 use Phalcon\Di\Injectable;
 use SimpleXMLElement;
 use MikoPBX\Service\Main;
@@ -42,6 +43,15 @@ use MikoPBX\Service\Main;
  */
 class AdvicesProcessor extends Injectable
 {
+    public const ARR_ADVICE_TYPES = [
+        ['type' => 'isConnected', 'cacheTime' => 60],
+        ['type' => 'checkCorruptedFiles', 'cacheTime' => 600],
+        ['type' => 'checkPasswords', 'cacheTime' => 86400],
+        ['type' => 'checkFirewalls', 'cacheTime' => 86400],
+        ['type' => 'checkStorage', 'cacheTime' => 600],
+        ['type' => 'checkUpdates', 'cacheTime' => 3600],
+        ['type' => 'checkRegistration', 'cacheTime' => 86400],
+    ];
 
     /**
      * Processes the Advices request.
@@ -76,22 +86,14 @@ class AdvicesProcessor extends Injectable
         $res->processor = __METHOD__;
         try {
             $arrMessages = [];
-            $arrAdvicesTypes = [
-                ['type' => 'isConnected', 'cacheTime' => 15],
-                ['type' => 'checkCorruptedFiles', 'cacheTime' => 15],
-                ['type' => 'checkPasswords', 'cacheTime' => 3],
-                ['type' => 'checkFirewalls', 'cacheTime' => 15],
-                ['type' => 'checkStorage', 'cacheTime' => 120],
-                ['type' => 'checkUpdates', 'cacheTime' => 3600],
-                ['type' => 'checkRegistration', 'cacheTime' => 86400],
-            ];
+
             $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
             $language = PbxSettings::getValueByKey('WebAdminLanguage');
 
-            foreach ($arrAdvicesTypes as $adviceType) {
+            foreach (self::ARR_ADVICE_TYPES as $adviceType) {
                 $currentAdvice = $adviceType['type'];
                 $cacheTime = $adviceType['cacheTime'];
-                $cacheKey = 'AdvicesProcessor:getAdvicesAction:' . $currentAdvice;
+                $cacheKey = self::getCacheKey($currentAdvice);
                 if ($managedCache->has($cacheKey)) {
                     $oldResult = json_decode($managedCache->get($cacheKey), true, 512, JSON_THROW_ON_ERROR);
                     if ($language === $oldResult['LastLanguage']) {
@@ -136,28 +138,28 @@ class AdvicesProcessor extends Injectable
     }
 
     /**
-     * Check the quality of passwords.
+     * Prepares array of system passwords with representation to check password quality.
      *
-     * @return array An array containing warning and needUpdate messages.
-     *
-     * @noinspection PhpUnusedPrivateMethodInspection
+     * @param array $fields
+     * @return void
      */
-    private function checkPasswords(): array
+    public function preparePasswordFields(array &$fields): array
     {
         $messages = [
             'warning' => [],
             'needUpdate' => []
         ];
+
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
         $fields = [
             'WebAdminPassword' => [
-                'url' => 'general-settings/modify/#/passwords',
-                'type' => 'gs_WebPasswordFieldName',
+                'urlTemplate' => 'general-settings/modify/#/passwords',
+                'type' => 'adv_WebPasswordFieldName',
                 'value' => PbxSettings::getValueByKey('WebAdminPassword')
             ],
             'SSHPassword' => [
-                'url' => 'general-settings/modify/#/ssh',
-                'type' => 'gs_SshPasswordFieldName',
+                'urlTemplate' => 'general-settings/modify/#/ssh',
+                'type' => 'adv_SshPasswordFieldName',
                 'value' => PbxSettings::getValueByKey('SSHPassword')
             ],
         ];
@@ -178,22 +180,97 @@ class AdvicesProcessor extends Injectable
             $messages['needUpdate'][] = 'SSHPassword';
         } elseif (PbxSettings::getValueByKey('SSHPasswordHash') !== md5_file('/etc/passwd')) {
             $messages['warning'][] = $this->translation->_(
-                'gs_SSHPPasswordCorrupt',
+                'adv_SSHPPasswordCorrupt',
                 ['url' => $this->url->get('general-settings/modify/#/ssh')]
             );
         }
+        return $messages;
+    }
 
-        $peersData = Sip::find([
-                "type = 'peer' AND ( disabled <> '1')",
-                'columns' => 'id,extension,secret']
+    /**
+     * Prepares array of ami passwords with representation to check password quality.
+     * @param array $fields
+     * @return void
+     */
+    public function prepareAmiFields(array &$fields): void
+    {
+        $amiUsersData = AsteriskManagerUsers::find([
+                'columns' => 'id, username, secret']
         );
-        foreach ($peersData as $peer) {
-            $fields[$peer['extension']] = [
-                'url' => $this->url->get('extensions/modify/') . $peer['id'],
-                'type' => 'gs_UserPasswordFieldName',
-                'value' => $peer['secret']
+        foreach ($amiUsersData as $amiUser) {
+            $fields[$amiUser->username] = [
+                'urlTemplate' => 'asterisk-managers/modify/' . $amiUser->id,
+                'type' => 'adv_AmiPasswordFieldName',
+                'value' => $amiUser->secret
             ];
         }
+    }
+
+    /**
+     * Prepares array of sip passwords with representation to check password quality.
+     * @param array $fields
+     * @return void
+     */
+    public function prepareSipFields(array &$fields): void
+    {
+        $parameters = [
+            'models' => [
+                'Extensions' => Extensions::class,
+            ],
+            'conditions' => 'Extensions.is_general_user_number = "1"',
+            'columns' => [
+                'id' => 'Extensions.id',
+                'username' => 'Extensions.callerid',
+                'number' => 'Extensions.number',
+                'secret' => 'Sip.secret',
+            ],
+            'order' => 'number',
+            'joins' => [
+                'Sip' => [
+                    0 => Sip::class,
+                    1 => 'Sip.extension=Extensions.number',
+                    2 => 'Sip',
+                    3 => 'INNER',
+                ],
+                'Users' => [
+                    0 => Users::class,
+                    1 => 'Users.id = Extensions.userid',
+                    2 => 'Users',
+                    3 => 'INNER',
+                ],
+            ],
+        ];
+        $queryResult = $this->di->get('modelsManager')->createBuilder($parameters)->getQuery()->execute();
+
+        foreach ($queryResult as $user) {
+            $key = "{$user->username} <{$user->number}>";
+            $fields[$key] = [
+                'urlTemplate' => 'extensions/modify/' . $user->id,
+                'type' => 'adv_UserPasswordFieldName',
+                'value' => $user->secret
+            ];
+        }
+    }
+
+    /**
+     * Check the quality of passwords.
+     *
+     * @return array An array containing warning and needUpdate messages.
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     */
+    private function checkPasswords(): array
+    {
+        $fields = [];
+
+        // WebAdminPassword and SSHPassword
+        $messages = $this->preparePasswordFields($fields);
+
+        // SIP passwords
+        $this->prepareSipFields($fields);
+
+        // AMI Passwords
+        $this->prepareAmiFields($fields);
 
         $cloudInstanceId = PbxSettings::getValueByKey('CloudInstanceId');
         foreach ($fields as $key => $value) {
@@ -207,11 +284,12 @@ class AdvicesProcessor extends Injectable
             $messages['warning'][] = $this->translation->_(
                 'adv_isSimplePassword',
                 [
-                    'type' => $this->translation->_($value['type'], ['extension' => $key]),
-                    'url' => $this->url->get($value['url']),
+                    'type' => $this->translation->_($value['type'], ['record' => $key]),
+                    'url' => $this->url->get($value['urlTemplate']),
                 ]
             );
         }
+
         return $messages;
     }
 
@@ -225,7 +303,7 @@ class AdvicesProcessor extends Injectable
         $messages = [];
         $files = Main::checkForCorruptedFiles();
         if (count($files) !== 0) {
-            $messages['warning'] = $this->translation->_('The integrity of the system is broken', ['url' => '']) . '. ' . $this->translation->_('systemBrokenComment', ['url' => '']);
+            $messages['error'] =  $this->translation->_('adv_SystemBrokenComment', ['url' => '']);
         }
 
         return $messages;
@@ -309,7 +387,7 @@ class AdvicesProcessor extends Injectable
                     'form_params' => [
                         'PBXVER' => $PBXVersion,
                     ],
-                    'timeout' => 3,
+                    'timeout' => 5,
                 ]
             );
             $code = $res->getStatusCode();
@@ -372,5 +450,39 @@ class AdvicesProcessor extends Injectable
             $messages['warning'] = $this->translation->_('adv_ProblemWithInternetConnection');
         }
         return $messages;
+    }
+
+    /**
+     * Prepares redis cache key for advice type
+     * @param string $currentAdviceType current advice type
+     * @return string cache key
+     */
+    public static function getCacheKey(string  $currentAdviceType): string{
+        return 'AdvicesProcessor:getAdvicesAction:' . $currentAdviceType;
+    }
+
+    /**
+     * Cleanup cache for all advice types after change dependent models and PBX settings
+     * on the WorkerModelsEvents worker.
+     * @return void
+     */
+    public static function cleanupCache(): void{
+
+        $dataIndependentAdviceTypes = [
+            'isConnected',
+            'checkCorruptedFiles',
+            'checkStorage',
+            'checkUpdates',
+            'checkRegistration'
+        ];
+
+        $di = Di::getDefault();
+        $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
+        foreach (self::ARR_ADVICE_TYPES as $adviceType) {
+            if (!in_array($adviceType['type'], $dataIndependentAdviceTypes)) {
+                $cacheKey = self::getCacheKey($adviceType['type']);
+                $managedCache->delete($cacheKey);
+            }
+        }
     }
 }

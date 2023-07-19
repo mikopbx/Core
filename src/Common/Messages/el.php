@@ -1,39 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -463,7 +447,7 @@ return [
     'Install on Hard Drive' => 'Εκτέλεση εγκατάστασης',
     'Install or recover' => 'Εκτέλεση εγκατάστασης/επισκευής',
     'PBX console setup' => 'Κονσόλα PBX',
-    'systemBrokenComment' => 'Τα κρίσιμα αρχεία συστήματος έχουν τροποποιηθεί. Πρέπει να πραγματοποιήσετε επαναφορά/αναβάθμιση συστήματος.',
+    'adv_SystemBrokenComment' => 'Τα κρίσιμα αρχεία συστήματος έχουν τροποποιηθεί. Πρέπει να πραγματοποιήσετε επαναφορά/αναβάθμιση συστήματος.',
     'The integrity of the system is broken' => 'Παραβιάστηκε η ακεραιότητα του συστήματος',
     'VLAN IP address assigned via' => 'VLAN IP: λειτουργεί πλήρως',
     'LAN IP address' => 'Ρύθμιση IP LAN χειροκίνητα',
@@ -563,7 +547,7 @@ return [
     'gs_SSHecdsaKey' => 'Κλειδί SSH ECDSA',
     'gs_SSHAuthorizedKeys' => 'Εξουσιοδοτημένα κλειδιά SSH',
     'gs_SSHPassword' => 'κωδικός πρόσβασης ssh',
-    'gs_SSHPPasswordCorrupt' => 'Ο κωδικός πρόσβασης ssh που έχει οριστεί στη διεπαφή ιστού δεν ταιριάζει με τον τρέχοντα κωδικό πρόσβασης στο σύστημα.',
+    'adv_SSHPPasswordCorrupt' => 'Ο κωδικός πρόσβασης ssh που έχει οριστεί στη διεπαφή ιστού δεν ταιριάζει με τον τρέχοντα κωδικό πρόσβασης στο σύστημα.',
     'gs_SSHPort' => 'θύρα ssh',
     'gs_AJAMPortTLS' => 'Κρυπτογραφημένη θύρα AJAM',
     'gs_AJAMPort' => 'Λιμάνι AJAM',
@@ -1081,9 +1065,9 @@ return [
     'January' => 'Ιανουάριος',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => '',
     'adv_isSimplePassword' => 'Μη ασφαλής κωδικός πρόσβασης που χρησιμοποιείται για το "%type%" - <a href=\'%url%\'>αλλαγή</a>',
-    'gs_WebPasswordFieldName' => 'Διεπαφή ιστού (Web)',
-    'gs_SshPasswordFieldName' => 'SSH',
-    'gs_UserPasswordFieldName' => 'Επέκταση <%extension%>',
+    'adv_WebPasswordFieldName' => 'Διεπαφή ιστού (Web)',
+    'adv_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
     'gs_PasswordSimple' => 'Ο κωδικός πρόσβασης που ορίζεται είναι πολύ απλός.',
     'gs_SetPassword' => 'Ορίστε νέο κωδικό πρόσβασης',
     'gs_SetPasswordInfo' => 'Ο κωδικός πρόσβασης είναι πολύ απλός. Ο νέος κωδικός πρόσβασης πρέπει να περιέχει αριθμούς, πεζά και κεφαλαία γράμματα.',

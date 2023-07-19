@@ -1,39 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1074,16 +1058,16 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ex_ImpossibleToDeleteExtension' => 'Il n\'est pas possible de supprimer un employé car il y a les liens suivants',
     'cq_PereodicAnonceMohSoundFile' => 'Musique de fond (MOH)',
     'gs_SSHDisablePasswordLogins' => 'Désactiver l\'authentification par mot de passe',
-    'systemBrokenComment' => 'Les fichiers système critiques ont été modifiés. Vous devez effectuer une restauration/mise à jour du système.',
-    'gs_SSHPPasswordCorrupt' => 'Le mot de passe ssh défini dans l\'interface Web ne correspond pas à celui actuel dans le système.',
+    'adv_SystemBrokenComment' => 'Les fichiers système critiques ont été modifiés. Vous devez effectuer une restauration/mise à jour du système.',
+    'adv_SSHPPasswordCorrupt' => 'Le mot de passe ssh défini dans l\'interface Web ne correspond pas à celui actuel dans le système.',
     'Attention! SSH password changed!' => "Attention! Le mot de passe SSH a été changé !",
     'The password for SSH access to the PBX has been changed' => "Le mot de passe SSH pour accéder à MikoPBX a été changé !",
     'The SSH password was not changed from the web interface.' => 'Le mot de passe SSH a été modifié en dehors de l\'interface Web MikoPBX',
     'The system password does not match what is set in the configuration file.' => 'Le mot de passe SSH MikoPBX est différent de celui défini dans le fichier de configuration. Il a peut-être été modifié manuellement à partir de la console PBX.',
     'adv_isSimplePassword' => 'Mot de passe non sécurisé utilisé pour "%type%" - <a href=\'%url%\'>modifier</a>',
-    'gs_UserPasswordFieldName' => 'Extension <%extension%>',
-    'gs_WebPasswordFieldName' => 'interface Web',
-    'gs_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
+    'adv_WebPasswordFieldName' => 'interface Web',
+    'adv_SshPasswordFieldName' => 'SSH',
     'gs_PasswordSimple' => 'Le mot de passe défini est trop simple.',
     'gs_SetPassword' => 'Définir un nouveau mot de passe',
     'gs_SetPasswordInfo' => 'Le mot de passe est trop simple. Le nouveau mot de passe doit contenir des chiffres, des lettres minuscules et majuscules.',

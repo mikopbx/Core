@@ -1,39 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'December' => 'dekabr',
     'Loading' => 'Yüklənir',
     'MetaTegHeadDescription' => 'Biznes üçün telefon sistemi',
@@ -115,7 +99,7 @@ return [
     'gs_SSHecdsaKey' => 'SSH ECDSA açarı',
     'gs_SSHAuthorizedKeys' => 'SSH Səlahiyyətli Açarları',
     'gs_SSHPassword' => 'ssh parol',
-    'gs_SSHPPasswordCorrupt' => 'Veb interfeysində təyin edilmiş ssh parolu sistemdəki cari parola uyğun gəlmir.',
+    'adv_SSHPPasswordCorrupt' => 'Veb interfeysində təyin edilmiş ssh parolu sistemdəki cari parola uyğun gəlmir.',
     'gs_SetPasswordInfo' => 'Parol çox sadədir.',
     'gs_SetPassword' => 'Yeni parol təyin edin',
     'gs_SSHDssKey' => 'SSH DSS açarı',
@@ -221,8 +205,8 @@ Bir dəfə aktivləşdirilə bilər, bundan sonra kupon geri alınır.
     'pass_CheckWebAdminPasswordEmpty' => 'Sahə boşdur: WEB parolu',
     'pass_CheckWebAdminPasswordDontMatch' => 'WEB üçün daxil edilmiş parollar uyğun gəlmir',
     'pass_CheckWebAdminPasswordSimple' => 'WEB parolu çox sadədir.',
-    'gs_UserPasswordFieldName' => 'Genişləndirmə <%extension%>',
-    'gs_SshPasswordFieldName' => 'SSH',
+    'adv_UserPasswordFieldName' => '%record%',
+    'adv_SshPasswordFieldName' => 'SSH',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Yaddaş sürücüsündə boş yer tükənir (%free% Mb)</a>',
     'adv_ThisCopyIsNotRegistered' => 'Proqramın bu nüsxəsi lisenziyalı deyil - <a href=\'%url%\'>Pulsuz aktivləşdirmə</a>',
     'adv_AvailableNewVersionPBX' => 'Yeni PBX versiyası mövcuddur - <a href=\'%url%\'>%ver%</a>',
@@ -331,7 +315,7 @@ Bir dəfə aktivləşdirilə bilər, bundan sonra kupon geri alınır.
     'Ping host' => 'ping ünvanları',
     'Install on Hard Drive' => 'Quraşdırmanı işə salın',
     'Install or recover' => 'Quraşdırma/təmiri işə salın',
-    'systemBrokenComment' => 'Kritik sistem faylları dəyişdirildi. Sistemin bərpası/yenilənməsini yerinə yetirməlisiniz.',
+    'adv_SystemBrokenComment' => 'Kritik sistem faylları dəyişdirildi. Sistemin bərpası/yenilənməsini yerinə yetirməlisiniz.',
     'The integrity of the system is broken' => 'Sistemin bütövlüyü pozuldu',
     'VLAN IP address assigned via' => 'VLAN IP: işləyir',
     'topMenu_SearchPlaceholder' => 'Axtarış termini daxil edin',
@@ -614,7 +598,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'pass_CheckSSHPasswordEmpty' => 'Sahə boş: SSH',
     'pass_CheckSSHPasswordDontMatch' => 'SSH üçün daxil edilmiş parollar uyğun gəlmir',
     'pass_CheckWebPassErrorChange' => 'Parolu dəyişmək alınmadı',
-    'gs_WebPasswordFieldName' => 'veb interfeysi',
+    'adv_WebPasswordFieldName' => 'veb interfeysi',
     'adv_isSimplePassword' => '"%type%" - <a href=\'%url%\'>dəyişiklik</a> üçün etibarlı olmayan parol istifadə edildi',
     'adv_YouUseDefaultSSHPassword' => 'Siz SSH girişi üçün standart paroldan istifadə edirsiniz - <a href=\'%url%\'>dəyişiklik</a>',
     'adv_YouUseDefaultWebPassword' => 'Siz inzibati interfeysə daxil olmaq üçün standart paroldan istifadə edirsiniz - <a href=\'%url%\'>dəyişiklik</a>',
