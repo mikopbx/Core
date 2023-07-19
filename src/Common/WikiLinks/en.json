@@ -3,5 +3,10 @@
   "https://wiki.mikopbx.com/extensions": "https://docs.mikopbx.com/mikopbx/v/english/manual/telefoniya/extensions",
   "https://wiki.mikopbx.com/call-queues": "https://docs.mikopbx.com/mikopbx/v/english/manual/telefoniya/call-queues",
   "https://wiki.mikopbx.com/ivr-menu": "https://docs.mikopbx.com/mikopbx/v/english/manual/telefoniya/ivr-menu",
-  "https://wiki.mikopbx.com/conference-rooms": "https://docs.mikopbx.com/mikopbx/v/english/manual/telefoniya/conference-rooms"
+  "https://wiki.mikopbx.com/conference-rooms": "https://docs.mikopbx.com/mikopbx/v/english/manual/telefoniya/conference-rooms",
+  "https://wiki.mikopbx.ru/sound-files":"https://docs.mikopbx.com/mikopbx/v/english/manual/telephony/sound-files",
+  "https://wiki.mikopbx.ru/call-detail-records":"https://docs.mikopbx.com/mikopbx/v/english/manual/telephony/call-detail-records",
+  "https://wiki.mikopbx.ru/providers": "https://docs.mikopbx.com/mikopbx/v/english/manual/routing/providers",
+  "https://wiki.mikopbx.ru/incoming-routes":"https://docs.mikopbx.com/mikopbx/v/english/manual/routing/incoming-routes",
+  "https://wiki.mikopbx.ru/outbound-routes":"https://docs.mikopbx.com/mikopbx/v/english/manual/routing/outbound-routes"
 }
