@@ -69,15 +69,15 @@ class GeneralSettingsController extends BaseController
      * @param array $data The data array containing the passwords and CloudInstanceId.
      * @return array The list of password keys that failed the simple password check.
      */
-    private function getSimplePasswords($data): array
+    private function getSimplePasswords(array $data): array
     {
         $passwordCheckFail = [];
-        $CloudInstanceId = $data['CloudInstanceId'] ?? '';
+        $cloudInstanceId = $data['CloudInstanceId'] ?? '';
         foreach (['SSHPassword', 'WebAdminPassword'] as $value) {
-            if (!isset($data[$value])) {
+            if (!isset($data[$value]) || $data[$value] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                 continue;
             }
-            if ($CloudInstanceId === $data[$value] || Util::isSimplePassword($data[$value])) {
+            if ($cloudInstanceId === $data[$value] || Util::isSimplePassword($data[$value])) {
                 $passwordCheckFail[] = $value;
             }
         }
@@ -112,7 +112,8 @@ class GeneralSettingsController extends BaseController
 
         // Process SSHPassword and set SSHPasswordHash accordingly
         if (isset($data['SSHPassword'])) {
-            if ($data['SSHPassword'] === $pbxSettings['SSHPassword']) {
+            if ($data['SSHPassword'] === $pbxSettings['SSHPassword']
+                || $data['SSHPassword'] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                 $data['SSHPasswordHash'] = md5($data['WebAdminPassword']);
             } else {
                 $data['SSHPasswordHash'] = md5($data['SSHPassword']);
@@ -139,8 +140,10 @@ class GeneralSettingsController extends BaseController
                     // Set newValue as WebAdminPassword if SSHPassword is the same as the default value
                     if ($data[$key] === $value) {
                         $newValue = $data['WebAdminPassword'];
-                    } else {
+                    } elseif ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $data[$key];
+                    } else {
+                        continue 2;
                     }
                     break;
                 case 'SendMetrics':
@@ -149,6 +152,13 @@ class GeneralSettingsController extends BaseController
                     break;
                 case 'PBXFeatureTransferDigitTimeout':
                     $newValue = ceil((int)$data['PBXFeatureDigitTimeout'] / 1000);
+                    break;
+                case 'WebAdminPassword':
+                    if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                        $newValue = $this->security->hash($data[$key]);
+                    } else {
+                        continue 2;
+                    }
                     break;
                 default:
                     $newValue = $data[$key];

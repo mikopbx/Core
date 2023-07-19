@@ -36,6 +36,8 @@ use Phalcon\Forms\Element\Text;
  */
 class GeneralSettingsEditForm extends BaseForm
 {
+    public const HIDDEN_PASSWORD = 'xxxxxxx';
+
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
@@ -69,20 +71,20 @@ class GeneralSettingsEditForm extends BaseForm
                     $this->add(new Numeric($key, ['value' => $value, 'style'=>'width:100px;']));
                     break;
                 case 'SSHPassword':
-                    $this->add(new Password($key, ['value' => $value]));
+                    $this->add(new Password($key, ['value' => self::HIDDEN_PASSWORD]));
                     $this->add(
                         new Password(
                             'SSHPasswordRepeat',
-                            ['value' => $value]
+                            ['value' => self::HIDDEN_PASSWORD]
                         )
                     );
                     break;
                 case 'WebAdminPassword':
-                    $this->add(new Password($key, ['value' => $value]));
+                    $this->add(new Password($key, ['value' => self::HIDDEN_PASSWORD]));
                     $this->add(
                         new Password(
                             'WebAdminPasswordRepeat',
-                            ['value' => $value]
+                            ['value' => self::HIDDEN_PASSWORD]
                         )
                     );
                     break;

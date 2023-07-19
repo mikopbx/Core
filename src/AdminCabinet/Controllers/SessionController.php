@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
+use Phalcon\Security;
 
 /**
  * SessionController
@@ -65,13 +66,15 @@ class SessionController extends BaseController
         $passFromUser = $this->request->getPost('password');
         $this->flash->clear();
         $login = PbxSettings::getValueByKey('WebAdminLogin');
-        $password = PbxSettings::getValueByKey('WebAdminPassword');
+        $passwordHash = PbxSettings::getValueByKey('WebAdminPassword');
 
         $userLoggedIn = false;
         $sessionParams = [];
 
         // Check if the provided login and password match the stored values
-        if ($password === $passFromUser && $login === $loginFromUser) {
+        if ($login === $loginFromUser
+            && ($this->security->checkHash($passFromUser, $passwordHash) || $passwordHash === $passFromUser))
+            {
             $sessionParams = [
                 SessionController::ROLE => AclProvider::ROLE_ADMINS,
                 SessionController::HOME_PAGE => $this->url->get('extensions/index')
@@ -101,7 +104,7 @@ class SessionController extends BaseController
             if (!empty($backUri)) {
                 $this->view->reload = $backUri;
             } else {
-                $this->view->reload = 'index/index';
+                $this->view->reload = $this->session->get(SessionController::HOME_PAGE);
             }
         } else {
             // Authentication failed

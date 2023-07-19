@@ -29,10 +29,45 @@ const generalSettingsModify = {
      */
     $formObj: $('#general-settings-form'),
 
+    /**
+     * jQuery object for the web admin password input field.
+     * @type {jQuery}
+     */
     $webAdminPassword: $('#WebAdminPassword'),
-    $recordsSavePeriodSlider: $('#PBXRecordSavePeriodSlider'),
-    saveRecordsPeriod: ['30', '90', '180', '360', '1080', ''],
+
+    /**
+     * jQuery object for the ssh password input field.
+     * @type {jQuery}
+     */
     $sshPassword: $('#SSHPassword'),
+
+    /**
+     * jQuery object for the web ssh password input field.
+     * @type {jQuery}
+     */
+    $disableSSHPassword: $('#SSHDisablePasswordLogins').parent('.checkbox'),
+
+    /**
+     * jQuery object for the SSH password fields
+     * @type {jQuery}
+     */
+    $sshPasswordSegment: $('#only-if-password-enabled'),
+
+    /**
+     * If password set, it will be hided from web ui.
+     */
+    hiddenPassword: 'xxxxxxx',
+
+    /**
+     * jQuery object for the records retention period slider.
+     * @type {jQuery}
+     */
+    $recordsSavePeriodSlider: $('#PBXRecordSavePeriodSlider'),
+
+    /**
+     * Possible period values for the records retention.
+     */
+    saveRecordsPeriod: ['30', '90', '180', '360', '1080', ''],
 
     /**
      * Validation rules for the form fields before submission.
@@ -51,31 +86,7 @@ const generalSettingsModify = {
         },
         WebAdminPassword: {
             identifier: 'WebAdminPassword',
-            rules: [
-                {
-                    type: 'empty',
-                    prompt: globalTranslate.gs_ValidateEmptyWebPassword,
-                },
-                {
-                    type: 'minLength[5]',
-                    prompt: globalTranslate.gs_ValidateWeakWebPassword,
-                },
-                {
-                    type: 'notRegExp',
-                    value: /[a-z]/,
-                    prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoLowSimvol
-                },
-                {
-                    type: 'notRegExp',
-                    value: /\d/,
-                    prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoNumbers
-                },
-                {
-                    type: 'notRegExp',
-                    value: /[A-Z]/,
-                    prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoUpperSimvol
-                }
-            ],
+            rules: [],
         },
         WebAdminPasswordRepeat: {
             identifier: 'WebAdminPasswordRepeat',
@@ -155,6 +166,34 @@ const generalSettingsModify = {
             ],
         },
     },
+
+    // Rules for the web admin password field when it not equal to hiddenPassword
+    webAdminPasswordRules: [
+        {
+            type: 'empty',
+            prompt: globalTranslate.gs_ValidateEmptyWebPassword,
+        },
+        {
+            type: 'minLength[5]',
+            prompt: globalTranslate.gs_ValidateWeakWebPassword,
+        },
+        {
+            type: 'notRegExp',
+            value: /[a-z]/,
+            prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoLowSimvol
+        },
+        {
+            type: 'notRegExp',
+            value: /\d/,
+            prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoNumbers
+        },
+        {
+            type: 'notRegExp',
+            value: /[A-Z]/,
+            prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoUpperSimvol
+        }
+    ],
+    // Rules for the SSH password field when SSH login through the password enabled, and it not equal to hiddenPassword
     additionalSshValidRulesPass: [
         {
             type: 'empty',
@@ -180,6 +219,8 @@ const generalSettingsModify = {
             prompt: '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' + globalTranslate.gs_PasswordNoUpperSimvol
         }
     ],
+
+    // Rules for the SSH password field when SSH login through the password disabled
     additionalSshValidRulesNoPass: [
         {
             type: 'empty',
@@ -198,31 +239,32 @@ const generalSettingsModify = {
 
         // When WebAdminPassword input is changed, recalculate the password strength
         generalSettingsModify.$webAdminPassword.on('keyup', () => {
-            PasswordScore.checkPassStrength({
-                pass: generalSettingsModify.$webAdminPassword.val(),
-                bar: $('.password-score'),
-                section: $('.password-score-section'),
-            });
+            if (generalSettingsModify.$webAdminPassword.val() !== generalSettingsModify.hiddenPassword) {
+                generalSettingsModify.initRules();
+                PasswordScore.checkPassStrength({
+                    pass: generalSettingsModify.$webAdminPassword.val(),
+                    bar: $('.password-score'),
+                    section: $('.password-score-section'),
+                });
+            }
         });
 
         // When SSHPassword input is changed, recalculate the password strength
         generalSettingsModify.$sshPassword.on('keyup', () => {
-            PasswordScore.checkPassStrength({
-                pass: generalSettingsModify.$sshPassword.val(),
-                bar: $('.ssh-password-score'),
-                section: $('.ssh-password-score-section'),
-            });
+            if (generalSettingsModify.$sshPassword.val() !== generalSettingsModify.hiddenPassword) {
+                generalSettingsModify.initRules();
+                PasswordScore.checkPassStrength({
+                    pass: generalSettingsModify.$sshPassword.val(),
+                    bar: $('.ssh-password-score'),
+                    section: $('.ssh-password-score-section'),
+                });
+            }
         });
 
         // Enable tab navigation with history support
         $('#general-settings-menu').find('.item').tab({
             history: true,
             historyType: 'hash',
-        });
-
-        // Add onChange event listener to the checkboxes in the form
-        $('#general-settings-form .checkbox').checkbox({
-            'onChange': generalSettingsModify.initRules
         });
 
         // Enable dropdowns in the form
@@ -266,6 +308,15 @@ const generalSettingsModify = {
         // Initialize the form
         generalSettingsModify.initializeForm();
 
+        // Initialize additional validation rules
+        generalSettingsModify.initRules();
+
+        // Show, hide ssh password segment
+        generalSettingsModify.$disableSSHPassword.checkbox({
+            'onChange': generalSettingsModify.showHideSSHPassword
+        });
+        generalSettingsModify.showHideSSHPassword();
+
         // Set the initial value for the records save period slider
         const recordSavePeriod = generalSettingsModify.$formObj.form('get value', 'PBXRecordSavePeriod');
         generalSettingsModify.$recordsSavePeriodSlider
@@ -277,6 +328,17 @@ const generalSettingsModify = {
         });
     },
 
+    /**
+     * Show, hide ssh password segment according to the value of use SSH password checkbox.
+     */
+    showHideSSHPassword(){
+        if (generalSettingsModify.$disableSSHPassword.checkbox('is checked')) {
+            generalSettingsModify.$sshPasswordSegment.hide();
+        } else {
+            generalSettingsModify.$sshPasswordSegment.show();
+        }
+        generalSettingsModify.initRules();
+    },
     /**
      * Checks conditions for deleting all records.
      * Compares the value of the 'deleteAllInput' field with a phrase.
@@ -310,7 +372,7 @@ const generalSettingsModify = {
     },
 
     /**
-     * @description Handle event after the select save period slider is changed.
+     * Handle event after the select save period slider is changed.
      * @param {number} value - The selected value from the slider.
      */
     cbAfterSelectSavePeriodSlider(value) {
@@ -361,11 +423,24 @@ const generalSettingsModify = {
         generalSettingsModify.checkDeleteAllConditions();
     },
 
+    /**
+     * Initialize the validation rules of the form
+     */
     initRules() {
-        if ($('#SSHDisablePasswordLogins').parent().checkbox('is checked')) {
-            generalSettingsModify.validateRules.SSHPassword.rules = generalSettingsModify.additionalSshValidRulesNoPass;
+        // SSHPassword
+        if (generalSettingsModify.$disableSSHPassword.checkbox('is checked')) {
+            Form.validateRules.SSHPassword.rules = generalSettingsModify.additionalSshValidRulesNoPass;
+        } else if (generalSettingsModify.$sshPassword.val() === generalSettingsModify.hiddenPassword) {
+            Form.validateRules.SSHPassword.rules = [];
         } else {
-            generalSettingsModify.validateRules.SSHPassword.rules = generalSettingsModify.additionalSshValidRulesPass;
+            Form.validateRules.SSHPassword.rules = generalSettingsModify.additionalSshValidRulesPass;
+        }
+
+        // WebAdminPassword
+        if (generalSettingsModify.$webAdminPassword.val() === generalSettingsModify.hiddenPassword) {
+            Form.validateRules.WebAdminPassword.rules = [];
+        } else {
+            Form.validateRules.WebAdminPassword.rules = generalSettingsModify.webAdminPasswordRules;
         }
     },
 
@@ -373,7 +448,6 @@ const generalSettingsModify = {
      * Initialize the form with custom settings
      */
     initializeForm() {
-        generalSettingsModify.initRules();
         Form.$formObj = generalSettingsModify.$formObj;
         Form.url = `${globalRootUrl}general-settings/save`; // Form submission URL
         Form.validateRules = generalSettingsModify.validateRules; // Form validation rules
