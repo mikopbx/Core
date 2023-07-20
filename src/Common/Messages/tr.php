@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1146,4 +1145,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz. <br>
     'BreadcrumbAdminCabinet' => 'İdari arayüz',
     'BreadcrumbPBXCoreREST' => 'DİNLENME API\'SI',
     'mm_Update' => 'PBX güncellemesi',
+    'adv_AmiPasswordFieldName' => 'kullanıcı AMI <%record%>',
+    'adv_PopupHeader' => 'Aşağıdaki sorunlar bulundu:',
 ];

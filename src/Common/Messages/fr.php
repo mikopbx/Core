@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1146,4 +1145,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'BreadcrumbPBXCoreREST' => 'API REST',
     'BreadcrumbRestartmanage' => 'Redémarrage du système',
     'mm_Update' => 'Mise à jour du PABX',
+    'adv_AmiPasswordFieldName' => 'AMI utilisateur <%record%>',
+    'adv_PopupHeader' => 'Les problèmes suivants ont été détectés :',
 ];

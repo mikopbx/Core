@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'March' => 'maart',
     'February' => 'februari',
     'January' => 'januari',
@@ -1119,4 +1118,6 @@ Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
     'Enter the new LAN IP address: ' => 'Voer een nieuw LAN IP-adres in:',
     'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Subnetmasker in CIDR-indeling (1-32)',
     'mm_Update' => 'PBX-update',
+    'adv_AmiPasswordFieldName' => 'Gebruiker AMI <%record%>',
+    'adv_PopupHeader' => 'De volgende problemen zijn gevonden:',
 ];

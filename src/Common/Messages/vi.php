@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -1146,4 +1145,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá đ
     'BreadcrumbPBXCoreREST' => 'API REST',
     'BreadcrumbRestartmanage' => 'Khởi động lại hệ thống',
     'mm_Update' => 'cập nhật tổng đài',
+    'adv_AmiPasswordFieldName' => 'AMI người dùng <%record%>',
+    'adv_PopupHeader' => 'Các vấn đề sau đây đã được tìm thấy:',
 ];
