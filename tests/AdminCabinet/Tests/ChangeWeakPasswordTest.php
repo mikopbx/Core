@@ -42,24 +42,24 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
         );
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/ssh");
-        $this->changeInputField('SSHPassword', $params['Password']);
-        $this->changeInputField('SSHPasswordRepeat', $params['Password']);
+        $this->changeInputField('SSHPassword', $params['password']);
+        $this->changeInputField('SSHPasswordRepeat', $params['password']);
 
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/passwords");
-        $this->changeInputField('WebAdminPassword', $params['Password']);
-        $this->changeInputField('WebAdminPasswordRepeat', $params['Password']);
+        $this->changeInputField('WebAdminPassword', $params['password']);
+        $this->changeInputField('WebAdminPasswordRepeat', $params['password']);
 
         $this->submitForm('general-settings-form');
 
         $this->clickSidebarMenuItemByHref("/admin-cabinet/general-settings/modify/");
 
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/ssh");
-        $this->assertInputFieldValueEqual('SSHPassword', $params['Password'], true);
-        $this->assertInputFieldValueEqual('SSHPasswordRepeat', $params['Password'], true);
+        $this->assertInputFieldValueEqual('SSHPassword', $params['checkPassword'], true);
+        $this->assertInputFieldValueEqual('SSHPasswordRepeat', $params['checkPassword'], true);
 
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/passwords");
-        $this->assertInputFieldValueEqual('WebAdminPassword', $params['Password'], true);
-        $this->assertInputFieldValueEqual('WebAdminPasswordRepeat', $params['Password'], true);
+        $this->assertInputFieldValueEqual('WebAdminPassword', $params['checkPassword'], true);
+        $this->assertInputFieldValueEqual('WebAdminPasswordRepeat', $params['checkPassword'], true);
 
     }
 
@@ -74,7 +74,8 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
 
         $params[] = [
             [
-                'Password'            => '123456789MikoPBX#1',
+                'password'            => '123456789MikoPBX#1',
+                'checkPassword'        => 'xxxxxxx'
             ],
         ];
 
