@@ -316,11 +316,10 @@ const extensionModules = {
             newParams.updateLink = obj.href;
             if (newParams.action === 'update') {
                 params.aLink.find('i').addClass('loading');
-                extensionModules.updateModule(newParams);
             } else {
                 params.aLink.find('i').addClass('loading redo').removeClass('download');
-                extensionModules.installModule(newParams, false);
             }
+            extensionModules.installModule(newParams);
         });
     },
 
@@ -339,30 +338,13 @@ const extensionModules = {
     },
 
     /**
-     * Update the module by first disabling it, if possible, then sending a command for update, and refreshing the page.
-     * @param {Object} params - The request parameters.
-     */
-    updateModule(params) {
-        // Check if the module is enabled, if so, disable it
-        const status = $(`#${params.uniqid}`).find('.checkbox').checkbox('is checked');
-        if (status === true) {
-            PbxApi.ModulesDisableModule(params.uniqid, () => {
-                extensionModules.installModule(params, true);
-            });
-        } else {
-            extensionModules.installModule(params, false);
-        }
-    },
-
-    /**
      * Install a module.
      * @param {Object} params - The request parameters.
-     * @param {boolean} needEnable - Whether to enable the module after installation.
      */
-    installModule(params, needEnable) {
+    installModule(params) {
         PbxApi.ModulesModuleStartDownload(params, (response) => {
             if (response === true) {
-                upgradeStatusLoopWorker.initialize(params.uniqid, needEnable);
+                upgradeStatusLoopWorker.initialize(params.uniqid);
             } else {
                 if (response.messages !== undefined) {
                     UserMessage.showMultiString(response.messages);

@@ -67,6 +67,12 @@ const installStatusLoopWorker = {
      */
     $progressBar: $('#upload-progress-bar'),
 
+    /**
+     * Module Unique id.
+     * @type string
+     */
+    moduleUniqid: '',
+
 
     /**
      * Initializes the installStatusLoopWorker object.
@@ -134,7 +140,7 @@ const installStatusLoopWorker = {
             if (installStatusLoopWorker.needEnableAfterInstall) {
                 // Enable the installed module and redirect to the module index page
                 PbxApi.ModulesEnableModule(
-                    installStatusLoopWorker.moduleUniqid,
+                    response.data.uniqid,
                     () => {
                         window.location = `${globalRootUrl}pbx-extension-modules/index/`;
                     },

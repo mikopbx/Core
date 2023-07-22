@@ -116,8 +116,8 @@ const mergingCheckWorker = {
      * @param {object} response - The response object from the module installation API.
      */
     cbAfterModuleInstall(response) {
-        if (response.result === true) {
-            installStatusLoopWorker.initialize(response.data.filePath);
+        if (response.result === true && response.data.filePath !=='') {
+            installStatusLoopWorker.initialize(response.data.filePath,  response.data.moduleWasEnabled);
         } else {
             UserMessage.showMultiString(response, globalTranslate.ext_InstallationError);
             addNewExtension.$uploadButton.removeClass('loading');

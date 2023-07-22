@@ -125,11 +125,13 @@ class ModulesManagementProcessor extends Injectable
 
         $moduleUniqueID = $resModuleMetadata->data['uniqid'];
         // Disable the module if it's enabled
+        $moduleWasEnabled = false;
         if (PbxExtensionUtils::isEnabled($moduleUniqueID)) {
             $res = self::disableModule($moduleUniqueID);
             if (!$res->success) {
                 return $res;
             }
+            $moduleWasEnabled = true;
         }
 
         $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
@@ -166,6 +168,7 @@ class ModulesManagementProcessor extends Injectable
         // Execute the background process to install the module
         Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
         $res->data['filePath'] = $filePath;
+        $res->data['moduleWasEnabled'] = $moduleWasEnabled;
         $res->success = true;
 
         return $res;
@@ -315,6 +318,12 @@ class ModulesManagementProcessor extends Injectable
             $res->success = true;
             $res->data['i_status_progress'] = '100';
             $res->data['i_status'] = 'INSTALLATION_COMPLETE';
+
+            $resModuleMetadata = self::getMetadataFromModuleFile($filePath);
+            if ($resModuleMetadata->success) {
+                $res->data['uniqid'] = $resModuleMetadata->data['uniqid'];
+            }
+
         } else {
             $res->success = true;
             $res->data['i_status'] = 'INSTALLATION_IN_PROGRESS';

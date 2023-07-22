@@ -55,20 +55,12 @@ const upgradeStatusLoopWorker = {
     oldPercent: '0',
 
     /**
-     * Indicates whether to enable the module after installation.
-     * @type {boolean}
-     */
-    needEnableAfterInstall: false,
-
-    /**
      * Initializes the module upgrade status.
      * @param {string} uniqid - The unique ID of the module.
-     * @param {boolean} [needEnable=false] - Indicates whether to enable the module after installation.
      */
-    initialize(uniqid, needEnable = false) {
+    initialize(uniqid) {
         upgradeStatusLoopWorker.moduleUniqid = uniqid;
         upgradeStatusLoopWorker.iterations = 0;
-        upgradeStatusLoopWorker.needEnableAfterInstall = needEnable;
         upgradeStatusLoopWorker.restartWorker();
     },
 
@@ -133,8 +125,8 @@ const upgradeStatusLoopWorker = {
      * @param {object} response - The response from the server.
      */
     cbAfterModuleInstall(response) {
-        if (response.result === true) {
-            installStatusLoopWorker.initialize(response.data.filePath, upgradeStatusLoopWorker.needEnableAfterInstall);
+        if (response.result === true && response.data.filePath !=='' ) {
+            installStatusLoopWorker.initialize(response.data.filePath, response.data.moduleWasEnabled);
         } else {
             UserMessage.showMultiString(response, globalTranslate.ext_InstallationError);
         }
