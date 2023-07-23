@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -91,10 +90,8 @@ return [
     'MetaTegHeadDescription' => 'Telephone system for business',
     'Loading' => 'Load',
     'qf_Qualify' => 'Support NAT session',
-    'qf_Frequency' => 'The frequency of the send to sec.',
-    'qf_QualifyInstructions' => '<div class=\'ui message \'>
-            If this option is enabled, Asterisk will send SIP Options packets with the specified frequency. This is necessary to support NAT tunneling on your router. 
-        </div>',
+    'qf_Frequency' => 'Send frequency in seconds:',
+    'qf_QualifyInstructions' => 'When this option is enabled, the PBX will send SIP OPTIONS packets at the specified frequency. This is required to support NAT tunneling on your router.',
     'AdvancedOptions' => 'Advanced setting',
     'ConnectionSettings' => 'Connection settings',
     'BreadcrumbHome' => 'At the start',
@@ -139,17 +136,17 @@ return [
     'BreadcrumbDialplanApplicationsmodify' => 'Application setting',
     'SubHeaderDialplanApplications' => 'Programmable voice applications in PHP and Asterisk Dialplan',
     'BreadcrumbConferenceRooms' => 'Conference rooms',
-    'SubHeaderConferenceRooms' => 'Organization of rooms for multilateral audio conferences',
+    'SubHeaderConferenceRooms' => 'Organization of rooms for multiparty audio conferences',
     'BreadcrumbConferenceRoomsmodify' => 'Setting Up Conferences',
     'BreadcrumbCallDetailRecords' => 'Call detail records (CDR)',
     'SubHeaderCallDetailRecords' => 'Call detail records and call change log',
     'BreadcrumbCustomFilesmodify' => 'Editing',
     'BreadcrumbCustomFiles' => 'System file',
-    'SubHeaderCustomFiles' => 'Customization of system configuration files and Asterisk',
+    'SubHeaderCustomFiles' => 'Customizing system and Asterisk configuration files',
     'BreadcrumbSoundFiles' => 'Sound files',
     'SubHeaderSoundFiles' => 'Used in a variety of call scenarios and interactive voice response',
     'BreadcrumbLicensing' => 'Licensing',
-    'SubHeaderLicensing' => 'Register your PBX to access updates and marketplace',
+    'SubHeaderLicensing' => 'Registration in <b>Marketplace</b> for access to new extensions and modules',
     'BreadcrumbErrors' => 'Error message',
     'SubHeaderErrors' => 'If this error persists, please notify the developer',
     'BreadcrumbRestart' => 'System restart',
@@ -219,7 +216,7 @@ return [
     'pr_DTMFMode' => 'DTMF Mode',
     'pr_RegistrationSettings' => 'Registration settings',
     'pr_ValidationProviderNameIsEmpty' => 'Describe name for this provider',
-    'pr_ValidationProviderHostIsEmpty' => 'Describe provider host URL or IP address',
+    'pr_ValidationProviderHostIsEmpty' => 'Enter the server name or IP address of the provider',
     'pr_ValidationProviderLoginIsEmpty' => 'Enter the username for authorization at the provider',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'The login must be longer than one character',
     'pr_SIPPort' => 'SIP connection port',
@@ -244,9 +241,9 @@ return [
     'pr_AddSIPProvider' => 'Connect SIP',
     'pr_AddIAXProvider' => 'Connect IAX',
     'pr_QualifyInstructionsIAX' => 'If this option is enabled, Asterisk will send SIP Options packets. This is necessary to support NAT tunneling on your router.',
-    'pr_CustomFieldsDescriptions' => '<div class=\'ui message\'>In most cases, you should leave the override fields blank. 
- Only if you do not have calls and the provider requires special settings, then these fields must be filled in according to the recommendation of the provider.</div>',
-    'pr_ReceiveCallsWithoutAuth' => 'Trust this provider and accept any calls from it without authentication',
+    'pr_CustomFieldsDescriptions' => 'In most cases, override fields should be left blank.
+    Only if calls do not work for you, and the provider requires special settings, then these fields must be filled in according to the provider\'s recommendations.',
+    'pr_ReceiveCallsWithoutAuth' => 'Accept calls without authentication',
     'pr_ValidationProviderPortRange' => 'SIP port out of range {ruleValue}',
     'pr_DeleteTitle' => 'Delete provider',
     'pr_DeleteDescription' => 'Together with the provider, all associated outbound routing rules will be deleted, and in the inbound routing rules all links will be replaced with "Any provider"',
@@ -296,12 +293,12 @@ return [
     'ir_RuleAssignIf' => 'The rule will work when you call on',
     'ir_DidNumber' => 'Direct inward dialing number (DID number)',
     'ir_CallTransferTo' => 'The call will be forwarded to',
-    'ir_Extension' => 'the phone number',
+    'ir_Extension' => 'number',
     'ir_ValidateForwardingToBeFilled' => 'Do not specify the number to forward',
     'ir_ValidateForwardingDefaultToBeFilled' => 'Do not specify the number to forward by default',
     'ir_ValidationPleaseEnterRuleName' => 'Enter a name for the rule',
     'ir_ValidateTimeoutOutOfRange' => 'The forwarding timeout is not correct. It must be between {ruleValue}',
-    'ir_DidNumberDescription' => 'The provider can pass an direct inward dialing (DID) number, this is not a required field, but in some cases you can more accurately route calls.',
+    'ir_DidNumberDescription' => 'The provider can send an additional number, this is an optional field, but in some cases it is possible to route calls more accurately.',
     'ir_TimeoutToTransferDefault' => 'Time, in seconds, after which the call will be routed to the next priority rule',
     'ir_AddNewRule' => 'Add a new rule',
     'ir_AnyProvider' => 'Any provider',
@@ -397,7 +394,7 @@ return [
     'ex_DTMFMode' => 'DTMF Mode',
     'ex_NetworkFilter' => 'Network filter',
     'ex_NatMode' => 'NAT Mode',
-    'ex_ManualAdditionalAttributes' => 'Manual additional attributes for SIP',
+    'ex_ManualAdditionalAttributes' => 'Extra options',
     'ex_RingMainExtension' => 'Within',
     'ex_SecondsAndThenRedirectCallTo' => 'seconds trying to get through to the main number, then redirect to',
     'ex_IfMainExtensionIsBusyRedirectCallTo' => 'If the main number is busy, redirect the call to',
@@ -489,7 +486,7 @@ return [
     'fw_icmpDescription' => 'ICMP - ping command',
     'fw_ValidatePermitAddress' => 'The subnet address is incorrect. Try a design similar 192.168.1.0/24',
     'fw_ValidateRuleName' => 'Enter a name for the subnet',
-    'fw_NewerBlockIp' => 'Never block addresses from that network, ignore the authentication error, and the error enter the password in the Web interface',
+    'fw_NewerBlockIp' => 'Never block addresses from this network, ignore phone authorization errors and password entry errors in the Web interface',
     'fw_ItIsLocalNetwork' => 'This VPN or local network, phones from this network are connected to the PBX directly without NAT routing',
     'fw_AllNetworksRule' => 'All available networks',
     'fw_LocalNetworksRule' => 'The subnet where the PBX',
@@ -510,7 +507,7 @@ return [
     'nw_ValidateDHCPOnVlansDontSupport' => 'VLAN don\'t support DHCP',
     'nw_ValidateNameIsNotBeEmpty' => 'Interface name not filled',
     'nw_ValidateVlanRange' => 'Incorrectly filled value VLAN. Choose between {ruleValue}',
-    'nw_Hostname' => 'Host name',
+    'nw_Hostname' => 'local hostname',
     'nw_ValidateExtIppaddrNotRight' => 'Error filling external IP address of the router',
     'nw_ValidateExtIppaddrOrHostIsEmpty' => 'You must fill in either the external IP of the router or its DNS name',
     'nw_ValidateVlanCross' => 'Errors in the settings of the VLANs have interfaces, check the intersection of the parameters',
@@ -544,7 +541,7 @@ return [
     'gs_PBXInternalExtensionLength' => 'Maximum length of extension',
     'gs_PBXRecordCalls' => 'Call recording',
     'gs_RestartEveryNight' => 'The PBX is restarted every night',
-    'gs_PBXCallParkingExt' => 'Park Extension',
+    'gs_PBXCallParkingExt' => 'Call Park Number',
     'gs_PBXFeatureAttendedTransfer' => 'This key combination activates an attended transfer',
     'gs_PBXFeatureBlindTransfer' => 'This key combination activates a blind transfer',
     'gs_PBXFeatureDigitTimeout' => 'Maximum timeout between digits when entering an extension number (in milliseconds)',
@@ -577,15 +574,15 @@ return [
     'gs_WebAdminPassword' => 'Password',
     'gs_WebAdminPasswordRepeat' => 'Reenter your password',
     'gs_SSHPasswordRepeat' => 'Reenter your password',
-    'gs_Passwords' => 'Administrator password',
+    'gs_Passwords' => 'WEB interface password',
     'gs_DefaultPasswordWarning' => 'Don\'t use the default username and password of system administrator',
     'gs_ValidateEmptyWebPassword' => 'Admin password can not be empty',
-    'gs_ValidateWeakWebPassword' => 'The administrative interface password is very simple',
-    'gs_ValidateWebPasswordsFieldDifferent' => 'The admin password is entered incorrectly',
+    'gs_ValidateWeakWebPassword' => 'WEB password must be longer than 4 characters',
+    'gs_ValidateWebPasswordsFieldDifferent' => 'Web interface password entered incorrectly',
     'gs_ValidateEmptySSHPassword' => 'The SSH password could not be empty',
-    'gs_ValidateWeakSSHPassword' => 'Set a very simple password SSH',
-    'gs_ValidateSSHPasswordsFieldDifferent' => 'The SSH password is entered incorrectly',
-    'gs_SendAnonymousMetrics' => 'Send bugs reports to the developers team',
+    'gs_ValidateWeakSSHPassword' => 'SSH password must be longer than 4 characters',
+    'gs_ValidateSSHPasswordsFieldDifferent' => 'The SSH password was entered incorrectly. Re-enter the password.',
+    'gs_SendAnonymousMetrics' => 'Send developers information about crashes',
     'gs_RedirectToHttps' => 'Redirect to HTTPS',
     'ts_CurrentSettings' => 'Current setting',
     'ts_SystemTime' => 'System time',
@@ -686,7 +683,7 @@ return [
     'cf_Description' => 'Comment for what changes are made',
     'cf_Mode' => 'Mode',
     'mo_BeforeDeleteFirst' => 'There are references to the object - %represent%',
-    'ConstraintViolation' => '<div class=\'header\'>Logical integrity violation</div>',
+    'ConstraintViolation' => 'Logical Integrity Violation',
     'repAsteriskManagerUsers' => 'AMI record - %represent%',
     'repCallQueues' => 'Call queue - %represent%',
     'repCallQueueMembers' => 'Call queue member - %represent%',
@@ -724,7 +721,7 @@ return [
     'sf_SelectAudioFile' => 'Select the audio file',
     'sf_ValidationFileNotSelected' => 'You should upload an audio file',
     'lic_ValidateCompanyNameEmpty' => 'Required field is not filled - the name of the company',
-    'lic_ValidateContactEmail' => 'Required field is not filled - contact person email',
+    'lic_ValidateContactEmail' => 'Required field not filled - contact person\'s email',
     'lic_ValidateContactName' => 'Required field is not filled - contact person',
     'lic_ValidateCouponEmpty' => 'Required field is not filled - coupon',
     'lic_ValidateLicenseKeyEmpty' => 'Required field is not filled - license key',
@@ -738,14 +735,12 @@ return [
     'lic_Coupon' => 'Coupon is for upgrade of a license',
     'lic_ActivateCouponButton' => 'Activate coupon',
     'lic_SaveLicenseKeyButton' => 'Save key',
-    'lic_LicenseKeyMessage' => '<div class=\'ui message \'>The license key is used to store all your licenses from any Miko products.<br>
+    'lic_LicenseKeyMessage' => 'The license key is used to store all your licenses from any MIKO products.<br>
 If you already have a key, you can simply enter it in this field.<br>
-If you had the key, but you forgot it, look in the mail Inbox at lic@miko.ru<br>
-You can get a new key automatically by filling in the registration form.<br>
-</div>',
-    'lic_CouponMessage' => '<div class=\'ui message \'>The coupon is used when expanding the functionality of PBX or when buying a license.<br>
-It can be activated once, after which the coupon becomes redeemed.
-</div>',
+If you had the key, but you forgot it, look in the mail for incoming letters at lic@miko.ru<br>
+You can get a new key automatically by filling out the registration form.<br>',
+    'lic_CouponMessage' => 'The coupon is used when expanding the functionality of the PBX or when purchasing a license.<br>
+It can be activated once, after which the coupon becomes redeemed.',
     'lic_CurrentLicenseInfo' => 'Detailed information about the products in the license key',
     'lic_Expired' => 'Product has expired',
     'lic_ExpiredAfter' => 'The license expires after %expired%',
@@ -755,9 +750,9 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_LicenseKeyOwner' => 'License key owner',
     'lic_ResetLicenseSettings' => 'Reset license key',
     'lic_LicenseKeyValid' => 'Registration number is OK',
-    'lic_FailedToGetTrialKey2051' => '(2051) Failed to register this copy because you have already used a registration number with a different Email on this machine. <br>
- Use the key sent to you earlier from the address lic@miko.ru',
-    'lic_FailedToGetTrialKey2022' => '(2022) Failed to register this copy. A registration number for another company has already been generated to the specified email address. <br>
+    'lic_FailedToGetTrialKey2051' => '(2051) Failed to check in this copy. you have already used the registration number with another Email on this machine.<br>
+ Use the key sent to you earlier from lic@miko.ru',
+    'lic_FailedToGetTrialKey2022' => '(2022) Failed to register this copy. A registration number for another company has already been generated for the specified email.<br>
  Use the key sent to you earlier from the address lic@miko.ru or enter the correct company name.',
     'lic_FailedActivateCoupon2057' => '(2057) This coupon is disabled',
     'lic_FailedActivateCoupon2041' => '(2041) Your coupon has already activated',
@@ -772,9 +767,9 @@ It can be activated once, after which the coupon becomes redeemed.
     'lic_IntroductionTabHeader' => 'Marketplace licensing',
     'lic_ManagementTabHeader' => 'License management',
     'lic_FirstQuestionHeader' => 'Do you have to register',
-    'lic_FirstQuestionAnswer' => 'The base MikoPBX functional is completely free and not limited by license. Your registration does not affect calls in any way. You can register at any time, as well as unregister your PBX in the Marketplace.',
+    'lic_FirstQuestionAnswer' => 'The basic functionality of MikoPBX is completely free and not limited by a license. The absence of a license does not affect calls in any way.<br> You can register and unregister in the Marketplace at any time.',
     'lic_MarketplaceHeader' => 'For what purpose do you need registration',
-    'lic_MarketplaceText' => 'Registering in the Marketplace will give you access to additional modules and extensions. <br> There are free modules that we removed from the basic functionality to simplify the initial setup, as well as paid modules from us and other developers. <br> If you are a developer, you can contact <a href="mailto:developers@mikopbx.com"> with us </a> for instructions on how to develop your own module and add it to the Marketplace.',
+    'lic_MarketplaceText' => 'Registering on the Marketplace will give you access to additional modules and extensions.<br>There are free modules that we removed from the core functionality to simplify initial setup, as well as paid modules from us and other developers.<br>If you are a developer, you can contact <a href="mailto:developers@mikopbx.com">us</a> for instructions on how to develop your own module and add it to the Marketplace.',
     'lic_MarketplaceImageHeader' => 'Screenshot from our marketplace',
     'lic_MarketplaceAction' => 'Go to free registration',
     'lic_LastQuestionHeader' => 'What should you do with the license problem',
@@ -793,8 +788,8 @@ It can be activated once, after which the coupon becomes redeemed.
     'auth_ValidateLoginNotEmpty' => 'Enter the login',
     'auth_SubmitButton' => 'Authorize',
     'auth_WrongLoginPassword' => 'Authorization error',
-    'log_CaptureMessage' => '<div class = \'ui message\'> Start collecting network packets and initiate a call or other failure action.
-<br> The system will save all packets passing through the network card at this moment for further analysis. </div>',
+    'log_CaptureMessage' => 'Start collecting network packets and make a call or other action that causes the failure.
+<br>The system will save all packets passing at this moment through the network card for further analysis.',
     'dbg_NoDebugInformation' => 'No information',
     'dbg_Header' => 'Debugging information',
     'f2b_Reason' => 'Reason',
@@ -821,7 +816,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'upd_DownloadUpgradeError' => 'Error downloading update, please try again later',
     'upd_UploadError' => 'File upload error',
     'upd_UpdateTitle' => 'PBX update',
-    'upd_UpdateDescription' => 'After downloading the update, the PBX will reboot automatically, all current calls will be dropped. <br> We recommend to make system backup before upgrade.',
+    'upd_UpdateDescription' => 'After downloading the update, the PBX will reboot automatically, all current calls will be dropped. Be sure to backup your MikoPBX before updating.',
     'upd_Cancel' => 'Cancel',
     'upd_Update' => 'Upgrade',
     'upd_UploadInProgress' => 'The firmware file is uploading …',
@@ -874,9 +869,9 @@ It can be activated once, after which the coupon becomes redeemed.
     'adv_YouUseDefaultWebPassword' => 'You use the default password to log in to the administrative interface - <a href=\'%url%\'>fix it</a>',
     'adv_YouUseDefaultSSHPassword' => 'You are using the default password for SSH access - <a href=\'%url%\'>fix it</a>',
     'adv_FirewallDisabled' => 'The firewall is disabled in the PBX - <a href=\'%url%\'>fix it</a>',
-    'adv_NetworksNotConfigured' => 'Network subnets don\'t configured  - <a href=\'%url%\'>fix it</a>',
+    'adv_NetworksNotConfigured' => 'Allowed subnet settings not configured - <a href=\'%url%\'>change</a>',
     'adv_StorageDiskUnMounted' => 'The storage disk was not connected!',
-    'adv_AvailableNewVersionPBX' => 'New updates available  - <a href=\'%url%\'>%ver%</a>',
+    'adv_AvailableNewVersionPBX' => 'New PBX version available - <a href=\'%url%\'>%ver%</a>',
     'adv_ThisCopyIsNotRegistered' => 'This program isn\'t registered - <a href=\'%url%\'>Get free license</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Out of free storage space (%free% Mb)</a>',
     'adv_ThisCopyHasLicensingTroubles' => 'PBX license has problem: %error%   <a target="_blank" href=\'%url%\'>how to fix it?</a>',
@@ -899,7 +894,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'sntry_LabelSubmit' => 'Submit',
     'sntry_ErrorGeneric' => 'An unknown error occurred while submitting your report. Please try again!',
     'sntry_ErrorFormEntry' => 'Some fields were invalid. Please correct the errors and try again!',
-    'sntry_SuccessMessage' => 'Your feedback has been sent. Thank you!',
+    'sntry_SuccessMessage' => 'Thank you for your help!',
     'gs_WebAdminLanguage' => 'Web interface language',
     'lang_HelpWithTranslateIt' => 'Help with MikoPBX Translation',
     'topMenu_Support' => 'Support',
@@ -952,7 +947,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'All settings will be lost!' => 'Return to factory settings!',
     'Install or recovery' => 'Install / restore',
     'Error resetting password.' => 'Password reset error',
-    'Password successfully reset. New login: admin. New password: admin.' => 'Password reset successfully. Username: admin   Password: admin',
+    'Password successfully reset. New login: admin. New password: admin.' => 'Password reset successfully. Username: admin Password: admin',
     'Do you want reset password? (y/n): ' => 'Do you want to reset the web password to the factory settings? (y / n):',
     'Enter the device name:' => 'Enter the device name:',
     'Valid disks are:' => 'List of available disks:',
@@ -1056,7 +1051,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'mo_NewElementExtensions' => 'New employee',
     'mo_NewElementNetworkFilters' => 'New firewall rule for subnet / address',
     'sd_CollectingLogsInfo' => 'Getting a list of log files',
-    'adv_ProblemWithInternetConnection' => 'There is no Internet connection. There may be problems in the operation of paid modules.',
+    'adv_ProblemWithInternetConnection' => 'There is no Internet connection. There may be problems in the work of paid modules.',
     'lic_GetTrialErrorCheckInternet' => 'Registration failed, check for Internet on MikoPBX',
     'gs_SevenDigthts' => '7 digits',
     'gs_SIPPortSettings' => 'Port settings for SIP and RTP',
@@ -1065,7 +1060,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'gs_CallRecordTab' => 'Call recording',
     'gs_PBXAllowGuestCalls' => 'Allow incoming calls from any servers',
     'pr_NoAnyAdditionalHosts' => 'No additional addresses specified for this provider',
-    'pr_EnterHostOrIpPlaceholder' => 'Enter IP address or subnet',
+    'pr_EnterHostOrIpPlaceholder' => 'Enter the IP address or subnet and press Enter',
     'pr_EnterHostOrIp' => 'Additional provider hosts or ip',
     'auth_RememberMe' => 'Remember me',
     'log_DownloadLogs' => 'Download all system logs',
@@ -1097,7 +1092,7 @@ It can be activated once, after which the coupon becomes redeemed.
     'pass_CheckSSHPasswordEmpty' => 'Field empty: SSH',
     'pass_CheckSSHPasswordSimple' => 'The password for SSH is too simple.',
     'gs_PasswordSimple' => 'The password being set is too simple.',
-    'gs_SetPasswordInfo' => 'The password is too simple. The new password must contain numbers, lower and upper case letters.',
+    'gs_SetPasswordInfo' => 'The password is too simple.',
     'gs_PasswordNoNumbers' => 'Password must contain numbers',
     'gs_PasswordNoLowSimvol' => 'Password must contain lowercase characters',
     'gs_PasswordNoUpperSimvol' => 'Password must contain uppercase characters',
@@ -1107,13 +1102,13 @@ It can be activated once, after which the coupon becomes redeemed.
     'ex_ValidateUsernameSpecialCharacters' => 'Full name must not contain special characters',
     'lic_NoInetHeader' => 'No access to the license server.',
     'lic_NoInet' => 'Perhaps there is no Internet access from the MikoPBX server',
-    'lic_NoInetLicMiko' => 'Perhaps restricted access to the resource <b>lic.miko.ru</b>',
-    'lic_NoInetNetSettings' => "Check <b>DNS</b> and <b>Gateway</b> settings in <a href='/admin-cabinet/network/modify/'>network</a> settings",
+    'lic_NoInetLicMiko' => 'Perhaps restricted access to the resource <b>lic.mikopbx.com</b>',
+    'lic_NoInetNetSettings' => "Check <b>DNS</b> and <b>Gateway</b> settings in <a href='%url$'>network</a> settings",
     'lic_SuccessfulСuponActivation' => 'Coupon successfully activated',
     'or_RuleNotConfigured' => 'Rule not configured',
     'or_RuleAnyNumbers' => 'Any numbers',
     'or_RuleDescriptionBeginEmpty' => 'The number consists of <b>%restnumbers%</b> digits',
-    'ex_Transport' => 'Transport protocol (UDP/TCP by default)',
+    'ex_Transport' => 'Transport Protocol',
     'gs_TLS_PORT' => 'SIP TLS port (encrypted calls)',
     'ex_OutboundProxy' => 'Outbound proxy (example: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS did not respond to a request for information on the license. Service is unavailable.',
@@ -1169,4 +1164,6 @@ It can be activated once, after which the coupon becomes redeemed.
     'mm_Update' => 'PBX update',
     'adv_AmiPasswordFieldName' => 'User AMI <%record%>',
     'adv_PopupHeader' => 'The following issues have been found:',
+    'upd_EnterIHaveBackupPhrasePreText' => 'To update the system, enter the following phrase in the input field:',
+    'upd_EnterIHaveBackupPhrase' => 'Yes, I have a backup',
 ];

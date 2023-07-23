@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -38,7 +37,7 @@ return [
     'December' => 'dekabr',
     'Loading' => 'Yüklənir',
     'MetaTegHeadDescription' => 'Biznes üçün telefon sistemi',
-    'qf_Frequency' => 'Tezliyi saniyədə göndərin.',
+    'qf_Frequency' => 'Tezliyi saniyələrlə göndərin:',
     'SubHeaderTimeSettings' => 'Saatın və təqvimin qurulması',
     'BreadcrumbTimeSettings' => 'Sistem vaxtı',
     'BreadcrumbFail2Ban' => 'Oğurluqdan qorunma',
@@ -142,7 +141,7 @@ return [
     'cr_ColumnName' => 'ad',
     'cr_ColumnExtension' => 'Nömrə',
     'cr_AddNewConferenceRoom' => 'Konfrans əlavə edin',
-    'ConstraintViolation' => '<div class=\'header\'>Məntiqi Dürüstlüyün pozulması</div>',
+    'ConstraintViolation' => 'Məntiqi Dürüstlüyün pozulması',
     'repIvrMenuActions' => 'IVR menyusunun üzvü - %represent%',
     'repIvrMenu' => 'IVR menyusu - %represent%',
     'repSoundFiles' => 'Səs faylı - %represent%',
@@ -174,9 +173,8 @@ return [
     'lic_SaveLicenseKeyButton' => 'açarı saxla',
     'lic_ActivateCouponButton' => 'Kuponu aktivləşdirin',
     'lic_CurrentLicenseInfo' => 'Lisenziya açarında ətraflı məhsul məlumatı',
-    'lic_CouponMessage' => '<div class=\'ui message \'>Kupon PBX funksionallığını genişləndirərkən və ya lisenziya alarkən istifadə olunur.<br>
-Bir dəfə aktivləşdirilə bilər, bundan sonra kupon geri alınır.
-</div>',
+    'lic_CouponMessage' => 'Kupon ATS-in funksional imkanlarını genişləndirərkən və ya lisenziya alarkən istifadə olunur.<br>
+Bir dəfə aktivləşdirilə bilər, bundan sonra kupon geri alınır.',
     'lic_FailedToGetTrialKey2051' => '(2051) Bu nüsxəni yoxlamaq alınmadı. siz artıq bu maşında qeydiyyat nömrəsini başqa E-poçtla istifadə etmisiniz.<br>
  lic@miko.ru saytından sizə əvvəllər göndərilən açardan istifadə edin',
     'lic_FailedActivateCoupon2037' => '(2037) Qeydiyyat nömrəsini təyin edərkən xəta',
@@ -188,8 +186,8 @@ Bir dəfə aktivləşdirilə bilər, bundan sonra kupon geri alınır.
     'lic_MarketplaceAction' => 'Pulsuz qeydiyyata keçin',
     'lic_MarketplaceImageHeader' => 'Marketimizdən şəkil',
     'er_Home' => 'Başlamaq üçün gedin',
-    'lic_NoInetNetSettings' => "<a href='/admin-cabinet/network/modify/'>şəbəkə</a> parametrlərində <b>DNS</b> və <b>Gateway</b> parametrlərini yoxlayın",
-    'lic_NoInetLicMiko' => 'Ola bilsin ki, <b>lic.miko.ru</b> resursuna giriş məhdudlaşdırılıb.',
+    'lic_NoInetNetSettings' => "<a href='%url$'>şəbəkə</a> parametrlərində <b>DNS</b> və <b>Gateway</b> parametrlərini yoxlayın",
+    'lic_NoInetLicMiko' => 'Ola bilsin ki, <b>lic.mikopbx.com</b> resursuna giriş məhdudlaşdırılıb.',
     'lic_NoInet' => 'Bəlkə də MikoPBX serverindən İnternetə çıxış yoxdur',
     'rs_ShutdownRebootMessage' => 'Yenidən başladıqda və ya bağlandıqda bütün davam edən zənglər dayandırılacaq.',
     'rs_Dst' => 'Kimə',
@@ -230,7 +228,7 @@ Bir dəfə aktivləşdirilə bilər, bundan sonra kupon geri alınır.
     'adv_NetworksNotConfigured' => 'İcazə verilən alt şəbəkə parametrləri konfiqurasiya edilməyib - <a href=\'%url%\'>dəyişiklik</a>',
     'сal_Yesterday' => 'Dünən',
     'сal_Today' => 'Bu gün',
-    'adv_ProblemWithInternetConnection' => 'İnternetə qoşulma yoxdur. Ödənişli modulların işində problemlər ola bilər.',
+    'adv_ProblemWithInternetConnection' => 'İnternet bağlantısı yoxdur. Ödənişli modulların işində problemlər ola bilər.',
     'сal_CancelBtn' => 'Ləğv et',
     'сal_ApplyBtn' => 'Müraciət edin',
     'sntry_Subtitle' => 'Səhv haqqında məlumat tərtibatçıya göndərildi.',
@@ -337,7 +335,7 @@ Bir dəfə aktivləşdirilə bilər, bundan sonra kupon geri alınır.
     'VLAN IP address assigned via' => 'VLAN IP: işləyir',
     'topMenu_SearchPlaceholder' => 'Axtarış termini daxil edin',
     'lang_HelpWithTranslateIt' => 'MikoPBX tərcüməsində kömək edin',
-    'sntry_SuccessMessage' => 'Yardım üçün təşəkkür edirik!',
+    'sntry_SuccessMessage' => 'Yardımınız üçün təşəkkür edirik!',
     'upd_FileName' => 'Yeniləmə faylını seçin',
     'f2b_TableBannedEmpty' => 'Məlumat yoxdur',
     'f2b_ValidateBanTimeRange' => 'Yanlış bloklama müddəti',
@@ -358,8 +356,8 @@ Bir dəfə aktivləşdirilə bilər, bundan sonra kupon geri alınır.
     'log_DownloadLogs' => 'Bütün sistem qeydlərini yükləyin',
     'log_StopCapturePCAP' => 'Dayan və endir',
     'log_StartCapturePCAP' => 'Başlamaq',
-    'log_CaptureMessage' => '<div class=\'ui message \'>Şəbəkə paketlərini toplamağa başlayın və uğursuzluğa səbəb olan zəng və ya digər hərəkəti yerinə yetirin.
-<br>Sistem əlavə təhlil üçün hazırda şəbəkə kartından keçən bütün paketləri saxlayacaq.</div>',
+    'log_CaptureMessage' => 'Şəbəkə paketlərini toplamağa başlayın və uğursuzluğa səbəb olan zəng və ya digər hərəkətləri edin.
+<br>Sistem bu anda şəbəkə kartından keçən bütün paketləri əlavə təhlil üçün saxlayacaq.',
     'auth_RememberMe' => 'Məni xatırlamaq üçün',
     'rs_CurrentCalls' => 'Aktiv zənglər',
     'rs_ShutDownPhoneSystem' => 'PBX-i söndürün',
@@ -388,11 +386,10 @@ Bir dəfə aktivləşdirilə bilər, bundan sonra kupon geri alınır.
     'lic_Product' => 'Məhsul',
     'lic_ExpiredAfter' => 'Lisenziya %expired% sonra başa çatır',
     'lic_Expired' => 'Məhsulun vaxtı keçmişdir',
-    'lic_LicenseKeyMessage' => '<div class=\'ui message \'>Lisenziya açarı istənilən MIKO məhsulundan bütün lisenziyalarınızı saxlamaq üçün istifadə olunur.<br>
+    'lic_LicenseKeyMessage' => 'Lisenziya açarı istənilən MIKO məhsulundan bütün lisenziyalarınızı saxlamaq üçün istifadə olunur.<br>
 Əgər artıq açarınız varsa, onu sadəcə bu sahəyə daxil edə bilərsiniz.<br>
 Əgər açarınız var idisə, lakin onu unutmusunuzsa, lic@miko.ru ünvanına gələn məktublar üçün poçta baxın<br>
-Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bilərsiniz.<br>
-</div>',
+Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bilərsiniz.<br>',
     'lic_Coupon' => 'Lisenziyanın yenilənməsi üçün kupon',
     'lic_Inn' => 'Unikal şirkət identifikatoru (VÖEN, İIN, UNP və s.)',
     'lic_Email' => 'Əlaqədar şəxsin e-poçt ünvanı',
@@ -422,7 +419,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'repCallQueueMembers' => 'Zəng növbəsi üzvü - %represent%',
     'repCallQueues' => 'Zəng növbəsi - %represent%',
     'repAsteriskManagerUsers' => 'AMI rekordu - %represent%',
-    'mo_BeforeDeleteFirst' => 'Obyektə keçidlər var - %represent%',
+    'mo_BeforeDeleteFirst' => 'Obyektə istinadlar var - %represent%',
     'cf_Mode' => 'Rejim',
     'cf_Description' => 'Dəyişikliklərin niyə edildiyini şərh edin',
     'cf_Path' => 'Fayla gedən yol',
@@ -616,7 +613,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'pass_CheckSSHPasswordDontMatch' => 'SSH üçün daxil edilmiş parollar uyğun gəlmir',
     'pass_CheckWebPassErrorChange' => 'Parolu dəyişmək alınmadı',
     'adv_WebPasswordFieldName' => 'veb interfeysi',
-    'adv_isSimplePassword' => '"%type%" - <a href=\'%url%\'>dəyişiklik</a> üçün etibarlı olmayan parol istifadə edildi',
+    'adv_isSimplePassword' => '"%type%" - <a href=\'%url%\'>dəyişikliyi</a> üçün etibarlı olmayan parol istifadə edilmişdir',
     'adv_YouUseDefaultSSHPassword' => 'Siz SSH girişi üçün standart paroldan istifadə edirsiniz - <a href=\'%url%\'>dəyişiklik</a>',
     'adv_YouUseDefaultWebPassword' => 'Siz inzibati interfeysə daxil olmaq üçün standart paroldan istifadə edirsiniz - <a href=\'%url%\'>dəyişiklik</a>',
     'adv_MessagesHeaderError' => 'Ciddi səhv',
@@ -663,7 +660,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'upd_UpgradeInProgress' => 'Yenilənmiş sistem faylları…',
     'upd_UploadInProgress' => 'Yeniləmə faylı yüklənir…',
     'upd_Cancel' => 'Ləğv et',
-    'upd_UpdateDescription' => 'Güncəlləməni endirdikdən sonra ATS avtomatik olaraq yenidən işə düşəcək, bütün cari zənglər dayandırılacaq.<br> Güncəlləmədən əvvəl ehtiyat nüsxəsini çıxarmağınızı tövsiyə edirik.',
+    'upd_UpdateDescription' => 'Yeniləmə yükləndikdən sonra PBX avtomatik olaraq yenidən işə düşəcək, bütün cari zənglər dayandırılacaq. Yeniləməzdən əvvəl MikoPBX-in ehtiyat nüsxəsini çıxardığınızdan əmin olun.',
     'upd_UpdateTitle' => 'PBX yeniləməsi',
     'upd_UploadError' => 'Güncəlləməni endirərkən xəta baş verdi',
     'upd_DownloadUpgradeError' => 'Güncəlləməni endirərkən xəta baş verdi, sonra yenidən cəhd edin',
@@ -683,7 +680,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ex_IfMainExtensionIsBusyRedirectCallTo' => 'Əsas nömrə məşğuldursa, zəngi ona köçürün',
     'ex_SecondsAndThenRedirectCallTo' => 'saniyə ərzində əsas nömrəyə keçməyə çalışır, sonra köçür',
     'ex_RingMainExtension' => 'ərzində',
-    'ex_ManualAdditionalAttributes' => 'Əlavə SIP hesabı parametrləri',
+    'ex_ManualAdditionalAttributes' => 'Əlavə seçimlər',
     'ex_NatMode' => 'NAT rejimi',
     'ex_NetworkFilter' => 'Şəbəkə filtri',
     'ex_DTMFMode' => 'DTMF rejimi',
@@ -770,7 +767,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ir_DidNumberDescription' => 'Provayder əlavə nömrə göndərə bilər, bu isteğe bağlı sahədir, lakin bəzi hallarda zəngləri daha dəqiq istiqamətləndirmək mümkündür.',
     'ir_ValidateTimeoutOutOfRange' => 'Yenidən yönləndirmə fasiləsi yanlışdır. {ruleValue} arasında olmalıdır',
     'ir_ValidationPleaseEnterRuleName' => 'Qaydanın adını daxil edin',
-    'ir_Extension' => 'telefon nömrəsi',
+    'ir_Extension' => 'nömrə',
     'ir_CallTransferTo' => 'Zəng ünvanına yönləndiriləcək',
     'ir_DidNumber' => 'Əlavə nömrə (DID)',
     'ir_RuleAssignIf' => 'Qayda zəng edərkən işləyəcək',
@@ -812,14 +809,14 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'or_NumberBeginsWithTheDigits' => 'Nömrə ilə başlayır',
     'or_RuleName' => 'Qayda Adı',
     'pr_NoAnyAdditionalHosts' => 'Bu provayder üçün əlavə ünvan göstərilməyib',
-    'pr_EnterHostOrIpPlaceholder' => 'IP ünvanını və ya alt şəbəkəni daxil edin',
+    'pr_EnterHostOrIpPlaceholder' => 'IP ünvanını və ya alt şəbəkəni daxil edin və Enter düyməsini basın',
     'pr_EnterHostOrIp' => 'Əlavə provayder ünvanları',
     'pr_DeleteDescription' => 'Bütün əlaqəli gedən marşrutlaşdırma qaydaları provayderlə birlikdə silinəcək və gələn marşrutlaşdırma qaydalarındakı bütün keçidlər "İstənilən provayder" ilə əvəz olunacaq.',
     'pr_DeleteTitle' => 'Provayderin silinməsi',
     'pr_ValidationProviderPortRange' => 'Provayder portu {ruleValue} daxilində olmalıdır',
     'pr_ReceiveCallsWithoutAuth' => 'Doğrulama olmadan zəngləri qəbul edin',
-    'pr_CustomFieldsDescriptions' => '<div class=\'ui message\'>Əksər hallarda ləğvetmə sahələri boş qalmalıdır.
-    Yalnız zənglər sizin üçün işləmirsə və provayder xüsusi parametrlər tələb edirsə, bu sahələr provayderin tövsiyələrinə uyğun olaraq doldurulmalıdır.</div>',
+    'pr_CustomFieldsDescriptions' => 'Əksər hallarda, ləğvetmə sahələri boş qalmalıdır.
+    Yalnız zənglər sizin üçün işləmirsə və provayder xüsusi parametrlər tələb edirsə, bu sahələr provayderin tövsiyələrinə uyğun olaraq doldurulmalıdır.',
     'pr_QualifyInstructionsIAX' => 'Bu seçim aktiv olduqda, Asterisk SIP Seçimləri paketlərini göndərəcək. Bu, marşrutlaşdırıcınızda NAT tunelini dəstəkləmək üçün tələb olunur.',
     'pr_AddIAXProvider' => 'IAX-ı birləşdirin',
     'pr_AddSIPProvider' => 'SIP-ə qoşulun',
@@ -933,7 +930,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'gs_PBXAllowGuestCalls' => 'İstənilən serverdən gələn zənglərə icazə verin',
     'gs_PBXSplitAudioThread' => 'Səsyazmaları stereoda saxlayın',
     'gs_PBXFeatureBlindTransfer' => 'Şərtsiz köçürmə üçün birləşmə',
-    'gs_PBXCallParkingExt' => 'Dayanacaq nömrəsi',
+    'gs_PBXCallParkingExt' => 'Park nömrəsinə zəng edin',
     'gs_RestartEveryNight' => 'Hər gecə PBX-i yenidən başladın',
     'gs_PBXRecordCalls' => 'Zəng qeydi',
     'gs_PBXInternalExtensionLength' => 'Maksimum uzatma uzunluğu',
@@ -957,7 +954,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'nw_ValidateIppaddrNotRight' => 'Şəbəkə interfeysinin IP ünvanı səhvdir',
     'nw_ValidateIppaddrIsEmpty' => 'Şəbəkə interfeysinin IP ünvanı doldurulmayıb',
     'nw_ValidateVlanCross' => 'İnterfeyslər üçün VLAN parametrlərində səhvlər, parametrlərin kəsişməsini yoxlayın',
-    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Ya marşrutlaşdırıcının xarici IP-sini və ya DNS adını doldurmaq lazımdır',
+    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Siz marşrutlaşdırıcının xarici IP-sini və ya DNS adını doldurmalısınız',
     'nw_ValidateExtIppaddrNotRight' => 'Routerin xarici IP ünvanını doldurarkən xəta baş verdi',
     'nw_Hostname' => 'yerli host adı',
     'nw_ValidateVlanRange' => 'VLAN dəyəri yanlışdır. {ruleValue} arasında seçim edin',
@@ -1028,7 +1025,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'BreadcrumbLicensing' => 'Lisenziyalaşdırma',
     'SubHeaderSoundFiles' => 'Müxtəlif zəng ssenarilərində və interaktiv səs menyularında istifadə olunur',
     'BreadcrumbSoundFiles' => 'Səs faylları',
-    'SubHeaderCustomFiles' => 'Sistem konfiqurasiya fayllarının və Ulduz işarəsinin fərdiləşdirilməsi',
+    'SubHeaderCustomFiles' => 'Sistem və Asterisk konfiqurasiya fayllarının fərdiləşdirilməsi',
     'BreadcrumbCustomFiles' => 'Sistem faylları',
     'BreadcrumbCustomFilesmodify' => 'Redaktə',
     'SubHeaderCallDetailRecords' => 'Zəng jurnalı və zəng jurnalı',
@@ -1077,23 +1074,21 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'BreadcrumbHome' => 'Başlanğıc üçün',
     'ConnectionSettings' => 'Bağlantı parametrləri',
     'AdvancedOptions' => 'Qabaqcıl parametrlər',
-    'qf_QualifyInstructions' => '<div class=\'ui message \'>
-            Bu seçim aktiv olduqda, PBX SIP OPTIONS paketlərini müəyyən olunmuş tezlikdə göndərəcək. Bu, marşrutlaşdırıcınızda NAT tunelini dəstəkləmək üçün tələb olunur.
-        </div>',
+    'qf_QualifyInstructions' => 'Bu seçim aktiv olduqda, PBX SIP OPTIONS paketlərini müəyyən olunmuş tezlikdə göndərəcək. Bu, marşrutlaşdırıcınızda NAT tunelini dəstəkləmək üçün tələb olunur.',
     'qf_Qualify' => 'NAT sessiyasını qoruyun',
     'Now' => 'İndi',
     'Today' => 'Bu gün',
-    'ShortDaySaturday' => 'şənbə',
+    'ShortDaySaturday' => 'Oturdu',
     'ShortDayFriday' => 'Cümə',
-    'ShortDayThursday' => 'Cümə axşamı',
+    'ShortDayThursday' => 'Cr',
     'ShortDayWednesday' => 'Çərşənbə',
     'ShortDayTuesday' => 'Çərşənbə axşamı',
     'ShortDayMonday' => 'Bazar ertəsi',
-    'ShortDaySunday' => 'bazar',
+    'ShortDaySunday' => 'Vos',
     'Dec' => 'dekabr',
-    'Nov' => 'Noyabr',
+    'Nov' => 'Amma mən',
     'Oct' => 'Oktyabr',
-    'Sep' => 'sentyabr',
+    'Sep' => 'sen',
     'Aug' => 'avqust',
     'Jul' => 'İyul',
     'Jun' => 'İyun',
@@ -1166,4 +1161,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'mm_Update' => 'PBX yeniləməsi',
     'adv_AmiPasswordFieldName' => 'İstifadəçi AMI <%record%>',
     'adv_PopupHeader' => 'Aşağıdakı problemlər aşkar edilmişdir:',
+    'upd_EnterIHaveBackupPhrasePreText' => 'Sistemi yeniləmək üçün giriş sahəsinə aşağıdakı ifadəni daxil edin:',
+    'upd_EnterIHaveBackupPhrase' => 'Bəli, ehtiyat nüsxəm var',
 ];

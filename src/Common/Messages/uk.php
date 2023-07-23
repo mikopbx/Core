@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -110,12 +109,10 @@ return [
     'MetaTegHeadDescription' => 'Телефонна система для бізнесу',
     'Loading' => 'Завантаження',
     'qf_Qualify' => 'Підтримувати NAT сесію',
-    'qf_Frequency' => 'Частота відправки в сек.',
-    'qf_QualifyInstructions' => '<div class=\'ui message \'>
-            При включенні цієї опції Asterisk буде відправляти SIP Options пакети з вказаною частотою. Це необхідно для підтримки NAT тунелювання на вашому маршрутизаторі.  
-        </div>',
+    'qf_Frequency' => 'Частота відправлення за секунди:',
+    'qf_QualifyInstructions' => 'При включенні цієї опції АТС відправлятиме SIP OPTIONS пакети із зазначеною частотою. Це необхідно для підтримки NAT тунелювання на маршрутизаторі.',
     'AdvancedOptions' => 'Розширені налаштування',
-    'ConnectionSettings' => 'Налаштування з\'єднань',
+    'ConnectionSettings' => 'Налаштування з\'єднання',
     'BreadcrumbHome' => 'На початок',
     'BreadcrumbProviders' => 'Провайдери телефонії',
     'SubHeaderProviders' => 'Параметри облікових записів для організації зовнішніх вхідних і вихідних з\'єднань',
@@ -158,7 +155,7 @@ return [
     'BreadcrumbDialplanApplicationsmodify' => 'Налаштування застосунків',
     'SubHeaderDialplanApplications' => 'Програмовані голосові застосунки на PHP та Asterisk Dialplan',
     'BreadcrumbConferenceRooms' => 'Конференції',
-    'SubHeaderConferenceRooms' => 'Організація кімнат для багатосторонніх аудиоконференций',
+    'SubHeaderConferenceRooms' => 'Організація кімнат для багатосторонніх аудіо-конференцій',
     'BreadcrumbConferenceRoomsmodify' => 'Налаштування параметрів',
     'BreadcrumbCallDetailRecords' => 'Історія викликів',
     'SubHeaderCallDetailRecords' => 'Журнал записів розмов та лог дзвінків',
@@ -168,7 +165,7 @@ return [
     'BreadcrumbSoundFiles' => 'Звукові файли',
     'SubHeaderSoundFiles' => 'Використовуються в різних сценаріях дзвінків та інтерактивних голосових меню',
     'BreadcrumbLicensing' => 'Ліцензування',
-    'SubHeaderLicensing' => 'Реєстрація в Marketplace для доступу до нових розширень та модулів',
+    'SubHeaderLicensing' => 'Реєстрація в <b>Marketplace</b> для доступу до нових розширень та модулів',
     'BreadcrumbErrors' => 'Повідомлення про помилку',
     'SubHeaderErrors' => 'Якщо ця помилка відтворюється, повідомте розробнику',
     'BreadcrumbRestart' => 'Перезавантаження системи',
@@ -221,7 +218,7 @@ return [
     'bt_SaveSettingsAndExit' => 'Зберегти і закрити',
     'bt_ApplyChangesToPBX' => 'Застосувати зміни',
     'bt_BackToList' => 'Назад до списку',
-    'bt_Back' => 'Назад',
+    'bt_Back' => 'назад',
     'bt_ToolTipCopyPassword' => 'Пароль скопійований в буфер',
     'bt_ToolTipEdit' => 'Змінити',
     'bt_ToolTipRestore' => 'Відновити',
@@ -238,7 +235,7 @@ return [
     'pr_DTMFMode' => 'Режим DTMF',
     'pr_RegistrationSettings' => 'Налаштування реєстрації',
     'pr_ValidationProviderNameIsEmpty' => 'Введіть назву провайдера',
-    'pr_ValidationProviderHostIsEmpty' => 'Введіть хост або IP адресу провайдера',
+    'pr_ValidationProviderHostIsEmpty' => 'Введіть ім\'я сервера або IP-адресу провайдера',
     'pr_ValidationProviderLoginIsEmpty' => 'Введіть логін для авторизації у провайдера',
     'pr_SIPPort' => 'Порт з\'єднання SIP',
     'pr_DisableFromUser' => 'Відключити використання поля fromuser',
@@ -259,9 +256,9 @@ return [
     'pr_AddSIPProvider' => 'Підключити SIP',
     'pr_AddIAXProvider' => 'підключити IAX',
     'pr_QualifyInstructionsIAX' => 'При включення цієї опції Asterisk буде відправляти SIP Options пакети. Це необхідно для підтримки NAT тунелювання на вашому маршрутизаторі.',
-    'pr_CustomFieldsDescriptions' => '<div class=\'ui message\'>У більшості випадків поля перевизначень потрібно залишати порожніми. 
-    Тільки якщо у вас не працюють дзвінки, і провайдер вимагає особливих налаштувань, тоді ці поля необхідно заповнювати відповідно до рекомендацій провайдера.</div>',
-    'pr_ReceiveCallsWithoutAuth' => 'Довіряти цьому провайдеру і приймати від нього будь-які дзвінки без аутентифікації',
+    'pr_CustomFieldsDescriptions' => 'Найчастіше поля перевизначень потрібно залишати порожніми.
+    Тільки якщо у вас не працюють дзвінки і провайдер вимагає особливих налаштувань, тоді ці поля необхідно заповнювати згідно з рекомендаціями провайдера.',
+    'pr_ReceiveCallsWithoutAuth' => 'Приймати дзвінки без автентифікації',
     'pr_ValidationProviderPortRange' => 'Порт провайдера повинен бути в межах {ruleValue}',
     'pr_DeleteTitle' => 'Видалення провайдера',
     'pr_DeleteDescription' => 'Разом з провайдером будуть видалені всі пов\'язані правила вихідної маршрутизації, а в правилах вхідної маршрутизації всі посилання будуть замінені на "Будь-який провайдер"',
@@ -309,12 +306,12 @@ return [
     'ir_RuleAssignIf' => 'Правило спрацює при дзвінку на',
     'ir_DidNumber' => 'Додатковий номер (DID)',
     'ir_CallTransferTo' => 'Виклик буде переадресовано на',
-    'ir_Extension' => 'телефонний номер',
+    'ir_Extension' => 'номер',
     'ir_ValidateForwardingToBeFilled' => 'Не вказаний номер для переадресації',
     'ir_ValidateForwardingDefaultToBeFilled' => 'Не вказаний номер для переадресації за замовчуванням',
     'ir_ValidationPleaseEnterRuleName' => 'Введіть назву правила',
     'ir_ValidateTimeoutOutOfRange' => 'Не вірно вказаний таймаут переадресації. Він повинен бути між {ruleValue}',
-    'ir_DidNumberDescription' => 'Провайдер може передати додатковий номер, це необов\'язкове поле, але в деяких випадках можна більш точно маршрутизувати виклики.',
+    'ir_DidNumberDescription' => 'Провайдер може передати додатковий номер, це необов\'язкове поле, але в деяких випадках можна точніше маршрутизувати дзвінки.',
     'ir_TimeoutToTransferDefault' => 'Час в секундах, після якого виклик буде спрямований на наступне за пріоритетом правило',
     'ir_AddNewRule' => 'Додати нове правило',
     'ir_AnyProvider' => 'Будь-який провайдер',
@@ -406,7 +403,7 @@ return [
     'ex_DTMFMode' => 'Режим DTMF',
     'ex_NetworkFilter' => 'Мережевий фільтр',
     'ex_NatMode' => 'Режим NAT',
-    'ex_ManualAdditionalAttributes' => 'Додаткові параметри облікового запису SIP',
+    'ex_ManualAdditionalAttributes' => 'Додаткові параметри',
     'ex_RingMainExtension' => 'Протягом',
     'ex_SecondsAndThenRedirectCallTo' => 'секунд намагаємося додзвонитися за основним номером, потім переводимо на',
     'ex_IfMainExtensionIsBusyRedirectCallTo' => 'Якщо основний номер зайнятий переводимо виклик на',
@@ -497,7 +494,7 @@ return [
     'fw_icmpDescription' => 'ICMP - перевірка зв\'язку командою ping',
     'fw_ValidatePermitAddress' => 'Неправильно вказана адреса підмережі. Спробуйте конструкцію подібну 192.168.1.0/24',
     'fw_ValidateRuleName' => 'Введіть назву для підмережі',
-    'fw_NewerBlockIp' => 'Ніколи не блокувати адреси з цієї мережі, ігнорувати помилки авторизації телефонів і помилки введення пароля в Web інтерфейсі',
+    'fw_NewerBlockIp' => 'Ніколи не блокувати адреси цієї мережі, ігнорувати помилки авторизації телефонів і помилки введення пароля в Web інтерфейсі',
     'fw_ItIsLocalNetwork' => 'Це VPN або локальна мережа, телефони цієї мережі підключаються до станції безпосередньо без NAT маршрутизації',
     'fw_AllNetworksRule' => 'Всі доступні мережі',
     'fw_LocalNetworksRule' => 'Підмережа, де знаходиться АТС',
@@ -518,9 +515,9 @@ return [
     'nw_ValidateDHCPOnVlansDontSupport' => 'DHCP у VLAN підмереж не підтримується',
     'nw_ValidateNameIsNotBeEmpty' => 'Не заповнена назва інтерфейсу',
     'nw_ValidateVlanRange' => 'Неправильно заповнено значення VLAN. Вибирайте між {ruleValue}',
-    'nw_Hostname' => 'Ім\'я хоста',
+    'nw_Hostname' => 'Локальне ім\'я хоста',
     'nw_ValidateExtIppaddrNotRight' => 'Помилка заповнення зовнішньої IP адреси маршрутизатора',
-    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Необхідно заповнити або зовнішній IP маршрутизатора, або його DNS ім\'я',
+    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Необхідно заповнити або зовнішній IP маршрутизатор, або його DNS ім\'я',
     'nw_ValidateVlanCross' => 'Помилки в налаштуваннях VLAN у інтерфейсів, перевірте перетин параметрів',
     'nw_ValidateIppaddrIsEmpty' => 'Не заповнена IP адреса мережевого інтерфейсу',
     'nw_ValidateIppaddrNotRight' => 'IP адреса мережевого інтерфейсу вказана некоректно',
@@ -551,7 +548,7 @@ return [
     'gs_PBXInternalExtensionLength' => 'Максимальна довжина внутрішніх номерів',
     'gs_PBXRecordCalls' => 'Запис розмов',
     'gs_RestartEveryNight' => 'Перезапуск PBX щоночі',
-    'gs_PBXCallParkingExt' => 'Номер для паркування',
+    'gs_PBXCallParkingExt' => 'Номер для паркування виклику',
     'gs_PBXFeatureAttendedTransfer' => 'Комбінація для консультативного переводу',
     'gs_PBXFeatureBlindTransfer' => 'Комбінація для безумовного переводу',
     'gs_PBXFeatureDigitTimeout' => 'Максимальний таймаут між цифрами при введенні додаткового номера (в мілісекундах)',
@@ -582,15 +579,15 @@ return [
     'gs_WebAdminPassword' => 'Пароль',
     'gs_WebAdminPasswordRepeat' => 'Повторіть введення пароля',
     'gs_SSHPasswordRepeat' => 'Повторіть введення пароля',
-    'gs_Passwords' => 'Пароль адміністратора',
+    'gs_Passwords' => 'Пароль WEB інтерфейсу',
     'gs_DefaultPasswordWarning' => 'Не використовуйте стандартний логін і пароль адміністратора системи',
     'gs_ValidateEmptyWebPassword' => 'Пароль адмінки не може бути порожнім',
-    'gs_ValidateWeakWebPassword' => 'Вказано дуже простий пароль адміністративного інтерфейсу',
-    'gs_ValidateWebPasswordsFieldDifferent' => 'Пароль адмінки введено некоректно',
+    'gs_ValidateWeakWebPassword' => 'Пароль WEB повинен бути довшим за 4 символи',
+    'gs_ValidateWebPasswordsFieldDifferent' => 'Пароль web інтерфейсу введено некоректно',
     'gs_ValidateEmptySSHPassword' => 'Пароль SSH не може бути порожнім',
-    'gs_ValidateWeakSSHPassword' => 'Вказано дуже простий пароль SSH',
-    'gs_ValidateSSHPasswordsFieldDifferent' => 'Пароль SSH введено некоректно',
-    'gs_SendAnonymousMetrics' => 'Відправляти розробникам інформацію про збої',
+    'gs_ValidateWeakSSHPassword' => 'Пароль SSH повинен бути довшим за 4 символи',
+    'gs_ValidateSSHPasswordsFieldDifferent' => 'Пароль SSH неправильно введено. Повторіть введення пароля.',
+    'gs_SendAnonymousMetrics' => 'Надсилати розробникам інформацію про збої',
     'ts_CurrentSettings' => 'Поточні параметри',
     'ts_SystemTime' => 'Системний час',
     'ts_TimeZone' => 'Таймзона',
@@ -662,7 +659,7 @@ return [
     'da_ValidateExtensionDouble' => 'Внутрішній номер, вказаний для цього застосунка, зайнятий',
     'da_AddNewDialplanApp' => 'Додати нове',
     'da_TypePhp' => 'PHP-AGI скрипт',
-    'da_TypePlaintext' => 'Диалплан Asterisk',
+    'da_TypePlaintext' => 'Діалплан Asterisk',
     'cr_AddNewConferenceRoom' => 'Додати конференцію',
     'cr_ColumnExtension' => 'Номер',
     'cr_ColumnName' => 'Назва',
@@ -688,8 +685,8 @@ return [
     'cf_Path' => 'Шлях до файлу',
     'cf_Description' => 'Коментар для чого зроблені зміни',
     'cf_Mode' => 'Режим',
-    'mo_BeforeDeleteFirst' => 'mo_BeforeDeleteFirst %represent%',
-    'ConstraintViolation' => '<div class=\'header\'>Порушення логічної цілісності</div>',
+    'mo_BeforeDeleteFirst' => 'Є посилання на об\'єкт - %represent%',
+    'ConstraintViolation' => 'Порушення логічної цілісності',
     'repAsteriskManagerUsers' => 'AMI запис - %represent%',
     'repCallQueues' => 'Черга викликів - %represent%',
     'repCallQueueMembers' => 'Учасник черги викликів - %represent%',
@@ -727,7 +724,7 @@ return [
     'sf_SelectAudioFile' => 'Виберіть аудіофайл',
     'sf_ValidationFileNotSelected' => 'Спочатку завантажте аудіофайл',
     'lic_ValidateCompanyNameEmpty' => 'Не заповнене обов\'язкове поле - назва компанії',
-    'lic_ValidateContactEmail' => 'Не заповнене обов\'язкове поле - email контактної особи',
+    'lic_ValidateContactEmail' => 'Не заповнено обов\'язкове поле - email контактної особи',
     'lic_ValidateContactName' => 'Не заповнене обов\'язкове поле - контактна особа',
     'lic_ValidateCouponEmpty' => 'Не заповнене обов\'язкове поле - купон',
     'lic_ValidateLicenseKeyEmpty' => 'Не заповнене обов\'язкове поле - Ліцензійний ключ',
@@ -741,14 +738,12 @@ return [
     'lic_Coupon' => 'Купон для поновлення ліцензії',
     'lic_ActivateCouponButton' => 'Активувати купон',
     'lic_SaveLicenseKeyButton' => 'Зберегти ключ',
-    'lic_LicenseKeyMessage' => '<div class=\'ui message \'>Ліцензійний ключ використовується для зберігання всіх ваших ліцензій від будь-яких продуктів МІКО.<br>
-Якщо у вас вже є ключ, ви можете просто вписати його в це поле.<br>
-Якщо ключ у вас був, але ви його забули, пошукайте в пошті вхідні листи за адресою lic@miko.ru<br>
-Отримати новий ключ можна автоматично, заповнивши реєстраційну форму.<br>
-</div>',
-    'lic_CouponMessage' => '<div class=\'ui message \'>Купон використовується при розширенні функціоналу АТС або при покупці ліцензії.<br>
-Його можна активувати один раз, після чого купон рахується використаним.
-</div>',
+    'lic_LicenseKeyMessage' => 'Ліцензійний ключ використовується для зберігання всіх ліцензій від будь-яких продуктів МИКО.<br>
+Якщо у вас є ключ, ви можете просто вписати його в це поле.<br>
+Якщо ключ у вас був, але ви його забули, пошукайте в пошті листи, що входять за адресою lic@miko.ru<br>
+Отримати новий ключ можна автоматично, заповнивши реєстраційну форму.<br>',
+    'lic_CouponMessage' => 'Купон використовується при розширенні функціоналу АТС або при покупці ліцензії.<br>
+Його можна активувати один раз, після чого купон стає погашеним.',
     'lic_CurrentLicenseInfo' => 'Детальна інформація про продукти в ліцензійному ключі',
     'lic_Expired' => 'Термін дії продукту закінчився',
     'lic_ExpiredAfter' => 'Термін дії ліцензії закінчується після %expired%',
@@ -757,10 +752,10 @@ return [
     'lic_LicenseKeyProducts' => 'Активовані продукти',
     'lic_ResetLicenseSettings' => 'Скасувати прив\'язку до ключа',
     'lic_LicenseKeyValid' => 'Програма зареєстрована',
-    'lic_FailedToGetTrialKey2051' => '(2051) Не вдалося зареєструвати цю копію, тому що ви вже використовували реєстраційний номер з іншим Email на цій машині.<br>
- Використовуйте ключ відправлення вам раніше з адреси lic@miko.ru',
-    'lic_FailedToGetTrialKey2022' => '(2022) Не вдалося зареєструвати цю копію. На вказаний email вже був сгенерований реєстраційний номер для іншої компанії.<br>
- Використовуйте ключ відправлення вам раніше з адреси lic@miko.ru або вкажіть коректну назву компанії.',
+    'lic_FailedToGetTrialKey2051' => '(2051) Неможливо зареєструвати цю копію, т.к. ви вже використовували реєстраційний номер з іншим Email на цій машині.<br>
+ Використовуйте ключ, надісланий вам раніше з адреси lic@miko.ru',
+    'lic_FailedToGetTrialKey2022' => '(2022) Неможливо зареєструвати цю копію. На вказаний email вже було згенеровано реєстраційний номер для іншої компанії.<br>
+ Використовуйте ключ, надісланий вам раніше з адреси lic@miko.ru або вкажіть коректну назву компанії.',
     'lic_FailedActivateCoupon2057' => '(2057) Цей купон заблокований, зверніться за адресою lic@miko.ru',
     'lic_FailedActivateCoupon2040' => '(2040) Такого купона не існує, перевірте коректність введення',
     'lic_FailedActivateCoupon2041' => '(2041) Цей купон вже був активований раніше',
@@ -774,9 +769,9 @@ return [
     'lic_IntroductionTabHeader' => 'Про ліцензування маркетплейсу',
     'lic_ManagementTabHeader' => 'Реєстрація та управління ліцензією',
     'lic_FirstQuestionHeader' => 'Чи обов\'язково реєструватися',
-    'lic_FirstQuestionAnswer' => 'Базовий фукціонал MikoPBX повністю безкоштовний і необмежений ліцензією. Відсутність ліцензії ніяк не впливає на дзвінки.<br> Ви в будь-який момент можете зареєструватися, а також скасувати реєстрацію в Marketplace.',
+    'lic_FirstQuestionAnswer' => 'Базовий функціонал MikoPBX повністю безкоштовний та не обмежений ліцензією. Відсутність ліцензії ніяк не впливає на дзвінки. Ви можете в будь-який момент зареєструватися, а також скасувати реєстрацію в Marketplace.',
     'lic_MarketplaceHeader' => 'Marketplace - це додаткові можливості',
-    'lic_MarketplaceText' => 'Реєстрація в Marketplace дасть вам доступ до додаткових модулів та розширень.<br>Є безкоштовні модулі, котрі ми винесли з базового функціоналу для спрощення початкового налаштування, а також платні модулі від нас і інших розробників.<br>Якщо ви розробник, то можете зв\'язатися <a href="mailto:developers@mikopbx.com">з нами</a> для отримання інструкцій про те, як розробити власний модуль і додати його в Marketplace.',
+    'lic_MarketplaceText' => 'Реєстрація в Marketplace дасть вам доступ до додаткових модулів і розширень.<br>Є безкоштовні модулі, які ми винесли з базового функціоналу для спрощення початкового налаштування, а також платні модулі від нас та інших розробників.<br>Якщо ви розробник, то можете зв\'язатися <a href="mailto:dex розробити власний модуль і додати його до Marketplace.',
     'lic_MarketplaceImageHeader' => 'Картинка з нашого Marketplace',
     'lic_MarketplaceAction' => 'Перейти до безкоштовної реєстрації',
     'lic_LastQuestionHeader' => 'Що робити якщо виникла проблема з ліцензією',
@@ -795,8 +790,8 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Введіть логін',
     'auth_SubmitButton' => 'Авторизуватись',
     'auth_WrongLoginPassword' => 'Помилка авторизації',
-    'log_CaptureMessage' => '<div class=\'ui message \'>Запустіть збір логів і виконайте дзвінок або іншу дію, що приводить до збою. 
-<br>Система сформує зліпок стану системи у вигляді архіву.</div>',
+    'log_CaptureMessage' => 'Запустіть збір мережних пакетів і здійсніть дзвінок або іншу дію, що призводить до збою.
+<br>Система збереже всі пакети, які проходять в цей момент через мережну карту для подальшого аналізу.',
     'dbg_NoDebugInformation' => 'Немає інформації',
     'dbg_Header' => 'Налагоджувальна інформація',
     'f2b_Reason' => 'Причина',
@@ -823,7 +818,7 @@ return [
     'upd_DownloadUpgradeError' => 'Помилка при скачуванні оновлення, спробуйте повторити спробу пізніше',
     'upd_UploadError' => 'Помилка при завантаженні оновлення',
     'upd_UpdateTitle' => 'Оновлення PBX',
-    'upd_UpdateDescription' => 'Після завантаження оновлення, АТС перезавантажиться автоматично, всі поточні виклики будуть скинуті.<br> Рекомендуємо виконати резервне копіювання, перед оновленням.',
+    'upd_UpdateDescription' => 'Після завантаження оновлення, АТС перезавантажиться автоматично, всі поточні дзвінки будуть скинуті. Перед оновленням обов\'язково зробіть резервну копію MikoPBX.',
     'upd_Update' => 'Оновити',
     'upd_UploadInProgress' => 'Закачується файл оновлення …',
     'upd_UpgradeInProgress' => 'Оновлюються системні файли …',
@@ -876,8 +871,8 @@ return [
     'adv_YouUseDefaultSSHPassword' => 'Ви використовуєте пароль за замовчуванням для доступу до SSH - <a href=\'%url%\'>змінити</a>',
     'adv_FirewallDisabled' => 'В системі відключений мережевий екран - <a href=\'%url%\'>змінити</a>',
     'adv_StorageDiskUnMounted' => 'Не подключено диск для зберігання налаштувань та даних!',
-    'adv_NetworksNotConfigured' => 'Не налаштовані параметри дозволених підмереж  - <a href=\'%url%\'>змінити</a>',
-    'adv_AvailableNewVersionPBX' => 'Доступна нова версія PBX – <a href=\'%url%\'>%ver%</a>',
+    'adv_NetworksNotConfigured' => 'Не налаштовані параметри дозволених підмереж - <a href=\'%url%\'>змінити</a>',
+    'adv_AvailableNewVersionPBX' => 'Доступна нова версія PBX - <a href=\'%url%\'>%ver%</a>',
     'adv_ThisCopyIsNotRegistered' => 'Ця копія програми не ліцензована – <a href=\'%url%\'>Безкоштовна активація</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'На диску для зберігання закінчується вільне місце (%free% Mb)</a>',
     'adv_ThisCopyHasLicensingTroubles' => 'Проблема з ліцензією PBX: %error%  - <a target="_blank" href=\'%url%\'>як це виправити</a>',
@@ -1048,11 +1043,11 @@ return [
     'gs_KeepAliveHeader' => 'Налаштування тривалості дії реєстрації',
     'gs_PBXFeaturePickupExten' => 'Комбінація для перехоплення вхідних викликів',
     'gs_CallRecordTab' => 'Запис розмов',
-    'adv_ProblemWithInternetConnection' => 'Відсутнє підключення до Internet. Можливі проблеми в роботі платних модулів.',
+    'adv_ProblemWithInternetConnection' => 'Відсутнє підключення до Internet. Можливі проблеми у роботі платних модулів.',
     'lic_GetTrialErrorCheckInternet' => 'Неможливо пройти реєстрацію, перевірте наявність Internet на MikoPBX',
     'gs_PBXAllowGuestCalls' => 'Дозволити вхідні дзвінки з будь-яких серверів',
     'pr_NoAnyAdditionalHosts' => 'Не вказано додаткових адрес для цього провайдера',
-    'pr_EnterHostOrIpPlaceholder' => 'Введіть IP адреса або підмережа',
+    'pr_EnterHostOrIpPlaceholder' => 'Введіть IP-адресу або підсіть і натисніть Enter',
     'pr_EnterHostOrIp' => 'Додаткові адреси провайдера',
     'auth_RememberMe' => 'Запам\'ятати мене',
     'log_DownloadLogs' => 'Завантажити усі логи',
@@ -1087,7 +1082,7 @@ return [
     'adv_isSimplePassword' => 'Використовується небезпечний пароль для "%type%" - <a href=\'%url%\'>змінити</a>',
     'gs_PasswordSimple' => 'Пароль, що встановлюється, занадто простий.',
     'gs_SetPassword' => 'Встановіть новий пароль',
-    'gs_SetPasswordInfo' => 'Пароль дуже простий. Новий пароль має містити цифри, літери нижнього та верхнього регістру.',
+    'gs_SetPasswordInfo' => 'Пароль надто простий.',
     'pass_CheckSSHPasswordEmpty' => 'Поле не заповнено: SSH',
     'pass_CheckWebAdminPasswordSimple' => 'Пароль для WEB дуже простий.',
     'pass_CheckWebAdminPasswordDontMatch' => 'Введені паролі для WEB не збігаються',
@@ -1104,13 +1099,13 @@ return [
     'ex_ValidateSecretWeak' => 'Пароль SIP повинен бути довшим за 4 символи',
     'lic_NoInetHeader' => 'Немає доступу до сервера ліцензування.',
     'lic_NoInet' => 'Можливо, з сервера MikoPBX немає доступу в інтернет',
-    'lic_NoInetLicMiko' => 'Можливо обмежений доступ до ресурсів <b>lic.miko.ru</b>',
+    'lic_NoInetLicMiko' => 'Можливо обмежений доступ до ресурсів <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "Перевірте параметри <b>DNS</b> та <b>Gateway</b> у налаштуваннях <a href='/admin-cabinet/network/modify/'>мережі</a>",
     'lic_SuccessfulСuponActivation' => 'Купон успішно активовано',
     'or_RuleDescriptionBeginEmpty' => 'Номер складається з <b>%restnumbers%</b> цифр',
     'or_RuleNotConfigured' => 'Правило не налаштоване',
     'or_RuleAnyNumbers' => 'Будь-які номери',
-    'ex_Transport' => 'Транспортний протокол (UDP/TCP за замовчуванням)',
+    'ex_Transport' => 'Транспортний протокол',
     'gs_TLS_PORT' => 'Порт SIP TLS (шифровані дзвінки)',
     'ex_OutboundProxy' => 'Outbound proxy (приклад: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'АТС не відповіла на запит інформації щодо ліцензії. Сервіс недоступний.',
@@ -1166,4 +1161,6 @@ return [
     'mm_Update' => 'Оновлення PBX',
     'adv_AmiPasswordFieldName' => 'AMI користувача <%record%>',
     'adv_PopupHeader' => 'Виявлено такі проблеми:',
+    'upd_EnterIHaveBackupPhrasePreText' => 'Для оновлення системи введіть у поле введення наступну фразу:',
+    'upd_EnterIHaveBackupPhrase' => 'Так, у мене є резервна копія',
 ];

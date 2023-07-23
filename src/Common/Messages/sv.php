@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -108,8 +107,8 @@ return [
     'adv_YouUseDefaultSSHPassword' => 'Du använder standardlösenordet för att komma åt SSH - <a href=\'%url%\'> ändring </a>',
     'adv_FirewallDisabled' => 'Inaktiverad brandvägg i systemet - <a href=\'%url%\'> ändring </a>',
     'adv_StorageDiskUnMounted' => 'Inte ansluten enhet för att lagra inställningar och data!',
-    'adv_NetworksNotConfigured' => 'De tillåtna undernätinställningarna är inte konfigurerade - <a href=\'%url%\'> ändra </a>',
-    'adv_AvailableNewVersionPBX' => 'En ny version av PBX finns - <a href=\'%url%\'> %ver% </a>',
+    'adv_NetworksNotConfigured' => 'Tillåtna undernätsinställningar inte konfigurerade - <a href=\'%url%\'>ändra</a>',
+    'adv_AvailableNewVersionPBX' => 'Ny PBX-version tillgänglig - <a href=\'%url%\'>%ver%</a>',
     'adv_ThisCopyIsNotRegistered' => 'Denna kopia av programmet är inte licensierad - <a href=\'%url%\'> Gratis aktivering </a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Disken för lagring har slut på ledigt utrymme (%free% Mb) </a>',
     'adv_ThisCopyHasLicensingTroubles' => 'PBX-licensproblem: %error% - <a target="_blank" href=\'%url%\'> hur man fixar </a>',
@@ -128,9 +127,8 @@ return [
     'gs_PBXName' => 'PBX-systemnamn',
     'gs_AJAMEnabled' => 'Använd AJAM-gränssnitt',
     'gs_AJAMPort' => 'AJAM port',
-    'lic_CouponMessage' => '<div class = \'ui message\'> Kupongen används vid utvidgning av PBX: s funktionalitet eller vid köp av en licens. <br>
-Det kan aktiveras en gång, varefter kupongen löses in.
-</div>',
+    'lic_CouponMessage' => 'Kupongen används när man utökar växelns funktionalitet eller när man köper en licens.<br>
+Den kan aktiveras en gång, varefter kupongen löses in.',
     'lic_FailedActivateCoupon2041' => '(2041) Denna kupong har redan aktiverats tidigare',
     'rs_ShutDownPhoneSystem' => 'Stäng av PBX',
     'ext_Version' => 'version',
@@ -194,7 +192,7 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'fw_icmpDescription' => 'ICMP - pingkommunikation',
     'fw_ValidatePermitAddress' => 'Subnätadressen är felaktig. Prova en design som 192.168.1.0/24',
     'fw_ValidateRuleName' => 'Ange ett namn för undernätet',
-    'fw_NewerBlockIp' => 'Blockera aldrig adresser från detta nätverk, ta in fel på telefonens godkännande och fel i lösenordsinmatningen i webbgränssnittet',
+    'fw_NewerBlockIp' => 'Blockera aldrig adresser från detta nätverk, ignorera telefonauktoriseringsfel och lösenordsinmatningsfel i webbgränssnittet',
     'fw_ItIsLocalNetwork' => 'Detta är ett VPN- eller lokalnätverk, telefoner från detta nätverk ansluter direkt till stationen utan NAT-routing',
     'fw_DenyNetwork' => 'Forbidden Subnet',
     'fw_PermitNetwork' => 'subnätverk',
@@ -211,7 +209,7 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'nw_ValidateDHCPOnVlansDontSupport' => 'DHCP stöds inte på VLAN-undernät',
     'nw_ValidateNameIsNotBeEmpty' => 'Gränssnittsnamnet är inte fyllt',
     'nw_ValidateVlanRange' => 'VLAN-värdet är felaktigt befolkat. Välj mellan {ruleValue}',
-    'nw_Hostname' => 'Värdnamn',
+    'nw_Hostname' => 'lokalt värdnamn',
     'nw_ValidateVlanCross' => 'Fel i VLAN-inställningar vid gränssnitt, kontrollera skärning av parametrar',
     'nw_ValidateIppaddrIsEmpty' => 'IP-adressen för nätverksgränssnittet är inte full',
     'nw_ValidateIppaddrNotRight' => 'IP-adressen för nätverksgränssnittet är felaktig',
@@ -238,7 +236,7 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'gs_PBXLanguage' => 'Systemljudmeddelande Språk',
     'gs_PBXInternalExtensionLength' => 'Maximal längd på interna nummer',
     'gs_RestartEveryNight' => 'Starta om PBX varje natt',
-    'gs_PBXCallParkingExt' => 'Parkeringsnummer',
+    'gs_PBXCallParkingExt' => 'Ring parkeringsnummer',
     'gs_PBXFeatureAttendedTransfer' => 'Kombination för rådgivande översättning',
     'gs_PBXFeatureBlindTransfer' => 'Kombination för ovillkorlig överföring',
     'gs_PBXFeatureDigitTimeout' => 'Maximal timeout mellan siffror när du anger ett anknytningsnummer (i millisekunder)',
@@ -265,15 +263,15 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'gs_WebAdminPassword' => 'lösenord',
     'gs_WebAdminPasswordRepeat' => 'Skriv in lösenordet igen',
     'gs_SSHPasswordRepeat' => 'Skriv in lösenordet igen',
-    'gs_Passwords' => 'Administratörslösenord',
+    'gs_Passwords' => 'WEB-gränssnittslösenord',
     'gs_DefaultPasswordWarning' => 'Använd inte standardinloggningen och lösenordet för systemadministratören',
     'gs_ValidateEmptyWebPassword' => 'Administratörslösenordet kan inte vara tomt',
-    'gs_ValidateWeakWebPassword' => 'Mycket enkelt admingränssnitt lösenord specificerat',
-    'gs_ValidateWebPasswordsFieldDifferent' => 'Administratörslösenordet anges felaktigt',
+    'gs_ValidateWeakWebPassword' => 'WEB-lösenordet måste vara längre än 4 tecken',
+    'gs_ValidateWebPasswordsFieldDifferent' => 'Lösenordet för webbgränssnittet har angetts felaktigt',
     'gs_ValidateEmptySSHPassword' => 'SSH-lösenord kan inte vara tomt',
-    'gs_ValidateWeakSSHPassword' => 'Mycket enkelt SSH-lösenord specificerat',
-    'gs_ValidateSSHPasswordsFieldDifferent' => 'SSH-lösenord angav felaktigt',
-    'gs_SendAnonymousMetrics' => 'Skicka kraschinfo till utvecklare',
+    'gs_ValidateWeakSSHPassword' => 'SSH-lösenordet måste vara längre än 4 tecken',
+    'gs_ValidateSSHPasswordsFieldDifferent' => 'SSH-lösenordet har angetts felaktigt. Ange lösenordet igen.',
+    'gs_SendAnonymousMetrics' => 'Skicka information till utvecklare om krascher',
     'gs_RedirectToHttps' => 'HTTPS-omdirigering',
     'gs_WebAdminLanguage' => 'Webgränssnittsspråk',
     'ts_CurrentSettings' => 'Aktuella inställningar',
@@ -365,8 +363,8 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'cf_Path' => 'Filväg',
     'cf_Description' => 'Kommentar till varför ändringar gjordes',
     'cf_Mode' => 'regim',
-    'mo_BeforeDeleteFirst' => 'Det finns länkar till objektet - %represent%',
-    'ConstraintViolation' => '<div class = \'header\'> Brott mot logisk integritet </div>',
+    'mo_BeforeDeleteFirst' => 'Det finns referenser till objektet - %represent%',
+    'ConstraintViolation' => 'Brott mot logisk integritet',
     'repAsteriskManagerUsers' => 'AMI-post - %represent%',
     'repCallQueues' => 'Samtalskö - %represent%',
     'repCallQueueMembers' => 'Samtalskömedlem - %represent%',
@@ -398,7 +396,7 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'sf_SelectAudioFile' => 'Välj en ljudfil',
     'sf_ValidationFileNotSelected' => 'Ladda ner ljudfilen först',
     'lic_ValidateCompanyNameEmpty' => 'Det obligatoriska fältet är inte fyllt - företagsnamn',
-    'lic_ValidateContactEmail' => 'Det obligatoriska fältet är inte fyllt - kontaktpersons e-post',
+    'lic_ValidateContactEmail' => 'Obligatoriskt fält ej ifyllt - kontaktpersons e-post',
     'lic_ValidateContactName' => 'Obligatoriskt fält är inte fyllt - kontaktperson',
     'lic_ValidateCouponEmpty' => 'Det obligatoriska fältet är inte fyllt - kupong',
     'lic_ValidateLicenseKeyEmpty' => 'Obligatoriskt fält är inte fyllt - Licensnyckel',
@@ -412,11 +410,10 @@ Det kan aktiveras en gång, varefter kupongen löses in.
     'lic_Coupon' => 'Kupong för förnyelse av licens',
     'lic_ActivateCouponButton' => 'Aktivera kupongen',
     'lic_SaveLicenseKeyButton' => 'Spara nyckel',
-    'lic_LicenseKeyMessage' => '<div class = \'ui message\'> Licensnyckeln används för att lagra alla dina licenser från alla MIKO-produkter. <br>
-Om du redan har en nyckel kan du helt enkelt ange den i det här fältet. <br>
-Om du hade nyckeln, men du glömde den, leta i posten efter inkommande brev på lic@miko.ru <br>
-Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. <br>
-</div>',
+    'lic_LicenseKeyMessage' => 'Licensnyckeln används för att lagra alla dina licenser från alla MIKO-produkter.<br>
+Om du redan har en nyckel kan du helt enkelt ange den i det här fältet.<br>
+Om du hade nyckeln men glömde den, leta efter inkommande brev i posten på lic@miko.ru<br>
+Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<br>',
     'lic_CurrentLicenseInfo' => 'Licensierad produktinformation',
     'lic_Expired' => 'Produkten har gått ut',
     'lic_ExpiredAfter' => 'Licens går ut efter %expired%',
@@ -426,10 +423,10 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'lic_LicenseKeyOwner' => 'Licenshavare',
     'lic_ResetLicenseSettings' => 'Koppla bort nyckeln',
     'lic_LicenseKeyValid' => 'Programmet är registrerat',
-    'lic_FailedToGetTrialKey2051' => '(2051) Det gick inte att registrera denna kopia eftersom Du har redan använt ett registreringsnummer med ett annat e-postmeddelande på den här maskinen. <br>
- Använd nyckeln som skickades till dig tidigare från lic@miko.ru',
-    'lic_FailedToGetTrialKey2022' => '(2022) Det gick inte att registrera denna kopia. Ett registreringsnummer för ett annat företag har redan genererats till den angivna e-postadressen. <br>
- Använd nyckeln som skickades till dig tidigare från lic@miko.ru eller ange rätt namn på företaget.',
+    'lic_FailedToGetTrialKey2051' => '(2051) Det gick inte att checka in detta exemplar. du har redan använt registreringsnumret med en annan e-post på den här maskinen.<br>
+ Använd nyckeln som skickades till dig tidigare från lic@miko.ru',
+    'lic_FailedToGetTrialKey2022' => '(2022) Det gick inte att registrera denna kopia. Ett registreringsnummer för ett annat företag har redan genererats för den angivna e-postadressen.<br>
+ Använd nyckeln som skickats till dig tidigare från adressen lic@miko.ru eller ange rätt företagsnamn.',
     'lic_FailedActivateCoupon2057' => '(2057) Den här kupongen har blockerats. Kontakta lic@miko.ru',
     'lic_FailedActivateCoupon2040' => '(2040) Denna kupong finns inte, kontrollera att ingången är korrekt',
     'lic_FailedActivateCoupon2037' => '(2037) Fel vid specificering av registreringsnummer',
@@ -442,9 +439,9 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'lic_IntroductionTabHeader' => 'Om licensiering av marknaden',
     'lic_ManagementTabHeader' => 'Registrering och licenshantering',
     'lic_FirstQuestionHeader' => 'Måste jag registrera mig',
-    'lic_FirstQuestionAnswer' => 'Basfunktionen MikoPBX är helt gratis och begränsas inte av licens. Brist på licens påverkar inte samtal på något sätt. <br> Du kan registrera dig när som helst samt avbryta registreringen på Marketplace.',
+    'lic_FirstQuestionAnswer' => 'Den grundläggande funktionaliteten hos MikoPBX är helt gratis och inte begränsad av en licens. Avsaknaden av en licens påverkar inte samtal på något sätt.<br> Du kan registrera och avregistrera dig på Marketplace när som helst.',
     'lic_MarketplaceHeader' => 'Marketplace - det här är ytterligare möjligheter',
-    'lic_MarketplaceText' => 'Registrering på Marketplace ger dig tillgång till ytterligare moduler och tillägg. <br> Det finns gratis moduler som vi har tagit bort från den grundläggande funktionaliteten för att förenkla den initiala installationen, liksom betalade moduler från oss och andra utvecklare. <br> Om du är en utvecklare kan du kontakta <a href="mailto:developers@mikopbx.com"> med oss </a> för instruktioner om hur du utvecklar din egen modul och lägger till den på Marketplace.',
+    'lic_MarketplaceText' => 'Genom att registrera dig på Marketplace får du tillgång till ytterligare moduler och tillägg.<br>Det finns gratismoduler som vi tog bort från kärnfunktionaliteten för att förenkla den initiala installationen, såväl som betalmoduler från oss och andra utvecklare.<br>Om du är en utvecklare kan du kontakta <a href="mailto:developers@mikopbx.com">oss om hur du utvecklar din egen modul</a> för instruktioner för Marketplace.',
     'lic_MarketplaceImageHeader' => 'Bild från vår marknadsplats',
     'lic_MarketplaceAction' => 'Gå till gratis registrering',
     'lic_LastQuestionHeader' => 'Vad du ska göra om det finns ett problem med licensen',
@@ -462,8 +459,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'auth_ValidateLoginNotEmpty' => 'Ange inloggning',
     'auth_SubmitButton' => 'Logga in',
     'auth_WrongLoginPassword' => 'Autoriseringsfel',
-    'log_CaptureMessage' => '<div class = \'ui message\'> Börja samla nätverkspaket och utför ett samtal eller annan åtgärd som orsakar ett fel.
-<br> Systemet kommer att spara alla paket som passerar genom nätverkskortet för närvarande för vidare analys. </div>',
+    'log_CaptureMessage' => 'Börja samla in nätverkspaket och ring ett samtal eller annan åtgärd som orsakar felet.
+<br>Systemet kommer att spara alla paket som passerar för närvarande genom nätverkskortet för vidare analys.',
     'dbg_NoDebugInformation' => 'Ingen information',
     'dbg_Header' => 'Felsökningsinformation',
     'f2b_Reason' => 'anledning',
@@ -487,7 +484,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'upd_DownloadUpgradeError' => 'Fel vid nedladdning av uppdateringen, försök igen senare',
     'upd_UploadError' => 'Fel vid nedladdning av uppdateringen',
     'upd_UpdateTitle' => 'PBX-uppdatering',
-    'upd_UpdateDescription' => 'Efter nedladdning av uppdateringen kommer PBX att starta om automatiskt, alla aktuella samtal återställs. <br> Vi rekommenderar att du säkerhetskopierar innan du uppdaterar.',
+    'upd_UpdateDescription' => 'Efter nedladdning av uppdateringen kommer telefonväxeln att starta om automatiskt, alla aktuella samtal kommer att avbrytas. Se till att säkerhetskopiera din MikoPBX innan du uppdaterar.',
     'upd_Cancel' => 'annullering',
     'upd_Update' => 'uppdatering',
     'upd_UploadInProgress' => 'Hämtar uppdateringsfil …',
@@ -548,10 +545,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'MetaTegHeadDescription' => 'Business Phone System',
     'Loading' => 'lastning',
     'qf_Qualify' => 'Stöd NAT-sessionen',
-    'qf_Frequency' => 'Skickfrekvens i sek.',
-    'qf_QualifyInstructions' => '<div class = \'ui meddelande\'>
-            När detta alternativ är aktiverat skickar Asterisk SIP-alternativpaket med den angivna frekvensen. Detta är nödvändigt för att stödja NAT-tunneling på din router.
-        </div>',
+    'qf_Frequency' => 'Sändningsfrekvens i sekunder:',
+    'qf_QualifyInstructions' => 'När det här alternativet är aktiverat kommer telefonväxeln att skicka SIP OPTIONS-paket med angiven frekvens. Detta krävs för att stödja NAT-tunnling på din router.',
     'AdvancedOptions' => 'Avancerade inställningar',
     'ConnectionSettings' => 'Anslutningsinställningar',
     'BreadcrumbHome' => 'Till början',
@@ -594,17 +589,17 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'BreadcrumbDialplanApplicationsmodify' => 'Applikationsinställning',
     'SubHeaderDialplanApplications' => 'PHP och Asterisk Dialplan programmerbara röstapplikationer',
     'BreadcrumbConferenceRooms' => 'konferens',
-    'SubHeaderConferenceRooms' => 'Organisering av rum för multilaterala ljudkonferenser',
+    'SubHeaderConferenceRooms' => 'Organisering av rum för ljudkonferenser med flera parter',
     'BreadcrumbConferenceRoomsmodify' => 'Parameterinställning',
     'BreadcrumbCallDetailRecords' => 'Samtalshistorik',
     'SubHeaderCallDetailRecords' => 'Konversationslogg och samtalslogg',
     'BreadcrumbCustomFilesmodify' => 'redigering',
     'BreadcrumbCustomFiles' => 'Systemfiler',
-    'SubHeaderCustomFiles' => 'Casotization av systemkonfigurationsfiler och Asterisk',
+    'SubHeaderCustomFiles' => 'Anpassa system- och Asterisk-konfigurationsfiler',
     'BreadcrumbSoundFiles' => 'Ljudfiler',
     'SubHeaderSoundFiles' => 'Används i olika samtalsscenarier och interaktiva röstmenyer',
     'BreadcrumbLicensing' => 'licensiering',
-    'SubHeaderLicensing' => 'Registrera dig på Marketplace för att få tillgång till nya tillägg och moduler',
+    'SubHeaderLicensing' => 'Registrering i <b>Marketplace</b> för tillgång till nya tillägg och moduler',
     'BreadcrumbErrors' => 'Felmeddelande',
     'SubHeaderErrors' => 'Om detta fel kvarstår, informera utvecklaren',
     'BreadcrumbRestart' => 'Starta om systemet',
@@ -673,7 +668,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'pr_DTMFMode' => 'DTMF-läge',
     'pr_RegistrationSettings' => 'Registreringsinställningar',
     'pr_ValidationProviderNameIsEmpty' => 'Ange leverantörens namn',
-    'pr_ValidationProviderHostIsEmpty' => 'Ange leverantörens värd eller IP-adress',
+    'pr_ValidationProviderHostIsEmpty' => 'Ange servernamnet eller IP-adressen för leverantören',
     'pr_ValidationProviderLoginIsEmpty' => 'Ange inloggning för godkännande med leverantör',
     'pr_SIPPort' => 'SIP-anslutningsport',
     'pr_DisableFromUser' => 'Inaktivera med användarfältet',
@@ -694,9 +689,9 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'pr_AddSIPProvider' => 'Anslut SIP',
     'pr_AddIAXProvider' => 'Anslut IAX',
     'pr_QualifyInstructionsIAX' => 'När detta alternativ är aktiverat skickar Asterisk SIP-alternativpaket. Detta är nödvändigt för att stödja NAT-tunneling på din router.',
-    'pr_CustomFieldsDescriptions' => '<div class = \'ui meddelande\'> I de flesta fall bör åsidosättningsfälten lämnas tomma.
-    Endast om dina samtal inte fungerar och leverantören kräver specialinställningar måste dessa fält fyllas i enligt leverantörens rekommendationer. </div>',
-    'pr_ReceiveCallsWithoutAuth' => 'Lita på denna leverantör och få alla samtal från den utan verifiering',
+    'pr_CustomFieldsDescriptions' => 'I de flesta fall bör åsidosättningsfält lämnas tomma.
+    Endast om samtal inte fungerar för dig, och leverantören kräver speciella inställningar, måste dessa fält fyllas i enligt leverantörens rekommendationer.',
+    'pr_ReceiveCallsWithoutAuth' => 'Acceptera samtal utan autentisering',
     'pr_ValidationProviderPortRange' => 'Leverantörsport måste vara inom {ruleValue}',
     'pr_DeleteTitle' => 'Radera leverantör',
     'pr_DeleteDescription' => 'Tillsammans med leverantören kommer alla tillhörande regler för utgående routing att raderas, och i de inkommande routingreglerna kommer alla länkar att ersättas med "Alla leverantörer"',
@@ -745,12 +740,12 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ir_RuleAssignIf' => 'Regeln fungerar när du ringer på',
     'ir_DidNumber' => 'Ytterligare nummer (DID)',
     'ir_CallTransferTo' => 'Samtalet vidarebefordras till',
-    'ir_Extension' => 'telefonnummer',
+    'ir_Extension' => 'siffra',
     'ir_ValidateForwardingToBeFilled' => 'Vidarebefordringsnummer inte specificerat',
     'ir_ValidateForwardingDefaultToBeFilled' => 'Inget standardnummer för vidarekoppling har angetts',
     'ir_ValidationPleaseEnterRuleName' => 'Ange ett regelnamn',
     'ir_ValidateTimeoutOutOfRange' => 'Ogiltig timeout för omdirigering specificerad. Det måste vara mellan {ruleValue}',
-    'ir_DidNumberDescription' => 'Leverantören kan skicka ett ytterligare nummer, detta är ett valfritt fält, men i vissa fall är det möjligt att dirigera samtal mer exakt.',
+    'ir_DidNumberDescription' => 'Leverantören kan skicka ett extra nummer, detta är ett valfritt fält, men i vissa fall är det möjligt att dirigera samtal mer exakt.',
     'ir_TimeoutToTransferDefault' => 'Tid i sekunder efter det att samtalet dirigeras till nästa prioriteringsregel',
     'ir_AddNewRule' => 'Lägg till ny regel',
     'ir_AnyProvider' => 'Varje leverantör',
@@ -841,7 +836,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ex_DTMFMode' => 'DTMF-läge',
     'ex_NetworkFilter' => 'Överspänningsskydd',
     'ex_NatMode' => 'NAT-läge',
-    'ex_ManualAdditionalAttributes' => 'Ytterligare parametrar för SIP-redovisning',
+    'ex_ManualAdditionalAttributes' => 'Extra tillval',
     'ex_SecondsAndThenRedirectCallTo' => 'sekunder vi försöker nå huvudnumret och sedan överföra till',
     'ex_IfMainExtensionIsBusyRedirectCallTo' => 'Om huvudnumret är upptaget, överför samtalet till',
     'ex_IfMainExtensionIsUnavailableRedirectCallTo' => 'Om huvudnumret inte är tillgängligt, överför samtalet till',
@@ -872,7 +867,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'fw_LocalNetworksRule' => 'Subnät där PBX finns',
     'mo_Disabled' => 'off',
     'nw_ValidateExtIppaddrNotRight' => 'Fel vid uppgradering av routerns externa IP-adress',
-    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Det är nödvändigt att fylla i antingen routerns externa IP eller dess DNS-namn',
+    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Du måste fylla i antingen routerns externa IP eller dess DNS-namn',
     'gs_PBXDescription' => 'Ytterligare beskrivning',
     'gs_PBXRecordCalls' => 'Samtalinspelning',
     'gs_AJAMPortTLS' => 'AJAM-port med kryptering',
@@ -1048,10 +1043,10 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'gs_KeepAliveHeader' => 'Inställningar för registreringstid',
     'gs_PBXFeaturePickupExten' => 'Kombination för att ta emot inkommande samtal',
     'gs_CallRecordTab' => 'Samtalinspelning',
-    'adv_ProblemWithInternetConnection' => 'Det finns ingen internetanslutning. Det kan vara problem med driften av betalda moduler.',
+    'adv_ProblemWithInternetConnection' => 'Det finns ingen internetanslutning. Det kan finnas problem i arbetet med betalda moduler.',
     'lic_GetTrialErrorCheckInternet' => 'Registreringen misslyckades, kolla efter Internet på MikoPBX',
     'pr_NoAnyAdditionalHosts' => 'Inga ytterligare adresser har angetts för denna leverantör',
-    'pr_EnterHostOrIpPlaceholder' => 'Ange IP-adress eller undernät',
+    'pr_EnterHostOrIpPlaceholder' => 'Ange IP-adressen eller subnätet och tryck på Enter',
     'gs_PBXAllowGuestCalls' => 'Tillåt inkommande samtal från alla servrar',
     'pr_EnterHostOrIp' => 'Ytterligare leverantörsadresser',
     'auth_RememberMe' => 'Kom ihåg mig',
@@ -1086,7 +1081,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'adv_SshPasswordFieldName' => 'SSH',
     'adv_UserPasswordFieldName' => '%record%',
     'gs_SetPassword' => 'Ange ett nytt lösenord',
-    'gs_SetPasswordInfo' => 'Lösenordet är för enkelt. Det nya lösenordet måste innehålla siffror, små och stora bokstäver.',
+    'gs_SetPasswordInfo' => 'Lösenordet är för enkelt.',
     'gs_PasswordSimple' => 'Lösenordet som ställs in är för enkelt.',
     'pass_CheckWebAdminPasswordSimple' => 'WEB-lösenordet är för enkelt.',
     'pass_CheckWebAdminPasswordDontMatch' => 'Angivna lösenord för WEB stämmer inte överens',
@@ -1104,13 +1099,13 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'ex_PasswordNoNumbers' => 'Lösenordet måste innehålla siffror',
     'lic_NoInetHeader' => 'Ingen åtkomst till licensservern.',
     'lic_NoInet' => 'Kanske finns det ingen internetåtkomst från MikoPBX-servern',
-    'lic_NoInetLicMiko' => 'Kanske begränsad åtkomst till resursen <b>lic.miko.ru</b>',
+    'lic_NoInetLicMiko' => 'Kanske begränsad åtkomst till resursen <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "Kontrollera inställningarna för <b>DNS</b> och <b>Gateway</b> i inställningarna för <a href='/admin-cabinet/network/modify/'>nätverk</a>",
     'lic_SuccessfulСuponActivation' => 'Kupongen har aktiverats',
     'or_RuleDescriptionBeginEmpty' => 'Numret består av <b>%restnumbers%</b> siffror',
     'or_RuleNotConfigured' => 'Regel inte konfigurerad',
     'or_RuleAnyNumbers' => 'Alla siffror',
-    'ex_Transport' => 'Transportprotokoll (UDP/TCP som standard)',
+    'ex_Transport' => 'Transportprotokoll',
     'gs_TLS_PORT' => 'SIP TLS-port (krypterade samtal)',
     'ex_OutboundProxy' => 'Utgående proxy (exempel: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATC svarade inte på en begäran om information om licensen. Tjänsten är inte tillgänglig.',
@@ -1166,4 +1161,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret. 
     'mm_Update' => 'PBX-uppdatering',
     'adv_AmiPasswordFieldName' => 'Användar-AMI <%record%>',
     'adv_PopupHeader' => 'Följande problem har hittats:',
+    'upd_EnterIHaveBackupPhrasePreText' => 'För att uppdatera systemet, skriv in följande fras i inmatningsfältet:',
+    'upd_EnterIHaveBackupPhrase' => 'Ja, jag har en backup',
 ];

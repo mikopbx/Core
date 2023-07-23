@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -90,7 +89,7 @@ return [
     'Oct' => 'Out',
     'Sep' => 'Set',
     'Jul' => 'Jul',
-    'qf_Frequency' => 'Frequência de envio em seg.',
+    'qf_Frequency' => 'Frequência de envio em segundos:',
     'BreadcrumbIncomingRoutes' => 'Roteamento de entrada',
     'BreadcrumbOutOffWorkTime' => 'Horário não comercial',
     'bt_Back' => 'Voltar',
@@ -190,7 +189,7 @@ return [
     'gs_CodecsTab' => 'Codecs de áudio / vídeo',
     'gs_WebAdminLanguage' => 'Linguagem da interface da web',
     'gs_RedirectToHttps' => 'Redirecionar para HTTPS',
-    'gs_SendAnonymousMetrics' => 'Envie informações de falha para desenvolvedores',
+    'gs_SendAnonymousMetrics' => 'Envie aos desenvolvedores informações sobre falhas',
     'gs_ValidateWEBHTTPSPortNotEqualToAjamTLSPort' => 'As portas HTTPS e AJAM devem ser diferentes',
     'gs_ValidateWEBHTTPSPortNotEqualToAjamPort' => 'As portas HTTPS e AJAM devem ser diferentes',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'As portas HTTP e AJAM devem ser diferentes',
@@ -199,10 +198,10 @@ return [
     'gs_ValidateWEBHTTPSPortOutOfRange' => 'O campo da porta HTTPS está incorreto. Escolha um valor entre {ruleValue}.',
     'gs_ValidateWEBPortOutOfRange' => 'O campo da porta HTTP está incorreto. Escolha um valor entre {ruleValue}.',
     'gs_ValidateSSHPasswordsFieldDifferent' => 'Senha SSH inserida incorretamente.',
-    'gs_ValidateWeakSSHPassword' => 'Senha muito simples para SSH',
+    'gs_ValidateWeakSSHPassword' => 'A senha SSH deve ter mais de 4 caracteres',
     'gs_ValidateEmptySSHPassword' => 'A senha SSH não pode estar vazia',
-    'gs_ValidateWebPasswordsFieldDifferent' => 'Senha de administrador inserida incorretamente',
-    'gs_ValidateWeakWebPassword' => 'A senha da interface administrativa é muito simples',
+    'gs_ValidateWebPasswordsFieldDifferent' => 'Senha da interface da Web digitada incorretamente',
+    'gs_ValidateWeakWebPassword' => 'A senha da WEB deve ter mais de 4 caracteres',
     'gs_ValidateEmptyWebPassword' => 'A senha do administrador não pode estar em branco',
     'gs_DefaultPasswordWarning' => 'Não use o login e senha padrão do administrador do sistema',
     'gs_Passwords' => 'Senha de administrador',
@@ -242,7 +241,7 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Tempo limite máximo entre dígitos ao inserir um número do ramal (em milissegundos)',
     'gs_PBXFeatureBlindTransfer' => 'Combinação para transferência incondicional',
     'gs_PBXFeatureAttendedTransfer' => 'Combinação para transferência consultiva',
-    'gs_PBXCallParkingExt' => 'Número de estacionamento',
+    'gs_PBXCallParkingExt' => 'Número de estacionamento de chamada',
     'gs_RestartEveryNight' => 'Reinicie o PBX todas as noites',
     'gs_PBXRecordCalls' => 'Gravação de chamadas',
     'gs_PBXInternalExtensionLength' => 'Comprimento máximo de números internos',
@@ -274,7 +273,7 @@ return [
     'nw_ValidateIppaddrNotRight' => 'O endereço IP da interface de rede está especificado incorretamente',
     'nw_ValidateIppaddrIsEmpty' => 'O endereço IP da interface de rede não está preenchido',
     'nw_ValidateVlanCross' => 'Erros nas configurações de VLAN para interfaces, verifique a interseção de parâmetros',
-    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'É necessário preencher o IP externo do roteador ou seu nome DNS',
+    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Você deve preencher o IP externo do roteador ou seu nome DNS',
     'nw_ValidateExtIppaddrNotRight' => 'Erro ao preencher o endereço IP externo do roteador',
     'nw_Hostname' => 'Hostname',
     'nw_ValidateVlanRange' => 'O valor da VLAN foi preenchido incorretamente. Escolha entre {ruleValue}',
@@ -310,7 +309,7 @@ return [
     'fw_LocalNetworksRule' => 'Sub-rede onde o PBX está localizado',
     'fw_AllNetworksRule' => 'Todas as redes disponíveis',
     'fw_ItIsLocalNetwork' => 'Esta é uma VPN ou rede local, os telefones desta rede se conectam diretamente à estação sem roteamento NAT',
-    'fw_NewerBlockIp' => 'Nunca bloqueie endereços desta rede, ignore erros de autorização de telefone e erros de entrada de senha na interface da web',
+    'fw_NewerBlockIp' => 'Nunca bloqueie endereços desta rede, ignore erros de autorização de telefone e erros de entrada de senha na interface da Web',
     'fw_ValidateRuleName' => 'Insira um nome para a sub-rede',
     'fw_ValidatePermitAddress' => 'O endereço da sub-rede está incorreto. Tente uma construção como 192.168.1.0/24',
     'fw_icmpDescription' => 'ICMP - ping',
@@ -402,7 +401,7 @@ return [
     'ex_IfMainExtensionIsBusyRedirectCallTo' => 'Se o número principal estiver ocupado, transferimos a chamada para',
     'ex_SecondsAndThenRedirectCallTo' => 'segundos, tentamos ligar para o número principal e, em seguida, transferimos para',
     'ex_RingMainExtension' => 'Durante',
-    'ex_ManualAdditionalAttributes' => 'Parâmetros SIP adicionais',
+    'ex_ManualAdditionalAttributes' => 'Opções extras',
     'ex_NatMode' => 'Modo NAT',
     'ex_NetworkFilter' => 'Filtro de rede',
     'ex_DTMFMode' => 'Modo DTMF',
@@ -497,12 +496,12 @@ return [
     'ir_AnyProvider' => 'Qualquer provedor',
     'ir_AddNewRule' => 'Adicionar nova regra',
     'ir_TimeoutToTransferDefault' => 'Tempo em segundos após o qual a chamada será direcionada para a próxima regra de prioridade',
-    'ir_DidNumberDescription' => 'O provedor pode enviar um número adicional, este é um campo opcional, mas em alguns casos é possível rotear as chamadas com mais precisão.',
+    'ir_DidNumberDescription' => 'O provedor pode enviar um número adicional, este é um campo opcional, mas em alguns casos é possível encaminhar as ligações com mais precisão.',
     'ir_ValidateTimeoutOutOfRange' => 'O tempo limite de redirecionamento não foi especificado corretamente. Deve estar entre {ruleValue}',
     'ir_ValidationPleaseEnterRuleName' => 'Insira um nome para a regra',
     'ir_ValidateForwardingDefaultToBeFilled' => 'Nenhum número de encaminhamento padrão especificado',
     'ir_ValidateForwardingToBeFilled' => 'Nenhum número de encaminhamento especificado',
-    'ir_Extension' => 'número de telefone',
+    'ir_Extension' => 'número',
     'ir_CallTransferTo' => 'A chamada será encaminhada para',
     'ir_DidNumber' => 'Número adicional (DID)',
     'ir_RuleAssignIf' => 'A regra será acionada ao chamar',
@@ -569,12 +568,12 @@ return [
     'сal_LastWeek' => 'Últimos 7 dias',
     'сal_Yesterday' => 'Ontem',
     'сal_Today' => 'Hoje',
-    'adv_ProblemWithInternetConnection' => 'Não há conexão com a Internet. Pode haver problemas na operação de módulos pagos.',
+    'adv_ProblemWithInternetConnection' => 'Não há conexão com a Internet. Pode haver problemas no trabalho de módulos pagos.',
     'adv_ThisCopyHasLicensingTroubles' => 'Problema de licença PBX: %error% - <a target="_blank" href=\'%url%\'> como consertar </a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'O disco para armazenamento está ficando sem espaço livre (%free% Mb) </a>',
     'adv_ThisCopyIsNotRegistered' => 'Esta cópia do programa não está licenciada - <a href=\'%url%\'> Ativação gratuita </a>',
-    'adv_AvailableNewVersionPBX' => 'Uma nova versão do PBX está disponível - <a href=\'%url%\'> %ver% </a>',
-    'adv_NetworksNotConfigured' => 'Parâmetros de sub-redes permitidos não configurados - <a href=\'%url%\'> alterar </a>',
+    'adv_AvailableNewVersionPBX' => 'Nova versão de PBX disponível - <a href=\'%url%\'>%ver%</a>',
+    'adv_NetworksNotConfigured' => 'Configurações de sub-rede permitidas não configuradas - <a href=\'%url%\'>alterar</a>',
     'adv_StorageDiskUnMounted' => 'O disco para armazenar configurações e dados não está conectado!',
     'adv_FirewallDisabled' => 'O firewall está desabilitado no sistema - <a href=\'%url%\'> alterar </a>',
     'adv_YouUseDefaultSSHPassword' => 'Você está usando a senha padrão para acesso SSH - <a href=\'%url%\'> alterar </a>',
@@ -629,7 +628,7 @@ return [
     'upd_UploadInProgress' => 'O arquivo de atualização está sendo baixado …',
     'upd_Update' => 'Atualizar',
     'upd_Cancel' => 'Cancelamento',
-    'upd_UpdateDescription' => 'Depois de baixar a atualização, o PABX será reiniciado automaticamente, todas as chamadas atuais serão interrompidas. <br> Recomendamos fazer um backup antes de atualizar.',
+    'upd_UpdateDescription' => 'Depois de baixar a atualização, o PBX será reinicializado automaticamente, todas as chamadas atuais serão descartadas. Certifique-se de fazer backup do seu MikoPBX antes de atualizar.',
     'upd_UpdateTitle' => 'Atualização de PBX',
     'upd_UploadError' => 'Erro ao baixar atualização',
     'upd_DownloadUpgradeError' => 'Erro ao baixar a atualização, tente novamente mais tarde',
@@ -658,9 +657,9 @@ return [
     'dbg_NoDebugInformation' => 'Sem informação',
     'log_DownloadLogs' => 'Baixe todos os logs do sistema',
     'lic_MarketplaceImageHeader' => 'Foto do nosso Marketplace',
-    'lic_MarketplaceText' => 'O registro no Marketplace lhe dará acesso a módulos e extensões adicionais. <br> Existem módulos gratuitos que removemos da funcionalidade básica para simplificar a configuração inicial, bem como módulos pagos por nós e por outros desenvolvedores. <br> Se você é um desenvolvedor, você pode entrar em contato <a contato href="mailto:developers@mikopbx.com"> nos </a> para obter instruções sobre como desenvolver seu próprio módulo e adicioná-lo ao mercado.',
+    'lic_MarketplaceText' => 'O registro no Marketplace lhe dará acesso a módulos e extensões adicionais.<br>Existem módulos gratuitos que removemos da funcionalidade principal para simplificar a configuração inicial, bem como módulos pagos nossos e de outros desenvolvedores.<br>Se você for um desenvolvedor, entre em contato <a href="mailto:developers@mikopbx.com">nos</a> para obter instruções sobre como desenvolver seu próprio módulo e adicioná-lo ao Marketplace.',
     'lic_MarketplaceHeader' => 'Marketplace é recursos adicionais',
-    'lic_FirstQuestionAnswer' => 'A funcionalidade básica do MikoPBX é totalmente gratuita e não é limitada por licença. A falta de uma licença não afeta as chamadas de forma alguma. <br> Você pode se cadastrar a qualquer momento, bem como cancelar seu cadastro no Marketplace.',
+    'lic_FirstQuestionAnswer' => 'A funcionalidade básica do MikoPBX é totalmente gratuita e não é limitada por uma licença. A ausência de uma licença não afeta em nada as chamadas.<br> Você pode se registrar e cancelar o registro no Marketplace a qualquer momento.',
     'lic_FirstQuestionHeader' => 'É obrigatório se cadastrar',
     'lic_ManagementTabHeader' => 'Gerenciamento de registro e licença',
     'lic_IntroductionTabHeader' => 'Sobre o licenciamento do marketplace',
@@ -674,10 +673,10 @@ return [
     'lic_FailedActivateCoupon2041' => '(2041) Este cupom já foi ativado anteriormente',
     'lic_FailedActivateCoupon2040' => '(2040) Este cupom não existe, por favor, verifique a exatidão da entrada',
     'lic_FailedActivateCoupon2057' => '(2057) Este cupom está bloqueado, entre em contato com lic@miko.ru',
-    'lic_FailedToGetTrialKey2022' => '(2022) Falha ao registrar esta cópia. Um número de registro de outra empresa já foi gerado para o endereço de e-mail especificado. <br>
+    'lic_FailedToGetTrialKey2022' => '(2022) Falha ao registrar esta cópia. Um número de registro para outra empresa já foi gerado para o e-mail especificado.<br>
  Use a chave enviada a você anteriormente do endereço lic@miko.ru ou digite o nome correto da empresa.',
-    'lic_FailedToGetTrialKey2051' => '(2051) Falha ao registrar esta cópia porque você já usou um número de registro com um e-mail diferente nesta máquina. <br>
- Use a chave enviada a você anteriormente do endereço lic@miko.ru',
+    'lic_FailedToGetTrialKey2051' => '(2051) Falha ao verificar esta cópia. você já usou o número de registro com outro e-mail nesta máquina.<br>
+ Use a chave enviada a você anteriormente por lic@miko.ru',
     'lic_LicenseKeyValid' => 'O programa está registrado',
     'lic_ResetLicenseSettings' => 'Desvincular a uma chave',
     'lic_LicenseKeyOwner' => 'Titular da licença',
@@ -686,14 +685,12 @@ return [
     'lic_ExpiredAfter' => 'A licença expira após %expired%',
     'lic_Expired' => 'Produto vencido',
     'lic_CurrentLicenseInfo' => 'Informações detalhadas do produto em uma chave de licença',
-    'lic_CouponMessage' => '<div class = \'ui message\'> O cupom é usado ao expandir a funcionalidade do PBX ou ao comprar uma licença. <br>
-Ele pode ser ativado uma vez, após o qual o cupom é resgatado.
-</div>',
-    'lic_LicenseKeyMessage' => '<div class = \'ui message\'> A chave de licença é usada para armazenar todas as suas licenças de qualquer produto MIKO. <br>
-Se você já tem uma chave, pode simplesmente inseri-la neste campo. <br>
-Se você tinha a chave, mas a esqueceu, procure em seu e-mail as mensagens que chegam em lic@miko.ru <br>
-Você pode obter uma nova chave automaticamente preenchendo o formulário de registro. <br>
-</div>',
+    'lic_CouponMessage' => 'O cupom é usado na expansão da funcionalidade do PBX ou na compra de uma licença.<br>
+Ele pode ser ativado uma vez, após o qual o cupom é resgatado.',
+    'lic_LicenseKeyMessage' => 'A chave de licença é usada para armazenar todas as suas licenças de qualquer produto MIKO.<br>
+Se você já possui uma chave, basta inseri-la neste campo.<br>
+Se você tinha a chave, mas a esqueceu, procure no correio as cartas recebidas em lic@miko.ru<br>
+Você pode obter uma nova chave automaticamente preenchendo o formulário de registro.<br>',
     'lic_GetTrialErrorCheckInternet' => 'Falha ao registrar, verifique se há Internet no MikoPBX',
     'lic_SaveLicenseKeyButton' => 'Salvar chave',
     'lic_ActivateCouponButton' => 'Ativar cupom',
@@ -752,8 +749,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'repCallQueueMembers' => 'Membro da fila de chamadas - %represent%',
     'repCallQueues' => 'Fila de chamadas - %represent%',
     'repAsteriskManagerUsers' => 'Registro AMI - %represent%',
-    'ConstraintViolation' => '<div class=\'header\'> Violação de integridade lógica </div>',
-    'mo_BeforeDeleteFirst' => 'Existem links para o objeto - %represent%',
+    'ConstraintViolation' => 'Violação de Integridade Lógica',
+    'mo_BeforeDeleteFirst' => 'Existem referências ao objeto - %represent%',
     'cf_Mode' => 'Modo',
     'cf_Description' => 'Comentário por que as mudanças foram feitas',
     'cf_Path' => 'O caminho para o arquivo',
@@ -875,16 +872,16 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'or_Note' => 'Anotação',
     'or_RuleName' => 'Nome da regra',
     'pr_NoAnyAdditionalHosts' => 'Nenhum endereço adicional especificado para este provedor',
-    'pr_EnterHostOrIpPlaceholder' => 'Digite o endereço IP ou sub-rede',
+    'pr_EnterHostOrIpPlaceholder' => 'Digite o endereço IP ou sub-rede e pressione Enter',
     'pr_EnterHostOrIp' => 'Endereços de provedores adicionais',
     'pr_Delete' => 'Excluir',
     'pr_Cancel' => 'Cancelamento',
     'pr_DeleteDescription' => 'Todas as regras de roteamento de saída associadas serão excluídas junto com o provedor e todos os links nas regras de roteamento de entrada serão substituídos por "Qualquer provedor"',
     'pr_DeleteTitle' => 'Removendo um provedor',
     'pr_ValidationProviderPortRange' => 'A porta do provedor deve estar dentro de {ruleValue}',
-    'pr_ReceiveCallsWithoutAuth' => 'Confie neste provedor e aceite todas as chamadas dele sem autenticação',
-    'pr_CustomFieldsDescriptions' => '<div class=\'ui message\'> Na maioria dos casos, os campos de substituição devem ser deixados em branco.
-    Somente se suas chamadas não funcionarem e o provedor exigir configurações especiais, esses campos devem ser preenchidos de acordo com as recomendações do provedor. </div>',
+    'pr_ReceiveCallsWithoutAuth' => 'Aceitar chamadas sem autenticação',
+    'pr_CustomFieldsDescriptions' => 'Na maioria dos casos, os campos de substituição devem ser deixados em branco.
+    Somente se as chamadas não funcionarem para você e o provedor exigir configurações especiais, esses campos deverão ser preenchidos de acordo com as recomendações do provedor.',
     'pr_QualifyInstructionsIAX' => 'Quando esta opção é habilitada, o Asterisk irá enviar pacotes de Opções SIP. Isso é necessário para oferecer suporte ao encapsulamento NAT em seu roteador.',
     'pr_AddIAXProvider' => 'Conectar IAX',
     'pr_AddSIPProvider' => 'Conectar SIP',
@@ -978,13 +975,13 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'BreadcrumbLicensing' => 'Licenciamento',
     'SubHeaderSoundFiles' => 'Usado em vários cenários de chamada e menus de voz interativos',
     'BreadcrumbSoundFiles' => 'Arquivos de som',
-    'SubHeaderCustomFiles' => 'Personalização de arquivos de configuração do sistema e Asterisk',
+    'SubHeaderCustomFiles' => 'Personalizando arquivos de configuração do sistema e do Asterisk',
     'BreadcrumbCustomFiles' => 'Arquivos do sistema',
     'BreadcrumbCustomFilesmodify' => 'Editando',
     'SubHeaderCallDetailRecords' => 'Registro de chamadas e registro de chamadas',
     'BreadcrumbCallDetailRecords' => 'Histórico de chamadas',
     'BreadcrumbConferenceRoomsmodify' => 'Definições',
-    'SubHeaderConferenceRooms' => 'Organização de salas para audioconferências com vários participantes',
+    'SubHeaderConferenceRooms' => 'Organização de salas para audioconferências multipartidárias',
     'BreadcrumbConferenceRooms' => 'Conferências',
     'SubHeaderDialplanApplications' => 'Aplicativos de voz programáveis em PHP e Asterisk Dialplan',
     'BreadcrumbDialplanApplicationsmodify' => 'Configuração de aplicativo',
@@ -1027,14 +1024,12 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'BreadcrumbHome' => 'Para o começo',
     'ConnectionSettings' => 'Configurações de conexão',
     'AdvancedOptions' => 'Configurações avançadas',
-    'qf_QualifyInstructions' => '<div class=\'ui message \'>
-            Quando esta opção é habilitada, o Asterisk enviará pacotes de Opções SIP na freqüência especificada. Isso é necessário para oferecer suporte ao túnel NAT em seu roteador.
-        </div>',
+    'qf_QualifyInstructions' => 'Quando esta opção estiver habilitada, o PBX enviará pacotes SIP OPTIONS na frequência especificada. Isso é necessário para oferecer suporte ao túnel NAT em seu roteador.',
     'qf_Qualify' => 'Manter sessão NAT',
     'log_StopCapturePCAP' => 'Pare e baixe',
     'log_StartCapturePCAP' => 'Começar',
-    'log_CaptureMessage' => '<div class = \'ui message\'> Comece a coletar pacotes de rede e inicie uma chamada ou outra ação de falha.
-<br> O sistema salvará todos os pacotes que passam pela placa de rede neste momento para análise posterior. </div>',
+    'log_CaptureMessage' => 'Comece a coletar pacotes de rede e faça uma chamada ou outra ação que cause a falha.
+<br>O sistema salvará todos os pacotes que passarem neste momento pela placa de rede para posterior análise.',
     'auth_RememberMe' => 'Lembre de mim',
     'auth_WrongLoginPassword' => 'Erro de autorização',
     'auth_SubmitButton' => 'Entrar',
@@ -1086,7 +1081,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'adv_UserPasswordFieldName' => '%record%',
     'gs_PasswordSimple' => 'A senha que está sendo definida é muito simples.',
     'gs_SetPassword' => 'Definir uma nova senha',
-    'gs_SetPasswordInfo' => 'A senha é muito simples. A nova senha deve conter números, letras maiúsculas e minúsculas.',
+    'gs_SetPasswordInfo' => 'A senha é muito simples.',
     'pass_CheckWebAdminPasswordSimple' => 'A senha da Interface Web é muito simples.',
     'pass_CheckWebAdminPasswordDontMatch' => 'As senhas inseridas para Interface Web não correspondem',
     'pass_CheckWebAdminPasswordEmpty' => 'O campo está vazio: senha Interface Web',
@@ -1103,13 +1098,13 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_ValidateUsernameSpecialCharacters' => 'O nome completo não deve conter caracteres especiais',
     'lic_NoInetHeader' => 'Sem acesso ao servidor de licenças.',
     'lic_NoInet' => 'Talvez não haja acesso à Internet do servidor MikoPBX',
-    'lic_NoInetLicMiko' => 'Talvez acesso restrito ao recurso <b>lic.miko.ru</b>',
+    'lic_NoInetLicMiko' => 'Talvez acesso restrito ao recurso <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "Verifique as configurações de <b>DNS</b> e <b>Gateway</b> nas configurações de <a href='/admin-cabinet/network/modify/'>rede</a>",
     'lic_SuccessfulСuponActivation' => 'Cupom ativado com sucesso',
     'or_RuleDescriptionBeginEmpty' => 'O número consiste em dígitos <b>%restnumbers%</b>',
     'or_RuleNotConfigured' => 'Regra não configurada',
     'or_RuleAnyNumbers' => 'Qualquer número',
-    'ex_Transport' => 'Protocolo de transporte (UDP/TCP por padrão)',
+    'ex_Transport' => 'protocolo de transporte',
     'gs_TLS_PORT' => 'Porta SIP TLS (chamadas criptografadas)',
     'ex_OutboundProxy' => 'Proxy de saída (exemplo: pbx.yandex.net:5080)',
     'lic_FailedCheckLicenseNotPbxResponse' => 'A ATC não respondeu a um pedido de informações sobre a licença. Serviço está indisponível.',
@@ -1165,4 +1160,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'mm_Update' => 'Atualização de PABX',
     'adv_AmiPasswordFieldName' => 'Usuário AMI <%record%>',
     'adv_PopupHeader' => 'Os seguintes problemas foram encontrados:',
+    'upd_EnterIHaveBackupPhrasePreText' => 'Para atualizar o sistema, insira a seguinte frase no campo de entrada:',
+    'upd_EnterIHaveBackupPhrase' => 'Sim, eu tenho um backup',
 ];

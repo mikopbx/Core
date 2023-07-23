@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -65,7 +64,7 @@ return [
     'or_PatternToMatch' => 'Ο κανόνας θα λειτουργήσει εάν',
     'or_Note' => 'Το σημείωμα',
     'or_RuleName' => 'Όνομα κανόνα',
-    'pr_EnterHostOrIpPlaceholder' => 'Εισαγάγετε τη διεύθυνση IP ή το υποδίκτυο',
+    'pr_EnterHostOrIpPlaceholder' => 'Εισαγάγετε τη διεύθυνση IP ή το υποδίκτυο και πατήστε Enter',
     'or_TableColumnProvider' => 'Πάροχος',
     'ir_TableColumnDetails' => 'κανόνας',
     'ir_DidNumber' => 'Πρόσθετος αριθμός (DID)',
@@ -75,7 +74,7 @@ return [
     'ir_hangup' => 'Άσε το τηλέφωνο κάτω',
     'ir_ValidateForwardingDefaultToBeFilled' => 'Ο προεπιλεγμένος αριθμός προώθησης δεν έχει καθοριστεί',
     'ir_ValidateForwardingToBeFilled' => 'Ο αριθμός προώθησης κλήσης δεν παρέχεται',
-    'ir_Extension' => 'αριθμός τηλεφώνου',
+    'ir_Extension' => 'αριθμός',
     'cq_ringing' => 'Ήχοι κλήσης',
     'cq_CallerHearOnQueued' => 'Τι ακούει ο καλών την ώρα που περιμένει',
     'cq_QueueCallerSettings' => 'Ρυθμίσεις ουράς καλούντων',
@@ -121,7 +120,7 @@ return [
     'upd_UploadInProgress' => 'Μεταφόρτωση αρχείου ενημέρωσης…',
     'upd_Update' => 'Φρεσκάρω',
     'upd_Cancel' => 'Ματαίωση',
-    'upd_UpdateDescription' => 'Μετά τη λήψη της ενημέρωσης, το PBX θα επανεκκινηθεί αυτόματα, όλες οι τρέχουσες κλήσεις θα απορριφθούν.<br> Συνιστούμε να δημιουργήσετε αντίγραφα ασφαλείας πριν από την ενημέρωση.',
+    'upd_UpdateDescription' => 'Μετά τη λήψη της ενημέρωσης, το PBX θα επανεκκινήσει αυτόματα, όλες οι τρέχουσες κλήσεις θα διαγραφούν. Φροντίστε να δημιουργήσετε αντίγραφα ασφαλείας του MikoPBX πριν από την ενημέρωση.',
     'upd_UpdateTitle' => 'Ενημέρωση PBX',
     'ext_NoLicenseAvailable' => 'Δεν υπάρχει άδεια εγκατάστασης ή ενημέρωσης αυτής της ενότητας.',
     'ext_Caption' => 'Όνομα στοιχείου μενού',
@@ -161,8 +160,8 @@ return [
     'adv_ThisCopyHasLicensingTroubles' => 'Πρόβλημα με την άδεια PBX: %error% - <a target="_blank" href=\'%url%\'>πώς να διορθώσετε το</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Ο ελεύθερος χώρος της μονάδας αποθήκευσης εξαντλείται (%free% Mb)</a>',
     'adv_ThisCopyIsNotRegistered' => 'Αυτό το αντίγραφο του προγράμματος δεν έχει άδεια χρήσης - <a href=\'%url%\'>Δωρεάν ενεργοποίηση</a>',
-    'adv_AvailableNewVersionPBX' => 'Διατίθεται νέα έκδοση PBX - <a href=\'%url%\'>%ver%</a>',
-    'adv_NetworksNotConfigured' => 'Δεν έχουν διαμορφωθεί οι επιτρεπόμενες ρυθμίσεις υποδικτύων - <a href=\'%url%\'>αλλαγή</a>',
+    'adv_AvailableNewVersionPBX' => 'Διαθέσιμη νέα έκδοση PBX - <a href=\'%url%\'>%ver%</a>',
+    'adv_NetworksNotConfigured' => 'Δεν έχουν διαμορφωθεί οι επιτρεπόμενες ρυθμίσεις υποδικτύου - <a href=\'%url%\'>αλλαγή</a>',
     'adv_FirewallDisabled' => 'Το τείχος προστασίας είναι απενεργοποιημένο στο σύστημα - <a href=\'%url%\'>αλλαγή</a>',
     'adv_YouUseDefaultSSHPassword' => 'Χρησιμοποιείτε τον προεπιλεγμένο κωδικό πρόσβασης για πρόσβαση στο SSH - <a href=\'%url%\'>change</a>',
     'adv_YouUseDefaultWebPassword' => 'Χρησιμοποιείτε τον προεπιλεγμένο κωδικό πρόσβασης για να συνδεθείτε στη διεπαφή διαχείρισης - <a href=\'%url%\'>αλλαγή</a>',
@@ -236,8 +235,8 @@ return [
     'log_DownloadLogs' => 'Λήψη όλων των αρχείων καταγραφής συστήματος',
     'log_StopCapturePCAP' => 'Διακοπή και λήψη',
     'log_StartCapturePCAP' => 'Αρχή',
-    'log_CaptureMessage' => '<div class=\'ui message \'>Ξεκινήστε να συλλέγετε πακέτα δικτύου και πραγματοποιήστε μια κλήση ή άλλη ενέργεια που προκαλεί συντριβή.
-<br>Το σύστημα θα αποθηκεύσει όλα τα πακέτα που περνούν αυτήν τη στιγμή μέσω της κάρτας δικτύου για περαιτέρω ανάλυση.</div>',
+    'log_CaptureMessage' => 'Ξεκινήστε να συλλέγετε πακέτα δικτύου και πραγματοποιήστε μια κλήση ή άλλη ενέργεια που προκαλεί την αποτυχία.
+<br>Το σύστημα θα αποθηκεύσει όλα τα πακέτα που περνούν αυτή τη στιγμή μέσω της κάρτας δικτύου για περαιτέρω ανάλυση.',
     'auth_WrongLoginPassword' => 'Σφάλμα εξουσιοδότησης',
     'auth_SubmitButton' => 'Σύνδεση',
     'auth_ValidateLoginNotEmpty' => 'Εισαγάγετε τη σύνδεση',
@@ -251,7 +250,7 @@ return [
     'rs_CurrentCalls' => 'Ενεργές κλήσεις',
     'rs_ShutDownPhoneSystem' => 'Απενεργοποιήστε το PBX',
     'lic_LastQuestionAnswer' => 'Αυτό δεν επηρεάζει τις κλήσεις, αλλά μπορεί να επηρεάσει τις εγκατεστημένες μονάδες.<br>Ελέγξτε την άδεια χρήσης στον προσωπικό σας λογαριασμό στον ιστότοπο <a href="https://lm.miko.ru">https://lm.miko. ru</a><br>Εάν το πρόβλημα παραμένει, ανατρέξτε στις <a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">Συχνές ερωτήσεις</a> ή στείλτε ένα αίτημα στο <a href=" mailto:lic@miko.ru">lic@miko.ru</a> σίγουρα θα σας βοηθήσουμε να το διορθώσετε.',
-    'lic_MarketplaceText' => 'Η εγγραφή στο Marketplace θα σας δώσει πρόσβαση σε πρόσθετες ενότητες και επεκτάσεις.<br>Υπάρχουν δωρεάν λειτουργικές μονάδες που καταργήσαμε από τη βασική λειτουργία για να απλοποιήσουμε την αρχική ρύθμιση, καθώς και λειτουργικές μονάδες επί πληρωμή από εμάς και άλλους προγραμματιστές.<br>Εάν είστε ένας προγραμματιστής, μπορείτε να επικοινωνήσετε <a href="mailto:developers@mikopbx.com">επικοινωνήστε μαζί μας</a> για οδηγίες σχετικά με το πώς να αναπτύξετε τη δική σας ενότητα και να την προσθέσετε στο Marketplace.',
+    'lic_MarketplaceText' => 'Η εγγραφή στο Marketplace θα σας δώσει πρόσβαση σε πρόσθετες λειτουργικές μονάδες και επεκτάσεις.<br>Υπάρχουν δωρεάν λειτουργικές μονάδες που καταργήσαμε από τη βασική λειτουργικότητα για να απλοποιήσουμε την αρχική ρύθμιση, καθώς και λειτουργικές μονάδες επί πληρωμή από εμάς και άλλους προγραμματιστές.<br>Εάν είστε προγραμματιστής, μπορείτε να επικοινωνήσετε με <a href="mailto:developers@mikopbx.com">να αναπτύξετε τη δική σας λειτουργική μονάδα</a>.',
     'lic_MarketplaceHeader' => 'Το Marketplace είναι πρόσθετα χαρακτηριστικά',
     'lic_FirstQuestionAnswer' => 'Η βασική λειτουργικότητα του MikoPBX είναι εντελώς δωρεάν και δεν περιορίζεται από άδεια χρήσης. Η απουσία άδειας δεν επηρεάζει με κανέναν τρόπο τις κλήσεις.<br> Μπορείτε να εγγραφείτε και να καταργήσετε την εγγραφή σας στο Marketplace ανά πάσα στιγμή.',
     'lic_InvalidLicenseKey2009' => '(2009) Σφάλμα κλειδιού άδειας χρήσης',
@@ -272,14 +271,12 @@ return [
     'lic_ExpiredAfter' => 'Η άδεια λήγει μετά το %expired%',
     'lic_Expired' => 'Το προϊόν έληξε',
     'lic_CurrentLicenseInfo' => 'Αναλυτικές πληροφορίες προϊόντος στο κλειδί άδειας χρήσης',
-    'lic_CouponMessage' => '<div class=\'ui message \'>Το κουπόνι χρησιμοποιείται κατά την επέκταση της λειτουργίας PBX ή κατά την αγορά άδειας χρήσης.<br>
-Μπορεί να ενεργοποιηθεί μία φορά, μετά την οποία το κουπόνι εξαργυρώνεται.
-</div>',
-    'lic_LicenseKeyMessage' => '<div class=\'ui message \'>Το κλειδί άδειας χρήσης χρησιμοποιείται για την αποθήκευση όλων των αδειών σας από οποιαδήποτε προϊόντα MIKO.<br>
+    'lic_CouponMessage' => 'Το κουπόνι χρησιμοποιείται κατά την επέκταση της λειτουργικότητας του PBX ή κατά την αγορά άδειας χρήσης.<br>
+Μπορεί να ενεργοποιηθεί μία φορά, μετά την οποία το κουπόνι εξαργυρώνεται.',
+    'lic_LicenseKeyMessage' => 'Το κλειδί άδειας χρήσης χρησιμοποιείται για την αποθήκευση όλων των αδειών σας από οποιαδήποτε προϊόντα MIKO.<br>
 Εάν έχετε ήδη ένα κλειδί, μπορείτε απλώς να το εισαγάγετε σε αυτό το πεδίο.<br>
-Εάν είχατε το κλειδί, αλλά το ξεχάσατε, αναζητήστε στο mail για εισερχόμενες επιστολές στη διεύθυνση lic@miko.ru<br>
-Μπορείτε να λάβετε ένα νέο κλειδί αυτόματα συμπληρώνοντας τη φόρμα εγγραφής.<br>
-</div>',
+Εάν είχατε το κλειδί, αλλά το ξεχάσατε, αναζητήστε εισερχόμενες επιστολές στο mail στο lic@miko.ru<br>
+Μπορείτε να λάβετε ένα νέο κλειδί αυτόματα συμπληρώνοντας τη φόρμα εγγραφής.<br>',
     'lic_Coupon' => 'Κουπόνι για ανανέωση άδειας',
     'lic_Inn' => 'Μοναδικό αναγνωριστικό εταιρείας (TIN, IIN, UNP, κ.λπ.)',
     'lic_Phone' => 'Τηλέφωνο επικοινωνίας',
@@ -321,8 +318,8 @@ return [
     'repExternalPhones' => 'Εξωτερικός αριθμός - %represent%',
     'repExtensions' => 'Αριθμός επέκτασης - %represent%',
     'repAsteriskManagerUsers' => 'Ρεκόρ AMI - %represent%',
-    'ConstraintViolation' => '<div class=\'header\'>Παραβίαση λογικής ακεραιότητας</div>',
-    'mo_BeforeDeleteFirst' => 'Υπάρχουν σύνδεσμοι προς το αντικείμενο - %represent%',
+    'ConstraintViolation' => 'Παραβίαση Λογικής Ακεραιότητας',
+    'mo_BeforeDeleteFirst' => 'Υπάρχουν αναφορές στο αντικείμενο - %represent%',
     'cf_Mode' => 'Τρόπος',
     'cf_Description' => 'Σχολιάστε γιατί έγιναν οι αλλαγές',
     'cf_Path' => 'Η διαδρομή προς το αρχείο',
@@ -474,7 +471,7 @@ return [
     'topMenu_SearchPlaceholder' => 'Εισαγάγετε έναν όρο αναζήτησης',
     'topMenu_Support' => 'Υποστήριξη',
     'lang_HelpWithTranslateIt' => 'Βοήθεια με τη μετάφραση MikoPBX',
-    'sntry_SuccessMessage' => 'Ευχαριστώ για τη βοήθειά σου!',
+    'sntry_SuccessMessage' => 'Σας ευχαριστώ για τη βοήθειά σας!',
     'iv_ValidateExtensionIsDouble' => 'Ο καθορισμένος αριθμός μενού IVR είναι απασχολημένος',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Δεν έχει καθοριστεί ο αριθμός προώθησης χρονικού ορίου',
     'iv_ValidateNameIsEmpty' => 'Το όνομα του μενού IVR δεν έχει καθοριστεί',
@@ -581,7 +578,7 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Μέγιστο χρονικό όριο μεταξύ ψηφίων κατά την εισαγωγή μιας επέκτασης (σε χιλιοστά του δευτερολέπτου)',
     'gs_PBXFeatureBlindTransfer' => 'Συνδυασμός για άνευ όρων μεταφορά',
     'gs_PBXFeatureAttendedTransfer' => 'Συνδυασμός για συμβουλευτική μετάφραση',
-    'gs_PBXCallParkingExt' => 'Αριθμός στάθμευσης',
+    'gs_PBXCallParkingExt' => 'Καλέστε τον αριθμό πάρκου',
     'gs_RestartEveryNight' => 'Επανεκκινήστε το PBX κάθε βράδυ',
     'gs_PBXRecordCalls' => 'Καταγραφή κλήσεων',
     'gs_PBXInternalExtensionLength' => 'Μέγιστο μήκος επέκτασης',
@@ -696,7 +693,7 @@ return [
     'ex_IfMainExtensionIsBusyRedirectCallTo' => 'Εάν ο κύριος αριθμός είναι απασχολημένος, μεταφέρετε την κλήση στο',
     'ex_SecondsAndThenRedirectCallTo' => 'δευτερόλεπτα προσπαθώντας να περάσετε στον κύριο αριθμό και μετά μεταφέρετε στον',
     'ex_RingMainExtension' => 'Στη διάρκεια',
-    'ex_ManualAdditionalAttributes' => 'Πρόσθετες ρυθμίσεις λογαριασμού SIP',
+    'ex_ManualAdditionalAttributes' => 'Επιπλέον επιλογές',
     'ex_NatMode' => 'Λειτουργία NAT',
     'ex_NetworkFilter' => 'Φίλτρο δικτύου',
     'ex_DTMFMode' => 'Λειτουργία DTMF',
@@ -786,7 +783,7 @@ return [
     'ir_AnyProvider' => 'Οποιοσδήποτε πάροχος',
     'ir_AddNewRule' => 'Προσθήκη νέου κανόνα',
     'ir_TimeoutToTransferDefault' => 'Χρόνος σε δευτερόλεπτα μετά τον οποίο η κλήση θα δρομολογηθεί στον επόμενο κανόνα προτεραιότητας',
-    'ir_DidNumberDescription' => 'Ο πάροχος μπορεί να στείλει έναν επιπλέον αριθμό, αυτό είναι ένα προαιρετικό πεδίο, αλλά σε ορισμένες περιπτώσεις είναι δυνατή η δρομολόγηση κλήσεων με μεγαλύτερη ακρίβεια.',
+    'ir_DidNumberDescription' => 'Ο πάροχος μπορεί να στείλει έναν επιπλέον αριθμό, αυτό είναι ένα προαιρετικό πεδίο, αλλά σε ορισμένες περιπτώσεις είναι δυνατό να δρομολογηθούν οι κλήσεις με μεγαλύτερη ακρίβεια.',
     'ir_ValidateTimeoutOutOfRange' => 'Μη έγκυρο χρονικό όριο ανακατεύθυνσης. Πρέπει να είναι μεταξύ {ruleValue}',
     'ir_ValidationPleaseEnterRuleName' => 'Εισαγάγετε το όνομα του κανόνα',
     'ir_CallTransferTo' => 'Η κλήση θα προωθηθεί στο',
@@ -829,8 +826,8 @@ return [
     'pr_DeleteDescription' => 'Όλοι οι σχετικοί κανόνες εξερχόμενης δρομολόγησης θα καταργηθούν μαζί με τον πάροχο και όλοι οι σύνδεσμοι στους κανόνες εισερχόμενης δρομολόγησης θα αντικατασταθούν με "Οποιοσδήποτε πάροχος"',
     'pr_ValidationProviderPortRange' => 'Η θύρα παρόχου πρέπει να βρίσκεται εντός του {ruleValue}',
     'pr_ReceiveCallsWithoutAuth' => 'Εμπιστευτείτε αυτόν τον πάροχο και αποδεχτείτε τυχόν κλήσεις από αυτόν χωρίς έλεγχο ταυτότητας',
-    'pr_CustomFieldsDescriptions' => '<div class=\'ui message\'>Στις περισσότερες περιπτώσεις, τα πεδία παράκαμψης πρέπει να παραμένουν κενά.
-    Μόνο εάν οι κλήσεις δεν λειτουργούν για εσάς και ο πάροχος απαιτεί ειδικές ρυθμίσεις, τότε αυτά τα πεδία πρέπει να συμπληρωθούν σύμφωνα με τις συστάσεις του παρόχου.</div>',
+    'pr_CustomFieldsDescriptions' => 'Στις περισσότερες περιπτώσεις, τα πεδία παράκαμψης πρέπει να μείνουν κενά.
+    Μόνο εάν οι κλήσεις δεν λειτουργούν για εσάς και ο πάροχος απαιτεί ειδικές ρυθμίσεις, τότε αυτά τα πεδία πρέπει να συμπληρωθούν σύμφωνα με τις συστάσεις του παρόχου.',
     'pr_QualifyInstructionsIAX' => 'Όταν αυτή η επιλογή είναι ενεργοποιημένη, το Asterisk θα στέλνει πακέτα SIP Options. Αυτό απαιτείται για την υποστήριξη της διοχέτευσης NAT στο δρομολογητή σας.',
     'pr_AddIAXProvider' => 'Συνδέστε το IAX',
     'pr_AddSIPProvider' => 'Συνδέστε το SIP',
@@ -855,7 +852,7 @@ return [
     'pr_SIPPort' => 'Θύρα σύνδεσης SIP',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Η σύνδεση πρέπει να είναι μεγαλύτερη από έναν χαρακτήρα',
     'pr_ValidationProviderLoginIsEmpty' => 'Εισαγάγετε τα στοιχεία σύνδεσης για εξουσιοδότηση με τον πάροχο',
-    'pr_ValidationProviderHostIsEmpty' => 'Εισαγάγετε τον κεντρικό υπολογιστή ή τη διεύθυνση IP του παρόχου',
+    'pr_ValidationProviderHostIsEmpty' => 'Εισαγάγετε το όνομα διακομιστή ή τη διεύθυνση IP του παρόχου',
     'pr_ValidationProviderNameIsEmpty' => 'Εισαγάγετε το όνομα του παρόχου',
     'pr_DTMFMode' => 'Λειτουργία DTMF',
     'pr_ProviderHostOrIPAddress' => 'Διεύθυνση κεντρικού υπολογιστή ή IP',
@@ -873,9 +870,9 @@ return [
     'bt_ToolTipCopyPassword' => 'Ο κωδικός πρόσβασης αντιγράφηκε στο πρόχειρο',
     'bt_Back' => 'Πίσω',
     'bt_BackToList' => 'Πίσω στη λίστα',
-    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Είναι απαραίτητο να συμπληρώσετε είτε την εξωτερική IP του δρομολογητή είτε το όνομα DNS του',
+    'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Πρέπει να συμπληρώσετε είτε την εξωτερική IP του δρομολογητή είτε το όνομα DNS του',
     'nw_ValidateExtIppaddrNotRight' => 'Σφάλμα συμπλήρωσης της εξωτερικής διεύθυνσης IP του δρομολογητή',
-    'nw_Hostname' => 'Όνομα κεντρικού υπολογιστή',
+    'nw_Hostname' => 'τοπικό όνομα κεντρικού υπολογιστή',
     'nw_ValidateVlanRange' => 'Η τιμή VLAN είναι λανθασμένη. Επιλέξτε μεταξύ {ruleValue}',
     'nw_ValidateNameIsNotBeEmpty' => 'το όνομα διεπαφής δεν έχει συμπληρωθεί',
     'nw_ValidateDHCPOnVlansDontSupport' => 'Το DHCP σε υποδίκτυα VLAN δεν υποστηρίζεται',
@@ -1043,10 +1040,8 @@ return [
     'BreadcrumbHome' => 'Στην αρχή',
     'ConnectionSettings' => 'Ρυθμίσεις σύνδεσης',
     'AdvancedOptions' => 'Προηγμένες ρυθμίσεις',
-    'qf_QualifyInstructions' => '<div class=\'ui message \'>
-            Όταν αυτή η επιλογή είναι ενεργοποιημένη, το Asterisk θα στέλνει πακέτα SIP Options στην καθορισμένη συχνότητα. Αυτό απαιτείται για την υποστήριξη της διοχέτευσης NAT στο δρομολογητή σας.
-        </div>',
-    'qf_Frequency' => 'Συχνότητα αποστολής σε δευτερόλεπτα.',
+    'qf_QualifyInstructions' => 'Όταν αυτή η επιλογή είναι ενεργοποιημένη, το PBX θα στέλνει πακέτα SIP OPTIONS στην καθορισμένη συχνότητα. Αυτό απαιτείται για την υποστήριξη της σήραγγας NAT στο δρομολογητή σας.',
+    'qf_Frequency' => 'Συχνότητα αποστολής σε δευτερόλεπτα:',
     'qf_Qualify' => 'Διατήρηση συνεδρίας NAT',
     'Loading' => 'Φόρτωση',
     'MetaTegHeadDescription' => 'Τηλεφωνικό σύστημα για επιχειρήσεις',
@@ -1104,7 +1099,7 @@ return [
     'ex_PasswordNoNumbers' => 'Ο κωδικός πρόσβασης πρέπει να περιέχει αριθμούς',
     'lic_NoInetHeader' => 'Δεν υπάρχει πρόσβαση στον διακομιστή αδειών χρήσης.',
     'lic_NoInet' => 'Ίσως δεν υπάρχει πρόσβαση στο Διαδίκτυο από τον διακομιστή MikoPBX',
-    'lic_NoInetLicMiko' => 'Ίσως περιορισμένη πρόσβαση στον πόρο <b>lic.miko.ru</b>',
+    'lic_NoInetLicMiko' => 'Ίσως περιορισμένη πρόσβαση στον πόρο <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "Ελέγξτε τις ρυθμίσεις <b>DNS</b> και <b>Gateway</b> στις ρυθμίσεις <a href='/admin-cabinet/network/modify/'>δίκτυο</a>",
     'lic_SuccessfulСuponActivation' => 'Το κουπόνι ενεργοποιήθηκε με επιτυχία',
     'or_RuleDescriptionBeginEmpty' => 'Ο αριθμός αποτελείται από <b>%restnumbers%</b> ψηφία',
@@ -1166,4 +1161,6 @@ return [
     'mm_Update' => 'Ενημέρωση PBX',
     'adv_AmiPasswordFieldName' => 'Χρήστης AMI <%record%>',
     'adv_PopupHeader' => 'Έχουν βρεθεί τα ακόλουθα ζητήματα:',
+    'upd_EnterIHaveBackupPhrasePreText' => 'Για να ενημερώσετε το σύστημα, εισαγάγετε την ακόλουθη φράση στο πεδίο εισαγωγής:',
+    'upd_EnterIHaveBackupPhrase' => 'Ναι, έχω αντίγραφο ασφαλείας',
 ];
