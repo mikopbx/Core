@@ -24,6 +24,7 @@ namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\Models\ModulesModelsBase;
 use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -86,16 +87,11 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 }
 
                 if (!class_exists($moduleModelClass)
-                    || defined('START_DOCKER')
                     || count(get_class_vars($moduleModelClass)) === 0) {
                     continue;
                 }
 
-                $model = new $moduleModelClass();
-                $connectionServiceName = $model->getReadConnectionService();
-                if (!isset($connectionServiceName)) {
-                    continue;
-                }
+                $connectionServiceName = ModulesModelsBase::getConnectionServiceName($moduleUniqueId);
                 $registeredDBServices[] = $connectionServiceName;
                 if ($di->has($connectionServiceName)) {
                     $di->remove($connectionServiceName);

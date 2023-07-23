@@ -44,4 +44,3 @@ $errorLogger = new SentryErrorLogger('pbx-core-workers');
 $errorLogger->init();
 
 RegisterDIServices::init();
-

@@ -21,10 +21,6 @@
 namespace MikoPBX\Core\Rc;
 use MikoPBX\Core\System\{Processes, Util, SystemLoader};
 
-// Check if script is running in Docker environment
-if('docker' === ($argv[1]??'')){
-    define('START_DOCKER',1);
-}
 require_once('Globals.php');
 
 // Echo message with syslog

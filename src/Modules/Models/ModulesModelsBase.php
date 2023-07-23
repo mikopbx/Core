@@ -46,7 +46,7 @@ class ModulesModelsBase extends ModelsBase
         $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
         if (count($partsOfNameSpace) === 3 && $partsOfNameSpace[0] === 'Modules') {
             $this->moduleUniqueId = $partsOfNameSpace[1];
-            $this->setConnectionService("{$this->moduleUniqueId}_module_db");
+            $this->setConnectionService(self::getConnectionServiceName($this->moduleUniqueId));
         }
         parent::initialize();
         $this->initialized = true;
@@ -117,4 +117,14 @@ class ModulesModelsBase extends ModelsBase
         return $link;
     }
 
+    /**
+     * Returns the connection service name.
+     *
+     * @param string $moduleUniqueId Module UniqueID
+     * @return string   The connection service name
+     */
+    public static function getConnectionServiceName(string $moduleUniqueId): string
+    {
+        return "{$moduleUniqueId}_module_db";
+    }
 }

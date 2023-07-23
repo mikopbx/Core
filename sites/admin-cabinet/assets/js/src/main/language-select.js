@@ -106,8 +106,9 @@ const LanguageSelect = {
             tr: '<i class="turkey flag"></i>',
             ja: '<i class="japan flag"></i>',
             vi: '<i class="vietnam flag"></i>',
-            zh_Hans: '<i class="china flag"></i>',
             az: '<i class="azerbaijan flag"></i>',
+            ro: '<i class="romania flag"></i>',
+            zh_Hans: '<i class="china flag"></i>',
         };
         if (langKey in arFlags) {
             // Return the flag icon for the given language key

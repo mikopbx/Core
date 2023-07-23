@@ -99,7 +99,7 @@ class WorkerModuleInstaller extends WorkerBase
             try {
                 $setup = new $pbxExtensionSetupClass($moduleUniqueID);
                 if ( ! $setup->installModule()) {
-                    file_put_contents($this->error_file, '++'.defined('START_DOCKER').'++ '.implode(" ", $setup->getMessages()), FILE_APPEND);
+                    file_put_contents($this->error_file, '++'.Util::isDocker().'++ '.implode(" ", $setup->getMessages()), FILE_APPEND);
                 } else {
                     Processes::restartAllWorkers();
                 }

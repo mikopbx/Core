@@ -1,12 +1,14 @@
 {{ form('network/save', 'role': 'form', 'class': 'ui form large', 'id':'network-form') }}
 
+<input type="hidden" name="is-docker" value="{{ isDocker }}">
+
 <div class=" field">
     <label for="hostname">{{ t._('nw_Hostname') }}</label>
     <div class="field max-width-400">
         {{ form.render('hostname') }}
     </div>
 </div>
-
+<div class="do-not-show-if-docker">
 <h4 class="ui dividing header">{{ t._("nw_NetworkInterfaces") }}</h4>
 
 <div class="ui top attached tabular menu" id="eth-interfaces-menu">
@@ -80,6 +82,7 @@
         {% endif %}
     </div>
 {% endfor %}
+</div>
 <h4 class="ui dividing header">{{ t._("nw_NetworkAddressTranslations") }}</h4>
 
 <div class="field">
@@ -89,15 +92,14 @@
     </div>
 </div>
 
-
-<div class="field">
+<div class="field do-not-show-if-docker">
     <label for="gateway">{{ t._('nw_GatewayAddress') }}</label>
     <div class="field max-width-400">
         {{ form.render('gateway') }}
     </div>
 </div>
 
-<div class="field">
+<div class="field do-not-show-if-docker">
     <label>{{ t._('nw_DNSAddresses') }}</label>
     <div class="fields">
         <div class="field max-width-250">

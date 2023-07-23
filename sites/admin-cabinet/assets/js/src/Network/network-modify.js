@@ -38,6 +38,12 @@ const networks = {
     vlansArray: {},
 
     /**
+     * jQuery object for the elements with we should hide from the form for docker installation.
+     * @type {jQuery}
+     */
+    $notShowOnDockerDivs: $('.do-not-show-if-docker'),
+
+    /**
      * Validation rules for the form fields before submission.
      *
      * @type {object}
@@ -172,6 +178,11 @@ const networks = {
         networks.$ipaddressInput.inputmask({alias: 'ip', 'placeholder': '_'});
 
         networks.initializeForm();
+
+        // Hide form elements connected with non docker installations
+        if (networks.$formObj.form('get value','is-docker')==="1") {
+            networks.$notShowOnDockerDivs.hide();
+        }
     },
 
     /**

@@ -65,14 +65,19 @@ class Network extends Injectable
      *
      * @return array An array containing the names of the network interfaces.
      */
-    public function getInterfacesNames()
+    public function getInterfacesNames(): array
     {
-        // Universal command to retrieve all PCI network interfaces.
-        $lsPath = Util::which('ls');
         $grepPath = Util::which('grep');
         $awkPath = Util::which('awk');
-        Processes::mwExec("{$lsPath} -l /sys/class/net | {$grepPath} devices | {$grepPath} -v virtual | {$awkPath} '{ print $9 }'", $names);
-
+        if (Util::isDocker()) {
+            $ifconfigPath = Util::which('ifconfig');
+            $command = "{$ifconfigPath} | {$grepPath} -o -E '^[a-zA-Z0-9]+' | {$grepPath} -v 'lo'";
+        } else {
+            // Universal command to retrieve all PCI network interfaces.
+            $lsPath = Util::which('ls');
+            $command = "{$lsPath} -l /sys/class/net | {$grepPath} devices | {$grepPath} -v virtual | {$awkPath} '{ print $9 }'";
+        }
+        Processes::mwExec($command, $names);
         return $names;
     }
 
@@ -299,9 +304,10 @@ class Network extends Injectable
      */
     public function lanConfigure(): int
     {
+        // Retrieve the network settings
+        $networks = $this->getGeneralNetSettings();
+
         if (Util::isDocker()) {
-            // Update the list of interfaces
-            $this->getGeneralNetSettings();
             return 0;
         }
 
@@ -310,8 +316,6 @@ class Network extends Injectable
         $vconfigPath = Util::which('vconfig');
         $killallPath = Util::which('killall');
 
-        // Retrieve the network settings
-        $networks = $this->getGeneralNetSettings();
         $arr_commands = [];
         $arr_commands[] = "{$killallPath} udhcpc";
         $eth_mtu = [];

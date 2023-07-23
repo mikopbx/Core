@@ -47,6 +47,7 @@ use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
@@ -272,6 +273,12 @@ class Elements extends Injectable
 
         ];
 
+    // Array of controllers that are hidden in menu in the Docker installation
+    private array $_hiddenInDocker = [
+        RestartController::class,
+        UpdateController::class
+    ];
+
     /**
      * Generates the HTML code for the header menu by iterating through the items and checking if they are allowed
      * to be displayed by the current user based on their role.
@@ -296,8 +303,7 @@ class Elements extends Injectable
                 $groupHtml .= $this->translation->_($groupparams['caption']) . '</div>';
                 $groupHtml .= "<div class='menu' data-group='{$group}'>";
                 foreach ($groupparams['submenu'] as $controller => $option) {
-                    $isAllowed = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controller, $option['action']]);
-                    if ($isAllowed) {
+                    if ($this->ifItPossibleToShowThisElement($controller, $option['action'])) {
                         $link = $this->getLinkToControllerAction($controller,  $option['action'], $option['param']);
                         $caption = $this->translation->_($option['caption']);
                         $groupHtml .= "<a class='item {$option['style']}' href='{$link}'";
@@ -313,16 +319,13 @@ class Elements extends Injectable
                 }
                 $groupHtml .= '</div>';
                 $groupHtml .= '</div>';
-            } else {
-                $isAllowedGroup = $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$group, $groupparams['action'] ?? 'index']);
-                if ($isAllowedGroup) {
+            } elseif ($this->ifItPossibleToShowThisElement($group, $groupparams['action'] ?? 'index')) {
                     $link = $this->getLinkToControllerAction($group,  $groupparams['action'], $groupparams['param']);
                     $caption = $this->translation->_($groupparams['caption']);
                     $groupHtml .= "<a class='item {$groupparams['style']}' href='{$link}'>
                     	    <i class='{$groupparams['iconclass']} icon'></i>{$caption}
                         </a>";
                     $addToHTML = true;
-                }
             }
             if ($addToHTML) {
                 $resultHtml .= $groupHtml;
@@ -410,6 +413,7 @@ class Elements extends Injectable
             'ja' => $this->translation->_('ex_Japanese'),
             'vi' => $this->translation->_('ex_Vietnamese'),
             'az' => $this->translation->_('ex_Azərbaycan'),
+            'ro' => $this->translation->_('ex_Romanian'),
             'zh_Hans' => $this->translation->_('ex_Chinese'),
         ];
     }
@@ -490,6 +494,26 @@ class Elements extends Injectable
         }
 
         return $url;
+    }
+
+    /**
+     * Checks if it's possible to show a specific element based on the controller and action.
+     *
+     * @param string $controller The name of the controller.
+     * @param string $action The name of the action.
+     * @return bool True if the element can be shown, false otherwise.
+     */
+    private function ifItPossibleToShowThisElement(string $controller, string $action):bool
+    {
+        // Check if the application is running in a Docker environment and if the controller is in the hidden list.
+        // If so, return false as the element should not be shown.
+        if (Util::isDocker() and in_array($controller, $this->_hiddenInDocker)){
+           return false;
+        }
+
+        // If the application is not running in Docker or the controller is not in the hidden list,
+        // use the SecurityPluginProvider to check if the element can be shown.
+        return $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controller, $action]);
     }
 
 }

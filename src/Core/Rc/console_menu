@@ -337,6 +337,7 @@ class ConsoleMenu{
             'pl' => Util::translate('ex_Polish'),
             'sv' => Util::translate('ex_Swedish'),
             'az' => Util::translate('ex_Azərbaycan'),
+            'ro' => Util::translate('ex_Romanian'),
 
             // not able to show in console without additional shell fonts, maybe later we add it
             // 'el'      => Util::translate('ex_Greek'),
