@@ -31,12 +31,58 @@ const updatePBX = {
      */
     $formObj: $('#upgrade-form'),
 
+    /**
+     * jQuery object for the submit button.
+     * @type {jQuery}
+     */
     $submitButton: $('#submitbutton'),
+
+    /**
+     * jQuery object for the progress bar.
+     * @type {jQuery}
+     */
     $progressBar: $('#upload-progress-bar'),
+
+    /**
+     * jQuery object for the progress bar label.
+     * @type {jQuery}
+     */
     $progressBarLabel: $('#upload-progress-bar-label'),
+
+    /**
+     * Current version of the PBX firmware.
+     * @type {string}
+     */
     currentVersion: globalPBXVersion,
+
+    /**
+     * jQuery object for the modal form before upgrade.
+     * @type {jQuery}
+     */
     $upgradeModalForm: $('#update-modal-form'),
+
+    /**
+     * jQuery object for the "I have backup" input field.
+     * @type {jQuery}
+     */
+    $iHaveBackupInput: $("input[name='i-have-backup-input']"),
+
+    /**
+     * jQuery object for the green button on modal form before upgrade.
+     * @type {jQuery}
+     */
+    $startUpgradeButton: $('#start-upgrade-button'),
+
+    /**
+     * There is upgrade process working now flag.
+     * @type {boolean}
+     */
     upgradeInProgress: false,
+
+    /**
+     * Helps to convert markdown into html.
+     * @type {Converter}
+     */
     converter: new showdown.Converter(),
 
     /**
@@ -62,6 +108,15 @@ const updatePBX = {
                 $('input:text', $(e.target).parent()).val(filename);
                 updatePBX.$submitButton.removeClass('disabled');
             }
+        });
+
+        // Track the input field and make submit button available if phrase is equal to 'I have backup'
+        updatePBX.$iHaveBackupInput.on('input', (e) => {
+                if (updatePBX.$iHaveBackupInput.val()===globalTranslate.upd_EnterIHaveBackupPhrase) {
+                    updatePBX.$startUpgradeButton.removeClass('disabled');
+                } else {
+                    updatePBX.$startUpgradeButton.addClass('disabled');
+                }
         });
 
         // Handle submit button click
@@ -134,7 +189,7 @@ const updatePBX = {
                             onDeny: () => true,
                             onApprove: () => {
                                 // Prepare parameters for firmware download
-                                const params = [];
+                                const params = {};
                                 const $aLink = $(e.target).closest('a');
                                 params.updateLink = $aLink.attr('href');
                                 params.md5 = $aLink.attr('data-md5');
