@@ -267,8 +267,11 @@ const generalSettingsModify = {
             historyType: 'hash',
         });
 
-        // Enable dropdowns in the form
+        // Enable dropdowns on the form
         $('#general-settings-form .dropdown').dropdown();
+
+        // Enable checkboxes on the form
+        $('#general-settings-form .checkbox').checkbox();
 
         // Enable table drag-n-drop functionality
         $('#audio-codecs-table, #video-codecs-table').tableDnD({
