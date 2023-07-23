@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -1116,7 +1134,8 @@ Se puede activar una vez, después de lo cual el cupón se canjea.
     'f2b_Jail_asterisk_security_log_v2' => 'Errores de autorización SIP (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'Errores de autorización SIP (error)',
     'f2b_Jail_asterisk_v2' => 'Errores de autorización SIP',
-    'ex_Azərbaycan' => 'Azerbaiyán',
+    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 dígitos',
     'cr_pinCode' => 'PIN de conferencia',
     'tf_AllowRestriction' => 'Aplicar solo a ciertas rutas entrantes',
