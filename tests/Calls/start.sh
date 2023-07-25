@@ -5,28 +5,42 @@
 # Written by Alexey Portnov, 10 2020
 #
 
-# sh /root/mikopbx-testing/start.sh
-#
-echo -e "\e[01;35mInit asterisk...\e[0m";
+function echo_header() {
+    echo -e "\e[01;35m${1}\e[0m";
+}
+
+function echo_info() {
+    echo -e "\e[01;32m-> \e[0m${1}";
+}
+
+echo_header 'Init asterisk...';
 dirName="$(realpath "$(dirname "$0")")";
 /bin/mount -o remount,rw /offload/
-
 ############################################################
 ##### Setup configs
 # Убиваем старый процесс.
-echo -e "\e[01;35mSetup configs...\e[0m";
+echo_header 'Setup configs...';
 dumpConfFile='/storage/usbdisk1/mikopbx/tmp/mikopbx.db';
 confFile='/cf/conf/mikopbx.db';
 testConfFile="$dirName/db/mikopbx.db";
 cp "$confFile" "$dumpConfFile"
 
+debugParams="$XDEBUG_CONFIG";
+if [ "${debugParams}x" != "x" ]; then
+  # Отключаем отладку
+  export XDEBUG_CONFIG="${EMPTY}";
+fi;
+
 if [ "${1}x" = 'x' ]; then
+  echo_info "Copy tests config...";
   sqlite3 "$testConfFile" 'delete from m_LanInterfaces';
   sqlite3 "$dumpConfFile" .dump | grep m_LanInterfaces | grep 'INTO m_LanInterfaces' | sqlite3 "$testConfFile"
   cp "$testConfFile" "$confFile"
-  php -f "$dirName/db/updateDb.php" /dev/null 2> /dev/null;
+  echo_info 'Restart services...';
+  php -f "$dirName/db/updateDb.php" > /dev/null 2> /dev/null;
   sleep 5;
-  asterisk -rx 'core waitfullybooted' /dev/null 2> /dev/null;
+  echo_info 'Wait booted asterisk...';
+  asterisk -rx 'core waitfullybooted' > /dev/null 2> /dev/null;
 fi;
 ############################################################
 
@@ -42,20 +56,21 @@ sed "s/PATH/$escapeDirName/" < "${dirName}/asterisk/asterisk-pattern.conf" > "${
 
 # start asterisk.
 astConf="${dirName}/asterisk/asterisk.conf";
-echo -e "\e[01;32m-> \e[0mNew config file $astConf...";
+echo_info "New config file $astConf...";
 /usr/sbin/asterisk -C "$astConf";
-echo -e "\e[01;32m-> \e[0mWaiting start asterisk...";
+echo_info "Waiting start asterisk...";
 sleep 1;
 # Ожидаем запуска Asterisk.
+echo_info "Waiting fully boot asterisk...";
 /usr/sbin/asterisk -C "$astConf" -rx 'core waitfullybooted' > /dev/null;
-echo -e "\e[01;32m-> \e[0mWaiting fully boot asterisk...";
-echo -e "\e[01;32m-> \e[0mEnd init";
+echo_info 'End init';
 echo;
 
 export USER_AGENT="mikopbx-test-$(date +'%s')";
 export astConf dirName;
 initTests=$(/bin/find "${dirName}/Scripts" -type f -name "start.php" | /bin/sort | grep '/00-');
 
+export XDEBUG_CONFIG="${debugParams}";
 if [ "$1" != '' ]; then
   # Выполняем только конкретные тесты
   tests=$(/bin/find "${dirName}/Scripts" -type f -name "start.php" | /bin/sort | grep -v '/00-' | grep "/${1}");
@@ -70,7 +85,7 @@ for file in $tests; do
 done
 
 if [ ! "${2}x" == "x" ]; then
-  echo "Need sleep ${2}";
+  echo_info "Need sleep ${2}";
   sleep "${2}";
 fi;
 
@@ -78,10 +93,15 @@ fi;
 
 ############################################################
 ##### Restore configs
-echo -e "\e[01;35mRestore configs...\e[0m";
+echo_header "Restore configs...";
 cp "$dumpConfFile" "$confFile";
-if [ "${1}x" = 'x' ]; then
+if [ "$1x" == 'x' ]; then
+  # Отключаем отладку
+  if [ "${debugParams}x" != "x" ]; then
+    export XDEBUG_CONFIG="${EMPTY}";
+  fi;
   php -f "$dirName/db/updateDb.php" /dev/null 2> /dev/null;
+  # Возвращаем обратно настройки отладки.
+  export XDEBUG_CONFIG="${debugParams}";
 fi;
-
 ############################################################
