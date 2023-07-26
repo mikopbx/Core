@@ -30,4 +30,10 @@ class PBXTest extends TestCase
         PBX::dialplanReload();
         $this->assertTrue(true);
     }
+
+    public function testSipReload()
+    {
+        PBX::sipReload();
+        $this->assertTrue(true);
+    }
 }

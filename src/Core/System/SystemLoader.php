@@ -98,6 +98,9 @@ class SystemLoader extends Di\Injectable
         // Check if the system is running on T2SDELinux
         $itIsT2SDELinux = Util::isT2SdeLinux();
 
+        // Check if the system is running in Docker
+        $itIsDocker = Util::isDocker();
+
         // Mark the registry as booting
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = true;
 
@@ -188,7 +191,11 @@ class SystemLoader extends Di\Injectable
 
         // Configure LAN interface
         $this->echoStartMsg(' - Configuring LAN interface...');
-        $network->lanConfigure();
+        if ($itIsDocker){
+            $network->configureLanInDocker();
+        } else {
+            $network->lanConfigure();
+        }
         $this->echoResultMsg();
 
         // SSL rehash
@@ -279,10 +286,8 @@ class SystemLoader extends Di\Injectable
             $this->echoStartMsg(' - All services are fully loaded');
         }
 
-        // Display network information if not running in Docker
-        if(!Util::isDocker()){
-            $this->echoStartMsg(Network::getInfoMessage());
-        }
+        // Display network information
+        $this->echoStartMsg(Network::getInfoMessage());
 
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
 

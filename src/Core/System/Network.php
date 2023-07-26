@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System;
 use MikoPBX\Common\Models\{LanInterfaces, PbxSettings};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di\Injectable;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 /**
@@ -79,6 +80,52 @@ class Network extends Injectable
         }
         Processes::mwExec($command, $names);
         return $names;
+    }
+
+    /**
+     * Retrieves the information message containing available web interface addresses.
+     *
+     * @return string The information message.
+     */
+    public static function getInfoMessage(): string
+    {
+        $addresses = [
+            'local' => [],
+            'external' => []
+        ];
+        /** @var LanInterfaces $interface */
+        $interfaces = LanInterfaces::find("disabled='0'");
+        foreach ($interfaces as $interface) {
+            if (!empty($interface->ipaddr)) {
+                $addresses['local'][] = $interface->ipaddr;
+            }
+            if (!empty($interface->exthostname) && !in_array($interface->exthostname, $addresses['local'], true)) {
+                $addresses['external'][] = explode(':', $interface->exthostname)[0] ?? '';
+            }
+            if (!empty($interface->extipaddr) && !in_array($interface->extipaddr, $addresses['local'], true)) {
+                $addresses['external'][] = explode(':', $interface->extipaddr)[0] ?? '';
+            }
+        }
+        unset($interfaces);
+        $port = PbxSettings::getValueByKey('WEBHTTPSPort');
+        $info = PHP_EOL . "   The web interface is available at the addresses:" . PHP_EOL . PHP_EOL;
+        foreach ($addresses['local'] as $address) {
+            if (empty($address)) {
+                continue;
+            }
+            $info .= "    - https://$address:$port" . PHP_EOL;
+        }
+        $info .= PHP_EOL;
+        $info .= "   The web interface is available at the external addresses:" . PHP_EOL . PHP_EOL;
+        foreach ($addresses['external'] as $address) {
+            if (empty($address)) {
+                continue;
+            }
+            $info .= "    - https://$address:$port" . PHP_EOL;
+        }
+        $info .= PHP_EOL;
+
+        return $info;
     }
 
     /**
@@ -304,12 +351,12 @@ class Network extends Injectable
      */
     public function lanConfigure(): int
     {
-        // Retrieve the network settings
-        $networks = $this->getGeneralNetSettings();
-
         if (Util::isDocker()) {
             return 0;
         }
+
+        // Retrieve the network settings
+        $networks = $this->getGeneralNetSettings();
 
         // Retrieve the paths of required commands
         $busyboxPath = Util::which('busybox');
@@ -519,53 +566,6 @@ class Network extends Injectable
     }
 
     /**
-     * Retrieves the information message containing available web interface addresses.
-     *
-     * @return string The information message.
-     */
-    public static function getInfoMessage(): string
-    {
-        $addresses = [
-            'local' => [],
-            'external' => []
-        ];
-        /** @var LanInterfaces $interface */
-        $interfaces = LanInterfaces::find("disabled='0'");
-        foreach ($interfaces as $interface) {
-            if (!empty($interface->ipaddr)) {
-                $addresses['local'][] = $interface->ipaddr;
-            }
-            if (!empty($interface->exthostname) && !in_array($interface->exthostname, $addresses['local'], true)) {
-                $addresses['external'][] = explode(':', $interface->exthostname)[0] ?? '';
-            }
-            if (!empty($interface->extipaddr) && !in_array($interface->extipaddr, $addresses['local'], true)) {
-                $addresses['external'][] = explode(':', $interface->extipaddr)[0] ?? '';
-            }
-        }
-        unset($interfaces);
-        $port = PbxSettings::getValueByKey('WEBHTTPSPort');
-        $info = PHP_EOL . "   The web interface is available at the addresses:" . PHP_EOL . PHP_EOL;
-        foreach ($addresses['local'] as $address) {
-            if (empty($address)) {
-                continue;
-            }
-            $info .= "    - https://$address:$port" . PHP_EOL;
-        }
-        $info .= PHP_EOL;
-        $info .= "   The web interface is available at the external addresses:" . PHP_EOL . PHP_EOL;
-        foreach ($addresses['external'] as $address) {
-            if (empty($address)) {
-                continue;
-            }
-            $info .= "    - https://$address:$port" . PHP_EOL;
-        }
-        $info .= PHP_EOL;
-
-        return $info;
-    }
-
-
-    /**
      * Converts a net mask to CIDR notation.
      *
      * @param string $net_mask The net mask to convert.
@@ -629,7 +629,7 @@ class Network extends Injectable
      * @param bool $general Flag indicating if the interface is a general interface.
      * @return array The array representation of the added interface.
      */
-    private function addLanInterface(string $name, bool $general = false)
+    private function addLanInterface(string $name, bool $general = false): array
     {
         $data = new LanInterfaces();
         $data->name = $name;
@@ -700,6 +700,97 @@ class Network extends Injectable
             $openvpnPath = Util::which('openvpn');
             Processes::mwExecBg("{$openvpnPath} --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
         }
+    }
+
+    /**
+     * Configures the LAN settings inside the Docker container.
+     *
+     * If the environment is not Docker, this method does nothing.
+     *
+     * @return void
+     */
+    public function configureLanInDocker(): void
+    {
+        // Check if the environment is Docker
+        if (!Util::isDocker()) {
+            return;
+        }
+
+        // Find the path to the busybox binary
+        $busyboxPath = Util::which('busybox');
+
+        // Retrieve the network settings
+        $networks = $this->getGeneralNetSettings();
+
+        foreach ($networks as $if_data) {
+
+            $if_name = $if_data['interface'];
+            $if_name = escapeshellcmd(trim($if_name));
+
+            $commands = [
+                'subnet' => $busyboxPath . ' ifconfig eth0 | awk \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
+                'ipaddr' => $busyboxPath . ' ifconfig eth0 | awk \'/inet / {sub("addr:", "", $2); print $2}\'',
+                'gateway' => $busyboxPath . ' route -n | awk \'/^0.0.0.0/ {print $2}\'',
+            ];
+            $data = [];
+            foreach ($commands as $key => $command) {
+                $output = [];
+                if (Processes::MWExec($command, $output) === 0) {
+                    $value = implode("", $output);
+                    if ($key === 'subnet') {
+                        $data[$key] = $this->netMaskToCidr($value);
+                    } else {
+                        $data[$key] = $value;
+                    }
+                }
+            }
+
+            // Save information to the database.
+            $this->updateIfSettings($data, $if_name);
+        }
+
+    }
+
+    /**
+     * Updates the interface settings with the provided data.
+     *
+     * @param array $data The data to update the interface settings with.
+     * @param string $name The name of the interface.
+     *
+     * @return void;
+     */
+    public function updateIfSettings(array $data, string $name): void
+    {
+        /** @var LanInterfaces $res */
+        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
+            return;
+        }
+        foreach ($data as $key => $value) {
+            $res->writeAttribute($key, $value);
+        }
+        $res->save();
+    }
+
+    /**
+     * Checks if the network settings have changed.
+     *
+     * @param array $data The new network settings.
+     * @param array $dbData The existing network settings from the database.
+     *
+     * @return bool  Returns true if the settings have changed, false otherwise.
+     */
+    private function settingsIsChange(array $data, array $dbData): bool
+    {
+        $isChange = false;
+        foreach ($dbData as $key => $value) {
+            if (!isset($data[$key]) || (string)$value === (string)$data[$key]) {
+                continue;
+            }
+            Util::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
+            $isChange = true;
+        }
+        return $isChange;
     }
 
     /**
@@ -811,6 +902,32 @@ class Network extends Injectable
     }
 
     /**
+     * Updates the DNS settings with the provided data.
+     *
+     * @param array $data The data to update the DNS settings with.
+     * @param string $name The name of the interface.
+     *
+     * @return void
+     */
+    public function updateDnsSettings($data, $name): void
+    {
+        /** @var LanInterfaces $res */
+        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
+            return;
+        }
+        foreach ($data as $key => $value) {
+            $res->writeAttribute($key, $value);
+        }
+        if (empty($res->primarydns) && !empty($res->secondarydns)) {
+            // Swap primary and secondary DNS if primary is empty
+            $res->primarydns = $res->secondarydns;
+            $res->secondarydns = '';
+        }
+        $res->save();
+    }
+
+    /**
      * Renews and configures the network settings after successful DHCP negotiation using systemd environment variables.
      * For OS systemctl (Debian).
      *  Configures LAN interface FROM dhcpc (renew_bound).
@@ -879,77 +996,9 @@ class Network extends Injectable
     }
 
     /**
-     * Updates the interface settings with the provided data.
-     *
-     * @param array  $data The data to update the interface settings with.
-     * @param string $name The name of the interface.
-     *
-     * @return void;
-     */
-    public function updateIfSettings(array $data, string $name):void
-    {
-        /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
-        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
-            return;
-        }
-        foreach ($data as $key => $value) {
-            $res->writeAttribute($key, $value);
-        }
-        $res->save();
-    }
-
-    /**
-     * Updates the DNS settings with the provided data.
-     *
-     * @param array  $data The data to update the DNS settings with.
-     * @param string $name The name of the interface.
-     *
-     * @return void
-     */
-    public function updateDnsSettings($data, $name): void
-    {
-        /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
-        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
-            return;
-        }
-        foreach ($data as $key => $value) {
-            $res->writeAttribute($key, $value);
-        }
-        if (empty($res->primarydns) && !empty($res->secondarydns)) {
-            // Swap primary and secondary DNS if primary is empty
-            $res->primarydns = $res->secondarydns;
-            $res->secondarydns = '';
-        }
-        $res->save();
-    }
-
-    /**
-     * Checks if the network settings have changed.
-     *
-     * @param array $data    The new network settings.
-     * @param array $dbData  The existing network settings from the database.
-     *
-     * @return bool  Returns true if the settings have changed, false otherwise.
-     */
-    private function settingsIsChange(array $data, array $dbData): bool
-    {
-        $isChange = false;
-        foreach ($dbData as $key => $value) {
-            if (!isset($data[$key]) || (string)$value === (string)$data[$key]) {
-                continue;
-            }
-            Util::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
-            $isChange = true;
-        }
-        return $isChange;
-    }
-
-    /**
      * Retrieves the interface name by its ID.
      *
-     * @param string $id_net  The ID of the network interface.
+     * @param string $id_net The ID of the network interface.
      *
      * @return string  The interface name.
      */

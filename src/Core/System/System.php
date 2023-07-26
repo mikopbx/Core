@@ -148,6 +148,7 @@ class System extends Di\Injectable
         $network->resolvConfGenerate();
         $network->loConfigure();
         $network->lanConfigure();
+        $network->configureLanInDocker();
     }
 
     /**

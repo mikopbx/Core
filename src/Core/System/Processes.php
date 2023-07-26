@@ -53,7 +53,7 @@ class Processes
      * @param int|null $retVal Reference to a variable to store the return value of the execution.
      * @return int The return value of the execution.
      */
-    public static function mwExec($command, &$outArr = null, &$retVal = null): int
+    public static function mwExec(string $command, &$outArr = null, &$retVal = null): int
     {
         $retVal = 0;
         $outArr = [];
@@ -95,7 +95,7 @@ class Processes
      * @param array|null $out Reference to an array to store the output.
      * @param string $logname The name of the log file to save the output.
      */
-    public static function mwExecCommands($arr_cmds, &$out = [], $logname = ''): void
+    public static function mwExecCommands(array $arr_cmds, &$out = [], string $logname = ''): void
     {
         $out = [];
         foreach ($arr_cmds as $cmd) {

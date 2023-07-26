@@ -17,24 +17,18 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Tests\Core\System;
+namespace MikoPBX\Tests\Core\Asterisk\Configs;
 
-use MikoPBX\Core\System\Network;
+use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
-class NetworkTest extends AbstractUnitTest
+class SIPConfTest  extends AbstractUnitTest
 {
 
-    public function testUpdateIfSettings()
+    public function testNeedAsteriskRestart()
     {
-        $network = new Network();
-        $network->udhcpcConfigureDeconfig();
-        $this->assertTrue(true);
-    }
-
-    public function testGetInfoMessage()
-    {
-        $networkInfo = Network::getInfoMessage();
+        $conf = new SIPConf();
+        $conf->needAsteriskRestart();
         $this->assertTrue(true);
     }
 }
