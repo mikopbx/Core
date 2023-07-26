@@ -52,14 +52,14 @@ class SecurityPlugin extends Injectable
     public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher): bool
     {
         // Check if user is authenticated
-        $isLoggedIn = $this->checkUserAuth();
+        $isAuthenticated = $this->checkUserAuth() || $this->isLocalHostRequest();
 
         // Get the controller and action names
         $controller = $dispatcher->getControllerName();
         $action = $dispatcher->getActionName();
 
         // Redirect to login page if user is not authenticated and the controller is not "session"
-        if (!$isLoggedIn && strtoupper($controller) !== 'SESSION') {
+        if (!$isAuthenticated && strtoupper($controller) !== 'SESSION') {
             // Return a 403 response for AJAX requests
             if ($this->request->isAjax()) {
                 $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
@@ -77,7 +77,7 @@ class SecurityPlugin extends Injectable
         }
 
         // Check if the authenticated user is allowed to access the requested controller and action
-        if ($isLoggedIn) {
+        if ($isAuthenticated) {
             // Check if the desired controller exists or show the extensions page
             $controllerClass = $this->dispatcher->getHandlerClass();
             if (!class_exists($controllerClass)
@@ -103,7 +103,8 @@ class SecurityPlugin extends Injectable
                 ]);
                 return true;
             }
-            if (!$this->isAllowedAction($controllerClass, $action)
+            if (!$this->isLocalHostRequest()
+                && !$this->isAllowedAction($controllerClass, $action)
                 && !in_array(strtoupper($controller), ['ERRORS','SESSION'])
             ) {
                 // Show a 401 error if not allowed
@@ -138,7 +139,7 @@ class SecurityPlugin extends Injectable
     function checkUserAuth(): bool
     {
         // Check if it is a localhost request or if the user is already authenticated.
-        if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $this->session->has(SessionController::SESSION_ID)) {
+        if ($this->session->has(SessionController::SESSION_ID)) {
             return true;
         }
 
@@ -187,6 +188,16 @@ class SecurityPlugin extends Injectable
         } else {
             return true;
         }
+    }
+
+    /**
+     * Check if the request is coming from localhost.
+     *
+     * @return bool
+     */
+    public function isLocalHostRequest(): bool
+    {
+        return ($_SERVER['REMOTE_ADDR'] === '127.0.0.1');
     }
 
 }
