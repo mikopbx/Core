@@ -87,7 +87,7 @@ class SessionController extends BaseController
             // Check if any additional module successfully authenticated the user
             foreach ($additionalModules as $moduleUniqueId => $sessionData) {
                 if (!empty($sessionData)) {
-                    $this->loggerAuth->info("User $login was authenticated over module $moduleUniqueId");
+                    $this->loggerAuth->info("User $loginFromUser was authenticated over module $moduleUniqueId");
                     $sessionParams = $sessionData;
                     $userLoggedIn = true;
                     break;

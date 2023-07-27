@@ -26,6 +26,7 @@ use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Acl\Component;
 use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Acl\Role as AclRole;
+use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -46,6 +47,8 @@ class AclProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'ACL';
 
+    public const CACHE_KEY = 'ACLCache';
+
     public const ROLE_ADMINS = 'admins';
     public const ROLE_GUESTS = 'guests';
 
@@ -59,32 +62,50 @@ class AclProvider implements ServiceProviderInterface
     {
         $di->setShared(
             self::SERVICE_NAME,
-            function (){
-                $acl = new AclList();
-                $acl->setDefaultAction(AclEnum::DENY);
+            function () use ($di){
 
-                // Register roles
-                $acl->addRole(new AclRole(AclProvider::ROLE_ADMINS, 'Admins'));
-                $acl->addRole(new AclRole(AclProvider::ROLE_GUESTS, 'Guests'));
+                $cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
+                $acl = $cache->get(self::CACHE_KEY);
 
-                // Default permissions
-                $acl->allow(AclProvider::ROLE_ADMINS, '*', '*');
-                $acl->deny(AclProvider::ROLE_GUESTS, '*', '*');
+                if (!$acl) {
+                    $acl = new AclList();
+                    $acl->setDefaultAction(AclEnum::DENY);
 
-                // Modules HOOK
-                PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_ACL_LIST_PREPARED, [&$acl]);
+                    // Register roles
+                    $acl->addRole(new AclRole(AclProvider::ROLE_ADMINS, 'Admins'));
+                    $acl->addRole(new AclRole(AclProvider::ROLE_GUESTS, 'Guests'));
 
-                // Allow to show ERROR controllers to everybody
-                $acl->addComponent(new Component('Errors'), ['show401', 'show404', 'show500']);
-                $acl->allow('*', 'Errors', ['show401', 'show404', 'show500']);
+                    // Default permissions
+                    $acl->allow(AclProvider::ROLE_ADMINS, '*', '*');
+                    $acl->deny(AclProvider::ROLE_GUESTS, '*', '*');
 
-                // Allow to show session controllers actions to everybody
-                $acl->addComponent(new Component('Session'), ['index', 'start', 'changeLanguage', 'end']);
-                $acl->allow('*', 'Session', ['index', 'start', 'changeLanguage', 'end']);
+                    // Modules HOOK
+                    PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_ACL_LIST_PREPARED, [&$acl]);
+
+                    // Allow to show ERROR controllers to everybody
+                    $acl->addComponent(new Component('Errors'), ['show401', 'show404', 'show500']);
+                    $acl->allow('*', 'Errors', ['show401', 'show404', 'show500']);
+
+                    // Allow to show session controllers actions to everybody
+                    $acl->addComponent(new Component('Session'), ['index', 'start', 'changeLanguage', 'end']);
+                    $acl->allow('*', 'Session', ['index', 'start', 'changeLanguage', 'end']);
+
+                    $cache->set(self::CACHE_KEY, $acl, 86400);
+                }
 
                 return $acl;
             }
         );
+    }
+
+    /**
+     *  Clear ACL cache
+     * @return void
+     */
+    public static function clearCache():void {
+        $di = Di::getDefault();
+        $cache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+        $cache->delete(self::CACHE_KEY);
     }
 
 }
