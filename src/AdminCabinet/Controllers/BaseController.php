@@ -109,8 +109,8 @@ class BaseController extends Controller
         $this->view->urlToLogo = $this->url->get('assets/img/logo-mikopbx.svg');
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent = '';
-        $this->view->WebAdminLanguage = PbxSettings::getValueByKey('WebAdminLanguage');
-        $this->view->AvailableLanguages = json_encode($this->elements->getAvailableWebAdminLanguages());
+        $this->view->WebAdminLanguage = $this->session->get(LanguageController::WEB_ADMIN_LANGUAGE)??PbxSettings::getValueByKey('WebAdminLanguage');
+        $this->view->AvailableLanguages = json_encode(LanguageController::getAvailableWebAdminLanguages());
         $this->view->submitMode = $this->session->get('SubmitMode') ?? 'SaveSettings';
         $this->view->lastSentryEventId = $this->setLastSentryEventId();
         $this->view->PBXVersion = PbxSettings::getValueByKey('PBXVersion');

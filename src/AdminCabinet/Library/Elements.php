@@ -386,38 +386,6 @@ class Elements extends Injectable
         return $result;
     }
 
-
-    /**
-     * Prepares array of available WEB UI languages
-     * @return array
-     */
-    public function getAvailableWebAdminLanguages(): array
-    {
-        return [
-            'en' => $this->translation->_('ex_English'),
-            'ru' => $this->translation->_('ex_Russian'),
-            'de' => $this->translation->_('ex_Deutsch'),
-            'es' => $this->translation->_('ex_Spanish'),
-            'el' => $this->translation->_('ex_Greek'),
-            'fr' => $this->translation->_('ex_French'),
-            'pt' => $this->translation->_('ex_Portuguese'),
-            'pt_BR' => $this->translation->_('ex_PortugueseBrazil'),
-            'uk' => $this->translation->_('ex_Ukrainian'),
-            'ka' => $this->translation->_('ex_Georgian'),
-            'it' => $this->translation->_('ex_Italian'),
-            'da' => $this->translation->_('ex_Danish'),
-            'pl' => $this->translation->_('ex_Polish'),
-            'sv' => $this->translation->_('ex_Swedish'),
-            'cs' => $this->translation->_('ex_Czech'),
-            'tr' => $this->translation->_('ex_Turkish'),
-            'ja' => $this->translation->_('ex_Japanese'),
-            'vi' => $this->translation->_('ex_Vietnamese'),
-            'az' => $this->translation->_('ex_Azərbaycan'),
-            'ro' => $this->translation->_('ex_Romanian'),
-            'zh_Hans' => $this->translation->_('ex_Chinese'),
-        ];
-    }
-
     /**
      * Adds menu items from enabled external modules to the header menu.
      *

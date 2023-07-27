@@ -195,7 +195,7 @@ class AssetProvider implements ServiceProviderInterface
             ->addJs('js/vendor/jquery.min.js', true);
 
         $this->footerCollectionJS
-            ->addJs('js/pbx/main/language-select.js', true);
+            ->addJs('js/pbx/Language/language-select.js', true);
 
         $this->semanticCollectionJS
             ->addJs('js/vendor/semantic/form.min.js', true)

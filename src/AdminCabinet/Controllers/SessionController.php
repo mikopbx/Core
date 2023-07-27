@@ -25,7 +25,6 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
-use Phalcon\Security;
 
 /**
  * SessionController
@@ -40,7 +39,6 @@ class SessionController extends BaseController
 
     public const HOME_PAGE = 'homePage';
 
-    public const WEB_ADMIN_LANGUAGE = 'WebAdminLanguage';
 
     /**
      * Renders the login page with form and settings values.
@@ -98,7 +96,9 @@ class SessionController extends BaseController
         if ($userLoggedIn) {
             // Register the session with the specified parameters
             $this->_registerSession($sessionParams);
-            $this->updateSystemLanguage();
+            if ($this->session->has(LanguageController::WEB_ADMIN_LANGUAGE)){
+                LanguageController::updateSystemLanguage($this->session->get(LanguageController::WEB_ADMIN_LANGUAGE));
+            }
             $this->view->success = true;
             $backUri = $this->request->getPost('backUri');
             if (!empty($backUri)) {
@@ -182,45 +182,6 @@ class SessionController extends BaseController
                 }
             }
             $cookie->delete();
-        }
-    }
-
-    /**
-     * Updates system settings for language
-     *
-     */
-    private function updateSystemLanguage(): void
-    {
-        $newLanguage = $this->session->get(SessionController::WEB_ADMIN_LANGUAGE);
-        if (!isset($newLanguage)) {
-            return;
-        }
-        $languageSettings = PbxSettings::findFirstByKey('WebAdminLanguage');
-        if ($languageSettings === null) {
-            $languageSettings = new PbxSettings();
-            $languageSettings->key = 'WebAdminLanguage';
-            $languageSettings->value = PbxSettings::getDefaultArrayValues()['WebAdminLanguage'];
-        }
-        if ($newLanguage !== $languageSettings->value) {
-            $languageSettings->value = $newLanguage;
-            $languageSettings->save();
-        }
-    }
-
-    /**
-     * Process language change
-     */
-    public function changeLanguageAction(): void
-    {
-        $newLanguage = $this->request->getPost('newLanguage', 'string');
-        if (array_key_exists($newLanguage, $this->elements->getAvailableWebAdminLanguages())) {
-            $this->session->set(SessionController::WEB_ADMIN_LANGUAGE, $newLanguage);
-            if ($this->session->has(self::SESSION_ID)) {
-                $this->updateSystemLanguage();
-            }
-            $this->view->success = true;
-        } else {
-            $this->view->success = false;
         }
     }
 

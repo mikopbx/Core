@@ -19,6 +19,8 @@
 
 namespace MikoPBX\AdminCabinet\Plugins;
 
+use MikoPBX\AdminCabinet\Controllers\ErrorsController;
+use MikoPBX\AdminCabinet\Controllers\LanguageController;
 use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Providers\AclProvider;
@@ -57,9 +59,17 @@ class SecurityPlugin extends Injectable
         // Get the controller and action names
         $controller = $dispatcher->getControllerName();
         $action = $dispatcher->getActionName();
+        $controllerClass = $this->dispatcher->getHandlerClass();
+
+        // Controllers allowed without authentification
+        $publicControllers = [
+            SessionController::class,
+            LanguageController::class,
+            ErrorsController::class
+        ];
 
         // Redirect to login page if user is not authenticated and the controller is not "session"
-        if (!$isAuthenticated && strtoupper($controller) !== 'SESSION') {
+        if (!$isAuthenticated && !in_array($controllerClass, $publicControllers)) {
             // Return a 403 response for AJAX requests
             if ($this->request->isAjax()) {
                 $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
@@ -79,9 +89,8 @@ class SecurityPlugin extends Injectable
         // Check if the authenticated user is allowed to access the requested controller and action
         if ($isAuthenticated) {
             // Check if the desired controller exists or show the extensions page
-            $controllerClass = $this->dispatcher->getHandlerClass();
             if (!class_exists($controllerClass)
-                || (strtoupper($controller) === 'SESSION' && strtoupper($action) !== 'END')) {
+                || ($controllerClass === SessionController::class && strtoupper($action) !== 'END')) {
                 // Redirect to home page if controller does not set or user logged in but still on session page
                 $homePath = $this->session->get(SessionController::SESSION_ID)[SessionController::HOME_PAGE];
                 if (empty($homePath)){
@@ -105,7 +114,7 @@ class SecurityPlugin extends Injectable
             }
             if (!$this->isLocalHostRequest()
                 && !$this->isAllowedAction($controllerClass, $action)
-                && !in_array(strtoupper($controller), ['ERRORS','SESSION'])
+                && !in_array($controllerClass, $publicControllers)
             ) {
                 // Show a 401 error if not allowed
                 $dispatcher->forward([
