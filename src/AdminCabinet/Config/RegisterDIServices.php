@@ -33,7 +33,7 @@ use MikoPBX\Common\Providers\{AclProvider,
     BeanstalkConnectionModelsProvider,
     CDRDatabaseProvider,
     LanguageProvider,
-    LicenseProvider,
+    MarketPlaceProvider,
     LoggerAuthProvider,
     LoggerProvider,
     MainDatabaseProvider,
@@ -98,7 +98,7 @@ class RegisterDIServices
             LanguageProvider::class,
 
             // Inject license
-            LicenseProvider::class,
+            MarketPlaceProvider::class,
 
             // Inject PBX modules
             PBXConfModulesProvider::class,
