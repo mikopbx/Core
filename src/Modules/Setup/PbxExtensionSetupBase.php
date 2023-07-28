@@ -58,9 +58,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
     /**
      * Minimal required version PBX from the module.json
-     * @var string|null
+     * @var string
      */
-    protected $min_pbx_version;
+    protected string $min_pbx_version;
 
     /**
      * Module developer name  from the module.json

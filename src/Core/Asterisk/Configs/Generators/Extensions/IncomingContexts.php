@@ -1,5 +1,21 @@
 <?php
-
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
 
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
@@ -242,7 +258,7 @@ class IncomingContexts extends AsteriskConfigClass
      *
      * @return void
      */
-    private function generateDialActions($rout): void
+    private function generateDialActions(array $rout): void
     {
         // If the route doesn't have an extension, exit the function.
         if (empty($rout['extension'])) {
@@ -263,11 +279,11 @@ class IncomingContexts extends AsteriskConfigClass
      * extensions based on the provided route configuration and route number.
      *
      * @param array $rout The route configuration.
-     * @param int $rout_number The route number.
-     * @param int $number The number to dial.
+     * @param string $rout_number The route number.
+     * @param string $number The number to dial.
      * @return void
      */
-    private function generateDialActionsRoutNumber($rout, $rout_number, $number): void
+    private function generateDialActionsRoutNumber(array $rout, string $rout_number, string $number): void
     {
         // Set the timeout for the route based on the configuration.
         $timeout = trim($rout['timeout']);
@@ -305,10 +321,10 @@ class IncomingContexts extends AsteriskConfigClass
      *
      * @param array $rout The route configuration.
      * @param string $dial_command The dial command to be added.
-     * @param int $number The number to dial.
+     * @param string $number The number to dial.
      * @return void
      */
-    private function duplicateDialActionsRoutNumber($rout, $dial_command, $number): void
+    private function duplicateDialActionsRoutNumber(array $rout, string $dial_command, string $number): void
     {
         // Check if the provider array is properly set.
         if ( ! is_array($this->provider)) {

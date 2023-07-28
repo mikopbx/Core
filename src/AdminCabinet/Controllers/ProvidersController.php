@@ -276,7 +276,7 @@ class ProvidersController extends BaseController
                     }
                     break;
                 case 'qualifyfreq':
-                    $providerByType->qualifyfreq = (int)$data[$name];
+                    $providerByType->$name = (int)$data[$name];
                     break;
                 case 'manualattributes':
                     if (array_key_exists($name, $data)) {

@@ -250,7 +250,7 @@ class AsteriskManager
      *
      * @return array of parameters, empty on timeout
      */
-    public function waitResponse($allow_timeout = false): array
+    public function waitResponse(bool $allow_timeout = false): array
     {
         $timeout = false;
         do {
@@ -309,12 +309,12 @@ class AsteriskManager
      * Process the response based on the event type.
      *
      * @param string $type The event type.
-     * @param int $timeout The timeout value.
+     * @param bool $timeout The timeout.
      * @param bool $allow_timeout Indicates whether the timeout is allowed.
      * @param array $parameters The parameters containing the sub-data.
      * @return void
      */
-    private function waitResponseProcessResponse($type, & $timeout, $allow_timeout, $parameters):void{
+    private function waitResponseProcessResponse($type, &$timeout, $allow_timeout, $parameters):void{
         switch ($type) {
             case '':
                 // Timeout occured

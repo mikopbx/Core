@@ -240,9 +240,9 @@ class SubnetCalculator
     /**
      * Get network.
      *
-     * @return int network.
+     * @return string network.
      */
-    public function getNetworkSize(): int
+    public function getNetworkSize(): string
     {
         return $this->network_size;
     }

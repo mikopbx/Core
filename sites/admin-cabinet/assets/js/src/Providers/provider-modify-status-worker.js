@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate, PbxApi, DebuggerInfo */
+/* global globalTranslate, PbxApi, DebuggerInfo, provider */
 
 
 /**

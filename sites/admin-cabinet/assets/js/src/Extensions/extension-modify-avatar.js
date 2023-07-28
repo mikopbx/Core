@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, Form, extension  */
+/* global globalRootUrl, Form, extension, Image  */
 
 const avatar = {
     // Store reference to the avatar picture element
