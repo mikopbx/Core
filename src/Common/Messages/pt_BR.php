@@ -1071,7 +1071,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_SSHDisablePasswordLogins' => 'Desativar autorização de senha',
     'adv_SystemBrokenComment' => 'Os arquivos críticos do sistema foram modificados. Você precisa executar uma restauração/atualização do sistema.',
     'adv_SSHPPasswordCorrupt' => 'A senha ssh definida na interface da web não corresponde à senha atual no sistema.',
-    'The system password does not match what is set in the configuration file.' => 'A senha SSH MikoPBX é diferente daquela definida no arquivo de configuração. Talvez tenha sido alterado manualmente no console do PBX.',
     'adv_isSimplePassword' => 'Senha insegura usada para "%type%" - <a href=\'%url%\'>alterar</a>',
     'gs_PasswordSimple' => 'A senha que está sendo definida é muito simples.',
     'gs_SetPassword' => 'Definir uma nova senha',

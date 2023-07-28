@@ -1072,7 +1072,6 @@ return [
     'gs_SSHDisablePasswordLogins' => 'Вимкнути авторизацію за паролем',
     'adv_SystemBrokenComment' => 'Критично важливі системні файли були модифіковані. Необхідно виконати відновлення/оновлення системи.',
     'adv_SSHPPasswordCorrupt' => 'Пароль ssh, встановлений у web інтерфейсі, не збігається з чинним у системі.',
-    'The system password does not match what is set in the configuration file.' => 'Пароль SSH MikoPBX відрізняється від встановленого у конфігураційному файлі. Можливо, він був змінений вручну з консолі АТС.',
     'adv_isSimplePassword' => 'Використовується небезпечний пароль для "%type%" - <a href=\'%url%\'>змінити</a>',
     'gs_PasswordSimple' => 'Пароль, що встановлюється, занадто простий.',
     'gs_SetPassword' => 'Встановіть новий пароль',

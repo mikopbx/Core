@@ -1072,7 +1072,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'gs_SSHDisablePasswordLogins' => 'Désactiver l\'authentification par mot de passe',
     'adv_SystemBrokenComment' => 'Les fichiers système critiques ont été modifiés. Vous devez effectuer une restauration/mise à jour du système.',
     'adv_SSHPPasswordCorrupt' => 'Le mot de passe ssh défini dans l\'interface Web ne correspond pas à celui actuel dans le système.',
-    'The system password does not match what is set in the configuration file.' => 'Le mot de passe SSH MikoPBX est différent de celui défini dans le fichier de configuration. Il a peut-être été modifié manuellement à partir de la console PBX.',
     'adv_isSimplePassword' => 'Mot de passe non sécurisé utilisé pour "%type%" - <a href=\'%url%\'>modifier</a>',
     'gs_PasswordSimple' => 'Le mot de passe défini est trop simple.',
     'gs_SetPassword' => 'Définir un nouveau mot de passe',

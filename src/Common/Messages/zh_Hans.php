@@ -1072,7 +1072,6 @@ return [
     'gs_SSHDisablePasswordLogins' => '禁用密码验证',
     'adv_SystemBrokenComment' => '关键系统文件已被修改。您需要执行系统还原/更新。',
     'adv_SSHPPasswordCorrupt' => '网页界面设置的 ssh 密码与系统当前设置的不匹配。',
-    'The system password does not match what is set in the configuration file.' => 'SSH MikoPBX 密码与配置文件中设置的密码不同。也许它是从 PBX 控制台手动更改的。',
     'adv_isSimplePassword' => '用于“%type%”的不安全密码 - <a href=\'%url%\'>更改</a>',
     'gs_PasswordSimple' => '设置的密码太简单了。',
     'gs_SetPassword' => '设置新密码',

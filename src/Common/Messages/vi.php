@@ -1072,7 +1072,6 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá s�
     'gs_SSHDisablePasswordLogins' => 'Tắt xác thực mật khẩu',
     'adv_SystemBrokenComment' => 'Các tệp hệ thống quan trọng đã được sửa đổi. Bạn cần thực hiện khôi phục / cập nhật hệ thống.',
     'adv_SSHPPasswordCorrupt' => 'Mật khẩu ssh được đặt trong giao diện web không khớp với mật khẩu hiện tại trong hệ thống.',
-    'The system password does not match what is set in the configuration file.' => 'Mật khẩu SSH MikoPBX khác với mật khẩu được đặt trong tệp cấu hình. Có lẽ nó đã được thay đổi thủ công từ bảng điều khiển PBX.',
     'adv_isSimplePassword' => 'Mật khẩu không an toàn được sử dụng cho "%type%" - <a href=\'%url%\'>change</a>',
     'gs_PasswordSimple' => 'Mật khẩu được đặt quá đơn giản.',
     'gs_SetPassword' => 'Đặt mật khẩu mới',

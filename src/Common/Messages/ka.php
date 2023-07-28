@@ -1072,7 +1072,6 @@ return [
     'gs_SSHDisablePasswordLogins' => 'პაროლის ავტორიზაციის გამორთვა',
     'adv_SystemBrokenComment' => 'კრიტიკული სისტემის ფაილები შეიცვალა. თქვენ უნდა შეასრულოთ სისტემის აღდგენა/განახლება.',
     'adv_SSHPPasswordCorrupt' => 'ვებ ინტერფეისში მითითებული ssh პაროლი არ ემთხვევა სისტემაში არსებულს.',
-    'The system password does not match what is set in the configuration file.' => 'SSH MikoPBX პაროლი განსხვავდება კონფიგურაციის ფაილში მითითებული პაროლისგან. შესაძლოა ის ხელით შეიცვალა PBX კონსოლიდან.',
     'adv_isSimplePassword' => '"%type%"-ისთვის გამოყენებული დაუცველი პაროლი - <a href=\'%url%\'>შეცვლა</a>',
     'pass_CheckWebAdminPasswordSimple' => 'WEB პაროლი ძალიან მარტივია.',
     'pass_CheckWebAdminPasswordDontMatch' => 'WEB-ისთვის შეყვანილი პაროლები არ ემთხვევა',

@@ -1072,7 +1072,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'gs_SSHDisablePasswordLogins' => 'Inaktivera lösenordsautentisering',
     'adv_SystemBrokenComment' => 'Kritiska systemfiler har ändrats. Du måste utföra en systemåterställning/uppgradering.',
     'adv_SSHPPasswordCorrupt' => 'Det ssh-lösenord som ställts in i webbgränssnittet matchar inte det nuvarande i systemet.',
-    'The system password does not match what is set in the configuration file.' => 'SSH MikoPBX-lösenordet skiljer sig från det som anges i konfigurationsfilen. Kanske ändrades det manuellt från PBX-konsolen.',
     'adv_isSimplePassword' => 'Osäkert lösenord används för "%type%" - <a href=\'%url%\'>ändra</a>',
     'gs_SetPassword' => 'Ange ett nytt lösenord',
     'gs_SetPasswordInfo' => 'Lösenordet är för enkelt.',

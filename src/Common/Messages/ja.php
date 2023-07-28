@@ -1072,7 +1072,6 @@ return [
     'gs_SSHDisablePasswordLogins' => 'パスワード認証を無効にする',
     'adv_SystemBrokenComment' => '重要なシステムファイルが変更されました。システムの復元/更新を実行する必要があります。',
     'adv_SSHPPasswordCorrupt' => 'Webインターフェイスで設定されたsshパスワードが、システムの現在のパスワードと一致しません。',
-    'The system password does not match what is set in the configuration file.' => 'SSH MikoPBXパスワードは、構成ファイルで設定されているものとは異なります。おそらく、PBXコンソールから手動で変更された可能性があります。',
     'adv_isSimplePassword' => '「%type%」に使用されている安全でないパスワード - <a href=\'%url%\'>変更</a>',
     'gs_PasswordSimple' => '設定するパスワードが単純すぎます。',
     'gs_SetPassword' => '新しいパスワードを設定する',
