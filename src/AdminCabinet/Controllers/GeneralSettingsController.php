@@ -73,7 +73,11 @@ class GeneralSettingsController extends BaseController
     {
         $passwordCheckFail = [];
         $cloudInstanceId = $data['CloudInstanceId'] ?? '';
-        foreach (['SSHPassword', 'WebAdminPassword'] as $value) {
+        $checkPasswordFields =['SSHPassword', 'WebAdminPassword'];
+        if ($data['SSHDisablePasswordLogins'] === 'on'){
+            unset($checkPasswordFields['SSHPassword']);
+        }
+        foreach ($checkPasswordFields as $value) {
             if (!isset($data[$value]) || $data[$value] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                 continue;
             }
@@ -95,17 +99,14 @@ class GeneralSettingsController extends BaseController
         }
         $data = $this->request->getPost();
 
-        // Perform a simple password check if SSHDisablePasswordLogins is not checked
-        if ($data['SSHDisablePasswordLogins'] !== 'on') {
-            $passwordCheckFail = $this->getSimplePasswords($data);
-            if (!empty($passwordCheckFail)) {
-                $this->view->message = [
-                    'error' => $this->translation->_('gs_SetPasswordInfo')
-                ];
-                $this->view->success = false;
-                $this->view->passwordCheckFail = $passwordCheckFail;
-                return;
-            }
+        $passwordCheckFail = $this->getSimplePasswords($data);
+        if (!empty($passwordCheckFail)) {
+           foreach ($passwordCheckFail as $settingsKey){
+               $this->flash->error($this->translation->_('gs_SetPasswordError', ['password'=>$data[$settingsKey]]));
+           }
+            $this->view->success = false;
+            $this->view->passwordCheckFail = $passwordCheckFail;
+            return;
         }
 
         $pbxSettings = PbxSettings::getDefaultArrayValues();
