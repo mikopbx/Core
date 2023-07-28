@@ -1145,9 +1145,8 @@ class WorkerModelsEvents extends WorkerBase
      */
     private function cleanupAdvicesCache(): void
     {
-        AdvicesProcessor::cleanupCache();
+        WorkerPrepareAdvices::afterChangePBXSettings();
     }
-
 
     /**
      * Process after PBXExtension state changes

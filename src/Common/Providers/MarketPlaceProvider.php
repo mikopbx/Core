@@ -49,7 +49,7 @@ use Throwable;
  *
  * @package MikoPBX\Common\Providers
  */
-class LicenseProvider implements ServiceProviderInterface
+class MarketPlaceProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'license';
 

@@ -54,20 +54,21 @@ class MikoPBXConfig extends Injectable
     }
 
     /**
-     * Deletes a general setting value.
+     * Resets a general setting value.
      *
-     * @param string $db_key The key of the general setting to be deleted.
+     * @param string $db_key The key of the general setting to be reset.
      *
-     * @return bool True if the value was successfully deleted, false otherwise.
+     * @return bool True if the value was successfully reset to default, false otherwise.
      */
-    public function deleteGeneralSettings(string $db_key): bool
+    public function resetGeneralSettings(string $db_key): bool
     {
         $data = PbxSettings::findFirstByKey($db_key);
         if (null === $data) {
             return true;
         }
+        $data->value = PbxSettings::getDefaultArrayValues()[$db_key]??'';
 
-        return $data->delete();
+        return $data->update();
     }
 
     /**

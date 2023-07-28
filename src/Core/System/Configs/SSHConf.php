@@ -20,11 +20,11 @@
 namespace MikoPBX\Core\System\Configs;
 
 
-use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Workers\WorkerPrepareAdvices;
 use Phalcon\Di\Injectable;
 
 /**
@@ -37,7 +37,6 @@ use Phalcon\Di\Injectable;
 class SSHConf extends Injectable
 {
     private MikoPBXConfig $mikoPBXConfig;
-    public const CHECK_PASSWORD_FILE = '/var/etc/last-check-password';
 
     /**
      * SSHConf constructor.
@@ -136,69 +135,9 @@ class SSHConf extends Injectable
         $this->mikoPBXConfig->setGeneralSettings('SSHPasswordHash',       md5_file('/etc/passwd'));
         if($hashString !== md5($password)){
             $this->mikoPBXConfig->setGeneralSettings('SSHPasswordHashString', md5($password));
-            $this->sendNotify('Attention! SSH password changed!', ['The password for SSH access to the PBX has been changed']);
-            if(file_exists(self::CHECK_PASSWORD_FILE)){
-                unlink(self::CHECK_PASSWORD_FILE);
-            }
+            Notifications::sendAdminNotification('adv_SSHPasswordWasChangedSubject', ['adv_SSHPasswordWasChangedBody'],true);
+            WorkerPrepareAdvices::afterChangeSSHConf();
         }
     }
 
-    /**
-     * Sends a notification email.
-     *
-     * @param string $subject
-     * @param array  $messages
-     * @return void
-     */
-    private function sendNotify(string $subject, array $messages):void
-    {
-        if(!Notifications::checkConnection(Notifications::TYPE_PHP_MAILER)){
-            return;
-        }
-        $subject = Util::translate($subject, false);
-        $text = '';
-        foreach ($messages as $message){
-            $text .= PHP_EOL.Util::translate($message, false);
-        }
-        $adminMail = $this->mikoPBXConfig->getGeneralSettings('SystemNotificationsEmail');
-        $notify = new Notifications();
-        $notify->sendMail($adminMail, $subject, trim($text));
-    }
-
-    /**
-     * Checks the password in case it was changed by an unauthorized means.
-     *
-     * @return void
-     */
-    public static function checkPassword():void
-    {
-        $enableNotify = true;
-
-        if(file_exists(self::CHECK_PASSWORD_FILE)){
-            $data = stat(self::CHECK_PASSWORD_FILE);
-            if(is_array($data)){
-                $enableNotify = (time() - stat(self::CHECK_PASSWORD_FILE)['mtime']??0) > 60*60*4;
-            }
-        }
-        if(!$enableNotify){
-            return;
-        }
-        $messages   = [];
-        $password   = PbxSettings::getValueByKey('SSHPassword');
-        $hashString = PbxSettings::getValueByKey('SSHPasswordHashString');
-        $hashFile   = PbxSettings::getValueByKey('SSHPasswordHash');
-        if($hashString !== md5($password)){
-            // The password has been changed in an unusual way.
-            $messages[] = 'The SSH password was not changed from the web interface.';
-        }
-        if($hashFile   !== md5_file('/etc/passwd')){
-            // The system password does not match what is set in the configuration file.
-            $messages[] = 'The system password does not match what is set in the configuration file.';
-        }
-        if(!empty($messages)){
-            file_put_contents(self::CHECK_PASSWORD_FILE, time());
-            $SSHConf = new SSHConf();
-            $SSHConf->sendNotify('Attention! SSH password compromised', $messages);
-        }
-    }
 }

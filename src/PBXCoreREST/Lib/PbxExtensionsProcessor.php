@@ -29,7 +29,7 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\PBXCoreREST\Lib
  *
- * @property \MikoPBX\Common\Providers\LicenseProvider license
+ * @property \MikoPBX\Common\Providers\MarketPlaceProvider license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  * @property \Phalcon\Config                               config
  */

@@ -26,7 +26,7 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     BeanstalkConnectionModelsProvider,
     BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
-    LicenseProvider,
+    MarketPlaceProvider,
     LoggerProvider,
     MainDatabaseProvider,
     ModelsCacheProvider,
@@ -89,7 +89,7 @@ class RegisterDIServices
             AmiConnectionListener::class,
 
             // Inject License Worker
-            LicenseProvider::class,
+            MarketPlaceProvider::class,
 
             // Url link builder
             UrlProvider::class,

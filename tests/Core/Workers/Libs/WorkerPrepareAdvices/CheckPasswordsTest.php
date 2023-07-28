@@ -17,27 +17,18 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Tests\Core\Workers;
+namespace MikoPBX\Tests\Core\Workers\Libs\WorkerPrepareAdvices;
 
-use MikoPBX\Common\Models\ModelsBase;
-use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\Workers\WorkerModelsEvents;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckPasswords;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
-class WorkerModelsEventsTest extends AbstractUnitTest
+class CheckPasswordsTest extends AbstractUnitTest
 {
 
-    public function testStart()
+    public function testProcess()
     {
-        $worker = new WorkerModelsEvents();
-        $worker->start(['start']);
-        $this->assertTrue(true);
-    }
-
-    public function testClearCache()
-    {
-        $called_class = PbxSettings::class;
-        ModelsBase::clearCache($called_class);
-        $this->assertTrue(true);
+            $class = new CheckPasswords();
+            $class->process();
+            $this->assertTrue(true);
     }
 }

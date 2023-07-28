@@ -36,7 +36,7 @@ use function MikoPBX\Common\Config\appPath;
  * Base class for module setup.
  * Common procedures for module installation and removing external modules.
  *
- * @property \MikoPBX\Common\Providers\LicenseProvider license
+ * @property \MikoPBX\Common\Providers\MarketPlaceProvider license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  *
  *  @package MikoPBX\Modules\Setup

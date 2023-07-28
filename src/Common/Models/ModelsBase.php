@@ -189,6 +189,9 @@ class ModelsBase extends Model
         if (empty($changedFields) && $action === 'afterSave') {
             return;
         }
+        if ($action === 'afterDelete') {
+            $changedFields = array_keys($this->getSnapshotData());
+        }
         $this->sendChangesToBackend($action, $changedFields);
     }
 
@@ -235,7 +238,6 @@ class ModelsBase extends Model
         if ($di === null) {
             return;
         }
-
         if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
             $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
             $category = explode('\\', $calledClass)[3];

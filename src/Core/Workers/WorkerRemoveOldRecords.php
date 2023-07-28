@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{BeanstalkClient, Processes, Storage, Util};
+use MikoPBX\Core\System\{Processes, Storage, Util};
 
 /**
  * WorkerRemoveOldRecords is a worker class responsible for cleaning monitor records.
@@ -30,7 +30,7 @@ use MikoPBX\Core\System\{BeanstalkClient, Processes, Storage, Util};
 class WorkerRemoveOldRecords extends WorkerBase
 {
     private const MIN_SPACE_MB = 500;
-    private const MIN_SPACE_MB_ALERT = 200;
+    public const MIN_SPACE_MB_ALERT = 200;
 
     /**
      * Starts the worker and checks disk space. Sends notifications in case of problems.
@@ -40,8 +40,6 @@ class WorkerRemoveOldRecords extends WorkerBase
      */
     public function start(array $params): void
     {
-        // Establish connection with Beanstalk queue
-        $clientQueue = new BeanstalkClient(WorkerNotifyError::STORAGE_ERROR_TUBE);
         $storage = new Storage();
         $hdd = $storage->getAllHdd(true);
 
@@ -55,14 +53,6 @@ class WorkerRemoveOldRecords extends WorkerBase
             [$need_alert, $need_clean, $test_alert] = $this->check($disk);
             if ($need_alert) {
                 Util::sysLogMsg("STORAGE", $test_alert);
-                $data = [
-                    'Device     - ' => "/dev/{$disk['id']}",
-                    'Directoire - ' => $disk['mounted'],
-                    'Desciption - ' => $test_alert,
-                ];
-
-                // Add a notification task
-                $clientQueue->publish(json_encode($data), WorkerNotifyError::STORAGE_ERROR_TUBE);
             }
             if ($need_clean) {
                 $this->cleanStorage();

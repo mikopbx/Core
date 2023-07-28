@@ -32,7 +32,7 @@ use SimpleXMLElement;
  * Class LicenseManagementProcessor
  *
  * @package MikoPBX\PBXCoreREST\Lib
- * @property \MikoPBX\Common\Providers\LicenseProvider     license
+ * @property \MikoPBX\Common\Providers\MarketPlaceProvider     license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  * @property \Phalcon\Config                               config
  */
@@ -100,7 +100,7 @@ class LicenseManagementProcessor extends Injectable
         $mikoPBXConfig = new MikoPBXConfig();
         $res           = new PBXApiResult();
         $res->processor = __METHOD__;
-        $mikoPBXConfig->deleteGeneralSettings('PBXLicense');
+        $mikoPBXConfig->resetGeneralSettings('PBXLicense');
         $res->success = true;
         $this->license->changeLicenseKey('');
         return $res;

@@ -620,8 +620,8 @@ class ConsoleMenu{
         }catch (Exception $e){
         }
         $mikoPBXConfig = new MikoPBXConfig();
-        $res_login     = $mikoPBXConfig->deleteGeneralSettings('WebAdminLogin');
-        $res_password  = $mikoPBXConfig->deleteGeneralSettings('WebAdminPassword');
+        $res_login     = $mikoPBXConfig->resetGeneralSettings('WebAdminLogin');
+        $res_password  = $mikoPBXConfig->resetGeneralSettings('WebAdminPassword');
 
         if ($res_login === true && $res_password === true) {
             echo Util::translate('Password successfully reset. New login: admin. New password: admin.');

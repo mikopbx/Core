@@ -17,27 +17,33 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Tests\Core\Workers;
+namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices;
 
-use MikoPBX\Common\Models\ModelsBase;
-use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\Workers\WorkerModelsEvents;
-use MikoPBX\Tests\Unit\AbstractUnitTest;
+use Phalcon\Di\Injectable;
+use MikoPBX\Service\Main;
 
-class WorkerModelsEventsTest extends AbstractUnitTest
+/**
+ * Class CheckCorruptedFiles
+ * This class is responsible for checking corrupted files on backend.
+ *
+ * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices
+ */
+class CheckCorruptedFiles extends Injectable
 {
-
-    public function testStart()
+    /**
+     * Check for corrupted files.
+     *
+     * @return array An array containing warning messages.
+     */
+    public function process(): array
     {
-        $worker = new WorkerModelsEvents();
-        $worker->start(['start']);
-        $this->assertTrue(true);
+        $messages = [];
+        $files = Main::checkForCorruptedFiles();
+        if (count($files) !== 0) {
+            $messages['warning'][] =  ['messageTpl'=>'adv_SystemBrokenComment'];
+        }
+
+        return $messages;
     }
 
-    public function testClearCache()
-    {
-        $called_class = PbxSettings::class;
-        ModelsBase::clearCache($called_class);
-        $this->assertTrue(true);
-    }
 }

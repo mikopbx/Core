@@ -21,7 +21,6 @@ namespace MikoPBX\Core\Workers\Cron;
 
 require_once 'Globals.php';
 
-use Generator;
 use MikoPBX\Core\System\{BeanstalkClient, Configs\SSHConf, PBX, Processes, Util};
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Workers\WorkerBase;
@@ -29,16 +28,18 @@ use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\Core\Workers\WorkerCheckFail2BanAlive;
-use MikoPBX\Core\Workers\WorkerLicenseChecker;
+use MikoPBX\Core\Workers\WorkerMarketplaceChecker;
 use MikoPBX\Core\Workers\WorkerLogRotate;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
+use MikoPBX\Core\Workers\WorkerPrepareAdvices;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Recoil\React\ReactKernel;
 use Throwable;
+use Generator;
 
 /**
  * Class WorkerSafeScriptsCore
@@ -104,11 +105,12 @@ class WorkerSafeScriptsCore extends WorkerBase
                 ],
             self::CHECK_BY_PID_NOT_ALERT =>
                 [
-                    WorkerLicenseChecker::class,
+                    WorkerMarketplaceChecker::class,
                     WorkerBeanstalkdTidyUp::class,
                     WorkerCheckFail2BanAlive::class,
                     WorkerLogRotate::class,
                     WorkerRemoveOldRecords::class,
+                    WorkerPrepareAdvices::class
                 ],
         ];
 
@@ -160,9 +162,6 @@ class WorkerSafeScriptsCore extends WorkerBase
                 }
             }
         );
-
-        // Check SSH configuration.
-        SSHConf::checkPassword();
     }
 
     /**

@@ -28,7 +28,7 @@ const advicesWorker = {
      * Time in milliseconds before fetching new advice.
      * @type {number}
      */
-    timeOut: 300000,
+    timeOut: 10000,
 
     /**
      * The id of the timer function for advice worker.

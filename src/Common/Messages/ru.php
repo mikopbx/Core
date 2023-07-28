@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -621,7 +639,7 @@ return [
     'gs_AJAMPort' => 'Порт AJAM',
     'gs_AJAMPortTLS' => 'Порт AJAM с шифрованием',
     'gs_SSHPort' => 'SSH порт',
-    'adv_SSHPPasswordCorrupt' => 'Пароль ssh, установленный в web интерфейсе, не совпадает с действующим в системе.',
+    'adv_SSHPPasswordCorrupt' => 'Пароль SSH, установленный в web интерфейсе, не совпадает с действующим в системе. <a target="_blank" href=\'%url%\'>исправить</a>',
     'gs_SSHPassword' => 'SSH пароль',
     'gs_SSHAuthorizedKeys' => 'SSH Authorized Keys',
     'gs_SSHecdsaKey' => 'SSH ECDSA Key',
@@ -629,7 +647,8 @@ return [
     'gs_SSHDssKey' => 'Ключ SSH DSS',
     'gs_PasswordSimple' => 'Устанавливаемый пароль слишком простой.',
     'gs_SetPassword' => 'Установите новый пароль',
-    'gs_SetPasswordInfo' => 'Пароль слишком простой.',
+    'gs_SetPasswordError' => 'Пароль - %password% нельзя использовать, он присутствует в словаре простых паролей.',
+    'gs_SetPasswordInfo' => 'Указанный пароль нельзя использовать, он присутствует в словаре простых паролей.',
     'gs_PasswordNoNumbers' => 'Пароль должен содержать цифры',
     'gs_PasswordNoLowSimvol' => 'Пароль должен содержать символы нижнего регистра',
     'gs_PasswordNoUpperSimvol' => 'Пароль должен содержать символы верхнего регистра',
@@ -1008,10 +1027,10 @@ return [
     'adv_YouUseDefaultWebPassword' => 'Вы используете пароль по умолчанию для входа в административный интерфейс - <a href=\'%url%\'>изменить</a>',
     'adv_YouUseDefaultSSHPassword' => 'Вы используете пароль по умолчанию для доступа к SSH - <a href=\'%url%\'>изменить</a>',
     'adv_isSimplePassword' => 'Используется небезопасный пароль для "%type%" - <a href=\'%url%\'>изменить</a>',
-    'adv_WebPasswordFieldName' => 'Web интерфейс',
-    'adv_SshPasswordFieldName' => 'SSH',
-    'adv_UserPasswordFieldName' => '%record%',
-    'adv_AmiPasswordFieldName' => 'AMI пользователя <%record%>',
+    'adv_WebPasswordWeak' => 'Простой пароль администратора в Web интерфейсе',
+    'adv_SshPasswordWeak' => 'Простой пароль учетной записи SSH',
+    'adv_SipPasswordWeak' => 'Простой пароль SIP у %record%',
+    'adv_AmiPasswordWeak' => 'Простой пароль у AMI пользователя <%record%>',
     'adv_PopupHeader' => 'Обнаружены следующие проблемы:',
     'pass_CheckWebAdminPasswordSimple' => 'Пароль для WEB слишком простой.',
     'pass_CheckWebAdminPasswordDontMatch' => 'Введенные пароли для WEB не совпадают',
@@ -1145,8 +1164,10 @@ return [
     'msg_ErrorHeader' => 'Ошибка',
     'msg_WarningHeader' => 'Внимание',
     'msg_infoHeader' => 'Информация',
-    'Attention! SSH password changed!' => "Внимание! Пароль SSH был изменен!",
-    'The password for SSH access to the PBX has been changed' => "Пароль SSH для доступа к MikoPBX был изменен!",
-    'The SSH password was not changed from the web interface.' => 'Пароль SSH был изменен вне web интерфейса MikoPBX',
-    'The system password does not match what is set in the configuration file.' => 'Пароль SSH MikoPBX отличается от установленного в конфигурационном файле. Возможно он был изменен вручную из консоли АТС.',
+    'adv_SSHPasswordWasChangedSubject' => "Внимание! Пароль SSH был изменен!",
+    'adv_SSHPasswordWasChangedBody' => "Пароль SSH для доступа к MikoPBX был изменен!",
+    'adv_SSHPasswordWasCompromisedSubject'=> 'Внимание! Пароль SSH был изменен без входа в интерфейс MikoPBX!',
+    'adv_SSHPasswordMismatchStringsHash'=> 'Пароль SSH был изменен вне web интерфейса MikoPBX',
+    'adv_SSHPasswordMismatchFilesHash'=> 'Пароль SSH MikoPBX отличается от установленного в конфигурационном файле. Возможно он был изменен вручную из консоли АТС.',
+    'adv_ThereIsSomeTroublesWithMikoPBX'=> 'Внимание! Обнаружены проблемы в вашей MikoPBX!'
 ];

@@ -27,7 +27,7 @@ class AdvicesProcessorTest extends AbstractUnitTest
 
     public function testAdvicesCallBack()
     {
-        $res = AdvicesProcessor::advicesCallBack(['action'=>'getList']);
+        $res = AdvicesProcessor::callBack(['action'=>'getList']);
         $this->assertTrue($res->success);
 
     }

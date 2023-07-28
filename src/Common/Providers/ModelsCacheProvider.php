@@ -36,6 +36,8 @@ class ModelsCacheProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'modelsCache';
 
+    public const CACHE_PREFIX = 'models-cache:';
+
     /**
      * Register Models cache service provider.
      *
@@ -54,7 +56,7 @@ class ModelsCacheProvider implements ServiceProviderInterface
                     'host'              => $config->path('redis.host'),
                     'port'              => $config->path('redis.port'),
                     'index'             => 3,
-                    'prefix'            => 'models-cache'
+                    'prefix'            => self::CACHE_PREFIX
                 ];
 
                 return new Redis($serializerFactory, $options);

@@ -19,15 +19,15 @@
 
 namespace MikoPBX\Tests\Core\Workers;
 
-use MikoPBX\Core\Workers\WorkerLicenseChecker;
-use MikoPBX\Tests\Unit\AbstractUnitTest;
+use MikoPBX\Core\Workers\WorkerNotifyError;
+use PHPUnit\Framework\TestCase;
 
-class WorkerLicenseCheckerTest extends AbstractUnitTest
+class WorkerNotifyErrorTest extends TestCase
 {
 
     public function testStart()
     {
-        $worker = new WorkerLicenseChecker();
+        $worker = new WorkerNotifyError();
         $worker->start(['start']);
         $this->assertTrue(true);
     }
