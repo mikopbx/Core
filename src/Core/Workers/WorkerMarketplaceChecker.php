@@ -43,11 +43,11 @@ class WorkerMarketplaceChecker extends WorkerBase
     {
         $cacheKey = 'Workers:WorkerMarketplaceChecker:lastCheck';
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
+        $lic = $this->di->getShared(MarketPlaceProvider::SERVICE_NAME);
 
         // Retrieve the last license check timestamp from the cache
         $lastCheck = $managedCache->get($cacheKey);
         if ($lastCheck === null) {
-            $lic = $this->di->getShared(MarketPlaceProvider::SERVICE_NAME);
 
             // Perform PBX registration check
             $lic->checkPBX();
@@ -67,7 +67,7 @@ class WorkerMarketplaceChecker extends WorkerBase
             if (empty($licKey)) {
                 return;
             }
-            $regInfo = $this->license->getLicenseInfo($licKey);
+            $regInfo = $lic->getLicenseInfo($licKey);
             if ($regInfo instanceof SimpleXMLElement) {
                 file_put_contents('/tmp/licenseInfo', json_encode($regInfo->attributes()));
             }

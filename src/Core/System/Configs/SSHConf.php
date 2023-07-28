@@ -132,7 +132,7 @@ class SSHConf extends Injectable
         }else{
             Processes::mwExec("{$echoPath} 'root:$password' | {$chPasswdPath}");
         }
-        $this->mikoPBXConfig->setGeneralSettings('SSHPasswordHash',       md5_file('/etc/passwd'));
+        $this->mikoPBXConfig->setGeneralSettings('SSHPasswordHash',       md5_file('/etc/shadow'));
         if($hashString !== md5($password)){
             $this->mikoPBXConfig->setGeneralSettings('SSHPasswordHashString', md5($password));
             Notifications::sendAdminNotification('adv_SSHPasswordWasChangedSubject', ['adv_SSHPasswordWasChangedBody'],true);

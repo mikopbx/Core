@@ -47,7 +47,7 @@ class CheckSSHConfig extends Injectable
             // The password has been changed in an unusual way.
             $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchStringsHash'];
         }
-        if($hashFile   !== md5_file('/etc/passwd')){
+        if($hashFile   !== md5_file('/etc/shadow')){
             // The system password does not match what is set in the configuration file.
             $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchFilesHash'];
         }

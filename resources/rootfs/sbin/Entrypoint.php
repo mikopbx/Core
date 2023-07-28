@@ -217,13 +217,13 @@ class Entrypoint
 
         $commands = [];
         $userID = 'www';
-        $currentUserId = trim(shell_exec("grep '^$userID:' < /etc/passwd | cut -d ':' -f 3"));
-        $currentGroupId = trim(shell_exec("grep '^$userID:' < /etc/passwd | cut -d ':' -f 4"));
+        $currentUserId = trim(shell_exec("grep '^$userID:' < /etc/shadow | cut -d ':' -f 3"));
+        $currentGroupId = trim(shell_exec("grep '^$userID:' < /etc/shadow | cut -d ':' -f 4"));
 
         Util::echoWithSyslog(" - Old user id: $currentUserId; New user id: $newUserId" . PHP_EOL);
         Util::echoWithSyslog(" - Old group id: $currentGroupId; New user id: $newGroupId" . PHP_EOL);
         if (!empty($currentUserId) && !empty($newUserId) && $currentUserId !== $newUserId) {
-            $commands[] = "sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/passwd*";
+            $commands[] = "sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
             $id = '';
             if (file_exists($pidIdPath)) {
                 $id = file_get_contents($pidIdPath);
@@ -235,7 +235,7 @@ class Entrypoint
         }
         if (!empty($currentGroupId) && !empty($newGroupId) && $currentGroupId !== $newGroupId) {
             $commands[] = "sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
-            $commands[] = "sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/passwd";
+            $commands[] = "sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/shadow";
 
             $id = '';
             if (file_exists($pidGrPath)) {

@@ -82,7 +82,7 @@ class CheckPasswords extends Injectable
      * Prepares array of system passwords with representation to check password quality.
      *
      * @param array $fields
-     * @return void
+     * @return array
      */
     private function preparePasswordFields(array &$fields): array
     {
@@ -120,7 +120,7 @@ class CheckPasswords extends Injectable
             ];
             unset($fields['SSHPassword']);
             $messages['needUpdate'][] = 'SSHPassword';
-        } elseif (PbxSettings::getValueByKey('SSHPasswordHash') !== md5_file('/etc/passwd')) {
+        } elseif (PbxSettings::getValueByKey('SSHPasswordHash') !== md5_file('/etc/shadow')) {
             $messages['warning'][] = [
                 'messageTpl'=>'adv_SSHPPasswordCorrupt',
                 'messageParams'=>[
