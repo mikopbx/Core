@@ -83,7 +83,7 @@ class VoltProvider implements ServiceProviderInterface
                 // Allows use isAllowed within volt templates
                 $compiler->addFunction(
                     'isAllowed',
-                    function ($action, $controller = '') use ($view) {
+                    function ($action, $controller = '') {
                         // If we don't provide the second parameter
                         // there is some array with parameters instead of empty string.
                         if (is_array($controller)){
@@ -96,7 +96,7 @@ class VoltProvider implements ServiceProviderInterface
                 // Allows use hookVoltBlock within volt templates
                 $compiler->addFunction(
                     'hookVoltBlock',
-                    function ($blockName) use ($view, $volt) {
+                    function ($blockName) use ($view) {
                         $controller = $view->getControllerName();
                         $blockNameWithoutQuotes = str_replace(['"', '\''], '', $blockName);
                         $modulesVoltBlocks = PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_VOLT_BLOCK_COMPILE, [$controller, $blockNameWithoutQuotes, $view]);

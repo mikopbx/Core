@@ -118,7 +118,7 @@ class UpdateConfigsUpToVer202202103 extends Injectable implements UpgradeSystemC
 
         /** @var Codecs $codecForRemove */
         $codecForRemove = Codecs::findFirst("name='g719'");
-        if($codecForRemove){
+        if($codecForRemove!==null){
             $codecForRemove->delete();
         }
     }

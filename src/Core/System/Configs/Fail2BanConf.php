@@ -529,9 +529,9 @@ class Fail2BanConf extends Injectable
 
         // If rule exists, extract its properties.
         if ($res !== null) {
-            $max_retry = $res->maxretry;
-            $find_time = $res->findtime;
-            $ban_time = $res->bantime;
+            $max_retry = intval($res->maxretry);
+            $find_time = intval($res->findtime);
+            $ban_time = intval($res->bantime);
 
             // Explode whitelist IPs into array.
             $whitelist = (string) $res->whitelist;
@@ -556,9 +556,9 @@ class Fail2BanConf extends Injectable
             $user_whitelist = trim($user_whitelist);
         } else {
             // If rule doesn't exist, use default values.
-            $max_retry = '10';
-            $find_time = '1800';
-            $ban_time = '43200';
+            $max_retry = 10;
+            $find_time = 1800;
+            $ban_time = 43200;
         }
 
         // Return an array of the properties.

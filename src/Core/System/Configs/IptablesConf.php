@@ -203,7 +203,7 @@ class IptablesConf extends Injectable
      *
      * @return void
      */
-    private function addAdditionalFirewallRules(&$arr_command): void
+    private function addAdditionalFirewallRules(array &$arr_command): void
     {
         /** @var Sip $data */
         $db_data  = Sip::find("type = 'friend' AND ( disabled <> '1')");
@@ -227,7 +227,7 @@ class IptablesConf extends Injectable
         }
         // Allow all local connections
         $arr_command[] = $this->getIptablesInputRule('', '-s 127.0.0.1 ');
-        unset($db_data, $sipHosts, $result, $hashArray);
+        unset($db_data, $sipHosts, $hashArray);
     }
 
     /**
@@ -237,7 +237,7 @@ class IptablesConf extends Injectable
      *
      * @return void
      */
-    public function addMainFirewallRules(&$arr_command):void
+    public function addMainFirewallRules(array &$arr_command):void
     {
         $options = [];
         /** @var FirewallRules $rule */

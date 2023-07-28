@@ -534,7 +534,7 @@ class Util
 
         // Generate keys
         $private_key = openssl_pkey_new($config_args_pkey);
-        $csr = openssl_csr_new($options, $private_key, $config_args_csr);
+        $csr = openssl_csr_new($options, /** @scrutinizer ignore-type */$private_key, $config_args_csr);
         $x509 = openssl_csr_sign($csr, null, $private_key, $days = 3650, $config_args_csr);
 
         // Export keys
@@ -589,7 +589,7 @@ class Util
         $pathBusyBox = self::which('busybox');
         $ttyTittle = trim(shell_exec("$pathBusyBox setserial -g $ttyPath 2> /dev/null"));
         if (strpos($ttyTittle, $ttyPath) !== false && strpos($ttyTittle, 'unknown') === false) {
-            @file_put_contents($ttyPath, $message, FILE_APPEND);
+            /** @scrutinizer ignore-unhandled */ @file_put_contents($ttyPath, $message, FILE_APPEND);
         }
     }
 

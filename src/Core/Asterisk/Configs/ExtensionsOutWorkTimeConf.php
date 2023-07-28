@@ -404,7 +404,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         } else {
             /** @var SoundFiles $res */
             $res = SoundFiles::findFirst($ruleData['audio_message_id']);
-            $audio_message = ($res === null) ? '' : Util::trimExtensionForFile($res->path);
+            $audio_message = ($res === null) ? '' : Util::trimExtensionForFile($res->path??'');
 
             $dialplanName = "work-time-set-var-{$ruleData['id']}";
 

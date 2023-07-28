@@ -133,12 +133,10 @@ class WorkerDownloader extends WorkerBase
      *
      * @param int $downloadTotal The total size of the download.
      * @param int $downloadedBytes The number of bytes downloaded.
-     * @param int $uploadTotal The total size of the upload.
-     * @param int $uploadedBytes The number of bytes uploaded.
      *
      * @return void
      */
-    public function progress(int $downloadTotal, int $downloadedBytes, int $uploadTotal, int $uploadedBytes) :void
+    public function progress(int $downloadTotal, int $downloadedBytes) :void
     {
         if ($downloadedBytes === 0) {
             return;

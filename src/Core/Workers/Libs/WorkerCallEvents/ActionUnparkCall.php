@@ -44,7 +44,7 @@ class ActionUnparkCall
 
         // Enable recording if monitoring is enabled.
         if ($worker->enableMonitor($data['src_num'], $data['dst_num'])) {
-            $data['recordingfile'] = $worker->MixMonitor($data['dst_chan'], $data['UNIQUEID'], null, null, 'ActionUnparkCall');
+            $data['recordingfile'] = $worker->MixMonitor($data['dst_chan'], $data['UNIQUEID'], '', '', 'ActionUnparkCall');
         }
 
         // Insert data to DB.

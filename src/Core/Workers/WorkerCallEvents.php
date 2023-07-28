@@ -119,14 +119,14 @@ class WorkerCallEvents extends WorkerBase
      * Initiates the recording of a conversation on a channel.
      *
      * @param string $channel The name of the channel where recording will be initiated.
-     * @param ?string $file_name Optional name of the file where the recording will be saved.
-     * @param ?string $sub_dir Optional subdirectory where the recording file will be saved.
-     * @param ?string $full_name Optional full name for the recording file.
+     * @param string $file_name Optional name of the file where the recording will be saved.
+     * @param string $sub_dir Optional subdirectory where the recording file will be saved.
+     * @param string $full_name Optional full name for the recording file.
      * @param string $actionID Optional action ID for the recording action.
      *
      * @return string The name of the result file.
      */
-    public function MixMonitor(string $channel, $file_name = null, $sub_dir = null, $full_name = null, string $actionID = ''): string
+    public function MixMonitor(string $channel, string $file_name = '', string $sub_dir = '', string $full_name = '', string $actionID = ''): string
     {
         $resFile = $this->mixMonitorChannels[$channel] ?? '';
         if ($resFile !== '') {
@@ -152,19 +152,19 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Sets the file name options for the monitor.
      *
-     * @param ?string $full_name The full name of the file. If it exists, it will be used as is.
-     * @param ?string $sub_dir The subdirectory where the file will be stored.
-     * @param ?string $file_name The name of the file.
+     * @param string $full_name The full name of the file. If it exists, it will be used as is.
+     * @param string $sub_dir The subdirectory where the file will be stored.
+     * @param string $file_name The name of the file.
      *
      * @return array An array containing the full file path and the options for the recording.
      *               If $this->split_audio_thread is true, options will be set to split audio in two separate files (in/out).
      *               Otherwise, 'ab' will be returned as options.
      */
-    public function setMonitorFilenameOptions(?string $full_name, ?string $sub_dir, ?string $file_name): array
+    public function setMonitorFilenameOptions(string $full_name, string $sub_dir, string $file_name): array
     {
-        if (!file_exists((string)$full_name)) {
+        if (!file_exists($full_name)) {
             $monitor_dir = Storage::getMonitorDir();
-            if ($sub_dir === null) {
+            if (empty($sub_dir)) {
                 $sub_dir = date('Y/m/d/H/');
             }
             $f = "{$monitor_dir}/{$sub_dir}{$file_name}";

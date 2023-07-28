@@ -36,6 +36,7 @@ use Throwable;
  *  Utility class for managing extension state.
  *
  * @property \MikoPBX\Service\License license
+ * @property \Phalcon\Config\Adapter\Json config
  *
  * @package MikoPBX\Modules
  */

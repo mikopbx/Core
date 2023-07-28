@@ -57,11 +57,12 @@ class SecurityPlugin extends Injectable
         $isAuthenticated = $this->checkUserAuth() || $this->isLocalHostRequest();
 
         // Get the controller and action names
-        $controller = $dispatcher->getControllerName();
         $action = $dispatcher->getActionName();
+
+        /** @scrutinizer ignore-call */
         $controllerClass = $this->dispatcher->getHandlerClass();
 
-        // Controllers allowed without authentification
+        // Controllers allowed without authentication
         $publicControllers = [
             SessionController::class,
             LanguageController::class,

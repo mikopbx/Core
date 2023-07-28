@@ -38,6 +38,7 @@ use function MikoPBX\Common\Config\appPath;
  *
  * @property \MikoPBX\Common\Providers\MarketPlaceProvider license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property \Phalcon\Config\Adapter\Json config
  *
  *  @package MikoPBX\Modules\Setup
  */
@@ -145,7 +146,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
             if ($module_settings) {
                 // Extract module settings
                 $this->version         = $module_settings['version'];
-                $this->min_pbx_version = $module_settings['min_pbx_version'];
+                $this->min_pbx_version = $module_settings['min_pbx_version']??'';
                 $this->developer       = $module_settings['developer'];
                 $this->support_email   = $module_settings['support_email'];
 

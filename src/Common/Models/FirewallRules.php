@@ -49,14 +49,14 @@ class FirewallRules extends ModelsBase
     /**
      * Starting port number of the rule
      *
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", nullable=true)
      */
     public ?string $portfrom = '';
 
     /**
      * Ending port number of the rule
      *
-     * @Column(type="integer", nullable=true)
+     * @Column(type="string", nullable=true)
      */
     public ?string $portto = '';
 

@@ -168,7 +168,9 @@ class Notifications
         try {
             $mail = $this->getMailSender();
             $mail->setFrom($this->fromAddres, $this->fromName);
-            $to = explode(',', $to);
+            if (is_string($to)) {
+                $to = explode(',', $to);
+            }
             foreach ($to as $email) {
                 $mail->addAddress($email);
             }

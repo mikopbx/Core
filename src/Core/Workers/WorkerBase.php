@@ -27,8 +27,6 @@ use Phalcon\Di;
 use Phalcon\Text;
 use Throwable;
 
-use function GuzzleHttp\Psr7\str;
-
 /**
  * Base class for workers. This class is responsible for basic worker management and
  * includes methods for handling signals, saving PID files, and managing worker processes.
@@ -82,7 +80,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
             true
         );
         register_shutdown_function([$this, 'shutdownHandler']);
-        $this->workerStartTime = microtime(true);
+        $this->workerStartTime = floatval(microtime(true));
         $this->savePidFile();
     }
 

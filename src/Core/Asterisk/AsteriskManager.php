@@ -130,7 +130,7 @@ class AsteriskManager
      * @param string $pingTube The name of the ping tube.
      * @return bool True if a response is received within the timeout, false otherwise.
      */
-    public function pingAMIListener($pingTube = 'CdrConnector')
+    public function pingAMIListener(string $pingTube = 'CdrConnector'):bool
     {
         // Set event filter.
         $params = ['Operation' => 'Add', 'Filter' => 'Event: UserEvent'];
@@ -146,7 +146,7 @@ class AsteriskManager
         }
         $req .= "\r\n";
         if ( ! is_resource($this->socket)) {
-            return [];
+            return false;
         }
         $this->sendDataToSocket($req);
 
@@ -460,11 +460,8 @@ class AsteriskManager
      * @param bool $event_as_array Indicates whether to store events as arrays (optional, default is true).
      * @return void
      */
-    private function waitResponseGetSubData(&$parameters, $end_string = '', $event_as_array = true): void
+    private function waitResponseGetSubData(array &$parameters, string $end_string = '', bool $event_as_array = true): void
     {
-        if ( ! is_array($parameters)) {
-            $parameters = [];
-        }
         if (empty($end_string)) {
             return;
         }

@@ -448,7 +448,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function applyACLFiltersToCDRQuery(array &$parameters): void
+    public function applyACLFiltersToCDRQuery(/** @scrutinizer ignore-unused */ array &$parameters): void
     {
         // Implement $parameters modifications
     }

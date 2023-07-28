@@ -45,7 +45,7 @@ class OutWorkTimesRouts extends ModelsBase
     /**
      * Reference to the record in the IncomingRoutingTable table
      *
-     * @Column(type="integer", nullable=false)
+     * @Column(type="string", nullable=false)
      */
     public $routId;
 

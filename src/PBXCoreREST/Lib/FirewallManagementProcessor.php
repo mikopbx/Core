@@ -99,11 +99,9 @@ class FirewallManagementProcessor extends Injectable
     /**
      * Retrieve a list of banned IP addresses or get data for a specific IP address.
      *
-     * @param string|null $ip The IP address for which to retrieve data. If null, retrieves a list of all banned IP addresses.
-     *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function getBannedIp(?string $ip = null): PBXApiResult
+    public static function getBannedIp(): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;

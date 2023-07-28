@@ -27,9 +27,9 @@ require_once 'Globals.php';
  * Get active channels by extension.
  *
  * @param string $EXTEN The extension to retrieve active channels for.
- * @return array An associative array where the key is the Linkedid and the value is an array of channels.
+ * @return string An associative array where the key is the Linkedid and the value is an array of channels.
  */
-function getActiveIdChannels(string $EXTEN)
+function getActiveIdChannels(string $EXTEN):string
 {
     $ParkeeChannel = '';
     $am            = Util::getAstManager('off');

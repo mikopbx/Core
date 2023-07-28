@@ -125,13 +125,13 @@ class Extensions extends ModelsBase
         $result = self::find($parameters)->toArray();
 
         // Find the next available application number starting from 2200100
+        $freeExtension = '2200100';
         for ($i = 100; ; $i++) {
             $freeExtension = "2200{$i}";
             if (!in_array(['number' => $freeExtension], $result, false)) {
                 break;
             }
         }
-
         return $freeExtension;
     }
 

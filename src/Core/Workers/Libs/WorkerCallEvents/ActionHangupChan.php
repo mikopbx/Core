@@ -195,7 +195,7 @@ class ActionHangupChan
         if (empty($data['UNIQUEID'])) {
             $data['UNIQUEID'] = $data['agi_threadid'];
         }
-        $time = (float)str_replace('mikopbx-', '', $data['linkedid']);
+        $time = intval(str_replace('mikopbx-', '', $data['linkedid']));
         $data['start'] = date("Y-m-d H:i:s.v", $time);
         $data['endtime'] = $data['end'];
 
@@ -249,7 +249,7 @@ class ActionHangupChan
             $n_data['UNIQUEID'] = $data['linkedid'] . Util::generateRandomString();
             $n_data['transfer'] = '0';
             if ($worker->enableMonitor($n_data['src_num'] ?? '', $n_data['dst_num'] ?? '')) {
-                $n_data['recordingfile'] = $worker->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID'], null, null, 'hangupChanCheckSipTrtansfer');
+                $n_data['recordingfile'] = $worker->MixMonitor($n_data['dst_chan'], $n_data['UNIQUEID'], '', '', 'hangupChanCheckSipTrtansfer');
             }
             $n_data['did'] = $data_chan['did'];
 

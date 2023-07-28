@@ -116,13 +116,12 @@ class CreateRowTransfer
             $recordingfile = $worker->MixMonitor(
                 $insert_data['dst_chan'],
                 'transfer_' . $insert_data['src_num'] . '_' . $insert_data['dst_num'] . '_' . $data['linkedid'],
-                null,
-                null,
+                '',
+                '',
                 'fillLocalChannelCdr'
             );
         }
 
-        $insert_data['action'] = "{$action}_end_trasfer";
         $insert_data['recordingfile'] = $recordingfile;
         $insert_data['start'] = $data['end'];
         $insert_data['answer'] = $data['end'];

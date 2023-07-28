@@ -53,6 +53,7 @@ class BaseController extends Controller
     public function initialize(): void
     {
         $this->actionName = $this->dispatcher->getActionName();
+        /** @scrutinizer ignore-call */
         $this->controllerClass = $this->dispatcher->getHandlerClass();
         $this->controllerName = Text::camelize($this->dispatcher->getControllerName(), '_');
         $this->controllerNameUnCamelized = Text::uncamelize($this->controllerName, '-');

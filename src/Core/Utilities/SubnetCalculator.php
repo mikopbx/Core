@@ -53,9 +53,9 @@ class SubnetCalculator
     /**
      * CIDR network size.
      *
-     * @var int
+     * @var string
      */
-    private int $network_size;
+    private string $network_size;
     /**
      * Array of four elements containing the four quads of the IP address.
      *
@@ -74,11 +74,11 @@ class SubnetCalculator
      * For example: 192.168.1.120/24 would be $ip=192.168.1.120 $network_size=24
      *
      * @param string $ip IP address in dotted quad notation.
-     * @param int $network_size CIDR network size.
+     * @param string $network_size CIDR network size.
      *
      * @throws \Throwable
      */
-    public function __construct(string $ip, $network_size)
+    public function __construct(string $ip, string $network_size)
     {
         $this->validateInputs($ip, $network_size);
         $this->ip           = $ip;
@@ -92,11 +92,11 @@ class SubnetCalculator
      * Validate IP address and network.
      *
      * @param string $ip           IP address in dotted quads format.
-     * @param int $network_size Network.
+     * @param string $network_size Network.
      *
      * @throws \Throwable IP or network size not valid.
      */
-    private function validateInputs(string $ip, int $network_size)
+    private function validateInputs(string $ip, string $network_size)
     {
         if ( ! filter_var($ip, FILTER_VALIDATE_IP)) {
             throw new Error("IP address $ip not valid.");

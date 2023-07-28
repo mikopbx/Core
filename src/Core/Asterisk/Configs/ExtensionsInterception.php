@@ -72,6 +72,7 @@ class ExtensionsInterception extends AsteriskConfigClass
         $am = Util::getAstManager('off');
         $channels=$am->GetChannels();
         $interceptionChannel = '';
+        $interceptionLinkedId = '';
         foreach ($channels as $linkedId => $linkedIdData){
             foreach ($linkedIdData as $tmpChannel){
                 if(strpos($tmpChannel, 'PJSIP/'.$providerId) === false){

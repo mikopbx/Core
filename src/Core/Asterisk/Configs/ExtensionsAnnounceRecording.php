@@ -70,7 +70,7 @@ class ExtensionsAnnounceRecording extends AsteriskConfigClass
             /** @var SoundFiles $fileData */
             $fileData = SoundFiles::findFirst($id);
             if ($fileData !== null) {
-                $filename = Util::trimExtensionForFile($fileData->path);
+                $filename = Util::trimExtensionForFile($fileData->path??'');
             }
         }
 

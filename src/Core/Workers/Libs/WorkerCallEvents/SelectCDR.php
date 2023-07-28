@@ -106,12 +106,12 @@ class SelectCDR
      * @param array $filter The filter to validate.
      * @return bool True if the filter has invalid bind parameters, false otherwise.
      */
-    private static function filterNotValid($filter): bool
+    private static function filterNotValid(array $filter): bool
     {
         $haveErrors = false;
         $validValue = ['0', ''];
         if (isset($filter['bind'])) {
-            if (is_array($filter)) {
+            if (is_array($filter['bind'])) {
                 foreach ($filter['bind'] as $bindValue) {
                     if (empty($bindValue) && !in_array($bindValue, $validValue, true)) {
                         $haveErrors = true;

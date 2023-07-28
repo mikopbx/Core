@@ -38,7 +38,7 @@ class Cidr extends Injectable
             $bin .= $cidr >= $i ? '1' : '0';
         }
 
-        $netmask = long2ip(bindec($bin));
+        $netmask = long2ip(intval(bindec($bin)));
 
         if ($netmask == "0.0.0.0") {
             return false;

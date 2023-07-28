@@ -95,7 +95,7 @@ class ActionCelAnswer
             $insert_data['transfer'] = '0';
 
             if ($worker->enableMonitor($insert_data['src_num'] ?? '', $insert_data['dst_num'] ?? '')) {
-                $insert_data['recordingfile'] = $worker->MixMonitor($insert_data['dst_chan'], $insert_data['UNIQUEID'], null, null, 'ret_after_trasfer');
+                $insert_data['recordingfile'] = $worker->MixMonitor($insert_data['dst_chan'], $insert_data['UNIQUEID'], '', '', 'ret_after_trasfer');
             }
 
             // Insert the new data into the database

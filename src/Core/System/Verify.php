@@ -37,13 +37,8 @@ class Verify
      *
      * @return bool|null Returns true if the $ipaddr is a valid IP address, false otherwise.
      */
-    public static function isIpAddress($ipaddr): ?bool
+    public static function isIpAddress(string $ipaddr): ?bool
     {
-        // Check if $ipaddr is not a string. If it's not a string, it cannot be an IP address.
-        if ( ! is_string($ipaddr)) {
-            return false;
-        }
-
         // Convert the IP address to long format.
         $ip_long    = ip2long($ipaddr);
 

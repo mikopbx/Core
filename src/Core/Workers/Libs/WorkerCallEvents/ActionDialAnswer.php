@@ -127,7 +127,7 @@ class ActionDialAnswer
             if ($worker->enableMonitor($new_data['src_num'] ?? '', $new_data['dst_num'] ?? '')) {
 
                 // If it is, start recording the call.
-                $new_data['recordingfile'] = $worker->MixMonitor($new_data['dst_chan'], 'pickup_' . $new_data['UNIQUEID'], null, null, 'fillPickUpCdr');
+                $new_data['recordingfile'] = $worker->MixMonitor($new_data['dst_chan'], 'pickup_' . $new_data['UNIQUEID'], '', '', 'fillPickUpCdr');
             }
 
             // Unset unnecessary fields from the new data.

@@ -83,7 +83,6 @@ class Request extends PhRequest
     public function isAllowedAction($api): bool
     {
         $pattern = $api->router->getMatches()[0]??'';
-        $action = $api->router->getMatches()[1]??'';
         $partsOfPattern = explode('/', $pattern);
         if (count($partsOfPattern)===5){
             $role = $api->getSharedService(SessionProvider::SERVICE_NAME)->get(SessionController::SESSION_ID)[SessionController::ROLE] ?? AclProvider::ROLE_GUESTS;
