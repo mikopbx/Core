@@ -214,9 +214,8 @@ class SystemLoader extends Di\Injectable
         NTPConf::configure();
         $this->echoResultMsg();
 
-        // Configure SSH for T2SDELinux
-        if($itIsT2SDELinux){
-            // Do not need to set Docker or Debian SSH service
+        // Do not need to set Debian SSH service
+        if(!Util::isSystemctl()){
             $this->echoStartMsg(' - Configuring SSH console...');
             $sshConf = new SSHConf();
             $resSsh  = $sshConf->configure();
