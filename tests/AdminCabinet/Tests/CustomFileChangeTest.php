@@ -21,6 +21,7 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
+use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class CustomFileChangeTest extends MikoPBXTestsBase
@@ -51,11 +52,11 @@ class CustomFileChangeTest extends MikoPBXTestsBase
 
         self::$driver->wait()->until(
             WebDriverExpectedCondition::presenceOfElementLocated(
-                WebDriverBy::xpath('id("application-code")//textarea')
+                WebDriverBy::xpath('id("user-edit-config")/textarea')
             )
         );
 
-        $textAreaACEContent = self::$driver->findElement(WebDriverBy::xpath('id("application-code")/textarea'));
+        $textAreaACEContent = self::$driver->findElement(WebDriverBy::xpath('id("user-edit-config")/textarea'));
         $textAreaACEContent->getLocationOnScreenOnceScrolledIntoView();
         self::$driver->wait(3);
         $textAreaACEContent->clear();
@@ -94,7 +95,7 @@ class CustomFileChangeTest extends MikoPBXTestsBase
         $params[] = [
             [
                 'filePath'     => '/var/spool/cron/crontabs/root',
-                'mode'         => 'append',
+                'mode'         => CustomFiles::MODE_APPEND,
                 'fileContents' => "*/1 * * * * /etc/rc/remount-offload-rw > /dev/null 2> /dev/null",
                 'description'  => 'Подключаем режим записи для Offload диска',
             ],

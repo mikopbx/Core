@@ -411,7 +411,8 @@ class SysinfoManagementProcessor extends Injectable
     {
         $content = '────────────────────────────────── Changed config files ─────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        $files   = CustomFiles::find('mode!="none"');
+        $modeNone = CustomFiles::MODE_NONE;
+        $files   = CustomFiles::find("mode!='$modeNone'");
         foreach ($files as $file) {
             $content .= "({$file->mode}){$file->filepath}" . PHP_EOL;
         }

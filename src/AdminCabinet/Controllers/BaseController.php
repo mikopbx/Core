@@ -295,7 +295,7 @@ class BaseController extends Controller
      * @param mixed $entity The entity to be saved.
      * @return bool True if the entity was successfully saved, false otherwise.
      */
-    protected function saveEntity($entity): bool
+    protected function saveEntity($entity, string $reloadPath=''): bool
     {
         $success = $entity->save();
 
@@ -308,6 +308,9 @@ class BaseController extends Controller
 
         if ($this->request->isAjax()) {
             $this->view->success = $success;
+            if ($reloadPath!=='' && $success){
+                $this->view->reload = $reloadPath;
+            }
         }
 
         return $success;

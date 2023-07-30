@@ -88,13 +88,10 @@ class CustomFilesController extends BaseController
                     $customFile->$name = $data[$name];
             }
         }
-        if ($customFile->save() === false) {
-            $errors = $customFile->getMessages();
-            $this->flash->error(implode('<br>', $errors));
-            $this->view->success = false;
-        } else {
-            $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-            $this->view->success = true;
+        if (empty($customFile->getContent())){
+            $customFile->mode = CustomFiles::MODE_NONE;
         }
+
+        $this->saveEntity($customFile, "custom-files/modify/{$data['id']}");
     }
 }

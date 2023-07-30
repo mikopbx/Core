@@ -245,41 +245,62 @@ class Util
      * Writes content to a file.
      *
      * @param string $filename The path of the file.
-     * @param mixed $data The data to write to the file.
+     * @param string $data The data to write to the file.
      *
      * @return void
      */
-    public static function fileWriteContent(string $filename, $data): void
+    public static function fileWriteContent(string $filename, string $data): void
     {
         /** @var CustomFiles $res */
         $res = CustomFiles::findFirst("filepath = '{$filename}'");
-
-        $filename_orgn = "{$filename}.orgn";
-
-        // Check if CustomFiles entry exists and its mode is 'none'
-        if (($res === null || $res->mode === 'none') && file_exists($filename_orgn)) {
-            unlink($filename_orgn);
-        } // Check if CustomFiles entry exists and its mode is not 'none'
-        elseif ($res !== null && $res->mode !== 'none') {
-            // Write the original file
-            file_put_contents($filename_orgn, $data);
-        }
-
         if ($res === null) {
             // File is not yet registered in the database, create a new CustomFiles entry
             $res = new CustomFiles();
             $res->writeAttribute('filepath', $filename);
-            $res->writeAttribute('mode', 'none');
+            $res->writeAttribute('mode',  CustomFiles::MODE_NONE);
             $res->save();
-        } elseif ($res->mode === 'append') {
-            // Append to the file
-            $data .= "\n\n";
-            $data .= base64_decode((string)$res->content);
-        } elseif ($res->mode === 'override') {
-            // Override the file
-            $data = base64_decode((string)$res->content);
         }
-        file_put_contents($filename, $data);
+
+        $filename_orgn = "{$filename}.orgn";
+
+        switch ($res->mode){
+            case CustomFiles::MODE_NONE:
+                if (file_exists($filename_orgn)) {
+                    unlink($filename_orgn);
+                }
+                file_put_contents($filename, $data);
+                break;
+            case CustomFiles::MODE_APPEND:
+                file_put_contents($filename_orgn, $data);
+                // Append to the file
+                $data .= "\n\n";
+                $data .= base64_decode((string)$res->content);
+                file_put_contents($filename, $data);
+                break;
+            case CustomFiles::MODE_OVERRIDE:
+                file_put_contents($filename_orgn, $data);
+                // Override the file
+                $data = base64_decode((string)$res->content);
+                file_put_contents($filename, $data);
+                break;
+            case CustomFiles::MODE_SCRIPT:
+                // Save the original copy.
+                file_put_contents($filename_orgn, $data);
+
+                // Save the config file.
+                file_put_contents($filename, $data);
+
+                // Apply custom script to the file
+                $scriptText = base64_decode((string)$res->content);
+                $tempScriptFile = tempnam(sys_get_temp_dir(), 'temp_script.sh');
+                file_put_contents($tempScriptFile, $scriptText);
+                $command = "/bin/sh {$tempScriptFile} {$filename}";
+                Processes::mwExec($command);
+                unlink($tempScriptFile);
+
+                break;
+            default:
+        }
     }
 
     /**

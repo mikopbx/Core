@@ -797,6 +797,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/CustomFiles/custom-files-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
+                ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/CustomFiles/custom-files-modify.js', true);
             $this->footerCollectionACE

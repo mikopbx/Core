@@ -98,16 +98,6 @@ class WorkerPrepareAdvices extends WorkerBase
             try {
                 $checkObj = new $currentAdviceClass();
                 $newAdvice = $checkObj->process();
-
-                foreach ($newAdvice as $messages){
-                    if (array_key_exists('error', $messages)){
-
-                    }
-                }
-                if(!empty($messages)){
-                    Notifications::sendAdminNotification('adv_SSHPasswordWasCompromisedSubject', $messages);
-                }
-
                 $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
             } catch (\Throwable $e) {
                 global $errorLogger;

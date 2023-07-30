@@ -39,8 +39,6 @@ use Phalcon\Http\Message\UploadedFile;
 class FilesManagementProcessor extends Injectable
 {
 
-    public const PROCESSOR_NAME='files';
-
     /**
      * Processes file upload requests
      *
@@ -66,7 +64,7 @@ class FilesManagementProcessor extends Injectable
                 $res = self::removeAudioFile($postData['filename']);
                 break;
             case 'getFileContent':
-                $res = self::getFileContent($postData['filename'], $postData['needOriginal']);
+                $res = self::getFileContent($postData['filename'], $postData['needOriginal']==='true');
                 break;
             case 'downloadNewFirmware':
                 $res = self::downloadNewFirmware($request['data']);
@@ -336,7 +334,7 @@ class FilesManagementProcessor extends Injectable
             $cat          = Util::which('cat');
             $di           = Di::getDefault();
             $dirsConfig   = $di->getShared('config');
-            $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.conf';
+            $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' .time(). '.conf';
             $cmd          = "{$cat} {$filename} > {$filenameTmp}";
             Processes::mwExec("{$cmd}; chown www:www {$filenameTmp}");
             $res->data['filename'] = $filenameTmp;

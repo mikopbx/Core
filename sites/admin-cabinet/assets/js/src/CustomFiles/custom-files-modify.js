@@ -32,13 +32,37 @@ const customFile = {
      */
     $formObj: $('#custom-file-form'),
 
+
     /**
-     * jQuery objects
-     * This section defines references to DOM elements that the module interacts with.
+     * jQuery object for the tab menu.
+     * @type {jQuery}
      */
-    $typeSelectDropDown: $('#custom-file-form .type-select'),
-    $appCode: $('#application-code'),
-    $appCodeFromServer: $('#application-code-readonly'),
+    $tabMenu: $('#custom-files-menu .item'),
+
+
+    /**
+     * jQuery object for the mode select.
+     * @type {jQuery}
+     */
+    $modeDropDown: $('#custom-file-form .mode-select'),
+
+    /**
+     * jQuery object for the original file content.
+     * @type {jQuery}
+     */
+    $originalTab: $('a[data-tab="original"]'),
+
+    /**
+     * jQuery object for the user content/script editor.
+     * @type {jQuery}
+     */
+    $editorTab: $('a[data-tab="editor"]'),
+
+    /**
+     * jQuery object for the resulted file content.
+     * @type {jQuery}
+     */
+    $resultTab: $('a[data-tab="result"]'),
 
     /**
      * jQuery element for the main content container.
@@ -48,10 +72,11 @@ const customFile = {
 
     /**
      * Ace editor instances
-     * `editor` is for input and `viewer` is for display, and they are initialized in `initializeAce`.
+     * `editor` is for input and `viewers` is for display code from server
      */
     editor: '',
-    viewer: '',
+    viewerOriginal: '',
+    viewerResult: '',
 
     /**
      * Validation rules for the form fields before submission.
@@ -75,26 +100,64 @@ const customFile = {
      * Sets up the dropdown, initializes Ace editor, form, and retrieves file content from the server.
      */
     initialize() {
-        customFile.$mainContainer.removeClass('container');
 
-        customFile.$typeSelectDropDown.dropdown({
-            onChange() {
-                // Hide or show code depending on the file type
-                customFile.hideShowCode();
-
-                // Get the content of the file from the server
-                customFile.getFileContentFromServer();
-            },
+        // Enable tab navigation with history support
+        customFile.$tabMenu.tab({
+            onVisible: customFile.onChangeTab
         });
+
+        customFile.$mainContainer.removeClass('container');
 
         // Initialize Ace editor
         customFile.initializeAce();
 
+        customFile.$modeDropDown.dropdown({
+            onChange: customFile.cbOnChangeMode
+        });
+        const mode = customFile.$formObj.form('get value', 'mode');
+        customFile.cbOnChangeMode(mode);
+
         // Initialize form
         customFile.initializeForm();
 
-        // Get the content of the file from the server
-        customFile.getFileContentFromServer();
+    },
+
+    cbOnChangeMode(value, text){
+        // Handle code visibility and content based on the 'mode'
+        switch (value) {
+            case 'none':
+                customFile.$tabMenu.tab('change tab','original');
+                break;
+            case 'override':
+                customFile.$tabMenu.tab('change tab','editor');
+                break;
+            case 'append':
+                customFile.$tabMenu.tab('change tab','editor');
+                break;
+            case 'script':
+                customFile.$tabMenu.tab('change tab','editor');
+                break;
+            default:
+                customFile.$tabMenu.tab('change tab','original');
+        }
+        customFile.hideShowCode();
+    },
+
+    onChangeTab(currentTab){
+        const filePath = customFile.$formObj.form('get value', 'filepath');
+        const data = {filename: filePath, needOriginal: true, needLogfile: false};
+        switch (currentTab) {
+            case 'result':
+                data.needOriginal=false;
+                PbxApi.GetFileContent(data, customFile.cbGetResultFileContentFromServer);
+                break;
+            case 'original':
+                data.needOriginal=true;
+                PbxApi.GetFileContent(data, customFile.cbGetOriginalFileContentFromServer);
+                break;
+            case 'editor':
+                break;
+        }
     },
 
     /**
@@ -102,63 +165,62 @@ const customFile = {
      * Adjusts the Ace editor settings accordingly.
      */
     hideShowCode() {
-        // Calculate ace editor height and rows count
-        const aceHeight = window.innerHeight - 475;
-        const rowsCount = Math.round(aceHeight / 16.3);
-
-        // Set minimum height for the code sections on window load
-        // $(window).load(function () {
-            $('.application-code').css('min-height', `${aceHeight}px`);
-        //});
-
         // Retrieve 'mode' value from the form
         const mode = customFile.$formObj.form('get value', 'mode');
+        let content = customFile.$formObj.form('get value', 'content');
 
         // Handle code visibility and content based on the 'mode'
         switch (mode) {
             case 'none':
-                // If 'mode' is 'none', show server code and hide custom code
-                customFile.viewer.navigateFileStart();
-                customFile.$appCodeFromServer.show();
-                customFile.$appCode.hide();
-                customFile.viewer.setOptions({
-                    minLines: rowsCount,
-                });
-                customFile.viewer.resize()
+                // If 'mode' is 'none', show only result code generated and hide editor and result viewer
+                customFile.$editorTab.hide();
+                customFile.$originalTab.show();
+                customFile.viewerOriginal.navigateFileStart();
+                customFile.$resultTab.hide();
                 break;
             case 'append':
-                // If 'mode' is 'append', show both server and custom code, append custom code to server code
-                customFile.$appCodeFromServer.show();
-                customFile.viewer.navigateFileEnd();
-                customFile.editor.setValue(customFile.$formObj.form('get value', 'content'));
-                customFile.$appCode.show();
-                customFile.editor.setOptions({
-                    minLines: rowsCount,
-                });
-                customFile.editor.getSession().on('change', () => {
-                    // Trigger change event to acknowledge the modification
-                    Form.dataChanged();
-                });
+                // If 'mode' is 'append', show all fields
+                customFile.$editorTab.show();
+                customFile.$originalTab.show();
+                customFile.$resultTab.show();
+                customFile.viewerOriginal.navigateFileEnd();
+                customFile.viewerResult.navigateFileEnd();
+                customFile.editor.clearSelection();
+                customFile.editor.alignCursors();
                 break;
             case 'override':
-                // If 'mode' is 'override', show custom code and hide server code, replace server code with custom code
+                // If 'mode' is 'override', show custom content and hide server content, replace server file content with custom content
+                customFile.$editorTab.show();
+                customFile.$originalTab.hide();
+                customFile.$resultTab.hide();
                 customFile.editor.navigateFileStart();
-                customFile.$appCodeFromServer.hide();
-                const changedContent = customFile.$formObj.form('get value', 'content');
-                if (changedContent.length > 0) {
-                    customFile.editor.getSession().setValue(changedContent);
-                } else {
-                    customFile.editor.getSession().setValue(customFile.viewer.getValue());
+                customFile.editor.clearSelection();
+                customFile.editor.alignCursors();
+                break;
+            case 'script':
+                // If 'mode' is 'script', show both server and custom code, apply custom script to the file content on server
+                customFile.$editorTab.show();
+                customFile.$originalTab.show();
+                customFile.$resultTab.show();
+                // Editor
+                if (!content.includes('#!/bin/bash')) {
+                    content = `#!/bin/bash \n\n`;
+                    content += `configPath="$1" # Path to the original config file\n\n`;
+                    content += `# Example 1: Replace all values max_contacts = 5 to max_contacts = 1 on pjsip.conf\n`;
+                    content += `# sed -i 's/max_contacts = 5/max_contacts = 1/g' "$configPath"\n\n`
+
+                    content += `# Example 2: Change value max_contacts only for peer with extension 226 on pjsip.conf\n`;
+                    content += `# sed -i '/^\\[226\\]$/,/^\\[/ s/max_contacts = 5/max_contacts = 2/' "$configPath"\n\n`
+
+                    content += `# Example 3: Add en extra string into [playback-exit] section after the "same => n,Hangup()" string on extensions.conf\n`;
+                    content += `# sed -i '/^\\[playback-exit\\]$/,/^\\[/ s/^\\(\\s*same => n,Hangup()\\)/\\1\\n\\tsame => n,NoOp("Your NoOp comment here")/' "$configPath"\n\n`;
+
+                    content += `# Attention! You will see changes after the background worker processes the script or after rebooting the system. \n`;
                 }
-                customFile.$appCode.show();
-                customFile.editor.setOptions({
-                    minLines: rowsCount,
-                });
-                customFile.editor.resize()
-                customFile.editor.getSession().on('change', () => {
-                    // Trigger change event to acknowledge the modification
-                    Form.dataChanged();
-                });
+                customFile.editor.setValue(content);
+                customFile.editor.clearSelection();
+                customFile.editor.alignCursors();
+
                 break;
             default:
                 // Handle any other 'mode' values
@@ -168,44 +230,76 @@ const customFile = {
 
     /**
      * Callback function that handles the response from the server containing the file's content.
-     * It will update the 'viewer' with the file's content and adjust the code display.
+     * It will update the 'viewerOriginal' with the file's content and adjust the code display.
      */
-    cbGetFileContentFromServer(response) {
-        if (response !== undefined) {
-            customFile.viewer.getSession().setValue(response.data.content);
-            customFile.hideShowCode();
+    cbGetOriginalFileContentFromServer(response) {
+        if (response.data.content !== undefined) {
+            const aceViewer = customFile.viewerOriginal;
+            const scrollTop = aceViewer.getSession().getScrollTop();
+            aceViewer.getSession().setValue(response.data.content);
+            aceViewer.getSession().setScrollTop(scrollTop);
         }
     },
 
     /**
-     * Fetches file content from the server based on the file path and mode of operation.
+     * Callback function that handles the response from the server containing the file's content.
+     * It will update the 'viewerResult' with the file's content and adjust the code display.
      */
-    getFileContentFromServer() {
-        const filePath = customFile.$formObj.form('get value', 'filepath');
-        const mode = customFile.$formObj.form('get value', 'mode') !== 'override';
-        const data = {filename: filePath, needOriginal: mode, needLogfile: false};
-        PbxApi.GetFileContent(data, customFile.cbGetFileContentFromServer);
+    cbGetResultFileContentFromServer(response) {
+        if (response.data.content !== undefined) {
+            const aceViewer = customFile.viewerResult;
+            const scrollTop = aceViewer.getSession().getScrollTop();
+            aceViewer.getSession().setValue(response.data.content);
+            aceViewer.getSession().setScrollTop(scrollTop);
+        }
     },
 
     /**
-     * Initializes Ace editor instances for both 'editor' and 'viewer'.
+     * Initializes Ace editor instances for 'editor' and 'viewers' windows.
      */
     initializeAce() {
-        const IniMode = ace.require('ace/mode/julia').Mode;
-        customFile.viewer = ace.edit('application-code-readonly');
-        customFile.viewer.session.setMode(new IniMode());
-        customFile.viewer.setTheme('ace/theme/monokai');
-        customFile.viewer.setOptions({
-            showPrintMargin: false,
-            readOnly: true
-        });
-        customFile.viewer.resize();
+        // Calculate ace editor height and rows count
+        const aceHeight = window.innerHeight - 475;
+        const rowsCount = Math.round(aceHeight / 16.3);
 
-        customFile.editor = ace.edit('application-code');
-        customFile.editor.setTheme('ace/theme/monokai');
+        // Set minimum height for the code sections on window load
+        $('.application-code').css('min-height', `${aceHeight}px`);
+
+        // ACE window for the original file content.
+        const IniMode = ace.require('ace/mode/julia').Mode;
+        customFile.viewerOriginal = ace.edit('config-file-original');
+        customFile.viewerOriginal.session.setMode(new IniMode());
+        customFile.viewerOriginal.setTheme('ace/theme/monokai');
+        customFile.viewerOriginal.setOptions({
+            showPrintMargin: false,
+            readOnly: true,
+            minLines: rowsCount
+        });
+        customFile.viewerOriginal.resize();
+
+        // ACE window for the resulted file content.
+        customFile.viewerResult = ace.edit('config-file-result');
+        customFile.viewerResult.session.setMode(new IniMode());
+        customFile.viewerResult.setTheme('ace/theme/monokai');
+        customFile.viewerResult.setOptions({
+            showPrintMargin: false,
+            readOnly: true,
+            minLines: rowsCount
+        });
+        customFile.viewerResult.resize();
+
+        // ACE window for the user editor.
+        customFile.editor = ace.edit('user-edit-config');
         customFile.editor.session.setMode(new IniMode());
+        customFile.editor.setTheme('ace/theme/monokai');
         customFile.editor.setOptions({
             showPrintMargin: false,
+            minLines: rowsCount,
+        });
+        customFile.editor.setValue(customFile.$formObj.form('get value', 'content'));
+        customFile.editor.getSession().on('change', () => {
+            // Trigger change event to acknowledge the modification
+            Form.dataChanged();
         });
         customFile.editor.resize();
     },
@@ -221,6 +315,7 @@ const customFile = {
         switch (customFile.$formObj.form('get value', 'mode')) {
             case 'append':
             case 'override':
+            case 'script':
                 result.data.content = customFile.editor.getValue();
                 break;
             default:

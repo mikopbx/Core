@@ -29,6 +29,12 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class CustomFiles extends ModelsBase
 {
+
+    public const MODE_NONE = 'none';
+    public const MODE_APPEND = 'append';
+    public const MODE_OVERRIDE = 'override';
+    public const MODE_SCRIPT = 'script';
+
     /**
      * @Primary
      * @Identity
@@ -56,9 +62,9 @@ class CustomFiles extends ModelsBase
      * override - override the file
      * none - do nothing
      *
-     * @Column(type="string", nullable=true, default="none") {'append'|'override'|'none'}
+     * @Column(type="string", nullable=true, default="none") {'script'|'append'|'override'|'none'}
      */
-    public ?string $mode = 'none';
+    public ?string $mode = self::MODE_NONE;
 
     /**
      * Indicates if the file has been changed

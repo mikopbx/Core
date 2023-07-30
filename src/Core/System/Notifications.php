@@ -103,9 +103,9 @@ class Notifications
         $subject = Util::translate($subject, false);
         $text = '';
         foreach ($messages as $message) {
-            $text .= PHP_EOL . Util::translate($message, false);
+            $text .= '<br>' . Util::translate($message, false);
         }
-        $text = $text . PHP_EOL . PHP_EOL . Network::getInfoMessage();
+        $text = $text . '<br><br>' . Network::getInfoMessage();
 
         // Get the admin email address from PbxSettings.
         $adminMail = PbxSettings::getValueByKey('SystemNotificationsEmail');

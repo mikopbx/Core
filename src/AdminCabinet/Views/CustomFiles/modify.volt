@@ -12,13 +12,39 @@
         {{ form.render('mode') }}
     </div>
 </div>
-<div id="application-code-readonly" class="application-code">
-    <pre>{{ content|e }}</pre>
+
+
+<div class="ui top attached tabular menu" id="custom-files-menu">
+    <a class="item" data-tab="original">{{ t._('cf_OriginalFileHeader') }}</a>
+    <a class="item" data-tab="editor">{{ t._('cf_UserEditHeader') }}</a>
+    <a class="item" data-tab="result">{{ t._('cf_ResultFileHeader') }}</a>
+    {{ partial("PbxExtensionModules/hookVoltBlock",
+        ['arrayOfPartials':hookVoltBlock('TabularMenu')])
+    }}
 </div>
-<div class="ui hidden divider"></div>
-<div id="application-code" class="application-code">
-    <pre>{{ content|e }}</pre>
+
+
+<!-- original-section -->
+<div class="ui bottom attached tab" data-tab="original">
+    <div id="config-file-original" class="application-code">
+        <pre>{{ content|e }}</pre>
+    </div>
 </div>
+
+<!-- editor-section -->
+<div class="ui bottom attached tab" data-tab="editor">
+    <div id="user-edit-config" class="application-code">
+        <pre>{{ content|e }}</pre>
+    </div>
+</div>
+
+<!-- result-section -->
+<div class="ui bottom attached tab" data-tab="result">
+    <div id="config-file-result" class="application-code">
+        <pre>{{ content|e }}</pre>
+    </div>
+</div>
+
 
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralMainFields')]) }}
 
