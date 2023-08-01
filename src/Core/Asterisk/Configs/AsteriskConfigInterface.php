@@ -170,7 +170,7 @@ interface AsteriskConfigInterface
 
     /**
      * Adds priorities for [dial_create_chan] context section in the extensions.conf file
-     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensionGenCreateChannelDialplan
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongencreatechanneldialplan
      *
      * @return string
      */
