@@ -1166,4 +1166,8 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá s�
     'adv_AmiPasswordWeak' => 'Mật khẩu đơn giản cho người dùng AMI <%record%>',
     'adv_SSHPasswordMismatchStringsHash' => 'Đổi mật khẩu SSH ngoài giao diện web MikoPBX',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Chú ý! Các sự cố được tìm thấy trong MikoPBX của bạn!',
+    'cf_FileActionsScript' => 'Kịch bản',
+    'cf_UserEditHeader' => 'Trình chỉnh sửa để thực hiện thay đổi',
+    'cf_OriginalFileHeader' => 'Nội dung gốc của tệp do hệ thống tạo ra',
+    'cf_ResultFileHeader' => 'Nội dung tệp có thay đổi',
 ];

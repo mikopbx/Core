@@ -1166,4 +1166,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'adv_SSHPasswordWasChangedBody' => "A senha SSH para acessar o MikoPBX foi alterada!",
     'adv_SSHPasswordWasCompromisedSubject' => 'Atenção! A senha SSH foi alterada sem fazer login na interface MikoPBX!',
     'adv_SSHPasswordMismatchFilesHash' => 'A senha SSH MikoPBX é diferente daquela definida no arquivo de configuração. Talvez tenha sido alterado manualmente no console PBX.',
+    'cf_FileActionsScript' => 'Roteiro',
+    'cf_OriginalFileHeader' => 'O conteúdo original do arquivo gerado pelo sistema',
+    'cf_UserEditHeader' => 'Editor para fazer alterações',
+    'cf_ResultFileHeader' => 'Conteúdo do arquivo com alterações',
 ];

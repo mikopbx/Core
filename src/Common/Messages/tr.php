@@ -1166,4 +1166,8 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'gs_SetPasswordError' => 'Parola - %password% kullanılamaz, basit parola sözlüğünde bulunur.',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Dikkat! MikoPBX\'inizde bulunan sorunlar!',
     'adv_SSHPasswordMismatchFilesHash' => 'SSH MikoPBX parolası, yapılandırma dosyasında ayarlanan paroladan farklıdır. Belki de PBX konsolundan manuel olarak değiştirilmiştir.',
+    'cf_FileActionsScript' => 'Senaryo',
+    'cf_OriginalFileHeader' => 'Sistem tarafından oluşturulan dosyanın orijinal içeriği',
+    'cf_UserEditHeader' => 'Değişiklik yapmak için düzenleyici',
+    'cf_ResultFileHeader' => 'Değişiklikler içeren dosya içeriği',
 ];

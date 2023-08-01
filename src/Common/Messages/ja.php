@@ -1166,4 +1166,8 @@ return [
     'adv_ThereIsSomeTroublesWithMikoPBX' => '注意！ MikoPBX で問題が見つかりました!',
     'adv_AmiPasswordWeak' => 'AMI ユーザーの簡易パスワード <%record%>',
     'adv_SSHPasswordMismatchStringsHash' => 'SSH パスワードが MikoPBX Web インターフェイスの外部で変更されました',
+    'cf_FileActionsScript' => '脚本',
+    'cf_OriginalFileHeader' => 'システムによって生成されたファイルの元の内容',
+    'cf_UserEditHeader' => '変更を加える編集者',
+    'cf_ResultFileHeader' => '変更を伴うファイルの内容',
 ];

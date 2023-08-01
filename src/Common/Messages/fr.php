@@ -1166,4 +1166,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'adv_SipPasswordWeak' => '%record% Mot de passe SIP simple',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Attention! Problèmes trouvés dans votre MikoPBX !',
     'adv_SSHPasswordMismatchFilesHash' => 'Le mot de passe SSH MikoPBX est différent de celui défini dans le fichier de configuration. Peut-être qu\'il a été modifié manuellement à partir de la console PBX.',
+    'cf_FileActionsScript' => 'Scénario',
+    'cf_OriginalFileHeader' => 'Le contenu original du fichier généré par le système',
+    'cf_UserEditHeader' => 'Éditeur pour apporter des modifications',
+    'cf_ResultFileHeader' => 'Contenu du fichier avec modifications',
 ];

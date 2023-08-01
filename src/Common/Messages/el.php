@@ -1166,4 +1166,8 @@ return [
     'gs_SetPasswordError' => 'Ο κωδικός πρόσβασης - %password% δεν μπορεί να χρησιμοποιηθεί, υπάρχει στο λεξικό απλού κωδικού πρόσβασης.',
     'adv_SSHPasswordMismatchStringsHash' => 'Ο κωδικός πρόσβασης SSH άλλαξε εκτός της διεπαφής ιστού MikoPBX',
     'adv_SSHPasswordMismatchFilesHash' => 'Ο κωδικός πρόσβασης SSH MikoPBX είναι διαφορετικός από αυτόν που ορίζεται στο αρχείο διαμόρφωσης. Ίσως άλλαξε χειροκίνητα από την κονσόλα PBX.',
+    'cf_FileActionsScript' => 'Γραφή',
+    'cf_OriginalFileHeader' => 'Το αρχικό περιεχόμενο του αρχείου που δημιουργείται από το σύστημα',
+    'cf_UserEditHeader' => 'Editor για να κάνετε αλλαγές',
+    'cf_ResultFileHeader' => 'Περιεχόμενο αρχείου με αλλαγές',
 ];

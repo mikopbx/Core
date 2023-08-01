@@ -1183,4 +1183,8 @@ Può essere attivato una volta, dopodiché il coupon viene riscattato.',
     'adv_SSHPasswordWasCompromisedSubject' => 'Attenzione! La password SSH è stata modificata senza accedere all\'interfaccia MikoPBX!',
     'adv_SSHPasswordMismatchFilesHash' => 'La password SSH MikoPBX è diversa da quella impostata nel file di configurazione. Forse è stato modificato manualmente dalla console PBX.',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Attenzione! Problemi riscontrati nel tuo MikoPBX!',
+    'cf_FileActionsScript' => 'Sceneggiatura',
+    'cf_UserEditHeader' => 'Editor per apportare modifiche',
+    'cf_OriginalFileHeader' => 'Il contenuto originale del file generato dal sistema',
+    'cf_ResultFileHeader' => 'Contenuto del file con modifiche',
 ];

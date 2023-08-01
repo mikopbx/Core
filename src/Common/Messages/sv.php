@@ -1166,4 +1166,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'adv_SSHPasswordMismatchFilesHash' => 'SSH MikoPBX-lösenordet skiljer sig från det som anges i konfigurationsfilen. Kanske ändrades det manuellt från PBX-konsolen.',
     'adv_SSHPasswordWasCompromisedSubject' => 'Uppmärksamhet! SSH-lösenordet har ändrats utan att logga in på MikoPBX-gränssnittet!',
     'adv_SSHPasswordMismatchStringsHash' => 'SSH-lösenordet ändrades utanför MikoPBX webbgränssnitt',
+    'cf_FileActionsScript' => 'Manus',
+    'cf_OriginalFileHeader' => 'Det ursprungliga innehållet i filen som genereras av systemet',
+    'cf_UserEditHeader' => 'Redaktör för att göra ändringar',
+    'cf_ResultFileHeader' => 'Filinnehåll med ändringar',
 ];

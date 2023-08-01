@@ -1166,4 +1166,8 @@ return [
     'adv_SipPasswordWeak' => '%record% 简单SIP密码',
     'adv_AmiPasswordWeak' => 'AMI 用户 <%record%> 的简单密码',
     'adv_SSHPasswordMismatchStringsHash' => 'SSH 密码在 MikoPBX Web 界面外更改',
+    'cf_FileActionsScript' => '脚本',
+    'cf_OriginalFileHeader' => '系统生成的文件的原始内容',
+    'cf_UserEditHeader' => '编辑器进行更改',
+    'cf_ResultFileHeader' => '文件内容发生变化',
 ];

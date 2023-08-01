@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -807,9 +806,9 @@ return [
     'cf_Path' => 'Путь к файлу',
     'cf_Description' => 'Комментарий для чего сделаны изменения',
     'cf_Mode' => 'Режим',
-    'cf_OriginalFileHeader'=>'Оригинальное содержимое файла сгенерированное системой',
-    'cf_UserEditHeader'=>'Редактор для внесения изменений',
-    'cf_ResultFileHeader'=>'Содержимое файла с изменениями',
+    'cf_OriginalFileHeader' => 'Оригинальное содержимое файла сгенерированное системой',
+    'cf_UserEditHeader' => 'Редактор для внесения изменений',
+    'cf_ResultFileHeader' => 'Содержимое файла с изменениями',
     'mo_BeforeDeleteFirst' => 'Есть ссылки на объект - %represent%',
     'ConstraintViolation' => 'Нарушение логической целостности',
     'repAsteriskManagerUsers' => 'AMI запись - %represent%',
@@ -1170,8 +1169,8 @@ return [
     'msg_infoHeader' => 'Информация',
     'adv_SSHPasswordWasChangedSubject' => "Внимание! Пароль SSH был изменен!",
     'adv_SSHPasswordWasChangedBody' => "Пароль SSH для доступа к MikoPBX был изменен!",
-    'adv_SSHPasswordWasCompromisedSubject'=> 'Внимание! Пароль SSH был изменен без входа в интерфейс MikoPBX!',
-    'adv_SSHPasswordMismatchStringsHash'=> 'Пароль SSH был изменен вне web интерфейса MikoPBX',
-    'adv_SSHPasswordMismatchFilesHash'=> 'Пароль SSH MikoPBX отличается от установленного в конфигурационном файле. Возможно он был изменен вручную из консоли АТС.',
-    'adv_ThereIsSomeTroublesWithMikoPBX'=> 'Внимание! Обнаружены проблемы в вашей MikoPBX!'
+    'adv_SSHPasswordWasCompromisedSubject' => 'Внимание! Пароль SSH был изменен без входа в интерфейс MikoPBX!',
+    'adv_SSHPasswordMismatchStringsHash' => 'Пароль SSH был изменен вне web интерфейса MikoPBX',
+    'adv_SSHPasswordMismatchFilesHash' => 'Пароль SSH MikoPBX отличается от установленного в конфигурационном файле. Возможно он был изменен вручную из консоли АТС.',
+    'adv_ThereIsSomeTroublesWithMikoPBX' => 'Внимание! Обнаружены проблемы в вашей MikoPBX!',
 ];

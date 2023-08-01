@@ -1166,4 +1166,8 @@ Lze jej aktivovat jednou, poté se kupón uplatní.',
     'adv_SSHPasswordWasCompromisedSubject' => 'Pozornost! Heslo SSH bylo změněno bez přihlášení do rozhraní MikoPBX!',
     'adv_SSHPasswordMismatchFilesHash' => 'Heslo SSH MikoPBX se liší od hesla nastaveného v konfiguračním souboru. Možná to bylo změněno ručně z konzole PBX.',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Pozornost! Nalezeny problémy ve vaší MikoPBX!',
+    'cf_FileActionsScript' => 'Skript',
+    'cf_OriginalFileHeader' => 'Původní obsah souboru vygenerovaného systémem',
+    'cf_UserEditHeader' => 'Editor pro provedení změn',
+    'cf_ResultFileHeader' => 'Obsah souboru se změnami',
 ];

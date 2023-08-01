@@ -1166,4 +1166,8 @@ Se puede activar una vez, después de lo cual el cupón se canjea.',
     'adv_SSHPasswordWasCompromisedSubject' => '¡Atención! ¡La contraseña de SSH se ha cambiado sin iniciar sesión en la interfaz de MikoPBX!',
     'adv_SSHPasswordMismatchFilesHash' => 'La contraseña de SSH MikoPBX es diferente a la configurada en el archivo de configuración. Quizás se cambió manualmente desde la consola PBX.',
     'adv_SSHPasswordWasChangedBody' => "¡La contraseña SSH para acceder a MikoPBX ha sido cambiada!",
+    'cf_FileActionsScript' => 'Guion',
+    'cf_OriginalFileHeader' => 'El contenido original del archivo generado por el sistema.',
+    'cf_UserEditHeader' => 'Editor para hacer cambios',
+    'cf_ResultFileHeader' => 'Contenido del archivo con cambios',
 ];

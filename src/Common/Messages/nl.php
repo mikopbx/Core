@@ -1127,4 +1127,8 @@ Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
     'adv_SshPasswordWeak' => 'Eenvoudig SSH-accountwachtwoord',
     'adv_SSHPasswordMismatchFilesHash' => 'Het SSH MikoPBX-wachtwoord verschilt van het wachtwoord dat in het configuratiebestand is ingesteld. Misschien is het handmatig gewijzigd vanaf de PBX-console.',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Aandacht! Problemen gevonden in uw MikoPBX!',
+    'cf_FileActionsScript' => 'Script',
+    'cf_OriginalFileHeader' => 'De originele inhoud van het bestand dat door het systeem is gegenereerd',
+    'cf_UserEditHeader' => 'Redacteur om wijzigingen aan te brengen',
+    'cf_ResultFileHeader' => 'Bestandsinhoud met wijzigingen',
 ];

@@ -1166,4 +1166,8 @@ Den kan aktiveres én gang, hvorefter kuponen bliver indløst.',
     'adv_SshPasswordWeak' => 'Enkel SSH-kontokodeord',
     'adv_SSHPasswordWasCompromisedSubject' => 'Opmærksomhed! SSH-adgangskoden er blevet ændret uden at logge ind på MikoPBX-grænsefladen!',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Opmærksomhed! Problemer fundet i din MikoPBX!',
+    'cf_FileActionsScript' => 'Manuskript',
+    'cf_OriginalFileHeader' => 'Det originale indhold af filen, der er genereret af systemet',
+    'cf_UserEditHeader' => 'Editor til at foretage ændringer',
+    'cf_ResultFileHeader' => 'Filindhold med ændringer',
 ];

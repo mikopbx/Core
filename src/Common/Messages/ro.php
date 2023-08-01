@@ -1110,4 +1110,8 @@ Poate fi activat o singură dată, după care cuponul este valorificat.',
     'adv_SSHPasswordMismatchFilesHash' => 'Parola SSH MikoPBX este diferită de cea setată în fișierul de configurare. Poate că a fost schimbat manual din consola PBX.',
     'adv_SSHPasswordMismatchStringsHash' => 'Parola SSH a fost schimbată în afara interfeței web MikoPBX',
     'adv_SipPasswordWeak' => '%record% Parolă SIP simplă',
+    'cf_FileActionsScript' => 'Scenariul',
+    'cf_OriginalFileHeader' => 'Conținutul original al fișierului generat de sistem',
+    'cf_UserEditHeader' => 'Editor pentru a face modificări',
+    'cf_ResultFileHeader' => 'Conținutul fișierului cu modificări',
 ];

@@ -1186,4 +1186,8 @@ Es kann einmalig aktiviert werden, danach wird der Coupon eingelöst.',
     'adv_AmiPasswordWeak' => 'Einfaches Passwort für AMI-Benutzer <%record%>',
     'adv_SSHPasswordMismatchFilesHash' => 'Das SSH MikoPBX-Passwort unterscheidet sich von dem in der Konfigurationsdatei festgelegten. Möglicherweise wurde es manuell über die PBX-Konsole geändert.',
     'adv_SSHPasswordMismatchStringsHash' => 'Das SSH-Passwort wurde außerhalb der MikoPBX-Weboberfläche geändert',
+    'cf_FileActionsScript' => 'Skript',
+    'cf_OriginalFileHeader' => 'Der ursprüngliche Inhalt der vom System generierten Datei',
+    'cf_UserEditHeader' => 'Editor, um Änderungen vorzunehmen',
+    'cf_ResultFileHeader' => 'Dateiinhalt mit Änderungen',
 ];

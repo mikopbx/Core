@@ -1165,4 +1165,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'adv_SshPasswordWeak' => 'Senha simples da conta SSH',
     'adv_SSHPasswordMismatchStringsHash' => 'A senha SSH foi alterada fora da interface web do MikoPBX',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Atenção! Problemas encontrados em seu MikoPBX!',
+    'cf_FileActionsScript' => 'Roteiro',
+    'cf_OriginalFileHeader' => 'O conteúdo original do arquivo gerado pelo sistema',
+    'cf_UserEditHeader' => 'Editor para fazer alterações',
+    'cf_ResultFileHeader' => 'Conteúdo do arquivo com alterações',
 ];

@@ -1166,4 +1166,8 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'adv_SipPasswordWeak' => '%record% Sadə SIP Parol',
     'adv_AmiPasswordWeak' => 'AMI istifadəçisi üçün sadə parol <%record%>',
     'adv_SSHPasswordWasChangedBody' => "MikoPBX-ə daxil olmaq üçün SSH parolu dəyişdirildi!",
+    'cf_FileActionsScript' => 'Skript',
+    'cf_OriginalFileHeader' => 'Sistem tərəfindən yaradılan faylın orijinal məzmunu',
+    'cf_UserEditHeader' => 'Dəyişikliklər etmək üçün redaktor',
+    'cf_ResultFileHeader' => 'Dəyişikliklərlə fayl məzmunu',
 ];

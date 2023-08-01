@@ -1166,4 +1166,8 @@ return [
     'adv_SSHPasswordMismatchFilesHash' => 'Пароль SSH MikoPBX відрізняється від встановленого у конфігураційному файлі. Можливо, він був змінений вручну з консолі АТС.',
     'adv_SSHPasswordWasCompromisedSubject' => 'Увага! Пароль SSH змінено без входу в інтерфейс MikoPBX!',
     'adv_AmiPasswordWeak' => 'Простий пароль у AMI користувача <%record%>',
+    'cf_FileActionsScript' => 'Обробити скриптом',
+    'cf_OriginalFileHeader' => 'Оригінальний вміст файлу згенерований системою',
+    'cf_UserEditHeader' => 'Редактор для внесення змін',
+    'cf_ResultFileHeader' => 'Вміст файлу із змінами',
 ];

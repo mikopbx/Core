@@ -1166,4 +1166,8 @@ return [
     'adv_SSHPasswordMismatchStringsHash' => 'SSH პაროლი შეიცვალა MikoPBX ვებ ინტერფეისის გარეთ',
     'adv_SSHPasswordMismatchFilesHash' => 'SSH MikoPBX პაროლი განსხვავდება კონფიგურაციის ფაილში მითითებული პაროლისგან. შესაძლოა ის ხელით შეიცვალა PBX კონსოლიდან.',
     'adv_SSHPasswordWasCompromisedSubject' => 'ყურადღება! SSH პაროლი შეიცვალა MikoPBX ინტერფეისში შესვლის გარეშე!',
+    'cf_FileActionsScript' => 'სკრიპტი',
+    'cf_OriginalFileHeader' => 'სისტემის მიერ გენერირებული ფაილის ორიგინალური შინაარსი',
+    'cf_UserEditHeader' => 'რედაქტორი ცვლილებების შესატანად',
+    'cf_ResultFileHeader' => 'ფაილის შინაარსი ცვლილებებით',
 ];

@@ -1166,4 +1166,8 @@ Można go aktywować raz, po czym kupon zostaje zrealizowany.',
     'adv_SSHPasswordMismatchFilesHash' => 'Hasło SSH MikoPBX jest inne niż ustawione w pliku konfiguracyjnym. Być może został zmieniony ręcznie z poziomu konsoli PBX.',
     'adv_SSHPasswordMismatchStringsHash' => 'Hasło SSH zostało zmienione poza interfejsem sieciowym MikoPBX',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Uwaga! Wykryto problemy w Twojej MikoPBX!',
+    'cf_FileActionsScript' => 'Scenariusz',
+    'cf_OriginalFileHeader' => 'Oryginalna zawartość pliku wygenerowana przez system',
+    'cf_UserEditHeader' => 'Redaktor, aby wprowadzić zmiany',
+    'cf_ResultFileHeader' => 'Zawartość pliku ze zmianami',
 ];
