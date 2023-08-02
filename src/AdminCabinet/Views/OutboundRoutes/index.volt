@@ -1,4 +1,4 @@
-{% if isAllowed('modify') %}
+{% if isAllowed('save') %}
     {{ link_to("outbound-routes/modify", '<i class="add circle icon"></i> '~t._('or_AddNewRule'), "class": "ui blue button") }}
     {% set modifyClass="" %}
 {% else %}

@@ -1,4 +1,4 @@
-{% if isAllowed('modify') %}
+{% if isAllowed('save') %}
     {{ link_to("extensions/modify", '<i class="add user icon"></i>  '~t._('ex_AddNewExtension'), "class": "ui blue button", "id":"add-new-button") }}
 {% endif %}
     {% for extension in extensions %}

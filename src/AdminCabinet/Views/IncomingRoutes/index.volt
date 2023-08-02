@@ -1,4 +1,4 @@
-{% if isAllowed('modify') %}
+{% if isAllowed('save') %}
     {{ link_to("incoming-routes/modify", '<i class="add circle icon"></i> '~t._('ir_AddNewRule'), "class": "ui blue button") }}
 {% endif %}
     {% for rule in routingTable %}

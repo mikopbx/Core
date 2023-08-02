@@ -1,4 +1,4 @@
-{% if isAllowed('modify') %}
+{% if isAllowed('save') %}
     {{ link_to("ivr-menu/modify", '<i class="add circle icon"></i> '~t._('iv_AddNewIvrMenu'), "class": "ui blue button", 'id':'add-new-button') }}
 {% endif %}
     {% for record in ivrmenu %}

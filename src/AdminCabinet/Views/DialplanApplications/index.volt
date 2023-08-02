@@ -1,4 +1,4 @@
-{% if isAllowed('modify') %}
+{% if isAllowed('save') %}
     {{ link_to("dialplan-applications/modify", '<i class="add circle icon"></i> '~t._('da_AddNewDialplanApp'), "class": "ui blue button", "id":"add-new-button") }}
 {% endif %}
     {% for record in apps %}

@@ -15,7 +15,7 @@
         <div class="ui red approve button">{{ t._('pr_Delete') }}</div>
     </div>
 </div>
-{% if isAllowed('modify') %}
+{% if isAllowed('save') %}
     {{ link_to("providers/modifysip", '<i class="add circle icon"></i> '~t._('pr_AddSIPProvider'), "class": " ui blue button add-new-button") }}
     {{ link_to("providers/modifyiax", '<i class="add circle icon"></i> '~t._('pr_AddIAXProvider'), "class": " ui blue button add-new-button") }}
     {% set modifyClass="" %}

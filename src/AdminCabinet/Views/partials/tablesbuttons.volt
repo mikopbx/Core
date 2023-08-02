@@ -8,7 +8,7 @@
                 </i>
             </a>
         {% endif %}
-        {% if edit is not empty and (isAllowed('edit') or isAllowed('modify'))  %}
+        {% if edit is not empty and (isAllowed('edit') or isAllowed('modify') or isAllowed('modifyiax') or isAllowed('modifysip'))  %}
             {{ link_to(edit ~ id, '<i class="icon edit blue"></i> ', "class": "ui button edit popuped", "data-content": t._('bt_ToolTipEdit')) }}
         {% endif %}
         {% if restore is not empty and isAllowed('restore') %}
