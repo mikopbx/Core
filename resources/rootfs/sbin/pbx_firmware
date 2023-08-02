@@ -56,8 +56,12 @@ if [ -f /offload/livecd ]; then
   echoToTeletype " - unmounting /conf.recover...";
   /bin/umount -f /conf.recover;
 else
-  # Backup of settings to a disk for data storage
-  /sbin/dump-conf-db
+
+  if [ -f /offload/version.buildtime ]; then
+    # Offload is mounted
+    # Backup of settings to a disk for data storage
+    /sbin/dump-conf-db
+  fi;
   # Copy the configuration to the tmp (RAM) directory
   /bin/busybox cp -R /cf/conf/* /tmp/configbak;
 
