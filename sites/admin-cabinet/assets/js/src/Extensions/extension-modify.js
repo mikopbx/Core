@@ -223,6 +223,9 @@ const extension = {
         extension.$number.inputmask('option', {
             oncomplete: extension.cbOnCompleteNumber,
         });
+        extension.$number.on('paste', function() {
+            extension.cbOnCompleteNumber();
+        });
 
         // Set up the input masks for the mobile number input
         const maskList = $.masksSort(InputMaskPatterns, ['#'], /[0-9]|#/, 'mask');
@@ -247,8 +250,10 @@ const extension = {
 
         // Set up the input mask for the email input
         extension.$email.inputmask('email', {
-            onUnMask: extension.cbOnUnmaskEmail,
             oncomplete: extension.cbOnCompleteEmail,
+        });
+        extension.$email.on('paste', function() {
+            extension.cbOnCompleteEmail();
         });
 
         // Attach a focusout event listener to the mobile number input
@@ -304,7 +309,7 @@ const extension = {
                 const result = settings;
                 // Add the entered email to the URL of the API request
                 result.urlData = {
-                    value: extension.$email.inputmask('unmaskedvalue'),
+                    value: extension.$formObj.form('get value', 'user_email'),
                 };
                 return result;
             },
@@ -312,7 +317,7 @@ const extension = {
             onSuccess(response) {
                 // If the response indicates that the email is available or the entered email is the same as the default email
                 if (response.emailAvailable
-                    || extension.defaultEmail === extension.$email.inputmask('unmaskedvalue')
+                    || extension.defaultEmail === extension.$formObj.form('get value', 'user_email')
                 ) {
                     // Remove the error class from the email input field
                     $('.ui.input.email').parent().removeClass('error');
@@ -329,13 +334,7 @@ const extension = {
     },
 
     /**
-     * It is executed when the completion event on a mobile number input field occurs
-     */
-    cbOnUnmaskEmail(maskedValue, unmaskedValue) {
-        return unmaskedValue;
-    },
-    /**
-     * Вызывается при вводе мобильного телефона в карточке сотрудника
+     * Activated when entering a mobile phone number in the employee's profile.
      */
     cbOnCompleteMobileNumber() {
         console.log('cbOnCompleteMobileNumber');

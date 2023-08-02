@@ -29,13 +29,19 @@ class ErrorsController extends BaseController
 
     public function show404Action()
     {
+        $this->view->success = false;
+        $this->view->message = 'Page not found - 404';
     }
 
     public function show401Action()
     {
+        $this->view->success = false;
+        $this->view->message =  'Unauthorized - 401';
     }
 
     public function show500Action()
     {
+        $this->view->success = false;
+        $this->view->message =  'Server error - 500';
     }
 }

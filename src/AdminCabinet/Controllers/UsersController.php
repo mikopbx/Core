@@ -27,8 +27,9 @@ class UsersController extends BaseController {
      *
      * @param string $email The email to check availability for.
      */
-    public function availableAction($email):void
+    public function availableAction(string $email):void
     {
+        $email = urldecode($email);
         $result = true;
         $extension = Users::findFirstByEmail($email);
         if ($extension) {
