@@ -23,7 +23,7 @@
     </a>
     <a class="item hide-on-mobile hide-on-tablet" href="{{ urlToSupport }}" target="_blank"><i
                 class="icon conversation"></i> {{ t._("topMenu_Support") }}</a>
-    <div class="ui dropdown item" id="web-admin-language-selector">
+    <div class="ui search dropdown item" id="web-admin-language-selector">
         <input type="hidden" name="WebAdminLanguage">
         <div class="text"></div>
         <i class="dropdown icon"></i>
