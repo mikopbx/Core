@@ -132,8 +132,8 @@ return [
     'SubHeaderFail2Ban' => 'Blocare automată la ghicirea parolelor',
     'BreadcrumbUpdate' => 'Actualizare de sistem',
     'SubHeaderUpdate' => 'Remedieri de erori, îmbunătățiri ale performanței, funcții noi',
-    'BreadcrumbPbxExtensionModules' => 'Gestionarea pluginurilor',
-    'SubHeaderPbxExtensionModules' => 'Modulele extind funcționalitatea sistemului',
+    'BreadcrumbPbxExtensionModules' => 'Gestionarea modulelor și extensiilor pentru MikoPBX',
+    'SubHeaderPbxExtensionModules' => 'Încărcați propriile module sau descărcați module de pe piața noastră',
     'mm_Setup' => 'Telefonie',
     'mm_Extensions' => 'Angajatii',
     'mm_CallQueues' => 'Cozile de apeluri',
@@ -163,7 +163,7 @@ return [
     'mm_SystemDiagnostic' => 'Jurnalele de sistem',
     'mm_Fail2Ban' => 'Protecție împotriva efracției',
     'mm_Update' => 'Actualizare PBX',
-    'mm_ModuleManager' => 'Managementul modulelor',
+    'mm_ModuleManager' => 'Piața de module',
     'mm_SSHConsole' => 'consola ssh',
     'bt_Edit' => 'Schimbare',
     'bt_Clear' => 'clar',
@@ -597,7 +597,7 @@ return [
     'gs_SSHDssKey' => 'Cheie SSH DSS',
     'gs_PasswordSimple' => 'Setarea parolei este prea simplă.',
     'gs_SetPassword' => 'Setați o nouă parolă',
-    'gs_SetPasswordInfo' => 'Parola este prea simplă.',
+    'gs_SetPasswordInfo' => 'Parola specificată nu poate fi folosită, este prezentă în dicționarul de parole simple.',
     'gs_PasswordNoNumbers' => 'Parola trebuie să conțină numere',
     'gs_PasswordNoLowSimvol' => 'Parola trebuie să conțină litere mici',
     'gs_PasswordNoUpperSimvol' => 'Parola trebuie să conțină caractere majuscule',
@@ -821,7 +821,7 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'lic_CouponMessage' => 'Cuponul este utilizat la extinderea funcționalității PBX-ului sau la achiziționarea unei licențe.<br>
 Poate fi activat o singură dată, după care cuponul este valorificat.',
     'lic_CurrentLicenseInfo' => 'Informații detaliate despre produs în cheia de licență',
-    'lic_Expired' => 'Produsul a expirat',
+    'lic_Expired' => 'Produsul a expirat, contactați <a href="mailto:lic@mikopbx.com">lic@mikobx.com</a>',
     'lic_ExpiredAfter' => 'Licența expiră după %expired%',
     'lic_Product' => 'Produs',
     'lic_FeatureInfo' => 'Total de licențe %count% pentru %name%, din care ocupate %captured%',
@@ -833,15 +833,15 @@ Poate fi activat o singură dată, după care cuponul este valorificat.',
  Folosește cheia care ți-a fost trimisă mai devreme de la lic@miko.ru',
     'lic_FailedToGetTrialKey2022' => '(2022) Nu s-a putut înregistra această copie. Un număr de înregistrare pentru o altă companie a fost deja generat pentru e-mailul specificat.<br>
  Folosiți cheia trimisă mai devreme de la adresa lic@miko.ru sau introduceți numele corect al companiei.',
-    'lic_FailedActivateCoupon2057' => '(2057) Acest cupon este blocat, contactați lic@miko.ru',
+    'lic_FailedActivateCoupon2057' => '(2057) Acest cupon este blocat',
     'lic_FailedActivateCoupon2040' => '(2040) Acest cupon nu există, vă rugăm să verificați introducerea',
     'lic_FailedActivateCoupon2041' => '(2041) Acest cupon a fost deja activat înainte',
     'lic_FailedActivateCoupon2037' => '(2037) Eroare la specificarea numărului de înregistrare',
     'lic_FailedCheckLicense2026' => '(2026) Eroare la specificarea numărului de licență',
-    'lic_FailedToCaptureFeature2008' => '(2008) Nu este necesară licența',
+    'lic_FailedToCaptureFeature2008' => '(2008) Nu este necesară licența sau este legată de un alt MikoPBX',
     'lic_InvalidLicenseKey2009' => '(2009) Eroare cheie de licență',
-    'lic_FeatureExpired2011' => '(2011) Licența a expirat',
-    'lic_FailedCheckLicense' => 'Serverul de licențe nu a returnat niciun răspuns, vă rugăm să verificați setările de internet și să încercați din nou mai târziu',
+    'lic_FeatureExpired2011' => '(2011) Licența modulului a expirat, contactați <a href="mailto:sale@mikopbx.com">sale@mikobx.com</a>',
+    'lic_FailedCheckLicense' => 'Serverul de licență nu a returnat niciun răspuns, vă rugăm să verificați setările de internet',
     'lic_UnknownLicenseMessage' => 'Niciun răspuns din partea sistemului de licențiere',
     'lic_IntroductionTabHeader' => 'Despre licențierea pe piață',
     'lic_ManagementTabHeader' => 'Gestionarea inregistrarii si licentelor',
@@ -849,8 +849,7 @@ Poate fi activat o singură dată, după care cuponul este valorificat.',
     'lic_FirstQuestionAnswer' => 'Funcționalitatea de bază a MikoPBX este complet gratuită și nu este limitată de o licență. Absența unei licențe nu afectează în niciun fel apelurile.<br> Vă puteți înregistra și anula înregistrarea pe Marketplace în orice moment.',
     'lic_MarketplaceHeader' => 'Piața este caracteristici suplimentare',
     'lic_MarketplaceText' => 'Înregistrarea pe Piață vă va oferi acces la module și extensii suplimentare.<br>Există module gratuite pe care le-am eliminat din funcționalitatea de bază pentru a simplifica configurarea inițială, precum și module plătite de la noi și alți dezvoltatori.<br>Dacă sunteți un dezvoltator, puteți contacta <a href="mailto:developers@mikopbx.com">contactați-ne</a> pentru instrucțiuni despre cum să vă dezvoltați propriul modul și să îl adăugați la Piață.',
-    'lic_MarketplaceAction' => 'Accesați înregistrarea gratuită',
-    'lic_LastQuestionAnswer' => 'Acest lucru nu afectează apelurile, dar poate afecta modulele instalate.<br>Verificați-vă licența în contul personal de pe site-ul web <a href="https://lm.miko.ru">https://lm.miko. ru< /a><br>Dacă problema persistă, consultați <a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">Întrebări frecvente</a> sau trimiteți o solicitare la <a href=" mailto:lic@miko.ru">lic@miko.ru</a> vă vom ajuta cu siguranță să remediați problema.',
+    'lic_LastQuestionAnswer' => 'Întrebările frecvente despre licențe pot fi găsite la <a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">link</a>.',
     'lic_NoInetHeader' => 'Fără acces la serverul de licențe.',
     'lic_NoInet' => 'Poate că nu există acces la Internet de la serverul MikoPBX',
     'lic_NoInetLicMiko' => 'Poate acces restricționat la resursa <b>lic.mikopbx.com</b>',
@@ -1089,7 +1088,7 @@ Poate fi activat o singură dată, după care cuponul este valorificat.',
     'msg_ErrorHeader' => 'Eroare',
     'msg_WarningHeader' => 'Atenţie',
     'msg_infoHeader' => 'informație',
-    'adv_SSHPPasswordCorrupt' => 'Parola ssh setată în interfața web nu se potrivește cu cea actuală din sistem.',
+    'adv_SSHPPasswordCorrupt' => 'Parola SSH setată în interfața web nu se potrivește cu cea actuală din sistem. <a target="_blank" href=\'%url%\'>remediere</a>',
     'adv_PopupHeader' => 'Au fost găsite următoarele probleme:',
     'adv_SystemBrokenComment' => 'Fișierele de sistem au fost modificate. Efectuați o restaurare/actualizare a sistemului.',
     'ex_Romanian' => 'Romană',
@@ -1097,18 +1096,92 @@ Poate fi activat o singură dată, după care cuponul este valorificat.',
     'upd_EnterIHaveBackupPhrase' => 'Da, am o copie de rezervă',
     'ex_Azərbaycan' => 'Azərbaycan',
     'gs_SetPasswordError' => 'Parola - %password% nu poate fi utilizată, este prezentă în dicționarul de parole simple.',
-    'adv_WebPasswordWeak' => 'Parolă simplă de administrator în interfața web',
-    'adv_SshPasswordWeak' => 'Parola simplă a contului SSH',
+    'adv_WebPasswordWeak' => 'Parola simplă de administrator în interfața web <a href=\'%url%\'>schimbați</a>',
+    'adv_SshPasswordWeak' => 'Parola simplă a contului SSH <a href=\'%url%\'>modificare</a>',
     'adv_SSHPasswordWasChangedBody' => "Parola SSH pentru accesarea MikoPBX a fost schimbată!",
     'adv_SSHPasswordWasChangedSubject' => "Atenţie! Parola SSH a fost schimbată!",
-    'adv_AmiPasswordWeak' => 'Parolă simplă pentru utilizatorul AMI <%record%>',
+    'adv_AmiPasswordWeak' => 'Parolă simplă utilizator AMI <a href=\'%url%\'>%record%</a>',
     'adv_SSHPasswordWasCompromisedSubject' => 'Atenţie! Parola SSH a fost schimbată fără a vă conecta la interfața MikoPBX!',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Atenţie! Probleme găsite în MikoPBX!',
     'adv_SSHPasswordMismatchFilesHash' => 'Parola SSH MikoPBX este diferită de cea setată în fișierul de configurare. Poate că a fost schimbat manual din consola PBX.',
     'adv_SSHPasswordMismatchStringsHash' => 'Parola SSH a fost schimbată în afara interfeței web MikoPBX',
-    'adv_SipPasswordWeak' => '%record% Parolă SIP simplă',
+    'adv_SipPasswordWeak' => 'Parola SIP simplă la <a href=\'%url%\'>%record%</a>',
     'cf_FileActionsScript' => 'Scenariul',
     'cf_OriginalFileHeader' => 'Conținutul original al fișierului generat de sistem',
     'cf_UserEditHeader' => 'Editor pentru a face modificări',
     'cf_ResultFileHeader' => 'Conținutul fișierului cu modificări',
+    'lic_LicenseProblem' => 'Problemă cu înregistrarea în Piață',
+    'lic_ManageLicense' => 'Pentru a gestiona licența, resetați legările, analizați problemele, accesați site-ul web ',
+    'ex_English' => 'English(US)',
+    'ex_Japanese' => '日本語',
+    'ex_Deutsch' => 'Deutsch',
+    'ex_French' => 'Le français',
+    'ex_EnglishUK' => 'English(UK)',
+    'ex_Greek' => 'Ελληνική',
+    'ex_Danish' => 'Dansk',
+    'ex_Spanish' => 'Espanol',
+    'ex_Italian' => 'Italiano',
+    'ex_Portuguese' => 'Português',
+    'ex_PortugueseBrazil' => 'Português (Brazil)',
+    'ex_Polish' => 'Polskie',
+    'ex_Ukrainian' => 'Українська',
+    'ex_Swedish' => 'Svenska',
+    'ex_Vietnamese' => 'Tiếng việt',
+    'ex_Chinese' => '中国人',
+    'ex_Turkish' => 'Türk',
+    'ex_Dutch' => 'Nederlands',
+    'ex_Czech' => 'Čeština',
+    'ex_Georgian' => 'ქართველი',
+    /*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+    /*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+    /*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+    'ex_Russian' => 'Русский',
 ];

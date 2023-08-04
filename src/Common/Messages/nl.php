@@ -124,8 +124,8 @@ return [
     'SubHeaderFail2Ban' => 'Automatische blokkering bij het raden van wachtwoorden',
     'BreadcrumbUpdate' => 'Systeem update',
     'SubHeaderUpdate' => 'Bugfixes, prestatieverbeteringen, nieuwe functies',
-    'BreadcrumbPbxExtensionModules' => 'Beheer van plug-ins',
-    'SubHeaderPbxExtensionModules' => 'Modules breiden de functionaliteit van het systeem uit',
+    'BreadcrumbPbxExtensionModules' => 'Beheer van modules en uitbreidingen voor MikoPBX',
+    'SubHeaderPbxExtensionModules' => 'Upload uw eigen modules of download modules van onze marktplaats',
     'mm_Setup' => 'Telefonie',
     'mm_Extensions' => 'Medewerkers',
     'mm_CallQueues' => 'Bel wachtrijen',
@@ -154,7 +154,7 @@ return [
     'mm_Logout' => 'Uitgang',
     'mm_SystemDiagnostic' => 'Systeemlogboeken',
     'mm_Fail2Ban' => 'Inbraakbeveiliging',
-    'mm_ModuleManager' => 'Modulebeheer',
+    'mm_ModuleManager' => 'Marktplaats van modules',
     'mm_SSHConsole' => 'ssh-console',
     'bt_Edit' => 'Wijziging',
     'bt_Clear' => 'Duidelijk',
@@ -535,7 +535,7 @@ return [
     'gs_AJAMPort' => 'AJAM-poort',
     'gs_AJAMPortTLS' => 'Versleutelde AJAM-poort',
     'gs_SSHPort' => 'ssh-poort',
-    'adv_SSHPPasswordCorrupt' => 'Het ssh-wachtwoord dat is ingesteld in de webinterface komt niet overeen met het huidige wachtwoord in het systeem.',
+    'adv_SSHPPasswordCorrupt' => 'Het SSH-wachtwoord dat is ingesteld in de webinterface komt niet overeen met het huidige wachtwoord in het systeem. <a target="_blank" href=\'%url%\'>repareren</a>',
     'gs_SSHPassword' => 'ssh-wachtwoord',
     'gs_SSHAuthorizedKeys' => 'SSH-geautoriseerde sleutels',
     'gs_SSHecdsaKey' => 'SSH ECDSA-sleutel',
@@ -543,7 +543,7 @@ return [
     'gs_SSHDssKey' => 'SSH DSS-sleutel',
     'gs_PasswordSimple' => 'Het ingestelde wachtwoord is te eenvoudig.',
     'gs_SetPassword' => 'Stel een nieuw wachtwoord in',
-    'gs_SetPasswordInfo' => 'Het wachtwoord is te simpel.',
+    'gs_SetPasswordInfo' => 'Het opgegeven wachtwoord kan niet worden gebruikt, het is aanwezig in het eenvoudige wachtwoordwoordenboek.',
     'gs_PasswordNoNumbers' => 'Wachtwoord moet cijfers bevatten',
     'gs_PasswordNoLowSimvol' => 'Wachtwoord moet kleine letters bevatten',
     'gs_PasswordNoUpperSimvol' => 'Wachtwoord moet hoofdletters bevatten',
@@ -799,7 +799,7 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'lic_CouponMessage' => 'De coupon wordt gebruikt bij het uitbreiden van de functionaliteit van de PBX of bij het aanschaffen van een licentie.<br>
 Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
     'lic_CurrentLicenseInfo' => 'Gedetailleerde productinformatie in de licentiesleutel',
-    'lic_Expired' => 'Product verlopen',
+    'lic_Expired' => 'Product verlopen, neem contact op met <a href="mailto:lic@mikopbx.com">lic@mikopbx.com</a>',
     'lic_ExpiredAfter' => 'Licentie verloopt na %expired%',
     'lic_Product' => 'Product',
     'lic_FeatureInfo' => 'Totaal aantal %count% licenties voor %name%, waarvan bezet %captured%',
@@ -811,15 +811,15 @@ Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
  Gebruik de sleutel die u eerder is toegestuurd van lic@miko.ru',
     'lic_FailedToGetTrialKey2022' => '(2022) Kan dit exemplaar niet registreren. Er is al een registratienummer voor een ander bedrijf gegenereerd voor het opgegeven e-mailadres.<br>
  Gebruik de eerder toegestuurde sleutel van het adres lic@miko.ru of voer de juiste bedrijfsnaam in.',
-    'lic_FailedActivateCoupon2057' => '(2057) Deze coupon is geblokkeerd, neem contact op met lic@miko.ru',
+    'lic_FailedActivateCoupon2057' => '(2057) Deze coupon is geblokkeerd',
     'lic_FailedActivateCoupon2040' => '(2040) Deze coupon bestaat niet, controleer de invoer',
     'lic_FailedActivateCoupon2041' => '(2041) Deze coupon is al eerder geactiveerd',
     'lic_FailedActivateCoupon2037' => '(2037) Fout bij het opgeven van het registratienummer',
     'lic_FailedCheckLicense2026' => '(2026) Fout bij het opgeven van het licentienummer',
-    'lic_FailedToCaptureFeature2008' => '(2008) Geen vereiste licentie',
+    'lic_FailedToCaptureFeature2008' => '(2008) Geen vereiste licentie of het is gekoppeld aan een andere MikoPBX',
     'lic_InvalidLicenseKey2009' => '(2009) Fout met licentiesleutel',
-    'lic_FeatureExpired2011' => '(2011) Licentie verlopen',
-    'lic_FailedCheckLicense' => 'De licentieserver heeft geen reactie geretourneerd. Controleer uw internetinstellingen en probeer het later opnieuw',
+    'lic_FeatureExpired2011' => '(2011) Modulelicentie verlopen, neem contact op met <a href="mailto:sale@mikopbx.com">sale@mikopbx.com</a>',
+    'lic_FailedCheckLicense' => 'De licentieserver heeft geen reactie geretourneerd, controleer uw internetinstellingen',
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS heeft niet gereageerd op een verzoek om informatie over de vergunning. Dienst is niet beschikbaar.',
     'lic_UnknownLicenseMessage' => 'Geen reactie van licentiesysteem',
     'lic_IntroductionTabHeader' => 'Over marktplaatslicenties',
@@ -828,8 +828,7 @@ Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
     'lic_FirstQuestionAnswer' => 'De basisfunctionaliteit van MikoPBX is volledig gratis en niet beperkt door een licentie. Het ontbreken van een licentie heeft op geen enkele manier invloed op oproepen.<br> U kunt zich op elk moment op de Marketplace aan- en afmelden.',
     'lic_MarketplaceHeader' => 'Marktplaats is extra functies',
     'lic_MarketplaceText' => 'Als u zich registreert op Marketplace, krijgt u toegang tot aanvullende modules en uitbreidingen.<br>Er zijn gratis modules die we uit de basisfunctionaliteit hebben verwijderd om de eerste installatie te vereenvoudigen, evenals betaalde modules van ons en andere ontwikkelaars.<br>Als u dat bent een ontwikkelaar, kunt u contact opnemen met <a href="mailto:developers@mikopbx.com">contact met ons opnemen</a> voor instructies over hoe u uw eigen module kunt ontwikkelen en deze kunt toevoegen aan de Marketplace.',
-    'lic_MarketplaceAction' => 'Ga naar gratis registratie',
-    'lic_LastQuestionAnswer' => 'Dit heeft geen invloed op oproepen, maar wel op geïnstalleerde modules.<br>Controleer uw licentie in uw persoonlijke account op de website <a href="https://lm.miko.ru">https://lm.miko. ru< /a><br>Als het probleem aanhoudt, bekijk dan onze <a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">FAQ</a> of stuur een verzoek naar <a href=" mailto:lic@miko.ru">lic@miko.ru</a> we zullen je zeker helpen om het op te lossen.',
+    'lic_LastQuestionAnswer' => 'Veelgestelde vragen over licenties vindt u op <a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">link</a>.',
     'lic_NoInetHeader' => 'Geen toegang tot de licentieserver.',
     'lic_NoInet' => 'Misschien is er geen internettoegang vanaf de MikoPBX-server',
     'lic_NoInetLicMiko' => 'Mogelijk beperkte toegang tot de bron <b>lic.mikopbx.com</b>',
@@ -1114,18 +1113,92 @@ Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
     'upd_EnterIHaveBackupPhrasePreText' => 'Voer de volgende zin in het invoerveld in om het systeem bij te werken:',
     'upd_EnterIHaveBackupPhrase' => 'Ja, ik heb een back-up',
     'gs_SetPasswordError' => 'Wachtwoord - %password% kan niet worden gebruikt, het is aanwezig in het eenvoudige wachtwoordwoordenboek.',
-    'adv_WebPasswordWeak' => 'Eenvoudig beheerderswachtwoord in de webinterface',
+    'adv_WebPasswordWeak' => 'Eenvoudig beheerderswachtwoord in webinterface <a href=\'%url%\'>wijzigen</a>',
     'adv_SSHPasswordMismatchStringsHash' => 'Het SSH-wachtwoord werd gewijzigd buiten de MikoPBX-webinterface om',
     'adv_SSHPasswordWasChangedSubject' => "Aandacht! Het SSH-wachtwoord is gewijzigd!",
     'adv_SSHPasswordWasChangedBody' => "Het SSH-wachtwoord voor toegang tot MikoPBX is gewijzigd!",
     'adv_SSHPasswordWasCompromisedSubject' => 'Aandacht! Het SSH-wachtwoord is gewijzigd zonder in te loggen op de MikoPBX-interface!',
-    'adv_SipPasswordWeak' => '%record% Eenvoudig SIP-wachtwoord',
-    'adv_AmiPasswordWeak' => 'Eenvoudig wachtwoord voor AMI-gebruiker <%record%>',
-    'adv_SshPasswordWeak' => 'Eenvoudig SSH-accountwachtwoord',
+    'adv_SipPasswordWeak' => 'Eenvoudig SIP-wachtwoord op <a href=\'%url%\'>%record%</a>',
+    'adv_AmiPasswordWeak' => 'Eenvoudig gebruikerswachtwoord AMI <a href=\'%url%\'>%record%</a>',
+    'adv_SshPasswordWeak' => 'Eenvoudig SSH-accountwachtwoord <a href=\'%url%\'> wijzigen </a>',
     'adv_SSHPasswordMismatchFilesHash' => 'Het SSH MikoPBX-wachtwoord verschilt van het wachtwoord dat in het configuratiebestand is ingesteld. Misschien is het handmatig gewijzigd vanaf de PBX-console.',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Aandacht! Problemen gevonden in uw MikoPBX!',
     'cf_FileActionsScript' => 'Script',
     'cf_OriginalFileHeader' => 'De originele inhoud van het bestand dat door het systeem is gegenereerd',
     'cf_UserEditHeader' => 'Redacteur om wijzigingen aan te brengen',
     'cf_ResultFileHeader' => 'Bestandsinhoud met wijzigingen',
+    'ex_English' => 'English(US)',
+    'ex_EnglishUK' => 'English(UK)',
+    'ex_Japanese' => '日本語',
+    'ex_Deutsch' => 'Deutsch',
+    'ex_Danish' => 'Dansk',
+    'ex_Spanish' => 'Espanol',
+    'ex_Greek' => 'Ελληνική',
+    'ex_French' => 'Le français',
+    'ex_Italian' => 'Italiano',
+    'ex_Portuguese' => 'Português',
+    'ex_PortugueseBrazil' => 'Português (Brazil)',
+    'ex_Ukrainian' => 'Українська',
+    'ex_Vietnamese' => 'Tiếng việt',
+    'ex_Chinese' => '中国人',
+    'ex_Polish' => 'Polskie',
+    'ex_Dutch' => 'Nederlands',
+    'ex_Swedish' => 'Svenska',
+    'ex_Czech' => 'Čeština',
+    'ex_Turkish' => 'Türk',
+    'ex_Georgian' => 'ქართველი',
+    /*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+    /*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+    /*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+    'ex_Russian' => 'Русский',
+    'lic_LicenseProblem' => 'Probleem met registratie in de Marktplaats',
+    'lic_ManageLicense' => 'Om de licentie te beheren, de bindingen opnieuw in te stellen, problemen te analyseren, gaat u naar de website ',
 ];
