@@ -151,16 +151,16 @@ class Elements extends Injectable
                 'caption' => 'mm_PbxExtensionModules',
                 'iconclass' => '',
                 'submenu' => [
-                    DialplanApplicationsController::class => [
-                        'caption' => 'mm_DialplanApplications',
-                        'iconclass' => 'php',
+                    PbxExtensionModulesController::class => [
+                        'caption' => 'mm_ModuleManager',
+                        'iconclass' => 'store',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
-                    PbxExtensionModulesController::class => [
-                        'caption' => 'mm_ModuleManager',
-                        'iconclass' => 'puzzle piece',
+                    DialplanApplicationsController::class => [
+                        'caption' => 'mm_DialplanApplications',
+                        'iconclass' => 'php',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
