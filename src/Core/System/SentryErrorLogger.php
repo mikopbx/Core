@@ -47,7 +47,7 @@ class SentryErrorLogger
      *
      * @param string $libraryName The name of the library.
      */
-    public function __construct($libraryName)
+    public function __construct(string $libraryName)
     {
         $this->dsn         = 'https://07be0eff8a5c463fbac3e90ae5c7d039@sentry.miko.ru/1';
         $this->libraryName = $libraryName;
