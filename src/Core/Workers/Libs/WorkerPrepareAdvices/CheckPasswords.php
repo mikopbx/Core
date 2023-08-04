@@ -68,7 +68,7 @@ class CheckPasswords extends Injectable
                 [
                     'messageTpl'=>$value['message'],
                     'messageParams'=> [
-                        'record' => $value['record'],
+                        'record' => $value['name'],
                         'url' => $this->url->get($value['urlTemplate']),
                     ]
                 ];
@@ -93,11 +93,13 @@ class CheckPasswords extends Injectable
             'WebAdminPassword' => [
                 'urlTemplate' => 'general-settings/modify/#/passwords',
                 'message' => 'adv_WebPasswordWeak',
+                'name'  => 'WEB password',
                 'record' => PbxSettings::getValueByKey('WebAdminPassword')
             ],
             'SSHPassword' => [
                 'urlTemplate' => 'general-settings/modify/#/ssh',
                 'message' => 'adv_SshPasswordWeak',
+                'name'  => 'SSH password',
                 'record' => PbxSettings::getValueByKey('SSHPassword')
             ],
         ];
@@ -145,6 +147,7 @@ class CheckPasswords extends Injectable
             $fields[$amiUser->username] = [
                 'urlTemplate' => 'asterisk-managers/modify/' . $amiUser->id,
                 'message' => 'adv_AmiPasswordWeak',
+                'name'  => $amiUser->username,
                 'record' => $amiUser->secret
             ];
         }
@@ -191,6 +194,7 @@ class CheckPasswords extends Injectable
             $fields[$key] = [
                 'urlTemplate' => 'extensions/modify/' . $user->id,
                 'message' => 'adv_SipPasswordWeak',
+                'name'  => $key,
                 'record' => $user->secret
             ];
         }
