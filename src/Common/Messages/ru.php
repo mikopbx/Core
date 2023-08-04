@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -164,8 +182,8 @@ return [
     'SubHeaderFail2Ban' => 'Автоматическая блокировка при подборе паролей',
     'BreadcrumbUpdate' => 'Обновление системы',
     'SubHeaderUpdate' => 'Исправление ошибок, повышение быстродействия, новый функционал',
-    'BreadcrumbPbxExtensionModules' => 'Управление модулями расширений',
-    'SubHeaderPbxExtensionModules' => 'Модули расширяют функционал системы',
+    'BreadcrumbPbxExtensionModules' => 'Управление модулями и расширениями для MikoPBX',
+    'SubHeaderPbxExtensionModules' => 'Загружайте собственные или скачивайте модули из нашего маркетплейса',
     'mm_Setup' => 'Телефония',
     'mm_Extensions' => 'Сотрудники',
     'mm_CallQueues' => 'Очереди вызовов',
@@ -195,7 +213,7 @@ return [
     'mm_SystemDiagnostic' => 'Системные логи',
     'mm_Fail2Ban' => 'Защита от взлома',
     'mm_Update' => 'Обновление PBX',
-    'mm_ModuleManager' => 'Управление модулями',
+    'mm_ModuleManager' => 'Маркетплейс модулей',
     'mm_SSHConsole' => 'SSH консоль',
     'bt_Edit' => 'Изменить',
     'bt_Clear' => 'Очистить',
@@ -877,7 +895,7 @@ return [
     'lic_CouponMessage' => 'Купон используется при расширении функционала АТС или при покупке лицензии.<br>
 Его можно активировать один раз, после чего купон становится погашенным.',
     'lic_CurrentLicenseInfo' => 'Подробная информация о продуктах в лицензионном ключе',
-    'lic_Expired' => 'Срок действия продукта истек, обратитесь по адресу lic@mikopbx.com',
+    'lic_Expired' => 'Срок действия продукта истек, обратитесь по адресу <a href="mailto:lic@mikopbx.com">lic@mikopbx.com</a>',
     'lic_ExpiredAfter' => 'Срок действия лицензии истекает после %expired%',
     'lic_Product' => 'Продукт',
     'lic_FeatureInfo' => 'Всего %count% лицензий на %name%, из них занято %captured%',
@@ -887,17 +905,17 @@ return [
     'lic_LicenseKeyValid' => 'Программа зарегистрирована',
     'lic_FailedToGetTrialKey2051' => '(2051) Не удалось зарегистрировать эту копию, т.к. вы уже использовали регистрационный номер с другим Email на этой машине.<br>
  Используйте ключ отправленный вам ранее с адреса lic@miko.ru',
-    'lic_FailedToGetTrialKey2022' => '(2022) Не удалось зарегистрировать эту копию. На указанный email уже был сгененрирован регистрационный номер для другой компании.<br>
+    'lic_FailedToGetTrialKey2022' => '(2022) Не удалось зарегистрировать эту копию. На указанный email уже был сгенерирован регистрационный номер для другой компании.<br>
  Используйте ключ отправленный вам ранее с адреса lic@miko.ru или укажите корректное название компании.',
-    'lic_FailedActivateCoupon2057' => '(2057) Этот купон заблокирован, обратитесь по адресу lic@mikopbx.com',
+    'lic_FailedActivateCoupon2057' => '(2057) Этот купон заблокирован',
     'lic_FailedActivateCoupon2040' => '(2040) Такого купона не существует, проверьте корректность ввода',
     'lic_FailedActivateCoupon2041' => '(2041) Этот купон уже был активирован ранее',
     'lic_FailedActivateCoupon2037' => '(2037) Ошибка при указании регистрационного номера',
     'lic_FailedCheckLicense2026' => '(2026) Ошибка при указании лицензионного номера',
-    'lic_FailedToCaptureFeature2008' => '(2008) Нет необходимой лицензии, обратитесь по адресу lic@mikopbx.com',
+    'lic_FailedToCaptureFeature2008' => '(2008) Нет необходимой лицензии или она привязана к другой MikoPBX',
     'lic_InvalidLicenseKey2009' => '(2009) Ошибка лицензионного ключа',
-    'lic_FeatureExpired2011' => '(2011) Срок действия лицензии истек, обратитесь по адресу lic@mikopbx.com',
-    'lic_FailedCheckLicense' => 'Сервер лицензирования не вернул ответ, проверьте настройки Internet и повторите попытку позже',
+    'lic_FeatureExpired2011' => '(2011) Срок действия лицензии на модуль истек, обратитесь по адресу <a href="mailto:sale@mikopbx.com">sale@mikopbx.com</a>',
+    'lic_FailedCheckLicense' => 'Сервер лицензирования не вернул ответ, проверьте настройки Internet',
     'lic_FailedCheckLicenseNotPbxResponse' => 'АТС не ответила на запрос информации по лицензии. Сервис не доступен.',
     'lic_UnknownLicenseMessage' => 'Нет ответа от системы лицензирования',
     'lic_IntroductionTabHeader' => 'О лицензировании маркетплейса',
@@ -906,15 +924,14 @@ return [
     'lic_FirstQuestionAnswer' => 'Базовый функционал MikoPBX полностью бесплатный и не ограничен лицензией. Отсутствие лицензии никак не влияет на звонки.<br> Вы в любой момент можете зарегистрироваться, а также отменить регистрацию в Marketplace.',
     'lic_MarketplaceHeader' => 'Marketplace - это дополнительные возможности',
     'lic_MarketplaceText' => 'Регистрация в Marketplace даст вам доступ к дополнительным модулям и расширениям.<br>Есть бесплатные модули, который мы вынесли из базового функционала для упрощения первоначальной настройки, а также платные модули от нас и других разрабочиков.<br>Если вы разработчик, то можете связаться <a href="mailto:developers@mikopbx.com">с нами</a> для получения инструкций о том, как разработать собственный модуль и добавить его в Marketplace.',
-    'lic_MarketplaceImageHeader' => 'Картинка из нашего Marketplace',
-    'lic_MarketplaceAction' => 'Перейти к бесплатной регистрации',
-    'lic_LastQuestionHeader' => 'Что делать если возникла проблема с лицензией',
-    'lic_LastQuestionAnswer' => 'На звонки это не влияет, но может повлиять на установленные модули.<br>Проверьте вашу лицензию в личном кабинете на сайте <a href="https://lm.miko.ru">https://lm.miko.ru</a><br>Если проблема осталась, посмотрите наш <a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">FAQ</a> или напишите запрос на <a href="mailto:lic@miko.ru">lic@miko.ru</a> мы обязательно поможем это исправить.',
+    'lic_LastQuestionAnswer' => 'Ответы на часто задаваемые вопросы по лицензиям можно найти <a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">по ссылке</a>.',
     'lic_NoInetHeader' => 'Нет доступа к серверу лицензирования.',
     'lic_NoInet' => 'Возможно с сервера MikoPBX нет доступа в интернет',
     'lic_NoInetLicMiko' => 'Возможно ограничен доступ к ресурсу <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "Проверьте настройки <b>DNS</b> и <b>Gateway</b> в настройках <a href='%url%'>сети</a>",
     'lic_ReloadPage' => 'Обновить страницу…',
+    'lic_LicenseProblem' => 'Проблема с регистрацией в Маркетплейсе',
+    'lic_ManageLicense' => 'Для управления лицензией, сброса привязок, анализа проблем, перейдите в на сайт ',
     'er_Home' => 'Перейти в начало',
     'rs_RestartPhoneSystem' => 'Перезагрузить АТС',
     'rs_ShutDownPhoneSystem' => 'Выключить АТС',
@@ -1029,11 +1046,10 @@ return [
     'adv_MessagesHeaderError' => 'Серьезная ошибка',
     'adv_YouUseDefaultWebPassword' => 'Вы используете пароль по умолчанию для входа в административный интерфейс - <a href=\'%url%\'>изменить</a>',
     'adv_YouUseDefaultSSHPassword' => 'Вы используете пароль по умолчанию для доступа к SSH - <a href=\'%url%\'>изменить</a>',
-    'adv_isSimplePassword' => 'Используется небезопасный пароль для "%type%" - <a href=\'%url%\'>изменить</a>',
-    'adv_WebPasswordWeak' => 'Простой пароль администратора в Web интерфейсе',
-    'adv_SshPasswordWeak' => 'Простой пароль учетной записи SSH',
-    'adv_SipPasswordWeak' => 'Простой пароль SIP у %record%',
-    'adv_AmiPasswordWeak' => 'Простой пароль у AMI пользователя <%record%>',
+    'adv_WebPasswordWeak' => 'Простой пароль администратора в Web интерфейсе <a href=\'%url%\'>изменить</a>',
+    'adv_SshPasswordWeak' => 'Простой пароль учетной записи SSH <a href=\'%url%\'>изменить</a>',
+    'adv_SipPasswordWeak' => 'Простой пароль SIP у <a href=\'%url%\'>%record%</a>',
+    'adv_AmiPasswordWeak' => 'Простой пароль у AMI пользователя <a href=\'%url%\'>%record%</a>',
     'adv_PopupHeader' => 'Обнаружены следующие проблемы:',
     'pass_CheckWebAdminPasswordSimple' => 'Пароль для WEB слишком простой.',
     'pass_CheckWebAdminPasswordDontMatch' => 'Введенные пароли для WEB не совпадают',

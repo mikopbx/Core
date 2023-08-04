@@ -1,5 +1,8 @@
 {{ form('licensing/modify', 'role': 'form', 'class': 'ui form large disable-if-no-internet', 'id':'licencing-modify-form') }}
- <div id="licenseKeySection" class="disabled">
+{% set manageLink = '<a href="https://lm.mikopbx.com/client-cabinet/session/index/"'~PBXLicense~' target="_blank">lm.mikopbx.com</a>' %}
+
+
+<div id="licenseKeySection" class="disabled">
         <h2 class="ui header">{{ t._('lic_LicenseKey') }}</h2>
         <div class="empty-license-key-info">
             <div class="field">
@@ -49,7 +52,6 @@
             </div>
 
             <div class="ui divider"></div>
-
         </div>
         <div id="getNewKeyLicenseSection">
             <div class="ui header">{{ t._('lic_FirstQuestionHeader') }}</div>
@@ -90,9 +92,7 @@
             <div class="ui message">{{ t._('lic_CouponMessage') }}</div>
             <div class="ui hidden divider"></div>
         </div>
-        <div class="ui header">{{ t._('lic_LastQuestionHeader') }}</div>
-        {{ t._('lic_LastQuestionAnswer') }}
-        <div class="ui hidden divider"></div>
+
         {{ partial("partials/submitbutton",['indexurl':'']) }}
         <button class="ui labeled icon large button prevent-word-wrap disable-if-no-internet" id="reset-license">
             <i class="recycle icon"></i>

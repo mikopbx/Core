@@ -173,7 +173,6 @@ const licensingModify = {
     cbAfterGetMikoPBXFeatureStatus(response) {
         // Remove the loading spinner and any previous AJAX messages
         $('.spinner.loading.icon').remove();
-        licensingModify.$ajaxMessages.remove();
         if (response === true) {
             // MikoPBX feature status is true (valid)
             licensingModify.$formObj.removeClass('error').addClass('success');
@@ -181,16 +180,13 @@ const licensingModify = {
             licensingModify.$filledLicenseKeyHeader.show();
         } else {
             // MikoPBX feature status is false or an error occurred
-            licensingModify.$formObj.addClass('error').removeClass('success');
             if (response === false || response.messages === undefined) {
                 // Failed to check license status (response is false or no messages available)
-                $('#licFailInfo').remove();
-                licensingModify.$filledLicenseKeyInfo.after(`<div id="licFailInfo" class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${globalTranslate.lic_FailedCheckLicenseNotPbxResponse}</div>`);
+                UserMessage.showMultiString(globalTranslate.lic_FailedCheckLicenseNotPbxResponse, globalTranslate.lic_LicenseProblem);
                 licensingModify.$filledLicenseKeyHeader.show();
             } else {
                 // Failed to check license status with error messages
-                $('#licFailInfoMsg').remove();
-                licensingModify.$filledLicenseKeyInfo.after(`<div id="licFailInfoMsg" class="ui error message ajax"><i class="exclamation triangle red icon"></i> ${response.messages}</div>`);
+                licensingModify.showLicenseError(response.messages);
                 licensingModify.$filledLicenseKeyHeader.show();
             }
         }
@@ -351,6 +347,19 @@ const licensingModify = {
         Form.dataChanged();
     },
 
+    /**
+     * Prepares error messages to be displayed.
+     * @param messages
+     */
+    showLicenseError(messages){
+        let manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="https://lm.mikopbx.com/client-cabinet/session/index/`;
+        if (licensingModify.defaultLicenseKey.length === 28) {
+            manageLink += licensingModify.defaultLicenseKey
+        }
+        manageLink += '" target="_blank">https://lm.mikopbx.com</a>';
+        messages.push(manageLink);
+        UserMessage.showMultiString(messages, globalTranslate.lic_LicenseProblem);
+    },
     /**
      * Callback function to be called before the form is sent
      * @param {Object} settings - The current settings of the form

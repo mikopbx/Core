@@ -51,13 +51,16 @@ const UserMessage = {
      */
     showError(message, header = '') {
         const text = UserMessage.convertToText(message);
-        let html = '<div class="ui error message ajax">';
+        let html = '<div class="ui error icon message ajax">';
+        html += '<i class="exclamation icon"></i>';
+        html += '<div class="content">';
         if (header !== '') {
             html += `<div class="header">${header}</div>`
         } else {
             html += `<div class="header">${globalTranslate.msg_ErrorHeader}</div>`
         }
-        html += `<p>${text}</p></div>`;
+        html += `<p>${text}</p>`;
+        html += '</div></div>';
         UserMessage.$ajaxMessagesDiv.after(html);
         UserMessage.scrollToMessages();
     },
@@ -69,13 +72,16 @@ const UserMessage = {
      */
     showWarning(message, header = '') {
         const text = UserMessage.convertToText(message);
-        let html = '<div class="ui warning message ajax">';
+        let html = '<div class="ui warning icon message ajax">';
+        html += '<i class="warning icon"></i>';
+        html += '<div class="content">';
         if (header !== '') {
             html += `<div class="header">${header}</div>`
         } else {
             html += `<div class="header">${globalTranslate.msg_WarningHeader}</div>`
         }
-        html += `<p>${text}</p></div>`;
+        html += `<p>${text}</p>`;
+        html += '</div></div>';
         UserMessage.$ajaxMessagesDiv.after(html);
         UserMessage.scrollToMessages();
     },
@@ -87,13 +93,16 @@ const UserMessage = {
      */
     showInformation(message, header = '') {
         const text = UserMessage.convertToText(message);
-        let html = '<div class="ui info message ajax">';
+        let html = '<div class="ui info icon message ajax">';
+        html += '<i class="info icon"></i>';
+        html += '<div class="content">';
         if (header !== '') {
             html += `<div class="header">${header}</div>`
         } else {
             html += `<div class="header">${globalTranslate.msg_infoHeader}</div>`
         }
-        html += `<p>${text}</p></div>`;
+        html += `<p>${text}</p>`;
+        html += '</div></div>';
         UserMessage.$ajaxMessagesDiv.after(html);
         UserMessage.scrollToMessages();
     },
