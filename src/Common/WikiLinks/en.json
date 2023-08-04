@@ -8,5 +8,6 @@
   "https://wiki.mikopbx.com/call-detail-records":"https://docs.mikopbx.com/mikopbx/v/english/manual/telephony/call-detail-records",
   "https://wiki.mikopbx.com/providers": "https://docs.mikopbx.com/mikopbx/v/english/manual/routing/providers",
   "https://wiki.mikopbx.com/incoming-routes":"https://docs.mikopbx.com/mikopbx/v/english/manual/routing/incoming-routes",
-  "https://wiki.mikopbx.com/outbound-routes":"https://docs.mikopbx.com/mikopbx/v/english/manual/routing/outbound-routes"
+  "https://wiki.mikopbx.com/outbound-routes":"https://docs.mikopbx.com/mikopbx/v/english/manual/routing/outbound-routes",
+  "https://wiki.mikopbx.com/pbx-extension-modules":"https://docs.mikopbx.com/mikopbx/v/english/manual/modules/pbx-extension-modules"
 }
