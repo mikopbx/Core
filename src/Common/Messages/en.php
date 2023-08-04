@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -788,9 +787,7 @@ It can be activated once, after which the coupon becomes redeemed.',
     'lic_FirstQuestionAnswer' => 'The basic functionality of MikoPBX is completely free and not limited by a license. The absence of a license does not affect calls in any way.<br> You can register and unregister in the Marketplace at any time.',
     'lic_MarketplaceHeader' => 'For what purpose do you need registration',
     'lic_MarketplaceText' => 'Registering on the Marketplace will give you access to additional modules and extensions.<br>There are free modules that we removed from the core functionality to simplify initial setup, as well as paid modules from us and other developers.<br>If you are a developer, you can contact <a href="mailto:developers@mikopbx.com">us</a> for instructions on how to develop your own module and add it to the Marketplace.',
-    'lic_MarketplaceImageHeader' => 'Screenshot from our marketplace',
     'lic_MarketplaceAction' => 'Go to free registration',
-    'lic_LastQuestionHeader' => 'What should you do with the license problem',
     'lic_LastQuestionAnswer' => 'This does not affect calls, but may affect installed applications. <br> Check your license in your account on <a href="https://lm.miko.ru"> https://lm.miko.ru </a> <br> If the problem persists, see our <a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank"> FAQ </a> or write a request for <a href = " mailto: lic@miko.ru "> lic@miko.ru </a> we will definitely help to fix this.',
     'er_Home' => 'Go to top',
     'rs_RestartPhoneSystem' => 'Restart the PBX',
@@ -1093,7 +1090,6 @@ It can be activated once, after which the coupon becomes redeemed.',
     'Storage disk was mounted successfully...' => 'Storage disk successfully mounted',
     'ex_ImpossibleToDeleteExtension' => 'It is not possible to delete an employee because there are following links',
     'cq_PereodicAnonceMohSoundFile' => 'Background music (MOH)',
-    'adv_isSimplePassword' => 'Insecure password used for "%type%" - <a href=\'%url%\'>change</a>',
     'gs_SetPassword' => 'Set a new password',
     'pass_CheckWebAdminPasswordSimple' => 'WEB password is too simple.',
     'pass_CheckWebAdminPasswordDontMatch' => 'Entered passwords for WEB do not match',
