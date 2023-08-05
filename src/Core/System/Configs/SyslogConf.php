@@ -69,7 +69,7 @@ class SyslogConf extends Injectable
                 '$IncludeConfig /etc/rsyslog.d/*.conf'.PHP_EOL.
                 // '*.* '.$log_file.PHP_EOL.
                 PHP_EOL.
-                '$outchannel log_rotation,'.$log_file.',2621440,'.$pathScript.PHP_EOL
+                '$outchannel log_rotation,'.$log_file.',10485760,'.$pathScript.PHP_EOL
                 .'*.* :omfile:$log_rotation'.PHP_EOL;
         Util::fileWriteContent(self::CONF_FILE, $conf);
         Util::createUpdateSymlink($log_file, self::SYS_LOG_LINK);
