@@ -334,6 +334,7 @@ class ConsoleMenu{
             'uk' => Util::translate('ex_Ukrainian'),
             'it' => Util::translate('ex_Italian'),
             'da' => Util::translate('ex_Danish'),
+            'nl' => Util::translate('ex_Dutch'),
             'pl' => Util::translate('ex_Polish'),
             'sv' => Util::translate('ex_Swedish'),
             'az' => Util::translate('ex_Azərbaycan'),

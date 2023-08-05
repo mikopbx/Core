@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use MikoPBX\Core\System\Util;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use function MikoPBX\Common\Config\appPath;
@@ -60,18 +61,17 @@ class MessagesProvider implements ServiceProviderInterface
                     }
                 }
 
-                $translates = [];
-
                 // Load English translations
-                $translates = require appPath('/src/Common/Messages/en.php');
+                $translates = self::includeLanguageFile(appPath('/src/Common/Messages/en.php'));
 
                 if ($language !== 'en') {
-                    $additionalTranslates = [];
                     // Check if translation file exists for the selected language
                     $langFile = appPath("/src/Common/Messages/{$language}.php");
                     if (file_exists($langFile)) {
-                        $additionalTranslates = require $langFile;
-                        $translates = array_merge($translates, $additionalTranslates);
+                        $langArr = self::includeLanguageFile($langFile);
+                        if (!empty($langArr)) {
+                            $translates = array_merge($translates, $langArr);
+                        }
                     }
                 }
 
@@ -79,8 +79,8 @@ class MessagesProvider implements ServiceProviderInterface
                 $extensionsTranslates = [[]];
                 $results              = glob($coreConfig->modulesDir . '/*/{Messages}/en.php', GLOB_BRACE);
                 foreach ($results as $path) {
-                    $langArr = require $path;
-                    if (is_array($langArr)) {
+                    $langArr =  self::includeLanguageFile($path);
+                    if (!empty($langArr)) {
                         $extensionsTranslates[] = $langArr;
                     }
                 }
@@ -94,8 +94,8 @@ class MessagesProvider implements ServiceProviderInterface
                         GLOB_BRACE
                     );
                     foreach ($results as $path) {
-                        $langArr = require $path;
-                        if (is_array($langArr)) {
+                        $langArr = self::includeLanguageFile($path);
+                        if (!empty($langArr)) {
                             $additionalTranslates[] = $langArr;
                             $translates = array_merge($translates, ...$additionalTranslates);
                         }
@@ -109,5 +109,32 @@ class MessagesProvider implements ServiceProviderInterface
                 return $translates;
             }
         );
+    }
+
+    /**
+     * Includes the language file and returns its content as an array.
+     *
+     * @param string $path The path to the language file.
+     * @return array The language array if successful, otherwise an empty array.
+     */
+    private static function includeLanguageFile(string $path): array
+    {
+        try {
+            // Try to include the language file and store its content in $langArr.
+            $langArr = require $path;
+
+            // Check if $langArr is an array and return it if successful.
+            if (is_array($langArr)) {
+                return $langArr;
+            }
+        } catch (\Throwable $e) {
+            // If an error occurs while including the file, log the exception and error message.
+            global $errorLogger;
+            $errorLogger->captureException($e);
+            Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+        }
+
+        // Return an empty array if there was an error or $langArr is not an array.
+        return [];
     }
 }
