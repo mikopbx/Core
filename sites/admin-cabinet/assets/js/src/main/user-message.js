@@ -48,8 +48,9 @@ const UserMessage = {
      * Shows an error message.
      * @param {string|object|array} message - The error message.
      * @param {string} [header=''] - The header of the error message.
+     * @param disableScroll - If true, then the message will not be scrolled to.
      */
-    showError(message, header = '') {
+    showError(message, header = '', disableScroll=false) {
         const text = UserMessage.convertToText(message);
         let html = '<div class="ui error icon message ajax">';
         html += '<i class="exclamation icon"></i>';
@@ -62,15 +63,18 @@ const UserMessage = {
         html += `<p>${text}</p>`;
         html += '</div></div>';
         UserMessage.$ajaxMessagesDiv.after(html);
-        UserMessage.scrollToMessages();
+        if (!disableScroll){
+            UserMessage.scrollToMessages();
+        }
     },
 
     /**
      * Shows a warning message.
      * @param {string|object|array} message - The warning message.
      * @param {string} [header=''] - The header of the warning message.
+     * @param disableScroll - If true, then the message will not be scrolled to.
      */
-    showWarning(message, header = '') {
+    showWarning(message, header = '', disableScroll=false) {
         const text = UserMessage.convertToText(message);
         let html = '<div class="ui warning icon message ajax">';
         html += '<i class="warning icon"></i>';
@@ -83,15 +87,18 @@ const UserMessage = {
         html += `<p>${text}</p>`;
         html += '</div></div>';
         UserMessage.$ajaxMessagesDiv.after(html);
-        UserMessage.scrollToMessages();
+        if (!disableScroll){
+            UserMessage.scrollToMessages();
+        }
     },
 
     /**
      * Shows an information message.
      * @param {string|object|array} message - The information message.
      * @param {string} [header=''] - The header of the information message.
+     * @param disableScroll - If true, then the message will not be scrolled to.
      */
-    showInformation(message, header = '') {
+    showInformation(message, header = '', disableScroll) {
         const text = UserMessage.convertToText(message);
         let html = '<div class="ui info icon message ajax">';
         html += '<i class="info icon"></i>';
@@ -104,15 +111,18 @@ const UserMessage = {
         html += `<p>${text}</p>`;
         html += '</div></div>';
         UserMessage.$ajaxMessagesDiv.after(html);
-        UserMessage.scrollToMessages();
+        if (!disableScroll){
+            UserMessage.scrollToMessages();
+        }
     },
 
     /**
      * Shows multiple messages.
      * @param {string|object|array} message - The multiple messages.
      * @param {string} [header=''] - The header of the multiple messages.
+     * @param disableScroll - If true, then the message will not be scrolled to.
      */
-    showMultiString(message, header = '') {
+    showMultiString(message, header = '', disableScroll=false) {
         let messages = UserMessage.convertToText(message);
         $('.ui.message.ajax').remove();
         if (!messages) return;
@@ -146,11 +156,11 @@ const UserMessage = {
                     newValue = newValue.join('<br>');
                 }
                 if (index === 'error') {
-                    UserMessage.showError(newValue, header);
+                    UserMessage.showError(newValue, header, disableScroll);
                 } else if (index === 'info') {
-                    UserMessage.showInformation(newValue, header);
+                    UserMessage.showInformation(newValue, header, disableScroll);
                 } else {
-                    UserMessage.showWarning(newValue, header);
+                    UserMessage.showWarning(newValue, header, disableScroll);
                 }
                 previousMessage = value;
             });
@@ -166,7 +176,7 @@ const UserMessage = {
                 }
                 previousMessage = value;
             });
-            UserMessage.showWarning(content, header);
+            UserMessage.showWarning(content, header, disableScroll);
         }
     },
 

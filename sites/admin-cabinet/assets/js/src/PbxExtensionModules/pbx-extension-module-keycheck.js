@@ -354,16 +354,17 @@ const keyCheck = {
 
     /**
      * Prepares error messages to be displayed.
-     * @param messages
+     * @param messages - Array of error messages.
+     *
      */
-    showLicenseError(messages){
+    showLicenseError(messages) {
         let manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="https://lm.mikopbx.com/client-cabinet/session/index/`;
         if (keyCheck.defaultLicenseKey.length === 28) {
             manageLink += keyCheck.defaultLicenseKey
         }
         manageLink += '" target="_blank">https://lm.mikopbx.com</a>';
         messages.push(manageLink);
-        UserMessage.showMultiString(messages, globalTranslate.lic_LicenseProblem);
+        UserMessage.showMultiString(messages, globalTranslate.lic_LicenseProblem, true);
         sessionStorage.setItem(`previousKeyMessage${globalWebAdminLanguage}`, JSON.stringify(messages));
     },
     /**
