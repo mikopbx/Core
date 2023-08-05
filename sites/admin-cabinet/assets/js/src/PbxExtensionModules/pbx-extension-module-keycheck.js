@@ -16,15 +16,15 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, sessionStorage, globalPBXLicense*/
+/* global globalRootUrl, globalTranslate, Form, sessionStorage, globalPBXLicense, UserMessage*/
 
 
 /**
  * Object for managing modules license key
  *
- * @module licensingModify
+ * @module keyCheck
  */
-const licensingModify = {
+const keyCheck = {
     /**
      * jQuery object for the form.
      * @type {jQuery}
@@ -105,50 +105,55 @@ const licensingModify = {
 
     // Initialize the licensing page.
     initialize() {
-        licensingModify.$accordions.accordion();
-        licensingModify.$licenseDetailInfo.hide();
+        keyCheck.$accordions.accordion();
+        keyCheck.$licenseDetailInfo.hide();
 
         // Set input mask for coupon code field
-        licensingModify.$coupon.inputmask('MIKOUPD-*****-*****-*****-*****', {
-            onBeforePaste: licensingModify.cbOnCouponBeforePaste,
+        keyCheck.$coupon.inputmask('MIKOUPD-*****-*****-*****-*****', {
+            onBeforePaste: keyCheck.cbOnCouponBeforePaste,
         });
 
         // Set input mask for license key field
-        licensingModify.$licKey.inputmask('MIKO-*****-*****-*****-*****', {
-            oncomplete: licensingModify.cbOnLicenceKeyInputChange,
-            onincomplete: licensingModify.cbOnLicenceKeyInputChange,
+        keyCheck.$licKey.inputmask('MIKO-*****-*****-*****-*****', {
+            oncomplete: keyCheck.cbOnLicenceKeyInputChange,
+            onincomplete: keyCheck.cbOnLicenceKeyInputChange,
             clearIncomplete: true,
-            onBeforePaste: licensingModify.cbOnLicenceKeyBeforePaste,
+            onBeforePaste: keyCheck.cbOnLicenceKeyBeforePaste,
         });
 
-        licensingModify.$email.inputmask('email');
-        licensingModify.defaultLicenseKey = licensingModify.$licKey.val();
+        keyCheck.$email.inputmask('email');
+        keyCheck.defaultLicenseKey = keyCheck.$licKey.val();
 
-        // Handle reset button click
-        licensingModify.$resetButton.on('click', () => {
-            licensingModify.$formObj.addClass('loading disabled');
-            PbxApi.LicenseResetLicenseKey(licensingModify.cbAfterResetLicenseKey);
-        });
-
-        licensingModify.cbOnLicenceKeyInputChange();
-
-        licensingModify.initializeForm();
-
-        // Check if a license key is present
-        if (licensingModify.defaultLicenseKey.length === 28) {
-            licensingModify.$filledLicenseKeyInfo
-                .html(`${licensingModify.defaultLicenseKey} <i class="spinner loading icon"></i>`)
-                .show();
-            licensingModify.$filledLicenseKeyHeader.show();
-            PbxApi.LicenseGetMikoPBXFeatureStatus(licensingModify.cbAfterGetMikoPBXFeatureStatus);
-            PbxApi.LicenseGetLicenseInfo(licensingModify.cbAfterGetLicenseInfo);
-            licensingModify.$emptyLicenseKeyInfo.hide();
-        } else {
-            licensingModify.$filledLicenseKeyHeader.hide();
-            licensingModify.$filledLicenseKeyInfo.hide();
-            licensingModify.$emptyLicenseKeyInfo.show();
+        // Restore previous license error message to prevent blinking
+        const previousKeyMessage = sessionStorage.getItem(`previousKeyMessage${globalWebAdminLanguage}`);
+        if (previousKeyMessage) {
+            keyCheck.showLicenseError(JSON.parse(previousKeyMessage));
         }
 
+        // Handle reset button click
+        keyCheck.$resetButton.on('click', () => {
+            keyCheck.$formObj.addClass('loading disabled');
+            PbxApi.LicenseResetLicenseKey(keyCheck.cbAfterResetLicenseKey);
+        });
+
+        keyCheck.cbOnLicenceKeyInputChange();
+
+        keyCheck.initializeForm();
+
+        // Check if a license key is present
+        if (keyCheck.defaultLicenseKey.length === 28) {
+            keyCheck.$filledLicenseKeyInfo
+                .html(`${keyCheck.defaultLicenseKey} <i class="spinner loading icon"></i>`)
+                .show();
+            keyCheck.$filledLicenseKeyHeader.show();
+            PbxApi.LicenseGetMikoPBXFeatureStatus(keyCheck.cbAfterGetMikoPBXFeatureStatus);
+            PbxApi.LicenseGetLicenseInfo(keyCheck.cbAfterGetLicenseInfo);
+            keyCheck.$emptyLicenseKeyInfo.hide();
+        } else {
+            keyCheck.$filledLicenseKeyHeader.hide();
+            keyCheck.$filledLicenseKeyInfo.hide();
+            keyCheck.$emptyLicenseKeyInfo.show();
+        }
     },
 
     /**
@@ -157,7 +162,7 @@ const licensingModify = {
      */
     cbAfterResetLicenseKey(response) {
         // Remove the loading and disabled classes from the form
-        licensingModify.$formObj.removeClass('loading disabled');
+        keyCheck.$formObj.removeClass('loading disabled');
 
         if (response !== false) {
             // If the response is not false, indicating a successful license key reset,
@@ -175,19 +180,19 @@ const licensingModify = {
         $('.spinner.loading.icon').remove();
         if (response === true) {
             // MikoPBX feature status is true (valid)
-            licensingModify.$formObj.removeClass('error').addClass('success');
-            licensingModify.$filledLicenseKeyInfo.after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
-            licensingModify.$filledLicenseKeyHeader.show();
+            keyCheck.$formObj.removeClass('error').addClass('success');
+            keyCheck.$filledLicenseKeyInfo.after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
+            keyCheck.$filledLicenseKeyHeader.show();
         } else {
             // MikoPBX feature status is false or an error occurred
             if (response === false || response.messages === undefined) {
                 // Failed to check license status (response is false or no messages available)
                 UserMessage.showMultiString(globalTranslate.lic_FailedCheckLicenseNotPbxResponse, globalTranslate.lic_LicenseProblem);
-                licensingModify.$filledLicenseKeyHeader.show();
+                keyCheck.$filledLicenseKeyHeader.show();
             } else {
                 // Failed to check license status with error messages
-                licensingModify.showLicenseError(response.messages);
-                licensingModify.$filledLicenseKeyHeader.show();
+                keyCheck.showLicenseError(response.messages);
+                keyCheck.$filledLicenseKeyHeader.show();
             }
         }
     },
@@ -199,11 +204,11 @@ const licensingModify = {
     cbAfterGetLicenseInfo(response) {
         if (response.licenseInfo !== undefined) {
             // License information is available
-            licensingModify.showLicenseInfo(response.licenseInfo);
-            licensingModify.$licenseDetailInfo.show();
+            keyCheck.showLicenseInfo(response.licenseInfo);
+            keyCheck.$licenseDetailInfo.show();
         } else {
             // License information is not available
-            licensingModify.$licenseDetailInfo.hide();
+            keyCheck.$licenseDetailInfo.hide();
         }
     },
 
@@ -211,22 +216,22 @@ const licensingModify = {
      * Callback function triggered when there is a change in the license key input.
      */
     cbOnLicenceKeyInputChange() {
-        const licKey = licensingModify.$licKey.val();
+        const licKey = keyCheck.$licKey.val();
         if (licKey.length === 28) {
             // License key is complete
-            licensingModify.$formObj.find('.reginfo input').each((index, obj) => {
+            keyCheck.$formObj.find('.reginfo input').each((index, obj) => {
                 $(obj).attr('hidden', '');
             });
-            licensingModify.$getNewKeyLicenseSection.hide();
-            licensingModify.$couponSection.show();
-            licensingModify.$formErrorMessages.empty();
+            keyCheck.$getNewKeyLicenseSection.hide();
+            keyCheck.$couponSection.show();
+            keyCheck.$formErrorMessages.empty();
         } else {
             // License key is incomplete
-            licensingModify.$formObj.find('.reginfo input').each((index, obj) => {
+            keyCheck.$formObj.find('.reginfo input').each((index, obj) => {
                 $(obj).removeAttr('hidden');
             });
-            licensingModify.$getNewKeyLicenseSection.show();
-            licensingModify.$couponSection.hide();
+            keyCheck.$getNewKeyLicenseSection.show();
+            keyCheck.$couponSection.hide();
         }
     },
 
@@ -237,7 +242,7 @@ const licensingModify = {
      */
     cbOnLicenceKeyBeforePaste(pastedValue) {
         if (pastedValue.indexOf('MIKO-') === -1) {
-            licensingModify.$licKey.transition('shake');
+            keyCheck.$licKey.transition('shake');
             return false;
         }
         return pastedValue.replace(/\s+/g, '');
@@ -250,7 +255,7 @@ const licensingModify = {
      */
     cbOnCouponBeforePaste(pastedValue) {
         if (pastedValue.indexOf('MIKOUPD-') === -1) {
-            licensingModify.$coupon.transition('shake');
+            keyCheck.$coupon.transition('shake');
             return false;
         }
         return pastedValue.replace(/\s+/g, '');
@@ -327,13 +332,13 @@ const licensingModify = {
         if (success === true) {
             if (typeof response.data.PBXLicense !== 'undefined') {
                 globalPBXLicense = response.data.PBXLicense;
-                licensingModify.$formObj.form('set value', 'licKey', response.data.PBXLicense);
+                keyCheck.$formObj.form('set value', 'licKey', response.data.PBXLicense);
             }
             $('#productDetails tbody').html('');
 
-            licensingModify.$formObj.form('set value', 'coupon', '');
+            keyCheck.$formObj.form('set value', 'coupon', '');
 
-            licensingModify.initialize();
+            keyCheck.initialize();
             if (response.messages.length !== 0) {
                 UserMessage.showMultiString(response.messages);
             }
@@ -353,12 +358,13 @@ const licensingModify = {
      */
     showLicenseError(messages){
         let manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="https://lm.mikopbx.com/client-cabinet/session/index/`;
-        if (licensingModify.defaultLicenseKey.length === 28) {
-            manageLink += licensingModify.defaultLicenseKey
+        if (keyCheck.defaultLicenseKey.length === 28) {
+            manageLink += keyCheck.defaultLicenseKey
         }
         manageLink += '" target="_blank">https://lm.mikopbx.com</a>';
         messages.push(manageLink);
         UserMessage.showMultiString(messages, globalTranslate.lic_LicenseProblem);
+        sessionStorage.setItem(`previousKeyMessage${globalWebAdminLanguage}`, JSON.stringify(messages));
     },
     /**
      * Callback function to be called before the form is sent
@@ -374,19 +380,19 @@ const licensingModify = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-        const formData = licensingModify.$formObj.form('get values');
-        PbxApi.LicenseProcessUserRequest(formData, licensingModify.cbAfterFormProcessing);
+        const formData = keyCheck.$formObj.form('get values');
+        PbxApi.LicenseProcessUserRequest(formData, keyCheck.cbAfterFormProcessing);
     },
 
     /**
      * Initialize the form with custom settings
      */
     initializeForm() {
-        Form.$formObj = licensingModify.$formObj;
+        Form.$formObj = keyCheck.$formObj;
         Form.url = `${globalRootUrl}licensing/save`; // Form submission URL
-        Form.validateRules = licensingModify.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = licensingModify.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = licensingModify.cbAfterSendForm; // Callback after form is sent
+        Form.validateRules = keyCheck.validateRules; // Form validation rules
+        Form.cbBeforeSendForm = keyCheck.cbBeforeSendForm; // Callback before form is sent
+        Form.cbAfterSendForm = keyCheck.cbAfterSendForm; // Callback after form is sent
         Form.initialize();
     },
 };
@@ -397,13 +403,13 @@ const licensingModify = {
  * @returns {boolean} - True if the field is not empty or the license key field is empty, false otherwise.
  */
 $.fn.form.settings.rules.checkEmptyIfLicenseKeyEmpty = function (value) {
-    return (licensingModify.$licKey.val().length === 28 || value.length > 0);
+    return (keyCheck.$licKey.val().length === 28 || value.length > 0);
 };
 
 /**
  *  Initialize licensing modify form on document ready
  */
 $(document).ready(() => {
-    licensingModify.initialize();
+    keyCheck.initialize();
 });
 
