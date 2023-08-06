@@ -1,56 +1,23 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English(US)',
     'ex_EnglishUK' => 'English(UK)',
@@ -931,6 +898,8 @@ return [
     'lic_ReloadPage' => 'Обновить страницу…',
     'lic_LicenseProblem' => 'Проблема с регистрацией в Маркетплейсе',
     'lic_ManageLicense' => 'Для управления лицензией, сброса привязок, анализа проблем, перейдите в на сайт ',
+    'lic_ManageLicenseKeyOnSitePreLinkText' => 'Для управления лицензией, сброса привязок к хосту, просмотра статистики',
+    'lic_ManageLicenseKeyOnSiteLinkText' => 'по ссылке',
     'er_Home' => 'Перейти в начало',
     'rs_RestartPhoneSystem' => 'Перезагрузить АТС',
     'rs_ShutDownPhoneSystem' => 'Выключить АТС',
@@ -1027,6 +996,11 @@ return [
     'ext_InstalledModules' => 'Установленные модули',
     'ext_Marketplace' => 'Маркетплейс',
     'ext_Licensing' => 'Управление лицензией',
+    'ext_NoAvailableModules' => 'Нет доступных для установки модулей',
+    'ext_NoInstalledModules' => 'Нет установленных модулей',
+    'ext_GoToMarketplace'=>'Перейти в маркетплейс',
+    'ext_GoToRegistration'=>'Регистрация в маркетплейсе',
+    'ext_LicenseProblemHeader'=>'Проблема с лицензией',
     'DimmerWaitForPBXIsOnline' => 'Разрыв связи с ядром PBX …',
     'DimmerWaitForPBXOnlineDescription' => 'Это нормально, если станция перезагружается. <br>Как только связь восстановится страница обновится автоматически!',
     'loc_NoResult' => 'Ничего не найдено',

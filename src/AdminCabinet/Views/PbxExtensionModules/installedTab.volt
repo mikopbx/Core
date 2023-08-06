@@ -33,7 +33,8 @@
                 <input type="checkbox" {% if module['status']!=='disabled' %} checked {% endif %}/> <label></label>
             </div>
         </td>
-        <td class="{{ module['status'] }} disability">{{ t._('Breadcrumb'~module['uniqid']) }} <i class="status-icon"></i><br><span
+        <td class="{{ module['status'] }} disability">{{ t._('Breadcrumb'~module['uniqid']) }} <i
+                    class="status-icon"></i><br><span
                     class="features">{{ t._('SubHeader'~module['uniqid']) }}</span></td>
         <td class="{{ module['status'] }} disability">{{ module['developer'] }}</td>
         <td class="{{ module['status'] }} disability version">{{ module['version'] }}</td>
@@ -49,3 +50,17 @@
         </table>
     {% endif %}
 {% endfor %}
+
+{% if modulelist == [] %}
+    <div class="ui placeholder segment">
+        <div class="ui icon header">
+            <i class="puzzle piece icon"></i>
+            {{ t._('ext_NoInstalledModules') }}
+        </div>
+        {% if PBXLicense=='' %}
+            {{ link_to("pbx-extension-modules/index/#/licensing", '<i class="store icon"></i> '~t._('ext_GoToRegistration'), "class": "ui icon labeled blue button") }}
+        {% else %}
+            {{ link_to("pbx-extension-modules/index/#/marketplace", '<i class="key icon"></i> '~t._('ext_GoToMarketplace'), "class": "ui icon labeled blue button") }}
+        {% endif %}
+    </div>
+{% endif %}

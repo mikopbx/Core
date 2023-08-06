@@ -127,6 +127,7 @@ class LicenseManagementProcessor extends Injectable
                     $mikoPBXConfig->setGeneralSettings('PBXLicense', $data['licKey']);
                     $this->license->changeLicenseKey($data['licKey']);
                     $this->license->addTrial('11'); // MikoPBX forever license
+                    $res->data['PBXLicense'] = $data['licKey'];
                     $res->success = true;
                 } elseif ( ! empty($licenseInfo) && strpos($licenseInfo, '2026') !== false) {
                     $res->success    = false;

@@ -45,7 +45,6 @@ const keyCheck = {
     $resetButton: $('#reset-license'),
     $productDetails: $('#productDetails'),
     $accordions: $('#licencing-modify-form .ui.accordion'),
-    defaultLicenseKey: null,
 
     /**
      * Validation rules for the form fields before submission.
@@ -122,12 +121,11 @@ const keyCheck = {
         });
 
         keyCheck.$email.inputmask('email');
-        keyCheck.defaultLicenseKey = keyCheck.$licKey.val();
 
         // Restore previous license error message to prevent blinking
         const previousKeyMessage = sessionStorage.getItem(`previousKeyMessage${globalWebAdminLanguage}`);
-        if (previousKeyMessage) {
-            keyCheck.showLicenseError(JSON.parse(previousKeyMessage));
+        if (previousKeyMessage && globalPBXLicense.length>0) {
+            UserMessage.showLicenseError(globalTranslate.lic_LicenseProblem, JSON.parse(previousKeyMessage),true)
         }
 
         // Handle reset button click
@@ -141,11 +139,12 @@ const keyCheck = {
         keyCheck.initializeForm();
 
         // Check if a license key is present
-        if (keyCheck.defaultLicenseKey.length === 28) {
+        if (globalPBXLicense.length === 28) {
             keyCheck.$filledLicenseKeyInfo
-                .html(`${keyCheck.defaultLicenseKey} <i class="spinner loading icon"></i>`)
+                .html(`${globalPBXLicense} <i class="spinner loading icon"></i>`)
                 .show();
             keyCheck.$filledLicenseKeyHeader.show();
+            keyCheck.$filledLicenseKeyInfo.after(`<br>${globalTranslate.lic_ManageLicenseKeyOnSitePreLinkText}&nbsp<a href="${Config.keyManagementUrl}" class="">${globalTranslate.lic_ManageLicenseKeyOnSiteLinkText}</a>.`)
             PbxApi.LicenseGetMikoPBXFeatureStatus(keyCheck.cbAfterGetMikoPBXFeatureStatus);
             PbxApi.LicenseGetLicenseInfo(keyCheck.cbAfterGetLicenseInfo);
             keyCheck.$emptyLicenseKeyInfo.hide();
@@ -191,7 +190,8 @@ const keyCheck = {
                 keyCheck.$filledLicenseKeyHeader.show();
             } else {
                 // Failed to check license status with error messages
-                keyCheck.showLicenseError(response.messages);
+                UserMessage.showLicenseError(globalTranslate.lic_LicenseProblem, response.messages, true);
+                sessionStorage.setItem(`previousKeyMessage${globalWebAdminLanguage}`, JSON.stringify(response.messages));
                 keyCheck.$filledLicenseKeyHeader.show();
             }
         }
@@ -352,21 +352,6 @@ const keyCheck = {
         Form.dataChanged();
     },
 
-    /**
-     * Prepares error messages to be displayed.
-     * @param messages - Array of error messages.
-     *
-     */
-    showLicenseError(messages) {
-        let manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="https://lm.mikopbx.com/client-cabinet/session/index/`;
-        if (keyCheck.defaultLicenseKey.length === 28) {
-            manageLink += keyCheck.defaultLicenseKey
-        }
-        manageLink += '" target="_blank">https://lm.mikopbx.com</a>';
-        messages.push(manageLink);
-        UserMessage.showMultiString(messages, globalTranslate.lic_LicenseProblem, true);
-        sessionStorage.setItem(`previousKeyMessage${globalWebAdminLanguage}`, JSON.stringify(messages));
-    },
     /**
      * Callback function to be called before the form is sent
      * @param {Object} settings - The current settings of the form

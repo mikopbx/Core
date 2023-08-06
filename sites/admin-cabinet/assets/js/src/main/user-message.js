@@ -69,6 +69,18 @@ const UserMessage = {
     },
 
     /**
+     * Shows a license error with management link message.
+     * @param {string|object|array} messages - The warning message.
+     * @param {string} [header=''] - The header of the warning message.
+     * @param disableScroll - If true, then the message will not be scrolled to.
+     */
+    showLicenseError(header, messages, disableScroll) {
+        const manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="${Config.keyManagementUrl}" target="_blank">${Config.keyManagementSite}</a>`;
+        messages.push(manageLink);
+        UserMessage.showMultiString(messages, header, disableScroll);
+    },
+
+    /**
      * Shows a warning message.
      * @param {string|object|array} message - The warning message.
      * @param {string} [header=''] - The header of the warning message.

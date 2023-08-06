@@ -1,6 +1,5 @@
 <?php
-return [
-    /*
+/*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -17,6 +16,8 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
+
+return [
     'March' => 'maart',
     'February' => 'februari',
     'January' => 'januari',

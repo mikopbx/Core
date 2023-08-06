@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalPBXLicense, globalTranslate, UserMessage, globalPBXVersion, SemanticLocalization, upgradeStatusLoopWorker, PbxExtensionStatus */
+/* global globalRootUrl, PbxApi, globalPBXLicense, globalTranslate, UserMessage, globalPBXVersion, SemanticLocalization, upgradeStatusLoopWorker, PbxExtensionStatus, keyCheck */
 
 /**
  * Represents list of extension modules.
@@ -30,6 +30,12 @@ const extensionModules = {
      * @type {jQuery}
      */
     $marketplaceTable: $('#new-modules-table'),
+
+    /**
+     * jQuery object for the information when no any modules available to install.
+     * @type {jQuery}
+     */
+    $noNewModulesSegment: $('#no-new-modules-segment'),
 
     /**
      * jQuery object for the loader instead of available modules.
@@ -147,6 +153,12 @@ const extensionModules = {
             }
         });
 
+        if ($('tr.new-module-row').length>0){
+            extensionModules.$noNewModulesSegment.hide();
+        } else {
+            extensionModules.$noNewModulesSegment.show();
+        }
+
         /**
          * Event handler for the download link click event.
          * @param {Event} e - The click event object.
@@ -157,6 +169,7 @@ const extensionModules = {
             const params = {};
             const $aLink = $(e.target).closest('a');
             $aLink.removeClass('disabled');
+            $aLink.addClass('loading');
             params.uniqid = $aLink.attr('data-uniqid');
             params.releaseId = $aLink.attr('data-id');
             params.size = $aLink.attr('data-size');
@@ -295,11 +308,11 @@ const extensionModules = {
                 extensionModules.cbGetModuleInstallLinkFailure,
             );
         } else if (result === false && params.length > 0) {
-            UserMessage.showMultiString(params);
-            $('a.button').removeClass('disabled');
+            UserMessage.showLicenseError(globalTranslate.ext_LicenseProblemHeader, params);
+            $('a.button').removeClass('disabled').removeClass('loading');
         } else {
-            UserMessage.showMultiString(globalTranslate.ext_NoLicenseAvailable);
-            $('a.button').removeClass('disabled');
+            UserMessage.showLicenseError(globalTranslate.ext_LicenseProblemHeader, [globalTranslate.ext_NoLicenseAvailable]);
+            $('a.button').removeClass('disabled').removeClass('loading');
         }
 
     },
@@ -317,6 +330,7 @@ const extensionModules = {
             if (newParams.action === 'update') {
                 params.aLink.find('i').addClass('loading');
             } else {
+                params.aLink.removeClass('loading');
                 params.aLink.find('i').addClass('loading redo').removeClass('download');
             }
             extensionModules.installModule(newParams);

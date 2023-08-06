@@ -15,3 +15,13 @@
     <tbody>
     </tbody>
 </table>
+
+
+<div class="ui placeholder segment" id="no-new-modules-segment" style="display: none;">
+    <div class="ui icon header">
+        <i class="puzzle piece icon"></i>
+        {{ t._('ext_NoAvailableModules') }}
+    </div>
+</div>
+
+
