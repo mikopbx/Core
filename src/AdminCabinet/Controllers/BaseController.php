@@ -118,7 +118,7 @@ class BaseController extends Controller
         $this->view->MetaTegHeadDescription = $this->translation->_('MetaTegHeadDescription');
         $this->view->isExternalModuleController = $this->isExternalModuleController;
 
-        if ($this->controllerName!=='Session'){
+        if ($this->controllerClass!==SessionController::class){
             $this->view->setTemplateAfter('main');
         }
 
@@ -138,8 +138,36 @@ class BaseController extends Controller
             }
             $this->view->module = $module->toArray();
             $this->view->globalModuleUniqueId = $module->uniqid;
-            $this->view->pick("Modules/{$module->uniqid}/{$this->controllerName}/{$this->actionName}");
         }
+    }
+
+    /**
+     * Performs actions before executing the route.
+     *
+     * @return void
+     */
+    public function beforeExecuteRoute(): void
+    {
+        // Check if the request method is POST
+        if ($this->request->isPost()) {
+            // Retrieve the 'submitMode' data from the request
+            $data = $this->request->getPost('submitMode');
+            if (!empty($data)) {
+                // Set the 'SubmitMode' session variable to the retrieved data
+                $this->session->set('SubmitMode', $data);
+            }
+        }
+
+        $this->actionName = $this->dispatcher->getActionName();
+        $this->controllerName = Text::camelize($this->dispatcher->getControllerName(), '_');
+        // Add module variables into view if it is an external module controller
+        if (str_starts_with($this->dispatcher->getNamespaceName(), 'Modules')) {
+            $this->view->pick("Modules/{$this->getModuleUniqueId()}/{$this->controllerName}/{$this->actionName}");
+        } else  {
+            $this->view->pick("{$this->controllerName}/{$this->actionName}");
+        }
+
+        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_EXECUTE_ROUTE,[$this]);
     }
 
     /**
@@ -178,26 +206,6 @@ class BaseController extends Controller
     }
 
     /**
-     * Performs actions before executing the route.
-     *
-     * @return void
-     */
-    public function beforeExecuteRoute(): void
-    {
-        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_EXECUTE_ROUTE,[$this]);
-
-        // Check if the request method is POST
-        if ($this->request->isPost()) {
-            // Retrieve the 'submitMode' data from the request
-            $data = $this->request->getPost('submitMode');
-            if (!empty($data)) {
-                // Set the 'SubmitMode' session variable to the retrieved data
-                $this->session->set('SubmitMode', $data);
-            }
-        }
-    }
-
-    /**
      * Forwards the request to a different controller and action based on the provided URI.
      *
      * @param string $uri The URI to forward to.
@@ -206,16 +214,29 @@ class BaseController extends Controller
     protected function forward(string $uri): void
     {
         $uriParts = explode('/', $uri);
-        $params = array_slice($uriParts, 2);
+        if ($this->isExternalModuleController and count($uriParts)>2){
+            $params = array_slice($uriParts, 3);
+            $moduleUniqueID = $this->getModuleUniqueId();
+            $this->dispatcher->forward(
+                [
+                    'namespace'=>"Modules\\{$moduleUniqueID}\\App\\Controllers",
+                    'controller' => $uriParts[1],
+                    'action' => $uriParts[2],
+                    'params' => $params,
+                ]
+            );
+        } else {
+            $params = array_slice($uriParts, 2);
 
-        $this->dispatcher->forward(
-            [
-                'controller' => $uriParts[0],
-                'action' => $uriParts[1],
-                'params' => $params,
-            ]
-
-        );
+            $this->dispatcher->forward(
+                [
+                    'namespace'=>"MikoPBX\AdminCabinet\Controllers",
+                    'controller' => $uriParts[0],
+                    'action' => $uriParts[1],
+                    'params' => $params,
+                ]
+            );
+        }
     }
 
     /**
@@ -304,6 +325,40 @@ class BaseController extends Controller
             $this->flash->error(implode('<br>', $errors));
         } elseif (!$this->request->isAjax()) {
             $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
+            if ($reloadPath!==''){
+                $this->forward($reloadPath);
+            }
+        }
+
+        if ($this->request->isAjax()) {
+            $this->view->success = $success;
+            if ($reloadPath!=='' && $success){
+                $this->view->reload = $reloadPath;
+            }
+        }
+
+        return $success;
+    }
+
+
+    /**
+     * Delete an entity and handle success or error messages.
+     *
+     * @param mixed $entity The entity to be deleted.
+     * @return bool True if the entity was successfully deleted, false otherwise.
+     */
+    protected function deleteEntity($entity, string $reloadPath=''): bool
+    {
+        $success = $entity->delete();
+
+        if (!$success) {
+            $errors = $entity->getMessages();
+            $this->flash->error(implode('<br>', $errors));
+        } elseif (!$this->request->isAjax()) {
+            // $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
+            if ($reloadPath!==''){
+                $this->forward($reloadPath);
+            }
         }
 
         if ($this->request->isAjax()) {

@@ -39,13 +39,19 @@ abstract class BaseForm extends Form
      * @param string $areaName The name of the textarea field.
      * @param string $areaValue The initial value for the textarea field.
      * @param int $areaWidth The width of the textarea field in columns (optional, default: 85).
-     *
+     * @param array $options Additional options for TextArea element
      * @return void
      */
-    public function addTextArea(string $areaName, string $areaValue, int $areaWidth = 90, $options=[]): void
+    public function addTextArea(string $areaName, string $areaValue, int $areaWidth = 90, array $options=[]): void
     {
         $rows = 1;
-        $strings = explode("\n", $areaValue);
+        $strings = '';
+        if (array_key_exists('placeholder', $options) && !empty($options["placeholder"])){
+            $strings = explode("\n", $options["placeholder"]);
+        }
+        if (!empty($areaValue)){
+            $strings = explode("\n", $areaValue);
+        }
         foreach ($strings as $string) {
             $rows += ceil(strlen($string) / $areaWidth);
         }
