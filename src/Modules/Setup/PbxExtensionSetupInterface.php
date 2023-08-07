@@ -45,6 +45,20 @@ interface PbxExtensionSetupInterface
     public function installModule(): bool;
 
     /**
+     * Checks if the current PBX version is compatible with the minimum required version.
+     *
+     * This function compares the current PBX version with the minimum required version
+     * specified by the module. If the current version is lower than the minimum required
+     * version, it adds a message to the `messages` array and returns `false`. Otherwise,
+     * it returns `true`, indicating that the PBX version is compatible.
+     *
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#checkcompatibility
+     *
+     * @return bool Returns `true` if PBX version is compatible; otherwise, `false`.
+     */
+    public function checkCompatibility():bool;
+
+    /**
      * Activates the license, applicable only for commercial modules.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#activatelicense
      *

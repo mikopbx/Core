@@ -30,6 +30,7 @@ use Phalcon\Di\Injectable;
 use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
+use function Symfony\Component\Translation\t;
 
 
 /**
@@ -170,7 +171,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                     $this->wiki_links = $wiki_links;
                 }
             } else {
-                $this->messages[] = 'Error on decode module.json';
+                $this->messages[] = $this->translation->_("ext_ErrorOnDecodeModuleJson",['filename'=>'module.json']);
             }
         }
 
@@ -187,34 +188,68 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      */
     public function installModule(): bool
     {
-        $result = true;
         try {
-            if ( ! $this->activateLicense()) {
-                $this->messages[] = 'License activate error';
-                $result           = false;
+            if (!$this->checkCompatibility()){
+                return false;
+            }
+            if (!$this->activateLicense()) {
+                $this->messages[] = $this->translation->_("ext_ErrorOnLicenseActivation");
+                return false;
             }
             if ( ! $this->installFiles()) {
-                $this->messages[] = ' installFiles error';
-                $result           = false;
+                $this->messages[] = $this->translation->_("ext_ErrorOnInstallFiles");
+                return false;
             }
             if ( ! $this->installDB()) {
-                $this->messages[] = ' installDB error';
-                $result           = false;
+                $this->messages[] = $this->translation->_("ext_ErrorOnInstallDB");
+                return false;
             }
             if ( ! $this->fixFilesRights()) {
-                $this->messages[] = ' Apply files rights error';
-                $result           = false;
+                $this->messages[] = $this->translation->_("ext_ErrorOnAppliesFilesRights");
+                return false;
             }
 
             // Recreate version hash for js files and translations
             PBXConfModulesProvider::getVersionsHash(true);
 
         } catch (Throwable $exception) {
-            $result         = false;
             $this->messages[] = $exception->getMessage();
+            return false;
         }
 
-        return $result;
+        return true;
+    }
+
+    /**
+     * Checks if the current PBX version is compatible with the minimum required version.
+     *
+     * This function compares the current PBX version with the minimum required version
+     * specified by the module. If the current version is lower than the minimum required
+     * version, it adds a message to the `messages` array and returns `false`. Otherwise,
+     * it returns `true`, indicating that the PBX version is compatible.
+     *
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#checkcompatibility
+     *
+     * @return bool Returns `true` if PBX version is compatible; otherwise, `false`.
+     */
+    public function checkCompatibility():bool
+    {
+        // Get the current PBX version from the settings.
+        $currentVersionPBX = PbxSettings::getValueByKey('PBXVersion');
+
+        // Remove any '-dev' suffix from the version.
+        $currentVersionPBX = str_replace('-dev', '', $currentVersionPBX);
+        if (version_compare($currentVersionPBX, $this->min_pbx_version) < 0) {
+            // The current PBX version is lower than the required version.
+            // Add a message indicating the compatibility issue.
+            $this->messages[] = $this->translation->_("ext_ModuleDependsHigherVersion",['version'=>$this->min_pbx_version]);
+
+            // Return false to indicate incompatibility.
+            return false;
+        }
+
+        // The current PBX version is compatible.
+        return true;
     }
 
     /**
@@ -228,11 +263,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         if($this->lic_product_id>0) {
             $lic = PbxSettings::getValueByKey('PBXLicense');
             if (empty($lic)) {
-                $this->messages[] = 'License key not found...';
+                $this->messages[] = $this->translation->_("ext_EmptyLicenseKey");
                 return false;
             }
 
-            // Get trial license
+            // Get trial license for the module
             $this->license->addtrial($this->lic_product_id);
         }
         return true;
@@ -328,11 +363,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $result = true;
         try {
             if ( ! $this->unInstallDB($keepSettings)) {
-                $this->messages[] = ' unInstallDB error';
+                $this->messages[] = $this->translation->_("ext_UninstallDBError");
                 $result           = false;
             }
             if ($result && ! $this->unInstallFiles($keepSettings)) {
-                $this->messages[] = ' unInstallFiles error';
+                $this->messages[] = $this->translation->_("ext_UnInstallFiles");
                 $result           = false;
             }
 
@@ -365,7 +400,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      * Deletes records from the PbxExtensionModules table.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#unregistermodule
      *
-     * @return bool The result of the unregistration process.
+     * @return bool The result of the uninstallation process.
      */
     public function unregisterModule(): bool
     {
@@ -447,15 +482,6 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      */
     public function registerNewModule(): bool
     {
-        // Check the compatibility of the PBX version and the module.
-        $currentVersionPBX = PbxSettings::getValueByKey('PBXVersion');
-        $currentVersionPBX = str_replace('-dev', '', $currentVersionPBX);
-        if (version_compare($currentVersionPBX, $this->min_pbx_version) < 0) {
-            $this->messages[] = "Module depends minimum PBX ver $this->min_pbx_version";
-
-            return false;
-        }
-
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ( ! $module) {
             $module           = new PbxExtensionModules();

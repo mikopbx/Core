@@ -82,7 +82,7 @@ class LicenseManagementProcessor extends Injectable
                 $res = $proc->pingAction();
                 break;
             default:
-                $res->messages[] = "Unknown action - {$action} in licenseCallBack";
+                $res->messages['error'][] = "Unknown action - {$action} in licenseCallBack";
         }
 
         $res->function = $action;
@@ -130,13 +130,13 @@ class LicenseManagementProcessor extends Injectable
                     $res->data['PBXLicense'] = $data['licKey'];
                     $res->success = true;
                 } elseif ( ! empty($licenseInfo) && strpos($licenseInfo, '2026') !== false) {
+                    $res->messages['error'][] = $this->translation->_('lic_FailedCheckLicense2026');
                     $res->success    = false;
-                    $res->messages[] = $this->translation->_('lic_FailedCheckLicense2026');
                 } elseif ( ! empty($licenseInfo)) {
-                    $res->messages[] = $licenseInfo;
+                    $res->messages['error'][] = $licenseInfo;
                     $res->success    = false;
                 } else {
-                    $res->messages[] = $this->translation->_('lic_FailedCheckLicense');
+                    $res->messages['error'][] = $this->translation->_('lic_FailedCheckLicense');
                     $res->success    = false;
                 }
             }
@@ -146,7 +146,7 @@ class LicenseManagementProcessor extends Injectable
                     $res->messages[] = $this->translation->_('lic_SuccessfulСuponActivation');
                     $res->success    = true;
                 } else {
-                    $res->messages[] = $this->license->translateLicenseErrorMessage((string)$result);
+                    $res->messages['error'][] = $this->license->translateLicenseErrorMessage((string)$result);
                     $res->success    = false;
                 }
             }
@@ -160,7 +160,7 @@ class LicenseManagementProcessor extends Injectable
                 $res->data['PBXLicense'] = $newLicenseKey;
             } else {
                 // No internet connection, or wrong data sent to license server, or something else
-                $res->messages[] = $this->license->translateLicenseErrorMessage($newLicenseKey);
+                $res->messages['error'][] = $this->license->translateLicenseErrorMessage($newLicenseKey);
                 $res->success    = false;
             }
         }
@@ -184,7 +184,7 @@ class LicenseManagementProcessor extends Injectable
             $res->success             = true;
             $res->data['licenseInfo'] = json_encode($licenseInfo);
         } else {
-            $res->messages[] = 'License key is wrong or empty';
+            $res->messages['error'][] = $this->translation->_('lic_WrongLicenseKeyOrEmpty');
         }
 
         return $res;
@@ -203,7 +203,7 @@ class LicenseManagementProcessor extends Injectable
         if ($checkBaseFeature['success'] === false) {
             $res->success = false;
             $textError = (string)($checkBaseFeature['error']??'');
-            $res->messages[] = $this->license->translateLicenseErrorMessage($textError);
+            $res->messages['error'][] = $this->license->translateLicenseErrorMessage($textError);
         } else {
             $res->success = true;
         }
@@ -241,7 +241,7 @@ class LicenseManagementProcessor extends Injectable
                 $result = $this->license->captureFeature($licFeatureId);
                 if ($result['success'] === false) {
                     $textError = (string)($result['error']??'');
-                    $res->messages[] = $this->license->translateLicenseErrorMessage($textError);
+                    $res->messages['error'][] = $this->license->translateLicenseErrorMessage($textError);
                     $res->success = false;
                 }
             }

@@ -52,7 +52,7 @@ class AdvicesProcessor extends Injectable
             $proc = new self();
             $res = $proc->getAdvicesAction();
         } else {
-            $res->messages[] = "Unknown action - {$action} in advicesCallBack";
+            $res->messages['error'][] = "Unknown action - {$action} in advicesCallBack";
         }
         $res->function = $action;
         return $res;

@@ -313,7 +313,7 @@ class ModulesManagementProcessor extends Injectable
             $res->success = true;
             $res->data['i_status'] = 'INSTALLATION_ERROR';
             $res->data['i_status_progress'] = '0';
-            $res->messages[] = file_get_contents($error_file);
+            $res->messages['error'][] = file_get_contents($error_file);
         } elseif ('100' === file_get_contents($progress_file)) {
             $res->success = true;
             $res->data['i_status_progress'] = '100';

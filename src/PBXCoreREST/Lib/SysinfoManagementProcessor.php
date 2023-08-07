@@ -56,7 +56,7 @@ class SysinfoManagementProcessor extends Injectable
                 $res = self::getExternalIpInfo();
                 break;
             default:
-                $res->messages[] = "Unknown action - {$action} in sysinfoCallBack";
+                $res->messages['error'][] = "Unknown action - {$action} in sysinfoCallBack";
         }
         $res->function = $action;
         return $res;

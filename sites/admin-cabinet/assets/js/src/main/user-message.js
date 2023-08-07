@@ -76,7 +76,11 @@ const UserMessage = {
      */
     showLicenseError(header, messages, disableScroll) {
         const manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="${Config.keyManagementUrl}" target="_blank">${Config.keyManagementSite}</a>`;
-        messages.push(manageLink);
+        if (Array.isArray(messages.error)){
+            messages.error.push(manageLink);
+        } else if (Array.isArray(messages)){
+            messages.push(manageLink);
+        }
         UserMessage.showMultiString(messages, header, disableScroll);
     },
 

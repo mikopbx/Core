@@ -129,7 +129,7 @@ class PbxExtensionState extends Injectable
 
         // If there are no errors, enable the firewall and the module
         if ( ! $this->enableFirewallSettings()) {
-            $this->messages[] = 'Error on enable firewall settings';
+            $this->messages[] = $this->translation->_("ext_ErrorOnEnableFirewallSettings");
 
             return false;
         }
@@ -235,7 +235,7 @@ class PbxExtensionState extends Injectable
 
         // Disable firewall settings and the module
         if ( ! $this->disableFirewallSettings()) {
-            $this->messages[] = 'Error on disable firewall settings';
+            $this->messages[] = $this->translation->_("ext_ErrorOnDisableFirewallSettings");
 
             return false;
         }
@@ -297,7 +297,7 @@ class PbxExtensionState extends Injectable
             if ( ! empty($messages)) {
                 $this->messages = $messages;
             } else {
-                $this->messages[] = 'Error on the Module enable function at onBeforeModuleDisable';
+                $this->messages[] = $this->translation->_("ext_ErrorOnModuleBeforeDisable");
             }
             $this->db->rollback(true); // Rollback the transaction
 
@@ -450,7 +450,7 @@ class PbxExtensionState extends Injectable
             if ( ! empty($messages)) {
                 $this->messages = $messages;
             } else {
-                $this->messages[] = 'Error on the enableModule function at onBeforeModuleEnable';
+                $this->messages[] = $this->translation->_("ext_ErrorOnModuleBeforeEnable");
             }
             $this->db->rollback(true); // Rollback the temporary transaction
 

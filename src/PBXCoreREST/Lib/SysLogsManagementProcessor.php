@@ -76,7 +76,7 @@ class SysLogsManagementProcessor extends Injectable
                 $res = self::getLogsList();
                 break;
             default:
-                $res->messages[] = "Unknown action - {$action} in syslogCallBack";
+                $res->messages['error'][] = "Unknown action - {$action} in syslogCallBack";
         }
 
         $res->function = $action;

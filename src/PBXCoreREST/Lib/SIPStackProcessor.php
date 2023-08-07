@@ -58,7 +58,7 @@ class SIPStackProcessor extends Injectable
                 $res = self::getRegistry();
                 break;
             default:
-                $res->messages[] = "Unknown action - {$action} in sipCallBack";
+                $res->messages['error'][] = "Unknown action - {$action} in sipCallBack";
                 break;
         }
 

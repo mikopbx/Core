@@ -125,6 +125,7 @@ const installStatusLoopWorker = {
         ) {
             window.clearTimeout(installStatusLoopWorker.timeoutHandle);
             UserMessage.showMultiString(response.messages, globalTranslate.ext_InstallationError);
+            $('.loading').removeClass('loading');
         } else if (response.data.i_status === 'INSTALLATION_IN_PROGRESS') {
             installStatusLoopWorker.$progressBar.progress({
                 percent: parseInt(response.data.i_status_progress, 10),

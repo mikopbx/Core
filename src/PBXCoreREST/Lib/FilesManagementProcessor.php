@@ -73,7 +73,7 @@ class FilesManagementProcessor extends Injectable
                 $res = self::firmwareDownloadStatus($postData['filename']);
                 break;
             default:
-                $res->messages[] = "Unknown action - {$action} in uploadCallBack";
+                $res->messages['error'][] = "Unknown action - {$action} in uploadCallBack";
         }
 
         $res->function = $action;

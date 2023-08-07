@@ -91,7 +91,7 @@ class SystemManagementProcessor extends Injectable
                 $res = self::convertAudioFile($request['data']['filename']);
                 break;
             default:
-                $res->messages[] = "Unknown action - {$action} in systemCallBack";
+                $res->messages['error'][] = "Unknown action - {$action} in systemCallBack";
         }
 
         $res->function = $action;
