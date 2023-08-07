@@ -1184,4 +1184,11 @@ Poate fi activat o singură dată, după care cuponul este valorificat.',
  * If not, see <https://www.gnu.org/licenses/>.
  */
     'ex_Russian' => 'Русский',
+    'lic_ManageLicenseKeyOnSitePreLinkText' => 'Pentru a gestiona licența, resetați legăturile gazdei, vizualizați statisticile',
+    'lic_ManageLicenseKeyOnSiteLinkText' => 'legătură',
+    'ext_NoAvailableModules' => 'Nu există module disponibile pentru instalare',
+    'ext_NoInstalledModules' => 'Nu există module instalate',
+    'ext_GoToMarketplace' => 'Mergeți la piață',
+    'ext_GoToRegistration' => 'Înregistrare pe piață',
+    'ext_LicenseProblemHeader' => 'Problema licenței',
 ];

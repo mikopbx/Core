@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'December' => 'dekabr',
     'Loading' => 'Yüklənir',
     'MetaTegHeadDescription' => 'Biznes üçün telefon sistemi',
@@ -1152,4 +1151,11 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'cf_ResultFileHeader' => 'Dəyişikliklərlə fayl məzmunu',
     'lic_LicenseProblem' => 'Marketplace-də qeydiyyatla bağlı problem',
     'lic_ManageLicense' => 'Lisenziyanı idarə etmək, bağlamaları sıfırlamaq, problemləri təhlil etmək, vebsayta daxil olmaq ',
+    'ext_NoInstalledModules' => 'Heç bir modul quraşdırılmayıb',
+    'lic_ManageLicenseKeyOnSitePreLinkText' => 'Lisenziyanı idarə etmək üçün host bağlamalarını sıfırlayın, statistikaya baxın',
+    'lic_ManageLicenseKeyOnSiteLinkText' => 'keçid',
+    'ext_NoAvailableModules' => 'Quraşdırma üçün modul yoxdur',
+    'ext_GoToMarketplace' => 'Bazara gedin',
+    'ext_GoToRegistration' => 'Bazarda qeydiyyat',
+    'ext_LicenseProblemHeader' => 'Lisenziya məsələsi',
 ];
