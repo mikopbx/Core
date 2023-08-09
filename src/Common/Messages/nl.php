@@ -1,4 +1,22 @@
 <?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -1127,7 +1145,7 @@ Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
     'cf_OriginalFileHeader' => 'De originele inhoud van het bestand dat door het systeem is gegenereerd',
     'cf_UserEditHeader' => 'Redacteur om wijzigingen aan te brengen',
     'cf_ResultFileHeader' => 'Bestandsinhoud met wijzigingen',
-    'ex_English' => 'English(US)',
+    'ex_English' => 'English',
     'ex_EnglishUK' => 'English(UK)',
     'ex_Japanese' => '日本語',
     'ex_Deutsch' => 'Deutsch',

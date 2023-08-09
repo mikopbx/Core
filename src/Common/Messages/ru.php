@@ -19,7 +19,7 @@
 
 return [
     'ex_Russian' => 'Русский',
-    'ex_English' => 'English(US)',
+    'ex_English' => 'English',
     'ex_EnglishUK' => 'English(UK)',
     'ex_Japanese' => '日本語',
     'ex_Deutsch' => 'Deutsch',
