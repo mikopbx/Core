@@ -30,7 +30,6 @@ use Phalcon\Di\Injectable;
 use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
-use function Symfony\Component\Translation\t;
 
 
 /**

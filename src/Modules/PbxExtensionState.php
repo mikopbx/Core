@@ -37,6 +37,7 @@ use Throwable;
  *
  * @property \MikoPBX\Service\License license
  * @property \Phalcon\Config\Adapter\Json config
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
  *
  * @package MikoPBX\Modules
  */
