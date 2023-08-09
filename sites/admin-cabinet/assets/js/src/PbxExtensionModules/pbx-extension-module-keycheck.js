@@ -190,8 +190,8 @@ const keyCheck = {
                 keyCheck.$filledLicenseKeyHeader.show();
             } else {
                 // Failed to check license status with error messages
-                UserMessage.showLicenseError(globalTranslate.lic_LicenseProblem, response.messages, true);
                 sessionStorage.setItem(`previousKeyMessage${globalWebAdminLanguage}`, JSON.stringify(response.messages));
+                UserMessage.showLicenseError(globalTranslate.lic_LicenseProblem, response.messages, true);
                 keyCheck.$filledLicenseKeyHeader.show();
             }
         }
