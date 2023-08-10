@@ -20,34 +20,34 @@
 namespace MikoPBX\Tests\PBXCoreREST\Lib;
 
 use GuzzleHttp\Client;
-use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
-class SystemManagementProcessorTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
+class ModulesManagementProcessorTest extends AbstractUnitTest
 {
 
-    public function testDisableModule(){
+    public function testCallBack()
+    {
         $httpClient = new Client([
             "timeout"  => 5.0,
-       		"http_errors"=> false
-       ]);
+            "http_errors"=> false
+        ]);
 
-        $moduleUniqueID = 'ModuleTelegramNotify';
-        $url = "http://127.0.0.1/pbxcore/api/system/disableModule";
+        $moduleUniqueID = 'ModuleSmartIVR';
+        $url = "http://127.0.0.1/pbxcore/api/modules/core/disableModule";
         $response = $httpClient->request("POST", $url, [
             "form_params" =>["uniqid"=>$moduleUniqueID]
         ]);
 
-          if ($response->getStatusCode() == 200){
+        if ($response->getStatusCode() == 200){
             $body = $response->getBody();
-              $result = json_decode($body, true);
-              if ($result["result"]===true) {
-                  if (openlog("License", LOG_ODELAY, LOG_LOCAL7)) {
-                      syslog(LOG_EMERG, "Module:".$moduleUniqueID." was disabled by license reason");
-                      closelog();
-                  }
-              }
-          }
+            $result = json_decode($body, true);
+            if ($result["result"]===true) {
+                if (openlog("License", LOG_ODELAY, LOG_LOCAL7)) {
+                    syslog(LOG_EMERG, "Module:".$moduleUniqueID." was disabled by license reason");
+                    closelog();
+                }
+            }
+        }
         $this->assertTrue(true);
     }
 }
