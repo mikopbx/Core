@@ -181,6 +181,7 @@ return [
     'mm_Update' => 'Обновление PBX',
     'mm_ModuleManager' => 'Маркетплейс модулей',
     'mm_SSHConsole' => 'SSH консоль',
+    'mm_Integrations'=> 'Интеграции',
     'bt_Edit' => 'Изменить',
     'bt_Clear' => 'Очистить',
     'bt_Delete' => 'Удалить',
