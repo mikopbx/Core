@@ -35,7 +35,6 @@ use MikoPBX\AdminCabinet\Controllers\OutboundRoutesController;
 use MikoPBX\AdminCabinet\Controllers\OutOffWorkTimeController;
 use MikoPBX\AdminCabinet\Controllers\ProvidersController;
 use MikoPBX\AdminCabinet\Controllers\SoundFilesController;
-use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
@@ -633,8 +632,7 @@ class ModelsBase extends Model
                 $link = $this->buildRecordUrl(ExtensionsController::class, 'modify',  $this->id);
                 break;
             case ExternalPhones::class:
-                if ( $this->di->get(SecurityPluginProvider::SERVICE_NAME, [static::class, 'modify'])
-                    && $this->Extensions->is_general_user_number === "1") {
+                if ( $this->Extensions->is_general_user_number === "1") {
                     $parameters = [
                         'conditions' => 'is_general_user_number="1" AND type="' . Extensions::TYPE_EXTERNAL . '" AND userid=:userid:',
                         'bind' => [
@@ -686,13 +684,10 @@ class ModelsBase extends Model
                 $link = $this->buildRecordUrl(GeneralSettingsController::class, 'index');
                 break;
             case PbxExtensionModules::class:
-                $moduleMainController = "Modules\\{$this->uniqid}\\App\\Controllers\\{$this->uniqid}Controller";
-                if ($this->di->get(SecurityPluginProvider::SERVICE_NAME, [$moduleMainController, 'index'])) {
-                    $url = new Url();
-                    $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
-                    $unCamelizedModuleId = Text::uncamelize($this->uniqid, '-');
-                    $link = $url->get("$unCamelizedModuleId/$unCamelizedModuleId/index", null, null, $baseUri);
-                }
+                $url = new Url();
+                $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
+                $unCamelizedModuleId = Text::uncamelize($this->uniqid, '-');
+                $link = $url->get("$unCamelizedModuleId/$unCamelizedModuleId/index", null, null, $baseUri);
                 break;
             case Sip::class:
                 if ($this->Extensions) {
@@ -737,17 +732,15 @@ class ModelsBase extends Model
      */
     private function buildRecordUrl(string $controllerClass, string  $action, string $recordId=''):string
     {
-        $link = '#';
-        if ($this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controllerClass, $action])) {
-            $url = new Url();
-            $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
-            $controllerParts = explode('\\', $controllerClass);
-            $controllerName = end($controllerParts);
-            // Remove the "Controller" suffix if present
-            $controllerName = str_replace("Controller", "", $controllerName);
-            $unCamelizedControllerName = Text::uncamelize($controllerName, '-');
-            $link = $url->get("{$unCamelizedControllerName}//{$action}//{$recordId}", null, null, $baseUri);
-        }
+        $url = new Url();
+        $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
+        $controllerParts = explode('\\', $controllerClass);
+        $controllerName = end($controllerParts);
+        // Remove the "Controller" suffix if present
+        $controllerName = str_replace("Controller", "", $controllerName);
+        $unCamelizedControllerName = Text::uncamelize($controllerName, '-');
+        $link = $url->get("{$unCamelizedControllerName}//{$action}//{$recordId}", null, null, $baseUri);
+
         return $link;
     }
 
