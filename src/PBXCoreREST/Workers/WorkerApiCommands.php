@@ -101,6 +101,7 @@ class WorkerApiCommands extends WorkerBase
         } catch (Throwable $exception) {
             $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
             $request        = [];
+            $this->needRestart = true;
         } finally {
             $message->reply(json_encode($res->getResult()));
             if ($res->success) {
