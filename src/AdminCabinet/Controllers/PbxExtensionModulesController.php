@@ -107,7 +107,7 @@ class PbxExtensionModulesController extends BaseController
                 "Breadcrumb$uniqid"
             );
         $this->view->submitMode = null;
-        $this->view->indexUrl   = $unCamelizedControllerName;
+        $this->view->indexUrl   = 'pbx-extension-modules/index/';
     }
 
     /**
