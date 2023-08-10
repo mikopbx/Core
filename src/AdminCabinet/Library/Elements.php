@@ -270,6 +270,11 @@ class Elements extends Injectable
                     ],
                 ],
             ],
+            'integrations' => [
+                'caption' => 'mm_Integrations',
+                'iconclass' => 'plug',
+                'submenu' => [],
+            ]
 
         ];
 
