@@ -130,7 +130,8 @@ class PbxExtensionModules extends ModelsBase
             'cache' => [
                 'key' => ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray'),
                 'lifetime' => 3600,
-            ]
+            ],
+            'order'=>'id desc',
         ];
         return PbxExtensionModules::find($parameters)->toArray();
     }
