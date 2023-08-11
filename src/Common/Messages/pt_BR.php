@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -1189,4 +1188,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ext_ErrorOnEnableFirewallSettings' => 'Erro ao ativar as configurações de firewall para o módulo',
     'ext_ErrorOnDisableFirewallSettings' => 'Erro de exclusão de configurações de firewall para o módulo',
     'ext_ErrorOnModuleBeforeDisable' => 'Erros na verificação da capacidade de desativar o módulo',
+    'mm_Integrations' => 'Integrações',
 ];

@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -1190,4 +1189,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ext_ErrorOnDisableFirewallSettings' => 'Erreur d\'exclusion des paramètres du pare-feu pour le module',
     'ext_ErrorOnModuleBeforeEnable' => 'Erreurs lors de la vérification de la possibilité d\'activer le module',
     'ext_ErrorOnModuleBeforeDisable' => 'Erreurs lors de la vérification de la possibilité de désactiver le module',
+    'mm_Integrations' => 'Intégrations',
 ];

@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'BreadcrumbPBXCoreREST' => 'API-ul REST',
     'BreadcrumbRestart' => 'Repornirea sistemului',
     'pr_DTMFMode' => 'modul DTMF',
@@ -1223,4 +1222,5 @@ Poate fi activat o singură dată, după care cuponul este valorificat.',
     'ext_ErrorOnDisableFirewallSettings' => 'Eroare de excludere a setărilor firewall-ului pentru modul',
     'ext_ErrorOnModuleBeforeEnable' => 'Erori la verificarea capacității de a activa modulul',
     'ext_ErrorOnModuleBeforeDisable' => 'Erori la verificarea capacității de a dezactiva modulul',
+    'mm_Integrations' => 'Integrari',
 ];

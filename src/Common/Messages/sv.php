@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -1190,4 +1189,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ext_ErrorOnDisableFirewallSettings' => 'Uteslutningsfel för brandväggsinställningar för modulen',
     'ext_ErrorOnModuleBeforeEnable' => 'Fel vid kontroll av möjligheten att aktivera modulen',
     'ext_ErrorOnModuleBeforeDisable' => 'Fel vid kontroll av möjligheten att inaktivera modulen',
+    'mm_Integrations' => 'Integrationer',
 ];

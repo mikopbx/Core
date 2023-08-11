@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -1190,4 +1189,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ext_ErrorOnModuleBeforeEnable' => 'Erros verificando a capacidade de habilitar o módulo',
     'ext_ErrorOnModuleBeforeDisable' => 'Erros na verificação da capacidade de desativar o módulo',
     'ext_ErrorOnDecodeModuleJson' => 'Erro ao analisar o arquivo de configuração do módulo %filename%',
+    'mm_Integrations' => 'Integrações',
 ];

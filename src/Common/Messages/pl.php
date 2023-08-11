@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -1190,4 +1189,5 @@ Można go aktywować raz, po czym kupon zostaje zrealizowany.',
     'ext_ErrorOnModuleBeforeEnable' => 'Błędy sprawdzające możliwość włączenia modułu',
     'ext_ErrorOnModuleBeforeDisable' => 'Błędy w sprawdzaniu możliwości wyłączenia modułu',
     'ext_ErrorOnInstallFiles' => 'Błędy podczas kopiowania plików modułów',
+    'mm_Integrations' => 'Integracje',
 ];

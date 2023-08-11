@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -1240,4 +1239,5 @@ Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
     'ext_ErrorOnDisableFirewallSettings' => 'Uitsluitingsfout firewall-instellingen voor module',
     'ext_ErrorOnModuleBeforeEnable' => 'Fouten bij het controleren van de mogelijkheid om de module in te schakelen',
     'ext_ErrorOnModuleBeforeDisable' => 'Fouten bij het controleren van de mogelijkheid om de module uit te schakelen',
+    'mm_Integrations' => 'Integraties',
 ];

@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -1190,4 +1189,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.',
     'ext_ErrorOnDisableFirewallSettings' => 'Error de exclusión de la configuración del cortafuegos para el módulo',
     'ext_ErrorOnModuleBeforeEnable' => 'Errores al verificar la capacidad de habilitar el módulo',
     'ext_ErrorOnModuleBeforeDisable' => 'Errores al verificar la capacidad de deshabilitar el módulo',
+    'mm_Integrations' => 'integraciones',
 ];

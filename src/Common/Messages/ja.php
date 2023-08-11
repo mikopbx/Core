@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -1190,4 +1189,5 @@ return [
     'ext_ErrorOnDisableFirewallSettings' => 'モジュールのファイアウォール設定除外エラー',
     'ext_ErrorOnModuleBeforeEnable' => 'モジュールを有効にする機能をチェック中にエラーが発生しました',
     'ext_ErrorOnModuleBeforeDisable' => 'モジュールを無効にする機能のチェック中にエラーが発生しました',
+    'mm_Integrations' => '統合',
 ];

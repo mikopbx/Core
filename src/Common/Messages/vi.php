@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -1190,4 +1189,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá s�
     'ext_ErrorOnDisableFirewallSettings' => 'Lỗi loại trừ cài đặt tường lửa cho mô-đun',
     'ext_ErrorOnModuleBeforeEnable' => 'Lỗi kiểm tra khả năng kích hoạt mô-đun',
     'ext_ErrorOnModuleBeforeDisable' => 'Lỗi khi kiểm tra khả năng vô hiệu hóa mô-đun',
+    'mm_Integrations' => 'tích hợp',
 ];
