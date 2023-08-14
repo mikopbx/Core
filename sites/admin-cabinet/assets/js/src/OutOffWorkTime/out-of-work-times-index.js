@@ -58,8 +58,35 @@ const OutOfWorkTimesTable = {
         // Move the "Add New" button to the first eight-column div
         $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
 
+        $('body').on('click', 'a.delete', (e) => {
+            e.preventDefault();
+            const id = $(e.target).closest('tr').attr('id');
+            OutOfWorkTimesTable.deleteRule(id);
+        });
     },
-
+    /**
+     * Deletes an extension with the given ID.
+     * @param {string} id - The ID of the rule to delete.
+     */
+    deleteRule(id) {
+        $('.message.ajax').remove();
+        $.api({
+            url: `${globalRootUrl}out-off-work-time/delete/${id}`,
+            on: 'now',
+            successTest(response) {
+                // test whether a JSON response is valid
+                return response !== undefined
+                    && Object.keys(response).length > 0;
+            },
+            onSuccess(response) {
+                if (response.success === true) {
+                    $('#time-frames-table').find(`tr[id=${id}]`).remove();
+                } else {
+                    UserMessage.showError(response.message.error, globalTranslate.ex_ImpossibleToDeleteExtension);
+                }
+            },
+        });
+    },
 };
 
 /**
