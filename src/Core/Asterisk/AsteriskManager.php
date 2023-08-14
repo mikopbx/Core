@@ -369,27 +369,23 @@ class AsteriskManager
      * @param array $parameters The parameters to store the sub-data.
      * @return void
      */
-    private function waitResponseReadCompletePart($event_text, & $parameters):void{
+    private function waitResponseReadCompletePart($event_text, &$parameters):void{
         $settings = [
-            'Queue status will follow'          => 'QueueStatusComplete',
-            'Channels will follow'              => 'CoreShowChannelsComplete',
-            'Result will follow'                => 'DBGetComplete',
-            'Parked calls will follow'          => 'ParkedCallsComplete',
-            'Peer status list will follow'      => 'PeerlistComplete',
-            'IAX Peer status list will follow'  => 'PeerlistComplete',
-            'Registrations will follow'         => 'RegistrationsComplete',
-            'Meetme user list will follow'      => 'MeetmeListComplete',
-            'Meetme conferences will follow'    => 'MeetmeListRoomsComplete',
-            'Following are Events for each object associated with the Endpoint' => 'EndpointDetailComplete',
-            'Following are Events for each Outbound registration'               => 'OutboundRegistrationDetailComplete',
-            'A listing of Endpoints follows, presented as EndpointList events'  => 'EndpointListComplete'
+            'Queue status will follow'          => ['QueueStatusComplete'],
+            'Channels will follow'              => ['CoreShowChannelsComplete'],
+            'Result will follow'                => ['DBGetComplete', 'DBGetTreeComplete'],
+            'Parked calls will follow'          => ['ParkedCallsComplete'],
+            'Peer status list will follow'      => ['PeerlistComplete'],
+            'IAX Peer status list will follow'  => ['PeerlistComplete'],
+            'Registrations will follow'         => ['RegistrationsComplete'],
+            'Meetme user list will follow'      => ['MeetmeListComplete'],
+            'Meetme conferences will follow'    => ['MeetmeListRoomsComplete'],
+            'Following are Events for each object associated with the Endpoint' => ['EndpointDetailComplete'],
+            'Following are Events for each Outbound registration'               => ['OutboundRegistrationDetailComplete'],
+            'A listing of Endpoints follows, presented as EndpointList events'  => ['EndpointListComplete']
         ];
-        $eventsAsNotArray = [];//[ 'EndpointDetailComplete' ];
-
-        $endString = $settings[$event_text]??false;
-        if($endString !== false){
-            $NotArray = !in_array($endString,$eventsAsNotArray);
-            $this->waitResponseGetSubData($parameters, $endString, $NotArray);
+        if(isset($settings[$event_text])){
+            $this->waitResponseGetSubData($parameters, $settings[$event_text]);
         }
     }
 
@@ -456,11 +452,10 @@ class AsteriskManager
      * Wait for response and get sub-data from the socket.
      *
      * @param array $parameters The parameters to store the sub-data.
-     * @param string $end_string The string indicating the end of the response (optional).
-     * @param bool $event_as_array Indicates whether to store events as arrays (optional, default is true).
+     * @param array $end_string The string indicating the end of the response (optional).
      * @return void
      */
-    private function waitResponseGetSubData(array &$parameters, string $end_string = '', bool $event_as_array = true): void
+    private function waitResponseGetSubData(array &$parameters, array $end_string): void
     {
         if (empty($end_string)) {
             return;
@@ -471,23 +466,24 @@ class AsteriskManager
             $value = '';
             $buff  = $this->getStringDataFromSocket().$value;
             $a_pos = strpos($buff, ':');
-            if ( ! $a_pos) {
-                if (!empty($m)) {
-                    if ($event_as_array) {
-                        $parameters['data'][$m['Event']][] = $m;
-                    } else {
-                        $parameters['data'][$m['Event']] = $m;
-                    }
+            if (!$a_pos) {
+                if(empty($m)){
+                    continue;
                 }
-                $m = [];
+                if($parameters['ActionID'] === $m['ActionID']){
+                    // This is the event for the last request of the current worker
+                    $parameters['data'][$m['Event']][] = $m;
+                    $m = [];
+                }elseif(isset($m['Event'])){
+                    // These are other events not related to the last request
+                    $this->processEvent($parameters);
+                }
                 continue;
             }
-
             $key   = trim(substr($buff, 0, $a_pos));
             $value = trim(substr($buff, $a_pos + 1));
-
             $m[$key] = $value;
-        } while ($value !== $end_string);
+        } while (!in_array($value, $end_string, true));
     }
 
     /**
