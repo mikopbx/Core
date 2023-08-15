@@ -95,6 +95,13 @@ const PbxApi = {
     licenseCaptureFeatureForProductId: `${Config.pbxUrl}/pbxcore/api/license/captureFeatureForProductId`, // Tries to capture a feature for a product.
     licenseSendPBXMetrics: `${Config.pbxUrl}/pbxcore/api/license/sendPBXMetrics`, // Make an API call to send PBX metrics
 
+    // Extensions
+    extensionsGetPhonesRepresent: `${Config.pbxUrl}/pbxcore/api/extensions/getPhonesRepresent`, // Returns CallerID names for the numbers list.
+    extensionsGetPhoneRepresent: `${Config.pbxUrl}/pbxcore/api/extensions/getPhoneRepresent`, // Returns CallerID names for the number.
+    extensionsGetForSelect: `${Config.pbxUrl}/pbxcore/api/extensions/getForSelect?type={type}`, // Retrieves the extensions list limited by type parameter.
+    extensionsAvailable: `${Config.pbxUrl}/pbxcore/api/extensions/available?number={number}`, // Checks the number uniqueness.
+
+
     /**
      * Tries to parse a JSON string.
      *
@@ -1458,6 +1465,31 @@ const PbxApi = {
             },
             onFailure() {
                 callback(false);
+            },
+            onError() {
+                callback(false);
+            },
+        });
+    },
+
+    /**
+     * Fetches phone representations for a list of phone numbers using an API call.
+     *
+     * @param {string[]} numbers - An array of phone numbers to fetch representations for.
+     * @param {function} callback - The callback function to handle the API response.
+     */
+    ExtensionsGetPhonesRepresent(numbers, callback) {
+        $.api({
+            url: PbxApi.extensionsGetPhonesRepresent,
+            on: 'now',
+            method: 'POST',
+            data: {numbers},
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
             },
             onError() {
                 callback(false);

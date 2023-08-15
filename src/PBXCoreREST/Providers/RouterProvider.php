@@ -44,6 +44,8 @@ use MikoPBX\PBXCoreREST\Controllers\
     Files\GetController as FilesGetController,
     Files\PostController as FilesPostController,
     Advices\GetController as AdvicesGetController,
+    Extensions\GetController as ExtensionsGetController,
+    Extensions\PostController as ExtensionsPostController,
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController
 };
@@ -154,6 +156,9 @@ class RouterProvider implements ServiceProviderInterface
             [FilesPostController::class, 'callAction', '/pbxcore/api/files/{actionName}', 'post', '/'],
 
             [AdvicesGetController::class, 'callAction', '/pbxcore/api/advices/{actionName}', 'get', '/'],
+
+            [ExtensionsGetController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'get', '/'],
+            [ExtensionsPostController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'post', '/'],
 
             [LicenseGetController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'get', '/'],
             [LicensePostController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'post', '/'],

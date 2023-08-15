@@ -48,6 +48,8 @@ const extensionStatusLoopWorker = {
         DebuggerInfo.initialize();
         if (extension.$formObj.form('get value', 'id') !== '') {
             extensionStatusLoopWorker.restartWorker();
+        } else {
+            extensionStatusLoopWorker.$statusLabel.hide();
         }
     },
 

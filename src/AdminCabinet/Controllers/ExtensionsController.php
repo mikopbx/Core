@@ -25,12 +25,10 @@ use MikoPBX\Common\Models\{
     Extensions,
     ExternalPhones,
     NetworkFilters,
-    PbxExtensionModules,
     PbxSettings,
     Sip,
     Users
 };
-use Phalcon\Text;
 
 use function MikoPBX\Common\Config\appPath;
 
@@ -141,95 +139,26 @@ class ExtensionsController extends BaseController
         // $data[1] == <actual base64 string>
         $data = explode(',', $base64_string);
 
-        // We could add validation here to ensure count($data) > 1
+        if (count($data) > 1) {
+            // Write the base64 decoded data to the file
+            fwrite($ifp, base64_decode($data[1]));
 
-        // Write the base64 decoded data to the file
-        fwrite($ifp, base64_decode($data[1]));
-
-        // Close the file resource
-        fclose($ifp);
+            // Close the file resource
+            fclose($ifp);
+        }
     }
 
     /**
      * Modify extension settings.
      *
-     * @param string|null $id The ID of the extension being modified.
+     * @param string $id The ID of the extension being modified.
      *
      * @return void
      */
-    public function modifyAction(string $id = null): void
+    public function modifyAction(string $id=''): void
     {
-        $extension = Extensions::findFirstById($id);
-
-        if ($extension === null) {
-            // Create a new extension with default settings
-            $extension = new Extensions();
-            $extension->show_in_phonebook = '1';
-            $extension->public_access = '0';
-            $extension->is_general_user_number = '1';
-            $extension->type = Extensions::TYPE_SIP;
-            $extension->Sip = new Sip();
-            $extension->Sip->disabled = 0;
-            $extension->Sip->type = 'peer';
-            $extension->Sip->uniqid = Extensions::TYPE_SIP . strtoupper('-PHONE-' . md5(time()));
-            $extension->Sip->qualify = '1';
-            $extension->Sip->qualifyfreq = 60;
-            $extension->number = $this->getNextInternalNumber();
-
-            $extension->Users = new Users();
-
-            $extension->ExtensionForwardingRights = new ExtensionForwardingRights();
-
-            $this->view->avatar = '';
-        } else {
-            $this->view->avatar = $extension->Users->avatar;
-        }
-
-        // Get network filters for SIP type
-        $arrNetworkFilters = [];
-        $networkFilters = NetworkFilters::getAllowedFiltersForType(['SIP']);
-        $arrNetworkFilters['none'] = $this->translation->_('ex_NoNetworkFilter');
-        foreach ($networkFilters as $filter) {
-            $arrNetworkFilters[$filter->id] = $filter->getRepresent();
-        }
-
-        // Get the external extension for the current user
-        $parameters = [
-            'conditions' => 'type = "' . Extensions::TYPE_EXTERNAL . '" AND is_general_user_number = "1" AND userid=:userid:',
-            'bind' => [
-                'userid' => $extension->userid,
-            ],
-        ];
-        $externalExtension = Extensions::findFirst($parameters);
-        if ($externalExtension === null) {
-            // Create a new external extension for the user
-            $externalExtension = new Extensions();
-            $externalExtension->userid = $extension->userid;
-            $externalExtension->type = Extensions::TYPE_EXTERNAL;
-            $externalExtension->is_general_user_number = '1';
-            $externalExtension->ExternalPhones = new ExternalPhones();
-            $externalExtension->ExternalPhones->uniqid = Extensions::TYPE_EXTERNAL . strtoupper('-' . md5(time()));
-            $externalExtension->ExternalPhones->disabled = '0';
-        }
-
-        // Get the forwarding extensions for the extension
-        $forwardingExtensions = [];
-        $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
-
-        $parameters = [
-            'conditions' => 'number IN ({ids:array})',
-            'bind' => [
-                'ids' => [
-                    $extension->ExtensionForwardingRights->forwarding,
-                    $extension->ExtensionForwardingRights->forwardingonbusy,
-                    $extension->ExtensionForwardingRights->forwardingonunavailable,
-                ],
-            ],
-        ];
-        $extensions = Extensions::find($parameters);
-        foreach ($extensions as $record) {
-            $forwardingExtensions[$record->number] = $record->getRepresent();
-        }
+        // Prepare or get current extension data
+        $extension = $this->prepareExtension($id);
 
         // Limit the length of internal extension based on settings
         $extensionsLength = PbxSettings::getValueByKey('PBXInternalExtensionLength');
@@ -238,9 +167,9 @@ class ExtensionsController extends BaseController
         // Create the form for editing the extension
         $form = new ExtensionEditForm(
             $extension, [
-                'network_filters' => $arrNetworkFilters,
-                'external_extension' => $externalExtension,
-                'forwarding_extensions' => $forwardingExtensions,
+                'network_filters' => $this->prepareNetworkFilters(),
+                'external_extension' => $this->prepareExternalExtension($extension->userid),
+                'forwarding_extensions' => $this->prepareForwardingExtensions($extension),
                 'internalextension_mask' => $internalExtensionMask,
             ]
         );
@@ -248,7 +177,7 @@ class ExtensionsController extends BaseController
         // Pass the form and extension details to the view
         $this->view->form = $form;
         $this->view->represent = $extension->getRepresent();
-
+        $this->view->avatar = $extension->Users->avatar;
     }
 
     /**
@@ -384,13 +313,8 @@ class ExtensionsController extends BaseController
                 ],
             ];
             $deletedMobileNumber = Extensions::findFirst($parameters);
-            if ($deletedMobileNumber !== null
-                && $deletedMobileNumber->delete() === false) {
-                $errors = $deletedMobileNumber->getMessages();
-                $this->flash->error(implode('<br>', $errors));
-                $this->view->success = false;
+            if ($deletedMobileNumber !== null && $this->deleteEntity($deletedMobileNumber)=== false) {
                 $this->db->rollback();
-
                 return;
             }
         }
@@ -657,299 +581,110 @@ class ExtensionsController extends BaseController
         }
     }
 
+
     /**
-     * Check the availability of a number in the extensions.js JavaScript script.
+     * Prepare an extension with the specified ID or create a new one if not found.
      *
-     * @param string $number - The internal number of the user
-     *
-     * @return void - The parameters are stored in the view and processed through ControllerBase::afterExecuteRoute()
+     * @param string $id The ID of the extension to prepare.
+     * @return Extensions The prepared or newly created extension.
      */
-    public function availableAction(string $number = ''): void
+    public function prepareExtension(string $id):Extensions
     {
-        $result = true;
-        // Check for overlap with internal number plan
-        $extension = Extensions::findFirstByNumber($number);
-        if ($extension !== null) {
-            $result = false;
-            $this->view->userId = $extension->userid;
-        }
-        // Check for overlap with parking slots
-        if ($result) {
-            $parkExt = PbxSettings::getValueByKey('PBXCallParkingExt');
-            $parkStartSlot = PbxSettings::getValueByKey('PBXCallParkingStartSlot');
-            $parkEndSlot = PbxSettings::getValueByKey('PBXCallParkingEndSlot');
-            if ($number === $parkExt || ($number >= $parkStartSlot && $number <= $parkEndSlot)) {
-                $result = false;
-                $this->view->userId = 0;
-            }
+        $extension = Extensions::findFirstById($id);
+
+        if ($extension === null) {
+            // Create a new extension with default settings
+            $extension = new Extensions();
+            $extension->show_in_phonebook = '1';
+            $extension->public_access = '0';
+            $extension->is_general_user_number = '1';
+            $extension->type = Extensions::TYPE_SIP;
+            $extension->Sip = new Sip();
+            $extension->Sip->disabled = 0;
+            $extension->Sip->type = 'peer';
+            $extension->Sip->uniqid = Extensions::TYPE_SIP . strtoupper('-PHONE-' . md5(time()));
+            $extension->Sip->qualify = '1';
+            $extension->Sip->qualifyfreq = 60;
+            $extension->number = $this->getNextInternalNumber();
+
+            $extension->Users = new Users();
+
+            $extension->ExtensionForwardingRights = new ExtensionForwardingRights();
         }
 
-        $this->view->numberAvailable = $result;
+        return $extension;
     }
 
     /**
-     * Disable all numbers of a user.
+     * Prepare an external extension for the specified user or create a new one if not found.
      *
-     * @param string $number - The internal number of the user
-     *
-     * @return void
+     * @param int|null $userId The user ID for whom the external extension needs to be prepared.
+     * @return Extensions The prepared or newly created external extension.
      */
-    public function disableAction(string $number = ''): void
+    public function prepareExternalExtension(int $userId=null):Extensions
     {
-        $extension = Extensions::findFirstByNumber($number);
-        if ($extension !== null) {
-            $extensions = Extensions::findByUserid($extension->userid);
-            foreach ($extensions as $extension) {
-                switch ($extension->type) {
-                    case Extensions::TYPE_SIP:
-                        $extension->Sip->disabled = '1';
-                        break;
-                    case Extensions::TYPE_EXTERNAL:
-                        $extension->ExternalPhones->disabled = '1';
-                        break;
-                }
-                if ($extension->save() === true) {
-                    $this->view->success = true;
-                } else {
-                    $this->view->success = false;
-                    $errors = $extension->getMessages();
-                    $this->flash->error(implode('<br>', $errors));
-
-                    return;
-                }
-            }
+        // Get the external extension for the current user
+        $parameters = [
+            'conditions' => 'type = "' . Extensions::TYPE_EXTERNAL . '" AND is_general_user_number = "1" AND userid=:userid:',
+            'bind' => [
+                'userid' => $userId,
+            ],
+        ];
+        $externalExtension = Extensions::findFirst($parameters);
+        if ($externalExtension === null) {
+            // Create a new external extension for the user
+            $externalExtension = new Extensions();
+            $externalExtension->userid = $userId;
+            $externalExtension->type = Extensions::TYPE_EXTERNAL;
+            $externalExtension->is_general_user_number = '1';
+            $externalExtension->ExternalPhones = new ExternalPhones();
+            $externalExtension->ExternalPhones->uniqid = Extensions::TYPE_EXTERNAL . strtoupper('-' . md5(time()));
+            $externalExtension->ExternalPhones->disabled = '0';
         }
+        return $externalExtension;
     }
 
     /**
-     * Enable all numbers of a user.
+     * Prepare an array of forwarding extensions based on the provided extension.
      *
-     * @param string $number - The internal number of the user
-     *
-     * @return void
+     * @param Extensions $extension The extension for which forwarding extensions need to be prepared.
+     * @return array An array of forwarding extensions with their numbers and representations.
      */
-    public function enableAction(string $number = ''): void
+    public function prepareForwardingExtensions(Extensions $extension):array
     {
-        $extension = Extensions::findFirstByNumber($number);
-        if ($extension !== null) {
-            $extensions = Extensions::findByUserid($extension->userid);
-            foreach ($extensions as $extension) {
-                switch ($extension->type) {
-                    case Extensions::TYPE_SIP:
-                        $extension->Sip->disabled = '0';
-                        break;
-                    case Extensions::TYPE_EXTERNAL:
-                        $extension->ExternalPhones->disabled = '1';
-                        break;
-                }
-                if ($extension->save() === true) {
-                    $this->view->success = true;
-                } else {
-                    $this->view->success = false;
-                    $errors = $extension->getMessages();
-                    $this->flash->error(implode('<br>', $errors));
+        $forwardingExtensions = [];
+        $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
 
-                    return;
-                }
-            }
-        }
-    }
-
-    /**
-     * Retrieves the view for the phone numbers list via AJAX request.
-     *
-     * @return void
-     */
-    public function GetPhonesRepresentAction(): void
-    {
-        if (!$this->request->isPost()) {
-            return;
-        }
-        $numbers = $this->request->getPost('numbers');
-        $result = [];
-        foreach ($numbers as $number) {
-            $result[$number] = [
-                'number' => $number,
-                'represent' => $this->GetPhoneRepresentAction($number),
-            ];
-        }
-        $this->view->success = true;
-        $this->view->message = $result;
-    }
-
-    /**
-     * Retrieves the view for the phone number via AJAX request.
-     *
-     * @return void
-     */
-    public function GetPhoneRepresentAction($phoneNumber): string
-    {
-        $response = $phoneNumber;
-
-        if (strlen($phoneNumber) > 10) {
-            $seekNumber = substr($phoneNumber, -9);
-            $parameters = [
-                'conditions' => 'number LIKE :SearchPhrase1:',
-                'bind' => [
-                    'SearchPhrase1' => "%{$seekNumber}",
+        $parameters = [
+            'conditions' => 'number IN ({ids:array})',
+            'bind' => [
+                'ids' => [
+                    $extension->ExtensionForwardingRights->forwarding,
+                    $extension->ExtensionForwardingRights->forwardingonbusy,
+                    $extension->ExtensionForwardingRights->forwardingonunavailable,
                 ],
-            ];
-        } else {
-            $parameters = [
-                'conditions' => 'number = :SearchPhrase1:',
-                'bind' => [
-                    'SearchPhrase1' => $phoneNumber,
-                ],
-            ];
-        }
-        $result = Extensions::findFirst($parameters);
-        if ($result !== null) {
-            $response = $result->getRepresent();
-        }
-
-        return $response;
-    }
-
-    /**
-     * Used to generate a select list of users from the JavaScript script extensions.js.
-     *
-     * @param string $type {all, phones, internal} - Display only phones or all possible numbers.
-     *
-     * @return void
-     */
-    public function getForSelectAction(string $type = 'all'): void
-    {
-        $results = [];
-        switch ($type) {
-            case 'all':
-            {
-                // Query conditions to fetch all extensions except 'did2user'
-                $parameters = [
-                    'conditions' => 'show_in_phonebook="1" AND number NOT IN ({exclude:array})',
-                    'bind' => [
-                        'exclude' => ['did2user']
-                    ]
-                ];
-                break;
-            }
-            case 'routing':
-            {
-                // Query conditions to fetch all extensions
-                $parameters = [
-                    'conditions' => 'show_in_phonebook="1"',
-                ];
-                break;
-            }
-            case 'phones':
-            {
-                // Query conditions to fetch phone extensions (SIP and external)
-                $parameters = [
-                    'conditions' => 'type IN ({ids:array}) AND show_in_phonebook="1"',
-                    'bind' => [
-                        'ids' => [Extensions::TYPE_SIP, Extensions::TYPE_EXTERNAL],
-                    ],
-                ];
-                break;
-            }
-            case 'internal':
-            {
-                // Query conditions to fetch only internal extensions (SIP)
-                $parameters = [
-                    'conditions' => 'type IN ({ids:array}) AND show_in_phonebook="1"',
-                    'bind' => [
-                        'ids' => [Extensions::TYPE_SIP],
-                    ],
-                ];
-                break;
-            }
-            default:
-            {
-                // Default query conditions to fetch all extensions
-                $parameters = [
-                    'conditions' => 'show_in_phonebook="1"',
-                ];
-            }
-        }
-
-        // Fetch extensions based on the query parameters
+            ],
+        ];
         $extensions = Extensions::find($parameters);
         foreach ($extensions as $record) {
-            $type = ($record->userid > 0) ? ' USER'
-                : $record->type; // Users will be the very first in the list.
-            $type = Text::underscore(strtoupper($type));
-
-            if ($type === Extensions::TYPE_MODULES) {
-                // Check if the extension belongs to a module and if the module is disabled
-                $module = $this->findModuleByExtensionNumber($record->number);
-                if ($module === null || $module->disabled === '1') {
-                    continue; // Skip disabled modules
-                }
-            }
-            $represent = $record->getRepresent();
-            $clearedRepresent = strip_tags($represent);
-            // Create a result entry with user's name, number, type, localized type, and sorter value
-            $results[] = [
-                'name' => $represent,
-                'value' => $record->number,
-                'type' => $type,
-                'typeLocalized' => $this->translation->_("ex_dropdownCategory_{$type}"),
-                'sorter' => ($record->userid > 0) ? "{$type}{$clearedRepresent}{$record->number}" : "{$type}{$clearedRepresent}"
-            ];
+            $forwardingExtensions[$record->number] = $record->getRepresent();
         }
-
-        // Sort the results based on the sorter value
-        usort(
-            $results,
-            [__CLASS__, 'sortExtensionsArray']
-        );
-
-        $this->view->success = true;
-        $this->view->results = $results;
+        return $forwardingExtensions;
     }
 
     /**
-     * Tries to find a module by extension number.
+     * Get an array of prepared network filters for SIP type.
      *
-     * @param string $number - The extension number.
-     *
-     * @return mixed|null The module object if found, null otherwise.
+     * @return array An array of network filters with their IDs and representations.
      */
-    private function findModuleByExtensionNumber(string $number)
+    public function prepareNetworkFilters():array
     {
-        $result = null;
-        $extension = Extensions::findFirst("number ='{$number}'");
-        $relatedLinks = $extension->getRelatedLinks();
-        $moduleUniqueID = false;
-
-        // Iterate through the related links to find the module
-        foreach ($relatedLinks as $relation) {
-            $obj = $relation['object'];
-
-            // Check if the related object belongs to a module
-            if (strpos(get_class($obj), 'Modules\\') === 0) {
-                $moduleUniqueID = explode('Models\\', get_class($obj))[1];
-            }
+        $arrNetworkFilters = [];
+        $networkFilters = NetworkFilters::getAllowedFiltersForType(['SIP']);
+        $arrNetworkFilters['none'] = $this->translation->_('ex_NoNetworkFilter');
+        foreach ($networkFilters as $filter) {
+            $arrNetworkFilters[$filter->id] = $filter->getRepresent();
         }
-
-        // If a module unique ID is found, retrieve the corresponding module object
-        if ($moduleUniqueID) {
-            $result = PbxExtensionModules::findFirstByUniqid($moduleUniqueID);
-        }
-
-        return $result;
+        return $arrNetworkFilters;
     }
-
-    /**
-     * Sorts the extensions array.
-     *
-     * @param array $a - The first element to compare.
-     * @param array $b - The second element to compare.
-     *
-     * @return int - Returns a negative, zero, or positive integer based on the comparison result.
-     */
-    private function sortExtensionsArray($a, $b): int
-    {
-        return strcmp($a['sorter'], $b['sorter']);
-    }
-
 }

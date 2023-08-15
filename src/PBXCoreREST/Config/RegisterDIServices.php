@@ -36,7 +36,8 @@ use MikoPBX\Common\Providers\{AclProvider,
     RegistryProvider,
     ManagedCacheProvider,
     SessionProvider,
-    LanguageProvider};
+    LanguageProvider,
+    TranslationProvider};
 use MikoPBX\PBXCoreREST\Providers\{
     DispatcherProvider,
     RequestProvider,
@@ -95,6 +96,7 @@ class RegisterDIServices
             // Translates
             MessagesProvider::class,
             LanguageProvider::class,
+            TranslationProvider::class,
 
             ModulesDBConnectionsProvider::class,
         ];

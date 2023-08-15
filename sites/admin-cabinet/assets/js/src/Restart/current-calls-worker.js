@@ -91,7 +91,7 @@ const currentCallsWorker = {
         });
         resultUl += '</tbody></table>';
         currentCallsWorker.$currentCallsInfo.html(resultUl);
-        Extensions.UpdatePhonesRepresent('need-update');
+        Extensions.updatePhonesRepresent('need-update');
     },
 };
 

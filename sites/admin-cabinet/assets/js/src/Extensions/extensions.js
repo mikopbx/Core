@@ -39,9 +39,10 @@ const Extensions = {
      * This function drops all caches if data changes.
      */
     cbOnDataChanged() {
-        sessionStorage.removeItem(`${globalRootUrl}extensions/getForSelect/internal`);
-        sessionStorage.removeItem(`${globalRootUrl}extensions/getForSelect/all`);
-        sessionStorage.removeItem(`${globalRootUrl}extensions/getForSelect/routing`);
+        sessionStorage.removeItem('/pbxcore/api/extensions/getForSelect?type=all');
+        sessionStorage.removeItem('/pbxcore/api/extensions/getForSelect?type=route');
+        sessionStorage.removeItem('/pbxcore/api/extensions/getForSelect?type=internal');
+        sessionStorage.removeItem('/pbxcore/api/extensions/getForSelect?type=phones');
     },
 
     /**
@@ -67,7 +68,7 @@ const Extensions = {
 
         if (response) {
             formattedResponse.success = true;
-            $.each(response.results, (index, item) => {
+            $.each(response.data, (index, item) => {
                 formattedResponse.results.push({
                     name: item.name,
                     value: item.value,
@@ -88,7 +89,10 @@ const Extensions = {
     getDropdownSettingsWithEmpty(cbOnChange = null) {
         return {
             apiSettings: {
-                url: `${globalRootUrl}extensions/getForSelect/all`,
+                url: PbxApi.extensionsGetForSelect,
+                urlData: {
+                    type: 'all'
+                },
                 // cache: false,
                 // throttle: 400,
                 onResponse(response) {
@@ -120,7 +124,10 @@ const Extensions = {
     getDropdownSettingsWithoutEmpty(cbOnChange = null) {
         return {
             apiSettings: {
-                url: `${globalRootUrl}extensions/getForSelect/all`,
+                url: PbxApi.extensionsGetForSelect,
+                urlData: {
+                    type: 'all'
+                },
                 onResponse(response) {
                     return Extensions.formatDropdownResults(response, false);
                 },
@@ -148,7 +155,10 @@ const Extensions = {
     getDropdownSettingsForRouting(cbOnChange = null) {
         return {
             apiSettings: {
-                url: `${globalRootUrl}extensions/getForSelect/routing`,
+                url: PbxApi.extensionsGetForSelect,
+                urlData: {
+                    type: 'routing'
+                },
                 // cache: false,
                 // throttle: 400,
                 onResponse(response) {
@@ -179,7 +189,10 @@ const Extensions = {
     getDropdownSettingsOnlyInternalWithoutEmpty(cbOnChange = null) {
         return {
             apiSettings: {
-                url: `${globalRootUrl}extensions/getForSelect/internal`,
+                url: PbxApi.extensionsGetForSelect,
+                urlData: {
+                    type: 'internal'
+                },
                 // cache: false,
                 // throttle: 400,
                 onResponse(response) {
@@ -210,7 +223,10 @@ const Extensions = {
     getDropdownSettingsOnlyInternalWithEmpty(cbOnChange = null) {
         return {
             apiSettings: {
-                url: `${globalRootUrl}extensions/getForSelect/internal`,
+                url: PbxApi.extensionsGetForSelect,
+                urlData: {
+                    type: 'internal'
+                },
                 // cache: false,
                 // throttle: 400,
                 onResponse(response) {
@@ -249,21 +265,17 @@ const Extensions = {
             return;
         }
         $.api({
-            url: `${globalRootUrl}extensions/available/{value}`,
+            url: PbxApi.extensionsAvailable,
             stateContext: `.ui.input.${cssClassName}`,
             on: 'now',
-            beforeSend(settings) {
-                const result = settings;
-                result.urlData = {
-                    value: newNumber,
-                };
-                return result;
+            urlData: {
+                number: newNumber
             },
             onSuccess(response) {
-                if (response.numberAvailable) {
+                if (response.result) {
                     $(`.ui.input.${cssClassName}`).parent().removeClass('error');
                     $(`#${cssClassName}-error`).addClass('hidden');
-                } else if (userId.length > 0 && response.userId === userId) {
+                } else if (userId.length > 0 && response.data['userId'] === userId) {
                     $(`.ui.input.${cssClassName}`).parent().removeClass('error');
                     $(`#${cssClassName}-error`).addClass('hidden');
                 } else {
@@ -280,7 +292,10 @@ const Extensions = {
      */
     getPhoneExtensions(callBack) {
         $.api({
-            url: `${globalRootUrl}extensions/getForSelect/phones`,
+            url: PbxApi.extensionsGetForSelect,
+            urlData: {
+                type: 'phones'
+            },
             on: 'now',
             onResponse(response) {
                 return Extensions.formatDropdownResults(response, false);
@@ -320,13 +335,20 @@ const Extensions = {
     },
 
     /**
-     * Updates the representation of phone numbers on a page.
-     * @param {string} htmlClass - The HTML class of the elements to update.
+     * Update phone representations for HTML elements with a specific class.
+     *
+     * @param {string} htmlClass - The HTML class to identify elements for update.
      */
-    UpdatePhonesRepresent(htmlClass) {
+    updatePhonesRepresent(htmlClass) {
         const $preprocessedObjects = $(`.${htmlClass}`);
-        if ($preprocessedObjects.length === 0) return;
+        // Check if there are elements to process
+        if ($preprocessedObjects.length === 0) {
+            return;
+        }
+
         const numbers = [];
+
+        // Iterate through each element and update representations if available
         $preprocessedObjects.each((index, el) => {
             const number = $(el).text();
             const represent = sessionStorage.getItem(number);
@@ -337,47 +359,61 @@ const Extensions = {
                 numbers.push(number);
             }
         });
-        if (numbers.length === 0) return;
-        $.api({
-            url: `${globalRootUrl}extensions/GetPhonesRepresent`,
-            data: {numbers},
-            method: 'POST',
-            on: 'now',
-            onSuccess(response) {
-                if (response !== undefined && response.success === true) {
-                    $preprocessedObjects.each((index, el) => {
-                        const needle = $(el).text();
-                        if (response.message[needle] !== undefined) {
-                            $(el).html(response.message[needle].represent);
-                            sessionStorage.setItem(needle, response.message[needle].represent);
-                        }
-                        $(el).removeClass(htmlClass);
-                    });
-                }
-            },
-        });
+
+        // Check if there are numbers to fetch representations for
+        if (numbers.length === 0) {
+            return;
+        }
+
+        // Fetch phone representations using API call
+        PbxApi.ExtensionsGetPhonesRepresent(numbers,
+            (response)=>{
+                Extensions.cbAfterGetPhonesRepresent(response, htmlClass)
+            }
+        );
     },
+
     /**
+     * Callback function executed after fetching phone representations.
      *
-     * Updates the representation of a phone number in the cache.
+     * @param {Object} response - The response object from the API call.
+     * @param {string} htmlClass - The HTML class for element identification.
+     */
+    cbAfterGetPhonesRepresent(response, htmlClass){
+        const $preprocessedObjects = $(`.${htmlClass}`);
+
+        // Check if the response is valid and process elements accordingly
+        if (response !== undefined && response.result === true) {
+            $preprocessedObjects.each((index, el) => {
+                const number = $(el).text();
+                if (response.data[number] !== undefined) {
+                    $(el).html(response.data[number].represent);
+                    sessionStorage.setItem(number, response.data[number].represent);
+                }
+                $(el).removeClass(htmlClass);
+            });
+        }
+    },
+
+    /**
+     * Update the representation of a phone number.
+     *
      * @param {string} number - The phone number to update.
      */
-    UpdatePhoneRepresent(number) {
+    updatePhoneRepresent(number) {
         const numbers = [];
         numbers.push(number);
-        $.api({
-            url: `${globalRootUrl}extensions/GetPhonesRepresent`,
-            data: {numbers},
-            method: 'POST',
-            on: 'now',
-            onSuccess(response) {
+        PbxApi.ExtensionsGetPhonesRepresent(numbers,(response)=>{
+            {
+                // Check if the response is valid and contains the required data
                 if (response !== undefined
-                    && response.success === true
-                    && response.message[number] !== undefined) {
-                    sessionStorage.setItem(number, response.message[number].represent);
+                    && response.result === true
+                    && response.data[number] !== undefined) {
+                    // Store the phone representation in session storage
+                    sessionStorage.setItem(number, response.data[number].represent);
                 }
-            },
-        });
+            }
+        })
     },
 
 };

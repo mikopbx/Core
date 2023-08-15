@@ -476,7 +476,7 @@ const extension = {
         extension.defaultNumber = extension.$number.val();
 
         // Update the phone representation with the new default number
-        Extensions.UpdatePhoneRepresent(extension.defaultNumber);
+        Extensions.updatePhoneRepresent(extension.defaultNumber);
     },
     /**
      * Initialize the form with custom settings

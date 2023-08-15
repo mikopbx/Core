@@ -117,7 +117,7 @@ const callDetailRecords = {
              * Draw event - fired once the table has completed a draw.
              */
             drawCallback() {
-                Extensions.UpdatePhonesRepresent('need-update');
+                Extensions.updatePhonesRepresent('need-update');
             },
             language: SemanticLocalization.dataTableLocalisation,
             ordering: false,
@@ -157,7 +157,7 @@ const callDetailRecords = {
                     const id = $(playerRow).attr('id');
                     return new CDRPlayer(id);
                 });
-                Extensions.UpdatePhonesRepresent('need-update');
+                Extensions.updatePhonesRepresent('need-update');
             }
         });
     },
