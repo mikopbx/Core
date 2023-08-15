@@ -287,6 +287,7 @@ class SysLogsManagementProcessor extends Injectable
         $filesList      = [];
         $entries        = self::scanDirRecursively($logDir);
         $entries        = Util::flattenArray($entries);
+        $defaultFound   = false;
         foreach ($entries as $entry) {
             $fileSize = filesize($entry);
             $now      = time();
@@ -295,21 +296,30 @@ class SysLogsManagementProcessor extends Injectable
             ) {
                 continue;
             }
-
             $relativePath             = str_ireplace($logDir . '/', '', $entry);
             $fileSizeKB               = ceil($fileSize / 1024);
+            $default = ($relativePath === self::DEFAULT_FILENAME);
             $filesList[$relativePath] =
                 [
                     'path'    => $relativePath,
                     'size'    => "{$fileSizeKB} kb",
-                    'default' => ($relativePath === self::DEFAULT_FILENAME),
+                    'default' => $default,
                 ];
+            if($default){
+                $defaultFound = true;
+            }
         }
+        if(!$defaultFound){
+            if(isset($filesList['system/messages'])){
+                $filesList['system/messages']['default'] = true;
 
+            }else{
+                $filesList[array_key_first($filesList)]['default'] = true;
+            }
+        }
         ksort($filesList);
         $res->success       = true;
         $res->data['files'] = $filesList;
-
         return $res;
     }
 
