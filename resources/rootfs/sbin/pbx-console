@@ -18,6 +18,40 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
+
+# Function to display the help message
+display_help() {
+    echo "Usage: $0 <subcommand> [options]"
+    echo
+    echo "Subcommands:"
+    echo "  services <action>   Manage PBX services"
+    echo "    - stop-all         Stop all PBX services"
+    echo "    - start-all        Start all PBX services"
+    echo "    - restart-all      Restart all PBX services"
+    echo "  service <name>      Kill a specific PBX service"
+    echo "  debug <name> <ip>   Debug a specific script"
+    echo "  cron <action>       Manage cron"
+    echo "    - stop             Stop cron"
+    echo "    - restart          Restart cron"
+    echo "    - start            Start cron"
+    echo "    - show             Show the status of cron"
+    echo
+    echo "Examples:"
+    echo "  $0 services start-all"
+    echo "  $0 service php-worker"
+    echo "  $0 debug WorkerApiCommands 192.168.1.2"
+    echo "  $0 debug WorkerApiCommands docker.for.mac.localhost"
+    echo "  $0 cron show"
+    echo
+}
+
+# Check if help is requested or no subcommand provided
+if [ "$1" = "help" ] || [ -z "$1" ]; then
+    display_help
+    exit 0
+fi
+
+
 # First command line argument is treated as a subcommand
 subcmd=$1;
 
@@ -96,6 +130,7 @@ debug)
   # Enable xdebug in PHP if it's not enabled
   if [ ! -f /etc/php.d/15-xdebug.ini ]; then
     cp /etc/php.d/15-xdebug.ini.disabled /etc/php.d/15-xdebug.ini;
+    sed -i "s/xdebug.remote_host = .*/xdebug.remote_host = ${ipDebugger}/" /etc/php.d/15-xdebug.ini;
   fi;
 
   # Start the PHP script with xdebug enabled
