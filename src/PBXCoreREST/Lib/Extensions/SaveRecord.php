@@ -175,6 +175,7 @@ class SaveRecord extends Injectable
      */
     private static function saveExtension(DataStructure $dataStructure, bool $isMobile = false): array
     {
+        $parameters = [];
         $parameters['conditions'] = 'type=:type: AND is_general_user_number = "1" AND userid=:userid:';
         $parameters['bind']['type'] = $isMobile ? Extensions::TYPE_EXTERNAL : Extensions::TYPE_SIP;
         $parameters['bind']['userid'] = $dataStructure->user_id ;
@@ -284,11 +285,11 @@ class SaveRecord extends Injectable
                     $forwardingRight->$name = $dataStructure->number;
                     break;
                 case 'ringlength':
-                    $forwardingRight->ringlength = '';
+                    $forwardingRight->ringlength = 0;
                     if (!empty($dataStructure->fwd_ringlength)) {
                         $forwardingRight->ringlength = $dataStructure->fwd_ringlength;
-                    } elseif (!empty($forwardingRight->fwd_forwarding)) {
-                        $forwardingRight->ringlength = '45';
+                    } elseif (!empty($dataStructure->fwd_forwarding)) {
+                        $forwardingRight->ringlength = 45;
                     }
                     break;
                 default:

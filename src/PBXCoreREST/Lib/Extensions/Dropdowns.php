@@ -118,12 +118,12 @@ class Dropdowns extends \Phalcon\Di\Injectable
      */
     private static function processExtension(Extensions $record): array
     {
-        $type = ($record->userid > 0) ? ' USER' : $record->type;
+        $type = ($record->userid > 0) ? ' USER' : $record->type??'';
         $type = Text::underscore(strtoupper($type));
 
         if ($type === Extensions::TYPE_MODULES) {
             // Check if the extension belongs to a module and if the module is disabled
-            $module = self::findModuleByExtensionNumber($record->number);
+            $module = self::findModuleByExtensionNumber($record->number??'');
             if ($module === null || $module->disabled === '1') {
                 return []; // Skip disabled modules
             }

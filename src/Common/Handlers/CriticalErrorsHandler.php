@@ -35,11 +35,10 @@ class CriticalErrorsHandler
      * Captures an exception, sends it to the Sentry cloud, and writes syslog.
      *
      * @param Throwable $exception The exception to capture.
-     * @param string $moduleTag The name of the current module.
      *
      * @return string Pretty error description
      */
-    public static function handleExceptionWithSyslog(Throwable $exception, string $moduleTag=''): string
+    public static function handleExceptionWithSyslog(Throwable $exception): string
     {
         // Sentry
         $di = Di::getDefault();
@@ -58,9 +57,8 @@ class CriticalErrorsHandler
      * Handle an exception, sends it to the Sentry cloud, and shows error description to user.
      *
      * @param Throwable $exception The exception to capture.
-     * @param string $moduleTag The name of the current module.
      */
-    public static function handleException(Throwable $exception, string $moduleTag=''): void
+    public static function handleException(Throwable $exception): void
     {
         // Sentry
         $di = Di::getDefault();

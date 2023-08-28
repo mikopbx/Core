@@ -336,10 +336,9 @@ class Sip extends ModelsBase
     public static function generateSipPassword(): string
     {
         $random = new Random();
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $passwordLength = 8;
         try {
-            $password = $random->base64Safe($passwordLength, $characters);
+            $password = $random->base64Safe($passwordLength);
         } catch (\Throwable $exception) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $password = md5(time());

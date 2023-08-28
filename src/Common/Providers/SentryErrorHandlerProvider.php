@@ -74,10 +74,10 @@ class SentryErrorHandlerProvider implements ServiceProviderInterface
                 SentrySdk::init()->bindClient($client);
 
                 // Configure Sentry scope with user info, license info, and library tag
-                $licenseInfo = self::prepareLicenseInfo($di);
+                $licenseInfo = self::prepareLicenseInfo();
 
                 SentrySdk::getCurrentHub()->configureScope(
-                    function (Scope $scope) use ($options, $licenseInfo, $moduleTag): void {
+                    function (Scope $scope) use ($licenseInfo, $moduleTag): void {
                         if (!empty($licenseInfo->email)) {
                             $scope->setUser(['id' => $licenseInfo->email]);
                         }
@@ -103,7 +103,7 @@ class SentryErrorHandlerProvider implements ServiceProviderInterface
      *
      * @return \stdClass The prepared license info object.
      */
-    private static function prepareLicenseInfo(DiInterface $di): \stdClass
+    private static function prepareLicenseInfo(): \stdClass
     {
         $licenseInfo = new \stdClass();
         $licenseInfo->key = '';
@@ -117,8 +117,8 @@ class SentryErrorHandlerProvider implements ServiceProviderInterface
        $xmlFromFile = simplexml_load_file(WorkerMarketplaceChecker::LIC_FILE_PATH);
         if ($xmlFromFile) {
             foreach ($xmlFromFile->attributes() as $attribute => $value) {
-                if (!empty($licenseInfo->{'@attributes'}->$attribute)) {
-                    $licenseInfo->$attribute = $licenseInfo->{'@attributes'}->$attribute;
+                if (!empty($value) and property_exists($licenseInfo, $attribute)) {
+                    $licenseInfo->$attribute = $value;
                 }
             }
         }

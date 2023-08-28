@@ -51,8 +51,8 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
             self::SERVICE_NAME,
             function () {
                 $whoops = new Run();
-                $whoops->pushHandler(function ($exception, $inspector, $run) {
-                    return WhoopsErrorHandlerProvider::handleModuleException($exception, $inspector, $run);
+                $whoops->pushHandler(function ($exception) {
+                    return WhoopsErrorHandlerProvider::handleModuleException($exception);
                 });
                 if (Whoops\Util\Misc::isAjaxRequest()) {
                     $handler = new JsonResponseHandler();
@@ -72,11 +72,9 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
      * Handles a Whoops exception and disables the corresponding module.
      *
      * @param Throwable $exception The exception to handle.
-     * @param Whoops\Exception\Inspector $inspector The Inspector instance.
-     * @param Run $run The Run instance.
      * @return int The Whoops handler status.
      */
-    private static function handleModuleException($exception, $inspector, $run): int
+    private static function handleModuleException(Throwable $exception): int
     {
         $exceptionFile = $exception->getFile();
         PbxExtensionUtils::disableBadModule($exceptionFile);
