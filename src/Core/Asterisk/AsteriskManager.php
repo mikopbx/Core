@@ -582,7 +582,7 @@ class AsteriskManager
      * @example examples/sip_show_peer.php Get information about a sip peer
      *
      */
-    public function connect($server = null, $username = null, $secret = null, $events = 'on')
+    public function connect($server = null, $username = null, $secret = null, $events = 'on'): bool
     {
         $this->listenEvents = $events;
         // use config if not specified
