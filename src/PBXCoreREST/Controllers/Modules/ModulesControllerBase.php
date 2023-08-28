@@ -74,6 +74,7 @@ class ModulesControllerBase extends BaseController
             'action'         => $actionName,
             'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
             'processor'      => 'modules',
+            'debug'     => strpos($this->request->getHeader('Cookie'),'XDEBUG_SESSION')!==false
         ]);
 
         $response   = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME)->request($request, 30, 0);

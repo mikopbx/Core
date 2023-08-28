@@ -19,11 +19,13 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 
-use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
+use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use MikoPBX\Core\Workers\WorkerBase;
-use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
+use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use Throwable;
 
@@ -46,17 +48,17 @@ class WorkerApiCommands extends WorkerBase
      *
      * @var int
      */
-    public int $maxProc = 2;
+    public int $maxProc = 4;
 
 
     /**
      * Starts the worker.
      *
-     * @param array $argv The command line arguments.
+     * @param array $argv The command-line arguments passed to the worker.
      *
      * @return void
      */
-    public function start($argv): void
+    public function start(array $argv): void
     {
         /** @var BeanstalkConnectionWorkerApiProvider $beanstalk */
         $beanstalk = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
@@ -86,24 +88,37 @@ class WorkerApiCommands extends WorkerBase
         try {
             $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $processor = $request['processor'];
-
+            $res->processor = $processor;
             // Old style, we can remove it in 2025
             if ($processor === 'modules'){
                 $processor = PbxExtensionsProcessor::class;
+            }
+
+            // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
+            // and set XDEBUG_SESSION Cookie header on REST request to debug it
+            if (isset($request['debug']) && $request['debug'] === true) {
+                xdebug_break();
             }
 
             if (method_exists($processor, 'callback')) {
                 $res = $processor::callback($request);
             } else {
                 $res->success    = false;
-                $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
+                $res->messages['error'][] = "Unknown processor - {$processor} in prepareAnswer";
             }
         } catch (Throwable $exception) {
-            $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
             $request        = [];
             $this->needRestart = true;
+            // Prepare answer with pretty error description
+            $res->messages['error'][] = CriticalErrorsHandler::handleExceptionWithSyslog($exception);
         } finally {
-            $message->reply(json_encode($res->getResult()));
+            $encodedResult = json_encode($res->getResult());
+            if ($encodedResult===false){
+                $res->data=[];
+                $res->messages['error'][]='It is impossible to encode to json current processor answer';
+                $encodedResult = json_encode($res->getResult());
+            }
+            $message->reply($encodedResult);
             if ($res->success) {
                 $this->checkNeedReload($request);
             }
@@ -141,10 +156,12 @@ class WorkerApiCommands extends WorkerBase
     {
         return [
             SystemManagementProcessor::class  => [
-                 'enableModule',
-                 'disableModule',
-                 'uninstallModule',
-                 'restoreDefaultSettings',
+                'restoreDefault',
+            ],
+            ModulesManagementProcessor::class  => [
+                'enableModule',
+                'disableModule',
+                'uninstallModule',
             ],
         ];
     }

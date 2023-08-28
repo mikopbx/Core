@@ -21,13 +21,14 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Controllers;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
+use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use Phalcon\Mvc\Controller;
 use Pheanstalk\Pheanstalk;
 use Throwable;
-
 
 /**
  * Class BaseController
@@ -63,10 +64,16 @@ class BaseController extends Controller
             $processor = PbxExtensionsProcessor::class;
         }
 
+        // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
+        // and set XDEBUG_SESSION Cookie header on REST request to debug it
+        // The set will break the WorkerApiCommands() execution on prepareAnswer method
+        $debug = strpos($this->request->getHeader('Cookie'),'XDEBUG_SESSION')!==false;
+
         $requestMessage = [
             'processor' => $processor,
             'data'      => $payload,
-            'action'    => $actionName
+            'action'    => $actionName,
+            'debug'     => $debug
         ];
         if ($processor === PbxExtensionsProcessor::class){
             $requestMessage['module'] = $moduleName;
@@ -74,14 +81,22 @@ class BaseController extends Controller
         try {
             $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
             $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
+            if ($debug){
+                $maxTimeout = 9999;
+            }
             $response       = $beanstalkQueue->request($message, $maxTimeout, $priority);
             if ($response !== false) {
                 $response = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
-                $this->response->setPayloadSuccess($response);
+                if (array_key_exists(BeanstalkClient::QUEUE_ERROR, $response)){
+                    $this->response->setPayloadError($response[BeanstalkClient::QUEUE_ERROR]);
+                } else {
+                    $this->response->setPayloadSuccess($response);
+                }
             } else {
                 $this->sendError(Response::INTERNAL_SERVER_ERROR);
             }
         } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $this->sendError(Response::BAD_REQUEST, $e->getMessage());
         }
     }
@@ -99,4 +114,5 @@ class BaseController extends Controller
             ->setPayloadError($this->response->getHttpCodeDescription($code) . ' ' . $description)
             ->setStatusCode($code);
     }
+
 }
