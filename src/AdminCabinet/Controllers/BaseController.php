@@ -20,13 +20,13 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Http\ResponseInterface;
-use Phalcon\Mvc\{Controller, View};
+use Phalcon\Mvc\{Controller, Dispatcher, View};
 use Phalcon\Tag;
 use Phalcon\Text;
-use Sentry\SentrySdk;
 
 /**
  * @property \Phalcon\Session\Manager session
@@ -146,7 +146,7 @@ class BaseController extends Controller
      *
      * @return void
      */
-    public function beforeExecuteRoute(): void
+    public function beforeExecuteRoute(Dispatcher $dispatcher): void
     {
         // Check if the request method is POST
         if ($this->request->isPost()) {
@@ -167,7 +167,7 @@ class BaseController extends Controller
             $this->view->pick("{$this->controllerName}/{$this->actionName}");
         }
 
-        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_EXECUTE_ROUTE,[$this]);
+        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_EXECUTE_ROUTE,[$dispatcher]);
     }
 
     /**
@@ -175,7 +175,7 @@ class BaseController extends Controller
      *
      * @return \Phalcon\Http\ResponseInterface
      */
-    public function afterExecuteRoute(): ResponseInterface
+    public function afterExecuteRoute(Dispatcher $dispatcher): ResponseInterface
     {
 
         if ($this->request->isAjax() === true) {
@@ -192,15 +192,17 @@ class BaseController extends Controller
                 $data['message'] = $data['message'] ?? $this->flash->getMessages();
 
                 // Let's add information about the last error to display a dialog window for the user.
-                if (file_exists('/etc/sendmetrics')) {
-                    $data['lastSentryEventId'] = SentrySdk::getCurrentHub()->getLastEventId();
+                $sentry =  $this->di->get(SentryErrorHandlerProvider::SERVICE_NAME,['admin-cabinet']);
+                if ($sentry){
+                    $data['lastSentryEventId'] = $sentry->getLastEventId();
                 }
+
                 $result = json_encode($data);
             }
             $this->response->setContent($result);
         }
 
-        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_EXECUTE_ROUTE,[$this]);
+        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_EXECUTE_ROUTE,[$dispatcher]);
 
         return $this->response->send();
     }
@@ -288,11 +290,9 @@ class BaseController extends Controller
     {
         $result = null;
         // Allow anonymous statistics collection for JS code
-        if (PbxSettings::getValueByKey('SendMetrics') === '1') {
-            touch('/etc/sendmetrics');
-            $result = SentrySdk::getCurrentHub()->getLastEventId();
-        } elseif (file_exists('/etc/sendmetrics')) {
-            unlink('/etc/sendmetrics');
+        $sentry =  $this->di->get(SentryErrorHandlerProvider::SERVICE_NAME);
+        if ($sentry){
+            $result = $sentry->getLastEventId();
         }
         return $result;
     }
@@ -333,7 +333,7 @@ class BaseController extends Controller
         if ($this->request->isAjax()) {
             $this->view->success = $success;
             if ($reloadPath!=='' && $success){
-                $this->view->reload = $reloadPath;
+                $this->view->reload = str_replace('{id}', $entity->id, $reloadPath);
             }
         }
 
@@ -369,5 +369,35 @@ class BaseController extends Controller
         }
 
         return $success;
+    }
+
+    /**
+     * Creates a JPEG file from the provided image.
+     *
+     * @param string $base64_string The base64 encoded image string.
+     * @param string $output_file The output file path to save the JPEG file.
+     *
+     * @return void
+     */
+    protected function base64ToJpeg(string $base64_string, string $output_file): void
+    {
+        // Open the output file for writing
+        $ifp = fopen($output_file, 'wb');
+
+        if ($ifp === false) {
+            return;
+        }
+        // Split the string on commas
+        // $data[0] == "data:image/png;base64"
+        // $data[1] == <actual base64 string>
+        $data = explode(',', $base64_string);
+
+        if (count($data) > 1) {
+            // Write the base64 decoded data to the file
+            fwrite($ifp, base64_decode($data[1]));
+
+            // Close the file resource
+            fclose($ifp);
+        }
     }
 }

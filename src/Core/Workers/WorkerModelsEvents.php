@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\{AsteriskManagerUsers,
     CallQueueMembers,
     CallQueues,
@@ -54,6 +55,7 @@ use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
+use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\{BeanstalkClient,
     Configs\CronConf,
     Configs\Fail2BanConf,
@@ -62,6 +64,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
     Configs\NginxConf,
     Configs\NTPConf,
     Configs\PHPConf,
+    Configs\SentryConf,
     Configs\SSHConf,
     Configs\SyslogConf,
     PBX,
@@ -69,9 +72,7 @@ use MikoPBX\Core\System\{BeanstalkClient,
     System,
     Util
 };
-use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Modules\Config\SystemConfigInterface;
-use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di;
 use Pheanstalk\Contract\PheanstalkInterface;
@@ -145,6 +146,8 @@ class WorkerModelsEvents extends WorkerBase
 
     private const R_ADVICES = 'cleanupAdvicesCache';
 
+    private const R_SENTRY = 'reloadSentry';
+
     private int $last_change;
     private array $modified_tables;
 
@@ -159,10 +162,10 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * Starts the models events worker.
      *
-     * @param array $params The command-line arguments passed to the worker.
+     * @param array $argv The command-line arguments passed to the worker.
      * @return void
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
         $this->last_change = time() - 2;
 
@@ -181,6 +184,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_FAIL2BAN_CONF,
             self::R_SSH,
             self::R_LICENSE,
+            self::R_SENTRY,
             self::R_NATS,
             self::R_NTP,
             self::R_PHP_FPM,
@@ -491,6 +495,16 @@ class WorkerModelsEvents extends WorkerBase
             ],
         ];
 
+        // Sentry
+        $tables[] = [
+            'settingName' => [
+                'SendMetrics',
+            ],
+            'functions' => [
+                self::R_SENTRY,
+            ],
+        ];
+
         $this->pbxSettingsDependencyTable = $tables;
     }
 
@@ -719,30 +733,35 @@ class WorkerModelsEvents extends WorkerBase
      */
     public function processModelChanges(BeanstalkClient $message): void
     {
-        // Decode the received message
-        $receivedMessage = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        try {
+            // Decode the received message
+            $receivedMessage = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
 
-        // Check the source of the message and perform actions accordingly
-        if ($receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_INVOKE_ACTION
-            && in_array($receivedMessage['action'], $this->PRIORITY_R, true)) {
-            // Store the modified table and its parameters
-            $this->modified_tables[$receivedMessage['action']] = true;
-            $this->modified_tables['parameters'][$receivedMessage['action']] = $receivedMessage['parameters'];
-        } elseif ($receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED) {
+            // Check the source of the message and perform actions accordingly
+            if ($receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_INVOKE_ACTION
+                && in_array($receivedMessage['action'], $this->PRIORITY_R, true)) {
+                // Store the modified table and its parameters
+                $this->modified_tables[$receivedMessage['action']] = true;
+                $this->modified_tables['parameters'][$receivedMessage['action']] = $receivedMessage['parameters'];
+            } elseif ($receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED) {
 
-            // Fill the modified tables array with the changes from the received message
-            $this->fillModifiedTables($receivedMessage);
+                // Fill the modified tables array with the changes from the received message
+                $this->fillModifiedTables($receivedMessage);
+            }
+
+            // Start the reload process if there are modified tables
+            $this->startReload();
+
+            if (!$receivedMessage) {
+                return;
+            }
+
+            // Send information about model changes to additional modules with changed data details
+            PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::MODELS_EVENT_CHANGE_DATA, [$receivedMessage]);
+        } catch (Throwable $exception) {
+            $this->needRestart = true;
+            CriticalErrorsHandler::handleExceptionWithSyslog($exception);
         }
-
-        // Start the reload process if there are modified tables
-        $this->startReload();
-
-        if (!$receivedMessage) {
-            return;
-        }
-
-        // Send information about model changes to additional modules with changed data details
-        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::MODELS_EVENT_CHANGE_DATA, [$receivedMessage]);
     }
 
     /**
@@ -798,9 +817,7 @@ class WorkerModelsEvents extends WorkerBase
                     call_user_func([$configClassObj, AsteriskConfigInterface::GET_SETTINGS]);
                 }
             } catch (Throwable $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
                 continue;
             }
         }
@@ -1140,15 +1157,6 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
-     * Cleanup advices cache
-     * @return void
-     */
-    private function cleanupAdvicesCache(): void
-    {
-        WorkerPrepareAdvices::afterChangePBXSettings();
-    }
-
-    /**
      * Process after PBXExtension state changes
      *
      * @param array $pbxModuleRecord
@@ -1203,6 +1211,25 @@ class WorkerModelsEvents extends WorkerBase
                 call_user_func([$configClassObj, SystemConfigInterface::ON_AFTER_MODULE_ENABLE]);
             }
         }
+    }
+
+    /**
+     * Cleanup advices cache
+     * @return void
+     */
+    private function cleanupAdvicesCache(): void
+    {
+        WorkerPrepareAdvices::afterChangePBXSettings();
+    }
+
+    /**
+     * Configure the sentry error logger
+     * @return void
+     */
+    private function reloadSentry(): void
+    {
+        $sentryConf = new SentryConf();
+        $sentryConf->configure();
     }
 }
 

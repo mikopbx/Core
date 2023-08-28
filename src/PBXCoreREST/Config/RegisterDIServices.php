@@ -24,6 +24,7 @@ namespace MikoPBX\PBXCoreREST\Config;
 use MikoPBX\Common\Providers\{AclProvider,
     BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
+    EnviromentTagProvider,
     LoggerAuthProvider,
     LoggerProvider,
     MainDatabaseProvider,
@@ -33,11 +34,14 @@ use MikoPBX\Common\Providers\{AclProvider,
     ModelsMetadataProvider,
     ModulesDBConnectionsProvider,
     PBXConfModulesProvider,
+    PBXCoreRESTClientProvider,
     RegistryProvider,
     ManagedCacheProvider,
+    SentryErrorHandlerProvider,
     SessionProvider,
     LanguageProvider,
-    TranslationProvider};
+    TranslationProvider,
+    WhoopsErrorHandlerProvider};
 use MikoPBX\PBXCoreREST\Providers\{
     DispatcherProvider,
     RequestProvider,
@@ -58,6 +62,11 @@ class RegisterDIServices
     public static function init(DiInterface $di): void
     {
         $pbxRestAPIProviders = [
+
+            // Inject errors handlers
+            SentryErrorHandlerProvider::class,
+            WhoopsErrorHandlerProvider::class,
+
             // Inject Registry provider
             RegistryProvider::class,
 
@@ -66,6 +75,7 @@ class RegisterDIServices
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
+            ModulesDBConnectionsProvider::class,
 
             // Inject caches
             ManagedCacheProvider::class,
@@ -98,7 +108,8 @@ class RegisterDIServices
             LanguageProvider::class,
             TranslationProvider::class,
 
-            ModulesDBConnectionsProvider::class,
+            // Inject Rest API client
+            PBXCoreRESTClientProvider::class
         ];
 
         foreach ($pbxRestAPIProviders as $provider) {
@@ -106,5 +117,7 @@ class RegisterDIServices
             $di->remove($provider::SERVICE_NAME);
             $di->register(new $provider());
         }
+
+        $di->getShared(RegistryProvider::SERVICE_NAME)->libraryName = 'pbx-core-rest';
     }
 }

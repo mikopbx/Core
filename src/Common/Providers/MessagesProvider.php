@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use function MikoPBX\Common\Config\appPath;
@@ -129,9 +129,7 @@ class MessagesProvider implements ServiceProviderInterface
             }
         } catch (\Throwable $e) {
             // If an error occurs while including the file, log the exception and error message.
-            global $errorLogger;
-            $errorLogger->captureException($e);
-            Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
 
         // Return an empty array if there was an error or $langArr is not an array.
