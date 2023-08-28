@@ -676,7 +676,6 @@ class Network extends Injectable
             $hosts_conf .= "127.0.0.1 $realHostName\n";
         }
         Util::fileWriteContent('/etc/hosts', $hosts_conf);
-        $hostnamePath = Util::which('hostname');
         Processes::mwExec($hostnamePath . ' ' . escapeshellarg($data['hostname']));
     }
 
@@ -731,6 +730,7 @@ class Network extends Injectable
                 'subnet' => $busyboxPath . ' ifconfig eth0 | awk \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
                 'ipaddr' => $busyboxPath . ' ifconfig eth0 | awk \'/inet / {sub("addr:", "", $2); print $2}\'',
                 'gateway' => $busyboxPath . ' route -n | awk \'/^0.0.0.0/ {print $2}\'',
+                'hostname'=> $busyboxPath . ' hostname',
             ];
             $data = [];
             foreach ($commands as $key => $command) {
