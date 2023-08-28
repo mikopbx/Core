@@ -29,18 +29,24 @@ const UserMessage = {
     $ajaxMessagesDiv: $('#ajax-messages'),
 
     /**
-     * Converts the input text to plain text if it is an object or an array.
-     * @param {string|object|array} text - The text to be converted.
-     * @returns {string} The converted plain text.
+     * Convert text data to a more user-friendly format.
+     * Replaces newline characters with HTML line break tags.
+     *
+     * @param {string|Array|Object} data - The input text data.
+     * @returns {string} The converted text.
      */
-    convertToText(text) {
-        if ((Array.isArray(text) || typeof text === 'object')
-            && Object.keys(text).length > 0
-            && text.messages !== undefined
-        ) {
-            return text.messages;
+    convertToText(data) {
+        if (Array.isArray(data)) {
+            // For arrays, recursively transform each element
+            const transformedArray = data.map(item => UserMessage.convertToText(item));
+            return transformedArray.join('<br>');
+        } else if (typeof data === 'object' && data !== null) {
+            // For objects, recursively transform each value
+            const transformedObject = Object.entries(data).map(([key, value]) => `${UserMessage.convertToText(value)}`);
+            return `${transformedObject.join('<br>')}`;
         } else {
-            return text;
+            // For other data types, simply return as string
+            return String(data).replace(/\n/g, '<br>');
         }
     },
 
@@ -50,7 +56,7 @@ const UserMessage = {
      * @param {string} [header=''] - The header of the error message.
      * @param disableScroll - If true, then the message will not be scrolled to.
      */
-    showError(message, header = '', disableScroll=false) {
+    showError(message, header = '', disableScroll = false) {
         const text = UserMessage.convertToText(message);
         let html = '<div class="ui error icon message ajax">';
         html += '<i class="exclamation icon"></i>';
@@ -63,7 +69,7 @@ const UserMessage = {
         html += `<p>${text}</p>`;
         html += '</div></div>';
         UserMessage.$ajaxMessagesDiv.after(html);
-        if (!disableScroll){
+        if (!disableScroll) {
             UserMessage.scrollToMessages();
         }
     },
@@ -76,9 +82,9 @@ const UserMessage = {
      */
     showLicenseError(header, messages, disableScroll) {
         const manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="${Config.keyManagementUrl}" target="_blank">${Config.keyManagementSite}</a>`;
-        if (Array.isArray(messages.error)){
+        if (Array.isArray(messages.error)) {
             messages.error.push(manageLink);
-        } else if (Array.isArray(messages)){
+        } else if (Array.isArray(messages)) {
             messages.push(manageLink);
         }
         UserMessage.showMultiString(messages, header, disableScroll);
@@ -90,7 +96,7 @@ const UserMessage = {
      * @param {string} [header=''] - The header of the warning message.
      * @param disableScroll - If true, then the message will not be scrolled to.
      */
-    showWarning(message, header = '', disableScroll=false) {
+    showWarning(message, header = '', disableScroll = false) {
         const text = UserMessage.convertToText(message);
         let html = '<div class="ui warning icon message ajax">';
         html += '<i class="warning icon"></i>';
@@ -103,7 +109,7 @@ const UserMessage = {
         html += `<p>${text}</p>`;
         html += '</div></div>';
         UserMessage.$ajaxMessagesDiv.after(html);
-        if (!disableScroll){
+        if (!disableScroll) {
             UserMessage.scrollToMessages();
         }
     },
@@ -127,7 +133,7 @@ const UserMessage = {
         html += `<p>${text}</p>`;
         html += '</div></div>';
         UserMessage.$ajaxMessagesDiv.after(html);
-        if (!disableScroll){
+        if (!disableScroll) {
             UserMessage.scrollToMessages();
         }
     },
@@ -138,7 +144,7 @@ const UserMessage = {
      * @param {string} [header=''] - The header of the multiple messages.
      * @param disableScroll - If true, then the message will not be scrolled to.
      */
-    showMultiString(message, header = '', disableScroll=false) {
+    showMultiString(message, header = '', disableScroll = false) {
         let messages = UserMessage.convertToText(message);
         $('.ui.message.ajax').remove();
         if (!messages) return;

@@ -25,7 +25,6 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
-use Phalcon\Loader;
 use Phalcon\Mvc\Application;
 
 use Phalcon\Mvc\Router;
@@ -50,12 +49,12 @@ class PbxExtensionUtils
     public static function isEnabled(string $moduleUniqueID): bool
     {
         $parameters = [
-            'conditions'=>'uniqid = :uniqid:',
-            'bind'=>[
+            'conditions' => 'uniqid = :uniqid:',
+            'bind' => [
                 'uniqid' => $moduleUniqueID,
             ],
             'cache' => [
-                'key'=>ModelsBase::makeCacheKey(PbxExtensionModules::class, 'isEnabled'.$moduleUniqueID),
+                'key' => ModelsBase::makeCacheKey(PbxExtensionModules::class, 'isEnabled' . $moduleUniqueID),
                 'lifetime' => 3600,
             ]
         ];
@@ -76,8 +75,8 @@ class PbxExtensionUtils
         $moduleDir = self::getModuleDir($moduleUniqueID);
 
         // Create symlinks for IMG
-        $moduleImageDir      = "{$moduleDir}/public/assets/img";
-        $imgCacheDir         = appPath('sites/admin-cabinet/assets/img/cache');
+        $moduleImageDir = "{$moduleDir}/public/assets/img";
+        $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
         $moduleImageCacheDir = "{$imgCacheDir}/{$moduleUniqueID}";
         if (file_exists($moduleImageCacheDir)) {
             unlink($moduleImageCacheDir);
@@ -87,8 +86,8 @@ class PbxExtensionUtils
         }
 
         // Create symlinks for CSS
-        $moduleCSSDir      = "{$moduleDir}/public/assets/css";
-        $cssCacheDir       = appPath('sites/admin-cabinet/assets/css/cache');
+        $moduleCSSDir = "{$moduleDir}/public/assets/css";
+        $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
         $moduleCSSCacheDir = "{$cssCacheDir}/{$moduleUniqueID}";
         if (file_exists($moduleCSSCacheDir)) {
             unlink($moduleCSSCacheDir);
@@ -98,8 +97,8 @@ class PbxExtensionUtils
         }
 
         // Create symlinks for JS
-        $moduleJSDir      = "{$moduleDir}/public/assets/js";
-        $jsCacheDir       = appPath('sites/admin-cabinet/assets/js/cache');
+        $moduleJSDir = "{$moduleDir}/public/assets/js";
+        $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
         $moduleJSCacheDir = "{$jsCacheDir}/{$moduleUniqueID}";
         if (file_exists($moduleJSCacheDir)) {
             unlink($moduleJSCacheDir);
@@ -121,7 +120,7 @@ class PbxExtensionUtils
         if ($di === null) {
             return "/tmp/{$moduleUniqueID}";
         }
-        $config     = $di->getShared('config');
+        $config = $di->getShared('config');
         $modulesDir = $config->path('core.modulesDir');
 
         return "{$modulesDir}/{$moduleUniqueID}";
@@ -144,9 +143,9 @@ class PbxExtensionUtils
         $config = $di->getShared('config');
 
         // Create symlinks to AGI-BIN
-        $agiBinDir       = $config->path('asterisk.astagidir');
+        $agiBinDir = $config->path('asterisk.astagidir');
         $moduleAgiBinDir = "{$moduleDir}/agi-bin";
-        $files           = glob("$moduleAgiBinDir/*.{php}", GLOB_BRACE);
+        $files = glob("$moduleAgiBinDir/*.{php}", GLOB_BRACE);
         foreach ($files as $file) {
             $newFilename = $agiBinDir . '/' . basename($file);
             Util::createUpdateSymlink($file, $newFilename);
@@ -170,8 +169,8 @@ class PbxExtensionUtils
         if ($di === null) {
             return;
         }
-        $moduleViewDir      = "{$moduleDir}/App/Views";
-        $viewCacheDir       = appPath('src/AdminCabinet/Views/Modules');
+        $moduleViewDir = "{$moduleDir}/App/Views";
+        $viewCacheDir = appPath('src/AdminCabinet/Views/Modules');
         $moduleViewCacheDir = "{$viewCacheDir}/{$moduleUniqueID}";
         if (file_exists($moduleViewCacheDir)) {
             unlink($moduleViewCacheDir);
@@ -191,38 +190,26 @@ class PbxExtensionUtils
         $parameters = [
             'conditions' => 'disabled=0',
         ];
-        $modules    = PbxExtensionModules::find($parameters)->toArray();
+        $modules = PbxExtensionModules::find($parameters)->toArray();
         foreach ($modules as $module) {
             $needDisable = false;
-            $moduleDir   = PbxExtensionUtils::getModuleDir($module['uniqid']);
+            $moduleDir = PbxExtensionUtils::getModuleDir($module['uniqid']);
 
             // Check if module.json file exists
-            $moduleJson  = "{$moduleDir}/module.json";
-            if ( ! file_exists($moduleJson)) {
+            $moduleJson = "{$moduleDir}/module.json";
+            if (!file_exists($moduleJson)) {
                 $needDisable = true;
             }
-            $jsonString            = file_get_contents($moduleJson);
+            $jsonString = file_get_contents($moduleJson);
             $jsonModuleDescription = json_decode($jsonString, true);
-            $minPBXVersion         = $jsonModuleDescription['min_pbx_version'] ?? '1.0.0';
+            $minPBXVersion = $jsonModuleDescription['min_pbx_version'] ?? '1.0.0';
 
             // Check if module version is lower than the minimum supported version
             if (version_compare($minPBXVersion, ModelsBase::MIN_MODULE_MODEL_VER, '<')) {
                 $needDisable = true;
             }
             if ($needDisable) {
-                try {
-                    $moduleStateProcessor = new PbxExtensionState($module['uniqid']);
-                    $moduleStateProcessor->disableModule();
-                } catch (Throwable $exception) {
-                    Util::sysLogMsg(__CLASS__, "Can not disable module {$module['uniqid']} Message: {$exception}", LOG_ERR);
-                } finally {
-                    // Update module status to disabled if it was not already disabled
-                    $currentModule           = PbxExtensionModules::findFirstByUniqid($module['uniqid']);
-                    if ($currentModule->disabled==='0'){
-                        $currentModule->disabled = '1';
-                        $currentModule->update();
-                    }
-                }
+                self::forceDisableModule($module['uniqid']);
             }
         }
     }
@@ -233,23 +220,24 @@ class PbxExtensionUtils
      * @param Application $application The application instance.
      * @return void
      */
-    public static function registerEnabledModulesInApp(Application &$application){
+    public static function registerEnabledModulesInApp(Application &$application)
+    {
         $parameters = [
             'conditions' => 'disabled=0',
         ];
-        $modules    = PbxExtensionModules::find($parameters)->toArray();
+        $modules = PbxExtensionModules::find($parameters)->toArray();
         foreach ($modules as $module) {
             $moduleUniqueId = $module['uniqid'];
             $moduleDir = PbxExtensionUtils::getModuleDir($moduleUniqueId);
-            $unCamelizedModuleName = Text::uncamelize($moduleUniqueId,'-');
+            $unCamelizedModuleName = Text::uncamelize($moduleUniqueId, '-');
             $moduleAppClass = "{$moduleDir}/App/Module.php";
             if (file_exists($moduleAppClass)) {
                 $application->registerModules([
                     $unCamelizedModuleName => [
                         "className" => "Modules\\{$moduleUniqueId}\\App\\Module",
-                        "path"      => $moduleAppClass,
+                        "path" => $moduleAppClass,
                     ],
-                ],true);
+                ], true);
             }
         }
     }
@@ -260,22 +248,23 @@ class PbxExtensionUtils
      * @param Router $router
      * @return void
      */
-    public static function registerEnabledModulesInRouter(Router &$router){
+    public static function registerEnabledModulesInRouter(Router &$router)
+    {
         $parameters = [
             'conditions' => 'disabled=0',
         ];
-        $modules    = PbxExtensionModules::find($parameters)->toArray();
+        $modules = PbxExtensionModules::find($parameters)->toArray();
         foreach ($modules as $module) {
             $moduleUniqueId = $module['uniqid'];
             $moduleDir = PbxExtensionUtils::getModuleDir($moduleUniqueId);
-            $unCamelizedModuleName = Text::uncamelize($moduleUniqueId,'-');
+            $unCamelizedModuleName = Text::uncamelize($moduleUniqueId, '-');
             $moduleAppClass = "{$moduleDir}/App/Module.php";
             if (file_exists($moduleAppClass)) {
                 $router->add("/{$unCamelizedModuleName}/:controller/:action/:params", [
-                    'module'     => $unCamelizedModuleName,
+                    'module' => $unCamelizedModuleName,
                     'controller' => 1,
-                    'action'     => 2,
-                    'params'     => 3,
+                    'action' => 2,
+                    'params' => 3,
                     'namespace' => "Modules\\{$moduleUniqueId}\\App\\Controllers"
                 ]);
             }
@@ -283,25 +272,48 @@ class PbxExtensionUtils
     }
 
     /**
-     * Register modules composer autoloader in the provided loader.
+     * Disables a module based on its file path.
      *
-     * @param Loader $loader The loader instance to register modules in.
-     * @return void
+     * @param string $moduleFile The file path of the module.
      */
-    public static function registerModulesComposterInLoader(Loader $loader){
-        $di = Di::getDefault();
-        $modulesDir = $di->getShared('config')->path('core.modulesDir');
-        $results = glob($modulesDir . '/*/vendor/autoload.php', GLOB_NOSORT);
-
-        $modulesComposerLoaders = [];
-        foreach ($results as $moduleComposerLoader) {
-            // Check if the module's composer loader file exists
-            if (file_exists($moduleComposerLoader)) {
-                $modulesComposerLoaders[]=$moduleComposerLoader;
+    public static function disableBadModule(string $moduleFile): void
+    {
+        // Check if the module is within the /custom_modules/ directory
+        $customModulesPos = strpos($moduleFile, '/custom_modules/');
+        if ($customModulesPos !== false) {
+            // Extract the module name from the file path
+            $moduleName = substr($moduleFile, $customModulesPos + strlen('/custom_modules/'));
+            $moduleNameParts = explode('/', $moduleName);
+            $moduleUniqueId = $moduleNameParts[0];
+            if (!empty($moduleUniqueId)) {
+                // Disable the module using its unique ID
+                self::forceDisableModule($moduleUniqueId);
             }
         }
-        // Register the module composer loaders in the provided loader
-        $loader->registerFiles($modulesComposerLoaders,true);
     }
 
+    /**
+     * Disables a module by its unique ID.
+     *
+     * @param string $moduleUniqueId The unique ID of the module to be disabled.
+     */
+    private static function forceDisableModule(string $moduleUniqueId): void
+    {
+        try {
+            // Disable the module using the PbxExtensionState class
+            $moduleStateProcessor = new PbxExtensionState($moduleUniqueId);
+            $moduleStateProcessor->disableModule();
+        } catch (Throwable $exception) {
+            // Log an error message if module disabling fails
+            Util::sysLogMsg(__CLASS__, "Can not disable module {$moduleUniqueId} Message: {$exception}", LOG_ERR);
+        } finally {
+            // Update module status to disabled if it was not already disabled
+            $currentModule = PbxExtensionModules::findFirstByUniqid($moduleUniqueId);
+            if ($currentModule->disabled === '0') {
+                Util::sysLogMsg(__CLASS__, "Force disable module {$moduleUniqueId} on the PbxExtensionModules table", LOG_ERR);
+                $currentModule->disabled = '1';
+                $currentModule->update();
+            }
+        }
+    }
 }

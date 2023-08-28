@@ -118,7 +118,7 @@ class PbxExtensionState extends Injectable
             $result = $this->license->featureAvailable($this->lic_feature_id);
             if ($result['success'] === false) {
                 $textError = (string)($result['error']??'');
-                $this->messages[] = $this->license->translateLicenseErrorMessage($textError);
+                $this->messages['license'][] = $this->license->translateLicenseErrorMessage($textError);
 
                 return false;
             }
@@ -339,7 +339,7 @@ class PbxExtensionState extends Injectable
                     }
                 }
             } catch (Throwable $exception) {
-                $this->messages[] = $exception->getMessage();
+                $this->messages['error'][] = $exception->getMessage();
                 $success          = false;
             }
         }
@@ -382,7 +382,7 @@ class PbxExtensionState extends Injectable
 
         // Delete the current firewall rules
         if ( ! $currentRules->delete()) {
-            $this->messages[] = $currentRules->getMessages();
+            $this->messages['error'][] = $currentRules->getMessages();
 
             return false;
         }
@@ -400,7 +400,7 @@ class PbxExtensionState extends Injectable
 
         // Rollback and return false if there are any errors
         if (count($errors) > 0) {
-            $this->messages[] = array_merge($this->messages, $errors);
+            $this->messages['error'][] = array_merge($this->messages, $errors);
             $this->db->rollback(true);
 
             return false;
@@ -508,7 +508,7 @@ class PbxExtensionState extends Injectable
                     }
                 }
             } catch (Throwable $exception) {
-                $this->messages[] = $exception->getMessage();
+                $this->messages['error'][] = $exception->getMessage();
                 $success          = false;
             }
         }

@@ -132,6 +132,7 @@ class PbxExtensionStatus {
      */
     cbAfterModuleEnable(response, success) {
         if (success) {
+            $('.ui.message.ajax').remove();
             // Update UI to show module is enabled
             this.$toggle.checkbox('set checked');
             this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
@@ -156,7 +157,13 @@ class PbxExtensionStatus {
             this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
             this.$disabilityFields.addClass('disabled');
             if (response !== undefined && response.messages !== undefined) {
-                UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
+                if (response.messages.license!==undefined){
+                    response.messages.error = response.messages.license;
+                    UserMessage.showLicenseError(globalTranslate.ext_ModuleLicenseProblem, response.messages);
+                } else {
+                    UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
+                }
+
             }
         }
         this.$allToggles.removeClass('disabled');
