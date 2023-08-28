@@ -21,6 +21,7 @@ namespace MikoPBX\Modules\Config;
 
 use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Assets\Manager;
+use Phalcon\Events\Event;
 use Phalcon\Forms\Form;
 use Phalcon\Mvc\Controller;
 use Phalcon\Mvc\Dispatcher;
@@ -134,21 +135,20 @@ interface WebUIConfigInterface
      * Called from BaseController before executing a route.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforeexecuteroute
      *
-     * @param Controller $controller The called controller instance.
-     *
+     * @param Dispatcher $dispatcher
      * @return void
      */
-    public function onBeforeExecuteRoute(Controller $controller):void;
+    public function onBeforeExecuteRoute(Dispatcher $dispatcher):void;
 
     /**
      * Called from BaseController after executing a route.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterexecuteroute
      *
-     * @param Controller $controller The called controller instance.
+     * @param Dispatcher $dispatcher
      *
      * @return void
      */
-    public function onAfterExecuteRoute(Controller $controller):void;
+    public function onAfterExecuteRoute(Dispatcher $dispatcher):void;
 
 
 }

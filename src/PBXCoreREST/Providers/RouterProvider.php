@@ -52,6 +52,7 @@ use MikoPBX\PBXCoreREST\Controllers\
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
+use MikoPBX\Modules\Config\WebUIConfigInterface;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
@@ -60,6 +61,7 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager;
 use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Micro\Collection;
+use Phalcon\Events\Event;
 
 
 /**
@@ -85,6 +87,7 @@ class RouterProvider implements ServiceProviderInterface
 
         $this->attachRoutes($application);
         $this->attachMiddleware($application, $eventsManager);
+        $this->attachModuleHooks($application, $eventsManager);
 
         $application->setEventsManager($eventsManager);
     }
@@ -218,4 +221,25 @@ class RouterProvider implements ServiceProviderInterface
         ];
     }
 
+    /**
+     * Attaches the modules hooks to the application
+     *
+     * @param Micro   $application
+     * @param Manager $eventsManager
+     */
+    private function attachModuleHooks(Micro $application, Manager $eventsManager): void
+    {
+        $eventsManager->attach(
+            "micro:beforeExecuteRoute",
+            function (Event $event, $app) {
+                PBXConfModulesProvider::hookModulesMethod(RestAPIConfigInterface::ON_BEFORE_EXECUTE_RESTAPI_ROUTE,[$app]);
+            }
+        );
+        $eventsManager->attach(
+            "micro:afterExecuteRoute",
+            function (Event $event, $app) {
+                PBXConfModulesProvider::hookModulesMethod(RestAPIConfigInterface::ON_AFTER_EXECUTE_RESTAPI_ROUTE,[$app]);
+            }
+        );
+    }
 }

@@ -21,6 +21,9 @@ namespace MikoPBX\Modules\Config;
 
 
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Events\Event;
+use Phalcon\Mvc\Controller;
+use Phalcon\Mvc\Micro;
 
 /**
  * Interface RestAPIConfigInterface
@@ -34,6 +37,10 @@ interface RestAPIConfigInterface
     public const MODULE_RESTAPI_CALLBACK = 'moduleRestAPICallback';
 
     public const GET_PBXCORE_REST_ADDITIONAL_ROUTES = 'getPBXCoreRESTAdditionalRoutes';
+
+    public const ON_BEFORE_EXECUTE_RESTAPI_ROUTE = 'onBeforeExecuteRestAPIRoute';
+
+    public const ON_AFTER_EXECUTE_RESTAPI_ROUTE = 'onAfterExecuteRestAPIRoute';
 
     /**
      * Returns array of additional routes for PBXCoreREST interface from module
@@ -63,4 +70,24 @@ interface RestAPIConfigInterface
      * @return PBXApiResult An object containing the result of the API call.
      */
     public function moduleRestAPICallback(array $request): PBXApiResult;
+
+    /**
+     * Called from REST API RouterProvider before executing a route.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforeexecuterestapiroute
+     *
+     * @param Micro $app The micro application instance.
+     *
+     * @return void
+     */
+    public function onBeforeExecuteRestAPIRoute(Micro $app):void;
+
+    /**
+     * Called from REST API RouterProvider after executing a route.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterexecuterestapiroute
+     *
+     * @param Micro $app The micro application instance.
+     *
+     * @return void
+     */
+    public function onAfterExecuteRestAPIRoute(Micro $app):void;
 }

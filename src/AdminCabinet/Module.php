@@ -21,16 +21,17 @@
 namespace MikoPBX\AdminCabinet;
 
 use MikoPBX\AdminCabinet\Config\RegisterDIServices;
+use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
+use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
 use Phalcon\Di\DiInterface;
 use Phalcon\Mvc\ModuleDefinitionInterface;
 
 class Module implements ModuleDefinitionInterface
 {
-
     /**
      * Registers an autoloader related to the module
      *
-     * @param \Phalcon\Di\DiInterface $container
+     * @param DiInterface|null $container
      */
     public function registerAutoloaders(DiInterface $container = null){
 

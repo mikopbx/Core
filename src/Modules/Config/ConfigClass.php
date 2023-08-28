@@ -20,6 +20,7 @@
 namespace MikoPBX\Modules\Config;
 
 use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\System\MikoPBXConfig;
@@ -27,9 +28,11 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Assets\Manager;
 use Phalcon\Config;
+use Phalcon\Events\Event;
 use Phalcon\Forms\Form;
 use Phalcon\Mvc\Controller;
 use Phalcon\Mvc\Dispatcher;
+use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Router;
 use Phalcon\Mvc\View;
 use ReflectionClass as ReflectionClassAlias;
@@ -99,10 +102,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     public function __construct()
     {
 
-        $this->config          = $this->di->getShared(ConfigProvider::SERVICE_NAME);
-        $this->mikoPBXConfig   = new MikoPBXConfig();
-        $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
-        $this->messages        = [];
+       parent::__construct();
 
         // Get child class parameters and define module Dir and UniqueID
         $reflector        = new ReflectionClassAlias(static::class);
@@ -186,7 +186,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
                 break;
             default:
                 $res->success    = false;
-                $res->messages[] = 'API action not found in moduleRestAPICallback';
+                $res->messages['error'][] = 'API action not found in ' . __METHOD__;
         }
 
         return $res;
@@ -310,7 +310,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function createCronTasks(&$tasks): void
+    public function createCronTasks(array &$tasks): void
     {
     }
 
@@ -420,11 +420,11 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * Called from BaseController before executing a route.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforeexecuteroute
      *
-     * @param Controller $controller The called controller instance.
+     * @param Dispatcher $dispatcher
      *
      * @return void
      */
-    public function onBeforeExecuteRoute(Controller $controller):void
+    public function onBeforeExecuteRoute(Dispatcher $dispatcher):void
     {
     }
 
@@ -432,11 +432,11 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * Called from BaseController after executing a route.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterexecuteroute
      *
-     * @param Controller $controller The called controller instance.
+     * @param Dispatcher $dispatcher
      *
      * @return void
      */
-    public function onAfterExecuteRoute(Controller $controller):void
+    public function onAfterExecuteRoute(Dispatcher $dispatcher):void
     {
     }
 
@@ -451,5 +451,32 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     public function applyACLFiltersToCDRQuery(/** @scrutinizer ignore-unused */ array &$parameters): void
     {
         // Implement $parameters modifications
+    }
+
+
+    /**
+     * Called from REST API RouterProvider before executing a route.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforeexecuterestapiroute
+     *
+     * @param Micro $app The micro application instance.
+     *
+     * @return void
+     */
+    public function onBeforeExecuteRestAPIRoute(Micro $app):void
+    {
+
+    }
+
+    /**
+     * Called from REST API RouterProvider after executing a route.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterexecuterestapiroute
+     *
+     * @param Micro $app The micro application instance.
+     *
+     * @return void
+     */
+    public function onAfterExecuteRestAPIRoute(Micro $app):void
+    {
+
     }
 }
