@@ -92,6 +92,6 @@ class CustomFilesController extends BaseController
             $customFile->mode = CustomFiles::MODE_NONE;
         }
 
-        $this->saveEntity($customFile, "custom-files/modify/{$data['id']}");
+        $this->saveEntity($customFile, "custom-files/modify/{id}");
     }
 }

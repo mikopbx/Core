@@ -32,13 +32,11 @@ const customFile = {
      */
     $formObj: $('#custom-file-form'),
 
-
     /**
      * jQuery object for the tab menu.
      * @type {jQuery}
      */
     $tabMenu: $('#custom-files-menu .item'),
-
 
     /**
      * jQuery object for the mode select.
@@ -47,19 +45,19 @@ const customFile = {
     $modeDropDown: $('#custom-file-form .mode-select'),
 
     /**
-     * jQuery object for the original file content.
+     * jQuery object for the tab with original file content.
      * @type {jQuery}
      */
     $originalTab: $('a[data-tab="original"]'),
 
     /**
-     * jQuery object for the user content/script editor.
+     * jQuery object for the tab with user content/script editor.
      * @type {jQuery}
      */
     $editorTab: $('a[data-tab="editor"]'),
 
     /**
-     * jQuery object for the resulted file content.
+     * jQuery object for the tab with resulted file content.
      * @type {jQuery}
      */
     $resultTab: $('a[data-tab="result"]'),
@@ -69,6 +67,12 @@ const customFile = {
      * @type {jQuery}
      */
     $mainContainer: $('#main-content-container'),
+
+    /**
+     * jQuery element for the script editor
+     * @type {jQuery}
+     */
+    $userEditConfig: $('#user-edit-config textarea'),
 
     /**
      * Ace editor instances
@@ -238,6 +242,7 @@ const customFile = {
             const scrollTop = aceViewer.getSession().getScrollTop();
             aceViewer.getSession().setValue(response.data.content);
             aceViewer.getSession().setScrollTop(scrollTop);
+            customFile.$editorTab.find('textarea').trigger('focus');
         }
     },
 
@@ -251,6 +256,7 @@ const customFile = {
             const scrollTop = aceViewer.getSession().getScrollTop();
             aceViewer.getSession().setValue(response.data.content);
             aceViewer.getSession().setScrollTop(scrollTop);
+            customFile.$editorTab.find('textarea').trigger('focus');
         }
     },
 
