@@ -29,6 +29,7 @@ use MikoPBX\Common\Models\{Codecs,
     SipHosts,
     Users};
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\{MikoPBXConfig, Network, Processes, Util};
@@ -568,7 +569,11 @@ class SIPConf extends AsteriskConfigClass
         // Write sorcery.conf file
         file_put_contents($astEtcDir.'/sorcery.conf', '');
 
-        $this->updateAsteriskDatabase();
+        // Asterisk has to be restarted to apply the changes over ami
+        if ($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting!==true) {
+            $this->updateAsteriskDatabase();
+        }
+
     }
 
     /**

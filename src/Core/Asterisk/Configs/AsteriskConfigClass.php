@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
@@ -82,10 +83,14 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     public function __construct()
     {
         $this->config = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME);
-        $this->booting = $this->getDI()->getShared(RegistryProvider::SERVICE_NAME)->booting === true;
+        $this->booting = false;
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
         $this->messages = [];
+
+        if ($this->getDI()->has(RegistryProvider::SERVICE_NAME)){
+            $this->booting = $this->getDI()->getShared(RegistryProvider::SERVICE_NAME)->booting === true;
+        }
     }
 
     /**
@@ -134,9 +139,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
                     }
                 }
             } catch (\Throwable $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
                 continue;
             }
         }
