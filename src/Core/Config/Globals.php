@@ -24,7 +24,10 @@
 declare(strict_types=1);
 namespace MikoPBX\Core\Config;
 
-use MikoPBX\Core\System\SentryErrorLogger;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Providers\RegistryProvider;
+use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
+use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
 use Phalcon\Di\FactoryDefault\Cli;
 
 if (PHP_SAPI !== "cli") {
@@ -38,9 +41,5 @@ $di = new Cli();
 
 // Register classes, namespaces, additional libraries with lazy load
 require_once __DIR__ . '/../../../src/Common/Config/ClassLoader.php';
-
-// Initialize Sentry error logger
-$errorLogger = new SentryErrorLogger('pbx-core-workers');
-$errorLogger->init();
 
 RegisterDIServices::init();

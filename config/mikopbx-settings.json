@@ -69,5 +69,9 @@
     "viewCacheDir": "/var/tmp/www_cache/view",
     "combineCSS": false,
     "combineJS": false
+  },
+  "sentry": {
+    "environment": "development",
+    "dsn": "https://07be0eff8a5c463fbac3e90ae5c7d039@sentry.miko.ru/1"
   }
 }

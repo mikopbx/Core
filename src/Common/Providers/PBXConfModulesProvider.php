@@ -21,9 +21,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di;
 use Phalcon\Di\DiInterface;
@@ -98,15 +98,13 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         $additionalModules = $di->getShared(PBXConfModulesProvider::SERVICE_NAME, ['methodName'=>$methodName]);
 
         foreach ($additionalModules as $configClassObj) {
-            if ( ! method_exists($configClassObj, $methodName)) {
-                continue;
-            }
             try {
+                if ( ! method_exists($configClassObj, $methodName)) {
+                    continue;
+                }
                 $moduleMethodResponse = call_user_func_array([$configClassObj, $methodName], $arguments);
             } catch (\Throwable $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
                 continue;
             }
             if ( ! empty($moduleMethodResponse)) {

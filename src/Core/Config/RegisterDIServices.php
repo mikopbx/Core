@@ -36,11 +36,14 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     ModulesDBConnectionsProvider,
     NatsConnectionProvider,
     PBXConfModulesProvider,
+    PBXCoreRESTClientProvider,
     RegistryProvider,
+    SentryErrorHandlerProvider,
     TranslationProvider,
     MessagesProvider,
     UrlProvider,
-    LanguageProvider};
+    LanguageProvider,
+    WhoopsErrorHandlerProvider};
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use Phalcon\Di;
 
@@ -56,6 +59,10 @@ class RegisterDIServices
     {
         $di            = Di::getDefault();
         $providersList = [
+
+            // Inject errors handlers
+            SentryErrorHandlerProvider::class,
+            WhoopsErrorHandlerProvider::class,
 
             // Inject Logger provider
             LoggerProvider::class,
@@ -83,7 +90,6 @@ class RegisterDIServices
             BeanstalkConnectionModelsProvider::class,
             BeanstalkConnectionWorkerApiProvider::class,
 
-
             // AMI Connectors
             AmiConnectionCommand::class,
             AmiConnectionListener::class,
@@ -101,6 +107,9 @@ class RegisterDIServices
             PBXConfModulesProvider::class,
             ModulesDBConnectionsProvider::class,
 
+            // Inject Rest API client
+            PBXCoreRESTClientProvider::class
+
         ];
 
         foreach ($providersList as $provider) {
@@ -108,6 +117,11 @@ class RegisterDIServices
             $di->remove($provider::SERVICE_NAME);
             $di->register(new $provider());
         }
+
+        $di->getShared(RegistryProvider::SERVICE_NAME)->libraryName = 'core-workers';
+        // Enable Whoops error handler and pretty print
+        $di->get(SentryErrorHandlerProvider::SERVICE_NAME);
+        $di->get(WhoopsErrorHandlerProvider::SERVICE_NAME);
     }
 
 }

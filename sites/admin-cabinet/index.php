@@ -17,20 +17,13 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-use MikoPBX\AdminCabinet\Utilities\Debug\PhpError;
-use MikoPBX\Common\Providers\MainDatabaseProvider;
-use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Common\Providers\ModelsAnnotationsProvider;
-use MikoPBX\Common\Providers\ModelsCacheProvider;
-use MikoPBX\Common\Providers\ModelsMetadataProvider;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\RouterProvider;
-use MikoPBX\Core\System\SentryErrorLogger;
+use MikoPBX\Common\Config\RegisterDIServices as RegisterCommonDIServices;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Providers\RegistryProvider;
+use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
+use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Mvc\Application as BaseApplication;
-use Whoops\Handler\JsonResponseHandler;
-use Whoops\Handler\PrettyPageHandler;
-use Whoops\Run;
 
 class Application extends BaseApplication
 {
@@ -47,27 +40,7 @@ class Application extends BaseApplication
          */
         require_once __DIR__ . '/../../src/Common/Config/ClassLoader.php';
 
-        // Register default services
-        $providersList = [
-            // Inject Database connections
-            ModelsAnnotationsProvider::class,
-            ModelsMetadataProvider::class,
-            MainDatabaseProvider::class,
-
-            // Inject caches
-            ManagedCacheProvider::class,
-            ModelsCacheProvider::class,
-
-            // Inject PBX modules
-            PBXConfModulesProvider::class,
-
-            // Inject routers
-            RouterProvider::class,
-
-        ];
-        foreach ($providersList as $provider) {
-            $di->register(new $provider());
-        }
+        RegisterCommonDIServices::init($di);
 
         $this->setDI($di);
     }
@@ -75,25 +48,6 @@ class Application extends BaseApplication
     public function main()
     {
         $this->registerServices();
-
-        // Attach Sentry error logger
-        global $errorLogger;
-        $errorLogger = new SentryErrorLogger('admin-cabinet');
-        $errorLogger->init();
-
-        // Enable Whoops error pretty print
-        $is_ajax = 'xmlhttprequest' === strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '');
-        if ($is_ajax) {
-            $whoopsClass = JsonResponseHandler::class;
-        } else {
-            $whoopsClass = PrettyPageHandler::class;
-        }
-
-        if (class_exists($whoopsClass)) {
-            $whoops = new Run();
-            $whoops->pushHandler(new $whoopsClass());
-            $whoops->register();
-        }
 
         // Register the default modules
         $this->registerModules([
@@ -110,14 +64,7 @@ class Application extends BaseApplication
         try {
             echo $this->handle($_SERVER['REQUEST_URI'])->getContent();
         } catch (Throwable $e) {
-            $errorLogger->captureException($e);
-            PhpError::exceptionHandler($e);
-
-            if (isset($whoops)) {
-                $whoops->handleException($e);
-            } else {
-                echo $e->getMessage();
-            }
+            CriticalErrorsHandler::handleException($e,'admin-cabinet');
         }
     }
 }

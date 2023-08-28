@@ -6,3 +6,4 @@ sites/admin-cabinet/assets/img/cache
 sites/admin-cabinet/assets/css/cache
 sites/admin-cabinet/assets/js/cache
 src/AdminCabinet/Views/Modules
+.DS_Store

@@ -30,6 +30,7 @@ use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\RedisConf;
+use MikoPBX\Core\System\Configs\SentryConf;
 use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VmToolsConf;
@@ -121,6 +122,12 @@ class SystemLoader extends Di\Injectable
         $this->echoStartMsg(' - Start redis daemon...');
         $redisConf = new RedisConf();
         $redisConf->reStart();
+        $this->echoResultMsg();
+
+        // Configure Sentry error logger
+        $this->echoStartMsg(' - Configuring sentry error logger ...');
+        $sentryConf = new SentryConf();
+        $sentryConf->configure();
         $this->echoResultMsg();
 
         // Configure the system timezone
