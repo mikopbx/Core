@@ -60,7 +60,7 @@ class ProvidersController extends BaseController
         $provider = Providers::findFirstByUniqid($uniqid);
 
         if ($provider === null) {
-            $uniqid = strtoupper('SIP-' . time());
+            $uniqid = Sip::generateUniqueID('SIP-');
             $provider = new Providers();
             $provider->type = 'SIP';
             $provider->uniqid = $uniqid;
@@ -72,7 +72,7 @@ class ProvidersController extends BaseController
             $provider->Sip->disabled = '0';
             $provider->Sip->qualifyfreq = 60;
             $provider->Sip->qualify = '1';
-            $provider->Sip->secret = md5($uniqid . microtime());
+            $provider->Sip->secret = SIP::generateSipPassword();
         }
 
         $providerHost = $provider->Sip->host;
@@ -99,7 +99,7 @@ class ProvidersController extends BaseController
         $provider = Providers::findFirstByUniqid($uniqid);
 
         if ($provider === null) {
-            $uniqid = strtoupper('IAX-' . time());
+            $uniqid = Iax::generateUniqueID('IAX-');
             $provider = new Providers();
             $provider->type = 'IAX';
             $provider->uniqid = $uniqid;
