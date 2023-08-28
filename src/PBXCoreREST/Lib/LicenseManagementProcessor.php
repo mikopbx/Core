@@ -82,7 +82,7 @@ class LicenseManagementProcessor extends Injectable
                 $res = $proc->pingAction();
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - {$action} in licenseCallBack";
+                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
         }
 
         $res->function = $action;

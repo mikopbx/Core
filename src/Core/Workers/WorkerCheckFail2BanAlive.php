@@ -35,10 +35,10 @@ class WorkerCheckFail2BanAlive extends WorkerBase
     /**
      * Starts the Fail2Ban alive check worker.
      *
-     * @param array $params The worker parameters.
+     * @param array $argv The command-line arguments passed to the worker.
      * @return void
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
         $cacheKey = 'Workers:WorkerCheckFail2BanAlive:lastFail2BanCheck';
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);

@@ -50,11 +50,10 @@ class WorkerLongPoolAPI extends WorkerBase
     /**
      * Starts the worker.
      *
-     * @param array $argv The command line arguments.
-     *
+     * @param array $argv The command-line arguments passed to the worker.
      * @return void
      */
-    public function start($argv): void
+    public function start(array $argv): void
     {
 
         $client_queue = new BeanstalkClient();

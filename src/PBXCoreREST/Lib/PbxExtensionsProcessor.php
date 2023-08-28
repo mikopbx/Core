@@ -80,7 +80,7 @@ class PbxExtensionsProcessor extends Injectable
 
         $res             = new PBXApiResult();
         $res->processor  = __METHOD__;
-        $res->messages['error'][] = "Unknown action - {$action} in modulesCallBack";
+        $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
         $res->function   = $action;
 
         // Try process request over additional modules

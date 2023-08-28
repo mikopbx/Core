@@ -38,10 +38,10 @@ class WorkerLogRotate extends WorkerBase
     /**
      * Starts the log rotate worker.
      *
-     * @param array $params The command-line arguments passed to the worker.
+     * @param array $argv The command-line arguments passed to the worker.
      * @return void
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
         $cacheKey = 'Workers:WorkerLogRotate:lastProcessing';
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);

@@ -38,11 +38,11 @@ class WorkerBeanstalkdTidyUp extends WorkerBase
      * Starts the worker. It checks the time of the last tubes check.
      * If there wasn't a check or if it happened more than 5 minutes ago, it initiates a new check and cleans the tubes.
      *
-     * @param array $params The command-line arguments.
+     * @param array $argv The command-line arguments passed to the worker.
      *
      * @return void
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
         // Define the cache key
         $cacheKey = 'Workers:WorkerBeanstalkdTidyUp:lastTubesCheck';

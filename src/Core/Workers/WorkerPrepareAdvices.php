@@ -19,9 +19,10 @@
 
 namespace MikoPBX\Core\Workers;
 
+use Generator;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckConnection;
@@ -34,7 +35,6 @@ use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckUpdates;
 use Phalcon\Di;
 use Recoil\React\ReactKernel;
 use Throwable;
-use Generator;
 
 require_once 'Globals.php';
 
@@ -62,11 +62,11 @@ class WorkerPrepareAdvices extends WorkerBase
     /**
      * Starts processing advice types.
      *
-     * @param array $params An array of parameters for processing.
+     * @param array $argv The command-line arguments passed to the worker.
      *
      * @throws Throwable
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
         $adviceTypes = self::ARR_ADVICE_TYPES;
         // Use ReactKernel to start parallel execution
@@ -100,9 +100,7 @@ class WorkerPrepareAdvices extends WorkerBase
                 $newAdvice = $checkObj->process();
                 $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
             } catch (\Throwable $e) {
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg(__METHOD__, $e->getMessage(), LOG_ERR);
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
             }
             $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 5) {

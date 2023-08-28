@@ -50,9 +50,9 @@ class WorkerCdr extends WorkerBase
     /**
      * The main entry point for the worker.
      *
-     * @param array $params Command line arguments
+     * @param array $argv The command-line arguments passed to the worker.
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
         // Establish connection with Beanstalk queue
         $this->clientQueue = new BeanstalkClient(self::SELECT_CDR_TUBE);

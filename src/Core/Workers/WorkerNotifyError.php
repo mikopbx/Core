@@ -34,10 +34,10 @@ class WorkerNotifyError extends WorkerBase
     /**
      * Starts the errors notifier worker.
      *
-     * @param array $params The command-line arguments passed to the worker.
+     * @param array $argv The command-line arguments passed to the worker.
      * @return void
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
         $cacheKey = 'Workers:WorkerNotifyError:lastErrorsCheck';
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);

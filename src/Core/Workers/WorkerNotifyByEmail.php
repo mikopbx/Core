@@ -32,10 +32,10 @@ class WorkerNotifyByEmail extends WorkerBase
     /**
      * Entry point for the worker.
      *
-     * @param array $params The command-line arguments.
+     * @param array $argv The command-line arguments passed to the worker.
      * @return void
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
         $client = new BeanstalkClient(__CLASS__);
         if ($client->isConnected() === false) {

@@ -19,12 +19,6 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use GuzzleHttp\Client as GuzzleHttpClient;
-use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
-use MikoPBX\AdminCabinet\Forms\LicensingChangeLicenseKeyForm;
-use MikoPBX\AdminCabinet\Forms\LicensingGetKeyForm;
-use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Providers\UrlProvider;
 use Phalcon\Http\Response;
 
 class LicensingController extends BaseController

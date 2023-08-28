@@ -48,7 +48,7 @@ class IAXStackProcessor extends Injectable
                 $res = IAXStackProcessor::getRegistry();
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - {$action} in iaxCallBack";
+                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
                 break;
         }
 

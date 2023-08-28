@@ -54,7 +54,7 @@ class CdrDBProcessor extends Injectable
                 $res = self::getActiveCalls();
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - {$action} in cdrCallBack";
+                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
                 break;
         }
         $res->function = $action;

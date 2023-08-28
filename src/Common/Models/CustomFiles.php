@@ -125,7 +125,7 @@ class CustomFiles extends ModelsBase
      * @param string $text The content to be encoded and set.
      * @return void
      */
-    public function setContent($text): void
+    public function setContent(string  $text): void
     {
         $this->content = base64_encode($text);
     }

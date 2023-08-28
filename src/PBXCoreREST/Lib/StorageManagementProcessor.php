@@ -69,7 +69,7 @@ class StorageManagementProcessor extends Injectable
                 $res->data['status'] = Storage::statusMkfs($data['dev']);
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - {$action} in storageCallBack";
+                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
         }
 
         $res->function = $action;

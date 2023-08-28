@@ -61,7 +61,7 @@ class FirewallManagementProcessor extends Injectable
                 $res = self::getBannedIp();
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - {$action} in systemCallBack";
+                $res->messages['error'][] = "Unknown action - {$action} in ".__CLASS__;
         }
         $res->function = $action;
 

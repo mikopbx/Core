@@ -43,7 +43,7 @@ class SecurityPluginProvider implements ServiceProviderInterface
     {
         $di->set(
             self::SERVICE_NAME,
-            function ($controller, $action='index') {
+            function (string $controller, string $action='index') {
                 $aclManager = new SecurityPlugin();
                 return $aclManager->isAllowedAction($controller, $action);
             }

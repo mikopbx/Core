@@ -51,9 +51,9 @@ interface WorkerInterface
     /**
      * Worker entry point.
      *
-     * @param array $params The parameters passed to the worker.
+     * @param array $argv The command-line arguments passed to the worker.
      * @return void
      */
-    public function start(array $params): void;
+    public function start(array $argv): void;
 
 }

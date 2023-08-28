@@ -21,15 +21,17 @@ namespace MikoPBX\Core\Workers\Cron;
 
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{BeanstalkClient, Configs\SSHConf, PBX, Processes, Util};
+use Generator;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\Core\Workers\WorkerCheckFail2BanAlive;
-use MikoPBX\Core\Workers\WorkerMarketplaceChecker;
 use MikoPBX\Core\Workers\WorkerLogRotate;
+use MikoPBX\Core\Workers\WorkerMarketplaceChecker;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
@@ -39,7 +41,6 @@ use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Recoil\React\ReactKernel;
 use Throwable;
-use Generator;
 
 /**
  * Class WorkerSafeScriptsCore
@@ -54,7 +55,6 @@ class WorkerSafeScriptsCore extends WorkerBase
     public const CHECK_BY_BEANSTALK = 'checkWorkerBeanstalk';
 
     public const CHECK_BY_AMI = 'checkWorkerAMI';
-
     public const CHECK_BY_PID_NOT_ALERT = 'checkPidNotAlert';
 
     /**
@@ -133,11 +133,11 @@ class WorkerSafeScriptsCore extends WorkerBase
     /**
      * Starts all workers or checks them.
      *
-     * @param array $params The command-line arguments.
+     * @param array $argv The command-line arguments passed to the worker.
      *
      * @throws Throwable
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
         // Wait for the system to fully boot.
         PBX::waitFullyBooted();
@@ -199,9 +199,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                 );
             }
         } catch (Throwable $e) {
-            global $errorLogger;
-            $errorLogger->captureException($e);
-            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage(), LOG_ERR);
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
         yield;
     }
@@ -277,9 +275,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                 );
             }
         } catch (Throwable $e) {
-            global $errorLogger;
-            $errorLogger->captureException($e);
-            Util::sysLogMsg($workerClassName . '_EXCEPTION', $e->getMessage(), LOG_ERR);
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
         yield;
     }
@@ -324,7 +320,5 @@ try {
     }
 } catch (Throwable $e) {
     // If an exception is thrown, log it.
-    global $errorLogger;
-    $errorLogger->captureException($e);
-    Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
+    CriticalErrorsHandler::handleExceptionWithSyslog($e);
 }

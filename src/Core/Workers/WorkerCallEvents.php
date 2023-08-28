@@ -203,12 +203,12 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Starts the process, sets up initial options and worker subscribers.
      *
-     * @param array $params The parameters passed to the function.
+     * @param array $argv The command-line arguments passed to the worker.
      *
      * @return void This function does not return any value.
      * @throws Exception
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
         // Update the recording options for the worker
         $this->updateRecordingOptions();

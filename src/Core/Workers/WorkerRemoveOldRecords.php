@@ -35,10 +35,10 @@ class WorkerRemoveOldRecords extends WorkerBase
     /**
      * Starts the worker and checks disk space. Sends notifications in case of problems.
      *
-     * @param mixed $params The parameters.
+     * @param mixed $argv The command-line arguments passed to the worker.
      * @return void
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
         $storage = new Storage();
         $hdd = $storage->getAllHdd(true);

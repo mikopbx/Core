@@ -128,6 +128,8 @@ class Util
         if ($di === null) {
             throw new \Phalcon\Exception("di not found");
         }
+
+        // Try to connect to Asterisk Manager
         $am = $di->getShared($nameService);
         if (is_resource($am->socket)) {
             return $am;

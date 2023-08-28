@@ -100,7 +100,7 @@ class ModulesManagementProcessor extends Injectable
                     $res = self::getModuleLink($moduleReleaseId);
                     break;
                 default:
-                    $res->messages[] = "Unknown action - {$action} in modulesCoreCallBack";
+                    $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
             }
         $res->function = $action;
 

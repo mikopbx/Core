@@ -58,7 +58,7 @@ class FilesManagementProcessor extends Injectable
                 $res = self::uploadFile($postData);
                 break;
             case 'statusUploadFile':
-                $res = self::statusUploadFile($request['data']);
+                $res = self::statusUploadFile($postData);
                 break;
             case 'removeAudioFile':
                 $res = self::removeAudioFile($postData['filename']);
@@ -67,13 +67,13 @@ class FilesManagementProcessor extends Injectable
                 $res = self::getFileContent($postData['filename'], $postData['needOriginal']==='true');
                 break;
             case 'downloadNewFirmware':
-                $res = self::downloadNewFirmware($request['data']);
+                $res = self::downloadNewFirmware($postData);
                 break;
             case 'firmwareDownloadStatus':
                 $res = self::firmwareDownloadStatus($postData['filename']);
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - {$action} in uploadCallBack";
+                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
         }
 
         $res->function = $action;

@@ -45,13 +45,13 @@ class WorkerDownloader extends WorkerBase
     /**
      * WorkerDownloader entry point.
      *
-     * @param $params
+     * @param array $argv The command-line arguments passed to the worker.
      */
-    public function start($params): void
+    public function start(array $argv): void
     {
         $this->lastUpdate=time();
         $this->old_memory_limit = ini_get('memory_limit');
-        $filename = $params[2]??'';
+        $filename = $argv[2]??'';
         if (file_exists($filename)) {
             $this->settings = json_decode(file_get_contents($filename), true);
         } else {

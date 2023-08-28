@@ -42,12 +42,12 @@ class WorkerModuleInstaller extends WorkerBase
     /**
      * Starts the module installation worker process.
      *
-     * @param mixed $params The parameters for the worker.
+     * @param array $argv The command-line arguments passed to the worker.
      * @return void
      */
-    public function start($params): void
+    public function start(array $argv): void
     {
-        $settings_file = $params[2]??'';
+        $settings_file = $argv[2]??'';
 
         // Check if the settings file exists
         if ( ! file_exists($settings_file)) {

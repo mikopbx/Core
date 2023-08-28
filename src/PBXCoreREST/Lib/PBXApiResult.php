@@ -28,10 +28,6 @@ namespace MikoPBX\PBXCoreREST\Lib;
  */
 class PBXApiResult
 {
-    public const SUCCESS = 'Success';
-
-    public const ERROR = 'Error';
-
     /**
      * Request result
      *
