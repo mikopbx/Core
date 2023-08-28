@@ -44,11 +44,12 @@ use MikoPBX\Common\Providers\{AclProvider,
     ModelsMetadataProvider,
     ModulesDBConnectionsProvider,
     PBXConfModulesProvider,
+    PBXCoreRESTClientProvider,
     RegistryProvider,
     RouterProvider,
     SessionProvider,
     TranslationProvider,
-    UrlProvider};
+    UrlProvider,};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices
@@ -61,6 +62,7 @@ class RegisterDIServices
     public static function init(DiInterface $di): void
     {
         $adminCabinetProviders = [
+
             // Inject cache providers
             ManagedCacheProvider::class,
             ModelsCacheProvider::class,
@@ -113,6 +115,8 @@ class RegisterDIServices
             // Inject crypto provider
             CryptProvider::class,
 
+            // Inject Rest API client
+            PBXCoreRESTClientProvider::class
         ];
 
         foreach ($adminCabinetProviders as $provider) {
@@ -120,5 +124,8 @@ class RegisterDIServices
             $di->remove($provider::SERVICE_NAME);
             $di->register(new $provider());
         }
+
+        // Set library name
+        $di->getShared(RegistryProvider::SERVICE_NAME)->libraryName = 'admin-cabinet';
     }
 }
