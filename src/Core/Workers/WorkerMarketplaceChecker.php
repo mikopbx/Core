@@ -32,21 +32,24 @@ use SimpleXMLElement;
  */
 class WorkerMarketplaceChecker extends WorkerBase
 {
+    public const CACHE_KEY = 'Workers:WorkerMarketplaceChecker:lastCheck';
+    public const CACHE_KEY_LICENSE_INFO = 'Workers:WorkerMarketplaceChecker:lastCheck';
+
+    public const LIC_FILE_PATH = '/var/etc/license.xml';
 
     /**
      * Starts the checker worker.
      *
-     * @param array $params The command-line arguments passed to the worker.
+     * @param array $argv The command-line arguments passed to the worker.
      * @return void
      */
-    public function start(array $params): void
+    public function start(array $argv): void
     {
-        $cacheKey = 'Workers:WorkerMarketplaceChecker:lastCheck';
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
         $lic = $this->di->getShared(MarketPlaceProvider::SERVICE_NAME);
 
         // Retrieve the last license check timestamp from the cache
-        $lastCheck = $managedCache->get($cacheKey);
+        $lastCheck = $managedCache->get(self::CACHE_KEY);
         if ($lastCheck === null) {
 
             // Perform PBX registration check
@@ -56,22 +59,20 @@ class WorkerMarketplaceChecker extends WorkerBase
             $lic->checkModules();
 
             // Store the current timestamp in the cache to track the last repository check
-            $managedCache->set($cacheKey, time(), 3600); // Check every hour
+            $managedCache->set(self::CACHE_KEY, time(), 3600); // Check every hour
         }
 
         // Retrieve the last get license request from the cache
-        $cacheKeyGetInfo = 'Workers:WorkerMarketplaceChecker:lastGetInfo';
-        $lastGetLicenseInfo = $managedCache->get($cacheKeyGetInfo);
+        $lastGetLicenseInfo = $managedCache->get(self::CACHE_KEY_LICENSE_INFO);
         if ($lastGetLicenseInfo === null) {
             $licKey = PbxSettings::getValueByKey('PBXLicense');
-            if (empty($licKey)) {
-                return;
+            if (!empty($licKey)) {
+                $regInfo = $lic->getLicenseInfo($licKey);
+                if ($regInfo instanceof SimpleXMLElement) {
+                    file_put_contents(self::LIC_FILE_PATH, $regInfo);
+                }
             }
-            $regInfo = $lic->getLicenseInfo($licKey);
-            if ($regInfo instanceof SimpleXMLElement) {
-                file_put_contents('/tmp/licenseInfo', json_encode($regInfo->attributes()));
-            }
-            $managedCache->set($cacheKey, time(), 86400); // Check every day
+            $managedCache->set(self::CACHE_KEY_LICENSE_INFO, time(), 86400); // Check every day
         }
     }
 }

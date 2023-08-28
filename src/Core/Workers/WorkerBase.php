@@ -19,10 +19,11 @@
 
 namespace MikoPBX\Core\Workers;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
-use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Text;
 use Throwable;
@@ -125,7 +126,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     /**
      * Starts the worker.
      *
-     * @param array $argv The command-line arguments.
+     * @param array $argv The command-line arguments passed to the worker.
      * @param bool $setProcName Flag to set the process name. Default is true.
      *
      * @return void
@@ -150,9 +151,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
                 Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
             } catch (Throwable $e) {
                 // Handle exceptions, log error messages, and pause execution
-                global $errorLogger;
-                $errorLogger->captureException($e);
-                Util::sysLogMsg("{$workerClassname}_EXCEPTION", $e->getMessage(), LOG_ERR);
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
 
                 // Pause execution for 1 second
                 sleep(1);
@@ -204,17 +203,22 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function pingCallBack(BeanstalkClient $message): void
     {
+        Util::sysLogMsg(
+            static::class,
+            "pingCallBack on ".__CLASS__." with message: ".json_encode($message->getBody()),
+            LOG_DEBUG
+        );
         $message->reply(json_encode($message->getBody() . ':pong'));
     }
 
     /**
      * Replies to a ping request from the worker.
      *
-     * @param $parameters The parameters of the request.
+     * @param array $parameters The parameters of the request.
      *
      * @return bool True if the ping request was processed, false otherwise.
      */
-    public function replyOnPingRequest($parameters): bool
+    public function replyOnPingRequest(array $parameters): bool
     {
         $pingTube = $this->makePingTubeName(static::class);
         if ($pingTube === $parameters['UserEvent']) {

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use Phalcon\Di\Injectable;
 use Pheanstalk\Contract\PheanstalkInterface;
 use Pheanstalk\Job;
@@ -35,6 +36,8 @@ use Throwable;
 class BeanstalkClient extends Injectable
 {
     public const INBOX_PREFIX = 'INBOX_';
+
+    public const QUEUE_ERROR = 'queue_error';
 
     /** @var Pheanstalk */
     private Pheanstalk $queue;
@@ -75,6 +78,7 @@ class BeanstalkClient extends Injectable
         try {
             $this->queue->useTube($this->tube);
         }catch (Throwable $e){
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $this->connected = false;
             return;
         }
@@ -135,12 +139,15 @@ class BeanstalkClient extends Injectable
             if ($job !== null) {
                 $this->message = $job->getData();
                 $this->queue->delete($job);
+            } else {
+                $this->message = '{"'.self::QUEUE_ERROR.'":"Worker did not answer within timeout '.$timeout.' sec"}';
             }
-        } catch (Throwable $exception) {
-            Util::sysLogMsg(__METHOD__, $exception->getMessage(), LOG_ERR);
+        } catch (Throwable $e) {
             if(isset($job)){
                 $this->buryJob($job);
             }
+            $prettyMessage = CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            $this->message = '{"'.self::QUEUE_ERROR.'":"Exception on '.__METHOD__.' with message: '.$prettyMessage.'"}';
         }
         $this->queue->ignore($inbox_tube);
 
@@ -232,8 +239,8 @@ class BeanstalkClient extends Injectable
                         $deletedJobInfo[] = "{$id} from {$tube}";
                     }
                 }
-            } catch (Throwable $exception) {
-                Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
+            } catch (Throwable $e) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
             }
         }
         if (count($deletedJobInfo) > 0) {
@@ -252,8 +259,8 @@ class BeanstalkClient extends Injectable
         $start         = microtime(true);
         try {
             $job = $this->queue->reserveWithTimeout((int)$timeout);
-        } catch (Throwable $exception) {
-            Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
+        } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
 
         if ( ! isset($job)) {
@@ -299,7 +306,7 @@ class BeanstalkClient extends Injectable
             } catch (Throwable $e) {
                 // Marks the job as terminally failed and no workers will restart it.
                 $this->buryJob($job);
-                Util::sysLogMsg(__METHOD__ . '_EXCEPTION', $e->getMessage(), LOG_ERR);
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
             }
         }
     }
@@ -317,7 +324,7 @@ class BeanstalkClient extends Injectable
         try {
             $this->queue->bury($job);
         } catch (Throwable $e) {
-            Util::sysLogMsg(__METHOD__ . '_EXCEPTION', $e->getMessage(), LOG_ERR);
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
     }
 
