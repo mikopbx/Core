@@ -108,10 +108,6 @@ const extension = {
                     type: 'empty',
                     prompt: globalTranslate.ex_ValidateUsernameEmpty,
                 },
-                {
-                    type: 'specialCharactersExist',
-                    prompt: globalTranslate.ex_ValidateUsernameSpecialCharacters
-                }
             ],
         },
         sip_secret: {
@@ -465,6 +461,17 @@ const extension = {
         const result = settings;
         result.data = extension.$formObj.form('get values');
         result.data.mobile_number = extension.$mobile_number.inputmask('unmaskedvalue');
+
+        extension.$formObj.find('.checkbox').each((index, obj) => {
+            const input = $(obj).find('input');
+            const id = input.attr('id');
+            if ($(obj).checkbox('is checked')) {
+                result.data[id]='1';
+            } else {
+                result.data[id]='0';
+            }
+        });
+
         return result;
     },
     /**
@@ -472,18 +479,24 @@ const extension = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
+        if (extension.$formObj.form('get value','id') !== response.data.id){
+            window.location=`${globalRootUrl}extensions/modify/${response.data.id}`
+        }
+
         // Store the current extension number as the default number
         extension.defaultNumber = extension.$number.val();
 
         // Update the phone representation with the new default number
         Extensions.updatePhoneRepresent(extension.defaultNumber);
+
+        Form.initialize();
     },
     /**
      * Initialize the form with custom settings
      */
     initializeForm() {
         Form.$formObj = extension.$formObj;
-        Form.url = `${globalRootUrl}extensions/save`; // Form submission URL
+        Form.url = `${Config.pbxUrl}/pbxcore/api/extensions/saveRecord`; // Form submission URL
         Form.validateRules = extension.validateRules; // Form validation rules
         Form.cbBeforeSendForm = extension.cbBeforeSendForm; // Callback before form is sent
         Form.cbAfterSendForm = extension.cbAfterSendForm; // Callback after form is sent

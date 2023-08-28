@@ -94,66 +94,35 @@ const extensionsIndex = {
             console.error('Trigger:', e.trigger);
         });
 
-        // Setup checkbox functionality in the extension row.
-        $('.extension-row .checkbox')
-            .checkbox({
-                onChecked() {
-                    const number = $(this).attr('data-value');
-                    $.api({
-                        url: `${globalRootUrl}extensions/enable/${number}`,
-                        on: 'now',
-                        onSuccess(response) {
-                            if (response.success) {
-                                $(`#${number} .disability`).removeClass('disabled');
-                            }
-                        },
-                    });
-                },
-                onUnchecked() {
-                    const number = $(this).attr('data-value');
-                    $.api({
-                        url: `${globalRootUrl}extensions/disable/${number}`,
-                        on: 'now',
-                        onSuccess(response) {
-                            if (response.success) {
-                                $(`#${number} .disability`).addClass('disabled');
-                            }
-                        },
-                    });
-                },
-            });
-
         // Set up delete functionality on delete button click.
         $('body').on('click', 'a.delete', (e) => {
             e.preventDefault();
+
+            // Get the extension ID from the closest table row.
             const extensionId = $(e.target).closest('tr').attr('id');
-            extensionsIndex.deleteExtension(extensionId);
+
+            // Remove any previous AJAX messages.
+            $('.message.ajax').remove();
+
+            // Call the PbxApi method to delete the extension record.
+            PbxApi.ExtensionsDeleteRecord(extensionId, extensionsIndex.cbAfterDeleteRecord);
         });
     },
 
     /**
-     * Deletes an extension with the given ID.
-     * @param {string} extensionId - The ID of the extension to delete.
+     * Callback function executed after deleting a record.
+     * @param {Object} response - The response object from the API.
      */
-    deleteExtension(extensionId) {
-        $('.message.ajax').remove();
-        $.api({
-            url: `${globalRootUrl}extensions/delete/${extensionId}`,
-            on: 'now',
-            successTest(response) {
-                // test whether a JSON response is valid
-                return response !== undefined
-                    && Object.keys(response).length > 0;
-            },
-            onSuccess(response) {
-                if (response.success === true) {
-                    extensionsIndex.$extensionsList.find(`tr[id=${extensionId}]`).remove();
-                    Extensions.cbOnDataChanged();
-                } else {
-                    UserMessage.showError(response.message.error, globalTranslate.ex_ImpossibleToDeleteExtension);
-                }
-            },
-        });
+    cbAfterDeleteRecord(response){
+        if (response.result === true) {
+            // Remove the deleted extension's table row.
+            extensionsIndex.$extensionsList.find(`tr[id=${response.data.id}]`).remove();
+            // Call the callback function for data change.
+            Extensions.cbOnDataChanged();
+        } else {
+            // Show an error message if deletion was not successful.
+            UserMessage.showError(response.messages.error, globalTranslate.ex_ImpossibleToDeleteExtension);
+        }
     },
 
     /**

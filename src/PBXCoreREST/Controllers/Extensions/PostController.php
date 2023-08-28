@@ -20,8 +20,8 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Extensions;
 
 
-use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\ExtensionsManagementProcessor;
 
 /**
  * Handles the POST requests for extensions data.
@@ -44,82 +44,17 @@ class PostController extends BaseController
      * Returns CallerID names for the numbers list.
      * @Post("/getPhonesRepresent")
      *
-     * Returns CallerID names for the number.
-     * @Post("/getPhoneRepresent")
+     * Saves a record with associated entities.
+     * @Post("/saveRecord")
+     *
+     * Deletes the extension record with its dependent tables.
+     * @Post("/deleteRecord")
      *
      * @return void
      */
     public function callAction(string $actionName): void
     {
-        switch ($actionName) {
-            case 'getPhonesRepresent':
-                $numbers = $this->request->getPost('numbers');
-                $this->getPhonesRepresent($numbers);
-                break;
-            case 'getPhoneRepresent':
-                $number = $this->request->getPost('number');
-                $this->getPhonesRepresent([$number]);
-                break;
-            default:
-        }
-    }
-
-    /**
-     * Retrieves the view for the phone numbers list via AJAX request.
-     *
-     * @param array $numbers
-     * @return void
-     */
-    private function getPhonesRepresent(array $numbers): void
-    {
-        $result = [];
-        foreach ($numbers as $number) {
-            $result[$number] = [
-                'number' => $number,
-                'represent' => $this->getPhoneRepresent($number),
-            ];
-        }
-        $response =  [
-            'result'    => true,
-            'data'      => $result,
-            'messages'  => [],
-            'function'  => __METHOD__,
-            'processor' => __CLASS__,
-            'pid'       => getmypid(),
-        ];
-        $this->response->setPayloadSuccess($response);
-    }
-
-    /**
-     * Retrieves the view for the phone number via AJAX request.
-     *
-     * @return void
-     */
-    private function getPhoneRepresent(string $phoneNumber): string
-    {
-        $response = $phoneNumber;
-
-        if (strlen($phoneNumber) > 10) {
-            $seekNumber = substr($phoneNumber, -9);
-            $parameters = [
-                'conditions' => 'number LIKE :SearchPhrase1:',
-                'bind' => [
-                    'SearchPhrase1' => "%{$seekNumber}",
-                ],
-            ];
-        } else {
-            $parameters = [
-                'conditions' => 'number = :SearchPhrase1:',
-                'bind' => [
-                    'SearchPhrase1' => $phoneNumber,
-                ],
-            ];
-        }
-        $result = Extensions::findFirst($parameters);
-        if ($result !== null) {
-            $response = $result->getRepresent();
-        }
-
-        return $response;
+        $data = $this->request->getPost();
+        $this->sendRequestToBackendWorker(ExtensionsManagementProcessor::class, $actionName, $data);
     }
 }

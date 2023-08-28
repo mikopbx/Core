@@ -35,6 +35,7 @@ use MikoPBX\AdminCabinet\Controllers\OutboundRoutesController;
 use MikoPBX\AdminCabinet\Controllers\OutOffWorkTimeController;
 use MikoPBX\AdminCabinet\Controllers\ProvidersController;
 use MikoPBX\AdminCabinet\Controllers\SoundFilesController;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
@@ -53,6 +54,7 @@ use Phalcon\Mvc\Model\Relation;
 use Phalcon\Mvc\Model\Resultset;
 use Phalcon\Mvc\Model\Resultset\Simple;
 use Phalcon\Mvc\Model\ResultsetInterface;
+use Phalcon\Security\Random;
 use Phalcon\Text;
 use Phalcon\Url;
 
@@ -782,7 +784,7 @@ class ModelsBase extends Model
         $result = true;
         $relations = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
         foreach ($relations as $relation) {
-            $foreignKey = $relation->getOption('foreignKey');
+            $foreignKey = $relation->getOption('foreignKey')??[];
             if (!array_key_exists('action', $foreignKey)) {
                 continue;
             }
@@ -874,5 +876,23 @@ class ModelsBase extends Model
         $metaData = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
 
         return $metaData->getIdentityField($this);
+    }
+
+    /**
+     * Generates a random unique id.
+     *
+     * @return string The generated unique id.
+     */
+    public static function generateUniqueID(string $alias=''):string
+    {
+        $random = new Random();
+        $hashLength = 4;
+        try {
+            $hash = $random->hex($hashLength);
+        } catch (\Throwable $exception) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            $hash = md5(microtime());
+        }
+        return $alias . strtoupper($hash);
     }
 }

@@ -136,6 +136,31 @@ class Extensions extends ModelsBase
     }
 
     /**
+     * Get the next internal number from the database following the last entered internal number.
+     *
+     * @return string The next internal number.
+     */
+    public static function getNextInternalNumber(): string
+    {
+        $parameters = [
+            'conditions' => 'type = "' . Extensions::TYPE_SIP . '"',
+            'column' => 'number',
+        ];
+        // Get the maximum internal number from the database
+        $query = Extensions::maximum($parameters);
+        if ($query === null) {
+            // If there are no existing internal numbers, start from 200
+            $query = 200;
+        }
+        $result = (int)$query + 1;
+        $extensionsLength = PbxSettings::getValueByKey('PBXInternalExtensionLength');
+        $maxExtension = (10 ** $extensionsLength) - 1;
+
+        // Check if the next internal number exceeds the maximum allowed length
+        return ($result <= $maxExtension) ? $result : '';
+    }
+
+    /**
      * Initialize the model.
      */
     public function initialize(): void
@@ -520,5 +545,14 @@ class Extensions extends ModelsBase
         return $result;
     }
 
+    /**
+     * Sanitizes the caller ID by removing any characters that are not alphanumeric or spaces.
+     * This function is automatically triggered before saving the call model.
+     */
+    public function beforeSave()
+    {
+        // Sanitizes the caller ID by removing any characters that are not alphanumeric or spaces.
+        $this->callerid = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $this->callerid);
+    }
 
 }

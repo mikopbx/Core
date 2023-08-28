@@ -26,6 +26,8 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 /**
  * Class ExtensionForwardingRights
  *
+ * @method static mixed findFirstByExtension(string|null $number)
+ *
  * @package MikoPBX\Common\Models
  */
 class ExtensionForwardingRights extends ModelsBase
@@ -38,7 +40,7 @@ class ExtensionForwardingRights extends ModelsBase
     public $id;
 
     /**
-     *  Extension number
+     *  Link to SIP extension number
      *
      * @Column(type="string", nullable=true)
      */

@@ -8,7 +8,6 @@
 
 {{ form.render('sip_type') }}
 {{ form.render('sip_uniqid') }}
-{{ form.render('sip_disabled') }}
 
 {{ form.render('mobile_uniqid') }}
 
@@ -37,9 +36,7 @@
                     <i class="search icon"></i>
                     {{ form.render('number') }}
                 </div>
-                <div class="ui top pointing red label hidden" id="number-error">
-                    {{ t._("ex_ThisNumberIsNotFree") }}
-                </div>
+                <div class="ui top pointing red label hidden" id="number-error"></div>
             </div>
             <div class="field">
                 <label>{{ t._('ex_MobileNumber') }}</label>
@@ -116,7 +113,7 @@
             <div class="ten wide field">
                 <div class="ui toggle checkbox">
                     {{ form.render('sip_enableRecording') }}
-                    <label>{{ t._('ex_enableRecording') }}</label>
+                    <label for="sip_enableRecording">{{ t._('ex_enableRecording') }}</label>
                 </div>
             </div>
             <h3 class="ui dividing header ">{{ t._("ex_SipSettings") }}</h3>

@@ -280,7 +280,9 @@ const Extensions = {
                     $(`#${cssClassName}-error`).addClass('hidden');
                 } else {
                     $(`.ui.input.${cssClassName}`).parent().addClass('error');
-                    $(`#${cssClassName}-error`).removeClass('hidden');
+                    $(`#${cssClassName}-error`).removeClass('hidden').html(
+                        `${globalTranslate.ex_ThisNumberIsNotFree}: ${response.data['represent']}`
+                    );
                 }
             },
         });

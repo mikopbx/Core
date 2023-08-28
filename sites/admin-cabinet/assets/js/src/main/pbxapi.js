@@ -100,7 +100,7 @@ const PbxApi = {
     extensionsGetPhoneRepresent: `${Config.pbxUrl}/pbxcore/api/extensions/getPhoneRepresent`, // Returns CallerID names for the number.
     extensionsGetForSelect: `${Config.pbxUrl}/pbxcore/api/extensions/getForSelect?type={type}`, // Retrieves the extensions list limited by type parameter.
     extensionsAvailable: `${Config.pbxUrl}/pbxcore/api/extensions/available?number={number}`, // Checks the number uniqueness.
-
+    extensionsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/extensions/deleteRecord`, // Deletes the extension record with its dependent tables.
 
     /**
      * Tries to parse a JSON string.
@@ -1484,6 +1484,31 @@ const PbxApi = {
             on: 'now',
             method: 'POST',
             data: {numbers},
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback(false);
+            },
+        });
+    },
+
+    /**
+     * Deletes the extension record with its dependent tables.
+     *
+     * @param {string} id - id of deleting extensions record.
+     * @param {function} callback - The callback function to handle the API response.
+     */
+    ExtensionsDeleteRecord(id, callback) {
+        $.api({
+            url: PbxApi.extensionsDeleteRecord,
+            on: 'now',
+            method: 'POST',
+            data: {id},
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response);

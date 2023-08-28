@@ -27,6 +27,7 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  * Class ExternalPhones
  *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
+ * @method static mixed findFirstByExtension(string|null $number)
  *
  * @package MikoPBX\Common\Models
  */
@@ -40,7 +41,7 @@ class ExternalPhones extends ModelsBase
     public $id;
 
     /**
-     * Extension number
+     * Extension number with type External
      *
      * @Column(type="string", nullable=true)
      */
@@ -124,5 +125,18 @@ class ExternalPhones extends ModelsBase
         );
 
         return $this->validate($validation);
+    }
+
+    /**
+     * Generates a random unique id.
+     *
+     * @return string The generated unique id.
+     */
+    public static function generateUniqueID($alias=''):string
+    {
+        if (empty($alias)){
+            $alias = Extensions::TYPE_EXTERNAL.'-';
+        }
+        return parent::generateUniqueID($alias);
     }
 }

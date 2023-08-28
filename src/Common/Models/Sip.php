@@ -19,7 +19,9 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Security\Random;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
@@ -301,7 +303,7 @@ class Sip extends ModelsBase
      *
      * @param string $text The manual attributes text to be encoded and set.
      */
-    public function setManualAttributes($text): void
+    public function setManualAttributes(string $text): void
     {
         $this->manualattributes = base64_encode($text);
     }
@@ -324,6 +326,38 @@ class Sip extends ModelsBase
         );
 
         return $this->validate($validation);
+    }
+
+    /**
+     * Generates a random SIP password.
+     *
+     * @return string The generated SIP password.
+     */
+    public static function generateSipPassword(): string
+    {
+        $random = new Random();
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $passwordLength = 8;
+        try {
+            $password = $random->base64Safe($passwordLength, $characters);
+        } catch (\Throwable $exception) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            $password = md5(time());
+        }
+        return $password;
+    }
+
+    /**
+     * Generates a random unique id.
+     *
+     * @return string The generated unique id.
+     */
+    public static function generateUniqueID($alias=''):string
+    {
+        if (empty($alias)){
+            $alias = Extensions::TYPE_SIP.'-PHONE-';
+        }
+        return parent::generateUniqueID($alias);
     }
 
 }

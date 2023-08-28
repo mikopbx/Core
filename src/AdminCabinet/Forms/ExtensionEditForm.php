@@ -19,10 +19,10 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Models\ExtensionForwardingRights;
-use MikoPBX\Common\Models\ExternalPhones;
+use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\NetworkFilters;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
-use MikoPBX\Common\Models\Users;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
@@ -49,10 +49,12 @@ class ExtensionEditForm extends BaseForm
         $this->add(new Hidden('id'));
 
         // Number
+        // Limit the length of internal extension based on settings
+        $extensionsLength = PbxSettings::getValueByKey('PBXInternalExtensionLength');
         $this->add(
             new Text(
                 'number', [
-                    "data-inputmask" => "'mask': '" . $options["internalextension_mask"] . "'",
+                    "data-inputmask" => "'mask': '9{2,$extensionsLength}'",
                 ]
             )
         );
@@ -68,7 +70,6 @@ class ExtensionEditForm extends BaseForm
         if ($entity->show_in_phonebook) {
             $cheskarr = ['checked' => 'checked', 'value' => null];
         }
-
         $this->add(new Check('show_in_phonebook', $cheskarr));
 
         // Public_access
@@ -76,58 +77,45 @@ class ExtensionEditForm extends BaseForm
         if ($entity->public_access) {
             $cheskarr = ['checked' => 'checked', 'value' => null];
         }
-
         $this->add(new Check('public_access', $cheskarr));
 
-        // USER
-        $user = $entity->Users ?? new Users();
-        // ID
-        $this->add(new Hidden('user_id', ["value" => $user->id]));
+        // USER ID
+        $this->add(new Hidden('user_id', ["value" => $entity->user_id]));
 
-        // Username
-        $this->add(new Text('user_username', ["value" => $user->username, 'autocomplete' => 'off']));
+        // USER Username
+        $this->add(new Text('user_username', ["value" => $entity->user_username, 'autocomplete' => 'off']));
 
-        // Email
+        // USER Email
         $this->add(
             new Text(
-                'user_email', ["value" => $user->email, 'autocomplete' => 'off']
+                'user_email', ["value" => $entity->user_email, 'autocomplete' => 'off']
             )
         );
 
-        // Picture
-        $this->add(new Hidden('user_avatar', ["value" => $user->avatar]));
+        // USER Picture
+        $this->add(new Hidden('user_avatar', ["value" => $entity->user_avatar]));
 
-        // SIP
-        $sip = $entity->Sip ?? new Sip();
-        $this->add(new Hidden('sip_id', ["value" => $sip->id]));
+        // SIP Uniqid
+        $this->add(new Hidden('sip_uniqid', ["value" => $entity->sip_uniqid]));
 
-        // Disabled
-        $this->add(new Hidden('sip_disabled', ["value" => $sip->disabled]));
+        // SIP extension
+        $this->add(new Hidden('sip_extension', ["value" => $entity->number]));
 
-        // Extension
-        $this->add(new Hidden('sip_extension', ["value" => $sip->extension]));
+        // SIP Type
+        $this->add(new Hidden('sip_type', ["value" => $entity->type]));
 
-        // ID
-        $this->add(new Hidden('sip_id', ["value" => $sip->id]));
-
-        // Uniqid
-        $this->add(new Hidden('sip_uniqid', ["value" => $sip->uniqid]));
-
-        // Type
-        $this->add(new Hidden('sip_type', ["value" => $sip->type]));
-
-        // Secret
+        // SIP Secret
         $this->add(
             new Text(
                 'sip_secret', [
-                    "value" => $sip->secret,
+                    "value" => $entity->sip_secret,
                     "class" => "confidential-field",
                     'autocomplete' => 'off'
                 ]
             )
         );
 
-        // Dtmfmode
+        // SIP Dtmfmode
         $arrDTMFType = [
             'auto' => $this->translation->_('auto'),
             'inband' => $this->translation->_('inband'),
@@ -143,13 +131,20 @@ class ExtensionEditForm extends BaseForm
                     'name',
                 ],
                 'useEmpty' => false,
-                'value' => $sip->dtmfmode,
+                'value' => $entity->sip_dtmfmode,
                 'class' => 'ui selection dropdown',
             ]
         );
         $this->add($dtmfmode);
 
-        // Transport
+        // SIP EnableRecording
+        $checkArr = ['value' => null];
+        if ($entity->sip_enableRecording !== '0') {
+            $checkArr = ['checked' => 'checked', 'value' => null];
+        }
+        $this->add(new Check('sip_enableRecording', $checkArr));
+
+        // SIP Transport
         $arrTransport = [
             Sip::TRANSPORT_UDP => Sip::TRANSPORT_UDP,
             Sip::TRANSPORT_TCP => Sip::TRANSPORT_TCP,
@@ -165,77 +160,56 @@ class ExtensionEditForm extends BaseForm
                 'emptyText' => 'udp, tcp',
                 'emptyValue' => ' ',
                 'useEmpty' => true,
-                'value' => empty($sip->transport) ? ' ' : $sip->transport,
+                'value' => $entity->sip_transport,
                 'class' => 'ui selection dropdown',
             ]
         );
         $this->add($transport);
 
-        // Networkfilterid
+        // SIP Networkfilterid
         $networkfilterid = new Select(
-            'sip_networkfilterid', $options['network_filters'], [
+            'sip_networkfilterid', $this->prepareNetworkFilters(), [
                 'using' => [
                     'id',
                     'name',
                 ],
                 'useEmpty' => false,
-                'value' => $sip->networkfilterid,
+                'value' => $entity->sip_networkfilterid,
                 'class' => 'ui selection dropdown network-filter-select',
             ]
         );
         $this->add($networkfilterid);
 
-        // Qualify
-        $cheskarr = ['value' => null];
-        if ($sip->qualify) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-        $this->add(new Check('qualify', $cheskarr));
-
-        // Qualifyfreq
-        $this->add(new Numeric('qualifyfreq', ["value" => $sip->qualifyfreq, 'autocomplete' => 'off']));
-
-        // Manualattributes
-        $this->addTextArea('sip_manualattributes', $sip->getManualAttributes(), 80);
-
-        // Description
-        $this->add(new Text('sip_description', ["value" => $sip->description, 'autocomplete' => 'off']));
+        // SIP Manualattributes
+        $this->addTextArea('sip_manualattributes', base64_decode($entity->sip_manualattributes), 80);
 
         // EXTERNAL Extension
-        $this->add(new Text('mobile_number', ["value" => $options['external_extension']->number, 'autocomplete' => 'off']));
+        $this->add(new Text('mobile_number', ["value" => $entity->mobile_number, 'autocomplete' => 'off']));
 
-        // Uniqid
-        $externalPhones = $options['external_extension']->ExternalPhones ?? new ExternalPhones();
-        $this->add(new Hidden('mobile_uniqid', ["value" => $externalPhones->uniqid]));
+        // EXTERNAL Uniqid
+        $this->add(new Hidden('mobile_uniqid', ["value" => $entity->mobile_uniqid]));
 
-        // Disabled
-        $this->add(
-            new Hidden(
-                'mobile_disabled',
-                ["value" => $externalPhones->disabled]
-            )
-        );
-        // Dialstring
+        // EXTERNAL Dialstring
         $this->add(
             new Text(
                 'mobile_dialstring',
-                ["value" => $externalPhones->dialstring, 'autocomplete' => 'off']
+                ["value" => $entity->mobile_dialstring, 'autocomplete' => 'off']
             )
         );
 
+        // Routing tab
+        $forwardingExtensions = $this->prepareForwardingExtensions($entity);
 
-        // Routing
         // Forwarding
-        $extensionForwardingRights = $entity->ExtensionForwardingRights ?? new ExtensionForwardingRights();
         $this->add(
             new Select(
-                'fwd_forwarding', $options['forwarding_extensions'], [
+                'fwd_forwarding', $forwardingExtensions, [
                     'using' => [
                         'id',
                         'name',
                     ],
                     'useEmpty' => true,
-                    'value' => $extensionForwardingRights->forwarding,
+                    'value' => $entity->fwd_forwarding,
                     'class' => 'ui selection dropdown search forwarding-select',
                 ]
             )
@@ -244,33 +218,35 @@ class ExtensionEditForm extends BaseForm
         // Forwardingonbusy
         $this->add(
             new Select(
-                'fwd_forwardingonbusy', $options['forwarding_extensions'], [
+                'fwd_forwardingonbusy', $forwardingExtensions, [
                     'using' => [
                         'id',
                         'name',
                     ],
                     'useEmpty' => true,
-                    'value' => $extensionForwardingRights->forwardingonbusy,
+                    'value' => $entity->fwd_forwardingonbusy,
                     'class' => 'ui selection dropdown search forwarding-select',
                 ]
             )
         );
+
         // Forwardingonunavailable
         $this->add(
             new Select(
-                'fwd_forwardingonunavailable', $options['forwarding_extensions'], [
+                'fwd_forwardingonunavailable', $forwardingExtensions, [
                     'using' => [
                         'id',
                         'name',
                     ],
                     'useEmpty' => true,
-                    'value' => $extensionForwardingRights->forwardingonunavailable,
+                    'value' => $entity->fwd_forwardingonunavailable,
                     'class' => 'ui selection dropdown search forwarding-select',
                 ]
             )
         );
+
         // RingLength
-        $ringDuration = (int)$extensionForwardingRights->ringlength;
+        $ringDuration = (int)$entity->fwd_ringlength;
         $this->add(
             new Numeric(
                 'fwd_ringlength', [
@@ -282,11 +258,49 @@ class ExtensionEditForm extends BaseForm
                 ]
             )
         );
+    }
 
-        $checkArr = ['value' => null];
-        if ($sip->enableRecording !== '0') {
-            $checkArr = ['checked' => 'checked', 'value' => null];
+    /**
+     * Prepare an array of forwarding extensions based on the provided extension.
+     *
+     * @param object $entity extensions request structure.
+     * @return array An array of forwarding extensions with their numbers and representations.
+     */
+    private function prepareForwardingExtensions(object $entity): array
+    {
+        $forwardingExtensions = [];
+        $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
+
+        $parameters = [
+            'conditions' => 'number IN ({ids:array})',
+            'bind' => [
+                'ids' => [
+                    $entity->fwd_forwarding,
+                    $entity->fwd_forwardingonbusy,
+                    $entity->fwd_forwardingonunavailable
+                ],
+            ],
+        ];
+        $extensions = Extensions::find($parameters);
+        foreach ($extensions as $record) {
+            $forwardingExtensions[$record->number] = $record->getRepresent();
         }
-        $this->add(new Check('sip_enableRecording', $checkArr));
+        return $forwardingExtensions;
+    }
+
+    /**
+     * Get an array of prepared network filters for SIP type.
+     *
+     * @return array An array of network filters with their IDs and representations.
+     */
+    private function prepareNetworkFilters(): array
+    {
+        $arrNetworkFilters = [];
+        $networkFilters = NetworkFilters::getAllowedFiltersForType(['SIP']);
+        $arrNetworkFilters['none'] = $this->translation->_('ex_NoNetworkFilter');
+        foreach ($networkFilters as $filter) {
+            $arrNetworkFilters[$filter->id] = $filter->getRepresent();
+        }
+        return $arrNetworkFilters;
     }
 }
