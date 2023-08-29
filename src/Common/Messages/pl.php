@@ -1190,4 +1190,5 @@ Można go aktywować raz, po czym kupon zostaje zrealizowany.',
     'ext_ErrorOnModuleBeforeDisable' => 'Błędy w sprawdzaniu możliwości wyłączenia modułu',
     'ext_ErrorOnInstallFiles' => 'Błędy podczas kopiowania plików modułów',
     'mm_Integrations' => 'Integracje',
+    'ext_ModuleLicenseProblem' => 'Problem z licencją modułu rozszerzeń',
 ];

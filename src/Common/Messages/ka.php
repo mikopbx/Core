@@ -1190,4 +1190,5 @@ return [
     'ext_ErrorOnModuleBeforeEnable' => 'შეცდომები მოდულის ჩართვის შესაძლებლობის შემოწმებისას',
     'ext_ErrorOnModuleBeforeDisable' => 'შეცდომები მოდულის გამორთვის შესაძლებლობის შემოწმებისას',
     'mm_Integrations' => 'ინტეგრაციები',
+    'ext_ModuleLicenseProblem' => 'გაფართოების მოდულის ლიცენზიის პრობლემა',
 ];

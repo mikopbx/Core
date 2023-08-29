@@ -1207,4 +1207,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'ext_ErrorOnEnableFirewallSettings' => 'Modül için güvenlik duvarı ayarları etkinleştirilirken hata oluştu',
     'ext_ErrorOnDisableFirewallSettings' => 'Modül için güvenlik duvarı ayarları dışlama hatası',
     'mm_Integrations' => 'Entegrasyonlar',
+    'ext_ModuleLicenseProblem' => 'Genişletme modülü lisans sorunu',
 ];

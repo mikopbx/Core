@@ -1240,4 +1240,5 @@ Het kan eenmalig worden geactiveerd, waarna de coupon wordt ingewisseld.',
     'ext_ErrorOnModuleBeforeEnable' => 'Fouten bij het controleren van de mogelijkheid om de module in te schakelen',
     'ext_ErrorOnModuleBeforeDisable' => 'Fouten bij het controleren van de mogelijkheid om de module uit te schakelen',
     'mm_Integrations' => 'Integraties',
+    'ext_ModuleLicenseProblem' => 'Licentieprobleem voor uitbreidingsmodule',
 ];

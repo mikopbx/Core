@@ -1190,4 +1190,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ext_ErrorOnModuleBeforeDisable' => 'Erros na verificação da capacidade de desativar o módulo',
     'ext_ErrorOnDecodeModuleJson' => 'Erro ao analisar o arquivo de configuração do módulo %filename%',
     'mm_Integrations' => 'Integrações',
+    'ext_ModuleLicenseProblem' => 'Problema de licença do módulo de expansão',
 ];

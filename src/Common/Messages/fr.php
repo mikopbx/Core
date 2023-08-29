@@ -1190,4 +1190,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ext_ErrorOnModuleBeforeEnable' => 'Erreurs lors de la vérification de la possibilité d\'activer le module',
     'ext_ErrorOnModuleBeforeDisable' => 'Erreurs lors de la vérification de la possibilité de désactiver le module',
     'mm_Integrations' => 'Intégrations',
+    'ext_ModuleLicenseProblem' => 'Problème de licence du module d\'extension',
 ];

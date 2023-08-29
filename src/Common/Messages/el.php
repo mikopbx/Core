@@ -1190,4 +1190,5 @@ return [
     'ext_ErrorOnModuleBeforeEnable' => 'Σφάλματα κατά τον έλεγχο της δυνατότητας ενεργοποίησης της μονάδας',
     'ext_ErrorOnModuleBeforeDisable' => 'Σφάλματα στον έλεγχο της δυνατότητας απενεργοποίησης της μονάδας',
     'mm_Integrations' => 'Ενσωματώσεις',
+    'ext_ModuleLicenseProblem' => 'Πρόβλημα άδειας χρήσης μονάδας επέκτασης',
 ];

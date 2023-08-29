@@ -1190,4 +1190,5 @@ return [
     'ext_ErrorOnModuleBeforeEnable' => 'Помилки перевірки можливості увімкнення модуля',
     'ext_ErrorOnModuleBeforeDisable' => 'Помилки перевірки можливості вимкнення модуля',
     'mm_Integrations' => 'Інтеграція',
+    'ext_ModuleLicenseProblem' => 'Проблема з ліцензією на модуль розширення',
 ];

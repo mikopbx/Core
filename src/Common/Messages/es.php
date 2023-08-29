@@ -1190,4 +1190,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.',
     'ext_ErrorOnModuleBeforeEnable' => 'Errores al verificar la capacidad de habilitar el módulo',
     'ext_ErrorOnModuleBeforeDisable' => 'Errores al verificar la capacidad de deshabilitar el módulo',
     'mm_Integrations' => 'integraciones',
+    'ext_ModuleLicenseProblem' => 'Problema de licencia del módulo de expansión',
 ];
