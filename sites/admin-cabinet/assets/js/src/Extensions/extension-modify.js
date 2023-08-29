@@ -405,7 +405,7 @@ const extension = {
         // Check if forwarding was set to the mobile number
         if (extension.$formObj.form('get value', 'fwd_forwarding') === extension.defaultMobileNumber) {
             // If so, clear the 'fwd_ringlength' field and set 'fwd_forwarding' to -1
-            extension.$formObj.form('set value', 'fwd_ringlength', '');
+            extension.$formObj.form('set value', 'fwd_ringlength', 0);
             extension.$fwd_forwarding.dropdown('set text', '-').dropdown('set value', -1);
             extension.$formObj.form('set value', 'fwd_forwarding', -1);
         }
@@ -518,7 +518,7 @@ $.fn.form.settings.rules.extensionRule = () => {
     // If forwarding number is set and ring length is zero or not set, return false (invalid)
     if (fwdForwarding.length > 0
         && (
-            fwdRingLength === '0'
+            fwdRingLength === 0
             ||
             fwdRingLength === ''
         )) {

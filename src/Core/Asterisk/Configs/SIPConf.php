@@ -590,7 +590,7 @@ class SIPConf extends AsteriskConfigClass
         $db = new AstDB();
         foreach ($this->data_peers as $peer) {
             // Update Asterisk database with routing information.
-            $ringLength = ($peer['ringlength'] === '0') ? '' : trim($peer['ringlength']);
+            $ringLength = ((string)$peer['ringlength'] === '0') ? '' : trim($peer['ringlength']);
             $warError |= !$db->databasePut('FW_TIME', $peer['extension'], $ringLength);
             $warError |= !$db->databasePut('FW', $peer['extension'], trim($peer['forwarding']));
             $warError |= !$db->databasePut('FW_BUSY', $peer['extension'], trim($peer['forwardingonbusy']));

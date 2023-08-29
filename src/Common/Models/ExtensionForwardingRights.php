@@ -72,7 +72,7 @@ class ExtensionForwardingRights extends ModelsBase
      *
      * @Column(type="integer", nullable=true)
      */
-    public ?string $ringlength = '';
+    public ?int $ringlength = 0;
 
     /**
      * Initialize the model.

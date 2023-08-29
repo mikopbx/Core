@@ -23,7 +23,8 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\ExternalPhones;
 use MikoPBX\Common\Models\Sip;
 
-class DataStructure {
+class DataStructure
+{
 
     public ?string $id;
 
@@ -33,30 +34,30 @@ class DataStructure {
     public string $is_general_user_number = '1';
     public string $public_access = '0';
 
-    public string $number='';
+    public string $number = '';
 
-    public ?string $user_id='';
-    public string $user_avatar='';
-    public string $user_username='';
-    public string $user_email='';
-    public string $mobile_uniqid='';
-    public string $mobile_number='';
-    public string $mobile_dialstring='';
-    public ?string $sip_uniqid='';
+    public ?string $user_id = '';
+    public string $user_avatar = '';
+    public string $user_username = '';
+    public string $user_email = '';
+    public string $mobile_uniqid = '';
+    public string $mobile_number = '';
+    public string $mobile_dialstring = '';
+    public ?string $sip_uniqid = '';
 
-    public string $sip_secret='';
+    public string $sip_secret = '';
     public string $sip_type = 'peer';
     public string $sip_qualify = '1';
     public int $sip_qualifyfreq = 60;
-    public string $sip_enableRecording='1';
-    public string $sip_dtmfmode='auto';
+    public string $sip_enableRecording = '1';
+    public string $sip_dtmfmode = 'auto';
     public string $sip_transport = ' ';
     public string $sip_networkfilterid = 'none';
-    public string $sip_manualattributes='';
-    public string $fwd_ringlength='45';
-    public string $fwd_forwarding='';
-    public string $fwd_forwardingonbusy='';
-    public string $fwd_forwardingonunavailable='';
+    public string $sip_manualattributes = '';
+    public int $fwd_ringlength = 45;
+    public string $fwd_forwarding = '';
+    public string $fwd_forwardingonbusy = '';
+    public string $fwd_forwardingonunavailable = '';
 
     /**
      * DataStructure constructor.
@@ -66,7 +67,8 @@ class DataStructure {
      *
      * @param array $data The input data to initialize the DataStructure.
      */
-    public function __construct(array $data) {
+    public function __construct(array $data)
+    {
         foreach ($data as $key => $value) {
             if (!property_exists($this, $key)) {
                 continue;
@@ -75,16 +77,16 @@ class DataStructure {
             $this->$key = $value ?? $this->$key;
         }
 
-        if (empty($this->number)){
+        if (empty($this->number)) {
             $this->number = Extensions::getNextInternalNumber();
         }
-        if (empty($this->sip_uniqid)){
+        if (empty($this->sip_uniqid)) {
             $this->sip_uniqid = Sip::generateUniqueID();
         }
-        if (empty($this->sip_secret)){
+        if (empty($this->sip_secret)) {
             $this->sip_secret = Sip::generateSipPassword();
         }
-        if (empty($this->mobile_uniqid)){
+        if (empty($this->mobile_uniqid)) {
             $this->mobile_uniqid = ExternalPhones::generateUniqueID();
         }
 

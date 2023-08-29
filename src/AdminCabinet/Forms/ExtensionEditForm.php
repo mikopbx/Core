@@ -253,7 +253,7 @@ class ExtensionEditForm extends BaseForm
                     "maxlength" => 2,
                     "style" => "width: 80px;",
                     "defaultValue" => 120,
-                    "value" => ($ringDuration > 0) ? $ringDuration : '',
+                    "value" => ($ringDuration > 0) ? $ringDuration : 0,
                     'autocomplete' => 'off'
                 ]
             )
