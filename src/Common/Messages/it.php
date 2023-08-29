@@ -1190,4 +1190,5 @@ Può essere attivato una volta, dopodiché il coupon viene riscattato.',
     'ext_ErrorOnModuleBeforeEnable' => 'Errori durante il controllo della possibilità di abilitare il modulo',
     'ext_ErrorOnModuleBeforeDisable' => 'Errori nel controllo della possibilità di disabilitare il modulo',
     'mm_Integrations' => 'Integrazioni',
+    'ext_ModuleLicenseProblem' => 'Problema di licenza del modulo di espansione',
 ];

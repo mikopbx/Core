@@ -1190,4 +1190,5 @@ return [
     'ext_ErrorOnModuleBeforeEnable' => '检查启用模块的能力时出错',
     'ext_ErrorOnModuleBeforeDisable' => '检查禁用模块的能力时出错',
     'mm_Integrations' => '集成',
+    'ext_ModuleLicenseProblem' => '扩展模块许可证问题',
 ];

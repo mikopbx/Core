@@ -1190,4 +1190,5 @@ return [
     'ext_ErrorOnModuleBeforeEnable' => 'モジュールを有効にする機能をチェック中にエラーが発生しました',
     'ext_ErrorOnModuleBeforeDisable' => 'モジュールを無効にする機能のチェック中にエラーが発生しました',
     'mm_Integrations' => '統合',
+    'ext_ModuleLicenseProblem' => '拡張モジュールのライセンスの問題',
 ];

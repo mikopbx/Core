@@ -1190,4 +1190,5 @@ Lze jej aktivovat jednou, poté se kupón uplatní.',
     'ext_ErrorOnModuleBeforeEnable' => 'Chyby při kontrole schopnosti aktivovat modul',
     'ext_ErrorOnModuleBeforeDisable' => 'Chyby při kontrole schopnosti deaktivovat modul',
     'mm_Integrations' => 'Integrace',
+    'ext_ModuleLicenseProblem' => 'Problém s licencí rozšiřujícího modulu',
 ];

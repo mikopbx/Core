@@ -1190,4 +1190,5 @@ Den kan aktiveres én gang, hvorefter kuponen bliver indløst.',
     'ext_ErrorOnModuleBeforeEnable' => 'Fejl under kontrol af muligheden for at aktivere modulet',
     'ext_ErrorOnModuleBeforeDisable' => 'Fejl ved kontrol af muligheden for at deaktivere modulet',
     'mm_Integrations' => 'Integrationer',
+    'ext_ModuleLicenseProblem' => 'Udvidelsesmodullicensproblem',
 ];

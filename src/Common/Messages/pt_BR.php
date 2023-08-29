@@ -1189,4 +1189,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ext_ErrorOnDisableFirewallSettings' => 'Erro de exclusão de configurações de firewall para o módulo',
     'ext_ErrorOnModuleBeforeDisable' => 'Erros na verificação da capacidade de desativar o módulo',
     'mm_Integrations' => 'Integrações',
+    'ext_ModuleLicenseProblem' => 'Problema de licença do módulo de expansão',
 ];

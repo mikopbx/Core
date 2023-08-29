@@ -1190,4 +1190,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ext_ErrorOnDisableFirewallSettings' => 'Modul üçün firewall parametrləri istisna xətası',
     'ext_ErrorOnModuleBeforeEnable' => 'Modulu aktivləşdirmək imkanı yoxlanarkən xətalar',
     'mm_Integrations' => 'İnteqrasiyalar',
+    'ext_ModuleLicenseProblem' => 'Genişləndirmə modulu lisenziya problemi',
 ];

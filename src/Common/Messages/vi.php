@@ -1190,4 +1190,5 @@ Nó có thể được kích hoạt một lần, sau đó phiếu giảm giá s�
     'ext_ErrorOnModuleBeforeEnable' => 'Lỗi kiểm tra khả năng kích hoạt mô-đun',
     'ext_ErrorOnModuleBeforeDisable' => 'Lỗi khi kiểm tra khả năng vô hiệu hóa mô-đun',
     'mm_Integrations' => 'tích hợp',
+    'ext_ModuleLicenseProblem' => 'Vấn đề về giấy phép mô-đun mở rộng',
 ];
