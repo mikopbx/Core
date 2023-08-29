@@ -34,6 +34,7 @@ use Throwable;
  */
 class Network extends Injectable
 {
+    public const INTERNET_FLAG_FILE = '/var/etc/internet_flag';
 
     /**
      * Starts the SIP dump process.

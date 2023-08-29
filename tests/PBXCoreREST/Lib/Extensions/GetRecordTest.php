@@ -27,7 +27,7 @@ class GetRecordTest extends AbstractUnitTest
 
     public function testMain()
     {
-        $res = GetRecord::main("195");
+        $res = GetRecord::main("300");
         $this->assertTrue($res->success);
     }
 }

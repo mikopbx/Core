@@ -69,12 +69,32 @@ class DataStructure
      */
     public function __construct(array $data)
     {
-        foreach ($data as $key => $value) {
-            if (!property_exists($this, $key)) {
+        // Use Reflection to get information about the class properties.
+        $reflectionClass = new \ReflectionClass($this);
+        $properties = $reflectionClass->getProperties();
+
+        foreach ($properties as $property) {
+            $propName = $property->getName();
+
+            // Continue if the property doesn't exist in the data array.
+            if (!array_key_exists($propName, $data)) {
                 continue;
             }
-            // If value empty remain default value from property definition
-            $this->$key = $value ?? $this->$key;
+
+            // Use Reflection to get the type of the property.
+            $type = $property->getType();
+
+
+            // Assign a default value based on the type.
+            switch ($type->getName()) {
+                case 'string':
+                    $this->$propName = $data[$propName] ?? '';
+                    break;
+                case 'int':
+                    $this->$propName = intval($data[$propName]) ?? 0;
+                    break;
+                // You can add more types here if needed
+            }
         }
 
         if (empty($this->number)) {

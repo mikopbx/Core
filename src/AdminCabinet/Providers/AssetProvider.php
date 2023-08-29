@@ -26,7 +26,7 @@ use MikoPBX\AdminCabinet\Plugins\AssetManager as Manager;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Core\System\Configs\SentryConf;
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckConnection;
+use MikoPBX\Core\System\Network;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Assets\Collection;
 use Phalcon\Di\DiInterface;
@@ -153,7 +153,7 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeSentryAssets(): void
     {
-        if (file_exists(SentryConf::CONF_FILE) && file_exists(CheckConnection::INTERNET_FLAG_FILE)){
+        if (file_exists(SentryConf::CONF_FILE) && file_exists(Network::INTERNET_FLAG_FILE)){
             $this->headerCollectionSentryJS->addjs(
                 'assets/js/vendor/sentry/bundle.min.js',
                 true

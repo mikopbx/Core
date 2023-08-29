@@ -35,7 +35,6 @@ class WorkerMarketplaceChecker extends WorkerBase
     public const CACHE_KEY = 'Workers:WorkerMarketplaceChecker:lastCheck';
     public const CACHE_KEY_LICENSE_INFO = 'Workers:WorkerMarketplaceChecker:lastCheck';
 
-    public const LIC_FILE_PATH = '/var/etc/license.xml';
 
     /**
      * Starts the checker worker.

@@ -88,7 +88,7 @@ const conference = {
     initialize() {
 
         // Add handler to dynamically check if the input number is available
-        conference.$number.on('change', () => {
+        conference.$number.on('input', () => {
             const newNumber = conference.$formObj.form('get value', 'extension');
             Extensions.checkAvailability(conference.defaultNumber, newNumber);
         });

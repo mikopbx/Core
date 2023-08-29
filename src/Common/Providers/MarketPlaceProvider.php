@@ -53,6 +53,8 @@ class MarketPlaceProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'license';
 
+    public const LIC_FILE_PATH = '/var/etc/license.xml';
+
     /**
      * Register license service provider
      *

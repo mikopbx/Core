@@ -18,10 +18,9 @@
             <i class="search icon"></i>
             {{ form.render('extension') }}
         </div>
-
-        <div class="ui top pointing red label hidden" id="extension-error">
-            {{ t._("cr_ThisNumberIsNotFree") }}
-        </div>
+    </div>
+    <div class="ui top pointing red label hidden" id="extension-error">
+        {{ t._("cr_ThisNumberIsNotFree") }}
     </div>
 </div>
 

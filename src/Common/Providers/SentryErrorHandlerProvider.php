@@ -22,8 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Core\System\Configs\SentryConf;
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckConnection;
-use MikoPBX\Core\Workers\WorkerMarketplaceChecker;
+use MikoPBX\Core\System\Network;
 use Sentry\ClientBuilder;
 use Sentry\SentrySdk;
 use Sentry\State\HubInterface;
@@ -40,6 +39,7 @@ class SentryErrorHandlerProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'sentryErrorHandler';
 
+
     /**
      * Registers sentry error handler service provider
      *
@@ -52,7 +52,7 @@ class SentryErrorHandlerProvider implements ServiceProviderInterface
             function () use ($di): ?HubInterface {
 
                 // No internet no sentry
-                if (!file_exists(CheckConnection::INTERNET_FLAG_FILE)){
+                if (!file_exists(Network::INTERNET_FLAG_FILE)){
                     return null;
                 }
                 // Check if config file exists, return null if not and disable sentry logger
@@ -110,11 +110,11 @@ class SentryErrorHandlerProvider implements ServiceProviderInterface
         $licenseInfo->email = '';
         $licenseInfo->companyname = '';
 
-        if (!file_exists(WorkerMarketplaceChecker::LIC_FILE_PATH)){
+        if (!file_exists(MarketPlaceProvider::LIC_FILE_PATH)){
             return $licenseInfo;
         }
         // Retrieve the last get license request from the cache
-       $xmlFromFile = simplexml_load_file(WorkerMarketplaceChecker::LIC_FILE_PATH);
+       $xmlFromFile = simplexml_load_file(MarketPlaceProvider::LIC_FILE_PATH);
         if ($xmlFromFile) {
             foreach ($xmlFromFile->attributes() as $attribute => $value) {
                 if (!empty($value) and property_exists($licenseInfo, $attribute)) {

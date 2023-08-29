@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices;
 
+use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
@@ -31,7 +32,6 @@ use Phalcon\Di\Injectable;
  */
 class CheckConnection extends Injectable
 {
-    public const INTERNET_FLAG_FILE = '/var/etc/internet_flag';
 
     /**
      * Checks whether internet connection is available or not
@@ -47,11 +47,11 @@ class CheckConnection extends Injectable
         $retCode = Processes::mwExec("$pathTimeout 5 $pathCurl 'https://www.google.com/'");
         if ($retCode !== 0) {
             $messages['warning'][] = ['messageTpl'=>'adv_ProblemWithInternetConnection'];
-            if (file_exists(self::INTERNET_FLAG_FILE)) {
-                unlink(self::INTERNET_FLAG_FILE);
+            if (file_exists(Network::INTERNET_FLAG_FILE)) {
+                unlink(Network::INTERNET_FLAG_FILE);
             }
-        } elseif (!file_exists(self::INTERNET_FLAG_FILE)) {
-                touch(self::INTERNET_FLAG_FILE);
+        } elseif (!file_exists(Network::INTERNET_FLAG_FILE)) {
+                touch(Network::INTERNET_FLAG_FILE);
         }
         return $messages;
     }

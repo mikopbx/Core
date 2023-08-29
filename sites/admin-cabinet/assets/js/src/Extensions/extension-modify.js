@@ -479,17 +479,22 @@ const extension = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-        if (extension.$formObj.form('get value','id') !== response.data.id){
-            window.location=`${globalRootUrl}extensions/modify/${response.data.id}`
+        if (PbxApi.successTest(response)){
+            if (extension.$formObj.form('get value','id') !== response.data.id){
+                window.location=`${globalRootUrl}extensions/modify/${response.data.id}`
+            }
+
+            // Store the current extension number as the default number
+            extension.defaultNumber = extension.$number.val();
+
+            // Update the phone representation with the new default number
+            Extensions.updatePhoneRepresent(extension.defaultNumber);
+
+            Form.initialize();
+        } else {
+            UserMessage.showMultiString(response.messages);
         }
 
-        // Store the current extension number as the default number
-        extension.defaultNumber = extension.$number.val();
-
-        // Update the phone representation with the new default number
-        Extensions.updatePhoneRepresent(extension.defaultNumber);
-
-        Form.initialize();
     },
     /**
      * Initialize the form with custom settings
