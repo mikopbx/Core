@@ -36,10 +36,10 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
         $this->clickDeleteButtonOnRowWithText($params['name']);
 
         $this->clickButtonByHref('/admin-cabinet/conference-rooms/modify');
-        $this->changeInputField('name', $params['name']);
         $this->changeInputField('extension', $params['extension']);
+        $this->changeInputField('name', $params['name']);
 
-        // Сохраняем конференцию
+        // Save conference
         $this->submitForm('conference-room-form');
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/conference-rooms/index/');

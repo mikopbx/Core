@@ -33,22 +33,6 @@ class MikoPBXTestsBase extends BrowserStackTest
     use  LoginTrait;
 
     /**
-     * Assert that menu item not found on the page
-     *
-     * @param $by
-     */
-    protected function assertElementNotFound($by): void
-    {
-
-        $els = self::$driver->findElements($by);
-        if (count($els)) {
-            $this->fail("Unexpectedly element was found by " . $by->getValue() . PHP_EOL);
-        }
-        // increment assertion counter
-        $this->assertTrue(true);
-    }
-
-    /**
      * Select dropdown menu item
      *
      * @param $name  string menu name identifier
@@ -58,17 +42,17 @@ class MikoPBXTestsBase extends BrowserStackTest
     protected function selectDropdownItem(string $name, string $value): void
     {
         // Check selected value
-        $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
+        $xpath = '//select[@name="' . $name . '"]/option[@selected="selected"]';
         $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($selectedExtensions as $element) {
             $currentValue = $element->getAttribute('value');
-            if ($currentValue === $value){
+            if ($currentValue === $value) {
                 return;
             }
         }
 
         $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]';
-        $xpath .='| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
+        $xpath .= '| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
         try {
             $selectItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $selectItem->click();
@@ -76,7 +60,7 @@ class MikoPBXTestsBase extends BrowserStackTest
 
             // If search field exists input them before select
             $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]/input[contains(@class,"search")]';
-            $xpath .='| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]/input[contains(@class,"search")]';
+            $xpath .= '| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]/input[contains(@class,"search")]';
             $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
             $actions = new WebDriverActions(self::$driver);
             foreach ($inputItems as $inputItem) {
@@ -88,70 +72,13 @@ class MikoPBXTestsBase extends BrowserStackTest
             }
 
             //Try to find need string with value
-            $xpath    = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[@data-value="' . $value . '"]';
+            $xpath = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[@data-value="' . $value . '"]';
             $menuItem = self::$driver->wait()->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
             );
             $menuItem->click();
         } catch (NoSuchElementException $e) {
-            $this->fail('Not found select with name ' . $name . 'on selectDropdownItem'. PHP_EOL);
-        } catch (TimeoutException $e) {
-            $this->fail('Not found menuitem ' . $value . PHP_EOL);
-        } catch (Exception $e) {
-            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
-        }
-    }
-
-
-    /**
-     * Select dropdown menu item
-     *
-     * @param $name  string menu name identifier
-     * @param $value string menu text for select
-     *
-     * @return string
-     */
-    protected function selectDropdownItemByName(string $name, string $value): string
-    {
-        // Check selected value
-        $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
-        $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
-        foreach ($selectedExtensions as $element) {
-            $currentValue = $element->getText();
-            if ($currentValue === $value){
-                return $element->getAttribute('value');
-            }
-        }
-
-        $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]';
-        $xpath .='| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
-        try {
-            $selectItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $selectItem->click();
-            $this->waitForAjax();
-
-            // If search field exists input them before select
-            $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]/input[contains(@class,"search")]';
-            $xpath .='| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]/input[contains(@class,"search")]';
-            $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
-            $actions = new WebDriverActions(self::$driver);
-            foreach ($inputItems as $inputItem) {
-                $actions->moveToElement($inputItem);
-                $actions->perform();
-                $inputItem->click();
-                $inputItem->clear();
-                $inputItem->sendKeys($value);
-            }
-
-            //Try to find need string with value
-            $xpath    = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[contains(text(),"'.$value.'")]';
-            $menuItem = self::$driver->wait()->until(
-                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
-            );
-            $menuItem->click();
-            return $menuItem->getAttribute('data-value');
-        } catch (NoSuchElementException $e) {
-            $this->fail('Not found select with name ' . $name . 'on selectDropdownItem'. PHP_EOL);
+            $this->fail('Not found select with name ' . $name . 'on selectDropdownItem' . PHP_EOL);
         } catch (TimeoutException $e) {
             $this->fail('Not found menuitem ' . $value . PHP_EOL);
         } catch (Exception $e) {
@@ -175,28 +102,79 @@ class MikoPBXTestsBase extends BrowserStackTest
     }
 
     /**
+     * Select dropdown menu item
+     *
+     * @param $name  string menu name identifier
+     * @param $value string menu text for select
+     *
+     * @return string
+     */
+    protected function selectDropdownItemByName(string $name, string $value): string
+    {
+        // Check selected value
+        $xpath = '//select[@name="' . $name . '"]/option[@selected="selected"]';
+        $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        foreach ($selectedExtensions as $element) {
+            $currentValue = $element->getText();
+            if ($currentValue === $value) {
+                return $element->getAttribute('value');
+            }
+        }
+
+        $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]';
+        $xpath .= '| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
+        try {
+            $selectItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $selectItem->click();
+            $this->waitForAjax();
+
+            // If search field exists input them before select
+            $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]/input[contains(@class,"search")]';
+            $xpath .= '| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]/input[contains(@class,"search")]';
+            $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
+            $actions = new WebDriverActions(self::$driver);
+            foreach ($inputItems as $inputItem) {
+                $actions->moveToElement($inputItem);
+                $actions->perform();
+                $inputItem->click();
+                $inputItem->clear();
+                $inputItem->sendKeys($value);
+            }
+
+            //Try to find need string with value
+            $xpath = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[contains(text(),"' . $value . '")]';
+            $menuItem = self::$driver->wait()->until(
+                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
+            );
+            $menuItem->click();
+            return $menuItem->getAttribute('data-value');
+        } catch (NoSuchElementException $e) {
+            $this->fail('Not found select with name ' . $name . 'on selectDropdownItem' . PHP_EOL);
+        } catch (TimeoutException $e) {
+            $this->fail('Not found menuitem ' . $value . PHP_EOL);
+        } catch (Exception $e) {
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
+        }
+    }
+
+    /**
      * Assert that menu item selected
      *
      * @param      $name         string menu name
      * @param      $checkedValue string checked value
      * @param bool $skipIfNotExist
      */
-    protected function assertMenuItemSelected(string $name, string $checkedValue, $skipIfNotExist=false): void
+    protected function assertMenuItemSelected(string $name, string $checkedValue, $skipIfNotExist = false): void
     {
-        $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
-        if ($checkedValue==='none' and !in_array($name,['sip_networkfilterid', 'registration_type'])){
-            // if name is not sip_networkfilterid and registration_type no any selected elements should be found if value is none
-            $this->assertElementNotFound(WebDriverBy::xpath($xpath));
-        } else {
-            $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
-            foreach ($selectedExtensions as $element) {
-                $currentValue = $element->getAttribute('value');
-                $message      = "{$name} check failure, because {$checkedValue} != {$currentValue}";
-                $this->assertEquals($checkedValue, $currentValue, $message);
-            }
-            if (!$skipIfNotExist && count($selectedExtensions)===0){
-                $this->fail('Not found select with name ' . $name .' in assertMenuItemSelected'. PHP_EOL);
-            }
+        $xpath = '//select[@name="' . $name . '"]/option[@selected="selected"]';
+        $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        foreach ($selectedExtensions as $element) {
+            $currentValue = $element->getAttribute('value');
+            $message = "{$name} check failure, because {$checkedValue} != {$currentValue}";
+            $this->assertEquals($checkedValue, $currentValue, $message);
+        }
+        if (!$skipIfNotExist && count($selectedExtensions) === 0) {
+            $this->fail('Not found select with name ' . $name . ' in assertMenuItemSelected' . PHP_EOL);
         }
     }
 
@@ -207,9 +185,25 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function assertMenuItemNotSelected(string $name): void
     {
-        $xpath             = '//select[@name="' . $name . '"]/option[@selected="selected"]';
+        $xpath = '//select[@name="' . $name . '"]/option[@selected="selected"]';
         $this->assertElementNotFound(WebDriverBy::xpath($xpath));
 
+    }
+
+    /**
+     * Assert that menu item not found on the page
+     *
+     * @param $by
+     */
+    protected function assertElementNotFound($by): void
+    {
+
+        $els = self::$driver->findElements($by);
+        if (count($els)) {
+            $this->fail("Unexpectedly element was found by " . $by->getValue() . PHP_EOL);
+        }
+        // increment assertion counter
+        $this->assertTrue(true);
     }
 
     /**
@@ -217,11 +211,11 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @param string $name
      * @param string $value
-     * @param bool   $skipIfNotExist
+     * @param bool $skipIfNotExist
      */
-    protected function changeTextAreaValue(string $name, string $value, bool $skipIfNotExist=false): void
+    protected function changeTextAreaValue(string $name, string $value, bool $skipIfNotExist = false): void
     {
-        $xpath         = ('//textarea[@name="' . $name . '"]');
+        $xpath = ('//textarea[@name="' . $name . '"]');
         $textAreaItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         $actions = new WebDriverActions(self::$driver);
         foreach ($textAreaItems as $textAreaItem) {
@@ -231,23 +225,23 @@ class MikoPBXTestsBase extends BrowserStackTest
             $textAreaItem->clear();
             $textAreaItem->sendKeys($value);
         }
-        if (!$skipIfNotExist && count($textAreaItems)===0){
-            $this->fail('Not found textarea with name ' . $name .' in changeTextAreaValue'. PHP_EOL);
+        if (!$skipIfNotExist && count($textAreaItems) === 0) {
+            $this->fail('Not found textarea with name ' . $name . ' in changeTextAreaValue' . PHP_EOL);
         }
     }
 
     /**
      * Assert that textArea value is equal
      *
-     * @param string $name         textArea name
+     * @param string $name textArea name
      * @param string $checkedValue checked value
      */
     protected function assertTextAreaValueIsEqual(string $name, string $checkedValue): void
     {
-        $xpath        = '//textarea[@name="' . $name . '"]';
+        $xpath = '//textarea[@name="' . $name . '"]';
         $textAreaItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
         $currentValue = $textAreaItem->getAttribute('value');
-        $message      = "{$name} check failure, because {$checkedValue} != {$currentValue}";
+        $message = "{$name} check failure, because {$checkedValue} != {$currentValue}";
         $this->assertEquals($checkedValue, $currentValue, $message);
     }
 
@@ -256,17 +250,17 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @param string $name
      * @param string $value
-     * @param bool   $skipIfNotExist
+     * @param bool $skipIfNotExist
      */
-    protected function changeFileField(string $name, string $value, bool $skipIfNotExist=false): void
+    protected function changeFileField(string $name, string $value, bool $skipIfNotExist = false): void
     {
-        $xpath      = '//input[@name="' . $name . '" and (@type = "file")]';
+        $xpath = '//input[@name="' . $name . '" and (@type = "file")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($inputItems as $inputItem) {
             $inputItem->sendKeys($value);
         }
-        if (!$skipIfNotExist && count($inputItems)===0){
-            $this->fail('Not found input with type FILE and with name ' . $name .' in changeFileField'. PHP_EOL);
+        if (!$skipIfNotExist && count($inputItems) === 0) {
+            $this->fail('Not found input with type FILE and with name ' . $name . ' in changeFileField' . PHP_EOL);
         }
     }
 
@@ -275,24 +269,24 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @param string $name
      * @param string $value
-     * @param bool   $skipIfNotExist
+     * @param bool $skipIfNotExist
      */
-    protected function changeInputField(string $name, string $value, bool $skipIfNotExist=false): void
+    protected function changeInputField(string $name, string $value, bool $skipIfNotExist = false): void
     {
-        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="number" or @type="hidden")]';
+        $xpath = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="number" or @type="hidden")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         $actions = new WebDriverActions(self::$driver);
         foreach ($inputItems as $inputItem) {
             $id = $inputItem->getAttribute('id');
             $type = $inputItem->getAttribute('type');
-            if ($type === 'hidden'){
-                if (!empty($id)){
+            if ($type === 'hidden') {
+                if (!empty($id)) {
                     self::$driver->executeScript("document.getElementById('{$id}').value={$value}");
                 }
             } else {
                 $actions->moveToElement($inputItem);
                 $actions->perform();
-                if (!empty($id)){
+                if (!empty($id)) {
                     self::$driver->executeScript("document.getElementById('{$id}').scrollIntoView({block: 'center'})");
                 }
                 $inputItem->click();
@@ -301,8 +295,8 @@ class MikoPBXTestsBase extends BrowserStackTest
             }
         }
 
-        if (!$skipIfNotExist && count($inputItems)===0){
-            $this->fail('Not found input with name ' . $name .' in changeInputField'. PHP_EOL);
+        if (!$skipIfNotExist && count($inputItems) === 0) {
+            $this->fail('Not found input with name ' . $name . ' in changeInputField' . PHP_EOL);
         }
     }
 
@@ -311,19 +305,19 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @param string $name
      * @param string $checkedValue
-     * @param bool   $skipIfNotExist
+     * @param bool $skipIfNotExist
      */
-    protected function assertInputFieldValueEqual(string $name, string $checkedValue, $skipIfNotExist=false): void
+    protected function assertInputFieldValueEqual(string $name, string $checkedValue, $skipIfNotExist = false): void
     {
-        $xpath      = '//input[@name="' . $name . '" and (@type="text" or @type="number" or @type="password" or @type="hidden")]';
+        $xpath = '//input[@name="' . $name . '" and (@type="text" or @type="number" or @type="password" or @type="hidden")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($inputItems as $inputItem) {
             $currentValue = $inputItem->getAttribute('value');
-            $message      = "input field: '{$name}' check failure, because {$checkedValue} != {$currentValue}";
+            $message = "input field: '{$name}' check failure, because {$checkedValue} != {$currentValue}";
             $this->assertEquals($checkedValue, $currentValue, $message);
         }
-        if (!$skipIfNotExist && count($inputItems)===0){
-            $this->fail('Not found input with name ' . $name .' in assertInputFieldValueEqual'. PHP_EOL);
+        if (!$skipIfNotExist && count($inputItems) === 0) {
+            $this->fail('Not found input with name ' . $name . ' in assertInputFieldValueEqual' . PHP_EOL);
         }
     }
 
@@ -331,20 +325,20 @@ class MikoPBXTestsBase extends BrowserStackTest
      * Change checkbox state according the $enabled value if checkbox with the $name exist on the page
      *
      * @param string $name
-     * @param bool   $enabled
-     * @param bool   $skipIfNotExist
+     * @param bool $enabled
+     * @param bool $skipIfNotExist
      */
-    protected function changeCheckBoxState(string $name, bool $enabled, $skipIfNotExist=false): void
+    protected function changeCheckBoxState(string $name, bool $enabled, $skipIfNotExist = false): void
     {
-        $xpath         = '//input[@name="' . $name . '" and @type="checkbox"]';
+        $xpath = '//input[@name="' . $name . '" and @type="checkbox"]';
         $checkBoxItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($checkBoxItems as $checkBoxItem) {
             if (
-                ($enabled && ! $checkBoxItem->isSelected())
+                ($enabled && !$checkBoxItem->isSelected())
                 ||
-                ( ! $enabled && $checkBoxItem->isSelected())
+                (!$enabled && $checkBoxItem->isSelected())
             ) {
-                $xpath        = '//input[@name="' . $name . '" and @type="checkbox"]/parent::div';
+                $xpath = '//input[@name="' . $name . '" and @type="checkbox"]/parent::div';
                 $checkBoxItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
                 $actions = new WebDriverActions(self::$driver);
                 $actions->moveToElement($checkBoxItem);
@@ -352,21 +346,21 @@ class MikoPBXTestsBase extends BrowserStackTest
                 $checkBoxItem->click();
             }
         }
-        if (!$skipIfNotExist && count($checkBoxItems)===0){
-            $this->fail('Not found checkbox with name ' . $name .' in changeCheckBoxState'. PHP_EOL);
+        if (!$skipIfNotExist && count($checkBoxItems) === 0) {
+            $this->fail('Not found checkbox with name ' . $name . ' in changeCheckBoxState' . PHP_EOL);
         }
     }
 
     /**
      * Assert that checkBox state is equal to the $enabled if checkbox with the $name exist on the page
      *
-     * @param string $name    checkBox name
-     * @param bool   $enabled checked state
-     * @param bool   $skipIfNotExist
+     * @param string $name checkBox name
+     * @param bool $enabled checked state
+     * @param bool $skipIfNotExist
      */
-    protected function assertCheckBoxStageIsEqual(string $name, bool $enabled, $skipIfNotExist=false): void
+    protected function assertCheckBoxStageIsEqual(string $name, bool $enabled, $skipIfNotExist = false): void
     {
-        $xpath         = '//input[@name="' . $name . '" and @type="checkbox"]';
+        $xpath = '//input[@name="' . $name . '" and @type="checkbox"]';
         $checkBoxItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($checkBoxItems as $checkBoxItem) {
             if ($enabled) {
@@ -375,8 +369,8 @@ class MikoPBXTestsBase extends BrowserStackTest
                 $this->assertFalse($checkBoxItem->isSelected(), "{$name} must be unchecked" . PHP_EOL);
             }
         }
-        if (!$skipIfNotExist && count($checkBoxItems)===0){
-            $this->fail('Not found checkbox with name ' . $name .' in assertCheckBoxStageIsEqual'. PHP_EOL);
+        if (!$skipIfNotExist && count($checkBoxItems) === 0) {
+            $this->fail('Not found checkbox with name ' . $name . ' in assertCheckBoxStageIsEqual' . PHP_EOL);
         }
     }
 
@@ -420,7 +414,7 @@ class MikoPBXTestsBase extends BrowserStackTest
     protected function clickSidebarMenuItemByHref(string $href): void
     {
         try {
-            $xpath       = '//div[@id="sidebar-menu"]//ancestor::a[contains(@class, "item") and contains(@href ,"' . $href . '")]';
+            $xpath = '//div[@id="sidebar-menu"]//ancestor::a[contains(@class, "item") and contains(@href ,"' . $href . '")]';
             $sidebarItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $actions = new WebDriverActions(self::$driver);
             $actions->moveToElement($sidebarItem);
@@ -488,14 +482,14 @@ class MikoPBXTestsBase extends BrowserStackTest
         $xpath = ('//td[contains(text(),"' . $text . '")]/ancestor::tr[contains(@class, "row")]//a[contains(@href,"delete")]');
         try {
             $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
-            foreach ($deleteButtons as $deleteButton){
+            foreach ($deleteButtons as $deleteButton) {
                 $deleteButton->click();
                 sleep(1);
                 $deleteButton->click();
             }
             $this->waitForAjax();
         } catch (NoSuchElementException $e) {
-            echo('Not found row with text=' . $text . ' on this page in clickDeleteButtonOnRowWithText'. PHP_EOL);
+            echo('Not found row with text=' . $text . ' on this page in clickDeleteButtonOnRowWithText' . PHP_EOL);
         } catch (Exception $e) {
             $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
@@ -509,7 +503,7 @@ class MikoPBXTestsBase extends BrowserStackTest
     protected function clickButtonByHref(string $href): void
     {
         try {
-            $xpath         = "//a[@href = '{$href}']";
+            $xpath = "//a[@href = '{$href}']";
             $button_AddNew = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $actions = new WebDriverActions(self::$driver);
             $actions->moveToElement($button_AddNew);
@@ -532,7 +526,7 @@ class MikoPBXTestsBase extends BrowserStackTest
     {
         try {
             $xpath = "//div[contains(@class, 'menu')]//a[contains(@data-tab,'{$anchor}')]";
-            $tab   = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $actions = new WebDriverActions(self::$driver);
             $actions->moveToElement($tab);
             $actions->perform();
@@ -551,7 +545,7 @@ class MikoPBXTestsBase extends BrowserStackTest
     {
         try {
             $xpath = "//div[contains(@class, 'ui') and contains(@class, 'accordion')]";
-            $accordion   = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $accordion = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $actions = new WebDriverActions(self::$driver);
             $actions->moveToElement($accordion);
             $actions->perform();
@@ -559,7 +553,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         } catch (NoSuchElementException $e) {
             $this->fail('Not found usual accordion element on this page on openAccordionOnThePage' . PHP_EOL);
         } catch (Exception $e) {
-            $this->fail('Unknown error ' . $e->getMessage() .' on openAccordionOnThePage'. PHP_EOL);
+            $this->fail('Unknown error ' . $e->getMessage() . ' on openAccordionOnThePage' . PHP_EOL);
         }
     }
 
@@ -573,7 +567,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         try {
             $xpath = '//input[@name="id" and (@type="hidden")]';
             $input = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            return $input->getAttribute('value')??'undefinedInGetCurrentRecordID';
+            return $input->getAttribute('value') ?? 'undefinedInGetCurrentRecordID';
         } catch (NoSuchElementException $e) {
             $this->fail('Not found input with name ID on this page getCurrentRecordID' . PHP_EOL);
         } catch (Exception $e) {
@@ -590,7 +584,7 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function deleteAllRecordsOnTable(string $tableId): void
     {
-        $xpath         = "//table[@id='{$tableId}']//a[contains(@href,'delete') and not(contains(@class,'disabled'))]";
+        $xpath = "//table[@id='{$tableId}']//a[contains(@href,'delete') and not(contains(@class,'disabled'))]";
         $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
         while (count($deleteButtons) > 0) {
             try {
@@ -614,10 +608,10 @@ class MikoPBXTestsBase extends BrowserStackTest
      *
      * @return bool
      */
-    protected function checkIfElementExistOnDropdownMenu(string $name, string $value):bool
+    protected function checkIfElementExistOnDropdownMenu(string $name, string $value): bool
     {
-        $xpath = '//select[@name="'.$name.'"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]';
-        $xpath .='| //div[@id="'.$name.'" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
+        $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]';
+        $xpath .= '| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
         $elementFound = false;
         try {
             $selectItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
@@ -625,8 +619,8 @@ class MikoPBXTestsBase extends BrowserStackTest
             $this->waitForAjax();
 
             // If search field exists input them before select
-            $xpath = '//select[@name="'.$name.'"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]/input[contains(@class,"search")]';
-            $xpath .='| //div[@id="'.$name.'" and contains(@class, "ui") and contains(@class ,"dropdown") ]/input[contains(@class,"search")]';
+            $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]/input[contains(@class,"search")]';
+            $xpath .= '| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]/input[contains(@class,"search")]';
             $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
             $actions = new WebDriverActions(self::$driver);
             foreach ($inputItems as $inputItem) {
@@ -638,7 +632,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             }
 
             //Try to find need string with value
-            $xpath    = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[contains(text(),"'.$value.'")]';
+            $xpath = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[contains(text(),"' . $value . '")]';
             $menuItem = self::$driver->wait()->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
             );

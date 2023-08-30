@@ -117,7 +117,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->clickModifyButtonOnRowWithText($params['username']);
 
         $this->changeTabOnCurrentPage('routing');
-        $this->assertInputFieldValueEqual('fwd_ringlength', '');
+        $this->assertInputFieldValueEqual('fwd_ringlength', 0);
         $this->assertMenuItemSelected('fwd_forwardingonbusy', '');
         $this->assertMenuItemSelected('fwd_forwarding', '');
         $this->assertMenuItemSelected('fwd_forwardingonunavailable', '');
