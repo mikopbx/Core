@@ -13,14 +13,14 @@
 
 <div class="field">
     <label for="extension">{{ t._('cr_Extensions') }}</label>
-    <div class="field max-width-200">
+    <div class="inline field">
         <div class="ui icon input extension">
             <i class="search icon"></i>
             {{ form.render('extension') }}
         </div>
-    </div>
-    <div class="ui top pointing red label hidden" id="extension-error">
-        {{ t._("cr_ThisNumberIsNotFree") }}
+        <div class="ui left pointing red label hidden" id="extension-error">
+            {{ t._("cr_ThisNumberIsNotFree") }}
+        </div>
     </div>
 </div>
 
