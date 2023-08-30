@@ -113,6 +113,9 @@ class IncomingRoutesController extends BaseController
             ];
             $rule = new IncomingRoutingTable();
             $rule->priority = (int)IncomingRoutingTable::maximum($parameters)+1;
+        }
+
+        if (empty($rule->provider)){
             $rule->provider = 'none';
         }
 
