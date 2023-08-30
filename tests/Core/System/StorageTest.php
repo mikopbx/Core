@@ -20,9 +20,8 @@
 namespace MikoPBX\Tests\Core\System;
 
 use MikoPBX\Core\System\Storage;
-use MikoPBX\Tests\Unit\AbstractUnitTest;
 
-class StorageTest extends AbstractUnitTest
+class StorageTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
 {
     protected Storage $storage;
 

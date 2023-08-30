@@ -22,7 +22,7 @@ namespace MikoPBX\Tests\Core\System;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
-class NetworkTest extends AbstractUnitTest
+class NetworkTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
 {
 
     public function testUpdateIfSettings()

@@ -22,7 +22,7 @@ namespace MikoPBX\Tests\Core\System;
 use MikoPBX\Core\System\PBX;
 use PHPUnit\Framework\TestCase;
 
-class PBXTest extends TestCase
+class PBXTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
 {
 
     public function testDialplanReload()

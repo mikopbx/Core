@@ -17,8 +17,9 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Common\Models;
+namespace MikoPBX\Tests\Common\Models;
 
+use MikoPBX\Common\Models\Sip;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class SipTest extends AbstractUnitTest

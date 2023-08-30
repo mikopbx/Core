@@ -25,7 +25,7 @@ use PHPUnit\Framework\TestCase;
 use BrowserStack\Local as BrowserStackLocal;
 use GuzzleHttp\Client as GuzzleHttpClient;
 
-require 'globals.php';
+require_once 'globals.php';
 
 class BrowserStackTest extends TestCase
 {
@@ -58,11 +58,11 @@ class BrowserStackTest extends TestCase
         }
 
         // If BrowserStack Local is enabled, start a BrowserStackLocal instance
-        if(array_key_exists("browserstack.local", $caps) && $caps["browserstack.local"])
+        if($GLOBALS['BROWSERSTACK_DAEMON_STARTED']==='false')
         {
             $bs_local_args = [
                 "key" => $GLOBALS['BROWSERSTACK_ACCESS_KEY'],
-                "localIdentifier" => $caps['browserstack.localIdentifier'],
+                "localIdentifier" => "".$GLOBALS['bs_localIdentifier']
             ];
             self::$bs_local = new BrowserStackLocal();
             self::$bs_local->start($bs_local_args);

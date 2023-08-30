@@ -23,7 +23,7 @@ use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
-class DateTimeTest extends AbstractUnitTste
+class DateTimeTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
 {
 
     public function testSetDate()

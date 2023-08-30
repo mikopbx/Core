@@ -106,6 +106,10 @@ class DataStructure
         if (empty($this->sip_secret)) {
             $this->sip_secret = Sip::generateSipPassword();
         }
+        if (empty($this->sip_networkfilterid)) {
+            $this->sip_networkfilterid='none';
+        }
+
         if (empty($this->mobile_uniqid)) {
             $this->mobile_uniqid = ExternalPhones::generateUniqueID();
         }

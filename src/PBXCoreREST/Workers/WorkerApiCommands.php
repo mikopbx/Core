@@ -28,6 +28,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use Throwable;
+use function xdebug_break;
 
 require_once 'Globals.php';
 

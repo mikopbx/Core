@@ -24,7 +24,6 @@ namespace MikoPBX\PBXCoreREST\Config;
 use MikoPBX\Common\Providers\{AclProvider,
     BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
-    EnviromentTagProvider,
     LoggerAuthProvider,
     LoggerProvider,
     MainDatabaseProvider,
