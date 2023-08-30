@@ -21,7 +21,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\DefaultIncomingRouteForm;
 use MikoPBX\AdminCabinet\Forms\IncomingRouteEditForm;
-use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, OutWorkTimesRouts, Providers, Sip};
+use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, OutWorkTimesRouts, Sip};
 
 
 class IncomingRoutesController extends BaseController
@@ -113,38 +113,10 @@ class IncomingRoutesController extends BaseController
             ];
             $rule = new IncomingRoutingTable();
             $rule->priority = (int)IncomingRoutingTable::maximum($parameters)+1;
+            $rule->provider = 'none';
         }
 
-        // Get a list of providers
-        $providersList         = [];
-        $providersList['none'] = $this->translation->_('ir_AnyProvider');
-        $providers             = Providers::find();
-        foreach ($providers as $provider) {
-            $modelType                          = ucfirst($provider->type);
-            $provByType                         = $provider->$modelType;
-            $providersList[$provByType->uniqid] = $provByType->getRepresent();
-        }
-
-        // Get a list of all used extensions
-        $forwardingExtensions     = [];
-        $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
-        $parameters               = [
-            'conditions' => 'number IN ({ids:array})',
-            'bind'       => [
-                'ids' => [
-                    $rule->extension,
-                ],
-            ],
-        ];
-        $extensions               = Extensions::find($parameters);
-        foreach ($extensions as $record) {
-            $forwardingExtensions[$record->number] = $record ? $record->getRepresent() : '';
-        }
-        $form                  = new IncomingRouteEditForm(
-            $rule,
-            ['extensions' => $forwardingExtensions, 'providers' => $providersList]
-        );
-        $this->view->form      = $form;
+        $this->view->form      = new IncomingRouteEditForm($rule);
         $this->view->represent = $rule->getRepresent();
     }
 
