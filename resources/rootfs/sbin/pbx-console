@@ -30,6 +30,10 @@ display_help() {
     echo "    - restart-all      Restart all PBX services"
     echo "  service <name>      Kill a specific PBX service"
     echo "  debug <name> <ip>   Debug a specific script"
+    echo "  xdebug <action> <ip>   Debug whole system"
+    echo "    - enable-cli        Start CLI scripts debug session"
+    echo "    - enable-www        Start WEB scripts debug session"
+    echo "    - enable-agi        Start Asterisk scripts debug session"
     echo "  cron <action>       Manage cron"
     echo "    - stop             Stop cron"
     echo "    - restart          Restart cron"
@@ -42,6 +46,8 @@ display_help() {
     echo "  $0 debug WorkerApiCommands 192.168.1.2"
     echo "  $0 debug WorkerApiCommands docker.for.mac.localhost"
     echo "  $0 cron show"
+    echo "  $0 xdebug enable-www docker.for.mac.localhost"
+    echo "  $0 xdebug enable-agi 192.168.1.2"
     echo
 }
 
@@ -136,6 +142,41 @@ debug)
   # Start the PHP script with xdebug enabled
   php -f "$pathToFile" start;
   ;;
+
+xdebug)
+    # Handle actions related to xdebug
+    pbxConsole="$0";
+    action=$2;
+    ipDebugger="$3";
+    case "${action}" in
+      enable-cli)
+        echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
+        echo "Changing xdebug.remote_host to address $1 ..."
+        sed "s/xdebug.remote_host = .*/xdebug.remote_host = ${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
+        export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_autostart=0 remote_port=9000 remote_host=${ipDebugger} remote_connect_back=0";
+        echo "Done"
+        ;;
+      enable-www)
+        echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
+        echo "Changing xdebug.remote_host to address $1 ..."
+        sed "s/xdebug.remote_host = .*/xdebug.remote_host = ${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
+        echo "killing the php-fpm processes ..."
+        killall php-fpm
+        sleep 5;
+        echo "Restarting the php-fpm daemon ..."
+        php-fpm -c /etc/php.ini
+        echo "Done"
+        ;;
+      enable-agi)
+        echo "Restarting the asterisk daemon ..."
+        killall safe_asterisk
+        killall asterisk
+        "${pbxConsole}" enable-cli ${ipDebugger}
+        nohup safe_asterisk -f > /dev/null 2>&1 &
+        echo "Done"
+        ;;
+    esac
+    ;;
 cron)
   # Handle actions related to cron
   action=$2;
