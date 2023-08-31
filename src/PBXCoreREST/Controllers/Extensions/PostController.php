@@ -44,7 +44,7 @@ class PostController extends BaseController
      * Returns CallerID names for the numbers list.
      * @Post("/getPhonesRepresent")
      *
-     * Saves a record with associated entities.
+     * Saves extensions, sip, users, external phones, forwarding rights with POST data
      * @Post("/saveRecord")
      *
      * Deletes the extension record with its dependent tables.

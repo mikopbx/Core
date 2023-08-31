@@ -37,11 +37,11 @@ class GetController extends BaseController
 {
 
     /**
-     * Calls the corresponding action for IAX registrations based on the provided $actionName.
+     * Handles the call to different actions based on the action name
      *
      * @param string $actionName The name of the action.
      *
-     * Retrieves the extension data structure, if id will not find it returns empty structure
+     * Get data structure for saveRecord request, if id parameter is empty it returns structure with default data
      * @Get("/getRecord")
      *
      * Retrieves the extensions list limited by type parameter.

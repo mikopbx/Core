@@ -54,9 +54,7 @@
                     <i class="search icon"></i>
                     {{ form.render('user_email') }}
                 </div>
-                <div class="ui top pointing red label hidden" id="email-error">
-                    {{ t._("ex_ThisEmailAlreadyRegisteredForOtherUser") }}
-                </div>
+                <div class="ui top pointing red label hidden" id="email-error"></div>
             </div>
 
             {# <div class="field"> #}

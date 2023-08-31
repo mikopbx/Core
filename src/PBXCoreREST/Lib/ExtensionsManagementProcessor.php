@@ -19,7 +19,6 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use Facebook\WebDriver\Exception\ElementNotSelectableException;
 use MikoPBX\PBXCoreREST\Lib\Extensions\DeleteRecord;
 use MikoPBX\PBXCoreREST\Lib\Extensions\Dropdowns;
 use MikoPBX\PBXCoreREST\Lib\Extensions\GetRecord;
