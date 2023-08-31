@@ -39,7 +39,7 @@ class GetController extends BaseController
      * @param string $actionName The name of the action.
      *
      * Checks the email uniqueness.
-     * @Get("/users")
+     * @Get("/available")
      *
      * @return void
      */
