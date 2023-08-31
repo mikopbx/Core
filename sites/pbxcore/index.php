@@ -46,7 +46,7 @@ class RestAPI extends Micro
         try {
             $application->handle($_SERVER['REQUEST_URI']);
         } catch (Throwable $e) {
-            CriticalErrorsHandler::handleException($e,'pbx-core-rest');
+            CriticalErrorsHandler::handleException($e);
         }
     }
 }

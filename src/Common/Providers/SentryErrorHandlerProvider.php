@@ -115,7 +115,7 @@ class SentryErrorHandlerProvider implements ServiceProviderInterface
         }
         // Retrieve the last get license request from the cache
        $xmlFromFile = simplexml_load_file(MarketPlaceProvider::LIC_FILE_PATH);
-        if ($xmlFromFile) {
+        if ($xmlFromFile!==false) {
             foreach ($xmlFromFile->attributes() as $attribute => $value) {
                 if (!empty($value) and property_exists($licenseInfo, $attribute)) {
                     $licenseInfo->$attribute = $value;

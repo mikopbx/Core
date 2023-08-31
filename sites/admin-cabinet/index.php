@@ -64,7 +64,7 @@ class Application extends BaseApplication
         try {
             echo $this->handle($_SERVER['REQUEST_URI'])->getContent();
         } catch (Throwable $e) {
-            CriticalErrorsHandler::handleException($e,'admin-cabinet');
+            CriticalErrorsHandler::handleException($e);
         }
     }
 }

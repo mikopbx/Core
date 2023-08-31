@@ -30,7 +30,7 @@ class SentryErrorLogger extends Injectable
     private ?HubInterface $errorHandler;
 
     /**
-     * DEPRECATED SentryErrorHandler constructor.
+     * @deprecated  SentryErrorHandler constructor.
      *
      * @param string $libraryName The name of the library.
      */
@@ -42,7 +42,7 @@ class SentryErrorLogger extends Injectable
     }
 
     /**
-     * DEPRECATED Initializes the Sentry error logging subsystem if error sending is enabled in the PBX settings.
+     * @deprecated  Initializes the Sentry error logging subsystem if error sending is enabled in the PBX settings.
      *
      * @return bool The initialization result.
      */
@@ -53,7 +53,7 @@ class SentryErrorLogger extends Injectable
     }
 
     /**
-     * DEPRECATED Captures an exception and sends it to the Sentry cloud.
+     * @deprecated  Captures an exception and sends it to the Sentry cloud.
      *
      * @param Throwable $e The exception to capture.
      */

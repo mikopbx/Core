@@ -889,8 +889,8 @@ class ModelsBase extends Model
         $hashLength = 4;
         try {
             $hash = $random->hex($hashLength);
-        } catch (\Throwable $exception) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($exception);
+        } catch (\Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $hash = md5(microtime());
         }
         return $alias . strtoupper($hash);
