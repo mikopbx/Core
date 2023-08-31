@@ -176,10 +176,10 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
             'moduleId' => 'ModuleTelegramNotify',
             'enable' => false,
         ]];
-//        $params[] = [[
-//            'moduleId' => 'ModuleUsersGroups',
-//            'enable' => true,
-//        ]];
+        $params[] = [[
+            'moduleId' => 'ModuleUsersGroups',
+            'enable' => true,
+        ]];
 
         return $params;
     }

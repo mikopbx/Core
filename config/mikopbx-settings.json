@@ -58,8 +58,7 @@
   },
   "www": {
     "uploadDir": "/mountpoint/mikopbx/tmp/www_cache/upload_cache",
-    "downloadCacheDir": "/mountpoint/mikopbx/tmp/www_cache/files_cache",
-    "encryptionKey": "auVy8?^%5XLTJQc-%&k?TcB-_E2jNT35K?%knZ&TMqmc8U@k+=AaZ^3vv7xA+mA5"
+    "downloadCacheDir": "/mountpoint/mikopbx/tmp/www_cache/files_cache"
   },
   "adminApplication": {
     "debugMode": false,

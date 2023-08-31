@@ -23,9 +23,12 @@ declare(strict_types=1);
 namespace MikoPBX\AdminCabinet\Providers;
 
 
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use Phalcon\Crypt;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+use Phalcon\Security\Random;
 
 /**
  * Initializes Crypt provider
@@ -43,10 +46,10 @@ class CryptProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
-        $encryptionKey = $di->getShared('config')->path('www.encryptionKey');
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($encryptionKey) {
+            function () {
+                $encryptionKey = self::getEncryptionKey();
                 $crypt = new Crypt();
                 // Set a global encryption key
                 $crypt->setKey(
@@ -55,5 +58,34 @@ class CryptProvider implements ServiceProviderInterface
                 return $crypt;
             }
         );
+    }
+
+    /**
+     * Retrieve the encryption key from settings.
+     * Generate a new one if it doesn't exist.
+     *
+     * @return string The encryption key.
+     */
+    private static function getEncryptionKey():string
+    {
+        $encryptionKey   = PbxSettings::getValueByKey(PbxSettingsConstants::WWW_ENCRYPTION_KEY);
+        if (empty($encryptionKey)){
+            $record = PbxSettings::findFirstByKey(PbxSettingsConstants::WWW_ENCRYPTION_KEY);
+            if ($record===null){
+                $random = new Random();
+                try {
+                    // Try generating a new encryption key.
+                    $encryptionKey = $random->base64Safe(16);
+                } catch (\Throwable $e) {
+                    // If something goes wrong, fall back to a default encryption key.
+                    $encryptionKey = md5(microtime());
+                }
+                $record = new PbxSettings();
+                $record->key = PbxSettingsConstants::WWW_ENCRYPTION_KEY;
+                $record->value = $encryptionKey;
+                $record->save();
+            }
+        }
+        return $encryptionKey;
     }
 }
