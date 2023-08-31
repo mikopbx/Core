@@ -107,11 +107,12 @@ class Utils extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $res->success = true;
+        $res->data['available'] = true;
 
         // Check for overlap with internal number plan
         $extension = Extensions::findFirstByNumber($number);
         if ($extension !== null) {
-            $res->success = false;
+            $res->data['available'] = false;
             $res->data['userId'] = $extension->userid;
             $res->data['represent'] = $extension->getRepresent();
             return $res;
@@ -122,7 +123,8 @@ class Utils extends Injectable
         $parkStartSlot = PbxSettings::getValueByKey('PBXCallParkingStartSlot');
         $parkEndSlot = PbxSettings::getValueByKey('PBXCallParkingEndSlot');
         if ($number === $parkExt || ($number >= $parkStartSlot && $number <= $parkEndSlot)) {
-            $res->success = false;
+            $res->data['available'] = false;
+            $res->data['represent'] = 'ex_ThisNumberOverlapWithParkingSlots';
         }
         return $res;
     }
