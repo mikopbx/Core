@@ -42,8 +42,8 @@ try {
         'miko_tmp_db' => true,
     ];
     $client  = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
-    $message = $client->request(json_encode($filter), 2);
-    if ($message !== false) {
+    list($result, $message) = $client->sendRequest(json_encode($filter), 2);
+    if ($result !== false) {
         $res = json_decode($client->getBody(), true);
         if (count($res) === 1) {
             $exten = ($res[0]['src_chan'] === $chan) ? $res[0]['src_num'] : $res[0]['dst_num'];

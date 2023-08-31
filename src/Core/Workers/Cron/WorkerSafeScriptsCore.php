@@ -184,7 +184,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                 // We had service PID, so we will ping it
                 $queue = new BeanstalkClient($this->makePingTubeName($workerClassName));
                 // Check service with higher priority
-                $result = $queue->request('ping', 5, 1);
+                list($result, $message) = $queue->sendRequest('ping', 5, 1);
             }
             if (false === $result) {
                 Processes::processPHPWorker($workerClassName);

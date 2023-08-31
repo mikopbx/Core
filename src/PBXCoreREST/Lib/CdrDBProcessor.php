@@ -82,8 +82,8 @@ class CdrDBProcessor extends Injectable
                 'miko_result_in_file' => true,
             ];
             $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
-            $message = $client->request(json_encode($filter), 2);
-            if ($message === false) {
+            list($result, $message) = $client->sendRequest(json_encode($filter), 2);
+            if ($result === false) {
                 $res->data = [];
             } else {
                 $am = Util::getAstManager('off');
@@ -135,8 +135,8 @@ class CdrDBProcessor extends Injectable
             'miko_tmp_db' => true,
         ];
         $client  = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
-        $message = $client->request(json_encode($filter), 2);
-        if ($message === false) {
+        list($result, $message) = $client->sendRequest(json_encode($filter), 2);
+        if ($result === false) {
             $res->data = [];
         }else{
             $res->data[] = $message;

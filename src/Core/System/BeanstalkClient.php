@@ -115,6 +115,8 @@ class BeanstalkClient extends Injectable
     /**
      * Sends request and wait for answer from processor
      *
+     * @deprecated Use sendRequest instead with array result: list($result, $message) = $client->sendRequest(...)
+     *
      * @param      $job_data
      * @param int  $timeout
      * @param int  $priority
@@ -139,8 +141,50 @@ class BeanstalkClient extends Injectable
             if ($job !== null) {
                 $this->message = $job->getData();
                 $this->queue->delete($job);
+            }
+        } catch (Throwable $exception) {
+            Util::sysLogMsg(__METHOD__, $exception->getMessage(), LOG_ERR);
+            if(isset($job)){
+                $this->buryJob($job);
+            }
+        }
+        $this->queue->ignore($inbox_tube);
+
+        return $this->message;
+    }
+
+
+    /**
+     * Sends request and wait for answer from processor
+     *
+     * @param      $job_data
+     * @param int  $timeout
+     * @param int  $priority
+     *
+     * @return array
+     */
+    public function sendRequest($job_data, int $timeout = 10, int $priority = PheanstalkInterface::DEFAULT_PRIORITY):array
+    {
+        $result = true;
+        $inbox_tube    = uniqid(self::INBOX_PREFIX, true);
+        $this->queue->watch($inbox_tube);
+
+        // Send message to backend worker
+        $requestMessage = [
+            $job_data,
+            'inbox_tube' => $inbox_tube,
+        ];
+        $this->publish($requestMessage, null, $priority, 0, $timeout);
+
+        // We wait until a worker process request.
+        try {
+            $job = $this->queue->reserveWithTimeout($timeout);
+            if ($job !== null) {
+                $this->message = $job->getData();
+                $this->queue->delete($job);
             } else {
                 $this->message = '{"'.self::QUEUE_ERROR.'":"Worker did not answer within timeout '.$timeout.' sec"}';
+                $result = false;
             }
         } catch (Throwable $e) {
             if(isset($job)){
@@ -148,10 +192,11 @@ class BeanstalkClient extends Injectable
             }
             $prettyMessage = CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $this->message = '{"'.self::QUEUE_ERROR.'":"Exception on '.__METHOD__.' with message: '.$prettyMessage.'"}';
+            $result = false;
         }
         $this->queue->ignore($inbox_tube);
 
-        return $this->message;
+        return [$result, $this->message];
     }
 
     /**

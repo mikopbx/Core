@@ -76,9 +76,9 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
         $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
         $filename = '';
         try {
-            $result = $client->request(json_encode($filter), 2);
+            list($result, $message) = $client->sendRequest(json_encode($filter), 2);
             if ($result!==false){
-                $filename = json_decode($result, true, 512, JSON_THROW_ON_ERROR);
+                $filename = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
             }
         } catch (\Throwable $e) {
             $filename = '';
