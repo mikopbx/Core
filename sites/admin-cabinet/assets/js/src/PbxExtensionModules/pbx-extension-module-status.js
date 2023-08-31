@@ -158,8 +158,7 @@ class PbxExtensionStatus {
             this.$disabilityFields.addClass('disabled');
             if (response !== undefined && response.messages !== undefined) {
                 if (response.messages.license!==undefined){
-                    response.messages.error = response.messages.license;
-                    UserMessage.showLicenseError(globalTranslate.ext_ModuleLicenseProblem, response.messages);
+                    UserMessage.showLicenseError(globalTranslate.ext_ModuleLicenseProblem, response.messages.license);
                 } else {
                     UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
                 }
