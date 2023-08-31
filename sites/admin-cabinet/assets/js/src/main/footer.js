@@ -37,7 +37,7 @@ $(document).ready(() => {
     $('.popuped').popup();
     $('div[data-content], a[data-content]').popup();
     $('#loader').removeClass('active');
-    $('#loader-row').hide();
-    $('#content-frame').show();
+    // $('#loader-row').hide();
+    // $('#content-frame').show();
 
 });
