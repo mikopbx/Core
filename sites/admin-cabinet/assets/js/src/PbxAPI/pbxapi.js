@@ -100,7 +100,13 @@ const PbxApi = {
     extensionsGetPhoneRepresent: `${Config.pbxUrl}/pbxcore/api/extensions/getPhoneRepresent`, // Returns CallerID names for the number.
     extensionsGetForSelect: `${Config.pbxUrl}/pbxcore/api/extensions/getForSelect?type={type}`, // Retrieves the extensions list limited by type parameter.
     extensionsAvailable: `${Config.pbxUrl}/pbxcore/api/extensions/available?number={number}`, // Checks the number uniqueness.
+    extensionsGetRecord: `${Config.pbxUrl}/pbxcore/api/extensions/getRecord?id={id}`, // Get data structure for saveRecord request, if id parameter is empty it returns structure with default data.
+    extensionsSaveRecord: `${Config.pbxUrl}/pbxcore/api/extensions/saveRecord`, // Saves extensions, sip, users, external phones, forwarding rights with POST data.
     extensionsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/extensions/deleteRecord`, // Deletes the extension record with its dependent tables.
+
+    // Users
+    usersAvailable: `${Config.pbxUrl}/pbxcore/api/users/available?email={email}`, // Checks the email uniqueness.
+
 
     /**
      * Tries to parse a JSON string.
@@ -1523,3 +1529,6 @@ const PbxApi = {
     },
 
 };
+
+// requirejs(["pbx/PbxAPI/extensionsAPI"]);
+// requirejs(["pbx/PbxAPI/usersAPI"]);

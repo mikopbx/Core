@@ -193,6 +193,7 @@ class AssetProvider implements ServiceProviderInterface
             ->addCss('css/vendor/semantic/checkbox.min.css', true);
 
         $this->headerCollectionJS
+            //->addJs('js/vendor/requirejs.org/require.min.js', true,true,['data-main'=>'/admin-cabinet/assets/js/pbx/main/header.js'])
             ->addJs('js/pbx/main/header.js', true)
             ->addJs('js/vendor/jquery.min.js', true);
 
@@ -233,7 +234,8 @@ class AssetProvider implements ServiceProviderInterface
 
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/config.js', true)
-                ->addJs('js/pbx/main/pbxapi.js', true)
+                ->addJs('js/pbx/PbxAPI/pbxapi.js', true)
+                ->addJs('js/pbx/PbxAPI/extensionsAPI.js', true)
                 ->addJs('js/pbx/main/connection-check-worker.js', true)
                 ->addJs('js/pbx/main/semantic-localization.js', true)
                 ->addJs('js/pbx/Advices/advices-worker.js', true)
@@ -242,7 +244,6 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/ssh-console.js', true)
                 ->addJs('js/pbx/main/delete-something.js', true)
                 ->addJs('js/pbx/main/user-message.js', true)
-                ->addJs('js/pbx/Extensions/extensions.js', true)
                 ->addJs('js/pbx/main/sidebar-menu-show-active.js', true)
                 ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true)
                 ->addJs('js/pbx/WikiLinksReplacement/wiki-links-replacement-worker.js', true);
@@ -751,6 +752,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/inputmask/jquery.inputmask-multi.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
+                ->addJs('js/pbx/PbxAPI/usersAPI.js', true)
                 ->addJs('js/pbx/Extensions/input-mask-patterns.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true)

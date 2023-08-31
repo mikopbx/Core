@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, sessionStorage */
+/* global globalRootUrl, sessionStorage, PbxApi */
 
 
 /**
@@ -259,7 +259,7 @@ const Extensions = {
      * @param {string} userId - The ID of the user associated with the extension.
      */
     checkAvailability(oldNumber, newNumber, cssClassName = 'extension', userId = '') {
-        if (oldNumber === newNumber) {
+        if (oldNumber === newNumber || newNumber.length===0) {
             $(`.ui.input.${cssClassName}`).parent().removeClass('error');
             $(`#${cssClassName}-error`).addClass('hidden');
             return;
@@ -271,8 +271,9 @@ const Extensions = {
             urlData: {
                 number: newNumber
             },
+            successTest: PbxApi.successTest,
             onSuccess(response) {
-                if (response.result) {
+                if (response.data['available']===true) {
                     $(`.ui.input.${cssClassName}`).parent().removeClass('error');
                     $(`#${cssClassName}-error`).addClass('hidden');
                 } else if (userId.length > 0 && response.data['userId'] === userId) {
@@ -280,9 +281,13 @@ const Extensions = {
                     $(`#${cssClassName}-error`).addClass('hidden');
                 } else {
                     $(`.ui.input.${cssClassName}`).parent().addClass('error');
-                    $(`#${cssClassName}-error`).removeClass('hidden').html(
-                        `${globalTranslate.ex_ThisNumberIsNotFree}: ${response.data['represent']}`
-                    );
+                    let message =`${globalTranslate.ex_ThisNumberIsNotFree}:&nbsp`;
+                    if (globalTranslate[response.data['represent']]!==undefined){
+                        message = globalTranslate[response.data['represent']];
+                    } else {
+                        message +=response.data['represent'];
+                    }
+                    $(`#${cssClassName}-error`).removeClass('hidden').html(message);
                 }
             },
         });

@@ -39,4 +39,5 @@ $(document).ready(() => {
     $('#loader').removeClass('active');
     $('#loader-row').hide();
     $('#content-frame').show();
+
 });
