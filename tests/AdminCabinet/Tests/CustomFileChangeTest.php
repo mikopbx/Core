@@ -21,7 +21,6 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
-use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class CustomFileChangeTest extends MikoPBXTestsBase
@@ -95,7 +94,7 @@ class CustomFileChangeTest extends MikoPBXTestsBase
         $params[] = [
             [
                 'filePath'     => '/var/spool/cron/crontabs/root',
-                'mode'         => CustomFiles::MODE_APPEND,
+                'mode'         => 'append',
                 'fileContents' => "*/1 * * * * /etc/rc/remount-offload-rw > /dev/null 2> /dev/null",
                 'description'  => 'Подключаем режим записи для Offload диска',
             ],
