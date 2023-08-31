@@ -88,9 +88,20 @@ const conference = {
     initialize() {
 
         // Add handler to dynamically check if the input number is available
+        let timeoutId;
         conference.$number.on('input', () => {
-            const newNumber = conference.$formObj.form('get value', 'extension');
-            Extensions.checkAvailability(conference.defaultNumber, newNumber);
+            // Clear the previous timer, if it exists
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            // Set a new timer with a delay of 0.5 seconds
+            timeoutId = setTimeout(() => {
+                // Get the newly entered number
+                const newNumber = conference.$formObj.form('get value', 'extension');
+
+                // Execute the availability check for the number
+                Extensions.checkAvailability(conference.defaultNumber, newNumber);
+            }, 500);
         });
 
         // Initialize the conference room form
