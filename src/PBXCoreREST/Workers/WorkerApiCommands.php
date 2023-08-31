@@ -97,7 +97,7 @@ class WorkerApiCommands extends WorkerBase
 
             // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
             // and set XDEBUG_SESSION Cookie header on REST request to debug it
-            if (isset($request['debug']) && $request['debug'] === true) {
+            if (isset($request['debug']) && $request['debug'] === true && extension_loaded('xdebug')) {
                 xdebug_break();
             }
 
