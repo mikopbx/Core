@@ -46,13 +46,13 @@ use MikoPBX\PBXCoreREST\Controllers\
     Advices\GetController as AdvicesGetController,
     Extensions\GetController as ExtensionsGetController,
     Extensions\PostController as ExtensionsPostController,
+    Users\GetController as UsersGetController,
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController
 };
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
-use MikoPBX\Modules\Config\WebUIConfigInterface;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
@@ -162,6 +162,8 @@ class RouterProvider implements ServiceProviderInterface
 
             [ExtensionsGetController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'get', '/'],
             [ExtensionsPostController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'post', '/'],
+
+            [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'get', '/'],
 
             [LicenseGetController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'get', '/'],
             [LicensePostController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'post', '/'],
