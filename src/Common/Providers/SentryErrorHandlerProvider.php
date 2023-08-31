@@ -78,14 +78,14 @@ class SentryErrorHandlerProvider implements ServiceProviderInterface
 
                 SentrySdk::getCurrentHub()->configureScope(
                     function (Scope $scope) use ($licenseInfo, $moduleTag): void {
-                        if (!empty($licenseInfo->email)) {
-                            $scope->setUser(['id' => $licenseInfo->email]);
-                        }
                         if (!empty($licenseInfo->key)) {
-                            $scope->setExtra('key', $licenseInfo->key);
-                        }
-                        if (!empty($licenseInfo->company)) {
-                            $scope->setExtra('company', $licenseInfo->company);
+                            $scope->setUser(
+                                [
+                                    'id'=>$licenseInfo->key,
+                                    'email' => $licenseInfo->email,
+                                    'username'=>$licenseInfo->companyname
+                                ]
+                            );
                         }
                         if (isset($moduleTag)) {
                             $scope->setTag('library', $moduleTag);
@@ -114,9 +114,11 @@ class SentryErrorHandlerProvider implements ServiceProviderInterface
             return $licenseInfo;
         }
         // Retrieve the last get license request from the cache
-       $xmlFromFile = simplexml_load_file(MarketPlaceProvider::LIC_FILE_PATH);
-        if ($xmlFromFile!==false) {
-            foreach ($xmlFromFile->attributes() as $attribute => $value) {
+       $encodedContent = file_get_contents(MarketPlaceProvider::LIC_FILE_PATH);
+       $licenseInfoResult =  json_decode($encodedContent,true);
+
+        if (is_array($licenseInfoResult)) {
+            foreach ($licenseInfoResult['@attributes'] as $attribute => $value) {
                 if (!empty($value) and property_exists($licenseInfo, $attribute)) {
                     $licenseInfo->$attribute = $value;
                 }

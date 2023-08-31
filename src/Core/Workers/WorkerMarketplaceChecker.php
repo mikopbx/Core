@@ -33,7 +33,7 @@ use SimpleXMLElement;
 class WorkerMarketplaceChecker extends WorkerBase
 {
     public const CACHE_KEY = 'Workers:WorkerMarketplaceChecker:lastCheck';
-    public const CACHE_KEY_LICENSE_INFO = 'Workers:WorkerMarketplaceChecker:lastCheck';
+    public const CACHE_KEY_LICENSE_INFO = 'Workers:WorkerMarketplaceChecker:lastGetLicenseCheck';
 
 
     /**
@@ -68,7 +68,7 @@ class WorkerMarketplaceChecker extends WorkerBase
             if (!empty($licKey)) {
                 $regInfo = $lic->getLicenseInfo($licKey);
                 if ($regInfo instanceof SimpleXMLElement) {
-                    file_put_contents(MarketPlaceProvider::LIC_FILE_PATH, $regInfo);
+                    file_put_contents(MarketPlaceProvider::LIC_FILE_PATH, json_encode($regInfo->attributes()));
                 }
             }
             $managedCache->set(self::CACHE_KEY_LICENSE_INFO, time(), 86400); // Check every day
