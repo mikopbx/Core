@@ -216,8 +216,18 @@ const extension = {
         });
 
         // Set the "oncomplete" event handler for the extension number input
+        let timeoutNumberId;
         extension.$number.inputmask('option', {
-            oncomplete: extension.cbOnCompleteNumber,
+            oncomplete: ()=>{
+                    // Clear the previous timer, if it exists
+                    if (timeoutNumberId) {
+                        clearTimeout(timeoutNumberId);
+                    }
+                    // Set a new timer with a delay of 0.5 seconds
+                    timeoutNumberId = setTimeout(() => {
+                        extension.cbOnCompleteNumber();
+                    }, 500);
+            }
         });
         extension.$number.on('paste', function() {
             extension.cbOnCompleteNumber();
@@ -245,8 +255,18 @@ const extension = {
         });
 
         // Set up the input mask for the email input
+        let timeoutEmailId;
         extension.$email.inputmask('email', {
-            oncomplete: extension.cbOnCompleteEmail,
+            oncomplete: ()=>{
+                // Clear the previous timer, if it exists
+                if (timeoutEmailId) {
+                    clearTimeout(timeoutEmailId);
+                }
+                // Set a new timer with a delay of 0.5 seconds
+                timeoutEmailId = setTimeout(() => {
+                    extension.cbOnCompleteEmail();
+                }, 500);
+            },
         });
         extension.$email.on('paste', function() {
             extension.cbOnCompleteEmail();
@@ -285,56 +305,30 @@ const extension = {
 
         // Call the `checkAvailability` function on `Extensions` object
         // to check whether the entered phone number is already in use.
-        // Parameters: default number, new number, type of check (number), user id
+        // Parameters: default number, new number, class name of error message (number), user id
         Extensions.checkAvailability(extension.defaultNumber, newNumber, 'number', userId);
     },
     /**
      * It is executed once an email address has been completely entered.
      */
     cbOnCompleteEmail() {
-        // Dynamic check to see if the entered email is available
-        $.api({
-            // The URL for the API request, `globalRootUrl` is a global variable containing the base URL
-            url: `${globalRootUrl}users/available/{value}`,
-            // The jQuery selector for the context in which to search for the state
-            stateContext: '.ui.input.email',
-            // 'now' will execute the API request immediately when called
-            on: 'now',
-            // This function will be called before the API request is made, used to modify settings of the request
-            beforeSend(settings) {
-                const result = settings;
-                // Add the entered email to the URL of the API request
-                result.urlData = {
-                    value: extension.$formObj.form('get value', 'user_email'),
-                };
-                return result;
-            },
-            // This function will be called when the API request is successful
-            onSuccess(response) {
-                // If the response indicates that the email is available or the entered email is the same as the default email
-                if (response.emailAvailable
-                    || extension.defaultEmail === extension.$formObj.form('get value', 'user_email')
-                ) {
-                    // Remove the error class from the email input field
-                    $('.ui.input.email').parent().removeClass('error');
-                    // Hide the email error message
-                    $('#email-error').addClass('hidden');
-                } else {
-                    // Add the error class to the email input field
-                    $('.ui.input.email').parent().addClass('error');
-                    // Show the email error message
-                    $('#email-error').removeClass('hidden');
-                }
-            },
-        });
+
+        // Retrieve the entered phone number after removing any input mask
+        const newEmail = extension.$email.inputmask('unmaskedvalue');
+
+        // Retrieve the user ID from the form
+        const userId = extension.$formObj.form('get value', 'user_id');
+
+        // Call the `checkAvailability` function on `UsersAPI` object
+        // to check whether the entered email is already in use.
+        // Parameters: default email, new email, class name of error message (email), user id
+        UsersAPI.checkAvailability(extension.defaultEmail, newEmail,'email', userId);
     },
 
     /**
      * Activated when entering a mobile phone number in the employee's profile.
      */
     cbOnCompleteMobileNumber() {
-        console.log('cbOnCompleteMobileNumber');
-
         // Get the new mobile number without any input mask
         const newMobileNumber = extension.$mobile_number.inputmask('unmaskedvalue');
 
@@ -390,8 +384,6 @@ const extension = {
         }
         // Set the new mobile number as the default
         extension.defaultMobileNumber = newMobileNumber;
-
-        console.log(`new mobile number ${extension.defaultMobileNumber} `);
     },
 
     /**
@@ -480,7 +472,8 @@ const extension = {
      */
     cbAfterSendForm(response) {
         if (PbxApi.successTest(response)){
-            if (extension.$formObj.form('get value','id') !== response.data.id){
+            if (response.data.id!==undefined
+                && extension.$formObj.form('get value','id') !== response.data.id){
                 window.location=`${globalRootUrl}extensions/modify/${response.data.id}`
             }
 

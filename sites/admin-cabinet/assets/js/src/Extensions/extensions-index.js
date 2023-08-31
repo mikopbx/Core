@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, ClipboardJS, SemanticLocalization, InputMaskPatterns, UserMessage, globalTranslate */
+/* global globalRootUrl, ClipboardJS, SemanticLocalization, InputMaskPatterns, UserMessage, globalTranslate, Inputmask */
 
 
 /**
@@ -97,7 +97,7 @@ const extensionsIndex = {
         // Set up delete functionality on delete button click.
         $('body').on('click', 'a.delete', (e) => {
             e.preventDefault();
-
+            $(e.target).addClass('disabled');
             // Get the extension ID from the closest table row.
             const extensionId = $(e.target).closest('tr').attr('id');
 
@@ -123,6 +123,7 @@ const extensionsIndex = {
             // Show an error message if deletion was not successful.
             UserMessage.showError(response.messages.error, globalTranslate.ex_ImpossibleToDeleteExtension);
         }
+        $('a.delete').removeClass('disabled');
     },
 
     /**
