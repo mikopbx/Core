@@ -1090,7 +1090,7 @@ return [
     'lic_NoInet' => 'შესაძლოა, MikoPBX სერვერიდან არ არის ინტერნეტი',
     'lic_NoInetLicMiko' => 'შესაძლოა შეზღუდული წვდომა რესურსზე <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "შეამოწმეთ <b>DNS</b> და <b>Gateway</b> პარამეტრები <a href='%url$'>ქსელის</a> პარამეტრებში",
-    'lic_SuccessfulСuponActivation' => 'კუპონი წარმატებით გააქტიურდა',
+    'lic_SuccessfulCouponActivation' => 'კუპონი წარმატებით გააქტიურდა',
     'or_RuleDescriptionBeginEmpty' => 'რიცხვი შედგება <b>%restnumbers%</b> ციფრისგან',
     'or_RuleNotConfigured' => 'წესი არ არის კონფიგურირებული',
     'or_RuleAnyNumbers' => 'ნებისმიერი რიცხვი',

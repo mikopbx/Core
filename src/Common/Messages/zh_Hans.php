@@ -1090,7 +1090,7 @@ return [
     'lic_NoInet' => '可能没有从 MikoPBX 服务器访问 Internet',
     'lic_NoInetLicMiko' => '可能限制访问资源 <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "检查<a href='%url$'>网络</a>设置中的<b>DNS</b>和<b>网关</b>设置",
-    'lic_SuccessfulСuponActivation' => '优惠券成功激活',
+    'lic_SuccessfulCouponActivation' => '优惠券成功激活',
     'or_RuleDescriptionBeginEmpty' => '编号由 <b>%restnumbers%</b> 位组成',
     'or_RuleNotConfigured' => '未配置规则',
     'or_RuleAnyNumbers' => '任何数字',

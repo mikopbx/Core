@@ -1090,7 +1090,7 @@ return [
     'lic_NoInet' => 'Можливо, з сервера MikoPBX немає доступу в інтернет',
     'lic_NoInetLicMiko' => 'Можливо обмежений доступ до ресурсів <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "Перевірте параметри <b>DNS</b> та <b>Gateway</b> у налаштуваннях <a href='/admin-cabinet/network/modify/'>мережі</a>",
-    'lic_SuccessfulСuponActivation' => 'Купон успішно активовано',
+    'lic_SuccessfulCouponActivation' => 'Купон успішно активовано',
     'or_RuleDescriptionBeginEmpty' => 'Номер складається з <b>%restnumbers%</b> цифр',
     'or_RuleNotConfigured' => 'Правило не налаштоване',
     'or_RuleAnyNumbers' => 'Будь-які номери',

@@ -1090,7 +1090,7 @@ return [
     'lic_NoInet' => 'おそらく、MikoPBXサーバーからのインターネットアクセスはありません',
     'lic_NoInetLicMiko' => 'おそらくリソース <b>lic.mikopbx.com</b> へのアクセスが制限されています',
     'lic_NoInetNetSettings' => "<a href='/admin-cabinet/network/modify/'>ネットワーク</a>設定で<b>DNS</b>と<b>ゲートウェイ</b>の設定を確認してください",
-    'lic_SuccessfulСuponActivation' => 'クーポンが正常にアクティブ化されました',
+    'lic_SuccessfulCouponActivation' => 'クーポンが正常にアクティブ化されました',
     'or_RuleDescriptionBeginEmpty' => '番号は<b>%restnumbers%</b>桁で構成されます',
     'or_RuleNotConfigured' => 'ルールが構成されていません',
     'or_RuleAnyNumbers' => '任意の数字',

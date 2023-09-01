@@ -830,7 +830,7 @@ return [
     'lic_ActivateCouponButton' => 'Activați cuponul',
     'lic_SaveLicenseKeyButton' => 'tasta de salvare',
     'lic_GetTrialErrorCheckInternet' => 'Înregistrare eșuată, verificați dacă există Internet pe MikoPBX',
-    'lic_SuccessfulСuponActivation' => 'Cupon activat cu succes',
+    'lic_SuccessfulCouponActivation' => 'Cupon activat cu succes',
     'lic_LicenseKeyMessage' => 'Cheia de licență este folosită pentru a stoca toate licențele dvs. de la orice produs MIKO.<br>
 Dacă aveți deja o cheie, puteți să o introduceți pur și simplu în acest câmp.<br>
 Dacă ați avut cheia, dar ați uitat-o, căutați în e-mail scrisorile primite la lic@miko.ru<br>

@@ -1090,7 +1090,7 @@ return [
     'lic_NoInet' => 'Ίσως δεν υπάρχει πρόσβαση στο Διαδίκτυο από τον διακομιστή MikoPBX',
     'lic_NoInetLicMiko' => 'Ίσως περιορισμένη πρόσβαση στον πόρο <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "Ελέγξτε τις ρυθμίσεις <b>DNS</b> και <b>Gateway</b> στις ρυθμίσεις <a href='/admin-cabinet/network/modify/'>δίκτυο</a>",
-    'lic_SuccessfulСuponActivation' => 'Το κουπόνι ενεργοποιήθηκε με επιτυχία',
+    'lic_SuccessfulCouponActivation' => 'Το κουπόνι ενεργοποιήθηκε με επιτυχία',
     'or_RuleDescriptionBeginEmpty' => 'Ο αριθμός αποτελείται από <b>%restnumbers%</b> ψηφία',
     'or_RuleNotConfigured' => 'Ο κανόνας δεν έχει ρυθμιστεί',
     'or_RuleAnyNumbers' => 'Οποιοιδήποτε αριθμοί',

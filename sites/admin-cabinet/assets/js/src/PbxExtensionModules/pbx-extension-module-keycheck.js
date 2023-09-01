@@ -34,6 +34,7 @@ const keyCheck = {
     $emptyLicenseKeyInfo: $('.empty-license-key-info'),
     $filledLicenseKeyHeader: $('.filled-license-key-header'),
     $filledLicenseKeyInfo: $('.filled-license-key-info'),
+    $filledLicenseKeyPlaceholder: $('.filled-license-key-info .confidential-field'),
     $getNewKeyLicenseSection: $('#getNewKeyLicenseSection'),
     $couponSection: $('#couponSection'),
     $formErrorMessages: $('#form-error-messages'),
@@ -42,9 +43,13 @@ const keyCheck = {
     $email: $('#email'),
     $ajaxMessages: $('.ui.message.ajax'),
     $licenseDetailInfo: $('#licenseDetailInfo'),
-    $resetButton: $('#reset-license'),
     $productDetails: $('#productDetails'),
     $accordions: $('#licencing-modify-form .ui.accordion'),
+
+    $resetButton: $('#reset-license-button'),
+    $saveKeyButton: $('#save-license-key-button'),
+    $activateCouponButton: $('#coupon-activation-button'),
+    $manageKeyButton: $('#manage-license-button'),
 
     /**
      * Validation rules for the form fields before submission.
@@ -128,10 +133,33 @@ const keyCheck = {
             UserMessage.showLicenseError(globalTranslate.lic_LicenseProblem, JSON.parse(previousKeyMessage),true)
         }
 
+        // Handle save key button click
+        keyCheck.$saveKeyButton.on('click', () => {
+            if (keyCheck.$licKey.inputmask('unmaskedvalue').length===20){
+                keyCheck.$formObj.addClass('loading disabled');
+                keyCheck.$saveKeyButton.addClass('loading disabled');
+                Form.submitForm();
+            } else {
+                keyCheck.$saveKeyButton.transition('shake');
+            }
+        });
+
         // Handle reset button click
         keyCheck.$resetButton.on('click', () => {
             keyCheck.$formObj.addClass('loading disabled');
+            keyCheck.$resetButton.addClass('loading disabled');
             PbxApi.LicenseResetLicenseKey(keyCheck.cbAfterResetLicenseKey);
+        });
+
+        // Handle activate coupon button click
+        keyCheck.$activateCouponButton.on('click', () => {
+            if (keyCheck.$coupon.inputmask('unmaskedvalue').length===20 &&keyCheck.$licKey.inputmask('unmaskedvalue').length===20){
+                keyCheck.$formObj.addClass('loading disabled');
+                keyCheck.$activateCouponButton.addClass('loading disabled');
+                Form.submitForm();
+            } else {
+                keyCheck.$activateCouponButton.transition('shake');
+            }
         });
 
         keyCheck.cbOnLicenceKeyInputChange();
@@ -140,14 +168,13 @@ const keyCheck = {
 
         // Check if a license key is present
         if (globalPBXLicense.length === 28) {
-            keyCheck.$filledLicenseKeyInfo
-                .html(`${globalPBXLicense} <i class="spinner loading icon"></i>`)
-                .show();
+            keyCheck.$filledLicenseKeyPlaceholder.html(`${globalPBXLicense} <i class="spinner loading icon"></i>`);
             keyCheck.$filledLicenseKeyHeader.show();
-            keyCheck.$filledLicenseKeyInfo.after(`<br>${globalTranslate.lic_ManageLicenseKeyOnSitePreLinkText}&nbsp<a href="${Config.keyManagementUrl}" class="">${globalTranslate.lic_ManageLicenseKeyOnSiteLinkText}</a>.`)
+            keyCheck.$manageKeyButton.attr('href',Config.keyManagementUrl);
             PbxApi.LicenseGetMikoPBXFeatureStatus(keyCheck.cbAfterGetMikoPBXFeatureStatus);
             PbxApi.LicenseGetLicenseInfo(keyCheck.cbAfterGetLicenseInfo);
             keyCheck.$emptyLicenseKeyInfo.hide();
+            keyCheck.$filledLicenseKeyInfo.show();
         } else {
             keyCheck.$filledLicenseKeyHeader.hide();
             keyCheck.$filledLicenseKeyInfo.hide();
@@ -162,7 +189,7 @@ const keyCheck = {
     cbAfterResetLicenseKey(response) {
         // Remove the loading and disabled classes from the form
         keyCheck.$formObj.removeClass('loading disabled');
-
+        keyCheck.$resetButton.removeClass('loading disabled');
         if (response !== false) {
             // If the response is not false, indicating a successful license key reset,
             // reload the window to apply the changes
@@ -180,8 +207,9 @@ const keyCheck = {
         if (response === true) {
             // MikoPBX feature status is true (valid)
             keyCheck.$formObj.removeClass('error').addClass('success');
-            keyCheck.$filledLicenseKeyInfo.after(`<div class="ui success message ajax"><i class="check green icon"></i> ${globalTranslate.lic_LicenseKeyValid}</div>`);
+            keyCheck.$filledLicenseKeyPlaceholder.html(`${globalPBXLicense} <i class="check green icon"></i>`)
             keyCheck.$filledLicenseKeyHeader.show();
+            sessionStorage.removeItem(`previousKeyMessage${globalWebAdminLanguage}`);
         } else {
             // MikoPBX feature status is false or an error occurred
             if (response === false || response.messages === undefined) {
@@ -216,8 +244,7 @@ const keyCheck = {
      * Callback function triggered when there is a change in the license key input.
      */
     cbOnLicenceKeyInputChange() {
-        const licKey = keyCheck.$licKey.val();
-        if (licKey.length === 28) {
+        if (keyCheck.$licKey.inputmask('unmaskedvalue').length === 20) {
             // License key is complete
             keyCheck.$formObj.find('.reginfo input').each((index, obj) => {
                 $(obj).attr('hidden', '');
@@ -342,10 +369,10 @@ const keyCheck = {
             if (response.messages.length !== 0) {
                 UserMessage.showMultiString(response.messages);
             }
-        } else if (response.messages !== undefined) {
-            UserMessage.showMultiString(response.messages);
+        } else if (response.messages.license!==undefined){
+            UserMessage.showLicenseError(globalTranslate.lic_GeneralError, response.messages.license);
         } else {
-            UserMessage.showError(globalTranslate.lic_GetTrialErrorCheckInternet);
+            UserMessage.showMultiString(response.messages, globalTranslate.lic_GeneralError);
         }
 
         // Trigger change event to acknowledge the modification
@@ -366,6 +393,9 @@ const keyCheck = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
+        keyCheck.$formObj.removeClass('loading');
+        keyCheck.$saveKeyButton.removeClass('loading disabled');
+        keyCheck.$activateCouponButton.removeClass('loading disabled');
         const formData = keyCheck.$formObj.form('get values');
         PbxApi.LicenseProcessUserRequest(formData, keyCheck.cbAfterFormProcessing);
     },
@@ -389,7 +419,7 @@ const keyCheck = {
  * @returns {boolean} - True if the field is not empty or the license key field is empty, false otherwise.
  */
 $.fn.form.settings.rules.checkEmptyIfLicenseKeyEmpty = function (value) {
-    return (keyCheck.$licKey.val().length === 28 || value.length > 0);
+    return (keyCheck.$licKey.inputmask('unmaskedvalue').length === 20 || value.length > 0);
 };
 
 /**

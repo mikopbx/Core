@@ -808,7 +808,7 @@ return [
     'lic_ActivateCouponButton' => 'Waardebon activeren',
     'lic_SaveLicenseKeyButton' => 'sleutel opslaan',
     'lic_GetTrialErrorCheckInternet' => 'Registreren mislukt, controleer op internet op MikoPBX',
-    'lic_SuccessfulСuponActivation' => 'Coupon succesvol geactiveerd',
+    'lic_SuccessfulCouponActivation' => 'Coupon succesvol geactiveerd',
     'lic_LicenseKeyMessage' => 'De licentiesleutel wordt gebruikt om al uw licenties van alle MIKO-producten op te slaan.<br>
 Als u al een sleutel heeft, kunt u deze eenvoudig in dit veld invoeren.<br>
 Als je de sleutel had, maar je bent hem vergeten, kijk dan in de mail voor inkomende brieven op lic@miko.ru<br>

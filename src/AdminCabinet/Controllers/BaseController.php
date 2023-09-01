@@ -379,7 +379,7 @@ class BaseController extends Controller
      *
      * @return void
      */
-    protected function base64ToJpeg(string $base64_string, string $output_file): void
+    protected function base64ToJpegFile(string $base64_string, string $output_file): void
     {
         // Open the output file for writing
         $ifp = fopen($output_file, 'wb');

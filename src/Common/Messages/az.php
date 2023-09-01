@@ -168,7 +168,7 @@ return [
     'lic_ValidateCouponEmpty' => 'Tələb olunan sahə doldurulmayıb',
     'lic_Phone' => 'Əlaqə telefon nömrəsi',
     'lic_Contact' => 'Əlaqədar şəxs',
-    'lic_SuccessfulСuponActivation' => 'Kupon uğurla aktivləşdirildi',
+    'lic_SuccessfulCouponActivation' => 'Kupon uğurla aktivləşdirildi',
     'lic_GetTrialErrorCheckInternet' => 'Qeydiyyatdan keçmək alınmadı, MikoPBX-də İnterneti yoxlayın',
     'lic_SaveLicenseKeyButton' => 'açarı saxla',
     'lic_ActivateCouponButton' => 'Kuponu aktivləşdirin',

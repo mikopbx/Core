@@ -95,7 +95,7 @@ class ExtensionsController extends BaseController
                         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
                         $imgFile = "{$imgCacheDir}/$filename.jpg";
                         if (!file_exists($imgFile)) {
-                            $this->base64ToJpeg($extension->avatar, $imgFile);
+                            $this->base64ToJpegFile($extension->avatar, $imgFile);
                         }
 
                         $extensionTable[$extension->userid]['avatar'] = "{$this->url->get()}assets/img/cache/{$filename}.jpg";

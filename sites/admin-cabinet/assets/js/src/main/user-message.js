@@ -140,12 +140,11 @@ const UserMessage = {
 
     /**
      * Shows multiple messages.
-     * @param {string|object|array} message - The multiple messages.
+     * @param {string|object|array} messages - The multiple messages.
      * @param {string} [header=''] - The header of the multiple messages.
      * @param disableScroll - If true, then the message will not be scrolled to.
      */
-    showMultiString(message, header = '', disableScroll = false) {
-        let messages = UserMessage.convertToText(message);
+    showMultiString(messages, header = '', disableScroll = false) {
         $('.ui.message.ajax').remove();
         if (!messages) return;
 

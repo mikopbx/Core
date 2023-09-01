@@ -1089,7 +1089,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'lic_NoInet' => 'Talvez não haja acesso à Internet do servidor MikoPBX',
     'lic_NoInetLicMiko' => 'Talvez acesso restrito ao recurso <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "Verifique as configurações de <b>DNS</b> e <b>Gateway</b> nas configurações de <a href='/admin-cabinet/network/modify/'>rede</a>",
-    'lic_SuccessfulСuponActivation' => 'Cupom ativado com sucesso',
+    'lic_SuccessfulCouponActivation' => 'Cupom ativado com sucesso',
     'or_RuleDescriptionBeginEmpty' => 'O número consiste em dígitos <b>%restnumbers%</b>',
     'or_RuleNotConfigured' => 'Regra não configurada',
     'or_RuleAnyNumbers' => 'Qualquer número',

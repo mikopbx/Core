@@ -1090,7 +1090,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'lic_NoInet' => 'Kanske finns det ingen internetåtkomst från MikoPBX-servern',
     'lic_NoInetLicMiko' => 'Kanske begränsad åtkomst till resursen <b>lic.mikopbx.com</b>',
     'lic_NoInetNetSettings' => "Kontrollera inställningarna för <b>DNS</b> och <b>Gateway</b> i inställningarna för <a href='/admin-cabinet/network/modify/'>nätverk</a>",
-    'lic_SuccessfulСuponActivation' => 'Kupongen har aktiverats',
+    'lic_SuccessfulCouponActivation' => 'Kupongen har aktiverats',
     'or_RuleDescriptionBeginEmpty' => 'Numret består av <b>%restnumbers%</b> siffror',
     'or_RuleNotConfigured' => 'Regel inte konfigurerad',
     'or_RuleAnyNumbers' => 'Alla siffror',
