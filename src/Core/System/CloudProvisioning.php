@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\SSHConf;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp;
@@ -85,8 +86,8 @@ class CloudProvisioning
     private function updateSshPassword($hashSalt): void
     {
         $data = md5(shell_exec(Util::which('ifconfig')) . $hashSalt . time());
-        $this->updatePbxSettings('SSHPassword', $data);
-        $this->updatePbxSettings('SSHDisablePasswordLogins', '1');
+        $this->updatePbxSettings(PbxSettingsConstants::SSH_PASSWORD, $data);
+        $this->updatePbxSettings(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD, '1');
         $confSsh = new SSHConf();
         $confSsh->updateShellPassword();
     }
@@ -129,7 +130,7 @@ class CloudProvisioning
         if (count($arrData) === 2) {
             $data = $arrData[1];
         }
-        $this->updatePbxSettings('SSHAuthorizedKeys', $data);
+        $this->updatePbxSettings(PbxSettingsConstants::SSH_AUTHORIZED_KEYS, $data);
     }
 
     /**

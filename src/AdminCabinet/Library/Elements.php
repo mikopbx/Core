@@ -46,6 +46,7 @@ use MikoPBX\AdminCabinet\Controllers\UpdateController;
 use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
@@ -431,8 +432,8 @@ class Elements extends Injectable
      */
     private function addMenuItemSSHMenu(): void
     {
-        if (PbxSettings::getValueByKey('SSHDisablePasswordLogins') !== '1') {
-            $sshPort = PbxSettings::getValueByKey('SSHPort');
+        if (PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD) !== '1') {
+            $sshPort = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PORT);
             $this->_headerMenu['maintenance']['submenu'][ConsoleController::class]['data-value'] = "root@{$_SERVER['SERVER_ADDR']}:$sshPort";
         } else {
             unset ($this->_headerMenu['maintenance']['submenu'][ConsoleController::class]);

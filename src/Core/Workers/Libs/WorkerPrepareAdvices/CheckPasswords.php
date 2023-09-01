@@ -22,9 +22,9 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
-use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
@@ -61,7 +61,7 @@ class CheckPasswords extends Injectable
                 continue;
             }
 
-            if (in_array($key, ['WebAdminPassword', 'SSHPassword'], true)) {
+            if (in_array($key, ['WebAdminPassword', PbxSettingsConstants::SSH_PASSWORD], true)) {
                 $messages['needUpdate'][] = $key;
             }
             $messages['warning'][] =
@@ -96,11 +96,11 @@ class CheckPasswords extends Injectable
                 'name'  => 'WEB password',
                 'record' => PbxSettings::getValueByKey('WebAdminPassword')
             ],
-            'SSHPassword' => [
+            PbxSettingsConstants::SSH_PASSWORD => [
                 'urlTemplate' => 'general-settings/modify/#/ssh',
                 'message' => 'adv_SshPasswordWeak',
                 'name'  => 'SSH password',
-                'record' => PbxSettings::getValueByKey('SSHPassword')
+                'record' => PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD)
             ],
         ];
         if ($arrOfDefaultValues['WebAdminPassword'] === PbxSettings::getValueByKey('WebAdminPassword')) {
@@ -113,16 +113,16 @@ class CheckPasswords extends Injectable
             unset($fields['WebAdminPassword']);
             $messages['needUpdate'][] = 'WebAdminPassword';
         }
-        if ($arrOfDefaultValues['SSHPassword'] === PbxSettings::getValueByKey('SSHPassword')) {
+        if ($arrOfDefaultValues[PbxSettingsConstants::SSH_PASSWORD] === PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD)) {
             $messages['error'][] = [
                 'messageTpl'=>'adv_YouUseDefaultSSHPassword',
                 'messageParams'=>[
                     'url'=>$this->url->get('general-settings/modify/#/ssh')
                 ]
             ];
-            unset($fields['SSHPassword']);
-            $messages['needUpdate'][] = 'SSHPassword';
-        } elseif (PbxSettings::getValueByKey('SSHPasswordHash') !== md5_file('/etc/shadow')) {
+            unset($fields[PbxSettingsConstants::SSH_PASSWORD]);
+            $messages['needUpdate'][] = PbxSettingsConstants::SSH_PASSWORD;
+        } elseif (PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE) !== md5_file('/etc/shadow')) {
             $messages['warning'][] = [
                 'messageTpl'=>'adv_SSHPPasswordCorrupt',
                 'messageParams'=>[

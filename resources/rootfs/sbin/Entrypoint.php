@@ -20,6 +20,7 @@
 
 require_once('Globals.php');
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use function MikoPBX\Common\Config\appPath;
@@ -55,7 +56,7 @@ class Entrypoint
             'GNATS_PORT' => 'gnats',
 
             // General settings.
-            'SSH_PORT' => 'SSHPort',
+            'SSH_PORT' => PbxSettingsConstants::SSH_PORT,
             'WEB_PORT' => 'WEBPort',
             'WEB_HTTPS_PORT' => 'WEBHTTPSPort',
             'SIP_PORT' => 'SIPPort',

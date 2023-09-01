@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
@@ -59,7 +60,7 @@ class GeneralSettingsEditForm extends BaseForm
                 case 'AMIPort':
                 case 'AJAMPort':
                 case 'AJAMPortTLS':
-                case 'SSHPort':
+                case PbxSettingsConstants::SSH_PORT:
                 case 'WEBPort':
                 case 'WEBHTTPSPort':
                 case 'PBXCallParkingExt':
@@ -70,7 +71,7 @@ class GeneralSettingsEditForm extends BaseForm
                 case '***ALL NUMBERIC ABOVE***':
                     $this->add(new Numeric($key, ['value' => $value, 'style'=>'width:100px;']));
                     break;
-                case 'SSHPassword':
+                case PbxSettingsConstants::SSH_PASSWORD:
                     $this->add(new Password($key, ['value' => self::HIDDEN_PASSWORD]));
                     $this->add(
                         new Password(
@@ -89,7 +90,7 @@ class GeneralSettingsEditForm extends BaseForm
                     );
                     break;
                 case 'Description':
-                case 'SSHAuthorizedKeys':
+                case PbxSettingsConstants::SSH_AUTHORIZED_KEYS:
                 case 'SSHecdsaKey':
                 case 'SSHRsaKey':
                 case 'SSHDssKey':
@@ -188,7 +189,7 @@ class GeneralSettingsEditForm extends BaseForm
                 case 'RedirectToHttps':
                 case 'PBXSplitAudioThread':
                 case 'PBXAllowGuestCalls':
-                case 'SSHDisablePasswordLogins':
+                case PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD:
                 case '***ALL CHECK BOXES ABOVE***':
                     $cheskarr = ['value' => null];
                     if ($value) {

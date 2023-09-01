@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use Phalcon\Di\Injectable;
 
 /**
@@ -40,9 +41,9 @@ class CheckSSHConfig extends Injectable
     public function process(): array
     {
         $messages   = [];
-        $password   = PbxSettings::getValueByKey('SSHPassword');
-        $hashString = PbxSettings::getValueByKey('SSHPasswordHashString');
-        $hashFile   = PbxSettings::getValueByKey('SSHPasswordHash');
+        $password   = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
+        $hashString = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING);
+        $hashFile   = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE);
         if($hashString !== md5($password)){
             // The password has been changed in an unusual way.
             $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchStringsHash'];

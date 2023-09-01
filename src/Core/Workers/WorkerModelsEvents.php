@@ -45,11 +45,11 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     OutWorkTimes,
     PbxExtensionModules,
     PbxSettings,
+    PbxSettingsConstants,
     Sip,
     SipHosts,
     SoundFiles,
-    Users
-};
+    Users};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
@@ -335,13 +335,13 @@ class WorkerModelsEvents extends WorkerBase
         // SSHParameters
         $tables[] = [
             'settingName' => [
-                'SSHPort',
+                PbxSettingsConstants::SSH_PORT,
                 'SSHRsaKey',
                 'SSHDssKey',
-                'SSHPassword',
+                PbxSettingsConstants::SSH_PASSWORD,
                 'SSHecdsaKey',
-                'SSHAuthorizedKeys',
-                'SSHDisablePasswordLogins',
+                PbxSettingsConstants::SSH_AUTHORIZED_KEYS,
+                PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD,
             ],
             'functions' => [
                 self::R_SSH,
@@ -361,7 +361,7 @@ class WorkerModelsEvents extends WorkerBase
                 'AJAMPortTLS',
                 'WEBPort',
                 'WEBHTTPSPort',
-                'SSHPort',
+                PbxSettingsConstants::SSH_PORT,
                 'PBXFirewallEnabled',
                 'PBXFail2BanEnabled',
             ],
@@ -487,7 +487,7 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'WebAdminPassword',
-                'SSHPassword',
+                PbxSettingsConstants::SSH_PASSWORD,
                 'PBXFirewallEnabled',
             ],
             'functions' => [
@@ -774,7 +774,7 @@ class WorkerModelsEvents extends WorkerBase
     {
         $count_changes = count($this->modified_tables);
         $called_class = $data['model'] ?? '';
-        Util::sysLogMsg(__METHOD__, "New changes " . $called_class, LOG_DEBUG);
+        Util::sysLogMsg(__METHOD__, "New changes " . json_encode($data), LOG_DEBUG);
 
         // Clear cache for the called class
         ModelsBase::clearCache($called_class);

@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class FillPBXSettingsTest extends MikoPBXTestsBase
@@ -144,7 +145,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
                 'PBXLanguage'            => 'en-en',
                 'PBXRecordCalls'         => true,
                 'SendMetrics'            => false,
-                'SSHAuthorizedKeys'      => $SSHAuthorizedKeys,
+                PbxSettingsConstants::SSH_AUTHORIZED_KEYS      => $SSHAuthorizedKeys,
                 'codec_alaw'             => true,
                 'codec_ulaw'             => false,
                 'codec_g726'             => true,

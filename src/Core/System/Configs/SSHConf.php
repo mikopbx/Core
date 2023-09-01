@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Processes;
@@ -66,7 +67,7 @@ class SSHConf extends Injectable
             "ecdsa" => "SSHecdsaKey"
         ];
 
-        $options = ($this->mikoPBXConfig->getGeneralSettings('SSHDisablePasswordLogins') === '1')?'-s':'';
+        $options = ($this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD) === '1')?'-s':'';
         // Get keys from DB
         $dropbearkeyPath = Util::which('dropbearkey');
         $dropbearPath    = Util::which('dropbear');
@@ -87,7 +88,7 @@ class SSHConf extends Injectable
                 $this->mikoPBXConfig->setGeneralSettings($db_key, $new_key);
             }
         }
-        $ssh_port = escapeshellcmd($this->mikoPBXConfig->getGeneralSettings('SSHPort'));
+        $ssh_port = escapeshellcmd($this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_PORT));
         // Set root password
         $this->updateShellPassword();
         // Restart ssh  server
@@ -108,7 +109,7 @@ class SSHConf extends Injectable
     {
         $ssh_dir = '/root/.ssh';
         Util::mwMkdir($ssh_dir);
-        $conf_data = $this->mikoPBXConfig->getGeneralSettings('SSHAuthorizedKeys');
+        $conf_data = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_AUTHORIZED_KEYS);
         file_put_contents("{$ssh_dir}/authorized_keys", $conf_data);
     }
 
@@ -119,9 +120,9 @@ class SSHConf extends Injectable
      */
     public function updateShellPassword(): void
     {
-        $password           = $this->mikoPBXConfig->getGeneralSettings('SSHPassword');
-        $hashString         = $this->mikoPBXConfig->getGeneralSettings('SSHPasswordHashString');
-        $disablePassLogin   = $this->mikoPBXConfig->getGeneralSettings('SSHDisablePasswordLogins');
+        $password           = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_PASSWORD);
+        $hashString         = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING);
+        $disablePassLogin   = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD);
 
         $echoPath       = Util::which('echo');
         $chPasswdPath   = Util::which('chpasswd');
@@ -132,9 +133,9 @@ class SSHConf extends Injectable
         }else{
             Processes::mwExec("{$echoPath} 'root:$password' | {$chPasswdPath}");
         }
-        $this->mikoPBXConfig->setGeneralSettings('SSHPasswordHash',       md5_file('/etc/shadow'));
+        $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE,       md5_file('/etc/shadow'));
         if($hashString !== md5($password)){
-            $this->mikoPBXConfig->setGeneralSettings('SSHPasswordHashString', md5($password));
+            $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING, md5($password));
             Notifications::sendAdminNotification('adv_SSHPasswordWasChangedSubject', ['adv_SSHPasswordWasChangedBody'],true);
             WorkerPrepareAdvices::afterChangeSSHConf();
         }

@@ -35,6 +35,7 @@ use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\Users;
@@ -96,10 +97,10 @@ class RestoreDefaultSettings extends \Phalcon\Di\Injectable
         $fixedKeys = [
             'Name',
             'Description',
-            'SSHPassword',
+            PbxSettingsConstants::SSH_PASSWORD,
             'SSHRsaKey',
             'SSHDssKey',
-            'SSHAuthorizedKeys',
+            PbxSettingsConstants::SSH_AUTHORIZED_KEYS,
             'SSHecdsaKey',
             'SSHLanguage',
             'WEBHTTPSPublicKey',

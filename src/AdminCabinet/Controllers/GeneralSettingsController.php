@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 
 class GeneralSettingsController extends BaseController
@@ -73,9 +74,9 @@ class GeneralSettingsController extends BaseController
     {
         $passwordCheckFail = [];
         $cloudInstanceId = $data['CloudInstanceId'] ?? '';
-        $checkPasswordFields =['SSHPassword', 'WebAdminPassword'];
-        if ($data['SSHDisablePasswordLogins'] === 'on'){
-            unset($checkPasswordFields['SSHPassword']);
+        $checkPasswordFields =[PbxSettingsConstants::SSH_PASSWORD, 'WebAdminPassword'];
+        if ($data[PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD] === 'on'){
+            unset($checkPasswordFields[PbxSettingsConstants::SSH_PASSWORD]);
         }
         foreach ($checkPasswordFields as $value) {
             if (!isset($data[$value]) || $data[$value] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
@@ -112,12 +113,12 @@ class GeneralSettingsController extends BaseController
         $pbxSettings = PbxSettings::getDefaultArrayValues();
 
         // Process SSHPassword and set SSHPasswordHash accordingly
-        if (isset($data['SSHPassword'])) {
-            if ($data['SSHPassword'] === $pbxSettings['SSHPassword']
-                || $data['SSHPassword'] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
-                $data['SSHPasswordHash'] = md5($data['WebAdminPassword']);
+        if (isset($data[PbxSettingsConstants::SSH_PASSWORD])) {
+            if ($data[PbxSettingsConstants::SSH_PASSWORD] === $pbxSettings[PbxSettingsConstants::SSH_PASSWORD]
+                || $data[PbxSettingsConstants::SSH_PASSWORD] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                $data[PbxSettingsConstants::SSH_PASSWORD_HASH_STRING] = md5($data['WebAdminPassword']);
             } else {
-                $data['SSHPasswordHash'] = md5($data['SSHPassword']);
+                $data[PbxSettingsConstants::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettingsConstants::SSH_PASSWORD]);
             }
         }
         $this->db->begin();
@@ -132,12 +133,12 @@ class GeneralSettingsController extends BaseController
                 case 'RedirectToHttps':
                 case 'PBXSplitAudioThread':
                 case 'UseWebRTC':
-                case 'SSHDisablePasswordLogins':
+                case PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD:
                 case 'PBXAllowGuestCalls':
                 case '***ALL CHECK BOXES ABOVE***':
                     $newValue = ($data[$key] === 'on') ? '1' : '0';
                     break;
-                case 'SSHPassword':
+                case PbxSettingsConstants::SSH_PASSWORD:
                     // Set newValue as WebAdminPassword if SSHPassword is the same as the default value
                     if ($data[$key] === $value) {
                         $newValue = $data['WebAdminPassword'];

@@ -170,11 +170,11 @@ class FirewallRules extends ModelsBase
             'SSH' => [
                 'rules' => [
                     [
-                        'portfrom' => $protectedPortSet['SSHPort'],
-                        'portto' => $protectedPortSet['SSHPort'],
+                        'portfrom' => $protectedPortSet[PbxSettingsConstants::SSH_PORT],
+                        'portto' => $protectedPortSet[PbxSettingsConstants::SSH_PORT],
                         'protocol' => 'tcp',
-                        'portFromKey' => 'SSHPort',
-                        'portToKey' => 'SSHPort',
+                        'portFromKey' => PbxSettingsConstants::SSH_PORT,
+                        'portToKey' => PbxSettingsConstants::SSH_PORT,
                     ],
                 ],
                 'action' => 'allow',
@@ -254,7 +254,7 @@ class FirewallRules extends ModelsBase
             'AJAMPortTLS',
             'WEBPort',
             'WEBHTTPSPort',
-            'SSHPort',
+            PbxSettingsConstants::SSH_PORT,
         ];
         $result = [];
         foreach ($portSet as $portName) {

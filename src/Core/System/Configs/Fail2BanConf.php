@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
@@ -225,7 +226,7 @@ class Fail2BanConf extends Injectable
             $this->allPbxSettings['WEBHTTPSPort']
         ];
         $sshPort = [
-            $this->allPbxSettings['SSHPort'],
+            $this->allPbxSettings[PbxSettingsConstants::SSH_PORT],
         ];
         $asteriskPorts = [
             $this->allPbxSettings['SIPPort'],
