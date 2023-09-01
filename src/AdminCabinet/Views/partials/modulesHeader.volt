@@ -20,7 +20,8 @@
 
     <div class="ui right floated middle aligned three wide column">
         {% if logoImagePath is not empty %}
-            <img class="ui tiny right floated image" src="{{ logoImagePath }}">
+            <img class="ui tiny right floated image" src="{{ logoImagePath }} /">
         {% endif %}
     </div>
 </div>
+<div class="ui clearing hidden divider"></div>

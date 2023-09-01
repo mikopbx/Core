@@ -194,11 +194,10 @@ td.disabled img {
     min-height: 600px;
 }
 
-/* Hide interface until it not full loaded */
-/*#content-frame {*/
-/*    !*display: none;*!*/
-/*    padding-bottom: 25px;*/
-/*}*/
+/* Add gap from the bottom line */
+#content-frame {
+    padding-bottom: 25px;
+}
 
 /* Sort icons on tables */
 th.sorting_asc:after {

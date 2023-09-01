@@ -37,4 +37,7 @@ $(document).ready(() => {
     $('.popuped').popup();
     $('div[data-content], a[data-content]').popup();
     $('#content-frame').removeClass('loading');
+    if (!$('#content-frame').hasClass('grey')){
+        $('#content-frame').removeClass('segment');
+    }
 });
