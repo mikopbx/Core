@@ -27,7 +27,6 @@
 const extensionsIndex = {
     maskList: null,
     $extensionsList: $('#extensions-table'),
-    $contentFrame: $('#content-frame'),
 
     /**
      * Initialize the ExtensionsIndex module.

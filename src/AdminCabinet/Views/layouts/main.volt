@@ -11,7 +11,6 @@
             <div id="debug-info"></div>
 
             <div class="ui container" id="main-content-container">
-
                 <!--ADVICES-->
                 <div class="ui flowing popup bottom left transition hidden" id="advices"></div>
                 <!--/ ADVICES-->
@@ -25,26 +24,21 @@
                 <!--/ HEADER-->
 
                 <!--MAIN CONTENT-->
-                <div class="row" id="content-frame">
                     <div id="ajax-messages"></div>
-                    <!--LOADER-->
-                    {{ partial("partials/mainLoader") }}
-                    <!--/ LOADER-->
-
                     {% if (isExternalModuleController) %}
                         {{ partial("partials/modulesStatusToggle") }}
                     {% endif %}
-
                     {% if (actionName=='index') %}
-                        {{ flash.output() }}
-                        {{ content() }}
+                        <div class="ui basic loading segment" id="content-frame">
+                            {{ flash.output() }}
+                            {{ content() }}
+                        </div>
                     {% else %}
-                        <div class="ui grey segment">
+                        <div class="ui grey loading segment" id="content-frame">
                             {{ flash.output() }}
                             {{ content() }}
                         </div>
                     {% endif %}
-                </div>
                 <!--/MAIN CONTENT-->
 
                 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Footer')]) }}

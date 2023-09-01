@@ -26,7 +26,6 @@
  */
 const soundFiles = {
     $audioFilesList: $('#custom-sound-files-table, #moh-sound-files-table'),
-    $contentFrame: $('#content-frame'),
     $tabMenuItems: $('#sound-files-menu .item'),
 
     /**
@@ -110,7 +109,7 @@ const soundFiles = {
                     sessionStorage.removeItem(`${globalRootUrl}sound-files/getSoundFiles/custom`);
                     sessionStorage.removeItem(`${globalRootUrl}sound-files/getSoundFiles/moh`);
                 } else {
-                    soundFiles.$contentFrame.before(`<div class="ui error message ajax">${response.message.error}</div>`);
+                    UserMessage.showMultiString(response.message);
                 }
             },
         });

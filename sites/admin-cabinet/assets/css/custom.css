@@ -195,10 +195,10 @@ td.disabled img {
 }
 
 /* Hide interface until it not full loaded */
-#content-frame {
-    /*display: none;*/
-    padding-bottom: 25px;
-}
+/*#content-frame {*/
+/*    !*display: none;*!*/
+/*    padding-bottom: 25px;*/
+/*}*/
 
 /* Sort icons on tables */
 th.sorting_asc:after {
