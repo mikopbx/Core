@@ -33,21 +33,25 @@ class ChangeLicenseKeyTest extends MikoPBXTestsBase
      */
     public function testFillLicenseKey($licenseKey):void
     {
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
-        $this->changeTabOnCurrentPage('licensing');
+//        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
+//        $this->changeTabOnCurrentPage('licensing');
 
-        // Сбрасываем привязку к ключу
-        $xpath = "id('reset-license')";
-        $resetButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
-        $resetButton->click();
-        $this->waitForAjax();
+//        // Сбрасываем привязку к ключу
+//        $xpath = "id('reset-license-button')";
+//        $resetButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
+//        $resetButton->click();
+//        $this->waitForAjax();
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
         $this->changeTabOnCurrentPage('licensing');
         $licKey = str_ireplace('MIKO-','', $licenseKey);
         $this->changeInputField('licKey', $licKey);
 
-        $this->submitForm('licencing-modify-form');
+        // Save license key
+        $xpath = "id('save-license-key-button')";
+        $saveButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $saveButton->click();
+        $this->waitForAjax();
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
         $this->changeTabOnCurrentPage('licensing');
