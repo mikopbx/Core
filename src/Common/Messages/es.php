@@ -1191,4 +1191,5 @@ Se puede activar una vez, después de lo cual el cupón se canjea.',
     'ext_ErrorOnModuleBeforeDisable' => 'Errores al verificar la capacidad de deshabilitar el módulo',
     'mm_Integrations' => 'integraciones',
     'ext_ModuleLicenseProblem' => 'Problema de licencia del módulo de expansión',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Intersección con varios números de aparcamiento.',
 ];

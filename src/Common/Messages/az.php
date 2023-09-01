@@ -1191,4 +1191,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ext_ErrorOnModuleBeforeEnable' => 'Modulu aktivləşdirmək imkanı yoxlanarkən xətalar',
     'mm_Integrations' => 'İnteqrasiyalar',
     'ext_ModuleLicenseProblem' => 'Genişləndirmə modulu lisenziya problemi',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Bir sıra dayanacaq nömrələri ilə kəsişmə',
 ];

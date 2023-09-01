@@ -1191,4 +1191,5 @@ return [
     'ext_ErrorOnModuleBeforeDisable' => 'モジュールを無効にする機能のチェック中にエラーが発生しました',
     'mm_Integrations' => '統合',
     'ext_ModuleLicenseProblem' => '拡張モジュールのライセンスの問題',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'さまざまな駐車番号がある交差点',
 ];

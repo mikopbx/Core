@@ -1190,4 +1190,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ext_ErrorOnModuleBeforeDisable' => 'Erros na verificação da capacidade de desativar o módulo',
     'mm_Integrations' => 'Integrações',
     'ext_ModuleLicenseProblem' => 'Problema de licença do módulo de expansão',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Interseção com vários números de estacionamento',
 ];

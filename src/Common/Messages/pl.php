@@ -1191,4 +1191,5 @@ Można go aktywować raz, po czym kupon zostaje zrealizowany.',
     'ext_ErrorOnInstallFiles' => 'Błędy podczas kopiowania plików modułów',
     'mm_Integrations' => 'Integracje',
     'ext_ModuleLicenseProblem' => 'Problem z licencją modułu rozszerzeń',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Skrzyżowanie z zakresem numerów parkingowych',
 ];

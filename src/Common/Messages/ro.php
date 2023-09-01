@@ -1224,4 +1224,5 @@ Poate fi activat o singură dată, după care cuponul este valorificat.',
     'ext_ErrorOnModuleBeforeDisable' => 'Erori la verificarea capacității de a dezactiva modulul',
     'mm_Integrations' => 'Integrari',
     'ext_ModuleLicenseProblem' => 'Problemă de licență pentru modulul de extindere',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Intersecție cu o serie de numere de parcare',
 ];

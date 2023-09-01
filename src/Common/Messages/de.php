@@ -1194,4 +1194,5 @@ Es kann einmalig aktiviert werden, danach wird der Coupon eingelöst.',
     'ext_ErrorOnDisableFirewallSettings' => 'Fehler beim Ausschluss der Firewall-Einstellungen für das Modul',
     'mm_Integrations' => 'Integrationen',
     'ext_ModuleLicenseProblem' => 'Problem mit der Lizenz des Erweiterungsmoduls',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Kreuzung mit verschiedenen Parknummern',
 ];

@@ -1191,4 +1191,5 @@ return [
     'ext_ErrorOnModuleBeforeDisable' => 'Σφάλματα στον έλεγχο της δυνατότητας απενεργοποίησης της μονάδας',
     'mm_Integrations' => 'Ενσωματώσεις',
     'ext_ModuleLicenseProblem' => 'Πρόβλημα άδειας χρήσης μονάδας επέκτασης',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Διασταύρωση με μια σειρά από αριθμούς στάθμευσης',
 ];

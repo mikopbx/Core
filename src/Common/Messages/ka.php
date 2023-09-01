@@ -1191,4 +1191,5 @@ return [
     'ext_ErrorOnModuleBeforeDisable' => 'შეცდომები მოდულის გამორთვის შესაძლებლობის შემოწმებისას',
     'mm_Integrations' => 'ინტეგრაციები',
     'ext_ModuleLicenseProblem' => 'გაფართოების მოდულის ლიცენზიის პრობლემა',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'კვეთა პარკინგის ნომრების სპექტრით',
 ];

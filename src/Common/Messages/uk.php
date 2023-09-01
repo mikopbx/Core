@@ -1191,4 +1191,5 @@ return [
     'ext_ErrorOnModuleBeforeDisable' => 'Помилки перевірки можливості вимкнення модуля',
     'mm_Integrations' => 'Інтеграція',
     'ext_ModuleLicenseProblem' => 'Проблема з ліцензією на модуль розширення',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Перетин з діапазоном номерів паркування',
 ];

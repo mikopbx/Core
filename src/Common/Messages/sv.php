@@ -1191,4 +1191,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ext_ErrorOnModuleBeforeDisable' => 'Fel vid kontroll av möjligheten att inaktivera modulen',
     'mm_Integrations' => 'Integrationer',
     'ext_ModuleLicenseProblem' => 'Licensproblem för expansionsmodul',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Korsning med en rad parkeringsnummer',
 ];
