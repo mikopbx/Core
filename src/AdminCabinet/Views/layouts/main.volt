@@ -24,21 +24,19 @@
                 <!--/ HEADER-->
 
                 <!--MAIN CONTENT-->
-                    <div id="ajax-messages"></div>
-                    {% if (isExternalModuleController) %}
-                        {{ partial("partials/modulesStatusToggle") }}
-                    {% endif %}
-                    {% if (actionName=='index') %}
-                        <div class="ui basic loading segment" id="content-frame">
-                            {{ flash.output() }}
-                            {{ content() }}
-                        </div>
-                    {% else %}
-                        <div class="ui grey loading segment" id="content-frame">
-                            {{ flash.output() }}
-                            {{ content() }}
-                        </div>
-                    {% endif %}
+                {% if (actionName=='index') %}
+                    {%set contentClass='basic' %}
+                {% else %}
+                    {%set contentClass='grey' %}
+                {% endif %}
+                    <div class="ui {{ contentClass}} loading segment" id="content-frame">
+                        {% if (isExternalModuleController) %}
+                            {{ partial("partials/modulesStatusToggle") }}
+                        {% endif %}
+                        <div id="ajax-messages"></div>
+                        {{ flash.output() }}
+                        {{ content() }}
+                    </div>
                 <!--/MAIN CONTENT-->
 
                 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Footer')]) }}
