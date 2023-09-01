@@ -293,21 +293,29 @@ class BeanstalkClient extends Injectable
         }
     }
 
+
     /**
-     * Waits for a job from the Beanstalkd server.
+     * Wait for and process a job from the queue.
      *
-     * @param float $timeout The timeout value in seconds.
+     * @param float $timeout The timeout period in seconds.
+     *
+     * @return void
      */
     public function wait(float $timeout = 5): void
     {
         $this->message = null;
+
+        // Record the start time
         $start         = microtime(true);
+
+        // Try to reserve a job with a timeout
         try {
             $job = $this->queue->reserveWithTimeout((int)$timeout);
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
 
+        // If no job was reserved
         if ( ! isset($job)) {
             $workTime = (microtime(true) - $start);
             if ($workTime < $timeout) {
@@ -317,6 +325,8 @@ class BeanstalkClient extends Injectable
                 // something is wrong, probably lost connection with the queue server
                 $this->reconnect();
             }
+
+            // Call the timeout handler if one is set
             if (is_array($this->timeout_handler)) {
                 call_user_func($this->timeout_handler);
             }
@@ -332,15 +342,26 @@ class BeanstalkClient extends Injectable
         }
         $this->message = $mData;
 
+        // Check the job stats
         $stats           = $this->queue->statsJob($job);
+        if (intval($stats['reserves'])>3){
+            // Probably an exception did happen during the previous job execution, force to delete it.
+            $errorMessage = 'This job has attempted to execute more than 3 times without success.'.PHP_EOL;
+            $errorMessage .= 'Job stats: '.json_encode($stats).PHP_EOL;
+            $errorMessage .= 'Message: '.json_encode($this->message);
+            Util::sysLogMsg(__METHOD__,$errorMessage,LOG_ALERT);
+            $this->buryJob($job);
+        }
+
+        // Find the subscribed function for the tube
         $requestFormTube = $stats['tube'];
         $func            = $this->subscriptions[$requestFormTube] ?? null;
-
         if ($func === null) {
-            // Action not found
+            // No action found, bury the job
             $this->buryJob($job);
         } else {
             try {
+                // Execute the subscribed function
                 if (is_array($func)) {
                     call_user_func($func, $this);
                 } elseif (is_callable($func) === true) {
