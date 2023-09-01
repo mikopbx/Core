@@ -1191,4 +1191,5 @@ return [
     'ext_ErrorOnModuleBeforeDisable' => '检查禁用模块的能力时出错',
     'mm_Integrations' => '集成',
     'ext_ModuleLicenseProblem' => '扩展模块许可证问题',
+    'ex_ThisNumberOverlapWithParkingSlots' => '具有一系列停车位的交叉路口',
 ];

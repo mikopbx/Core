@@ -1191,4 +1191,5 @@ Den kan aktiveres én gang, hvorefter kuponen bliver indløst.',
     'ext_ErrorOnModuleBeforeDisable' => 'Fejl ved kontrol af muligheden for at deaktivere modulet',
     'mm_Integrations' => 'Integrationer',
     'ext_ModuleLicenseProblem' => 'Udvidelsesmodullicensproblem',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Kryds med en række parkeringsnumre',
 ];

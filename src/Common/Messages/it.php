@@ -1191,4 +1191,5 @@ Può essere attivato una volta, dopodiché il coupon viene riscattato.',
     'ext_ErrorOnModuleBeforeDisable' => 'Errori nel controllo della possibilità di disabilitare il modulo',
     'mm_Integrations' => 'Integrazioni',
     'ext_ModuleLicenseProblem' => 'Problema di licenza del modulo di espansione',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Incrocio con una serie di numeri di parcheggio',
 ];

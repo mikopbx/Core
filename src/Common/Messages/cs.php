@@ -1191,4 +1191,5 @@ Lze jej aktivovat jednou, poté se kupón uplatní.',
     'ext_ErrorOnModuleBeforeDisable' => 'Chyby při kontrole schopnosti deaktivovat modul',
     'mm_Integrations' => 'Integrace',
     'ext_ModuleLicenseProblem' => 'Problém s licencí rozšiřujícího modulu',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Křižovatka s řadou parkovacích čísel',
 ];

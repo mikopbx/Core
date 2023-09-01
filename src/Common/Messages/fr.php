@@ -1191,4 +1191,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ext_ErrorOnModuleBeforeDisable' => 'Erreurs lors de la vérification de la possibilité de désactiver le module',
     'mm_Integrations' => 'Intégrations',
     'ext_ModuleLicenseProblem' => 'Problème de licence du module d\'extension',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Intersection avec une série de numéros de stationnement',
 ];

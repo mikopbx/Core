@@ -1194,4 +1194,5 @@ It can be activated once, after which the coupon becomes redeemed.',
     'ext_ErrorOnModuleBeforeDisable' => 'Errors in checking the ability to disable the module',
     'mm_Integrations' => 'Integrations',
     'ext_ModuleLicenseProblem' => 'Expansion module license problem',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Intersection with a range of parking numbers',
 ];
