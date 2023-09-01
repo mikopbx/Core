@@ -185,7 +185,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         if ($e === null) {
             Util::sysLogMsg(static::class, "shutdownHandler after {$timeElapsedSecs} seconds", LOG_DEBUG);
         } else {
-            $details = (string)print_r($e, true);
+            $details = implode(PHP_EOL,$e);
             Util::sysLogMsg(
                 static::class,
                 "shutdownHandler after {$timeElapsedSecs} seconds with error: {$details}",
