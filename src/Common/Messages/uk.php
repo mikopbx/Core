@@ -390,7 +390,7 @@ return [
     'ex_RoutingSettings' => 'Налаштування маршрутизації',
     'ex_Username' => 'ПІБ користувача',
     'ex_EmailAddress' => 'Адреса електронної пошти',
-    'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Введена адреса вже зареєстрована для іншого користувача',
+    'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Введена адреса вже зареєстрована для',
     'ex_Language' => 'Мова інтерфейсу і сповіщень',
     'ex_Number' => 'Внутрішній номер',
     'ex_ThisNumberIsNotFree' => 'Номер вже є в базі даних',
@@ -699,10 +699,10 @@ return [
     'repFail2BanRules' => 'Правило Fail2Ban - %represent%',
     'repFirewallRules' => 'Правило Firewall - %represent%',
     'repIax' => 'Обліковий запис IAX - %represent%',
-    'repIncomingRoutingTable' => 'Правило обробки вхідних - %represent%',
+    'repIncomingRoutingTable' => '%represent%',
     'repLanInterfaces' => 'Системний файл - %represent%',
     'repNetworkFilters' => 'Мережевий фільтр - %represent%',
-    'repOutgoingRoutingTable' => 'Правило обробки вихідних - %represent%',
+    'repOutgoingRoutingTable' => '%represent%',
     'repOutWorkTimes' => 'Неробочий час - %represent%',
     'repPbxSettings' => 'Налаштування станції - %represent%',
     'repSip' => 'Обліковий запис SIP - %represent%',
@@ -742,8 +742,8 @@ return [
 Якщо у вас є ключ, ви можете просто вписати його в це поле.<br>
 Якщо ключ у вас був, але ви його забули, пошукайте в пошті листи, що входять за адресою lic@miko.ru<br>
 Отримати новий ключ можна автоматично, заповнивши реєстраційну форму.<br>',
-    'lic_CouponMessage' => 'Купон використовується при розширенні функціоналу АТС або при покупці ліцензії.<br>
-Його можна активувати один раз, після чого купон стає погашеним.',
+    'lic_CouponMessage' => 'Купон використовується для продовження передплат, тріалів та активації ліцензій на модулі розширення.<br>
+Купон можна активувати один раз, після чого він стає погашеним.',
     'lic_CurrentLicenseInfo' => 'Детальна інформація про продукти в ліцензійному ключі',
     'lic_Expired' => 'Строк дії продукту минув, зверніться за адресою <a href="mailto:lic@mikopbx.com">lic@mikopbx.com</a>',
     'lic_ExpiredAfter' => 'Термін дії ліцензії закінчується після %expired%',
@@ -853,7 +853,7 @@ return [
     'ext_ModuleChangeStatusError' => 'Проблеми при зміні статусу модуля',
     'ext_InstallationError' => 'Помилка при встановленні модуля',
     'DimmerWaitForPBXIsOnline' => 'Розрив зв\'язку з ядром PBX …',
-    'DimmerWaitForPBXOnlineDescription' => 'Це нормально, якщо станція перезавантажується. <br>Як тільки зв\'язок відновиться сторінка оновиться автоматично!',
+    'DimmerWaitForPBXOnlineDescription' => 'Це нормально, якщо станція перезавантажується. <br>Як тільки зв\'язок відновиться, сторінка оновиться автоматично!',
     'loc_NoResult' => 'Нічого не знайдено',
     'mo_CallQueueShort4Dropdown' => 'Черга',
     'mo_ConferenceRoomsShort4Dropdown' => 'Конференція',
@@ -1192,4 +1192,8 @@ return [
     'mm_Integrations' => 'Інтеграція',
     'ext_ModuleLicenseProblem' => 'Проблема з ліцензією на модуль розширення',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Перетин з діапазоном номерів паркування',
+    'lic_SuccessfulActivation' => 'Успішна реєстрація системи',
+    'lic_ManageLicenseKey' => 'Управління ліцензією',
+    'lic_RegisterTheSystemButton' => 'Зареєструватись',
+    'lic_GeneralError' => 'Помилка при спробі активації ліцензії',
 ];

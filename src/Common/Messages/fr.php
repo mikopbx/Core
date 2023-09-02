@@ -95,7 +95,7 @@ return [
     'mo_ConferenceRoomsShort4Dropdown' => 'Conférence',
     'mo_CallQueueShort4Dropdown' => 'File d\'attente',
     'loc_NoResult' => 'Rien trouvé',
-    'DimmerWaitForPBXOnlineDescription' => 'Ceci est normal si la station redémarre. <br> Dès que la connexion est rétablie, la page sera mise à jour automatiquement !',
+    'DimmerWaitForPBXOnlineDescription' => 'C\'est normal si la station redémarre. <br>Dès que la connexion est rétablie, la page sera mise à jour automatiquement !',
     'DimmerWaitForPBXIsOnline' => 'Déconnexion du cœur du PBX …',
     'ext_InstallationError' => 'Erreur lors de l\'installation du module',
     'ext_ModuleChangeStatusError' => 'Problèmes de modification de l\'état du module',
@@ -164,10 +164,10 @@ return [
     'repSip' => 'Compte SIP - %represent%',
     'repPbxSettings' => 'Paramètres de la station - %represent%',
     'repOutWorkTimes' => 'Après les heures d\'ouverture - %represent%',
-    'repOutgoingRoutingTable' => 'Règle de traitement sortant - %represent%',
+    'repOutgoingRoutingTable' => '%represent%',
     'repNetworkFilters' => 'Parafoudre - %represent%',
     'repLanInterfaces' => 'Fichier système - %represent%',
-    'repIncomingRoutingTable' => 'Règle de traitement entrant - %represent%',
+    'repIncomingRoutingTable' => '%represent%',
     'repIax' => 'Compte IAX - %represent%',
     'repFirewallRules' => 'Règle de pare-feu - %represent%',
     'repFail2BanRules' => 'Règle Fail2Ban - %represent%',
@@ -529,11 +529,11 @@ return [
     'lic_ExpiredAfter' => 'La licence expire après %expired%',
     'lic_Expired' => 'Produit expiré, contactez <a href="mailto:lic@mikopbx.com">lic@mikopbx.com</a>',
     'lic_CurrentLicenseInfo' => 'Détails du produit sous licence',
-    'lic_CouponMessage' => 'Le coupon est utilisé lors de l\'extension des fonctionnalités du PBX ou lors de l\'achat d\'une licence.<br>
-Il peut être activé une fois, après quoi le coupon est utilisé.',
+    'lic_CouponMessage' => 'Le coupon est utilisé pour renouveler les abonnements, les essais et activer les licences pour les modules d\'extension.<br>
+Le coupon peut être activé une fois, après quoi il est utilisé.',
     'lic_LicenseKeyMessage' => 'La clé de licence est utilisée pour stocker toutes vos licences de tous les produits MIKO.<br>
-Si vous avez déjà une clé, vous pouvez simplement la saisir dans ce champ.<br>
-Si vous aviez la clé, mais que vous l\'avez oubliée, regardez dans le courrier les lettres entrantes à lic@miko.ru<br>
+Si vous disposez déjà d\'une clé, vous pouvez simplement la saisir dans ce champ.<br>
+Si vous aviez la clé, mais que vous l\'avez oubliée, recherchez dans le courrier les lettres entrantes à lic@miko.ru<br>
 Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulaire d\'inscription.<br>',
     'lic_SaveLicenseKeyButton' => 'Clé de sauvegarde',
     'ex_Email' => 'Courriel',
@@ -563,7 +563,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ex_ThisNumberIsNotFree' => 'Le numéro est déjà dans la base de données',
     'ex_Number' => 'Numéro de poste',
     'ex_Language' => 'Interface et langue d\'alerte',
-    'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'L\'adresse que vous avez entrée est déjà enregistrée pour un autre utilisateur',
+    'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'L\'adresse saisie est déjà enregistrée pour',
     'ex_EmailAddress' => 'Adresse e-mail',
     'ex_Username' => 'Nom complet de l\'utilisateur',
     'ex_RoutingSettings' => 'Paramètres de routage',
@@ -697,7 +697,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'pr_DeleteTitle' => 'Supprimer le fournisseur',
     'pr_ValidationProviderPortRange' => 'Le port du fournisseur doit être dans {ruleValue}',
     'pr_ReceiveCallsWithoutAuth' => 'Accepter les appels sans authentification',
-    'pr_CustomFieldsDescriptions' => 'Dans la plupart des cas, les champs de remplacement doivent être laissés vides.
+    'pr_CustomFieldsDescriptions' => 'Dans la plupart des cas, les champs de remplacement doivent rester vides.
     Seulement si les appels ne fonctionnent pas pour vous et que le fournisseur nécessite des paramètres spéciaux, ces champs doivent être remplis conformément aux recommandations du fournisseur.',
     'pr_QualifyInstructionsIAX' => 'Lorsque cette option est activée, Asterisk enverra des paquets d\'options SIP. Ceci est nécessaire pour prendre en charge la tunnellisation NAT sur votre routeur.',
     'pr_AddIAXProvider' => 'Connecter IAX',
@@ -1167,7 +1167,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'cf_UserEditHeader' => 'Éditeur pour apporter des modifications',
     'cf_ResultFileHeader' => 'Contenu du fichier avec modifications',
     'lic_LicenseProblem' => 'Problème d\'inscription sur la Marketplace',
-    'lic_ManageLicense' => 'Pour gérer la licence, réinitialiser les liaisons, analyser les problèmes, aller sur le site ',
+    'lic_ManageLicense' => 'Pour gérer la licence, réinitialiser les liaisons, analyser les problèmes, rendez-vous sur le site ',
     'lic_ManageLicenseKeyOnSitePreLinkText' => 'Pour gérer la licence, réinitialiser les liaisons d\'hôte, afficher les statistiques',
     'lic_ManageLicenseKeyOnSiteLinkText' => 'lien',
     'ext_NoAvailableModules' => 'Aucun module disponible pour l\'installation',
@@ -1192,4 +1192,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'mm_Integrations' => 'Intégrations',
     'ext_ModuleLicenseProblem' => 'Problème de licence du module d\'extension',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Intersection avec une série de numéros de stationnement',
+    'lic_RegisterTheSystemButton' => 'Registre',
+    'lic_ManageLicenseKey' => 'Gestion des licences',
+    'lic_GeneralError' => 'Erreur lors de la tentative d\'activation d\'une licence',
+    'lic_SuccessfulActivation' => 'Enregistrement du système réussi',
 ];

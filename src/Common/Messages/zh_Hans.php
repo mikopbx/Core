@@ -371,7 +371,7 @@ return [
     'ex_RoutingSettings' => '路由设定',
     'ex_Username' => '用户全名',
     'ex_EmailAddress' => '电邮地址',
-    'ex_ThisEmailAlreadyRegisteredForOtherUser' => '您输入的地址已经为其他用户注册',
+    'ex_ThisEmailAlreadyRegisteredForOtherUser' => '输入的地址已被注册',
     'ex_Language' => '界面和警报语言',
     'ex_Number' => '分机号码',
     'ex_ThisNumberIsNotFree' => '该号码已经在数据库中',
@@ -686,10 +686,10 @@ return [
     'repFail2BanRules' => 'Fail2Ban规则-%represent%',
     'repFirewallRules' => '防火墙规则-%represent%',
     'repIax' => 'IAX帐户-%represent%',
-    'repIncomingRoutingTable' => '入站处理规则-%represent%',
+    'repIncomingRoutingTable' => '%represent%',
     'repLanInterfaces' => '系统文件-%represent%',
     'repNetworkFilters' => '电涌保护器-%represent%',
-    'repOutgoingRoutingTable' => '出站处理规则-%represent%',
+    'repOutgoingRoutingTable' => '%represent%',
     'repOutWorkTimes' => '下班后-%represent%',
     'repPbxSettings' => '电台设置-%represent%',
     'repSip' => 'SIP帐户-%represent%',
@@ -729,8 +729,8 @@ return [
 如果您已有密钥，只需在此字段中输入即可。<br>
 如果您有钥匙，但忘记了，请在邮件中查找收到的信件：lic@miko.ru<br>
 您可以通过填写注册表自动获取新密钥。<br>',
-    'lic_CouponMessage' => '扩展 PBX 功能或购买许可证时可使用优惠券。<br>
-可以激活一次，之后优惠券即可兑换。',
+    'lic_CouponMessage' => '优惠券用于续订、试用和激活扩展模块的许可证。<br>
+优惠券只能激活一次，激活后即可兑换。',
     'lic_CurrentLicenseInfo' => '许可产品详细信息',
     'lic_Expired' => '产品已过期，请联系 <a href="mailto:lic@mikopbx.com">lic@mikopbx.com</a>',
     'lic_ExpiredAfter' => '许可在%expired%之后过期',
@@ -842,7 +842,7 @@ return [
     'ext_ModuleChangeStatusError' => '更改模块状态时出现问题',
     'ext_InstallationError' => '安装模块时出错',
     'DimmerWaitForPBXIsOnline' => '断开与PBX核心的连接…',
-    'DimmerWaitForPBXOnlineDescription' => '如果工作站重新启动，这是正常的。 <br>恢复连接后，页面将自动更新！',
+    'DimmerWaitForPBXOnlineDescription' => '如果站重新启动，这是正常的。 <br>一旦连接恢复，页面就会自动更新！',
     'loc_NoResult' => '没找到',
     'mo_CallQueueShort4Dropdown' => '列',
     'mo_ConferenceRoomsShort4Dropdown' => '会议会议',
@@ -1192,4 +1192,8 @@ return [
     'mm_Integrations' => '集成',
     'ext_ModuleLicenseProblem' => '扩展模块许可证问题',
     'ex_ThisNumberOverlapWithParkingSlots' => '具有一系列停车位的交叉路口',
+    'lic_RegisterTheSystemButton' => '登记',
+    'lic_SuccessfulActivation' => '系统注册成功',
+    'lic_ManageLicenseKey' => '许可证管理',
+    'lic_GeneralError' => '尝试激活许可证时出错',
 ];
