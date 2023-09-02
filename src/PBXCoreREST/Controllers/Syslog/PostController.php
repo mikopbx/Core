@@ -59,6 +59,9 @@ class PostController extends BaseController
      * Requests a zipped archive containing logs and PCAP file
      * Checks if archive ready it returns download link.
      * @Post("/downloadLogsArchive")
+     *
+     * Erase file content.
+     * @Post("/eraseFile")
      */
     public function callAction(string $actionName): void
     {
@@ -137,8 +140,7 @@ class PostController extends BaseController
                 } else {
                     $scheme                       = $this->request->getScheme();
                     $host                         = $this->request->getHttpHost();
-                    $port                         = $this->request->getPort();
-                    $response['data']['filename'] = "{$scheme}://{$host}:{$port}/pbxcore/files/cache/{$response['data']['filename']}";
+                    $response['data']['filename'] = "{$scheme}://{$host}/pbxcore/files/cache/{$response['data']['filename']}";
                 }
             }
             $this->response->setPayloadSuccess($response);

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global ace, PbxApi, updateLogViewWorker */
+/* global ace, PbxApi, updateLogViewWorker, Ace, UserMessage */
 
 /**
  * Represents the system diagnostic logs object.
@@ -40,6 +40,12 @@ const systemDiagnosticLogs = {
      * @type {jQuery}
      */
     $showAutoBtn: $('#show-last-log-auto'),
+
+    /**
+     * jQuery object for the "Erase current file content" button.
+     * @type {jQuery}
+     */
+    $eraseBtn: $('#erase-file'),
 
     /**
      * jQuery object for the log content.
@@ -139,6 +145,13 @@ const systemDiagnosticLogs = {
             }
         });
 
+        // Event listener for "Erase file" button click
+        systemDiagnosticLogs.$eraseBtn.on('click', (e) => {
+            e.preventDefault();
+            systemDiagnosticLogs.eraseCurrentFileContent();
+        });
+
+
         // Event listener for Enter keypress on input fields
         $('input').keyup((event) => {
             if (event.keyCode === 13) {
@@ -188,8 +201,9 @@ const systemDiagnosticLogs = {
         }
         // Check if there is a default value set for the filename input field
         let defVal = '';
-        if (systemDiagnosticLogs.logsItems.length === 0 && $("#filename").val() !== '') {
-            defVal = $("#filename").val().trim();
+        const fileName = systemDiagnosticLogs.$formObj.form('get value', 'filename');
+        if (systemDiagnosticLogs.logsItems.length === 0 && fileName !== '') {
+            defVal = fileName.trim();
         }
 
         systemDiagnosticLogs.logsItems = [];
@@ -254,10 +268,31 @@ const systemDiagnosticLogs = {
             window.location = response.filename;
         }
     },
+
+    /**
+     * Callback after clicking the "Erase File" button.
+     */
+    eraseCurrentFileContent(){
+        const fileName = systemDiagnosticLogs.$formObj.form('get value', 'filename');
+        if (fileName.length>0){
+            PbxApi.SyslogEraseFile(fileName, systemDiagnosticLogs.cbAfterFileErased)
+        }
+    },
+
+    /**
+     * Callback after clicking the "Erase File" button and calling REST API command
+     * @param {Object} response - The response data.
+     */
+    cbAfterFileErased(response){
+        if (response.result===false && response.messages !== undefined) {
+            UserMessage.showMultiString(response.messages);
+        } else {
+            systemDiagnosticLogs.updateLogFromServer();
+        }
+    },
 };
 
 // When the document is ready, initialize the show system logs tab
 $(document).ready(() => {
     systemDiagnosticLogs.initialize();
 });
-

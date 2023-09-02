@@ -73,6 +73,8 @@ const PbxApi = {
     syslogGetLogsList: `${Config.pbxUrl}/pbxcore/api/syslog/getLogsList`, // Returns list of log files to show them on web interface
     syslogGetLogFromFile: `${Config.pbxUrl}/pbxcore/api/syslog/getLogFromFile`, // Gets partially filtered log file strings.
     syslogDownloadLogFile: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogFile`, //  Prepares a downloadable link for a log file with the provided name.
+    syslogEraseFile: `${Config.pbxUrl}/pbxcore/api/syslog/eraseFile`, // Erase file content.
+
 
     // FilesManagementProcessor
     filesUploadFile: `${Config.pbxUrl}/pbxcore/api/files/uploadFile`, // Upload files into the system by chunks
@@ -679,6 +681,33 @@ const PbxApi = {
             },
             onFailure(response) {
                 callback(false);
+            },
+            onError(response) {
+                callback(false);
+            },
+        });
+    },
+
+    /**
+     *  Erase log file content.
+     *
+     * @param {string} filename - The name of the log file to be erased.
+     * @param {function} callback - The callback function to be called after erase the log file.
+     *
+     * @returns {void}
+     */
+    SyslogEraseFile(filename, callback) {
+        $.api({
+            url: PbxApi.syslogEraseFile,
+            on: 'now',
+            method: 'POST',
+            data: {filename},
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
             },
             onError(response) {
                 callback(false);

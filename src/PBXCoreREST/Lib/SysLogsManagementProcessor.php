@@ -75,6 +75,9 @@ class SysLogsManagementProcessor extends Injectable
             case 'getLogsList':
                 $res = self::getLogsList();
                 break;
+            case 'eraseFile':
+                $res = self::eraseFile($data['filename']);
+                break;
             default:
                 $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
         }
@@ -269,6 +272,31 @@ class SysLogsManagementProcessor extends Injectable
             Processes::mwExec("{$chownPath} www:www {$result_dir}/{$link_name}");
             $res->success          = true;
             $res->data['filename'] = "{$uid}/{$link_name}";
+        }
+
+        return $res;
+    }
+
+    /**
+     * Erase log file with the provided name.
+     *
+     * @param string $filename The name of the log file.
+     *
+     * @return PBXApiResult An object containing the result of the API call.
+     *
+     */
+    private static function eraseFile(string $filename): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $filename       = System::getLogDir() . '/' . $filename;
+        if ( ! file_exists($filename)) {
+            $res->success    = false;
+            $res->messages[] = 'File does not exist ' . $filename;
+        } else {
+            $echoPath = Util::which('echo');
+            Processes::mwExec("$echoPath ' ' > $filename");
+            $res->success          = true;
         }
 
         return $res;

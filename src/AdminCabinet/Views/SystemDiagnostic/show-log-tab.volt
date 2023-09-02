@@ -31,14 +31,15 @@
         <div class="ui right floated field">
             <label>&nbsp;</label>
             <div class="ui buttons">
-                <div class="ui icon button" id="download-file"><i class="download icon"></i></div>
-                <div class="ui icon button" id="show-last-log"><i class="refresh icon"></i></div>
-                <div class="ui icon button" id="show-last-log-auto">
+                <div class="ui icon button" id="download-file" data-content="{{ t._('sd_ToolTipDownload') }}" ><i class="download icon"></i></div>
+                <div class="ui icon button" id="show-last-log" data-content="{{ t._('sd_ToolTipRefresh') }}"><i class="refresh icon"></i></div>
+                <div class="ui icon button" id="show-last-log-auto" data-content="{{ t._('sd_ToolTipAutoUpdate') }}">
                     <i class="icons">
                         <i class="refresh icon"></i>
                         <i class="corner font icon"></i>
                     </i>
                 </div>
+                <div class="ui icon button" id="erase-file" data-content="{{ t._('sd_ToolTipErase') }}"><i class="red erase icon"></i></div>
             </div>
         </div>
     </div>
