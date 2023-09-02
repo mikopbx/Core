@@ -84,6 +84,8 @@ const UserMessage = {
         const manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="${Config.keyManagementUrl}" target="_blank">${Config.keyManagementSite}</a>`;
         if (Array.isArray(messages.error)) {
             messages.error.push(manageLink);
+        } else if (Array.isArray(messages.license)) {
+            messages.license.push(manageLink);
         } else if (Array.isArray(messages)) {
             messages.push(manageLink);
         }
@@ -146,7 +148,9 @@ const UserMessage = {
      */
     showMultiString(messages, header = '', disableScroll = false) {
         $('.ui.message.ajax').remove();
-        if (!messages) return;
+        if (!messages) {
+            return;
+        }
 
         // Remove empty values
         let messagesArray = [];
@@ -197,7 +201,9 @@ const UserMessage = {
                 }
                 previousMessage = value;
             });
-            UserMessage.showWarning(content, header, disableScroll);
+            if (content.length>0){
+                UserMessage.showWarning(content, header, disableScroll);
+            }
         }
     },
 
