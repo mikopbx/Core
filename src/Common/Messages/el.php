@@ -266,8 +266,8 @@ return [
     'lic_ExpiredAfter' => 'Η άδεια λήγει μετά το %expired%',
     'lic_Expired' => 'Το προϊόν έληξε, επικοινωνήστε με <a href="mailto:lic@mikopbx.com">lic@mikopbx.com</a>',
     'lic_CurrentLicenseInfo' => 'Αναλυτικές πληροφορίες προϊόντος στο κλειδί άδειας χρήσης',
-    'lic_CouponMessage' => 'Το κουπόνι χρησιμοποιείται κατά την επέκταση της λειτουργικότητας του PBX ή κατά την αγορά άδειας χρήσης.<br>
-Μπορεί να ενεργοποιηθεί μία φορά, μετά την οποία το κουπόνι εξαργυρώνεται.',
+    'lic_CouponMessage' => 'Το κουπόνι χρησιμοποιείται για την ανανέωση συνδρομών, τις δοκιμές και την ενεργοποίηση αδειών για ενότητες επέκτασης.<br>
+Το κουπόνι μπορεί να ενεργοποιηθεί μία φορά, μετά την οποία εξαργυρώνεται.',
     'lic_LicenseKeyMessage' => 'Το κλειδί άδειας χρήσης χρησιμοποιείται για την αποθήκευση όλων των αδειών σας από οποιαδήποτε προϊόντα MIKO.<br>
 Εάν έχετε ήδη ένα κλειδί, μπορείτε απλώς να το εισαγάγετε σε αυτό το πεδίο.<br>
 Εάν είχατε το κλειδί, αλλά το ξεχάσατε, αναζητήστε εισερχόμενες επιστολές στο mail στο lic@miko.ru<br>
@@ -302,11 +302,11 @@ return [
     'repLink' => 'Σύνδεσμος',
     'repIvrMenuActions' => 'Μέλος του μενού IVR - %represent%',
     'repOutgoingRoutingTableNumber' => 'Κανόνας εξερχόμενης επεξεργασίας - N%represent%',
-    'repOutgoingRoutingTable' => 'Κανόνας εξερχόμενης επεξεργασίας - %represent%',
+    'repOutgoingRoutingTable' => '%represent%',
     'repNetworkFilters' => 'Φίλτρο ρεύματος - %represent%',
     'repLanInterfaces' => 'Αρχείο συστήματος - %represent%',
     'repIncomingRoutingTableNumber' => 'Κανόνας εισερχόμενης επεξεργασίας - N%represent%',
-    'repIncomingRoutingTable' => 'Κανόνας εισερχόμενης επεξεργασίας - %represent%',
+    'repIncomingRoutingTable' => '%represent%',
     'repIax' => 'Λογαριασμός IAX - %represent%',
     'repFirewallRules' => 'Κανόνας τείχους προστασίας - %represent%',
     'repFail2BanRules' => 'Κανόνας Fail2Ban - %represent%',
@@ -699,7 +699,7 @@ return [
     'ex_ThisNumberIsNotFree' => 'Ο αριθμός βρίσκεται ήδη στη βάση δεδομένων',
     'ex_Number' => 'Αριθμός επέκτασης',
     'ex_Language' => 'Διεπαφή και γλώσσα ειδοποιήσεων',
-    'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Η εισαγόμενη διεύθυνση είναι ήδη εγγεγραμμένη για άλλον χρήστη',
+    'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Η διεύθυνση που καταχωρίσατε είναι ήδη εγγεγραμμένη',
     'ex_EmailAddress' => 'Διεύθυνση ηλεκτρονικού ταχυδρομείου',
     'ex_Username' => 'Ονομα χρήστη',
     'ex_RoutingSettings' => 'Ρυθμίσεις δρομολόγησης',
@@ -1167,7 +1167,7 @@ return [
     'cf_UserEditHeader' => 'Editor για να κάνετε αλλαγές',
     'cf_ResultFileHeader' => 'Περιεχόμενο αρχείου με αλλαγές',
     'lic_LicenseProblem' => 'Πρόβλημα με την εγγραφή στο Marketplace',
-    'lic_ManageLicense' => 'Για να διαχειριστείτε την άδεια, επαναφέρετε τις συνδέσεις, αναλύστε προβλήματα, μεταβείτε στον ιστότοπο ',
+    'lic_ManageLicense' => 'Για να διαχειριστείτε την άδεια χρήσης, επαναφέρετε τις συνδέσεις, αναλύστε προβλήματα, μεταβείτε στον ιστότοπο ',
     'lic_ManageLicenseKeyOnSitePreLinkText' => 'Για να διαχειριστείτε την άδεια χρήσης, επαναφέρετε τις συνδέσεις κεντρικού υπολογιστή, προβάλετε στατιστικά στοιχεία',
     'lic_ManageLicenseKeyOnSiteLinkText' => 'Σύνδεσμος',
     'ext_NoAvailableModules' => 'Δεν υπάρχουν διαθέσιμες μονάδες για εγκατάσταση',
@@ -1192,4 +1192,8 @@ return [
     'mm_Integrations' => 'Ενσωματώσεις',
     'ext_ModuleLicenseProblem' => 'Πρόβλημα άδειας χρήσης μονάδας επέκτασης',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Διασταύρωση με μια σειρά από αριθμούς στάθμευσης',
+    'lic_RegisterTheSystemButton' => 'Κανω ΕΓΓΡΑΦΗ',
+    'lic_SuccessfulActivation' => 'Επιτυχής εγγραφή συστήματος',
+    'lic_ManageLicenseKey' => 'Διαχείριση αδειών',
+    'lic_GeneralError' => 'Σφάλμα κατά την προσπάθεια ενεργοποίησης μιας άδειας',
 ];

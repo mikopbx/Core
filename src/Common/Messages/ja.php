@@ -382,7 +382,7 @@ return [
     'ex_RoutingSettings' => 'ルーティング設定',
     'ex_Username' => 'ユーザーの氏名',
     'ex_EmailAddress' => 'メールアドレス',
-    'ex_ThisEmailAlreadyRegisteredForOtherUser' => '入力したアドレスはすでに別のユーザーに登録されています',
+    'ex_ThisEmailAlreadyRegisteredForOtherUser' => '入力されたアドレスは既に登録されています',
     'ex_Language' => 'インターフェースと警告言語',
     'ex_Number' => '内線番号',
     'ex_ThisNumberIsNotFree' => '番号はすでにデータベースにあります',
@@ -689,10 +689,10 @@ return [
     'repFail2BanRules' => 'Fail2Banルール-%represent%',
     'repFirewallRules' => 'ファイアウォールルール-%represent%',
     'repIax' => 'IAXアカウント-%represent%',
-    'repIncomingRoutingTable' => 'インバウンド処理ルール-%represent%',
+    'repIncomingRoutingTable' => '%represent%',
     'repLanInterfaces' => 'システムファイル-%represent%',
     'repNetworkFilters' => 'サージプロテクタ-%represent%',
-    'repOutgoingRoutingTable' => 'アウトバウンド処理ルール-%represent%',
+    'repOutgoingRoutingTable' => '%represent%',
     'repOutWorkTimes' => '営業時間後-%represent%',
     'repPbxSettings' => 'ステーション設定-%represent%',
     'repSip' => 'SIPアカウント-%represent%',
@@ -732,8 +732,8 @@ return [
 すでにキーをお持ちの場合は、このフィールドにキーを入力するだけです。<br>
 鍵を持っていたのに忘れてしまった場合は、lic@miko.ru 宛てのメールで手紙が届いているかどうかを確認してください。<br>
 登録フォームに記入すると、新しいキーを自動的に取得できます。<br>',
-    'lic_CouponMessage' => 'クーポンは、PBXの機能拡張時やライセンス購入時に使用します。<br>
-一度有効化すると、クーポンが引き換えられます。',
+    'lic_CouponMessage' => 'このクーポンは、サブスクリプション、トライアルの更新、拡張モジュールのライセンスのアクティベーションに使用されます。<br>
+クーポンは 1 回有効化でき、その後は引き換えられます。',
     'lic_CurrentLicenseInfo' => 'ライセンス製品の詳細',
     'lic_Expired' => '製品の有効期限が切れています。<a href="mailto:lic@mikopbx.com">lic@mikopbx.com</a> までお問い合わせください。',
     'lic_ExpiredAfter' => '%expired%後にライセンスが期限切れになります',
@@ -844,7 +844,7 @@ return [
     'ext_ModuleChangeStatusError' => 'モジュールステータスの変更に関する問題',
     'ext_InstallationError' => 'モジュールのインストールエラー',
     'DimmerWaitForPBXIsOnline' => 'PBXコアからの切断 …',
-    'DimmerWaitForPBXOnlineDescription' => 'ステーションが再起動した場合、これは正常です。 <br>接続が復元されるとすぐに、ページは自動的に更新されます！',
+    'DimmerWaitForPBXOnlineDescription' => 'ステーションが再起動しても正常です。 <br>接続が回復するとすぐに、ページは自動的に更新されます。',
     'loc_NoResult' => '何も見つかりませんでした',
     'mo_CallQueueShort4Dropdown' => 'キュー',
     'mo_ConferenceRoomsShort4Dropdown' => 'コンファレンス',
@@ -1192,4 +1192,8 @@ return [
     'mm_Integrations' => '統合',
     'ext_ModuleLicenseProblem' => '拡張モジュールのライセンスの問題',
     'ex_ThisNumberOverlapWithParkingSlots' => 'さまざまな駐車番号がある交差点',
+    'lic_RegisterTheSystemButton' => '登録する',
+    'lic_SuccessfulActivation' => 'システム登録に成功しました',
+    'lic_ManageLicenseKey' => 'ライセンス管理',
+    'lic_GeneralError' => 'ライセンスをアクティベートしようとしたときにエラーが発生しました',
 ];

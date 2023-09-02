@@ -416,7 +416,7 @@ return [
     'ex_ThisNumberIsNotFree' => 'O número já está no banco de dados',
     'ex_Number' => 'Número do ramal',
     'ex_Language' => 'Interface e idioma de notificação',
-    'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'O endereço inserido já está registrado para outro usuário',
+    'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'O endereço digitado já está registrado para',
     'ex_EmailAddress' => 'Endereço de e-mail',
     'ex_Username' => 'Nome completo do usuário',
     'ex_RoutingSettings' => 'Configurações de roteamento',
@@ -587,7 +587,7 @@ return [
     'mo_ConferenceRoomsShort4Dropdown' => 'A conferência',
     'mo_CallQueueShort4Dropdown' => 'Fila',
     'loc_NoResult' => 'Nada encontrado',
-    'DimmerWaitForPBXOnlineDescription' => 'É normal que a estação reinicie. <br> Assim que a conexão for restaurada, a página será atualizada automaticamente!',
+    'DimmerWaitForPBXOnlineDescription' => 'É normal se a estação for reinicializada. <br>Assim que a conexão for restaurada, a página será atualizada automaticamente!',
     'DimmerWaitForPBXIsOnline' => 'Desconectando do núcleo do PBX …',
     'ext_InstallationError' => 'Erro de instalação do módulo',
     'ext_ModuleChangeStatusError' => 'Problemas ao alterar o status do módulo',
@@ -684,8 +684,8 @@ return [
     'lic_ExpiredAfter' => 'A licença expira após %expired%',
     'lic_Expired' => 'Produto vencido, entre em contato com <a href="mailto:lic@mikopbx.com">lic@mikopbx.com</a>',
     'lic_CurrentLicenseInfo' => 'Informações detalhadas do produto em uma chave de licença',
-    'lic_CouponMessage' => 'O cupom é usado na expansão da funcionalidade do PBX ou na compra de uma licença.<br>
-Ele pode ser ativado uma vez, após o qual o cupom é resgatado.',
+    'lic_CouponMessage' => 'O cupom é usado para renovar assinaturas, avaliações e ativar licenças para módulos de extensão.<br>
+O cupom pode ser ativado uma vez e após isso será resgatado.',
     'lic_LicenseKeyMessage' => 'A chave de licença é usada para armazenar todas as suas licenças de qualquer produto MIKO.<br>
 Se você já possui uma chave, basta inseri-la neste campo.<br>
 Se você tinha a chave, mas a esqueceu, procure no correio as cartas recebidas em lic@miko.ru<br>
@@ -731,11 +731,11 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'repPbxSettings' => 'Configurações da estação - %represent%',
     'repOutWorkTimes' => 'Depois do expediente - %represent%',
     'repOutgoingRoutingTableNumber' => 'Regra de processamento de saída - N %represent%',
-    'repOutgoingRoutingTable' => 'Regra de processamento de saída - %represent%',
+    'repOutgoingRoutingTable' => '%represent%',
     'repNetworkFilters' => 'Protetor de sobretensão - %represent%',
     'repLanInterfaces' => 'Arquivo de sistema - %represent%',
     'repIncomingRoutingTableNumber' => 'Regra de processamento de entrada - N %represent%',
-    'repIncomingRoutingTable' => 'Regra de processamento de entrada - %represent%',
+    'repIncomingRoutingTable' => '%represent%',
     'repIax' => 'Conta IAX - %represent%',
     'repFirewallRules' => 'Regra de firewall - %represent%',
     'repFail2BanRules' => 'Regra Fail2Ban - %represent%',
@@ -1191,4 +1191,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'mm_Integrations' => 'Integrações',
     'ext_ModuleLicenseProblem' => 'Problema de licença do módulo de expansão',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Interseção com vários números de estacionamento',
+    'lic_RegisterTheSystemButton' => 'Registro',
+    'lic_SuccessfulActivation' => 'Registro do sistema bem-sucedido',
+    'lic_ManageLicenseKey' => 'Gerenciamento de licenças',
+    'lic_GeneralError' => 'Erro ao tentar ativar uma licença',
 ];

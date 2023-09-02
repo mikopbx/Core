@@ -1,5 +1,6 @@
 <?php
-/*
+return [
+    /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
@@ -16,8 +17,6 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
-return [
     'ex_Russian' => 'Русский',
     'ex_English' => 'English',
     'ex_EnglishUK' => 'English(UK)',
@@ -181,7 +180,7 @@ return [
     'mm_Update' => 'Обновление PBX',
     'mm_ModuleManager' => 'Маркетплейс модулей',
     'mm_SSHConsole' => 'SSH консоль',
-    'mm_Integrations'=> 'Интеграции',
+    'mm_Integrations' => 'Интеграции',
     'bt_Edit' => 'Изменить',
     'bt_Clear' => 'Очистить',
     'bt_Delete' => 'Удалить',
@@ -400,7 +399,7 @@ return [
     'ex_Language' => 'Язык интерфейса и оповещений',
     'ex_Number' => 'Внутренний номер',
     'ex_ThisNumberIsNotFree' => 'Номер уже есть в базе данных',
-    'ex_ThisNumberOverlapWithParkingSlots'=>'Пересечение с диапазоном номеров парковки',
+    'ex_ThisNumberOverlapWithParkingSlots' => 'Пересечение с диапазоном номеров парковки',
     'ex_MobileNumber' => 'Мобильный номер',
     'ex_Secret' => 'Пароль для SIP',
     'ex_ChangeAvatar' => 'Сменить аватар',
@@ -853,12 +852,12 @@ return [
     'lic_Inn' => 'Уникальный идентификатор компании (ИНН, ИИН, УНП и т.д.)',
     'lic_Coupon' => 'Купон для обновления лицензии',
     'lic_ActivateCouponButton' => 'Активировать купон',
-    'lic_RegisterTheSystemButton'=>'Зарегистрироваться',
+    'lic_RegisterTheSystemButton' => 'Зарегистрироваться',
     'lic_SaveLicenseKeyButton' => 'Сохранить ключ',
     'lic_GetTrialErrorCheckInternet' => 'Не удалось пройти регистрацию, проверьте наличие Internet на MikoPBX',
     'lic_SuccessfulCouponActivation' => 'Купон успешно активирован',
     'lic_SuccessfulActivation' => 'Успешная регистрация системы',
-    'lic_WrongLicenseKeyOrEmpty'=>'Некорректно введен лицензионный ключ',
+    'lic_WrongLicenseKeyOrEmpty' => 'Некорректно введен лицензионный ключ',
     'lic_LicenseKeyMessage' => 'Лицензионный ключ используется для хранения всех ваших лицензий от любых продуктов МИКО.<br>
 Если у вас уже есть ключ, вы можете просто вписать его в это поле.<br>
 Если ключ у вас был, но вы его забыли, поищите в почте входящие письма по адресу lic@miko.ru<br>
@@ -905,7 +904,7 @@ return [
     'lic_ManageLicense' => 'Для управления лицензией, сброса привязок, анализа проблем, перейдите на сайт ',
     'lic_ManageLicenseKeyOnSitePreLinkText' => 'Для управления лицензией, сброса привязок к хосту, просмотра статистики',
     'lic_ManageLicenseKeyOnSiteLinkText' => 'по ссылке',
-    'lic_ManageLicenseKey'=>'Управление лицензией',
+    'lic_ManageLicenseKey' => 'Управление лицензией',
     'lic_GeneralError' => 'Ошибка при попытке активации лицензии',
     'er_Home' => 'Перейти в начало',
     'rs_RestartPhoneSystem' => 'Перезагрузить АТС',
@@ -1005,23 +1004,23 @@ return [
     'ext_Licensing' => 'Управление лицензией',
     'ext_NoAvailableModules' => 'Нет доступных для установки модулей',
     'ext_NoInstalledModules' => 'Нет установленных модулей',
-    'ext_GoToMarketplace'=>'Перейти в маркетплейс',
-    'ext_GoToRegistration'=>'Регистрация в маркетплейсе',
-    'ext_LicenseProblemHeader'=>'Проблема с лицензией',
-    'ext_ModuleDependsHigherVersion'=>'Для установки модуля необходима %version% или более новая версия MikoPBX',
-    'ext_UninstallDBError'=>'Ошибка при удалении базы данных модуля',
-    'ext_UnInstallFiles'=>'Ошибка при удалении файлов модуля',
-    'ext_EmptyLicenseKey'=>'Не установлен лицензионный ключ для активации лицензии на модуль',
-    'ext_ErrorOnAppliesFilesRights'=>'Ошибка при назначении прав файлам модуля',
-    'ext_ErrorOnInstallDB'=>'Ошибка при настройке базы данных модуля',
-    'ext_ErrorOnInstallFiles'=>'Ошибки при копировании файлов модуля',
-    'ext_ErrorOnLicenseActivation'=>'Ошибки при активации лицензии',
-    'ext_ErrorOnDecodeModuleJson'=>'Ошибка разбора конфигурационного файла модуля %filename%',
-    'ext_ErrorOnEnableFirewallSettings'=>'Ошибка включения настроек брандмауэра для модуля',
-    'ext_ErrorOnDisableFirewallSettings'=>'Ошибка исключения настроек брандмауэра для модуля',
-    'ext_ErrorOnModuleBeforeEnable'=>'Ошибки проверки возможности включения модуля',
-    'ext_ErrorOnModuleBeforeDisable'=>'Ошибки проверки возможности выключения модуля',
-    'ext_ModuleLicenseProblem'=>'Проблема с лицензией на модуль расширения',
+    'ext_GoToMarketplace' => 'Перейти в маркетплейс',
+    'ext_GoToRegistration' => 'Регистрация в маркетплейсе',
+    'ext_LicenseProblemHeader' => 'Проблема с лицензией',
+    'ext_ModuleDependsHigherVersion' => 'Для установки модуля необходима %version% или более новая версия MikoPBX',
+    'ext_UninstallDBError' => 'Ошибка при удалении базы данных модуля',
+    'ext_UnInstallFiles' => 'Ошибка при удалении файлов модуля',
+    'ext_EmptyLicenseKey' => 'Не установлен лицензионный ключ для активации лицензии на модуль',
+    'ext_ErrorOnAppliesFilesRights' => 'Ошибка при назначении прав файлам модуля',
+    'ext_ErrorOnInstallDB' => 'Ошибка при настройке базы данных модуля',
+    'ext_ErrorOnInstallFiles' => 'Ошибки при копировании файлов модуля',
+    'ext_ErrorOnLicenseActivation' => 'Ошибки при активации лицензии',
+    'ext_ErrorOnDecodeModuleJson' => 'Ошибка разбора конфигурационного файла модуля %filename%',
+    'ext_ErrorOnEnableFirewallSettings' => 'Ошибка включения настроек брандмауэра для модуля',
+    'ext_ErrorOnDisableFirewallSettings' => 'Ошибка исключения настроек брандмауэра для модуля',
+    'ext_ErrorOnModuleBeforeEnable' => 'Ошибки проверки возможности включения модуля',
+    'ext_ErrorOnModuleBeforeDisable' => 'Ошибки проверки возможности выключения модуля',
+    'ext_ModuleLicenseProblem' => 'Проблема с лицензией на модуль расширения',
     'DimmerWaitForPBXIsOnline' => 'Разрыв связи с ядром PBX …',
     'DimmerWaitForPBXOnlineDescription' => 'Это нормально, если станция перезагружается. <br>Как только связь восстановится, страница обновится автоматически!',
     'loc_NoResult' => 'Ничего не найдено',
