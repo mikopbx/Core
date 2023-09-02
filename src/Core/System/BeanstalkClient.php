@@ -423,7 +423,11 @@ class BeanstalkClient extends Injectable
     {
         if (isset($this->message['inbox_tube'])) {
             $this->queue->useTube($this->message['inbox_tube']);
-            $this->queue->put($response);
+            try {
+                $this->queue->put($response);
+            } catch (\Throwable $exception) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($exception);
+            }
             $this->queue->useTube($this->tube);
         }
     }
