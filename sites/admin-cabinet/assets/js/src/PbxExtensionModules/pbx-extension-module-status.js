@@ -111,7 +111,7 @@ class PbxExtensionStatus {
             }
 
             // Refresh the page to reflect changes is better to do in on module page using event ModuleStatusChanged subscription
-            // window.location.reload();
+            window.location.reload();
         } else {
             this.$toggle.checkbox('set checked');
             this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
@@ -151,7 +151,7 @@ class PbxExtensionStatus {
             }
 
             // Refresh the page to reflect changes is better to do in on module page using event ModuleStatusChanged subscription
-            // window.location.reload();
+            window.location.reload();
         } else {
             this.$toggle.checkbox('set unchecked');
             this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
