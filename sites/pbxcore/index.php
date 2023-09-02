@@ -20,7 +20,6 @@
 namespace MikoPBX\PbxCore;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\PBXCoreREST\Config\RegisterDIServices;
 use Phalcon\Di\FactoryDefault;
 use Phalcon\Mvc\Micro;
@@ -50,5 +49,6 @@ class RestAPI extends Micro
         }
     }
 }
-$restApi= new RestAPI();
+
+$restApi = new RestAPI();
 $restApi->main();
