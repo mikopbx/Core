@@ -1196,4 +1196,8 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'lic_SuccessfulActivation' => 'Vellykket systemregistrering',
     'lic_ManageLicenseKey' => 'Administration af licens',
     'lic_GeneralError' => 'Fejl ved forsøg på at aktivere en licens',
+    'sd_ToolTipAutoUpdate' => 'Opdater automatisk skærmindhold',
+    'sd_ToolTipErase' => 'Ryd fil',
+    'sd_ToolTipDownload' => 'Download logfil',
+    'sd_ToolTipRefresh' => 'Hent den seneste logfil',
 ];

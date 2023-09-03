@@ -1196,4 +1196,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'lic_SuccessfulActivation' => 'Lyckad systemregistrering',
     'lic_ManageLicenseKey' => 'Licenshantering',
     'lic_GeneralError' => 'Fel vid försök att aktivera en licens',
+    'sd_ToolTipRefresh' => 'Hämta den senaste loggfilen',
+    'sd_ToolTipAutoUpdate' => 'Uppdatera skärminnehåll automatiskt',
+    'sd_ToolTipErase' => 'Rensa filen',
+    'sd_ToolTipDownload' => 'Ladda ner loggfil',
 ];

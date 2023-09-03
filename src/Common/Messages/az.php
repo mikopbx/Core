@@ -1196,4 +1196,8 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'lic_SuccessfulActivation' => 'Uğurlu sistem qeydiyyatı',
     'lic_ManageLicenseKey' => 'Lisenziya idarəetməsi',
     'lic_GeneralError' => 'Lisenziyanı aktivləşdirməyə çalışarkən xəta baş verdi',
+    'sd_ToolTipDownload' => 'Günlük faylını yükləyin',
+    'sd_ToolTipRefresh' => 'Ən son jurnal faylını əldə edin',
+    'sd_ToolTipAutoUpdate' => 'Ekran məzmununu avtomatik yeniləyin',
+    'sd_ToolTipErase' => 'Faylı təmizləyin',
 ];

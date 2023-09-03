@@ -1196,4 +1196,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'lic_ManageLicenseKey' => 'Gestion des licences',
     'lic_GeneralError' => 'Erreur lors de la tentative d\'activation d\'une licence',
     'lic_SuccessfulActivation' => 'Enregistrement du système réussi',
+    'sd_ToolTipErase' => 'Effacer le fichier',
+    'sd_ToolTipDownload' => 'Télécharger le fichier journal',
+    'sd_ToolTipRefresh' => 'Obtenez le dernier fichier journal',
+    'sd_ToolTipAutoUpdate' => 'Mettre à jour automatiquement le contenu de l\'écran',
 ];

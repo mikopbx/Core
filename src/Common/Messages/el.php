@@ -1196,4 +1196,8 @@ return [
     'lic_SuccessfulActivation' => 'Επιτυχής εγγραφή συστήματος',
     'lic_ManageLicenseKey' => 'Διαχείριση αδειών',
     'lic_GeneralError' => 'Σφάλμα κατά την προσπάθεια ενεργοποίησης μιας άδειας',
+    'sd_ToolTipDownload' => 'Λήψη αρχείου καταγραφής',
+    'sd_ToolTipRefresh' => 'Λάβετε το πιο πρόσφατο αρχείο καταγραφής',
+    'sd_ToolTipAutoUpdate' => 'Αυτόματη ενημέρωση περιεχομένου οθόνης',
+    'sd_ToolTipErase' => 'Καθαρο ΑΡΧΕΙΟ',
 ];

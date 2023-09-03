@@ -1196,4 +1196,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'lic_ManageLicenseKey' => 'Gerenciamento de licenças',
     'lic_GeneralError' => 'Erro ao tentar ativar uma licença',
     'lic_RegisterTheSystemButton' => 'Registro',
+    'sd_ToolTipDownload' => 'Baixar arquivo de registro',
+    'sd_ToolTipRefresh' => 'Obtenha o arquivo de log mais recente',
+    'sd_ToolTipAutoUpdate' => 'Atualizar automaticamente o conteúdo da tela',
+    'sd_ToolTipErase' => 'Arquivo limpo',
 ];

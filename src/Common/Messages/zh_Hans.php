@@ -1196,4 +1196,8 @@ return [
     'lic_SuccessfulActivation' => '系统注册成功',
     'lic_ManageLicenseKey' => '许可证管理',
     'lic_GeneralError' => '尝试激活许可证时出错',
+    'sd_ToolTipDownload' => '下载日志文件',
+    'sd_ToolTipRefresh' => '获取最新的日志文件',
+    'sd_ToolTipAutoUpdate' => '自动更新屏幕内容',
+    'sd_ToolTipErase' => '清除文件',
 ];

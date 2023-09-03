@@ -1229,4 +1229,8 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'lic_SuccessfulActivation' => 'Înregistrare cu succes a sistemului',
     'lic_ManageLicenseKey' => 'Managementul licențelor',
     'lic_GeneralError' => 'Eroare la încercarea de a activa o licență',
+    'sd_ToolTipErase' => 'Ștergeți fișierul',
+    'sd_ToolTipDownload' => 'Descărcați fișierul jurnal',
+    'sd_ToolTipRefresh' => 'Obțineți cel mai recent fișier jurnal',
+    'sd_ToolTipAutoUpdate' => 'Actualizați automat conținutul ecranului',
 ];

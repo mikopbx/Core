@@ -1199,4 +1199,8 @@ The coupon can be activated once, after which it becomes redeemed.',
     'lic_GeneralError' => 'Error when trying to activate a license',
     'lic_RegisterTheSystemButton' => 'Register',
     'lic_SuccessfulActivation' => 'Successful system registration',
+    'sd_ToolTipDownload' => 'Download log file',
+    'sd_ToolTipRefresh' => 'Get the latest log file',
+    'sd_ToolTipAutoUpdate' => 'Automatically update screen content',
+    'sd_ToolTipErase' => 'Clear file',
 ];

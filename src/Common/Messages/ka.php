@@ -1196,4 +1196,8 @@ return [
     'lic_SuccessfulActivation' => 'სისტემის წარმატებული რეგისტრაცია',
     'lic_ManageLicenseKey' => 'ლიცენზიის მართვა',
     'lic_GeneralError' => 'შეცდომა ლიცენზიის გააქტიურების მცდელობისას',
+    'sd_ToolTipDownload' => 'ჩამოტვირთეთ ჟურნალის ფაილი',
+    'sd_ToolTipRefresh' => 'მიიღეთ უახლესი ჟურნალის ფაილი',
+    'sd_ToolTipAutoUpdate' => 'ეკრანის შინაარსის ავტომატურად განახლება',
+    'sd_ToolTipErase' => 'ფაილის გასუფთავება',
 ];

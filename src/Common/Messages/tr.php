@@ -1213,4 +1213,8 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'lic_RegisterTheSystemButton' => 'Kayıt olmak',
     'lic_SuccessfulActivation' => 'Başarılı sistem kaydı',
     'lic_GeneralError' => 'Lisansı etkinleştirmeye çalışırken hata oluştu',
+    'sd_ToolTipAutoUpdate' => 'Ekran içeriğini otomatik olarak güncelle',
+    'sd_ToolTipErase' => 'Dosyayı temizle',
+    'sd_ToolTipDownload' => 'Günlük dosyasını indir',
+    'sd_ToolTipRefresh' => 'En son günlük dosyasını alın',
 ];

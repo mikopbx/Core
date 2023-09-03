@@ -1196,4 +1196,8 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'lic_SuccessfulActivation' => 'Pomyślna rejestracja w systemie',
     'lic_GeneralError' => 'Błąd podczas próby aktywacji licencji',
     'lic_ManageLicenseKey' => 'Zarządzanie licencjami',
+    'sd_ToolTipAutoUpdate' => 'Automatycznie aktualizuj zawartość ekranu',
+    'sd_ToolTipErase' => 'Wyczyść plik',
+    'sd_ToolTipDownload' => 'Pobierz plik dziennika',
+    'sd_ToolTipRefresh' => 'Pobierz najnowszy plik dziennika',
 ];
