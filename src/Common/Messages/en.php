@@ -748,7 +748,7 @@ The coupon can be activated once, after which it becomes redeemed.',
     'lic_FeatureInfo' => 'Total %count% licenses for %name% of them use %captured%',
     'lic_LicenseKeyProducts' => 'Activated products',
     'lic_LicenseKeyOwner' => 'License key owner',
-    'lic_ResetLicenseSettings' => 'Reset license key',
+    'lic_ResetLicenseSettings' => 'Reset key binding',
     'lic_LicenseKeyValid' => 'Registration number is OK',
     'lic_FailedToGetTrialKey2051' => '(2051) Failed to check in this copy. you have already used the registration number with another Email on this machine.<br>
  Use the key sent to you earlier from lic@miko.ru',

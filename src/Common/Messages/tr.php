@@ -70,7 +70,7 @@ return [
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     'ex_ValidateForwardingToBeFilled' => 'Yönlendirme ayarlarında, zaman aşımı yönlendirme numarası doldurulmaz',
     'ex_ValidateRingingBeforeForwardOutOfRange' => 'Yönlendirme ayarlarında, aktarımdan önceki süre yanlış belirtilir. {RuleValue} arasında bir değer seçin.',
