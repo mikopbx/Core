@@ -703,7 +703,7 @@ return [
     'lic_SaveLicenseKeyButton' => 'Uložit klíč',
     'lic_LicenseKeyMessage' => 'Licenční klíč se používá k uložení všech vašich licencí z jakýchkoli produktů MIKO.<br>
 Pokud již máte klíč, můžete jej jednoduše zadat do tohoto pole.<br>
-Pokud jste klíč měli, ale zapomněli jste ho, vyhledejte v e-mailu příchozí dopisy na adrese lic@miko.ru<br>
+Pokud jste měli klíč, ale zapomněli jste ho, vyhledejte v e-mailu příchozí dopisy na adrese lic@miko.ru<br>
 Nový klíč můžete získat automaticky vyplněním registračního formuláře.<br>',
     'lic_CouponMessage' => 'Kupón se používá k obnovení předplatného, zkušebních verzí a aktivaci licencí pro rozšiřující moduly.<br>
 Kupón lze aktivovat jednou, poté se uplatní.',
@@ -714,7 +714,7 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'lic_FeatureInfo' => 'Celkem %count% licencí pro %name%, z toho %captured%',
     'lic_LicenseKeyProducts' => 'Aktivované produkty',
     'lic_LicenseKeyOwner' => 'Držitel licence',
-    'lic_ResetLicenseSettings' => 'Odpojit klíč',
+    'lic_ResetLicenseSettings' => 'Resetujte vazbu kláves',
     'lic_LicenseKeyValid' => 'Program je registrován',
     'lic_FailedToGetTrialKey2051' => '(2051) Nepodařilo se odevzdat tuto kopii. registrační číslo jste již použili s jiným e-mailem na tomto počítači.<br>
  Použijte klíč, který vám byl zaslán dříve z lic@miko.ru',
@@ -1089,7 +1089,7 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'lic_NoInetHeader' => 'Žádný přístup k licenčnímu serveru.',
     'lic_NoInet' => 'Ze serveru MikoPBX možná není přístup k internetu',
     'lic_NoInetLicMiko' => 'Možná omezený přístup ke zdroji <b>lic.mikopbx.com</b>',
-    'lic_NoInetNetSettings' => "Zkontrolujte nastavení <b>DNS</b> a <b>Gateway</b> v nastavení <a href='%url$'>síť</a>",
+    'lic_NoInetNetSettings' => "Zkontrolujte nastavení <b>DNS</b> a <b>Gateway</b> v nastavení <a href='%url%'>síť</a>",
     'lic_SuccessfulCouponActivation' => 'Kupón byl úspěšně aktivován',
     'or_RuleDescriptionBeginEmpty' => 'Číslo se skládá z <b>%restnumbers%</b> číslic',
     'or_RuleNotConfigured' => 'Pravidlo není nakonfigurováno',
@@ -1126,7 +1126,7 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'ex_CallRecording' => 'Nahrávání hovorů',
     'ex_enableRecording' => 'Dovolit',
     'gs_PBXRecordCallsInner' => 'Nahrávání interních rozhovorů',
-    'lic_ReloadPage' => 'Obnovte stránku...',
+    'lic_ReloadPage' => 'Obnovte stránku…',
     'gs_StoreAllPossibleRecords' => '∞',
     'gs_Store1MonthOfRecords' => '1 měsíc',
     'gs_Store3MonthsOfRecords' => '3 měsíce',

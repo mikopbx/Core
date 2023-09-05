@@ -725,10 +725,10 @@ return [
     'lic_Coupon' => '许可证续订优惠券',
     'lic_ActivateCouponButton' => '激活优惠券',
     'lic_SaveLicenseKeyButton' => '储存金钥',
-    'lic_LicenseKeyMessage' => '许可证密钥用于存储任何 MIKO 产品的所有许可证。<br>
-如果您已有密钥，只需在此字段中输入即可。<br>
-如果您有钥匙，但忘记了，请在邮件中查找收到的信件：lic@miko.ru<br>
-您可以通过填写注册表自动获取新密钥。<br>',
+    'lic_LicenseKeyMessage' => '许可证密钥用于存储任何MIKO产品中的所有许可证。
+如果您已经有了密钥，则只需在此字段中输入<br>
+如果您有密钥，但是却忘记了，请通过lic@miko.ru在邮件中查找传入的信件<br>
+您可以通过填写注册表来自动获取新密钥。<br>',
     'lic_CouponMessage' => '优惠券用于续订、试用和激活扩展模块的许可证。<br>
 优惠券只能激活一次，激活后即可兑换。',
     'lic_CurrentLicenseInfo' => '许可产品详细信息',
@@ -738,7 +738,7 @@ return [
     'lic_FeatureInfo' => '共有%count%个许可，共%name%个，其中%captured%个',
     'lic_LicenseKeyProducts' => '活化产品',
     'lic_LicenseKeyOwner' => '执照持有人',
-    'lic_ResetLicenseSettings' => '取消连结键',
+    'lic_ResetLicenseSettings' => '重置按键绑定',
     'lic_LicenseKeyValid' => '该程序已注册',
     'lic_FailedToGetTrialKey2051' => '(2051) 无法签入此副本。您已经在这台机器上使用了另一个电子邮件地址的注册号。<br>
  使用之前从 lic@miko.ru 发送给您的密钥',
@@ -1089,7 +1089,7 @@ return [
     'lic_NoInetHeader' => '无权访问许可证服务器。',
     'lic_NoInet' => '可能没有从 MikoPBX 服务器访问 Internet',
     'lic_NoInetLicMiko' => '可能限制访问资源 <b>lic.mikopbx.com</b>',
-    'lic_NoInetNetSettings' => "检查<a href='%url$'>网络</a>设置中的<b>DNS</b>和<b>网关</b>设置",
+    'lic_NoInetNetSettings' => "检查<a href='%url%'>网络</a>设置中的<b>DNS</b>和<b>网关</b>设置",
     'lic_SuccessfulCouponActivation' => '优惠券成功激活',
     'or_RuleDescriptionBeginEmpty' => '编号由 <b>%restnumbers%</b> 位组成',
     'or_RuleNotConfigured' => '未配置规则',
@@ -1126,7 +1126,7 @@ return [
     'ex_CallRecording' => '通话录音',
     'ex_enableRecording' => '允许',
     'gs_PBXRecordCallsInner' => '记录内部对话',
-    'lic_ReloadPage' => '刷新页面...',
+    'lic_ReloadPage' => '刷新页面…',
     'gs_Store1MonthOfRecords' => '1个月',
     'gs_Store3MonthsOfRecords' => '3个月',
     'gs_Store6MonthsOfRecords' => '6个月',
