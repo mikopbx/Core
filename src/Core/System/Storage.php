@@ -688,7 +688,7 @@ class Storage extends Di\Injectable
             if (is_file("/sys/block/" . $disk . "/size")) {
                 $original_size = trim(file_get_contents("/sys/block/" . $disk . "/size"));
                 $original_size = ($original_size * 512 / 1024 / 1024);
-                $mb_size = $original_size;
+                $mb_size = round($original_size, 1);
             }
             if ($mb_size > 100) {
                 $temp_size = sprintf("%.0f MB", $mb_size);
@@ -714,7 +714,7 @@ class Storage extends Di\Injectable
                     'size_text' => $temp_size,
                     'vendor' => $temp_vendor,
                     'mounted' => $mounted,
-                    'free_space' => $free_space,
+                    'free_space' => round($free_space, 1),
                     'partitions' => $arr_disk_info,
                     'sys_disk' => $sys_disk,
                 ];
