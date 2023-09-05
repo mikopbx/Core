@@ -1199,4 +1199,8 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'lic_GeneralError' => 'Fehler beim Versuch, eine Lizenz zu aktivieren',
     'lic_RegisterTheSystemButton' => 'Registrieren',
     'lic_SuccessfulActivation' => 'Erfolgreiche Systemregistrierung',
+    'sd_ToolTipDownload' => 'Protokolldatei herunterladen',
+    'sd_ToolTipRefresh' => 'Holen Sie sich die neueste Protokolldatei',
+    'sd_ToolTipAutoUpdate' => 'Bildschirminhalte automatisch aktualisieren',
+    'sd_ToolTipErase' => 'Datei löschen',
 ];

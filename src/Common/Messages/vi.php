@@ -1196,4 +1196,8 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'lic_ManageLicenseKey' => 'Quản lý Giấy phép',
     'lic_RegisterTheSystemButton' => 'Đăng ký',
     'lic_GeneralError' => 'Lỗi khi cố gắng kích hoạt giấy phép',
+    'sd_ToolTipDownload' => 'Tải xuống tệp nhật ký',
+    'sd_ToolTipRefresh' => 'Nhận tệp nhật ký mới nhất',
+    'sd_ToolTipErase' => 'Xóa tập tin',
+    'sd_ToolTipAutoUpdate' => 'Tự động cập nhật nội dung màn hình',
 ];

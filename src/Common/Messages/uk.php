@@ -1196,4 +1196,8 @@ return [
     'lic_ManageLicenseKey' => 'Управління ліцензією',
     'lic_RegisterTheSystemButton' => 'Зареєструватись',
     'lic_GeneralError' => 'Помилка при спробі активації ліцензії',
+    'sd_ToolTipDownload' => 'Завантажити файл лога',
+    'sd_ToolTipRefresh' => 'Отримати останню версію лог файлу',
+    'sd_ToolTipAutoUpdate' => 'Автоматично оновлювати вміст на екрані',
+    'sd_ToolTipErase' => 'Очистити файл',
 ];

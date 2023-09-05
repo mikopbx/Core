@@ -1196,4 +1196,8 @@ El cupón se puede activar una vez y luego se canjea.',
     'lic_GeneralError' => 'Error al intentar activar una licencia',
     'lic_SuccessfulActivation' => 'Registro exitoso del sistema',
     'lic_ManageLicenseKey' => 'Gestión de licencias',
+    'sd_ToolTipDownload' => 'Descargar archivo de registro',
+    'sd_ToolTipRefresh' => 'Obtenga el archivo de registro más reciente',
+    'sd_ToolTipAutoUpdate' => 'Actualizar automáticamente el contenido de la pantalla',
+    'sd_ToolTipErase' => 'Archivo vacio',
 ];

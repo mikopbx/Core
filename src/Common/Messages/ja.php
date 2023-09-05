@@ -1196,4 +1196,8 @@ return [
     'lic_SuccessfulActivation' => 'システム登録に成功しました',
     'lic_ManageLicenseKey' => 'ライセンス管理',
     'lic_GeneralError' => 'ライセンスをアクティベートしようとしたときにエラーが発生しました',
+    'sd_ToolTipAutoUpdate' => '画面コンテンツを自動的に更新する',
+    'sd_ToolTipDownload' => 'ログファイルをダウンロードする',
+    'sd_ToolTipRefresh' => '最新のログファイルを取得する',
+    'sd_ToolTipErase' => 'クリアファイル',
 ];

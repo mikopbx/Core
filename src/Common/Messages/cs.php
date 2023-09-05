@@ -1196,4 +1196,8 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'lic_ManageLicenseKey' => 'Správa licencí',
     'lic_GeneralError' => 'Chyba při pokusu o aktivaci licence',
     'lic_SuccessfulActivation' => 'Úspěšná registrace systému',
+    'sd_ToolTipDownload' => 'Stáhnout soubor protokolu',
+    'sd_ToolTipRefresh' => 'Získejte nejnovější soubor protokolu',
+    'sd_ToolTipAutoUpdate' => 'Automaticky aktualizovat obsah obrazovky',
+    'sd_ToolTipErase' => 'Vymazat soubor',
 ];

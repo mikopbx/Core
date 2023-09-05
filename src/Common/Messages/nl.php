@@ -1246,4 +1246,8 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'lic_SuccessfulActivation' => 'Succesvolle systeemregistratie',
     'lic_GeneralError' => 'Fout bij het activeren van een licentie',
     'lic_ManageLicenseKey' => 'Licentiebeheer',
+    'sd_ToolTipAutoUpdate' => 'Scherminhoud automatisch bijwerken',
+    'sd_ToolTipDownload' => 'Logbestand downloaden',
+    'sd_ToolTipRefresh' => 'Haal het nieuwste logbestand op',
+    'sd_ToolTipErase' => 'Bestand wissen',
 ];
