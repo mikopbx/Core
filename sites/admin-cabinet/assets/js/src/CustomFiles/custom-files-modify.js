@@ -68,11 +68,6 @@ const customFile = {
      */
     $mainContainer: $('#main-content-container'),
 
-    /**
-     * jQuery element for the script editor
-     * @type {jQuery}
-     */
-    $userEditConfig: $('#user-edit-config textarea'),
 
     /**
      * Ace editor instances
@@ -126,6 +121,12 @@ const customFile = {
 
     },
 
+    /**
+     * Callback for when the code mode changes.
+     *
+     * @param {string} value - The selected value from the dropdown.
+     * @param {string} text - The selected text from the dropdown.
+     */
     cbOnChangeMode(value, text){
         // Handle code visibility and content based on the 'mode'
         switch (value) {
@@ -147,16 +148,23 @@ const customFile = {
         customFile.hideShowCode();
     },
 
+    /**
+     * Event handler for tab changes.
+     *
+     * @param {string} currentTab - The current tab that is visible.
+     */
     onChangeTab(currentTab){
         const filePath = customFile.$formObj.form('get value', 'filepath');
         const data = {filename: filePath, needOriginal: true, needLogfile: false};
         switch (currentTab) {
             case 'result':
                 data.needOriginal=false;
+                $('.tab[data-tab="result"]').addClass('loading');
                 PbxApi.GetFileContent(data, customFile.cbGetResultFileContentFromServer);
                 break;
             case 'original':
                 data.needOriginal=true;
+                $('.tab[data-tab="original"]').addClass('loading');
                 PbxApi.GetFileContent(data, customFile.cbGetOriginalFileContentFromServer);
                 break;
             case 'editor':
@@ -189,17 +197,12 @@ const customFile = {
                 customFile.$resultTab.show();
                 customFile.viewerOriginal.navigateFileEnd();
                 customFile.viewerResult.navigateFileEnd();
-                customFile.editor.clearSelection();
-                customFile.editor.alignCursors();
                 break;
             case 'override':
                 // If 'mode' is 'override', show custom content and hide server content, replace server file content with custom content
                 customFile.$editorTab.show();
                 customFile.$originalTab.hide();
                 customFile.$resultTab.hide();
-                customFile.editor.navigateFileStart();
-                customFile.editor.clearSelection();
-                customFile.editor.alignCursors();
                 break;
             case 'script':
                 // If 'mode' is 'script', show both server and custom code, apply custom script to the file content on server
@@ -222,14 +225,17 @@ const customFile = {
                     content += `# Attention! You will see changes after the background worker processes the script or after rebooting the system. \n`;
                 }
                 customFile.editor.setValue(content);
-                customFile.editor.clearSelection();
-                customFile.editor.alignCursors();
 
                 break;
             default:
                 // Handle any other 'mode' values
                 break;
         }
+
+        customFile.viewerOriginal.setTheme('ace/theme/monokai');
+        customFile.editor.setTheme('ace/theme/monokai');
+        customFile.editor.setValue(content);
+        customFile.editor.clearSelection();
     },
 
     /**
@@ -239,11 +245,11 @@ const customFile = {
     cbGetOriginalFileContentFromServer(response) {
         if (response.data.content !== undefined) {
             const aceViewer = customFile.viewerOriginal;
-            const scrollTop = aceViewer.getSession().getScrollTop();
-            aceViewer.getSession().setValue(response.data.content);
-            aceViewer.getSession().setScrollTop(scrollTop);
-            customFile.$editorTab.find('textarea').trigger('focus');
+            const scrollTop = aceViewer.session.getScrollTop();
+            aceViewer.session.setValue(response.data.content);
+            aceViewer.session.setScrollTop(scrollTop);
         }
+        $('.tab[data-tab="original"]').removeClass('loading');
     },
 
     /**
@@ -253,11 +259,11 @@ const customFile = {
     cbGetResultFileContentFromServer(response) {
         if (response.data.content !== undefined) {
             const aceViewer = customFile.viewerResult;
-            const scrollTop = aceViewer.getSession().getScrollTop();
-            aceViewer.getSession().setValue(response.data.content);
-            aceViewer.getSession().setScrollTop(scrollTop);
-            customFile.$editorTab.find('textarea').trigger('focus');
+            const scrollTop = aceViewer.session.getScrollTop();
+            aceViewer.session.setValue(response.data.content);
+            aceViewer.session.setScrollTop(scrollTop);
         }
+        $('.tab[data-tab="result"]').removeClass('loading');
     },
 
     /**
@@ -281,7 +287,6 @@ const customFile = {
             readOnly: true,
             minLines: rowsCount
         });
-        customFile.viewerOriginal.resize();
 
         // ACE window for the resulted file content.
         customFile.viewerResult = ace.edit('config-file-result');
@@ -292,7 +297,7 @@ const customFile = {
             readOnly: true,
             minLines: rowsCount
         });
-        customFile.viewerResult.resize();
+
 
         // ACE window for the user editor.
         customFile.editor = ace.edit('user-edit-config');
@@ -302,12 +307,10 @@ const customFile = {
             showPrintMargin: false,
             minLines: rowsCount,
         });
-        customFile.editor.setValue(customFile.$formObj.form('get value', 'content'));
-        customFile.editor.getSession().on('change', () => {
+        customFile.editor.session.on('change', () => {
             // Trigger change event to acknowledge the modification
             Form.dataChanged();
         });
-        customFile.editor.resize();
     },
 
     /**
