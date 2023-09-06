@@ -233,9 +233,9 @@ class WorkerModelsEvents extends WorkerBase
             'settingName' => [
                 'PBXLanguage',
                 'PBXInternalExtensionLength',
-                'PBXCallParkingExt',
-                'PBXCallParkingStartSlot',
-                'PBXCallParkingEndSlot',
+                PbxSettingsConstants::PBX_CALL_PARKING_EXT,
+                PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT,
+                PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT,
                 'PBXFeatureAttendedTransfer',
                 'PBXFeatureBlindTransfer',
                 'PBXFeatureDigitTimeout',

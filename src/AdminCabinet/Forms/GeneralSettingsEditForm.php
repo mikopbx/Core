@@ -63,9 +63,9 @@ class GeneralSettingsEditForm extends BaseForm
                 case PbxSettingsConstants::SSH_PORT:
                 case 'WEBPort':
                 case 'WEBHTTPSPort':
-                case 'PBXCallParkingExt':
-                case 'PBXCallParkingStartSlot':
-                case 'PBXCallParkingEndSlot':
+                case PbxSettingsConstants::PBX_CALL_PARKING_EXT:
+                case PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT:
+                case PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT:
                 case 'PBXFeatureDigitTimeout':
                 case 'PBXFeatureAtxferNoAnswerTimeout':
                 case '***ALL NUMBERIC ABOVE***':
@@ -119,7 +119,6 @@ class GeneralSettingsEditForm extends BaseForm
                             'sv-sv' => $this->translation->_('ex_Swedish'),
                             'cs-cs' => $this->translation->_('ex_Czech'),
                             'tr-tr' => $this->translation->_('ex_Turkish'),
-
                         ]
                         , [
                             'using' => [

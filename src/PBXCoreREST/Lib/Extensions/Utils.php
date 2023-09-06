@@ -113,18 +113,21 @@ class Utils extends Injectable
         $extension = Extensions::findFirstByNumber($number);
         if ($extension !== null) {
             $res->data['available'] = false;
-            $res->data['userId'] = $extension->userid;
-            $res->data['represent'] = $extension->getRepresent();
-            return $res;
-        }
+            switch ($extension->type){
+                case Extensions::TYPE_SIP:
+                case Extensions::TYPE_EXTERNAL:
+                    $res->data['userId'] = $extension->userid;
+                    $res->data['represent'] = $extension->getRepresent();
+                    break;
+                case Extensions::TYPE_PARKING:
+                    $res->data['represent'] = 'ex_ThisNumberOverlapWithParkingSlots';
+                    break;
+                default:
+                    $res->data['available'] = false;
+                    $res->data['represent'] = 'ex_ThisNumberIsNotFree';
+            }
 
-        // Check for overlap with parking slots
-        $parkExt = PbxSettings::getValueByKey('PBXCallParkingExt');
-        $parkStartSlot = PbxSettings::getValueByKey('PBXCallParkingStartSlot');
-        $parkEndSlot = PbxSettings::getValueByKey('PBXCallParkingEndSlot');
-        if ($number === $parkExt || ($number >= $parkStartSlot && $number <= $parkEndSlot)) {
-            $res->data['available'] = false;
-            $res->data['represent'] = 'ex_ThisNumberOverlapWithParkingSlots';
+            return $res;
         }
         return $res;
     }

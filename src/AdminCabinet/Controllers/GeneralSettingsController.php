@@ -21,10 +21,16 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
 use MikoPBX\Common\Models\Codecs;
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 
+/**
+ * Class GeneralSettingsController
+ *
+ * This class handles general settings for the application.
+ */
 class GeneralSettingsController extends BaseController
 {
     /**
@@ -38,23 +44,23 @@ class GeneralSettingsController extends BaseController
      */
     public function modifyAction(): void
     {
-        // Retrieve and sort the audio codecs
+        // Retrieve and sort audio codecs from database
         $audioCodecs = Codecs::find(['conditions' => 'type="audio"'])->toArray();
         usort($audioCodecs, [__CLASS__, 'sortArrayByPriority']);
         $this->view->audioCodecs = $audioCodecs;
 
-        // Retrieve and sort the video codecs
+        // Retrieve and sort video codecs from database
         $videoCodecs = Codecs::find(['conditions' => 'type="video"'])->toArray();
         usort($videoCodecs, [__CLASS__, 'sortArrayByPriority']);
         $this->view->videoCodecs = $videoCodecs;
 
-        // Retrieve all PBX settings
+        // Fetch all PBX settings
         $pbxSettings = PbxSettings::getAllPbxSettings();
 
-        // Retrieve and assign the simple passwords data to the view
+        // Fetch and assign simple passwords for the view
         $this->view->simplePasswords = $this->getSimplePasswords($pbxSettings);
 
-        // Create an instance of the GeneralSettingsEditForm
+        // Create an instance of the GeneralSettingsEditForm and assign it to the view
         $this->view->form = new GeneralSettingsEditForm(null, $pbxSettings);
         $this->view->submitMode = null;
 
@@ -72,12 +78,18 @@ class GeneralSettingsController extends BaseController
      */
     private function getSimplePasswords(array $data): array
     {
+        // Initialize an array to keep track of passwords that fail the check
         $passwordCheckFail = [];
+
         $cloudInstanceId = $data['CloudInstanceId'] ?? '';
-        $checkPasswordFields =[PbxSettingsConstants::SSH_PASSWORD, 'WebAdminPassword'];
-        if ($data[PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD] === 'on'){
+        $checkPasswordFields = [PbxSettingsConstants::SSH_PASSWORD, 'WebAdminPassword'];
+
+        // If SSH is disabled, remove the SSH_PASSWORD key
+        if ($data[PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD] === 'on') {
             unset($checkPasswordFields[PbxSettingsConstants::SSH_PASSWORD]);
         }
+
+        // Loop through and check passwords
         foreach ($checkPasswordFields as $value) {
             if (!isset($data[$value]) || $data[$value] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                 continue;
@@ -102,14 +114,121 @@ class GeneralSettingsController extends BaseController
 
         $passwordCheckFail = $this->getSimplePasswords($data);
         if (!empty($passwordCheckFail)) {
-           foreach ($passwordCheckFail as $settingsKey){
-               $this->flash->error($this->translation->_('gs_SetPasswordError', ['password'=>$data[$settingsKey]]));
-           }
+            foreach ($passwordCheckFail as $settingsKey) {
+                $this->flash->error($this->translation->_('gs_SetPasswordError', ['password' => $data[$settingsKey]]));
+            }
             $this->view->success = false;
             $this->view->passwordCheckFail = $passwordCheckFail;
             return;
         }
 
+        $this->db->begin();
+
+        list($result, $messages) = $this->updatePBXSettings($data);
+        if (!$result) {
+            $this->view->success = false;
+            $this->view->messages = $messages;
+            $this->db->rollback();
+            return;
+        }
+
+        list($result, $messages) = $this->updateCodecs($data['codecs']);
+        if (!$result) {
+            $this->view->success = false;
+            $this->view->messages = $messages;
+            $this->db->rollback();
+            return;
+        }
+
+        list($result, $messages) = $this->createParkingExtensions(
+            $data[PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT],
+            $data[PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT],
+            $data[PbxSettingsConstants::PBX_CALL_PARKING_EXT],
+        );
+
+        if (!$result) {
+            $this->view->success = false;
+            $this->view->messages = $messages;
+            $this->db->rollback();
+            return;
+        }
+
+        $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
+        $this->view->success = true;
+        $this->db->commit();
+
+    }
+
+
+    /**
+     * Create parking extensions.
+     *
+     * @param int $startSlot
+     * @param int $endSlot
+     * @param int $reservedSlot
+     *
+     * @return array
+     */
+    private function createParkingExtensions(int $startSlot, int $endSlot, int $reservedSlot): array
+    {
+        $messages = [];
+        // Delete all parking slots
+        $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
+        foreach ($currentSlots as $currentSlot) {
+            if (!$currentSlot->delete()) {
+                $messages['error'][] = $currentSlot->getMessages();
+            }
+        }
+
+        // Create an array of new numbers
+        $numbers = range($startSlot, $endSlot);
+        $numbers[] = $reservedSlot;
+        foreach ($numbers as $number) {
+            $record = new Extensions();
+            $record->type = Extensions::TYPE_PARKING;
+            $record->number = $number;
+            if (!$record->create()) {
+                $messages['error'][] = $record->getMessages();
+            }
+        }
+
+        $result = count($messages) === 0;
+        return [$result, $messages];
+    }
+
+    /**
+     * Update codecs based on the provided data.
+     *
+     * @param string $codecsData The JSON-encoded data for codecs.
+     *
+     * @return array
+     */
+    private function updateCodecs(string $codecsData): array
+    {
+        $messages = [];
+        $codecs = json_decode($codecsData, true);
+        foreach ($codecs as $codec) {
+            $record = Codecs::findFirstById($codec['codecId']);
+            $record->priority = $codec['priority'];
+            $record->disabled = $codec['disabled'] === true ? '1' : '0';
+            if (!$record->update()) {
+                $messages['error'][] = $record->getMessages();
+            }
+        }
+        $result = count($messages) === 0;
+        return [$result, $messages];
+    }
+
+    /**
+     * Update PBX settings based on the provided data.
+     *
+     * @param array $data The data containing PBX settings.
+     *
+     * @return array
+     */
+    private function updatePBXSettings(array $data):array
+    {
+        $messages = [];
         $pbxSettings = PbxSettings::getDefaultArrayValues();
 
         // Process SSHPassword and set SSHPasswordHash accordingly
@@ -121,7 +240,7 @@ class GeneralSettingsController extends BaseController
                 $data[PbxSettingsConstants::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettingsConstants::SSH_PASSWORD]);
             }
         }
-        $this->db->begin();
+
         // Update PBX settings
         foreach ($pbxSettings as $key => $value) {
             switch ($key) {
@@ -178,27 +297,12 @@ class GeneralSettingsController extends BaseController
                 $record->value = $newValue;
 
                 if ($record->save() === false) {
-                    $errors = $record->getMessages();
-                    $this->flash->warning(implode('<br>', $errors));
-                    $this->view->success = false;
-                    $this->db->rollback();
-
-                    return;
+                    $messages['error'][] = $record->getMessages();
                 }
             }
         }
-
-        $codecs = json_decode($data['codecs'], true);
-        foreach ($codecs as $codec) {
-            $record = Codecs::findFirstById($codec['codecId']);
-            $record->priority = $codec['priority'];
-            $record->disabled = $codec['disabled'] === true ? '1' : '0';
-            $record->update();
-        }
-
-        $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-        $this->view->success = true;
-        $this->db->commit();
+        $result = count($messages) === 0;
+        return [$result, $messages];
     }
 
 }
