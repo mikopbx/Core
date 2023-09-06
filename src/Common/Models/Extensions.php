@@ -38,7 +38,6 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  *
  *
  * @method static mixed findFirstByNumber(string|null $number)
- * @method static mixed findByType(string|null $type)
  * @method static mixed findByUserid(int $userid)
  *
  * @package MikoPBX\Common\Models
@@ -54,7 +53,6 @@ class Extensions extends ModelsBase
     public const  TYPE_CONFERENCE = 'CONFERENCE';
     public const  TYPE_MODULES = 'MODULES';
     public const  TYPE_SYSTEM = 'SYSTEM';
-    public const  TYPE_PARKING = 'PARKING';
 
     /**
      * @Primary
@@ -138,39 +136,28 @@ class Extensions extends ModelsBase
     }
 
     /**
-     * Get the next available internal extension number.
+     * Get the next internal number from the database following the last entered internal number.
      *
-     * This function retrieves the minimum existing internal extension number from the database.
-     * If there are no existing internal numbers, it starts from 200.
-     * It then checks for available extension numbers within the range and returns the next available one.
-     *
-     * @return string The next available internal extension number, or an empty string if none are available.
+     * @return string The next internal number.
      */
     public static function getNextInternalNumber(): string
     {
         $parameters = [
+            'conditions' => 'type = "' . Extensions::TYPE_SIP . '"',
             'column' => 'number',
-            'conditions'=>'type="'.Extensions::TYPE_SIP.'" and userid is not null'
         ];
-        $started = Extensions::minimum($parameters);
-        if ($started === null) {
+        // Get the maximum internal number from the database
+        $query = Extensions::maximum($parameters);
+        if ($query === null) {
             // If there are no existing internal numbers, start from 200
-            $started = 200;
+            $query = 200;
         }
-
+        $result = (int)$query + 1;
         $extensionsLength = PbxSettings::getValueByKey('PBXInternalExtensionLength');
         $maxExtension = (10 ** $extensionsLength) - 1;
 
-        $occupied = Extensions::find(['columns' => 'number'])->toArray();
-        $occupied = array_column($occupied, 'number');
-
-        for ($i = $started; $i <= $maxExtension ; $i++) {
-            if (!in_array((string)$i, $occupied)){
-                return (string)$i;
-            }
-        }
-        // There is no available extensions
-        return '';
+        // Check if the next internal number exceeds the maximum allowed length
+        return ($result <= $maxExtension) ? $result : '';
     }
 
     /**

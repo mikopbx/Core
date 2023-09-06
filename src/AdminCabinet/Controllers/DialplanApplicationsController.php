@@ -46,7 +46,7 @@ class DialplanApplicationsController extends BaseController
         $app = DialplanApplications::findFirstByUniqid($uniqid);
         if ($app === null) {
             $app            = new DialplanApplications();
-            $app->uniqid    = DialplanApplications::generateUniqueID('DIALPLAN-APP-');
+            $app->uniqid    = strtoupper('DIALPLAN-APP-' . md5($app->id . time()));
             $app->type      = 'php';
             $app->extension = Extensions::getNextFreeApplicationNumber();
         }

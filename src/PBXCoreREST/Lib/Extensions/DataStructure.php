@@ -84,6 +84,7 @@ class DataStructure
             // Use Reflection to get the type of the property.
             $type = $property->getType();
 
+
             // Assign a default value based on the type.
             switch ($type->getName()) {
                 case 'string':
@@ -96,7 +97,6 @@ class DataStructure
             }
         }
 
-        // Fill empty values
         if (empty($this->number)) {
             $this->number = Extensions::getNextInternalNumber();
         }
@@ -106,32 +106,14 @@ class DataStructure
         if (empty($this->sip_secret)) {
             $this->sip_secret = Sip::generateSipPassword();
         }
-        if (empty($this->mobile_uniqid)) {
-            $this->mobile_uniqid = ExternalPhones::generateUniqueID();
-        }
         if (empty($this->sip_networkfilterid)) {
             $this->sip_networkfilterid='none';
         }
-        if (empty($this->sip_dtmfmode)) {
-            $this->sip_dtmfmode='auto';
-        }
-        if (empty($this->mobile_dialstring)) {
-            $this->mobile_dialstring = preg_replace('/\D/', '', $this->mobile_number);
+
+        if (empty($this->mobile_uniqid)) {
+            $this->mobile_uniqid = ExternalPhones::generateUniqueID();
         }
 
-        // Sanitize mobile numbers for storage or further processing
-        if (!empty($this->mobile_number)){
-            $this->mobile_number = preg_replace('/\D/', '', $this->mobile_number);
-        }
-        if (!empty($this->fwd_forwarding)){
-            $this->fwd_forwarding = preg_replace('/\D/', '', $this->fwd_forwarding);
-        }
-        if (!empty($this->fwd_forwardingonunavailable)){
-            $this->fwd_forwardingonunavailable = preg_replace('/\D/', '', $this->fwd_forwardingonunavailable);
-        }
-        if (!empty($this->fwd_forwardingonbusy)){
-            $this->fwd_forwardingonbusy = preg_replace('/\D/', '', $this->fwd_forwardingonbusy);
-        }
     }
 
     /**
