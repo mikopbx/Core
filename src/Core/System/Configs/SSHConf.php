@@ -88,7 +88,7 @@ class SSHConf extends Injectable
                 $this->mikoPBXConfig->setGeneralSettings($db_key, $new_key);
             }
         }
-        $ssh_port = escapeshellcmd($this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_PORT));
+        $ssh_port = escapeshellcmd((string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_PORT));
         // Set root password
         $this->updateShellPassword();
         // Restart ssh  server
@@ -120,9 +120,9 @@ class SSHConf extends Injectable
      */
     public function updateShellPassword(): void
     {
-        $password           = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_PASSWORD);
-        $hashString         = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING);
-        $disablePassLogin   = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD);
+        $password           = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_PASSWORD);
+        $hashString         = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING);
+        $disablePassLogin   = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD);
 
         $echoPath       = Util::which('echo');
         $chPasswdPath   = Util::which('chpasswd');
@@ -133,7 +133,7 @@ class SSHConf extends Injectable
         }else{
             Processes::mwExec("{$echoPath} 'root:$password' | {$chPasswdPath}");
         }
-        $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE,       md5_file('/etc/shadow'));
+        $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE, md5_file('/etc/shadow'));
         if($hashString !== md5($password)){
             $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING, md5($password));
             Notifications::sendAdminNotification('adv_SSHPasswordWasChangedSubject', ['adv_SSHPasswordWasChangedBody'],true);
