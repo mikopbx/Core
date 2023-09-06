@@ -465,6 +465,7 @@ return [
     'ex_dropdownCategory_CUSTOMFILES' => 'Конфигурационные файлы',
     'ex_dropdownCategory_MENUITEMS' => 'Пункты меню',
     'ex_dropdownCategory_SYSTEM' => 'Служебные номера',
+    'ex_dropdownCategory_PARKING'=> 'Слоты парковки',
     'ex_ImpossibleToDeleteExtension' => 'Невозможно удалить сотрудника, т.к. существуют следующие ссылки',
     'am_TableColumnName' => 'Имя',
     'am_TableColumnRead' => 'Доступ на чтение',

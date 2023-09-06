@@ -187,6 +187,7 @@ class GeneralSettingsController extends BaseController
             $record = new Extensions();
             $record->type = Extensions::TYPE_PARKING;
             $record->number = $number;
+            $record->show_in_phonebook = '0';
             if (!$record->create()) {
                 $messages['error'][] = $record->getMessages();
             }

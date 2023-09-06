@@ -136,6 +136,9 @@ class RestoreDefaultSettings extends \Phalcon\Di\Injectable
             Processes::mwExec("{$rm} -rf {$callRecordsPath}/*");
         }
 
+        // Recreate parking slots
+        self::createParkingSlots();
+
         // Restart PBX
         $pbxConsole = Util::which('pbx-console');
         shell_exec("$pbxConsole services restart-all");
@@ -311,5 +314,45 @@ class RestoreDefaultSettings extends \Phalcon\Di\Injectable
         }
     }
 
+    /**
+     * Create parking extensions.
+     *
+     * @return void
+     */
+    public static function createParkingSlots()
+    {
+        // Delete all parking slots
+        $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
+        foreach ($currentSlots as $currentSlot) {
+            if (!$currentSlot->delete()) {
+                Util::sysLogMsg(
+                    __CLASS__,
+                    'Can not delete extenison ' . $currentSlot->number . ' from \MikoPBX\Common\Models\Extensions ' . implode($currentSlot->getMessages()),
+                    LOG_ERR
+                );
+            }
+        }
+
+        $startSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT));
+        $endSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT));
+        $reservedSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_EXT));
+
+        // Create an array of new numbers
+        $numbers = range($startSlot, $endSlot);
+        $numbers[] = $reservedSlot;
+        foreach ($numbers as $number) {
+            $record = new Extensions();
+            $record->type = Extensions::TYPE_PARKING;
+            $record->number = $number;
+            $record->show_in_phonebook = '0';
+            if (!$record->create()) {
+                Util::sysLogMsg(
+                    __CLASS__,
+                    'Can not create extenison ' . $record->number . ' from \MikoPBX\Common\Models\Extensions ' . implode($record->getMessages()),
+                    LOG_ERR
+                );
+            }
+        }
+    }
 
 }
