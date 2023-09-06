@@ -21,20 +21,17 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\FirewallRules;
-use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\Sip;
-use MikoPBX\Core\System\Processes;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2023.2.161';
+    public const PBX_VERSION = '2023.2.161';
 
-	/**
+    /**
      * Class constructor.
      */
     public function __construct()
@@ -44,22 +41,25 @@ class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemC
     /**
      * https://github.com/mikopbx/Core/issues/269
      */
-    public function processUpdate():void
+    public function processUpdate(): void
     {
         $availCodecs = [
-            'JPEG'      => 'jpeg',
-            'H.261'     => 'h261',
-            'VP8'       => 'vp8',
-            'VP9'       => 'vp9',
+            'JPEG' => 'jpeg',
+            'H.261' => 'h261',
+            'VP8' => 'vp8',
+            'VP9' => 'vp9',
         ];
         $this->addNewCodecs($availCodecs, false);
+
+
+        $this->createParkingSlots();
     }
 
 
     /**
      * Adds new codecs from $availCodecs array if it doesn't exist
      * @param array $availCodecs
-     * @param bool  $isAudio
+     * @param bool $isAudio
      * @return void
      */
     private function addNewCodecs(array $availCodecs, bool $isAudio = true): void
@@ -73,10 +73,10 @@ class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemC
                 continue;
             }
             $codecData->name = $availCodec;
-            $codecData->type        = $isAudio?'audio':'video';
-            $codecData->disabled    = '1';
+            $codecData->type = $isAudio ? 'audio' : 'video';
+            $codecData->disabled = '1';
             $codecData->description = $desc;
-            if ( ! $codecData->save()) {
+            if (!$codecData->save()) {
                 Util::sysLogMsg(
                     __CLASS__,
                     'Can not update codec info ' . $codecData->name . ' from \MikoPBX\Common\Models\Codecs',
@@ -86,4 +86,44 @@ class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemC
         }
     }
 
+    /**
+     * Create parking extensions.
+     *
+     * @return void
+     */
+    private function createParkingSlots()
+    {
+        $messages = [];
+        // Delete all parking slots
+        $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
+        foreach ($currentSlots as $currentSlot) {
+            if (!$currentSlot->delete()) {
+                Util::sysLogMsg(
+                    __CLASS__,
+                    'Can not delete extenison ' . $currentSlot->number . ' from \MikoPBX\Common\Models\Extensions ' . implode($currentSlot->getMessages()),
+                    LOG_ERR
+                );
+            }
+        }
+
+        $startSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT));
+        $endSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT));
+        $reservedSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_EXT));
+
+        // Create an array of new numbers
+        $numbers = range($startSlot, $endSlot);
+        $numbers[] = $reservedSlot;
+        foreach ($numbers as $number) {
+            $record = new Extensions();
+            $record->type = Extensions::TYPE_PARKING;
+            $record->number = $number;
+            if (!$record->create()) {
+                Util::sysLogMsg(
+                    __CLASS__,
+                    'Can not create extenison ' . $record->number . ' from \MikoPBX\Common\Models\Extensions ' . implode($record->getMessages()),
+                    LOG_ERR
+                );
+            }
+        }
+    }
 }
