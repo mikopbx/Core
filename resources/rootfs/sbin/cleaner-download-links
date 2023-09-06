@@ -1,0 +1,75 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+# $root_dir - a directory where files are available for download through nginx.
+#
+# Example:
+#   Let's create a file and a symlink to it in $root_dir;
+#   echo privet > /tmp/test.txt; ln -s /tmp/test.txt /usr/www/sites/pbxcore/files/cache/test.txt;
+#   The symlink will be destroyed after 5 minutes.
+#
+# Example 2:
+#   Let's create a file and a symlink to it in $root_dir;
+#   echo privet > /tmp/temp-test.txt; ln -s /tmp/temp-test.txt /usr/www/sites/pbxcore/files/cache/test.txt;
+#   Both the symlink and the file will be destroyed after 5 minutes.
+#   If the file name contains "/temp-", it will also be removed.
+
+root_dir=$(grep -rn 'downloadCacheDir' /etc/inc/mikopbx-settings.json | cut -d'"' -f4);
+if [ ! -d "${root_dir}" ]; then
+    exit 2;
+fi
+
+# Get all symbolic links.
+links=$(/bin/find "${root_dir}" -mmin +2 -type l 2> /dev/null| head -n 1000);
+
+if [ ! "${links}x" = "x" ]; then
+  filesForRemove=$(readlink "$links" | grep '/temp-');
+  # Get all temporary files.
+  for file in $filesForRemove
+  do
+    # Check if the file is free.
+    /usr/bin/lsof "$file"  > /dev/null 2> /dev/null;
+    # The file must exist.
+    # It should be freed by all processes.
+    # It should not be the root directory $root_dir.
+    if  [ $? -eq 1 ] && [ ! "${file}" = "${root_dir}" ] && [ -f "${file}" ]; then
+      /usr/sbin/rm -rf "$file";
+    fi
+  done
+fi
+
+# Clean directories that contain symlinks.
+for file in $links
+do
+  # Check if the file is free.
+  /usr/bin/lsof "$file"  > /dev/null 2> /dev/null;
+  if  [ $? -eq 1 ]; then
+      dir=$(/usr/bin/dirname "$file");
+      # If the file is not the root directory, remove it.
+      if [ ! "${file}" = "${root_dir}" ]; then
+        /usr/sbin/rm -rf "${file}";
+      fi
+      #  If the directory is not the root directory, remove it.
+      if [ ! "${dir}" = "${root_dir}" ]; then
+        /usr/sbin/rm -rf "$dir";
+      fi
+  fi
+done
+
+/bin/find "${root_dir}" -type l ! -exec test -e {} \; -delete

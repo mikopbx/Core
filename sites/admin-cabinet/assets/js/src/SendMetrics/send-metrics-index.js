@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,20 +17,40 @@
  */
 
 /* global sessionStorage, PbxApi */
-const sendMetrics = {
-	initialize(){
-		const isMetricsSend = sessionStorage.getItem('MetricsAlreadySent');
-		if (isMetricsSend === null) {
-			PbxApi.LicenseSendPBXMetrics(sendMetrics.cbAfterMetricsSent);
 
-		}
-	},
-	cbAfterMetricsSent(result){
-		if (result===true){
-			sessionStorage.setItem('MetricsAlreadySent', 'true');
-		}
-	}
+/**
+ * Object responsible for sending PBX metrics.
+ *
+ * @module sendMetrics
+ */
+const sendMetrics = {
+
+    /**
+     * Initializes the send metrics functionality by checking if metrics have already been sent.
+     * If metrics have not been sent, it sends the metrics.
+     */
+    initialize() {
+        const isMetricsSend = sessionStorage.getItem('MetricsAlreadySent');
+        if (isMetricsSend === null) {
+            PbxApi.LicenseSendPBXMetrics(sendMetrics.cbAfterMetricsSent);
+
+        }
+    },
+
+    /**
+     * Callback function after metrics have been sent.
+     * @param {boolean} result - The result of sending the metrics.
+     */
+    cbAfterMetricsSent(result) {
+        if (result === true) {
+            sessionStorage.setItem('MetricsAlreadySent', 'true');
+        }
+    }
 }
+
+/**
+ * Sends PBX metrics on document ready.
+ */
 $(document).ready(() => {
-	sendMetrics.initialize();
+    sendMetrics.initialize();
 });

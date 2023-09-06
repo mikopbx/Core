@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,16 @@
 namespace MikoPBX\Modules\Models;
 
 use MikoPBX\Common\Models\ModelsBase;
+use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Text;
 use Phalcon\Url;
 use ReflectionClass as ReflectionClassAlias;
 
+/**
+ * Base class for module models.
+ *
+ * @package MikoPBX\Modules\Models
+ */
 class ModulesModelsBase extends ModelsBase
 {
     protected bool $initialized = false;
@@ -31,31 +37,31 @@ class ModulesModelsBase extends ModelsBase
 
     /**
      * Class initialization and create DB connection by Class and DB name,
-     * it uses on src/Common/Providers/ModulesDBConnectionsProvider.php
+     * it is used in src/Common/Providers/ModulesDBConnectionsProvider.php.
      */
     public function initialize(): void
     {
         // Get child class parameters and define module UniqueID
-        $reflector        = new ReflectionClassAlias(static::class);
+        $reflector = new ReflectionClassAlias(static::class);
         $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
         if (count($partsOfNameSpace) === 3 && $partsOfNameSpace[0] === 'Modules') {
             $this->moduleUniqueId = $partsOfNameSpace[1];
-            $this->setConnectionService("{$this->moduleUniqueId}_module_db");
+            $this->setConnectionService(self::getConnectionServiceName($this->moduleUniqueId));
         }
         parent::initialize();
-        $this->initialized=true;
+        $this->initialized = true;
     }
 
     /**
-     *  Returns module name in human readable form for error and notification messages
+     * Returns the module name in a human-readable form for error and notification messages.
      *
-     * @param bool $needLink
+     * @param bool $needLink Whether to include a link.
      *
-     * @return string
+     * @return string The module name.
      */
-    public function getRepresent($needLink = false): string
+    public function getRepresent(bool $needLink = false): string
     {
-        if (!$this->initialized){
+        if (!$this->initialized) {
             $this->initialize();
         }
 
@@ -90,18 +96,20 @@ class ModulesModelsBase extends ModelsBase
     }
 
     /**
-     * Return link on database record in web interface
+     * Returns the link to the database record in the web interface.
      *
-     * @return string
+     * @return string The web interface link.
      */
     public function getWebInterfaceLink(): string
     {
-        if (!$this->initialized){
+        if (!$this->initialized) {
             $this->initialize();
         }
         if (isset($this->moduleUniqueId)) {
-            $url  = new Url();
-            $link = $url->get(Text::uncamelize($this->moduleUniqueId, '-'));
+            $url = new Url();
+            $baseUri = $this->di->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.baseUri');
+            $unCamelizedModuleId = Text::uncamelize($this->moduleUniqueId, '-');
+            $link = $url->get("$unCamelizedModuleId/$unCamelizedModuleId/index", null, null, $baseUri);
         } else {
             $link = '#';
         }
@@ -109,4 +117,14 @@ class ModulesModelsBase extends ModelsBase
         return $link;
     }
 
+    /**
+     * Returns the connection service name.
+     *
+     * @param string $moduleUniqueId Module UniqueID
+     * @return string   The connection service name
+     */
+    public static function getConnectionServiceName(string $moduleUniqueId): string
+    {
+        return "{$moduleUniqueId}_module_db";
+    }
 }

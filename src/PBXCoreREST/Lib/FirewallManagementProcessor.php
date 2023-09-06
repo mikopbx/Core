@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 
-use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -30,14 +29,51 @@ use Phalcon\Di\Injectable;
 use SQLite3;
 use Throwable;
 
+/**
+ * Class FirewallManagementProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ */
 class FirewallManagementProcessor extends Injectable
 {
+
     /**
-     * Удалить адрес из бана.
+     * Processes Firewall requests
      *
-     * @param string $ip
+     * @param array $request
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
+     *
+     * @throws \Exception
+     */
+    public static function callBack(array $request): PBXApiResult
+    {
+        $action         = $request['action'];
+        $data           = $request['data'];
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        switch ($action) {
+            case 'unBanIp':
+                $res = self::fail2banUnbanAll($data['ip']);
+                break;
+            case 'getBannedIp':
+                $res = self::getBannedIp();
+                break;
+            default:
+                $res->messages['error'][] = "Unknown action - {$action} in ".__CLASS__;
+        }
+        $res->function = $action;
+
+        return $res;
+    }
+
+    /**
+     * Remove an IP address from the fail2ban ban list.
+     *
+     * @param string $ip The IP address to unban.
+     *
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function fail2banUnbanAll(string $ip): PBXApiResult
     {
@@ -61,13 +97,11 @@ class FirewallManagementProcessor extends Injectable
     }
 
     /**
-     * Возвращает массив забаненных ip. Либо данные по конкретному адресу.
+     * Retrieve a list of banned IP addresses or get data for a specific IP address.
      *
-     * @param ?string $ip
-     *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function getBanIp(?string $ip = null): PBXApiResult
+    public static function getBannedIp(): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -76,6 +110,11 @@ class FirewallManagementProcessor extends Injectable
         return $res;
     }
 
+    /**
+     * Retrieve a list of banned IP addresses with their corresponding ban and unban timestamps.
+     *
+     * @return array An array containing the banned IP addresses and their timestamps.
+     */
     public static function getBanIpWithTime():array
     {
         $result = [];
@@ -113,11 +152,12 @@ class FirewallManagementProcessor extends Injectable
     }
 
     /**
-     * Конвертация даты.
-     * @param $strTime
-     * @return int
+     * Convert a string representation of a time to a UNIX timestamp.
+     *
+     * @param string $strTime The string representation of the time.
+     * @return int The UNIX timestamp.
      */
-    public static function time2stamp($strTime):int
+    public static function time2stamp(string $strTime):int
     {
         $result = 0;
         $d = \DateTime::createFromFormat('Y-m-d H:i:s', $strTime);
@@ -128,12 +168,11 @@ class FirewallManagementProcessor extends Injectable
     }
 
     /**
-     * Удаление бана из базы.
+     * Remove an IP from the fail2ban database ban.
      *
-     * @param string $ip
-     * @param string $jail
-     *
-     * @return PBXApiResult
+     * @param string $ip The IP address to unban.
+     * @param string $jail The jail name (optional).
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function fail2banUnbanDb(string $ip, string $jail = ''): PBXApiResult
     {
@@ -143,7 +182,7 @@ class FirewallManagementProcessor extends Injectable
         $jail_q  = ($jail === '') ? '' : "AND jail = '{$jail}'";
         $path_db = Fail2BanConf::FAIL2BAN_DB_PATH;
         if(!file_exists($path_db)){
-            // Таблица не существует. Бана нет.
+            // Database table does not exist. No ban.
             $res->success    = false;
             $res->messages[] = "DB {$path_db} not found";
             return $res;
@@ -152,7 +191,7 @@ class FirewallManagementProcessor extends Injectable
         $db->busyTimeout(3000);
         $fail2ban = new Fail2BanConf();
         if (false === $fail2ban->tableBanExists($db)) {
-            // Таблица не существует. Бана нет.
+            // Database table does not exist. No ban.
             $res->success = true;
             return $res;
         }

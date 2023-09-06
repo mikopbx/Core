@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,9 +26,27 @@ use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+use Pheanstalk\Contract\PheanstalkInterface;
 
 /**
- *  We register the beansTalk connection to process the REST API commands
+ * BeanstalkConnectionWorkerApiProvider
+ *
+ * This service provider registers the Beanstalk connection for processing REST API commands.
+ *
+ * @method  reconnect()
+ * @method subscribe(string $tube, $callback)
+ * @method isConnected()
+ * @method request($job_data, int $timeout = 10, int $priority = PheanstalkInterface::DEFAULT_PRIORITY)
+ * @method publish($job_data,$tube = null, int $priority = PheanstalkInterface::DEFAULT_PRIORITY, int $delay = PheanstalkInterface::DEFAULT_DELAY, int $ttr = PheanstalkInterface::DEFAULT_TTR)
+ * @method cleanTubes()
+ * @method wait(float $timeout = 5)
+ * @method getBody()
+ * @method reply($response)
+ * @method getMessagesFromTube(string $tube = '')
+ *
+)
+ *
+ * @package MikoPBX\Common\Providers
  */
 class BeanstalkConnectionWorkerApiProvider implements ServiceProviderInterface
 {
@@ -37,7 +55,7 @@ class BeanstalkConnectionWorkerApiProvider implements ServiceProviderInterface
     /**
      * Register beanstalkConnectionWorkerAPI service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

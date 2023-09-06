@@ -1,8 +1,9 @@
-{{ link_to("conference-rooms/modify", '<i class="add circle icon"></i> '~t._('cr_AddNewConferenceRoom'), "class": "ui blue button") }}
-
+{% if isAllowed('save') %}
+    {{ link_to("conference-rooms/modify", '<i class="add circle icon"></i> '~t._('cr_AddNewConferenceRoom'), "class": "ui blue button") }}
+{% endif %}
     {% for record in records %}
         {% if loop.first %}
-            <table class="ui selectable compact table" id="routingTable">
+            <table class="ui selectable compact unstackable table" id="routingTable">
             <thead>
             <tr>
                 <th>{{ t._('cr_ColumnExtension') }}</th>

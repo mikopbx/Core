@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,12 +32,21 @@ use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
 use Phalcon\Di;
 
+
+/**
+ * Class System
+ *
+ * This class provides various system-level functionalities.
+ *
+ * @package MikoPBX\Core\System
+ * @property \Phalcon\Config config
+ */
 class System extends Di\Injectable
 {
     private MikoPBXConfig $mikoPBXConfig;
 
     /**
-     * System constructor
+     * System constructor - Instantiates MikoPBXConfig.
      */
     public function __construct()
     {
@@ -45,9 +54,75 @@ class System extends Di\Injectable
     }
 
     /**
-     * Returns logs dir
+     * Is the configuration default?
+     * @return bool
+     */
+    public function isDefaultConf():bool
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            return false;
+        }
+        $sqlite3 = Util::which('sqlite3');
+        $md5sum = Util::which('md5sum');
+        $busybox = Util::which('busybox');
+        $md5_1 = shell_exec("$sqlite3 ".$di->getConfig()->path('database.dbfile')." .dump | $md5sum | $busybox cut -f 1 -d ' '");
+        $md5_2 = shell_exec("$sqlite3 /conf.default/mikopbx.db .dump | $md5sum | $busybox cut -f 1 -d ' '");
+        return $md5_1 === $md5_2;
+    }
+
+    /**
+     * Trying to restore the backup
+     * @return void
+     */
+    public function tryRestoreConf():void
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        $storage = new Storage();
+        $storages = $storage->getStorageCandidate();
+        $tmpMountDir = '/tmp/mnt';
+        $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'],['',''],$di->getConfig()->path('core.confBackupDir'));
+        $confFile    = $di->getConfig()->path('database.dbfile');
+        foreach ($storages as $dev => $fs){
+            Util::teletypeEcho("    - mount $dev ..."."\n");
+            Util::mwMkdir($tmpMountDir."/$dev");
+            $res = Storage::mountDisk($dev, $fs, $tmpMountDir."/$dev");
+            if(!$res){
+                Util::teletypeEcho("    - fail mount $dev ..."."\n");
+            }
+        }
+        $pathBusybox = Util::which('busybox');
+        $pathFind    = Util::which('find');
+        $pathMount   = Util::which('umount');
+        $pathRm    = Util::which('rm');
+        $pathGzip    = Util::which('gzip');
+        $pathSqlite3    = Util::which('sqlite3');
+        $lastBackUp  = trim(shell_exec("$pathFind $tmpMountDir/dev/*$backupDir -type f -printf '%T@ %p\\n' | $pathBusybox sort -n | $pathBusybox tail -1 | $pathBusybox cut -f2- -d' '"));
+        if(empty($lastBackUp)){
+            return;
+        }
+        Util::teletypeEcho("    - Restore $lastBackUp ..."."\n");
+        shell_exec("$pathRm -rf {$confFile}*");
+        shell_exec("$pathGzip -c -d $lastBackUp | sqlite3 $confFile");
+        Processes::mwExec("$pathSqlite3 $confFile 'select * from m_Storage'", $out, $ret);
+        if($ret !== 0){
+            Util::teletypeEcho("    - fail restore $lastBackUp ..."."\n");
+            copy('/conf.default/mikopbx.db', $confFile);
+        }elseif(!$this->isDefaultConf()){
+            self::rebootSync();
+        }
+        foreach ($storages as $dev => $fs){
+            shell_exec("$pathMount $dev");
+        }
+    }
+
+    /**
+     * Returns the directory where logs are stored.
      *
-     * @return string
+     * @return string - Directory path where logs are stored.
      */
     public static function getLogDir(): string
     {
@@ -56,34 +131,48 @@ class System extends Di\Injectable
             return $di->getConfig()->path('core.logsDir');
         }
 
+        // Default logs directory
         return '/var/log';
     }
 
     /**
-     * Refresh networks configs and restarts network daemon
+     * Refreshes networks configs and restarts network daemon.
+     *
+     * @return void
      */
     public static function networkReload(): void
     {
+        // Create Network object and configure settings
         $network = new Network();
         $network->hostnameConfigure();
         $network->resolvConfGenerate();
         $network->loConfigure();
         $network->lanConfigure();
+        $network->configureLanInDocker();
     }
 
     /**
      * Updates custom changes in config files
+     *
+     * @return void
      */
     public static function updateCustomFiles():void
     {
         $actions = [];
+
+        // Find all custom files marked as changed
         /** @var CustomFiles $res_data */
         $res_data = CustomFiles::find("changed = '1'");
+
+        // Process each changed file
         foreach ($res_data as $file_data) {
             // Always restart asterisk after any custom file change
             $actions['asterisk_core_reload'] = 100;
             $filename                        = basename($file_data->filepath);
+
+            // Process based on file name
             switch ($filename) {
+                // Set actions based on the name of the changed file
                 case 'manager.conf':
                     $actions['manager'] = 10;
                     break;
@@ -129,8 +218,12 @@ class System extends Di\Injectable
                     break;
             }
         }
+
+        // Sort actions and invoke them
         asort($actions);
         self::invokeActions($actions);
+
+        // After actions are invoked, reset the changed status and save the file data
         foreach ($res_data as $file_data) {
             /** @var CustomFiles $file_data */
             $file_data->writeAttribute("changed", '0');
@@ -139,14 +232,18 @@ class System extends Di\Injectable
     }
 
     /**
-     * Batch module restart
+     * Restart modules or services based on the provided actions.
      *
-     * @param $actions
+     * @param array $actions - The actions to be performed.
      *
+     * @return void
      */
-    public static function invokeActions($actions): void
+    public static function invokeActions(array $actions): void
     {
+
+        // Process each action
         foreach ($actions as $action => $value) {
+            // Restart modules or services based on action
             switch ($action) {
                 case 'manager':
                     PBX::managerReload();
@@ -197,10 +294,10 @@ class System extends Di\Injectable
     }
 
     /**
-     * Setup system time
+     * Sets the system date and time based on timestamp and timezone.
      *
-     * @param int    $timeStamp
-     * @param string $remote_tz
+     * @param int    $timeStamp - Unix timestamp.
+     * @param string $remote_tz - Timezone string.
      *
      * @return bool
      * @throws \Exception
@@ -208,14 +305,22 @@ class System extends Di\Injectable
     public static function setDate(int $timeStamp, string $remote_tz): bool
     {
         $datePath = Util::which('date');
+
+        // Fetch timezone from database
         $db_tz = PbxSettings::getValueByKey('PBXTimezone');
         $origin_tz = '';
+
+        // Read existing timezone from file if it exists
         if (file_exists('/etc/TZ')) {
             $origin_tz = file_get_contents("/etc/TZ");
         }
+
+        // If the timezones are different, configure the timezone
         if ($origin_tz !== $db_tz){
             self::timezoneConfigure();
         }
+
+        // Calculate the time offset and set the system time
         $origin_tz = $db_tz;
         $origin_dtz = new DateTimeZone($origin_tz);
         $remote_dtz = new DateTimeZone($remote_tz);
@@ -223,15 +328,17 @@ class System extends Di\Injectable
         $remote_dt  = new DateTime('now', $remote_dtz);
         $offset     = $origin_dtz->getOffset($origin_dt) - $remote_dtz->getOffset($remote_dt);
         $timeStamp  = $timeStamp - $offset;
+
+        // Execute date command to set system time
         Processes::mwExec("{$datePath} +%s -s @{$timeStamp}");
-        // Для 1 января должно быть передано 1577829662
-        // Установлено 1577818861
 
         return true;
     }
 
     /**
      * Reboots the system after calling system_reboot_cleanup()
+     *
+     * @return void
      */
     public static function rebootSync(): void
     {
@@ -249,7 +356,7 @@ class System extends Di\Injectable
     }
 
     /**
-     * Shutdown the system
+     * Shutdown the system.
      */
     public static function shutdown(): void
     {
@@ -257,63 +364,87 @@ class System extends Di\Injectable
         Processes::mwExec("{$shutdownPath} > /dev/null 2>&1");
     }
 
-
     /**
-     * Populates /etc/TZ with an appropriate time zone
+     * Configures the system timezone according to the PBXTimezone setting.
+     *
+     * @return void
      */
     public static function timezoneConfigure(): void
     {
+
+        // Get the timezone setting from the database
         $timezone = PbxSettings::getValueByKey('PBXTimezone');
+
+        // If /etc/TZ or /etc/localtime exist, delete them
         if (file_exists('/etc/TZ')) {
             unlink("/etc/TZ");
         }
         if (file_exists('/etc/localtime')) {
             unlink("/etc/localtime");
         }
+
+        // If a timezone is set, configure it
         if ($timezone) {
+
+            // The path to the zone file
             $zone_file = "/usr/share/zoneinfo/{$timezone}";
+
+            // If the zone file exists, copy it to /etc/localtime
             if ( ! file_exists($zone_file)) {
                 return;
             }
             $cpPath = Util::which('cp');
             Processes::mwExec("{$cpPath}  {$zone_file} /etc/localtime");
+
+            // Write the timezone to /etc/TZ and set the TZ environment variable
             file_put_contents('/etc/TZ', $timezone);
             putenv("TZ={$timezone}");
-            Processes::mwExec("export TZ;");
 
+            // Execute the export TZ command and configure PHP's timezone
+            Processes::mwExec("export TZ;");
             PHPConf::phpTimeZoneConfigure();
         }
 
     }
 
     /**
-     * Loads additional kernel modules
+     * Loads additional kernel modules.
+     *
+     * @return bool - Returns true if modules are loaded successfully.
      */
     public function loadKernelModules(): bool
     {
+        // If the system is running in Docker, no need to load kernel modules
         if(Util::isDocker()){
             return true;
         }
 
+        // Paths to system commands
         $modprobePath = Util::which('modprobe');
         $ulimitPath   = Util::which('ulimit');
 
+        // Load dahdi and dahdi_transcode modules and set ulimit values
         $res1 = Processes::mwExec("{$modprobePath} -q dahdi");
         $res2 = Processes::mwExec("{$modprobePath} -q dahdi_transcode");
         Processes::mwExec("{$ulimitPath} -n 4096");
         Processes::mwExec("{$ulimitPath} -p 4096");
 
+        // Return true if both modules loaded successfully
         return ($res1 === 0 && $res2 === 0);
     }
 
     /**
-     * Вычисляет хэш сертификатов SSL и распаковывает их из ca-certificates.crt.
+     * Calculate the hash of SSL certificates and extract them from ca-certificates.crt.
+     *
      * @return void
      */
     public static function sslRehash(): void
     {
+        // Paths to system commands
         $openSslPath = Util::which('openssl');
         $cutPath     = Util::which('cut');
+
+        // Get OpenSSL directory and cert file
         $openSslDir  = trim(shell_exec("$openSslPath version -d | $cutPath -d '\"' -f 2"));
         $certFile    = "$openSslDir/certs/ca-certificates.crt";
         $tmpFile     = tempnam('/tmp', 'cert-');

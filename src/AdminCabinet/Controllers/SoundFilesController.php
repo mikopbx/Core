@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,45 +30,56 @@ class SoundFilesController extends BaseController
      */
     public function indexAction(): void
     {
-        $this->view->mohFiles    = SoundFiles::find('category="' . SoundFiles::CATEGORY_MOH . '"');
+        $this->view->mohFiles = SoundFiles::find('category="' . SoundFiles::CATEGORY_MOH . '"');
         $this->view->customFiles = SoundFiles::find('category="' . SoundFiles::CATEGORY_CUSTOM . '"');
     }
 
 
     /**
-     * Open and edit record
+     * Opens and edits a record.
      *
-     * @param string $id редактируемой записи
+     * @param string $id The ID of the record being edited.
      */
     public function modifyAction(string $id = ''): void
     {
+        // Check if the ID corresponds to a custom or MOH category file
         if (in_array($id, [SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH], true)) {
-            $file           = new SoundFiles();
+            $file = new SoundFiles();
             $file->category = $id;
         } else {
+            // Find the SoundFiles record by ID
             $file = SoundFiles::findFirstById($id);
         }
+
+        // If the record is not found, create a new SoundFiles record with the custom category
         if ($file === null) {
-            $file           = new SoundFiles();
+            $file = new SoundFiles();
             $file->category = SoundFiles::CATEGORY_CUSTOM;
         }
 
-        $form                  = new SoundFilesEditForm($file);
-        $this->view->form      = $form;
-        $this->view->category  = $file->category;
+        // Create a new SoundFilesEditForm and set it in the view
+        $form = new SoundFilesEditForm($file);
+        $this->view->form = $form;
+
+        // Set the category and audio path in the view
+        $this->view->category = $file->category;
         $this->view->audioPath = empty($file->path) ? '' : "/pbxcore/api/cdr/v2/playback?view={$file->path}";
+
+        // Set the representation of the file in the view
         $this->view->represent = $file->getRepresent();
     }
 
 
     /**
-     * Save sound file to storage
+     * Save sound file action.
+     *
+     * This method is responsible for saving the changes made to a sound file.
      *
      * @return void
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (!$this->request->isPost()) {
             return;
         }
         $data = $this->request->getPost();
@@ -83,7 +94,7 @@ class SoundFilesController extends BaseController
                 case "id":
                     break;
                 default:
-                    if ( ! array_key_exists($name, $data)) {
+                    if (!array_key_exists($name, $data)) {
                         continue 2;
                     }
                     $soundFile->$name = $data[$name];
@@ -97,7 +108,7 @@ class SoundFilesController extends BaseController
         } else {
             $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
             $this->view->success = true;
-            // If it was create new one, we will reload page
+            // If it was creating a new record, reload the page
             if (empty($data['id'])) {
                 $this->view->reload = "sound-files/modify/{$soundFile->id}";
             }
@@ -115,11 +126,11 @@ class SoundFilesController extends BaseController
             return;
         }
         $soundFile = SoundFiles::findFirstById($id);
-        if ($soundFile === null){
+        if ($soundFile === null) {
             return;
         }
-        $errors    = false;
-        if (! $soundFile->delete()) {
+        $errors = false;
+        if (!$soundFile->delete()) {
             $errors = $soundFile->getMessages();
         }
         if ($errors) {
@@ -151,15 +162,15 @@ class SoundFilesController extends BaseController
      *
      * @param string $category
      */
-    public function getSoundFilesAction(string $category='custom'):void
+    public function getSoundFilesAction(string $category = 'custom'): void
     {
         $soundFiles = SoundFiles::find("category='{$category}'");
         $soundFilesList = [];
         foreach ($soundFiles as $soundFile) {
             $soundFilesList[] =
                 [
-                    'name'=>$soundFile->getRepresent(),
-                    'value'=>$soundFile->id
+                    'name' => $soundFile->getRepresent(),
+                    'value' => $soundFile->id
                 ];
         }
         $this->view->results = $soundFilesList;

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,12 +23,15 @@ class LocalizationController extends BaseController
 {
 
     /**
-     * Возвращает массив переводов для локализации в JavaScript
+     * Get the translated array for JavaScript localization.
      *
+     * @return void
      */
     public function getTranslatedArrayAction(): void
     {
         $arrStr = [];
+
+        // Iterate through the translated messages
         foreach ($this->di->getShared('messages') as $key => $value) {
             $arrStr[$key] = str_replace(["\n", "  ", '"'], ['', '', '\\"'], $value);
         }

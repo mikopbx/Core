@@ -1,13 +1,14 @@
-{{ link_to("dialplan-applications/modify", '<i class="add circle icon"></i> '~t._('da_AddNewDialplanApp'), "class": "ui blue button", "id":"add-new-button") }}
-
+{% if isAllowed('save') %}
+    {{ link_to("dialplan-applications/modify", '<i class="add circle icon"></i> '~t._('da_AddNewDialplanApp'), "class": "ui blue button", "id":"add-new-button") }}
+{% endif %}
     {% for record in apps %}
         {% if loop.first %}
-            <table class="ui selectable compact table" id="custom-applications-table">
+            <table class="ui selectable compact unstackable table" id="custom-applications-table">
             <thead>
             <tr>
                 <th>{{ t._('da_ColumnExtension') }}</th>
                 <th>{{ t._('da_ColumnName') }}</th>
-                <th>{{ t._('da_ColumnNote') }}</th>
+                <th >{{ t._('da_ColumnNote') }}</th>
                 <th></th>
             </tr>
             </thead>

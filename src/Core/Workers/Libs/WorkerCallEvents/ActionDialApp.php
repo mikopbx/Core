@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,16 +22,27 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
+/**
+ * Class ActionDialApp
+ * Handles the start of an application.
+ *
+ *  @package MikoPBX\Core\Workers\Libs\WorkerCallEvents
+ */
 class ActionDialApp
 {
     /**
-     * Начало работы приложения
-     * @param WorkerCallEvents $worker
-     * @param                  $data
+     * Executes the start of an application.
+     *
+     * @param WorkerCallEvents $worker Instance of WorkerCallEvents.
+     * @param array $data Data related to the event.
+     * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data):void
+    public static function execute(WorkerCallEvents $worker, $data): void
     {
+        // Ends the previous application
         ActionAppEnd::execute($worker, $data);
+
+        // Insert data into database
         InsertDataToDB::execute($data);
     }
 }

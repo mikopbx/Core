@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@ class AsteriskManagersController extends BaseController
      *
      * @param string $id AsteriskManagerUsers record ID
      */
-    public function modifyAction($id = '')
+    public function modifyAction(string $id = '')
     {
         $manager = AsteriskManagerUsers::findFirstById($id);
         if ($manager === null) {
@@ -110,7 +110,7 @@ class AsteriskManagersController extends BaseController
 
 
     /**
-     * Save Asterisk Manager User settings
+     * Save Asterisk Manager User settings into database
      */
     public function saveAction(): void
     {
@@ -156,7 +156,7 @@ class AsteriskManagersController extends BaseController
     }
 
     /**
-     * Deletes Asterisk Manager
+     * Deletes Asterisk Manager records from database
      *
      * @param string $amiId
      *
@@ -176,7 +176,7 @@ class AsteriskManagersController extends BaseController
     }
 
     /**
-     * Checks uniqueness for AMI username from JS.
+     * Checks uniqueness for AMI username from JS by ajax requests.
      *
      * @param string $username
      *

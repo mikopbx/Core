@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,8 +38,10 @@ use function MikoPBX\Common\Config\appPath;
 /**
  * Class UpdateDatabase
  *
- * @package MikoPBX\Core\System\Upgrade
+ *
  * @property \Phalcon\Config config
+ *
+ *  @package MikoPBX\Core\System\Upgrade
  */
 class UpdateDatabase extends Di\Injectable
 {
@@ -74,29 +76,34 @@ class UpdateDatabase extends Di\Injectable
             try {
                 $this->createUpdateDbTableByAnnotations($moduleModelClass);
             } catch (Throwable $exception){
+                // Log errors encountered during table update
                 Util::echoWithSyslog('Errors within update table '.$className.' '.$exception->getMessage());
             }
         }
+
+        // Update permissions for custom modules
         $this->updatePermitCustomModules();
     }
 
     /**
+     * Update the permissions for custom modules.
      * https://github.com/mikopbx/Core/issues/173
+     *
      * @return void
      */
     private function updatePermitCustomModules():void
     {
-        /**
-         * Добавим права на файлы в директории модулей.
-         */
         $modulesDir = $this->config->path('core.modulesDir');
         $findPath  = Util::which('find');
         $chownPath = Util::which('chown');
         $chmodPath = Util::which('chmod');
+
+        // Set execute permissions for files in the modules' binary directories
         Processes::mwExec("$findPath $modulesDir/*/*bin/ -type f -exec {$chmodPath} +x {} \;");
+
+        // Set ownership of the modules directory to www:www
         Processes::mwExec("$chownPath -R www:www $modulesDir/*");
     }
-
 
     /**
      * Create, update DB structure by code description
@@ -109,12 +116,16 @@ class UpdateDatabase extends Di\Injectable
     public function createUpdateDbTableByAnnotations(string $modelClassName): bool
     {
         $result = true;
+
+        // Check if the model class exists and has properties
         if (
             ! class_exists($modelClassName)
             || count(get_class_vars($modelClassName)) === 0) {
             return true;
         }
-        // Test is abstract
+
+
+        // Test if the model class is abstract
         try {
             $reflection = new ReflectionClass($modelClassName);
             if ($reflection->isAbstract()) {
@@ -123,19 +134,28 @@ class UpdateDatabase extends Di\Injectable
         } catch (Throwable $exception) {
             return false;
         }
+
+        // Get the model instance
         $model                 = new $modelClassName();
+
+        // Get the connection service name
         $connectionServiceName = $model->getReadConnectionService();
+
+        // Check if the connection service name is empty
         if (empty($connectionServiceName)) {
             return false;
         }
 
+        // Get the connection service and metadata provider
         $connectionService = $this->di->getShared($connectionServiceName);
         $metaData          = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
         $metaData->reset();
 
+        // Get the model annotations
         //https://docs.phalcon.io/4.0/ru-ru/annotations
         $modelAnnotation = $this->di->get(ModelsAnnotationsProvider::SERVICE_NAME)->get($model);
 
+        // Initialize table name, structure and indexes
         $tableName       = $model->getSource();
         $table_structure = [];
         $indexes         = [];
@@ -174,14 +194,14 @@ class UpdateDatabase extends Di\Injectable
             }
         }
 
-        // For each numeric column change type
+        // Change type for numeric columns
         $numericAttributes = $metaData->getDataTypesNumeric($model);
         foreach ($numericAttributes as $attribute => $value) {
             $table_structure[$attribute]['type']      = Column::TYPE_INTEGER;
             $table_structure[$attribute]['isNumeric'] = true;
         }
 
-        // For each not nullable column change type
+        // Set not null for columns
         $notNull = $metaData->getNotNullAttributes($model);
         foreach ($notNull as $attribute) {
             $table_structure[$attribute]['notNull'] = true;
@@ -257,6 +277,14 @@ class UpdateDatabase extends Di\Injectable
             'indexes' => $indexes,
         ];
 
+        // Let's describe the directory for storing temporary tables and data
+        $tempDir = $this->di->getShared('config')->path('core.tempDir');
+        $sqliteTempStore = $connectionService->fetchColumn('PRAGMA temp_store');
+        $sqliteTempDir   = $connectionService->fetchColumn('PRAGMA temp_store_directory');
+        $connectionService->execute('PRAGMA temp_store = FILE;');
+        $connectionService->execute("PRAGMA temp_store_directory = '$tempDir';");
+
+        // Starting the transaction
         $connectionService->begin();
 
         if ( ! $connectionService->tableExists($tableName)) {
@@ -273,7 +301,7 @@ class UpdateDatabase extends Di\Injectable
                 Util::echoWithSyslog($msg);
                 // Create new table and copy all data
                 $currentStateColumnList = [];
-                $oldColNames            = []; // Старые названия колонок
+                $oldColNames            = []; // Old columns names
                 $countColumnsTemp       = count($currentColumnsArr);
                 for ($k = 0; $k < $countColumnsTemp; $k++) {
                     $currentStateColumnList[$k] = $currentColumnsArr[$k]->getName();
@@ -316,6 +344,9 @@ DROP TABLE  {$tableName}";
             $connectionService->rollback();
         }
 
+        // Restoring PRAGMA values
+        $connectionService->execute("PRAGMA temp_store = $sqliteTempStore;");
+        $connectionService->execute("PRAGMA temp_store_directory = '$sqliteTempDir';");
         return $result;
     }
 

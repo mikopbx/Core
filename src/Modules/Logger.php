@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,12 @@ use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use Phalcon\Logger\Adapter\Stream as FileLogger;
 
+/**
+ * Class Logger
+ * Provides logging functionality for modules.
+ *
+ * @package MikoPBX\Modules
+ */
 class Logger
 {
     public bool $debug;
@@ -32,14 +38,16 @@ class Logger
     /**
      * Logger constructor.
      *
-     * @param string $class
-     * @param string $module_name
+     * @param string $class The name of the class using the logger.
+     * @param string $module_name The name of the module.
      */
     public function __construct(string $class, string $module_name)
     {
         $this->module_name = $module_name;
         $this->debug    = true;
         $logPath        = System::getLogDir() . '/' . $this->module_name . '/';
+
+        // Create the log directory if it does not exist
         if (!is_dir($logPath)){
             Util::mwMkdir($logPath);
             Util::addRegularWWWRights($logPath);
@@ -54,6 +62,11 @@ class Logger
         );
     }
 
+    /**
+     * Writes log information.
+     *
+     * @param mixed $data The data to be logged.
+     */
     public function write($data): void
     {
         if ($this->debug) {
@@ -61,6 +74,11 @@ class Logger
         }
     }
 
+    /**
+     * Writes log error information.
+     *
+     * @param mixed $data The error data to be logged.
+     */
     public function writeError($data): void
     {
         if ($this->debug) {
@@ -68,6 +86,11 @@ class Logger
         }
     }
 
+    /**
+     * Writes log informational data.
+     *
+     * @param mixed $data The informational data to be logged.
+     */
     public function writeInfo($data): void
     {
         if ($this->debug) {
@@ -75,6 +98,13 @@ class Logger
         }
     }
 
+    /**
+     * Returns the decoded string representation of the data.
+     *
+     * @param mixed $data The data to be decoded.
+     *
+     * @return string The decoded string.
+     */
     private function getDecodedString($data):string
     {
         $printedData = print_r($data, true);
@@ -85,6 +115,5 @@ class Logger
         }
         return $result;
     }
-
 
 }

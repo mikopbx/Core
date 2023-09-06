@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,37 +17,63 @@
  */
 /* global globalRootUrl, SemanticLocalization */
 
+/**
+ * callQueuesTable module.
+ *
+ *  Define an object for managing call queue tables
+ * @module callQueuesTable
+ */
 const callQueuesTable = {
-	$queuesTable: $('#queues-table'),
-	initialize() {
-		$('.queue-row td').on('dblclick', (e) => {
-			const id = $(e.target).closest('tr').attr('id');
-			window.location = `${globalRootUrl}call-queues/modify/${id}`;
-		});
-		callQueuesTable.initializeDataTable();
-	},
-	/**
-	 * Initialize data tables on table
-	 */
-	initializeDataTable() {
-		callQueuesTable.$queuesTable.DataTable({
-			lengthChange: false,
-			paging: false,
-			columns: [
-				null,
-				null,
-				null,
-				null,
-				{orderable: false, searchable: false},
-			],
-			order: [1, 'asc'],
-			language: SemanticLocalization.dataTableLocalisation,
-		});
-		$('#add-new-button').appendTo($('div.eight.column:eq(0)'));
-	},
+    $queuesTable: $('#queues-table'),
+
+    /**
+     * Initialize the call queue table handlers and DataTable.
+     */
+    initialize() {
+
+        // Add a double-click handler to each cell in the queue row.
+        // This will redirect the user to the modify page for the clicked call queue.
+        $('.queue-row td').on('dblclick', (e) => {
+            const id = $(e.target).closest('tr').attr('id');
+            window.location = `${globalRootUrl}call-queues/modify/${id}`;
+        });
+
+        // Initialize the data table for the call queues table.
+        callQueuesTable.initializeDataTable();
+    },
+    /**
+     * Initialize the DataTable for the call queues table.
+     * This adds additional functionality like sorting and pagination.
+     */
+    initializeDataTable() {
+
+        // Initialize DataTable on $queuesTable element with custom settings
+        callQueuesTable.$queuesTable.DataTable({
+            lengthChange: false,  // Disable user to change records per page
+            paging: false, // Disable pagination
+
+            // Define the characteristics of each column in the table
+            columns: [
+                null,
+                null,
+                null,
+                null,
+                {
+                    orderable: false,  // This column is not orderable
+                    searchable: false  // This column is not searchable
+                },
+            ],
+            order: [1, 'asc'],  // By default, order by the second column ascending
+            language: SemanticLocalization.dataTableLocalisation, // Set localisation options
+        });
+
+        // Move the "add new" button to the first eight column div
+        $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
+    },
 };
 
+// Initialize the call queue table management object when the document is ready
 $(document).ready(() => {
-	callQueuesTable.initialize();
+    callQueuesTable.initialize();
 });
 

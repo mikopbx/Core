@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,16 +26,18 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Registry;
 
 /**
- * Main database connection is created based in the parameters defined in the configuration file
+ * Registers the registry service provider.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class RegistryProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'registry';
 
     /**
-     * Register registry service provider
+     * Register the registry service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

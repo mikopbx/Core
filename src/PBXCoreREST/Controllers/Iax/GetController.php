@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,16 +20,32 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Iax;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;
+
 
 /**
- * Статусы регистраций: '/api/iax/{name}'
- *   curl http://172.16.156.212/pbxcore/api/iax/getRegistry;
+ * Handles the GET request for IAX registrations.
+ *
+ * @RoutePrefix("/pbxcore/api/iax")
+ *
+ * @examples
+ * curl http://172.16.156.212/pbxcore/api/iax/getRegistry;
  */
 class GetController extends BaseController
 {
 
-    public function callAction($actionName): void
+    /**
+     * Calls the corresponding action for IAX registrations based on the provided $actionName.
+     *
+     * @param string $actionName The name of the action.
+     *
+     * Retrieves the statuses of IAX providers registration.
+     * @Get("/getRegistry")
+     *
+     * @return void
+     */
+    public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker('iax', $actionName);
+        $this->sendRequestToBackendWorker(IAXStackProcessor::class, $actionName);
     }
 }

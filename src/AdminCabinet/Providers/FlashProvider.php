@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,9 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Flash\Session as FlashSession;
 
 /**
- * Register the flash service with custom CSS classes
+ * The FlashProvider class is responsible for registering the flash service with custom CSS classes.
+ *
+ * @package MikoPBX\AdminCabinet\Providers
  */
 class FlashProvider implements ServiceProviderInterface
 {
@@ -36,10 +38,11 @@ class FlashProvider implements ServiceProviderInterface
     /**
      * Register flash service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
+
         $di->setShared(
             self::SERVICE_NAME,
             function () {

@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,55 +37,53 @@
  */
 
 function versionCompare(v1, v2, options) {
-	const lexicographical = (options && options.lexicographical) || false,
-		zeroExtend = (options && options.zeroExtend) || true;
+    const lexicographical = (options && options.lexicographical) || false,
+        zeroExtend = (options && options.zeroExtend) || true;
 
-	let v1parts = (v1 || "0").split('.'),
-		v2parts = (v2 || "0").split('.');
+    let v1parts = (v1 || "0").split('.'),
+        v2parts = (v2 || "0").split('.');
 
-	function isValidPart(x) {
-		return (lexicographical ? /^\d+[A-Za-zαß]*$/ : /^\d+[A-Za-zαß]?$/).test(x);
-	}
+    function isValidPart(x) {
+        return (lexicographical ? /^\d+[A-Za-zαß]*$/ : /^\d+[A-Za-zαß]?$/).test(x);
+    }
 
-	if (!v1parts.every(isValidPart) || !v2parts.every(isValidPart)) {
-		return NaN;
-	}
+    if (!v1parts.every(isValidPart) || !v2parts.every(isValidPart)) {
+        return NaN;
+    }
 
-	if (zeroExtend) {
-		while (v1parts.length < v2parts.length) v1parts.push("0");
-		while (v2parts.length < v1parts.length) v2parts.push("0");
-	}
+    if (zeroExtend) {
+        while (v1parts.length < v2parts.length) v1parts.push("0");
+        while (v2parts.length < v1parts.length) v2parts.push("0");
+    }
 
-	if (!lexicographical) {
-		v1parts = v1parts.map(function(x){
-			const match = (/[A-Za-zαß]/).exec(x);
-			return Number(match ? x.replace(match[0], "." + x.charCodeAt(match.index)):x);
-		});
-		v2parts = v2parts.map(function(x){
-			const match = (/[A-Za-zαß]/).exec(x);
-			return Number(match ? x.replace(match[0], "." + x.charCodeAt(match.index)):x);
-		});
-	}
+    if (!lexicographical) {
+        v1parts = v1parts.map(function (x) {
+            const match = (/[A-Za-zαß]/).exec(x);
+            return Number(match ? x.replace(match[0], "." + x.charCodeAt(match.index)) : x);
+        });
+        v2parts = v2parts.map(function (x) {
+            const match = (/[A-Za-zαß]/).exec(x);
+            return Number(match ? x.replace(match[0], "." + x.charCodeAt(match.index)) : x);
+        });
+    }
 
-	for (let i = 0; i < v1parts.length; ++i) {
-		if (v2parts.length === i) {
-			return 1;
-		}
+    for (let i = 0; i < v1parts.length; ++i) {
+        if (v2parts.length === i) {
+            return 1;
+        }
 
-		if (v1parts[i] === v2parts[i]) {
-			continue;
-		}
-		else if (v1parts[i] > v2parts[i]) {
-			return 1;
-		}
-		else {
-			return -1;
-		}
-	}
+        if (v1parts[i] === v2parts[i]) {
 
-	if (v1parts.length !== v2parts.length) {
-		return -1;
-	}
+        } else if (v1parts[i] > v2parts[i]) {
+            return 1;
+        } else {
+            return -1;
+        }
+    }
 
-	return 0;
+    if (v1parts.length !== v2parts.length) {
+        return -1;
+    }
+
+    return 0;
 }

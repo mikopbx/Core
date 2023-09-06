@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,17 +27,23 @@ use MikoPBX\PBXCoreREST\Workers\WorkerMakeLogFilesArchive;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class SysLogsManagementProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ */
 class SysLogsManagementProcessor extends Injectable
 {
     public const DEFAULT_FILENAME = 'asterisk/messages';
 
     /**
-     * Processes System requests
+     * Processes syslog requests
      *
      * @param array $request
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     * @throws \Exception
+     * @return PBXApiResult An object containing the result of the API call.
+     *
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -69,8 +75,11 @@ class SysLogsManagementProcessor extends Injectable
             case 'getLogsList':
                 $res = self::getLogsList();
                 break;
+            case 'eraseFile':
+                $res = self::eraseFile($data['filename']);
+                break;
             default:
-                $res->messages[] = "Unknown action - {$action} in syslogCallBack";
+                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
         }
 
         $res->function = $action;
@@ -79,14 +88,14 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Gets log file content partially
+     * Gets partially filtered log file strings.
      *
      * @param string $filename
      * @param string $filter
      * @param int    $lines
      * @param int    $offset
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function getLogFromFile(string $filename, string $filter = '', $lines = 500, $offset = 0): PBXApiResult
     {
@@ -131,14 +140,11 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Starts logs record
+     * Starts the collection of logs and captures TCP packets.
      *
-     * @param int $timeout
-     *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     * @throws \Exception
+     * @return PBXApiResult An object containing the result of the API call.
      */
-    private static function startLog($timeout = 300): PBXApiResult
+    private static function startLog(): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -150,6 +156,7 @@ class SysLogsManagementProcessor extends Injectable
         $network     = new Network();
         $arr_eth     = $network->getInterfacesNames();
         $tcpdumpPath = Util::which('tcpdump');
+        $timeout = 300;
         foreach ($arr_eth as $eth) {
             Processes::mwExecBgWithTimeout(
                 "{$tcpdumpPath} -i {$eth} -n -s 0 -vvv -w {$tcpDumpDir}/{$eth}.pcap",
@@ -163,10 +170,11 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Prepare log archive file
+     * Stops tcpdump and starts creating a log files archive for download.
      *
-     * @param bool $tcpdumpOnly
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @param bool $tcpdumpOnly Indicates whether to include only tcpdump logs.
+     *
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private static function prepareLog(bool $tcpdumpOnly): PBXApiResult
     {
@@ -199,12 +207,12 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Checks if archive ready then create download link
+     * Requests a zipped archive containing logs and PCAP file
+     * Checks if archive ready it returns download link.
      *
      * @param string $resultFile
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     * @throws \Exception
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private static function downloadLogsArchive(string $resultFile): PBXApiResult
     {
@@ -236,12 +244,12 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
-     * Prepares downloadable log file
+     * Prepares a downloadable link for a log file with the provided name.
      *
-     * @param string $filename
+     * @param string $filename The name of the log file.
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
-     * @throws \Exception
+     * @return PBXApiResult An object containing the result of the API call.
+     *
      */
     private static function downloadLogFile(string $filename): PBXApiResult
     {
@@ -270,9 +278,34 @@ class SysLogsManagementProcessor extends Injectable
     }
 
     /**
+     * Erase log file with the provided name.
+     *
+     * @param string $filename The name of the log file.
+     *
+     * @return PBXApiResult An object containing the result of the API call.
+     *
+     */
+    private static function eraseFile(string $filename): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $filename       = System::getLogDir() . '/' . $filename;
+        if ( ! file_exists($filename)) {
+            $res->success    = false;
+            $res->messages[] = 'File does not exist ' . $filename;
+        } else {
+            $echoPath = Util::which('echo');
+            Processes::mwExec("$echoPath ' ' > $filename");
+            $res->success          = true;
+        }
+
+        return $res;
+    }
+
+    /**
      * Returns list of log files to show them on web interface
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private static function getLogsList(): PBXApiResult
     {
@@ -282,6 +315,7 @@ class SysLogsManagementProcessor extends Injectable
         $filesList      = [];
         $entries        = self::scanDirRecursively($logDir);
         $entries        = Util::flattenArray($entries);
+        $defaultFound   = false;
         foreach ($entries as $entry) {
             $fileSize = filesize($entry);
             $now      = time();
@@ -290,21 +324,30 @@ class SysLogsManagementProcessor extends Injectable
             ) {
                 continue;
             }
-
             $relativePath             = str_ireplace($logDir . '/', '', $entry);
             $fileSizeKB               = ceil($fileSize / 1024);
+            $default = ($relativePath === self::DEFAULT_FILENAME);
             $filesList[$relativePath] =
                 [
                     'path'    => $relativePath,
                     'size'    => "{$fileSizeKB} kb",
-                    'default' => ($relativePath === self::DEFAULT_FILENAME),
+                    'default' => $default,
                 ];
+            if($default){
+                $defaultFound = true;
+            }
         }
+        if(!$defaultFound){
+            if(isset($filesList['system/messages'])){
+                $filesList['system/messages']['default'] = true;
 
+            }else{
+                $filesList[array_key_first($filesList)]['default'] = true;
+            }
+        }
         ksort($filesList);
         $res->success       = true;
         $res->data['files'] = $filesList;
-
         return $res;
     }
 

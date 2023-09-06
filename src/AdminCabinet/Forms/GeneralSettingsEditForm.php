@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,28 +19,36 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\SoundFiles;
-use Phalcon\Forms\Element\AbstractElement;
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
+use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class GeneralSettingsEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
-class GeneralSettingsEditForm extends Form
+class GeneralSettingsEditForm extends BaseForm
 {
-    public function initialize(/** @scrutinizer ignore-unused */ $entity = null, $options = null): void
+    public const HIDDEN_PASSWORD = 'xxxxxxx';
+
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         foreach ($options as $key => $value) {
             switch ($key) {
+                case 'PBXRecordSavePeriod':
+                case '***ALL HIDDEN ABOVE***':
+                    $this->add(new Hidden($key, ['value' => $value]));
+                    break;
                 case 'SIPPort':
                 case 'TLS_PORT':
                 case 'SIPDefaultExpiry':
@@ -52,7 +60,7 @@ class GeneralSettingsEditForm extends Form
                 case 'AMIPort':
                 case 'AJAMPort':
                 case 'AJAMPortTLS':
-                case 'SSHPort':
+                case PbxSettingsConstants::SSH_PORT:
                 case 'WEBPort':
                 case 'WEBHTTPSPort':
                 case 'PBXCallParkingExt':
@@ -61,46 +69,35 @@ class GeneralSettingsEditForm extends Form
                 case 'PBXFeatureDigitTimeout':
                 case 'PBXFeatureAtxferNoAnswerTimeout':
                 case '***ALL NUMBERIC ABOVE***':
-                    $this->add(new Numeric($key, ['value' => $value]));
+                    $this->add(new Numeric($key, ['value' => $value, 'style'=>'width:100px;']));
                     break;
-                case 'SSHPassword':
-                    $this->add(new Password($key, ['value' => $value]));
+                case PbxSettingsConstants::SSH_PASSWORD:
+                    $this->add(new Password($key, ['value' => self::HIDDEN_PASSWORD]));
                     $this->add(
                         new Password(
                             'SSHPasswordRepeat',
-                            ['value' => $value]
+                            ['value' => self::HIDDEN_PASSWORD]
                         )
                     );
                     break;
                 case 'WebAdminPassword':
-                    $this->add(new Password($key, ['value' => $value]));
+                    $this->add(new Password($key, ['value' => self::HIDDEN_PASSWORD]));
                     $this->add(
                         new Password(
                             'WebAdminPasswordRepeat',
-                            ['value' => $value]
+                            ['value' => self::HIDDEN_PASSWORD]
                         )
                     );
                     break;
                 case 'Description':
-                    $this->add(new TextArea($key, ['value' => $value, "rows" => 2]));
-                    break;
-                case 'RTPStunServer':
-                    $this->add(new Text($key, ['value' => $value, "rows" => 1]));
-                    break;
-                case 'SSHAuthorizedKeys':
+                case PbxSettingsConstants::SSH_AUTHORIZED_KEYS:
                 case 'SSHecdsaKey':
                 case 'SSHRsaKey':
                 case 'SSHDssKey':
                 case 'WEBHTTPSPublicKey':
                 case 'WEBHTTPSPrivateKey':
                 case '***ALL TEXTAREA ABOVE***':
-                    $rows = max(round(strlen($value) / 95), 2);
-                    $this->add(
-                        new TextArea(
-                            $key,
-                            ['value' => $value, 'rows' => $rows]
-                        )
-                    );
+                    $this->addTextArea($key, $value??'', 65);
                     break;
                 case 'PBXLanguage':
                     $language = new Select(
@@ -125,13 +122,13 @@ class GeneralSettingsEditForm extends Form
 
                         ]
                         , [
-                            'using'    => [
+                            'using' => [
                                 'id',
                                 'name',
                             ],
-                            'value'    => $value,
+                            'value' => $value,
                             'useEmpty' => false,
-                            'class'    => 'ui selection dropdown language-select',
+                            'class' => 'ui selection dropdown language-select',
                         ]
                     );
                     $this->add($language);
@@ -149,37 +146,36 @@ class GeneralSettingsEditForm extends Form
                             11 => $this->translation->_('gs_ElevenDigthts'),
                         ]
                         , [
-                            'using'    => [
+                            'using' => [
                                 'id',
                                 'name',
                             ],
-                            'value'    => $value,
+                            'value' => $value,
                             'useEmpty' => false,
-                            'class'    => 'ui selection dropdown extension-length-select',
+                            'class' => 'ui selection dropdown extension-length-select',
                         ]
                     );
                     $this->add($extLength);
                     break;
                 case 'PBXRecordAnnouncementIn':
                 case 'PBXRecordAnnouncementOut':
-
                     $currentSoundFile = SoundFiles::findFirstById($value);
-                    $selectArray=[];
-                    if ($currentSoundFile!==null){
-                        $selectArray = [$value=>$currentSoundFile->getRepresent()];
+                    $selectArray = [];
+                    if ($currentSoundFile !== null) {
+                        $selectArray = [$value => $currentSoundFile->getRepresent()];
                     }
 
                     // Audio_message_id
                     $audioMessage = new Select(
                         $key, $selectArray, [
-                                              'using'    => [
-                                                  'id',
-                                                  'name',
-                                              ],
-                                              'useEmpty' => true,
-                                              'value'    => $value,
-                                              'class'    => 'ui selection dropdown search fluid audio-message-select',
-                            ]
+                            'using' => [
+                                'id',
+                                'name',
+                            ],
+                            'useEmpty' => true,
+                            'value' => $value,
+                            'class' => 'ui selection dropdown search fluid audio-message-select',
+                        ]
                     );
                     $this->add($audioMessage);
                     break;
@@ -193,7 +189,7 @@ class GeneralSettingsEditForm extends Form
                 case 'RedirectToHttps':
                 case 'PBXSplitAudioThread':
                 case 'PBXAllowGuestCalls':
-                case 'SSHDisablePasswordLogins':
+                case PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD:
                 case '***ALL CHECK BOXES ABOVE***':
                     $cheskarr = ['value' => null];
                     if ($value) {

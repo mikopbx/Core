@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,25 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class SayConf extends CoreConfigClass
+/**
+ * Class SayConf
+ *
+ * This class represents the say.conf configuration file.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class SayConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'say.conf';
 
+    /**
+     * Generates the content for the say.conf file and writes it to the file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
         $conf = '[general]'.PHP_EOL.
@@ -65,6 +80,8 @@ class SayConf extends CoreConfigClass
                 '_[n]um:[2-9][3-9] => digits/${SAY:0:1}0, num:${SAY:1}'.PHP_EOL.
                 '_[n]um:[2-9][3-9]f => digits/${SAY:0:1}0, num:${SAY:1}'.PHP_EOL.
                 '';
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/say.conf', $conf);
     }
 }

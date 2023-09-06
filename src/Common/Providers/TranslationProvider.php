@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,17 +28,19 @@ use Phalcon\Translate\InterpolatorFactory;
 use Phalcon\Translate\TranslateFactory;
 
 /**
- * Localization service
- * @method string _(string $translateKey, array $placeholders = array())
+ * Localization service.
+ * @method string _(string $translateKey, array $placeholders = [])
+ *
+ * @package MikoPBX\Common\Providers
  */
 class TranslationProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'translation';
 
     /**
-     * Register translation service provider
+     * Register the translation service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,24 +33,28 @@ class ChangeLicenseKeyTest extends MikoPBXTestsBase
      */
     public function testFillLicenseKey($licenseKey):void
     {
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/licensing/modify/');
-        $this->changeTabOnCurrentPage('management');
+//        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
+//        $this->changeTabOnCurrentPage('licensing');
 
-        // Сбрасываем привязку к ключу
-        $xpath = "id('reset-license')";
-        $resetButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
-        $resetButton->click();
-        $this->waitForAjax();
+//        // Сбрасываем привязку к ключу
+//        $xpath = "id('reset-license-button')";
+//        $resetButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
+//        $resetButton->click();
+//        $this->waitForAjax();
 
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/licensing/modify/');
-        $this->changeTabOnCurrentPage('management');
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
+        $this->changeTabOnCurrentPage('licensing');
         $licKey = str_ireplace('MIKO-','', $licenseKey);
         $this->changeInputField('licKey', $licKey);
 
-        $this->submitForm('licencing-modify-form');
+        // Save license key
+        $xpath = "id('save-license-key-button')";
+        $saveButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $saveButton->click();
+        $this->waitForAjax();
 
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/licensing/modify/');
-        $this->changeTabOnCurrentPage('management');
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
+        $this->changeTabOnCurrentPage('licensing');
         $this->assertInputFieldValueEqual('licKey', $licenseKey);
 
     }

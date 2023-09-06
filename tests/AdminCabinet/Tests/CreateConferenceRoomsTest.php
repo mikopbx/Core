@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,10 +36,10 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
         $this->clickDeleteButtonOnRowWithText($params['name']);
 
         $this->clickButtonByHref('/admin-cabinet/conference-rooms/modify');
-        $this->changeInputField('name', $params['name']);
         $this->changeInputField('extension', $params['extension']);
+        $this->changeInputField('name', $params['name']);
 
-        // Сохраняем конференцию
+        // Save conference
         $this->submitForm('conference-room-form');
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/conference-rooms/index/');

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,18 +20,25 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Sysinfo;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 
 /**
- * /pbxcore/api/sysinfo/{name}' Get system logs (POST).
+ * This controller handles POST requests related to system information.
  *
+ * @RoutePrefix("/pbxcore/api/sysinfo")
  *
  */
 class PostController extends BaseController
 {
-    public function callAction($actionName): void
+    /**
+     * Handles the call to different actions based on the action name
+     *
+     * @param string $actionName The name of the action
+     */
+    public function callAction(string $actionName): void
     {
         $data = $this->request->getPost();
-        $this->sendRequestToBackendWorker('sysinfo', $actionName, $data);
+        $this->sendRequestToBackendWorker(SysinfoManagementProcessor::class, $actionName, $data);
     }
 
 }

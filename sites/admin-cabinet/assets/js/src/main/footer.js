@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,24 +18,26 @@
 
 // Polyfill for old browsers
 if (typeof Number.isFinite !== 'function') {
-	Number.isFinite = function isFinite(value) {
-		// 1. If Type(number) is not Number, return false.
-		if (typeof value !== 'number') {
-			return false;
-		}
-		// 2. If number is NaN, +∞, or −∞, return false.
-		if (value !== value || value === Infinity || value === -Infinity) {
-			return false;
-		}
-		// 3. Otherwise, return true.
-		return true;
-	};
+    Number.isFinite = function isFinite(value) {
+        // 1. If Type(number) is not Number, return false.
+        if (typeof value !== 'number') {
+            return false;
+        }
+        // 2. If number is NaN, +∞, or −∞, return false.
+        if (value !== value || value === Infinity || value === -Infinity) {
+            return false;
+        }
+        // 3. Otherwise, return true.
+        return true;
+    };
 }
 
+// When the document is ready, initialize the footer
 $(document).ready(() => {
-	$('.popuped').popup();
-	$('div[data-content], a[data-content]').popup();
-	$('#loader').removeClass('active');
-	$('#loader-row').hide();
-	$('#content-frame').show();
+    $('.popuped').popup();
+    $('div[data-content], a[data-content]').popup();
+    $('#content-frame').removeClass('loading');
+    if (!$('#content-frame').hasClass('grey')){
+        $('#content-frame').removeClass('segment');
+    }
 });

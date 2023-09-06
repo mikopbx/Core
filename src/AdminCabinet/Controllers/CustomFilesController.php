@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ class CustomFilesController extends BaseController
 {
 
     /**
-     * Построение списка файлов
+     * Build the list of files.
      */
     public function indexAction(): void
     {
@@ -38,9 +38,9 @@ class CustomFilesController extends BaseController
 
 
     /**
-     * Открытие карточки редактирования Файла записи
+     * Open the file edit card.
      *
-     * @param string $id редактируемой записи
+     * @param string $id The ID of the file to be edited.
      */
     public function modifyAction(string $id): void
     {
@@ -58,9 +58,7 @@ class CustomFilesController extends BaseController
 
 
     /**
-     * Сохранение параметров переопределения системного файла
-     *
-     * @return void
+     * Save the parameters of the custom file override.
      */
     public function saveAction(): void
     {
@@ -74,7 +72,7 @@ class CustomFilesController extends BaseController
             return;
         }
 
-        // Заполним параметры записи
+        // Update file parameters
         foreach ($customFile as $name => $value) {
             switch ($name) {
                 case "changed":
@@ -90,13 +88,10 @@ class CustomFilesController extends BaseController
                     $customFile->$name = $data[$name];
             }
         }
-        if ($customFile->save() === false) {
-            $errors = $customFile->getMessages();
-            $this->flash->error(implode('<br>', $errors));
-            $this->view->success = false;
-        } else {
-            $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-            $this->view->success = true;
+        if (empty($customFile->getContent())){
+            $customFile->mode = CustomFiles::MODE_NONE;
         }
+
+        $this->saveEntity($customFile, "custom-files/modify/{id}");
     }
 }

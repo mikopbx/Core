@@ -17,6 +17,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
+# Check if another process is already running
 /bin/ps -A -f | grep 'convert-lost-wav2mp3' | grep -v $$ | grep -v grep > /dev/null;
 if [ "$?" != '1' ];then
     echo 'Another process is already running';
@@ -35,7 +36,8 @@ for filename in $files ; do
   /bin/busybox ps | /bin/busybox grep wav2mp3 | /bin/busybox grep "$filename";
   processNotExists="$?";
   if [ "$lsofResult" = "1" ] && [ "$processNotExists" = '1' ]; then
-      # Файл не используется.
+
+      # File is not being used
       /usr/bin/nice -n 19 /sbin/wav2mp3.sh "$filename";
       sleep 0.1;
   fi;

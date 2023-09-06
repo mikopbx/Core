@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,16 +30,18 @@ use Phalcon\Mvc\Model\MetaData\Strategy\Annotations as StrategyAnnotations;
 use Phalcon\Storage\SerializerFactory;
 
 /**
- * Main database connection is created based in the parameters defined in the configuration file
+ * Registers the Models metadata service provider.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class ModelsMetadataProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'modelsMetadata';
 
     /**
-     * Register Models metadata service provider
+     * Register Models metadata service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

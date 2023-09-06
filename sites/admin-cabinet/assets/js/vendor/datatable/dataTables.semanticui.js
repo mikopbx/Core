@@ -15303,7 +15303,7 @@
 	/* Set the defaults for DataTables initialisation */
 	$.extend( true, DataTable.defaults, {
 		dom:
-		"<'ui stackable grid'"+
+		"<'ui grid'"+
 		"<'row'"+
 		"<'eight wide column'l>"+
 		"<'right aligned eight wide column'f>"+

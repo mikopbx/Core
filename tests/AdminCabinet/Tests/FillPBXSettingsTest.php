@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class FillPBXSettingsTest extends MikoPBXTestsBase
@@ -144,7 +145,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
                 'PBXLanguage'            => 'en-en',
                 'PBXRecordCalls'         => true,
                 'SendMetrics'            => false,
-                'SSHAuthorizedKeys'      => $SSHAuthorizedKeys,
+                PbxSettingsConstants::SSH_AUTHORIZED_KEYS      => $SSHAuthorizedKeys,
                 'codec_alaw'             => true,
                 'codec_ulaw'             => false,
                 'codec_g726'             => true,
@@ -156,6 +157,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
                 'codec_h264'             => true,
                 'codec_h263'             => false,
                 'codec_h263p'            => true,
+                'PBXRecordSavePeriod'    => '90'
             ],
         ];
 

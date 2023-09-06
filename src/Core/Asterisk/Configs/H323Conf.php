@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,26 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
-class H323Conf extends CoreConfigClass
+/**
+ * Class H323Conf
+ *
+ * Represents a configuration class for H.323
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class H323Conf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'ooh323.conf';
     public const MODULE_NAME = 'chan_ooh323.so';
 
+    /**
+     * Generates the configuration for the ooh323.conf file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
         $conf = "[general]" . PHP_EOL.
@@ -43,9 +58,15 @@ class H323Conf extends CoreConfigClass
             "directrtpsetup=no".PHP_EOL.
             PHP_EOL;
 
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/'. $this->description, $conf);
     }
 
+    /**
+     * Reloads the H.323 module.
+     *
+     * @return void
+     */
     public static function reload():void
     {
         $h323 = new H323Conf();
@@ -56,9 +77,9 @@ class H323Conf extends CoreConfigClass
     }
 
     /**
-     * Генератор modules.conf
+     * Generates the configuration line for the modules.conf file.
      *
-     * @return string
+     * @return string The generated configuration line.
      */
     public function generateModulesConf(): string
     {

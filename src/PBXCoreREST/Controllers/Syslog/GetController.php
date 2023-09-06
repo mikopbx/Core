@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,24 +20,47 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Syslog;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\SysLogsManagementProcessor;
 
 /**
- * /pbxcore/api/syslog/{name} Get system logs (GET)
+ * Get system logs (GET)
  *
- * Start logs collection and pickup TCP packages
+ * @RoutePrefix("/pbxcore/api/syslog")
+ *
+ * @examples
+ *
+ * Starts the collection of logs and captures TCP packets.
  *   curl http://172.16.156.212/pbxcore/api/syslog/startLog;
  *
- * Stop tcp dump and start making file for download
+ * Stops tcpdump and starts creating a log files archive for download.
  *   curl http://172.16.156.212/pbxcore/api/syslog/stopLog;
  *
- * Gets logs files list
+ * Returns list of log files to show them on web interface
  *   curl http://172.16.156.212/pbxcore/api/syslog/getLogsList;
  *
  */
 class GetController extends BaseController
 {
-    public function callAction($actionName): void
+    /**
+     * Handles the call to different actions based on the action name
+     *
+     * @param string $actionName The name of the action
+     *
+     * Starts the collection of logs and captures TCP packets.
+     * @Get("/startLog")
+     *
+     * Stops tcpdump and starts creating a log files archive for download.
+     * @Get("/stopLog")
+     *
+     * Starts creating a log files archive for download.
+     * @Get("/prepareLog")
+     *
+     * Returns list of log files to show them on web interface
+     * @Get("/getLogsList")
+     *
+     */
+    public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker('syslog', $actionName, $_REQUEST);
+        $this->sendRequestToBackendWorker(SysLogsManagementProcessor::class, $actionName, $_REQUEST);
     }
 }

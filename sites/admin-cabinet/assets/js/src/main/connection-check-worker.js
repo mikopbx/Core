@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,47 +16,81 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalDebugMode */
+/* global globalDebugMode, EventSource */
 
+/**
+ * The connectionCheckWorker object is responsible for checking
+ * the connection status with backend
+ *
+ * @module connectionCheckWorker
+ */
 const connectionCheckWorker = {
-	timeOut: 1000,
-	timeOutHandle: '',
-	errorCounts: 0,
-	$connectionDimmer: $('#connection-dimmer'),
-	initialize() {
-		// Запустим обновление статуса провайдера
-		connectionCheckWorker.restartWorker();
-	},
-	restartWorker() {
-		window.clearTimeout(connectionCheckWorker.timeoutHandle);
-		connectionCheckWorker.worker();
-	},
-	worker() {
-		PbxApi.PingPBX(connectionCheckWorker.cbAfterResponse);
-		connectionCheckWorker.timeoutHandle = window.setTimeout(
-			connectionCheckWorker.worker,
-			connectionCheckWorker.timeOut,
-		);
-	},
-	cbAfterResponse(result) {
-		if (result === true) {
-			connectionCheckWorker.$connectionDimmer.dimmer('hide');
-			connectionCheckWorker.timeOut = 3000;
-			if (connectionCheckWorker.errorCounts > 5) window.location.reload();
-			connectionCheckWorker.errorCounts = 0;
-		} else if (connectionCheckWorker.errorCounts > 3) {
-			connectionCheckWorker.$connectionDimmer.dimmer('show');
-			connectionCheckWorker.timeOut = 1000;
-			connectionCheckWorker.errorCounts += 1;
-		} else {
-			connectionCheckWorker.timeOut = 1000;
-			connectionCheckWorker.errorCounts += 1;
-		}
-	},
+
+    // Counter for error counts
+    errorCounts: 0,
+
+    /**
+     * jQuery object for the no connection dimmer element.
+     * @type {jQuery}
+     */
+    $connectionDimmer: $('#connection-dimmer'),
+
+    /**
+     * EventSource object for the connection check.
+     * @type {EventSource}
+     */
+    eventSource: null,
+
+    /**
+     * Initialize the connection check worker.
+     */
+    initialize() {
+        connectionCheckWorker.eventSource = new EventSource('/connection-check');
+
+        connectionCheckWorker.eventSource.addEventListener('error', function(event) {
+            connectionCheckWorker.cbAfterResponse(false);
+        });
+
+        connectionCheckWorker.eventSource.addEventListener('open', function(event) {
+            connectionCheckWorker.cbAfterResponse(true);
+        });
+    },
+
+    /**
+     * Callback function after receiving the response from the connection check.
+     * @param {boolean} result - The result of the connection check.
+     */
+    cbAfterResponse(result) {
+        if (result === true) {
+            // If the connection is successful, hide the connection dimmer
+            connectionCheckWorker.$connectionDimmer.dimmer('hide');
+
+            // Reload the page if the error count exceeds a certain threshold
+            if (connectionCheckWorker.errorCounts > 5) {
+                window.location.reload();
+            }
+
+            // Reset the error count
+            connectionCheckWorker.errorCounts = 0;
+
+        } else if (connectionCheckWorker.errorCounts > 3) {
+
+            // If the connection is unsuccessful and error count exceeds a threshold, show the connection dimmer
+            connectionCheckWorker.$connectionDimmer.dimmer('show');
+
+            // Increment the error count
+            connectionCheckWorker.errorCounts += 1;
+        } else {
+
+            // Increment the error count
+            connectionCheckWorker.errorCounts += 1;
+        }
+    },
 };
 
+// When the document is ready, initialize the connection check worker
 $(document).ready(() => {
-	if (!globalDebugMode) {
-		connectionCheckWorker.initialize();
-	}
+    if (!globalDebugMode) {
+        connectionCheckWorker.initialize();
+    }
 });

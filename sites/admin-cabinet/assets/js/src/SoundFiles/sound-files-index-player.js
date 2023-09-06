@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,118 +16,130 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-
+/**
+ * Represents an index sound player.
+ *
+ * @class IndexSoundPlayer
+ */
 class IndexSoundPlayer {
-	constructor(id) {
-		this.id = id;
-		this.html5Audio = document.getElementById(`audio-player-${id}`);
-		const $row = $(`#${id}`);
-		if ($row.hasClass('initialized')) {
-			return;
-		}
-		this.$pButton = $row.find('i.play'); // play button
-		this.$dButton = $row.find('i.download'); // download button
-		this.$slider = $row.find('div.cdr-player');
-		this.$spanDuration = $row.find('span.cdr-duration');
-		this.html5Audio.removeEventListener('timeupdate', this.cbOnMetadataLoaded, false);
-		this.html5Audio.removeEventListener('loadedmetadata', this.cbTimeUpdate, false);
-		this.$pButton.unbind();
-		this.$dButton.unbind();
 
+    /**
+     * Constructs a new IndexSoundPlayer object.
+     * @param {string} id - The ID of the audio player element.
+     */
+    constructor(id) {
+        this.id = id;
+        this.html5Audio = document.getElementById(`audio-player-${id}`);
+        const $row = $(`#${id}`);
+        if ($row.hasClass('initialized')) {
+            // Prevent double processing
+            return;
+        }
+        this.$pButton = $row.find('i.play'); // play button
+        this.$dButton = $row.find('i.download'); // download button
+        this.$slider = $row.find('div.cdr-player');
+        this.$spanDuration = $row.find('span.cdr-duration');
+        this.html5Audio.removeEventListener('timeupdate', this.cbOnMetadataLoaded, false);
+        this.html5Audio.removeEventListener('loadedmetadata', this.cbTimeUpdate, false);
+        this.$pButton.unbind();
+        this.$dButton.unbind();
 
-		// play button event listenter
-		this.$pButton.on('click', (e) => {
-			e.preventDefault();
-			this.play();
-		});
+        // Play button event listener
+        this.$pButton.on('click', (e) => {
+            e.preventDefault();
+            this.play();
+        });
 
-		// download button event listenter
-		this.$dButton.on('click', (e) => {
-			e.preventDefault();
-			window.location = $(e.target).attr('data-value');
-		});
+        // Download button event listener
+        this.$dButton.on('click', (e) => {
+            e.preventDefault();
+            window.location = $(e.target).attr('data-value');
+        });
 
-		this.html5Audio.addEventListener('loadedmetadata', this.cbOnMetadataLoaded, false);
+        // Loaded metadata event listener
+        this.html5Audio.addEventListener('loadedmetadata', this.cbOnMetadataLoaded, false);
 
-		// timeupdate event listener
-		this.html5Audio.addEventListener('timeupdate', this.cbTimeUpdate, false);
+        // Timeupdate event listener
+        this.html5Audio.addEventListener('timeupdate', this.cbTimeUpdate, false);
 
-		this.$slider.range({
-			min: 0,
-			max: 100,
-			start: 0,
-			onChange: this.cbOnSliderChange,
-			html5Audio: this.html5Audio,
-			cbTimeUpdate: this.cbTimeUpdate,
-			spanDuration: this.$spanDuration,
-		});
+        // Initialize range slider
+        this.$slider.range({
+            min: 0,
+            max: 100,
+            start: 0,
+            onChange: this.cbOnSliderChange,
+            html5Audio: this.html5Audio,
+            cbTimeUpdate: this.cbTimeUpdate,
+            spanDuration: this.$spanDuration,
+        });
 
-		// Prevent double processing
-		$row.addClass('initialized');
-	}
+        // Prevent double processing
+        $row.addClass('initialized');
+    }
 
-	/**
-	 * Обработчик подгрузки метаданных
-	 */
-	cbOnMetadataLoaded() {
-		if (Number.isFinite(this.duration)) {
-			const $row = $(this).closest('tr');
-			const date = new Date(null);
-			date.setSeconds(this.currentTime); // specify value for SECONDS here
-			const currentTime = date.toISOString().substr(14, 5);
-			date.setSeconds(this.duration); // specify value for SECONDS here
-			const duration = date.toISOString().substr(14, 5);
-			$row.find('span.cdr-duration').text(`${currentTime}/${duration}`);
-		}
-	}
+    /**
+     * Callback for metadata loaded event.
+     */
+    cbOnMetadataLoaded() {
+        if (Number.isFinite(this.duration)) {
+            const $row = $(this).closest('tr');
+            const date = new Date(null);
+            date.setSeconds(this.currentTime); // specify value for SECONDS here
+            const currentTime = date.toISOString().substr(14, 5);
+            date.setSeconds(this.duration); // specify value for SECONDS here
+            const duration = date.toISOString().substr(14, 5);
+            $row.find('span.cdr-duration').text(`${currentTime}/${duration}`);
+        }
+    }
 
-	/**
-	 * Колбек на сдвиг слайдера проигрывателя
-	 * @param newVal
-	 * @param meta
-	 */
-	cbOnSliderChange(newVal, meta) {
-		if (meta.triggeredByUser && Number.isFinite(this.html5Audio.duration)) {
-			this.html5Audio.removeEventListener('timeupdate', this.cbTimeUpdate, false);
-			this.html5Audio.currentTime = (this.html5Audio.duration * newVal) / 100;
-			this.html5Audio.addEventListener('timeupdate', this.cbTimeUpdate, false);
-		}
-		if (Number.isFinite(this.html5Audio.duration)) {
-			const currentTime = new Date(this.html5Audio.currentTime * 1000).toISOString().substr(14, 5);
-			const duration    = new Date(this.html5Audio.duration * 1000).toISOString().substr(14, 5);
-			this.spanDuration.text(`${currentTime}/${duration}`);
-		}
-	}
+    /**
+     * Callback function for the slider change event.
+     * @param {number} newVal - The new value of the slider.
+     * @param {Object} meta - Additional metadata for the slider.
+     */
+    cbOnSliderChange(newVal, meta) {
+        if (meta.triggeredByUser && Number.isFinite(this.html5Audio.duration)) {
+            this.html5Audio.removeEventListener('timeupdate', this.cbTimeUpdate, false);
+            this.html5Audio.currentTime = (this.html5Audio.duration * newVal) / 100;
+            this.html5Audio.addEventListener('timeupdate', this.cbTimeUpdate, false);
+        }
+        if (Number.isFinite(this.html5Audio.duration)) {
+            const currentTime = new Date(this.html5Audio.currentTime * 1000).toISOString().substr(14, 5);
+            const duration = new Date(this.html5Audio.duration * 1000).toISOString().substr(14, 5);
+            this.spanDuration.text(`${currentTime}/${duration}`);
+        }
+    }
 
-	/**
-	 * Колбек на изменение позиции проигрываемого файла из HTML5 аудиотега
-	 */
-	cbTimeUpdate() {
-		if (Number.isFinite(this.duration)) {
-			const percent = this.currentTime / this.duration;
-			const rangePosition = Math.round((percent) * 100);
-			const $row = $(this).closest('tr');
-			$row.find('div.cdr-player').range('set value', rangePosition);
-			if (rangePosition === 100) {
-				$row.find('i.pause').removeClass('pause').addClass('play');
-			}
-		}
-	}
+    /**
+     * Callback function for the timeupdate event.
+     * Synchronizes playhead position with current point in audio
+     */
+    cbTimeUpdate() {
+        if (Number.isFinite(this.duration)) {
+            const percent = this.currentTime / this.duration;
+            const rangePosition = Math.round((percent) * 100);
+            const $row = $(this).closest('tr');
+            $row.find('div.cdr-player').range('set value', rangePosition);
+            if (rangePosition === 100) {
+                $row.find('i.pause').removeClass('pause').addClass('play');
+            }
+        }
+    }
 
-	/**
-	 * Запуск и остановка воспроизведения аудио файла
-	 * по клику на иконку Play
-	 */
-	play() {
-		// start music
-		if (this.html5Audio.paused && this.html5Audio.duration) {
-			this.html5Audio.play();
-			// remove play, add pause
-			this.$pButton.removeClass('play').addClass('pause');
-		} else { // pause music
-			this.html5Audio.pause();
-			// remove pause, add play
-			this.$pButton.removeClass('pause').addClass('play');
-		}
-	}
+    /**
+     * Plays or pauses the audio file when the play button is clicked.
+     */
+    play() {
+        if (this.html5Audio.paused && this.html5Audio.duration) {
+            // Start playing the audio
+            this.html5Audio.play();
+            // Update the play button icon to pause
+            this.$pButton.removeClass('play').addClass('pause');
+        } else {
+            // Pause the audio
+            this.html5Audio.pause();
+            // Update the play button icon to play
+            this.$pButton.removeClass('pause').addClass('play');
+        }
+    }
 }

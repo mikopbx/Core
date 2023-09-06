@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,10 +23,19 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class NTPConf
+ *
+ * Represents the NTP configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class NTPConf extends Injectable
 {
     /**
-     * Setup ntp daemon conf file
+     * Configures the NTP daemon conf file.
+     *
+     * @return void
      */
     public static function configure(): void
     {

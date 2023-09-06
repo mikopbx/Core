@@ -1,3 +1,13 @@
 {
-  "links-version": "1.0"
+  "links-version": "1.0",
+  "https://wiki.mikopbx.com/extensions": "https://docs.mikopbx.com/mikopbx/manual/telefoniya/extensions",
+  "https://wiki.mikopbx.com/call-queues": "https://docs.mikopbx.com/mikopbx/manual/telefoniya/call-queues",
+  "https://wiki.mikopbx.com/ivr-menu": "https://docs.mikopbx.com/mikopbx/manual/telefoniya/ivr-menu",
+  "https://wiki.mikopbx.com/conference-rooms": "https://docs.mikopbx.com/mikopbx/manual/telefoniya/conference-rooms",
+  "https://wiki.mikopbx.com/sound-files":"https://docs.mikopbx.com/mikopbx/manual/telefoniya/sound-files",
+  "https://wiki.mikopbx.com/call-detail-records":"https://docs.mikopbx.com/mikopbx/manual/telefoniya/call-detail-records",
+  "https://wiki.mikopbx.com/providers": "https://docs.mikopbx.com/mikopbx/manual/routing/providers",
+  "https://wiki.mikopbx.com/incoming-routes":"https://docs.mikopbx.com/mikopbx/manual/routing/incoming-routes",
+  "https://wiki.mikopbx.com/outbound-routes":"https://docs.mikopbx.com/mikopbx/manual/routing/outbound-routes",
+  "https://wiki.mikopbx.com/pbx-extension-modules":"https://docs.mikopbx.com/mikopbx/manual/modules/pbx-extension-modules"
 }

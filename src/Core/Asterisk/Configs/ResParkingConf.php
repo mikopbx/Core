@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,17 +22,63 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
 
-class ResParkingConf extends CoreConfigClass
+/**
+ * Class ResParkingConf
+ *
+ * Represents the res_parking.conf configuration file in Asterisk.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class ResParkingConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 590;
+
+    /**
+     * Parking extension.
+     *
+     * @var string
+     */
     protected string $ParkingExt;
+
+    /**
+     * Start slot for parking.
+     *
+     * @var string
+     */
     protected string $ParkingStartSlot;
+
+    /**
+     * End slot for parking.
+     *
+     * @var string
+     */
     protected string $ParkingEndSlot;
+
+    /**
+     * Parking feature.
+     *
+     * @var string
+     */
     protected string $ParkingFeature;
+
+    /**
+     * Parking duration.
+     *
+     * @var string
+     */
     protected string $ParkingDuration;
+
+    /**
+     * Description of the res_parking.conf file.
+     *
+     * @var string
+     */
 
     protected string $description = 'res_parking.conf';
 
     /**
+     * Get the dependence models.
      *
      * @return array
      */
@@ -43,17 +89,19 @@ class ResParkingConf extends CoreConfigClass
 
     /**
      * ResParkingConf constructor.
-     *
      */
     public function __construct(){
         parent::__construct();
-        // Вызов "getSettings" приемлем, так как идет работа с инициализированной переменной generalSettings.
         $this->getSettings();
     }
 
+    /**
+     * Generates the res_parking.conf configuration content and writes it to the file.
+     *
+     */
     protected function generateConfigProtected(): void
     {
-        // Генерация конфигурационных файлов.
+        // Generate the configuration content
         $conf   = "[general]".PHP_EOL.
             "parkeddynamic = yes".PHP_EOL.PHP_EOL.
             "[default]".PHP_EOL.
@@ -65,14 +113,21 @@ class ResParkingConf extends CoreConfigClass
             "comebacktoorigin=no".PHP_EOL.
             "comebackcontext = parked-calls-timeout".PHP_EOL.
             "parkpos => $this->ParkingStartSlot-$this->ParkingEndSlot".PHP_EOL.PHP_EOL;
+
+        // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . '/res_parking.conf', $conf);
     }
 
     /**
-     * Функция позволяет получить активные каналы.
-     * Возвращает ассоциативный массив. Ключ - linked id, значение - массив каналов.
-     * @param string|null $extension
-     * @return array|null
+     * Get the park slot data.
+     *
+     * Retrieves park slot data based on the provided extension.
+     * If the extension is null, it returns all park slot data.
+     *
+     * @param string|null $extension The extension to filter the park slot data. If null, returns all park slot data. Default is null.
+     *
+     * @return array|null An associative array representing the park slot data.
+     *
      * @throws \Phalcon\Exception
      */
     public static function getParkSlotData(?string $extension = null) : ?array
@@ -96,7 +151,9 @@ class ResParkingConf extends CoreConfigClass
     }
 
     /**
-     * Получение настроек.
+     * Retrieve park slot settings.
+     *
+     * This method fetches park slot settings from the PbxSettings class and assigns them to the corresponding properties.
      */
     public function getSettings(): void
     {
@@ -108,13 +165,15 @@ class ResParkingConf extends CoreConfigClass
     }
 
     /**
-     * Генерация дополнительных контекстов.
+     * Generate extension contexts.
      *
-     * @return string
+     * Generates the internal number plan for parked calls and returns it as a string.
+     *
+     * @return string The generated extension contexts for parked calls.
      */
     public function extensionGenContexts(): string
     {
-        // Генерация внутреннего номерного плана.
+        // Generate the internal number plan for parked calls.
         $conf  = "[parked-calls]\n";
         $conf .= "exten => _X!,2,NoOp()\n\t";
         $conf .= 'same => n,AGI(cdr_connector.php,unpark_call)' . "\n\t";
@@ -133,13 +192,16 @@ class ResParkingConf extends CoreConfigClass
     }
 
     /**
-     * Возвращает номерной план для internal контекста.
+     * Generate internal extensions.
      *
-     * @return string
+     * Generates internal extensions for parked calls and returns them as a string.
+     *
+     * @return string The generated internal extensions for parked calls.
      */
     public function extensionGenInternal(): string
     {
         $conf = '';
+        // Generate internal extensions for the range of parking slots.
         for ($ext = $this->ParkingStartSlot; $ext <= $this->ParkingEndSlot; $ext++) {
             $conf .= 'exten => ' . $ext . ',1,Goto(parked-calls,${EXTEN},2)' . "\n";
         }
@@ -149,9 +211,11 @@ class ResParkingConf extends CoreConfigClass
     }
 
     /**
-     * Возвращает включения в контекст internal-transfer
+     * Get the include for internal transfer.
      *
-     * @return string
+     * Generates the include for internal transfers based on the configured ParkingExt and returns it as a string.
+     *
+     * @return string The generated include for internal transfer.
      */
     public function getIncludeInternalTransfer(): string
     {
@@ -164,9 +228,11 @@ class ResParkingConf extends CoreConfigClass
     }
 
     /**
-     * Дополнительные параметры для секции global.
+     * Generate extension globals.
      *
-     * @return string
+     * Generates extension globals based on the configured ParkingDuration and returns them as a string.
+     *
+     * @return string The generated extension globals.
      */
     public function extensionGlobals(): string
     {
@@ -174,9 +240,11 @@ class ResParkingConf extends CoreConfigClass
     }
 
     /**
-     * Дополнительные коды feature.conf
+     * Get the feature map for feature.conf
      *
-     * @return string
+     * Generates the feature map based on the configured ParkingFeature and returns it as a string.
+     *
+     * @return string The generated feature map.
      */
     public function getFeatureMap(): string
     {

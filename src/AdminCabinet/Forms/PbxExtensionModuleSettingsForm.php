@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,23 +19,25 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Form;
 
 /**
  * Class PbxExtensionModuleSettingsForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
-class PbxExtensionModuleSettingsForm extends Form
+class PbxExtensionModuleSettingsForm extends BaseForm
 {
 
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         // ModuleUniqId
         $this->add(new Hidden('uniqid', ['value' => $options['uniqid']]));
 
@@ -59,8 +61,8 @@ class PbxExtensionModuleSettingsForm extends Form
         $this->add(
             new Text(
                 'caption', [
-                'value' => $this->di->get('translation')->_($options['caption']),
-            ]
+                    'value' => $this->di->get('translation')->_($options['caption']),
+                ]
             )
         );
 
@@ -69,14 +71,14 @@ class PbxExtensionModuleSettingsForm extends Form
 
         $groups = new Select(
             'menu-group', $menuGroups, [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'value'    => $options['group'],
-            'class'    => 'ui selection dropdown',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'value' => $options['group'],
+                'class' => 'ui selection dropdown',
+            ]
         );
         $this->add($groups);
     }

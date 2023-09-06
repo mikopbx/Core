@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,12 +33,16 @@ class PbxSettings extends ModelsBase
 {
 
     /**
+     * Key by which the value is stored
+     *
      * @Primary
      * @Column(type="string", nullable=false)
      */
     public string $key = '';
 
     /**
+     * Stored value
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $value = null;
@@ -51,9 +55,9 @@ class PbxSettings extends ModelsBase
     public static function getAllPbxSettings(): array
     {
         $arrayOfSettings = self::getDefaultArrayValues();
-        $parameters      = [
+        $parameters = [
             'cache' => [
-                'key'      => ModelsBase::makeCacheKey(PbxSettings::class, 'getAllPbxSettings'),
+                'key' => ModelsBase::makeCacheKey(PbxSettings::class, 'getAllPbxSettings'),
                 'lifetime' => 3600,
             ],
         ];
@@ -76,86 +80,86 @@ class PbxSettings extends ModelsBase
     public static function getDefaultArrayValues(): array
     {
         return [
-            'Name'                            => 'PBX system',
-            'VirtualHardwareType'             => 'REAL',//VMWARE,HYPERV,AWS,AZURE
-            'Description'                     => '',
-            'RestartEveryNight'               => '0',
-            'SIPPort'                         => '5060',
-            'TLS_PORT'                        => '5061',
-            'SIPDefaultExpiry'                => '120',
-            'SIPMinExpiry'                    => '60',
-            'SIPMaxExpiry'                    => '3600',
-            'RTPPortFrom'                     => '10000',
-            'RTPPortTo'                       => '10200',
-            'RTPStunServer'                   => '',
-            'UseWebRTC'                       => '0',
-            'IAXPort'                         => '4569',
-            'AMIEnabled'                      => '1',
-            'AMIPort'                         => '5038',
-            'AJAMEnabled'                     => '1',
-            'AJAMPort'                        => '8088',
-            'AJAMPortTLS'                     => '8089',
-            'SSHPort'                         => '22',
-            'SSHPassword'                     => 'admin',
-            'SSHRsaKey'                       => '',
-            'SSHDssKey'                       => '',
-            'SSHAuthorizedKeys'               => '',
-            'SSHecdsaKey'                     => '',
-            'SSHDisablePasswordLogins'        => '0',
-            'SSHLanguage'                     => 'en',
-            'WEBPort'                         => '80',
-            'WEBHTTPSPort'                    => '443',
-            'WEBHTTPSPublicKey'               => '',
-            'WEBHTTPSPrivateKey'              => '',
-            'RedirectToHttps'                 => '0',
-            'MailSMTPUseTLS'                  => '0',
-            'MailSMTPCertCheck'               => '0',
-            'MailSMTPHost'                    => '',
-            'MailSMTPPort'                    => '25',
-            'MailSMTPUsername'                => '',
-            'MailSMTPPassword'                => '',
-            'MailSMTPFromUsername'            => 'PBX',
-            'MailSMTPSenderAddress'           => '',
-            'MailEnableNotifications'         => '0',
-            'MailTplMissedCallSubject'        => 'You have missing call from <MailSMTPSenderAddress>',
-            'MailTplMissedCallBody'           => 'You have missed calls (NOTIFICATION_MISSEDCAUSE) from <NOTIFICATION_CALLERID> at <NOTIFICATION_DATE>',
-            'MailTplMissedCallFooter'         => '',
-            'MailTplVoicemailSubject'         => 'VoiceMail from PBX',
-            'MailTplVoicemailBody'            => 'See attach',
-            'MailTplVoicemailFooter'          => '',
-            'NTPServer'                       => '0.pool.ntp.org' . PHP_EOL . '1.pool.ntp.org' . PHP_EOL,
-            'VoicemailNotificationsEmail'     => 'admin@mycompany.com',
-            'VoicemailExten'                  => '*001',
-            'PBXLanguage'                     => 'en-en',
-            'PBXInternalExtensionLength'      => '3',
-            'PBXFeaturePickupExten'           => '',
-            'PBXRecordCalls'                  => '1',
-            'PBXRecordCallsInner'             => '1',
-            'PBXSplitAudioThread'             => '0',
-            'PBXRecordAnnouncementIn'         => '',
-            'PBXRecordAnnouncementOut'        => '',
-            'PBXCallParkingExt'               => '800',
-            'PBXCallParkingFeature'           => '*2',
-            'PBXCallParkingDuration'          => '50',
-            'PBXCallParkingStartSlot'         => '801',
-            'PBXCallParkingEndSlot'           => '820',
-            'PBXFeatureAttendedTransfer'      => '##',
-            'PBXFeatureBlindTransfer'         => '**',
-            'PBXFeaturePickupExten'           => '*8',
-            'PBXFeatureDigitTimeout'          => '2500',
+            'Name' => 'PBX system',
+            'VirtualHardwareType' => 'REAL',//VMWARE,HYPERV,AWS,AZURE
+            'Description' => '',
+            'RestartEveryNight' => '0',
+            'SIPPort' => '5060',
+            'TLS_PORT' => '5061',
+            'SIPDefaultExpiry' => '120',
+            'SIPMinExpiry' => '60',
+            'SIPMaxExpiry' => '3600',
+            'RTPPortFrom' => '10000',
+            'RTPPortTo' => '10200',
+            'RTPStunServer' => '',
+            'UseWebRTC' => '0',
+            'IAXPort' => '4569',
+            'AMIEnabled' => '1',
+            'AMIPort' => '5038',
+            'AJAMEnabled' => '1',
+            'AJAMPort' => '8088',
+            'AJAMPortTLS' => '8089',
+            PbxSettingsConstants::SSH_PORT => '22',
+            PbxSettingsConstants::SSH_PASSWORD => 'admin',
+            'SSHRsaKey' => '',
+            'SSHDssKey' => '',
+            PbxSettingsConstants::SSH_AUTHORIZED_KEYS => '',
+            'SSHecdsaKey' => '',
+            PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD => '0',
+            'SSHLanguage' => 'en',
+            'WEBPort' => '80',
+            'WEBHTTPSPort' => '443',
+            'WEBHTTPSPublicKey' => '',
+            'WEBHTTPSPrivateKey' => '',
+            'RedirectToHttps' => '0',
+            'MailSMTPUseTLS' => '0',
+            'MailSMTPCertCheck' => '0',
+            'MailSMTPHost' => '',
+            'MailSMTPPort' => '25',
+            'MailSMTPUsername' => '',
+            'MailSMTPPassword' => '',
+            'MailSMTPFromUsername' => 'PBX',
+            'MailSMTPSenderAddress' => '',
+            'MailEnableNotifications' => '0',
+            'MailTplMissedCallSubject' => 'You have missing call from <MailSMTPSenderAddress>',
+            'MailTplMissedCallBody' => 'You have missed calls (NOTIFICATION_MISSEDCAUSE) from <NOTIFICATION_CALLERID> at <NOTIFICATION_DATE>',
+            'MailTplMissedCallFooter' => '',
+            'MailTplVoicemailSubject' => 'VoiceMail from PBX',
+            'MailTplVoicemailBody' => 'See attach',
+            'MailTplVoicemailFooter' => '',
+            'NTPServer' => '0.pool.ntp.org' . PHP_EOL . '1.pool.ntp.org' . PHP_EOL,
+            'VoicemailNotificationsEmail' => 'admin@mycompany.com',
+            'VoicemailExten' => '*001',
+            'PBXLanguage' => 'en-en',
+            'PBXInternalExtensionLength' => '3',
+            'PBXRecordCalls' => '1',
+            'PBXRecordCallsInner' => '1',
+            'PBXSplitAudioThread' => '0',
+            'PBXRecordAnnouncementIn' => '',
+            'PBXRecordAnnouncementOut' => '',
+            'PBXRecordSavePeriod' => '',
+            'PBXCallParkingExt' => '800',
+            'PBXCallParkingFeature' => '*2',
+            'PBXCallParkingDuration' => '50',
+            'PBXCallParkingStartSlot' => '801',
+            'PBXCallParkingEndSlot' => '820',
+            'PBXFeatureAttendedTransfer' => '##',
+            'PBXFeatureBlindTransfer' => '**',
+            'PBXFeaturePickupExten' => '*8',
+            'PBXFeatureDigitTimeout' => '2500',
             'PBXFeatureAtxferNoAnswerTimeout' => '45',
-            'PBXFeatureTransferDigitTimeout'  => '3',
-            'PBXFirewallEnabled'              => '0',
-            'PBXFail2BanEnabled'              => '0',
-            'PBXTimezone'                     => 'Europe/Moscow',
-            'PBXVersion'                      => '2020.1.1',
-            'PBXAllowGuestCalls'              => '0',
-            'WebAdminLogin'                   => 'admin',
-            'WebAdminPassword'                => 'admin',
-            'WebAdminLanguage'                => 'en',
-            'SystemNotificationsEmail'        => '',
-            'SystemEmailForMissed'            => '',
-            'SendMetrics'                     => '1',
+            'PBXFeatureTransferDigitTimeout' => '3',
+            'PBXFirewallEnabled' => '0',
+            'PBXFail2BanEnabled' => '0',
+            'PBXTimezone' => 'Europe/Moscow',
+            'PBXVersion' => '2020.1.1',
+            'PBXAllowGuestCalls' => '0',
+            'WebAdminLogin' => 'admin',
+            'WebAdminPassword' => 'admin',
+            'WebAdminLanguage' => 'en',
+            'SystemNotificationsEmail' => '',
+            'SystemEmailForMissed' => '',
+            'SendMetrics' => '1',
         ];
     }
 
@@ -168,9 +172,9 @@ class PbxSettings extends ModelsBase
      */
     public static function getValueByKey(string $key): string
     {
-        $parameters      = [
+        $parameters = [
             'cache' => [
-                'key'      => ModelsBase::makeCacheKey(PbxSettings::class, 'getValueByKey'),
+                'key' => ModelsBase::makeCacheKey(PbxSettings::class, 'getValueByKey'),
                 'lifetime' => 3600,
             ],
         ];
@@ -192,6 +196,9 @@ class PbxSettings extends ModelsBase
         return '';
     }
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_PbxSettings');
@@ -199,9 +206,9 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Before PbxSettings entity save callback
+     * Perform validation on the model.
      *
-     * @return bool
+     * @return bool Whether the validation was successful or not.
      */
     public function validation(): bool
     {

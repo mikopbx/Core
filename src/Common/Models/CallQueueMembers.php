@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,20 +38,29 @@ class CallQueueMembers extends ModelsBase
     public $id;
 
     /**
+     * Ref to call queue uniqid
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $queue = '';
 
     /**
+     * Extension associated with the queue member.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $extension = '';
 
     /**
+     *  Priority of the queue member.
+     *
      * @Column(type="integer", nullable=true)
      */
     public ?string $priority = '';
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_CallQueueMembers');
@@ -61,10 +70,10 @@ class CallQueueMembers extends ModelsBase
             Extensions::class,
             'number',
             [
-                'alias'      => 'Extensions',
+                'alias' => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );
@@ -73,16 +82,21 @@ class CallQueueMembers extends ModelsBase
             CallQueues::class,
             'uniqid',
             [
-                'alias'      => 'CallQueues',
+                'alias' => 'CallQueues',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
 
         );
     }
 
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
     public function validation(): bool
     {
         $validation = new Validation();

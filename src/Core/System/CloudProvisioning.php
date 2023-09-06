@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,39 +21,50 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\SSHConf;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp;
 
+/**
+ * Class CloudProvisioning
+ *
+ * Handles the provisioning process for cloud solutions.
+ *
+ * @package MikoPBX\Core\System
+ */
 class CloudProvisioning
 {
     public const PBX_SETTING_KEY = 'CloudProvisioning';
     public const HTTP_TIMEOUT = 10;
 
-    public static function start():void
+    /**
+     * Starts the cloud provisioning process.
+     */
+    public static function start(): void
     {
-        if(PbxSettings::findFirst('key="'.self::PBX_SETTING_KEY.'"')){
-            // Уже отработали ранее.
+        if (PbxSettings::findFirst('key="' . self::PBX_SETTING_KEY . '"')) {
+            // Already processed before.
             return;
         }
         $cp = new self();
         $solutions = ['google', 'mcs', 'azure'];
         $resultProvisioning = '0';
-        foreach ($solutions as $solution){
+        foreach ($solutions as $solution) {
             $methodName = "{$solution}Provisioning";
-            if(!method_exists($cp, $methodName)){
+            if (!method_exists($cp, $methodName)) {
                 continue;
             }
             Util::sysLogMsg(__CLASS__, "Try $solution provisioning... ");
-            if($cp->$methodName()){
+            if ($cp->$methodName()) {
                 $resultProvisioning = '1';
                 Util::sysLogMsg(__CLASS__, "$solution provisioning OK... ");
                 break;
             }
         }
         $cp->updatePbxSettings(self::PBX_SETTING_KEY, $resultProvisioning);
-        if($resultProvisioning === '1'){
-            // Включаем firewall.
+        if ($resultProvisioning === '1') {
+            // Enable firewall.
             $cp->updatePbxSettings('PBXFirewallEnabled', '1');
             $cp->updatePbxSettings('PBXFail2BanEnabled', '1');
             $cp->checkConnectStorage();
@@ -61,199 +72,226 @@ class CloudProvisioning
     }
 
     /**
-     * Автоматическое подключение диска для хранения данных.
-     * @return void
+     * Checks and connects the storage disk automatically.
      */
-    private function checkConnectStorage():void{
+    private function checkConnectStorage(): void
+    {
         $phpPath = Util::which('php');
-        Processes::mwExec($phpPath.' -f /etc/rc/connect.storage auto');
+        Processes::mwExec($phpPath . ' -f /etc/rc/connect.storage auto');
     }
 
-    private function updateSshPassword():void{
-        $data = 'S'.md5(time());
-        $this->updatePbxSettings('SSHPassword', $data);
-        $this->updatePbxSettings('SSHDisablePasswordLogins', '1');
+    /**
+     * Updates the SSH password.
+     */
+    private function updateSshPassword($hashSalt): void
+    {
+        $data = md5(shell_exec(Util::which('ifconfig')) . $hashSalt . time());
+        $this->updatePbxSettings(PbxSettingsConstants::SSH_PASSWORD, $data);
+        $this->updatePbxSettings(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD, '1');
         $confSsh = new SSHConf();
         $confSsh->updateShellPassword();
     }
 
     /**
-     * Обновление пароля к SSH.
-     * @param $keyName
-     * @param $data
+     * Updates the PBX settings with the provided key and data.
+     *
+     * @param string $keyName The key name.
+     * @param mixed $data The data to be stored.
      */
-    private function updatePbxSettings($keyName, $data):void{
-        $setting = PbxSettings::findFirst('key="'.$keyName.'"');
-        if(!$setting){
+    private function updatePbxSettings(string $keyName, $data): void
+    {
+        $setting = PbxSettings::findFirst('key="' . $keyName . '"');
+        if (!$setting) {
             $setting = new PbxSettings();
             $setting->key = $keyName;
         }
         $setting->value = $data;
         $result = $setting->save();
-        if($result){
+        if ($result) {
             Util::sysLogMsg(__CLASS__, "Update $keyName ... ");
-        }else{
+        } else {
             Util::sysLogMsg(__CLASS__, "FAIL Update $keyName ... ");
         }
         unset($setting);
     }
 
+
     /**
-     * Обновление ключей ssh.
-     * @param string $data
+     * Updates the SSH keys.
+     *
+     * @param string $data The SSH keys data.
      */
-    private function updateSSHKeys(string $data):void{
-        if(empty($data)){
+    private function updateSSHKeys(string $data): void
+    {
+        if (empty($data)) {
             return;
         }
         $arrData = explode(':', $data);
-        if(count($arrData) === 2){
+        if (count($arrData) === 2) {
             $data = $arrData[1];
         }
-        $this->updatePbxSettings('SSHAuthorizedKeys', $data);
+        $this->updatePbxSettings(PbxSettingsConstants::SSH_AUTHORIZED_KEYS, $data);
     }
 
     /**
-     * Обновление имени хост.
+     * Updates the LAN settings.
+     *
+     * @param string $hostname The hostname.
+     * @param string $extipaddr The external IP address.
      */
-    private function updateLanSettings($hostname, $extipaddr):void{
+    private function updateLanSettings(string $hostname, string $extipaddr): void
+    {
         /** @var LanInterfaces $lanData */
         $lanData = LanInterfaces::findFirst();
-        if($lanData){
-            if(!empty($extipaddr)){
+        if ($lanData !== null) {
+            if (!empty($extipaddr)) {
                 $lanData->extipaddr = $extipaddr;
-                $lanData->topology  = 'private';
+                $lanData->topology = 'private';
             }
-            if(!empty($hostname)){
-                $lanData->hostname  = $hostname;
+            if (!empty($hostname)) {
+                $lanData->hostname = $hostname;
             }
             $result = $lanData->save();
-            if($result){
-                Util::sysLogMsg(__CLASS__, 'Update LAN... '.$hostname.'  '. $extipaddr);
-            }else{
-                Util::sysLogMsg(__CLASS__, 'FAIL Update LAN... '.$hostname.'  '. $extipaddr);
+            if ($result) {
+                Util::sysLogMsg(__CLASS__, 'Update LAN... ' . $hostname . '  ' . $extipaddr);
+            } else {
+                Util::sysLogMsg(__CLASS__, 'FAIL Update LAN... ' . $hostname . '  ' . $extipaddr);
             }
-        }else{
-            Util::sysLogMsg(__CLASS__, 'LAN not found... '.$hostname.'  '. $extipaddr);
+        } else {
+            Util::sysLogMsg(__CLASS__, 'LAN not found... ' . $hostname . '  ' . $extipaddr);
         }
     }
 
     /**
-     * Настройка машины для Google Cloud / Yandex Cloud.
+     * Performs the Google Cloud provisioning.
+     * Google Cloud / Yandex Cloud.
+     *
+     * @return bool True if the provisioning was successful, false otherwise.
      */
-    public function googleProvisioning():bool
+    public function googleProvisioning(): bool
     {
-        $curl    = curl_init();
-        $url     = 'http://169.254.169.254/computeMetadata/v1/instance/?recursive=true';
+        $curl = curl_init();
+        $url = 'http://169.254.169.254/computeMetadata/v1/instance/?recursive=true';
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_TIMEOUT, self::HTTP_TIMEOUT);
         curl_setopt($curl, CURLOPT_HTTPHEADER, ['Metadata-Flavor:Google']);
         $resultRequest = curl_exec($curl);
 
-        $http_code     = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $http_code = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
-        if($http_code !== 200 ){
+        if ($http_code !== 200 || !is_string($resultRequest)) {
             return false;
         }
         $data = json_decode($resultRequest, true);
-        $this->updateSSHKeys($data['attributes']['ssh-keys']??'');
-        $hostname = $data['name']??'';
-        $extIp= $data['networkInterfaces'][0]['accessConfigs'][0]['externalIp']??'';
+        $this->updateSSHKeys($data['attributes']['ssh-keys'] ?? '');
+        $hostname = $data['name'] ?? '';
+        $extIp = $data['networkInterfaces'][0]['accessConfigs'][0]['externalIp'] ?? '';
         $this->updateLanSettings($hostname, $extIp);
-        $this->updateSshPassword();
-        $this->updateWebPassword($data['id']??'');
+
+        $id = $data['id'] ?? '';
+        $this->updateSshPassword($id);
+        $this->updateWebPassword($id);
+
         return true;
     }
 
-    private function getMetaDataMCS($url):string
+    /**
+     * Retrieves metadata from the MCS endpoint.
+     *
+     * @param string $url The URL of the metadata endpoint.
+     * @return string The response body.
+     */
+    private function getMetaDataMCS(string $url): string
     {
         $baseUrl = 'http://169.254.169.254/latest/meta-data/';
-        $client  = new GuzzleHttp\Client();
+        $client = new GuzzleHttp\Client();
         $headers = [];
-        $params  = [];
+        $params = [];
         $options = [
             'timeout' => self::HTTP_TIMEOUT,
             'http_errors' => false,
             'headers' => $headers
         ];
 
-        $url = "$baseUrl/$url?".http_build_query($params);
+        $url = "$baseUrl/$url?" . http_build_query($params);
         try {
-            $res    = $client->request('GET', $url, $options);
-            $code   = $res->getStatusCode();
-        }catch (GuzzleHttp\Exception\ConnectException $e ){
+            $res = $client->request('GET', $url, $options);
+            $code = $res->getStatusCode();
+        } catch (GuzzleHttp\Exception\ConnectException $e) {
             $code = 0;
         } catch (GuzzleException $e) {
             $code = 0;
         }
         $body = '';
-        if($code === 200 && isset($res)){
+        if ($code === 200 && isset($res)) {
             $body = $res->getBody()->getContents();
         }
         return $body;
     }
 
     /**
-     * Автонастройка для Mail (VK) Cloud Solutions
-     * @return bool
+     * Performs the Mail (VK) Cloud Solutions provisioning.
+     *
+     * @return bool True if the provisioning was successful, false otherwise.
      */
-    public function mcsProvisioning():bool
+    public function mcsProvisioning(): bool
     {
         // Имя сервера.
         $hostname = $this->getMetaDataMCS('hostname');
-        if(empty($hostname)){
+        if (empty($hostname)) {
             return false;
         }
-        $extIp    = $this->getMetaDataMCS('public-ipv4');
+        $extIp = $this->getMetaDataMCS('public-ipv4');
         // Получим ключи ssh.
-        $sshKey   = '';
-        $sshKeys  = $this->getMetaDataMCS('public-keys');
-        $sshId    = explode('=', $sshKeys)[0]??'';
-        if($sshId !== ''){
+        $sshKey = '';
+        $sshKeys = $this->getMetaDataMCS('public-keys');
+        $sshId = explode('=', $sshKeys)[0] ?? '';
+        if ($sshId !== '') {
             $sshKey = $this->getMetaDataMCS("public-keys/$sshId/openssh-key");
         }
         $this->updateSSHKeys($sshKey);
         $this->updateLanSettings($hostname, $extIp);
-        $this->updateSshPassword();
 
-        $webPassword = $this->getMetaDataMCS('instance-id');
-        $this->updateWebPassword($webPassword);
-
+        $id = $this->getMetaDataMCS('instance-id');
+        $this->updateSshPassword($id);
+        $this->updateWebPassword($id);
         return true;
     }
 
     /**
-     * Устанавливает пароль к web интерфейсу исходя из имени инстанса и его идентификатора.
-     * @param $webPassword
-     * @return void
+     * Updates the web password based on the instance name and ID.
+     *
+     * @param string $webPassword The web password.
      */
-    private function updateWebPassword($webPassword):void
+    private function updateWebPassword(string $webPassword): void
     {
-        if(empty($webPassword)){
+        if (empty($webPassword)) {
             return;
         }
-        $this->updatePbxSettings('WebAdminPassword',$webPassword);
+        $this->updatePbxSettings('WebAdminPassword', $webPassword);
         $this->updatePbxSettings('CloudInstanceId', $webPassword);
     }
 
     /**
-     * Настройка машины для Azure Cloud
+     * Performs the Azure Cloud provisioning.
+     *
+     * @return bool True if the provisioning was successful, false otherwise.
      */
-    public function azureProvisioning():bool
+    public function azureProvisioning(): bool
     {
         $baseUrl = 'http://168.63.129.16/machine';
         $curl = curl_init();
-        $url  = "{$baseUrl}?comp=goalstate";
+        $url = "{$baseUrl}?comp=goalstate";
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_TIMEOUT, self::HTTP_TIMEOUT);
         curl_setopt($curl, CURLOPT_HTTPHEADER, ['x-ms-version: 2012-11-30']);
         $resultRequest = curl_exec($curl);
-        $http_code     = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $http_code = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
         curl_close($curl);
 
-        if($http_code === 0){
+        if ($http_code === 0) {
             $setting = new PbxSettings();
             $setting->key = self::PBX_SETTING_KEY;
             $setting->save();
@@ -263,9 +301,12 @@ class CloudProvisioning
             return false;
         }
 
+        if (!is_string($resultRequest)) {
+            return false;
+        }
         $xml = simplexml_load_string($resultRequest);
         $xmlDocument = $this->getAzureXmlResponse($xml->Container->ContainerId, $xml->Container->RoleInstanceList->RoleInstance->InstanceId);
-        $url="{$baseUrl}?comp=health";
+        $url = "{$baseUrl}?comp=health";
         $headers = [
             'x-ms-version: 2012-11-30',
             'x-ms-agent-name: WALinuxAgent',
@@ -281,13 +322,13 @@ class CloudProvisioning
         curl_setopt($curl, CURLOPT_POSTFIELDS, $xmlDocument);
 
         curl_exec($curl);
-        $http_code     = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $http_code = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
         $result = false;
-        if($http_code === 200){
+        if ($http_code === 200) {
             $result = true;
         }
         $curl = curl_init();
-        $url  = "http://169.254.169.254/metadata/instance?api-version=2020-09-01";
+        $url = "http://169.254.169.254/metadata/instance?api-version=2020-09-01";
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_TIMEOUT, self::HTTP_TIMEOUT);
@@ -295,32 +336,39 @@ class CloudProvisioning
         $resultRequest = curl_exec($curl);
         curl_close($curl);
 
+        if (!is_string($resultRequest)) {
+            return false;
+        }
+
         $arrKeys = [];
+
+
         $jsonData = json_decode($resultRequest, true);
-        $publicKeys = $jsonData['compute']['publicKeys']??[];
-        foreach ($publicKeys as $keeData){
-            $arrKeys[]= $keeData['keyData'];
+        $publicKeys = $jsonData['compute']['publicKeys'] ?? [];
+        foreach ($publicKeys as $keeData) {
+            $arrKeys[] = $keeData['keyData'];
         }
         $this->updateSSHKeys(implode(PHP_EOL, $arrKeys));
-        $this->updateSshPassword();
+        $this->updateSshPassword($resultRequest);
         return $result;
     }
 
     /**
-     * Возвращает строку XML для ответа о готовкности машины.
-     * @param $containerId
-     * @param $instanceId
-     * @return string
+     * Returns the Azure XML response string for machine readiness.
+     *
+     * @param string $containerId The container ID.
+     * @param string $instanceId The instance ID.
+     * @return string The XML response string.
      */
-    private function getAzureXmlResponse($containerId, $instanceId):string
+    private function getAzureXmlResponse($containerId, $instanceId): string
     {
         return '<Health>
   <GoalStateIncarnation>1</GoalStateIncarnation>
   <Container>
-    <ContainerId>'.$containerId.'</ContainerId>
+    <ContainerId>' . $containerId . '</ContainerId>
     <RoleInstanceList>
       <Role>
-        <InstanceId>'.$instanceId.'</InstanceId>
+        <InstanceId>' . $instanceId . '</InstanceId>
         <Health>
           <State>Ready</State>
         </Health>

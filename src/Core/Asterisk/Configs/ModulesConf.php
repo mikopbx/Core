@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,10 +21,23 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class ModulesConf extends CoreConfigClass
+/**
+ * Class ModulesConf
+ *
+ * Represents the configuration class for modules.conf and codecs.conf
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class ModulesConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'modules.conf';
 
+    /**
+     * Generates the configuration for modules.conf and codecs.conf
+     */
     protected function generateConfigProtected(): void
     {
         $conf = "[modules]\n" .
@@ -118,9 +131,9 @@ class ModulesConf extends CoreConfigClass
             'func_export.so',
             'app_mixmonitor.so',
 
-            // Необходимое для работы переадресаций.
+            // Required for call forwarding.
             'bridge_simple.so',
-            // Прочие bridge модули. Один из них необходим для работы парковки.
+            // Other bridge modules. One of them is necessary for parking functionality.
             'bridge_holding.so',
             'bridge_builtin_features.so',
             'bridge_builtin_interval_features.so',
@@ -194,6 +207,7 @@ class ModulesConf extends CoreConfigClass
             // 'res_hep_rtcp.so',
         ];
 
+        // Check if specific files exist and add modules accordingly
         if(file_exists('/dev/dahdi/transcode')){
           $modules[] = 'app_meetme.so';
           $modules[] = 'chan_dahdi.so';
@@ -204,8 +218,11 @@ class ModulesConf extends CoreConfigClass
         foreach ($modules as $value) {
             $conf .= "load => $value\n";
         }
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_MODULES_CONF);
 
+        // Call the hook modules method for generating additional configuration
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_MODULES_CONF);
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/modules.conf', $conf);
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/codecs.conf', '');
     }

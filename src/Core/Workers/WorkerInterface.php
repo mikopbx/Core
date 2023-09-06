@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,30 +21,39 @@ namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Core\System\BeanstalkClient;
 
+/**
+ * WorkerInterface is an interface for worker classes.
+ *
+ * @package MikoPBX\Core\Workers
+ */
 interface WorkerInterface
 {
     /**
-     * Workers constructor
+     * WorkerInterface constructor.
      */
     public function __construct();
 
     /**
-     * Ping callback for keep alive check
+     * Ping callback for keep alive check.
      *
-     * @param BeanstalkClient $message
+     * @param BeanstalkClient $message The message received from the Beanstalk client.
+     * @return void
      */
     public function pingCallBack(BeanstalkClient $message): void;
 
     /**
-     * Create PID file for worker
+     * Get the PID file for the worker.
+     *
+     * @return string The path to the PID file.
      */
     public function getPidFile(): string;
 
     /**
-     * Worker entry point
+     * Worker entry point.
      *
-     * @param mixed $params
+     * @param array $argv The command-line arguments passed to the worker.
+     * @return void
      */
-    public function start($params): void;
+    public function start(array $argv): void;
 
 }

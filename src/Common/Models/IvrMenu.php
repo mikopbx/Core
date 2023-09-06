@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,136 +41,150 @@ class IvrMenu extends ModelsBase
     public $id;
 
     /**
-     * Адрес сервера 1С
+     * Unique ID of the IVR menu.
      *
      * @Column(type="string", nullable=true)
      */
     public ?string $uniqid = '';
 
     /**
-     * Номер IVR меню
+     * IVR menu extension number.
      *
      * @Column(type="string", nullable=true)
      */
     public ?string $extension = '';
 
     /**
-     * ID записи аудиоприветсвия
+     *  ID of the audio greeting message record.
      *
      * @Column(type="string", nullable=true)
      */
     public ?string $audio_message_id = '';
 
     /**
-     * Название IVR меню
+     * Name of the IVR menu.
      *
      * @Column(type="string", nullable=true)
      */
     public ?string $name = '';
 
     /**
-     * Ожидание ввода внутреннего номера после проигрывания приветсвитя
-     * 7 секунд по-умолчанию
+     * Timeout during which the system waits for input of an internal extension or an IVR menu option,
+     * after which the call is transferred to the default extension specified in the $timeout_extension field.
+     *
+     * Default is 7 seconds.
+     *
      * @Column(type="integer", nullable=true, default="7")
      */
     public ?string $timeout = '7';
 
     /**
-     * Номер на который уйдет вызов после $number_of_repeat попыток набора
+     * Extension number to which the call will be transferred after a certain number of dialing attempts.
      *
      * @Column(type="string", nullable=true)
      */
     public ?string $timeout_extension = '';
 
     /**
-     * Разрешить донабор любого внутреннего номера
+     * Allow dialing any internal extension number.
      *
-     *  @Column(type="string", length=1, nullable=true, default="0")
+     * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $allow_enter_any_internal_extension = '0';
 
-
     /**
-     * Максимальное число повторов меню перед отправкой на номер по умолчанию
+     * Maximum number of menu repeats before forwarding to the default number
+     * specified in the $timeout_extension field.
      *
      * @Column(type="integer", nullable=true, default="3")
      */
     public $number_of_repeat = '3';
 
     /**
-     * Комментарий
+     * Comment
      *
      * @Column(type="string", nullable=true)
      */
     public $description = '';
 
     /**
-     *
+     * Initialize the model.
      */
     public function initialize(): void
     {
         $this->setSource('m_IvrMenu');
         parent::initialize();
+
+        // Establish a belongsTo relationship with the Extensions model for IVR menu's extension
         $this->belongsTo(
             'extension',
             Extensions::class,
             'number',
             [
-                'alias'      => 'Extensions',
+                'alias' => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION // IVR меню удаляем через его Extension
+                    'action' => Relation::NO_ACTION
+                    // IVR menu is deleted through its associated Extension
                 ],
             ]
         );
 
+        // Establish a belongsTo relationship with the Extensions model for timeout extension
         $this->belongsTo(
             'timeout_extension',
             Extensions::class,
             'number',
             [
-                'alias'      => 'TimeoutExtensions',
+                'alias' => 'TimeoutExtensions',
                 'foreignKey' => [
-                    'message'    => 'TimeoutExtensions',
+                    'message' => 'TimeoutExtensions',
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION// Не троогать Extensions
+                    'action' => Relation::NO_ACTION
+                    // TimeoutExtensions are not affected
                 ],
             ]
         );
 
+        // Establish a hasMany relationship with IvrMenuActions model
         $this->hasMany(
             'uniqid',
             IvrMenuActions::class,
             'ivr_menu_id',
             [
-                'alias'      => 'IvrMenuActions',
+                'alias' => 'IvrMenuActions',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::ACTION_CASCADE
-                    //Удалить подчиненные все IvrMenuActions при удалении IvrMenu
+                    'action' => Relation::ACTION_CASCADE
+                    // Delete all related IvrMenuActions when deleting the IVR menu
                 ],
-                'params'     => [
+                'params' => [
                     'order' => 'digits asc',
                 ],
             ]
         );
 
+        // Establish a belongsTo relationship with SoundFiles model for the audio message
         $this->belongsTo(
             'audio_message_id',
             SoundFiles::class,
             'id',
             [
-                'alias'      => 'SoundFiles',
+                'alias' => 'SoundFiles',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
 
         );
     }
 
-
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
     public function validation(): bool
     {
         $validation = new Validation();

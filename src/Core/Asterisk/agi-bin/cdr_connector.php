@@ -2,7 +2,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,44 +21,44 @@
 use MikoPBX\Core\Asterisk\AGI;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{ResParkingConf};
-use MikoPBX\Core\System\{MikoPBXConfig, Processes, Util};
+use MikoPBX\Core\System\{MikoPBXConfig, Util};
 
 require_once 'Globals.php';
 
 /**
- * Начало телефонного звонка.
+ * Creates an event for dialing with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the dialing event.
  *
- * @return array
+ * @return array The data for the dialing event.
  */
 function Event_dial($agi, $action)
 {
     $now  = Util::getNowDate();
     $data = [];
 
-    // Уточним канал, на случай очереди.
+    // Determine the channel for queue calls.
     $QUEUE_SRC_CHAN = $agi->get_variable("QUEUE_SRC_CHAN", true);
     $orign_chan     = $agi->get_variable("orign_chan", true);
     $id             = $agi->get_variable("pt1c_UNIQUEID", true);
     $IS_ORGNT       = $agi->get_variable("IS_ORGNT", true);
     if ($id == '' || ! empty($QUEUE_SRC_CHAN)) {
-        // Если это вызов на агента очереди !empty($QUEUE_SRC_CHAN).
-        // Если это новый вызов $id == ''.
+        // If it's a call to a queue agent (!empty($QUEUE_SRC_CHAN)).
+        // If it's a new call ($id == '').
         $id = $agi->request['agi_uniqueid'] . '_' . Util::generateRandomString();
     }
-    // Канал, AGI скрипта.
+    // AGI script channel.
     $channel  = $agi->request['agi_channel'];
     $is_local = ! (stripos($channel, 'local/') === false);
     if ($QUEUE_SRC_CHAN != '' && $is_local) {
-        // Это LOCAL, Переопределим на исходный.
+        // It's a LOCAL channel, override it with the original channel.
         $channel = $QUEUE_SRC_CHAN;
     } elseif ($is_local && (stripos($orign_chan, 'local/') === false)) {
         $channel = $orign_chan;
     }
 
-    // Получим ID исходного канала.
+    // Get the ID of the source channel.
     $from_account = $agi->get_variable("FROM_PEER", true);
     if ($from_account == '' && stripos($agi->request['agi_channel'], 'local/') === false) {
         $from_account = $agi->get_variable('CUT(CUT(CHANNEL(name),,1),/,2)', true);
@@ -103,12 +103,12 @@ function Event_dial($agi, $action)
 }
 
 /**
- * Обработка события создания канала - пары, при начале телефонного звонка.
+ * Creates an event for creating a channel with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the channel creation event.
  *
- * @return array
+ * @return array The data for the channel creation event.
  */
 function Event_dial_create_chan($agi, $action)
 {
@@ -127,9 +127,9 @@ function Event_dial_create_chan($agi, $action)
 
     $IS_ORGNT = $agi->get_variable("IS_ORGNT", true);
     if ( ! empty($IS_ORGNT)) {
-        // Вероятно необходимо переопределить искать по двум ID.
-        // Применимо только для Originate, когда в качестве звонящего используем два канала
-        // мобильный и внутренний номер.
+        // It's probably necessary to search for two IDs.
+        // Applicable only for Originate, when we use two channels as the caller,
+        // a mobile number and an internal number.
         $peer_mobile = $agi->get_variable("peer_mobile", true);
         if ( ! empty($peer_mobile) && stripos($id, $peer_mobile) === false) {
             $id             = substr($agi->request['agi_uniqueid'], 0, 16) . '_' . $peer_mobile . '_' . $IS_ORGNT;
@@ -141,12 +141,12 @@ function Event_dial_create_chan($agi, $action)
 }
 
 /**
- * Обработка события ответа на звонок. Соединение абонентов.
+ * Creates an event for answering a call with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the call answer event.
  *
- * @return array
+ * @return array The data for the call answer event.
  */
 function Event_dial_answer($agi, $action)
 {
@@ -166,9 +166,9 @@ function Event_dial_answer($agi, $action)
 
     $IS_ORGNT = $agi->get_variable("IS_ORGNT", true);
     if ( ! empty($IS_ORGNT)) {
-        // Вероятно необходимо переопределить ID.
-        // Применимо только для Originate, когда в качестве звонящего используем два канала
-        // мобильный и внутренний номер.
+        // Probably need to override the ID.
+        // Applicable only for Originate, when we use two channels as the caller,
+        // a mobile number and an internal number.
         $peer_mobile = $agi->get_variable("peer_mobile", true);
         if ( ! empty($peer_mobile) && stripos($id, $peer_mobile) === false) {
             $id             = substr($agi->request['agi_uniqueid'], 0, 16) . '_' . $peer_mobile . '_' . $IS_ORGNT;
@@ -185,14 +185,14 @@ function Event_dial_answer($agi, $action)
     $mikoPBXConfig = new MikoPBXConfig();
     $pickupexten   = $mikoPBXConfig->getGeneralSettings('PBXFeaturePickupExten');
     if ('unknown' == $data['dnid'] && $PICKUPEER != '') {
-        // Скорее всего ответ на вызов из 1С.
+        // Most likely an answer to a call from 1C.
         $data['dnid'] = $pickupexten;
     } elseif ($pickupexten == substr($data['dnid'], 0, 2) && $PICKUPEER != '') {
-        // Это перехват при наборе номера *8XXX.
+        // Call interception when dialing *8XXX.
         $data['dnid'] = $pickupexten;
     }
     if (trim($data['dnid']) == $pickupexten) {
-        // Очищаем переменную канала. Больше не требуется.
+        // Clear the channel variable. No longer needed.
         $agi->set_variable("PICKUPEER", "");
         $data['old_id'] = $id;
         $data['id']     = $agi->request['agi_uniqueid'] . '_' . Util::generateRandomString();
@@ -203,16 +203,17 @@ function Event_dial_answer($agi, $action)
 }
 
 /**
- * Завершение звонка. Завершение прееадресации.
+ * [DEPRECATED] Creates an event for hanging up a call with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * WARNING: This function is deprecated and should be removed in the future.
  *
- * @return array
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the call hangup event.
+ *
+ * @return array The data for the call hangup event.
  */
 function Event_dial_hangup_DEPRECATED($agi, $action)
 {
-    // TODO Удалить эту функцию в будущем.
     $now                 = Util::getNowDate();
     $data                = [];
     $data['action']      = "$action";
@@ -228,27 +229,27 @@ function Event_dial_hangup_DEPRECATED($agi, $action)
 }
 
 /**
- * Начало переадресации.
+ * Creates an event for a transfer dial with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the transfer dial event.
  *
- * @return array
+ * @return array The data for the transfer dial event.
  */
 function Event_transfer_dial($agi, $action)
 {
     $now = Util::getNowDate();
     $id  = $agi->request['agi_uniqueid'] . '_' . Util::generateRandomString();
 
-    // Пытаемся определить канал.
+    // Attempt to determine the channel.
     $TRANSFERERNAME = $agi->get_variable("TRANSFERERNAME", true);
     $QUEUE_SRC_CHAN = $agi->get_variable("QUEUE_SRC_CHAN", true);
     $is_local       = ! (stripos($TRANSFERERNAME, 'local/') === false);
     if ($QUEUE_SRC_CHAN != '' && $is_local) {
-        // Это LOCAL, Переопределим на исходный.
+        // It's a LOCAL channel, override it with the original channel.
         $channel = $QUEUE_SRC_CHAN;
     } elseif ($QUEUE_SRC_CHAN != '' && $TRANSFERERNAME == '') {
-        // Это редирект на очередь.
+        // It's a redirect to a queue.
         $channel = $QUEUE_SRC_CHAN;
     } elseif ($TRANSFERERNAME == '') {
         $channel = $agi->request['agi_channel'];
@@ -274,12 +275,12 @@ function Event_transfer_dial($agi, $action)
 }
 
 /**
- * Обработка события создания канала - пары, при начале переадресации звонка.
+ * Creates an event for creating a channel during a transfer dial with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the transfer dial channel creation event.
  *
- * @return array
+ * @return array The data for the transfer dial channel creation event.
  */
 function Event_transfer_dial_create_chan($agi, $action)
 {
@@ -294,12 +295,12 @@ function Event_transfer_dial_create_chan($agi, $action)
 }
 
 /**
- * Обработка события ответа на переадресацию. Соединение абонентов.
+ * Creates an event for answering a call during a transfer dial with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the transfer dial answer event.
  *
- * @return array
+ * @return array The data for the transfer dial answer event.
  */
 function Event_transfer_dial_answer($agi, $action)
 {
@@ -316,12 +317,12 @@ function Event_transfer_dial_answer($agi, $action)
 }
 
 /**
- * Завершение канала при прееадресации.
+ * Creates an event for hanging up a call during a transfer dial with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the transfer dial hangup event.
  *
- * @return array
+ * @return array The data for the transfer dial hangup event.
  */
 function Event_transfer_dial_hangup($agi, $action)
 {
@@ -336,9 +337,9 @@ function Event_transfer_dial_hangup($agi, $action)
 
     $pos = stripos($data['agi_channel'], 'local/');
     if ($pos === false) {
-        // Если это завершение переадресации (консультативной). Создадим новую строку CDR.
+        // If it's the end of a transfer (consultative). Create a new CDR record.
     } else {
-        // Если пришел локальный канал:
+        // If it's a local channel:
         $data['TRANSFERERNAME'] = $agi->get_variable("TRANSFERERNAME", true);
         $data['ANSWEREDTIME']   = $agi->get_variable("ANSWEREDTIME", true);
         $data['dst_chan']       = $agi->get_variable("CDR(dstchannel)", true);
@@ -348,12 +349,12 @@ function Event_transfer_dial_hangup($agi, $action)
 }
 
 /**
- * Завершение / уничтожение канала.
+ * Creates an event for hanging up a channel with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the channel hangup event.
  *
- * @return array
+ * @return array The data for the channel hangup event.
  */
 function Event_hangup_chan($agi, $action)
 {
@@ -378,24 +379,24 @@ function Event_hangup_chan($agi, $action)
 }
 
 /**
- * Забираем вызов с парковки.
+ * Creates an event for unparking a call with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the unpark call event.
  *
- * @return array
+ * @return array The data for the unpark call event.
  */
 function Event_unpark_call($agi, $action)
 {
     $now = Util::getNowDate();
-    // Обработка данных парковки.
+    // Processing parking data.
     $exten    = $agi->get_variable("EXTEN", true);
     $park_row = ResParkingConf::getParkSlotData($exten);
 
     $agi->set_variable("__pt1c_IS_PARK", "1");
     $agi->set_variable("pt1c_PARK_CHAN", $park_row['ParkeeChannel']);
 
-    // Сбор данных для генерации CDR.
+    // Collecting data for generating CDR.
     $id      = $agi->request['agi_uniqueid'] . '_' . Util::generateRandomString();
     $channel = $agi->request['agi_channel'];
     $agi->set_variable("__pt1c_UNIQUEID", "$id");
@@ -449,12 +450,12 @@ function Event_unpark_call($agi, $action)
 }
 
 /**
- * Возвращаем вызов с парковки по таймауту.
+ * Creates an event for a timeout during call unparking with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the unpark call timeout event.
  *
- * @return array
+ * @return array The data for the unpark call timeout event.
  */
 function Event_unpark_call_timeout($agi, $action)
 {
@@ -490,12 +491,12 @@ function Event_unpark_call_timeout($agi, $action)
 }
 
 /**
- * Старт очереди.
+ * Creates an event for the start of a queue with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the queue start event.
  *
- * @return array
+ * @return array The data for the queue start event.
  */
 function Event_queue_start($agi, $action)
 {
@@ -540,12 +541,12 @@ function Event_queue_start($agi, $action)
 }
 
 /**
- * Ответ агента очереди.
+ * Creates an event for answering a queue call with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the queue answer event.
  *
- * @return array
+ * @return array The data for the queue answer event.
  */
 function Event_queue_answer($agi, $action)
 {
@@ -562,12 +563,12 @@ function Event_queue_answer($agi, $action)
 }
 
 /**
- * Завершение работы очереди.
+ * Creates an event for ending a queue call with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the queue end event.
  *
- * @return array
+ * @return array The data for the queue end event.
  */
 function Event_queue_end($agi, $action)
 {
@@ -585,12 +586,12 @@ function Event_queue_end($agi, $action)
 }
 
 /**
- * Звонок на номер конференции.
+ * Creates an event for dialing into a MeetMe conference with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the MeetMe dial event.
  *
- * @return array
+ * @return array The data for the MeetMe dial event.
  */
 function Event_meetme_dial($agi, $action)
 {
@@ -664,12 +665,12 @@ function Event_meetme_dial($agi, $action)
 }
 
 /**
- * Выход канала из конференции.
+ * Creates an event for hanging up a MeetMe channel with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the MeetMe hangup event.
  *
- * @return array
+ * @return array The data for the MeetMe hangup event.
  */
 function Event_hangup_chan_meetme($agi, $action): array
 {
@@ -697,12 +698,12 @@ function Event_hangup_chan_meetme($agi, $action): array
 }
 
 /**
- * Вызов на приложение.
+ * Creates an event for dialing an application channel with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the dial app event.
  *
- * @return array
+ * @return array The data for the dial app event.
  */
 function Event_dial_app($agi, $action)
 {
@@ -723,12 +724,12 @@ function Event_dial_app($agi, $action)
 }
 
 /**
- * Вызов в нерабочее время.
+ * Creates an event for dialing the outworktimes application with necessary data.
  *
- * @param AGI    $agi
- * @param string $action
+ * @param AGI $agi The AGI object.
+ * @param string $action The action associated with the dial outworktimes event.
  *
- * @return array
+ * @return array The data for the dial outworktimes event.
  */
 function Event_dial_outworktimes($agi, $action)
 {
@@ -740,7 +741,9 @@ function Event_dial_outworktimes($agi, $action)
     return $data;
 }
 
-// Должны быть переданы параметры.
+/**
+ * Main entry point for executing the event based on the command-line arguments.
+ */
 if (count($argv) == 1) {
     exit;
 }
@@ -750,9 +753,9 @@ $func_name = "Event_$action";
 
 if (function_exists($func_name)) {
     $agi = new AGI();
-    // Сбор сведений по каналу.
+    // Retrieve channel information.
     $result = $func_name($agi, $action);
-    // Оповещение без задержек.
+    // Notify without delays.
     $data = base64_encode(json_encode($result));
     $agi->exec("CELGenUserEvent", $data);
     $agi->exec("UserEvent", "CdrConnector,AgiData:$data");

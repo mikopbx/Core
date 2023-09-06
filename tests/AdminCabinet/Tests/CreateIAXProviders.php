@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,12 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
         $this->clickDeleteButtonOnRowWithText($params['description']);
 
         $this->clickButtonByHref('/admin-cabinet/providers/modifyiax');
+
+        // Fix uniqid to compare reference data in /etc folder for every build
+        self::$driver->executeScript(
+            "$('#save-provider-form').form('set value','uniqid','{$params['uniqid']}');"
+        );
+
         $this->changeInputField('description', $params['description']);
         $this->changeInputField('host', $params['host']);
         $this->changeInputField('username', $params['username']);
@@ -78,6 +84,7 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
         $params = [];
         $params[] = [[
             'type'=>'iax',
+            'uniqid'=>'IAX-1683372799',
             'description' => 'VoxlinkIAX',
             'host' => 'vox.link.ru',
             'username'        => 'line1',
@@ -88,6 +95,7 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
         ]];
         $params[] = [[
             'type'=>'iax',
+            'uniqid'=>'IAX-1683372823',
             'description' => 'VoxlinkIAX for delete',
             'host' => 'vox.link2.ru',
             'username'        => 'line1',

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,16 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+/**
+ * Base interface for AsteriskConfig children
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
 interface AsteriskConfigInterface
 {
     public const EXTENSION_GEN_HINTS = 'extensionGenHints';
+
+    public const EXTENSIONS_GEN_CREATE_CHANNEL_DIALPLAN = 'extensionGenCreateChannelDialplan';
 
     public const GENERATE_PUBLIC_CONTEXT = 'generatePublicContext';
 
@@ -70,27 +77,44 @@ interface AsteriskConfigInterface
 
     public const GET_SETTINGS = 'getSettings';
 
+
     /**
      * Generates core modules config files with cli messages before and after generation
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateconfig
+     *
+     * @return void
      */
     public function generateConfig(): void;
 
 
     /**
      * Prepares settings dataset for a PBX module
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#other
+     *
+     * @return void
      */
     public function getSettings(): void;
 
 
     /**
      * Prepares additional includes for [internal] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getincludeinternal
      *
      * @return string
      */
     public function getIncludeInternal(): string;
 
     /**
+     * Generates the modules.conf file.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatemodulesconf
+     *
+     * @return string The generated modules.conf file content.
+     */
+    public function generateModulesConf(): string;
+
+    /**
      * Prepares additional rules for [internal] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongeninternal
      *
      * @return string
      */
@@ -98,6 +122,7 @@ interface AsteriskConfigInterface
 
     /**
      * Prepares additional rules for [internal-users] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongeninternaluserspredial
      *
      * @return string
      */
@@ -105,6 +130,7 @@ interface AsteriskConfigInterface
 
     /**
      * Prepares additional rules for [all_peers] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongenallpeerscontext
      *
      * @return string
      */
@@ -112,6 +138,7 @@ interface AsteriskConfigInterface
 
     /**
      * Prepares additional includes for [internal-transfer] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getincludeinternaltransfer
      *
      * @return string
      */
@@ -119,6 +146,7 @@ interface AsteriskConfigInterface
 
     /**
      * Prepares additional rules for [internal-transfer] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongeninternaltransfer
      *
      * @return string
      */
@@ -126,6 +154,7 @@ interface AsteriskConfigInterface
 
     /**
      * Prepares additional contexts sections in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongencontexts
      *
      * @return string
      */
@@ -133,13 +162,23 @@ interface AsteriskConfigInterface
 
     /**
      * Prepares additional hints for [internal-hints] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongenhints
      *
      * @return string
      */
     public function extensionGenHints(): string;
 
     /**
+     * Adds priorities for [dial_create_chan] context section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensiongencreatechanneldialplan
+     *
+     * @return string
+     */
+    public function extensionGenCreateChannelDialplan(): string;
+
+    /**
      * Prepares additional parameters for [globals] section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#extensionglobals
      *
      * @return string
      */
@@ -147,6 +186,7 @@ interface AsteriskConfigInterface
 
     /**
      * Prepares additional parameters for [featuremap] section in the features.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getfeaturemap
      *
      * @return string returns additional Star codes
      */
@@ -154,6 +194,7 @@ interface AsteriskConfigInterface
 
     /**
      * Prepares additional parameters for [public-direct-dial] section in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatepubliccontext
      *
      * @return string
      */
@@ -162,15 +203,18 @@ interface AsteriskConfigInterface
     /**
      * Prepares additional parameters for each incoming context for each incoming route before dial in the
      * extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateincomingroutbeforedialpresystem
      *
      * @param string $rout_number
      *
      * @return string
      */
     public function generateIncomingRoutBeforeDialPreSystem(string $rout_number): string;
+
     /**
      * Prepares additional parameters for each incoming context for each incoming route before dial in the
      * extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateincomingroutbeforedialsystem
      *
      * @param string $rout_number
      *
@@ -181,6 +225,7 @@ interface AsteriskConfigInterface
     /**
      * Prepares additional parameters for each incoming context for each incoming route before dial in the
      * extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateincomingroutbeforedial
      *
      * @param string $rout_number
      *
@@ -190,6 +235,7 @@ interface AsteriskConfigInterface
 
     /**
      * Returns the messages variable
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#other
      *
      * @return array
      */
@@ -197,6 +243,7 @@ interface AsteriskConfigInterface
 
     /**
      * Returns models list of models which affect the current module settings
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#other
      *
      * @return array
      */
@@ -205,6 +252,7 @@ interface AsteriskConfigInterface
     /**
      * Prepares additional parameters for each outgoing route context
      * before dial call in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateoutroutcontext
      *
      * @param array $rout
      *
@@ -214,6 +262,7 @@ interface AsteriskConfigInterface
 
     /**
      * Override pjsip options for provider in the pjsip.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#overrideproviderpjsipoptions
      *
      * @param string $uniqid  the provider unique identifier
      * @param array  $options list of pjsip options
@@ -224,6 +273,7 @@ interface AsteriskConfigInterface
 
     /**
      * Override pjsip options for peer in the pjsip.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#overridepjsipoptions
      *
      * @param string $extension the endpoint extension
      * @param array  $options   list of pjsip options
@@ -235,6 +285,7 @@ interface AsteriskConfigInterface
     /**
      * Prepares additional parameters for each outgoing route context
      * after dial call in the extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateoutroutafterdialcontext
      *
      * @param array $rout
      *
@@ -244,6 +295,7 @@ interface AsteriskConfigInterface
 
     /**
      * Prepares additional pjsip options on endpoint section in the pjsip.conf file for peer
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatepeerpjadditionaloptions
      *
      * @param array $peer information about peer
      *
@@ -253,6 +305,7 @@ interface AsteriskConfigInterface
 
     /**
      * Prepares additional AMI users data in the manager.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatemanagerconf
      *
      * @return string
      */
@@ -261,6 +314,8 @@ interface AsteriskConfigInterface
     /**
      * Prepares additional parameters for each incoming context
      * and incoming route after dial command in an extensions.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generateincomingroutafterdialcontext
+     *
      *
      * @param string $uniqId
      *
@@ -270,9 +325,20 @@ interface AsteriskConfigInterface
 
     /**
      * Prepares additional peers data in the pjsip.conf file
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatepeerspj
      *
      * @return string
      */
     public function generatePeersPj(): string;
+
+    /**
+     * Allows overriding the execution priority of a method when called through hookModulesMethod.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getmethodpriority
+     *
+     * @param string $methodName
+     *
+     * @return int
+     */
+    public function getMethodPriority(string $methodName = ''): int;
 
 }

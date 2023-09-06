@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,22 +19,23 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class DialplanApplicationEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
-class DialplanApplicationEditForm extends Form
+class DialplanApplicationEditForm extends BaseForm
 {
-    public function initialize($entity): void
+    public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         foreach ($entity as $key => $value) {
             switch ($key) {
                 case "id":
@@ -43,23 +44,22 @@ class DialplanApplicationEditForm extends Form
                     $this->add(new Hidden($key));
                     break;
                 case "description":
-                    $rows = max(round(strlen($value) / 95), 2);
-                    $this->add(new TextArea($key, ["rows" => $rows]));
+                    $this->addTextArea($key, $value??'', 95);
                     break;
                 case "type":
                     $select = new Select(
                         $key,
                         [
-                            'php'       => $this->translation->_("da_TypePhp"),
+                            'php' => $this->translation->_("da_TypePhp"),
                             'plaintext' => $this->translation->_("da_TypePlaintext"),
                         ]
                         , [
-                            'using'    => [
+                            'using' => [
                                 'id',
                                 'name',
                             ],
                             'useEmpty' => false,
-                            'class'    => 'ui selection dropdown type-select',
+                            'class' => 'ui selection dropdown type-select',
                         ]
                     );
                     $this->add($select);

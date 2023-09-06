@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,47 +19,85 @@
 /* global globalRootUrl, Form, globalTranslate */
 
 /**
- * Process common module settings
- *
+ * Process common module settings.
+ * @module pbxExtensionModuleModify
  */
 const pbxExtensionModuleModify = {
-	$formObj: $('#pbx-extension-modify-form'),
-	$backButton: $('#back-to-list-button'),
-	$dropdown: $('#menu-group'),
-	validateRules: {
-		name: {
-			identifier: 'caption',
-			rules: [
-				{
-					type: 'empty',
-					prompt: globalTranslate.ext_ValidateCaptionEmpty,
-				},
-			],
-		},
-	},
-	initialize() {
-		$('#menu-group').dropdown();
-		pbxExtensionModuleModify.initializeForm();
-	},
-	cbBeforeSendForm(settings) {
-		const result = settings;
-		result.data = pbxExtensionModuleModify.$formObj.form('get values');
-		return result;
-	},
-	cbAfterSendForm() {
-		window.location = window.location.href;
-	},
-	initializeForm() {
-		Form.$formObj = pbxExtensionModuleModify.$formObj;
-		Form.url = `${globalRootUrl}pbx-extension-modules/saveModuleSettings`;
-		Form.validateRules = pbxExtensionModuleModify.validateRules;
-		Form.cbBeforeSendForm = pbxExtensionModuleModify.cbBeforeSendForm;
-		Form.cbAfterSendForm = pbxExtensionModuleModify.cbAfterSendForm;
-		Form.initialize();
-	},
+    /**
+     * jQuery object for the form.
+     * @type {jQuery}
+     */
+    $formObj: $('#pbx-extension-modify-form'),
+
+    /**
+     * jQuery object for the back button.
+     * @type {jQuery}
+     */
+    $backButton: $('#back-to-list-button'),
+
+    /**
+     * jQuery object for the dropdown menu.
+     * @type {jQuery}
+     */
+    $dropdownMenuGroups: $('#menu-group'),
+
+    /**
+     * Validation rules for the form fields before submission.
+     * @type {object}
+     */
+    validateRules: {
+        name: {
+            identifier: 'caption',
+            rules: [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.ext_ValidateCaptionEmpty,
+                },
+            ],
+        },
+    },
+
+    /**
+     * Initializes the module.
+     */
+    initialize() {
+        pbxExtensionModuleModify.$dropdownMenuGroups.dropdown();
+        pbxExtensionModuleModify.initializeForm();
+    },
+
+    /**
+     * Callback function to be called before the form is sent
+     * @param {Object} settings - The current settings of the form
+     * @returns {Object} - The updated settings of the form
+     */
+    cbBeforeSendForm(settings) {
+        const result = settings;
+        result.data = pbxExtensionModuleModify.$formObj.form('get values');
+        return result;
+    },
+
+    /**
+     * Callback function to be called after the form has been sent.
+     * @param {Object} response - The response from the server after the form is sent
+     */
+    cbAfterSendForm(response) {
+        window.location = window.location.href;
+    },
+
+    /**
+     * Initialize the form with custom settings
+     */
+    initializeForm() {
+        Form.$formObj = pbxExtensionModuleModify.$formObj;
+        Form.url = `${globalRootUrl}pbx-extension-modules/save`; // Form submission URL
+        Form.validateRules = pbxExtensionModuleModify.validateRules; // Form validation rules
+        Form.cbBeforeSendForm = pbxExtensionModuleModify.cbBeforeSendForm; // Callback before form is sent
+        Form.cbAfterSendForm = pbxExtensionModuleModify.cbAfterSendForm; // Callback after form is sent
+        Form.initialize();
+    },
 };
 
-
+// When the document is ready, initialize the external module management form.
 $(document).ready(() => {
-	pbxExtensionModuleModify.initialize();
+    pbxExtensionModuleModify.initialize();
 });

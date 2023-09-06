@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,16 +20,16 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use Phalcon\Di\Injectable;
 
 
 /**
- * Class PbxExtensionsProcessor
+ * Class PbxExtensionsProcessor delegate REST API processing into external modules
  *
  * @package MikoPBX\PBXCoreREST\Lib
  *
- * @property \MikoPBX\Common\Providers\LicenseProvider license
+ * @property \MikoPBX\Common\Providers\MarketPlaceProvider license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  * @property \Phalcon\Config                               config
  */
@@ -40,32 +40,38 @@ class PbxExtensionsProcessor extends Injectable
      * look at src/Modules/Config/RestAPIConfigInterface.php
      *
      * Every module config class can process requests under root rights,
-     * if it described in Config class
+     * if it is described in the Config class
+     *
+     * @var array An array of additional processors for modules
      */
     public array $additionalProcessors;
 
+    /**
+     * Creates a new instance of PbxExtensionsProcessor.
+     */
     public function __construct()
     {
         $additionalModules          = $this->getDI()->getShared(PBXConfModulesProvider::SERVICE_NAME);
         $this->additionalProcessors = [];
         foreach ($additionalModules as $moduleConfigObject) {
-            if (method_exists($moduleConfigObject, ConfigClass::MODULE_RESTAPI_CALLBACK)) {
+            if (method_exists($moduleConfigObject, RestAPIConfigInterface::MODULE_RESTAPI_CALLBACK)) {
                 $this->additionalProcessors[] = [
                     $moduleConfigObject->moduleUniqueId,
                     $moduleConfigObject,
-                    ConfigClass::MODULE_RESTAPI_CALLBACK,
+                    RestAPIConfigInterface::MODULE_RESTAPI_CALLBACK,
                 ];
             }
         }
     }
 
     /**
-     *  Processes modules API requests
+     * Processes modules API requests
      *
-     * @param array       $request
+     * @param array $request The request data
+     *   - action: The action to be performed
+     *   - module: The module identifier
      *
-     *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -74,7 +80,7 @@ class PbxExtensionsProcessor extends Injectable
 
         $res             = new PBXApiResult();
         $res->processor  = __METHOD__;
-        $res->messages[] = "Unknown action - {$action} in modulesCallBack";
+        $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
         $res->function   = $action;
 
         // Try process request over additional modules

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,10 +21,25 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class HttpConf extends CoreConfigClass
+/**
+ * Class HttpConf
+ *
+ * Represents a configuration class for HTTP.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class HttpConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'http.conf';
 
+    /**
+     * Generates the configuration for the http.conf file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
         $enabled = ($this->generalSettings['AJAMEnabled'] === '1') ? 'yes' : 'no';
@@ -44,7 +59,7 @@ class HttpConf extends CoreConfigClass
             if ( ! empty($WEBHTTPSPublicKey) && ! empty($WEBHTTPSPrivateKey)) {
                 $s_data = "{$WEBHTTPSPublicKey}\n{$WEBHTTPSPrivateKey}";
             } else {
-                // Генерируем сертификат ssl.
+                // Generate SSL certificate
                 $data   = Util::generateSslCert();
                 $s_data = implode("\n", $data);
             }
@@ -54,6 +69,8 @@ class HttpConf extends CoreConfigClass
                 "tlsprivatekey={$keys_dir}/ajam.pem\n";
             Util::fileWriteContent("{$keys_dir}/ajam.pem", $s_data);
         }
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/http.conf', $conf);
     }
 }

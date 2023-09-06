@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,15 +46,45 @@ class NormalizeControllerNamePlugin extends Injectable
         }
         $dispatcher->setControllerName(ucfirst($controller));
 
-        if (stripos($controller, 'module') === 0) {
-            $dispatcher->setModuleName('PBXExtension');
-            $camelizeControllerName = Text::camelize($controller);
-            $dispatcher->setNamespaceName("\\Modules\\{$camelizeControllerName}\\App\\Controllers");
 
-        } else {
-            $dispatcher->setModuleName('PBXCore');
-            $dispatcher->setNamespaceName('MikoPBX\AdminCabinet\Controllers');
+        // Check if it is an old style module link without namespace in URL
+        //
+        // @examples
+        // /admin-cabinet/module-users-groups/index
+        // /admin-cabinet/module-users-groups/modify/1
+        if(str_starts_with($dispatcher->getNamespaceName(), 'Modules')){
+            $controllerClass =  $dispatcher->getHandlerClass();
+            $actionMethod = $dispatcher->getActiveMethod();
+            if (!method_exists($controllerClass, $actionMethod)){
+                $actionSuffix = $dispatcher->getActionSuffix();
+                $controllerSuffix = $dispatcher->getHandlerSuffix();
+                $checkNamespace = $dispatcher->getNamespaceName();
+                // Url is broken, try to add namespace into it
+                // @examples
+                // /admin-cabinet/module-users-groups/module-users-groups/index
+                // /admin-cabinet/module-users-groups/module-users-groups/modify/1
+                $checkController = ucfirst(Text::camelize($dispatcher->getParam('moduleUniqueId'),'-'));
+                $checkAction = $dispatcher->getControllerName();
+                $controllerClass = "{$checkNamespace}\\{$checkController}{$controllerSuffix}";
+                $actionMethod = "{$checkAction}{$actionSuffix}";
+                if (method_exists($controllerClass, $actionMethod)){
+                    $params = $dispatcher->getActionName();
+
+                    $checkController = Text::uncamelize($checkController,'_');
+                    $dispatcher->forward([
+                        'controller' => $checkController,
+                        'action' => $checkAction,
+                        'namespace'=> $checkNamespace,
+                        'params'=> [$params]
+                    ]);
+                }
+            } else {
+                $moduleParams = $dispatcher->getParams();
+                unset($moduleParams['moduleUniqueId']);
+                $dispatcher->setParams($moduleParams);
+            }
         }
+
     }
 
     /**

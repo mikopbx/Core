@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2021 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,11 @@ use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use Throwable;
 
+/**
+ * The WorkerModuleInstaller class is responsible for handling the installation of a module from a file
+ *
+ * @package MikoPBX\PBXCoreREST\Workers
+ */
 class WorkerModuleInstaller extends WorkerBase
 {
 
@@ -35,14 +40,18 @@ class WorkerModuleInstaller extends WorkerBase
     private string $error_file = '';
 
     /**
-     * @param mixed $params
+     * Starts the module installation worker process.
+     *
+     * @param array $argv The command-line arguments passed to the worker.
+     * @return void
      */
-    public function start($params): void
+    public function start(array $argv): void
     {
-        $settings_file = $params[2]??'';
+        $settings_file = $argv[2]??'';
+
+        // Check if the settings file exists
         if ( ! file_exists($settings_file)) {
             Util::sysLogMsg(__CLASS__, 'File with settings did not found', LOG_ERR);
-
             return;
         }
         $settings = json_decode(file_get_contents($settings_file), true);
@@ -60,8 +69,12 @@ class WorkerModuleInstaller extends WorkerBase
     }
 
     /**
-     * Starts module installation on separate php process
+     * Installs a new module from a file.
      *
+     * @param string $currentModuleDir The directory of the current module.
+     * @param string $filePath The path to the module file.
+     * @param string $moduleUniqueID The unique ID of the module.
+     * @return void
      */
     private function installNewModuleFromFile(
         string $currentModuleDir,
@@ -69,33 +82,36 @@ class WorkerModuleInstaller extends WorkerBase
         string $moduleUniqueID
     ): void {
 
+        file_put_contents( $this->progress_file, '25');
         // Unzip module folder
         $semZaPath = Util::which('7za');
-        Processes::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
-
-        ModulesDBConnectionsProvider::recreateModulesDBConnections();
-
-        Util::addRegularWWWRights($currentModuleDir);
+        $exitCode = Processes::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
+        if ($exitCode !== 0) {
+            file_put_contents($this->error_file, 'Error occurred during module extraction.', FILE_APPEND);
+            return;
+        }
         file_put_contents( $this->progress_file, '50');
-        $pbxExtensionSetupClass = "\\Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
+        Util::addRegularWWWRights($currentModuleDir);
+        $pbxExtensionSetupClass = "Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
         if (class_exists($pbxExtensionSetupClass)
             && method_exists($pbxExtensionSetupClass, 'installModule')) {
             try {
                 $setup = new $pbxExtensionSetupClass($moduleUniqueID);
                 if ( ! $setup->installModule()) {
-                    file_put_contents($this->error_file, '++'.defined('START_DOCKER').'++ '.implode(" ", $setup->getMessages()), FILE_APPEND);
+                    file_put_contents($this->error_file, implode(" ", $setup->getMessages()), FILE_APPEND);
                 } else {
                     Processes::restartAllWorkers();
                 }
             } catch (Throwable $e){
-                file_put_contents($this->error_file, '--- '.$e->getMessage(), FILE_APPEND);
+                file_put_contents($this->error_file, 'Exception on installNewModuleFromFile: ' . $e->getMessage(), FILE_APPEND);
             }
         } else {
-            file_put_contents($this->error_file,"Install error: the class {$pbxExtensionSetupClass} not exists", FILE_APPEND);
+            file_put_contents($this->error_file,"Install error: the class {$pbxExtensionSetupClass} does not exists", FILE_APPEND);
         }
         file_put_contents( $this->progress_file, '100');
     }
 }
 
 // Start worker process
-WorkerModuleInstaller::startWorker($argv??null);
+WorkerModuleInstaller::startWorker($argv??[]);

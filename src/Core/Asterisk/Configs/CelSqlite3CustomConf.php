@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,11 +19,21 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
-class CelSqlite3CustomConf extends CoreConfigClass
+/**
+ * Generates the configuration content for cel_sqlite3_custom.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class CelSqlite3CustomConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'cel_sqlite3_custom.conf';
 
+    /**
+     * Generates the configuration content for cel_sqlite3_custom.conf.
+     */
     protected function generateConfigProtected(): void
     {
         $cal    = "eventtype, eventtime, cidname, cidnum, cidani, cidrdnis, ciddnid, context, exten, channame, appname, appdata, amaflags, accountcode, uniqueid, userfield, peer, userdeftype, eventextra, linkedid";
@@ -34,6 +44,7 @@ class CelSqlite3CustomConf extends CoreConfigClass
             "columns => $cal \n" .
             "values => $values \n";
 
+        // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . "/cel_sqlite3_custom.conf", $conf);
     }
 }

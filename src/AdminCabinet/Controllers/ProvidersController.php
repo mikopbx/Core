@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,22 +26,22 @@ class ProvidersController extends BaseController
 {
 
     /**
-     * Получение общего списка провайдеров
+     * Retrieves and prepares a list of providers for display in the index view.
      */
     public function indexAction(): void
     {
-        $providers     = Providers::find();
+        $providers = Providers::find();
         $providersList = [];
         foreach ($providers as $provider) {
-            $modelType       = ucfirst($provider->type);
-            $provByType      = $provider->$modelType;
+            $modelType = ucfirst($provider->type);
+            $provByType = $provider->$modelType;
             $providersList[] = [
-                'uniqid'     => $provByType->uniqid,
-                'name'       => $provByType->description,
-                'username'   => $provByType->username,
-                'hostname'   => $provByType->host,
-                'type'       => $provider->type,
-                'status'     => $provByType->disabled ? 'disabled' : '',
+                'uniqid' => $provByType->uniqid,
+                'name' => $provByType->description,
+                'username' => $provByType->username,
+                'hostname' => $provByType->host,
+                'type' => $provider->type,
+                'status' => $provByType->disabled ? 'disabled' : '',
                 'existLinks' => $provider->OutgoingRouting->count() > 0 ? 'true' : 'false',
 
             ];
@@ -51,74 +51,74 @@ class ProvidersController extends BaseController
 
 
     /**
-     * Открытие карточки SIP провайдера и заполнение значений по умолчанию
+     * Opens the SIP provider card and fills in default values.
      *
-     * @param string $uniqid Уникальный идентификатор провайдера, если мы открываем существующего
+     * @param string $uniqid Unique identifier of the provider (optional) when opening an existing one.
      */
     public function modifysipAction(string $uniqid = ''): void
     {
         $provider = Providers::findFirstByUniqid($uniqid);
 
         if ($provider === null) {
-            $uniqid                     = strtoupper('SIP-' . time());
-            $provider                   = new Providers();
-            $provider->type             = 'SIP';
-            $provider->uniqid           = $uniqid;
-            $provider->sipuid           = $uniqid;
-            $provider->Sip              = new Sip();
-            $provider->Sip->uniqid      = $uniqid;
-            $provider->Sip->type        = 'friend';
-            $provider->Sip->port        = 5060;
-            $provider->Sip->disabled    = '0';
+            $uniqid = Sip::generateUniqueID('SIP-');
+            $provider = new Providers();
+            $provider->type = 'SIP';
+            $provider->uniqid = $uniqid;
+            $provider->sipuid = $uniqid;
+            $provider->Sip = new Sip();
+            $provider->Sip->uniqid = $uniqid;
+            $provider->Sip->type = 'friend';
+            $provider->Sip->port = 5060;
+            $provider->Sip->disabled = '0';
             $provider->Sip->qualifyfreq = 60;
-            $provider->Sip->qualify     = '1';
-            $provider->Sip->secret      = md5($uniqid.microtime());
+            $provider->Sip->qualify = '1';
+            $provider->Sip->secret = SIP::generateSipPassword();
         }
 
         $providerHost = $provider->Sip->host;
-        $sipHosts   = $provider->Sip->SipHosts;
+        $sipHosts = $provider->Sip->SipHosts;
         $hostsTable = [];
         foreach ($sipHosts as $host) {
-            if ($providerHost !== $host->address){
+            if ($providerHost !== $host->address) {
                 $hostsTable[] = $host->address;
             }
         }
-        $this->view->secret     = $provider->Sip->secret;
+        $this->view->secret = $provider->Sip->secret;
         $this->view->hostsTable = $hostsTable;
-        $this->view->form       = new SipProviderEditForm($provider->Sip);
-        $this->view->represent  = $provider->getRepresent();
+        $this->view->form = new SipProviderEditForm($provider->Sip);
+        $this->view->represent = $provider->getRepresent();
     }
 
     /**
-     * Открытие карточки IAX провайдера и заполнение значений по умолчанию
+     * Opens the IAX provider card and fills in default values.
      *
-     * @param string $uniqid Уникальный идентификатор провайдера, если мы открываем существующего
+     * @param string $uniqid Unique identifier of the provider (optional) when opening an existing one.
      */
     public function modifyiaxAction(string $uniqid = ''): void
     {
         $provider = Providers::findFirstByUniqid($uniqid);
 
         if ($provider === null) {
-            $uniqid                  = strtoupper('IAX-' . time());
-            $provider                = new Providers();
-            $provider->type          = 'IAX';
-            $provider->uniqid        = $uniqid;
-            $provider->iaxuid        = $uniqid;
-            $provider->Iax           = new Iax();
-            $provider->Iax->uniqid   = $uniqid;
+            $uniqid = Iax::generateUniqueID('IAX-');
+            $provider = new Providers();
+            $provider->type = 'IAX';
+            $provider->uniqid = $uniqid;
+            $provider->iaxuid = $uniqid;
+            $provider->Iax = new Iax();
+            $provider->Iax->uniqid = $uniqid;
             $provider->Iax->disabled = '0';
-            $provider->Iax->qualify  = '1';
+            $provider->Iax->qualify = '1';
         }
 
-        $this->view->form      = new IaxProviderEditForm($provider->Iax);
+        $this->view->form = new IaxProviderEditForm($provider->Iax);
         $this->view->represent = $provider->getRepresent();
     }
 
     /**
-     * Включение провайдера
+     * Enables a provider.
      *
-     * @param string $type   тип провайдера SIP или IAX
-     * @param string $uniqid Уникальный идентификатор провайдера, если мы открываем существующего
+     * @param string $type Provider type (SIP or IAX)
+     * @param string $uniqid Unique identifier of the provider (optional) when opening an existing one.
      */
     public function enableAction(string $type, string $uniqid = ''): void
     {
@@ -146,10 +146,10 @@ class ProvidersController extends BaseController
     }
 
     /**
-     * Отключение провайдера
+     * Disables a provider.
      *
-     * @param string $type   тип провайдера SIP или IAX
-     * @param string $uniqid Уникальный идентификатор провайдера, если мы открываем существующего
+     * @param string $type Provider type (SIP or IAX)
+     * @param string $uniqid Unique identifier of the provider (optional) when opening an existing one.
      */
     public function disableAction(string $type, string $uniqid = ''): void
     {
@@ -177,29 +177,28 @@ class ProvidersController extends BaseController
     }
 
     /**
-     * Saves provider over ajax request from a web form
+     * Saves a provider via AJAX request from a web form.
      *
-     * @param string $type - sip or iax
-     *
+     * @param string $type Provider type ('sip' or 'iax').
      */
     public function saveAction(string $type): void
     {
-        if ( ! $this->request->isPost()) {
+        if (!$this->request->isPost()) {
             $this->forward('network/index');
         }
         $this->db->begin();
         $data = $this->request->getPost();
 
-        // Updates SIP and IAX tables
-        if ( ! $this->saveProvider($data, $type)) {
+        // Update SIP and IAX tables
+        if (!$this->saveProvider($data, $type)) {
             $this->view->success = false;
             $this->db->rollback();
 
             return;
         }
 
-        // Update additional hosts table
-        if ( $type === 'sip' && ! $this->updateAdditionalHosts($data)) {
+        // Update additional hosts table for SIP providers
+        if ($type === 'sip' && !$this->updateAdditionalHosts($data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -210,37 +209,37 @@ class ProvidersController extends BaseController
         $this->view->success = true;
         $this->db->commit();
 
-        // Если это было создание карточки то надо перегрузить страницу с указанием ID
+        // If it was creating a new provider, reload the page with the specified ID
         if (empty($data['id'])) {
             $this->view->reload = "providers/modify{$type}/{$data['uniqid']}";
         }
     }
 
     /**
-     * Save providers data table
+     * Save provider data table.
      *
-     * @param array  $data - POST DATA
-     * @param string $type - sip or iax
+     * @param array $data POST data.
+     * @param string $type Provider type ('sip' or 'iax').
      *
-     * @return bool save result
+     * @return bool Save result.
      */
     private function saveProvider(array $data, string $type): bool
     {
-        // Проверим это новый провайдер или старый
+        // Check if it's a new or existing provider.
         $provider = Providers::findFirstByUniqid($data['uniqid']);
         if ($provider === null) {
-            $provider         = new Providers();
+            $provider = new Providers();
             $provider->uniqid = $data['uniqid'];
             switch ($type) {
                 case 'iax':
                     $provider->iaxuid = $data['uniqid'];
-                    $provider->type   = 'IAX';
-                    $provider->Iax    = new Iax();
+                    $provider->type = 'IAX';
+                    $provider->Iax = new Iax();
                     break;
                 case 'sip':
                     $provider->sipuid = $data['uniqid'];
-                    $provider->type   = 'SIP';
-                    $provider->Sip    = new Sip();
+                    $provider->type = 'SIP';
+                    $provider->Sip = new Sip();
                     break;
             }
         }
@@ -277,7 +276,7 @@ class ProvidersController extends BaseController
                     }
                     break;
                 case 'qualifyfreq':
-                    $providerByType->qualifyfreq = (int)$data[$name];
+                    $providerByType->$name = (int)$data[$name];
                     break;
                 case 'manualattributes':
                     if (array_key_exists($name, $data)) {
@@ -302,30 +301,30 @@ class ProvidersController extends BaseController
     }
 
     /**
-     * Update additional hosts table
+     * Update additional hosts table.
      *
-     * @param array $data массив полей из POST запроса
+     * @param array $data Array of fields from the POST request.
      *
-     * @return bool update result
+     * @return bool Update result.
      */
     private function updateAdditionalHosts(array $data): bool
     {
         $providerHost = $data['host'];
         $additionalHosts = json_decode($data['additionalHosts']);
-        if($data['registration_type'] !== Sip::REG_TYPE_INBOUND){
+        if ($data['registration_type'] !== Sip::REG_TYPE_INBOUND) {
             $hosts = array_merge([], array_column($additionalHosts, 'address'), [$providerHost]);
-        }else{
+        } else {
             $hosts = array_column($additionalHosts, 'address');
         }
-        $parameters=[
-            'conditions'=>'provider_id = :providerId:',
-            'bind'=>[
-                'providerId'=>$data['uniqid']
+        $parameters = [
+            'conditions' => 'provider_id = :providerId:',
+            'bind' => [
+                'providerId' => $data['uniqid']
             ]
         ];
         $currentRecords = SipHosts::find($parameters);
-        foreach ($currentRecords as $record){
-            if (!in_array($record->address, $hosts, true)){
+        foreach ($currentRecords as $record) {
+            if (!in_array($record->address, $hosts, true)) {
                 if ($record->delete() === false) {
                     $errors = $record->getMessages();
                     $this->flash->warning(implode('<br>', $errors));
@@ -335,7 +334,7 @@ class ProvidersController extends BaseController
                 unset($hosts[$key]);
             }
         }
-        foreach ($hosts as $record){
+        foreach ($hosts as $record) {
             $currentRecord = new SipHosts();
             $currentRecord->provider_id = $data['uniqid'];
             $currentRecord->address = $record;
@@ -369,7 +368,7 @@ class ProvidersController extends BaseController
         $errors = false;
         if ($provider->Iax) {
             $iax = $provider->Iax;
-            if ( ! $iax->delete()) {
+            if (!$iax->delete()) {
                 $errors = $iax->getMessages();
             }
         }
@@ -378,11 +377,11 @@ class ProvidersController extends BaseController
             $sip = $provider->Sip;
             if ($sip->SipHosts) {
                 $sipHosts = $sip->SipHosts;
-                if ( ! $sipHosts->delete()) {
+                if (!$sipHosts->delete()) {
                     $errors = $sipHosts->getMessages();
                 }
             }
-            if ($errors === false && ! $sip->delete()) {
+            if ($errors === false && !$sip->delete()) {
                 $errors = $sip->getMessages();
             }
         }
@@ -393,7 +392,6 @@ class ProvidersController extends BaseController
         } else {
             $this->db->commit();
         }
-
 
         $this->forward('providers/index');
     }

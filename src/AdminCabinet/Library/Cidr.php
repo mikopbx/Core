@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ class Cidr extends Injectable
             $bin .= $cidr >= $i ? '1' : '0';
         }
 
-        $netmask = long2ip(bindec($bin));
+        $netmask = long2ip(intval(bindec($bin)));
 
         if ($netmask == "0.0.0.0") {
             return false;

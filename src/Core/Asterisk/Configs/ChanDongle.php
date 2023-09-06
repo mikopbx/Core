@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,30 +22,40 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class ChanDongle extends CoreConfigClass
+/**
+ * Generates the configuration content for dongle.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class ChanDongle extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'dongle.conf';
 
     /**
-     * Создание конфигурационного файла.
+     * Generates the configuration content for dongle.conf.
      */
     protected function generateConfigProtected(): void
     {
         $conf = '[general]' . PHP_EOL .
             'interval=15' . PHP_EOL;
 
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/dongle.conf', $conf);
     }
 
     /**
-     * Функция реализует алгоритм получения NCK кода.
-     * Источник https://3ginfo.ru/page9.html
-     * @param $imai
-     * @return int
+     * Calculates the NCK code based on the given IMEI.
+     *
+     * @param string $imei The IMEI value.
+     * @return int The calculated NCK code.
      */
-    public static function getNckByImei($imai):int{
+    public static function getNckByImei(string $imei):int
+    {
         $solt = substr(md5('hwe620datacard'), 8, 16);
-        $hash = md5($imai.$solt);
+        $hash = md5($imei.$solt);
         $len  = strlen($hash);
         $data = [ [], [], [], [] ];
         $ch = 0;

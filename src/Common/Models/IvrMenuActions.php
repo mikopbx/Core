@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,46 +38,59 @@ class IvrMenuActions extends ModelsBase
     public $id;
 
     /**
+     * ID of the associated IVR menu.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $ivr_menu_id = '';
 
     /**
+     * Digits for the IVR menu action.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $digits = '';
 
     /**
+     * Extension associated with the IVR menu action.
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $extension = '';
 
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_IvrMenuActions');
         parent::initialize();
+
+        // Establish a belongsTo relationship with the Extensions model
         $this->belongsTo(
             'extension',
             Extensions::class,
             'number',
             [
-                'alias'      => 'Extensions',
+                'alias' => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );
+
+        // Establish a belongsTo relationship with the IvrMenu model
         $this->belongsTo(
             'ivr_menu_id',
             IvrMenu::class,
             'uniqid',
             [
-                'alias'      => 'IvrMenu',
+                'alias' => 'IvrMenu',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION,
+                    'action' => Relation::NO_ACTION,
                 ],
             ]
         );

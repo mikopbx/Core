@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,16 +28,20 @@ use Phalcon\Cache\Adapter\Redis;
 use Phalcon\Storage\SerializerFactory;
 
 /**
- * Main database connection is created based in the parameters defined in the configuration file
+ * Registers the Models cache in REDIS service provider.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class ModelsCacheProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'modelsCache';
 
+    public const CACHE_PREFIX = 'models-cache:';
+
     /**
-     * Register Models cache service provider
+     * Register Models cache service provider.
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
@@ -52,7 +56,7 @@ class ModelsCacheProvider implements ServiceProviderInterface
                     'host'              => $config->path('redis.host'),
                     'port'              => $config->path('redis.port'),
                     'index'             => 3,
-                    'prefix'            => 'models-cache'
+                    'prefix'            => self::CACHE_PREFIX
                 ];
 
                 return new Redis($serializerFactory, $options);

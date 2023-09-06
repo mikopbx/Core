@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,87 +19,67 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\System;
 
-use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\ModelsBase;
-use MikoPBX\Common\Models\PbxExtensionModules;
-use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use Phalcon\Di;
 
 /**
- * /pbxcore/api/system/{name}' System management (POST).
+ * System management (POST).
  *
+ * @RoutePrefix("/pbxcore/api/system")
+ *
+ *
+ * @examples
  * Setup system time
  *   curl -X POST -d timestamp=1602509882 http://127.0.0.1/pbxcore/api/system/setDate
  *
- * Send email
- *   curl -X POST -d '{"email": "apor@miko.ru", "subject":"Hi from mikopbx", "body":"Test message", "encode":""}' http://172.16.156.223/pbxcore/api/system/sendMail;
- *     'encode' - может быть пустой строкой или 'base64', на случай, если subject и body передаются в base64;
- *
- * Unban IP address
- *   curl -X POST -d '{"ip": "172.16.156.1"}' http://172.16.156.212/pbxcore/api/system/unBanIp;
- *   Answer example:
- *   {"result":"Success","data":[{"jail":"asterisk","ip":"172.16.156.1","timeofban":1522326119}],"function":"getBanIp"}
- *
- * Get config file content
- *   curl -X POST -d '{"filename": "/etc/asterisk/asterisk.conf"}'
- *   http://172.16.156.212/pbxcore/api/system/fileReadContent;
- *
- * Answer example:
- *   {"result":"ERROR","message":"API action not found;","function":"fileReadContent"}
- *   {"result":"Success","data":"W2RpcmVj","function":"fileReadContent"}
+ * Sends an email notification.
+ *   curl -X POST -d '{"email": "apor@miko.ru", "subject":"Hi from mikopbx", "body":"Test message", "encode":""}' http://127.0.0.1/pbxcore/api/system/sendMail;
+ *     'encode' -  can be an empty string or 'base64' in case subject and body are passed in base64;
  *
  * Convert audiofile:
  *   curl -X POST -d '{"filename": "/tmp/WelcomeMaleMusic.mp3"}'
- *   http://172.16.156.212/pbxcore/api/system/convertAudioFile; Пример ответа:
+ *   http://127.0.0.1/pbxcore/api/system/convertAudioFile;
+ *
+ * Response example:
  *   {
  *      "result": "Success",
  *      "filename": "/tmp/WelcomeMaleMusic.wav",
  *      "function": "convertAudioFile"
  *   }
  *
- *
- * Delete audiofile:
- *   curl -X POST -d '{"filename": "/storage/usbdisk1/mikopbx/tmp/2233333.wav"}'
- *   http://172.16.156.212/pbxcore/api/system/removeAudioFile;
- *
- *
- * System upgrade (from file)
+ * Upgrade the PBX using uploaded IMG file.
  * curl -X POST -d
- *   '{"filename": "/storage/usbdisk1/mikopbx/tmp/2019.4.200-mikopbx-generic-x86-64-linux.img"}'
+ *   '{"filename": "/storage/usbdisk1/mikopbx/tmp/mikopbx-2023.1.223-x86_64.img"}'
  *   http://127.0.0.1/pbxcore/api/system/upgrade -H 'Cookie: XDEBUG_SESSION=PHPSTORM'; curl -F
- *   "file=@1.0.5-9.0-svn-mikopbx-x86-64-cross-linux.img" http://172.16.156.212/pbxcore/api/system/upgrade;
- *
- *
- * System upgrade (over link)
- * curl -X POST -d '{"md5":"df7622068d0d58700a2a624d991b6c1f", "url":
- *   "https://www.askozia.ru/upload/update/firmware/6.2.96-9.0-svn-mikopbx-x86-64-cross-linux.img"}'
- *   http://172.16.156.223/pbxcore/api/system/upgradeOnline;
- *
- *
- * Install new module with params by URL
- * curl -X POST -d '{"uniqid":"ModuleCTIClient", "md5":"fd9fbf38298dea83667a36d1d0464eae", "url":
- * "https://www.askozia.ru/upload/update/modules/ModuleCTIClient/ModuleCTIClientv01.zip"}'
- * http://172.16.156.223/pbxcore/api/modules/uploadNewModule;
- *
- *
- * Receive uploading status
- * curl  -X POST -d '{"uniqid":"ModuleSmartIVR"} http://172.16.156.223/pbxcore/api/system/statusUploadingNewModule
- *
- *
- * Install new module from ZIP archive:
- * curl -F "file=@ModuleTemplate.zip" http://127.0.0.1/pbxcore/api/modules/uploadNewModule;
- *
- *
- * Uninstall module:
- * curl -X POST -d '{"uniqid":"ModuleSmartIVR"} http://172.16.156.223/pbxcore/api/system/uninstallModule
+ *   "file=@mikopbx-2023.1.223-x86_64.img" http://172.16.156.212/pbxcore/api/system/upgrade;
  *
  */
 class PostController extends BaseController
 {
-    public function callAction($actionName): void
+    /**
+     * Handles the call to different actions based on the action name
+     *
+     * @param string $actionName The name of the action
+     *
+     * Updates the system date and time
+     * @Post("/setDate")
+     *
+     * Sends an email notification.
+     * @Post("/sendMail")
+     *
+     * Convert the audio file to various codecs using Asterisk.
+     * @Post("/convertAudioFile")
+     *
+     * Upgrade the PBX using uploaded IMG file.
+     * @Post("/upgrade")
+     *
+     * @return void
+     */
+    public function callAction(string $actionName): void
     {
         switch ($actionName) {
             case 'convertAudioFile':
@@ -107,12 +87,14 @@ class PostController extends BaseController
                 break;
             default:
                 $data = $this->request->getPost();
-                $this->sendRequestToBackendWorker('system', $actionName, $data);
+                $this->sendRequestToBackendWorker(SystemManagementProcessor::class, $actionName, $data);
         }
     }
 
     /**
      * Categorize and store uploaded audio files
+     *
+     * @return void
      */
     private function convertAudioFile(): void
     {
@@ -130,11 +112,11 @@ class PostController extends BaseController
                 $data['filename'] = "{$mediaDir}/" . basename($data['temp_filename']);
                 break;
             default:
-                $this->sendError(400, 'Category not set');
+                $this->sendError(Response::BAD_REQUEST, 'Category not set');
         }
         $requestMessage = json_encode(
             [
-                'processor' => 'system',
+                'processor' => SystemManagementProcessor::class,
                 'data'      => $data,
                 'action'    => 'convertAudioFile',
             ]
@@ -145,7 +127,7 @@ class PostController extends BaseController
             $response = json_decode($response, true);
             $this->response->setPayloadSuccess($response);
         } else {
-            $this->sendError(500);
+            $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
 

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +19,22 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
-use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class NginxConf
+ *
+ * Represents the Nginx configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class NginxConf extends Injectable
 {
     public const  MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
@@ -60,6 +68,11 @@ class NginxConf extends Injectable
         }
     }
 
+    /**
+     * Retrieves the Nginx process ID.
+     *
+     * @return string The process ID.
+     */
     private static function getPid():string{
         $filePid = trim(file_get_contents(self::PID_FILE));
         if(!empty($filePid)) {
@@ -72,12 +85,14 @@ class NginxConf extends Injectable
     }
 
     /**
-     * Write additional settings the nginx.conf
+     * Writes additional settings to the nginx.conf.
      *
-     * @param bool $not_ssl
-     * @param int  $level
+     * @param bool $not_ssl Whether to generate the configuration for non-SSL.
+     * @param int $level The recursion level.
+     *
+     * @return void
      */
-    public function generateConf($not_ssl = false, $level = 0): void
+    public function generateConf(bool $not_ssl = false, int $level = 0): void
     {
         $configPath      = '/etc/nginx/mikopbx/conf.d';
         $httpConfigFile  = "{$configPath}/http-server.conf";
@@ -143,9 +158,9 @@ class NginxConf extends Injectable
     }
 
     /**
-     * Test current nginx config on errors
+     * Tests the current nginx config for errors.
      *
-     * @return bool
+     * @return bool Whether the config is valid or not.
      */
     private function testCurrentNginxConfig(): bool
     {
@@ -158,7 +173,9 @@ class NginxConf extends Injectable
     }
 
     /**
-     * Generate modules locations conf files
+     * Generates the modules locations conf files.
+     *
+     * @return void
      */
     public function generateModulesConfigs(): void
     {
@@ -170,16 +187,15 @@ class NginxConf extends Injectable
         Processes::mwExec("{$rmPath} -rf {$locationsPath}/*.conf");
 
         // Add additional modules routes
-        $configClassObj = new ConfigClass();
-        $additionalLocations = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::CREATE_NGINX_LOCATIONS);
+        $additionalLocations = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::CREATE_NGINX_LOCATIONS);
         foreach ($additionalLocations as $moduleUniqueId=>$locationContent) {
             $confFileName = "{$locationsPath}/{$moduleUniqueId}.conf";
             file_put_contents($confFileName, $locationContent);
             if ( $this->testCurrentNginxConfig()) {
-                // Тест прошел успешно.
+                // Test passed successfully.
                 continue;
             }
-            // Откат конфига.
+            // Config test failed. Rollback the config.
             Processes::mwExec("{$rmPath} {$confFileName}");
             Util::sysLogMsg('nginx', 'Failed test config file for module' . $moduleUniqueId, LOG_ERR);
         }

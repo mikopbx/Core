@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,30 +18,45 @@
 
 /* global globalRootUrl, SemanticLocalization */
 
+/**
+ * Module for handling interactions with the custom files table.
+ * @module FilesTable
+ */
 const FilesTable = {
-	initialize() {
-		$('#custom-files-table').DataTable({
-			lengthChange: false,
-			paging: false,
-			columns: [
-				null,
-				null,
-				{orderable: false, searchable: false},
-				{orderable: false, searchable: false},
-			],
-			order: [0, 'asc'],
-			language: SemanticLocalization.dataTableLocalisation,
-		});
 
-		$('.file-row td').on('dblclick', (e) => {
-			const id = $(e.target).closest('tr').attr('id');
-			window.location = `${globalRootUrl}custom-files/modify/${id}`;
-		});
-	},
+    /**
+     * Initializes the custom files table, applying DataTable features and setting up event handlers.
+     */
+    initialize() {
+
+        // Initialize the DataTable with custom settings.
+        // Features include disabling length change and paging, setting column properties,
+        // setting the default order, and applying language localization.
+        $('#custom-files-table').DataTable({
+            lengthChange: false,
+            paging: false,
+            columns: [
+                null,
+                null,
+                {orderable: false, searchable: false},
+                {orderable: false, searchable: false},
+            ],
+            order: [0, 'asc'],
+            language: SemanticLocalization.dataTableLocalisation,
+        });
+
+        // Attach a double-click event handler to each cell in the file row.
+        // The handler redirects to a URL specific to the custom file for modification.
+        $('.file-row td').on('dblclick', (e) => {
+            const id = $(e.target).closest('tr').attr('id');
+            window.location = `${globalRootUrl}custom-files/modify/${id}`;
+        });
+    },
 
 };
 
+// Initialize the custom files table when the document is ready.
 $(document).ready(() => {
-	FilesTable.initialize();
+    FilesTable.initialize();
 });
 

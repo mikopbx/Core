@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +20,31 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-class UdptlConf extends CoreConfigClass
+/**
+ * Class UdptlConf
+ *
+ * Represents the udptl.conf configuration file.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class UdptlConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'udptl.conf';
 
+
+    /**
+     * Generate the configuration content for udptl.conf.
+     *
+     * This method generates the configuration content for the udptl.conf file.
+     */
     protected function generateConfigProtected(): void
     {
         $conf = '';
+
+        // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . '/udptl.conf', $conf);
     }
 }

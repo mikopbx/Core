@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,24 +19,24 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class IvrMenuEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
-class IvrMenuEditForm extends Form
+class IvrMenuEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
         // ID
         $this->add(new Hidden('id'));
 
@@ -53,10 +53,10 @@ class IvrMenuEditForm extends Form
         $this->add(
             new Numeric(
                 'number_of_repeat', [
-                "maxlength"    => 2,
-                "style"        => "width: 80px;",
-                "defaultValue" => 3,
-            ]
+                    "maxlength" => 2,
+                    "style" => "width: 80px;",
+                    "defaultValue" => 3,
+                ]
             )
         );
 
@@ -64,36 +64,36 @@ class IvrMenuEditForm extends Form
         $this->add(
             new Numeric(
                 'timeout', [
-                "maxlength"    => 2,
-                "style"        => "width: 80px;",
-                "defaultValue" => 7,
-            ]
+                    "maxlength" => 2,
+                    "style" => "width: 80px;",
+                    "defaultValue" => 7,
+                ]
             )
         );
 
         // Timeoutextension
         $extension = new Select(
             'timeout_extension', $options['extensions'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'class'    => 'ui selection dropdown search forwarding-select',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'class' => 'ui selection dropdown search forwarding-select',
+            ]
         );
         $this->add($extension);
 
         // Audio_message_id
         $audioMessage = new Select(
             'audio_message_id', $options['soundfiles'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'class'    => 'ui selection dropdown search audio-message-select',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'class' => 'ui selection dropdown search audio-message-select',
+            ]
         );
         $this->add($audioMessage);
 
@@ -106,7 +106,7 @@ class IvrMenuEditForm extends Form
         $this->add(new Check('allow_enter_any_internal_extension', $cheskarr));
 
         // Description
-        $rows = max(round(strlen($entity->description) / 95), 2);
-        $this->add(new TextArea('description', ["rows" => $rows]));
+        $this->addTextArea('description', $entity->description??'', 65);
+
     }
 }

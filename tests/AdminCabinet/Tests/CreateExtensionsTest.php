@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,6 +42,11 @@ class CreateExtensionsTest extends MikoPBXTestsBase
 
             $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
+
+//            // Fix uniqid to compare reference data in /etc folder for every build
+//            self::$driver->executeScript(
+//            "$('#extensions-form').form('set value','uniqid','{$params['uniqid']}');"
+//            );
             $this->changeInputField('user_username', $params['username']);
             $this->changeInputField('number', $params['number']);
             $this->changeInputField('mobile_number', $params['mobile']);

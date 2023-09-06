@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2021 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,16 +22,24 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Util;
 
-class ExtensionsAnnounceRecording extends CoreConfigClass
+/**
+ * Represents the Asterisk configuration class for handling announce recordings.
+ * Generates the configuration content for extensions.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class ExtensionsAnnounceRecording extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 580;
+
     /**
-     * Prepares additional contexts sections in the extensions.conf file
+     * Generates additional contexts sections in the extensions.conf file for announce recordings.
      *
-     * @return string
+     * @return string The generated additional contexts sections.
      */
     public function extensionGenContexts(): string
     {
-        //
         return '[annonce-spy]' . PHP_EOL .
             'exten => _.!,1,ExecIf($[ "${EXTEN}" == "h" ]?Hangup())' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${CHANNELS(PJSIP/${EXTEN})}x" != "x"]?Chanspy(PJSIP/${EXTEN},uBq))' . PHP_EOL . "\t" .
@@ -49,11 +57,11 @@ class ExtensionsAnnounceRecording extends CoreConfigClass
     }
 
     /**
-     * Returns path to announce file by it's id
+     * Returns the path to the announce file by its id.
      *
-     * @param string $id
+     * @param string $id The id of the announce file.
      *
-     * @return string
+     * @return string The path to the announce file.
      */
     public static function getPathAnnounceFile(string $id): string
     {
@@ -62,7 +70,7 @@ class ExtensionsAnnounceRecording extends CoreConfigClass
             /** @var SoundFiles $fileData */
             $fileData = SoundFiles::findFirst($id);
             if ($fileData !== null) {
-                $filename = Util::trimExtensionForFile($fileData->path);
+                $filename = Util::trimExtensionForFile($fileData->path??'');
             }
         }
 
@@ -70,12 +78,11 @@ class ExtensionsAnnounceRecording extends CoreConfigClass
     }
 
     /**
-     * Prepares additional parameters for each outgoing route context
-     * before dial call in the extensions.conf file
+     * Generates additional parameters for each outgoing route context before dial call in the extensions.conf file.
      *
-     * @param array $rout
+     * @param array $rout The outgoing route.
      *
-     * @return string
+     * @return string The generated additional parameters.
      */
     public function generateOutRoutContext(array $rout): string
     {
@@ -83,12 +90,12 @@ class ExtensionsAnnounceRecording extends CoreConfigClass
     }
 
     /**
-     * Prepares additional parameters for each incoming context for each incoming route before dial in the
-     * extensions.conf file
+     * Generates additional parameters for each incoming context for each incoming route before dial in the
+     * extensions.conf file.
      *
-     * @param string $rout_number
+     * @param string $rout_number The incoming route number.
      *
-     * @return string
+     * @return string The generated additional parameters.
      */
     public function generateIncomingRoutBeforeDial(string $rout_number): string
     {

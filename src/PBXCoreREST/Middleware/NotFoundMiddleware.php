@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ class NotFoundMiddleware extends Injectable implements MiddlewareInterface
     /**
      * Checks if the resource was found
      */
-    public function beforeNotFound()
+    public function beforeNotFound(): bool
     {
         $this->halt(
             $this->application,
@@ -58,7 +58,7 @@ class NotFoundMiddleware extends Injectable implements MiddlewareInterface
      *
      * @return bool
      */
-    public function call(Micro $api)
+    public function call(Micro $api): bool
     {
         return true;
     }

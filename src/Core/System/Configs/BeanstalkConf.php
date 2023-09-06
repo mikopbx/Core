@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,15 +20,25 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class BeanstalkConf
+ *
+ * Represents the Beanstalk configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class BeanstalkConf extends Injectable
 {
     public const PROC_NAME = 'beanstalkd';
 
     /**
-     * Restarts Beanstalk server
+     * Restarts Beanstalk server.
+     *
+     * This method retrieves the Beanstalk configuration from the dependency injection container,
+     * and restarts the Beanstalk server using the retrieved configuration. If the server fails to start,
+     * it waits for 10 seconds and retries the startup process.
      */
     public function reStart(): void
     {

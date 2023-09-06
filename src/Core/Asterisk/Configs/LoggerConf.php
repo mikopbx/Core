@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,43 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
-class LoggerConf extends CoreConfigClass
+/**
+ * Class LoggerConf
+ *
+ * Represents the configuration for logger.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class LoggerConf extends AsteriskConfigClass
 {
+    /**
+     * The module hook applying priority.
+     *
+     * @var int
+     */
+    public int $priority = 1000;
+
+    /**
+     * The description of the configuration.
+     *
+     * @var string
+     */
     protected string $description = 'logger.conf';
 
+
+    /**
+     * Generates the configuration for the logger.conf file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
         $logDir = System::getLogDir() . '/asterisk/';
+
+        // Create the log directory if it doesn't exist
         Util::mwMkdir($logDir);
+
+        // Generate the configuration content
         $conf = "[general]\n";
         $conf .= "queue_log = no\n";
         $conf .= "dateformat = %F %T\n";
@@ -43,6 +72,7 @@ class LoggerConf extends CoreConfigClass
         $conf .= "{$logDir}verbose => verbose(3),dtmf,fax,warning\n";
         $conf .= "\n";
 
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/logger.conf', $conf);
     }
 }

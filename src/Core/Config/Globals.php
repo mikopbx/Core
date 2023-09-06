@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,25 +17,29 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+/**
+ * This script is used for CLI only.
+ */
+
 declare(strict_types=1);
 namespace MikoPBX\Core\Config;
 
-use MikoPBX\Core\System\SentryErrorLogger;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Providers\RegistryProvider;
+use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
+use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
 use Phalcon\Di\FactoryDefault\Cli;
 
-if(PHP_SAPI !== "cli"){
-    // Этот скрипт только для CLI.
+if (PHP_SAPI !== "cli") {
+    // This script is only for CLI.
     return;
 }
+
+
 // Initialize dependency injector
 $di = new Cli();
 
-// Register classes, namespaces, additional libraries with lazzy load
+// Register classes, namespaces, additional libraries with lazy load
 require_once __DIR__ . '/../../../src/Common/Config/ClassLoader.php';
 
-// Initialize sentry error logger
-$errorLogger = new SentryErrorLogger('pbx-core-workers');
-$errorLogger->init();
-
 RegisterDIServices::init();
-

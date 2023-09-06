@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,13 @@ use Phalcon\Di\ServiceProviderInterface;
 
 /**
  * Main database connection is created based in the parameters defined in the configuration file
+ *
+ *  @package MikoPBX\Common\Providers
+ *
+ * @method bool begin(bool $nesting = true)
+ * @method bool commit(bool $nesting = true)
+ * @method bool rollback(bool $nesting = true)
+ *
  */
 class MainDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
@@ -34,7 +41,7 @@ class MainDatabaseProvider extends DatabaseProviderBase implements ServiceProvid
     /**
      * Register db service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {

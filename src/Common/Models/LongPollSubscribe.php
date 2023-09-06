@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,31 +35,44 @@ class LongPollSubscribe extends ModelsBase
     public $id;
 
     /**
+     * Action associated with the long poll subscription
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $action = '';
 
     /**
+     * Data associated with the long poll subscription
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $data = '';
 
     /**
+     * Channel for the long poll subscription
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $channel = '';
 
     /**
+     * Timeout duration for the long poll subscription
+     *
      * @Column(type="integer", nullable=true)
      */
     public ?string $timeout = '';
 
     /**
-     *  @Column(type="string", length=1, nullable=true, default="0")
+     * Enable flag for the long poll subscription
+     *
+     * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $enable = '0';
 
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_LongPollSubscribe');

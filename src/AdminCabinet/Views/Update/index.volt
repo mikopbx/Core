@@ -7,12 +7,18 @@
             <i class="icon attention"></i>
         </div>
         <div class="description">
-            {{ t._('upd_UpdateDescription') }}
+            {{ t._('upd_UpdateDescription') }}<br><br>
+            {{ t._('upd_EnterIHaveBackupPhrasePreText') }} &nbsp&nbsp<b>{{ t._('upd_EnterIHaveBackupPhrase') }}</b>
+            <br><br>
+            <div class="ui input fluid max-width-400">
+                <label for="i-have-backup-input"></label>
+                <input type="text" name="i-have-backup-input" value=""/>
+            </div>
         </div>
     </div>
     <div class="actions">
         <div class="ui negative button">{{ t._('upd_Cancel') }}</div>
-        <div class="ui positive button">{{ t._('upd_Update') }}</div>
+        <div class="ui positive disabled button" id="start-upgrade-button">{{ t._('upd_Update') }}</div>
     </div>
 </div>
 <form class="ui large grey segment form" id="upgrade-form">
@@ -31,7 +37,7 @@
             <div class="bar">
                 <div class="progress"></div>
             </div>
-            <div class="label"></div>
+            <div class="label" id="upload-progress-bar-label"></div>
         </div>
     </div>
     {{ partial("partials/submitbutton",[

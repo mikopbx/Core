@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,14 +25,21 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
+use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
 use Throwable;
 
 /**
- * @property \MikoPBX\Service\License license
+ *  Utility class for managing extension state.
  *
+ * @property \MikoPBX\Service\License license
+ * @property \Phalcon\Config\Adapter\Json config
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ *
+ * @package MikoPBX\Modules
  */
 class PbxExtensionState extends Injectable
 {
@@ -43,19 +50,26 @@ class PbxExtensionState extends Injectable
     private $modulesRoot;
 
 
+    /**
+     * PbxExtensionState constructor.
+     *
+     * @param string $moduleUniqueID The unique ID of the module
+     */
     public function __construct(string $moduleUniqueID)
     {
         $this->configClass    = null;
         $this->messages       = [];
         $this->moduleUniqueID = $moduleUniqueID;
         $this->modulesRoot    = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('core.modulesDir');
+
+        // Check if module.json file exists
         $moduleJson           = "{$this->modulesRoot}/{$this->moduleUniqueID}/module.json";
         if ( ! file_exists($moduleJson)) {
             $this->messages[] = 'module.json not found for module ' . $this->moduleUniqueID;
-
             return;
         }
 
+        // Read and parse module.json
         $jsonString            = file_get_contents($moduleJson);
         $jsonModuleDescription = json_decode($jsonString, true);
         if ( ! is_array($jsonModuleDescription)) {
@@ -64,21 +78,27 @@ class PbxExtensionState extends Injectable
             return;
         }
 
+        // Extract the lic_feature_id if present, otherwise set it to 0
         if (array_key_exists('lic_feature_id', $jsonModuleDescription)) {
             $this->lic_feature_id = $jsonModuleDescription['lic_feature_id'];
         } else {
             $this->lic_feature_id = 0;
         }
+
+        // Reload the config class
         $this->reloadConfigClass();
     }
 
     /**
-     * Recreates module's ClassNameConf class
+     * Reloads the configuration class for the module.
+     * The configuration class is determined based on the module's unique ID.
+     * If the configuration class exists, it is instantiated and assigned to the `configClass` property.
+     * If the configuration class does not exist, the `configClass` property is set to `null`.
      */
     private function reloadConfigClass(): void
     {
         $class_name      = str_replace('Module', '', $this->moduleUniqueID);
-        $configClassName = "\\Modules\\{$this->moduleUniqueID}\\Lib\\{$class_name}Conf";
+        $configClassName = "Modules\\{$this->moduleUniqueID}\\Lib\\{$class_name}Conf";
         if (class_exists($configClassName)) {
             $this->configClass = new $configClassName();
         } else {
@@ -87,17 +107,18 @@ class PbxExtensionState extends Injectable
     }
 
     /**
-     * Enables extension module with checking relations
+     * Enables the extension module by checking relations.
      *
+     * @return bool True if the module was successfully enabled, false otherwise.
      */
     public function enableModule(): bool
     {
         if ($this->lic_feature_id > 0) {
-            // Try to capture feature if it set
+            // Try to capture the feature if it is set
             $result = $this->license->featureAvailable($this->lic_feature_id);
             if ($result['success'] === false) {
                 $textError = (string)($result['error']??'');
-                $this->messages[] = $this->license->translateLicenseErrorMessage($textError);
+                $this->messages['license'][] = $this->license->translateLicenseErrorMessage($textError);
 
                 return false;
             }
@@ -107,15 +128,15 @@ class PbxExtensionState extends Injectable
             return false;
         }
 
-        // Если ошибок нет, включаем Firewall и модуль
+        // If there are no errors, enable the firewall and the module
         if ( ! $this->enableFirewallSettings()) {
-            $this->messages[] = 'Error on enable firewall settings';
+            $this->messages[] = $this->translation->_("ext_ErrorOnEnableFirewallSettings");
 
             return false;
         }
         if ($this->configClass !== null
-            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE)) {
-            call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE]);
+            && method_exists($this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_ENABLE)) {
+            call_user_func([$this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_ENABLE]);
         }
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module !== null) {
@@ -127,25 +148,30 @@ class PbxExtensionState extends Injectable
             $this->messages = array_merge($this->messages, $this->configClass->getMessages());
         }
 
+        // Cleanup volt cache, because them module can interact with volt templates
+        $this->cleanupVoltCache();
+
         return true;
     }
 
     /**
-     * On enable module this method restores previous firewall settings or sets default state.
+     * Enables the firewall settings for the module by restoring previous settings or setting the default state.
      *
-     * @return bool
+     * @return bool True if the firewall settings were successfully enabled, false otherwise.
      */
     protected function enableFirewallSettings(): bool
     {
         if ($this->configClass === null
-            || method_exists($this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES) === false
-            || call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]) === []
+            || method_exists($this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES) === false
+            || call_user_func([$this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES]) === []
         ) {
             return true;
         }
 
         $this->db->begin(true);
-        $defaultRules         = call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]);
+        $defaultRules         = call_user_func([$this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES]);
+
+        // Retrieve previous rule settings
         $previousRuleSettings = PbxSettings::findFirstByKey("{$this->moduleUniqueID}FirewallSettings");
         $previousRules        = [];
         if ($previousRuleSettings !== null) {
@@ -196,40 +222,48 @@ class PbxExtensionState extends Injectable
     }
 
     /**
-     * Disables extension module with checking relations
+     * Disables the extension module and performs necessary checks.
      *
+     * @return bool True if the module was successfully disabled, false otherwise.
      */
     public function disableModule(): bool
     {
+        // Perform necessary checks before disabling the module
         $success = $this->makeBeforeDisableTest();
         if ( ! $success) {
             return false;
         }
-        // Если ошибок нет, выключаем Firewall и модуль
+
+        // Disable firewall settings and the module
         if ( ! $this->disableFirewallSettings()) {
-            $this->messages[] = 'Error on disable firewall settings';
+            $this->messages[] = $this->translation->_("ext_ErrorOnDisableFirewallSettings");
 
             return false;
         }
+
+        // Call the onBeforeModuleDisable method if available in the configClass
         if ($this->configClass !== null
-            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE)) {
-            call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE]);
+            && method_exists($this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_DISABLE)) {
+            call_user_func([$this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_DISABLE]);
         }
+
+        // Find and update the module's disabled flag in the database
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module !== null) {
             $module->disabled = '1';
             $module->save();
         }
 
+        // Merge any additional messages from the configClass
         if ($this->configClass !== null
             && method_exists($this->configClass, 'getMessages')) {
             $this->messages = array_merge($this->messages, $this->configClass->getMessages());
         }
 
-        // Kill module workers
+        // Kill module workers if specified in the configClass
         if ($this->configClass !== null
-            && method_exists($this->configClass, ConfigClass::GET_MODULE_WORKERS)) {
-            $workersToKill = call_user_func([$this->configClass, ConfigClass::GET_MODULE_WORKERS]);
+            && method_exists($this->configClass, SystemConfigInterface::GET_MODULE_WORKERS)) {
+            $workersToKill = call_user_func([$this->configClass, SystemConfigInterface::GET_MODULE_WORKERS]);
             if (is_array($workersToKill)) {
                 foreach ($workersToKill as $moduleWorker) {
                     Processes::killByName($moduleWorker['worker']);
@@ -237,42 +271,47 @@ class PbxExtensionState extends Injectable
             }
         }
 
+        // Cleanup volt cache, because them module can interact with volt templates
+        $this->cleanupVoltCache();
+
         return true;
     }
 
     /**
-     * Makes before disable test to check dependency
+     * Performs necessary checks before disabling the module.
      *
-     * @return bool
+     * @return bool True if the checks pass and the module can be disabled, false otherwise.
      */
     private function makeBeforeDisableTest(): bool
     {
-        // Проверим, нет ли настроенных зависимостей у других модулей
-        // Попробуем удалить все настройки модуля
+        // Check if there are any configured dependencies in other modules
+        // Attempt to remove all module settings
+        // Start a temporary transaction for the checks
         $this->db->begin(true);
         $success = true;
 
         if ($this->configClass !== null
-            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE)
-            && call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_DISABLE]) === false) {
+            && method_exists($this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_DISABLE)
+            && call_user_func([$this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_DISABLE]) === false) {
+            // Call the module's ON_BEFORE_MODULE_DISABLE method and check the result
             $messages = $this->configClass->getMessages();
             if ( ! empty($messages)) {
                 $this->messages = $messages;
             } else {
-                $this->messages[] = 'Error on the Module enable function at onBeforeModuleDisable';
+                $this->messages[] = $this->translation->_("ext_ErrorOnModuleBeforeDisable");
             }
-            $this->db->rollback(true); // Откатываем временную транзакцию
+            $this->db->rollback(true); // Rollback the transaction
 
             return false;
         }
 
-        // Попытаемся удалить текущий модуль, если ошибок не будет, значит можно выклчать
-        // Например на модуль может ссылаться запись в таблице Extensions, которую надо удалить при отключении
-        // модуля
+        // Attempt to remove the current module, if no errors occur, it can be disabled
+        // For example, the module may be referenced by a record in the Extensions table,
+        // which needs to be deleted when the module is disabled
         $modelsFiles = glob("{$this->modulesRoot}/{$this->moduleUniqueID}/Models/*.php", GLOB_NOSORT);
         foreach ($modelsFiles as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
             try {
                 if ( ! class_exists($moduleModelClass)) {
                     continue;
@@ -288,8 +327,8 @@ class PbxExtensionState extends Injectable
                 foreach ($records as $record) {
                     $relations = $record->_modelsManager->getRelations(get_class($record));
                     if(empty($relations)){
-                        // Если в модели не описаны $relations, то не обрабатываем.
-                        // Для больших таблиц потенциальная проблема.
+                        // If the model does not have relations, skip it
+                        // Potential performance issue for large tables
                         break;
                     }
                     if ( ! $record->beforeDelete()) {
@@ -300,7 +339,7 @@ class PbxExtensionState extends Injectable
                     }
                 }
             } catch (Throwable $exception) {
-                $this->messages[] = $exception->getMessage();
+                $this->messages['error'][] = $exception->getMessage();
                 $success          = false;
             }
         }
@@ -308,40 +347,47 @@ class PbxExtensionState extends Injectable
             $this->messages = [];
         }
 
-        // Откатываем временную транзакцию
+        // Rollback the transaction
         $this->db->rollback(true);
 
         return $success;
     }
 
     /**
-     * Saves firewall state before disable module
+     * Disables the firewall settings for the module.
      *
-     * @return bool
+     * @return bool True if the firewall settings are disabled successfully, false otherwise.
      */
     protected function disableFirewallSettings(): bool
     {
         if ($this->configClass === null
-            || method_exists($this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES) === false
-            || call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]) === []
+            || method_exists($this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES) === false
+            || call_user_func([$this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES]) === []
         ) {
             return true;
         }
         $errors       = [];
         $savedState   = [];
-        $defaultRules = call_user_func([$this->configClass, ConfigClass::GET_DEFAULT_FIREWALL_RULES]);
+        $defaultRules = call_user_func([$this->configClass, SystemConfigInterface::GET_DEFAULT_FIREWALL_RULES]);
+
+        // Retrieve the category key and current rules for the firewall
         $key          = strtoupper(key($defaultRules));
         $currentRules = FirewallRules::findByCategory($key);
+
+        // Store the current firewall settings for later restoration
         foreach ($currentRules as $detailRule) {
             $savedState[$detailRule->networkfilterid] = $detailRule->action;
         }
         $this->db->begin(true);
+
+        // Delete the current firewall rules
         if ( ! $currentRules->delete()) {
-            $this->messages[] = $currentRules->getMessages();
+            $this->messages['error'][] = $currentRules->getMessages();
 
             return false;
         }
 
+        // Save the previous firewall settings
         $previousRuleSettings = PbxSettings::findFirstByKey("{$this->moduleUniqueID}FirewallSettings");
         if ($previousRuleSettings === null) {
             $previousRuleSettings      = new PbxSettings();
@@ -351,8 +397,10 @@ class PbxExtensionState extends Injectable
         if ( ! $previousRuleSettings->save()) {
             $errors[] = $previousRuleSettings->getMessages();
         }
+
+        // Rollback and return false if there are any errors
         if (count($errors) > 0) {
-            $this->messages[] = array_merge($this->messages, $errors);
+            $this->messages['error'][] = array_merge($this->messages, $errors);
             $this->db->rollback(true);
 
             return false;
@@ -374,51 +422,50 @@ class PbxExtensionState extends Injectable
     }
 
     /**
-     * Makes before enable test to check dependency
+     * Performs the necessary checks before enabling the module.
      *
-     * @return bool
+     * @return bool True if the checks passed successfully, false otherwise.
      */
     private function makeBeforeEnableTest(): bool
     {
         $success = true;
-        // Temporary transaction, we will rollback it after checks
+
+        // Start a temporary transaction for the checks
         $this->db->begin(true);
 
-        // Временно включим модуль, чтобы включить все связи и зависимости
-        // Temporary disable module and disable all links
+        // Temporarily enable the module to handle all links and dependencies
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module !== null) {
             $module->disabled = '0';
             $module->save();
         }
 
-        // Если в конфигурационном классе модуля есть функция корректного включения, вызовем ее,
-        // например модуль умной маршртутизации прописывает себя в маршруты
+        // If the module's configuration class contains a function for proper inclusion,
+        // we will invoke it. For example, the intelligent routing module registers itself in the routes.
         //
-        // If module config has special function before enable, we will execute it
-
+        // Execute the "ON_BEFORE_MODULE_ENABLE" function in the module config, if available
         if ($this->configClass !== null
-            && method_exists($this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE)
-            && call_user_func([$this->configClass, ConfigClass::ON_BEFORE_MODULE_ENABLE]) === false) {
+            && method_exists($this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_ENABLE)
+            && call_user_func([$this->configClass, SystemConfigInterface::ON_BEFORE_MODULE_ENABLE]) === false) {
             $messages = $this->configClass->getMessages();
             if ( ! empty($messages)) {
                 $this->messages = $messages;
             } else {
-                $this->messages[] = 'Error on the enableModule function at onBeforeModuleEnable';
+                $this->messages[] = $this->translation->_("ext_ErrorOnModuleBeforeEnable");
             }
-            $this->db->rollback(true); // Откатываем временную транзакцию
+            $this->db->rollback(true); // Rollback the temporary transaction
 
             return false;
         }
 
-        // Проверим нет ли битых ссылок, которые мешают включить модуль
-        // например удалили сотрудника, а модуль указывает на его extension
+        // Check for broken references that prevent enabling the module
+        // For example, if an employee has been deleted and the module references their extension.
         //
         $modelsFiles = glob("{$this->modulesRoot}/{$this->moduleUniqueID}/Models/*.php", GLOB_NOSORT);
         $translator  = $this->di->getShared('translation');
         foreach ($modelsFiles as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
 
             try {
                 if ( ! class_exists($moduleModelClass)) {
@@ -435,17 +482,17 @@ class PbxExtensionState extends Injectable
                 foreach ($records as $record) {
                     $relations = $record->_modelsManager->getRelations(get_class($record));
                     if(empty($relations)){
-                        // Если в модели не описаны $relations, то не обрабатываем.
-                        // Для больших таблиц потенциальная проблема.
+                        // If no relations are defined in the model, skip processing.
+                        // This can be a potential issue for large tables.
                         break;
                     }
                     foreach ($relations as $relation) {
                         $alias        = $relation->getOption('alias');
                         $checkedValue = $record->$alias;
                         $foreignKey   = $relation->getOption('foreignKey');
-                        // В модуле указан заперт на NULL в описании модели,
-                        // а параметр этот не заполнен в настройках модуля
-                        // например в модуле маршрутизации, резервный номер
+                        // If the module has a "NULL" restriction in the model description,
+                        // but the corresponding parameter is not filled in the module settings,
+                        // e.g., a backup number in the routing module
                         if ($checkedValue === false
                             && array_key_exists('allowNulls', $foreignKey)
                             && $foreignKey['allowNulls'] === false
@@ -461,7 +508,7 @@ class PbxExtensionState extends Injectable
                     }
                 }
             } catch (Throwable $exception) {
-                $this->messages[] = $exception->getMessage();
+                $this->messages['error'][] = $exception->getMessage();
                 $success          = false;
             }
         }
@@ -469,10 +516,27 @@ class PbxExtensionState extends Injectable
             $this->messages = [];
         }
 
-        // Откатываем временную транзакцию
+        // Rollback the temporary transaction
         $this->db->rollback(true);
 
         return $success;
+    }
+
+    /**
+     * Deletes volt cache files.
+     *
+     * @return void
+     */
+    private function cleanupVoltCache():void
+    {
+        $cacheDirs = [];
+        $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
+        $rmPath = Util::which('rm');
+        foreach ($cacheDirs as $cacheDir) {
+            if (!empty($cacheDir)) {
+                Processes::mwExec("{$rmPath} -rf {$cacheDir}/*");
+            }
+        }
     }
 
 }

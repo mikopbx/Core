@@ -1,15 +1,17 @@
-{{ link_to("asterisk-managers/modify", '<i class="add circle icon"></i> '~t._('am_AddNewUser'), "class": "ui blue button") }}
+{% if isAllowed('save') %}
+    {{ link_to("asterisk-managers/modify", '<i class="add circle icon"></i> '~t._('am_AddNewUser'), "class": "ui blue button") }}
+{% endif %}
 
     {% for user in amiUsers %}
         {% if loop.first %}
-            <table class="ui  very compact table" id="ami-users-table">
+            <table class="ui  very compact unstackable table" id="ami-users-table">
             <thead>
             <tr>
                 <th>{{ t._('am_TableColumnName') }}</th>
                 <th>{{ t._('am_TableColumnRead') }}</th>
                 <th>{{ t._('am_TableColumnWrite') }}</th>
-                <th>{{ t._('am_TableColumnNetworkFilter') }}</th>
-                <th>{{ t._('am_TableColumnDescription') }}</th>
+                <th class="hide-on-mobile">{{ t._('am_TableColumnNetworkFilter') }}</th>
+                <th class="hide-on-mobile">{{ t._('am_TableColumnDescription') }}</th>
 
                 <th></th>
             </tr>
@@ -47,12 +49,12 @@
                 {% if ( user['system']=='write' OR user['system']=='readwrite' ) %}<br>system{% endif %}
                 {% if ( user['verbose']=='write' OR user['verbose']=='readwrite' ) %}<br>verbose{% endif %}
             </td>
-            <td>
+            <td class="hide-on-mobile">
                 {% if ( user['networkfilterid']>0 ) %}
                     {{ networkFilters[user['networkfilterid']] }}
                 {% endif %}
             </td>
-            <td>
+            <td class="hide-on-mobile">
                 {% if not (user['description'] is empty) %}
                     <div class="ui basic icon button" data-content="{{ user['description'] }}" data-position="top right"
                          data-variation="wide">

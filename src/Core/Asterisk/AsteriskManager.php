@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -125,18 +125,17 @@ class AsteriskManager
     }
 
     /**
-     * Проверка работы сервиса AMI.
+     * Ping the AMI listener and wait for a response.
      *
-     * @param string $pingTube
-     *
-     * @return array|bool
+     * @param string $pingTube The name of the ping tube.
+     * @return bool True if a response is received within the timeout, false otherwise.
      */
-    public function pingAMIListener($pingTube = 'CdrConnector')
+    public function pingAMIListener(string $pingTube = 'CdrConnector'):bool
     {
-        // Установим фильтр на события.
+        // Set event filter.
         $params = ['Operation' => 'Add', 'Filter' => 'Event: UserEvent'];
         $this->sendRequestTimeout('Filter', $params);
-        // Отправим пинг.
+        // Send the ping.
         $req        = '';
         $parameters = [
             'Action'    => 'UserEvent',
@@ -147,16 +146,16 @@ class AsteriskManager
         }
         $req .= "\r\n";
         if ( ! is_resource($this->socket)) {
-            return [];
+            return false;
         }
         $this->sendDataToSocket($req);
 
-        // Замеряем время.
+        // Measure the time.
         $time_start = $this->microtimeFloat();
         $result     = false;
         $timeout    = false;
 
-        // Слушаем события, ждем ответ.
+        // Listen for events and wait for a response.
         do {
             $type       = '';
             $parameters = [];
@@ -181,13 +180,13 @@ class AsteriskManager
                 'event' === $type
                 && $parameters['Event'] === 'UserEvent'
                 && "{$pingTube}Pong" === $parameters['UserEvent']) {
-                // Ответ получен.
+                // Response received.
                 $result = true;
                 break;
             }
             $time = $this->microtimeFloat() - $time_start;
             if ($time > 5) {
-                // Таймаут ожидания.
+                // Timeout reached.
                 break;
             }
         } while ( ! $timeout);
@@ -196,19 +195,18 @@ class AsteriskManager
     }
 
     /**
-     * Send a request
+     * Send a request with timeout to the socket.
      *
-     * @param string $action
-     * @param array  $parameters
-     *
-     * @return array of parameters
+     * @param string $action The action to perform.
+     * @param array $parameters The parameters for the request (optional).
+     * @return array The response from the socket.
      */
     public function sendRequestTimeout($action, $parameters = [])
     {
         if ( ! is_resource($this->socket) && !$this->connectDefault()) {
             return [];
         }
-        // Прописываем обязательные поля.
+        // Set the mandatory fields.
         $parameters['Action']   = $action;
         $parameters['ActionID'] = $parameters['ActionID'] ?? "{$action}_".getmypid();
         $req = "";
@@ -232,6 +230,11 @@ class AsteriskManager
         return $response;
     }
 
+    /**
+     * Connect to the default socket.
+     *
+     * @return bool True if the connection to the default socket is successful and logged in, false otherwise.
+     */
     private function connectDefault():bool{
         $this->connect(null, null, null, $this->listenEvents);
         return $this->loggedIn();
@@ -247,7 +250,7 @@ class AsteriskManager
      *
      * @return array of parameters, empty on timeout
      */
-    public function waitResponse($allow_timeout = false): array
+    public function waitResponse(bool $allow_timeout = false): array
     {
         $timeout = false;
         do {
@@ -279,9 +282,10 @@ class AsteriskManager
     }
 
     /**
-     * Получение первичных данных из соекта.
-     * @param $response
-     * @return bool
+     * Get the initial data from the socket response.
+     *
+     * @param array $response The variable to store the response data.
+     * @return bool True if the initial data was obtained successfully, false otherwise.
      */
     private function waitResponseGetInitialData(& $response):bool{
         if ( !is_resource($this->socket) && !$this->connectDefault()) {
@@ -302,13 +306,15 @@ class AsteriskManager
     }
 
     /**
-     * Ответ получен, обработка ответа.
-     * @param $type
-     * @param $timeout
-     * @param $allow_timeout
-     * @param $parameters
+     * Process the response based on the event type.
+     *
+     * @param string $type The event type.
+     * @param bool $timeout The timeout.
+     * @param bool $allow_timeout Indicates whether the timeout is allowed.
+     * @param array $parameters The parameters containing the sub-data.
+     * @return void
      */
-    private function waitResponseProcessResponse($type, & $timeout, $allow_timeout, $parameters):void{
+    private function waitResponseProcessResponse($type, &$timeout, $allow_timeout, $parameters):void{
         switch ($type) {
             case '':
                 // Timeout occured
@@ -323,11 +329,13 @@ class AsteriskManager
     }
 
     /**
-     * Получаем тип ивента.
-     * @param $parameters
-     * @param $buffer
-     * @param $a
-     * @param $type
+     * Get the event type from the response buffer.
+     *
+     * @param array $parameters The parameters containing the sub-data.
+     * @param string $buffer The response buffer.
+     * @param int $a The position of the colon character in the buffer.
+     * @param string $type The variable to store the event type.
+     * @return void
      */
     private function waitResponseGetEventType($parameters, $buffer, $a, & $type):void{
         if ( ! count($parameters)) {
@@ -336,9 +344,11 @@ class AsteriskManager
     }
 
     /**
-     * Получение мноопакетного ответа.
-     * @param $event_text
-     * @param $parameters
+     * Wait for the follows part of a specific event and retrieve the data.
+     *
+     * @param string $event_text The text of the event.
+     * @param array $parameters The parameters to store the data.
+     * @return void
      */
     private function waitResponseReadFollowsPart($event_text, & $parameters):void{
         if ( ($event_text === 'Follows') && !count($parameters)) {
@@ -353,38 +363,36 @@ class AsteriskManager
     }
 
     /**
-     * Индивидуальная обработка для ряда запросов.
-     * Многопакетные ответы.
-     * @param $event_text
-     * @param $parameters
+     * Wait for the complete part of a specific event and retrieve the sub-data.
+     *
+     * @param string $event_text The text of the event.
+     * @param array $parameters The parameters to store the sub-data.
+     * @return void
      */
-    private function waitResponseReadCompletePart($event_text, & $parameters):void{
+    private function waitResponseReadCompletePart($event_text, &$parameters):void{
         $settings = [
-            'Queue status will follow'          => 'QueueStatusComplete',
-            'Channels will follow'              => 'CoreShowChannelsComplete',
-            'Result will follow'                => 'DBGetComplete',
-            'Parked calls will follow'          => 'ParkedCallsComplete',
-            'Peer status list will follow'      => 'PeerlistComplete',
-            'IAX Peer status list will follow'  => 'PeerlistComplete',
-            'Registrations will follow'         => 'RegistrationsComplete',
-            'Meetme user list will follow'      => 'MeetmeListComplete',
-            'Meetme conferences will follow'    => 'MeetmeListRoomsComplete',
-            'Following are Events for each object associated with the Endpoint' => 'EndpointDetailComplete',
-            'Following are Events for each Outbound registration'               => 'OutboundRegistrationDetailComplete',
-            'A listing of Endpoints follows, presented as EndpointList events'  => 'EndpointListComplete'
+            'Queue status will follow'          => ['QueueStatusComplete'],
+            'Channels will follow'              => ['CoreShowChannelsComplete'],
+            'Result will follow'                => ['DBGetComplete', 'DBGetTreeComplete'],
+            'Parked calls will follow'          => ['ParkedCallsComplete'],
+            'Peer status list will follow'      => ['PeerlistComplete'],
+            'IAX Peer status list will follow'  => ['PeerlistComplete'],
+            'Registrations will follow'         => ['RegistrationsComplete'],
+            'Meetme user list will follow'      => ['MeetmeListComplete'],
+            'Meetme conferences will follow'    => ['MeetmeListRoomsComplete'],
+            'Following are Events for each object associated with the Endpoint' => ['EndpointDetailComplete'],
+            'Following are Events for each Outbound registration'               => ['OutboundRegistrationDetailComplete'],
+            'A listing of Endpoints follows, presented as EndpointList events'  => ['EndpointListComplete']
         ];
-        $eventsAsNotArray = [];//[ 'EndpointDetailComplete' ];
-
-        $endString = $settings[$event_text]??false;
-        if($endString !== false){
-            $NotArray = !in_array($endString,$eventsAsNotArray);
-            $this->waitResponseGetSubData($parameters, $endString, $NotArray);
+        if(isset($settings[$event_text])){
+            $this->waitResponseGetSubData($parameters, $settings[$event_text]);
         }
     }
 
     /**
-     * Читает данные из сокета. Если возникает ошибка возвращает ее.
-     * @return array
+     * Get data from the socket.
+     *
+     * @return array An array containing the data from the socket response or an error message.
      */
     private function getDataFromSocket() {
         $response = [];
@@ -409,8 +417,9 @@ class AsteriskManager
     }
 
     /**
-     * Читает данные из сокета
-     * @return string
+     * Get string data from the socket response.
+     *
+     * @return string The string data from the socket response.
      */
     private function getStringDataFromSocket() {
         $response = $this->getDataFromSocket();
@@ -418,9 +427,10 @@ class AsteriskManager
     }
 
     /**
-     * Отправляет данные в сокет.
-     * @param $req
-     * @return bool
+     * Send data to the socket.
+     *
+     * @param string $req The data to send.
+     * @return bool True if the data was sent successfully, false otherwise.
      */
     private function sendDataToSocket($req) : bool{
         if(!is_resource($this->socket)){
@@ -438,11 +448,15 @@ class AsteriskManager
         return $result;
     }
 
-    private function waitResponseGetSubData(&$parameters, $end_string = '', $event_as_array = true): void
+    /**
+     * Wait for response and get sub-data from the socket.
+     *
+     * @param array $parameters The parameters to store the sub-data.
+     * @param array $end_string The string indicating the end of the response (optional).
+     * @return void
+     */
+    private function waitResponseGetSubData(array &$parameters, array $end_string): void
     {
-        if ( ! is_array($parameters)) {
-            $parameters = [];
-        }
         if (empty($end_string)) {
             return;
         }
@@ -452,23 +466,24 @@ class AsteriskManager
             $value = '';
             $buff  = $this->getStringDataFromSocket().$value;
             $a_pos = strpos($buff, ':');
-            if ( ! $a_pos) {
-                if (!empty($m)) {
-                    if ($event_as_array) {
-                        $parameters['data'][$m['Event']][] = $m;
-                    } else {
-                        $parameters['data'][$m['Event']] = $m;
-                    }
+            if (!$a_pos) {
+                if(empty($m)){
+                    continue;
                 }
-                $m = [];
+                if($parameters['ActionID'] === $m['ActionID']){
+                    // This is the event for the last request of the current worker
+                    $parameters['data'][$m['Event']][] = $m;
+                    $m = [];
+                }elseif(isset($m['Event'])){
+                    // These are other events not related to the last request
+                    $this->processEvent($parameters);
+                }
                 continue;
             }
-
             $key   = trim(substr($buff, 0, $a_pos));
             $value = trim(substr($buff, $a_pos + 1));
-
             $m[$key] = $value;
-        } while ($value !== $end_string);
+        } while (!in_array($value, $end_string, true));
     }
 
     /**
@@ -567,7 +582,7 @@ class AsteriskManager
      * @example examples/sip_show_peer.php Get information about a sip peer
      *
      */
-    public function connect($server = null, $username = null, $secret = null, $events = 'on')
+    public function connect($server = null, $username = null, $secret = null, $events = 'on'): bool
     {
         $this->listenEvents = $events;
         // use config if not specified
@@ -766,11 +781,10 @@ class AsteriskManager
     }
 
     /**
-     * Возвращает массив активных каналов.
+     * Get the channels information.
      *
-     * @param bool $group
-     *
-     * @return array
+     * @param bool $group Indicates whether to group the channels by Linkedid (optional, default is true).
+     * @return array The channels information.
      */
     public function GetChannels($group = true)
     {
@@ -826,9 +840,9 @@ class AsteriskManager
     }
 
     /**
-     * Возвращает регистрации пиров.
+     * Get the IAX registry information.
      *
-     * @return array
+     * @return array The IAX registry information.
      */
     public function IAXregistry(): array
     {
@@ -858,12 +872,11 @@ class AsteriskManager
     }
 
     /**
-     * Отправка event в AMI.
+     * Send a UserEvent to Asterisk.
      *
-     * @param string $name
-     * @param array  $headers
-     *
-     * @return array
+     * @param string $name The name of the UserEvent.
+     * @param array $headers The headers for the UserEvent.
+     * @return array The response from Asterisk.
      */
     public function UserEvent($name, $headers)
     {
@@ -1300,9 +1313,9 @@ class AsteriskManager
     }
 
     /**
-     * Полученире текущих регистраций.
+     * Get the SIP registry information.
      *
-     * @return array
+     * @return array The SIP registry information.
      */
     public function getSipRegistry()
     {
@@ -1323,9 +1336,9 @@ class AsteriskManager
     }
 
     /**
-     * Полученире текущих регистраций.
+     * Get the PJSIP registry information.
      *
-     * @return array
+     * @return array The PJSIP registry information.
      */
     public function getPjSipRegistry(): array
     {
@@ -1348,9 +1361,9 @@ class AsteriskManager
     }
 
     /**
-     * Полученире статусов пиров.
+     * Get the PJSIP peers information.
      *
-     * @return array
+     * @return array The PJSIP peers information.
      */
     public function getPjSipPeers(): array
     {
@@ -1381,9 +1394,9 @@ class AsteriskManager
     }
 
     /**
-     * Получение статусов пиров.
+     * Get the SIP peers information.
      *
-     * @return array
+     * @return array The SIP peers information.
      */
     public function getSipPeers():array
     {
@@ -1404,11 +1417,10 @@ class AsteriskManager
     }
 
     /**
-     * Получение статуса конкретного пира.
+     * Get the SIP peer information.
      *
-     * @param $peer
-     *
-     * @return array
+     * @param string $peer The peer name.
+     * @return array The SIP peer information.
      */
     public function getSipPeer($peer)
     {
@@ -1422,12 +1434,11 @@ class AsteriskManager
     }
 
     /**
-     * Получение статуса конкретного пира.
+     * Get the PJSIP peer information.
      *
-     * @param $peer
-     * @param string $prefix
-     *
-     * @return array
+     * @param string $peer The peer name.
+     * @param string $prefix The prefix for the peer (optional).
+     * @return array The PJSIP peer information.
      */
     public function getPjSipPeer($peer, string $prefix = ''):array
     {

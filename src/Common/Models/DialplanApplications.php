@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,69 +40,105 @@ class DialplanApplications extends ModelsBase
     public $id;
 
     /**
+     * Unique identifier for the dialplan application
+     *
      * @Primary
      * @Column(type="string", nullable=true)
      */
     public ?string $uniqid = '';
 
     /**
+     * Name of the dialplan application
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $name = '';
 
     /**
+     * Extension associated with the dialplan application
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $extension = '';
 
     /**
+     * Hint for the dialplan application
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $hint = '';
 
     /**
+     * Application logic for the dialplan application
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $applicationlogic = '';
 
     /**
+     * Type of the dialplan application
+     *
      * @Column(type="string", nullable=true) {'plaintext'|'php'}
      */
-    public ?string $type='plaintext';
+    public ?string $type = 'plaintext';
 
     /**
+     * Description of the dialplan application
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';
 
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_DialplanApplications');
         parent::initialize();
+
+        // Define the relationship with Extensions model
         $this->belongsTo(
             'extension',
             Extensions::class,
             'number',
             [
-                'alias'      => 'Extensions',
+                'alias' => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::NO_ACTION //DialplanApplications удаляем через его Extension
+                    'action' => Relation::NO_ACTION
+                    // DialplanApplications is deleted through its associated Extension
                 ],
             ]
         );
     }
 
+    /**
+     * Get the decoded application logic from the model.
+     *
+     * @return string The decoded application logic.
+     */
     public function getApplicationlogic(): string
     {
         return base64_decode((string)$this->applicationlogic);
     }
 
+    /**
+     * Set the encoded application logic for the model.
+     *
+     * @param string $text The application logic to be encoded and set.
+     * @return void
+     */
     public function setApplicationlogic($text): void
     {
         $this->applicationlogic = base64_encode($text);
     }
 
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
     public function validation(): bool
     {
         $validation = new Validation();

@@ -1,7 +1,7 @@
 {% for codec in audioCodecs %}
     {% if loop.first %}
         <h4 class="ui header">{{ t._('gs_AudioCodecs') }}</h4>
-        <table class="ui selectable compact table" id="audio-codecs-table">
+        <table class="ui selectable compact unstackable table" id="audio-codecs-table">
         <thead>
         <tr>
             <th class="ui one wide"></th>
@@ -32,7 +32,7 @@
 {% for codec in videoCodecs %}
     {% if loop.first %}
         <h4 class="ui header">{{ t._('gs_VideoCodecs') }}</h4>
-        <table class="ui selectable compact table" id="video-codecs-table">
+        <table class="ui selectable compact unstackable table" id="video-codecs-table">
         <thead>
         <tr>
             <th class="ui one wide"></th>

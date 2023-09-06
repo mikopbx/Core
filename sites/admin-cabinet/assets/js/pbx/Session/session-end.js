@@ -1,0 +1,63 @@
+"use strict";
+
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* global globalRootUrl */
+
+/**
+ * The sessionEnd object handles the session end functionality.
+ *
+ * @module sessionEnd
+ */
+var sessionEnd = {
+  /**
+   * Time in milliseconds before redirect to login page.
+   * @type {number}
+   */
+  timeOut: 5000,
+
+  /**
+   * The id of the timer function.
+   * @type {number}
+   */
+  timeOutHandle: 0,
+
+  /**
+   * Initializes the session end functionality.
+   */
+  initialize: function initialize() {
+    sessionEnd.timeoutHandle = window.setTimeout(sessionEnd.cbAfterTimeout, sessionEnd.timeOut);
+  },
+
+  /**
+   * Callback function triggered after the timeout.
+   * Redirects the user to the session index page.
+   */
+  cbAfterTimeout: function cbAfterTimeout() {
+    window.location = "".concat(globalRootUrl, "session/index");
+  }
+};
+/**
+ * Initializes the logout form on document ready.
+ */
+
+$(document).ready(function () {
+  sessionEnd.initialize();
+});
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9TZXNzaW9uL3Nlc3Npb24tZW5kLmpzIl0sIm5hbWVzIjpbInNlc3Npb25FbmQiLCJ0aW1lT3V0IiwidGltZU91dEhhbmRsZSIsImluaXRpYWxpemUiLCJ0aW1lb3V0SGFuZGxlIiwid2luZG93Iiwic2V0VGltZW91dCIsImNiQWZ0ZXJUaW1lb3V0IiwibG9jYXRpb24iLCJnbG9iYWxSb290VXJsIiwiJCIsImRvY3VtZW50IiwicmVhZHkiXSwibWFwcGluZ3MiOiI7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTs7QUFFQTs7QUFHQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EsSUFBTUEsVUFBVSxHQUFHO0FBRWY7QUFDSjtBQUNBO0FBQ0E7QUFDSUMsRUFBQUEsT0FBTyxFQUFFLElBTk07O0FBUWY7QUFDSjtBQUNBO0FBQ0E7QUFDSUMsRUFBQUEsYUFBYSxFQUFFLENBWkE7O0FBZWY7QUFDSjtBQUNBO0FBQ0lDLEVBQUFBLFVBbEJlLHdCQWtCRjtBQUNUSCxJQUFBQSxVQUFVLENBQUNJLGFBQVgsR0FBMkJDLE1BQU0sQ0FBQ0MsVUFBUCxDQUN2Qk4sVUFBVSxDQUFDTyxjQURZLEVBRXZCUCxVQUFVLENBQUNDLE9BRlksQ0FBM0I7QUFJSCxHQXZCYzs7QUF5QmY7QUFDSjtBQUNBO0FBQ0E7QUFDSU0sRUFBQUEsY0E3QmUsNEJBNkJFO0FBQ2JGLElBQUFBLE1BQU0sQ0FBQ0csUUFBUCxhQUFxQkMsYUFBckI7QUFDSDtBQS9CYyxDQUFuQjtBQWtDQTtBQUNBO0FBQ0E7O0FBQ0FDLENBQUMsQ0FBQ0MsUUFBRCxDQUFELENBQVlDLEtBQVosQ0FBa0IsWUFBTTtBQUNwQlosRUFBQUEsVUFBVSxDQUFDRyxVQUFYO0FBQ0gsQ0FGRCIsInNvdXJjZXNDb250ZW50IjpbIi8qXG4gKiBNaWtvUEJYIC0gZnJlZSBwaG9uZSBzeXN0ZW0gZm9yIHNtYWxsIGJ1c2luZXNzXG4gKiBDb3B5cmlnaHQgwqkgMjAxNy0yMDIzIEFsZXhleSBQb3J0bm92IGFuZCBOaWtvbGF5IEJla2V0b3ZcbiAqXG4gKiBUaGlzIHByb2dyYW0gaXMgZnJlZSBzb2Z0d2FyZTogeW91IGNhbiByZWRpc3RyaWJ1dGUgaXQgYW5kL29yIG1vZGlmeVxuICogaXQgdW5kZXIgdGhlIHRlcm1zIG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBhcyBwdWJsaXNoZWQgYnlcbiAqIHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb247IGVpdGhlciB2ZXJzaW9uIDMgb2YgdGhlIExpY2Vuc2UsIG9yXG4gKiAoYXQgeW91ciBvcHRpb24pIGFueSBsYXRlciB2ZXJzaW9uLlxuICpcbiAqIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0IHdpbGwgYmUgdXNlZnVsLFxuICogYnV0IFdJVEhPVVQgQU5ZIFdBUlJBTlRZOyB3aXRob3V0IGV2ZW4gdGhlIGltcGxpZWQgd2FycmFudHkgb2ZcbiAqIE1FUkNIQU5UQUJJTElUWSBvciBGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRS4gIFNlZSB0aGVcbiAqIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGZvciBtb3JlIGRldGFpbHMuXG4gKlxuICogWW91IHNob3VsZCBoYXZlIHJlY2VpdmVkIGEgY29weSBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgYWxvbmcgd2l0aCB0aGlzIHByb2dyYW0uXG4gKiBJZiBub3QsIHNlZSA8aHR0cHM6Ly93d3cuZ251Lm9yZy9saWNlbnNlcy8+LlxuICovXG5cbi8qIGdsb2JhbCBnbG9iYWxSb290VXJsICovXG5cblxuLyoqXG4gKiBUaGUgc2Vzc2lvbkVuZCBvYmplY3QgaGFuZGxlcyB0aGUgc2Vzc2lvbiBlbmQgZnVuY3Rpb25hbGl0eS5cbiAqXG4gKiBAbW9kdWxlIHNlc3Npb25FbmRcbiAqL1xuY29uc3Qgc2Vzc2lvbkVuZCA9IHtcblxuICAgIC8qKlxuICAgICAqIFRpbWUgaW4gbWlsbGlzZWNvbmRzIGJlZm9yZSByZWRpcmVjdCB0byBsb2dpbiBwYWdlLlxuICAgICAqIEB0eXBlIHtudW1iZXJ9XG4gICAgICovXG4gICAgdGltZU91dDogNTAwMCxcblxuICAgIC8qKlxuICAgICAqIFRoZSBpZCBvZiB0aGUgdGltZXIgZnVuY3Rpb24uXG4gICAgICogQHR5cGUge251bWJlcn1cbiAgICAgKi9cbiAgICB0aW1lT3V0SGFuZGxlOiAwLFxuXG5cbiAgICAvKipcbiAgICAgKiBJbml0aWFsaXplcyB0aGUgc2Vzc2lvbiBlbmQgZnVuY3Rpb25hbGl0eS5cbiAgICAgKi9cbiAgICBpbml0aWFsaXplKCkge1xuICAgICAgICBzZXNzaW9uRW5kLnRpbWVvdXRIYW5kbGUgPSB3aW5kb3cuc2V0VGltZW91dChcbiAgICAgICAgICAgIHNlc3Npb25FbmQuY2JBZnRlclRpbWVvdXQsXG4gICAgICAgICAgICBzZXNzaW9uRW5kLnRpbWVPdXQsXG4gICAgICAgICk7XG4gICAgfSxcblxuICAgIC8qKlxuICAgICAqIENhbGxiYWNrIGZ1bmN0aW9uIHRyaWdnZXJlZCBhZnRlciB0aGUgdGltZW91dC5cbiAgICAgKiBSZWRpcmVjdHMgdGhlIHVzZXIgdG8gdGhlIHNlc3Npb24gaW5kZXggcGFnZS5cbiAgICAgKi9cbiAgICBjYkFmdGVyVGltZW91dCgpIHtcbiAgICAgICAgd2luZG93LmxvY2F0aW9uID0gYCR7Z2xvYmFsUm9vdFVybH1zZXNzaW9uL2luZGV4YDtcbiAgICB9LFxufVxuXG4vKipcbiAqIEluaXRpYWxpemVzIHRoZSBsb2dvdXQgZm9ybSBvbiBkb2N1bWVudCByZWFkeS5cbiAqL1xuJChkb2N1bWVudCkucmVhZHkoKCkgPT4ge1xuICAgIHNlc3Npb25FbmQuaW5pdGlhbGl6ZSgpO1xufSk7Il19

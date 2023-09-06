@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,62 +24,75 @@ require_once 'Globals.php';
 use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
-use Throwable;
 
 /**
  * Class WorkerCdr
- * Обработка записей CDR. Заполение длительности звонков.
+ *
+ * It is a class that extends WorkerBase. It processes and manages
+ * call data records (CDR) retrieved from the database, handles system settings,
+ * and manages emails related to unanswered calls.
+ *
+ * @package MikoPBX\Core\Workers
  */
 class WorkerCdr extends WorkerBase
 {
-
+    // Tube names for Beanstalk queues.
     public const SELECT_CDR_TUBE = 'select_cdr_tube';
     public const UPDATE_CDR_TUBE = 'update_cdr_tube';
 
-    private BeanstalkClient $client_queue;
-    private array $internal_numbers  = [];
+    // Define properties
+    private BeanstalkClient $clientQueue;
+    private array $internal_numbers = [];
     private array $no_answered_calls = [];
-    private string $emailForMissed   = '';
+    private string $emailForMissed = '';
+    private int $lastCheckCdr = 0;
 
     /**
-     * Entry point
+     * The main entry point for the worker.
      *
-     * @param $argv
-     *
+     * @param array $argv The command-line arguments passed to the worker.
      */
-    public function start($argv): void
+    public function start(array $argv): void
     {
-        $this->client_queue = new BeanstalkClient(self::SELECT_CDR_TUBE);
-        $this->client_queue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
+        // Establish connection with Beanstalk queue
+        $this->clientQueue = new BeanstalkClient(self::SELECT_CDR_TUBE);
+        $this->clientQueue->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
 
+        // Initialize system settings
         $this->initSettings();
 
+        // Process call data records
         while ($this->needRestart === false) {
-            $result = CDRDatabaseProvider::getCdr();
-            if (!empty($result)) {
-                $this->updateCdr($result);
+            if(time() - $this->lastCheckCdr > 5){
+                $result = CDRDatabaseProvider::getCdr();
+                if (!empty($result)) {
+                    $this->updateCdr($result);
+                }
+                $this->lastCheckCdr = time();
             }
-            $this->client_queue->wait();
+            $this->clientQueue->wait();
         }
     }
 
     /**
-     * Fills settings
+     * Initializes system settings and internal users' data.
      */
     private function initSettings(): void
     {
-        $this->internal_numbers     = [];
-        $this->no_answered_calls    = [];
-        $this->emailForMissed       = PbxSettings::getValueByKey('SystemEmailForMissed');
+        // Retrieve system settings
+        $this->internal_numbers = [];
+        $this->no_answered_calls = [];
+        $this->emailForMissed = PbxSettings::getValueByKey('SystemEmailForMissed');
 
+        // Construct parameters for user data query
         $usersClass = Users::class;
         $parameters = [
-            'columns'=>[
-                'email'=>'email',
-                'language'=>'language',
-                'number'=>'Extensions.number'
+            'columns' => [
+                'email' => 'email',
+                'language' => 'language',
+                'number' => 'Extensions.number'
             ],
-            'joins'      => [
+            'joins' => [
                 'Extensions' => [
                     0 => Extensions::class,
                     1 => "Extensions.userid={$usersClass}.id",
@@ -88,171 +101,185 @@ class WorkerCdr extends WorkerBase
                 ],
             ],
             'cache' => [
-                'key'=> ModelsBase::makeCacheKey(Users::class, 'Workers-WorkerCdr-initSettings'),
+                'key' => ModelsBase::makeCacheKey(Users::class, 'Workers-WorkerCdr-initSettings'),
                 'lifetime' => 300,
             ]
         ];
 
-        $results   = Users::find($parameters);
+        // Get user data and populate internal_numbers array
+        $results = Users::find($parameters);
         foreach ($results as $record) {
             if (empty($record->email)) {
                 continue;
             }
             $this->internal_numbers[$record->number] = [
-                'email'    => $record->email,
+                'email' => $record->email,
                 'language' => $record->language,
             ];
         }
     }
 
     /**
-     * Обработчик результата запроса.
-     * @param $result
+     * Updates CDR and processes active call chains and unanswered calls.
+     *
+     * @param array $result CDR data
      */
     private function updateCdr($result): void
     {
+        // Re-initialize system settings for each call to this function
+        // to ensure we have the most up-to-date settings.
         $this->initSettings();
         $arr_update_cdr = [];
-        // Получаем идентификаторы активных каналов.
+
+        // Fetch identifiers for all currently active channels.
+        // Active channels are those that are involved in ongoing calls.
         $channels_id = $this->getActiveIdChannels();
+
+        // Process each Call Detail Record (CDR) from the result set.
         foreach ($result as $row) {
+
+            // If the linked ID for this CDR is present in the active channels,
+            // that means this call chain is still ongoing. We will skip processing
+            // this CDR for now and will process it in a future iteration when
+            // the call has completed.
             if (array_key_exists($row['linkedid'], $channels_id)) {
-                // Цепочка вызовов еще не завершена.
                 continue;
             }
 
-            $start      = strtotime($row['start']);
-            $answer     = strtotime($row['answer']);
-            $end        = strtotime($row['endtime']);
+            // Calculate timestamps and durations
+            $start = strtotime($row['start']);
+            $answer = strtotime($row['answer']);
+            $end = strtotime($row['endtime']);
             $dialstatus = trim($row['dialstatus']);
 
             $duration = max(($end - $start), 0);
-            $billsec  = ($end && $answer) ? ($end - $answer) : 0;
+            $billsec = ($end && $answer) ? ($end - $answer) : 0;
 
+            // Update disposition based on the billable seconds and dial status
             [$disposition, $row] = $this->setDisposition($billsec, $dialstatus, $row);
-            [$row, $billsec]     = $this->checkBillsecMakeRecFile($billsec, $row);
 
+            // Check the billable seconds and make recording file
+            [$row, $billsec] = $this->checkBillsecMakeRecFile($billsec, $row);
+
+            // Prepare the data for updating the CDR.
             $data = [
                 'work_completed' => 1,
-                'duration'       => $duration,
-                'billsec'        => $billsec,
-                'disposition'    => $disposition,
-                'UNIQUEID'       => $row['UNIQUEID'],
-                'recordingfile'  => ($disposition === 'ANSWERED') ? $row['recordingfile'] : '',
-                'tmp_linked_id'  => $row['linkedid'],
+                'duration' => $duration,
+                'billsec' => $billsec,
+                'disposition' => $disposition,
+                'UNIQUEID' => $row['UNIQUEID'],
+                'recordingfile' => ($disposition === 'ANSWERED') ? $row['recordingfile'] : '',
+                'tmp_linked_id' => $row['linkedid'],
             ];
 
+            // Add the updated data to the array that will be used to update all CDRs
             $arr_update_cdr[] = $data;
+
+            // Check if the call was not answered and, if so, add it to the list of
+            // calls to be notified about.
             $this->checkNoAnswerCall(array_merge($row, $data));
         }
 
+        // Update the statuses of the processed CDRs in the database and publish them
+        // to the UPDATE_CDR_TUBE for further processing by other workers.
         $this->setStatusAndPublish($arr_update_cdr);
+
+        // If there are any unanswered calls, notify the respective users by email.
         $this->notifyByEmail();
     }
 
     /**
-     * Функция позволяет получить активные каналы.
-     * Возвращает ассоциативный массив. Ключ - Linkedid, значение - массив каналов.
+     * Fetches all active channels from the Asterisk Manager Interface (AMI).
      *
-     * @return array
+     * @return array The array of active channels.
+     * The array key is the Linkedid of the channel, and the value is an array of channel details.
      */
     private function getActiveIdChannels(): array
     {
+        // The getAstManager method from the Util class is used to obtain an instance of the Asterisk Manager Interface (AMI).
+        // The 'off' argument specifies that we want the AMI instance with events turned off.
+        // The GetChannels method of the AMI instance is then used to retrieve all currently active channels.
         return Util::getAstManager('off')->GetChannels(true);
     }
 
     /**
-     * Анализируем не отвеченные вызовы. Наполняем временный массив для дальнейшей обработки.
+     * Sets the call disposition status and manages the call's recording file.
+     * It defines the call's disposition status based on the billable seconds and dial status.
+     * If the disposition is not 'ANSWERED', it removes the call's recording file if it exists.
+     * If the disposition is 'ANSWERED' and the recording file does not exist, it retrieves the file from the database.
      *
-     * @param $row
+     * @param int $billsec The billable seconds of the call.
+     * @param string $dialstatus The status of the dialed call.
+     * @param array $row The array containing the call details.
+     *
+     * @return array An array consisting of the disposition status and the modified row.
      */
-    private function checkNoAnswerCall($row): void
+    private function setDisposition(int $billsec, string $dialstatus, $row): array
     {
-        if ($row['disposition'] === 'ANSWERED') {
-            $this->no_answered_calls[$row['linkedid']]['ANSWERED'] = true;
-            return;
-        }
-        $isInternal = false;
-        if ((array_key_exists($row['src_num'], $this->internal_numbers))) {
-            // Это внутренний вызов.
-            $isInternal = true;
-        }
-        $email = ( $this->internal_numbers[$row['dst_num']]??[] )['email']??'';
-        if(empty($email) && !$isInternal){
-            $email = $this->emailForMissed;
-        }
-        if(empty($email)){
-            // Нет почты, куда отправлять уведомление.
-            return;
+
+        // Set the default disposition to 'NOANSWER'
+        $disposition = 'NOANSWER';
+
+        // If the call was answered (billsec > 0), set disposition to 'ANSWERED'
+        if ($billsec > 0) {
+            $disposition = 'ANSWERED';
+        } elseif ('' !== $dialstatus) {
+            // If the dialstatus is 'ANSWERED', keep the disposition as is, otherwise set it to dialstatus
+            $disposition = ($dialstatus === 'ANSWERED') ? $disposition : $dialstatus;
         }
 
-        $this->no_answered_calls[$row['linkedid']][] = [
-            'from_number' => $row['src_num'],
-            'to_number'   => $row['dst_num'],
-            'start'       => $row['start'],
-            'answer'      => $row['answer'],
-            'endtime'     => $row['endtime'],
-            'email'       => $email,
-            'language'    => $this->internal_numbers[$row['dst_num']]['language'],
-            'is_internal' => $isInternal,
-            'duration'    => $row['duration'],
-            'NOANSWER'    => true
-        ];
-    }
-
-
-    /**
-     * Постановка задачи в очередь на оповещение по email.
-     */
-    private function notifyByEmail(): void
-    {
-        foreach ($this->no_answered_calls as $call) {
-            $this->client_queue->publish(json_encode($call), WorkerNotifyByEmail::class);
-        }
-        $this->no_answered_calls = [];
-    }
-
-    /**
-     * @param array $arr_update_cdr
-     */
-    private function setStatusAndPublish(array $arr_update_cdr): void{
-        $idForDelete = [];
-
-        foreach ($arr_update_cdr as $data) {
-            $linkedId = $data['tmp_linked_id'];
-            $data['GLOBAL_STATUS'] = $data['disposition'];
-            if (isset($this->no_answered_calls[$linkedId]['ANSWERED'])) {
-                $data['GLOBAL_STATUS'] = 'ANSWERED';
-                // Это отвеченный вызов (на очередь). Удаляем из списка.
-                $idForDelete[$linkedId]=true;
+        // If the disposition is not 'ANSWERED' and there's a recording file, delete it
+        if ($disposition !== 'ANSWERED') {
+            if (file_exists($row['recordingfile']) && !is_dir($row['recordingfile'])) {
+                Processes::mwExec("rm -rf {$row['recordingfile']}");
             }
-            unset($data['tmp_linked_id']);
-            $this->client_queue->publish(json_encode($data), self::UPDATE_CDR_TUBE);
+        } elseif (!empty($row['recordingfile']) &&
+            !file_exists($row['recordingfile']) &&
+            !file_exists(Util::trimExtensionForFile($row['recordingfile']) . '.wav')) {
+
+            // If the disposition is 'ANSWERED' and the recording file doesn't exist, retrieve it from the database
+            $filter = [
+                "linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'",
+                'limit' => 1,
+                'miko_tmp_db' => true
+            ];
+            $data = CDRDatabaseProvider::getCdr($filter);
+            $recordingfile = $data[0]['recordingfile'] ?? '';
+            if (!empty($recordingfile)) {
+                $row['recordingfile'] = $recordingfile;
+            }
         }
 
-        // Чистим память.
-        foreach ($idForDelete as $linkedId => $data){
-            unset($this->no_answered_calls[$linkedId]);
-        }
+        // Return the updated disposition and row
+        return array($disposition, $row);
     }
 
     /**
-     * @param int $billsec
-     * @param     $row
-     * @return array
+     * Validates billable seconds and manages recording files.
+     * If the billable seconds is less or equal to zero, no recording file can exist. Otherwise, it triggers a process to convert the recording file to mp3.
+     *
+     * @param int $billsec The billable seconds of the call.
+     * @param array $row The array containing the call details.
+     *
+     * @return array An array consisting of the modified row and billsec.
      */
-    private function checkBillsecMakeRecFile(int $billsec, $row): array{
+    private function checkBillsecMakeRecFile(int $billsec, $row): array
+    {
+
+        // If billsec is less than or equal to zero, the call wasn't answered
         if ($billsec <= 0) {
             $row['answer'] = '';
             $billsec = 0;
 
+            // If there is a recording file
             if (!empty($row['recordingfile'])) {
-                if($row['dst_chan'] === "App:{$row['dst_num']}"){
-                    // Для приложения не может быть записи разговора.
-                    // Запись должна относится к конечному устройству.
+
+                // If the destination channel is an application, there can't be a call recording
+                // The recording must belong to an endpoint device
+                if ($row['dst_chan'] === "App:{$row['dst_num']}") {
                     $row['recordingfile'] = '';
-                }else{
-                    // Удаляем файлы
+                } else {
+                    // Remove the recording files
                     $p_info = pathinfo($row['recordingfile']);
                     $fileName = $p_info['dirname'] . '/' . $p_info['filename'];
                     $file_list = [$fileName . '.mp3', $fileName . '.wav', $fileName . '_in.wav', $fileName . '_out.wav',];
@@ -265,58 +292,135 @@ class WorkerCdr extends WorkerBase
                 }
             }
         } elseif (trim($row['recordingfile']) !== '') {
-            // Если каналов не существует с ID, то можно удалить временные файлы.
+            // If the call channel with ID doesn't exist anymore, it's safe to remove temporary files
             $p_info = pathinfo($row['recordingfile']);
-            // Запускаем процесс конвертации в mp3
+
+            // Launch a background process to convert the recording to mp3
             $wav2mp3Path = Util::which('wav2mp3.sh');
             $lostWav2mp3Path = Util::which('convert-lost-wav2mp3.sh');
             $nicePath = Util::which('nice');
             Processes::mwExecBg("{$nicePath} -n -19 {$wav2mp3Path} '{$p_info['dirname']}/{$p_info['filename']}'");
 
-            // Получим каталог с записями за текущемий месяц.
+            // Get the directory with current month's recordings
             $dir = dirname($p_info['dirname'], 2);
             Processes::mwExecBg("{$nicePath} -n -19 {$lostWav2mp3Path} '$dir'");
-            // В последствии конвертации (успешной) исходные файлы будут удалены.
+
+            // After a successful conversion, the original recording files will be deleted
         }
         return array($row, $billsec);
     }
 
     /**
-     * @param int    $billsec
-     * @param string $dialstatus
-     * @param        $row
-     * @return array
+     * Checks if the given call was not answered, and if so, records the call details for further processing.
+     *
+     * @param array $row The details of the call, including call start, end, and answer times, and the source and destination numbers.
+     * @return void
      */
-    private function setDisposition(int $billsec, string $dialstatus, $row): array{
-        $disposition = 'NOANSWER';
-        if ($billsec > 0) {
-            $disposition = 'ANSWERED';
-        } elseif ('' !== $dialstatus) {
-            $disposition = ($dialstatus === 'ANSWERED') ? $disposition : $dialstatus;
+    private function checkNoAnswerCall(array $row): void
+    {
+        if ($row['disposition'] === 'ANSWERED') {
+            // If the call was answered, record this fact and stop further processing
+            $this->no_answered_calls[$row['linkedid']]['ANSWERED'] = true;
+            return;
+        }
+        $isInternal = false;
+
+        // Check if this is an internal call (i.e., the source number is in the list of internal numbers)
+        if ((array_key_exists($row['src_num'], $this->internal_numbers))) {
+            $isInternal = true;
         }
 
-        if ($disposition !== 'ANSWERED') {
-            if (file_exists($row['recordingfile']) && !is_dir($row['recordingfile'])) {
-                Processes::mwExec("rm -rf {$row['recordingfile']}");
-            }
-        } elseif (!empty($row['recordingfile']) &&
-            !file_exists($row['recordingfile']) &&
-            !file_exists(Util::trimExtensionForFile($row['recordingfile']) . '.wav') ) {
-            $filter = [
-                "linkedid='{$row['linkedid']}' AND dst_chan='{$row['dst_chan']}'",
-                'limit' => 1,
-                'miko_tmp_db' => true
-            ];
-            $data = CDRDatabaseProvider::getCdr($filter);
-            $recordingfile = $data[0]['recordingfile']??'';
-            if (!empty($recordingfile)) {
-                $row['recordingfile'] = $recordingfile;
-            }
+        // Attempt to find the email address associated with the destination number
+        $email = ($this->internal_numbers[$row['dst_num']] ?? [])['email'] ?? '';
+
+        // If no email was found and this is not an internal call, use the default email for missed calls
+        if (empty($email) && !$isInternal) {
+            $email = $this->emailForMissed;
         }
-        return array($disposition, $row);
+
+        // If still no email address is available, stop processing
+        if (empty($email)) {
+            return;
+        }
+
+        // Record the details of the call for later processing
+        $this->no_answered_calls[$row['linkedid']][] = [
+            'from_number' => $row['src_num'],
+            'to_number' => $row['dst_num'],
+            'start' => $row['start'],
+            'answer' => $row['answer'],
+            'endtime' => $row['endtime'],
+            'email' => $email,
+            'language' => $this->internal_numbers[$row['dst_num']]['language'],
+            'is_internal' => $isInternal,
+            'duration' => $row['duration'],
+            'NOANSWER' => true
+        ];
+    }
+
+    /**
+     * Updates the status and publishes the call detail records (CDRs).
+     * Removes any answered calls from the list of non-answered calls.
+     *
+     * @param array $arr_update_cdr The array containing CDRs to be updated.
+     *
+     * @return void
+     */
+    private function setStatusAndPublish(array $arr_update_cdr): void
+    {
+        // Initialize an array to store identifiers for calls that are to be deleted
+        $idForDelete = [];
+
+        // Iterate over all the CDRs to be updated
+        foreach ($arr_update_cdr as $data) {
+            // Extract the linkedId from the data
+            $linkedId = $data['tmp_linked_id'];
+
+            // Set the global status of the call to the disposition of the call
+            $data['GLOBAL_STATUS'] = $data['disposition'];
+
+            // If the call has been answered
+            if (isset($this->no_answered_calls[$linkedId]['ANSWERED'])) {
+
+                // Set the global status of the call to 'ANSWERED'
+                $data['GLOBAL_STATUS'] = 'ANSWERED';
+
+                // This call has been answered. Add it to the list of calls to be deleted from the non-answered calls list
+                $idForDelete[$linkedId] = true;
+            }
+            // Remove the temporary linkedId from the data
+            unset($data['tmp_linked_id']);
+
+            // Publish the updated CDR to the queue
+            $this->clientQueue->publish(json_encode($data), self::UPDATE_CDR_TUBE);
+        }
+
+        // Clean up memory by removing answered calls from the non-answered calls list
+        foreach ($idForDelete as $linkedId => $data) {
+            unset($this->no_answered_calls[$linkedId]);
+        }
+    }
+
+    /**
+     * Notifies the concerned parties via email about the unanswered calls.
+     * After processing all the calls, the list of unanswered calls is cleared.
+     *
+     * @return void
+     */
+    private function notifyByEmail(): void
+    {
+        // Iterate over all unanswered calls
+        foreach ($this->no_answered_calls as $call) {
+
+            // Publish the call details to a queue for a worker that will send the notification email
+            $this->clientQueue->publish(json_encode($call), WorkerNotifyByEmail::class);
+        }
+
+        // After all calls have been processed, reset the list of unanswered calls
+        $this->no_answered_calls = [];
     }
 
 }
 
 // Start worker process
-WorkerCdr::startWorker($argv??null);
+WorkerCdr::startWorker($argv ?? []);

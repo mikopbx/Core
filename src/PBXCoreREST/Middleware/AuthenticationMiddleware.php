@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Middleware;
 
 use MikoPBX\Common\Providers\LoggerAuthProvider;
-use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Providers\RequestProvider;
@@ -56,44 +55,31 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
         if (
             true !== $request->isLocalHostRequest()
-            && true !== $request->isAuthorizedSessionRequest()
             && true !== $request->isDebugModeEnabled()
-            && true !== $this->thisIsModuleNoAuthRequest($api)
+            && true !== $request->isAuthorizedSessionRequest()
+            && true !== $request->thisIsModuleNoAuthRequest($api)
         ) {
             $loggerAuth = $api->getService(LoggerAuthProvider::SERVICE_NAME);
             $loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: Wrong password");
             $this->halt(
                 $api,
-                $response::OK,
-                'Invalid auth token'
+                $response::UNAUTHORIZED,
+                'The user isn\'t authenticated.'
             );
             return false;
         }
-        return true;
-    }
 
-
-    /**
-     * Check additional modules routes access rules
-     * @param Micro $api
-     *
-     * @return bool
-     */
-    public function thisIsModuleNoAuthRequest(Micro $api): bool
-    {
-        $pattern  = $api->request->getURI(true);
-        $configClassObj = new ConfigClass();
-        $additionalRoutes = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
-        foreach ($additionalRoutes as $additionalRoutesFromModule){
-            foreach ($additionalRoutesFromModule as $additionalRoute) {
-                $noAuth = $additionalRoute[5] ?? false;
-                if ($noAuth === true
-                    && stripos($pattern, $additionalRoute[2]) === 0) {
-                    return true; // Allow request without authentication
-                }
-            }
+        if (true !== $request->isLocalHostRequest()
+         && true !== $request->isAllowedAction($api)) {
+             $this->halt(
+                $api,
+                $response::FORBIDDEN,
+                'The route is not allowed'
+            );
+            return false;
         }
-        return false;
+
+        return true;
     }
 
 }

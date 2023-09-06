@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
  */
 
 div.pusher {
-    padding-top: 55px
+    padding-top: 40px
 }
 
 body > .grid {
@@ -28,13 +28,108 @@ body {
     background: #f1f4f5;
 }
 
-#sidebar-menu {
-    top: 40px;
+/* Search field */
+#top-menu-search {
+    min-width: 500px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.prevent-word-wrap {
+    white-space: nowrap;
+}
+
+/* No internet warning on license page */
+div.show-if-no-internet {
+    display: none;
+}
+
+/* No license warning on license page */
+div.show-if-license-fail {
+    display: none;
+}
+
+/* Sidebar menu button */
+#sidebar-menu-button {
+    display: none;
+}
+
+.sidebar-menu {
     padding-bottom: 50px;
 }
 
-.ui.sidebar.visible ~ .pusher {
-    width: calc(100% - 260px);
+.pusher {
+    display: block;
+    min-height: 0;
+    flex-direction: initial;
+}
+.pusher > .full.height {
+    display: block;
+    flex: none !important;
+}
+
+
+/*******************************
+         Sidebar Layout
+*******************************/
+
+#example > .pusher > .full.height {
+    display: flex;
+    flex-direction: row;
+}
+#example:not(.site) > .pusher > .full.height {
+    background-color: #FFFFFF;
+}
+
+/* page layout */
+.full.height > .toc {
+    position: fixed;
+    z-index: 1;
+    background-color: #1b1c1d;
+    width: 260px;
+    flex: 0 0 auto;
+    height: 100vh;
+}
+.full.height > .toc .ui.menu {
+    border-radius: 0;
+    border-width: 0 1px 0 0;
+    box-shadow: none;
+    margin: 0;
+    width: inherit;
+    will-change: transform;
+    max-height: 100vh;
+    overflow: auto;
+}
+.article {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: 280px;
+    margin-right: 10px;
+    padding-top: 1px;
+}
+
+.full.height > .toc .ui.menu::-webkit-scrollbar {
+    -webkit-appearance: none;
+}
+.full.height > .toc .ui.menu::-webkit-scrollbar-track {
+    background-color: rgba(255, 255, 255, 0);
+}
+.full.height > .toc .ui.menu::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0);
+}
+.full.height > .toc .ui.menu:hover::-webkit-scrollbar-track {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.full.height > .toc .ui.menu:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.pusher > .footer,
+.article > .footer {
+    border-top: 1px solid #DDDDDD;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.08) inset;
+    background-color: #FAFAFA;
+    padding-top: 2em;
 }
 
 /* Drag and prop tables point view BEGIN*/
@@ -96,12 +191,12 @@ td.disabled img {
 .application-code {
     position: relative;
     width: 100%;
-    height: 600px;
+    min-height: 600px;
 }
 
-/* Hide interface until it not full loaded */
+/* Add gap from the bottom line */
 #content-frame {
-    display: none;
+    padding-bottom: 25px;
 }
 
 /* Sort icons on tables */
@@ -216,11 +311,7 @@ span.features {
 .ui.form .fields .field > .selection.dropdown.forwarding-select,
 .ui.form .field > .selection.dropdown.forwarding-select {
     min-width: 400px;
-}
-
-/* Search field */
-#top-menu-search {
-    min-width: 500px;
+    max-width: 500px;
 }
 
 /* PBX Version */
@@ -380,15 +471,6 @@ Delete button on little extensions table
     font-size: 0.8rem;
 }
 
-/**
-Add gap on middle screen size
- */
-@media only screen and (min-width: 600px) and (max-width: 1400px) {
-    #main {
-        padding-left: 10px;
-        padding-right: 10px;
-    }
-}
 
 /**
 Blur passwords, secrets
@@ -396,4 +478,130 @@ Blur passwords, secrets
 .confidential-field:not(:focus):not(:hover) {
     color: transparent !important;
     text-shadow: 0 0 6px rgba(0,0,0,0.7);
+}
+
+/**
+Sets minimum width for advices bell on main menu header
+ */
+#show-advices-button {
+    min-width: 50px;
+}
+
+
+/**
+Sets padding to correct show slider labels inside segment block
+ */
+#pbx-records-term-slider {
+    padding-left: 35px;
+    padding-right: 35px;
+    margin-top: 5px;
+}
+
+/**
+Hide module status toggle by default, it will show from pbx-extension-module-status.js
+ */
+#module-status-toggle-segment {
+    display: none;
+}
+
+/*
+Limit fields width
+ */
+.field.max-width-100{
+    max-width: 100px;
+}
+.field.max-width-200{
+    max-width: 200px;
+}
+.field.max-width-250{
+    max-width: 250px;
+}
+.field.max-width-300{
+    max-width: 300px;
+}
+.field.max-width-400{
+    max-width: 400px;
+}
+.field.max-width-500{
+    max-width: 500px;
+}
+.field.max-width-800{
+    max-width: 800px;
+}
+
+
+/* Remove Fixed Sidebar /  Show Top Bar */
+@media only screen and (max-width: 1144px) {
+
+    /* Hide Fixed Sidebar */
+    .full.height > .toc {
+        display: none;
+    }
+
+    .full.height > .article {
+        margin-left: 0px;
+    }
+
+    /* Less Left Padding */
+    .main.container,
+    .fixed.menu > .container {
+        margin-left: 2em !important;
+    }
+
+
+    /* 100% Menu Width */
+    .fixed.menu > .container {
+        margin-left: 0em !important;
+        margin-right: 0em !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+
+    #top-left-logo {
+        display: none;
+    }
+
+    #sidebar-menu-button {
+        display: block;
+    }
+
+}
+
+@media only screen and (min-width: 1000px) and (max-width: 1220px) {
+    #top-menu-search {
+        min-width: 350px;
+    }
+}
+
+@media only screen and (min-width: 768px) and (max-width: 1000px) {
+    #top-menu-search {
+        min-width: 400px;
+    }
+    .hide-on-mobile {
+        display: none;
+    }
+
+    .ui.inverted.menu .item.hide-on-tablet{
+        display: none;
+    }
+
+}
+
+
+@media only screen and (max-width: 768px) {
+    #top-left-logo {
+        display: none;
+    }
+    #sidebar-menu-button {
+        display: block;
+    }
+    #top-menu-search {
+        min-width: 300px;
+    }
+    .hide-on-mobile {
+        display: none;
+    }
+    .ui.inverted.menu .item.hide-on-tablet{
+        display: none;
+    }
 }

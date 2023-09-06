@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,23 +19,24 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class OutgoingRouteEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
-class OutgoingRouteEditForm extends Form
+class OutgoingRouteEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
         // ID
         $this->add(new Hidden('id'));
 
@@ -46,8 +47,7 @@ class OutgoingRouteEditForm extends Form
         $this->add(new Text('rulename'));
 
         // Note
-        $rows = max(round(strlen($entity->note) / 95), 2);
-        $this->add(new TextArea('note', ["rows" => $rows]));
+        $this->addTextArea('note', $entity->note??'', 65);
 
         // Numberbeginswith
         $this->add(new Text('numberbeginswith'));
@@ -64,13 +64,13 @@ class OutgoingRouteEditForm extends Form
         // Providers
         $providers = new Select(
             'providerid', $options, [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'class'    => 'ui selection dropdown providerselect',
-        ]
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'class' => 'ui selection dropdown providerselect',
+            ]
         );
         $this->add($providers);
     }

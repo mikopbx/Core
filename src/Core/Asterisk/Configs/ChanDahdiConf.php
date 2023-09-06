@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,17 +19,28 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
-class ChanDahdiConf extends CoreConfigClass
+/**
+ * Generates the configuration content for chan_dahdi.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class ChanDahdiConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'chan_dahdi.conf';
 
+    /**
+     * Generates the configuration content for chan_dahdi.conf.
+     */
     protected function generateConfigProtected(): void
     {
         $conf = "[trunkgroups]\n" .
             "[channels]\n" .
             "";
 
+        // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . '/chan_dahdi.conf', $conf);
     }
 

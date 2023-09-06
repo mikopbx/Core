@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,64 +19,104 @@
 /* global globalRootUrl,globalTranslate,Form */
 
 const loginForm = {
-	$formObj: $('#login-form'),
-	$submitButton: $('#submitbutton'),
-	$checkBoxes: $('.checkbox'),
-	validateRules: {
-		login: {
-			identifier: 'login',
-			rules: [
-				{
-					type: 'empty',
-					prompt: globalTranslate.auth_ValidateLoginNotEmpty,
-				},
-			],
-		},
-		password: {
-			identifier: 'password',
-			rules: [
-				{
-					type: 'empty',
-					prompt: globalTranslate.auth_ValidatePasswordNotEmpty,
-				},
-			],
-		},
-	},
-	initialize() {
-		loginForm.initializeForm();
-		$('input')
-			.keyup((event)=> {
-			if (event.keyCode === 13) {
-				loginForm.$submitButton.click();
-			}
-		})
-			.on('input', () => {
-			$('.message.ajax').remove();
-		});
-		loginForm.$checkBoxes.checkbox();
-	},
-	cbBeforeSendForm(settings) {
-		const result = settings;
-		result.data = loginForm.$formObj.form('get values');
-		let backUri  = `${location.pathname}${location.search}`;
-		result.data.backUri = backUri.replace(globalRootUrl,'');
-		return result;
-	},
-	cbAfterSendForm() {
+    /**
+     * jQuery object for the form.
+     * @type {jQuery}
+     */
+    $formObj: $('#login-form'),
 
-	},
-	initializeForm() {
-		Form.$formObj = loginForm.$formObj;
-		Form.url = `${globalRootUrl}session/start`;
-		Form.validateRules = loginForm.validateRules;
-		Form.cbBeforeSendForm = loginForm.cbBeforeSendForm;
-		Form.cbAfterSendForm = loginForm.cbAfterSendForm;
-		Form.keyboardShortcuts = false;
-		Form.initialize();
-	},
+    /**
+     * The jQuery object for the submit button.
+     * @type {jQuery}
+     */
+    $submitButton: $('#submitbutton'),
+
+    /**
+     * The jQuery object for the checkboxes.
+     * @type {jQuery}
+     */
+    $checkBoxes: $('.checkbox'),
+
+    /**
+     * Validation rules for the form fields before submission.
+     *
+     * @type {object}
+     */
+    validateRules: {
+        login: {
+            identifier: 'login',
+            rules: [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.auth_ValidateLoginNotEmpty,
+                },
+            ],
+        },
+        password: {
+            identifier: 'password',
+            rules: [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.auth_ValidatePasswordNotEmpty,
+                },
+            ],
+        },
+    },
+
+    /**
+     * Initializes the login form functionality.
+     */
+    initialize() {
+        loginForm.initializeForm();
+        $('input')
+            .keyup((event) => {
+                if (event.keyCode === 13) {
+                    loginForm.$submitButton.click();
+                }
+            })
+            .on('input', () => {
+                $('.message.ajax').remove();
+            });
+        loginForm.$checkBoxes.checkbox();
+    },
+
+    /**
+     * Callback function to be called before the form is sent
+     * @param {Object} settings - The current settings of the form
+     * @returns {Object} - The updated settings of the form
+     */
+    cbBeforeSendForm(settings) {
+        const result = settings;
+        result.data = loginForm.$formObj.form('get values');
+        let backUri = `${location.pathname}${location.search}`;
+        result.data.backUri = backUri.replace(globalRootUrl, '');
+        return result;
+    },
+
+    /**
+     * Callback function to be called after the form has been sent.
+     * @param {Object} response - The response from the server after the form is sent
+     */
+    cbAfterSendForm(response) {
+
+    },
+
+    /**
+     * Initialize the form with custom settings
+     */
+    initializeForm() {
+        Form.$formObj = loginForm.$formObj;
+        Form.url = `${globalRootUrl}session/start`; // Form submission URL
+        Form.validateRules = loginForm.validateRules; // Form validation rules
+        Form.cbBeforeSendForm = loginForm.cbBeforeSendForm; // Callback before form is sent
+        Form.cbAfterSendForm = loginForm.cbAfterSendForm; // Callback after form is sent
+        Form.keyboardShortcuts = false;
+        Form.initialize();
+    },
 };
 
+// When the document is ready, initialize the login form.
 $(document).ready(() => {
-	loginForm.initialize();
+    loginForm.initialize();
 });
 

@@ -62,9 +62,10 @@
     </div>
 </div>
 
+{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 {{ partial("partials/submitbutton",[
     'indexurl':'sound-files/index/#/'~category
 ]) }}
-</form>
+{{ end_form() }}
 

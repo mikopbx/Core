@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,23 +20,24 @@
 namespace MikoPBX\PBXCoreREST\Controllers\System;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 
 /**
- * /pbxcore/api/system/{name} System management (GET)
+ * System management (GET)
  *
- * Shutdown system
+ * @RoutePrefix("/pbxcore/api/system")
+ *
+ * @examples
+ * Shutdown the system.
  *   curl http://127.0.0.1/pbxcore/api/system/shutdown;
  *
- * Reboot system
+ * Reboot the operating system.
  *   curl http://127.0.0.1/pbxcore/api/system/reboot;
- *
- * Get list of banned IP by fail2ban
- *   curl http://127.0.0.1/pbxcore/api/system/getBanIp;
  *
  * Ping backend (described in nginx.conf):
  *   curl http://127.0.0.1/pbxcore/api/system/ping
  *
- * Get system date:
+ * Retrieves the system date and time:
  *   curl http://127.0.0.1/pbxcore/api/system/getDate
  *
  * Restore default system settings
@@ -45,8 +46,33 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
  */
 class GetController extends BaseController
 {
-    public function callAction($actionName): void
+    /**
+     * Handles the call to different actions based on the action name
+     *
+     * @param string $actionName The name of the action
+     *
+     * Ping backend (described in nginx.conf)
+     * @Get("/ping")
+     *
+     * Reboot the operating system.
+     * @Get("/reboot")
+     *
+     * Shutdown the system.
+     * @Get("/shutdown")
+     *
+     * Retrieves the system date and time.
+     * @Get("/getDate")
+     *
+     * Tries to send a test email.
+     * @Get("/updateMailSettings")
+     *
+     * Restore default system settings
+     * @Get("/restoreDefault")
+     *
+     * @return void
+     */
+    public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker('system', $actionName, $_REQUEST);
+        $this->sendRequestToBackendWorker(SystemManagementProcessor::class, $actionName, $_REQUEST);
     }
 }

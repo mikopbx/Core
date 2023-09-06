@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,30 +26,30 @@ use MikoPBX\AdminCabinet\Providers\{AssetProvider,
     DispatcherProvider,
     ElementsProvider,
     FlashProvider,
-    RouterProvider,
-    SessionProvider,
+    SecurityPluginProvider,
     ViewProvider,
     VoltProvider};
-use MikoPBX\Common\Providers\{
+use MikoPBX\Common\Providers\{AclProvider,
     BeanstalkConnectionModelsProvider,
     CDRDatabaseProvider,
+    LanguageProvider,
+    MarketPlaceProvider,
     LoggerAuthProvider,
     LoggerProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
+    MessagesProvider,
+    ModelsAnnotationsProvider,
     ModelsCacheProvider,
     ModelsMetadataProvider,
-    ModelsAnnotationsProvider,
     ModulesDBConnectionsProvider,
     PBXConfModulesProvider,
+    PBXCoreRESTClientProvider,
     RegistryProvider,
-    SessionReadOnlyProvider,
-    MessagesProvider,
-    LanguageProvider,
+    RouterProvider,
+    SessionProvider,
     TranslationProvider,
-    LicenseProvider,
-    UrlProvider
-};
+    UrlProvider,};
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices
@@ -57,11 +57,12 @@ class RegisterDIServices
     /**
      * Initialize services on dependency injector
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public static function init(DiInterface $di): void
     {
         $adminCabinetProviders = [
+
             // Inject cache providers
             ManagedCacheProvider::class,
             ModelsCacheProvider::class,
@@ -82,10 +83,13 @@ class RegisterDIServices
             FlashProvider::class,
             ElementsProvider::class,
             AssetProvider::class,
+            SecurityPluginProvider::class,
 
             // Inject sessions
             SessionProvider::class,
-            SessionReadOnlyProvider::class,
+
+            // Inject Access Control Lists
+            AclProvider::class,
 
             // Inject Queue connection
             BeanstalkConnectionModelsProvider::class,
@@ -96,7 +100,7 @@ class RegisterDIServices
             LanguageProvider::class,
 
             // Inject license
-            LicenseProvider::class,
+            MarketPlaceProvider::class,
 
             // Inject PBX modules
             PBXConfModulesProvider::class,
@@ -111,6 +115,8 @@ class RegisterDIServices
             // Inject crypto provider
             CryptProvider::class,
 
+            // Inject Rest API client
+            PBXCoreRESTClientProvider::class
         ];
 
         foreach ($adminCabinetProviders as $provider) {
@@ -118,5 +124,8 @@ class RegisterDIServices
             $di->remove($provider::SERVICE_NAME);
             $di->register(new $provider());
         }
+
+        // Set library name
+        $di->getShared(RegistryProvider::SERVICE_NAME)->libraryName = 'admin-cabinet';
     }
 }

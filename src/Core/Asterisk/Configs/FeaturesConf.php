@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,22 +21,39 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class FeaturesConf extends CoreConfigClass
+/**
+ * Class FeaturesConf
+ *
+ * Represents a configuration class for features.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class FeaturesConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'features.conf';
 
+    /**
+     * Generates the PICKUP_EXTEN into the extensions.conf global section.
+     *
+     * @return string The generated PICKUP_EXTEN configuration.
+     */
     public function extensionGlobals(): string
     {
-        // Генерация хинтов.
         return "PICKUP_EXTEN={$this->generalSettings['PBXFeaturePickupExten']}\n";
     }
 
-    // Секция global для extensions.conf.
-
+    /**
+     * Generates the configuration for the features.conf file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
         $atxTimeout = $this->generalSettings['PBXFeatureAtxferNoAnswerTimeout'];
-        if(empty($atxTimeout)){
+        if (empty($atxTimeout)) {
             $atxTimeout = 45;
         }
         $conf = "[general]\n" .
@@ -45,16 +62,18 @@ class FeaturesConf extends CoreConfigClass
             "transferdigittimeout = {$this->generalSettings['PBXFeatureTransferDigitTimeout']}\n" .
             "pickupexten = {$this->generalSettings['PBXFeaturePickupExten']}\n" .
             "atxferabort = *0\n" .
-            "\n"            .
+            "\n" .
             "[applicationmap]\n\n" .
             "[featuremap]\n" .
             "atxfer => {$this->generalSettings['PBXFeatureAttendedTransfer']}\n" .
             "disconnect = *0\n" .
-            "blindxfer => {$this->generalSettings['PBXFeatureBlindTransfer']}\n".
+            "blindxfer => {$this->generalSettings['PBXFeatureBlindTransfer']}\n" .
             "\n";
 
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GET_FEATURE_MAP);
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GET_FEATURE_MAP);
 
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/features.conf', $conf);
     }
 }

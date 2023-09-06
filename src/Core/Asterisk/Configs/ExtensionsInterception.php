@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2021 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +21,22 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-class ExtensionsInterception extends CoreConfigClass
+/**
+ * Class ExtensionsInterception
+ *
+ * This class handles the generation of additional contexts sections in the extensions.conf file.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class ExtensionsInterception extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 610;
+
     /**
-     * Prepares additional contexts sections in the extensions.conf file
+     * Generates the extension contexts for interceptions.
      *
-     * @return string
+     * @return string The generated configuration.
      */
     public function extensionGenContexts(): string
     {
@@ -35,8 +45,8 @@ class ExtensionsInterception extends CoreConfigClass
                 'exten => _[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!,1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Wait(0.2))' . PHP_EOL."\t".
                 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))' . PHP_EOL."\t".
                 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Hangup())' . PHP_EOL."\t".
-                // Нужно проверить значение M_DIALSTATUS в канале INTECEPTION_CNANNEL
-                // Если вызов отвечен, то перехватывать не следует.
+                // Need to check the value of M_DIALSTATUS in the INTECEPTION_CNANNEL channel
+                // If the call is answered, interception should not be performed.
                 'same => n,Set(M_DIALSTATUS=${IMPORT(${INTECEPTION_CNANNEL},M_DIALSTATUS)})'.PHP_EOL."\t".
                 'same => n,ExecIf($[ "${M_DIALSTATUS}" == "ANSWER" ]?Hangup())'.PHP_EOL."\t".
                 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . PHP_EOL."\t".
@@ -49,10 +59,20 @@ class ExtensionsInterception extends CoreConfigClass
                 'same => n,Hangup()' . PHP_EOL;
     }
 
+    /**
+     * Test the originate functionality for interception.
+     *
+     * @param string $providerId   The provider ID.
+     * @param string $src          The source number.
+     * @param string $dest_number  The destination number.
+     *
+     * @return void
+     */
     public static function testOriginate($providerId = 'SIP-1611151795', $src = '203', $dest_number = '79257184233'):void{
         $am = Util::getAstManager('off');
         $channels=$am->GetChannels();
         $interceptionChannel = '';
+        $interceptionLinkedId = '';
         foreach ($channels as $linkedId => $linkedIdData){
             foreach ($linkedIdData as $tmpChannel){
                 if(strpos($tmpChannel, 'PJSIP/'.$providerId) === false){

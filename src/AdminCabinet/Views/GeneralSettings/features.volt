@@ -1,31 +1,27 @@
-<div class="field">
-    <label>{{ t._('gs_PBXCallParkingExt') }}</label>
+<div class="inline field">
     {{ form.render('PBXCallParkingExt') }}
+    <label>{{ t._('gs_PBXCallParkingExt') }}</label>
+</div>
+<div class="inline field">
+    {{ form.render('PBXCallParkingStartSlot') }}-&nbsp;&nbsp;&nbsp;
+    {{ form.render('PBXCallParkingEndSlot') }}&nbsp;
+    <label>{{ t._('gs_PBXCallParkingSlotRange') }}</label>
 </div>
 
-<div class="two fields">
-<div class="field">
-    <label>{{ t._('gs_PBXCallParkingStartSlot') }}</label>
-    {{ form.render('PBXCallParkingStartSlot') }}
-</div>
-<div class="field">
-    <label>{{ t._('gs_PBXCallParkingEndSlot') }}</label>
-    {{ form.render('PBXCallParkingEndSlot') }}
-</div>
-</div>
+
 <div class="inline field">
-    <label>{{ t._('gs_PBXFeatureAttendedTransfer') }}</label>
     {{ form.render('PBXFeatureAttendedTransfer') }}
+    <label>{{ t._('gs_PBXFeatureAttendedTransfer') }}</label>
 </div>
 <div class="inline field">
-    <label>{{ t._('gs_PBXFeatureBlindTransfer') }}</label>
     {{ form.render('PBXFeatureBlindTransfer') }}
+    <label>{{ t._('gs_PBXFeatureBlindTransfer') }}</label>
 </div>
 <div class="inline field">
-    <label>{{ t._('gs_PBXFeaturePickupExten') }}</label>
     {{ form.render('PBXFeaturePickupExten') }}
+    <label>{{ t._('gs_PBXFeaturePickupExten') }}</label>
 </div>
 <div class="inline field">
-    <label>{{ t._('gs_PBXFeatureAtxferNoAnswerTimeout') }}</label>
     {{ form.render('PBXFeatureAtxferNoAnswerTimeout') }}
+    <label>{{ t._('gs_PBXFeatureAtxferNoAnswerTimeout') }}</label>
 </div>

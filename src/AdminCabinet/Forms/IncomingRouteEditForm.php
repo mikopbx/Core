@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,68 +19,125 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\Providers;
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class IncomingRouteEditForm
- *
+ * This class is responsible for creating the form used for editing incoming routes.
+ * It extends from BaseForm to inherit common form functionality.
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
-class IncomingRouteEditForm extends Form
+class IncomingRouteEditForm extends BaseForm
 {
-    public function initialize(/** @scrutinizer ignore-unused */ $entity = null, $options = null): void
+    /**
+     * Initialize the form elements
+     *
+     * @param mixed $entity The entity for which the form is being initialized.
+     * @param mixed $options Additional options that may be needed.
+     */
+    public function initialize($entity = null, $options = null): void
     {
-        // ID
+        parent::initialize($entity, $options);
+
+        // Add hidden field for ID
         $this->add(new Hidden('id'));
 
-        // Priority
+        // Add hidden field for Priority
         $this->add(new Hidden('priority'));
 
-        // Action
+        // Add hidden field for Action, default value is 'extension'
         $this->add(new Hidden('action', ['value' => 'extension']));
 
-        // Rulename
+        // Add text field for Rule Name
         $this->add(new Text('rulename'));
 
-        // Number
+        // Add text field for Number
         $this->add(new Text('number'));
 
-        // Note
-        $this->add(new TextArea('note', ['rows' => 2]));
+        // Add text area for Note
+        $this->addTextArea('note', $entity->note ?? '', 65);
 
-        // Timeout
+        // Add numeric field for Timeout with some styling
         $this->add(new Numeric('timeout', ['maxlength' => 3, 'style' => 'width: 80px;', 'defaultValue' => 120]));
 
-        // Providers
+        // Add select dropdown for Providers
         $providers = new Select(
-            'provider', $options['providers'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'class'    => 'ui selection dropdown provider-select',
-        ]
+            'provider', $this->prepareProviders(), [
+                'using' => ['id', 'name'],
+                'useEmpty' => false,
+                'class' => 'ui selection dropdown provider-select',
+            ]
         );
         $this->add($providers);
 
-        // Extension
+        // Add select dropdown for Extension
         $extension = new Select(
-            'extension', $options['extensions'], [
-            'using'    => [
-                'id',
-                'name',
-            ],
-            'useEmpty' => false,
-            'class'    => 'ui selection dropdown search forwarding-select',
-        ]
+            'extension', $this->prepareForwardingExtensions($entity->extension ?? ''), [
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'class' => 'ui selection dropdown search forwarding-select',
+            ]
         );
         $this->add($extension);
+    }
+
+    /**
+     * Prepare Providers
+     *
+     * Generate a list of providers for the select dropdown
+     *
+     * @return array The list of providers
+     */
+    private function prepareProviders(): array
+    {
+        // Initialize an empty array to hold the list of providers
+        $providersList = [];
+
+        // Add a "none" option for any provider
+        $providersList['none'] = $this->translation->_('ir_AnyProvider');
+
+        // Fetch all providers from the database
+        $providers = Providers::find();
+
+        // Loop through each provider to populate the providers list
+        foreach ($providers as $provider) {
+            $modelType = ucfirst($provider->type);
+            $provByType = $provider->$modelType;
+            $providersList[$provByType->uniqid] = $provByType->getRepresent();
+
+        }
+        return $providersList;
+    }
+
+    /**
+     * Prepare Forwarding Extensions
+     *
+     * Generate a list of extensions for the select dropdown based on the provided extension.
+     *
+     * @param string $extension The extension to find
+     *
+     * @return array The list of forwarding extensions
+     */
+    private function prepareForwardingExtensions(string $extension): array
+    {
+        // Get a list of all used extensions
+        $forwardingExtensions = [];
+
+        // Add a default option for the select dropdown
+        $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
+
+        $record = Extensions::findFirstByNumber($extension);
+        $forwardingExtensions[$record->number] = $record ? $record->getRepresent() : '';
+        return $forwardingExtensions;
     }
 }

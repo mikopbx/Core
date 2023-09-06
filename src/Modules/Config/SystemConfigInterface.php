@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,13 @@
 namespace MikoPBX\Modules\Config;
 
 
+/**
+ * Interface SystemConfigInterface
+ *
+ * This interface defines system configuration hooks
+ *
+ * @package MikoPBX\Modules\Config
+ */
 interface SystemConfigInterface
 {
 
@@ -50,83 +57,114 @@ interface SystemConfigInterface
 
     /**
      * The callback function will execute after PBX started.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onafterpbxstarted
+     *
+     * @return void
      */
     public function onAfterPbxStarted(): void;
 
     /**
-     * Adds crond rules
+     * Adds cron tasks.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#createcrontasks
      *
-     * @param $tasks
+     * @param array $tasks The array of cron tasks.
+     *
+     * @return void
      */
-    public function createCronTasks(&$tasks): void;
+    public function createCronTasks(array &$tasks): void;
 
     /**
-     * Create additional Nginx locations from modules.
+     * Creates additional Nginx locations from modules.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#createnginxlocations
      *
+     * @return string The generated Nginx locations.
      */
     public function createNginxLocations(): string;
 
     /**
-     * This method calls in the WorkerModelsEvents after receive each models change
+     * This method is called in the WorkerModelsEvents after each model change.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modelseventchangedata
      *
-     * @param $data
+     * @param mixed $data The data related to the model change.
+     *
+     * @return void
      */
     public function modelsEventChangeData($data): void;
 
     /**
-     * This method calls in the WorkerModelsEvents after finished process models changing
+     * This method is called in the WorkerModelsEvents after the models changing process is finished.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modelseventneedreload
      *
-     * @param array $modified_tables list of modified models
+     * @param array $modified_tables The list of modified models.
+     *
+     * @return void
      */
     public function modelsEventNeedReload(array $modified_tables): void;
 
     /**
-     * Returns array of workers classes for WorkerSafeScripts
+     * Returns an array of worker classes for WorkerSafeScripts.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getmoduleworkers
      *
-     * @return array
+     * @return array The array of worker classes.
      */
     public function getModuleWorkers(): array;
 
     /**
-     * Returns array of additional firewall rules for module
+     * Returns an array of additional firewall rules for the module.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getdefaultfirewallrules
      *
-     * @return array
+     * @return array The array of firewall rules.
      */
     public function getDefaultFirewallRules(): array;
 
     /**
-     * Process before enable action in web interface
+     * Processes actions before enabling the module in the web interface.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforemoduleenable
      *
-     * @return bool
+     * @return bool Whether the module can be enabled.
      */
     public function onBeforeModuleEnable(): bool;
 
     /**
-     * Process after enable action in web interface
+     * Processes actions after enabling the module in the web interface
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onaftermoduleenable
      *
      * @return void
      */
     public function onAfterModuleEnable(): void;
 
     /**
-     * Process before disable action in web interface
+     * Processes actions before disabling the module in the web interface.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onbeforemoduledisable
      *
-     * @return bool
+     * @return bool Whether the module can be disabled.
      */
     public function onBeforeModuleDisable(): bool;
 
     /**
-     * Process after disable action in web interface
+     * Processes actions after disabling the module in the web interface.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#onaftermoduledisable
      *
      * @return void
      */
     public function onAfterModuleDisable(): void;
 
     /**
-     * Generates additional fail2ban jail conf rules
+     * Generates additional fail2ban jail conf rules.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#generatefail2banjails
      *
-     * @return string
+     * @return string The generated fail2ban jail conf rules.
      */
     public function generateFail2BanJails(): string;
+
+    /**
+     * Allows overriding the execution priority of a method when called through hookModulesMethod.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#getmethodpriority
+     *
+     * @param string $methodName
+     *
+     * @return int
+     */
+    public function getMethodPriority(string $methodName = ''): int;
 
 }

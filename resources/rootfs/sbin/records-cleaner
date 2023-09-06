@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+if [ ! -f /var/etc/record-save-period ]; then
+  exit 1;
+fi;
+
+period="$(cat /var/etc/record-save-period)";
+if [ "${period}x" = "x" ];then
+  exit 2;
+fi;
+
+monDir="$(/bin/busybox grep 'monitordir' < /etc/inc/mikopbx-settings.json | /bin/busybox cut -d '"' -f 4)";
+if [ ! -d "$monDir" ]; then
+  exit 3;
+fi;
+
+echo 'start remove old records ' "period: $period " "monitor dir: $monDir";
+/usr/bin/nice -n 19 /bin/find "$monDir" -type f -mtime +"$period" -delete;

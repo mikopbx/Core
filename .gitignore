@@ -1,7 +1,10 @@
-/tests/FunctionalTests/config/local.conf.json
+tests/AdminCabinet/config/local.conf.json
 /vendor
 .idea
 /composer.lock
 sites/admin-cabinet/assets/img/cache
 sites/admin-cabinet/assets/css/cache
 sites/admin-cabinet/assets/js/cache
+src/AdminCabinet/Views/Modules
+.DS_Store
+*.cache

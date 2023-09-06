@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,13 +49,13 @@ class SubnetCalculator
      *
      * @var string
      */
-    private $ip;
+    private string $ip;
     /**
      * CIDR network size.
      *
-     * @var int
+     * @var string
      */
-    private $network_size;
+    private string $network_size;
     /**
      * Array of four elements containing the four quads of the IP address.
      *
@@ -67,18 +67,18 @@ class SubnetCalculator
      *
      * @var int
      */
-    private $subnet_mask;
+    private int $subnet_mask;
 
     /**
      * Constructor - Takes IP address and network size, validates inputs, and assigns class attributes.
      * For example: 192.168.1.120/24 would be $ip=192.168.1.120 $network_size=24
      *
      * @param string $ip IP address in dotted quad notation.
-     * @param int CIDR network size.
+     * @param string $network_size CIDR network size.
      *
      * @throws \Throwable
      */
-    public function __construct($ip, $network_size)
+    public function __construct(string $ip, string $network_size)
     {
         $this->validateInputs($ip, $network_size);
         $this->ip           = $ip;
@@ -92,11 +92,11 @@ class SubnetCalculator
      * Validate IP address and network.
      *
      * @param string $ip           IP address in dotted quads format.
-     * @param int    $network_size Network.
+     * @param string $network_size Network.
      *
      * @throws \Throwable IP or network size not valid.
      */
-    private function validateInputs($ip, $network_size)
+    private function validateInputs(string $ip, string $network_size)
     {
         if ( ! filter_var($ip, FILTER_VALIDATE_IP)) {
             throw new Error("IP address $ip not valid.");
@@ -111,7 +111,7 @@ class SubnetCalculator
      *
      * @return array
      */
-    public function getIPAddressQuads()
+    public function getIPAddressQuads(): array
     {
         return $this->quads;
     }
@@ -121,7 +121,7 @@ class SubnetCalculator
      *
      * @return array Array of four elements containing the four quads of the subnet mask.
      */
-    public function getSubnetMaskQuads()
+    public function getSubnetMaskQuads(): array
     {
         return explode('.', $this->subnetCalculation('%d', '.'));
     }
@@ -134,7 +134,7 @@ class SubnetCalculator
      *
      * @return string subnet
      */
-    private function subnetCalculation($format, $separator = '')
+    private function subnetCalculation(string $format, string $separator = ''):string
     {
         $mask_quads   = [];
         $mask_quads[] = sprintf($format, ($this->subnet_mask >> 24) & 0xFF);
@@ -150,7 +150,7 @@ class SubnetCalculator
      *
      * @return array Array of four elements containing the four quads of the host portion.
      */
-    public function getHostPortionQuads()
+    public function getHostPortionQuads(): array
     {
         return explode('.', $this->hostCalculation('%d', '.'));
     }
@@ -163,7 +163,7 @@ class SubnetCalculator
      *
      * @return string formatted subnet mask.
      */
-    private function hostCalculation($format, $separator = '')
+    private function hostCalculation(string $format, string $separator = ''):string
     {
         $network_quads   = [];
         $network_quads[] = sprintf("$format", $this->quads[0] & ~($this->subnet_mask >> 24));
@@ -182,7 +182,7 @@ class SubnetCalculator
      *
      * @return string JSON string of subnet calculations.
      */
-    public function getSubnetJSONReport()
+    public function getSubnetJSONReport(): string
     {
         return json_encode($this->getSubnetArrayReport());
     }
@@ -195,7 +195,7 @@ class SubnetCalculator
      *
      * @return array Associated array of subnet calculations.
      */
-    public function getSubnetArrayReport()
+    public function getSubnetArrayReport(): array
     {
         return [
             'ip_address_with_network_size' => $this->getIPAddress() . '/' . $this->getNetworkSize(),
@@ -232,7 +232,7 @@ class SubnetCalculator
      *
      * @return string IP address as dotted quads.
      */
-    public function getIPAddress()
+    public function getIPAddress(): string
     {
         return $this->ip;
     }
@@ -240,9 +240,9 @@ class SubnetCalculator
     /**
      * Get network.
      *
-     * @return int network.
+     * @return string network.
      */
-    public function getNetworkSize()
+    public function getNetworkSize(): string
     {
         return $this->network_size;
     }
@@ -252,7 +252,7 @@ class SubnetCalculator
      *
      * @return string IP address in hex.
      */
-    public function getIPAddressHex()
+    public function getIPAddressHex(): string
     {
         return $this->ipAddressCalculation('%02X');
     }
@@ -265,7 +265,7 @@ class SubnetCalculator
      *
      * @return string formatted IP address.
      */
-    private function ipAddressCalculation($format, $separator = '')
+    private function ipAddressCalculation(string $format, string $separator = ''): string
     {
         return implode(
             $separator,
@@ -283,7 +283,7 @@ class SubnetCalculator
      *
      * @return string IP address in binary.
      */
-    public function getIPAddressBinary()
+    public function getIPAddressBinary(): string
     {
         return $this->ipAddressCalculation('%08b');
     }
@@ -293,7 +293,7 @@ class SubnetCalculator
      *
      * @return string subnet mask as dotted quads.
      */
-    public function getSubnetMask()
+    public function getSubnetMask(): string
     {
         return $this->subnetCalculation('%d', '.');
     }
@@ -303,7 +303,7 @@ class SubnetCalculator
      *
      * @return string subnet mask in hex.
      */
-    public function getSubnetMaskHex()
+    public function getSubnetMaskHex(): string
     {
         return $this->subnetCalculation('%02X');
     }
@@ -313,7 +313,7 @@ class SubnetCalculator
      *
      * @return string subnet mask in binary.
      */
-    public function getSubnetMaskBinary()
+    public function getSubnetMaskBinary(): string
     {
         return $this->subnetCalculation('%08b');
     }
@@ -323,7 +323,7 @@ class SubnetCalculator
      *
      * @return string network portion as dotted quads.
      */
-    public function getNetworkPortion()
+    public function getNetworkPortion(): string
     {
         return $this->networkCalculation('%d', '.');
     }
@@ -336,7 +336,7 @@ class SubnetCalculator
      *
      * @return string formatted subnet mask.
      */
-    private function networkCalculation($format, $separator = '')
+    private function networkCalculation(string $format, string $separator = ''): string
     {
         $network_quads   = [];
         $network_quads[] = sprintf("$format", $this->quads[0] & ($this->subnet_mask >> 24));
@@ -352,7 +352,7 @@ class SubnetCalculator
      *
      * @return string network portion in hex.
      */
-    public function getNetworkPortionHex()
+    public function getNetworkPortionHex(): string
     {
         return $this->networkCalculation('%02X');
     }
@@ -362,7 +362,7 @@ class SubnetCalculator
      *
      * @return string network portion in binary.
      */
-    public function getNetworkPortionBinary()
+    public function getNetworkPortionBinary(): string
     {
         return $this->networkCalculation('%08b');
     }
@@ -372,7 +372,7 @@ class SubnetCalculator
      *
      * @return string host portion as dotted quads.
      */
-    public function getHostPortion()
+    public function getHostPortion(): string
     {
         return $this->hostCalculation('%d', '.');
     }
@@ -382,7 +382,7 @@ class SubnetCalculator
      *
      * @return string host portion in hex.
      */
-    public function getHostPortionHex()
+    public function getHostPortionHex(): string
     {
         return $this->hostCalculation('%02X');
     }
@@ -392,7 +392,7 @@ class SubnetCalculator
      *
      * @return string host portion in binary.
      */
-    public function getHostPortionBinary()
+    public function getHostPortionBinary(): string
     {
         return $this->hostCalculation('%08b');
     }
@@ -402,7 +402,7 @@ class SubnetCalculator
      *
      * @return int Number of IP addresses.
      */
-    public function getNumberIPAddresses()
+    public function getNumberIPAddresses(): int
     {
         return pow(2, (32 - $this->network_size));
     }
@@ -412,7 +412,7 @@ class SubnetCalculator
      *
      * @return int Number of IP addresses that are addressable.
      */
-    public function getNumberAddressableHosts()
+    public function getNumberAddressableHosts(): int
     {
         if ($this->network_size == 32) {
             return 1;
@@ -428,7 +428,7 @@ class SubnetCalculator
      *
      * @return array Array containing start and end of IP address range. IP addresses in dotted quad notation.
      */
-    public function getIPAddressRange()
+    public function getIPAddressRange(): array
     {
         return [$this->getNetworkPortion(), $this->getBroadcastAddress()];
     }
@@ -439,7 +439,7 @@ class SubnetCalculator
      *
      * @return string IP address as dotted quads.
      */
-    public function getBroadcastAddress()
+    public function getBroadcastAddress(): string
     {
         $network_quads         = $this->getNetworkPortionQuads();
         $number_ip_addresses   = $this->getNumberIPAddresses();
@@ -469,7 +469,7 @@ class SubnetCalculator
      *
      * @return array Array of four elements containing the four quads of the network portion.
      */
-    public function getNetworkPortionQuads()
+    public function getNetworkPortionQuads(): array
     {
         return explode('.', $this->networkCalculation('%d', '.'));
     }
@@ -545,7 +545,7 @@ class SubnetCalculator
      *
      * @return string Subnet Calculator report.
      */
-    public function getPrintableReport()
+    public function getPrintableReport(): string
     {
         return $this->__tostring();
     }

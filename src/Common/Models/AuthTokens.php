@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,23 +36,29 @@ class AuthTokens extends ModelsBase
     public $id;
 
     /**
+     * Hashed token value
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $tokenHash = '';
 
     /**
+     * Serialized session parameters
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $sessionParams = '';
 
     /**
+     * Expiry date of the token
+     *
      * @Column(type="string", nullable=false)
      */
     public ?string $expiryDate = '';
 
 
     /**
-     * Class initialization
+     * Initialize the model.
      */
     public function initialize(): void
     {

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,12 +24,26 @@ use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Core\System\Util;
 
-class ManagerConf extends CoreConfigClass
+/**
+ * Class ManagerConf
+ *
+ * Represents the configuration for manager.conf.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class ManagerConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'manager.conf';
 
+    /**
+     * Generates the configuration for manager.conf.
+     */
     protected function generateConfigProtected(): void
     {
+        // List of channel variables
         $vars = [
             'DIALEDPEERNUMBER',
             'BLKVM_CHANNEL',
@@ -49,6 +63,7 @@ class ManagerConf extends CoreConfigClass
             'CDR(recordingfile)',
         ];
 
+        // Generate the configuration content
         $conf = "[general]\n" .
             "enabled = yes\n" .
             "port = {$this->generalSettings['AMIPort']};\n" .
@@ -61,12 +76,17 @@ class ManagerConf extends CoreConfigClass
             "httptimeout = 60\n\n";
 
         if ($this->generalSettings['AMIEnabled'] === '1') {
+            // Fetch the Asterisk manager users
             /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $managers */
             /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $user */
             $managers = AsteriskManagerUsers::find();
             $result   = [];
+
+            // Iterate through each manager user
             foreach ($managers as $user) {
                 $arr_data = $user->toArray();
+
+                // Fetch the associated network filter
                 /** @var NetworkFilters $network_filter */
                 $network_filter     = NetworkFilters::findFirst($user->networkfilterid);
                 $arr_data['permit'] = $network_filter === null ? '' : $network_filter->permit;
@@ -74,6 +94,7 @@ class ManagerConf extends CoreConfigClass
                 $result[]           = $arr_data;
             }
 
+            // Generate configuration for each manager user
             foreach ($result as $user) {
                 $conf .= '[' . $user['username'] . "]\n";
                 $conf .= 'secret=' . $user['secret'] . "\n";
@@ -101,6 +122,8 @@ class ManagerConf extends CoreConfigClass
                 ];
                 $read  = '';
                 $write = '';
+
+                // Generate read and write permissions
                 foreach ($keys as $perm) {
                     if ($user[$perm] === 'readwrite') {
                         $read  .= ('' === $read) ? $perm : ",$perm";
@@ -118,6 +141,8 @@ class ManagerConf extends CoreConfigClass
                 if ($write !== '') {
                     $conf .= "write=$write\n";
                 }
+
+                // Exclude specific events from the user
                 $conf .= "eventfilter=!UserEvent: CdrConnector\n";
                 $conf .= "eventfilter=!UserEvent: Ping_\n";
                 $conf .= "eventfilter=!Event: Newexten\n";
@@ -125,6 +150,8 @@ class ManagerConf extends CoreConfigClass
             }
             $conf .= "\n";
         }
+
+        // Configuration for phpagi user
         $conf .= '[phpagi]' . "\n";
         $conf .= 'secret=phpagi' . "\n";
         $conf .= 'deny=0.0.0.0/0.0.0.0' . "\n";
@@ -134,7 +161,10 @@ class ManagerConf extends CoreConfigClass
         $conf .= "eventfilter=!Event: Newexten\n";
         $conf .= "\n";
 
-        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_MANAGER_CONF);
+        // Call the hook modules method for generating additional configuration
+        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_MANAGER_CONF);
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/manager.conf', $conf);
     }
 }

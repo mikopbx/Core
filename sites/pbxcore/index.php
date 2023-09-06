@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,47 +18,37 @@
  */
 
 namespace MikoPBX\PbxCore;
-use MikoPBX\PBXCoreREST\Config\{RegisterDIServices};
+
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\PBXCoreREST\Config\RegisterDIServices;
 use Phalcon\Di\FactoryDefault;
-use Throwable;
-use MikoPBX\Core\System\{SentryErrorLogger};
 use Phalcon\Mvc\Micro;
-use Whoops\Handler\JsonResponseHandler;
-use Whoops\Run;
+use Throwable;
 
+class RestAPI extends Micro
+{
+    public function main()
+    {
+        // Create Dependency injector
+        $di = new FactoryDefault();
 
-// Create Dependency injector
-$di = new FactoryDefault();
+        // Auto-loader configuration
+        require_once __DIR__ . '/../../src/Common/Config/ClassLoader.php';
 
-// Auto-loader configuration
-require_once __DIR__ . '/../../src/Common/Config/ClassLoader.php';
+        //Load application services
+        $application = new Micro();
+        $application->setDI($di);
+        $di->setShared('application', $application);
+        RegisterDIServices::init($di);
 
-// Attach Sentry error logger
-$errorLogger = new SentryErrorLogger('pbx-core-rest');
-$errorLogger->init();
-
-// Enable Whoops error pretty print
-if (class_exists(JsonResponseHandler::class)){
-    $whoops = new Run();
-    $whoops->pushHandler(new JsonResponseHandler());
-    $whoops->register();
-}
-
-// Start application
-try {
-    $application = new Micro();
-    $application->setDI($di);
-    $di->setShared('application', $application);
-    //Load application services
-    RegisterDIServices::init($di);
-    $application->handle($_SERVER['REQUEST_URI']);
-} catch (Throwable $e) {
-    $errorLogger->captureException($e);
-    if (class_exists(JsonResponseHandler::class)){
-        $whoops->handleException($e);
-    } else {
-        echo $e->getMessage();
+        // Start application
+        try {
+            $application->handle($_SERVER['REQUEST_URI']);
+        } catch (Throwable $e) {
+            CriticalErrorsHandler::handleException($e);
+        }
     }
 }
 
-
+$restApi = new RestAPI();
+$restApi->main();

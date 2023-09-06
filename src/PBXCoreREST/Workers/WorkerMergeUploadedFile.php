@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,17 +24,26 @@ require_once 'Globals.php';
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
-use Throwable;
 
 
+/**
+ * The WorkerMergeUploadedFile class is responsible for merging uploaded files into one file.
+ *
+ * @package MikoPBX\PBXCoreREST\Workers
+ */
 class WorkerMergeUploadedFile extends WorkerBase
 {
     /**
-     * @param mixed $params
+     * Starts the process to merge uploaded files into one.
+     *
+     * @param array $argv The command-line arguments passed to the worker.
+     * @return void
      */
-    public function start($params): void
+    public function start(array $argv): void
     {
-        $settings_file = $params[2]??'';
+        $settings_file = $argv[2]??'';
+
+        // Check if the settings file exists
         if ( ! file_exists($settings_file)) {
             Util::sysLogMsg(__CLASS__, 'File with settings not found', LOG_ERR);
 
@@ -50,7 +59,7 @@ class WorkerMergeUploadedFile extends WorkerBase
             $progress_file
         );
 
-        // Check filesize is equal uploaded size
+        // Check if the merged file size is equal to the uploaded size
         $resultFileSize = filesize($settings['fullUploadedFileName']);
         if ((int)$settings['resumableTotalSize'] === $resultFileSize) {
             file_put_contents($progress_file, '100');
@@ -71,13 +80,14 @@ class WorkerMergeUploadedFile extends WorkerBase
     }
 
     /**
-     * Merges uploaded parts of file to en one with fileName
+     * Merges uploaded parts of a file into one with the specified file name.
      *
-     * @param string $tempDir
-     * @param string $fileName
-     * @param int    $total_files
-     * @param string $result_file
-     * @param string $progress_file
+     * @param string $tempDir The temporary directory where the uploaded parts are stored.
+     * @param string $fileName The name of the file being merged.
+     * @param int $total_files The total number of parts to merge.
+     * @param string $result_file The resulting merged file.
+     * @param string $progress_file The file to track the progress of the merging process.
+     * @return void
      */
     private function mergeFilesInDirectory(
         string $tempDir,
@@ -108,4 +118,4 @@ class WorkerMergeUploadedFile extends WorkerBase
 }
 
 // Start worker process
-WorkerMergeUploadedFile::startWorker($argv??null);
+WorkerMergeUploadedFile::startWorker($argv??[]);

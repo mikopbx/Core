@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,12 +24,12 @@ namespace MikoPBX\Common\Config;
 use function function_exists;
 
 if (true !== function_exists('MikoPBX\Common\Config\appPath')) {
+
     /**
      * Get the application path.
      *
-     * @param string $path
-     *
-     * @return string
+     * @param string $path The optional path to append to the application path.
+     * @return string The complete application path.
      */
     function appPath(string $path = ''): string
     {

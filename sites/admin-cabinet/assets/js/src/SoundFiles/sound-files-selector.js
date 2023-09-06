@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2021 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,102 +18,119 @@
 
 /* global globalRootUrl, sessionStorage */
 
+/**
+ * Represents a sound files selector.
+ *
+ * @module SoundFilesSelector
+ */
 const SoundFilesSelector = {
 
-	initialize() {
-		window.addEventListener('ConfigDataChanged', SoundFilesSelector.cbOnDataChanged);
-	},
-	/**
-	 * We will drop all caches if data changes
-	 */
-	cbOnDataChanged() {
-		sessionStorage.removeItem(`${globalRootUrl}sound-files/getSoundFiles/custom`);
-	},
-	/**
-	 * Makes dropdown menu for soundFiles with empty field
-	 * @param cbOnChange - on change callback function
-	 * @returns  dropdown settings
-	 */
-	getDropdownSettingsWithEmpty(cbOnChange = null) {
-		return {
-			apiSettings: {
-				url: `${globalRootUrl}sound-files/getSoundFiles/custom`,
-				// cache: false,
-				// throttle: 400,
-				onResponse(response) {
-					return SoundFilesSelector.formatDropdownResults(response, true);
-				},
-			},
-			onChange(value) {
-				if (parseInt(value, 10) === -1) $(this).dropdown('clear');
-				if (cbOnChange !== null) cbOnChange(value);
-			},
-			ignoreCase: true,
-			fullTextSearch: true,
-			filterRemoteData: true,
-			saveRemoteData: true,
-			forceSelection: false,
-			// direction: 'downward',
-			hideDividers: 'empty',
+    /**
+     * Initializes the sound files selector.
+     */
+    initialize() {
+        window.addEventListener('ConfigDataChanged', SoundFilesSelector.cbOnDataChanged);
+    },
 
-		};
-	},
-	/**
-	 * Makes dropdown menu for soundFiles without empty field
-	 * @param cbOnChange - on change callback function
-	 * @returns  dropdown settings
-	 */
-	getDropdownSettingsWithoutEmpty(cbOnChange = null) {
-		return {
-			apiSettings: {
-				url: `${globalRootUrl}sound-files/getSoundFiles/custom`,
-				// cache: false,
-				// throttle: 400,
-				onResponse(response) {
-					return SoundFilesSelector.formatDropdownResults(response, false);
-				},
-			},
-			ignoreCase: true,
-			fullTextSearch: true,
-			filterRemoteData: true,
-			saveRemoteData: true,
-			forceSelection: false,
-			// direction: 'downward',
-			hideDividers: 'empty',
-			onChange(value) {
-				if (cbOnChange !== null) cbOnChange(value);
-			},
-		};
-	},
-	/**
-	 * Makes formatted menu structure
-	 */
-	formatDropdownResults(response, addEmpty) {
-		const formattedResponse = {
-			success: false,
-			results: [],
-		};
-		if (addEmpty) {
-			formattedResponse.results.push({
-				name: '-',
-				value: -1
-			});
-		}
+    /**
+     * Callback function for data change event.
+     * Clears the session storage cache.
+     */
+    cbOnDataChanged() {
+        sessionStorage.removeItem(`${globalRootUrl}sound-files/getSoundFiles/custom`);
+    },
 
-		if (response) {
-			formattedResponse.success = true;
-			$.each(response.results, (index, item) => {
-				formattedResponse.results.push({
-					name: item.name,
-					value: item.value
-				});
-			});
-		}
-		return formattedResponse;
-	},
+    /**
+     * Retrieves the dropdown settings with an empty field for sound files.
+     * @param {function} cbOnChange - The onchange callback function.
+     * @returns {object} - The dropdown settings.
+     */
+    getDropdownSettingsWithEmpty(cbOnChange = null) {
+        return {
+            apiSettings: {
+                url: `${globalRootUrl}sound-files/getSoundFiles/custom`,
+                // cache: false,
+                // throttle: 400,
+                onResponse(response) {
+                    return SoundFilesSelector.formatDropdownResults(response, true);
+                },
+            },
+            onChange(value) {
+                if (parseInt(value, 10) === -1) $(this).dropdown('clear');
+                if (cbOnChange !== null) cbOnChange(value);
+            },
+            ignoreCase: true,
+            fullTextSearch: true,
+            filterRemoteData: true,
+            saveRemoteData: true,
+            forceSelection: false,
+            // direction: 'downward',
+            hideDividers: 'empty',
+
+        };
+    },
+
+    /**
+     * Retrieves the dropdown settings without an empty field for sound files.
+     * @param {function} cbOnChange - The onchange callback function.
+     * @returns {object} - The dropdown settings.
+     */
+    getDropdownSettingsWithoutEmpty(cbOnChange = null) {
+        return {
+            apiSettings: {
+                url: `${globalRootUrl}sound-files/getSoundFiles/custom`,
+                // cache: false,
+                // throttle: 400,
+                onResponse(response) {
+                    return SoundFilesSelector.formatDropdownResults(response, false);
+                },
+            },
+            ignoreCase: true,
+            fullTextSearch: true,
+            filterRemoteData: true,
+            saveRemoteData: true,
+            forceSelection: false,
+            // direction: 'downward',
+            hideDividers: 'empty',
+            onChange(value) {
+                if (cbOnChange !== null) cbOnChange(value);
+            },
+        };
+    },
+
+    
+    /**
+     * Formats the dropdown menu structure.
+     * @param {object} response - The response data.
+     * @param {boolean} addEmpty - Indicates if an empty field should be added to the results.
+     * @returns {object} - The formatted response.
+     */
+    formatDropdownResults(response, addEmpty) {
+        const formattedResponse = {
+            success: false,
+            results: [],
+        };
+        if (addEmpty) {
+            formattedResponse.results.push({
+                name: '-',
+                value: -1
+            });
+        }
+
+        if (response) {
+            formattedResponse.success = true;
+            $.each(response.results, (index, item) => {
+                formattedResponse.results.push({
+                    name: item.name,
+                    value: item.value
+                });
+            });
+        }
+        return formattedResponse;
+    },
 }
 
-
+// When the document is ready, initialize the sound files selector
 $(document).ready(() => {
-	SoundFilesSelector.initialize();
+    SoundFilesSelector.initialize();
 });

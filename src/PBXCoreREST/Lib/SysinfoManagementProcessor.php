@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,12 @@ use MikoPBX\Service\Main;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class SysinfoManagementProcessor
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
+ *
+ */
 class SysinfoManagementProcessor extends Injectable
 {
     /**
@@ -35,12 +41,12 @@ class SysinfoManagementProcessor extends Injectable
      *
      * @param array $request
      *
-     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {
         $action         = $request['action'];
-        $res            = new PBXApiResult();
+        $res = new PBXApiResult();
         $res->processor = __METHOD__;
         switch ($action) {
             case 'getInfo':
@@ -50,20 +56,16 @@ class SysinfoManagementProcessor extends Injectable
                 $res = self::getExternalIpInfo();
                 break;
             default:
-                $res             = new PBXApiResult();
-                $res->processor  = __METHOD__;
-                $res->messages[] = "Unknown action - {$action} in sysinfoCallBack";
+                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
         }
-
         $res->function = $action;
-
         return $res;
     }
 
     /**
-     * Gets system information
+     * Gets collection of the system information and put it into temp file.
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     private static function getInfo(): PBXApiResult
     {
@@ -409,7 +411,8 @@ class SysinfoManagementProcessor extends Injectable
     {
         $content = '────────────────────────────────── Changed config files ─────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        $files   = CustomFiles::find('mode!="none"');
+        $modeNone = CustomFiles::MODE_NONE;
+        $files   = CustomFiles::find("mode!='$modeNone'");
         foreach ($files as $file) {
             $content .= "({$file->mode}){$file->filepath}" . PHP_EOL;
         }
@@ -435,9 +438,9 @@ class SysinfoManagementProcessor extends Injectable
     }
 
     /**
-     * Returns public IP address of this system
+     * Gets an external IP address of the system
      *
-     * @return PBXApiResult
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function getExternalIpInfo(): PBXApiResult
     {

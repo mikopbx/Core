@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,24 +19,26 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Text;
-use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Form;
 
 /**
  * Class Fail2BanEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property TranslationProvider translation
  */
-class Fail2BanEditForm extends Form
+class Fail2BanEditForm extends BaseForm
 {
 
     public function initialize($entity = null, $options = null): void
     {
+        parent::initialize($entity, $options);
+
+
         foreach ($entity as $key => $value) {
             switch ($key) {
                 case "id":
@@ -49,7 +51,7 @@ class Fail2BanEditForm extends Form
                     $this->add(new Numeric($key));
                     break;
                 case "whitelist":
-                    $this->add(new TextArea($key, ["rows" => 6]));
+                    $this->addTextArea($key, $value??'', 95);
                     break;
                 default:
                     $this->add(new Text($key));

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,47 +21,60 @@ namespace MikoPBX\PBXCoreREST\Controllers\Modules;
 
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Http\Response;
 
+/**
+ * Base controller for handling module-related actions.
+ *
+ * @package MikoPBX\PBXCoreREST\Controllers\Modules
+ *
+ * @RoutePrefix("/pbxcore/api/modules/{moduleUniqueID}/{action}")
+ *
+ * @example
+ * API for additional modules.
+ * Module check:
+ *   curl http://127.0.0.1/pbxcore/api/modules/ModuleSmartIVR/check
+ *   curl http://127.0.0.1/pbxcore/api/modules/ModuleCTIClient/check
+ *   curl http://127.0.0.1/pbxcore/api/modules/ModuleTelegramNotify/check
+ *   curl http://127.0.0.1/pbxcore/api/modules/ModuleBitrix24Notify/check
+ *   curl http://127.0.0.1/pbxcore/api/modules/ModuleBitrix24Integration/check
+ *
+ * Module restart with config regeneration:
+ *   curl http://127.0.0.1/pbxcore/api/modules/ModuleSmartIVR/reload
+ *   curl http://127.0.0.1/pbxcore/api/modules/ModuleCTIClient/reload
+ *   curl http://127.0.0.1/pbxcore/api/modules/ModuleBitrix24Integration/reload
+ *
+ *
+ * Execution of actions without main authorization.
+ * curl http://127.0.0.1/pbxcore/api/modules/ModuleAutoprovision/getcfg?mac=00135E874B49&solt=test
+ * curl http://127.0.0.1/pbxcore/api/modules/ModuleAutoprovision/getimg?file=logo-yealink-132x32.dob
+ *
+ * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction?portal=b24-uve4uz.bitrix24.ru
+ * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction?portal=miko24.ru
+ * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction
+ *
+ */
 class ModulesControllerBase extends BaseController
 {
-
     /**
-     * API дополнительных модулей.
-     * Проверка работы модуля:
-     *   curl http://127.0.0.1/pbxcore/api/modules/ModuleSmartIVR/check
-     *   curl http://127.0.0.1/pbxcore/api/modules/ModuleCTIClient/check
-     *   curl http://127.0.0.1/pbxcore/api/modules/ModuleTelegramNotify/check
-     *   curl http://127.0.0.1/pbxcore/api/modules/ModuleBitrix24Notify/check
-     *   curl http://127.0.0.1/pbxcore/api/modules/ModuleBitrix24Integration/check
+     * Handles the call action for a specific module.
      *
-     * Перезапуск модуля с генерацией конфига:
-     *   curl http://127.0.0.1/pbxcore/api/modules/ModuleSmartIVR/reload
-     *   curl http://127.0.0.1/pbxcore/api/modules/ModuleCTIClient/reload
-     *   curl http://127.0.0.1/pbxcore/api/modules/ModuleBitrix24Integration/reload
-     *
-     *
-     * Выполнение действий без основной авторизации.
-     * curl http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/getcfg?mac=00135E874B49&solt=test
-     * curl http://172.16.156.223/pbxcore/api/modules/ModuleAutoprovision/getimg?file=logo-yealink-132x32.dob
-     *
-     * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction?portal=b24-uve4uz.bitrix24.ru
-     * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction?portal=miko24.ru
-     * curl http://84.201.142.45/pbxcore/api/modules/ModuleBitrix24Notify/customAction
-     *
-     * @param $moduleName
-     * @param $actionName
+     * @param string $moduleName The name of the module.
+     * @param string $actionName The name of the action.
+     * @return void
      */
-    public function callActionForModule($moduleName, $actionName): void
+    public function callActionForModule(string $moduleName, string $actionName): void
     {
         $_REQUEST['ip_srv'] = $_SERVER['SERVER_ADDR'];
         $input              = file_get_contents('php://input');
         $request            = json_encode([
             'data'           => $_REQUEST,
             'module'         => $moduleName,
-            'input'          => $input,     // Параметры запроса.
+            'input'          => $input,
             'action'         => $actionName,
             'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
             'processor'      => 'modules',
+            'debug'     => strpos($this->request->getHeader('Cookie'),'XDEBUG_SESSION')!==false
         ]);
 
         $response   = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME)->request($request, 30, 0);
@@ -97,14 +110,14 @@ class ModulesControllerBase extends BaseController
                 }
                 $this->response->setPayloadSuccess($response['echo']);
             } elseif (isset($response['echo_file'])) {
-                $this->response->setStatusCode(200, 'OK')->sendHeaders();
+                $this->response->setStatusCode(Response::OK, 'OK')->sendHeaders();
                 $this->response->setFileToSend($response['echo_file']);
                 $this->response->sendRaw();
             } else {
                 $this->response->setPayloadSuccess($response);
             }
         } else {
-            $this->sendError(500);
+            $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
 }

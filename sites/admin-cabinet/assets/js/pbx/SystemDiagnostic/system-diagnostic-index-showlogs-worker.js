@@ -1,0 +1,77 @@
+"use strict";
+
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* global systemDiagnosticLogs */
+
+/**
+ * Represents the update log view worker object.
+ *
+ * @module updateLogViewWorker
+ */
+var updateLogViewWorker = {
+  /**
+   * Time in milliseconds before fetching new request.
+   * @type {number}
+   */
+  timeOut: 3000,
+
+  /**
+   * The id of the timer function for the worker.
+   * @type {number}
+   */
+  timeOutHandle: 0,
+
+  /**
+   * Error count for tracking errors.
+   * @type {number}
+   */
+  errorCounts: 0,
+
+  /**
+   * Initializes the update log view worker.
+   */
+  initialize: function initialize() {
+    updateLogViewWorker.restartWorker();
+  },
+
+  /**
+   * Restarts the update log view worker.
+   */
+  restartWorker: function restartWorker() {
+    window.clearTimeout(updateLogViewWorker.timeoutHandle);
+    updateLogViewWorker.worker();
+  },
+
+  /**
+   * Worker function for fetching the request.
+   */
+  worker: function worker() {
+    systemDiagnosticLogs.updateLogFromServer();
+    updateLogViewWorker.timeoutHandle = window.setTimeout(updateLogViewWorker.worker, updateLogViewWorker.timeOut);
+  },
+
+  /**
+   * Stops the update log view worker.
+   */
+  stop: function stop() {
+    window.clearTimeout(updateLogViewWorker.timeoutHandle);
+  }
+};
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9TeXN0ZW1EaWFnbm9zdGljL3N5c3RlbS1kaWFnbm9zdGljLWluZGV4LXNob3dsb2dzLXdvcmtlci5qcyJdLCJuYW1lcyI6WyJ1cGRhdGVMb2dWaWV3V29ya2VyIiwidGltZU91dCIsInRpbWVPdXRIYW5kbGUiLCJlcnJvckNvdW50cyIsImluaXRpYWxpemUiLCJyZXN0YXJ0V29ya2VyIiwid2luZG93IiwiY2xlYXJUaW1lb3V0IiwidGltZW91dEhhbmRsZSIsIndvcmtlciIsInN5c3RlbURpYWdub3N0aWNMb2dzIiwidXBkYXRlTG9nRnJvbVNlcnZlciIsInNldFRpbWVvdXQiLCJzdG9wIl0sIm1hcHBpbmdzIjoiOztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FBRUE7O0FBR0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBLElBQU1BLG1CQUFtQixHQUFHO0FBRXhCO0FBQ0o7QUFDQTtBQUNBO0FBQ0lDLEVBQUFBLE9BQU8sRUFBRSxJQU5lOztBQVF4QjtBQUNKO0FBQ0E7QUFDQTtBQUNJQyxFQUFBQSxhQUFhLEVBQUUsQ0FaUzs7QUFjeEI7QUFDSjtBQUNBO0FBQ0E7QUFDSUMsRUFBQUEsV0FBVyxFQUFFLENBbEJXOztBQW9CeEI7QUFDSjtBQUNBO0FBQ0lDLEVBQUFBLFVBdkJ3Qix3QkF1Qlg7QUFDVEosSUFBQUEsbUJBQW1CLENBQUNLLGFBQXBCO0FBQ0gsR0F6QnVCOztBQTJCeEI7QUFDSjtBQUNBO0FBQ0lBLEVBQUFBLGFBOUJ3QiwyQkE4QlI7QUFDWkMsSUFBQUEsTUFBTSxDQUFDQyxZQUFQLENBQW9CUCxtQkFBbUIsQ0FBQ1EsYUFBeEM7QUFDQVIsSUFBQUEsbUJBQW1CLENBQUNTLE1BQXBCO0FBQ0gsR0FqQ3VCOztBQW1DeEI7QUFDSjtBQUNBO0FBQ0lBLEVBQUFBLE1BdEN3QixvQkFzQ2Y7QUFDTEMsSUFBQUEsb0JBQW9CLENBQUNDLG1CQUFyQjtBQUNBWCxJQUFBQSxtQkFBbUIsQ0FBQ1EsYUFBcEIsR0FBb0NGLE1BQU0sQ0FBQ00sVUFBUCxDQUNoQ1osbUJBQW1CLENBQUNTLE1BRFksRUFFaENULG1CQUFtQixDQUFDQyxPQUZZLENBQXBDO0FBSUgsR0E1Q3VCOztBQThDeEI7QUFDSjtBQUNBO0FBQ0lZLEVBQUFBLElBakR3QixrQkFpRGpCO0FBQ0hQLElBQUFBLE1BQU0sQ0FBQ0MsWUFBUCxDQUFvQlAsbUJBQW1CLENBQUNRLGFBQXhDO0FBQ0g7QUFuRHVCLENBQTVCIiwic291cmNlc0NvbnRlbnQiOlsiLypcbiAqIE1pa29QQlggLSBmcmVlIHBob25lIHN5c3RlbSBmb3Igc21hbGwgYnVzaW5lc3NcbiAqIENvcHlyaWdodCDCqSAyMDE3LTIwMjMgQWxleGV5IFBvcnRub3YgYW5kIE5pa29sYXkgQmVrZXRvdlxuICpcbiAqIFRoaXMgcHJvZ3JhbSBpcyBmcmVlIHNvZnR3YXJlOiB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5XG4gKiBpdCB1bmRlciB0aGUgdGVybXMgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGFzIHB1Ymxpc2hlZCBieVxuICogdGhlIEZyZWUgU29mdHdhcmUgRm91bmRhdGlvbjsgZWl0aGVyIHZlcnNpb24gMyBvZiB0aGUgTGljZW5zZSwgb3JcbiAqIChhdCB5b3VyIG9wdGlvbikgYW55IGxhdGVyIHZlcnNpb24uXG4gKlxuICogVGhpcyBwcm9ncmFtIGlzIGRpc3RyaWJ1dGVkIGluIHRoZSBob3BlIHRoYXQgaXQgd2lsbCBiZSB1c2VmdWwsXG4gKiBidXQgV0lUSE9VVCBBTlkgV0FSUkFOVFk7IHdpdGhvdXQgZXZlbiB0aGUgaW1wbGllZCB3YXJyYW50eSBvZlxuICogTUVSQ0hBTlRBQklMSVRZIG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiAgU2VlIHRoZVxuICogR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgZm9yIG1vcmUgZGV0YWlscy5cbiAqXG4gKiBZb3Ugc2hvdWxkIGhhdmUgcmVjZWl2ZWQgYSBjb3B5IG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBhbG9uZyB3aXRoIHRoaXMgcHJvZ3JhbS5cbiAqIElmIG5vdCwgc2VlIDxodHRwczovL3d3dy5nbnUub3JnL2xpY2Vuc2VzLz4uXG4gKi9cblxuLyogZ2xvYmFsIHN5c3RlbURpYWdub3N0aWNMb2dzICovXG5cblxuLyoqXG4gKiBSZXByZXNlbnRzIHRoZSB1cGRhdGUgbG9nIHZpZXcgd29ya2VyIG9iamVjdC5cbiAqXG4gKiBAbW9kdWxlIHVwZGF0ZUxvZ1ZpZXdXb3JrZXJcbiAqL1xuY29uc3QgdXBkYXRlTG9nVmlld1dvcmtlciA9IHtcblxuICAgIC8qKlxuICAgICAqIFRpbWUgaW4gbWlsbGlzZWNvbmRzIGJlZm9yZSBmZXRjaGluZyBuZXcgcmVxdWVzdC5cbiAgICAgKiBAdHlwZSB7bnVtYmVyfVxuICAgICAqL1xuICAgIHRpbWVPdXQ6IDMwMDAsXG5cbiAgICAvKipcbiAgICAgKiBUaGUgaWQgb2YgdGhlIHRpbWVyIGZ1bmN0aW9uIGZvciB0aGUgd29ya2VyLlxuICAgICAqIEB0eXBlIHtudW1iZXJ9XG4gICAgICovXG4gICAgdGltZU91dEhhbmRsZTogMCxcblxuICAgIC8qKlxuICAgICAqIEVycm9yIGNvdW50IGZvciB0cmFja2luZyBlcnJvcnMuXG4gICAgICogQHR5cGUge251bWJlcn1cbiAgICAgKi9cbiAgICBlcnJvckNvdW50czogMCxcblxuICAgIC8qKlxuICAgICAqIEluaXRpYWxpemVzIHRoZSB1cGRhdGUgbG9nIHZpZXcgd29ya2VyLlxuICAgICAqL1xuICAgIGluaXRpYWxpemUoKSB7XG4gICAgICAgIHVwZGF0ZUxvZ1ZpZXdXb3JrZXIucmVzdGFydFdvcmtlcigpO1xuICAgIH0sXG5cbiAgICAvKipcbiAgICAgKiBSZXN0YXJ0cyB0aGUgdXBkYXRlIGxvZyB2aWV3IHdvcmtlci5cbiAgICAgKi9cbiAgICByZXN0YXJ0V29ya2VyKCkge1xuICAgICAgICB3aW5kb3cuY2xlYXJUaW1lb3V0KHVwZGF0ZUxvZ1ZpZXdXb3JrZXIudGltZW91dEhhbmRsZSk7XG4gICAgICAgIHVwZGF0ZUxvZ1ZpZXdXb3JrZXIud29ya2VyKCk7XG4gICAgfSxcblxuICAgIC8qKlxuICAgICAqIFdvcmtlciBmdW5jdGlvbiBmb3IgZmV0Y2hpbmcgdGhlIHJlcXVlc3QuXG4gICAgICovXG4gICAgd29ya2VyKCkge1xuICAgICAgICBzeXN0ZW1EaWFnbm9zdGljTG9ncy51cGRhdGVMb2dGcm9tU2VydmVyKCk7XG4gICAgICAgIHVwZGF0ZUxvZ1ZpZXdXb3JrZXIudGltZW91dEhhbmRsZSA9IHdpbmRvdy5zZXRUaW1lb3V0KFxuICAgICAgICAgICAgdXBkYXRlTG9nVmlld1dvcmtlci53b3JrZXIsXG4gICAgICAgICAgICB1cGRhdGVMb2dWaWV3V29ya2VyLnRpbWVPdXQsXG4gICAgICAgICk7XG4gICAgfSxcblxuICAgIC8qKlxuICAgICAqIFN0b3BzIHRoZSB1cGRhdGUgbG9nIHZpZXcgd29ya2VyLlxuICAgICAqL1xuICAgIHN0b3AoKSB7XG4gICAgICAgIHdpbmRvdy5jbGVhclRpbWVvdXQodXBkYXRlTG9nVmlld1dvcmtlci50aW1lb3V0SGFuZGxlKTtcbiAgICB9XG59OyJdfQ==

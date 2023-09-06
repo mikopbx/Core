@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,58 +24,57 @@ namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\Models\ModulesModelsBase;
 use Phalcon\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Events\Manager;
-use phpDocumentor\Reflection\DocBlock\Tags\See;
 use ReflectionClass;
 use ReflectionException;
 
 
 /**
- * Class ModulesDBConnectionsProvider
- * Add to DI modules DB as sqlite3 connections
+ * ModulesDBConnectionsProvider is responsible for adding module DB connections to the DI container.
  *
- * @package Modules
+ * @package MikoPBX\Common\Providers
  */
 class ModulesDBConnectionsProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
     public const SERVICE_NAME = '';
+
     /**
-     * DiServicesInstall constructor
+     * Register module DB connections service provider.
      *
-     * @param $di DiInterface link to app dependency injector
-     *
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
         $registeredDBServices = [];
-        $config               = $di->getShared(ConfigProvider::SERVICE_NAME);
-        $modulesDir           = $config->path('core.modulesDir');
+        $config = $di->getShared(ConfigProvider::SERVICE_NAME);
+        $modulesDir = $config->path('core.modulesDir');
 
         $results = glob($modulesDir . '/*/module.json', GLOB_NOSORT);
 
         foreach ($results as $moduleJson) {
-            $jsonString            = file_get_contents($moduleJson);
-            if ($jsonString === false){
+            $jsonString = file_get_contents($moduleJson);
+            if ($jsonString === false) {
                 continue;
             }
             $jsonModuleDescription = json_decode($jsonString, true);
-            if ( ! is_array($jsonModuleDescription)
+            if (!is_array($jsonModuleDescription)
                 || !array_key_exists('moduleUniqueID', $jsonModuleDescription)) {
                 continue;
             }
 
             $moduleUniqueId = $jsonModuleDescription['moduleUniqueID'];
-            if ( ! isset($moduleUniqueId)) {
+            if (!isset($moduleUniqueId)) {
                 continue;
             }
 
             $modelsFiles = glob("{$modulesDir}/{$moduleUniqueId}/Models/*.php", GLOB_NOSORT);
             foreach ($modelsFiles as $file) {
-                $className        = pathinfo($file)['filename'];
-                $moduleModelClass = "\\Modules\\{$moduleUniqueId}\\Models\\{$className}";
+                $className = pathinfo($file)['filename'];
+                $moduleModelClass = "Modules\\{$moduleUniqueId}\\Models\\{$className}";
 
                 // Test whether this class abstract or not
                 try {
@@ -88,16 +87,11 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 }
 
                 if (!class_exists($moduleModelClass)
-                    || defined('START_DOCKER')
                     || count(get_class_vars($moduleModelClass)) === 0) {
                     continue;
                 }
 
-                $model                 = new $moduleModelClass();
-                $connectionServiceName = $model->getReadConnectionService();
-                if ( ! isset($connectionServiceName)) {
-                    continue;
-                }
+                $connectionServiceName = ModulesModelsBase::getConnectionServiceName($moduleUniqueId);
                 $registeredDBServices[] = $connectionServiceName;
                 if ($di->has($connectionServiceName)) {
                     $di->remove($connectionServiceName);
@@ -105,7 +99,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
 
                 // Create and connect database
                 $dbDir = "{$config->path('core.modulesDir')}/{$moduleUniqueId}/db";
-                if (!file_exists($dbDir)){
+                if (!file_exists($dbDir)) {
                     Util::mwMkdir($dbDir, true);
                 }
                 $dbFileName = "{$dbDir}/module.db";
@@ -114,7 +108,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 // Log
                 $logDir = "{$config->path('core.logsDir')}/$moduleUniqueId/db";
                 $logFileName = "{$logDir}/queries.log";
-                if (!is_dir($logDir)){
+                if (!is_dir($logDir)) {
                     Util::mwMkdir($logDir, true);
                     $touchPath = Util::which('touch');
                     Processes::mwExec("{$touchPath} {$logFileName}");
@@ -122,16 +116,16 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 }
 
                 $params = [
-                    "debugMode"    => $config->path('modulesDatabases.debugMode'),
-                    "adapter"      => "Sqlite",
-                    "dbfile"       => $dbFileName,
+                    "debugMode" => $config->path('modulesDatabases.debugMode'),
+                    "adapter" => "Sqlite",
+                    "dbfile" => $dbFileName,
                     "debugLogFile" => $logFileName,
                 ];
 
                 $this->registerDBService($connectionServiceName, $di, $params);
 
                 // if database was created, we have to apply rules
-                if (!$dbFileExistBeforeAttachToConnection){
+                if (!$dbFileExistBeforeAttachToConnection) {
                     Util::addRegularWWWRights($dbDir);
                 }
             }
@@ -174,12 +168,12 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 }
             }
         );
-        // Назначаем EventsManager экземпляру адаптера базы данных
+        // Set EventsManager to the main database adapter instance
         $mainConnection->setEventsManager($eventsManager);
     }
 
     /**
-     * Recreate DB connections after table structure changes for additional modules
+     * Recreate module DB connections after table structure changes for additional modules.
      */
     public static function recreateModulesDBConnections(): void
     {
@@ -188,7 +182,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
 
         ModelsAnnotationsProvider::recreateAnnotationsProvider();
 
-        if ($di->has(ModelsMetadataProvider::SERVICE_NAME)){
+        if ($di->has(ModelsMetadataProvider::SERVICE_NAME)) {
             $di->get(ModelsMetadataProvider::SERVICE_NAME)->reset();
         }
     }

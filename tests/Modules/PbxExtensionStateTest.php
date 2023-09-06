@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ class PbxExtensionStateTest extends AbstractUnitTest
         if ($result===true){
             $this->assertTrue(true);
         } else {
-           $this->assertTrue(false, implode(' ', $this->state->getMessages()));
+            $this->assertTrue(false, implode(' ', $this->state->getMessages()));
         }
     }
 

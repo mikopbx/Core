@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\NetworkEditForm;
 use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Core\System\Util;
 
 class NetworkController extends BaseController
 {
@@ -37,9 +38,9 @@ class NetworkController extends BaseController
             }
         }
 
-        $template         = new LanInterfaces();
-        $template->id     = 0;
-        $template->dhcp   = '1';
+        $template = new LanInterfaces();
+        $template->id = 0;
+        $template->dhcp = '1';
         $template->vlanid = '4095';
 
         $arrEth[] = $template;
@@ -47,22 +48,23 @@ class NetworkController extends BaseController
         $internetInterface = LanInterfaces::findFirstByInternet('1');
         if ($internetInterface === null) {
             $internetInterface = new LanInterfaces();
-            $internetInterface->id     = 1;
+            $internetInterface->id = 1;
         }
 
         // We will find additional interfaces which we can delete
         $deletableInterfaces = [];
-        $countInterfaces     = LanInterfaces::count(['group' => 'interface']);
+        $countInterfaces = LanInterfaces::count(['group' => 'interface']);
         foreach ($countInterfaces as $record) {
             if ($record->rowcount > 1) {
                 $deletableInterfaces[] = $record->interface;
             }
         }
-        $form                      = new NetworkEditForm($internetInterface, ['eths' => $arrEth]);
-        $this->view->form          = $form;
-        $this->view->eths          = $arrEth;
+        $form = new NetworkEditForm($internetInterface, ['eths' => $arrEth]);
+        $this->view->form = $form;
+        $this->view->eths = $arrEth;
         $this->view->deletableEths = $deletableInterfaces;
-        $this->view->submitMode    = null;
+        $this->view->isDocker = Util::isDocker();
+        $this->view->submitMode = null;
     }
 
     /**
@@ -70,12 +72,14 @@ class NetworkController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (!$this->request->isPost()) {
             return;
         }
 
         $data = $this->request->getPost();
         $this->db->begin();
+
+
         $networkInterfaces = LanInterfaces::find();
 
         // Update interface settings
@@ -93,7 +97,7 @@ class NetworkController extends BaseController
 
         // Save additional interface settings if it exists
         if ($data['interface_0'] !== '') {
-            $eth     = new LanInterfaces();
+            $eth = new LanInterfaces();
             $eth->id = 0;
             $this->fillEthStructure($eth, $data);
             $eth->id = null;
@@ -117,11 +121,12 @@ class NetworkController extends BaseController
     /**
      * Fills network interface settings
      *
-     * @param $eth
-     * @param $data
+     * @param LanInterfaces $eth
+     * @param array $data post data
      */
-    private function fillEthStructure($eth, $data): void
+    private function fillEthStructure(LanInterfaces $eth, array $data): void
     {
+        $isDocker = Util::isDocker();
         foreach ($eth as $name => $value) {
             $itIsInternetInterfce = $eth->id === $data['internet_interface'];
             switch ($name) {
@@ -158,6 +163,9 @@ class NetworkController extends BaseController
                 case 'dhcp':
                     if (array_key_exists($name . '_' . $eth->id, $data)) {
                         $eth->$name = ($data['dhcp_' . $eth->id]) === 'on' ? '1' : '0';
+                    }
+                    if ($isDocker){
+                        $eth->dhcp = '1';
                     }
                     break;
                 case 'internet':
@@ -199,7 +207,7 @@ class NetworkController extends BaseController
      *
      * @param string $ethId interface id
      */
-    public function deleteAction($ethId = ''): void
+    public function deleteAction(string $ethId = ''): void
     {
         $eth = LanInterfaces::findFirstById($ethId);
         if ($eth !== null && $eth->delete() === false) {

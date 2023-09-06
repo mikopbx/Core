@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # MikoPBX - free phone system for small business
-# Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
 
 PATH=$PATH:/sbin:/usr/sbin:/bin:/usr/bin:/usr/sbin
 # export TERM=xterm-color
+
+# Set environment variables
 export CLICOLOR=1
 export GREP_OPTIONS='--color=auto'
 export LSCOLORS=gxfxcxdxbxegedabagacad
@@ -28,6 +30,7 @@ export HISTSIZE=5000
 export PROMPT_COMMAND='history -a'
 export HISTTIMEFORMAT="%F %T: "
 
+# Enable bash options
 shopt -s histappend
 shopt -s histreedit
 shopt -s histverify
@@ -36,6 +39,7 @@ shopt -s cdspell
 shopt -s dirspell
 shopt -s cmdhist
 
+# Check storage device and set history file accordingly
 storageDevice="$(cat /var/etc/storage_device)";
 /bin/busybox mount | /bin/busybox grep " $storageDevice " > /dev/null 2> /dev/null;
 storageNotExists="$?";
@@ -45,18 +49,19 @@ if [ "$storageNotExists" = '0' ]; then
   export HISTFILE="$histDir/.bash_history";
 fi
 
+# Set aliases
 alias ls='ls --color=auto'
 alias myip="curl http://ipecho.net/plain; echo"
 alias remount-offload="_remountOffload"
-alias xdebug-enable="_xdebugEnable"
-alias xdebug-enable-www="_xdebugEnableWww"
-alias xdebug-enable-agi="_xdebugEnableAgi"
 
+# Set prompt
 PS1='\w\$ '
 PS2='>'
 
+# Set language
 export LANG=en_US.utf8
 
+# Function to remount offload device
 _remountOffload()
 {
   nowMode="$(mount | grep /offload | cut -d '(' -f 2 | cut -d ',' -f 1)";
@@ -71,58 +76,24 @@ _remountOffload()
   echo "Mode for /offload ${newMode} disk:${mountPoint}";
 }
 
-_xdebugEnable()
-{
-  echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
-  echo "Changing xdebug.remote_host to address $1 ..."
-  sed "s/172.16.162.1$/$1/g" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
-  export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_autostart=0 remote_port=9000 remote_host=$1 remote_connect_back=0";
-  echo "Done"
-}
-
-complete -F _xdebugEnable xdebug-enable
-
-_xdebugEnableAgi()
-{
-  killall safe_asterisk
-  killall asterisk
-  xdebug-enable $1
-  nohup safe_asterisk -f > /dev/null 2>&1 &
-  echo "Done"
-}
-
-complete -F _xdebugEnableAgi xdebug-enable-agi
-
-_xdebugEnableWww()
-{
-  _xdebugEnable $1
-  echo "killing the php-fpm processes ..."
-  killall php-fpm
-  sleep 5;
-  echo "Restarting the php-fpm daemon ..."
-  php-fpm -c /etc/php.ini
-  echo "Done"
-}
-
-complete -F _xdebugEnableWww xdebug-enable-www
-
+# Function for pbx-console commands completion
 _pbxConsoleCommands()
 {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
-    # Подкоманды первого уровня
+   # First-level subcommands
     subcommands_1="cron services service"
-    subCommandsServices="restart start stop" # возможные подкоманды для history
-    # Цикл определения автодополнения при вводе подкоманды первого уровня
+    subCommandsServices="restart start stop" # possible subcommands for 'service'
+     # Completion for first-level subcommands
     if [[ ${COMP_CWORD} == 1 ]] ; then
         COMPREPLY=( $(compgen -W "${subcommands_1}" -- ${cur}) )
         return 0
     fi
 
-    subcmd_1="${COMP_WORDS[1]}" #К данному моменту подкоманда первого уровня уже введена, и мы её выбираем в эту переменную
+    subcmd_1="${COMP_WORDS[1]}"  # The first-level subcommand is already entered at this point
     case "${subcmd_1}" in #Дальше смотри, что она из себя представляет
     services)
-        # Введены script history; надо подставить import или export
+       # Entered 'services history'; need to provide 'stop-all', 'start-all', 'restart-all'
         if [[ ${COMP_CWORD} == 2 ]] ; then
             cmd='stop-all start-all restart-all';
             COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )
@@ -130,7 +101,7 @@ _pbxConsoleCommands()
         fi
         ;;
     service)
-        # Введены script history; надо подставить import или export
+       # Entered 'service history'; need to provide 'stop'
         if [[ ${COMP_CWORD} == 3 ]] ; then
             cmd='stop';
             COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )
@@ -138,14 +109,14 @@ _pbxConsoleCommands()
         fi
 
         if [[ ${COMP_CWORD} == 2 ]] ; then
-            # Получим имена сервисов.
+            # Get service names
             subCommandsServices=$(ps | grep php | grep Worker | cut -d '}' -f2 | tr '\\' '/' | xargs basename -a);
             COMPREPLY=( $(compgen -W "${subCommandsServices}" -- ${cur}) )
             return 0
         fi
         ;;
     cron)
-        # Введены script history; надо подставить import или export
+        # Entered 'cron history'; need to provide 'stop', 'start', 'show', 'restart'
         if [[ ${COMP_CWORD} == 2 ]] ; then
             cmd='stop start show restart';
             COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )

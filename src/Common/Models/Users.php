@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ use Phalcon\Mvc\Model\Relation;
  * Class Users
  *
  * @method static mixed findFirstByEmail(array|string|int $parameters = null)
- * @property \MikoPBX\Common\Models\Extensions Extensions
+ * @property Extensions Extensions
  * @package MikoPBX\Common\Models
  */
 class Users extends ModelsBase
@@ -38,50 +38,36 @@ class Users extends ModelsBase
     public $id;
 
     /**
+     *  User's email address
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $email = '';
 
     /**
+     *  User's username
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $username = '';
 
     /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string $password = '';
-
-    /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string $role = '';
-
-    /**
+     * User's preferred language
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $language = '';
 
     /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string  $voicemailpincode = '';
-
-    /**
-     * @Column(type="string", nullable=true)
-     */
-    public ?string $ldapauth = '';
-
-    /**
+     * User's avatar image path
+     *
      * @Column(type="string", nullable=true)
      */
     public ?string $avatar = '';
 
-    public static function getRoleValues(): array
-    {
-        return ['Admins', 'Users'];
-    }
-
+    /**
+     * Initialize the model.
+     */
     public function initialize(): void
     {
         $this->setSource('m_Users');
@@ -91,18 +77,26 @@ class Users extends ModelsBase
             Extensions::class,
             'userid',
             [
-                'alias'      => 'Extensions',
+                'alias' => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action'     => Relation::ACTION_CASCADE,
+                    'action' => Relation::ACTION_CASCADE,
                 ],
             ]
         );
     }
 
+    /**
+     * Perform actions after the model is saved.
+     *
+     * This method is called after the model is successfully saved. It updates the cache for selection lists
+     * if there are any changes to the employee's name or surname. It clears the cache for the Extensions model
+     * by calling the clearCache() method of the ModelsBase class.
+     *
+     * @return void
+     */
     public function afterSave(): void
     {
-        // Обновим кеш для списков выбора если поменяли имя, фамилию сотрудника
         ModelsBase::clearCache(Extensions::class);
     }
 

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,16 +20,31 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Storage;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 
 /**
- * /api/storage/{name}
- * Получить список подключенных дисков к ПК.
+ * Controller for handling storage-related actions using GET requests.
+ * @RoutePrefix("/pbxcore/api/storage")
+ *
+ * @example
+ *
+ * Get list of connected disks.
  * curl http://172.16.156.212/pbxcore/api/storage/list
  */
 class GetController extends BaseController
 {
-    public function callAction($actionName): void
+    /**
+    * Handles the call action for storage using GET requests.
+    *
+    * @param string $actionName The name of the action.
+     *
+     * Get information about all HDD devices.
+     * @Get("/list")
+     *
+    * @return void
+    */
+    public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker('storage', $actionName, $_REQUEST);
+        $this->sendRequestToBackendWorker(StorageManagementProcessor::class, $actionName, $_REQUEST);
     }
 }

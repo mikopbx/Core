@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,9 @@ use function MikoPBX\Common\Config\appPath;
 
 class ClassLoader
 {
+    /**
+     * Initialize the application.
+     */
     public static function init(): void
     {
         require __DIR__ . '/functions.php';
@@ -55,9 +58,9 @@ class ClassLoader
 
         $loader = new Loader();
         $loader->registerFiles($libraryFiles);
+
         $loader->registerNamespaces($nameSpaces);
         $loader->register();
-
     }
 
 }

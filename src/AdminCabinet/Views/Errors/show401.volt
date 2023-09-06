@@ -10,6 +10,6 @@
         {{ t._("er_UnauthorizedDescription") }}
     </div>
 
-    {{ link_to('index', t._('er_Home'), 'class': 'ui button') }}
+    {{ link_to('session/end', t._('er_Home'), 'class': 'ui button') }}
 
 </div>

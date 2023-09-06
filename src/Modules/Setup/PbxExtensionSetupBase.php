@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,23 +20,27 @@
 namespace MikoPBX\Modules\Setup;
 
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
-use Phalcon\Text;
 use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
 
+
 /**
- * Class PbxExtensionSetupBase
- * Common procedures for module installation and removing
+ * Base class for module setup.
+ * Common procedures for module installation and removing external modules.
  *
- * @property \MikoPBX\Common\Providers\LicenseProvider license
+ * @property \MikoPBX\Common\Providers\MarketPlaceProvider license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ * @property \Phalcon\Config\Adapter\Json config
+ *
+ *  @package MikoPBX\Modules\Setup
  */
 abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionSetupInterface
 {
@@ -48,7 +52,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
     /**
      * Module version from the module.json
-     * @var string
+     * @var string|null
      */
     protected $version;
 
@@ -56,23 +60,23 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      * Minimal required version PBX from the module.json
      * @var string
      */
-    protected $min_pbx_version;
+    protected string $min_pbx_version;
 
     /**
      * Module developer name  from the module.json
-     * @var string
+     * @var string|null
      */
     protected $developer;
 
     /**
      * Module developer's email from module.json
-     * @var string
+     * @var string|null
      */
     protected $support_email;
 
     /**
      * PBX core general database
-     * @var \Phalcon\Db\Adapter\Pdo\Sqlite
+     * @var \Phalcon\Db\Adapter\Pdo\Sqlite|null
      */
     protected $db;
 
@@ -84,7 +88,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
     /**
      * Phalcon config service
-     * @var \Phalcon\Config
+     * @var \Phalcon\Config|null
      */
     protected $config;
 
@@ -96,135 +100,193 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
     /**
      * License worker
-     * @var \MikoPBX\Service\License
+     * @var \MikoPBX\Service\License|null
      */
     protected $license;
 
     /**
      * Trial product version identify number from the module.json
-     * @var int
+     * @var int|null
      */
     public $lic_product_id;
 
     /**
      * License feature identify number from the module.json
-     * @var int
+     * @var int|null
      */
     public $lic_feature_id;
 
-
     /**
-     * Массив ссылок на документацию
+     * Array of wiki links
      * @var array
      */
     public array $wiki_links = [];
 
     /**
-     * PbxExtensionBase constructor.
+     * Constructor for the module class.
      *
-     * @param string $moduleUniqueID
+     * @param string $moduleUniqueID The unique identifier of the module.
      */
     public function __construct(string $moduleUniqueID)
     {
+        // Set the module unique ID
         $this->moduleUniqueID = $moduleUniqueID;
+
+        // Initialize properties
         $this->messages = [];
         $this->db      = $this->getDI()->getShared('db');
         $this->config  = $this->getDI()->getShared('config');
         $this->license =  $this->getDI()->getShared('license');
         $this->moduleDir = $this->config->path('core.modulesDir') . '/' . $this->moduleUniqueID;
+
+        // Load module settings from module.json file
         $settings_file = "{$this->moduleDir}/module.json";
         if (file_exists($settings_file)) {
             $module_settings = json_decode(file_get_contents($settings_file), true);
             if ($module_settings) {
+                // Extract module settings
                 $this->version         = $module_settings['version'];
-                $this->min_pbx_version = $module_settings['min_pbx_version'];
+                $this->min_pbx_version = $module_settings['min_pbx_version']??'';
                 $this->developer       = $module_settings['developer'];
                 $this->support_email   = $module_settings['support_email'];
+
+                // Check if license product ID is defined in module settings
                 if (array_key_exists('lic_product_id', $module_settings)) {
                     $this->lic_product_id = $module_settings['lic_product_id'];
                 } else {
                     $this->lic_product_id = 0;
                 }
+
+                // Check if license feature ID is defined in module settings
                 if (array_key_exists('lic_feature_id', $module_settings)) {
                     $this->lic_feature_id = $module_settings['lic_feature_id'];
                 } else {
                     $this->lic_feature_id = 0;
                 }
+
+                // Extract wiki links from module settings
                 $wiki_links = $module_settings['wiki_links']??[];
                 if(is_array($wiki_links)){
                     $this->wiki_links = $wiki_links;
                 }
             } else {
-                $this->messages[] = 'Error on decode module.json';
+                $this->messages[] = $this->translation->_("ext_ErrorOnDecodeModuleJson",['filename'=>'module.json']);
             }
         }
+
+        // Reset messages array
         $this->messages  = [];
     }
 
     /**
-     * The main module installation function called by PBXCoreRest after unzip module files
-     * It calls some private functions and setup error messages on the message variable
+     * Performs the main module installation process called by PBXCoreRest after unzipping module files.
+     * It invokes private functions and sets up error messages in the message variable.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#installmodule
      *
-     * @return bool - result of installation
+     * @return bool The result of the installation process.
      */
     public function installModule(): bool
     {
-        $result = true;
         try {
-            if ( ! $this->activateLicense()) {
-                $this->messages[] = 'License activate error';
-                $result           = false;
+            if (!$this->checkCompatibility()){
+                return false;
+            }
+            if (!$this->activateLicense()) {
+                $this->messages[] = $this->translation->_("ext_ErrorOnLicenseActivation");
+                return false;
             }
             if ( ! $this->installFiles()) {
-                $this->messages[] = ' installFiles error';
-                $result           = false;
+                $this->messages[] = $this->translation->_("ext_ErrorOnInstallFiles");
+                return false;
             }
             if ( ! $this->installDB()) {
-                $this->messages[] = ' installDB error';
-                $result           = false;
+                $this->messages[] = $this->translation->_("ext_ErrorOnInstallDB");
+                return false;
             }
             if ( ! $this->fixFilesRights()) {
-                $this->messages[] = ' Apply files rights error';
-                $result           = false;
+                $this->messages[] = $this->translation->_("ext_ErrorOnAppliesFilesRights");
+                return false;
             }
+
+            // Recreate version hash for js files and translations
+            PBXConfModulesProvider::getVersionsHash(true);
+
         } catch (Throwable $exception) {
-            $result         = false;
             $this->messages[] = $exception->getMessage();
+            return false;
         }
 
-        return $result;
+        return true;
     }
 
     /**
-     * Executes license activation only for commercial modules
+     * Checks if the current PBX version is compatible with the minimum required version.
      *
-     * @return bool result of license activation
+     * This function compares the current PBX version with the minimum required version
+     * specified by the module. If the current version is lower than the minimum required
+     * version, it adds a message to the `messages` array and returns `false`. Otherwise,
+     * it returns `true`, indicating that the PBX version is compatible.
+     *
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#checkcompatibility
+     *
+     * @return bool Returns `true` if PBX version is compatible; otherwise, `false`.
+     */
+    public function checkCompatibility():bool
+    {
+        // Get the current PBX version from the settings.
+        $currentVersionPBX = PbxSettings::getValueByKey('PBXVersion');
+
+        // Remove any '-dev' suffix from the version.
+        $currentVersionPBX = str_replace('-dev', '', $currentVersionPBX);
+        if (version_compare($currentVersionPBX, $this->min_pbx_version) < 0) {
+            // The current PBX version is lower than the required version.
+            // Add a message indicating the compatibility issue.
+            $this->messages[] = $this->translation->_("ext_ModuleDependsHigherVersion",['version'=>$this->min_pbx_version]);
+
+            // Return false to indicate incompatibility.
+            return false;
+        }
+
+        // The current PBX version is compatible.
+        return true;
+    }
+
+    /**
+     * Activates the license, applicable only for commercial modules.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#activatelicense
+     *
+     * @return bool The result of the license activation.
      */
     public function activateLicense(): bool
     {
         if($this->lic_product_id>0) {
             $lic = PbxSettings::getValueByKey('PBXLicense');
             if (empty($lic)) {
-                $this->messages[] = 'License key not found...';
+                $this->messages[] = $this->translation->_("ext_EmptyLicenseKey");
                 return false;
             }
-            // Получение пробной лицензии.
+
+            // Get trial license for the module
             $this->license->addtrial($this->lic_product_id);
         }
         return true;
     }
 
     /**
-     * Copies files, creates folders and symlinks for module and restores previous backup settings
+     * Copies files, creates folders, and symlinks for the module and restores previous backup settings.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#installfiles
      *
-     * @return bool installation result
+     * @return bool The result of the installation process.
      */
     public function installFiles(): bool
     {
         // Create cache links for JS, CSS, IMG folders
         PbxExtensionUtils::createAssetsSymlinks($this->moduleUniqueID);
 
-        // Create cache links for agi-bin scripts
+        // Create links for the module view templates
+        PbxExtensionUtils::createViewSymlinks($this->moduleUniqueID);
+
+        // Create links for agi-bin scripts
         PbxExtensionUtils::createAgiBinSymlinks($this->moduleUniqueID);
 
         // Restore database settings
@@ -236,15 +298,16 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         }
 
         // Volt
-        $this->cleanupCache();
+        $this->cleanupVoltCache();
 
         return true;
     }
 
     /**
-     * Setups ownerships and folder rights
+     * Sets up ownerships and folder rights.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#fixfilesrights
      *
-     * @return bool fixing result
+     * @return bool The result of the fixing process.
      */
     public function fixFilesRights(): bool
     {
@@ -265,13 +328,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Creates database structure according to models annotations
+     * Creates the database structure according to models' annotations.
+     * If necessary, it fills some default settings and changes the sidebar menu item representation for this module.
+     * After installation, it registers the module on the PbxExtensionModules model.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#fixfilesrights
      *
-     * If it necessary, it fills some default settings, and change sidebar menu item representation for this module
-     *
-     * After installation it registers module on PbxExtensionModules model
-     *
-     * @return bool result of installation
+     * @return bool The result of the installation process.
      */
     public function installDB(): bool
     {
@@ -287,26 +349,30 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         return $result;
     }
 
-
     /**
-     * The main function called by MikoPBX REST API for delete any module
+     * Performs the main module uninstallation process called by MikoPBX REST API to delete any module.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#uninstallmodule
      *
-     * @param $keepSettings bool if it set to true, the function saves module database
+     * @param bool $keepSettings If set to true, the function saves the module database.
      *
-     * @return bool uninstall result
+     * @return bool The result of the uninstallation process.
      */
     public function uninstallModule(bool $keepSettings = false): bool
     {
         $result = true;
         try {
             if ( ! $this->unInstallDB($keepSettings)) {
-                $this->messages[] = ' unInstallDB error';
+                $this->messages[] = $this->translation->_("ext_UninstallDBError");
                 $result           = false;
             }
             if ($result && ! $this->unInstallFiles($keepSettings)) {
-                $this->messages[] = ' unInstallFiles error';
+                $this->messages[] = $this->translation->_("ext_UnInstallFiles");
                 $result           = false;
             }
+
+            // Recreate version hash for js files and translations
+            PBXConfModulesProvider::getVersionsHash(true);
+
         } catch (Throwable $exception) {
             $result         = false;
             $this->messages[] = $exception->getMessage();
@@ -316,12 +382,13 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Deletes some settings from database and links to the module
-     * If keepSettings set to true it copies database file to Backup folder
+     * Deletes some settings from the database and links to the module.
+     * If $keepSettings is set to true, it copies the database file to the Backup folder.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#uninstalldb
      *
-     * @param  $keepSettings bool
+     * @param bool $keepSettings If set to true, the module database is saved.
      *
-     * @return bool the uninstall result
+     * @return bool The result of the uninstallation process.
      */
     public function unInstallDB(bool $keepSettings = false): bool
     {
@@ -329,9 +396,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Deletes records from PbxExtensionModules
+     * Deletes records from the PbxExtensionModules table.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#unregistermodule
      *
-     * @return bool unregistration result
+     * @return bool The result of the uninstallation process.
      */
     public function unregisterModule(): bool
     {
@@ -345,12 +413,13 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Deletes the module files, folders, symlinks
-     * If keepSettings set to true it copies database file to Backup folder
+     * Deletes the module files, folders, and symlinks.
+     * If $keepSettings is set to true, it copies the database file to the Backup folder.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#uninstallfiles
      *
-     * @param $keepSettings bool
+     * @param bool $keepSettings If set to true, the module database is saved.
      *
-     * @return bool delete result
+     * @return bool The result of the deletion process.
      */
     public function unInstallFiles(bool $keepSettings = false):bool
     {
@@ -388,15 +457,16 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         }
 
         // Volt
-        $this->cleanupCache();
+        $this->cleanupVoltCache();
 
         return true;
     }
 
     /**
-     * Returns error messages
+     * Returns error messages.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#getmessages
      *
-     * @return array
+     * @return array An array of error messages.
      */
     public function getMessages(): array
     {
@@ -404,21 +474,13 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Registers module in the PbxExtensionModules table
+     * Registers the module in the PbxExtensionModules table.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#registernewmodule
      *
-     * @return bool
+     * @return bool The result of the registration process.
      */
     public function registerNewModule(): bool
     {
-        // Проверим версию АТС и Модуля на совместимость
-        $currentVersionPBX = PbxSettings::getValueByKey('PBXVersion');
-        $currentVersionPBX = str_replace('-dev', '', $currentVersionPBX);
-        if (version_compare($currentVersionPBX, $this->min_pbx_version) < 0) {
-            $this->messages[] = "Module depends minimum PBX ver $this->min_pbx_version";
-
-            return false;
-        }
-
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ( ! $module) {
             $module           = new PbxExtensionModules();
@@ -441,23 +503,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * DEPRECATED
-     * Returns translated phrase
+     * Traverses files with model descriptions and creates/alters tables in the system database.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#createsettingstablebymodelsannotations
      *
-     * @param $stringId string  Phrase identifier
-     *
-     * @return string  перевод
-     */
-    public function locString(string $stringId): string
-    {
-        Util::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
-        return $this->translation->_($stringId);
-    }
-
-    /**
-     * Traverses files with model descriptions and creates / modifies tables in the system database
-     *
-     * @return bool the table modification result
+     * @return bool The result of the table modification process.
      */
     public function createSettingsTableByModelsAnnotations(): bool
     {
@@ -469,7 +518,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $dbUpgrade = new UpdateDatabase();
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "\\Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
             $upgradeResult = $dbUpgrade->createUpdateDbTableByAnnotations($moduleModelClass);
             if (!$upgradeResult){
                 return false;
@@ -482,16 +531,15 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         return true;
     }
 
-
     /**
-     * Adds module to sidebar menu
+     * Adds the module to the sidebar menu.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-installer#addtosidebar
      *
-     * @return bool
+     * @return bool The result of the addition process.
      */
     public function addToSidebar(): bool
     {
         $menuSettingsKey           = "AdditionalMenuItem{$this->moduleUniqueID}";
-        $unCamelizedControllerName = Text::uncamelize($this->moduleUniqueID, '-');
         $menuSettings              = PbxSettings::findFirstByKey($menuSettingsKey);
         if ($menuSettings === null) {
             $menuSettings      = new PbxSettings();
@@ -499,7 +547,6 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         }
         $value               = [
             'uniqid'        => $this->moduleUniqueID,
-            'href'          => "/admin-cabinet/{$unCamelizedControllerName}",
             'group'         => 'modules',
             'iconClass'     => 'puzzle',
             'caption'       => "Breadcrumb{$this->moduleUniqueID}",
@@ -511,9 +558,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     }
 
     /**
-     * Deletes old cache files
+     * Deletes volt cache files.
+     *
+     * @return void
      */
-    private function cleanupCache()
+    private function cleanupVoltCache():void
     {
         $cacheDirs = [];
         $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
@@ -523,5 +572,19 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
                 Processes::mwExec("{$rmPath} -rf {$cacheDir}/*");
             }
         }
+    }
+
+    /**
+     * Deprecated function to return translated phrases.
+     *
+     * @param string $stringId The phrase identifier.
+     *
+     * @return string The translated phrase.
+     * @deprecated
+     */
+    public function locString(string $stringId): string
+    {
+        Util::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
+        return $this->translation->_($stringId);
     }
 }

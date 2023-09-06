@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,9 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * The URL component is used to generate all kind of urls in the application
+ * The LanguageProvider class is responsible for registering the language service.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class LanguageProvider implements ServiceProviderInterface
 {
@@ -37,7 +39,7 @@ class LanguageProvider implements ServiceProviderInterface
     /**
      * Register language service provider
      *
-     * @param \Phalcon\Di\DiInterface $di
+     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
@@ -53,13 +55,9 @@ class LanguageProvider implements ServiceProviderInterface
                         $language = PbxSettings::getValueByKey('SSHLanguage');
                     }
                 } else {
-                    $roSession = $di->getShared(SessionReadOnlyProvider::SERVICE_NAME);
-                    if ($roSession !== null && array_key_exists(
-                            'WebAdminLanguage',
-                            $roSession
-                        ) && ! empty($roSession['WebAdminLanguage'])) {
-                        $language = $roSession['WebAdminLanguage'];
-                    } else {
+                    $session = $di->getShared(SessionProvider::SERVICE_NAME);
+                    $language = $session->get('WebAdminLanguage')??'';
+                    if (empty($language)){
                         $language = PbxSettings::getValueByKey('WebAdminLanguage');
                     }
                 }

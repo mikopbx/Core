@@ -1,12 +1,12 @@
+{% set controller=dispatcher.getControllerName() %}
+{% set action=dispatcher.getActionName() %}
+
 <!DOCTYPE html>
-<html>
+<html lang="{{ WebAdminLanguage }}">
 <head>
     <meta charset="utf-8">
     <title>{{ get_title() }}</title>
-    {# {% cache 'headerAssetsBeforeMetatags'~cacheName~'Cache.volt.php' %} #}
-    {{ assets.outputCss('SemanticUICSS') }}
-    {{ assets.outputCss('headerCSS') }}
-    {# {% endcache %} #}
+    {{ assets.outputCombinedHeaderCSS(controller, action) }}
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url() }}assets/img/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url() }}assets/img/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url() }}assets/img/favicon-16x16.png">
@@ -18,7 +18,7 @@
     <meta name="msapplication-config" content="{{ url() }}assets/img/browserconfig.xml">
     <meta name="theme-color" content="#ffffff">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ t._("MetategHeadDescription") }}">
+    <meta name="description" content="{{ MetaTegHeadDescription }}">
     <meta name="author" content="MIKO">
     <script type="text/javascript">
 		var globalTranslate = '';
@@ -26,32 +26,21 @@
 		var globalRootUrl = '{{ url() }}';
 		var globalDebugMode = '{{ debugMode }}';
 		var globalPBXLicense = '{{ PBXLicense }}';
+        var globalModuleUniqueId = '{{ globalModuleUniqueId }}';
 		var globalLastSentryEventId = '{{ lastSentryEventId }}';
 		var globalWebAdminLanguage = '{{ WebAdminLanguage }}';
 		var globalAvailableLanguages = '{{ AvailableLanguages }}';
-		var globalSSHPort = '{{ SSHPort }}';
     </script>
-    {# {% cache 'headerAssetsAfterMetatags'~cacheName~'Cache.volt.php' %} #}
 
-    {{ assets.outputJs('headerSentryJS') }}
-    {{ assets.outputJs('headerPBXJS') }}
-    {{ assets.outputJs('headerJS') }}
+    {{ assets.outputCombinedHeaderJs(controller, action) }}
 
-    {# {% endcache %} #}
 </head>
-<body class="pushable">
+<body>
 {{ content() }}
-{# {% cache 'foterAssets'~cacheName~'Cache.volt.php' %} #}
 
-{{ assets.outputJs('SemanticUIJS') }}
-{{ assets.outputJs('footerACE') }}
-{{ assets.outputJs('footerLoc') }}
-{{ assets.outputJs('footerPBXJS') }}
+{{ assets.outputCombinedFooterJs(controller, action) }}
 {{ assets.outputInlineJs() }}
 {{ assets.outputJs('footerJS') }}
-
-{# {% endcache %} #}
 </body>
 </html>
-
 

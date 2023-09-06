@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ use PHPUnit\Framework\TestCase;
 use BrowserStack\Local as BrowserStackLocal;
 use GuzzleHttp\Client as GuzzleHttpClient;
 
-require 'globals.php';
+require_once 'globals.php';
 
 class BrowserStackTest extends TestCase
 {
@@ -58,11 +58,11 @@ class BrowserStackTest extends TestCase
         }
 
         // If BrowserStack Local is enabled, start a BrowserStackLocal instance
-        if(array_key_exists("browserstack.local", $caps) && $caps["browserstack.local"])
+        if($GLOBALS['BROWSERSTACK_DAEMON_STARTED']==='false')
         {
             $bs_local_args = [
                 "key" => $GLOBALS['BROWSERSTACK_ACCESS_KEY'],
-                "localIdentifier" => $caps['browserstack.localIdentifier'],
+                "localIdentifier" => "".$GLOBALS['bs_localIdentifier']
             ];
             self::$bs_local = new BrowserStackLocal();
             self::$bs_local->start($bs_local_args);
@@ -103,6 +103,9 @@ class BrowserStackTest extends TestCase
             'auth' => [$GLOBALS['BROWSERSTACK_USERNAME'], $GLOBALS['BROWSERSTACK_ACCESS_KEY']],
             'json' => ['name' => $name]
         ]);
+
+        // Maximize Browser size
+        self::$driver->manage()->window()->maximize();
     }
 
     /**

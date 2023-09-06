@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,16 +23,33 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Core\System\Util;
 use function MikoPBX\Common\Config\appPath;
 
-class IndicationConf extends CoreConfigClass
+/**
+ * Class IndicationConf
+ *
+ * Represents a configuration class for indications.
+ *
+ * @package MikoPBX\Core\Asterisk\Configs
+ */
+class IndicationConf extends AsteriskConfigClass
 {
+    // The module hook applying priority
+    public int $priority = 1000;
+
     protected string $description = 'indications.conf';
 
+    /**
+     * Generates the configuration for the indications.conf file.
+     *
+     * @return void
+     */
     protected function generateConfigProtected(): void
     {
-        $country = 'ru';//TODO:: Добавить в интерфейс если это важная опция
+        $country = 'ru'; // TODO: Add to the interface if it's an important option
         $filePath = appPath('src/Core/Asterisk/Configs/Samples/indications.conf.sample');
         $data     = file_get_contents($filePath);
         $conf     = str_replace('{country}', $country, $data);
+
+        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/indications.conf', $conf);
     }
 

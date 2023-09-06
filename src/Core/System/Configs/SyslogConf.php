@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,13 @@ use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
+/**
+ * Class SyslogConf
+ *
+ * Represents the Syslog configuration.
+ *
+ * @package MikoPBX\Core\System\Configs
+ */
 class SyslogConf extends Injectable
 {
     public const CONF_FILE   ='/etc/rsyslog.conf';
@@ -32,7 +39,7 @@ class SyslogConf extends Injectable
     public const SYS_LOG_LINK='/var/log/messages';
 
     /**
-     * Restarts syslog daemon
+     * Restarts syslog daemon.
      */
     public function reStart(): void
     {
@@ -47,7 +54,7 @@ class SyslogConf extends Injectable
     }
 
     /**
-     * Генерация конфигурационного файла.
+     * Generates the configuration file.
      */
     private function generateConfigFile():void{
         $pathScript = $this->createRotateScript();
@@ -62,7 +69,7 @@ class SyslogConf extends Injectable
                 '$IncludeConfig /etc/rsyslog.d/*.conf'.PHP_EOL.
                 // '*.* '.$log_file.PHP_EOL.
                 PHP_EOL.
-                '$outchannel log_rotation,'.$log_file.',2621440,'.$pathScript.PHP_EOL
+                '$outchannel log_rotation,'.$log_file.',10485760,'.$pathScript.PHP_EOL
                 .'*.* :omfile:$log_rotation'.PHP_EOL;
         Util::fileWriteContent(self::CONF_FILE, $conf);
         Util::createUpdateSymlink($log_file, self::SYS_LOG_LINK);
@@ -70,7 +77,8 @@ class SyslogConf extends Injectable
     }
 
     /**
-     * Returns Syslog file path
+     * Returns the path to the syslog file.
+     *
      * @return string
      */
     public static function getSyslogFile(): string
@@ -81,7 +89,8 @@ class SyslogConf extends Injectable
     }
 
     /**
-     * Скрипт ротации логов.
+     * Creates the log rotation script.
+     *
      * @return string
      */
     public function createRotateScript(): string

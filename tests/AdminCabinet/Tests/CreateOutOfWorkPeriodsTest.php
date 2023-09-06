@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,6 +100,17 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
 
         }
 
+        $this->changeCheckBoxState('allowRestriction', $params['allowRestriction']);
+
+        if ($params['allowRestriction']){
+            $xpath = "//div[@id='out-time-modify-menu']//ancestor::a[@data-tab='rules']";
+            $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $tab->click();
+            foreach ($params['inbound-rules-table'] as $checkBoxId=>$value){
+                $this->changeCheckBoxState('rule-'.$checkBoxId, $value);
+            }
+        }
+
         $this->submitForm('save-outoffwork-form');
 
         //Remember ID
@@ -131,6 +142,17 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
                 break;
             default:
         }
+        $this->assertCheckBoxStageIsEqual('allowRestriction', $params['allowRestriction']);
+
+        if ($params['allowRestriction']){
+            $xpath = "//div[@id='out-time-modify-menu']//ancestor::a[@data-tab='rules']";
+            $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $tab->click();
+            foreach ($params['inbound-rules-table'] as $checkBoxId=>$value){
+                $this->assertCheckBoxStageIsEqual('rule-'.$checkBoxId, $value);
+            }
+        }
+
     }
 
     /**
@@ -150,6 +172,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
             'time_to'=>'',
             'action'=> 'extension',
             'extension'=>'201',
+            'allowRestriction'=> false,
             'audio_message_id'=>''
         ]];
 
@@ -163,6 +186,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
             'time_to'=>'',
             'action'=> 'playmessage',
             'extension'=>'',
+            'allowRestriction'=> false,
             'audio_message_id'=>'1'
         ]];
 
@@ -176,7 +200,14 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
             'time_to'=>'',
             'action'=> 'playmessage',
             'extension'=>'',
-            'audio_message_id'=>'1'
+            'audio_message_id'=>'1',
+            'allowRestriction'=> true,
+            'inbound-rules-table'=>[
+                '13'=>false,
+                '14'=>false,
+                '15'=>false
+            ]
+
         ]];
 
         $params[] = [[
@@ -189,7 +220,13 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
             'time_to'=>'9:00',
             'action'=> 'playmessage',
             'extension'=>'',
-            'audio_message_id'=>'1'
+            'audio_message_id'=>'1',
+            'allowRestriction'=> true,
+            'inbound-rules-table'=>[
+                '13'=>false,
+                '14'=>true,
+                '15'=>true
+            ]
         ]];
 
         $params[] = [[
@@ -202,7 +239,13 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
             'time_to'=>'23:59',
             'action'=> 'playmessage',
             'extension'=>'',
-            'audio_message_id'=>'1'
+            'audio_message_id'=>'1',
+            'allowRestriction'=> true,
+            'inbound-rules-table'=>[
+                '13'=>true,
+                '14'=>false,
+                '15'=>true
+            ]
         ]];
 
         return $params;
