@@ -25,6 +25,8 @@ use MikoPBX\Common\Models\{ConferenceRooms, Extensions};
 
 class ConferenceRoomsController extends BaseController
 {
+
+
     /**
      * Build the list of conference rooms.
      */
@@ -33,6 +35,7 @@ class ConferenceRoomsController extends BaseController
         $records             = ConferenceRooms::find();
         $this->view->records = $records;
     }
+
 
     /**
      * Edit conference room details.
@@ -45,13 +48,14 @@ class ConferenceRoomsController extends BaseController
         if ($record === null) {
             // Create a new conference room if not found
             $record            = new ConferenceRooms();
-            $record->uniqid    = ConferenceRooms::generateUniqueID(Extensions::TYPE_CONFERENCE.'-');
+            $record->uniqid    = Extensions::TYPE_CONFERENCE.strtoupper('-' . md5(time()));
             $record->extension = Extensions::getNextFreeApplicationNumber();
         }
         $this->view->form      = new ConferenceRoomEditForm($record);
         $this->view->represent = $record->getRepresent();
         $this->view->extension = $record->extension;
     }
+
 
     /**
      * Save the conference room.

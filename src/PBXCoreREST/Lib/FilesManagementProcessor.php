@@ -110,7 +110,7 @@ class FilesManagementProcessor extends Injectable
         $fileName = (string)pathinfo($parameters['resumableFilename'], PATHINFO_FILENAME);
         $fileName = preg_replace('/[\W]/', '', $fileName);
         if (strlen($fileName) < 10) {
-            $fileName = '' . md5(microtime()) . '-' . $fileName;
+            $fileName = '' . md5(time()) . '-' . $fileName;
         }
         $extension                          = (string)pathinfo($parameters['resumableFilename'], PATHINFO_EXTENSION);
         $fileName                           .= '.' . $extension;
