@@ -341,7 +341,7 @@ class Sip extends ModelsBase
             $password = $random->base64Safe($passwordLength);
         } catch (\Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $password = md5(time());
+            $password = md5(microtime());
         }
         return $password;
     }
