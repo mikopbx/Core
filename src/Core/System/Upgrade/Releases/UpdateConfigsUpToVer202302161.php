@@ -93,7 +93,6 @@ class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemC
      */
     private function createParkingSlots()
     {
-        $messages = [];
         // Delete all parking slots
         $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
         foreach ($currentSlots as $currentSlot) {
