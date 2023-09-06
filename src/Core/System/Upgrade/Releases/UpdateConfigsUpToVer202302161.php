@@ -116,6 +116,7 @@ class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemC
             $record = new Extensions();
             $record->type = Extensions::TYPE_PARKING;
             $record->number = $number;
+            $record->show_in_phonebook = '0';
             if (!$record->create()) {
                 Util::sysLogMsg(
                     __CLASS__,
