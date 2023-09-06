@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,33 +22,19 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
-/**
- * Class ActionQueueStart
- * Handles the event of starting a queue.
- *
- * @package MikoPBX\Core\Workers\Libs\WorkerCallEvents
- */
 class ActionQueueStart
 {
-
-    /**
-     * Executes the action for the queue start event.
-     *
-     * @param WorkerCallEvents $worker The worker instance.
-     * @param array $data The event data.
-     * @return void
-     */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, $data):void
     {
         if ($data['transfer'] === '1') {
-            // If it's a transfer, perform a search for related data.
+            // Если это трансфер выполним поиск связанных данных.
             ActionTransferCheck::execute($worker, $data);
         }
         if (isset($data['start'])) {
-            // It's a new row.
+            // Это новая строка.
             InsertDataToDB::execute($data);
         } else {
-            // Only data update is required.
+            // Требуется только обновление данных.
             UpdateDataInDB::execute($data);
         }
         ActionAppEnd::execute($worker, $data);

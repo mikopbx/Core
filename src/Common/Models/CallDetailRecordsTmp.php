@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@ namespace MikoPBX\Common\Models;
 
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Util;
-use Throwable;
 
 /**
  * Class CallDetailRecordsTmp
@@ -42,9 +41,6 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
 {
     public const CACHE_KEY = 'Workers:Cdr';
 
-    /**
-     * Initialize the model.
-     */
     public function initialize(): void
     {
         $this->setSource('cdr');
@@ -53,32 +49,25 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
         $this->setConnectionService('dbCDR');
     }
 
-    /**
-     * Perform necessary actions after saving the record.
-     */
-    public function afterSave(): void
-    {
+    public function afterSave():void {
 
         $moveToGeneral = true;
-        // Check if the call was answered and either an interception or originate.
-        // In such cases, forcefully logging the call is not required.
-        if ($this->disposition === 'ANSWERED' &&
-            ($this->appname === 'interception' || $this->appname === 'originate')) {
+        if( $this->disposition === 'ANSWERED' &&
+            ($this->appname === 'interception' || $this->appname === 'originate') ){
+            // Это успешный originate или перехват на ответственного.
+            // Принудительно логировать такой вызов не следует.
             $moveToGeneral = false;
         }
 
         $work_completed = (string)$this->work_completed;
-
-        // If work is completed (value of 'work_completed' is '1') and should be moved to general CDR,
-        // create a new CallDetailRecords instance and copy relevant attributes.
-        if ($work_completed === '1' && $moveToGeneral) {
+        if( $work_completed === '1' && $moveToGeneral){
             $newCdr = new CallDetailRecords();
-            $vars = $this->toArray();
-            foreach ($vars as $key => $value) {
-                if ('id' === $key) {
+            $vars   = $this->toArray();
+            foreach ($vars as $key => $value){
+                if( 'id' === $key){
                     continue;
                 }
-                if (property_exists($newCdr, $key)) {
+                if(property_exists($newCdr, $key)){
                     $newCdr->writeAttribute($key, $value);
                 }
             }
@@ -87,38 +76,34 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
         $this->saveCdrCache();
     }
 
+    public function afterDelete():void
+    {
+        $this->saveCdrCache(false);
+    }
+
     /**
-     * Store current calls in Redis cache.
-     *
-     * @param bool $isSave Indicates whether to save the call record to cache.
+     * Храним в Redis текущие звонки.
+     * @param bool $isSave
      * @return void
      */
-    private function saveCdrCache(bool $isSave = true): void
+    private function saveCdrCache(bool $isSave = true):void
     {
         try {
             $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
 
             $rowData = $this->toArray();
-            $newKey = self::CACHE_KEY . ':' . $rowData['UNIQUEID'];
+            $newKey  = self::CACHE_KEY.':'.$rowData['UNIQUEID'];
             $idsList = $managedCache->getKeys(self::CACHE_KEY);
-            if ($isSave && !in_array($newKey, $idsList, true)) {
+            if($isSave && !in_array($newKey, $idsList, true)){
                 $idsList[$rowData['UNIQUEID']] = true;
-                $managedCache->set('Workers:Cdr:' . $rowData['UNIQUEID'], $rowData, 19200);
-            } else {
-                $managedCache->delete('Workers:Cdr:' . $rowData['UNIQUEID']);
+                $managedCache->set('Workers:Cdr:'.$rowData['UNIQUEID'], $rowData, 19200);
+            }else{
+                $managedCache->delete('Workers:Cdr:'.$rowData['UNIQUEID']);
             }
-        } catch (Throwable $e) {
+        }catch (\Throwable $e){
             Util::sysLogMsg(self::class, $e->getMessage());
             return;
         }
-    }
-
-    /**
-     * Perform necessary actions after deleting the record.
-     */
-    public function afterDelete(): void
-    {
-        $this->saveCdrCache(false);
     }
 
 }

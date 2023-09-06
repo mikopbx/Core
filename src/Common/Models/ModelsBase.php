@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,23 +19,6 @@
 
 namespace MikoPBX\Common\Models;
 
-use MikoPBX\AdminCabinet\Controllers\AsteriskManagersController;
-use MikoPBX\AdminCabinet\Controllers\CallQueuesController;
-use MikoPBX\AdminCabinet\Controllers\ConferenceRoomsController;
-use MikoPBX\AdminCabinet\Controllers\CustomFilesController;
-use MikoPBX\AdminCabinet\Controllers\DialplanApplicationsController;
-use MikoPBX\AdminCabinet\Controllers\ExtensionsController;
-use MikoPBX\AdminCabinet\Controllers\Fail2BanController;
-use MikoPBX\AdminCabinet\Controllers\FirewallController;
-use MikoPBX\AdminCabinet\Controllers\GeneralSettingsController;
-use MikoPBX\AdminCabinet\Controllers\IncomingRoutesController;
-use MikoPBX\AdminCabinet\Controllers\IvrMenuController;
-use MikoPBX\AdminCabinet\Controllers\NetworkController;
-use MikoPBX\AdminCabinet\Controllers\OutboundRoutesController;
-use MikoPBX\AdminCabinet\Controllers\OutOffWorkTimeController;
-use MikoPBX\AdminCabinet\Controllers\ProvidersController;
-use MikoPBX\AdminCabinet\Controllers\SoundFilesController;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
@@ -54,7 +37,6 @@ use Phalcon\Mvc\Model\Relation;
 use Phalcon\Mvc\Model\Resultset;
 use Phalcon\Mvc\Model\Resultset\Simple;
 use Phalcon\Mvc\Model\ResultsetInterface;
-use Phalcon\Security\Random;
 use Phalcon\Text;
 use Phalcon\Url;
 
@@ -75,8 +57,8 @@ use Phalcon\Url;
  * @method static AdapterInterface getReadConnection()
  * @method  Simple|false getRelated(string $alias, $arguments = null)
  *
- * @property Model\Manager _modelsManager
- * @property Di di
+ * @property \Phalcon\Mvc\Model\Manager _modelsManager
+ * @property \Phalcon\Di                di
  *
  * @package MikoPBX\Common\Models
  */
@@ -84,27 +66,9 @@ class ModelsBase extends Model
 {
     /**
      * All models with lover than this version in module.json won't be attached as children
-     * We use this constant to disable old modules that may not be compatible with the current version of MikoPBX
      */
     public const MIN_MODULE_MODEL_VER = '2020.2.468';
 
-    /**
-     * Returns Cache key for the models cache service
-     *
-     * @param string $modelClass
-     * @param string $keyName
-     *
-     * @return string
-     */
-    public static function makeCacheKey(string $modelClass, string $keyName): string
-    {
-        $category = explode('\\', $modelClass)[3];
-        return "{$category}:{$keyName}";
-    }
-
-    /**
-     * Initialize the model.
-     */
     public function initialize(): void
     {
         self::setup(['orm.events' => true]);
@@ -115,7 +79,7 @@ class ModelsBase extends Model
 
         $eventsManager->attach(
             'model',
-            function (Event $event, $record) {
+            function (Event $event, $record){
                 $type = $event->getType();
                 switch ($type) {
                     case 'afterSave':
@@ -143,21 +107,21 @@ class ModelsBase extends Model
             $moduleDir = PbxExtensionUtils::getModuleDir($module['uniqid']);
 
             $moduleJson = "{$moduleDir}/module.json";
-            if (!file_exists($moduleJson)) {
+            if ( ! file_exists($moduleJson)) {
                 continue;
             }
-            $jsonString = file_get_contents($moduleJson);
+            $jsonString            = file_get_contents($moduleJson);
             $jsonModuleDescription = json_decode($jsonString, true);
-            $minPBXVersion = $jsonModuleDescription['min_pbx_version'] ?? '1.0.0';
+            $minPBXVersion         = $jsonModuleDescription['min_pbx_version'] ?? '1.0.0';
             if (version_compare($minPBXVersion, self::MIN_MODULE_MODEL_VER, '<')) {
                 continue;
             }
 
             $moduleModelsDir = "{$moduleDir}/Models";
-            $results = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
+            $results         = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
             foreach ($results as $file) {
-                $className = pathinfo($file)['filename'];
-                $moduleModelClass = "Modules\\{$module['uniqid']}\\Models\\{$className}";
+                $className        = pathinfo($file)['filename'];
+                $moduleModelClass = "\\Modules\\{$module['uniqid']}\\Models\\{$className}";
 
                 if (class_exists($moduleModelClass)
                     && method_exists($moduleModelClass, 'getDynamicRelations')) {
@@ -167,150 +131,42 @@ class ModelsBase extends Model
         }
     }
 
-    /**
-     * Sends changed fields and settings to backend worker WorkerModelsEvents
-     *
-     * @param $action string may be afterSave or afterDelete
-     */
-    private function processSettingsChanges(string $action): void
-    {
-        $doNotTrackThisDB = [
-            CDRDatabaseProvider::SERVICE_NAME,
-        ];
-
-        if (in_array($this->getReadConnectionService(), $doNotTrackThisDB)) {
-            return;
-        }
-
-        if (!$this->hasSnapshotData()) {
-            return;
-        } // nothing changed
-
-        $changedFields = $this->getUpdatedFields();
-        if (empty($changedFields) && $action === 'afterSave') {
-            return;
-        }
-        if ($action === 'afterDelete') {
-            $changedFields = array_keys($this->getSnapshotData());
-        }
-        $this->sendChangesToBackend($action, $changedFields);
-    }
 
     /**
-     * Sends changed fields and class to WorkerModelsEvents
+     * Обработчик ошибок валидации, обычно сюда попадаем если неправильно
+     * сохраняются или удаляютмя модели или неправильно настроены зависимости между ними.
+     * Эта функция формирует список ссылок на объект который мы пытаемся удалить
      *
-     * @param $action
-     * @param $changedFields
-     */
-    private function sendChangesToBackend($action, $changedFields): void
-    {
-        // Add changed fields set to Beanstalkd queue
-        $queue = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
-        if ($queue === null) {
-            return;
-        }
-        if ($this instanceof PbxSettings) {
-            $idProperty = 'key';
-        } else {
-            $idProperty = 'id';
-        }
-        $id = $this->$idProperty;
-        $jobData = json_encode(
-            [
-                'source' => BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED,
-                'model' => get_class($this),
-                'recordId' => $id,
-                'action' => $action,
-                'changedFields' => $changedFields,
-            ]
-        );
-        $queue->publish($jobData);
-    }
-
-    /**
-     * Invalidates cached records contains model name in cache key value
-     *
-     * @param      $calledClass string full model class name
-     *
-     */
-    public static function clearCache(string $calledClass): void
-    {
-        $di = Di::getDefault();
-        if ($di === null) {
-            return;
-        }
-        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
-            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
-            $category = explode('\\', $calledClass)[3];
-            $keys = $managedCache->getKeys($category);
-            $prefix = $managedCache->getPrefix();
-            // Delete all items from the managed cache
-            foreach ($keys as $key) {
-                $cacheKey = str_ireplace($prefix, '', $key);
-                $managedCache->delete($cacheKey);
-            }
-        }
-        if ($di->has(ModelsCacheProvider::SERVICE_NAME)) {
-            $modelsCache = $di->getShared(ModelsCacheProvider::SERVICE_NAME);
-            $category = explode('\\', $calledClass)[3];
-            $keys = $modelsCache->getKeys($category);
-            $prefix = $modelsCache->getPrefix();
-            // Delete all items from the models cache
-            foreach ($keys as $key) {
-                $cacheKey = str_ireplace($prefix, '', $key);
-                $modelsCache->delete($cacheKey);
-            }
-        }
-
-    }
-
-    /**
-     * Error handler for validation failures.
-     * This function is called when a model fails to save or delete correctly,
-     * or when the dependencies between models are not properly configured.
-     * It generates a list of links to the objects that we are trying to delete.
      */
     public function onValidationFails(): void
     {
         $errorMessages = $this->getMessages();
         foreach ($errorMessages as $errorMessage) {
             if ($errorMessage->getType() === 'ConstraintViolation') {
-                // Extract the related model name from the error message
                 $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
                 if (count($arrMessageParts) === 2) {
                     $relatedModel = $arrMessageParts[1];
                 } else {
                     $relatedModel = $errorMessage->getMessage();
                 }
-
-                // Get the related records
-                $relatedRecords = $this->getRelated($relatedModel);
-
-                // Create a new error message template
-                $newErrorMessage = '<div class="ui header">'.$this->t('ConstraintViolation').'</div>';
+                $relatedRecords  = $this->getRelated($relatedModel);
+                $newErrorMessage = $this->t('ConstraintViolation');
                 $newErrorMessage .= "<ul class='list'>";
                 if ($relatedRecords === false) {
-                    // Throw an exception if there is an error in the model relationship
                     throw new Model\Exception('Error on models relationship ' . $errorMessage);
                 }
                 if ($relatedRecords instanceof Resultset) {
-                    // If there are multiple related records, iterate through them
                     foreach ($relatedRecords as $item) {
                         if ($item instanceof ModelsBase) {
-                            // Append each related record's representation to the error message
                             $newErrorMessage .= '<li>' . $item->getRepresent(true) . '</li>';
                         }
                     }
                 } elseif ($relatedRecords instanceof ModelsBase) {
-                    // If there is a single related record, append its representation to the error message
                     $newErrorMessage .= '<li>' . $relatedRecords->getRepresent(true) . '</li>';
                 } else {
-                    // If the related records are of an unknown type, indicate it in the error message
                     $newErrorMessage .= '<li>Unknown object</li>';
                 }
                 $newErrorMessage .= '</ul>';
-
-                // Set the new error message
                 $errorMessage->setMessage($newErrorMessage);
                 break;
             }
@@ -318,10 +174,10 @@ class ModelsBase extends Model
     }
 
     /**
-     * Function to access the translation array from models.
-     * It is used for messages in a user-friendly language.
+     * Функция для доступа к массиву переводов из моделей, используется для
+     * сообщений на понятном пользователю языке
      *
-     * @param $message
+     * @param       $message
      * @param array $parameters
      *
      * @return mixed
@@ -338,44 +194,52 @@ class ModelsBase extends Model
      *
      * @return string
      */
-    public function getRepresent(bool $needLink = false): string
+    public function getRepresent($needLink = false): string
     {
         switch (static::class) {
             case AsteriskManagerUsers::class:
                 $name = '<i class="asterisk icon"></i> ';
-                $name .= empty($this->id)
-                    ? $this->t('mo_NewElementAsteriskManagerUsers')
-                    : $this->t('repAsteriskManagerUsers', ['represent' => $this->username]);
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementAsteriskManagerUsers');
+                } else {
+                    $name .= $this->t('repAsteriskManagerUsers', ['represent' => $this->username]);
+                }
                 break;
             case CallQueueMembers::class:
                 $name = $this->Extensions->getRepresent();
                 break;
             case CallQueues::class:
                 $name = '<i class="users icon"></i> ';
-                $name .= empty($this->id)
-                    ? $this->t('mo_NewElementCallQueues')
-                    : $this->t('mo_CallQueueShort4Dropdown') . ': ' . $this->name;
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementCallQueues');
+                } else {
+                    $name .= $this->t('mo_CallQueueShort4Dropdown') . ': ' . $this->name;
+                }
                 break;
             case ConferenceRooms::class:
                 $name = '<i class="phone volume icon"></i> ';
-                $name .= empty($this->id)
-                    ? $this->t('mo_NewElementConferenceRooms')
-                    : $this->t('mo_ConferenceRoomsShort4Dropdown') . ': ' . $this->name;
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementConferenceRooms');
+                } else {
+                    $name .= $this->t('mo_ConferenceRoomsShort4Dropdown') . ': ' . $this->name;
+                }
                 break;
             case CustomFiles::class:
                 $name = "<i class='file icon'></i> {$this->filepath}";
                 break;
             case DialplanApplications::class:
                 $name = '<i class="php icon"></i> ';
-                $name .= empty($this->id)
-                    ? $this->t('mo_NewElementDialplanApplications')
-                    : $this->t('mo_ApplicationShort4Dropdown') . ': ' . $this->name;
-                break;
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementDialplanApplications');
+                } else {
+                    $name .= $this->t('mo_ApplicationShort4Dropdown') . ': ' . $this->name;
+                }
                 break;
             case ExtensionForwardingRights::class:
                 $name = $this->Extensions->getRepresent();
                 break;
             case Extensions::class:
+                // Для внутреннего номера бывают разные представления
                 if ($this->type === Extensions::TYPE_EXTERNAL) {
                     $icon = '<i class="icons"><i class="user outline icon"></i><i class="top right corner alternate mobile icon"></i></i>';
                 } else {
@@ -411,7 +275,7 @@ class ModelsBase extends Model
                             break;
                         case Extensions::TYPE_SYSTEM:
                             $name = '<i class="cogs icon"></i> '
-                                . $this->t('mo_SystemExten_' . $this->number);
+                                . $this->t('mo_SystemExten_'.$this->number);
                             break;
                         case Extensions::TYPE_EXTERNAL:
                         case Extensions::TYPE_SIP:
@@ -441,9 +305,11 @@ class ModelsBase extends Model
                 break;
             case IvrMenu::class:
                 $name = '<i class="sitemap icon"></i> ';
-                $name .= empty($this->id)
-                    ? $this->t('mo_NewElementIvrMenu')
-                    : $this->t('mo_IVRMenuShort4Dropdown') . ': ' . $this->name;
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementIvrMenu');
+                } else {
+                    $name .= $this->t('mo_IVRMenuShort4Dropdown') . ': ' . $this->name;
+                }
                 break;
             case IvrMenuActions::class:
                 $name = $this->IvrMenu->name;
@@ -455,13 +321,14 @@ class ModelsBase extends Model
                 $name = '<i class="map signs icon"></i> ';
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementIncomingRoutingTable');
-                } elseif (!empty($this->rulename)) {
-                    $name .= $this->t('repIncomingRoutingTable', ['represent' => $this->rulename]);
+                } elseif ( ! empty($this->note)) {
+                    $name .= $this->t('repIncomingRoutingTable', ['represent' => $this->note]);
                 } else {
                     $name .= $this->t('repIncomingRoutingTableNumber', ['represent' => $this->id]);
                 }
                 break;
             case LanInterfaces::class:
+                // LanInterfaces
                 $name = $this->name;
                 break;
             case NetworkFilters::class:
@@ -478,7 +345,7 @@ class ModelsBase extends Model
                 $name = '<i class="random icon"></i> ';
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementOutgoingRoutingTable');
-                } elseif (!empty($this->rulename)) {
+                } elseif ( ! empty($this->rulename)) {
                     $name .= $this->t('repOutgoingRoutingTable', ['represent' => $this->rulename]);
                 } else {
                     $name .= $this->t('repOutgoingRoutingTableNumber', ['represent' => $this->id]);
@@ -489,40 +356,8 @@ class ModelsBase extends Model
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementOutWorkTimes');
                 } else {
-                    $represent = '';
-                    if (!empty($this->date_from)) {
-                        $represent .= "<i class='icon outline calendar alternate' ></i>";
-                        $date_from = date("d.m.Y", $this->date_from);
-                        $represent .= "$date_from";
-                        $date_to = date("d.m.Y", $this->date_to)??$date_from;
-                        if ($date_from !== $date_to){
-                            $represent .= " - $date_to";
-                        }
-                    }
-                    if (!empty($this->weekday_from)) {
-                        if (!empty($represent)){
-                            $represent.=' ';
-                        }
-                        $weekday_from = $this->t(date('D',strtotime("Sunday +{$this->weekday_from} days")));
-                        $represent .= "<i class='icon outline calendar minus' ></i>";
-                        $represent .= "$weekday_from";
-                        if (!empty($this->weekday_to) && $this->weekday_from !== $this->weekday_to){
-                            $weekday_to = $this->t(date('D',strtotime("Sunday +{$this->weekday_to} days")));
-                            $represent .= " - $weekday_to";
-                        }
-                    }
-
-                    if (!empty($this->time_from)) {
-                        if (!empty($represent)){
-                            $represent.=' ';
-                        }
-                        $represent .= "<i class='icon clock outline' ></i>";
-                        $represent .= "$this->time_from";
-                        if ($this->time_from !== $this->time_to){
-                            $represent .= " - $this->time_to";
-                        }
-                    }
-                    $name = $this->t('repOutWorkTimes', ['represent' => $represent]);
+                    // BreadcrumbCustomFilesmodify
+                    $name = $this->t('repOutWorkTimes', ['represent' => $this->t('BreadcrumbCustomFilesmodify')]);
                 }
                 break;
             case Providers::class:
@@ -556,18 +391,21 @@ class ModelsBase extends Model
                 break;
             case SoundFiles::class:
                 $name = '<i class="file audio outline icon"></i> ';
-                $name .= empty($this->id)
-                    ? $this->t('mo_NewElementSoundFiles')
-                    : $this->t('repSoundFiles', ['represent' => $this->name]);
+                if (empty($this->id)) {
+                    $name .= $this->t('mo_NewElementSoundFiles');
+                } else {
+                    $name .= $this->t('repSoundFiles', ['represent' => $this->name]);
+                }
+
                 break;
             default:
                 $name = 'Unknown';
         }
 
         if ($needLink) {
-            $link = $this->getWebInterfaceLink();
+            $link     = $this->getWebInterfaceLink();
             $category = explode('\\', static::class)[3];
-            $result = $this->t(
+            $result   = $this->t(
                 'rep' . $category,
                 [
                     'represent' => "<a href='{$link}'>{$name}</a>",
@@ -581,7 +419,7 @@ class ModelsBase extends Model
     }
 
     /**
-     * Trims long names.
+     * Укорачивает длинные имена
      *
      * @param $s
      *
@@ -593,7 +431,7 @@ class ModelsBase extends Model
 
         if (strlen($s) > $max_length) {
             $offset = ($max_length - 3) - strlen($s);
-            $s = substr($s, 0, strrpos($s, ' ', $offset)) . '...';
+            $s      = substr($s, 0, strrpos($s, ' ', $offset)) . '...';
         }
 
         return $s;
@@ -606,142 +444,124 @@ class ModelsBase extends Model
      */
     public function getWebInterfaceLink(): string
     {
-        $link = '#';
+        $url = new Url();
 
+        $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
+        $link    = '#';
         switch (static::class) {
             case AsteriskManagerUsers::class:
-                $link = $this->buildRecordUrl(AsteriskManagersController::class, 'modify',  $this->id);
+                $link = $url->get('asterisk-managers/modify/' . $this->id, null, null, $baseUri);
                 break;
             case CallQueueMembers::class:
-                $link = $this->buildRecordUrl(CallQueuesController::class, 'modify',  $this->CallQueues->uniqid);
+                $link = $url->get('call-queues/modify/' . $this->CallQueues->uniqid, null, null, $baseUri);
                 break;
             case CallQueues::class:
-                $link = $this->buildRecordUrl(CallQueuesController::class, 'modify',  $this->uniqid);
+                $link = $url->get('call-queues/modify/' . $this->uniqid, null, null, $baseUri);
                 break;
             case ConferenceRooms::class:
-                $link = $this->buildRecordUrl(ConferenceRoomsController::class, 'modify',  $this->uniqid);
+                $link = $url->get('conference-rooms/modify/' . $this->uniqid, null, null, $baseUri);
                 break;
             case CustomFiles::class:
-                $link = $this->buildRecordUrl(CustomFilesController::class, 'modify',  $this->id);
+                $link = $url->get('custom-files/modify/' . $this->id, null, null, $baseUri);
                 break;
             case DialplanApplications::class:
-                $link = $this->buildRecordUrl(DialplanApplicationsController::class, 'modify',  $this->uniqid);
+                $link = $url->get('dialplan-applications/modify/' . $this->uniqid, null, null, $baseUri);
                 break;
             case ExtensionForwardingRights::class:
 
                 break;
             case Extensions::class:
-                $link = $this->buildRecordUrl(ExtensionsController::class, 'modify',  $this->id);
+                $link = $url->get('extensions/modify/' . $this->id, null, null, $baseUri);
                 break;
             case ExternalPhones::class:
-                if ( $this->Extensions->is_general_user_number === "1") {
-                    $parameters = [
+                if ($this->Extensions->is_general_user_number === "1") {
+                    $parameters    = [
                         'conditions' => 'is_general_user_number="1" AND type="' . Extensions::TYPE_EXTERNAL . '" AND userid=:userid:',
-                        'bind' => [
+                        'bind'       => [
                             'userid' => $this->Extensions->userid,
                         ],
                     ];
                     $needExtension = Extensions::findFirst($parameters);
-                    $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $needExtension->id);
+                    $link          = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
+                } else {
+                    $link = '#';//TODO сделать если будет раздел для допоплнинельных номеров пользователя
                 }
                 break;
             case Fail2BanRules::class:
-                $link = $this->buildRecordUrl(Fail2BanController::class, 'index');
+                $link = '#';//TODO сделать если будет fail2ban
                 break;
             case FirewallRules::class:
-                $link = $this->buildRecordUrl(FirewallController::class, 'modify', $this->NetworkFilters->id);
+                $link = $url->get('firewall/modify/' . $this->NetworkFilters->id, null, null, $baseUri);
                 break;
             case Iax::class:
-                $link = $this->buildRecordUrl(ProvidersController::class, 'modifyiax', $this->Providers->id);
+                $link = $url->get('providers/modifyiax/' . $this->Providers->id, null, null, $baseUri);
                 break;
             case IvrMenu::class:
-                $link = $this->buildRecordUrl(IvrMenuController::class, 'modify', $this->uniqid);
+                $link = $url->get('ivr-menu/modify/' . $this->uniqid, null, null, $baseUri);
                 break;
             case IvrMenuActions::class:
-                $link = $this->buildRecordUrl(IvrMenuController::class, 'modify', $this->IvrMenu->uniqid);
+                $link = $url->get('ivr-menu/modify/' . $this->IvrMenu->uniqid, null, null, $baseUri);
+                break;
+            case Codecs::class:
                 break;
             case IncomingRoutingTable::class:
-                $link = $this->buildRecordUrl(IncomingRoutesController::class, 'modify', $this->id);
+                $link = $url->get('incoming-routes/modify/' . $this->id, null, null, $baseUri);
                 break;
             case LanInterfaces::class:
-                $link = $this->buildRecordUrl(NetworkController::class, 'modify');
+                $link = $url->get('network/index/', null, null, $baseUri);
                 break;
             case NetworkFilters::class:
-                $link = $this->buildRecordUrl(FirewallController::class, 'modify', $this->id);
+                $link = $url->get('firewall/modify/' . $this->id, null, null, $baseUri);
                 break;
             case OutgoingRoutingTable::class:
-                $link = $this->buildRecordUrl(OutboundRoutesController::class, 'modify', $this->id);
+                $link = $url->get('outbound-routes/modify/' . $this->id, null, null, $baseUri);
                 break;
             case OutWorkTimes::class:
-                $link = $this->buildRecordUrl(OutOffWorkTimeController::class, 'modify', $this->id);
+                $link = $url->get('out-off-work-time/modify/' . $this->id, null, null, $baseUri);
                 break;
             case Providers::class:
                 if ($this->type === "IAX") {
-                    $link = $this->buildRecordUrl(ProvidersController::class, 'modifyiax', $this->uniqid);
+                    $link = $url->get('providers/modifyiax/' . $this->uniqid, null, null, $baseUri);
                 } else {
-                    $link = $this->buildRecordUrl(ProvidersController::class, 'modifysip', $this->uniqid);
+                    $link = $url->get('providers/modifysip/' . $this->uniqid, null, null, $baseUri);
                 }
                 break;
             case PbxSettings::class:
-                $link = $this->buildRecordUrl(GeneralSettingsController::class, 'index');
+                $link = $url->get('general-settings/index');
                 break;
             case PbxExtensionModules::class:
-                $url = new Url();
-                $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
-                $unCamelizedModuleId = Text::uncamelize($this->uniqid, '-');
-                $link = $url->get("$unCamelizedModuleId/$unCamelizedModuleId/index", null, null, $baseUri);
+                $link = $url->get(Text::uncamelize($this->uniqid), null, null, $baseUri);
                 break;
             case Sip::class:
-                if ($this->Extensions) {
+                if ($this->Extensions) { // Это внутренний номер?
                     if ($this->Extensions->is_general_user_number === "1") {
-                        $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $this->Extensions->id);
+                        $link = $url->get('extensions/modify/' . $this->Extensions->id, null, null, $baseUri);
+                    } else {
+                        $link = '#';//TODO сделать если будет раздел для допоплнинельных номеров пользователя
                     }
-                } elseif ($this->Providers) {
-                    $link = $this->buildRecordUrl(ProvidersController::class, 'modifysip', $this->Providers->id);
+                } elseif ($this->Providers) { // Это провайдер
+                    $link = $url->get('providers/modifysip/' . $this->Providers->id, null, null, $baseUri);
                 }
                 break;
             case Users::class:
-                $parameters = [
+                $parameters    = [
                     'conditions' => 'userid=:userid:',
-                    'bind' => [
+                    'bind'       => [
                         'userid' => $this->id,
                     ],
                 ];
                 $needExtension = Extensions::findFirst($parameters);
                 if ($needExtension === null) {
-                    $link = $this->buildRecordUrl(ExtensionsController::class, 'index');
+                    $link = $url->get('extensions/index/', null, null, $baseUri);
                 } else {
-                    $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $needExtension->id);
+                    $link = $url->get('extensions/modify/' . $needExtension->id, null, null, $baseUri);
                 }
                 break;
             case SoundFiles::class:
-                $link = $this->buildRecordUrl(SoundFilesController::class, 'modify',$this->id);
+                $link = $url->get('sound-files/modify/' . $this->id, null, null, $baseUri);
                 break;
             default:
         }
-
-        return $link;
-    }
-
-    /**
-     * Build a record URL based on the controller class, action, and record ID.
-     *
-     * @param string $controllerClass The controller class name.
-     * @param string $action The action name.
-     * @param string $recordId The record ID (optional).
-     *
-     * @return string The generated record URL.
-     */
-    private function buildRecordUrl(string $controllerClass, string  $action, string $recordId=''):string
-    {
-        $url = new Url();
-        $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
-        $controllerParts = explode('\\', $controllerClass);
-        $controllerName = end($controllerParts);
-        // Remove the "Controller" suffix if present
-        $controllerName = str_replace("Controller", "", $controllerName);
-        $unCamelizedControllerName = Text::uncamelize($controllerName, '-');
-        $link = $url->get("{$unCamelizedControllerName}//{$action}//{$recordId}", null, null, $baseUri);
 
         return $link;
     }
@@ -751,18 +571,18 @@ class ModelsBase extends Model
      */
     public function beforeValidationOnCreate(): void
     {
-        $metaData = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
+        $metaData      = $this->di->get(ModelsMetadataProvider::SERVICE_NAME);
         $defaultValues = $metaData->getDefaultValues($this);
         foreach ($defaultValues as $field => $value) {
-            if (!isset($this->{$field})) {
+            if ( ! isset($this->{$field})) {
                 $this->{$field} = $value;
             }
         }
     }
 
     /**
-     * Checks if there are any dependencies that prevent the deletion of the current entity.
-     * It displays a list of related entities with links that hinder the deletion.
+     * Функция позволяет вывести список зависимостей с сылками,
+     * которые мешают удалению текущей сущности
      *
      * @return bool
      */
@@ -772,52 +592,50 @@ class ModelsBase extends Model
     }
 
     /**
-     * Check whether this object has unsatisfied relations or not.
+     *  Check whether this object has unsatisfied relations or not
      *
-     * @param object $theFirstDeleteRecord The first delete record.
-     * @param object $currentDeleteRecord  The current delete record.
+     * @param $theFirstDeleteRecord
+     * @param $currentDeleteRecord
      *
-     * @return bool True if all relations are satisfied, false otherwise.
+     * @return bool
      */
-    private function checkRelationsSatisfaction(object $theFirstDeleteRecord, object $currentDeleteRecord): bool
+    private function checkRelationsSatisfaction($theFirstDeleteRecord, $currentDeleteRecord): bool
     {
         $result = true;
         $relations = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
         foreach ($relations as $relation) {
-            $foreignKey = $relation->getOption('foreignKey')??[];
-            if (!array_key_exists('action', $foreignKey)) {
+            $foreignKey = $relation->getOption('foreignKey');
+            if ( ! array_key_exists('action', $foreignKey)) {
                 continue;
             }
             // Check if there are some record which restrict delete current record
-            $relatedModel = $relation->getReferencedModel();
-            $mappedFields = $relation->getFields();
-            $mappedFields = is_array($mappedFields)
+            $relatedModel             = $relation->getReferencedModel();
+            $mappedFields             = $relation->getFields();
+            $mappedFields             = is_array($mappedFields)
                 ? $mappedFields : [$mappedFields];
-            $referencedFields = $relation->getReferencedFields();
-            $referencedFields = is_array($referencedFields)
+            $referencedFields         = $relation->getReferencedFields();
+            $referencedFields         = is_array($referencedFields)
                 ? $referencedFields : [$referencedFields];
             $parameters['conditions'] = '';
-            $parameters['bind'] = [];
+            $parameters['bind']       = [];
             foreach ($referencedFields as $index => $referencedField) {
-                $parameters['conditions'] .= $index > 0
+                $parameters['conditions']             .= $index > 0
                     ? ' OR ' : '';
-                $parameters['conditions'] .= $referencedField
+                $parameters['conditions']             .= $referencedField
                     . '= :field'
                     . $index . ':';
                 $bindField
-                    = $mappedFields[$index];
+                                                      = $mappedFields[$index];
                 $parameters['bind']['field' . $index] = $currentDeleteRecord->$bindField;
             }
             $relatedRecords = $relatedModel::find($parameters);
             switch ($foreignKey['action']) {
-                case Relation::ACTION_RESTRICT:
-                    // Restrict deletion and add message about unsatisfied undeleted links
+                case Relation::ACTION_RESTRICT: // Restrict deletion and add message about unsatisfied undeleted links
                     foreach ($relatedRecords as $relatedRecord) {
                         if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
                             || serialize($relatedRecord) === serialize($currentDeleteRecord)
                         ) {
-                            continue;
-                            // It is the checked object
+                            continue; // It is checked object
                         }
                         $message = new Message(
                             $theFirstDeleteRecord->t(
@@ -831,14 +649,12 @@ class ModelsBase extends Model
                         $result = false;
                     }
                     break;
-                case Relation::ACTION_CASCADE:
-                    // Delete all related records
+                case Relation::ACTION_CASCADE: // Удалим все зависимые записи
                     foreach ($relatedRecords as $relatedRecord) {
                         if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
                             || serialize($relatedRecord) === serialize($currentDeleteRecord)
                         ) {
-                            continue;
-                            // It is the checked object
+                            continue; // It is checked object
                         }
                         $result = $result && $relatedRecord->checkRelationsSatisfaction(
                                 $theFirstDeleteRecord,
@@ -855,8 +671,7 @@ class ModelsBase extends Model
                         }
                     }
                     break;
-                case Relation::NO_ACTION:
-                    // Clear all refs
+                case Relation::NO_ACTION: // Clear all refs
                     break;
                 default:
                     break;
@@ -864,6 +679,105 @@ class ModelsBase extends Model
         }
 
         return $result;
+    }
+
+
+
+    /**
+     * Sends changed fields and settings to backend worker WorkerModelsEvents
+     *
+     * @param $action string may be afterSave or afterDelete
+     */
+    private function processSettingsChanges(string $action): void
+    {
+        $doNotTrackThisDB = [
+            CDRDatabaseProvider::SERVICE_NAME,
+        ];
+
+        if (in_array($this->getReadConnectionService(), $doNotTrackThisDB)) {
+            return;
+        }
+
+        if ( ! $this->hasSnapshotData()) {
+            return;
+        } // nothing changed
+
+        $changedFields = $this->getUpdatedFields();
+        if (empty($changedFields) && $action === 'afterSave') {
+            return;
+        }
+        $this->sendChangesToBackend($action, $changedFields);
+    }
+
+    /**
+     * Sends changed fields and class to WorkerModelsEvents
+     *
+     * @param $action
+     * @param $changedFields
+     */
+    private function sendChangesToBackend($action, $changedFields): void
+    {
+        // Add changed fields set to Beanstalkd queue
+        $queue = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
+        if ($queue === null) {
+            return;
+        }
+        if ($this instanceof PbxSettings) {
+            $idProperty = 'key';
+        } else {
+            $idProperty = 'id';
+        }
+        $id      = $this->$idProperty;
+        $jobData = json_encode(
+            [
+                'source'        => BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED,
+                'model'         => get_class($this),
+                'recordId'      => $id,
+                'action'        => $action,
+                'changedFields' => $changedFields,
+            ]
+        );
+        $queue->publish($jobData);
+    }
+
+    /**
+     * Invalidates cached records contains model name in cache key value
+     *
+     * @param      $calledClass string full model class name
+     *
+     */
+    public static function clearCache(string $calledClass): void
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+
+        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
+            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+            $category     = explode('\\', $calledClass)[3];
+            $keys         = $managedCache->getKeys($category);
+            $prefix      = $managedCache->getPrefix();
+            // Delete all items from the managed cache
+            foreach ($keys as $key)
+            {
+                $cacheKey = str_ireplace($prefix, '', $key);
+                $managedCache->delete($cacheKey);
+            }
+        }
+        if ($di->has(ModelsCacheProvider::SERVICE_NAME)) {
+            $modelsCache = $di->getShared(ModelsCacheProvider::SERVICE_NAME);
+            $category    = explode('\\', $calledClass)[3];
+            $keys        = $modelsCache->getKeys($category);
+            $prefix      = $modelsCache->getPrefix();
+            // Delete all items from the models cache
+            foreach ($keys as $key)
+            {
+                $cacheKey = str_ireplace($prefix, '', $key);
+                $modelsCache->delete($cacheKey);
+            }
+        }
+
     }
 
     /**
@@ -879,20 +793,16 @@ class ModelsBase extends Model
     }
 
     /**
-     * Generates a random unique id.
+     * Returns Cache key for the models cache service
      *
-     * @return string The generated unique id.
+     * @param string $modelClass
+     * @param string $keyName
+     *
+     * @return string
      */
-    public static function generateUniqueID(string $alias=''):string
+    public static function makeCacheKey(string $modelClass, string $keyName):string
     {
-        $random = new Random();
-        $hashLength = 4;
-        try {
-            $hash = $random->hex($hashLength);
-        } catch (\Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $hash = md5(microtime());
-        }
-        return $alias . strtoupper($hash);
+        $category    = explode('\\', $modelClass)[3];
+        return "{$category}:{$keyName}";
     }
 }

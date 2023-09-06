@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,11 +28,7 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * Class BeanstalkConnectionModelsProvider
- *
- * Service provider for registering the Beanstalk connection for sending model changes to the backend application.
- *
- * @package MikoPBX\Common\Providers
+ *  We register the beansTalk connection for send models changes to backend application
  */
 class BeanstalkConnectionModelsProvider implements ServiceProviderInterface
 {
@@ -41,11 +37,10 @@ class BeanstalkConnectionModelsProvider implements ServiceProviderInterface
     public const SOURCE_INVOKE_ACTION = 'WorkerModelsEvents->invokeAction';
 
     public const SOURCE_MODELS_CHANGED = 'ModelsBase->sendChangesToBackend';
-
     /**
-     * Register beanstalkConnectionModels service provider.
+     * Register beanstalkConnectionModels service provider
      *
-     * @param \Phalcon\Di\DiInterface $di The DI container.
+     * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {

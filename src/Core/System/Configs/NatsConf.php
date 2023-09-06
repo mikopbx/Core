@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,15 +24,9 @@ use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
+use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
-/**
- * Class NatsConf
- *
- * Represents the Nats configuration.
- *
- * @package MikoPBX\Core\System\Configs
- */
 class NatsConf extends Injectable
 {
     private MikoPBXConfig $mikoPBXConfig;
@@ -44,11 +38,8 @@ class NatsConf extends Injectable
     {
         $this->mikoPBXConfig = new MikoPBXConfig();
     }
-
     /**
-     * Restarts the gnats server.
-     *
-     * @return void
+     * Restarts gnats server
      */
     public function reStart(): void
     {

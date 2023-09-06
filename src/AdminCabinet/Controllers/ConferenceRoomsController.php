@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ class ConferenceRoomsController extends BaseController
 
 
     /**
-     * Build the list of conference rooms.
+     * Построение списка конференц комнат
      */
     public function indexAction(): void
     {
@@ -38,15 +38,14 @@ class ConferenceRoomsController extends BaseController
 
 
     /**
-     * Edit conference room details.
+     * Карточка редактирования конференц комнаты
      *
-     * @param string|null $uniqid The unique identifier of the conference room.
+     * @param string|NULL $uniqid
      */
     public function modifyAction(string $uniqid = null): void
     {
         $record = ConferenceRooms::findFirstByUniqid($uniqid);
         if ($record === null) {
-            // Create a new conference room if not found
             $record            = new ConferenceRooms();
             $record->uniqid    = Extensions::TYPE_CONFERENCE.strtoupper('-' . md5(time()));
             $record->extension = Extensions::getNextFreeApplicationNumber();
@@ -58,7 +57,7 @@ class ConferenceRoomsController extends BaseController
 
 
     /**
-     * Save the conference room.
+     * Сохранение конференц комнаты
      */
     public function saveAction(): void
     {
@@ -69,7 +68,6 @@ class ConferenceRoomsController extends BaseController
         $data = $this->request->getPost();
         $room = ConferenceRooms::findFirstByUniqid($data['uniqid']);
         if ($room === null) {
-            // Create new conference room and extension if not found
             $room                         = new ConferenceRooms();
             $extension                    = new Extensions();
             $extension->type              = Extensions::TYPE_CONFERENCE;
@@ -82,7 +80,7 @@ class ConferenceRoomsController extends BaseController
             $extension = $room->Extensions;
         }
 
-        // Update extension parameters
+        // Заполним параметры внутреннего номера
         if ( ! $this->updateExtension($extension, $data)) {
             $this->view->success = false;
             $this->db->rollback();
@@ -90,7 +88,7 @@ class ConferenceRoomsController extends BaseController
             return;
         }
 
-        // Update conference room parameters
+        // Заполним параметры участников очереди
         if ( ! $this->updateConferenceRoom($room, $data)) {
             $this->view->success = false;
             $this->db->rollback();
@@ -102,19 +100,19 @@ class ConferenceRoomsController extends BaseController
         $this->view->success = true;
         $this->db->commit();
 
-        // If it was a new entity, reload the page with the new ID
+        // If it was new entity we will reload page with new ID
         if (empty($data['id'])) {
             $this->view->reload = "conference-rooms/modify/{$data['uniqid']}";
         }
     }
 
     /**
-     * Update extension parameters.
+     * Обновление параметров внутреннего номера
      *
-     * @param \MikoPBX\Common\Models\Extensions $extension The extension entity.
-     * @param array                             $data      The array of fields from the POST request.
+     * @param \MikoPBX\Common\Models\Extensions $extension
+     * @param array                             $data массив полей из POST запроса
      *
-     * @return bool The update result.
+     * @return bool update result
      */
     private function updateExtension(Extensions $extension, array $data): bool
     {
@@ -131,12 +129,12 @@ class ConferenceRoomsController extends BaseController
     }
 
     /**
-     * Update conference room properties.
+     * Updates conference room properties
      *
-     * @param \MikoPBX\Common\Models\ConferenceRooms $room The conference room entity.
-     * @param array                                  $data The POST fields.
+     * @param \MikoPBX\Common\Models\ConferenceRooms $room entity
+     * @param array                                  $data POST fields
      *
-     * @return bool The update result.
+     * @return bool update result
      */
     private function updateConferenceRoom(ConferenceRooms $room, array $data): bool
     {
@@ -164,9 +162,9 @@ class ConferenceRoomsController extends BaseController
     }
 
     /**
-     * Delete a conference room.
+     * Удаление конференцкомнаты
      *
-     * @param string $uniqid The unique identifier of the conference room.
+     * @param string $uniqid
      */
     public function deleteAction(string $uniqid = '')
     {

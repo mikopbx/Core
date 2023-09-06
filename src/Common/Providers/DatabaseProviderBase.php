@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,17 +31,15 @@ use Phalcon\Logger\Adapter\Stream as FileLogger;
 
 /**
  * Main database connection is created based in the parameters defined in the configuration file
- *
- *  @package MikoPBX\Common\Providers
  */
 abstract class DatabaseProviderBase
 {
     /**
-     * Register the database service provider.
+     * Register db service provider
      *
      * @param string                  $serviceName Injection service name
-     * @param \Phalcon\Di\DiInterface $di The DI container.
-     * @param array                   $dbConfig The database configuration.
+     * @param \Phalcon\Di\DiInterface $di
+     * @param array         $dbConfig
      */
     public function registerDBService(string $serviceName, DiInterface $di, array $dbConfig): void
     {
@@ -70,7 +68,7 @@ abstract class DatabaseProviderBase
                         ]
                     );
                     $eventsManager = new EventsManager();
-                    // Listen to all database events
+                    // Слушаем все события базы данных
                     $eventsManager->attach(
                         'db',
                         function ($event, $connection) use ($logger) {
@@ -94,7 +92,7 @@ abstract class DatabaseProviderBase
                         }
                     );
 
-                    // Assign the EventsManager to the database adapter instance
+                    // Назначаем EventsManager экземпляру адаптера базы данных
                     $connection->setEventsManager($eventsManager);
                 }
 
@@ -109,8 +107,7 @@ abstract class DatabaseProviderBase
     public static function recreateDBConnections(): void
     {
         $dbProvidersList = [
-            // Always recreate it before change DB providers
-            ModelsCacheProvider::class,
+            ModelsCacheProvider::class, // Always recreate it before change DB providers
 
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,

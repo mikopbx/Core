@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,23 +19,22 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Element\TextArea;
+use Phalcon\Forms\Form;
 
 /**
  * Class TimeSettingsEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property TranslationProvider translation
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class TimeSettingsEditForm extends BaseForm
+class TimeSettingsEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void
     {
-        parent::initialize($entity, $options);
 
         foreach ($entity as $item) {
             switch ($item->key) {
@@ -43,14 +42,14 @@ class TimeSettingsEditForm extends BaseForm
                 {
                     $ntpserver = new Select(
                         'PBXTimezone', $options, [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => false,
-                            'value' => $item->value,
-                            'class' => 'ui search selection dropdown',
-                        ]
+                        'using'    => [
+                            'id',
+                            'name',
+                        ],
+                        'useEmpty' => false,
+                        'value'    => $item->value,
+                        'class'    => 'ui search selection dropdown',
+                    ]
                     );
                     $this->add($ntpserver);
                     break;
@@ -72,15 +71,15 @@ class TimeSettingsEditForm extends BaseForm
                     $this->add(
                         new Text(
                             $item->key, [
-                                'value' => $item->value,
-                            ]
+                            'value' => $item->value,
+                        ]
                         )
                     );
                 }
             }
         }
 
-        $this->add(new Text('ManualDateTime', ['value' => '']));
+        $this->add(new Text('ManualDateTime', ['value' =>  '']));
 
     }
 }

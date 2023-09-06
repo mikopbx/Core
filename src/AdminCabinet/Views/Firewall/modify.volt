@@ -1,23 +1,19 @@
 {{ form('firewall/save', 'role': 'form', 'class': 'ui form large', 'id':'firewall-form') }}
+        {{ form.render('id') }}
 
-{{ form.render('id') }}
 
 <div class="field">
     <label>{{ t._('fw_Description') }}</label>
     {{ form.render('description') }}
 </div>
-<div class="fields">
+<div class="two fields">
     <div class="field">
         <label>{{ t._('fw_Permit') }}</label>
-        <div class="field max-width-400">
-            {{ form.render('network') }}
-        </div>
+        {{ form.render('network') }}
     </div>
     <div class="field">
         <label>{{ t._('fw_Subnet') }}</label>
-        <div class="field max-width-400">
-            {{ form.render('subnet') }}
-        </div>
+        {{ form.render('subnet') }}
     </div>
 </div>
 <div class="field">
@@ -52,8 +48,5 @@
         </div>
     </div>
 </div>
-
-{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
-
 {{ partial("partials/submitbutton",['indexurl':'firewall/index/']) }}
-{{ end_form() }}
+</form>

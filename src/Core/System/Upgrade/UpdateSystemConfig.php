@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -104,6 +104,7 @@ class UpdateSystemConfig extends Di\Injectable
     private function updateConfigEveryNewRelease(): void
     {
         PbxExtensionUtils::disableOldModules();
+        Storage::clearSessionsFiles();
         IptablesConf::updateFirewallRules();
     }
 
@@ -119,5 +120,7 @@ class UpdateSystemConfig extends Di\Injectable
     {
         return version_compare($a, $b);
     }
+
+
 
 }

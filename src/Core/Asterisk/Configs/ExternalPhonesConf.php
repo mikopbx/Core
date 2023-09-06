@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,22 +21,12 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\ExternalPhones;
 
-/**
- * Class ExternalPhonesConf
- *
- * Represents a configuration class for external phones.
- *
- * @package MikoPBX\Core\Asterisk\Configs
- */
-class ExternalPhonesConf extends AsteriskConfigClass
+class ExternalPhonesConf extends CoreConfigClass
 {
-    // The module hook applying priority
-    public int $priority = 580;
-
-    private ?array $arrExternalPhones=null;
+    private $arrExternalPhones;
 
     /**
-     * Retrieves settings for external phones.
+     * Получение настроек с АТС.
      */
     public function getSettings(): void
     {
@@ -54,9 +44,9 @@ class ExternalPhonesConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the internal extension dial plan.
+     * Генерация внутреннего номерного плана.
      *
-     * @return string The generated dial plan.
+     * @return string
      */
     public function extensionGenInternal(): string
     {
@@ -75,9 +65,7 @@ class ExternalPhonesConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the internal transfer dial plan.
-     *
-     * @return string The generated transfer dial plan.
+     * @return string
      */
     public function extensionGenInternalTransfer(): string
     {
@@ -95,9 +83,8 @@ class ExternalPhonesConf extends AsteriskConfigClass
     }
 
     /**
-     * Retrieves the models that this class depends on.
      *
-     * @return array The array of dependency models.
+     * @return array
      */
     public function getDependenceModels(): array
     {

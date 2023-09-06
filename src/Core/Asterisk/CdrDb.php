@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,14 +24,13 @@ use MikoPBX\Core\System\{Storage, Util};
 use Phalcon\Di;
 
 /**
- * Additional methods
+ * Вспомогательные методы.
  */
 class CdrDb
 {
     /**
-     * Returns the path to the CDR database file.
-     *
-     * @return string The path to the CDR database file.
+     * Возвращает путь к базе данных истории звонков.
+     * @return string
      */
     public static function getPathToDB(): string
     {
@@ -43,7 +42,7 @@ class CdrDb
     }
 
     /**
-     * Checks the CDR database for "broken" rows.
+     * Проверка базы данных на наличие "Битых" строк
      */
     public static function checkDb(): void
     {
@@ -77,11 +76,11 @@ class CdrDb
     }
 
     /**
-     * Forms the path to the recording file without the extension.
+     * Формирует путь к файлу записи без расширения.
      *
-     * @param string $file_name The name of the file.
+     * @param $file_name
      *
-     * @return string The path to the recording file without the extension.
+     * @return string
      */
     public static function MeetMeSetRecFilename($file_name): string
     {

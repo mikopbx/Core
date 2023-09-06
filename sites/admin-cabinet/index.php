@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,57 +17,59 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-use MikoPBX\Common\Config\RegisterDIServices as RegisterCommonDIServices;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\RegistryProvider;
-use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
-use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
-use MikoPBX\Modules\PbxExtensionUtils;
-use Phalcon\Mvc\Application as BaseApplication;
+namespace MikoPBX\AdminCabinet;
 
-class Application extends BaseApplication
-{
-    /**
-     * Register the services here to make them general or register in the ModuleDefinition to make them module-specific
-     */
-    protected function registerServices()
-    {
+use MikoPBX\AdminCabinet\Config\RegisterDIServices;
+use Phalcon\Di\FactoryDefault;
+use Phalcon\Mvc\Application;
+use MikoPBX\Core\System\SentryErrorLogger;
+use MikoPBX\AdminCabinet\Utilities\Debug\PhpError;
+use Throwable;
+use Whoops\Handler\JsonResponseHandler;
+use Whoops\Handler\PrettyPageHandler;
+use Whoops\Run;
 
-        $di = new Phalcon\Di\FactoryDefault();
+$di = new FactoryDefault();
 
-        /**
-         * Auto-loader configuration
-         */
-        require_once __DIR__ . '/../../src/Common/Config/ClassLoader.php';
+/**
+ * Auto-loader configuration
+ */
+require_once __DIR__ . '/../../src/Common/Config/ClassLoader.php';
 
-        RegisterCommonDIServices::init($di);
+/**
+ * Load application services
+ *
+ */
+RegisterDIServices::init($di);
 
-        $this->setDI($di);
-    }
+// Attach Sentry error logger
+$errorLogger = new SentryErrorLogger('admin-cabinet');
+$errorLogger->init();
 
-    public function main()
-    {
-        $this->registerServices();
-
-        // Register the default modules
-        $this->registerModules([
-            'admin-cabinet' => [
-                "className" => "MikoPBX\AdminCabinet\Module",
-                "path"      => __DIR__ . '/../../src/AdminCabinet/Module.php',
-            ],
-        ]);
-        $this->setDefaultModule('admin-cabinet');
-
-        // Register additional app modules from external enabled modules
-        PbxExtensionUtils::registerEnabledModulesInApp($this);
-
-        try {
-            echo $this->handle($_SERVER['REQUEST_URI'])->getContent();
-        } catch (Throwable $e) {
-            CriticalErrorsHandler::handleException($e);
-        }
-    }
+// Enable Whoops error pretty print
+$is_ajax = 'xmlhttprequest' === strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '');
+if ($is_ajax) {
+    $whoopsClass = JsonResponseHandler::class;
+} else {
+    $whoopsClass = PrettyPageHandler::class;
 }
 
-$application = new Application();
-$application->main();
+if (class_exists($whoopsClass)) {
+    $whoops = new Run();
+    $whoops->pushHandler(new $whoopsClass());
+    $whoops->register();
+}
+
+try {
+    $application = new Application($di);
+    echo $application->handle($_SERVER['REQUEST_URI'])->getContent();
+} catch (Throwable $e) {
+    $errorLogger->captureException($e);
+    PhpError::exceptionHandler($e);
+
+    if (class_exists($whoopsClass)) {
+        $whoops->handleException($e);
+    } else {
+        echo $e->getMessage();
+    }
+}

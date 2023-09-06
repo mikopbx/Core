@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,11 +30,7 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * CDRDatabaseProvider
- *
- * This service provider creates a CDR database connection based on the parameters defined in the configuration file.
- *
- * @package MikoPBX\Common\Providers
+ * CDR database connection is created based in the parameters defined in the configuration file
  */
 class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
@@ -43,7 +39,7 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
     /**
      * Register dbCDR service provider
      *
-     * @param \Phalcon\Di\DiInterface $di The DI container.
+     * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
@@ -52,17 +48,16 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
     }
 
     /**
-     * Retrieves all completed temporary CDRs.
-     * @param array $filter  An array of filter parameters.
-     * @return array An array of CDR data.
+     * Возвращает все завершенные временные CDR.
+     * @param array $filter
+     * @return array
      */
     public static function getCdr(array $filter = []): array
     {
         if (empty($filter)) {
             $filter = [
                 'work_completed<>1 AND endtime<>""',
-                'miko_tmp_db' => true,
-                'limit' => 2000
+                'miko_tmp_db' => true
             ];
         }
         $filter['miko_result_in_file'] = true;
@@ -74,12 +69,9 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
         }
 
         $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
-        $filename = '';
         try {
-            list($result, $message) = $client->sendRequest(json_encode($filter), 2);
-            if ($result!==false){
-                $filename = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
-            }
+            $result = $client->request(json_encode($filter), 2);
+            $filename = json_decode($result, true, 512, JSON_THROW_ON_ERROR);
         } catch (\Throwable $e) {
             $filename = '';
         }
@@ -90,13 +82,6 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
             } catch (\Throwable $e) {
                 Util::sysLogMsg('SELECT_CDR_TUBE', 'Error parse response.');
             }
-
-            $di = Di::getDefault();
-            if($di !== null){
-                $findPath = Util::which('find');
-                $downloadCacheDir = $di->getShared('config')->path('www.downloadCacheDir');
-                shell_exec("$findPath -L $downloadCacheDir -samefile  $filename -delete");
-            }
             unlink($filename);
         }
 
@@ -104,8 +89,8 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
     }
 
     /**
-     * Retrieves all incomplete CDRs from the cache.
-     * @return array  An array of CDR data.
+     * Возвращает все не завершенные CDR.
+     * @return array
      */
     public static function getCacheCdr(): array
     {

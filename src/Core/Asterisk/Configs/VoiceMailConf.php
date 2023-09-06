@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
@@ -29,26 +30,14 @@ use MikoPBX\Common\Models\Users;
 use Phalcon\Di;
 use Phalcon\Mvc\Model\Manager;
 
-/**
- * Class VoiceMailConf
- *
- * Represents the voicemail.conf configuration file.
- * @package MikoPBX\Core\Asterisk\Configs
- */
-class VoiceMailConf extends AsteriskConfigClass
+class VoiceMailConf extends CoreConfigClass
 {
-    // The module hook applying priority
-    public int $priority = 620;
-
-    /**
-     * The voice mailbox extension.
-     */
     public const VOICE_MAIL_EXT = 'voicemail';
     protected string $description = 'voicemail.conf';
 
 
     /**
-     * Get the inclusion in the internal context.
+     * Возвращает включения в контекст internal
      *
      * @return string
      */
@@ -58,7 +47,7 @@ class VoiceMailConf extends AsteriskConfigClass
     }
 
     /**
-     * Prepare additional context sections in the extensions.conf file.
+     * Prepares additional contexts sections in the extensions.conf file
      *
      * @return string
      */
@@ -77,14 +66,8 @@ class VoiceMailConf extends AsteriskConfigClass
         return  $conf;
     }
 
-    /**
-     * Generate the configuration content for voicemail.conf.
-     *
-     * This method generates the configuration content for the voicemail.conf file.
-     */
     protected function generateConfigProtected(): void
     {
-        // Create an array of parameters
         $params = [
             'VM_NAME' => '${VM_NAME}',
             'VM_DUR'  => '${VM_DUR}',
@@ -94,27 +77,21 @@ class VoiceMailConf extends AsteriskConfigClass
             'VM_DATE'  => '${VM_DATE}'
         ];
         try {
-            // Convert the parameters array to JSON
             $emailBody = json_encode($params, JSON_THROW_ON_ERROR);
-
-            // Replace double quotes with '%|%' in the JSON string
             $emailBody = str_replace('"', '%|%', $emailBody);
         }catch (\Exception $e){
-            // If there is an exception, set emailBody to an empty string
             $emailBody = '';
         }
 
-        // Get the sender address from generalSettings or fallback to MailSMTPUsername
+
         $from = $this->generalSettings['MailSMTPSenderAddress'];
         if (empty($from)) {
             $from =  $this->generalSettings['MailSMTPUsername'];
         }
 
-        // Get the PBX timezone and voicemail-sender path
         $timezone = $this->generalSettings['PBXTimezone'];
         $msmtpPath = Util::which('voicemail-sender');
 
-        // Create the voicemail configuration string
         $conf     = "[general]\n" .
             "format=wav\n" .
             "attach=yes\n" .
@@ -137,49 +114,35 @@ class VoiceMailConf extends AsteriskConfigClass
             "[zonemessages]\n" .
             "local={$timezone}|'vm-received' q 'digits/at' H 'hours' M 'minutes'\n\n";
 
-        // Append voicemail context and mail_box to the configuration string
         $conf .= "[voicemailcontext]\n";
         $mail_box = $this->generalSettings['VoicemailNotificationsEmail'];
         $conf .= "admin => admin," . Util::translate("user") . ",{$mail_box},,attach=yes|tz=local|delete=yes\n";
-
-        // Write the configuration string to voicemail.conf file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/voicemail.conf', $conf);
     }
 
     /**
-     * Get the filename for copying a source file to a destination directory.
-     *
-     * @param string $srcFileName The source file name.
-     * @param string $linkedId The linked ID.
-     * @param int $time The timestamp.
-     * @param bool $copy Whether to perform the copy operation.
-     * @return string The recording file name.
+     * @param      $srcFileName
+     * @param      $linkedId
+     * @param      $time
+     * @param bool $copy
+     * @return string
      */
     public static function getCopyFilename($srcFileName, $linkedId, $time, bool $copy = true):string{
-        // Generate the destination filename with .wav extension
         $filename = Util::trimExtensionForFile($srcFileName) . '.wav';
         $recordingFile = '';
-
-        // Define the directory path for storing the recording file
+        // Переопределим путь к файлу записи разговора. Для конференции файл один.
         $monitor_dir = Storage::getMonitorDir();
         $sub_dir     = date('Y/m/d', $time);
         $dirName = "$monitor_dir/$sub_dir/INBOX/";
-
-        // Create the directory if it doesn't exist
         if(Util::mwMkdir($dirName)){
             $recordingFile = $dirName.$linkedId.'.wav';
             $cpPath = Util::which('cp');
-
-            // Perform the copy operation if $copy is true
             if($copy === true){
                 Processes::mwExec("{$cpPath} {$filename} {$recordingFile}");
             }
-
-            // Check if the recording file exists
             if($copy === true && !file_exists($recordingFile)){
                 $recordingFile = '';
             }else{
-                // Change the extension of the recording file to .mp3
                 $recordingFile = Util::trimExtensionForFile($recordingFile) . '.mp3';
             }
         }
@@ -187,18 +150,15 @@ class VoiceMailConf extends AsteriskConfigClass
     }
 
     /**
-     * Get users' voicemail information.
-     *
-     * @return array An array containing the voicemail information of users.
+     * Возвращает список пользователей VM.
+     * @return array
      */
     public static function getUsersVM():array
     {
-        // Check if the dependency injector is available
         $di = Di::getDefault();
         if(!$di){
             return [];
         }
-
         /** @var Manager $manager */
         $manager = $di->get('modelsManager');
         $parameters = [
@@ -228,7 +188,6 @@ class VoiceMailConf extends AsteriskConfigClass
                 ]
             ],
         ];
-        // Create the query builder and execute the query
         $query  = $manager->createBuilder($parameters)->getQuery();
         $result = $query->execute()->toArray();
         $mails = [];
@@ -236,16 +195,14 @@ class VoiceMailConf extends AsteriskConfigClass
             if(empty($data['email'])){
                 continue;
             }
-            // Store the voicemail information in an array with the extension as the key
             $mails[$data['extension']] = $data;
         }
         return $mails;
     }
 
     /**
-     * Get the list of email addresses for voicemail notifications.
-     *
-     * @param string $linkedId
+     * Возвращает все
+     * @param $linkedId
      * @return array
      */
     public static function getToMail($linkedId):array

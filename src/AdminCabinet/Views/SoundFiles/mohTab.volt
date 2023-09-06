@@ -1,6 +1,6 @@
 {% for record in mohFiles %}
     {% if loop.first %}
-        <table class="ui selectable compact unstackable table" id="moh-sound-files-table">
+        <table class="ui selectable compact table" id="moh-sound-files-table">
         <thead>
         <tr>
             <th>{{ t._('sf_ColumnFile') }}</th>

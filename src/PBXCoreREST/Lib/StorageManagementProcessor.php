@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,26 +19,19 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
+
+
 use MikoPBX\Core\System\Storage;
 use Phalcon\Di\Injectable;
 
-
-/**
- * Class StorageManagementProcessor
- *
- * @package MikoPBX\PBXCoreREST\Lib
- *
- */
 class StorageManagementProcessor extends Injectable
 {
     /**
-     * Processes storage requests.
+     * Processes Storage requests
      *
-     * @param array $request The request data.
-     *   - action: The action to be performed.
-     *   - data: Additional data related to the action.
+     * @param array $request
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -69,7 +62,9 @@ class StorageManagementProcessor extends Injectable
                 $res->data['status'] = Storage::statusMkfs($data['dev']);
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in storageCallBack";
         }
 
         $res->function = $action;

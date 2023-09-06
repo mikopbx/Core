@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,27 +22,14 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Core\System\Util;
 
-/**
- * Represents the AsteriskConf class responsible for generating asterisk.conf configuration file.
- *
- * @package MikoPBX\Core\Asterisk\Configs
- */
-class AsteriskConf extends AsteriskConfigClass
+class AsteriskConf extends CoreConfigClass
 {
-    // The module hook applying priority
-    public int $priority = 1000;
-
     protected string $description = 'asterisk.conf';
 
-
-    /**
-     * Generates the protected configuration content.
-     */
     protected function generateConfigProtected(): void
     {
         $lang = $this->generalSettings['PBXLanguage'];
 
-        // Build the configuration content
         $conf = "[directories]\n" .
             "astetcdir => {$this->config->path('asterisk.astetcdir')}\n" .
             "astagidir => {$this->config->path('asterisk.astagidir')}\n" .
@@ -65,7 +52,6 @@ class AsteriskConf extends AsteriskConfigClass
             "defaultlanguage = {$lang}\n" .
             "systemname = mikopbx\n";
 
-        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/asterisk.conf', $conf);
     }
 }

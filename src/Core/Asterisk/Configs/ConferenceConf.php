@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,33 +21,21 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\ConferenceRooms;
 
-/**
- * Generates the configuration content for confbridge.conf.
- *
- * @package MikoPBX\Core\Asterisk\Configs
- */
-class ConferenceConf extends AsteriskConfigClass
+
+class ConferenceConf extends CoreConfigClass
 {
-    // The module hook applying priority
-    public int $priority = 520;
 
     protected string $description = 'confbridge.conf';
-
-    /**
-     * Generates the configuration content for confbridge.conf.
-     */
     protected function generateConfigProtected(): void
     {
         $conf = "";
-
-        // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . '/confbridge.conf', $conf);
     }
 
     /**
-     * Generates the internal extension plan.
+     * Возвращает номерной план для internal контекста.
      *
-     * @return string The generated internal extension plan.
+     * @return string
      */
     public function extensionGenInternal(): string
     {
@@ -62,9 +50,7 @@ class ConferenceConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the internal transfer extension plan.
-     *
-     * @return string The generated internal transfer extension plan.
+     * @return string
      */
     public function extensionGenInternalTransfer(): string
     {
@@ -79,27 +65,23 @@ class ConferenceConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the conference room extension plan for internal contexts.
+     * Генерация дополнительных контекстов.
      *
-     * @return string The generated conference room extension plan.
+     * @return string
      */
     public function extensionGenContexts(): string
     {
         $PBXRecordCalls = $this->generalSettings['PBXRecordCalls'];
-
-        // Generate hangup handler
+        // Генерация внутреннего номерного плана.
         $conf  = "[hangup_handler_meetme]\n\n";
         $conf .= "exten => s,1,AGI(cdr_connector.php,hangup_chan_meetme)\n\t";
         $conf .= "same => n,return\n\n";
-
-        // Generate conference room context
         $conf .= "[conference-rooms] \n";
         $data = $this->getConferences();
         foreach ($data as $conference => $pin) {
-            // Generate conference room extension plan
             $conf .= 'exten => ' . $conference . ',1,NoOp(---)' . "\n\t";
-
-            // Handle channel redirection for local channels
+            // Если это Local канал, к примеру вызов через IVR, то попробуем корректно перенаправить вызов.
+            // Ищем реальный канал. Local будут отправлены в hangup
             $conf .= 'same => n,Set(bridgePeer=${CHANNEL})' . "\n\t";
             $conf .= 'same => n,Set(i=1)' . "\n\t";
             $conf .= 'same => n,While($[${i} < 10])' . "\n\t";
@@ -111,16 +93,15 @@ class ConferenceConf extends AsteriskConfigClass
             $conf .= 'same => n,EndWhile' . "\n\t";
             $conf .= 'same => n,ExecIf($[ "${bridgePeer}" != "${CHANNEL}" && "${bridgePeer:0:5}" != "Local" && "${bridgePeer}x" != "x" ]?ChannelRedirect(${bridgePeer},${CONTEXT},${EXTEN},${PRIORITY}))' . "\n\t";
 
-            // Hangup if it's a local channel and the original channel couldn't be determined
+            // Если всеже это Local и не вышло определить оригинальный канал, то завершаем вызов.
             $conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Hangup())' . "\n\t";
-
-            // Send PJSIP channels to the conference room
+            // В конференцию попадет лишь реальный канал PJSIP
             $conf .= 'same => n,AGI(cdr_connector.php,meetme_dial)' . "\n\t";
             $conf .= 'same => n,Answer()' . "\n\t";
             $conf .= 'same => n,Gosub(set-answer-state,${EXTEN},1)' . PHP_EOL."\t";
             $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler_meetme,s,1)' . "\n\t";
-            // Enable call recording if configured
             if($PBXRecordCalls === '1'){
+                // Запускаем запись разговоров.
                 $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_file)=${MEETME_RECORDINGFILE}.wav)' . "\n\t";
                 $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_file_timestamp)=false)' . "\n\t";
                 $conf .= 'same => n,Set(CONFBRIDGE(bridge,record_conference)=yes)' . "\n\t";
@@ -128,8 +109,6 @@ class ConferenceConf extends AsteriskConfigClass
             $conf .= 'same => n,Set(CONFBRIDGE(bridge,video_mode)=follow_talker)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(user,talk_detection_events)=yes)' . "\n\t";
             $conf .= 'same => n,Set(CONFBRIDGE(user,quiet)=yes)' . "\n\t";
-
-            // Set PIN if available
             if(!empty($pin)){
                 $conf .= "same => n,Set(CONFBRIDGE(user,pin)=$pin)" . "\n\t";
             }
@@ -138,15 +117,13 @@ class ConferenceConf extends AsteriskConfigClass
             $conf .= 'same => n,Hangup()' . "\n\n";
         }
 
-        // Return the assembled dialplan configuration.
         return $conf;
     }
 
     /**
+     * Генерация хинтов.
      *
-     * Generates hints for conference extensions.
-     *
-     * @return string The generated hints for conference extensions.
+     * @return string
      */
     public function extensionGenHints(): string
     {
@@ -160,9 +137,8 @@ class ConferenceConf extends AsteriskConfigClass
     }
 
     /**
-     * Retrieves an array of conference extensions.
-     *
-     * @return array The array of conference extensions.
+     * Возвращает массив номеров конференц комнат.
+     * @return array
      */
     public static function getConferenceExtensions():array
     {
@@ -180,9 +156,8 @@ class ConferenceConf extends AsteriskConfigClass
     }
 
     /**
-     * Retrieves an array of conferences with their pin codes.
-     *
-     * @return array The array of conferences with pin codes.
+     * Возвращает массив номеров конференц комнат.
+     * @return array
      */
     private function getConferences():array
     {

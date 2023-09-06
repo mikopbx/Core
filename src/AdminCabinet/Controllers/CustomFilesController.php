@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ class CustomFilesController extends BaseController
 {
 
     /**
-     * Build the list of files.
+     * Построение списка файлов
      */
     public function indexAction(): void
     {
@@ -38,9 +38,9 @@ class CustomFilesController extends BaseController
 
 
     /**
-     * Open the file edit card.
+     * Открытие карточки редактирования Файла записи
      *
-     * @param string $id The ID of the file to be edited.
+     * @param string $id редактируемой записи
      */
     public function modifyAction(string $id): void
     {
@@ -58,7 +58,9 @@ class CustomFilesController extends BaseController
 
 
     /**
-     * Save the parameters of the custom file override.
+     * Сохранение параметров переопределения системного файла
+     *
+     * @return void
      */
     public function saveAction(): void
     {
@@ -72,7 +74,7 @@ class CustomFilesController extends BaseController
             return;
         }
 
-        // Update file parameters
+        // Заполним параметры записи
         foreach ($customFile as $name => $value) {
             switch ($name) {
                 case "changed":
@@ -88,10 +90,13 @@ class CustomFilesController extends BaseController
                     $customFile->$name = $data[$name];
             }
         }
-        if (empty($customFile->getContent())){
-            $customFile->mode = CustomFiles::MODE_NONE;
+        if ($customFile->save() === false) {
+            $errors = $customFile->getMessages();
+            $this->flash->error(implode('<br>', $errors));
+            $this->view->success = false;
+        } else {
+            $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
+            $this->view->success = true;
         }
-
-        $this->saveEntity($customFile, "custom-files/modify/{id}");
     }
 }

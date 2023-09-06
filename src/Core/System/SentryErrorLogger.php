@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,52 +17,101 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
-use Phalcon\Di;
-use Phalcon\Di\Injectable;
-use Sentry\State\HubInterface;
+use Sentry\ClientBuilder;
+use Sentry\SentrySdk;
+use Sentry\State\Scope;
 use Throwable;
-class SentryErrorLogger extends Injectable
+
+/**
+ * Collects errors and send them to Sentry cloud for software improvement reasons
+ */
+class SentryErrorLogger
 {
 
-    private ?HubInterface $errorHandler;
+    protected string $dsn; // Sentry unique ID
+    protected string $libraryName;
+    protected string $licKey;
+    protected string $companyName;
+    protected string $email;
+    protected string $release; // MikoPBX release
+    protected string $environment; // development or production
+    protected bool $enabled; // MikoPBX general settings "send errors to developers"
 
-    /**
-     * @deprecated  SentryErrorHandler constructor.
-     *
-     * @param string $libraryName The name of the library.
-     */
-    public function __construct(string $libraryName)
+
+    public function __construct($libraryName)
     {
-        Util::sysLogMsg('DEPRECATED','The class '.get_called_class().' uses deprecated SentryErrorLogger method', LOG_ALERT);
-        $di = Di::getDefault();
-        $this->errorHandler = $di->get(SentryErrorHandlerProvider::SERVICE_NAME, [$libraryName]);
+        $this->dsn         = 'https://07be0eff8a5c463fbac3e90ae5c7d039@sentry.miko.ru/1';
+        $this->libraryName = $libraryName;
+        $this->environment = 'development';
+        if (file_exists('/tmp/licenseInfo')) {
+            $licenseInfo       = json_decode(file_get_contents('/tmp/licenseInfo', false));
+            $this->licKey      = $licenseInfo->{'@attributes'}->key;
+            $this->email       = $licenseInfo->{'@attributes'}->email;
+            $this->companyName = $licenseInfo->{'@attributes'}->companyname;
+        }
+        if (file_exists('/etc/version')) {
+            $pbxVersion    = str_replace("\n", "", file_get_contents('/etc/version', false));
+            $this->release = "mikopbx@{$pbxVersion}";
+        }
+        $this->enabled = file_exists('/tmp/sendmetrics');
     }
 
     /**
-     * @deprecated  Initializes the Sentry error logging subsystem if error sending is enabled in the PBX settings.
+     * Если в настройках PBX разрешено отправлять сообщения об ошибках на сервер,
+     * то функция инициализирует подпистему облачного логирования ошибок Sentry
      *
-     * @return bool The initialization result.
+     * @return Boolean - initialization result
      */
     public function init(): bool
     {
-        Util::sysLogMsg('DEPRECATED','The class '.get_called_class().' uses deprecated SentryErrorLogger method', LOG_ALERT);
-        return true;
+        if ($this->enabled) {
+            $options = [
+                'dsn'         => $this->dsn,
+                'release'     => $this->release,
+                'environment' => $this->environment,
+            ];
+            if ($this->environment === 'development') {
+                $options['traces_sample_rate'] = 1.0;
+            } else {
+                $options['traces_sample_rate'] = 0.05;
+            }
+            $client = ClientBuilder::create($options)->getClient();
+
+            SentrySdk::init()->bindClient($client);
+
+            SentrySdk::getCurrentHub()->configureScope(
+                function (Scope $scope): void {
+                    if (isset($this->email)) {
+                        $scope->setUser(['id' => $this->email]);
+                    }
+                    if (isset($this->licKey)) {
+                        $scope->setExtra('key', $this->licKey);
+                    }
+                    if (isset($this->companyName)) {
+                        $scope->setExtra('company', $this->companyName);
+                    }
+                    if (isset($this->libraryName)) {
+                        $scope->setTag('library', $this->libraryName);
+                    }
+                }
+            );
+        }
+
+        return $this->enabled;
     }
 
     /**
-     * @deprecated  Captures an exception and sends it to the Sentry cloud.
+     * Process errors and send it to sentry cloud
      *
-     * @param Throwable $e The exception to capture.
+     * @param Throwable $e
      */
     public function captureException(Throwable $e): void
     {
-        Util::sysLogMsg('DEPRECATED','The class '.get_called_class().' uses deprecated SentryErrorLogger method', LOG_ALERT);
-        if ($this->errorHandler)
-        {
-            $this->errorHandler->captureException($e);
-        }
+        SentrySdk::getCurrentHub()->captureException($e);
     }
 }
+

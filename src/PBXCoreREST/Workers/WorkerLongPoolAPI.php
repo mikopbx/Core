@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 require_once 'Globals.php';
-
 use MikoPBX\Common\Models\LongPollSubscribe;
 use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
 use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;
@@ -31,29 +31,20 @@ use Throwable;
 
 use function clearstatcache;
 
-/**
- * The WorkerLongPoolAPI class is responsible for handling the long-polling API worker process.
- *
- * @package MikoPBX\PBXCoreREST\Workers
- *
- * @example
- * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getRegistry' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
- * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getActiveChannels' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
- * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getActiveCalls' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
- * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/ping' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
- * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/common_channel' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
- * curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/test' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
- */
+
+/*
+curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getRegistry' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getActiveChannels' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/getActiveCalls' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/ping' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/common_channel' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+curl -s -v --no-buffer 'http://172.16.156.223/pbxcore/api/long/sub/test' -H 'Cookie: PHPSESSID=aec8c4ae8a26e3f74296ba0acaa3a692'
+*/
+
 class WorkerLongPoolAPI extends WorkerBase
 {
 
-    /**
-     * Starts the worker.
-     *
-     * @param array $argv The command-line arguments passed to the worker.
-     * @return void
-     */
-    public function start(array $argv): void
+    public function start($argv): void
     {
 
         $client_queue = new BeanstalkClient();
@@ -94,10 +85,15 @@ class WorkerLongPoolAPI extends WorkerBase
     }
 
     /**
-     * Retrieves data from a specified URL.
+     * Проверяет наличие активных подписок LongPoll и отправляет с периодичностью новые данные.
+     */
+
+    /**
+     * Отправляет GET запрос по http. Возвращает ответ в виде массива.
      *
-     * @param string $url The URL to retrieve data from.
-     * @return array The retrieved data as an associative array.
+     * @param string $url
+     *
+     * @return array
      */
     private function getData(string $url):array
     {
@@ -111,7 +107,7 @@ class WorkerLongPoolAPI extends WorkerBase
         $resultRequest = curl_exec($ch);
         curl_close($ch);
 
-        if(is_string($resultRequest)){
+        if($resultRequest !== false){
             $resultTmp = json_decode($resultRequest, true);
             if(is_array($resultTmp)){
                 $result = $resultTmp;
@@ -121,13 +117,11 @@ class WorkerLongPoolAPI extends WorkerBase
     }
 
     /**
-     * Sets the channels data.
      *
-     * @return void
      */
     private function setChannelsData(): void
     {
-        /** @var \MikoPBX\Common\Models\LongPollSubscribe[] $subscribes */
+        /** @var \MikoPBX\Common\Models\LongPollSubscribe $sub */
         $subscribes = LongPollSubscribe::find('enable=1');
 
         /** @var \MikoPBX\Common\Models\LongPollSubscribe $sub */
@@ -146,13 +140,14 @@ class WorkerLongPoolAPI extends WorkerBase
     }
 
     /**
-     * Executes a function based on the specified channel and optional common channel.
+     * Выполнение метода API.
      *
-     * @param string $channel The channel to execute the function for.
-     * @param string|null $common_chan The optional common channel.
-     * @return string The data to send.
+     * @param $channel
+     * @param $common_chan
+     *
+     * @return array|false|string|null
      */
-    private function execFunction(string $channel, string $common_chan = null)
+    private function execFunction($channel, $common_chan = null)
     {
         clearstatcache();
         if ( ! $this->checkAction($channel, $common_chan)) {
@@ -163,6 +158,8 @@ class WorkerLongPoolAPI extends WorkerBase
             $data_for_send = 'PONG';
         } elseif ('getActiveChannels' === $channel) {
             $data_for_send = CdrDBProcessor::getActiveChannels()->getResult();
+        } elseif ('getActiveCalls' === $channel) {
+            $data_for_send = CdrDBProcessor::getActiveCalls()->getResult();
         } elseif ('getRegistry' === $channel) {
             $result        = [
                 'SIP' => SIPStackProcessor::getRegistry()->getResult(),
@@ -175,13 +172,14 @@ class WorkerLongPoolAPI extends WorkerBase
     }
 
     /**
-     * Checks if an action is enabled based on the specified channel and optional common channel.
+     * Проверка допустимости выполнения дейсвтия в данный момент времени.
      *
-     * @param string $channel The channel to check the action for.
-     * @param string|null $common_chan The optional common channel.
-     * @return bool Whether the action is enabled or not.
+     * @param $channel
+     * @param $common_chan
+     *
+     * @return bool
      */
-    private function checkAction(string $channel, string $common_chan = null)
+    private function checkAction($channel, $common_chan = null)
     {
         if ( ! $common_chan) {
             $actions = $GLOBALS['ACTIONS'];
@@ -209,11 +207,12 @@ class WorkerLongPoolAPI extends WorkerBase
     }
 
     /**
-     * Posts data to the specified URL using HTTP POST.
+     * Отправляет POST запрос по http. Возвращает ответ в виде массива.
      *
-     * @param string $url The URL to post the data to.
-     * @param string $data The data to be posted.
-     * @return array The response data as an associative array.
+     * @param string $url
+     * @param string $data
+     *
+     * @return array
      */
     private function postData(string $url, string $data): array
     {
@@ -238,4 +237,4 @@ class WorkerLongPoolAPI extends WorkerBase
 }
 
 // Start worker process
-WorkerLongPoolAPI::startWorker($argv??[]);
+WorkerLongPoolAPI::startWorker($argv??null);

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Config;
 
-use MikoPBX\Common\Providers\{AclProvider,
-    BeanstalkConnectionModelsProvider,
-    BeanstalkConnectionWorkerApiProvider,
+use MikoPBX\Common\Providers\{BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
     LoggerAuthProvider,
     LoggerProvider,
@@ -34,14 +32,10 @@ use MikoPBX\Common\Providers\{AclProvider,
     ModelsMetadataProvider,
     ModulesDBConnectionsProvider,
     PBXConfModulesProvider,
-    PBXCoreRESTClientProvider,
     RegistryProvider,
     ManagedCacheProvider,
-    SentryErrorHandlerProvider,
-    SessionProvider,
-    LanguageProvider,
-    TranslationProvider,
-    WhoopsErrorHandlerProvider};
+    SessionReadOnlyProvider,
+    LanguageProvider};
 use MikoPBX\PBXCoreREST\Providers\{
     DispatcherProvider,
     RequestProvider,
@@ -49,24 +43,16 @@ use MikoPBX\PBXCoreREST\Providers\{
     RouterProvider};
 use Phalcon\Di\DiInterface;
 
-/**
- * Initialize services on dependency injector
- */
 class RegisterDIServices
 {
     /**
      * Initialize services on dependency injector
      *
-     * @param DiInterface $di The DI container.
+     * @param \Phalcon\Di\DiInterface $di
      */
     public static function init(DiInterface $di): void
     {
         $pbxRestAPIProviders = [
-
-            // Inject errors handlers
-            SentryErrorHandlerProvider::class,
-            WhoopsErrorHandlerProvider::class,
-
             // Inject Registry provider
             RegistryProvider::class,
 
@@ -75,7 +61,6 @@ class RegisterDIServices
             ModelsMetadataProvider::class,
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
-            ModulesDBConnectionsProvider::class,
 
             // Inject caches
             ManagedCacheProvider::class,
@@ -83,7 +68,6 @@ class RegisterDIServices
 
             // Inject Queue connection
             BeanstalkConnectionWorkerApiProvider::class,
-            BeanstalkConnectionModelsProvider::class,
 
             // Inject PBX modules
             PBXConfModulesProvider::class,
@@ -93,12 +77,7 @@ class RegisterDIServices
             ResponseProvider::class,
             RequestProvider::class,
             RouterProvider::class,
-
-            // Inject sessions
-            SessionProvider::class,
-
-            // Inject Access control lists provider
-            AclProvider::class,
+            SessionReadOnlyProvider::class,
 
             // Inject Logger
             LoggerAuthProvider::class,
@@ -107,10 +86,8 @@ class RegisterDIServices
             // Translates
             MessagesProvider::class,
             LanguageProvider::class,
-            TranslationProvider::class,
 
-            // Inject Rest API client
-            PBXCoreRESTClientProvider::class
+            ModulesDBConnectionsProvider::class,
         ];
 
         foreach ($pbxRestAPIProviders as $provider) {
@@ -118,7 +95,5 @@ class RegisterDIServices
             $di->remove($provider::SERVICE_NAME);
             $di->register(new $provider());
         }
-
-        $di->getShared(RegistryProvider::SERVICE_NAME)->libraryName = 'pbx-core-rest';
     }
 }

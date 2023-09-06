@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,51 +36,41 @@ class OutWorkTimesRouts extends ModelsBase
     public $id;
 
     /**
-     * Reference to the record in the OutWorkTimes table
-     *
      * @Column(type="integer", nullable=false)
      */
     public $timeConditionId;
 
     /**
-     * Reference to the record in the IncomingRoutingTable table
-     *
-     * @Column(type="string", nullable=false)
+     * @Column(type="integer", nullable=false)
      */
     public $routId;
 
-    /**
-     * Initialize the model.
-     */
     public function initialize(): void
     {
         $this->setSource('m_OutWorkTimesRouts');
         parent::initialize();
-
-        // Establish a belongsTo relationship with the OutWorkTimes model
         $this->belongsTo(
             'timeConditionId',
             OutWorkTimes::class,
             'id',
             [
-                'alias' => 'OutWorkTimes',
+                'alias'      => 'OutWorkTimes',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action' => Relation::NO_ACTION,
+                    'action'     => Relation::NO_ACTION,
                 ],
             ]
         );
 
-        // Establish a hasOne relationship with the IncomingRoutingTable model
         $this->hasOne(
             'routId',
             IncomingRoutingTable::class,
             'id',
             [
-                'alias' => 'IncomingRoutingTable',
+                'alias'      => 'IncomingRoutingTable',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action' => Relation::NO_ACTION,
+                    'action'     => Relation::NO_ACTION,
                 ],
             ]
         );

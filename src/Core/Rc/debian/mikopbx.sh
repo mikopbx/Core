@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # MikoPBX - free phone system for small business
-# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+# Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 # Should-Stop:       $all
 # Default-Start:     5
 # Default-Stop:      0 1 2 3 4 6
-# Short-Description: Script for MIKOPBX initialization.
+# Short-Description: Скрипт инициализции MIKOPBX.
 ### END INIT INFO
 
 NAME='mikopbx'

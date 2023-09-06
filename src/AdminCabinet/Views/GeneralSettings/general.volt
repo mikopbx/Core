@@ -7,25 +7,19 @@
     {{ form.render('Description') }}
 </div>
 <div class="field">
-    <label>{{ t._('gs_PBXLanguage') }} </label>
-    <div class="field max-width-400">
-        {{ form.render('PBXLanguage') }}
-        <div class="ui pointing teal basic label">
-            {{ t._('gs_NeedRestartPBX') }}
-        </div>
+    <label>{{ t._('gs_PBXLanguage') }}</label>
+    {{ form.render('PBXLanguage') }}
+    <div class="ui pointing teal basic label">
+        {{ t._('gs_NeedRestartPBX') }}
     </div>
 </div>
 <div class="field">
     <label>{{ t._('gs_PBXInternalExtensionLength') }}</label>
-    <div class="field max-width-200">
-        {{ form.render('PBXInternalExtensionLength') }}
-    </div>
+    {{ form.render('PBXInternalExtensionLength') }}
 </div>
 <div class="field">
     <label>{{ t._('gs_PBXFeatureDigitTimeout') }}</label>
-    <div class="field max-width-100">
-        {{ form.render('PBXFeatureDigitTimeout') }}
-    </div>
+    {{ form.render('PBXFeatureDigitTimeout') }}
 </div>
 <div class="field">
     <div class="ui segment">

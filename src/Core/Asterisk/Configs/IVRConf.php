@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,22 +22,13 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\{IvrMenu, IvrMenuActions, Sip, SoundFiles};
 use MikoPBX\Core\System\{Processes, Util};
 
-/**
- * Class IVRConf
- *
- * Represents a configuration class for IVR.
- *
- * @package MikoPBX\Core\Asterisk\Configs
- */
-class IVRConf extends AsteriskConfigClass
+class IVRConf extends CoreConfigClass
 {
-    // The module hook applying priority
-    public int $priority = 560;
 
     /**
-     * Generates the additional contexts.
+     * Генерация дополнительных контекстов.
      *
-     * @return string The generated contexts.
+     * @return string
      */
     public function extensionGenContexts(): string
     {
@@ -51,10 +42,8 @@ class IVRConf extends AsteriskConfigClass
             }
         }
 
-        // Fetch IVR menus from the database
         $db_data = IvrMenu::find()->toArray();
-
-        // Generate internal dial plan.
+        // Генерация внутреннего номерного плана.
         $conf = '';
         foreach ($db_data as $ivr) {
             /** @var \MikoPBX\Common\Models\SoundFiles $res */
@@ -67,8 +56,6 @@ class IVRConf extends AsteriskConfigClass
             } else {
                 $audio_message = 'vm-enter-num-to-call';
             }
-
-            // Configure IVR extension context.
             $conf          .= "[ivr-{$ivr['extension']}] \n";
             $conf          .= 'exten => s,1,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
             $conf          .= "same => n,Set(APPEXTEN={$ivr['extension']})\n\t";
@@ -84,18 +71,14 @@ class IVRConf extends AsteriskConfigClass
             } else {
                 $conf .= "same => n,Goto(t,1)\n";
             }
-
-            // Fetch IVR menu actions from the database
             $res = IvrMenuActions::find("ivr_menu_id = '{$ivr['uniqid']}'");
+
             foreach ($res as $ext) {
                 $conf .= "exten => {$ext->digits},1,Goto(internal,{$ext->extension},1)\n";
             }
-
-            // Handle invalid and timeout extensions.
             $conf .= "exten => i,1,Goto(s,6)\n";
             $conf .= "exten => t,1,Goto(s,6)\n";
 
-            // Add support for entering any internal extension.
             if ($ivr['allow_enter_any_internal_extension'] === '1') {
                 foreach ($arr_lens as $len) {
                     $extension = Util::getExtensionX($len);
@@ -110,9 +93,9 @@ class IVRConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the hints.
+     * Генерация хинтов.
      *
-     * @return string The generated hints.
+     * @return string
      */
     public function extensionGenHints(): string
     {
@@ -126,10 +109,11 @@ class IVRConf extends AsteriskConfigClass
     }
 
     /**
-     * Retrieves the duration of a sound file.
+     * Получаем длительность файла.
      *
-     * @param string $filename The file name.
-     * @return int The duration of the sound file.
+     * @param $filename
+     *
+     * @return int
      */
     public function getSoundFileDuration($filename)
     {
@@ -154,9 +138,9 @@ class IVRConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the internal dialplan for IVR.
+     * Возвращает номерной план для internal контекста.
      *
-     * @return string The generated internal dialplan.
+     * @return string
      */
     public function extensionGenInternal(): string
     {
@@ -171,9 +155,7 @@ class IVRConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the internal transfer dialplan for IVR.
-     *
-     * @return string The generated internal transfer dialplan.
+     * @return string
      */
     public function extensionGenInternalTransfer(): string
     {

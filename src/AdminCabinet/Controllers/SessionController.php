@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,9 +22,6 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Providers\AclProvider;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Modules\Config\WebUIConfigInterface;
 
 /**
  * SessionController
@@ -33,98 +30,61 @@ use MikoPBX\Modules\Config\WebUIConfigInterface;
  */
 class SessionController extends BaseController
 {
-    public const SESSION_ID = 'authAdminCabinet';
-
-    public const ROLE = 'role';
-
-    public const HOME_PAGE = 'homePage';
-
-
-    /**
-     * Renders the login page with form and settings values.
-     */
     public function indexAction(): void
     {
         $this->view->NameFromSettings
-            = PbxSettings::getValueByKey('Name');
+                          = PbxSettings::getValueByKey('Name');
         $this->view->DescriptionFromSettings
-            = PbxSettings::getValueByKey('Description');
+                          = PbxSettings::getValueByKey('Description');
         $this->view->form = new LoginForm();
     }
 
     /**
-     * Handles the login form submission and authentication.
+     * This action authenticate and logs an user into the application
+     *
      */
     public function startAction(): void
     {
-        if (!$this->request->isPost()) {
+        if ( ! $this->request->isPost()) {
             $this->forward('session/index');
         }
         $loginFromUser = $this->request->getPost('login');
-        $passFromUser = $this->request->getPost('password');
+        $passFromUser  = $this->request->getPost('password');
         $this->flash->clear();
-        $login = PbxSettings::getValueByKey('WebAdminLogin');
-        $passwordHash = PbxSettings::getValueByKey('WebAdminPassword');
-
-        $userLoggedIn = false;
-        $sessionParams = [];
-
-        // Check if the provided login and password match the stored values
-        if ($login === $loginFromUser
-            && ($this->security->checkHash($passFromUser, $passwordHash) || $passwordHash === $passFromUser))
-            {
-            $sessionParams = [
-                SessionController::ROLE => AclProvider::ROLE_ADMINS,
-                SessionController::HOME_PAGE => $this->url->get('extensions/index')
-            ];
-            $userLoggedIn = true;
-        } else {
-            // Try to authenticate user over additional module
-            $additionalModules = PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::AUTHENTICATE_USER, [$loginFromUser, $passFromUser]);
-
-            // Check if any additional module successfully authenticated the user
-            foreach ($additionalModules as $moduleUniqueId => $sessionData) {
-                if (!empty($sessionData)) {
-                    $this->loggerAuth->info("User $loginFromUser was authenticated over module $moduleUniqueId");
-                    $sessionParams = $sessionData;
-                    $userLoggedIn = true;
-                    break;
-                }
-            }
-        }
-
-        if ($userLoggedIn) {
-            // Register the session with the specified parameters
-            $this->_registerSession($sessionParams);
-            if ($this->session->has(LanguageController::WEB_ADMIN_LANGUAGE)){
-                LanguageController::updateSystemLanguage($this->session->get(LanguageController::WEB_ADMIN_LANGUAGE));
-            }
+        $login    = PbxSettings::getValueByKey('WebAdminLogin');
+        $password = PbxSettings::getValueByKey('WebAdminPassword');
+        if ($password === $passFromUser && $login === $loginFromUser) {
+            $this->updateSystemLanguage();
+            $this->_registerSession('admins');
             $this->view->success = true;
             $backUri = $this->request->getPost('backUri');
-            if (!empty($backUri)) {
-                $this->view->reload = $backUri;
+            if (!empty($backUri)){
+                $this->view->reload  = $backUri;
             } else {
-                $this->view->reload = $this->session->get(SessionController::HOME_PAGE);
+                $this->view->reload  = 'index/index';
             }
+
         } else {
-            // Authentication failed
             $this->view->success = false;
             $this->flash->error($this->translation->_('auth_WrongLoginPassword'));
             $remoteAddress = $this->request->getClientAddress(true);
-            $userAgent = $this->request->getUserAgent();
+            $userAgent     = $this->request->getUserAgent();
             $this->loggerAuth->warning("From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
             $this->clearAuthCookies();
         }
-
     }
 
     /**
      * Register an authenticated user into session data
      *
+     * @param  $role
      */
-    private function _registerSession(array $sessionParams): void
+    private function _registerSession($role): void
     {
-        $this->session->set(self::SESSION_ID, $sessionParams);
+        $sessionParams = [
+            'role' => $role,
+        ];
+        $this->session->set('auth', $sessionParams);
 
         if ($this->request->getPost('rememberMeCheckBox') === 'on') {
             $this->updateRememberMeCookies($sessionParams);
@@ -152,17 +112,17 @@ class SessionController extends BaseController
         // Get token for username
         $parameters = [
             'conditions' => 'tokenHash = :tokenHash:',
-            'binds' => [
+            'binds'      => [
                 'tokenHash' => $randomPasswordHash,
             ],
         ];
-        $userToken = AuthTokens::findFirst($parameters);
+        $userToken  = AuthTokens::findFirst($parameters);
         if ($userToken === null) {
             $userToken = new AuthTokens();
         }
         // Insert new token
-        $userToken->tokenHash = $randomPasswordHash;
-        $userToken->expiryDate = $expiryDate;
+        $userToken->tokenHash     = $randomPasswordHash;
+        $userToken->expiryDate    = $expiryDate;
         $userToken->sessionParams = json_encode($sessionParams);
         $userToken->save();
     }
@@ -173,8 +133,8 @@ class SessionController extends BaseController
     private function clearAuthCookies(): void
     {
         if ($this->cookies->has('random_token')) {
-            $cookie = $this->cookies->get('random_token');
-            $value = $cookie->getValue();
+            $cookie     = $this->cookies->get('random_token');
+            $value      = $cookie->getValue();
             $userTokens = AuthTokens::find();
             foreach ($userTokens as $userToken) {
                 if ($this->security->checkHash($value, $userToken->tokenHash)) {
@@ -186,12 +146,51 @@ class SessionController extends BaseController
     }
 
     /**
+     * Updates system settings for language
+     *
+     */
+    private function updateSystemLanguage(): void
+    {
+        $newLanguage = $this->session->get('WebAdminLanguage');
+        if ( ! isset($newLanguage)) {
+            return;
+        }
+        $languageSettings = PbxSettings::findFirstByKey('WebAdminLanguage');
+        if ($languageSettings === null) {
+            $languageSettings        = new PbxSettings();
+            $languageSettings->key   = 'WebAdminLanguage';
+            $languageSettings->value = PbxSettings::getDefaultArrayValues()['WebAdminLanguage'];
+        }
+        if ($newLanguage !== $languageSettings->value) {
+            $languageSettings->value = $newLanguage;
+            $languageSettings->save();
+        }
+    }
+
+    /**
+     * Process language change
+     */
+    public function changeLanguageAction(): void
+    {
+        $newLanguage = $this->request->getPost('newLanguage', 'string');
+        if (array_key_exists($newLanguage, $this->elements->getAvailableWebAdminLanguages())) {
+            $this->session->set('WebAdminLanguage', $newLanguage);
+            if ($this->session->has('auth')) {
+                $this->updateSystemLanguage();
+            }
+            $this->view->success = true;
+        } else {
+            $this->view->success = false;
+        }
+    }
+
+    /**
      * Finishes the active session redirecting to the index
      *
      */
     public function endAction(): void
     {
-        $this->session->remove(self::SESSION_ID);
+        $this->session->remove('auth');
         $this->session->destroy();
         $this->clearAuthCookies();
     }

@@ -1,6 +1,6 @@
 {% for record in customFiles %}
     {% if loop.first %}
-        <table class="ui selectable compact unstackable table" id="custom-sound-files-table">
+        <table class="ui selectable compact table" id="custom-sound-files-table">
         <thead>
         <tr>
             <th>{{ t._('sf_ColumnFile') }}</th>

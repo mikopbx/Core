@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,6 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 /**
  * Class ExtensionForwardingRights
  *
- * @method static mixed findFirstByExtension(string|null $number)
- *
  * @package MikoPBX\Common\Models
  */
 class ExtensionForwardingRights extends ModelsBase
@@ -40,43 +38,30 @@ class ExtensionForwardingRights extends ModelsBase
     public $id;
 
     /**
-     *  Link to SIP extension number
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $extension = '';
 
     /**
-     * Forwarding number
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $forwarding = '';
 
     /**
-     * Forwarding number when the extension is busy
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $forwardingonbusy = '';
 
     /**
-     * Forwarding number when the extension is unavailable
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $forwardingonunavailable = '';
 
     /**
-     * Ring length in seconds
-     *
      * @Column(type="integer", nullable=true)
      */
-    public ?int $ringlength = 0;
+    public ?string $ringlength = '';
 
-    /**
-     * Initialize the model.
-     */
     public function initialize(): void
     {
         $this->setSource('m_ExtensionForwardingRights');
@@ -86,11 +71,11 @@ class ExtensionForwardingRights extends ModelsBase
             Extensions::class,
             'number',
             [
-                'alias' => 'Extensions',
+                'alias'      => 'Extensions',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'message' => Extensions::class,
-                    'action' => Relation::NO_ACTION,
+                    'message'    => Extensions::class,
+                    'action'     => Relation::NO_ACTION,
                 ],
             ]
         );
@@ -100,11 +85,11 @@ class ExtensionForwardingRights extends ModelsBase
             Extensions::class,
             'number',
             [
-                'alias' => 'ForwardingExtensions',
+                'alias'      => 'ForwardingExtensions',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'message' => 'ForwardingExtensions',
-                    'action' => Relation::NO_ACTION,
+                    'message'    => 'ForwardingExtensions',
+                    'action'     => Relation::NO_ACTION,
                 ],
             ]
         );
@@ -114,11 +99,11 @@ class ExtensionForwardingRights extends ModelsBase
             Extensions::class,
             'number',
             [
-                'alias' => 'ForwardingBusyExtensions',
+                'alias'      => 'ForwardingBusyExtensions',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'message' => 'ForwardingBusyExtensions',
-                    'action' => Relation::NO_ACTION,
+                    'message'    => 'ForwardingBusyExtensions',
+                    'action'     => Relation::NO_ACTION,
                 ],
             ]
         );
@@ -128,21 +113,16 @@ class ExtensionForwardingRights extends ModelsBase
             Extensions::class,
             'number',
             [
-                'alias' => 'ForwardingUnavailableExtensions',
+                'alias'      => 'ForwardingUnavailableExtensions',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'message' => 'ForwardingUnavailableExtensions',
-                    'action' => Relation::NO_ACTION,
+                    'message'    => 'ForwardingUnavailableExtensions',
+                    'action'     => Relation::NO_ACTION,
                 ],
             ]
         );
     }
 
-    /**
-     * Perform validation on the model.
-     *
-     * @return bool Whether the validation was successful or not.
-     */
     public function validation(): bool
     {
         $validation = new Validation();

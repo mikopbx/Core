@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,19 +28,17 @@ use Phalcon\Storage\SerializerFactory;
 
 
 /**
- * The ManagedCacheProvider class is responsible for registering the managedCache service.
- *
- * @package MikoPBX\Common\Providers
+ * Main database connection is created based in the parameters defined in the configuration file
  */
 class ManagedCacheProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'managedCache';
-    public const CACHE_PREFIX = 'managed-cache:';
+    public const CACHE_PREFIX = 'managed-cache';
 
     /**
-     * Register the managedCache service provider.
+     * Register managedCache service provider
      *
-     * @param DiInterface $di The DI container.
+     * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {

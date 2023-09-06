@@ -1,14 +1,12 @@
-{% if isAllowed('save') %}
-    {{ link_to("incoming-routes/modify", '<i class="add circle icon"></i> '~t._('ir_AddNewRule'), "class": "ui blue button") }}
-{% endif %}
+{{ link_to("incoming-routes/modify", '<i class="add circle icon"></i> '~t._('ir_AddNewRule'), "class": "ui blue button") }}
     {% for rule in routingTable %}
         {% if loop.first %}
-            <table class="ui selectable compact unstackable table" id="routingTable">
+            <table class="ui selectable compact table" id="routingTable">
             <thead>
             <tr>
                 <th></th>
                 <th>{{ t._('ir_TableColumnDetails') }}</th>
-                <th class="hide-on-mobile">{{ t._('ir_TableColumnNote') }}</th>
+                <th>{{ t._('ir_TableColumnNote') }}</th>
                 <th></th>
             </tr>
             </thead>
@@ -50,7 +48,7 @@
                 {% endif %}
 
             </td>
-            <td class="hide-on-mobile">
+            <td>
                 {% if not (rule['note'] is empty) and rule['note']|length>20 %}
                     <div class="ui basic icon button" data-content="{{ rule['note'] }}" data-variation="wide"
                          data-position="top right">
@@ -101,4 +99,4 @@
 
 {{ partial("partials/submitbutton",['indexurl':'']) }}
 <div class="ui clearing hidden divider"></div>
-{{ end_form() }}
+</form>

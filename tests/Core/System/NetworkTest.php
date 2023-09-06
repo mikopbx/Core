@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,19 +22,13 @@ namespace MikoPBX\Tests\Core\System;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
-class NetworkTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
+class NetworkTest extends AbstractUnitTest
 {
 
     public function testUpdateIfSettings()
     {
         $network = new Network();
         $network->udhcpcConfigureDeconfig();
-        $this->assertTrue(true);
-    }
-
-    public function testGetInfoMessage()
-    {
-        $networkInfo = Network::getInfoMessage();
         $this->assertTrue(true);
     }
 }

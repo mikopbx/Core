@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,8 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
+use phpDocumentor\Reflection\Types\True_;
 
-/**
- * Class VMWareToolsConf
- *
- * Represents the VMWareTools configuration.
- *
- * @package MikoPBX\Core\System\Configs
- */
 class VMWareToolsConf
 {
     private MikoPBXConfig $mikoPBXConfig;
@@ -43,10 +37,9 @@ class VMWareToolsConf
         $this->mikoPBXConfig = new MikoPBXConfig();
     }
 
+
     /**
-     * Configure and start VMWareTools.
-     *
-     * @return bool
+     * Configure and starts VMWareTools
      */
     public function configure(): bool
     {

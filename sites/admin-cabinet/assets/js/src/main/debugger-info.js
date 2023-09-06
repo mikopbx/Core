@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,71 +16,41 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/**
- * The DebuggerInfo object is responsible for showing extra information by double ESC key press
- *
- * @module DebuggerInfo
- */
 const DebuggerInfo = {
-    $debugInfoDiv: $('#debug-info'),
-    delta: 500,
-    lastKeypressTime: 0,
-
-    /**
-     * Initializes the debugger info.
-     */
-    initialize() {
-
-        // Add CSS class to the debug info div
-        DebuggerInfo.$debugInfoDiv.addClass('ui right very wide sidebar');
-
-        // Attach keydown event handler to the document
-        window.$(document).on('keydown', (event) => {
-            DebuggerInfo.keyHandler(event);
-        });
-    },
-
-    /**
-     * Updates the content of the debug info.
-     * @param {string} newContent - The new content for the debug info.
-     */
-    UpdateContent(newContent) {
-        DebuggerInfo.$debugInfoDiv.html(newContent);
-    },
-
-    /**
-     * Shows the sidebar with the debug info.
-     */
-    showSidebar() {
-        // Check if debug info is available
-        if (DebuggerInfo.$debugInfoDiv.html().length === 0) return;
-
-        // Toggle the sidebar to show/hide
-        DebuggerInfo.$debugInfoDiv
-            .sidebar({
-                transition: 'overlay',
-                dimPage: false,
-            })
-            .sidebar('toggle');
-    },
-
-    /**
-     * Handles key events for the debugger info.
-     * @param {Event} event - The keydown event.
-     */
-    keyHandler(event) {
-        // Double press of ESC key will show the debug information
-        if (event.keyCode === 27) {
-            let thisKeypressTime = new Date();
-            if (thisKeypressTime - DebuggerInfo.lastKeypressTime <= DebuggerInfo.delta) {
-                // Show the sidebar with debug info
-                DebuggerInfo.showSidebar();
-                thisKeypressTime = 0;
-            }
-            // Update the last keypress time
-            DebuggerInfo.lastKeypressTime = thisKeypressTime;
-        }
-    },
+	$debugInfoDiv: $('#debug-info'),
+	delta: 500,
+	lastKeypressTime: 0,
+	initialize() {
+		DebuggerInfo.$debugInfoDiv.addClass('ui right very wide sidebar');
+		window.$(document).on('keydown', (event) => {
+			DebuggerInfo.keyHandler(event);
+		});
+	},
+	UpdateContent(newContent) {
+		// let newHtml = `<h2>${globalTranslate.dbg_Header}</h2>`;
+		// newHtml += newContent;
+		DebuggerInfo.$debugInfoDiv.html(newContent);
+	},
+	showSidebar() {
+		if (DebuggerInfo.$debugInfoDiv.html().length === 0) return;
+		DebuggerInfo.$debugInfoDiv
+			.sidebar({
+				transition: 'overlay',
+				dimPage: false,
+			})
+			.sidebar('toggle');
+	},
+	keyHandler(event) {
+		// Double press to ESC will show the debug information
+		if (event.keyCode === 27) {
+			let thisKeypressTime = new Date();
+			if (thisKeypressTime - DebuggerInfo.lastKeypressTime <= DebuggerInfo.delta) {
+				DebuggerInfo.showSidebar();
+				thisKeypressTime = 0;
+			}
+			DebuggerInfo.lastKeypressTime = thisKeypressTime;
+		}
+	},
 };
 
 

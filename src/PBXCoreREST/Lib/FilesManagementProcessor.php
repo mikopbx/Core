@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,51 +29,52 @@ use Phalcon\Di\Injectable;
 use Phalcon\Http\Message\StreamFactory;
 use Phalcon\Http\Message\UploadedFile;
 
-
-/**
- * Class FilesManagementProcessor
- *
- * @package MikoPBX\PBXCoreREST\Lib
- *
- */
 class FilesManagementProcessor extends Injectable
 {
-
     /**
      * Processes file upload requests
      *
      * @param array $request
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return PBXApiResult
      */
     public static function callBack(array $request): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-
         $action   = $request['action'];
         $postData = $request['data'];
         switch ($action) {
-            case 'uploadFile':
-                $res = self::uploadFile($postData);
+            case 'uploadResumable':
+                $res = self::uploadResumable($postData);
                 break;
             case 'statusUploadFile':
-                $res = self::statusUploadFile($postData);
+                $res = self::statusUploadFile($request['data']);
                 break;
             case 'removeAudioFile':
                 $res = self::removeAudioFile($postData['filename']);
                 break;
-            case 'getFileContent':
-                $res = self::getFileContent($postData['filename'], $postData['needOriginal']==='true');
+            case 'fileReadContent':
+                $res = self::fileReadContent($postData['filename'], $postData['needOriginal']);
                 break;
             case 'downloadNewFirmware':
-                $res = self::downloadNewFirmware($postData);
+                $res = self::downloadNewFirmware($request['data']);
                 break;
             case 'firmwareDownloadStatus':
                 $res = self::firmwareDownloadStatus($postData['filename']);
                 break;
+            case 'downloadNewModule':
+                $module = $request['data']['uniqid'];
+                $url    = $request['data']['url'];
+                $md5    = $request['data']['md5'];
+                $res    = self::moduleStartDownload($module, $url, $md5);
+                break;
+            case 'moduleDownloadStatus':
+                $module = $request['data']['uniqid'];
+                $res    = self::moduleDownloadStatus($module);
+                break;
             default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+                $res             = new PBXApiResult();
+                $res->processor  = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in uploadCallBack";
         }
 
         $res->function = $action;
@@ -82,13 +83,13 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Process upload files by chunks.
+     * Process resumable upload files
      *
-     * @param array $parameters The upload parameters.
+     * @param array $parameters
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return PBXApiResult
      */
-    public static function uploadFile(array $parameters): PBXApiResult
+    public static function uploadResumable(array $parameters): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -218,11 +219,11 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Returns Status of uploading and merging process
+     * Returns Status of uploading process
      *
      * @param array $postData
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
     public static function statusUploadFile(array $postData): PBXApiResult
     {
@@ -271,7 +272,7 @@ class FilesManagementProcessor extends Injectable
      *
      * @param string $filePath
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return PBXApiResult
      */
     public static function removeAudioFile(string $filePath): PBXApiResult
     {
@@ -318,9 +319,9 @@ class FilesManagementProcessor extends Injectable
      * @param string $filename
      * @param bool   $needOriginal
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return PBXApiResult
      */
-    public static function getFileContent(string $filename, bool $needOriginal = true): PBXApiResult
+    public static function fileReadContent(string $filename, bool $needOriginal = true): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -334,7 +335,7 @@ class FilesManagementProcessor extends Injectable
             $cat          = Util::which('cat');
             $di           = Di::getDefault();
             $dirsConfig   = $di->getShared('config');
-            $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' .time(). '.conf';
+            $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.conf';
             $cmd          = "{$cat} {$filename} > {$filenameTmp}";
             Processes::mwExec("{$cmd}; chown www:www {$filenameTmp}");
             $res->data['filename'] = $filenameTmp;
@@ -347,17 +348,13 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Downloads the firmware file from the provided URL.
+     * Downloads IMG from MikoPBX repository
      *
-     * @param array $data The data array containing the following parameters:
-     *   - md5: The MD5 hash of the file.
-     *   - size: The size of the file.
-     *   - version: The version of the file.
-     *   - url: The download URL of the file.
+     * @param $data
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return PBXApiResult
      */
-    public static function downloadNewFirmware(array $data): PBXApiResult
+    public static function downloadNewFirmware($data): PBXApiResult
     {
         $di = Di::getDefault();
         if ($di !== null) {
@@ -399,11 +396,11 @@ class FilesManagementProcessor extends Injectable
     }
 
     /**
-     * Get the progress status of the firmware file download.
+     * Returns download Firmware from remote repository progress
      *
-     * @param string $imgFileName The filename of the firmware file.
+     * @param string $imgFileName
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return PBXApiResult
      */
     public static function firmwareDownloadStatus(string $imgFileName): PBXApiResult
     {
@@ -458,5 +455,162 @@ class FilesManagementProcessor extends Injectable
 
         return $res;
     }
+
+    /**
+     * Starts module download in background separate process
+     *
+     * @param $module
+     * @param $url
+     * @param $md5
+     *
+     * @return PBXApiResult
+     */
+    public static function moduleStartDownload($module, $url, $md5): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $di             = Di::getDefault();
+        if ($di !== null) {
+            $tempDir = $di->getConfig()->path('www.uploadDir');
+        } else {
+            $tempDir = '/tmp';
+        }
+
+        $moduleDirTmp = "{$tempDir}/{$module}";
+        Util::mwMkdir($moduleDirTmp);
+
+        $download_settings = [
+            'res_file' => "$moduleDirTmp/modulefile.zip",
+            'url'      => $url,
+            'module'   => $module,
+            'md5'      => $md5,
+            'action'   => 'moduleInstall',
+        ];
+        if (file_exists("$moduleDirTmp/error")) {
+            unlink("$moduleDirTmp/error");
+        }
+        if (file_exists("$moduleDirTmp/installed")) {
+            unlink("$moduleDirTmp/installed");
+        }
+        file_put_contents("$moduleDirTmp/progress", '0');
+        file_put_contents(
+            "$moduleDirTmp/download_settings.json",
+            json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        );
+        $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
+        $phpPath              = Util::which('php');
+        Processes::mwExecBg("{$phpPath} -f {$workerDownloaderPath} start {$moduleDirTmp}/download_settings.json");
+
+        $res->data['uniqid']   = $module;
+        $res->data['d_status'] = 'DOWNLOAD_IN_PROGRESS';
+        $res->success          = true;
+
+        return $res;
+    }
+
+    /**
+     * Returns module download status
+     *
+     * @param string $moduleUniqueID
+     *
+     * @return PBXApiResult
+     */
+    public static function moduleDownloadStatus(string $moduleUniqueID): PBXApiResult
+    {
+        clearstatcache();
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $di             = Di::getDefault();
+        if ($di !== null) {
+            $tempDir = $di->getConfig()->path('www.uploadDir');
+        } else {
+            $tempDir = '/tmp';
+        }
+        $moduleDirTmp  = $tempDir . '/' . $moduleUniqueID;
+        $progress_file = $moduleDirTmp . '/progress';
+        $error         = '';
+        if (file_exists($moduleDirTmp . '/error')) {
+            $error = trim(file_get_contents($moduleDirTmp . '/error'));
+        }
+
+        // Wait until download process started
+        $d_pid = Processes::getPidOfProcess("{$moduleDirTmp}/download_settings.json");
+        if (empty($d_pid)) {
+            usleep(500000);
+        }
+
+        if ( ! file_exists($progress_file)) {
+            $res->data['d_status_progress'] = '0';
+            $res->data['d_status']          = 'NOT_FOUND';
+            $res->success                   = false;
+        } elseif ('' !== $error) {
+            $res->data['d_status']          = 'DOWNLOAD_ERROR';
+            $res->data['d_status_progress'] = file_get_contents($progress_file);
+            $res->data['d_error']           = $error;
+            $res->messages[]                = file_get_contents($moduleDirTmp . '/error');
+            $res->success                   = false;
+        } elseif ('100' === file_get_contents($progress_file)) {
+            $res->data['d_status_progress'] = '100';
+            $res->data['d_status']          = 'DOWNLOAD_COMPLETE';
+            $res->data['filePath']          = "$moduleDirTmp/modulefile.zip";
+            $res->success                   = true;
+        } else {
+            $res->data['d_status_progress'] = file_get_contents($progress_file);
+            $d_pid                          = Processes::getPidOfProcess($moduleDirTmp . '/download_settings.json');
+            if (empty($d_pid)) {
+                $res->data['d_status'] = 'DOWNLOAD_ERROR';
+                if (file_exists($moduleDirTmp . '/error')) {
+                    $res->messages[] = file_get_contents($moduleDirTmp . '/error');
+                } else {
+                    $res->messages[] = "Download process interrupted at {$res->data['d_status_progress']}%";
+                }
+                $res->success = false;
+            } else {
+                $res->data['d_status'] = 'DOWNLOAD_IN_PROGRESS';
+                $res->success          = true;
+            }
+        }
+
+        return $res;
+    }
+
+    /**
+     * Unpack ModuleFile and get metadata information
+     *
+     * @param string $filePath
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     */
+    public static function getMetadataFromModuleFile(string $filePath): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+
+        if (file_exists($filePath)) {
+            $sevenZaPath = Util::which('7za');
+            $grepPath    = Util::which('grep');
+            $echoPath    = Util::which('echo');
+            $awkPath     = Util::which('awk');
+            $cmd         = 'f="' . $filePath . '"; p=`' . $sevenZaPath . ' l $f | ' . $grepPath . ' module.json`;if [ "$?" == "0" ]; then ' . $sevenZaPath . ' -so e -y -r $f `' . $echoPath . ' $p |  ' . $awkPath . ' -F" " \'{print $6}\'`; fi';
+
+            Processes::mwExec($cmd, $out);
+            $settings = json_decode(implode("\n", $out), true);
+
+            $moduleUniqueID = $settings['moduleUniqueID'] ?? null;
+            if ( ! $moduleUniqueID) {
+                $res->messages[] = 'The" moduleUniqueID " in the module file is not described.the json or file does not exist.';
+
+                return $res;
+            }
+            $res->success = true;
+            $res->data    = [
+                'filePath' => $filePath,
+                'uniqid'   => $moduleUniqueID,
+            ];
+        }
+
+        return $res;
+    }
+
 
 }

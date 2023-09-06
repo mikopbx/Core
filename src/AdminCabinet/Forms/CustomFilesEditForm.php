@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,25 +19,22 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Models\CustomFiles;
-use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
-
+use Phalcon\Forms\Element\TextArea;
+use Phalcon\Forms\Form;
 
 /**
  * Class CustomFilesEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property TranslationProvider translation
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class CustomFilesEditForm extends BaseForm
+class CustomFilesEditForm extends Form
 {
-    public function initialize($entity = null, $options = null): void
+    public function initialize($entity = null): void
     {
-        parent::initialize($entity, $options);
-
         foreach ($entity as $key => $value) {
             switch ($key) {
                 case "id":
@@ -47,24 +44,24 @@ class CustomFilesEditForm extends BaseForm
                     $this->add(new Hidden($key));
                     break;
                 case "description":
-                    $this->addTextArea($key, $value??'', 65);
+                    $rows = max(round(strlen($value) / 95), 2);
+                    $this->add(new TextArea($key, ["rows" => $rows]));
                     break;
                 case "mode":
                     $select = new Select(
                         $key,
                         [
-                            CustomFiles::MODE_NONE => $this->translation->_("cf_FileActionsNone"),
-                            CustomFiles::MODE_APPEND => $this->translation->_("cf_FileActionsAppend"),
-                            CustomFiles::MODE_OVERRIDE => $this->translation->_("cf_FileActionsOverride"),
-                            CustomFiles::MODE_SCRIPT => $this->translation->_("cf_FileActionsScript"),
+                            'none'     => $this->translation->_("cf_FileActionsNone"),
+                            'append'   => $this->translation->_("cf_FileActionsAppend"),
+                            'override' => $this->translation->_("cf_FileActionsOverride"),
                         ]
                         , [
-                            'using' => [
+                            'using'    => [
                                 'id',
                                 'name',
                             ],
                             'useEmpty' => false,
-                            'class' => 'ui selection dropdown mode-select',
+                            'class'    => 'ui selection dropdown type-select',
                         ]
                     );
                     $this->add($select);

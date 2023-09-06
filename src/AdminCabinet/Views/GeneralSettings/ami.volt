@@ -15,14 +15,14 @@
     </div>
 </div>
 <div class="inline field">
-    {{ form.render('AMIPort') }}
     <label>{{ t._('gs_AMIPort') }}</label>
+    {{ form.render('AMIPort') }}
 </div>
 <div class="inline field">
-    {{ form.render('AJAMPort') }}
     <label>{{ t._('gs_AJAMPort') }}</label>
+    {{ form.render('AJAMPort') }}
 </div>
 <div class="inline field">
-    {{ form.render('AJAMPortTLS') }}
     <label>{{ t._('gs_AJAMPortTLS') }}</label>
+    {{ form.render('AJAMPortTLS') }}
 </div>

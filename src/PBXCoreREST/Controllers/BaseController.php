@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,11 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Controllers;
 
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
-use MikoPBX\Core\System\BeanstalkClient;
-use MikoPBX\PBXCoreREST\Http\Response;
-use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use Phalcon\Mvc\Controller;
 use Pheanstalk\Pheanstalk;
 use Throwable;
+
 
 /**
  * Class BaseController
@@ -37,67 +34,35 @@ use Throwable;
  */
 class BaseController extends Controller
 {
-    /**
-     * Send a request to the backend worker.
-     *
-     * @param string $processor The name of the processor.
-     * @param string $actionName The name of the action.
-     * @param mixed|null $payload The payload data to send with the request.
-     * @param string $moduleName The name of the module (only for 'modules' processor).
-     * @param int $maxTimeout The maximum timeout for the request in seconds.
-     * @param int $priority The priority of the request.
-     *
-     * @return void
-     *
-     */
     public function sendRequestToBackendWorker(
         string $processor,
         string $actionName,
         $payload = null,
-        string $moduleName='',
+        string $modulename='',
         int $maxTimeout = 10,
         int $priority = Pheanstalk::DEFAULT_PRIORITY
     ): void
     {
-        // Old style modules, we can remove it after 2025
-        if ($processor === 'modules'){
-            $processor = PbxExtensionsProcessor::class;
-        }
-
-        // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
-        // and set XDEBUG_SESSION Cookie header on REST request to debug it
-        // The set will break the WorkerApiCommands() execution on prepareAnswer method
-        $debug = strpos($this->request->getHeader('Cookie'),'XDEBUG_SESSION')!==false;
-
         $requestMessage = [
             'processor' => $processor,
             'data'      => $payload,
-            'action'    => $actionName,
-            'debug'     => $debug
+            'action'    => $actionName
         ];
-        if ($processor === PbxExtensionsProcessor::class){
-            $requestMessage['module'] = $moduleName;
+        if ($processor==='modules'){
+            $requestMessage['module'] = $modulename;
         }
         try {
             $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
             $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
-            if ($debug){
-                $maxTimeout = 9999;
-            }
             $response       = $beanstalkQueue->request($message, $maxTimeout, $priority);
             if ($response !== false) {
                 $response = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
-                if (array_key_exists(BeanstalkClient::QUEUE_ERROR, $response)){
-                    $this->response->setPayloadError($response[BeanstalkClient::QUEUE_ERROR]);
-                } else {
-                    $this->response->setPayloadSuccess($response);
-                }
+                $this->response->setPayloadSuccess($response);
             } else {
-                $this->sendError(Response::INTERNAL_SERVER_ERROR);
+                $this->sendError(500);
             }
         } catch (Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $this->sendError(Response::BAD_REQUEST, $e->getMessage());
+            $this->sendError(400, $e->getMessage());
         }
     }
 
@@ -107,12 +72,11 @@ class BaseController extends Controller
      * @param int    $code
      * @param string $description
      */
-    protected function sendError(int $code, string $description = ''): void
+    protected function sendError(int $code, $description = ''): void
     {
         $this
             ->response
             ->setPayloadError($this->response->getHttpCodeDescription($code) . ' ' . $description)
             ->setStatusCode($code);
     }
-
 }

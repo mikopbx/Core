@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,24 +19,22 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Element\TextArea;
+use Phalcon\Forms\Form;
 
 /**
  * Class MailSettingsEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property TranslationProvider translation
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class MailSettingsEditForm extends BaseForm
+class MailSettingsEditForm extends Form
 {
-    public function initialize($entity = null, $options = null): void
+    public function initialize(/** @scrutinizer ignore-unused */ $entity = null, $options = null): void
     {
-        parent::initialize($entity, $options);
-
         foreach ($options as $key => $value) {
             switch ($key) {
                 case 'MailEnableNotifications' :
@@ -57,8 +55,8 @@ class MailSettingsEditForm extends BaseForm
                     $this->add(
                         new TextArea(
                             $key, [
-                                'value' => $value,
-                            ]
+                            'value' => $value,
+                        ]
                         )
                     );
                     break;
@@ -67,8 +65,8 @@ class MailSettingsEditForm extends BaseForm
                     $this->add(
                         new Password(
                             $key, [
-                                'value' => $value,
-                            ]
+                            'value' => $value,
+                        ]
                         )
                     );
                     break;
@@ -77,8 +75,8 @@ class MailSettingsEditForm extends BaseForm
                     $this->add(
                         new Text(
                             $key, [
-                                'value' => $value,
-                            ]
+                            'value' => $value,
+                        ]
                         )
                     );
             }

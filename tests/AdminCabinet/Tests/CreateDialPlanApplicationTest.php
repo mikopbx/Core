@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,11 +36,6 @@ class CreateDialPlanApplicationTest extends MikoPBXTestsBase
         $this->clickDeleteButtonOnRowWithText($params['extension']);
 
         $this->clickButtonByHref('/admin-cabinet/dialplan-applications/modify');
-
-        // Fix uniqid to compare reference data in /etc folder for every build
-        self::$driver->executeScript(
-            "$('#dialplan-application-form').form('set value','uniqid','{$params['uniqid']}');"
-        );
         $this->changeInputField('name', $params['name']);
         $this->changeTextAreaValue('description', $params['description']);
         $this->changeInputField('extension', $params['extension']);
@@ -73,7 +68,6 @@ class CreateDialPlanApplicationTest extends MikoPBXTestsBase
         $params = [];
         $params[] = [[
             'extension'=>'132456789',
-            'uniqid'=>'DIALPLAN-APP-146CBFBBF6EB4237EA15B2EC3E67B787',
             'name'=>'Проговорить IP адрес системы2',
             'description'=>"Test Dialplan application with plain text",
             'type'=>"plaintext",
@@ -95,7 +89,6 @@ n,Goto(5)',
         ]];
         $params[] = [[
             'extension'=>'10000123',
-            'uniqid'=>'DIALPLAN-APP-146CBFBBF6EB4237EA15B2EC3E67B784',
             'name'=>'1C MIKO SMART IVR',
             'description'=>"Генерация IVR меню на основе данных CRM системы",
             'type'=>"php",

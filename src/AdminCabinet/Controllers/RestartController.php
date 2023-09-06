@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +23,9 @@ class RestartController extends BaseController
 {
 
     /**
-     * Renders the form with main buttons for station reboot and shutdown.
+     * Форма с основными кнопками для перезагрузки и выключения станции
      */
-    public function manageAction(): void
+    public function indexAction(): void
     {
     }
 }

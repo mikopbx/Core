@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,16 +26,12 @@ class MailSettingsController extends BaseController
 {
 
     /**
-     * Modify mail settings action.
-     *
-     * @return void
+     * Построение формы настроек почты
      */
     public function modifyAction(): void
     {
         $MailSettingsFields = [];
         $arrKeys = $this->getEmailSettingsArray();
-
-        // Retrieve the values of mail settings from PbxSettings
         foreach ($arrKeys as $key) {
             $MailSettingsFields[$key] = PbxSettings::getValueByKey($key);
         }
@@ -45,7 +41,7 @@ class MailSettingsController extends BaseController
     }
 
     /**
-     *  Get the list of keys for email settings on the station.
+     * Возвращает список ключей для настройки почты на станции
      *
      * @return array
      */
@@ -74,7 +70,7 @@ class MailSettingsController extends BaseController
     }
 
     /**
-     * Saves the email settings based on the POST data.
+     * Сохранение почтовых настроек
      */
     public function saveAction(): void
     {

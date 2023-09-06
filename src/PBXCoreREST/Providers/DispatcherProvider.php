@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +28,7 @@ use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Mvc\Dispatcher;
 
 /**
- *  This service provider initializes the dispatcher for handling controller dispatching and event management.
- *
- * @package MikoPBX\PBXCoreREST\Providers
+ *  We register the events manager
  */
 class DispatcherProvider implements ServiceProviderInterface
 {
@@ -39,13 +37,14 @@ class DispatcherProvider implements ServiceProviderInterface
     /**
      * Register dispatcher service provider
      *
-     * @param DiInterface $di The DI container.
+     * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
         $di->setShared(
             self::SERVICE_NAME,
             function () {
+                // Create a events manager
                 $eventsManager = new EventsManager();
                 $dispatcher = new Dispatcher();
                 $dispatcher->setEventsManager($eventsManager);

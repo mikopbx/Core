@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,165 +17,109 @@
  */
 
 /* global PbxApi, globalTranslate, UserMessage */
-
-/**
- * Represents the status of an external module.
- * @class PbxExtensionStatus
- * @memberof module:pbxExtensionModuleModify
- */
 class PbxExtensionStatus {
-
-    /**
-     * Initializes the module status.
-     * @param {string} uniqid - The unique ID of the module.
-     * @param {boolean} [changeLabel=true] - Indicates whether to change the label text.
-     */
-    initialize(uniqid, changeLabel = true) {
-        this.$toggle = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`);
-        this.$toggleSegment = $('#module-status-toggle-segment');
-        this.$allToggles = $(`.ui.toggle.checkbox`);
-        this.$statusIcon = $(`tr#${uniqid} i.status-icon`);
-        this.$toggleSegment.show();
-        if (changeLabel) {
-            this.$label = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`).find('label');
-        } else {
-            this.$label = false;
-        }
-        this.uniqid = uniqid;
-        this.$disabilityFields = $(`tr#${uniqid} .disability`);
-        const cbOnChecked = $.proxy(this.cbOnChecked, this);
-        const cbOnUnchecked = $.proxy(this.cbOnUnchecked, this);
-        this.$toggle.checkbox({
-            onChecked: cbOnChecked,
-            onUnchecked: cbOnUnchecked,
-        });
-    }
-
-    /**
-     * Changes the label text.
-     * @param {string} newText - The new label text.
-     */
-    changeLabelText(newText) {
-        if (this.$label) {
-            this.$label.text(newText);
-        }
-    }
-
-    /**
-     * Callback function when the module is checked.
-     */
-    cbOnChecked() {
-        this.$statusIcon.addClass('spinner loading icon');
-        this.$allToggles.addClass('disabled');
-        $('a.button').addClass('disabled');
-        this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
-        const cbAfterModuleEnable = $.proxy(this.cbAfterModuleEnable, this);
-        PbxApi.ModulesEnableModule(this.uniqid, cbAfterModuleEnable);
-    }
-
-    /**
-     * Callback function when the module is unchecked.
-     */
-    cbOnUnchecked() {
-        this.$statusIcon.addClass('spinner loading icon');
-        this.$allToggles.addClass('disabled');
-        $('a.button').addClass('disabled');
-        this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
-        const cbAfterModuleDisable = $.proxy(this.cbAfterModuleDisable, this);
-        PbxApi.ModulesDisableModule(this.uniqid, cbAfterModuleDisable);
-    }
-
-    /**
-     * Callback function after disabling the module.
-     * @param {object} response - The response from the server.
-     * @param {boolean} success - Indicates whether the request was successful.
-     */
-    cbAfterModuleDisable(response, success) {
-        if (success) {
-            // Update UI to show module is disabled
-            this.$toggle.checkbox('set unchecked');
-            this.$statusIcon.removeClass('spinner loading icon');
-            this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
-
-            // Trigger events to indicate module status and config data has changed
-            const event = document.createEvent('Event');
-            event.initEvent('ModuleStatusChanged', false, true);
-            window.dispatchEvent(event);
-            event.initEvent('ConfigDataChanged', false, true);
-            window.dispatchEvent(event);
-
-            // Disable input fields and show message for changed objects
-            this.$disabilityFields.addClass('disabled');
-            if (response.data.changedObjects !== undefined) {
-                UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
-            }
-
-            // Refresh the page to reflect changes is better to do in on module page using event ModuleStatusChanged subscription
-            window.location.reload();
-        } else {
-            this.$toggle.checkbox('set checked');
-            this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
-            this.$disabilityFields.removeClass('disabled');
-            if (response !== undefined && response.messages !== undefined) {
-                UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
-            }
-        }
-        this.$allToggles.removeClass('disabled');
-        $('a.button').removeClass('disabled');
-        this.$statusIcon.removeClass('spinner loading icon');
-    }
-
-    /**
-     * Callback function after enabling the module.
-     * @param {object} response - The response from the server.
-     * @param {boolean} success - Indicates whether the request was successful.
-     */
-    cbAfterModuleEnable(response, success) {
-        if (success) {
-            $('.ui.message.ajax').remove();
-            // Update UI to show module is enabled
-            this.$toggle.checkbox('set checked');
-            this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
-
-            // Trigger events to indicate module status and config data has changed
-            const event = document.createEvent('Event');
-            event.initEvent('ModuleStatusChanged', false, true);
-            window.dispatchEvent(event);
-            event.initEvent('ConfigDataChanged', false, true);
-            window.dispatchEvent(event);
-
-            // Enable input fields and show message for changed objects
-            this.$disabilityFields.removeClass('disabled');
-            if (response.data.changedObjects !== undefined) {
-                UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
-            }
-
-            // Refresh the page to reflect changes is better to do in on module page using event ModuleStatusChanged subscription
-            window.location.reload();
-        } else {
-            this.$toggle.checkbox('set unchecked');
-            this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
-            this.$disabilityFields.addClass('disabled');
-            if (response !== undefined && response.messages !== undefined) {
-                if (response.messages.license!==undefined){
-                    UserMessage.showLicenseError(globalTranslate.ext_ModuleLicenseProblem, response.messages.license);
-                } else {
-                    UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
-                }
-
-            }
-        }
-        this.$allToggles.removeClass('disabled');
-        this.$statusIcon.removeClass('spinner loading icon');
-        $('a.button').removeClass('disabled');
-    }
+	initialize(uniqid, changeLabel = true) {
+		this.$toggle = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`);
+		this.$allToggles = $(`.ui.toggle.checkbox`);
+		this.$statusIcon = $(`tr#${uniqid} i.status-icon`);
+		if (changeLabel) {
+			this.$label = $(`.ui.toggle.checkbox[data-value="${uniqid}"]`).find('label');
+		} else {
+			this.$label = false;
+		}
+		this.uniqid = uniqid;
+		this.$disabilityFields = $(`tr#${uniqid} .disability`);
+		const cbOnChecked = $.proxy(this.cbOnChecked, this);
+		const cbOnUnchecked = $.proxy(this.cbOnUnchecked, this);
+		this.$toggle.checkbox({
+			onChecked: cbOnChecked,
+			onUnchecked: cbOnUnchecked,
+		});
+	}
+	changeLabelText(newText) {
+		if (this.$label) {
+			this.$label.text(newText);
+		}
+	}
+	cbOnChecked() {
+		this.$statusIcon.addClass('spinner loading icon');
+		this.$allToggles.addClass('disabled');
+		$('a.button').addClass('disabled');
+		this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
+		const cbAfterModuleEnable = $.proxy(this.cbAfterModuleEnable, this);
+		PbxApi.SystemEnableModule(this.uniqid, cbAfterModuleEnable);
+	}
+	cbOnUnchecked() {
+		this.$statusIcon.addClass('spinner loading icon');
+		this.$allToggles.addClass('disabled');
+		$('a.button').addClass('disabled');
+		this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
+		const cbAfterModuleDisable = $.proxy(this.cbAfterModuleDisable, this);
+		PbxApi.SystemDisableModule(this.uniqid, cbAfterModuleDisable);
+	}
+	cbAfterModuleDisable(response, success) {
+		if (success) {
+			this.$toggle.checkbox('set unchecked');
+			this.$statusIcon.removeClass('spinner loading icon');
+			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
+			const event = document.createEvent('Event');
+			event.initEvent('ModuleStatusChanged', false, true);
+			window.dispatchEvent(event);
+			event.initEvent('ConfigDataChanged', false, true);
+			window.dispatchEvent(event);
+			this.$disabilityFields.addClass('disabled');
+			if (response.data.changedObjects !== undefined){
+				UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
+			}
+			if(window.pbxExtensionMenuAddition !== undefined){
+				window.pbxExtensionMenuAddition.updateSidebarMenu();
+			}
+		} else {
+			this.$toggle.checkbox('set checked');
+			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
+			this.$disabilityFields.removeClass('disabled');
+			if (response !== undefined && response.messages !== undefined) {
+				UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
+			}
+		}
+		this.$allToggles.removeClass('disabled');
+		$('a.button').removeClass('disabled');
+		this.$statusIcon.removeClass('spinner loading icon');
+	}
+	cbAfterModuleEnable(response, success) {
+		if (success) {
+			this.$toggle.checkbox('set checked');
+			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
+			const event = document.createEvent('Event');
+			event.initEvent('ModuleStatusChanged', false, true);
+			window.dispatchEvent(event);
+			event.initEvent('ConfigDataChanged', false, true);
+			window.dispatchEvent(event);
+			this.$disabilityFields.removeClass('disabled');
+			if (response.data.changedObjects !== undefined){
+				UserMessage.showMultiString(response.data.changedObjects, globalTranslate.ext_ModuleChangedObjects);
+			}
+			if(window.pbxExtensionMenuAddition !== undefined){
+				window.pbxExtensionMenuAddition.updateSidebarMenu();
+			}
+		} else {
+			this.$toggle.checkbox('set unchecked');
+			this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
+			this.$disabilityFields.addClass('disabled');
+			if (response !== undefined && response.messages !== undefined) {
+				UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
+			}
+		}
+		this.$allToggles.removeClass('disabled');
+		this.$statusIcon.removeClass('spinner loading icon');
+		$('a.button').removeClass('disabled');
+	}
 }
 
-// When the document is ready, initialize the external module status toggles.
 $(document).ready(() => {
-    const uniqId = $('#module-status-toggle').attr('data-value');
-    if (uniqId) {
-        const pageStatus = new PbxExtensionStatus();
-        pageStatus.initialize(uniqId, true);
-    }
+	const uniqId = $('#module-status-toggle').attr('data-value');
+	if (uniqId) {
+		const pageStatus = new PbxExtensionStatus();
+		pageStatus.initialize(uniqId, true);
+	}
 });

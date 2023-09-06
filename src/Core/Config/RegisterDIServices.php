@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     BeanstalkConnectionModelsProvider,
     BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
-    MarketPlaceProvider,
+    LicenseProvider,
     LoggerProvider,
     MainDatabaseProvider,
     ModelsCacheProvider,
@@ -36,20 +36,14 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     ModulesDBConnectionsProvider,
     NatsConnectionProvider,
     PBXConfModulesProvider,
-    PBXCoreRESTClientProvider,
     RegistryProvider,
-    SentryErrorHandlerProvider,
     TranslationProvider,
     MessagesProvider,
     UrlProvider,
-    LanguageProvider,
-    WhoopsErrorHandlerProvider};
-use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
+    LanguageProvider};
 use Phalcon\Di;
 
-/**
- * Initialize services on dependency injector
- */
+
 class RegisterDIServices
 {
     /**
@@ -59,10 +53,6 @@ class RegisterDIServices
     {
         $di            = Di::getDefault();
         $providersList = [
-
-            // Inject errors handlers
-            SentryErrorHandlerProvider::class,
-            WhoopsErrorHandlerProvider::class,
 
             // Inject Logger provider
             LoggerProvider::class,
@@ -90,25 +80,20 @@ class RegisterDIServices
             BeanstalkConnectionModelsProvider::class,
             BeanstalkConnectionWorkerApiProvider::class,
 
+
             // AMI Connectors
             AmiConnectionCommand::class,
             AmiConnectionListener::class,
 
             // Inject License Worker
-            MarketPlaceProvider::class,
+            LicenseProvider::class,
 
             // Url link builder
             UrlProvider::class,
 
-            // Asterisk conf modules
-            AsteriskConfModulesProvider::class,
-
             // Inject PBX modules
             PBXConfModulesProvider::class,
             ModulesDBConnectionsProvider::class,
-
-            // Inject Rest API client
-            PBXCoreRESTClientProvider::class
 
         ];
 
@@ -117,11 +102,6 @@ class RegisterDIServices
             $di->remove($provider::SERVICE_NAME);
             $di->register(new $provider());
         }
-
-        $di->getShared(RegistryProvider::SERVICE_NAME)->libraryName = 'core-workers';
-        // Enable Whoops error handler and pretty print
-        $di->get(SentryErrorHandlerProvider::SERVICE_NAME);
-        $di->get(WhoopsErrorHandlerProvider::SERVICE_NAME);
     }
 
 }

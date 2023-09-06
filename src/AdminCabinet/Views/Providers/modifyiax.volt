@@ -8,26 +8,25 @@
 {{ form.render('providerType') }}
 
 
-<div class="required field max-width-500">
-    <label for="description">{{ t._('pr_ProviderName') }}</label>
+<div class="ten wide required field">
+    <label>{{ t._('pr_ProviderName') }}</label>
     {{ form.render('description') }}
 </div>
 
-<div class="field required max-width-500">
-    <label for="host">{{ t._('pr_ProviderHostOrIPAddress') }}</label>
+<div class="five wide field required">
+    <label>{{ t._('pr_ProviderHostOrIPAddress') }}</label>
     {{ form.render('host') }}
 </div>
 
-<div class="field max-width-500">
-    <label for="username">{{ t._('pr_ProviderLogin') }}</label>
+<div class="ten wide field">
+    <label>{{ t._('pr_ProviderLogin') }}</label>
     {{ form.render('username') }}
 </div>
 
-<div class="field max-width-500">
-    <label for="secret">{{ t._('pr_ProviderPassword') }}</label>
+<div class="ten wide field">
+    <label>{{ t._('pr_ProviderPassword') }}</label>
     {{ form.render('secret') }}
 </div>
-{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 <div class="ui accordion field">
     <div class=" title">
@@ -35,24 +34,25 @@
         {{ t._('AdvancedOptions') }}
     </div>
 
-    <div class="content field">
+    <div class=" content field">
         <h3 class="ui dividing header ">{{ t._("ConnectionSettings") }}</h3>
 
-        <div class="field max-width-400">
+        <div class="five wide field">
+
             <div class="ui segment">
                 <div class="field">
                     <div class="ui toggle checkbox" id="qualify">
                         {{ form.render('qualify') }}
-                        <label for="qualify">{{ t._('qf_Qualify') }}</label>
+                        <label>{{ t._('qf_Qualify') }}</label>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="ui info message">{{ t._('pr_QualifyInstructionsIAX') }}</div>
+        {{ t._('pr_QualifyInstructionsIAX') }}
 
         <h3 class="ui dividing header ">{{ t._("pr_RegistrationSettings") }}</h3>
 
-        <div class="field  max-width-400">
+        <div class="five wide field">
             <div class="ui segment">
                 <div class="field">
                     <div class="ui toggle checkbox" id="noregister">
@@ -63,13 +63,12 @@
             </div>
         </div>
 
-        <h4 class="ui dividing header ">{{ t._("pr_ManualAdditionalAtributes") }}</h4>
         <div class="field">
+            <label for="manualattributes">{{ t._('pr_ManualAdditionalAtributes') }}</label>
             {{ form.render('manualattributes') }}
         </div>
 
-        {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('AdvancedFields')]) }}
     </div>
 </div>
 {{ partial("partials/submitbutton",['indexurl':'providers/index/']) }}
-{{ end_form() }}
+</form>

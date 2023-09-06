@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,14 @@
 namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Validation;
+use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class SipHosts
  *
  * @package MikoPBX\Common\Models
- * @property Sip Sip
+ * @property \MikoPBX\Common\Models\Sip Sip
  */
 class SipHosts extends ModelsBase
 {
@@ -37,21 +39,17 @@ class SipHosts extends ModelsBase
     public $id;
 
     /**
-     * Link to the record of the associated SIP provider
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $provider_id = '';
 
     /**
-     * IP address of the host associated with the SIP provider
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $address = '';
 
     /**
-     * Initialize the model.
+     *
      */
     public function initialize(): void
     {
@@ -62,10 +60,10 @@ class SipHosts extends ModelsBase
             Sip::class,
             'uniqid',
             [
-                'alias' => 'Sip',
+                'alias'      => 'Sip',
                 'foreignKey' => [
                     'allowNulls' => false,
-                    'action' => Relation::NO_ACTION,
+                    'action'     => Relation::NO_ACTION,
                 ],
             ]
 

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,43 +19,40 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
-
+use Phalcon\Forms\Form;
 
 /**
  * Class DefaultIncomingRouteForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property TranslationProvider translation
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class DefaultIncomingRouteForm extends BaseForm
+class DefaultIncomingRouteForm extends Form
 {
     public function initialize($entity = null, $options = null): void
     {
-        parent::initialize($entity, $options);
-
         foreach ($entity as $key => $value) {
             switch ($key) {
                 case 'action' :
                 {
                     $arrDefaultActions = [
-                        'busy' => $this->translation->_('ir_busy_signal'),
-                        'hangup' => $this->translation->_('ir_hangup'),
+                        'busy'      => $this->translation->_('ir_busy_signal'),
+                        'hangup'    => $this->translation->_('ir_hangup'),
                         'extension' => $this->translation->_('ir_extension'),
                     ];
 
                     $defaultActions = new Select(
                         'action', $arrDefaultActions, [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => false,
-                            'value' => $value,
-                            'class' => 'ui selection dropdown defaultrouteselect',
-                        ]
+                        'using'    => [
+                            'id',
+                            'name',
+                        ],
+                        'useEmpty' => false,
+                        'value'    => $value,
+                        'class'    => 'ui selection dropdown defaultrouteselect',
+                    ]
                     );
                     $this->add($defaultActions);
                     break;
@@ -65,14 +62,14 @@ class DefaultIncomingRouteForm extends BaseForm
                     // Extension
                     $extension = new Select(
                         'extension', $options['extensions'], [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => true,
-                            'value' => $value,
-                            'class' => 'ui selection dropdown search forwarding-select',
-                        ]
+                        'using'    => [
+                            'id',
+                            'name',
+                        ],
+                        'useEmpty' => true,
+                        'value'    => $value,
+                        'class'    => 'ui selection dropdown search forwarding-select',
+                    ]
                     );
                     $this->add($extension);
                     break;

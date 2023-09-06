@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,31 +24,26 @@ use MikoPBX\Common\Models\Iax;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
-/**
- * Class IAXStackProcessor
- *
- * @package MikoPBX\PBXCoreREST\Lib
- *
- */
 class IAXStackProcessor extends Injectable
 {
     /**
-     * Process the IAX callback request.
+     * Processes IAX requests
      *
-     * @param array $request The request data.
-     * @return PBXApiResult An object containing the result of the API call.
+     * @param array $request
+     *
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
     public static function callBack(array $request): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
         $action = $request['action'];
         switch ($action) {
             case 'getRegistry':
                 $res = IAXStackProcessor::getRegistry();
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+                $res             = new PBXApiResult();
+                $res->processor = __METHOD__;
+                $res->messages[] = "Unknown action - {$action} in iaxCallBack";
                 break;
         }
 
@@ -58,66 +53,60 @@ class IAXStackProcessor extends Injectable
     }
 
     /**
-     * Retrieves the statuses of IAX providers registration.
+     * Получение статусов регистраций IAX
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return PBXApiResult
      */
     public static function getRegistry(): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+        $peers  = [];
+        $providers = Iax::find();
+        foreach ($providers as $provider) {
+            $peers[] = [
+                'state'      => 'OFF',
+                'id'         => $provider->uniqid,
+                'username'   => trim($provider->username),
+                'host'       => trim($provider->host),
+                'noregister' => $provider->noregister,
+            ];
+        }
 
-
-        try {
-            $peers = [];
-            $providers = Iax::find();
-            foreach ($providers as $provider) {
-                $peers[] = [
-                    'state' => 'OFF',
-                    'id' => $provider->uniqid,
-                    'username' => trim($provider->username),
-                    'host' => trim($provider->host),
-                    'noregister' => $provider->noregister,
-                ];
-            }
-
-            if (Iax::findFirst("disabled = '0'") !== null) {
-                // Find them over AMI
-                $am = Util::getAstManager('off');
-                $amiRegs = $am->IAXregistry(); // Registrations
-                $amiPeers = $am->IAXpeerlist(); // Peers
-                foreach ($amiPeers as $amiPeer) {
-                    $key = array_search($amiPeer['ObjectName'], array_column($peers, 'id'), true);
-                    if ($key !== false) {
-                        $currentPeer = &$peers[$key];
-                        if ($currentPeer['noregister'] === '1') {
-                            // Peer without registration.
-                            $arr_status = explode(' ', $amiPeer['Status']);
-                            $currentPeer['state'] = strtoupper($arr_status[0]);
-                            $currentPeer['time-response'] = strtoupper(str_replace(['(', ')'], '', $arr_status[1]));
-                        } else {
-                            $currentPeer['state'] = 'Error register.';
-                            // Parse active registrations
-                            foreach ($amiRegs as $reg) {
-                                if (
-                                    strcasecmp($reg['Addr'], $currentPeer['host']) === 0
-                                    && strcasecmp($reg['Username'], $currentPeer['username']) === 0
-                                ) {
-                                    $currentPeer['state'] = $reg['State'];
-                                    break;
-                                }
+        if (Iax::findFirst("disabled = '0'") !== null) {
+            // Find them over AMI
+            $am       = Util::getAstManager('off');
+            $amiRegs  = $am->IAXregistry(); // Registrations
+            $amiPeers = $am->IAXpeerlist(); // Peers
+            foreach ($amiPeers as $amiPeer) {
+                $key = array_search($amiPeer['ObjectName'], array_column($peers, 'id'), true);
+                if ($key !== false) {
+                    $currentPeer = &$peers[$key];
+                    if ($currentPeer['noregister'] === '1') {
+                        // Пир без регистрации.
+                        $arr_status                   = explode(' ', $amiPeer['Status']);
+                        $currentPeer['state']         = strtoupper($arr_status[0]);
+                        $currentPeer['time-response'] = strtoupper(str_replace(['(', ')'], '', $arr_status[1]));
+                    } else {
+                        $currentPeer['state'] = 'Error register.';
+                        // Parse active registrations
+                        foreach ($amiRegs as $reg) {
+                            if (
+                                strcasecmp($reg['Addr'], $currentPeer['host']) === 0
+                                && strcasecmp($reg['Username'], $currentPeer['username']) === 0
+                            ) {
+                                $currentPeer['state'] = $reg['State'];
+                                break;
                             }
                         }
                     }
                 }
             }
-
-            $res->data = $peers;
-            $res->success = true;
-        } catch (\Throwable $e) {
-            $res->success = false;
-            $res->messages[] = $e->getMessage();
         }
+
+        $res->data = $peers;
+        $res->success = true;
+
         return $res;
     }
 }

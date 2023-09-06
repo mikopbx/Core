@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +28,7 @@ use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
 /**
- * Registers natsConnection service provider.
- *
- * @package MikoPBX\Common\Providers
+ * Main database connection is created based in the parameters defined in the configuration file
  */
 class NatsConnectionProvider implements ServiceProviderInterface
 {
@@ -39,7 +37,7 @@ class NatsConnectionProvider implements ServiceProviderInterface
     /**
      * Registers natsConnection service provider
      *
-     * @param DiInterface $di The DI container.
+     * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
@@ -48,9 +46,9 @@ class NatsConnectionProvider implements ServiceProviderInterface
             self::SERVICE_NAME,
             function () use ($gnatsConfig) {
                 $connectionOptions = new NatsConnectionOptions();
-                $connectionOptions
-                    ->setHost($gnatsConfig->host)
-                    ->setPort($gnatsConfig->port);
+                $host              = $gnatsConfig->host;
+                $port              = $gnatsConfig->port;
+                $connectionOptions->setHost($host)->setPort($port);
 
                 return new NatsConnection($connectionOptions);
             }

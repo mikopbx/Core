@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,17 +16,9 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalDebugMode, globalPBXLicense */
+/* global globalDebugMode */
 
-
-/**
- * Object for managing global Config
- *
- * @module Config
- */
 const Config = {
-    pbxUrl: globalDebugMode ? '//172.16.32.72' : '',
-    updateUrl: 'https://releases.mikopbx.com/releases/v1/mikopbx/',
-    keyManagementUrl: `https://lm.mikopbx.com/client-cabinet/session/index/${globalPBXLicense}`,
-    keyManagementSite: 'https://lm.mikopbx.com'
+	pbxUrl: globalDebugMode ? '//172.16.32.72' : '',
+	updateUrl: 'https://releases.mikopbx.com/releases/v1/mikopbx/',
 };

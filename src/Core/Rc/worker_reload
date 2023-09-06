@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # MikoPBX - free phone system for small business
-# Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
+# Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,26 +17,21 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-# Path and basic parameters for the launched application.
-# Service name.
+# Путь и базовые параметры для запускаемого приложения.
+# Имя сервиса.
 NAMESAFE=$(/bin/busybox basename "$0");
 PATHTOBIN=$(/bin/busybox which "$(echo "$NAMESAFE" | /bin/busybox sed 's/safe-//g')");
 NAME=$(/bin/busybox basename "$PATHTOBIN");
 ARGS=$@;
-
-# Duration to wait before the next launch.
+# Длительно ожидание перед новым запуском.
 SLEEPSECS=1
 PIDFILE="/var/run/${NAMESAFE}.pid";
 
-
-# Function to display messages
 message() {
 	echo "$1" >&2
 	logger -t "$NAME" "$1"
 }
 
-
-# Function to run the binary
 run_bin()
 {
 	while :; do
@@ -56,7 +51,6 @@ run_bin()
 	done;
 }
 
-# Check if another instance of the script is already running
 if [ -f "$PIDFILE" ]; then
   message "Found another pid file.";
   resultGrep=$(/bin/busybox ps | /bin/busybox grep "$NAMESAFE" | grep "$(/bin/busybox cat "$PIDFILE")" | /bin/busybox grep -v grep);
@@ -65,19 +59,14 @@ if [ -f "$PIDFILE" ]; then
     exit 1;
   fi;
 fi;
-
-# Save the current process ID in the PID file
 echo $$ > "$PIDFILE";
 message "Starting $NAMESAFE...";
-
-# Check if there is another process running with the same binary path and terminate it
 pidOld=$(/bin/busybox ps | /bin/busybox grep "$(basename "$PATHTOBIN")" | /bin/busybox grep -v "$NAMESAFE" | /bin/busybox grep -v grep | /bin/busybox awk '{ print $1}');
 if [ -n "$pidOld" ]; then
   message "Completing another process ${PATHTOBIN}"
   /bin/busybox kill "$pidOld";
 fi;
-# Start running the binary in the background
-run_bin &
 
-# Update the PID of the background process.
+run_bin &
+# Обновляем PID фонового процесса.
 echo $! > "$PIDFILE";

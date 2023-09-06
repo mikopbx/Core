@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,18 +27,16 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Url;
 
 /**
- * The URL component is used to generate all kinds of URLs in the application.
- *
- * @package MikoPBX\Common\Providers
+ * The URL component is used to generate all kind of urls in the application
  */
 class UrlProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'url';
 
     /**
-     * Register the URL service provider.
+     * Register url service provider
      *
-     * @param DiInterface $di The DI container.
+     * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {

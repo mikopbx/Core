@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,16 +21,12 @@ namespace MikoPBX\PBXCoreREST\Controllers\Syslog;
 
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use MikoPBX\PBXCoreREST\Http\Response;
-use MikoPBX\PBXCoreREST\Lib\SysLogsManagementProcessor;
 use Phalcon\Di;
 
 /**
- * Get system logs (POST).
+ * /pbxcore/api/syslog/{name}' Get system logs (POST).
  *
- * @RoutePrefix("/pbxcore/api/syslog")
- *
- * Gets partially filtered log file strings.
+ * Get logfiles strings partially and filtered
  *   curl -X POST -d '{"filename": "asterisk/messages","filter":"","lines":"500"}'
  *   http://127.0.0.1/pbxcore/api/syslog/getLogFromFile;
  *
@@ -45,25 +41,7 @@ use Phalcon\Di;
  */
 class PostController extends BaseController
 {
-    /**
-     * Handles the call to different actions based on the action name
-     *
-     * @param string $actionName The name of the action
-     *
-     * Gets partially filtered log file strings.
-     * @Post("/getLogFromFile")
-     *
-     * Prepares a downloadable link for a log file with the provided name.
-     * @Post("/downloadLogFile")
-     *
-     * Requests a zipped archive containing logs and PCAP file
-     * Checks if archive ready it returns download link.
-     * @Post("/downloadLogsArchive")
-     *
-     * Erase file content.
-     * @Post("/eraseFile")
-     */
-    public function callAction(string $actionName): void
+    public function callAction($actionName): void
     {
         switch ($actionName) {
             case 'getLogFromFile':
@@ -75,7 +53,7 @@ class PostController extends BaseController
                 break;
             default:
                 $data = $this->request->getPost();
-                $this->sendRequestToBackendWorker(SysLogsManagementProcessor::class, $actionName, $data);
+                $this->sendRequestToBackendWorker('syslog', $actionName, $data);
         }
     }
 
@@ -86,7 +64,7 @@ class PostController extends BaseController
     {
         $requestMessage = json_encode(
             [
-                'processor' => SysLogsManagementProcessor::class,
+                'processor' => 'syslog',
                 'data'      => $this->request->getPost(),
                 'action'    => 'getLogFromFile',
             ]
@@ -108,7 +86,7 @@ class PostController extends BaseController
 
             $this->response->setPayloadSuccess($response);
         } else {
-            $this->sendError(Response::INTERNAL_SERVER_ERROR);
+            $this->sendError(500);
         }
     }
 
@@ -121,7 +99,7 @@ class PostController extends BaseController
     {
         $requestMessage = json_encode(
             [
-                'processor' => SysLogsManagementProcessor::class,
+                'processor' => 'syslog',
                 'data'      => $this->request->getPost(),
                 'action'    => $actionName,
             ]
@@ -140,12 +118,13 @@ class PostController extends BaseController
                 } else {
                     $scheme                       = $this->request->getScheme();
                     $host                         = $this->request->getHttpHost();
-                    $response['data']['filename'] = "{$scheme}://{$host}/pbxcore/files/cache/{$response['data']['filename']}";
+                    $port                         = $this->request->getPort();
+                    $response['data']['filename'] = "{$scheme}://{$host}:{$port}/pbxcore/files/cache/{$response['data']['filename']}";
                 }
             }
             $this->response->setPayloadSuccess($response);
         } else {
-            $this->sendError(Response::INTERNAL_SERVER_ERROR);
+            $this->sendError(500);
         }
     }
 }

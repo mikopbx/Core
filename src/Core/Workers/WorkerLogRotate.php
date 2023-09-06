@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,63 +22,52 @@ require_once 'Globals.php';
 
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\PHPConf;
+use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
-/**
- * WorkerLogRotate is a worker class responsible for log rotation.
- *
- * @package MikoPBX\Core\Workers
- */
 class WorkerLogRotate extends WorkerBase
 {
+
     /**
-     * Starts the log rotate worker.
-     *
-     * @param array $argv The command-line arguments passed to the worker.
-     * @return void
+     * @inheritDoc
      */
-    public function start(array $argv): void
+    public function start($params): void
     {
-        $cacheKey = 'Workers:WorkerLogRotate:lastProcessing';
+        $cacheKey =  'Workers:WorkerLogRotate:lastProcessing';
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
-
-        // Retrieve the last log rotate timestamp from the cache
         $lastLogRotate = $managedCache->get($cacheKey);
-        if ($lastLogRotate === null) {
-
-            // Perform log rotation for system logs
+        if ($lastLogRotate===null){
+            // System Logs
             PHPConf::rotateLog();
             PBX::logRotate();
 
-            // Perform log rotation for module logs
+            // Modules Logs
             $plugins = PbxExtensionModules::getEnabledModulesArray();
             foreach ($plugins as $plugin) {
                 $this->logRotate($plugin['uniqid']);
             }
-
-            // Store the current timestamp in the cache to track the last log rotation
-            $managedCache->set($cacheKey, time(), 3600); // Rotate logs every hour
+            $managedCache->set($cacheKey, time(), 3600);
         }
     }
 
     /**
-     * Performs log rotation on log files in the module's log folder.
+     * Makes log rotate on every log file in folder with module name
      *
-     * @param string $moduleUniqid The unique ID of the module.
-     * @return void
+     * @param string $moduleUniqid
      */
     public function logRotate(string $moduleUniqid): void
     {
-        $logPath = System::getLogDir() . '/' . $moduleUniqid . '/';
-        if (!file_exists($logPath)) {
+        $logPath        = System::getLogDir() . '/' . $moduleUniqid . '/';
+        if ( ! file_exists($logPath)) {
             return;
         }
 
-        $results = glob($logPath . '*.log', GLOB_NOSORT);
+        $results         = glob($logPath . '*.log', GLOB_NOSORT);
         $textConfig = '';
         foreach ($results as $file) {
             $textConfig .= $file . ' {
@@ -89,8 +78,8 @@ class WorkerLogRotate extends WorkerBase
     daily
     missingok
     notifempty
-}' . PHP_EOL;
-            $pathConf = '/tmp/' . pathinfo($file)['filename'] . '.conf';
+}'.PHP_EOL;
+            $pathConf = '/tmp/'.pathinfo($file)['filename'].'.conf';
             file_put_contents($pathConf, $textConfig);
             $logrotatePath = Util::which('logrotate');
             Processes::mwExec("{$logrotatePath} '{$pathConf}' > /dev/null 2> /dev/null");
@@ -102,4 +91,4 @@ class WorkerLogRotate extends WorkerBase
 }
 
 // Start worker process
-WorkerLogRotate::startWorker($argv ?? []);
+WorkerLogRotate::startWorker($argv??null);

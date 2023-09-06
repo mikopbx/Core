@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,23 +24,10 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 
-/**
- * Class MusicOnHoldConf
- *
- * Represents the configuration class for musiconhold.conf.
- *
- * @package MikoPBX\Core\Asterisk\Configs
- */
-class MusicOnHoldConf extends AsteriskConfigClass
+class MusicOnHoldConf extends CoreConfigClass
 {
-    // The module hook applying priority
-    public int $priority = 1000;
-
     protected string $description = 'musiconhold.conf';
 
-    /**
-     * Generates the configuration for musiconhold.conf.
-     */
     protected function generateConfigProtected(): void
     {
         $mohPath = $this->config->path('asterisk.mohdir');
@@ -59,61 +46,42 @@ class MusicOnHoldConf extends AsteriskConfigClass
                 "entry=$filename".PHP_EOL.PHP_EOL;
         }
 
-        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/musiconhold.conf', $conf);
         $this->checkMohFiles();
     }
 
     /**
-     * Checks the MOH files in the specified path and adds them to the database if they exist.
-     *
+     * Проверка существования MOH файлов.
      */
     protected function checkMohFiles(): void
     {
         $path  = $this->config->path('asterisk.mohdir');
         $mask  = '/*.mp3';
-
-        // Get the list of MP3 files in the specified path
         $fList = glob("{$path}{$mask}");
         if (count($fList) !== 0) {
-            // Iterate through the MP3 files and add them to the database
             foreach ($fList as $resultMp3) {
                 $this->checkAddFileToDB($resultMp3);
             }
 
             return;
         }
-
-        // If no MP3 files are found in the specified path, attempt to restore from the default location
         Util::sysLogMsg(static::class, 'Attempt to restore MOH from default...');
-
-        // Get the list of MP3 files from the default location
         $filesList = glob("/offload/asterisk/sounds/moh{$mask}");
         $cpPath    = Util::which('cp');
         foreach ($filesList as $srcFile) {
             $resultMp3 = "{$path}/" . basename($srcFile);
             $resultWav = Util::trimExtensionForFile($resultMp3) . '.wav';
-
-            // Copy the file to the specified path
             Processes::mwExec("{$cpPath} $srcFile {$resultMp3}");
-
-            // Convert the MP3 file to WAV format
             SystemManagementProcessor::convertAudioFile($resultMp3);
             if ( ! file_exists($resultWav)) {
                 Util::sysLogMsg(static::class, "Failed to convert file {$resultWav}...");
             }
 
-            // Add the MP3 file to the database
             $this->checkAddFileToDB($resultMp3);
         }
     }
 
-    /**
-     * Check and add file to the database.
-     *
-     * @param string $resultMp3 The path of the mp3 file.
-     */
-    protected function checkAddFileToDB(string $resultMp3): void
+    protected function checkAddFileToDB($resultMp3): void
     {
         /** @var SoundFiles $sf */
         $sf = SoundFiles::findFirst("path='{$resultMp3}'");

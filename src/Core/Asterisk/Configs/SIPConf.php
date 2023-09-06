@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,87 +28,32 @@ use MikoPBX\Common\Models\{Codecs,
     Sip,
     SipHosts,
     Users};
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
+use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Core\System\{MikoPBXConfig, Network, Processes, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
 use Throwable;
 
-/**
- * Class SIPConf
- *
- * This class represents the pjsip.conf configuration file.
- *
- * @package MikoPBX\Core\Asterisk\Configs
- */
-class SIPConf extends AsteriskConfigClass
+class SIPConf extends CoreConfigClass
 {
-    // The module hook applying priority
-    public int $priority = 540;
-
-    /**
-     * Constant representing the PJSIP technology.
-     */
     public const TYPE_PJSIP = 'PJSIP';
-
-    /**
-     * The path to the topology hash file.
-     */
     private const TOPOLOGY_HASH_FILE = '/topology_hash';
 
-    /**
-     * Peers data.
-     *
-     * @var mixed
-     */
     protected $data_peers;
-
-    /**
-     * Providers data.
-     *
-     * @var mixed
-     */
     protected $data_providers;
-
-    /**
-     * Rout data.
-     *
-     * @var mixed
-     */
     protected $data_rout;
-
-    /**
-     * SIP hosts data.
-     *
-     * @var array
-     */
     protected array $dataSipHosts;
 
-    /**
-     * The SIP technology used.
-     *
-     * @var string
-     */
     protected string $technology;
-
-    /**
-     * Contexts data.
-     *
-     * @var array
-     */
     protected array $contexts_data;
 
     protected string $description = 'pjsip.conf';
 
     /**
-     * Get the dependence models.
      *
-     * Returns an array of dependence models for this configuration file.
-     *
-     * @return array The array of dependence models.
+     * @return array
      */
     public function getDependenceModels(): array
     {
@@ -116,11 +61,10 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Check if an Asterisk restart is needed.
+     * Проверка ключевых параметров.
+     * Если параметры изменены, то необходим рестарт Asterisk процесса.
      *
-     * Compares the current topology hash with the stored hash to determine if an Asterisk restart is required.
-     *
-     * @return bool True if an Asterisk restart is needed, false otherwise.
+     * @return bool
      */
     public function needAsteriskRestart(): bool
     {
@@ -143,11 +87,7 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Get topology data.
-     *
-     * Retrieves the necessary topology data including the topology type, external IP address, external hostname, and subnets.
-     *
-     * @return array An array containing the topology data.
+     * @return array
      */
     private function getTopologyData(): array
     {
@@ -196,29 +136,30 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Generate extension contexts.
+     * Генератор extension для контекста peers.
      *
-     * Generates the extension contexts based on the configured data and returns them as a string.
-     *
-     * @return string The generated extension contexts.
+     * @return string
      */
     public function extensionGenContexts(): string
     {
         if ($this->data_peers === null) {
             $this->getSettings();
         }
-        // Generate internal number plan.
+        // Генерация внутреннего номерного плана.
         $conf = '';
 
         $contexts = [];
-        // Process incoming contexts.
+        // Входящие контексты.
         foreach ($this->data_providers as $provider) {
             $contextsData = $this->contexts_data[$provider['context_id']];
             if (count($contextsData) === 1) {
                 $conf .= IncomingContexts::generate($provider['uniqid'], $provider['username']);
             } elseif ( ! in_array($provider['context_id'], $contexts, true)) {
-                $context_id = str_replace('-incoming','',$provider['context_id']);
-                $conf      .= IncomingContexts::generate($contextsData, '', $context_id);
+                $conf       .= IncomingContexts::generate(
+                    $contextsData,
+                    null,
+                    $provider['context_id']
+                );
                 $contexts[] = $provider['context_id'];
             }
         }
@@ -232,8 +173,6 @@ class SIPConf extends AsteriskConfigClass
 
         $conf.=PHP_EOL.'[monitor-internal]'.PHP_EOL;
         $confExceptions = '';
-
-        // Process peers and their numbers.
         foreach ($this->data_peers as $peer) {
             $numbers = $usersNumbers[$peer['user_id']]??[];
             foreach ($numbers as $num){
@@ -247,21 +186,17 @@ class SIPConf extends AsteriskConfigClass
             }
         }
         $conf.= PHP_EOL.'[monitor-exceptions]'.PHP_EOL.
-            $confExceptions.PHP_EOL.PHP_EOL;
+                $confExceptions.PHP_EOL.PHP_EOL;
         return $conf;
     }
 
     /**
-     * Get settings.
-     *
-     * Retrieves and sets the necessary settings data for the current class.
-     *
-     * @return void
+     * Получение настроек.
      */
     public function getSettings(): void
     {
         $this->contexts_data = [];
-        // Retrieve peers, providers, out routes, technology, and SIP hosts data.
+        // Настройки для текущего класса.
         $this->data_peers        = $this->getPeers();
         $this->data_providers    = $this->getProviders();
         $this->data_rout         = $this->getOutRoutes();
@@ -270,11 +205,9 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Get peers.
+     * Получение данных по SIP пирам.
      *
-     * Retrieves and returns the peers data as an array.
-     *
-     * @return array The peers data.
+     * @return array
      */
     private function getPeers(): array
     {
@@ -285,26 +218,20 @@ class SIPConf extends AsteriskConfigClass
         /** @var ExtensionForwardingRights $extensionForwarding */
         $data    = [];
         $db_data = Sip::find("type = 'peer' AND ( disabled <> '1')");
-
-        // Process each SIP peer.
         foreach ($db_data as $sip_peer) {
             $arr_data       = $sip_peer->toArray();
             $network_filter = null;
-
-            // Retrieve associated network filter if available.
             if ( ! empty($sip_peer->networkfilterid)) {
                 $network_filter = NetworkFilters::findFirst($sip_peer->networkfilterid);
             }
-
-            // Assign permit and deny values based on network filter.
             $arr_data['permit'] = ($network_filter === null) ? '' : $network_filter->permit;
             $arr_data['deny']   = ($network_filter === null) ? '' : $network_filter->deny;
 
-            // Retrieve used codecs.
+            // Получим используемые кодеки.
             $arr_data['codecs'] = $this->getCodecs();
             $arr_data['enableRecording'] = $sip_peer->enableRecording !== '0';
 
-            // Retrieve employee name.
+            // Имя сотрудника.
             $extension = Extensions::findFirst("number = '{$sip_peer->extension}'");
             if (null === $extension) {
                 $arr_data['publicaccess'] = false;
@@ -319,8 +246,6 @@ class SIPConf extends AsteriskConfigClass
                     $arr_data['user_id']  = $user->id;
                 }
             }
-
-            // Retrieve extension forwarding rights.
             $extensionForwarding = ExtensionForwardingRights::findFirst("extension = '{$sip_peer->extension}'");
             if (null === $extensionForwarding) {
                 $arr_data['ringlength']              = '';
@@ -340,11 +265,9 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Get codecs.
+     * Возвращает доступные пиру кодеки.
      *
-     * Retrieves and returns the codecs data as an array.
-     *
-     * @return array The codecs data.
+     * @return array
      */
     private function getCodecs(): array
     {
@@ -362,18 +285,15 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Get providers.
+     * Получение данных по SIP провайдерам.
      *
-     * Retrieves and returns the providers data as an array.
-     *
-     * @return array The providers data.
+     * @return array
      */
     private function getProviders(): array
     {
         /** @var Sip $sip_peer */
         /** @var NetworkFilters $network_filter */
-
-        // Get settings for all accounts.
+        // Получим настройки всех аккаунтов.
         $data    = [];
         $db_data = Sip::find("type = 'friend' AND ( disabled <> '1')");
         foreach ($db_data as $sip_peer) {
@@ -381,8 +301,7 @@ class SIPConf extends AsteriskConfigClass
             $network_filter                         = NetworkFilters::findFirst($sip_peer->networkfilterid);
             $arr_data['permit']                     = ($network_filter === null) ? '' : $network_filter->permit;
             $arr_data['deny']                       = ($network_filter === null) ? '' : $network_filter->deny;
-
-            // Retrieve used codecs.
+            // Получим используемые кодеки.
             $arr_data['codecs'] = $this->getCodecs();
             $context_id = self::getContextId($sip_peer->host.$sip_peer->port);
             if ( ! isset($this->contexts_data[$context_id])) {
@@ -405,11 +324,9 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Get outgoing routes.
+     * Генератор исходящих контекстов для пиров.
      *
-     * Retrieves and returns the outgoing routes data as an array.
-     *
-     * @return array The outgoing routes data.
+     * @return array
      */
     private function getOutRoutes(): array
     {
@@ -424,8 +341,6 @@ class SIPConf extends AsteriskConfigClass
         $data    = [];
         $routs   = OutgoingRoutingTable::find(['order' => 'priority']);
         $db_data = Sip::find("type = 'friend' AND ( disabled <> '1')");
-
-        // Process each outgoing route.
         foreach ($routs as $rout) {
             foreach ($db_data as $sip_peer) {
                 if ($sip_peer->uniqid !== $rout->providerid) {
@@ -452,11 +367,9 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Get SIP hosts.
+     * Возвращает массив хостов.
      *
-     * Retrieves and returns the SIP hosts data as an array.
-     *
-     * @return array The SIP hosts data.
+     * @return array
      */
     public static function getSipHosts(): array
     {
@@ -464,8 +377,6 @@ class SIPConf extends AsteriskConfigClass
         /** @var SipHosts $sipHosts */
         /** @var SipHosts $hostData */
         $sipHosts = SipHosts::find();
-
-        // Process each SIP host.
         foreach ($sipHosts as $hostData) {
             if ( ! isset($dataSipHosts[$hostData->provider_id])) {
                 $dataSipHosts[$hostData->provider_id] = [];
@@ -477,11 +388,9 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Generate extension hints.
+     * Генерация хинтов.
      *
-     * Generates and returns the extension hints configuration as a string.
-     *
-     * @return string The extension hints configuration.
+     * @return string
      */
     public function extensionGenHints(): string
     {
@@ -499,18 +408,12 @@ class SIPConf extends AsteriskConfigClass
         return $conf;
     }
 
-    /**
-     * Generate internal number plan.
-     *
-     * Generates and returns the internal number plan configuration as a string.
-     *
-     * @return string The internal number plan configuration.
-     */
     public function extensionGenInternal(): string
     {
         if ($this->data_peers === null) {
             $this->getSettings();
         }
+        // Генерация внутреннего номерного плана.
         $conf = '';
         foreach ($this->data_peers as $peer) {
             $conf .= "exten => {$peer['extension']},1,Goto(internal-users,{$peer['extension']},1) \n";
@@ -520,18 +423,12 @@ class SIPConf extends AsteriskConfigClass
         return $conf;
     }
 
-    /**
-     * Generate internal transfer.
-     *
-     * Generates and returns the internal transfer configuration as a string.
-     *
-     * @return string The internal transfer configuration.
-     */
     public function extensionGenInternalTransfer(): string
     {
         if ($this->data_peers === null) {
             $this->getSettings();
         }
+        // Генерация внутреннего номерного плана.
         $conf = '';
         foreach ($this->data_peers as $peer) {
             $conf .= "exten => {$peer['extension']},1,Set(__ISTRANSFER=transfer_) \n";
@@ -543,9 +440,9 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Generate PJSIP configuration.
+     * Генератор sip.conf
      *
-     * Generates and writes the PJSIP configuration files.
+     * @return void
      */
     protected function generateConfigProtected(): void
     {
@@ -555,31 +452,20 @@ class SIPConf extends AsteriskConfigClass
 
         $astEtcDir = $this->config->path('asterisk.astetcdir');
 
-        // Write pjsip.conf file
         Util::fileWriteContent($astEtcDir . '/pjsip.conf', $conf);
-
-        // Write pjproject.conf file
         $pjConf = '[log_mappings]' . "\n" .
             'type=log_mappings' . "\n" .
             'asterisk_error = 0' . "\n" .
             'asterisk_warning = 2' . "\n" .
             'asterisk_debug = 1,3,4,5,6' . "\n\n";
         file_put_contents($astEtcDir.'/pjproject.conf', $pjConf);
-
-        // Write sorcery.conf file
         file_put_contents($astEtcDir.'/sorcery.conf', '');
-
-        // Asterisk has to be restarted to apply the changes over ami
-        if ($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting!==true) {
-            $this->updateAsteriskDatabase();
-        }
-
+        $this->updateAsteriskDatabase();
     }
 
     /**
-     * Updates the Asterisk database with the forwarding and ring length information for each peer.
-     *
-     * @return bool True if the update was successful, false otherwise.
+     * Обновление маршрутизации в AstDB
+     * @return bool
      */
     public function updateAsteriskDatabase():bool
     {
@@ -589,8 +475,8 @@ class SIPConf extends AsteriskConfigClass
         $warError = false;
         $db = new AstDB();
         foreach ($this->data_peers as $peer) {
-            // Update Asterisk database with routing information.
-            $ringLength = ((string)$peer['ringlength'] === '0') ? '' : trim($peer['ringlength']);
+            // Помещаем в AstDB сведения по маршуртизации.
+            $ringLength = ($peer['ringlength'] === '0') ? '' : trim($peer['ringlength']);
             $warError |= !$db->databasePut('FW_TIME', $peer['extension'], $ringLength);
             $warError |= !$db->databasePut('FW', $peer['extension'], trim($peer['forwarding']));
             $warError |= !$db->databasePut('FW_BUSY', $peer['extension'], trim($peer['forwardingonbusy']));
@@ -601,9 +487,10 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the general section of the PJSIP configuration file based on the provided settings.
+     * Генератора секции general pjsip.conf
      *
-     * @return string The generated general section configuration.
+     *
+     * @return string
      */
     private function generateGeneralPj(): string
     {
@@ -622,26 +509,20 @@ class SIPConf extends AsteriskConfigClass
         $tlsNatConf = '';
 
         $resolveOk = Processes::mwExec("timeout 1 getent hosts '$externalHostName'") === 0;
-
-        // Check if external hostname is provided and can be resolved
         if(!empty($externalHostName) && !$resolveOk){
             Util::sysLogMsg('DNS', "ERROR: DNS $externalHostName not resolved, It will not be used in SIP signaling.");
         }
-
-        // Configure NAT settings for private topology
         if ($topology === 'private') {
             foreach ($subnets as $net) {
                 $natConf .= "local_net=$net\n";
             }
             if ( !empty($externalHostName) && $resolveOk ) {
-                // If external hostname is provided and resolved, use it for signaling
                 $parts   = explode(':', $externalHostName);
                 $natConf .= 'external_media_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
                 $tlsNatConf = "{$natConf}external_signaling_port=$tlsPort";
                 $natConf .= 'external_signaling_port=' . ($parts[1] ?? $sipPort);
             } elseif ( ! empty($extIpAddress)) {
-                // If external IP address is provided, use it for signaling
                 $parts   = explode(':', $extIpAddress);
                 $natConf .= 'external_media_address=' . $parts[0] . "\n";
                 $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
@@ -688,7 +569,6 @@ class SIPConf extends AsteriskConfigClass
 
         $allowGuestCalls = PbxSettings::getValueByKey('PBXAllowGuestCalls');
         if ($allowGuestCalls === '1') {
-            // Add anonymous endpoint if guest calls are allowed
             $conf .= "[anonymous]\n" .
                 "type = endpoint\n" .
                 $codecConf .
@@ -699,8 +579,6 @@ class SIPConf extends AsteriskConfigClass
 
         $varEtcDir = $this->config->path('core.varEtcDir');
         $hash = md5($topology . $externalHostName . $extIpAddress . $this->generalSettings['SIPPort']. $this->generalSettings['TLS_PORT'] . implode('',$subnets));
-
-        // Write the configuration content to the file
         file_put_contents($varEtcDir.self::TOPOLOGY_HASH_FILE, $hash);
         $conf .= "\n";
         return $conf;
@@ -720,23 +598,17 @@ class SIPConf extends AsteriskConfigClass
         if ($this->data_providers === null) {
             $this->getSettings();
         }
-
-        // Iterate through each data provider
         foreach ($this->data_providers as $provider) {
             $manual_attributes = Util::parseIniSettings(base64_decode($provider['manualattributes'] ?? ''));
 
-            // Generate registration strings for outbound registration type
             if($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND){
                 $reg_strings .= $this->generateProviderRegistrationAuth($provider, $manual_attributes);
                 $reg_strings .= $this->generateProviderRegistration($provider, $manual_attributes);
             }
-
-            // Generate provider authentication configuration if registration type is not none
             if($provider['registration_type'] !== Sip::REG_TYPE_NONE){
                 $prov_config .= $this->generateProviderAuth($provider, $manual_attributes);
             }
 
-            // Generate identify, AOR, and endpoint configurations for the provider
             $prov_config .= $this->generateProviderIdentify($provider, $manual_attributes);
             $prov_config .= $this->generateProviderAor($provider, $manual_attributes);
             $prov_config .= $this->generateProviderEndpoint($provider, $manual_attributes);
@@ -749,39 +621,28 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Generate the registration authentication configuration for a provider.
+     * Генерация Auth для секции Registration провайдера.
      *
-     * This method generates the registration authentication configuration for a specific provider based on the provided data and manual attributes.
+     * @param array $provider
+     * @param array $manual_attributes
      *
-     * @param array $provider The provider data.
-     * @param array $manual_attributes The manual attributes for the provider.
-     * @return string The generated registration authentication configuration.
+     * @return string
      */
     private function generateProviderRegistrationAuth(array $provider, array $manual_attributes): string {
-        // Initialize the configuration string
         $conf = '';
-
         $options         = [
             'type'     => 'registration-auth',
             'username' => $provider['username'],
             'password' => $provider['secret'],
         ];
-
-        // Override PJSIP options from modules
         $options         = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
-
         $options['type'] = 'auth';
-
-        // Add configuration section header
         $conf            .= "[REG-AUTH-{$provider['uniqid']}]\n";
-
-        // Generate and add configuration options
         $conf            .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration-auth');
-
         return $conf;
     }
 
@@ -796,7 +657,8 @@ class SIPConf extends AsteriskConfigClass
      */
     private function overridePJSIPOptionsFromModules($extensionOrId, $options, $method): array
     {
-        $modulesOverridingArrays = PBXConfModulesProvider::hookModulesMethod($method, [$extensionOrId, $options]);
+        $configClassObj = new ConfigClass();
+        $modulesOverridingArrays = $configClassObj->hookModulesMethodWithArrayResult($method, [$extensionOrId, $options]);
         foreach ($modulesOverridingArrays as $newOptionsSet) {
             // How to make some order of overrides?
             $options = $newOptionsSet;
@@ -805,26 +667,21 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Generate the registration configuration for a provider.
+     * Генерация Registration провайдера.
      *
-     * This method generates the registration configuration for a specific provider based on the provided data and manual attributes.
+     * @param array $provider
+     * @param array $manual_attributes
      *
-     * @param array $provider The provider data.
-     * @param array $manual_attributes The manual attributes for the provider.
-     * @return string The generated registration configuration.
+     * @return string
      */
     private function generateProviderRegistration(array $provider, array $manual_attributes): string {
-
-        // Initialize the configuration string
         $conf = '';
-
-
         $options = [
             'type'                     => 'registration',
             'outbound_auth'            => "REG-AUTH-{$provider['uniqid']}",
             'contact_user'             => $provider['username'],
-            'retry_interval'           => '45',
-            'max_retries'              => '200',
+            'retry_interval'           => '30',
+            'max_retries'              => '100',
             'forbidden_retry_interval' => '300',
             'fatal_retry_interval'     => '300',
             'expiration'               => $this->generalSettings['SIPDefaultExpiry'],
@@ -838,73 +695,55 @@ class SIPConf extends AsteriskConfigClass
         if(!empty($provider['outbound_proxy'])){
             $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
         }
-
-        // Override PJSIP options from modules
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
-
-        // Add configuration section header
         $conf    .= "[REG-{$provider['uniqid']}] \n";
-
-        // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration');
 
         return $conf;
     }
 
     /**
-     * Generate the authentication configuration for a provider.
+     * Генерация Auth провайдера.
      *
-     * This method generates the authentication configuration for a specific provider based on the provided data and manual attributes.
+     * @param array $provider
+     * @param array $manual_attributes
      *
-     * @param array $provider The provider data.
-     * @param array $manual_attributes The manual attributes for the provider.
-     * @return string The generated authentication configuration.
+     * @return string
      */
     private function generateProviderAuth(array $provider, array $manual_attributes): string {
-
-        // Initialize the configuration string
         $conf = '';
         $options         = [
             'type'     => 'endpoint-auth',
             'username' => $provider['username'],
             'password' => $provider['secret'],
         ];
-
-        // Override PJSIP options from modules
         $options         = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
         $options['type'] = 'auth';
-
-        // Add configuration section header
         $conf            .= "[{$provider['uniqid']}-AUTH]\n";
-
-        // Generate and add configuration options
         $conf            .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint-auth');
 
         return $conf;
     }
 
     /**
-     * Generate the AOR (Address of Record) configuration for a provider.
+     * Генерация AOR для Endpoint.
      *
-     * This method generates the AOR configuration for a specific provider based on the provided data and manual attributes.
+     * @param array $provider
+     * @param array $manual_attributes
      *
-     * @param array $provider The provider data.
-     * @param array $manual_attributes The manual attributes for the provider.
-     * @return string The generated AOR configuration.
+     * @return string
      */
     private function generateProviderAor(array $provider, array $manual_attributes): string
     {
-        // Initialize the configuration string
         $conf        = '';
-
         $contact     = '';
         if($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND){
             $contact = "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}";
@@ -929,42 +768,32 @@ class SIPConf extends AsteriskConfigClass
         if(!empty($provider['outbound_proxy'])){
             $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
         }
-
-        // Override PJSIP options from modules
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
-
-        // Add configuration section header
         $conf    .= "[{$provider['uniqid']}]\n";
-
-        // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
 
         return $conf;
     }
 
     /**
-     * Generate the Identify configuration for a provider.
+     * Генерация AOR для Endpoint.
      *
-     * This method generates the Identify configuration for a specific provider based on the provided data and manual attributes.
+     * @param array $provider
+     * @param array $manual_attributes
      *
-     * @param array $provider The provider data.
-     * @param array $manual_attributes The manual attributes for the provider.
-     * @return string The generated Identify configuration.
+     * @return string
      */
     private function generateProviderIdentify(array $provider, array $manual_attributes): string {
-        // Initialize the configuration string
         $conf          = '';
-
         $providerHosts = $this->dataSipHosts[$provider['uniqid']] ?? [];
         if(!empty($provider['outbound_proxy'])){
             $providerHosts[] = explode(':', $provider['outbound_proxy'])[0];
         }
         if(empty($providerHosts)){
-            // Return empty configuration if provider hosts are empty
             return '';
         }
         $options = [
@@ -972,34 +801,27 @@ class SIPConf extends AsteriskConfigClass
             'endpoint' => $provider['uniqid'],
             'match'    => implode(',', array_unique($providerHosts)),
         ];
-        // Override PJSIP options from modules
+
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
-
-        // Add configuration section header
         $conf    .= "[{$provider['uniqid']}]\n";
-
-        // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'identify');
         return $conf;
     }
 
     /**
-     * Generate the Endpoint configuration for a provider.
+     * Генерация Endpoint провайдера.
      *
-     * This method generates the Endpoint configuration for a specific provider based on the provided data and manual attributes.
+     * @param array $provider
+     * @param array $manual_attributes
      *
-     * @param array $provider The provider data.
-     * @param array $manual_attributes The manual attributes for the provider.
-     * @return string The generated Endpoint configuration.
+     * @return string
      */
     private function generateProviderEndpoint(array $provider, array $manual_attributes): string {
-        // Initialize the configuration string
         $conf       = '';
-
         $fromdomain = (trim($provider['fromdomain']) === '') ? $provider['host'] : $provider['fromdomain'];
         $from       = (trim($provider['fromuser']) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
 
@@ -1015,16 +837,14 @@ class SIPConf extends AsteriskConfigClass
 
         if (count($this->contexts_data[$provider['context_id']]) === 1) {
             $context_id = $provider['uniqid'];
-            $context = "{$context_id}-incoming";
         } else {
             $context_id = $provider['context_id'];
-            $context = $context_id;
         }
         $dtmfmode = ($provider['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $provider['dtmfmode'];
         $options  = [
             'type'            => 'endpoint',
             '100rel'          => "no",
-            'context'         => $context,
+            'context'         => "{$context_id}-incoming",
             'dtmf_mode'       => $dtmfmode,
             'disallow'        => 'all',
             'allow'           => $provider['codecs'],
@@ -1057,31 +877,22 @@ class SIPConf extends AsteriskConfigClass
             $options['auth'] = "{$provider['uniqid']}-AUTH";
         }
         self::getToneZone($options, $language);
-
-        // Override PJSIP options from modules
         $options = $this->overridePJSIPOptionsFromModules(
             $provider['uniqid'],
             $options,
-            AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
+            CoreConfigClass::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
-
-        // Add configuration section header
         $conf    .= "[{$provider['uniqid']}]".PHP_EOL;
         $conf    .= 'set_var=contextID='.$provider['context_id'].PHP_EOL;
-
-        // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
 
         return $conf;
     }
 
     /**
-     * Get the context ID for a given name.
-     *
-     * This method generates the context ID for a given name by removing non-alphanumeric characters and appending "-incoming".
-     *
-     * @param string $name The name to generate the context ID from.
-     * @return string The generated context ID.
+     * Возвращает имя контекста без спецсимволовю
+     * @param $name
+     * @return string
      */
     public static function getContextId(string $name = ''):string
     {
@@ -1089,14 +900,8 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Set the tone zone option based on the language.
-     *
-     * This method sets the 'inband_progress' and 'tone_zone' options in the provided options array based on the language.
-     * It maps the language to the corresponding tone zone and sets the options accordingly.
-     *
-     * @param array $options The options array to modify.
-     * @param string $lang The language to determine the tone zone.
-     * @return void
+     * @param array  $options
+     * @param string $lang
      */
     public static function getToneZone(array &$options, string $lang): void
     {
@@ -1122,14 +927,10 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Generate the configuration for SIP peers in PJSIP format.
+     * Генератор сеции пиров для sip.conf
      *
-     * This method generates the configuration for SIP peers in PJSIP format based on the data_peers property.
-     * It iterates over each peer, generates the corresponding auth, aor, and endpoint sections, and appends them to the configuration.
-     * The manual attributes for each peer are parsed using Util::parseIniSettings() method.
-     * The generated configuration is also processed by hooking into the modules' method specified by AsteriskConfigInterface::GENERATE_PEERS_PJ constant.
      *
-     * @return string The generated configuration for SIP peers.
+     * @return string
      */
     public function generatePeersPj(): string
     {
@@ -1146,40 +947,31 @@ class SIPConf extends AsteriskConfigClass
             $conf              .= $this->generatePeerEndpoint($lang, $peer, $manual_attributes);
         }
 
-        $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEERS_PJ);
+        $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEERS_PJ);
 
         return $conf;
     }
 
     /**
-     * Generate the auth section for a SIP peer.
+     * Генерация AOR для Endpoint.
      *
-     * This method generates the auth section for a SIP peer in PJSIP format based on the provided peer data and manual attributes.
-     * It creates the auth section with the username and password of the peer.
-     * The PJSIP options can be overridden using the overridePJSIPOptionsFromModules() method.
-     * The manual attributes are applied using the Util::overrideConfigurationArray() method.
+     * @param array $peer
+     * @param array $manual_attributes
      *
-     * @param array $peer The data of the SIP peer.
-     * @param array $manual_attributes The manual attributes for the peer.
-     * @return string The generated auth section for the SIP peer.
+     * @return string
      */
     private function generatePeerAuth(array $peer, array $manual_attributes): string
     {
-        // Initialize the configuration string
         $conf    = '';
-
-        // Set the options for the auth section
         $options = [
             'type'     => 'auth',
             'username' => $peer['extension'],
             'password' => $peer['secret'],
         ];
-
-        // Override PJSIP options from modules
         $options = $this->overridePJSIPOptionsFromModules(
             $peer['extension'],
             $options,
-            AsteriskConfigInterface::OVERRIDE_PJSIP_OPTIONS
+            CoreConfigClass::OVERRIDE_PJSIP_OPTIONS
         );
         $conf    .= "[{$peer['extension']}] \n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'auth');
@@ -1188,42 +980,30 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Generate the aor section for a SIP peer.
+     * Генерация AOR для Endpoint.
      *
-     * This method generates the aor section for a SIP peer in PJSIP format based on the provided peer data and manual attributes.
-     * It creates the aor section with the qualify frequency, qualify timeout, and max contacts options.
-     * The PJSIP options can be overridden using the overridePJSIPOptionsFromModules() method.
-     * The manual attributes are applied using the Util::overrideConfigurationArray() method.
-     * If the "UseWebRTC" general setting is enabled, it also generates an additional aor section for WebRTC.
+     * @param array $peer
+     * @param array $manual_attributes
      *
-     * @param array $peer The data of the SIP peer.
-     * @param array $manual_attributes The manual attributes for the peer.
-     * @return string The generated aor sections for the SIP peer.
+     * @return string
      */
     private function generatePeerAor(array $peer, array $manual_attributes): string
     {
         $conf    = '';
-
-        // Set the options for the aor section
         $options = [
             'type'              => 'aor',
             'qualify_frequency' => '60',
             'qualify_timeout'   => '5',
             'max_contacts'      => '5',
         ];
-
-        // Override PJSIP options from modules
         $options = $this->overridePJSIPOptionsFromModules(
             $peer['extension'],
             $options,
-            AsteriskConfigInterface::OVERRIDE_PJSIP_OPTIONS
+            CoreConfigClass::OVERRIDE_PJSIP_OPTIONS
         );
-
-        // Generate the aor section
         $conf    .= "[{$peer['extension']}]\n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
 
-        // Generate the WebRTC aor section if enabled
         if($this->generalSettings['UseWebRTC'] === '1'){
             $conf    .= "[{$peer['extension']}-WS]\n";
             $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
@@ -1233,15 +1013,13 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
-     * Generate the endpoint section for a SIP peer.
+     * Генерация endpoint.
      *
-     * This method generates the endpoint section for a SIP peer in PJSIP format based
-     * on the provided language, peer data, and manual attributes.
+     * @param        $lang
+     * @param array  $peer
+     * @param array  $manual_attributes
      *
-     * @param string $lang The PBX language.
-     * @param array $peer The data of the SIP peer.
-     * @param array $manual_attributes The manual attributes for the SIP peer.
-     * @return string The generated configuration string for the endpoint section.
+     * @return string
      */
     private function generatePeerEndpoint(
         $lang,
@@ -1254,13 +1032,11 @@ class SIPConf extends AsteriskConfigClass
 
         $calleridname = (trim($peer['calleridname']) === '') ? $peer['extension'] : $peer['calleridname'];
         if(mb_strlen($calleridname) !== strlen($calleridname)){
-            // Limit the length of calleridname to 40 characters
+            // Ограничим длину calleridname. Это Unicode символы. Ограничиваем длину.
             $calleridname = mb_substr($calleridname,0, 40);
         }
 
         $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
-
-        // Prepare the options for the endpoint section
         $options  = [
             'type'                 => 'endpoint',
             'context'              => 'all_peers',
@@ -1274,8 +1050,8 @@ class SIPConf extends AsteriskConfigClass
             'direct_media'         => 'no',
             'callerid'             => "{$calleridname} <{$peer['extension']}>",
             'send_pai'             => 'yes',
-            'named_call_group'     => '1',
-            'named_pickup_group'   => '1',
+            'call_group'           => '1',
+            'pickup_group'         => '1',
             'sdp_session'          => 'mikopbx',
             'language'             => $language,
             'device_state_busy_at' => "1",
@@ -1287,7 +1063,6 @@ class SIPConf extends AsteriskConfigClass
             'message_context'      => 'messages',
         ];
 
-        // Set transport and media encryption options if applicable
         if(!empty($peer['transport'])){
             $options['transport'] = "transport-{$peer['transport']}";
             if($peer['transport'] === Sip::TRANSPORT_TLS){
@@ -1295,23 +1070,16 @@ class SIPConf extends AsteriskConfigClass
             }
         }
 
-        // Set tone zone options based on language
         self::getToneZone($options, $language);
-
-        // Override PJSIP options from modules
         $options = $this->overridePJSIPOptionsFromModules(
             $peer['extension'],
             $options,
-            AsteriskConfigInterface::OVERRIDE_PJSIP_OPTIONS
+            CoreConfigClass::OVERRIDE_PJSIP_OPTIONS
         );
-
-        // Generate the endpoint section header and options
         $conf    .= "[{$peer['extension']}] \n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
-        $conf    .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
+        $conf    .= $this->hookModulesMethod(self::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
 
-
-        // Generate the WebRTC endpoint section if enabled
         if($this->generalSettings['UseWebRTC'] === '1') {
             unset($options['media_encryption']);
 
@@ -1320,7 +1088,7 @@ class SIPConf extends AsteriskConfigClass
             $options['transport'] = 'transport-wss';
             $options['aors'] = $peer['extension'] . '-WS';
 
-            // Set Opus codec as a priority
+            /** Устанавливаем кодек Opus в приоритет. */
             $opusIndex = array_search('opus', $options['allow']);
             if($opusIndex !== false){
                 unset($options['allow'][$opusIndex]);
@@ -1331,10 +1099,8 @@ class SIPConf extends AsteriskConfigClass
              * https://www.asterisk.org/rtcp-mux-webrtc/
              */
             $options['rtcp_mux'] = 'yes';
-
-            // Generate the WebRTC endpoint section options
             $conf .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
-            $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
+            $conf .= $this->hookModulesMethod(CoreConfigClass::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
         }
         return $conf;
     }

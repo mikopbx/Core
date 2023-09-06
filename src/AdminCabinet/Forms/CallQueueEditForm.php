@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,25 +19,24 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
+use Phalcon\Forms\Element\TextArea;
+use Phalcon\Forms\Form;
 
 /**
  * Class CallQueueEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property TranslationProvider translation
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class CallQueueEditForm extends BaseForm
+class CallQueueEditForm extends Form
 {
     public function initialize($entity = null, $options = null): void
     {
-        parent::initialize($entity, $options);
-
         // ID
         $this->add(new Hidden('id'));
 
@@ -53,24 +52,24 @@ class CallQueueEditForm extends BaseForm
 
         // Strategy
         $arrActions = [
-            'ringall' => $this->translation->_('cq_ringall'),
+            'ringall'     => $this->translation->_('cq_ringall'),
             'leastrecent' => $this->translation->_('cq_leastrecent'),
             'fewestcalls' => $this->translation->_('cq_fewestcalls'),
-            'random' => $this->translation->_('cq_random'),
-            'rrmemory' => $this->translation->_('cq_rrmemory'),
-            'linear' => $this->translation->_('cq_linear'),
+            'random'      => $this->translation->_('cq_random'),
+            'rrmemory'    => $this->translation->_('cq_rrmemory'),
+            'linear'      => $this->translation->_('cq_linear'),
         ];
 
         $strategy = new Select(
             'strategy', $arrActions, [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'defaultValue' => "ringall",
-                'class' => 'ui selection dropdown strategyselect',
-            ]
+            'using'        => [
+                'id',
+                'name',
+            ],
+            'useEmpty'     => false,
+            'defaultValue' => "ringall",
+            'class'        => 'ui selection dropdown strategyselect',
+        ]
         );
         $this->add($strategy);
 
@@ -92,18 +91,18 @@ class CallQueueEditForm extends BaseForm
         // Callerhear
         $arrActions = [
             'ringing' => $this->translation->_('cq_ringing'),
-            'moh' => $this->translation->_('cq_moh'),
+            'moh'     => $this->translation->_('cq_moh'),
         ];
 
         $callerhear = new Select(
             'caller_hear', $arrActions, [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'class' => 'ui selection dropdown callerhearselect',
-            ]
+            'using'    => [
+                'id',
+                'name',
+            ],
+            'useEmpty' => false,
+            'class'    => 'ui selection dropdown callerhearselect',
+        ]
         );
         $this->add($callerhear);
 
@@ -126,25 +125,25 @@ class CallQueueEditForm extends BaseForm
 
         $periodicannouncesoundid = new Select(
             'periodic_announce_sound_id', $options['soundfiles'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search periodic-announce-sound-id-select',
-            ]
+            'using'    => [
+                'id',
+                'name',
+            ],
+            'useEmpty' => true,
+            'class'    => 'ui selection dropdown search periodic-announce-sound-id-select',
+        ]
         );
         $this->add($periodicannouncesoundid);
 
         $periodicannouncesoundid = new Select(
             'moh_sound_id', $options['mohSoundFiles'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search periodic-announce-sound-id-select',
-            ]
+            'using'    => [
+                'id',
+                'name',
+            ],
+            'useEmpty' => true,
+            'class'    => 'ui selection dropdown search periodic-announce-sound-id-select',
+        ]
         );
         $this->add($periodicannouncesoundid);
 
@@ -158,8 +157,8 @@ class CallQueueEditForm extends BaseForm
                 'timeout_to_redirect_to_extension',
                 [
                     "maxlength" => 2,
-                    "style" => "width: 80px;",
-                    "value" => ($ringlength > 0) ? $ringlength : '',
+                    "style"     => "width: 80px;",
+                    "value"     => ($ringlength > 0) ? $ringlength : '',
                 ]
             )
         );
@@ -167,26 +166,26 @@ class CallQueueEditForm extends BaseForm
         // Timeoutextension
         $extension = new Select(
             'timeout_extension', $options['extensions'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
+            'using'    => [
+                'id',
+                'name',
+            ],
+            'useEmpty' => true,
+            'class'    => 'ui selection dropdown search forwarding-select',
+        ]
         );
         $this->add($extension);
 
         // Redirecttoextensionifempty
         $extension = new Select(
             'redirect_to_extension_if_empty', $options['extensions'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
+            'using'    => [
+                'id',
+                'name',
+            ],
+            'useEmpty' => true,
+            'class'    => 'ui selection dropdown search forwarding-select',
+        ]
         );
         $this->add($extension);
 
@@ -197,8 +196,8 @@ class CallQueueEditForm extends BaseForm
                 'number_unanswered_calls_to_redirect',
                 [
                     "maxlength" => 2,
-                    "style" => "width: 80px;",
-                    "value" => ($ringlength > 0) ? $ringlength : '',
+                    "style"     => "width: 80px;",
+                    "value"     => ($ringlength > 0) ? $ringlength : '',
                 ]
             )
         );
@@ -206,13 +205,13 @@ class CallQueueEditForm extends BaseForm
         // Redirecttoextensionifunanswered
         $extension = new Select(
             'redirect_to_extension_if_unanswered', $options['extensions'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
+            'using'    => [
+                'id',
+                'name',
+            ],
+            'useEmpty' => true,
+            'class'    => 'ui selection dropdown search forwarding-select',
+        ]
         );
         $this->add($extension);
 
@@ -223,22 +222,23 @@ class CallQueueEditForm extends BaseForm
                 'number_repeat_unanswered_to_redirect',
                 [
                     "maxlength" => 2,
-                    "style" => "width: 80px;",
-                    "value" => ($ringlength > 0) ? $ringlength : '',
+                    "style"     => "width: 80px;",
+                    "value"     => ($ringlength > 0) ? $ringlength : '',
                 ]
             )
         );
 
         // Redirecttoextensionifrepeatexceeded
+
         $extension = new Select(
             'redirect_to_extension_if_repeat_exceeded', $options['extensions'], [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
+            'using'    => [
+                'id',
+                'name',
+            ],
+            'useEmpty' => true,
+            'class'    => 'ui selection dropdown search forwarding-select',
+        ]
         );
         $this->add($extension);
 
@@ -246,6 +246,7 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Text('callerid_prefix'));
 
         // Description
-        $this->addTextArea('description', $entity->description??'', 65);
+        $rows = max(round(strlen($entity->description) / 95), 2);
+        $this->add(new TextArea('description', ["rows" => $rows]));
     }
 }

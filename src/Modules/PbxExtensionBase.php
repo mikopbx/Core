@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,9 +25,8 @@ use ReflectionClass as ReflectionClassAlias;
 
 /**
  * Class PbxExtensionBase
- * Common methods for all modules.
- *
- * @package MikoPBX\Modules
+ * Общие для всех модулей методы
+ * Подключается при установке, удалении модуля
  */
 abstract class PbxExtensionBase extends Di\Injectable
 {

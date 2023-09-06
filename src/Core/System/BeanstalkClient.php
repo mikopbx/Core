@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,25 +19,15 @@
 
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use Phalcon\Di\Injectable;
 use Pheanstalk\Contract\PheanstalkInterface;
 use Pheanstalk\Job;
 use Pheanstalk\Pheanstalk;
 use Throwable;
 
-/**
- * Class BeanstalkClient
- *
- * Represents a client for interacting with Beanstalkd server.
- *
- * @package MikoPBX\Core\System
- */
 class BeanstalkClient extends Injectable
 {
     public const INBOX_PREFIX = 'INBOX_';
-
-    public const QUEUE_ERROR = 'queue_error';
 
     /** @var Pheanstalk */
     private Pheanstalk $queue;
@@ -54,8 +44,8 @@ class BeanstalkClient extends Injectable
     /**
      * BeanstalkClient constructor.
      *
-     * @param string $tube The name of the tube.
-     * @param string $port The port number for the Beanstalkd server.
+     * @param string $tube
+     * @param string $port
      */
     public function __construct(string $tube = 'default', string $port = '')
     {
@@ -65,7 +55,7 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Recreates connection to the Beanstalkd server.
+     * Recreates connection to the beanstalkd server
      */
     public function reconnect(): void
     {
@@ -78,7 +68,6 @@ class BeanstalkClient extends Injectable
         try {
             $this->queue->useTube($this->tube);
         }catch (Throwable $e){
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $this->connected = false;
             return;
         }
@@ -115,8 +104,6 @@ class BeanstalkClient extends Injectable
     /**
      * Sends request and wait for answer from processor
      *
-     * @deprecated Use sendRequest instead with array result: list($result, $message) = $client->sendRequest(...)
-     *
      * @param      $job_data
      * @param int  $timeout
      * @param int  $priority
@@ -151,52 +138,6 @@ class BeanstalkClient extends Injectable
         $this->queue->ignore($inbox_tube);
 
         return $this->message;
-    }
-
-
-    /**
-     * Sends request and wait for answer from processor
-     *
-     * @param      $job_data
-     * @param int  $timeout
-     * @param int  $priority
-     *
-     * @return array
-     */
-    public function sendRequest($job_data, int $timeout = 10, int $priority = PheanstalkInterface::DEFAULT_PRIORITY):array
-    {
-        $result = true;
-        $inbox_tube    = uniqid(self::INBOX_PREFIX, true);
-        $this->queue->watch($inbox_tube);
-
-        // Send message to backend worker
-        $requestMessage = [
-            $job_data,
-            'inbox_tube' => $inbox_tube,
-        ];
-        $this->publish($requestMessage, null, $priority, 0, $timeout);
-
-        // We wait until a worker process request.
-        try {
-            $job = $this->queue->reserveWithTimeout($timeout);
-            if ($job !== null) {
-                $this->message = $job->getData();
-                $this->queue->delete($job);
-            } else {
-                $this->message = '{"'.self::QUEUE_ERROR.'":"Worker did not answer within timeout '.$timeout.' sec"}';
-                $result = false;
-            }
-        } catch (Throwable $e) {
-            if(isset($job)){
-                $this->buryJob($job);
-            }
-            $prettyMessage = CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $this->message = '{"'.self::QUEUE_ERROR.'":"Exception on '.__METHOD__.' with message: '.$prettyMessage.'"}';
-            $result = false;
-        }
-        $this->queue->ignore($inbox_tube);
-
-        return [$result, $this->message];
     }
 
     /**
@@ -284,8 +225,8 @@ class BeanstalkClient extends Injectable
                         $deletedJobInfo[] = "{$id} from {$tube}";
                     }
                 }
-            } catch (Throwable $e) {
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            } catch (Throwable $exception) {
+                Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
             }
         }
         if (count($deletedJobInfo) > 0) {
@@ -293,40 +234,31 @@ class BeanstalkClient extends Injectable
         }
     }
 
-
     /**
-     * Wait for and process a job from the queue.
+     * Job worker for loop cycles
      *
-     * @param float $timeout The timeout period in seconds.
+     * @param float $timeout
      *
-     * @return void
      */
     public function wait(float $timeout = 5): void
     {
         $this->message = null;
-
-        // Record the start time
         $start         = microtime(true);
-
-        // Try to reserve a job with a timeout
         try {
             $job = $this->queue->reserveWithTimeout((int)$timeout);
-        } catch (Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+        } catch (Throwable $exception) {
+            Util::sysLogMsg(__METHOD__, 'Exception: ' . $exception->getMessage(), LOG_ERR);
         }
 
-        // If no job was reserved
         if ( ! isset($job)) {
             $workTime = (microtime(true) - $start);
             if ($workTime < $timeout) {
                 usleep(100000);
-                // If the work time $workTime is less than the timeout value $timeout
-                // and no job is received $job === null
-                // something is wrong, probably lost connection with the queue server
+                // Если время ожидания $worktime меньше значения таймаута $timeout
+                // И задача не получена $job === null
+                // Что то не то, вероятно потеряна связь с сервером очередей
                 $this->reconnect();
             }
-
-            // Call the timeout handler if one is set
             if (is_array($this->timeout_handler)) {
                 call_user_func($this->timeout_handler);
             }
@@ -342,26 +274,15 @@ class BeanstalkClient extends Injectable
         }
         $this->message = $mData;
 
-        // Check the job stats
         $stats           = $this->queue->statsJob($job);
-        if (intval($stats['reserves'])>3){
-            // Probably an exception did happen during the previous job execution, force to delete it.
-            $errorMessage = 'This job has attempted to execute more than 3 times without success.'.PHP_EOL;
-            $errorMessage .= 'Job stats: '.json_encode($stats).PHP_EOL;
-            $errorMessage .= 'Message: '.json_encode($this->message);
-            Util::sysLogMsg(__METHOD__,$errorMessage,LOG_ALERT);
-            $this->buryJob($job);
-        }
-
-        // Find the subscribed function for the tube
         $requestFormTube = $stats['tube'];
         $func            = $this->subscriptions[$requestFormTube] ?? null;
+
         if ($func === null) {
-            // No action found, bury the job
+            // Action not found
             $this->buryJob($job);
         } else {
             try {
-                // Execute the subscribed function
                 if (is_array($func)) {
                     call_user_func($func, $this);
                 } elseif (is_callable($func) === true) {
@@ -372,15 +293,13 @@ class BeanstalkClient extends Injectable
             } catch (Throwable $e) {
                 // Marks the job as terminally failed and no workers will restart it.
                 $this->buryJob($job);
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                Util::sysLogMsg(__METHOD__ . '_EXCEPTION', $e->getMessage(), LOG_ERR);
             }
         }
     }
 
     /**
-     * Buries a job in the Beanstalkd server.
-     *
-     * @param mixed $job The job to be buried.
+     * @param $job
      */
     private function buryJob($job):void
     {
@@ -390,21 +309,21 @@ class BeanstalkClient extends Injectable
         try {
             $this->queue->bury($job);
         } catch (Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            Util::sysLogMsg(__METHOD__ . '_EXCEPTION', $e->getMessage(), LOG_ERR);
         }
     }
 
     /**
-     * Returns the body of the message.
+     * Gets request body
      *
-     * @return string The body of the message.
+     * @return string
      */
     public function getBody(): string
     {
         if (is_array($this->message)
             && isset($this->message['inbox_tube'])
             && count($this->message) === 2) {
-            // If it's a request that requires a response, the data was passed as the first element of the array.
+            // Это поступил request, треует ответа. Данные были переданы первым параметром массива.
             $message_data = $this->message[0];
         } else {
             $message_data = $this->message;
@@ -414,29 +333,22 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Sends a reply message.
+     * Sends response to queue
      *
-     * @param mixed $response The response message.
-     * @return void
+     * @param $response
      */
     public function reply($response): void
     {
         if (isset($this->message['inbox_tube'])) {
             $this->queue->useTube($this->message['inbox_tube']);
-            try {
-                $this->queue->put($response);
-            } catch (\Throwable $exception) {
-                CriticalErrorsHandler::handleExceptionWithSyslog($exception);
-            }
+            $this->queue->put($response);
             $this->queue->useTube($this->tube);
         }
     }
 
     /**
-     * Sets the error handler for the Beanstalk client.
      *
-     * @param mixed $handler The error handler.
-     * @return void
+     * @param $handler
      */
     public function setErrorHandler($handler): void
     {
@@ -444,10 +356,7 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Sets the timeout handler for the Beanstalk client.
-     *
-     * @param mixed $handler The timeout handler.
-     * @return void
+     * @param $handler
      */
     public function setTimeoutHandler($handler): void
     {
@@ -455,9 +364,7 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Returns the number of times the Beanstalk client has reconnected.
-     *
-     * @return int The number of reconnects.
+     * @return int
      */
     public function reconnectsCount(): int
     {
@@ -465,10 +372,11 @@ class BeanstalkClient extends Injectable
     }
 
     /**
-     * Retrieves messages from a tube.
+     * Gets all messages from tube and clean it
      *
-     * @param string $tube The name of the tube. If empty, uses the default tube.
-     * @return array An array of messages retrieved from the tube.
+     * @param string $tube
+     *
+     * @return array
      */
     public function getMessagesFromTube(string $tube = ''): array
     {

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,20 +27,11 @@ use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
-/**
- * Class PHPConf
- *
- * Represents the PHP configuration.
- *
- * @package MikoPBX\Core\System\Configs
- */
 class PHPConf extends Injectable
 {
 
     /**
-     * Relocates PHP error log to the storage mount.
-     *
-     * @return void
+     * Relocate PHP error log to storage mount
      */
     public static function setupLog(): void
     {
@@ -57,9 +48,8 @@ class PHPConf extends Injectable
 
 
     /**
-     * Returns the PHP error log file path.
-     *
-     * @return string The log file path.
+     * Returns php error log filepath
+     * @return string
      */
     public static function getLogFile(): string
     {
@@ -69,9 +59,7 @@ class PHPConf extends Injectable
     }
 
     /**
-     * Rotates the PHP error log.
-     *
-     * @return void
+     * Rotate php error log
      */
     public static function rotateLog(): void
     {
@@ -92,7 +80,7 @@ class PHPConf extends Injectable
     postrotate
     endscript
 }";
-        // TODO::Add restart PHP-FPM after rotation
+        // TODO::Доделать рестарт PHP-FPM после обновление лога
         $di     = Di::getDefault();
         if ($di !== null){
             $varEtcDir = $di->getConfig()->path('core.varEtcDir');
@@ -111,9 +99,7 @@ class PHPConf extends Injectable
     }
 
     /**
-     * Sets up the timezone for PHP.
-     *
-     * @return void
+     * Setup timezone for PHP
      */
     public static function phpTimeZoneConfigure(): void
     {
@@ -129,19 +115,15 @@ class PHPConf extends Injectable
     }
 
     /**
-     * Restarts php-fpm.
-     *
-     * @return void
-     */
+     *   Restart php-fpm
+     **/
     public static function reStart(): void
     {
         $phpFPMPath = Util::which('php-fpm');
-
-        // Send graceful shutdown signal
+        // Отправляем запрос на graceful shutdown;
         Processes::mwExec('kill -SIGQUIT "$(cat /var/run/php-fpm.pid)"');
         usleep(100000);
-
-        // Forcefully terminate
+        // Принудительно завершаем.
         Processes::killByName('php-fpm');
         Processes::mwExec("{$phpFPMPath} -c /etc/php.ini");
     }

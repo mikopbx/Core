@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,39 +30,25 @@ class SoundFiles extends ModelsBase
 {
     public const CATEGORY_MOH = 'moh';
     public const CATEGORY_CUSTOM = 'custom';
-
     /**
      * @Primary
      * @Identity
      * @Column(type="integer", nullable=false)
      */
     public $id;
-
     /**
-     * Human-readable name for the sound file displayed in the interface
-     *
      * @Column(type="string", nullable=true)
      */
-    public ?string $name = '';
-
+    public ?string  $name = '';
     /**
-     * Path to the sound file
-     *
      * @Column(type="string", nullable=true)
      */
-    public ?string $path = '';
-
+    public ?string  $path = '';
     /**
-     * Category of the sound file, either "moh" for music on hold or "custom" for a custom file
-     *
      * @Column(type="string", nullable=true)
      */
-    public ?string $category = '';
+    public ?string  $category = '';
 
-
-    /**
-     * Initialize the model.
-     */
     public function initialize(): void
     {
         $this->setSource('m_SoundFiles');
@@ -72,10 +58,10 @@ class SoundFiles extends ModelsBase
             CallQueues::class,
             'periodic_announce_sound_id',
             [
-                "alias" => "CallQueues",
+                "alias"      => "CallQueues",
                 "foreignKey" => [
                     "allowNulls" => true,
-                    "action" => Relation::ACTION_RESTRICT,
+                    "action"     => Relation::ACTION_RESTRICT,
                 ],
             ]
         );
@@ -84,10 +70,10 @@ class SoundFiles extends ModelsBase
             CallQueues::class,
             'moh_sound_id',
             [
-                "alias" => "CallQueues",
+                "alias"      => "CallQueues",
                 "foreignKey" => [
                     "allowNulls" => true,
-                    "action" => Relation::ACTION_RESTRICT,
+                    "action"     => Relation::ACTION_RESTRICT,
                 ],
             ]
         );
@@ -97,10 +83,10 @@ class SoundFiles extends ModelsBase
             OutWorkTimes::class,
             'audio_message_id',
             [
-                "alias" => "OutWorkTimes",
+                "alias"      => "OutWorkTimes",
                 "foreignKey" => [
                     "allowNulls" => true,
-                    "action" => Relation::ACTION_RESTRICT,
+                    "action"     => Relation::ACTION_RESTRICT,
                 ],
             ]
         );
@@ -109,10 +95,10 @@ class SoundFiles extends ModelsBase
             IvrMenu::class,
             'audio_message_id',
             [
-                "alias" => "IvrMenu",
+                "alias"      => "IvrMenu",
                 "foreignKey" => [
                     "allowNulls" => true,
-                    "action" => Relation::ACTION_RESTRICT,
+                    "action"     => Relation::ACTION_RESTRICT,
                 ],
             ]
         );

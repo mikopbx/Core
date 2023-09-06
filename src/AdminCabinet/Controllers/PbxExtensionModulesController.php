@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,11 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
-use MikoPBX\AdminCabinet\Forms\LicensingChangeLicenseKeyForm;
-use MikoPBX\AdminCabinet\Forms\LicensingGetKeyForm;
 use MikoPBX\AdminCabinet\Forms\PbxExtensionModuleSettingsForm;
-use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use Phalcon\Text;
 
@@ -34,8 +30,12 @@ class PbxExtensionModulesController extends BaseController
      */
     public function indexAction(): void
     {
+        $licKey = PbxSettings::getValueByKey('PBXLicense');
+        if (strlen($licKey) !== 28
+            || ! Text::startsWith($licKey, 'MIKO-')) {
+            $licKey = '';
+        }
 
-        // Installed modules tab //
         $modules     = PbxExtensionModules::getModulesArray();
         $modulesList = [];
         foreach ($modules as $module) {
@@ -52,26 +52,7 @@ class PbxExtensionModulesController extends BaseController
             ];
         }
         $this->view->modulelist = $modulesList;
-
-        // License key management tab //
-        $licKey = PbxSettings::getValueByKey('PBXLicense');
-        if (strlen($licKey) !== 28
-            || ! Text::startsWith($licKey, 'MIKO-')) {
-            $licKey = '';
-        }
-
-        // License key form
-        $this->view->setVar('changeLicenseKeyForm',
-            new LicensingChangeLicenseKeyForm(null, ['licKey' => $licKey]));
-
-        // Coupon form
-        $this->view->setVar('activateCouponForm', new LicensingActivateCouponForm());
-
-        // Get new license key form
-        $this->view->setVar('getKeyForm', new LicensingGetKeyForm());
-
-        $this->view->setVar('submitMode', null);
-
+        $this->view->licenseKey = $licKey;
     }
 
     /**
@@ -91,7 +72,7 @@ class PbxExtensionModulesController extends BaseController
             $value                       = [
                 'uniqid'        => $uniqid,
                 'href'          => $this->url->get($unCamelizedControllerName),
-                'group'         => 'modules',
+                'group'         => '',
                 'iconClass'     => 'puzzle piece',
                 'caption'       => "Breadcrumb$uniqid",
                 'showAtSidebar' => false,
@@ -107,13 +88,13 @@ class PbxExtensionModulesController extends BaseController
                 "Breadcrumb$uniqid"
             );
         $this->view->submitMode = null;
-        $this->view->indexUrl   = 'pbx-extension-modules/index/';
+        $this->view->indexUrl   = $unCamelizedControllerName;
     }
 
     /**
      * Saves how to show the module in sidebar settings into PbxSettings
      */
-    public function saveAction(): void
+    public function saveModuleSettingsAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;
@@ -142,6 +123,25 @@ class PbxExtensionModulesController extends BaseController
             return;
         }
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
+        $this->view->success = true;
+    }
+
+
+    /**
+     * Prepares sidebar additional items for modules
+     */
+    public function sidebarIncludeAction(): void
+    {
+        $result  = [];
+        $modules = PbxExtensionModules::getEnabledModulesArray();
+        foreach ($modules as $module) {
+            $menuSettings         = "AdditionalMenuItem{$module['uniqid']}";
+            $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
+            if ($previousMenuSettings !== null) {
+                $result['items'][] = json_decode($previousMenuSettings->value, true);
+            }
+        }
+        $this->view->message = $result;
         $this->view->success = true;
     }
 

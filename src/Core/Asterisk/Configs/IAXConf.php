@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,26 +24,16 @@ use MikoPBX\Common\Models\Iax;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\Util;
 
-/**
- * Class IAXConf
- *
- * Represents a configuration class for IAX.
- *
- * @package MikoPBX\Core\Asterisk\Configs
- */
-class IAXConf extends AsteriskConfigClass
+class IAXConf extends CoreConfigClass
 {
-    // The module hook applying priority
-    public int $priority = 600;
-
     public const TYPE_IAX2 = 'IAX2';
 
     protected string $description = 'iax.conf';
 
     /**
-     * Generates the contexts for extensions.
+     * Описываем контексты.
      *
-     * @return string The generated contexts.
+     * @return string
      */
     public function extensionGenContexts(): string
     {
@@ -57,7 +47,8 @@ class IAXConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the configuration for the iax.conf and iaxprov.conf files.
+     * Генератор iax.conf
+     *
      *
      * @return void
      */
@@ -67,15 +58,15 @@ class IAXConf extends AsteriskConfigClass
         $conf .= $this->generateGeneral();
         $conf .= $this->generateProviders();
 
-        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/iax.conf', $conf);
         file_put_contents($this->config->path('asterisk.astetcdir') . '/iaxprov.conf', "[default]\ncodec=alaw\n");
     }
 
     /**
-     * Generates the [general] section in iax.conf.
+     * Генератора секции general iax.conf
      *
-     * @return string The generated [general] section.
+     *
+     * @return string
      */
     private function generateGeneral(): string
     {
@@ -94,9 +85,10 @@ class IAXConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the provider sections in iax.conf.
+     * Генератор секции провайдеров в iax.conf
      *
-     * @return string The generated provider sections.
+     *
+     * @return string
      */
     private function generateProviders(): string
     {
@@ -125,9 +117,9 @@ class IAXConf extends AsteriskConfigClass
             $prov_config .= "setvar=contextID={$provider['uniqid']}-incoming".PHP_EOL;
             $prov_config .= "\n";
 
-            // Formulate the registration string
+            // Формируем строку регистрации.
             if ($provider['noregister'] == 0) {
-                // Registration is only required if the current host has a dynamic IP
+                // Регистрация нужна только в том случае, если текущий хост имеет динаимческий ip.
                 $user   = $provider['username'];
                 $secret = (trim($provider['secret']) == '') ? '' : ":{$provider['secret']}";
                 $host   = $provider['host'];
@@ -140,9 +132,7 @@ class IAXConf extends AsteriskConfigClass
     }
 
     /**
-     * Retrieves data for IAX2 providers.
-     *
-     * @return array The provider data.
+     * Получение данных по IAX2 провайдерам.
      */
     private function getProviders(): array
     {

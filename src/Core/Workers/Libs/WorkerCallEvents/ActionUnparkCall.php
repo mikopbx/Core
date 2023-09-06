@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,38 +23,23 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
-/**
- * Class ActionUnparkCall
- *
- * Handles the action of removing a call from parking.
- *
- * @package MikoPBX\Core\Workers\Libs\WorkerCallEvents
- */
 class ActionUnparkCall
 {
     /**
-     * Executes the action of removing a call from parking.
-     *
-     * @param WorkerCallEvents $worker The worker instance.
-     * @param array $data The event data.
+     * Снятие вызова с парковки.
+     * @param WorkerCallEvents $worker
+     * @param $data
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, $data):void
     {
         $data['recordingfile'] = "";
-
-        // Enable recording if monitoring is enabled.
-        if ($worker->enableMonitor($data['src_num'], $data['dst_num'])) {
-            $data['recordingfile'] = $worker->MixMonitor($data['dst_chan'], $data['UNIQUEID'], '', '', 'ActionUnparkCall');
+        if($worker->enableMonitor($data['src_num'], $data['dst_num'])){
+            $data['recordingfile'] = $worker->MixMonitor($data['dst_chan'], $data['UNIQUEID'], null, null, 'ActionUnparkCall');
         }
-
-        // Insert data to DB.
         InsertDataToDB::execute($data);
         if (is_array($data['data_parking'])) {
-            // Insert parking data to DB if available.
             InsertDataToDB::execute($data['data_parking']);
         }
-
-        // Delete previously recorded rows.
         $filter = [
             "linkedid=:linkedid: AND src_chan=:src_chan:",
             'bind' => [

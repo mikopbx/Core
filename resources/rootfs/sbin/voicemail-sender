@@ -9,13 +9,6 @@ use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Common\Models\PbxSettings;
 
 require_once('Globals.php');
-
-/**
- * Replaces placeholders in a string with corresponding values from an array.
- *
- * @param string $src
- * @param array $params
- */
 function replaceParams(string &$src, array $params):void
 {
     foreach ($params as $key => $value){

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,22 +19,20 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Text;
+use Phalcon\Forms\Form;
 
 /**
  * Class ConferenceRoomEditForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property TranslationProvider translation
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class ConferenceRoomEditForm extends BaseForm
+class ConferenceRoomEditForm extends Form
 {
-    public function initialize($entity = null, $options = null): void
+    public function initialize(): void
     {
-        parent::initialize($entity, $options);
-
         // ID
         $this->add(new Hidden('id'));
 
@@ -46,8 +44,6 @@ class ConferenceRoomEditForm extends BaseForm
 
         // Extension
         $this->add(new Text('extension'));
-
-        // PinCode
         $this->add(new Text('pinCode'));
     }
 }

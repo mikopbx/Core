@@ -16,7 +16,7 @@
     </div>
 </div>
 <div class="ui hidden divider"></div>
-<table id="cdr-table" class="ui small very compact single line unstackable table ">
+<table id="cdr-table" class="ui small very compact single line table">
     <thead>
     <tr>
         <th class="one wide"></th>

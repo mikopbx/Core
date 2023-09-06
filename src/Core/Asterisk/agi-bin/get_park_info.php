@@ -2,7 +2,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,9 @@ use MikoPBX\Core\Asterisk\AGI;
 
 require_once 'Globals.php';
 
-/**
- * Get active channels by extension.
- *
- * @param string $EXTEN The extension to retrieve active channels for.
- * @return string An associative array where the key is the Linkedid and the value is an array of channels.
- */
-function getActiveIdChannels(string $EXTEN):string
+// Функция позволяет получить активные каналы. 
+// Возвращает ассоциативный массив. Ключ - Linkedid, значение - массив каналов. 
+function getActiveIdChannels($EXTEN)
 {
     $ParkeeChannel = '';
     $am            = Util::getAstManager('off');

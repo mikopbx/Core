@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,18 +19,11 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 require_once 'Globals.php';
-
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use GuzzleHttp;
 use Psr\Http\Message\ResponseInterface;
 
-
-/**
- * The WorkerDownloader class is responsible for handling the download worker process.
- *
- * @package MikoPBX\PBXCoreREST\Workers
- */
 class WorkerDownloader extends WorkerBase
 {
     private string $old_memory_limit;
@@ -45,13 +38,13 @@ class WorkerDownloader extends WorkerBase
     /**
      * WorkerDownloader entry point.
      *
-     * @param array $argv The command-line arguments passed to the worker.
+     * @param $params
      */
-    public function start(array $argv): void
+    public function start($params): void
     {
         $this->lastUpdate=time();
         $this->old_memory_limit = ini_get('memory_limit');
-        $filename = $argv[2]??'';
+        $filename = $params[2]??'';
         if (file_exists($filename)) {
             $this->settings = json_decode(file_get_contents($filename), true);
         } else {
@@ -119,9 +112,8 @@ class WorkerDownloader extends WorkerBase
     }
 
     /**
-     * Retrieves the headers from the server response.
-     *
-     * @param ResponseInterface $response The response object.
+     * Получение заголовков ответа сервера.
+     * @param ResponseInterface $response
      * @return void
      */
     public function getHeaders(ResponseInterface $response):void {
@@ -129,14 +121,14 @@ class WorkerDownloader extends WorkerBase
     }
 
     /**
-     * Processes progress information.
-     *
-     * @param int $downloadTotal The total size of the download.
-     * @param int $downloadedBytes The number of bytes downloaded.
-     *
+     * Обработка сведений о прогрессе.
+     * @param $downloadTotal
+     * @param $downloadedBytes
+     * @param $uploadTotal
+     * @param $uploadedBytes
      * @return void
      */
-    public function progress(int $downloadTotal, int $downloadedBytes) :void
+    public function progress( $downloadTotal, $downloadedBytes, $uploadTotal, $uploadedBytes) :void
     {
         if ($downloadedBytes === 0) {
             return;
@@ -145,8 +137,8 @@ class WorkerDownloader extends WorkerBase
         $new_progress = $downloadedBytes / $downloadTotal * 100;
         $delta = $new_progress - $this->progress;
         if ($delta > 1) {
-            // Script execution time limit to prevent "hanging".
-            // If there's no progress, terminate the execution.
+            // Лимит на работу скрипта. Чтобы исключить "Зависание".
+            // Если нет прогресса, то завершать работу.
             $this->progress = round($new_progress);
             $this->progress = min($this->progress, 99);
             file_put_contents($this->progress_file, $this->progress);
@@ -188,4 +180,4 @@ class WorkerDownloader extends WorkerBase
 }
 
 // Start worker process
-WorkerDownloader::startWorker($argv??[], false);
+WorkerDownloader::startWorker($argv??null, false);

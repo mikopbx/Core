@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Form;
 
@@ -27,14 +26,13 @@ use Phalcon\Forms\Form;
  * Class LicensingActivateCouponForm
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property TranslationProvider translation
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class LicensingActivateCouponForm extends BaseForm
+class LicensingActivateCouponForm extends Form
 {
-    public function initialize($entity = null, $options = null): void
-    {
-        parent::initialize($entity, $options);
 
+    public function initialize(): void
+    {
         $this->add(new Text('coupon'));
     }
 }

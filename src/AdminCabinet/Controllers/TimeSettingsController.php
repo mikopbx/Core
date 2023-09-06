@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ class TimeSettingsController extends BaseController
 {
 
     /**
-     * Form for editing and configuring time settings on the station.
+     * Форма редактирования и настроек времени на станции
      */
     public function modifyAction(): void
     {
@@ -45,9 +45,9 @@ class TimeSettingsController extends BaseController
     }
 
     /**
-     * Get the array of time settings.
+     * Массив настроек времени
      *
-     * @return array Array of time settings keys.
+     * @return array
      */
     private function getTimeSettingsArray(): array
     {
@@ -59,9 +59,9 @@ class TimeSettingsController extends BaseController
     }
 
     /**
-     * Generate an array of time zones.
+     * Генерация массива тайм зон
      *
-     * @return array Array of time zones.
+     * @return array
      */
     private function generateTimezoneList(): array
     {

@@ -94,9 +94,8 @@
     {{ form.render('description') }}
 </div>
 
-{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainFields')]) }}
 
 {{ partial("partials/submitbutton",['indexurl':'asterisk-managers/index']) }}
 
 
-{{ end_form() }}
+</form>

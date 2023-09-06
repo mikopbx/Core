@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ use SimpleXMLElement;
  * Class LicenseManagementProcessor
  *
  * @package MikoPBX\PBXCoreREST\Lib
- * @property \MikoPBX\Common\Providers\MarketPlaceProvider     license
+ * @property \MikoPBX\Common\Providers\LicenseProvider     license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
  * @property \Phalcon\Config                               config
  */
@@ -40,11 +40,12 @@ class LicenseManagementProcessor extends Injectable
 {
 
     /**
-     * Process the license callback.
+     * Processes requests to licensing system
      *
-     * @param array $request The request data.
+     * @param array $request
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
+     *
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -77,12 +78,8 @@ class LicenseManagementProcessor extends Injectable
                 $proc = new LicenseManagementProcessor();
                 $res = $proc->sendMetricsAction();
                 break;
-            case 'ping':
-                $proc = new LicenseManagementProcessor();
-                $res = $proc->pingAction();
-                break;
             default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+                $res->messages[] = "Unknown action - {$action} in licenseCallBack";
         }
 
         $res->function = $action;
@@ -91,27 +88,29 @@ class LicenseManagementProcessor extends Injectable
     }
 
     /**
-     * Reset license key.
+     * Reset license key
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
     private function resetLicenseAction():PBXApiResult
     {
         $mikoPBXConfig = new MikoPBXConfig();
         $res           = new PBXApiResult();
         $res->processor = __METHOD__;
-        $mikoPBXConfig->resetGeneralSettings('PBXLicense');
+        $mikoPBXConfig->deleteGeneralSettings('PBXLicense');
         $res->success = true;
         $this->license->changeLicenseKey('');
         return $res;
     }
 
+
+
     /**
-     * Check and update license key on database.
+     * Check and update license key on database
      *
      * @param array $data
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
     private function processUserRequestAction(array $data): PBXApiResult
     {
@@ -127,27 +126,25 @@ class LicenseManagementProcessor extends Injectable
                     $mikoPBXConfig->setGeneralSettings('PBXLicense', $data['licKey']);
                     $this->license->changeLicenseKey($data['licKey']);
                     $this->license->addTrial('11'); // MikoPBX forever license
-                    $res->data['PBXLicense'] = $data['licKey'];
-                    $res->messages['info'][] = $this->translation->_('lic_SuccessfulActivation');
                     $res->success = true;
                 } elseif ( ! empty($licenseInfo) && strpos($licenseInfo, '2026') !== false) {
-                    $res->messages['license'][] = $this->translation->_('lic_FailedCheckLicense2026');
                     $res->success    = false;
+                    $res->messages[] = $this->translation->_('lic_FailedCheckLicense2026');
                 } elseif ( ! empty($licenseInfo)) {
-                    $res->messages['license'][] = $licenseInfo;
+                    $res->messages[] = $licenseInfo;
                     $res->success    = false;
                 } else {
-                    $res->messages['license'][] = $this->translation->_('lic_FailedCheckLicense');
+                    $res->messages[] = $this->translation->_('lic_FailedCheckLicense');
                     $res->success    = false;
                 }
             }
             if ( ! empty($data['coupon'])) {
                 $result = $this->license->activateCoupon($data['coupon']);
                 if ($result === true) {
-                    $res->messages['info'][]= $this->translation->_('lic_SuccessfulCouponActivation');
+                    $res->messages[] = $this->translation->_('lic_SuccessfulСuponActivation');
                     $res->success    = true;
                 } else {
-                    $res->messages['license'][]= $this->license->translateLicenseErrorMessage((string)$result);
+                    $res->messages[] = $this->license->translateLicenseErrorMessage((string)$result);
                     $res->success    = false;
                 }
             }
@@ -159,20 +156,20 @@ class LicenseManagementProcessor extends Injectable
                 $this->license->changeLicenseKey($newLicenseKey);
                 $res->success    = true;
                 $res->data['PBXLicense'] = $newLicenseKey;
-                $res->messages['info'] = $this->translation->_('lic_SuccessfulActivation');
             } else {
                 // No internet connection, or wrong data sent to license server, or something else
-                $res->messages['license'][] = $this->license->translateLicenseErrorMessage($newLicenseKey);
+                $res->messages[] = $this->license->translateLicenseErrorMessage($newLicenseKey);
                 $res->success    = false;
             }
         }
         return $res;
     }
 
+
     /**
-     * Returns license info from license server by key.
+     * Returns license info from license server by key
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
     private function getLicenseInfoAction(): PBXApiResult
     {
@@ -186,16 +183,16 @@ class LicenseManagementProcessor extends Injectable
             $res->success             = true;
             $res->data['licenseInfo'] = json_encode($licenseInfo);
         } else {
-            $res->messages['error'][] = $this->translation->_('lic_WrongLicenseKeyOrEmpty');
+            $res->messages[] = 'License key is wrong or empty';
         }
 
         return $res;
     }
 
     /**
-     * Check for free MikoPBX base license.
+     * Check for free MikoPBX base license
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
     private function getMikoPBXFeatureStatusAction(): PBXApiResult
     {
@@ -205,7 +202,7 @@ class LicenseManagementProcessor extends Injectable
         if ($checkBaseFeature['success'] === false) {
             $res->success = false;
             $textError = (string)($checkBaseFeature['error']??'');
-            $res->messages['license'][] = $this->license->translateLicenseErrorMessage($textError);
+            $res->messages[] = $this->license->translateLicenseErrorMessage($textError);
         } else {
             $res->success = true;
         }
@@ -219,7 +216,7 @@ class LicenseManagementProcessor extends Injectable
      *
      * @param array $data
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
     private function captureFeatureForProductIdAction(array $data): PBXApiResult
     {
@@ -243,7 +240,7 @@ class LicenseManagementProcessor extends Injectable
                 $result = $this->license->captureFeature($licFeatureId);
                 if ($result['success'] === false) {
                     $textError = (string)($result['error']??'');
-                    $res->messages['license'][] = $this->license->translateLicenseErrorMessage($textError);
+                    $res->messages[] = $this->license->translateLicenseErrorMessage($textError);
                     $res->success = false;
                 }
             }
@@ -252,9 +249,9 @@ class LicenseManagementProcessor extends Injectable
     }
 
     /**
-     * Sends PBX metrics to the license server.
+     * Sends PBX metrics to the MIKO company
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @return \MikoPBX\PBXCoreREST\Lib\PBXApiResult
      */
     private function sendMetricsAction(): PBXApiResult
     {
@@ -282,20 +279,6 @@ class LicenseManagementProcessor extends Injectable
 
         $this->license->sendLicenseMetrics($licenseKey, $dataMetrics);
 
-        return $res;
-    }
-
-    /**
-     * Sends ping request to the license server.
-     *
-     * @return PBXApiResult An object containing the result of the API call.
-     */
-    private function pingAction(): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $result = $this->license->ping();
-        $res->success= $result['success'] === true;
         return $res;
     }
 }

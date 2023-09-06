@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,12 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 
-/**
- * Class PBXApiResult
- *
- * @package MikoPBX\PBXCoreREST\Lib
- *
- */
 class PBXApiResult
 {
+    public const SUCCESS = 'Success';
+
+    public const ERROR = 'Error';
+
     /**
      * Request result
      *
@@ -63,9 +61,7 @@ class PBXApiResult
      */
     public string $function;
 
-    /**
-     * Creates a new instance of PBXApiResult.
-     */
+
     public function __construct()
     {
         $this->success   = false;
@@ -79,7 +75,7 @@ class PBXApiResult
     /**
      * Prepare structured result
      *
-     * @return array The structured result as an array
+     * @return array
      */
     public function getResult(): array
     {

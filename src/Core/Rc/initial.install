@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,316 +19,152 @@
 
 namespace MikoPBX\Core\Rc;
 
-use MikoPBX\Common\Providers\ConfigProvider;
-use Phalcon\Config;
 use Phalcon\Di;
 use MikoPBX\Core\System\{Processes, Util, Storage, System, MikoPBXConfig};
-
 require_once('Globals.php');
 
-/**
- * Class PBXInstaller
- * Handles the installation of MikoPBX onto a selected drive
- * @package MikoPBX\Core\Rc
- */
-class PBXInstaller extends Di\Injectable
-{
-    // Storage instance
-    private Storage $storage;
+$fp = fopen('php://stdin', 'rb');
+$storage = new Storage();
 
-    /**
-     * Access to the /etc/inc/mikopbx-settings.json values
-     *
-     * @var \Phalcon\Config
-     */
-    private Config $config;
-
-    private array $valid_disks = [];
-    private array $selected_disk = ['size' => 0, 'id' => ''];
-    private string $target_disk = '';
-
-    // Path to system commands mount and umount
-    private string $mountPath = '';
-    private string $uMountPath = '';
-
-    // File pointer
-    private $fp;
-
-    /**
-     * PBXInstaller constructor.
-     * Initiates the installation process.
-     */
-    public function __construct()
-    {
-        $this->storage = new Storage();
-
-        $this->config = Di::getDefault()->getShared(ConfigProvider::SERVICE_NAME);
-
-        $this->fp = fopen('php://stdin', 'rb');
-
-        $this->mountPath = Util::which('mount');
-        $this->uMountPath = Util::which('umount');
-
-        $this->run();
+$valid_disks = [];
+$selected_disk = ['size' => 0, 'id' => ''];
+$all_hdd = $storage->getAllHdd();
+foreach ($all_hdd as $disk) {
+    $other_info = '';
+    if(true === $disk['sys_disk']){
+        $other_info.=' System Disk ';
+    }
+    if(true === $disk['mounted']){
+        $other_info.=' Mounted ';
+    }
+    if($other_info !== ''){
+        $other_info = "[ \033[31;1m{$other_info}\033[0m ]";
+    }
+    if($selected_disk['size'] === 0 || $selected_disk['size'] > $disk['size'] ){
+        $selected_disk = $disk;
+    }
+    if($disk['size'] < 400){
+        continue;
     }
 
-    /**
-     * Initiates the installation steps.
-     */
-    public function run()
-    {
-        $this->scanAllHdd();
-        $this->processValidDisks();
-        $this->promptForTargetDisk();
-        $this->confirmInstallation();
-        $this->proceedInstallation();
-    }
-
-    /**
-     * Scans all connected HDDs.
-     */
-    private function scanAllHdd()
-    {
-        $all_hdd = $this->storage->getAllHdd();
-        foreach ($all_hdd as $disk) {
-            $this->processDisk($disk);
-        }
-    }
-
-    /**
-     * Process each disk and save valid ones.
-     *
-     * @param array $disk Information about the disk
-     */
-    private function processDisk(array $disk)
-    {
-        // Initialize a variable to hold additional info
-        $other_info = '';
-
-        // Add info if the disk is a system disk or is mounted
-        if (true === $disk['sys_disk']) {
-            $other_info .= ' System Disk ';
-        }
-        if (true === $disk['mounted']) {
-            $other_info .= ' Mounted ';
-        }
-
-        // Add a visual effect to the additional info if it's not empty
-        if ($other_info !== '') {
-            $other_info = "[ \033[31;1m{$other_info}\033[0m ]";
-        }
-
-        // Update the selected disk if the current disk's size is smaller
-        if ($this->selected_disk['size'] === 0 || $this->selected_disk['size'] > $disk['size']) {
-            $this->selected_disk = $disk;
-        }
-
-        // Ignore disks that are less than 400 megabytes
-        if ($disk['size'] < 400) {
-            return;
-        }
-
-        // Add the disk to the list of valid disks
-        $this->valid_disks[$disk['id']] = "  - {$disk['id']}, {$disk['size_text']}, {$disk['vendor']} $other_info \n";
-    }
-
-    /**
-     * Process the valid disks and select one for installation.
-     */
-    private function processValidDisks(): void
-    {
-        // If no valid disks were found, print a message and sleep for 3 seconds, then return 0
-        if (count($this->valid_disks) === 0) {
-            echo "\n " . Util::translate('Valid disks not found...') . " \n";
-            sleep(3);
-            exit(0);
-        }
-
-        // If valid disks were found, print prompts for the user to select a disk
-        echo "\n " . Util::translate('Select the drive to install the system.') . ' ';
-        echo "\n " . Util::translate('Selected disk:') . "\033[33;1m [{$this->selected_disk['id']}] \033[0m \n\n";
-        echo "\n " . Util::translate('Valid disks are:') . " \n\n";
-
-        // Print each valid disk
-        foreach ($this->valid_disks as $disk) {
-            echo $disk;
-        }
-        echo "\n";
-    }
-
-    /**
-     * Prompt the user to select a target disk.
-     *
-     * @return void The selected disk id
-     */
-    private function promptForTargetDisk(): void
-    {
-        // Prompt the user to enter a device name until a valid device name is entered
-        do {
-            echo "\n" . Util::translate('Enter the device name:') . Util::translate('(default value = ') . $this->selected_disk['id'] . ') :';
-            $this->target_disk = trim(fgets($this->fp));
-            if ($this->target_disk === '') {
-                $this->target_disk = $this->selected_disk['id'];
-            }
-        } while (!array_key_exists($this->target_disk, $this->valid_disks));
-
-    }
-
-    /**
-     * Confirm the installation from the user.
-     */
-    private function confirmInstallation()
-    {
-        // Warning and confirmation prompt
-        echo '
-
-*******************************************************************************
-* ' . Util::translate('WARNING') . '!
-* ' . Util::translate('The PBX is about to be installed onto the') . " \033[33;1m{$this->target_disk}\033[0m.
-* - " . Util::translate('everything on this device will be erased!') . '
-* - ' . Util::translate('this cannot be undone!') . '
-*******************************************************************************
-
-' . Util::translate('The PBX will reboot after installation.') . '
-
-' . Util::translate('Do you want to proceed? (y/n): ');
-
-        // If the user doesn't confirm, save the system disk info to a temp file and exit
-        if (strtolower(trim(fgets($this->fp))) !== 'y') {
-            sleep(3);
-            exit(0);
-        }
-
-    }
-
-    /**
-     * Start the installation process.
-     */
-    private function proceedInstallation()
-    {
-        // Save the target disk to a file
-        file_put_contents( $this->config->path('core.varEtcDir') . '/cfdevice', $this->target_disk);
-
-        // Start the installation process
-        echo "Installing PBX...\n";
-        $this->unmountPartitions();
-        $this->unpackImage();
-        $this->createStoragePartition();
-        $this->mountStorage();
-        $this->copyConfiguration();
-
-        Processes::mwExec("{$this->uMountPath} /mnttmp");
-        echo "done\n";
-
-        // Reboot
-        file_put_contents('/tmp/ejectcd', '');
-        System::rebootSync();
-    }
-
-    /**
-     * Unmount the partitions of the selected disk.
-     */
-    private function unmountPartitions()
-    {
-        echo " - Unmounting partitions...\n";
-        $grepPath = Util::which('grep');
-        $busyboxPath = Util::which('busybox');
-        $awkPath = Util::which('awk');
-
-        // Get all mounted partitions
-        $mnt_dirs = [];
-        Processes::mwExec("{$this->mountPath} | {$grepPath} '^/dev/{$this->target_disk}' | {$busyboxPath} {$awkPath} '{print $3}'", $mnt_dirs);
-        foreach ($mnt_dirs as $mnt) {
-            // Terminate all related processes.
-            Processes::mwExec("/sbin/shell_functions.sh killprocesses '$mnt' -TERM 0;");
-            // Unmount.
-            Processes::mwExec("{$this->uMountPath} {$mnt}");
-        }
-    }
-
-    /**
-     * Unpack the image to the target disk.
-     */
-    private function unpackImage()
-    {
-        echo " - Unpacking img...\n";
-        $pvPath = Util::which('pv');
-        $ddPath = Util::which('dd');
-        $gunzipPath = Util::which('gunzip');
-
-        $install_cmd = 'exec < /dev/console > /dev/console 2>/dev/console;' .
-            "{$pvPath} -p /offload/firmware.img.gz | {$gunzipPath} | {$ddPath} of=/dev/{$this->target_disk} bs=512 2> /dev/null";
-        passthru($install_cmd);
-    }
-
-    /**
-     * Create the storage partition on the target disk.
-     */
-    private function createStoragePartition()
-    {
-        echo " - Create storage partition...\n";
-        passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial.storage.part.four create /dev/{$this->target_disk}");
-    }
-
-    /**
-     * Mount the storage partition.
-     */
-    private function mountStorage()
-    {
-        // Connect the disk for data storage.
-        include '/etc/rc/connect.storage';
-
-        // Back up the table with disk information.
-        echo 'Copying configuration...';
-        Util::mwMkdir('/mnttmp');
-
-        $partName = Storage::getDevPartName("/dev/{$this->target_disk}", '3');
-
-        // Mount the disk with settings.
-        Processes::mwExec("{$this->mountPath} -w -o noatime /dev/{$partName} /mnttmp");
-    }
-
-    /**
-     * Copy the configuration to the target disk.
-     */
-    private function copyConfiguration()
-    {
-        $mikoPBXconfig = new MikoPBXConfig();
-        $lang = $mikoPBXconfig->getGeneralSettings('SSHLanguage');
-
-        $filename = $this->config->path('database.dbfile');
-        $result_db_file = '/mnttmp/conf/mikopbx.db';
-
-        /** Copy the settings database file. */
-        $cpPath = Util::which('cp');
-        $sqlite3Path = Util::which('sqlite3');
-        $grepPath = Util::which('grep');
-        $dmpDbFile = tempnam('/tmp', 'storage');
-
-        // Save dump of settings.
-        $tables = ['m_Storage', 'm_LanInterfaces'];
-        $grepOptions = '';
-        foreach ($tables as $table) {
-            $grepOptions .= " -e '^INSERT INTO {$table}'";
-            $grepOptions .= " -e '^INSERT INTO \"{$table}'";
-        }
-        system("{$sqlite3Path} {$filename} .dump | {$grepPath} {$grepOptions} > " . $dmpDbFile);
-
-        // If another language is selected - use another settings file.
-        $filename_lang = "/offload/conf/mikopbx-{$lang}.db";
-        if ($lang !== 'en' && file_exists($filename_lang)) {
-            $filename = $filename_lang;
-        }
-
-        // Replace the settings file.
-        Processes::mwExec("{$cpPath} {$filename} {$result_db_file}");
-        system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_Storage'");
-        system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_LanInterfaces'");
-
-        // Restore settings from backup file.
-        system("{$sqlite3Path} {$result_db_file} < {$dmpDbFile}");
-        unlink($dmpDbFile);
-    }
+    $valid_disks[$disk['id']] = "  - {$disk['id']}, {$disk['size_text']}, {$disk['vendor']} $other_info \n";
 }
 
-new PBXInstaller();
+if(count($valid_disks) === 0){
+    echo "\n ".Util::translate('Valid disks not found...')." \n";
+    sleep(3);
+    return 0;
+}
+
+echo "\n ".Util::translate('Select the drive to install the system.').' ';
+echo "\n ".Util::translate('Selected disk:')."\033[33;1m [{$selected_disk['id']}] \033[0m \n\n";
+echo "\n ".Util::translate('Valid disks are:')." \n\n";
+foreach ($valid_disks as $disk) {
+    echo $disk;
+}
+echo "\n";
+do {
+    echo "\n".Util::translate('Enter the device name:').Util::translate('(default value = ').$selected_disk['id'].') :';
+    $target_disk = trim(fgets($fp));
+    if ($target_disk === '') {
+        $target_disk = $selected_disk['id'];
+    }
+} while (!array_key_exists($target_disk, $valid_disks));
+
+echo '
+
+*******************************************************************************
+* '.Util::translate('WARNING').'!                                                                    
+* '.Util::translate('The PBX is about to be installed onto the')." \033[33;1m{$target_disk}\033[0m.
+* - ".Util::translate('everything on this device will be erased!').'                                 
+* - '.Util::translate('this cannot be undone!').'                                                    
+*******************************************************************************
+
+'.Util::translate('The PBX will reboot after installation.').'
+
+'.Util::translate('Do you want to proceed? (y/n): ');
+
+if (strtolower(trim(fgets($fp)) ) !== 'y') {
+    // Сохраним информацию о системном диске во временный файл.
+
+    sleep(3);
+    exit(0);
+}
+
+$config = Di::getDefault()->getConfig();
+$varEtcDir = $config->path('core.varEtcDir');
+file_put_contents($varEtcDir.'/cfdevice', $target_disk);
+
+echo "Installing PBX...\n";
+$mountPath = Util::which('mount');
+$grepPath = Util::which('grep');
+$busyboxPath = Util::which('busybox');
+$awkPath = Util::which('awk');
+$umountPath = Util::which('umount');
+
+// Получим все смонтированные разделы:
+$mnt_dirs = [];
+Processes::mwExec("{$mountPath} | {$grepPath} '^/dev/{$target_disk}' | {$busyboxPath} {$awkPath} '{print $3}'",$mnt_dirs);
+foreach ($mnt_dirs as $mnt){
+    // Завершаем все связанные процессы.
+    Processes::mwExec("/sbin/shell_functions.sh killprocesses '$mnt' -TERM 0;");
+    // Отмонтируем.
+    Processes::mwExec("{$umountPath} {$mnt}");
+}
+echo " - Unpacking img...\n";
+$pvPath = Util::which('pv');
+$ddPath = Util::which('dd');
+$gunzipPath = Util::which('gunzip');
+
+$install_cmd =  'exec < /dev/console > /dev/console 2>/dev/console;'.
+    "{$pvPath} -p /offload/firmware.img.gz | {$gunzipPath} | {$ddPath} of=/dev/{$target_disk} bs=512 2> /dev/null";
+passthru($install_cmd);
+echo " - Create storage partition...\n";
+passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial.storage.part.four create /dev/{$target_disk}");
+// Подключение диска для хранения данных.
+include '/etc/rc/connect.storage';
+
+// Бекапим таблицу с информацией по дискам.
+echo 'Copying configuration...';
+Util::mwMkdir('/mnttmp');
+
+$partName = Storage::getDevPartName("/dev/{$target_disk}", '3');
+/** Монтируем диск с настройками */
+Processes::mwExec("{$mountPath} -w -o noatime /dev/{$partName} /mnttmp");
+
+$mikoPBXconfig = new MikoPBXConfig();
+$lang = $mikoPBXconfig->getGeneralSettings('SSHLanguage');
+
+$filename       = $config->path('database.dbfile');
+$result_db_file = '/mnttmp/conf/mikopbx.db';
+/** Копируем файл базы данных настроек. */
+$cpPath      = Util::which('cp');
+$sqlite3Path = Util::which('sqlite3');
+$grepPath = Util::which('grep');
+$dmpDbFile   = tempnam('/tmp', 'storage');
+// Сохраняем дамп настроек.
+$tables = ['m_Storage', 'm_LanInterfaces'];
+$grepOptions = '';
+foreach ($tables as $table){
+    $grepOptions.=" -e '^INSERT INTO {$table}'";
+    $grepOptions.=" -e '^INSERT INTO \"{$table}'";
+}
+system("{$sqlite3Path} {$filename} .dump | {$grepPath} {$grepOptions} > ". $dmpDbFile);
+// Если выбран другой язык - используем другой файл настроек.
+$filename_lang  = "/offload/conf/mikopbx-{$lang}.db";
+if($lang !== 'en' && file_exists($filename_lang)){
+    $filename = $filename_lang;
+}
+// Заменяем файл настроек.
+Processes::mwExec("{$cpPath} {$filename} {$result_db_file}");
+system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_Storage'");
+system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_LanInterfaces'");
+// Восстанавливаем настройки из файла бекапа.
+system("{$sqlite3Path} {$result_db_file} < {$dmpDbFile}");
+unlink($dmpDbFile);
+// Фиксируем флаг необходимости очистки кэш web.
+Processes::mwExec("{$umountPath} /mnttmp");
+echo "done\n";
+// Фиксируем флаг необходимости вынуить CD диск.
+file_put_contents('/tmp/ejectcd','');
+System::rebootSync();

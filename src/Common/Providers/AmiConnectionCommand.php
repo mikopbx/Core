@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,21 +24,13 @@ use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
-/**
- * Class AmiConnectionCommand
- *
- * Service provider for registering the AMI commander service in the DI container.
- *
- * @package MikoPBX\Common\Providers
- */
 class AmiConnectionCommand implements ServiceProviderInterface{
 
     public const SERVICE_NAME = 'amiCommander';
-
     /**
-     * Register amiCommander service provider.
+     * Register amiCommander service provider
      *
-     * @param \Phalcon\Di\DiInterface $di The DI container.
+     * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {

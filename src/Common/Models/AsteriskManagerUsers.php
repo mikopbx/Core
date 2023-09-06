@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,8 +31,6 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 class AsteriskManagerUsers extends ModelsBase
 {
     /**
-     * AMI users ID
-     *
      * @Primary
      * @Identity
      * @Column(type="integer", nullable=false)
@@ -54,107 +52,77 @@ class AsteriskManagerUsers extends ModelsBase
     public ?string $secret = '';
 
     /**
-     * Flag indicating if user has call access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $call = '';
 
     /**
-     * Flag indicating if user has CDR access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $cdr = '';
 
     /**
-     * Flag indicating if user has originate access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $originate = '';
 
     /**
-     * Flag indicating if user has reporting access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $reporting = '';
 
     /**
-     * Flag indicating if user has agent access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $agent = '';
 
     /**
-     * Flag indicating if user has config access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $config = '';
 
     /**
-     * Flag indicating if user has dialplan access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $dialplan = '';
 
     /**
-     * Flag indicating if user has DTMF access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $dtmf = '';
 
     /**
-     * Flag indicating if user has log access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $log = '';
 
     /**
-     * Flag indicating if user has system access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $system = '';
 
     /**
-     * Flag indicating if user has user access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $user = '';
 
     /**
-     * Flag indicating if user has verbose access
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $verbose = '';
 
     /**
-     * ID of the network filter associated with the user
-     *
      * @Column(type="integer", nullable=true)
      */
     public ?string $networkfilterid = '';
 
     /**
-     * AMI users description
+     * AMI users Description
      *
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';
 
-
-    /**
-     * Initialize the model.
-     */
     public function initialize(): void
     {
         $this->setSource('m_AsteriskManagerUsers');
@@ -164,20 +132,15 @@ class AsteriskManagerUsers extends ModelsBase
             NetworkFilters::class,
             'id',
             [
-                'alias' => 'NetworkFilters',
+                'alias'      => 'NetworkFilters',
                 'foreignKey' => [
                     'allowNulls' => true,
-                    'action' => Relation::NO_ACTION,
+                    'action'     => Relation::NO_ACTION,
                 ],
             ]
         );
     }
 
-    /**
-     * Perform validation on the model.
-     *
-     * @return bool Whether the validation was successful or not.
-     */
     public function validation(): bool
     {
         $validation = new Validation();

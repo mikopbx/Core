@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,24 +19,15 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
-use MikoPBX\Modules\Config\SystemConfigInterface;
+use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di\Injectable;
 
 use function MikoPBX\Common\Config\appPath;
 
-/**
- * Class CronConf
- *
- * Represents the Cron configuration.
- *
- * @package MikoPBX\Core\System\Configs
- */
 class CronConf extends Injectable
 {
     public const PROC_NAME = 'crond';
@@ -52,14 +43,13 @@ class CronConf extends Injectable
     }
 
     /**
-     * Setups crond and restarts it.
+     * Setups crond and restart it
      *
-     * @return int Returns 0 on success.
+     * @return int
      */
     public function reStart(): int
     {
-        $booting = $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting??false;
-        $this->generateConfig($booting);
+        $this->generateConfig($this->di->getShared('registry')->booting);
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
             Processes::mwExec("{$systemctlPath} restart ".self::PROC_NAME);
@@ -74,11 +64,11 @@ class CronConf extends Injectable
     }
 
     /**
-     * Generates crontab config.
+     * Generates crontab config
      *
-     * @param bool $boot Indicates whether the config is generated during boot.
+     * @param bool $boot
      */
-    private function generateConfig(bool $boot = true): void
+    private function generateConfig($boot = true): void
     {
         $mast_have     = [];
         $cron_filename = '/var/spool/cron/crontabs/root';
@@ -87,46 +77,32 @@ class CronConf extends Injectable
         $phpPath               = Util::which('php');
         $WorkerSafeScripts     = "$phpPath -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
 
+        $workersPath = appPath('src/Core/Workers');
         $restart_night = $this->mikoPBXConfig->getGeneralSettings('RestartEveryNight');
         $asteriskPath  = Util::which('asterisk');
         $ntpdPath      = Util::which('ntpd');
+        $shPath        = Util::which('sh');
         $dumpPath      = Util::which('dump-conf-db');
         $checkIpPath   = Util::which('check-out-ip');
-        $recordsCleaner= Util::which('records-cleaner');
-        $cleanerLinks  = Util::which('cleaner-download-links');
 
-        // Restart every night if enabled
         if ($restart_night === '1') {
             $mast_have[] = '0 1 * * * ' . $asteriskPath . ' -rx"core restart now" > /dev/null 2> /dev/null'.PHP_EOL;
         }
-        // Update NTP time every 5 minutes
         $mast_have[] = '*/5 * * * * ' . $ntpdPath . ' -q > /dev/null 2> /dev/null'.PHP_EOL;
-
-        // Perform database dump every 5 minutes
         $mast_have[] = '*/5 * * * * ' . "$dumpPath > /dev/null 2> /dev/null".PHP_EOL;
-        // Clearing outdated conversation records
-        $mast_have[] = '*/30 * * * * ' . "$recordsCleaner > /dev/null 2> /dev/null".PHP_EOL;
-
-        // Check IP address every minute
         $mast_have[] = '*/1 * * * * ' . "$checkIpPath > /dev/null 2> /dev/null".PHP_EOL;
-
-        // Clean download links every 6 minutes
-        $mast_have[] = '*/6 * * * * ' . "$cleanerLinks > /dev/null 2> /dev/null".PHP_EOL;
-
-        // Run WorkerSafeScripts every minute
+        $mast_have[] = '*/6 * * * * ' . "{$shPath} {$workersPath}/Cron/cleaner_download_links.sh > /dev/null 2> /dev/null".PHP_EOL;
         $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts.PHP_EOL;
 
-        // Add additional modules includes
         $tasks = [];
-        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::CREATE_CRON_TASKS, [&$tasks]);
+        // Add additional modules includes
+        $configClassObj = new ConfigClass();
+        $configClassObj->hookModulesMethod(ConfigClass::CREATE_CRON_TASKS, [&$tasks]);
         $conf = implode('', array_merge($mast_have, $tasks));
 
-        // Execute WorkerSafeScripts during boot if enabled
         if ($boot === true) {
             Processes::mwExecBg($WorkerSafeScripts);
         }
-
-        // Write the generated config to the cron file
         Util::fileWriteContent($cron_filename, $conf);
     }
 }

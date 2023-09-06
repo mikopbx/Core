@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,22 +23,12 @@ use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Core\System\{Processes, Util};
 
-/**
- * Class QueueConf
- *
- * Represents the queues.conf configuration class.
- *
- * @package MikoPBX\Core\Asterisk\Configs
- */
-class QueueConf extends AsteriskConfigClass
+class QueueConf extends CoreConfigClass
 {
-    // The module hook applying priority
-    public int $priority = 570;
-
     protected string $description = 'queues.conf';
 
     /**
-     * Generates queue.conf and restarts the Asterisk queue module.
+     * Generates queue.conf and restart asterisk queue module
      */
     public static function queueReload(): void
     {
@@ -50,13 +40,13 @@ class QueueConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates additional contexts for the queue.
+     * Возвращает дополнительные контексты для Очереди.
      *
-     * @return string The generated extension contexts.
+     * @return string
      */
     public function extensionGenContexts(): string
     {
-        // Generate internal numbering plan.
+        // Генерация внутреннего номерного плана.
         $conf = PHP_EOL."[queue_agent_answer]".PHP_EOL;
         $conf .= 'exten => s,1,Gosub(queue_answer,${EXTEN},1)' . PHP_EOL."\t";
         $conf .= "same => n,Return()".PHP_EOL.PHP_EOL;
@@ -65,9 +55,9 @@ class QueueConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates hints for the queue.
+     * Генерация хинтов.
      *
-     * @return string The generated hints.
+     * @return string
      */
     public function extensionGenHints(): string
     {
@@ -81,9 +71,7 @@ class QueueConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates internal transfer configuration for the queue.
-     *
-     * @return string The generated internal transfer configuration.
+     * @return string
      */
     public function extensionGenInternalTransfer(): string
     {
@@ -99,9 +87,9 @@ class QueueConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the extension plan for the internal context.
+     * Возвращает номерной план для internal контекста.
      *
-     * @return string The generated extension plan.
+     * @return string
      */
     public function extensionGenInternal(): string
     {
@@ -113,12 +101,12 @@ class QueueConf extends AsteriskConfigClass
             $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
             $reservExtension = $queue['redirect_to_extension_if_empty']??'';
             if(!empty($reservExtension)){
-                // Check if the queue is empty.
+                // Проверим, пустая ли очередь.
                 $queue_ext_conf .= 'same => n,Set(mLogged=${QUEUE_MEMBER('.$queue['uniqid'].',logged)})'.PHP_EOL."\t";
                 $queue_ext_conf .= 'same => n,ExecIf($["${mLogged}" == "0"]?Set(pt1c_UNIQUEID=${UNDEFINED}))'.PHP_EOL."\t";
                 $queue_ext_conf .= 'same => n,GotoIf($["${mLogged}" == "0"]?internal,'.$reservExtension.',1)'.PHP_EOL."\t";
             }
-            // Redirect the call to the queue.
+            // Направим вызов на очередь.
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
             $queue_ext_conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
             $queue_ext_conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
@@ -134,15 +122,15 @@ class QueueConf extends AsteriskConfigClass
                 $queue_ext_conf .= "same => n,Set(CALLERID(name)={$calleridPrefix}:" . '${CALLERID(name)}' . ") \n\t";
             }
             $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT\${MQ_OPTIONS}{$options},,,{$ringlength},,,queue_agent_answer) \n\t";
-            // Notify about the end of the queue.
+            // Оповестим о завершении работы очереди.
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
 
             if (trim($queue['timeout_extension']) !== '') {
-                // If no answer within the timeout, perform redirection.
+                // Если по таймауту не ответили, то выполним переадресацию.
                 $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,' . $queue['timeout_extension'] . ',1))' . " \n\t";
             }
             if (!empty($reservExtension)) {
-                // If the queue is empty, perform redirection.
+                // Если пустая очередь, то выполним переадресацию.
                 $exp            = '$["${QUEUESTATUS}" == "JOINEMPTY" || "${QUEUESTATUS}" == "LEAVEEMPTY" ]';
                 $queue_ext_conf .= 'same => n,ExecIf('.$exp.'?Goto(internal,'.$reservExtension.',1))' . " \n\t";
             }
@@ -153,15 +141,16 @@ class QueueConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the configuration for queues.
+     * Создание конфига для очередей.
+     *
+     *
+     * @return void
      */
     protected function generateConfigProtected(): void
     {
+        // Генерация конфигурационных файлов.
         $q_conf  = '';
-
         $db_data = $this->getQueueData();
-
-        // Iterate through the queue data
         foreach ($db_data as $queue_data) {
             $ringinuse        = ($queue_data['recive_calls_while_on_a_call'] === '1') ? 'yes' : 'no';
             $announceposition = ($queue_data['announce_position'] === '1') ? 'yes' : 'no';
@@ -169,21 +158,15 @@ class QueueConf extends AsteriskConfigClass
 
             $timeout           = empty($queue_data['seconds_to_ring_each_member']) ? '60' : $queue_data['seconds_to_ring_each_member'];
             $wrapuptime        = empty($queue_data['seconds_for_wrapup']) ? '3' : $queue_data['seconds_for_wrapup'];
-
-            // Check if periodic announce is set
             $periodic_announce = '';
             if (trim($queue_data['periodic_announce']) !== '') {
                 $announce_file     = Util::trimExtensionForFile($queue_data['periodic_announce']);
                 $periodic_announce = "periodic-announce={$announce_file} \n";
             }
-
-            // Check if periodic announce frequency is set
             $periodic_announce_frequency = '';
             if (trim($queue_data['periodic_announce_frequency']) !== '') {
                 $periodic_announce_frequency = "periodic-announce-frequency={$queue_data['periodic_announce_frequency']} \n";
             }
-
-            // Check if announce frequency should be set
             $announce_frequency = '';
             if ($announceposition !== 'no' || $announceholdtime !== 'no') {
                 $announce_frequency .= "announce-frequency=30 \n";
@@ -192,8 +175,6 @@ class QueueConf extends AsteriskConfigClass
             $mohClass = empty($queue_data['moh_sound'])?'default':$queue_data['moh_sound'];
 
             $strategy = $queue_data['strategy'];
-
-            // Build the queue configuration string
             $q_conf .= "[{$queue_data['uniqid']}]; {$queue_data['name']}\n";
             $q_conf .= "musicclass=$mohClass \n";
             $q_conf .= "strategy={$strategy} \n";
@@ -211,37 +192,30 @@ class QueueConf extends AsteriskConfigClass
             $q_conf .= $announce_frequency;
 
             $penalty = 0;
-
-            // Iterate through the agents in the queue
             foreach ($queue_data['agents'] as $agent) {
                 $hint = '';
-
-                // Check if the agent is internal or external
                 if ($agent['isExternal'] === false) {
                     $hint = ",hint:{$agent['agent']}@internal-hints";
                 }
-
-                // Add the member to the queue configuration
                 $q_conf .= "member => Local/{$agent['agent']}@internal/n,{$penalty},\"{$agent['agent']}\"{$hint} \n";
             }
             $q_conf .= "\n";
         }
 
-        // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/queues.conf', $q_conf);
     }
 
     /**
-     * Retrieves queue settings.
+     * Получение настроек очередей.
      *
-     * @return array The array containing queue data.
+     * @return array
      */
     public function getQueueData(): array
     {
         $arrResult = [];
         $queues    = CallQueues::find();
         foreach ($queues as $queue) {
-            $queueUniqId = $queue->uniqid; // Queue identifier
+            $queueUniqId = $queue->uniqid; // идентификатор очереди
 
             $arrAgents = [];
             $agents    = $queue->CallQueueMembers;
@@ -260,7 +234,7 @@ class QueueConf extends AsteriskConfigClass
             foreach ($queue as $key => $value) {
                 if ($key === 'callqueuemembers' || $key === "soundfiles") {
                     continue;
-                } // We collected these parameters separately
+                } // эти параметры мы собрали по-своему
                 $arrResult[$queueUniqId][$key] = $value;
             }
         }

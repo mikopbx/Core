@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,7 +100,7 @@ class OutboundRoutesController extends BaseController
     }
 
     /**
-     * Saves the outgoing routing table data based on the POST data.
+     * Сохранение карточки исходящего маршрута
      */
     public function saveAction(): void
     {
@@ -144,7 +144,7 @@ class OutboundRoutesController extends BaseController
         $this->view->success = true;
         $this->db->commit();
 
-        // If it was the creation of a new record, reload the page with the specified ID
+        // Если это было создание карточки то надо перегрузить страницу с указанием ID
         if (empty($data['id'])) {
             $this->view->reload = "outbound-routes/modify/{$rule->id}";
         }
@@ -152,11 +152,11 @@ class OutboundRoutesController extends BaseController
 
 
     /**
-     * Deletes an outgoing route from the database.
+     * Удаление исходящего маршрута из базы данных
      *
-     * @param string $id The ID of the outgoing route to delete.
+     * @param string $id
      */
-    public function deleteAction(string $id = ''): void
+    public function deleteAction($id = ''): void
     {
         $rule = OutgoingRoutingTable::findFirstByid($id);
         if ($rule !== null) {
@@ -167,9 +167,8 @@ class OutboundRoutesController extends BaseController
     }
 
     /**
-     * Changes the priority of outgoing routes.
+     * Changes rules priority
      *
-     * This action is typically called asynchronously via a POST request.
      */
     public function changePriorityAction(): void
     {
@@ -191,7 +190,7 @@ class OutboundRoutesController extends BaseController
     }
 
     /**
-     * Sorts an array by name and state.
+     * Sort array by name and state
      *
      * @param $a
      * @param $b

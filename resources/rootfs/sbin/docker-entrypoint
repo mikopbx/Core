@@ -1,64 +1,28 @@
 #!/bin/sh
 
-#
-# MikoPBX - free phone system for small business
-# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along with this program.
-# If not, see <https://www.gnu.org/licenses/>.
-#
-
-#Extract the current kernel version
 kernelVersion="$(/bin/uname -r | /bin/cut -f 1 -d '.')";
 
-# Ensure the kernel version is 5, otherwise terminate the script with an error message
 if [ ! "$kernelVersion" = '5' ]; then
   echo 'ERROR: Only linux 5 is supported...';
   exit 4;
 fi
 
-# Define a cleanup function to be used upon receiving certain signals
 cleanup()
 {
-  # Notify of the restart signal received
   echoToTeletype "Receive signal to restart "...;
-
-  # Execute cleanup procedures
   /sbin/freestorage 'doNotUnMount';
   /sbin/freeupoffload;
-
-  # Wait for 4 seconds before terminating the script
   sleep 4;
   exit 0;
 }
-
-# Source shell functions from another script
 . /sbin/shell_functions.sh;
-
-# Redirect input, output and error streams to the console
 exec </dev/console >/dev/console 2>/dev/console;
-
-# Execute the echoToTeletype function (assumed to be defined in shell_functions.sh)
 echoToTeletype;
 
-
-# Set the trap for specific signals to call the cleanup function
 for sig in SIGINT SIGTERM SIGHUP SIGQUIT EXIT; do
   trap cleanup "$sig";
 done
 
-# Start the PHP script in the background
 php -f /sbin/Entrypoint.php &
 
-# Enter an infinite loop to keep the script running
 while true; do sleep 1; done

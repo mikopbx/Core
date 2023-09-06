@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,35 +20,20 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Advices;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
 
-/**
- * Controller for handling advices and notifications related actions.
- *
- * @RoutePrefix("/pbxcore/api/advices")
- *
- * @package MikoPBX\PBXCoreREST\Controllers\Advices
- *
- * @example
- *
- * curl http://127.0.0.1/pbxcore/api/advices/getList;
- *
- */
 class GetController extends BaseController
 {
     /**
-     * This method retrieves the list of notifications regarding the system, firewall, passwords, and wrong settings.
-     * The following command can be used to invoke this action:
+     * Get advices and notifications /pbxcore/api/advices/
      *
-     * @param string $actionName The name of the action.
+     * Makes the list of notifications about system, firewall, passwords, wrong settings
+     * curl http://127.0.0.1/pbxcore/api/advices/getList;
      *
-     * Generates a list of notifications about the system, firewall, passwords, and wrong settings.
-     * @Get("/getList")
      *
-     * @return void
+     * @param $actionName
      */
-    public function callAction(string $actionName): void
+    public function callAction($actionName): void
     {
-        $this->sendRequestToBackendWorker(AdvicesProcessor::class, $actionName, [],'', 10, 2048);
+        $this->sendRequestToBackendWorker('advices', $actionName, [],'', 10, 2048);
     }
 }

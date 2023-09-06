@@ -2,7 +2,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ $linkedid   = $agi->get_variable('CHANNEL(linkedid)', true);
 if ($chan === '' && 'ANSWER' === $DIALSTATUS) {
     exit;
 }
-// Reset the value of the variable.
+// Обнуляем значение переменной.
 $agi->set_variable('BLINDTRANSFER', '');
 
 try {
@@ -42,8 +42,8 @@ try {
         'miko_tmp_db' => true,
     ];
     $client  = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
-    list($result, $message) = $client->sendRequest(json_encode($filter), 2);
-    if ($result !== false) {
+    $message = $client->request(json_encode($filter), 2);
+    if ($message !== false) {
         $res = json_decode($client->getBody(), true);
         if (count($res) === 1) {
             $exten = ($res[0]['src_chan'] === $chan) ? $res[0]['src_num'] : $res[0]['dst_num'];

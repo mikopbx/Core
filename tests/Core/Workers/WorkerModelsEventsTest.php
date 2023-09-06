@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,6 @@
 
 namespace MikoPBX\Tests\Core\Workers;
 
-use MikoPBX\Common\Models\ModelsBase;
-use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
@@ -31,13 +29,6 @@ class WorkerModelsEventsTest extends AbstractUnitTest
     {
         $worker = new WorkerModelsEvents();
         $worker->start(['start']);
-        $this->assertTrue(true);
-    }
-
-    public function testClearCache()
-    {
-        $called_class = PbxSettings::class;
-        ModelsBase::clearCache($called_class);
         $this->assertTrue(true);
     }
 }

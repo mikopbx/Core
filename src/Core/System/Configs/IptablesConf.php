@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,56 +25,34 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
 use Phalcon\Di\Injectable;
 
-/**
- * Class IptablesConf
- *
- * Manages the creation and application of iptables rules, using various configuration settings.
- *
- * @package MikoPBX\Core\System\Configs
- */
 class IptablesConf extends Injectable
 {
-    // Path to the MikoPBX iptables configuration file.
     public const IP_TABLE_MIKO_CONF = '/etc/iptables/iptables.mikopbx';
-
-    // Indicates if the firewall is enabled.
     private bool $firewall_enable;
-
-    // The Fail2Ban configuration object.
     private Fail2BanConf $fail2ban;
-
-    // Various port settings.
     private string $sipPort;
     private string $tlsPort;
     private string $rtpPorts;
 
     /**
      * Firewall constructor.
-     *
-     * Initializes object properties based on configuration settings.
      */
     public function __construct()
     {
-        // Check if the firewall is enabled.
         $firewall_enable       = PbxSettings::getValueByKey('PBXFirewallEnabled');
         $this->firewall_enable = ($firewall_enable === '1');
 
-        // Get the SIP, TLS, and RTP port settings.
         $this->sipPort  = PbxSettings::getValueByKey('SIPPort');
         $this->tlsPort  = PbxSettings::getValueByKey('TLS_PORT');
         $defaultRTPFrom = PbxSettings::getValueByKey('RTPPortFrom');
         $defaultRTPTo   = PbxSettings::getValueByKey('RTPPortTo');
         $this->rtpPorts = "$defaultRTPFrom:$defaultRTPTo";
 
-        // Initialize the Fail2Ban configuration.
         $this->fail2ban = new Fail2BanConf();
     }
 
     /**
-     * Applies iptables settings and restarts firewall.
-     *
-     * The method first checks if a firewall restart process is already running. If not, it starts a new process,
-     * applies the configuration and removes the process file. If a process is already running, it simply returns.
+     * Applies iptables settings and restart firewall
      */
     public static function reloadFirewall(): void
     {
@@ -96,12 +74,8 @@ class IptablesConf extends Injectable
     }
 
     /**
-     * Applies iptables settings.
-     *
-     * It stops Fail2Ban, drops all existing rules, and then re-creates them based on the current configuration.
-     * If the firewall is enabled, it applies the main and additional firewall rules.
-     * It also takes care of setting up Fail2Ban according to its enabled status.
-     */
+     * Apples iptables settings
+     **/
     public function applyConfig(): void
     {
         $this->fail2ban->fail2banStop();
@@ -165,9 +139,7 @@ class IptablesConf extends Injectable
     }
 
     /**
-     *  Flushes all firewall rules.
-     *
-     * It uses the iptables command to flush the INPUT chain.
+     *  Flush all firewall rules
      */
     private function dropAllRules(): void
     {
@@ -177,13 +149,13 @@ class IptablesConf extends Injectable
     }
 
     /**
-     * Makes iptables rule string.
+     * Makes iptables rule string
      *
-     * @param string $dport The destination port for the rule.
-     * @param string $other_data Any other data to include in the rule.
-     * @param string $action The action to take when the rule matches (default is 'ACCEPT').
+     * @param string $dport
+     * @param string $other_data
+     * @param string $action
      *
-     * @return string The iptables rule as a string.
+     * @return string
      */
     private function getIptablesInputRule(string $dport = '', string $other_data = '', string $action = 'ACCEPT'): string
     {
@@ -197,13 +169,11 @@ class IptablesConf extends Injectable
     }
 
     /**
-     * Adds additional firewall rules.
+     * Makes additional iptables rules
      *
-     * @param array $arr_command Reference to the command array.
-     *
-     * @return void
+     * @param $arr_command
      */
-    private function addAdditionalFirewallRules(array &$arr_command): void
+    private function addAdditionalFirewallRules(&$arr_command): void
     {
         /** @var Sip $data */
         $db_data  = Sip::find("type = 'friend' AND ( disabled <> '1')");
@@ -227,17 +197,14 @@ class IptablesConf extends Injectable
         }
         // Allow all local connections
         $arr_command[] = $this->getIptablesInputRule('', '-s 127.0.0.1 ');
-        unset($db_data, $sipHosts, $hashArray);
+        unset($db_data, $sipHosts, $result, $hashArray);
     }
 
     /**
-     * Adds the main firewall rules.
-     *
-     * @param array $arr_command Reference to the command array.
-     *
-     * @return void
+     * Makes rules for iptables.
+     * @param $arr_command
      */
-    public function addMainFirewallRules(array &$arr_command):void
+    public function addMainFirewallRules(&$arr_command):void
     {
         $options = [];
         /** @var FirewallRules $rule */
@@ -263,14 +230,6 @@ class IptablesConf extends Injectable
         $this->makeCmdMultiport($options, $arr_command);
     }
 
-    /**
-     * Constructs the multiport command and adds it to the command array.
-     *
-     * @param array $options      Options for constructing the command.
-     * @param array $arr_command  Reference to the command array.
-     *
-     * @return void
-     */
     private function makeCmdMultiport($options, &$arr_command)
     {
         foreach ($options as $protocol => $data){

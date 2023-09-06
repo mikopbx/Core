@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,33 +21,25 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\DialplanApplications;
 
-
-/**
- * Represents the configuration class for Dialplan applications.
- * Generates the configuration content for extensions.conf.
- *
- * @package MikoPBX\Core\Asterisk\Configs
- */
-class DialplanApplicationConf extends AsteriskConfigClass
+class DialplanApplicationConf extends CoreConfigClass
 {
 
-    public int $priority = 550;
-
-
     /**
-     * Retrieves the include statement for the internal context.
+     * Возвращает включения в контекст internal
      *
-     * @return string The include statement for the internal context.
+     * @return string
      */
     public function getIncludeInternal(): string
     {
+        // Включаем контексты.
         return "include => applications \n";
     }
 
+
     /**
-     * Generates additional contexts for dialplan applications.
+     * Генерация дополнительных контекстов.
      *
-     * @return string The generated contexts for dialplan applications.
+     * @return string
      */
     public function extensionGenContexts(): string
     {
@@ -67,10 +59,9 @@ class DialplanApplicationConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the configuration for a plaintext application.
+     * @param $app
      *
-     * @param array $app The dialplan application data.
-     * @return string The generated configuration for the plaintext application.
+     * @return string
      */
     private function generatePlaneTextApp($app): string
     {
@@ -93,22 +84,18 @@ class DialplanApplicationConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the configuration for a PHP application.
+     * @param $app
      *
-     * @param array $app The dialplan application data.
-     * @return string The generated configuration for the PHP application.
+     * @return string
      */
     private function generatePhpApp($app): string
     {
         $agiBinDir = $this->config->path('asterisk.astagidir');
-
-        // Create PHP script file for the application
         $text_app     = "#!/usr/bin/php\n";
         $text_app     .= base64_decode($app['applicationlogic']);
         file_put_contents("{$agiBinDir}/{$app['uniqid']}.php", $text_app);
         chmod("{$agiBinDir}/{$app['uniqid']}.php", 0755);
 
-        // Generate the dialplan configuration for the PHP application
         $result = 'exten => _' . $app['extension'] . ',1,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
         $result .= 'same => n,Gosub(dial_app,${EXTEN},1)' . "\n\t";
         $result .= "same => n,AGI({$app['uniqid']}.php)\n";
@@ -117,16 +104,15 @@ class DialplanApplicationConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the extension hints configuration.
+     * Генерация хинтов.
      *
-     * @return string The generated extension hints configuration.
+     * @return string
      */
     public function extensionGenHints(): string
     {
         $conf = '';
         $arrDialplanApplications = DialplanApplications::find()->toArray();
         foreach ($arrDialplanApplications as $app) {
-            // Skip non-numeric extensions
             if(!is_numeric($app['extension'])){
                 continue;
             }

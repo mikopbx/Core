@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,24 +21,21 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\AdminCabinet\Providers\SessionProvider;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+
 use function MikoPBX\Common\Config\appPath;
 
-/**
- * The MessagesProvider class is responsible for registering the messages service.
- *
- * @package MikoPBX\Common\Providers
- */
 class MessagesProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'messages';
 
+
     /**
-     * Register the messages service provider.
+     * Register messages service provider
      *
-     * @param DiInterface $di The DI container.
+     * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
@@ -48,12 +45,14 @@ class MessagesProvider implements ServiceProviderInterface
             function () use ($di, $coreConfig) {
                 $cacheKey = false;
                 $language = $di->get(LanguageProvider::SERVICE_NAME);
-                if (php_sapi_name() !== 'cli') {
-                    $version = PBXConfModulesProvider::getVersionsHash();
-                    $cacheKey = 'LocalisationArray:' . $version . ':' . $language;
+                if (php_sapi_name() !== 'cli'){
+                    $session  = $di->get(SessionProvider::SERVICE_NAME);
+                    if ($session !== null && $session->has('versionHash')) {
+                        $cacheKey = 'LocalisationArray:' . $session->get('versionHash') .':'. $language;
+                    }
                 }
 
-                // Check if translations exist in the cache
+                // Заглянем сначала в кеш переводов
                 if ($cacheKey) {
                     $translates = $di->get(ManagedCacheProvider::SERVICE_NAME)->get($cacheKey, 3600);
                     if (is_array($translates)) {
@@ -61,26 +60,32 @@ class MessagesProvider implements ServiceProviderInterface
                     }
                 }
 
-                // Load English translations
-                $translates = self::includeLanguageFile(appPath('/src/Common/Messages/en.php'));
+                $translates = [];
+                // Возьмем английский интерфейс
+                $enFilePath = appPath('/src/Common/Messages/en.php');
+                if (file_exists($enFilePath)) {
+                    $translates = require $enFilePath;
+                }
 
                 if ($language !== 'en') {
-                    // Check if translation file exists for the selected language
+                    $additionalTranslates = [];
+                    // Check if we have a translation file for that lang
                     $langFile = appPath("/src/Common/Messages/{$language}.php");
                     if (file_exists($langFile)) {
-                        $langArr = self::includeLanguageFile($langFile);
-                        if (!empty($langArr)) {
-                            $translates = array_merge($translates, $langArr);
-                        }
+                        $additionalTranslates = require $langFile;
+                    }
+                    // Заменим английские переводы на выбранный админом язык
+                    if ($additionalTranslates !== [[]]) {
+                        $translates = array_merge($translates, $additionalTranslates);
                     }
                 }
 
-                // Load English translations for extensions
+                // Возьмем английский перевод расширений
                 $extensionsTranslates = [[]];
                 $results              = glob($coreConfig->modulesDir . '/*/{Messages}/en.php', GLOB_BRACE);
                 foreach ($results as $path) {
-                    $langArr =  self::includeLanguageFile($path);
-                    if (!empty($langArr)) {
+                    $langArr = require $path;
+                    if (is_array($langArr)) {
                         $extensionsTranslates[] = $langArr;
                     }
                 }
@@ -94,11 +99,13 @@ class MessagesProvider implements ServiceProviderInterface
                         GLOB_BRACE
                     );
                     foreach ($results as $path) {
-                        $langArr = self::includeLanguageFile($path);
-                        if (!empty($langArr)) {
+                        $langArr = require $path;
+                        if (is_array($langArr)) {
                             $additionalTranslates[] = $langArr;
-                            $translates = array_merge($translates, ...$additionalTranslates);
                         }
+                    }
+                    if ($additionalTranslates !== [[]]) {
+                        $translates = array_merge($translates, ...$additionalTranslates);
                     }
                 }
                 if ($cacheKey) {
@@ -109,30 +116,5 @@ class MessagesProvider implements ServiceProviderInterface
                 return $translates;
             }
         );
-    }
-
-    /**
-     * Includes the language file and returns its content as an array.
-     *
-     * @param string $path The path to the language file.
-     * @return array The language array if successful, otherwise an empty array.
-     */
-    private static function includeLanguageFile(string $path): array
-    {
-        try {
-            // Try to include the language file and store its content in $langArr.
-            $langArr = require $path;
-
-            // Check if $langArr is an array and return it if successful.
-            if (is_array($langArr)) {
-                return $langArr;
-            }
-        } catch (\Throwable $e) {
-            // If an error occurs while including the file, log the exception and error message.
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        }
-
-        // Return an empty array if there was an error or $langArr is not an array.
-        return [];
     }
 }

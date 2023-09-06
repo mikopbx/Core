@@ -3,12 +3,12 @@
 {{ form.render('id') }}
 {{ form.render('priority') }}
 
-<div class="field max-width-800">
+<div class="ten wide field">
     <label>{{ t._('or_RuleName') }}</label>
     {{ form.render('rulename') }}
 </div>
 
-<div class="field max-width-800">
+<div class="ten wide field">
     <label>{{ t._('or_Note') }}</label>
     {{ form.render('note') }}
 </div>
@@ -24,23 +24,18 @@
 
 <h3 class="ui dividing header ">{{ t._("or_ReformatNumber") }}</h3>
 <div class="wide inline field">
-    {{ t._('or_BeforeConnectingTheCallTrim') }}&nbsp;
+    {{ t._('or_BeforeConnectingTheCallTrim') }}
     {{ form.render('trimfrombegin') }}
-    {{ t._('or_digitsFromTheFrontAndThenPrependTheDigits') }}&nbsp;
+    {{ t._('or_digitsFromTheFrontAndThenPrependTheDigits') }}
     {{ form.render('prepend') }}
     {{ t._('or_toTheNumber') }}
 </div>
 
 <h3 class="ui dividing header ">{{ t._("or_CallThrough") }}</h3>
 
-<div class="field">
+<div class="five wide field">
     <label>{{ t._('or_Provider') }}</label>
-    <div class="field max-width-500">
-        {{ form.render('providerid') }}
-    </div>
+    {{ form.render('providerid') }}
 </div>
-
-{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
-
 {{ partial("partials/submitbutton",['indexurl':'outbound-routes/index/']) }}
-{{ end_form() }}
+</form>

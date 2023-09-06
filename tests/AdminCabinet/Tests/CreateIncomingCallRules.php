@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
     public function testCreateIncomingCallRule($params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
-        //$this->clickDeleteButtonOnRowWithText($params['note']);
+        $this->clickDeleteButtonOnRowWithText($params['note']);
 
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
         $this->changeTextAreaValue('note', $params['note']);
@@ -85,8 +85,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
         $params   = [];
         $params[] = [
             [
-                'rulename'         => 'First rule',
-                'note'  => '',
+                'note'         => 'First rule',
                 'provider'     => 'none',
                 'providerName' => '',
                 'number'       => 74952293042,
@@ -97,8 +96,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
 
         $params[] = [
             [
-                'rulename'         => 'Second rule',
-                'note'  => '',
+                'note'         => 'Second rule',
                 'provider'     => 'SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43',
                 'providerName' => '',
                 'number'       => 74952293043,
@@ -109,15 +107,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
 
         $params[] = [
             [
-                'rulename'     => 'Rule for test provider',
-                'note'         => '1. The client calls in the company
-2. The client hears a voice message
-3. The client dials any extension which exists on PBX (201, 202, 203, 2001, 2002). This setup is called "Resolve extension dialing of any extension".
-4. There is waiting of 7 seconds. 
-5. The client dials digit 1 from phone. The call goes to sales department. (Call queue with extension 2001).
-6. The client dials digit 2 from phone. The call goes to technical support department (Call queue with extension 2002).
-7. The client gathers nothing or incorrectly dials number. The repeated voice notification is lost. The client enters number again. 
-8. The maximum number of attempts of input of number is equal to 5. Attempts come to the end. The call goes to number by default.',
+                'note'         => 'Rule for test provider',
                 'provider'     => '',
                 'providerName' => 'Provider for CTI tests',
                 'number'       => '',

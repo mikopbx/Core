@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,24 +22,15 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
-use MikoPBX\Modules\Config\SystemConfigInterface;
+use MikoPBX\Modules\Config\ConfigClass;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
 use SQLite3;
 
-/**
- * Class Fail2BanConf
- *
- * Represents the Fail2Ban configuration.
- *
- * @package MikoPBX\Core\System\Configs
- */
 class Fail2BanConf extends Injectable
 {
     private const FILTER_PATH     = '/etc/fail2ban/filter.d';
@@ -126,7 +117,7 @@ class Fail2BanConf extends Injectable
         if($fail2ban->fail2ban_enable && !empty($pid)){
             $fail2ban->generateModulesFilters();
             $fail2ban->generateModulesJailsLocal();
-            // Reload the configuration without restarting Fail2Ban.
+            // Перезагрузка конфигов без рестарта конфига.
             Processes::mwExecBg("{$fail2banPath} reload");
         }
     }
@@ -161,9 +152,9 @@ class Fail2BanConf extends Injectable
     }
 
     /**
-     * Creates the necessary directories and files for Fail2Ban.
+     * Create fail2ban dirs and DB if it does not exists
      *
-     * @return string Returns the path to the Fail2Ban database file.
+     * @return string
      */
     public function fail2banMakeDirs(): string
     {
@@ -176,14 +167,13 @@ class Fail2BanConf extends Injectable
             $dir_db = '/var/spool/fail2ban';
         }
         Util::mwMkdir($dir_db);
-
-        // Create working directories.
+        // Создаем рабочие каталоги.
         $db_bd_dir = dirname($res_file);
         Util::mwMkdir($db_bd_dir);
 
         $create_link = false;
 
-        // Symbolic link to the database.
+        // Символическая ссылка на базу данных.
         if (file_exists($res_file)){
             if (filetype($res_file) !== 'link') {
                 unlink($res_file);
@@ -192,7 +182,7 @@ class Fail2BanConf extends Injectable
                 unlink($res_file);
                 $create_link = true;
                 if (file_exists("$old_dir_db/$filename")) {
-                    // Move the file to the new location.
+                    // Перемещаем файл в новое местоположение.
                     $mvPath = Util::which('mv');
                     Processes::mwExec("{$mvPath} '$old_dir_db/$filename' '$dir_db/$filename'");
                 }
@@ -211,22 +201,20 @@ class Fail2BanConf extends Injectable
     }
 
     /**
-     * Writes the Fail2Ban configuration to the jail.local file.
+     * Записываем конфиг для fail2ban. Описываем правила блокировок.
      */
     public function writeConfig(): void
     {
-        // Initialize properties
         [$max_retry, $find_time, $ban_time, $user_whitelist] = $this->initProperty();
         $this->generateActions();
         $this->generateJails();
 
-        // Define ports for different services
         $httpPorts = [
             $this->allPbxSettings['WEBPort'],
             $this->allPbxSettings['WEBHTTPSPort']
         ];
         $sshPort = [
-            $this->allPbxSettings[PbxSettingsConstants::SSH_PORT],
+            $this->allPbxSettings['SSHPort'],
         ];
         $asteriskPorts = [
             $this->allPbxSettings['SIPPort'],
@@ -240,7 +228,6 @@ class Fail2BanConf extends Injectable
             $this->allPbxSettings['AJAMPort'],
         ];
 
-        // Define jails and their corresponding actions
         $jails        = [
             'dropbear'    => 'miko-iptables-multiport-all[name=SSH, port="'.implode(',', $sshPort).'"]',
             'mikopbx-www' => 'miko-iptables-multiport-all[name=HTTP, port="'.implode(',', $httpPorts).'"]',
@@ -248,7 +235,6 @@ class Fail2BanConf extends Injectable
 
         $this->generateModulesJailsLocal($max_retry, $find_time, $ban_time);
 
-        // Generate the Fail2Ban configuration
         $config       = "[DEFAULT]\n" .
             "ignoreip = 127.0.0.1 {$user_whitelist}\n\n";
 
@@ -266,8 +252,6 @@ class Fail2BanConf extends Injectable
         }
 
         $log_dir = System::getLogDir() . '/asterisk/';
-
-        // Add specific jail configurations for Asterisk logs
         $config  .= "[asterisk_security_log]\n" .
             "enabled = true\n" .
             "filter = asterisk-main\n" .
@@ -308,25 +292,12 @@ class Fail2BanConf extends Injectable
             "logencoding = utf-8\n" .
             "logpath = {$log_dir}messages\n\n";
 
-        // Write the Fail2Ban configuration to the jail.local file
         Util::fileWriteContent('/etc/fail2ban/jail.local', $config);
     }
 
-    /**
-     * Generate the actions for iptables and write it to a configuration file.
-     *
-     * This function constructs the configuration string for iptables based on predefined commands.
-     * These commands include start, stop, check, ban, and unban actions for the iptables firewall.
-     * The configuration is written to a file named 'miko-iptables-multiport-all.conf'.
-     *
-     * @return void
-     */
     private function generateActions(): void
     {
-        // Define the path to the configuration file
         $path = self::ACTION_PATH;
-
-        // Construct the configuration string
         $conf = "[INCLUDES]".PHP_EOL.
                 "before = iptables.conf".PHP_EOL.
                 "[Definition]".PHP_EOL.
@@ -344,27 +315,17 @@ class Fail2BanConf extends Injectable
                 "actionunban = <iptables> -D f2b-<name> -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>".PHP_EOL.
                 "              <iptables> -D f2b-<name> -s <ip> -p udp -m multiport --dports <port> -j <blocktype>".PHP_EOL.
                 "[Init]".PHP_EOL.PHP_EOL;
-
-        // Write the configuration string to the configuration file
         file_put_contents("{$path}/miko-iptables-multiport-all.conf", $conf);
     }
 
 
     /**
-     * Generate the jail configurations for various services.
-     *
-     * This function constructs the jail configuration strings for various services like MikroPBX web interface,
-     * Dropbear SSH server, Asterisk AMI, and Asterisk security. These jail configurations are written to
-     * their respective files.
-     *
-     * @return void
+     * Creates additional rules
      */
     private function generateJails(): void
     {
-        // Define the path to the filter files
         $filterPath = self::FILTER_PATH;
 
-        // Construct the MikoPBX web interface configuration string
         $conf = "[INCLUDES]\n" .
             "before = common.conf\n" .
             "[Definition]\n" .
@@ -373,11 +334,8 @@ class Fail2BanConf extends Injectable
             '            ^(\S|\s)*nginx:\s+\d+/\d+/\d+\s+(\S|\s)*status\s+403(\S|\s)*client:\s+<HOST>(\S|\s)*' . "\n" .
             '            \[error\] \d+#\d+: \*\d+ user "(?:[^"]+|.*?)":? (?:password mismatch|was not found in "[^\"]*"), client: <HOST>, server: \S*, request: "\S+ \S+ HTTP/\d+\.\d+", host: "\S+"(?:, referrer: "\S+")?\s*$' . "\n" .
             "ignoreregex =\n";
-
-        // Write the configuration to the MikoPBX web interface file
         file_put_contents("{$filterPath}/mikopbx-www.conf", $conf);
 
-        // Construct the Dropbear SSH server configuration string
         $conf = "[INCLUDES]\n" .
             "before = common.conf\n" .
             "[Definition]\n" .
@@ -387,11 +345,8 @@ class Fail2BanConf extends Injectable
             '            ^[Bb]ad (PAM )?password attempt for .+ from <HOST>(:\d+)?$' . "\n" .
             '            ^[Ee]xit before auth \(user \'.+\', \d+ fails\): Max auth tries reached - user \'.+\' from <HOST>:\d+\s*$' . "\n" .
             "ignoreregex =\n";
-
-        // Write the configuration to the Dropbear SSH server file
         file_put_contents("{$filterPath}/dropbear.conf", $conf);
 
-        // Construct the Asterisk AMI configuration string
         $conf = "[INCLUDES]".PHP_EOL.
                 "before = common.conf".PHP_EOL.PHP_EOL.
                 "[Definition]".PHP_EOL.PHP_EOL.
@@ -402,12 +357,7 @@ class Fail2BanConf extends Injectable
                 "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed to authenticate as '[^']*'\$".PHP_EOL.
                 "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s(?:\sHost)? <HOST> failed to authenticate as '[^']*'\$".PHP_EOL.PHP_EOL.
                 "ignoreregex =".PHP_EOL.PHP_EOL;
-
-        // Write the configuration to the Asterisk AMI file
         file_put_contents("{$filterPath}/asterisk-ami.conf", $conf);
-
-
-        // Construct the Asterisk security configuration string
 
         $conf = "[INCLUDES]".PHP_EOL.
                 "before = common.conf".PHP_EOL.PHP_EOL.
@@ -428,11 +378,8 @@ class Fail2BanConf extends Injectable
                 '            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s SecurityEvent="(?:FailedACL|InvalidAccountID|ChallengeResponseFailed|InvalidPassword)"(?:(?:,(?!RemoteAddress=)\w+="[^"]*")*|.*?),RemoteAddress="IPV[46]/[^/"]+/<HOST>/\d+"(?:,(?!RemoteAddress=)\w+="[^"]*")*$'.PHP_EOL.
                 "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s ^hacking attempt detected '<HOST>'\$".PHP_EOL.PHP_EOL.
                 'ignoreregex = Service="AMI"'.PHP_EOL.PHP_EOL;
-
-        // Write the configuration to the Asterisk security file
         file_put_contents("{$filterPath}/asterisk-main.conf", $conf);
 
-        // Generate the module filters
         $this->generateModulesFilters();
     }
 
@@ -445,8 +392,10 @@ class Fail2BanConf extends Injectable
         $rmPath            = Util::which('rm');
         Processes::mwExec("{$rmPath} -rf {$filterPath}/module_*.conf");
 
+
         // Add additional modules routes
-        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
+        $configClassObj = new ConfigClass();
+        $additionalModulesJails = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GENERATE_FAIL2BAN_JAILS);
         foreach ($additionalModulesJails as $moduleUniqueId=>$moduleJailText) {
             $fileName = Text::uncamelize($moduleUniqueId,'_').'.conf';
             file_put_contents("{$filterPath}/{$fileName}", $moduleJailText);
@@ -454,49 +403,28 @@ class Fail2BanConf extends Injectable
     }
 
     /**
-     * Generate local jail configurations for the provided modules.
-     *
-     * This method creates configuration for each jail rule provided by the PBXConfModulesProvider. These
-     * configurations are then written to their respective files in the jail directory.
-     *
-     * @param int $max_retry The maximum number of retries before a host is banned. Default is 0.
-     * @param int $find_time The time frame in which a host makes unsuccessful login attempts before it is banned. Default is 0.
-     * @param int $ban_time  The amount of time a host is banned. Default is 0.
-     *
-     * @return void
+     * @param $max_retry
+     * @param $find_time
+     * @param $ban_time
      */
-    private function generateModulesJailsLocal(int $max_retry = 0, int $find_time = 0, int $ban_time = 0): void
+    private function generateModulesJailsLocal($max_retry = 0, $find_time = 0, $ban_time = 0): void
     {
-        // Initialize the properties if they are not provided.
         if($max_retry === 0){
             [$max_retry, $find_time, $ban_time] = $this->initProperty();
         }
-
-        // Create the jail directory if it does not exist
         if(!is_dir(self::JAILS_DIR)){
             Util::mwMkdir(self::JAILS_DIR);
         }
-
-        // Define the prefix and extension for the jail configuration files
         $prefix = 'pbx_';
         $extension = 'conf';
-
-        // Delete all existing jail configuration files
         Processes::mwExec("rm -rf ".self::JAILS_DIR."/{$prefix}*.{$extension}");
-
-        // Get the system log file
         $syslog_file = SyslogConf::getSyslogFile();
 
-        // Fetch the jails provided by the modules
-        $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
-
-        // Iterate over each jail rule provided by the modules
+        $configClassObj = new ConfigClass();
+        $additionalModulesJails = $configClassObj->hookModulesMethodWithArrayResult(ConfigClass::GENERATE_FAIL2BAN_JAILS);
         foreach ($additionalModulesJails as $moduleUniqueId=>$moduleJailText) {
-
-            // Convert the module's unique id to a file-friendly format
             $fileName = Text::uncamelize($moduleUniqueId,'_');
 
-            // Construct the configuration string for the module
             $config = "[{$fileName}]\n" .
                 "enabled = true\n" .
                 "logpath = {$syslog_file}\n" .
@@ -506,63 +434,39 @@ class Fail2BanConf extends Injectable
                 "logencoding = utf-8\n" .
                 "action = iptables-allports[name={$moduleUniqueId}, protocol=all]\n\n";
 
-            // Write the configuration to the jail's configuration file
             file_put_contents(self::JAILS_DIR."/{$prefix}{$fileName}.{$extension}", $config);
         }
     }
 
     /**
-     * Initialize fail2ban rule properties.
-     *
-     * This method retrieves fail2ban rule properties from the database and constructs a whitelist
-     * of IPs which should not be banned. If the rule is not found, it assigns default values.
-     *
-     * @return array Contains max_retry, find_time, ban_time and user_whitelist.
+     * @return array
      */
     private function initProperty(): array{
-
-        // Initial empty whitelist.
         $user_whitelist = '';
-
-        // Find the first rule with id '1'.
         /** @var Fail2BanRules $res */
         $res = Fail2BanRules::findFirst("id = '1'");
-
-        // If rule exists, extract its properties.
         if ($res !== null) {
-            $max_retry = intval($res->maxretry);
-            $find_time = intval($res->findtime);
-            $ban_time = intval($res->bantime);
-
-            // Explode whitelist IPs into array.
+            $max_retry = $res->maxretry;
+            $find_time = $res->findtime;
+            $ban_time = $res->bantime;
             $whitelist = (string) $res->whitelist;
             $arr_whitelist = explode(' ', $whitelist);
-
-            // Verify and add each IP to user whitelist.
             foreach ($arr_whitelist as $ip_string) {
                 if (Verify::isIpAddress($ip_string)) {
                     $user_whitelist .= "$ip_string ";
                 }
             }
-
-            // Fetch network filters where newer_block_ip = '1'.
             $net_filters = NetworkFilters::find("newer_block_ip = '1'");
-
-            // Add each filter's permit IP to user whitelist.
             foreach ($net_filters as $filter) {
                 $user_whitelist .= "{$filter->permit} ";
             }
 
-            // Trim any trailing spaces from the user whitelist.
             $user_whitelist = trim($user_whitelist);
         } else {
-            // If rule doesn't exist, use default values.
-            $max_retry = 10;
-            $find_time = 1800;
-            $ban_time = 43200;
+            $max_retry = '10';
+            $find_time = '1800';
+            $ban_time = '43200';
         }
-
-        // Return an array of the properties.
         return array($max_retry, $find_time, $ban_time, $user_whitelist);
     }
 

@@ -2,7 +2,7 @@
 
 #
 # MikoPBX - free phone system for small business
-# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+# Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,14 +20,11 @@
 
 disk="${1}";
 disk_name=$(basename $disk);
-
-# Check if the block device exists
 if [ ! -b "${disk}" ]; then
     echo " - ERROR block devise ${disk} not found";
     exit 1;
 fi;
 
-# Determine the partition number based on whether it's a system disk or a storage disk
 if [ -b "${disk}4" ]; then
     # System disk
     part='4';
@@ -38,8 +35,6 @@ fi;
 
 tmp_dir='/storage/usbdisk1';
 mkdir -p "$tmp_dir";
-
-# Mount the partition
 mount "${disk}${part}" "$tmp_dir";
 if [ "$?" != "0" ]; then
     echo " - ERROR mount storage disk part ${part}...";
@@ -47,19 +42,12 @@ if [ "$?" != "0" ]; then
     exit 2;
 fi;
 
-# Get the total size of the disk in megabytes
 total_byte=`busybox blockdev --getsize64 $disk`;
 total=`expr $total_byte / 1024 / 1024`;
-
-# Get the size of the partition in megabytes
 disk_size=`/bin/busybox df -P -m | /bin/busybox grep "${disk}${part}" | busybox head -n 1 | /bin/busybox awk  '{ print $2}'`;
-
-# Unmount the partition
 umount "${disk}${part}";
 
-# Calculate the difference in size (delta) between the total size and partition size
 delta=`expr $total - $disk_size`;
-
 echo " - disk: '${disk}'";
 echo " - total_size: ${total}Mb";
 echo " - partition_size: ${disk_size}Mb";
@@ -70,23 +58,21 @@ if [ -b "${disk}4" ]; then
     if [ "$delta" -le "$system_size" ]; then
         delta=0;
     else
-        # Decrease delta by the size of the system image
+        # Уменьшим на размер образа системы.
         delta=`expr $delta - $system_size`;
     fi;
 fi;
 echo " - delta: ${delta}Mb";
-
-# Calculate the portion as a percentage multiplied by 100
+# portion - это процент * 100. В shell работаем только с целыми числами.
 portion=`expr $delta \* 10000 / $total `;
 if [ "$portion" -le "500" ]; then
-    # The delta is less than or equal to 5 percent, so no resizing will be performed
+    # Менять размер не будем, доля увеличения раздела не более 5 процентов.
     echo " - delta is less than five percent.";
     echo " - the partition size will not be changed.";
     sleep 1;
     exit 3;
 fi;
 
-# Check if the disk is currently mounted
 is_mounted=$(mount | grep "$disk");
 if [ "${is_mounted}x" != "x" ]; then
     echo ' - free storage...';
@@ -96,14 +82,12 @@ fi;
 echo " - delete part ${part} / add new part ${part}...";
 
 if [ -b "${disk}4" ]; then
-  # Clear existing configuration for system disk
-  /sbin/freeupoffload;
-  fdisk "$disk" > /dev/null 2> /dev/null << EOF
+    /sbin/freeupoffload;
+    fdisk "$disk" > /dev/null 2> /dev/null << EOF
 d
 ${part}
 w
 EOF
-    # Create new partition for system disk
     /sbin/initial.storage.part.four create "$disk";
     sleep 2;
 
@@ -121,11 +105,8 @@ w
 EOF
 fi;
 
-# Update the partition table
 /sbin/blockdev --rereadpt "${disk}" > /dev/null 2>&1;
 sleep 2;
-
-# Get the file system type for the partition
 fs_type=$(/sbin/blkid -ofull "${disk}${part}");
 if [ "${fs_type}x" != "x" ]; then
     echo " - e2fsck ${disk} part ${part}...";

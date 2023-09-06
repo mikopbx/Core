@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,18 +19,10 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
-/**
- * Class RedisConf
- *
- * Represents the Redis configuration.
- *
- * @package MikoPBX\Core\System\Configs
- */
 class RedisConf extends Injectable
 {
     public const PROC_NAME = 'redis-server';
@@ -38,22 +30,19 @@ class RedisConf extends Injectable
     public const CONF_FILE = '/etc/redis.conf';
 
     public string $port = '';
-
     /**
-     * Restarts the Redis server.
-     *
-     * @return void
+     * Restarts Redis server
      */
     public function reStart(): void
     {
         $mainRunner = 'safe-'.self::PROC_NAME;
-        Processes::killByName($mainRunner);
-        Processes::killByName(self::PROC_NAME);
+        Util::killByName($mainRunner);
+        Util::killByName(self::PROC_NAME);
 
         $ch = 0;
         do{
             $ch++;
-            // Wait for Redis to finish its work
+            // Ожидаем завершения работы redis;
             sleep(1);
             $pid1 = Processes::getPidOfProcess($mainRunner);
             $pid2 = Processes::getPidOfProcess(self::PROC_NAME);
@@ -72,17 +61,14 @@ class RedisConf extends Injectable
     }
 
     /**
-     * Sets up the Redis daemon conf file.
-     *
-     * @return void
+     * Setup redis daemon conf file
      */
     private function configure(): void
     {
-        $config = $this->getDI()->get(ConfigProvider::SERVICE_NAME)->redis;
+        $config = $this->getDI()->get('config')->redis;
         $this->port = $config->port;
         $conf   = "bind {$config->host}" . PHP_EOL;
         $conf   .= "port {$config->port}" . PHP_EOL;
-        $conf   .= "dir /var/tmp" . PHP_EOL;
         file_put_contents(self::CONF_FILE, $conf);
     }
 }

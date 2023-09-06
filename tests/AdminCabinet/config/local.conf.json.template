@@ -5,7 +5,7 @@
     "build": "MikoPBXTest",
     "name": "local_test",
     "os" : "Windows",
-    "resolution" : "1680x1050",
+    "resolution" : "1280x1024",
     "acceptSslCerts": true,
     "fixSessionCapabilities": true,
     "remoteFiles": true,

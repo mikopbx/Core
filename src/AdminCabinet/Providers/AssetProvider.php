@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,38 +21,16 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Providers;
 
-use MikoPBX\AdminCabinet\Controllers\SessionController;
-use MikoPBX\AdminCabinet\Plugins\AssetManager as Manager;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\SessionProvider;
-use MikoPBX\Core\System\Configs\SentryConf;
-use MikoPBX\Core\System\Network;
-use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Assets\Collection;
+use MikoPBX\AdminCabinet\Plugins\AssetManager as Manager;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Mvc\Dispatcher;
+
 use function MikoPBX\Common\Config\appPath;
 
-/**
- * Prepares list of CSS and JS files according to called controller/action
- *
- * @package MikoPBX\AdminCabinet\Providers
- */
 class AssetProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'assets';
-
-    public const HEADER_JS = 'headerJS';
-    public const HEADER_CSS = 'headerCSS';
-    public const HEADER_PBX_JS = 'headerPBXJS';
-    public const HEADER_SENTRY_JS = 'headerSentryJS';
-    public const SEMANTIC_UI_CSS = 'SemanticUICSS';
-    public const SEMANTIC_UI_JS = 'SemanticUIJS';
-    public const FOOTER_ACE = 'footerACE';
-    public const FOOTER_LOC = 'footerLoc';
-    public const FOOTER_JS = 'footerJS';
-    public const FOOTER_PBX_JS = 'footerPBXJS';
 
     private Collection $headerCollectionJSForExtensions;
     private Collection $footerCollectionJSForExtensions;
@@ -70,31 +48,33 @@ class AssetProvider implements ServiceProviderInterface
     /**
      * Registers assets service provider
      *
-     * @param DiInterface $di The DI container.
+     * @param \Phalcon\Di\DiInterface $di
      */
     public function register(DiInterface $di): void
     {
         $di->set(
             self::SERVICE_NAME,
             function () use ($di) {
-
-                $session = $di->get(SessionProvider::SERVICE_NAME);
+                $session = $di->get('session');
+                if ($session !== null && $session->has('versionHash')) {
+                    $version = (string)$session->get('versionHash');
+                } else {
+                    $version = str_replace(PHP_EOL, '', file_get_contents('/etc/version'));
+                }
 
                 $assets = new AssetProvider();
-
-                // Module and PBX version caching for proper PBX operation when installing modules.
-                $version = PBXConfModulesProvider::getVersionsHash();
                 $assets->initializeClassVariables($version);
-                $dispatcher = $di->get(DispatcherProvider::SERVICE_NAME);
+                $dispatcher = $di->get('dispatcher');
                 $controller = $dispatcher->getControllerName();
-                $action = $dispatcher->getActionName();
+                $action     = $dispatcher->getActionName();
+                $moduleName = $dispatcher->getModuleName();
 
                 if ($action === null) {
                     $action = 'index';
                 }
 
                 $assets->makeSentryAssets();
-                $assets->makeHeaderAssets($session, $dispatcher);
+                $assets->makeHeaderAssets($session, $moduleName);
 
                 // Generates Controllers assets
                 $method_name = "make{$controller}Assets";
@@ -105,12 +85,7 @@ class AssetProvider implements ServiceProviderInterface
                 $assets->makeFooterAssets();
                 $assets->makeLocalizationAssets($di, $version);
 
-                $assetsManager = $assets->manager;
-
-                // Register additional assets from external enabled modules
-                PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_ASSETS_PREPARED, [$assetsManager, $dispatcher]);
-
-                return $assetsManager;
+                return $assets->manager;
             }
         );
     }
@@ -125,25 +100,24 @@ class AssetProvider implements ServiceProviderInterface
 
         $this->jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
 
-        $this->headerCollectionJSForExtensions = $this->manager->collection(self::HEADER_JS);
+        $this->headerCollectionJSForExtensions = $this->manager->collection('headerJS');
         $this->headerCollectionJSForExtensions->setPrefix('assets/');
-
-        $this->footerCollectionJSForExtensions = $this->manager->collection(self::FOOTER_JS);
+        $this->footerCollectionJSForExtensions = $this->manager->collection('footerJS');
         $this->footerCollectionJSForExtensions->setPrefix('assets/');
-        $this->headerCollectionJS = $this->manager->collection(self::HEADER_PBX_JS);
+        $this->headerCollectionJS = $this->manager->collection('headerPBXJS');
         $this->headerCollectionJS->setPrefix('assets/');
-        $this->headerCollectionCSS = $this->manager->collection(self::HEADER_CSS);
+        $this->headerCollectionCSS = $this->manager->collection('headerCSS');
         $this->headerCollectionCSS->setPrefix('assets/');
-        $this->footerCollectionJS = $this->manager->collection(self::FOOTER_PBX_JS);
+        $this->footerCollectionJS = $this->manager->collection('footerPBXJS');
         $this->footerCollectionJS->setPrefix('assets/');
-        $this->headerCollectionSentryJS = $this->manager->collection(self::HEADER_SENTRY_JS);
-        $this->semanticCollectionCSS = $this->manager->collection(self::SEMANTIC_UI_CSS);
+        $this->headerCollectionSentryJS = $this->manager->collection('headerSentryJS');
+        $this->semanticCollectionCSS    = $this->manager->collection('SemanticUICSS');
         $this->semanticCollectionCSS->setPrefix('assets/');
-        $this->semanticCollectionJS = $this->manager->collection(self::SEMANTIC_UI_JS);
+        $this->semanticCollectionJS = $this->manager->collection('SemanticUIJS');
         $this->semanticCollectionJS->setPrefix('assets/');
-        $this->footerCollectionACE = $this->manager->collection(self::FOOTER_ACE);
+        $this->footerCollectionACE = $this->manager->collection('footerACE');
         $this->footerCollectionACE->setPrefix('assets/');
-        $this->footerCollectionLoc = $this->manager->collection(self::FOOTER_LOC);
+        $this->footerCollectionLoc = $this->manager->collection('footerLoc');
         $this->footerCollectionLoc->setPrefix('assets/');
     }
 
@@ -153,7 +127,7 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeSentryAssets(): void
     {
-        if (file_exists(SentryConf::CONF_FILE) && file_exists(Network::INTERNET_FLAG_FILE)){
+        if (file_exists('/tmp/sendmetrics')) {
             $this->headerCollectionSentryJS->addjs(
                 'assets/js/vendor/sentry/bundle.min.js',
                 true
@@ -169,9 +143,9 @@ class AssetProvider implements ServiceProviderInterface
      * Makes assets for all controllers. Base set of scripts and styles
      *
      * @param $session
-     * @param Dispatcher $dispatcher
+     * @param $moduleName
      */
-    private function makeHeaderAssets($session, Dispatcher $dispatcher): void
+    private function makeHeaderAssets($session, $moduleName): void
     {
         $this->semanticCollectionCSS
             ->addCss('css/vendor/semantic/grid.min.css', true)
@@ -193,12 +167,11 @@ class AssetProvider implements ServiceProviderInterface
             ->addCss('css/vendor/semantic/checkbox.min.css', true);
 
         $this->headerCollectionJS
-            //->addJs('js/vendor/requirejs.org/require.min.js', true,true,['data-main'=>'/admin-cabinet/assets/js/pbx/main/header.js'])
             ->addJs('js/pbx/main/header.js', true)
             ->addJs('js/vendor/jquery.min.js', true);
 
         $this->footerCollectionJS
-            ->addJs('js/pbx/Language/language-select.js', true);
+            ->addJs('js/pbx/main/language-select.js', true);
 
         $this->semanticCollectionJS
             ->addJs('js/vendor/semantic/form.min.js', true)
@@ -209,8 +182,8 @@ class AssetProvider implements ServiceProviderInterface
             ->addJs('js/vendor/semantic/transition.min.js', true)
             ->addJs('js/vendor/semantic/checkbox.min.js', true);
 
-        // If the user is logged in, let's generate the required CSS caches.
-        if ($session->has(SessionController::SESSION_ID)) {
+        // Если пользователь залогинился, сформируем необходимые CSS кеши
+        if ($session && $session->has('auth')) {
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/semantic/menu.min.css', true)
                 ->addCss('css/vendor/semantic/sidebar.min.css', true)
@@ -234,8 +207,7 @@ class AssetProvider implements ServiceProviderInterface
 
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/config.js', true)
-                ->addJs('js/pbx/PbxAPI/pbxapi.js', true)
-                ->addJs('js/pbx/PbxAPI/extensionsAPI.js', true)
+                ->addJs('js/pbx/main/pbxapi.js', true)
                 ->addJs('js/pbx/main/connection-check-worker.js', true)
                 ->addJs('js/pbx/main/semantic-localization.js', true)
                 ->addJs('js/pbx/Advices/advices-worker.js', true)
@@ -244,22 +216,15 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/ssh-console.js', true)
                 ->addJs('js/pbx/main/delete-something.js', true)
                 ->addJs('js/pbx/main/user-message.js', true)
-                ->addJs('js/pbx/main/sidebar-menu-show-active.js', true)
-                ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true)
-                ->addJs('js/pbx/WikiLinksReplacement/wiki-links-replacement-worker.js', true);
+                ->addJs('js/pbx/Extensions/extensions.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-menu-addition.js', true)
+                ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true);
 
-            // We can disable module status toggle from module controller, using the showModuleStatusToggle variable
-            $isExternalModulePage = str_starts_with($dispatcher->getNamespaceName(), 'Modules');
-
-            if ($isExternalModulePage) {
-                $currentControllerObject = $dispatcher->getActiveController();
-                $showModuleStatusToggle = property_exists($currentControllerObject, 'showModuleStatusToggle')
-                    ? $currentControllerObject->showModuleStatusToggle
-                    : true;
-
-                if ($showModuleStatusToggle) {
-                    $this->footerCollectionJS->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true);
-                }
+            if ($moduleName === 'PBXExtension') {
+                $this->footerCollectionJS->addJs(
+                    'js/pbx/PbxExtensionModules/pbx-extension-module-status.js',
+                    true
+                );
             }
         }
     }
@@ -281,14 +246,14 @@ class AssetProvider implements ServiceProviderInterface
     /**
      * Makes Language cache for browser JS scripts
      *
-     * @param DiInterface $di The DI container.
-     * @param string $version
+     * @param \Phalcon\Di\DiInterface $di
+     * @param string                  $version
      */
     private function makeLocalizationAssets(DiInterface $di, string $version): void
     {
         $language = $di->getShared('language');
         $fileName = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
-        if (!file_exists($fileName)) {
+        if ( ! file_exists($fileName)) {
             $arrStr = [];
             foreach ($di->getShared('messages') as $key => $value) {
                 $arrStr[$key] = str_replace(
@@ -359,10 +324,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/semantic/dropdown.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index.js', true)
-                ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-showlogs-worker.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-showlogs.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-sysinfo.js', true)
-                ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-logscapture-worker.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-logcapture.js', true);
             $this->footerCollectionACE
                 ->addJs('js/vendor/ace/ace.js', true)
@@ -464,9 +427,6 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/Session/login-form.js', true);
-        } elseif ($action === 'end') {
-            $this->footerCollectionJS
-                ->addJs('js/pbx/Session/session-end.js', true);
         }
     }
 
@@ -477,10 +437,9 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeRestartAssets(string $action): void
     {
-        if ($action === 'manage') {
+        if ($action === 'index') {
             $this->footerCollectionJS
-                ->addJs('js/pbx/Restart/restart-manage.js', true)
-                ->addJs('js/pbx/Restart/current-calls-worker.js', true);
+                ->addJs('js/pbx/Restart/restart-index.js', true);
         }
     }
 
@@ -501,8 +460,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/debugger-info.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
-                ->addJs('js/pbx/Providers/providers-index.js', true)
-                ->addJs('js/pbx/Providers/providers-status-worker.js', true);
+                ->addJs('js/pbx/Providers/providers-index.js', true);
         } elseif ($action === 'modifysip' || $action === 'modifyiax') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
@@ -523,23 +481,16 @@ class AssetProvider implements ServiceProviderInterface
         if ($action === 'index') {
             $this->semanticCollectionJS->addJs('js/vendor/semantic/modal.min.js', true);
             $this->footerCollectionJS
+                ->addJs('js/pbx/Update/update-api.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/resumable.js', true)
-                ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-upgrade-status-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-install-status-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-merging-status-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-modules-index.js', true)
                 ->addJs('js/vendor/semantic/progress.min.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-ping-lic-worker.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-add-new.js', true)
-                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
-                ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
-                ->addJs('js/vendor/inputmask/init.js', true)
-                ->addJs('js/pbx/main/form.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-keycheck.js', true);
-
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-add-new.js', true);
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
                 ->addCss('css/vendor/semantic/modal.min.css', true)
@@ -623,6 +574,23 @@ class AssetProvider implements ServiceProviderInterface
         }
     }
 
+    /**
+     * Makes assets for the Licensing controller
+     *
+     * @param string $action
+     */
+    private function makeLicensingAssets(string $action): void
+    {
+        if ($action === 'modify') {
+            $this->footerCollectionJS
+                //->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
+                ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
+                ->addJs('js/vendor/inputmask/init.js', true)
+                ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/Licensing/licensing-modify.js', true);
+        }
+    }
 
     /**
      * Makes assets for the IvrMenu controller
@@ -670,13 +638,8 @@ class AssetProvider implements ServiceProviderInterface
     private function makeGeneralSettingsAssets(string $action): void
     {
         if ($action === 'modify') {
-            $this->semanticCollectionCSS
-                ->addCss('css/vendor/semantic/slider.min.css', true)
-                ->addCss('css/vendor/semantic/progress.min.css', true);
-            $this->semanticCollectionJS
-                ->addJs('js/vendor/semantic/slider.min.js', true)
-                ->addJs('js/vendor/semantic/progress.min.js', true);
-
+            $this->semanticCollectionCSS->addCss('css/vendor/semantic/progress.min.css', true);
+            $this->semanticCollectionJS->addJs('js/vendor/semantic/progress.min.js', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/vendor/jquery.tablednd.js', true)
@@ -752,7 +715,6 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/inputmask/jquery.inputmask-multi.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
-                ->addJs('js/pbx/PbxAPI/usersAPI.js', true)
                 ->addJs('js/pbx/Extensions/input-mask-patterns.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true)
@@ -801,7 +763,6 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/CustomFiles/custom-files-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
-                ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/CustomFiles/custom-files-modify.js', true);
             $this->footerCollectionACE
@@ -837,10 +798,6 @@ class AssetProvider implements ServiceProviderInterface
 
             $this->footerCollectionJS
                 ->addJs(
-                    'js/pbx/CallDetailRecords/call-detail-records-player.js',
-                    true
-                )
-                ->addJs(
                     'js/pbx/CallDetailRecords/call-detail-records-index.js',
                     true
                 );
@@ -862,5 +819,6 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/AsteriskManagers/manager-modify.js', true);
         }
     }
+
 
 }

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,10 @@
 
 namespace MikoPBX\Core\Asterisk;
 
+use Throwable;
 use MikoPBX\Core\System\{Util};
 use Phalcon\Di;
+use SQLite3;
 
 class AstDB extends Di\Injectable
 {
@@ -35,13 +37,13 @@ class AstDB extends Di\Injectable
     }
 
     /**
-     * Put a value into the database.
+     * Поместить значение в базу данных.
      *
-     * @param string $family The family name.
-     * @param string $key The key name.
-     * @param string $value The value to be stored.
+     * @param $family
+     * @param $key
+     * @param $value
      *
-     * @return bool True if the operation is successful, false otherwise.
+     * @return bool
      */
     public function databasePut($family, $key, $value): bool
     {
@@ -53,13 +55,13 @@ class AstDB extends Di\Injectable
     }
 
     /**
-     * Put a value into the database using AMI.
+     * Поместить значение в базу данных через AMI.
      *
-     * @param string $family The family name.
-     * @param string $key The key name.
-     * @param string $value The value to be stored.
+     * @param $family
+     * @param $key
+     * @param $value
      *
-     * @return bool True if the operation is successful, false otherwise.
+     * @return bool
      */
     private function databasePutAmi($family, $key, $value): bool
     {

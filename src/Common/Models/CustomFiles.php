@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,12 +29,6 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class CustomFiles extends ModelsBase
 {
-
-    public const MODE_NONE = 'none';
-    public const MODE_APPEND = 'append';
-    public const MODE_OVERRIDE = 'override';
-    public const MODE_SCRIPT = 'script';
-
     /**
      * @Primary
      * @Identity
@@ -43,57 +37,41 @@ class CustomFiles extends ModelsBase
     public $id;
 
     /**
-     * Filepath of the custom file
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $filepath = '';
 
     /**
-     * Content of the custom file
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $content = null;
 
     /**
-     * File replacement mode
-     * append - append to the end of the file
-     * override - override the file
-     * none - do nothing
+     * Режим подмены файла
+     * append - добавить в конец файла
+     * override - переопределить
+     * none - ничего не делать
      *
-     * @Column(type="string", nullable=true, default="none") {'script'|'append'|'override'|'none'}
+     * @Column(type="string", nullable=true, default="none") {'append'|'override'|'none'}
      */
-    public ?string $mode = self::MODE_NONE;
+    public ?string $mode = 'none';
 
     /**
-     * Indicates if the file has been changed
-     *
      * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $changed = '0';
 
     /**
-     * Description of the custom file
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';
 
-    /**
-     * Initialize the model.
-     */
     public function initialize(): void
     {
         $this->setSource('m_CustomFiles');
         parent::initialize();
     }
 
-    /**
-     * Perform validation on the model.
-     *
-     * @return bool Whether the validation was successful or not.
-     */
     public function validation(): bool
     {
         $validation = new Validation();
@@ -109,23 +87,12 @@ class CustomFiles extends ModelsBase
         return $this->validate($validation);
     }
 
-    /**
-     * Get the decoded content from the model.
-     *
-     * @return string The decoded content.
-     */
     public function getContent(): string
     {
         return base64_decode((string)$this->content);
     }
 
-    /**
-     * Set the encoded content for the model.
-     *
-     * @param string $text The content to be encoded and set.
-     * @return void
-     */
-    public function setContent(string  $text): void
+    public function setContent($text): void
     {
         $this->content = base64_encode($text);
     }

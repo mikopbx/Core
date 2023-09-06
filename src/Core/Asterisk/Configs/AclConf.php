@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,25 +24,14 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\Util;
 
-/**
- * Represents the AclConf class responsible for generating acl.conf configuration file.
- *
- * @package MikoPBX\Core\Asterisk\Configs
- */
-class AclConf extends AsteriskConfigClass
+class AclConf extends CoreConfigClass
 {
-    /**
-     * The module hook applying priority.
-     */
-    public int $priority = 1000;
-
     protected string $description = 'acl.conf';
     protected array $data_peers;
 
     /**
-     * Returns the models that this class depends on.
      *
-     * @return array The array of dependence models.
+     * @return array
      */
     public function getDependenceModels(): array
     {
@@ -50,18 +39,18 @@ class AclConf extends AsteriskConfigClass
     }
 
     /**
-     * Retrieves the settings.
+     * Получение настроек.
      */
     public function getSettings(): void
     {
-        // Settings for the current class.
+        // Настройки для текущего класса.
         $this->data_peers = $this->getPeers();
     }
 
     /**
-     * Retrieves the data for SIP peers.
+     * Получение данных по SIP пирам.
      *
-     * @return array The array of SIP peers data.
+     * @return array
      */
     private function getPeers(): array
     {
@@ -82,9 +71,6 @@ class AclConf extends AsteriskConfigClass
         return $data;
     }
 
-    /**
-     * Generates the protected configuration content.
-     */
     protected function generateConfigProtected(): void
     {
         $conf_acl = '';

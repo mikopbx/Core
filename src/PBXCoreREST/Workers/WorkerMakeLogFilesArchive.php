@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,35 +26,19 @@ use MikoPBX\Core\System\System;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
+use Throwable;
 
-
-/**
- * The WorkerMakeLogFilesArchive class is responsible for archiving log files.
- *
- * @package MikoPBX\PBXCoreREST\Workers
- */
 class WorkerMakeLogFilesArchive extends WorkerBase
 {
-
-    /**
-     * Starts the log files archiving worker process.
-     *
-     * @param array $argv The command-line arguments passed to the worker.
-     * @return void
-     */
-    public function start(array $argv): void
+    public function start($argv): void
     {
         $settings_file = $argv[2] ?? '';
-
-        // Check if the settings file exists
         if ( ! file_exists($settings_file)) {
             Util::sysLogMsg("WorkerMakeLogFilesArchive", 'File with settings not found', LOG_ERR);
 
             return;
         }
         $file_data = json_decode(file_get_contents($settings_file), true);
-
-        // Check if the 'result_file' key is present in the settings file
         if ( ! isset($file_data['result_file'])) {
             Util::sysLogMsg("WorkerMakeLogFilesArchive", 'Wrong settings', LOG_ERR);
 
@@ -69,7 +53,6 @@ class WorkerMakeLogFilesArchive extends WorkerBase
         $za7Path  = Util::which('7za');
         $findPath = Util::which('find');
 
-        // Remove the result file if it already exists
         if (file_exists($resultFile)) {
             Processes::mwExec("{$rmPath} -rf {$resultFile}");
         }
@@ -105,5 +88,5 @@ class WorkerMakeLogFilesArchive extends WorkerBase
     }
 }
 
-// Start the log files archiving worker process
-WorkerMakeLogFilesArchive::startWorker($argv ?? []);
+// Start worker process
+WorkerMakeLogFilesArchive::startWorker($argv ?? null);

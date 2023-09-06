@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # MikoPBX - free phone system for small business
-# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+# Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,13 +23,12 @@
 # RAID
 mdadmPath=$(/sbin/which mdadm)
 if [ -n "$mdadmPath" ]; then
-  # Stop any running RAID arrays
   "$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop >/dev/null 2>/dev/null
 fi
 # RAID END
 
 if [ -f /tmp/ejectcd ]; then
-  # Try to eject the CD from the drive
+  # Попробуем изъять диск.
   cddev=$(/sbin/sysctl -n dev.cdrom.info | /bin/busybox grep "drive name" | /bin/busybox cut -f 3)
   echo "Eject CD from drive ${cddev}..."
   /bin/busybox eject "/dev/${cddev}" >/dev/null 2>/dev/null

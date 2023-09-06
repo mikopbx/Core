@@ -51,26 +51,20 @@
     "varEtcDir": "/var/etc",
     "modulesDir": "/mountpoint/mikopbx/custom_modules",
     "tempDir": "/mountpoint/mikopbx/tmp",
-    "confBackupDir": "/mountpoint/mikopbx/backup/db",
     "logsDir": "/mountpoint/mikopbx/log",
     "mediaMountPoint": "/mountpoint",
     "fail2banDbDir": "/mountpoint/mikopbx/fail2ban"
   },
   "www": {
     "uploadDir": "/mountpoint/mikopbx/tmp/www_cache/upload_cache",
-    "downloadCacheDir": "/mountpoint/mikopbx/tmp/www_cache/files_cache"
+    "phpSessionDir": "/var/tmp/php/session",
+    "downloadCacheDir": "/mountpoint/mikopbx/tmp/www_cache/files_cache",
+    "encryptionKey": "auVy8?^%5XLTJQc-%&k?TcB-_E2jNT35K?%knZ&TMqmc8U@k+=AaZ^3vv7xA+mA5"
   },
   "adminApplication": {
     "debugMode": false,
     "baseUri": "/admin-cabinet/",
     "assetsCacheDir": "/var/tmp/www_cache",
-    "voltCacheDir": "/var/tmp/www_cache/volt",
-    "viewCacheDir": "/var/tmp/www_cache/view",
-    "combineCSS": false,
-    "combineJS": false
-  },
-  "sentry": {
-    "environment": "development",
-    "dsn": "https://07be0eff8a5c463fbac3e90ae5c7d039@sentry.miko.ru/1"
+    "voltCacheDir": "/var/tmp/www_cache/volt"
   }
 }

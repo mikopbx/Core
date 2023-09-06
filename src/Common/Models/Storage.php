@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,33 +38,29 @@ class Storage extends ModelsBase
     public $id;
 
     /**
-     * Name of the mounted storage disk
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $name = '';
 
     /**
-     * Link to the system device for storing data
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $device = '';
 
     /**
-     * Unique identifier of the storage device
-     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $mountpoint = '';
+
+    /**
      * @Column(type="string", nullable=true)
      */
     public ?string $uniqid = '';
 
     /**
-     * File system type
-     *
      * @Column(type="string", nullable=true)
      */
     public ?string $filesystemtype = '';
-
 
     /**
      * @Column(type="integer", nullable=true)
@@ -72,19 +68,37 @@ class Storage extends ModelsBase
     public ?string $media = '';
 
     /**
-     * Initialize the model.
+     * @Column(type="integer", nullable=true)
      */
+    public ?string $persistence = '';
+
+    /**
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $astlogs = '';
+
+    /**
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $voicemailarchive = '';
+
+
+    /**
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $syslog = '';
+
+    /**
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $check_when_booting = '';
+
     public function initialize(): void
     {
         $this->setSource('m_Storage');
         parent::initialize();
     }
 
-    /**
-     * Perform validation on the model.
-     *
-     * @return bool Whether the validation was successful or not.
-     */
     public function validation(): bool
     {
         $validation = new Validation();

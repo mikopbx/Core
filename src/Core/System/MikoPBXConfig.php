@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,24 +23,20 @@ use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Di\Injectable;
 
 /**
- * Class MikoPBXConfig
- *
- * Provides methods to manage MikoPBX general settings.
- *
- * @package MikoPBX\Core\System
+ * Class Config
  */
 class MikoPBXConfig extends Injectable
 {
 
     /**
-     * Saves a value for a general setting.
+     * Saves GeneralSettings value
      *
-     * @param string $db_key The key of the general setting.
-     * @param mixed $value The value to be saved.
+     * @param $db_key
+     * @param $value
      *
-     * @return bool True if the value was successfully saved, false otherwise.
+     * @return mixed
      */
-    public function setGeneralSettings(string $db_key, $value): bool
+    public function setGeneralSettings($db_key, $value)
     {
         $data = PbxSettings::findFirst("key = '$db_key'");
         if (null === $data) {
@@ -54,29 +50,28 @@ class MikoPBXConfig extends Injectable
     }
 
     /**
-     * Resets a general setting value.
+     * Deletes GeneralSettings value
      *
-     * @param string $db_key The key of the general setting to be reset.
+     * @param $db_key
      *
-     * @return bool True if the value was successfully reset to default, false otherwise.
+     * @return bool
      */
-    public function resetGeneralSettings(string $db_key): bool
+    public function deleteGeneralSettings($db_key): bool
     {
         $data = PbxSettings::findFirstByKey($db_key);
         if (null === $data) {
             return true;
         }
-        $data->value = PbxSettings::getDefaultArrayValues()[$db_key]??'';
 
-        return $data->update();
+        return $data->delete();
     }
 
     /**
-     * Returns the array of general settings or the value of a specific key.
+     * Returns general settings array or value, if key was set
      *
-     * @param string $db_key The key of the general setting. If empty, returns all settings.
+     * @param string $db_key
      *
-     * @return array|string The array of general settings or the value of the specified key.
+     * @return array|string
      */
     public function getGeneralSettings(string $db_key = '')
     {

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 namespace MikoPBX\Core\System\Upgrade\Releases;
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
@@ -53,10 +52,10 @@ class UpdateConfigsUpToVer100 extends Injectable implements UpgradeSystemConfigI
         }
         $generalConfig = new MikoPBXConfig();
         $newPasswordSsh = 'S'.md5(''.$now.'ssh'.$now);
-        $generalConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD, $newPasswordSsh);
-        $generalConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING, md5($newPasswordSsh));
-        $generalConfig->setGeneralSettings(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD, '1');
-        $generalConfig->setGeneralSettings(PbxSettingsConstants::SSH_AUTHORIZED_KEYS, '');
+        $generalConfig->setGeneralSettings('SSHPassword', $newPasswordSsh);
+        $generalConfig->setGeneralSettings('SSHPasswordHashString', md5($newPasswordSsh));
+        $generalConfig->setGeneralSettings('SSHDisablePasswordLogins', '1');
+        $generalConfig->setGeneralSettings('SSHAuthorizedKeys', '');
         $generalConfig->setGeneralSettings('PBXAllowGuestCalls', '0');
     }
 }

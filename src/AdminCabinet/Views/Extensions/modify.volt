@@ -8,21 +8,20 @@
 
 {{ form.render('sip_type') }}
 {{ form.render('sip_uniqid') }}
+{{ form.render('sip_disabled') }}
 
 {{ form.render('mobile_uniqid') }}
 
+{{ form.render('user_role') }}
 {{ form.render('user_avatar') }}
 {{ form.render('user_id') }}
 <input type="file" name="file-select" id="file-select" style="display: none"/>
 
 <div class="ui top attached tabular menu" id="extensions-menu">
-        <a class="item active" data-tab="general">{{ t._('ex_GeneralSettings') }}</a>
-        <a class="item" data-tab="routing">{{ t._('ex_RoutingSettings') }}</a>
-    {{ partial("PbxExtensionModules/hookVoltBlock",
-        ['arrayOfPartials':hookVoltBlock('TabularMenu')])
-    }}
-</div>
+    <a class="item active" data-tab="general">{{ t._('ex_GeneralSettings') }}</a>
 
+    <a class="item" data-tab="routing">{{ t._('ex_RoutingSettings') }}</a>
+</div>
 <div class="ui bottom attached tab segment active" data-tab="general">
     <div class="two fields">
         <div class="field">
@@ -36,7 +35,9 @@
                     <i class="search icon"></i>
                     {{ form.render('number') }}
                 </div>
-                <div class="ui top pointing red label hidden" id="number-error"></div>
+                <div class="ui top pointing red label hidden" id="number-error">
+                    {{ t._("ex_ThisNumberIsNotFree") }}
+                </div>
             </div>
             <div class="field">
                 <label>{{ t._('ex_MobileNumber') }}</label>
@@ -54,7 +55,9 @@
                     <i class="search icon"></i>
                     {{ form.render('user_email') }}
                 </div>
-                <div class="ui top pointing red label hidden" id="email-error"></div>
+                <div class="ui top pointing red label hidden" id="email-error">
+                    {{ t._("ex_ThisEmailAlreadyRegisteredForOtherUser") }}
+                </div>
             </div>
 
             {# <div class="field"> #}
@@ -71,12 +74,14 @@
                     </div>
                 </div>
             </div>
+
+
         </div>
         <div class="field">
             <div class="field">
                 <div class="ui centered card">
                     <div class="image">
-                        <img src='{{ avatar }}' id="avatar" alt="{{ t._('ex_UserPhotography') }}">
+                        <img src='{{ avatar }}' id="avatar">
                     </div>
                     <div class="ui bottom attached basic buttons">
                         <div class="ui button" id="upload-new-avatar">
@@ -92,53 +97,41 @@
         </div>
     </div>
 
-    {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralTabFields')]) }}
-
     <div class="ui accordion field">
         <div class=" title">
             <i class="icon dropdown"></i>
             {{ t._('AdvancedOptions') }}
         </div>
-        <div class="content">
+        <div class=" content field">
             <h3 class="ui dividing header ">{{ t._("ex_MobileSettings") }}</h3>
-            <div class="field">
+            <div class="five wide field">
                 <label>{{ t._('ex_MobileDialstring') }}</label>
-                <div class="five wide field">
-                    {{ form.render('mobile_dialstring') }}
-                </div>
+                {{ form.render('mobile_dialstring') }}
             </div>
             <h3 class="ui dividing header ">{{ t._("gs_PBXRecordCalls") }}</h3>
             <div class="ten wide field">
                 <div class="ui toggle checkbox">
                     {{ form.render('sip_enableRecording') }}
-                    <label for="sip_enableRecording">{{ t._('ex_enableRecording') }}</label>
+                    <label>{{ t._('ex_enableRecording') }}</label>
                 </div>
             </div>
             <h3 class="ui dividing header ">{{ t._("ex_SipSettings") }}</h3>
             <div class="field">
                 <label>{{ t._('ex_DTMFMode') }}</label>
-                <div class="five wide field">
-                    {{ form.render('sip_dtmfmode') }}
-                </div>
+                {{ form.render('sip_dtmfmode') }}
             </div>
             <div class="field">
                 <label>{{ t._('ex_Transport') }}</label>
-                <div class="five wide field">
-                    {{ form.render('sip_transport') }}
-                </div>
+                {{ form.render('sip_transport') }}
             </div>
             <div class="field">
                 <label>{{ t._('ex_NetworkFilter') }}</label>
-                <div class="ten wide field">
-                    {{ form.render('sip_networkfilterid') }}
-                </div>
+                {{ form.render('sip_networkfilterid') }}
             </div>
             <h3 class="ui dividing header ">{{ t._("ex_ManualAdditionalAttributes") }}</h3>
             <div class="field">
                 {{ form.render('sip_manualattributes') }}
             </div>
-
-            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralTabAdvancedFields')]) }}
         </div>
     </div>
 </div>
@@ -160,11 +153,7 @@
         {{ t._('ex_IfMainExtensionIsUnavailableRedirectCallTo') }}
         {{ form.render('fwd_forwardingonunavailable') }}
     </div>
+
 </div>
-
-{{ partial("PbxExtensionModules/hookVoltBlock",
-    ['arrayOfPartials':hookVoltBlock('AdditionalTab')])
-}}
-
 {{ partial("partials/submitbutton",['indexurl':'extensions/index/']) }}
-{{ end_form() }}
+</form>

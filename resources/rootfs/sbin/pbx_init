@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # MikoPBX - free phone system for small business
-# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+# Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,16 +24,16 @@ freeOffloadFile='/tmp/freeoffload';
 while : ; do
 
     if [ ! -t 0 ] || [ ! -t 1 ] ; then
-        # Not a TTY, disable the menu.
+        # Это НЕ TTY. Меню необходимо отключить.
         exit 2;
     fi
     if [ "$i" -gt 3 ]; then
-        # System installation, disable the menu.
+        # Это установка системы. Меню необходимо отключить.
         exit 1;
     fi
 
     if [ "$delta" = "0" ]; then
-        # System installation, disable the menu.
+        # Это установка системы. Меню необходимо отключить.
         i=$((i + 1));
     else
         i=0;
@@ -41,47 +41,47 @@ while : ; do
     start_time=$(date +%s);
 
     if [ -f /tmp/ejectcd ]; then
-        # System installation, disable the menu.
+        # Это установка системы. Меню необходимо отключить.
         sleep 20;
     fi
 
     if [ -f /tmp/rebooting ]; then
         echo "Waiting for a reboot (${0})";
         /sbin/pbx_reboot;
-        # Wait for reboot for 10 seconds.
+        # Ожидаем перезагрузки 10 секунд.
         # dd if=/dev/urandom bs=1 count=10 2>/dev/null | pv -pL 1 | dd of=/dev/null 2>/dev/null;
     fi
     if [ -f /tmp/shutdown ]; then
         echo "Waiting for a shutdown (${0})";
         /sbin/shutdown;
-        # Wait for reboot for 10 seconds.
+        # Ожидаем перезагрузки 10 секунд.
         # dd if=/dev/urandom bs=1 count=10 2>/dev/null | pv -pL 1 | dd of=/dev/null 2>/dev/null;
     fi
 
-    # Check if shell needs to be started.
+    # Проверим, возможно требуется запустить shell.
     if [ -f /tmp/start_sh ]; then
         clear;
         rm -rf /tmp/start_sh;
         if [ -f /etc/debian_version ] ; then
             /bin/bash -login;
         elif [ "${SSH_CLIENT}x" = 'x' ] ; then
-             # Redirect input and output to the console.
+            # Перенаправляем потоки ввода вывода на консоль.
             exec < /dev/console > /dev/console  2>&1
             exec /bin/bash -login;
         else
             exec /bin/bash -login;
         fi
     fi
-    # Ensure that the /offload partition is mounted.
+    # Убедимся, что раздел смонтирован.
     if [ ! -f "$freeOffloadFile" ]; then
-        # Console menu depends on the /offload partition.
+        # Консольное меню зависит от /offload раздела.
         /etc/rc/console_menu 2>/dev/null;
         resultMenu=$?;
 
-        # Check for reboot.
+        # Проверка на перезагрузку.
         tput reset; tput civis;
         while [ -f "$freeOffloadFile" ]; do
-            # Wait until reboot process finishes.
+            # Если запущен процесс перезагрузки, ждем завершения.
             sleep 1;
         done;
         tput cnorm;

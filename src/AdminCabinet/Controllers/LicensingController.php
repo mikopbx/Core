@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,26 +19,43 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use Phalcon\Http\Response;
+use GuzzleHttp\Client as GuzzleHttpClient;
+use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
+use MikoPBX\AdminCabinet\Forms\LicensingChangeLicenseKeyForm;
+use MikoPBX\AdminCabinet\Forms\LicensingGetKeyForm;
+use MikoPBX\Common\Models\PbxSettings;
 
+/**
+ * @property \MikoPBX\Service\License license
+ */
 class LicensingController extends BaseController
 {
     /**
-     * Old services still use old controller address
      * License key, get new key, activate coupon form
      *
      */
     public function modifyAction(): void
     {
-        // Create a response object
-        $response = new Response();
+        if ($this->language === 'ru') {
+            $this->view->modulesExampleImgPath = $this->url->get('assets/img/modules-example-ru.png');
+        } else {
+            $this->view->modulesExampleImgPath = $this->url->get('assets/img/modules-example-en.png');
+        }
 
-        // Set the redirect URL with a hash fragment
-        $redirectUrl = 'pbx-extension-modules/index#licensing';
+        // License key form
+        $licKey                           = PbxSettings::getValueByKey('PBXLicense');
+        $changeLicenseKeyForm             = new LicensingChangeLicenseKeyForm(null, ['licKey' => $licKey]);
+        $this->view->changeLicenseKeyForm = $changeLicenseKeyForm;
 
-        // Perform the redirect
-        $response->redirect($redirectUrl)->send();
+        // Coupon form
+        $activateCouponForm             = new LicensingActivateCouponForm();
+        $this->view->activateCouponForm = $activateCouponForm;
 
+        // Get new license key form
+        $getKeyForm             = new LicensingGetKeyForm();
+        $this->view->getKeyForm = $getKeyForm;
+        $this->view->submitMode = null;
+        $this->view->internetExists = $this->checkInternetConnection();
     }
 
     /**
@@ -48,4 +65,25 @@ class LicensingController extends BaseController
     {
         $this->session->remove('PBXLicense');
     }
+
+    /**
+     * Checks connection between MikoPBX and marketplace server
+     * @return bool
+     */
+    private function checkInternetConnection():bool
+    {
+        $client  = new GuzzleHttpClient(['verify' => false ]);
+        try {
+            $res    = $client->request('GET', 'https://lic.mikopbx.com/protect/v1/ping', ['timeout'     => 2, 'http_errors' => false,]);
+            $code   = $res->getStatusCode();
+        }catch (\Throwable $e ){
+            $code = 0;
+        }
+        $body = '';
+        if($code === 200 && isset($res)){
+            $body = $res->getBody()->getContents();
+        }
+        return strpos($body, "message='pong'") !== false;
+    }
+
 }

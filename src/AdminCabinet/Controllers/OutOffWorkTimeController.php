@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,13 +24,11 @@ use MikoPBX\Common\Models\{Extensions,
     IncomingRoutingTable,
     OutWorkTimes,
     OutWorkTimesRouts,
-    PbxSettings,
     Sip,
     SoundFiles};
 
 class OutOffWorkTimeController extends BaseController
 {
-
 
     /**
      * This function retrieves OutWorkTimes data and formats it into an array that is used to display on the index page.
@@ -50,13 +48,14 @@ class OutOffWorkTimeController extends BaseController
 
         // Iterate over each OutWorkTimes record and format it into an array for displaying on the index page.
         foreach ($timeFrames as $timeFrame) {
-            // If the description is less than 45 characters, use the entire string.
-            // Otherwise, truncate it to 45 characters and add an ellipsis.
-            if(mb_strlen($timeFrame->description) < 45){
+            // If the description is less than 50 characters, use the entire string.
+            // Otherwise, truncate it to 50 characters and add an ellipsis.
+            if(mb_strlen($timeFrame->description) < 50){
                 $shot_description = $timeFrame->description;
-            } else {
-                $shot_description = trim(mb_substr($timeFrame->description, 0 , 45)).'...';
+            }else{
+                $shot_description = trim(mb_substr($timeFrame->description, 0 , 50)).'...';
             }
+
             // Add the formatted OutWorkTimes record to the array of records to be displayed on the index page.
             $timeframesTable[] = [
                 'id'               => $timeFrame->id,
@@ -191,10 +190,6 @@ class OutOffWorkTimeController extends BaseController
         }
 
         $this->view->rules = $routingTable;
-
-        // Prepare time zone offset
-        $dateTime = new \DateTime();
-        $this->view->setVar('serverOffset', $dateTime->getOffset() / 60);
     }
 
     /**
@@ -321,6 +316,7 @@ class OutOffWorkTimeController extends BaseController
                 $rule_id = explode('rule-', $key)[1];
                 if ($value === 'on') {
                     $newRule = new OutWorkTimesRouts();
+                    $newRule->id = $rule_id;
                     $newRule->timeConditionId = $data['id'];
                     $newRule->routId          = $rule_id;
                     if ($newRule->save() === false) {

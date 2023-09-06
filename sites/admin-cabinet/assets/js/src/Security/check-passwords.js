@@ -17,54 +17,30 @@
  */
 
 /* global $, globalTranslate, globalRootUrl */
-
-/**
- * Object responsible for checking password security and handling security warnings.
- *
- * @module checkPasswordWorker
- */
 const checkPasswordWorker = {
-    /**
-     * URL for the general settings modification page.
-     * @type {string}
-     */
     generalSettingsUrl: `${globalRootUrl}general-settings/modify/`,
-
-    /**
-     * Initializes the check password worker by attaching an event listener for security warnings.
-     */
     initialize() {
         $(window).on('SecurityWarning', checkPasswordWorker.onWarning);
     },
-
-    /**
-     * Event handler for security warnings.
-     * @param {Event} event - The event object.
-     * @param {Object} data - The data associated with the security warning.
-     */
     onWarning(event, data) {
         let tab = '';
         $.each(data.needUpdate, (key, value) => {
-            if ('WebAdminPassword' === value) {
+            if('WebAdminPassword' === value){
                 tab = 'passwords';
-            } else if ('SSHPassword' === value) {
+            }else if('SSHPassword' === value){
                 tab = 'ssh';
             }
         });
-        if (tab === '') {
+        if(tab === ''){
             return;
         }
-        if (window.location.pathname !== checkPasswordWorker.generalSettingsUrl) {
+        if(window.location.pathname !== checkPasswordWorker.generalSettingsUrl){
             window.location.href = `${checkPasswordWorker.generalSettingsUrl}#/${tab}`;
-        } else {
+        }else{
             $(window).trigger('GS-ActivateTab', [tab]);
         }
     },
 };
-
-/**
- *  Initialize check weak password on document ready
- */
 $(document).ready(() => {
     checkPasswordWorker.initialize();
 });

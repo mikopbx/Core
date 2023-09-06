@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright (C) 2017-2020 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,29 +19,25 @@
 
 namespace MikoPBX\PBXCoreREST\Workers;
 
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
+use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\Workers\WorkerBase;
-use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
+use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
+use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;
+use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
+use MikoPBX\PBXCoreREST\Lib\SysLogsManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
+use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
 use Throwable;
-use function xdebug_break;
 
 require_once 'Globals.php';
 
-
-/**
- * The WorkerApiCommands class is responsible for handling API command requests from the frontend.
- *
- * It handles API command requests, delegates the processing to the appropriate processor classes,
- * and checks for restart requirements based on the received requests.
- *
- *
- * @package MikoPBX\PBXCoreREST\Workers
- */
 class WorkerApiCommands extends WorkerBase
 {
     /**
@@ -49,19 +45,19 @@ class WorkerApiCommands extends WorkerBase
      *
      * @var int
      */
-    public int $maxProc = 4;
-
+    public int $maxProc = 2;
 
     /**
-     * Starts the worker.
-     *
-     * @param array $argv The command-line arguments passed to the worker.
-     *
-     * @return void
+     * Available REST API processors
      */
-    public function start(array $argv): void
+    private array $processors;
+
+    /**
+     * @param $argv
+     *
+     */
+    public function start($argv): void
     {
-        /** @var BeanstalkConnectionWorkerApiProvider $beanstalk */
         $beanstalk = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
         if($beanstalk->isConnected() === false){
             Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
@@ -70,10 +66,31 @@ class WorkerApiCommands extends WorkerBase
         }
         $beanstalk->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $beanstalk->subscribe(__CLASS__, [$this, 'prepareAnswer']);
+        $this->registerProcessors();
 
         while ($this->needRestart === false) {
             $beanstalk->wait();
         }
+    }
+
+    /**
+     * Prepares list of available processors
+     */
+    private function registerProcessors(): void
+    {
+        $this->processors = [
+            'advices' => AdvicesProcessor::class,
+            'cdr'     => CdrDBProcessor::class,
+            'iax'     => IAXStackProcessor::class,
+            'license' => LicenseManagementProcessor::class,
+            'sip'     => SIPStackProcessor::class,
+            'storage' => StorageManagementProcessor::class,
+            'system'  => SystemManagementProcessor::class,
+            'syslog'  => SysLogsManagementProcessor::class,
+            'sysinfo' => SysinfoManagementProcessor::class,
+            'files'   => FilesManagementProcessor::class,
+            'modules' => PbxExtensionsProcessor::class
+        ];
     }
 
     /**
@@ -89,37 +106,18 @@ class WorkerApiCommands extends WorkerBase
         try {
             $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
             $processor = $request['processor'];
-            $res->processor = $processor;
-            // Old style, we can remove it in 2025
-            if ($processor === 'modules'){
-                $processor = PbxExtensionsProcessor::class;
-            }
 
-            // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
-            // and set XDEBUG_SESSION Cookie header on REST request to debug it
-            if (isset($request['debug']) && $request['debug'] === true && extension_loaded('xdebug')) {
-                xdebug_break();
-            }
-
-            if (method_exists($processor, 'callback')) {
-                $res = $processor::callback($request);
+            if (array_key_exists($processor, $this->processors)) {
+                $res = $this->processors[$processor]::callback($request);
             } else {
                 $res->success    = false;
-                $res->messages['error'][] = "Unknown processor - {$processor} in prepareAnswer";
+                $res->messages[] = "Unknown processor - {$processor} in prepareAnswer";
             }
         } catch (Throwable $exception) {
+            $res->messages[] = 'Exception on WorkerApiCommands - ' . $exception->getMessage();
             $request        = [];
-            $this->needRestart = true;
-            // Prepare answer with pretty error description
-            $res->messages['error'][] = CriticalErrorsHandler::handleExceptionWithSyslog($exception);
         } finally {
-            $encodedResult = json_encode($res->getResult());
-            if ($encodedResult===false){
-                $res->data=[];
-                $res->messages['error'][]='It is impossible to encode to json current processor answer';
-                $encodedResult = json_encode($res->getResult());
-            }
-            $message->reply($encodedResult);
+            $message->reply(json_encode($res->getResult()));
             if ($res->success) {
                 $this->checkNeedReload($request);
             }
@@ -156,13 +154,11 @@ class WorkerApiCommands extends WorkerBase
     private function getNeedRestartActions(): array
     {
         return [
-            SystemManagementProcessor::class  => [
-                'restoreDefault',
-            ],
-            ModulesManagementProcessor::class  => [
-                'enableModule',
-                'disableModule',
-                'uninstallModule',
+            'system'  => [
+                 'enableModule',
+                 'disableModule',
+                 'uninstallModule',
+                 'restoreDefaultSettings',
             ],
         ];
     }
@@ -170,4 +166,4 @@ class WorkerApiCommands extends WorkerBase
 }
 
 // Start worker process
-WorkerApiCommands::startWorker($argv??[]);
+WorkerApiCommands::startWorker($argv??null);
