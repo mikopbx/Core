@@ -1200,4 +1200,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'sd_ToolTipRefresh' => 'Ən son jurnal faylını əldə edin',
     'sd_ToolTipAutoUpdate' => 'Ekran məzmununu avtomatik yeniləyin',
     'sd_ToolTipErase' => 'Faylı təmizləyin',
+    'ex_dropdownCategory_PARKING' => 'parkinq yerləri',
 ];

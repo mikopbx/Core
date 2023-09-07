@@ -1200,4 +1200,5 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'sd_ToolTipRefresh' => 'Nhận tệp nhật ký mới nhất',
     'sd_ToolTipErase' => 'Xóa tập tin',
     'sd_ToolTipAutoUpdate' => 'Tự động cập nhật nội dung màn hình',
+    'ex_dropdownCategory_PARKING' => 'chỗ đậu xe',
 ];

@@ -1200,4 +1200,5 @@ return [
     'sd_ToolTipRefresh' => '获取最新的日志文件',
     'sd_ToolTipAutoUpdate' => '自动更新屏幕内容',
     'sd_ToolTipErase' => '清除文件',
+    'ex_dropdownCategory_PARKING' => '停车位',
 ];

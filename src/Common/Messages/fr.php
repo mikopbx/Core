@@ -1200,4 +1200,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'sd_ToolTipDownload' => 'Télécharger le fichier journal',
     'sd_ToolTipRefresh' => 'Obtenez le dernier fichier journal',
     'sd_ToolTipAutoUpdate' => 'Mettre à jour automatiquement le contenu de l\'écran',
+    'ex_dropdownCategory_PARKING' => 'places de stationnement',
 ];

@@ -1200,4 +1200,5 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'sd_ToolTipErase' => 'Wyczyść plik',
     'sd_ToolTipDownload' => 'Pobierz plik dziennika',
     'sd_ToolTipRefresh' => 'Pobierz najnowszy plik dziennika',
+    'ex_dropdownCategory_PARKING' => 'miejsca parkingowe',
 ];

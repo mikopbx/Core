@@ -1200,4 +1200,5 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'sd_ToolTipRefresh' => 'Získejte nejnovější soubor protokolu',
     'sd_ToolTipAutoUpdate' => 'Automaticky aktualizovat obsah obrazovky',
     'sd_ToolTipErase' => 'Vymazat soubor',
+    'ex_dropdownCategory_PARKING' => 'parkovací místa',
 ];

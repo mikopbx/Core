@@ -1200,4 +1200,5 @@ return [
     'sd_ToolTipDownload' => 'ログファイルをダウンロードする',
     'sd_ToolTipRefresh' => '最新のログファイルを取得する',
     'sd_ToolTipErase' => 'クリアファイル',
+    'ex_dropdownCategory_PARKING' => '駐車スロット',
 ];

@@ -1250,4 +1250,5 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'sd_ToolTipDownload' => 'Logbestand downloaden',
     'sd_ToolTipRefresh' => 'Haal het nieuwste logbestand op',
     'sd_ToolTipErase' => 'Bestand wissen',
+    'ex_dropdownCategory_PARKING' => 'parkeerplaatsen',
 ];

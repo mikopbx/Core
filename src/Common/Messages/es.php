@@ -1200,4 +1200,5 @@ El cupón se puede activar una vez y luego se canjea.',
     'sd_ToolTipRefresh' => 'Obtenga el archivo de registro más reciente',
     'sd_ToolTipAutoUpdate' => 'Actualizar automáticamente el contenido de la pantalla',
     'sd_ToolTipErase' => 'Archivo vacio',
+    'ex_dropdownCategory_PARKING' => 'plazas de aparcamiento',
 ];
