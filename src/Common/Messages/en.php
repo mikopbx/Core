@@ -1203,4 +1203,5 @@ The coupon can be activated once, after which it becomes redeemed.',
     'sd_ToolTipRefresh' => 'Get the latest log file',
     'sd_ToolTipAutoUpdate' => 'Automatically update screen content',
     'sd_ToolTipErase' => 'Clear file',
+    'ex_dropdownCategory_PARKING' => 'parking slots',
 ];

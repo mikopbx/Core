@@ -1200,4 +1200,5 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'sd_ToolTipErase' => 'Ryd fil',
     'sd_ToolTipDownload' => 'Download logfil',
     'sd_ToolTipRefresh' => 'Hent den seneste logfil',
+    'ex_dropdownCategory_PARKING' => 'parkeringspladser',
 ];

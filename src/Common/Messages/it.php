@@ -1200,4 +1200,5 @@ Il coupon può essere attivato una volta, dopodiché viene riscattato.',
     'sd_ToolTipDownload' => 'Scarica il file di registro',
     'sd_ToolTipRefresh' => 'Ottieni il file di registro più recente',
     'sd_ToolTipAutoUpdate' => 'Aggiorna automaticamente il contenuto dello schermo',
+    'ex_dropdownCategory_PARKING' => 'posti auto',
 ];

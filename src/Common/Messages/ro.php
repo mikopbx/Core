@@ -1233,4 +1233,5 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'sd_ToolTipDownload' => 'Descărcați fișierul jurnal',
     'sd_ToolTipRefresh' => 'Obțineți cel mai recent fișier jurnal',
     'sd_ToolTipAutoUpdate' => 'Actualizați automat conținutul ecranului',
+    'ex_dropdownCategory_PARKING' => 'locuri de parcare',
 ];

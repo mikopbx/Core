@@ -1199,4 +1199,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'sd_ToolTipRefresh' => 'Obtenha o arquivo de log mais recente',
     'sd_ToolTipAutoUpdate' => 'Atualizar automaticamente o conteúdo da tela',
     'sd_ToolTipErase' => 'Arquivo limpo',
+    'ex_dropdownCategory_PARKING' => 'vagas de estacionamento',
 ];

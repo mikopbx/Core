@@ -1203,4 +1203,5 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'sd_ToolTipRefresh' => 'Holen Sie sich die neueste Protokolldatei',
     'sd_ToolTipAutoUpdate' => 'Bildschirminhalte automatisch aktualisieren',
     'sd_ToolTipErase' => 'Datei löschen',
+    'ex_dropdownCategory_PARKING' => 'Parkplätze',
 ];

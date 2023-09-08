@@ -1217,4 +1217,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'sd_ToolTipErase' => 'Dosyayı temizle',
     'sd_ToolTipDownload' => 'Günlük dosyasını indir',
     'sd_ToolTipRefresh' => 'En son günlük dosyasını alın',
+    'ex_dropdownCategory_PARKING' => 'park yuvaları',
 ];

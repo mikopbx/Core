@@ -1200,4 +1200,5 @@ return [
     'sd_ToolTipRefresh' => 'Отримати останню версію лог файлу',
     'sd_ToolTipAutoUpdate' => 'Автоматично оновлювати вміст на екрані',
     'sd_ToolTipErase' => 'Очистити файл',
+    'ex_dropdownCategory_PARKING' => 'Слоти паркування',
 ];

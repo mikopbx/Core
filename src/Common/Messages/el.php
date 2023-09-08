@@ -1200,4 +1200,5 @@ return [
     'sd_ToolTipRefresh' => 'Λάβετε το πιο πρόσφατο αρχείο καταγραφής',
     'sd_ToolTipAutoUpdate' => 'Αυτόματη ενημέρωση περιεχομένου οθόνης',
     'sd_ToolTipErase' => 'Καθαρο ΑΡΧΕΙΟ',
+    'ex_dropdownCategory_PARKING' => 'θέσεις στάθμευσης',
 ];

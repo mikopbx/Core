@@ -1200,4 +1200,5 @@ return [
     'sd_ToolTipRefresh' => 'მიიღეთ უახლესი ჟურნალის ფაილი',
     'sd_ToolTipAutoUpdate' => 'ეკრანის შინაარსის ავტომატურად განახლება',
     'sd_ToolTipErase' => 'ფაილის გასუფთავება',
+    'ex_dropdownCategory_PARKING' => 'პარკირების ადგილები',
 ];

@@ -1200,4 +1200,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'sd_ToolTipAutoUpdate' => 'Uppdatera skärminnehåll automatiskt',
     'sd_ToolTipErase' => 'Rensa filen',
     'sd_ToolTipDownload' => 'Ladda ner loggfil',
+    'ex_dropdownCategory_PARKING' => 'parkeringsplatser',
 ];
