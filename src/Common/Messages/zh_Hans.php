@@ -1118,7 +1118,7 @@ return [
     'f2b_Jail_asterisk_public_v2' => 'SIP 授权错误（公开）',
     'f2b_Jail_asterisk_security_log_v2' => 'SIP 授权错误（security_log）',
     'f2b_Jail_asterisk_error_v2' => 'SIP授权错误（错误）',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11位',
     'cr_pinCode' => '会议密码',

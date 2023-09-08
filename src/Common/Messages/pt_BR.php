@@ -1117,7 +1117,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'f2b_Jail_asterisk_security_log_v2' => 'Erros de autorização SIP (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'Erros de autorização SIP (erro)',
     'f2b_Jail_asterisk_public_v2' => 'Erros de autorização SIP (público)',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 dígitos',
     'cr_pinCode' => 'PIN de conferência',

@@ -38,7 +38,7 @@ return [
     'ex_Czech' => 'Čeština',
     'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'January' => 'Январь',
     'February' => 'Февраль',

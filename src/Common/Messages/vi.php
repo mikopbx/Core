@@ -1118,7 +1118,7 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'f2b_Jail_asterisk_error_v2' => 'Lỗi ủy quyền SIP (lỗi)',
     'f2b_Jail_asterisk_public_v2' => 'Lỗi ủy quyền SIP (công khai)',
     'f2b_Jail_asterisk_security_log_v2' => 'Lỗi ủy quyền SIP (security_log)',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 chữ số',
     'cr_pinCode' => 'mã PIN hội nghị',

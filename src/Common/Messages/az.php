@@ -1118,7 +1118,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ex_Czech' => 'Čeština',
     'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 rəqəm',
     'cr_pinCode' => 'Konfransın PIN kodu',
