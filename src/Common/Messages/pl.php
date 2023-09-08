@@ -53,7 +53,7 @@ return [
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     'tf_ActionPlayMessage' => 'Odtwórz plik <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Przekaż rozmowę do <b> %extension% </b>',

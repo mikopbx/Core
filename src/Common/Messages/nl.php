@@ -1162,7 +1162,7 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     /*
  * MikoPBX - free phone system for small business

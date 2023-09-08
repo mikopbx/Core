@@ -53,7 +53,7 @@ return [
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     'upd_UploadInProgress' => 'Đang tải xuống tệp cập nhật …',
     'upd_UpgradeInProgress' => 'Các tập tin hệ thống đang được cập nhật …',
