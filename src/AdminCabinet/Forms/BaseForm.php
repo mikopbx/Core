@@ -19,12 +19,14 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Forms\Element\TextArea;
 use Phalcon\Forms\Form;
 
+/**
+ * @property \MikoPBX\Common\Providers\TranslationProvider translation
+ */
 abstract class BaseForm extends Form
 {
 
