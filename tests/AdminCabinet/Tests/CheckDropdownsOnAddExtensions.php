@@ -94,9 +94,7 @@ class CheckDropdownsOnAddExtensions extends MikoPBXTestsBase
      */
     public function additionProvider(): array
     {
-        $params = [];
-        $params[] = [
-            [
+        return [
                 'number'   => 245,
                 'email'    => 'ntele@miko.ru',
                 'username' => 'Nikita Telegrafov',
@@ -108,7 +106,6 @@ class CheckDropdownsOnAddExtensions extends MikoPBXTestsBase
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
 
-            ]];
-        return $params;
+            ];
     }
 }
