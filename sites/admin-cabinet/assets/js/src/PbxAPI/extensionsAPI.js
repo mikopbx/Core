@@ -39,10 +39,15 @@ const Extensions = {
      * This function drops all caches if data changes.
      */
     cbOnDataChanged() {
-        sessionStorage.removeItem('/pbxcore/api/extensions/getForSelect?type=all');
-        sessionStorage.removeItem('/pbxcore/api/extensions/getForSelect?type=route');
-        sessionStorage.removeItem('/pbxcore/api/extensions/getForSelect?type=internal');
-        sessionStorage.removeItem('/pbxcore/api/extensions/getForSelect?type=phones');
+        const pattern = '/pbxcore/api/extensions/getForSelect';
+        for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+
+            // Check if the key matches the pattern
+            if (key && key.startsWith(pattern)) {
+                sessionStorage.removeItem(key);
+            }
+        }
     },
 
     /**
@@ -259,7 +264,7 @@ const Extensions = {
      * @param {string} userId - The ID of the user associated with the extension.
      */
     checkAvailability(oldNumber, newNumber, cssClassName = 'extension', userId = '') {
-        if (oldNumber === newNumber || newNumber.length===0) {
+        if (oldNumber === newNumber || newNumber.length === 0) {
             $(`.ui.input.${cssClassName}`).parent().removeClass('error');
             $(`#${cssClassName}-error`).addClass('hidden');
             return;
@@ -273,7 +278,7 @@ const Extensions = {
             },
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                if (response.data['available']===true) {
+                if (response.data['available'] === true) {
                     $(`.ui.input.${cssClassName}`).parent().removeClass('error');
                     $(`#${cssClassName}-error`).addClass('hidden');
                 } else if (userId.length > 0 && response.data['userId'] === userId) {
@@ -281,11 +286,11 @@ const Extensions = {
                     $(`#${cssClassName}-error`).addClass('hidden');
                 } else {
                     $(`.ui.input.${cssClassName}`).parent().addClass('error');
-                    let message =`${globalTranslate.ex_ThisNumberIsNotFree}:&nbsp`;
-                    if (globalTranslate[response.data['represent']]!==undefined){
+                    let message = `${globalTranslate.ex_ThisNumberIsNotFree}:&nbsp`;
+                    if (globalTranslate[response.data['represent']] !== undefined) {
                         message = globalTranslate[response.data['represent']];
                     } else {
-                        message +=response.data['represent'];
+                        message += response.data['represent'];
                     }
                     $(`#${cssClassName}-error`).removeClass('hidden').html(message);
                 }
@@ -374,7 +379,7 @@ const Extensions = {
 
         // Fetch phone representations using API call
         PbxApi.ExtensionsGetPhonesRepresent(numbers,
-            (response)=>{
+            (response) => {
                 Extensions.cbAfterGetPhonesRepresent(response, htmlClass)
             }
         );
@@ -386,7 +391,7 @@ const Extensions = {
      * @param {Object} response - The response object from the API call.
      * @param {string} htmlClass - The HTML class for element identification.
      */
-    cbAfterGetPhonesRepresent(response, htmlClass){
+    cbAfterGetPhonesRepresent(response, htmlClass) {
         const $preprocessedObjects = $(`.${htmlClass}`);
 
         // Check if the response is valid and process elements accordingly
@@ -410,7 +415,7 @@ const Extensions = {
     updatePhoneRepresent(number) {
         const numbers = [];
         numbers.push(number);
-        PbxApi.ExtensionsGetPhonesRepresent(numbers,(response)=>{
+        PbxApi.ExtensionsGetPhonesRepresent(numbers, (response) => {
             {
                 // Check if the response is valid and contains the required data
                 if (response !== undefined
