@@ -31,7 +31,7 @@ class DeleteExtensionTest extends MikoPBXTestsBase
      *
      * @param array $params;
      */
-    public function testDeleteExtension($params):void
+    public function testDeleteExtension(array $params):void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         $this->clickModifyButtonOnRowWithText($params['username']);
