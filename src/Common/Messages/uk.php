@@ -53,7 +53,7 @@ return [
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     'January' => 'Січень',
     'February' => 'Лютий',
@@ -1118,7 +1118,7 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'Помилки авторизації SIP (security_log)',
     'f2b_Jail_asterisk_public_v2' => 'Помилки авторизації SIP (public)',
     'f2b_Jail_asterisk_error_v2' => 'Помилки авторизації SIP (error)',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 цифр',
     'cr_pinCode' => 'PIN код конференції',
@@ -1200,4 +1200,5 @@ return [
     'sd_ToolTipRefresh' => 'Отримати останню версію лог файлу',
     'sd_ToolTipAutoUpdate' => 'Автоматично оновлювати вміст на екрані',
     'sd_ToolTipErase' => 'Очистити файл',
+    'ex_dropdownCategory_PARKING' => 'Слоти паркування',
 ];

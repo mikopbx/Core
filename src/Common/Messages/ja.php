@@ -53,7 +53,7 @@ return [
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     'November' => '11月',
     'December' => '12月',
@@ -1118,7 +1118,7 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP 認証エラー (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'SIP認証エラー（エラー）',
     'f2b_Jail_asterisk_public_v2' => 'SIP 認証エラー (パブリック)',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11桁',
     'cr_pinCode' => '会議暗証番号',
@@ -1200,4 +1200,5 @@ return [
     'sd_ToolTipDownload' => 'ログファイルをダウンロードする',
     'sd_ToolTipRefresh' => '最新のログファイルを取得する',
     'sd_ToolTipErase' => 'クリアファイル',
+    'ex_dropdownCategory_PARKING' => '駐車スロット',
 ];

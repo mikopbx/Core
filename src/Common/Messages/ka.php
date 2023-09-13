@@ -53,7 +53,7 @@ return [
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     'qf_Qualify' => 'შეინარჩუნეთ NAT სესია',
     'qf_Frequency' => 'გაგზავნის სიხშირე წამებში:',
@@ -1118,7 +1118,7 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'SIP ავტორიზაციის შეცდომები (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'SIP ავტორიზაციის შეცდომები (შეცდომა)',
     'f2b_Jail_asterisk_public_v2' => 'SIP ავტორიზაციის შეცდომები (საჯარო)',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 ციფრი',
     'cr_pinCode' => 'კონფერენციის PIN',
@@ -1200,4 +1200,5 @@ return [
     'sd_ToolTipRefresh' => 'მიიღეთ უახლესი ჟურნალის ფაილი',
     'sd_ToolTipAutoUpdate' => 'ეკრანის შინაარსის ავტომატურად განახლება',
     'sd_ToolTipErase' => 'ფაილის გასუფთავება',
+    'ex_dropdownCategory_PARKING' => 'პარკირების ადგილები',
 ];

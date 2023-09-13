@@ -53,7 +53,7 @@ return [
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     'Now' => 'Τώρα',
     'Today' => 'Σήμερα',
@@ -1118,7 +1118,7 @@ return [
     'f2b_Jail_asterisk_security_log_v2' => 'Σφάλματα εξουσιοδότησης SIP (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'Σφάλματα εξουσιοδότησης SIP (σφάλμα)',
     'f2b_Jail_asterisk_public_v2' => 'Σφάλματα εξουσιοδότησης SIP (δημόσια)',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 ψηφία',
     'cr_pinCode' => 'PIN συνδιάσκεψης',
@@ -1200,4 +1200,5 @@ return [
     'sd_ToolTipRefresh' => 'Λάβετε το πιο πρόσφατο αρχείο καταγραφής',
     'sd_ToolTipAutoUpdate' => 'Αυτόματη ενημέρωση περιεχομένου οθόνης',
     'sd_ToolTipErase' => 'Καθαρο ΑΡΧΕΙΟ',
+    'ex_dropdownCategory_PARKING' => 'θέσεις στάθμευσης',
 ];

@@ -53,7 +53,7 @@ return [
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     'March' => '三月',
     'April' => '四月',
@@ -1118,7 +1118,7 @@ return [
     'f2b_Jail_asterisk_public_v2' => 'SIP 授权错误（公开）',
     'f2b_Jail_asterisk_security_log_v2' => 'SIP 授权错误（security_log）',
     'f2b_Jail_asterisk_error_v2' => 'SIP授权错误（错误）',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11位',
     'cr_pinCode' => '会议密码',
@@ -1200,4 +1200,5 @@ return [
     'sd_ToolTipRefresh' => '获取最新的日志文件',
     'sd_ToolTipAutoUpdate' => '自动更新屏幕内容',
     'sd_ToolTipErase' => '清除文件',
+    'ex_dropdownCategory_PARKING' => '停车位',
 ];

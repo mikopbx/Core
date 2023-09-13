@@ -53,7 +53,7 @@ return [
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     'January' => 'Janvier',
     'sntry_SuccessMessage' => 'Merci pour votre aide!',
@@ -1118,7 +1118,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'f2b_Jail_asterisk_ami_v2' => 'Erreurs d\'autorisation AMI ou AJAM',
     'f2b_Jail_asterisk_v2' => 'Erreurs d\'autorisation SIP',
     'f2b_Jail_asterisk_security_log_v2' => 'Erreurs d\'autorisation SIP (security_log)',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 chiffres',
     'cr_pinCode' => 'NIP de la conférence',
@@ -1200,4 +1200,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'sd_ToolTipDownload' => 'Télécharger le fichier journal',
     'sd_ToolTipRefresh' => 'Obtenez le dernier fichier journal',
     'sd_ToolTipAutoUpdate' => 'Mettre à jour automatiquement le contenu de l\'écran',
+    'ex_dropdownCategory_PARKING' => 'places de stationnement',
 ];

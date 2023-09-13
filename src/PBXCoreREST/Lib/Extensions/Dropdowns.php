@@ -100,10 +100,30 @@ class Dropdowns extends \Phalcon\Di\Injectable
                 break;
             case 'phones':
                 $parameters['conditions'] .= ' AND type IN ({ids:array})';
-                $parameters['bind']['ids'] = [Extensions::TYPE_SIP, Extensions::TYPE_EXTERNAL];
+                $parameters['bind']['ids'] = [
+                    Extensions::TYPE_SIP,
+                    Extensions::TYPE_EXTERNAL
+                ];
                 break;
             case 'internal':
-                $parameters['conditions'] .= ' AND type = "' . Extensions::TYPE_SIP . '"';
+                $parameters['conditions'] .= ' AND type IN ({ids:array})';
+                $parameters['bind']['ids'] = [
+                    Extensions::TYPE_SIP
+                ];
+                break;
+            case 'routing':
+                $parameters['conditions'] .= ' AND type IN ({ids:array})';
+                $parameters['bind']['ids'] = [
+                    Extensions::TYPE_SIP,
+                    Extensions::TYPE_EXTERNAL,
+                    Extensions::TYPE_MODULES,
+                    Extensions::TYPE_CONFERENCE,
+                    Extensions::TYPE_DIALPLAN_APPLICATION,
+                    Extensions::TYPE_IVR_MENU,
+                    Extensions::TYPE_QUEUE,
+                    Extensions::TYPE_SYSTEM,
+                    // Extensions::TYPE_PARKING,
+                ];
                 break;
         }
 

@@ -97,9 +97,6 @@ class DataStructure
         }
 
         // Fill empty values
-        if (empty($this->number)) {
-            $this->number = Extensions::getNextInternalNumber();
-        }
         if (empty($this->sip_uniqid)) {
             $this->sip_uniqid = Sip::generateUniqueID();
         }
@@ -115,14 +112,23 @@ class DataStructure
         if (empty($this->sip_dtmfmode)) {
             $this->sip_dtmfmode='auto';
         }
-        if (empty($this->mobile_dialstring)) {
-            $this->mobile_dialstring = preg_replace('/\D/', '', $this->mobile_number);
+
+        // Sanitize extension
+        if (!empty($this->number)){
+            $this->number = preg_replace('/\D/', '', $this->number);
+        }
+        if (empty($this->number)) {
+            $this->number = Extensions::getNextInternalNumber();
         }
 
-        // Sanitize mobile numbers for storage or further processing
+        // Sanitize mobile numbers
         if (!empty($this->mobile_number)){
             $this->mobile_number = preg_replace('/\D/', '', $this->mobile_number);
         }
+        if (empty($this->mobile_dialstring)) {
+            $this->mobile_dialstring = $this->mobile_number;
+        }
+
         if (!empty($this->fwd_forwarding)){
             $this->fwd_forwarding = preg_replace('/\D/', '', $this->fwd_forwarding);
         }
@@ -132,6 +138,7 @@ class DataStructure
         if (!empty($this->fwd_forwardingonbusy)){
             $this->fwd_forwardingonbusy = preg_replace('/\D/', '', $this->fwd_forwardingonbusy);
         }
+
     }
 
     /**

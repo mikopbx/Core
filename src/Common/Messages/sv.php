@@ -53,7 +53,7 @@ return [
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     'ex_Online' => 'ansluten',
     'am_TableColumnDescription' => 'Anmärkningar',
@@ -1118,7 +1118,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'f2b_Jail_asterisk_security_log_v2' => 'SIP-auktoriseringsfel (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'SIP-auktoriseringsfel (fel)',
     'f2b_Jail_asterisk_public_v2' => 'SIP-auktoriseringsfel (offentliga)',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 siffror',
     'cr_pinCode' => 'Konferens-PIN',
@@ -1200,4 +1200,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'sd_ToolTipAutoUpdate' => 'Uppdatera skärminnehåll automatiskt',
     'sd_ToolTipErase' => 'Rensa filen',
     'sd_ToolTipDownload' => 'Ladda ner loggfil',
+    'ex_dropdownCategory_PARKING' => 'parkeringsplatser',
 ];

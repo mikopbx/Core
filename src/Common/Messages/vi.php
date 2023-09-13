@@ -53,7 +53,7 @@ return [
     'ex_Dutch' => 'Nederlands',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
     'upd_UploadInProgress' => 'Đang tải xuống tệp cập nhật …',
     'upd_UpgradeInProgress' => 'Các tập tin hệ thống đang được cập nhật …',
@@ -1118,7 +1118,7 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'f2b_Jail_asterisk_error_v2' => 'Lỗi ủy quyền SIP (lỗi)',
     'f2b_Jail_asterisk_public_v2' => 'Lỗi ủy quyền SIP (công khai)',
     'f2b_Jail_asterisk_security_log_v2' => 'Lỗi ủy quyền SIP (security_log)',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 chữ số',
     'cr_pinCode' => 'mã PIN hội nghị',
@@ -1200,4 +1200,5 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'sd_ToolTipRefresh' => 'Nhận tệp nhật ký mới nhất',
     'sd_ToolTipErase' => 'Xóa tập tin',
     'sd_ToolTipAutoUpdate' => 'Tự động cập nhật nội dung màn hình',
+    'ex_dropdownCategory_PARKING' => 'chỗ đậu xe',
 ];

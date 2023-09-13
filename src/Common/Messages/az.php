@@ -1116,9 +1116,9 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ex_Danish' => 'Dansk',
     'ex_Swedish' => 'Svenska',
     'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türk',
+    'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
-    'ex_Azərbaycan' => 'Azərbaycan',
+    'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 rəqəm',
     'cr_pinCode' => 'Konfransın PIN kodu',
@@ -1200,4 +1200,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'sd_ToolTipRefresh' => 'Ən son jurnal faylını əldə edin',
     'sd_ToolTipAutoUpdate' => 'Ekran məzmununu avtomatik yeniləyin',
     'sd_ToolTipErase' => 'Faylı təmizləyin',
+    'ex_dropdownCategory_PARKING' => 'parkinq yerləri',
 ];
