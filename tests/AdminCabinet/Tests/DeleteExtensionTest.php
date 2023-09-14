@@ -22,21 +22,26 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
-
+/**
+ * Class to test the deletion of an extension in the admin cabinet.
+ */
 class DeleteExtensionTest extends MikoPBXTestsBase
 {
     /**
+     * Test the deletion of an extension.
+     *
      * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params;
+     * @param array $params The parameters for the test.
      */
-    public function testDeleteExtension(array $params):void
+    public function testDeleteExtension(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         $this->clickModifyButtonOnRowWithText($params['username']);
+
         // TESTS
-        $xpath                   = "//input[@name = 'id']";
+        $xpath = "//input[@name = 'id']";
         $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
         $elementID = $input_ExtensionUniqueID->getAttribute('value');
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
@@ -45,30 +50,30 @@ class DeleteExtensionTest extends MikoPBXTestsBase
         $this->waitForAjax();
 
         // Try to find element with ID on page
-
-        $xpath                   = "//table[@id='extensions-table']//tr[@id='{$elementID}']";
+        $xpath = "//table[@id='extensions-table']//tr[@id='{$elementID}']";
         $els = self::$driver->findElements(WebDriverBy::xpath($xpath));
 
-        if ($params['possibleToDelete']){
-            if (count($els)>0){
+        if ($params['possibleToDelete']) {
+            if (count($els) > 0) {
                 $this->fail("Unexpectedly element was found by " . $xpath . PHP_EOL);
             }
         } else {
-            if (count($els) === 0){
+            if (count($els) === 0) {
                 $this->fail("Unexpectedly element was not found by " . $xpath . PHP_EOL);
             }
             // Check warning message on page top
-            $xpath                   = "//div[contains(@class,'message') and contains(@class,'error')]";
+            $xpath = "//div[contains(@class,'message') and contains(@class,'error')]";
             $errorMessage = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $this->assertTrue($errorMessage->isDisplayed());
         }
 
-        // increment assertion counter
+        // Increment assertion counter
         $this->assertTrue(true);
     }
 
     /**
-     * Dataset provider
+     * Dataset provider for extension deletion parameters.
+     *
      * @return array
      */
     public function additionProvider(): array
@@ -76,14 +81,16 @@ class DeleteExtensionTest extends MikoPBXTestsBase
         $params = [];
         $params[] = [
             [
-                'username'   => 'Alexandra Pushina',
-                'possibleToDelete'=>true
-            ]];
+                'username' => 'Alexandra Pushina',
+                'possibleToDelete' => true
+            ]
+        ];
         $params[] = [
             [
-                'username'   => 'Smith James',
-                'possibleToDelete'=>false
-            ]];
+                'username' => 'Smith James',
+                'possibleToDelete' => false
+            ]
+        ];
         return $params;
     }
 }

@@ -19,25 +19,30 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-
 use Exception;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\Interactions\WebDriverActions;
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
+/**
+ * Class to test the installation of modules in the admin cabinet.
+ */
 class InstallModulesTest extends MikoPBXTestsBaseAlias
 {
     /**
+     * Test to install a module.
+     *
      * @depends      testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params
+     * @param array $params The parameters for the test.
      */
     public function testInstallModule(array $params): void
     {
         $this->clickSidebarMenuItemByHref("/admin-cabinet/pbx-extension-modules/index/");
         $this->changeTabOnCurrentPage('installed');
+
         // Delete old module
         $xpath = '//tr[@id="' . $params['moduleId'] . '"]//a[contains(@href,"delete")]';
         try {
@@ -65,7 +70,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
             echo('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
 
-        // Wait the installation and test it
+        // Wait for the installation and test it
         $this->changeTabOnCurrentPage('installed');
         $maximumWaitTime = 120;
         $waitTime = 0;
@@ -83,11 +88,11 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         if (!$found) {
             $this->fail("Not found element by " . $xpath . PHP_EOL);
         } else {
-            // increment assertion counter
+            // Increment assertion counter
             $this->assertTrue(true);
         }
 
-        // Enable installed module
+        // Enable the installed module
         $this->changeModuleState($params['moduleId']);
 
         sleep(10);
@@ -97,14 +102,14 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
     }
 
     /**
-     * Changes the state of a module.
+     * Changes the state of a module (enable or disable).
      *
      * @param string $moduleId The ID of the module.
      * @param bool $enable (Optional) Whether to enable or disable the module. Defaults to true.
      *
      * @return void
      */
-    private function changeModuleState(string $moduleId, bool $enable = true):void
+    private function changeModuleState(string $moduleId, bool $enable = true): void
     {
         $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]';
         $checkBoxItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
@@ -120,11 +125,10 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
             }
         }
 
-
-        // Assert result of clicking
+        // Assert the result of clicking
         foreach ($checkBoxItems as $checkBoxItem) {
             $changed = false;
-            // Check if module is enabled or disabled
+            // Check if the module is enabled or disabled
             $maximumWaitTime = 45;
             $waitTime = 0;
             while ($waitTime < $maximumWaitTime) {
@@ -145,41 +149,62 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         }
     }
 
+    /**
+     * Provides data for the test.
+     *
+     * @return array
+     */
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [[
-            'moduleId' => 'ModuleAutoprovision',
-            'enable' => true,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleBackup',
-            'enable' => true,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleCTIClient',
-            'enable' => false,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleDocker',
-            'enable' => false,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModulePhoneBook',
-            'enable' => true,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleSmartIVR',
-            'enable' => true,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleTelegramNotify',
-            'enable' => false,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleUsersGroups',
-            'enable' => true,
-        ]];
+        $params[] = [
+            [
+                'moduleId' => 'ModuleAutoprovision',
+                'enable' => true,
+            ],
+        ];
+        $params[] = [
+            [
+                'moduleId' => 'ModuleBackup',
+                'enable' => true,
+            ],
+        ];
+        $params[] = [
+            [
+                'moduleId' => 'ModuleCTIClient',
+                'enable' => false,
+            ],
+        ];
+        $params[] = [
+            [
+                'moduleId' => 'ModuleDocker',
+                'enable' => false,
+            ],
+        ];
+        $params[] = [
+            [
+                'moduleId' => 'ModulePhoneBook',
+                'enable' => true,
+            ],
+        ];
+        $params[] = [
+            [
+                'moduleId' => 'ModuleSmartIVR',
+                'enable' => true,
+            ],
+        ];
+        $params[] = [
+            [
+                'moduleId' => 'ModuleTelegramNotify',
+                'enable' => false,
+            ],
+        ];
+        $params[] = [
+            [
+                'moduleId' => 'ModuleUsersGroups',
+                'enable' => true,
+            ],
+        ];
 
         return $params;
     }

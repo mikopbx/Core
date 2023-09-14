@@ -19,43 +19,48 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class CheckDropdownAfterDeleteAudioFileTest extends MikoPBXTestsBase
 {
     /**
-     * @depends      testLogin
-     * @dataProvider additionProvider
+     * Test checking the dropdown menu after deleting an audio file.
      *
-     * @param array $params
+     * @depends testLogin
+     * @dataProvider audioFilesProvider
      *
+     * @param array $params The parameters for the audio file.
      */
-    public function testCheckDropdownAfterDeleteAudioFile(array $params):void
+    public function testCheckDropdownAfterDeleteAudioFile(array $params): void
     {
+        // Navigate to the recording settings page
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/recording");
 
+        // Check if the specified element exists in the dropdown menu
         $elementFound = $this->checkIfElementExistOnDropdownMenu('PBXRecordAnnouncementIn', $params['name']);
 
-        //Asserts
+        // Asserts
         if ($elementFound && $params['for_delete']) {
             $this->fail('Found menuitem ' . $params['name'] . PHP_EOL);
-        } elseif (!$elementFound && !$params['for_delete']){
-           $this->fail('Not found menuitem ' . $params['name'] . PHP_EOL);
+        } elseif (!$elementFound && !$params['for_delete']) {
+            $this->fail('Not found menuitem ' . $params['name'] . PHP_EOL);
         } else {
-            // increment assertion counter
+            // Increment assertion counter
             $this->assertTrue(true);
         }
     }
 
-
     /**
-     * Dataset provider
+     * Dataset provider that retrieves data from CreateAudioFilesTest.
+     *
      * @return array
      */
-    public function additionProvider(): array
+    public function audioFilesProvider(): array
     {
+        // Create an instance of CreateAudioFilesTest to access its dataset provider
         $audioFiles = new CreateAudioFilesTest();
+
+        // Return data from the dataset provider of CreateAudioFilesTest
         return $audioFiles->additionProvider();
     }
 }

@@ -18,16 +18,22 @@
  */
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
+
 use Facebook\WebDriver\WebDriverBy;
 
+/**
+ * Trait for logging into the admin cabinet using WebDriver.
+ */
 trait LoginTrait
 {
     /**
+     * Perform the login operation.
+     *
      * @dataProvider loginDataProvider
      *
-     * @param array $params
+     * @param array $params The login parameters.
      */
-    public function testLogin($params): void
+    public function testLogin(array $params): void
     {
         self::$driver->get($GLOBALS['SERVER_PBX']);
         $this->changeInputField('login', $params['login']);
@@ -41,19 +47,18 @@ trait LoginTrait
 
         $xpath = '//div[contains(@class,"error") and contains(@class,"message")]';
         $errorMessages = self::$driver->findElements(WebDriverBy::xpath($xpath));
-        if(count($errorMessages)>0) {
-            foreach ($errorMessages as $errorMessage){
-                if ($errorMessage->isDisplayed()){
+        if (count($errorMessages) > 0) {
+            foreach ($errorMessages as $errorMessage) {
+                if ($errorMessage->isDisplayed()) {
                     $this->changeInputField('password', $params['password2']);
                     $xpath = '//form[@id="login-form"]//ancestor::div[@id="submitbutton"]';
                     $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
                     $button_Submit->click();
                 }
             }
-
         }
 
-        self::$driver->wait(10, 500)->until(function($driver) {
+        self::$driver->wait(10, 500)->until(function ($driver) {
             $elements = $driver->findElements(WebDriverBy::id("top-menu-search"));
             return count($elements) > 0;
         });
@@ -62,20 +67,21 @@ trait LoginTrait
     }
 
     /**
-     * Dataset provider
+     * Provide login data for testing.
+     *
      * @return array
      */
-    public function loginDataProvider():array
+    public function loginDataProvider(): array
     {
         $params = [];
-        $params[] = [[
-            'login'=>'admin',
-            'password'  => '123456789MikoPBX#1',
-            'password2' => 'admin',
-        ]];
+        $params[] = [
+            [
+                'login' => 'admin',
+                'password' => '123456789MikoPBX#1',
+                'password2' => 'admin',
+            ],
+        ];
 
         return $params;
     }
-
-
 }

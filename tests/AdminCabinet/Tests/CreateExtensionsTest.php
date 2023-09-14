@@ -26,86 +26,93 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 class CreateExtensionsTest extends MikoPBXTestsBase
 {
     /**
-     * @depends      testLogin
+     * Test the creation of extensions.
+     *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param $params
+     * @param array $params The parameters for creating the extension.
      *
      * @throws \Facebook\WebDriver\Exception\NoSuchElementException
      * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testCreateExtensions($params): void
+    public function testCreateExtensions(array $params): void
     {
-            $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Navigate to the extensions page
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
-            $this->clickDeleteButtonOnRowWithText($params['username']);
+        // Delete any existing extension with the same username
+        $this->clickDeleteButtonOnRowWithText($params['username']);
 
-            $this->clickButtonByHref('/admin-cabinet/extensions/modify');
+        // Click the button to modify the extensions
+        $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
+        // Set input field values for the extension
+        $this->changeInputField('user_username', $params['username']);
+        $this->changeInputField('number', $params['number']);
+        $this->changeInputField('mobile_number', $params['mobile']);
+        self::$driver->executeScript('$("#mobile_number").trigger("change")');
+        $this->changeInputField('user_email', $params['email']);
+        $this->changeInputField('sip_secret', $params['secret']);
 
-//            // Fix uniqid to compare reference data in /etc folder for every build
-//            self::$driver->executeScript(
-//            "$('#extensions-form').form('set value','uniqid','{$params['uniqid']}');"
-//            );
-            $this->changeInputField('user_username', $params['username']);
-            $this->changeInputField('number', $params['number']);
-            $this->changeInputField('mobile_number', $params['mobile']);
-            self::$driver->executeScript('$("#mobile_number").trigger("change")');
-            $this->changeInputField('user_email', $params['email']);
-            $this->changeInputField('sip_secret', $params['secret']);
+        // Expand advanced options
+        $this->openAccordionOnThePage();
 
-            // Раскрываем расширенные опции
-            $this->openAccordionOnThePage();
+        // Set advanced options
+        $this->changeCheckBoxState('sip_enableRecording', $params['sip_enableRecording']);
+        $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
+        $this->selectDropdownItem('sip_transport', $params['sip_transport']);
+        $this->changeTextAreaValue('sip_manualattributes', $params['sip_manualattributes']);
 
-            $this->changeCheckBoxState('sip_enableRecording', $params['sip_enableRecording']);
-            $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
-            $this->selectDropdownItem('sip_transport', $params['sip_transport']);
+        // Upload a file
+        $filePath = 'C:\Users\hello\Documents\images\person.jpg';
+        $this->changeFileField('file-select', $filePath);
 
-            $this->changeTextAreaValue('sip_manualattributes', $params['sip_manualattributes']);
+        // Submit the form
+        $this->submitForm('extensions-form');
 
-            //$filePath           =  __DIR__."/../assets/{$params['number']}.png";
-            $filePath = 'C:\Users\hello\Documents\images\person.jpg';
-            $this->changeFileField('file-select', $filePath);
+        // Wait for extension creation
+        self::$driver->wait(10, 500)->until(
+            function () {
+                $xpath = "//input[@name = 'id']";
+                $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
+                return $input_ExtensionUniqueID->getAttribute('value') !== '';
+            }
+        );
 
-           $this->submitForm('extensions-form');
+        // Assert extension creation
+        $xpath = "//input[@name = 'id']";
+        $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
 
-            self::$driver->wait(10, 500)->until(
-                function () {
-                    $xpath         = "//input[@name = 'id']";
-                    $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
-                    return $input_ExtensionUniqueID->getAttribute('value')!=='';
-                }
-            );
+        // Navigate back to the extensions page
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        $this->clickModifyButtonOnRowWithText($params['username']);
 
-            // TESTS
-            $xpath                   = "//input[@name = 'id']";
-            $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
+        // Assert input field values
+        $this->assertInputFieldValueEqual('user_username', $params['username']);
+        $this->assertInputFieldValueEqual('number', $params['number']);
+        $this->assertInputFieldValueEqual('user_email', $params['email']);
 
-            $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
-            $this->clickModifyButtonOnRowWithText($params['username']);
+        // Switch to the 'routing' tab and assert values
+        $this->changeTabOnCurrentPage('routing');
+        $this->assertInputFieldValueEqual('fwd_ringlength', '45');
+        $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['mobile']);
+        $this->assertMenuItemSelected('fwd_forwarding', $params['mobile']);
+        $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['mobile']);
 
-            $this->assertInputFieldValueEqual('user_username',  $params['username']);
-            $this->assertInputFieldValueEqual('number',  $params['number']);
-            $this->assertInputFieldValueEqual('user_email',  $params['email']);
-            // $this->assertInputFieldValueEqual('mobile_number',  $params['mobile']);
+        // Switch to the 'general' tab and assert values
+        $this->changeTabOnCurrentPage('general');
+        $this->assertInputFieldValueEqual('sip_secret', $params['secret']);
 
-            $this->changeTabOnCurrentPage('routing');
-            $this->assertInputFieldValueEqual('fwd_ringlength', '45');
-            $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['mobile']);
-            $this->assertMenuItemSelected('fwd_forwarding', $params['mobile']);
-            $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['mobile']);
-
-            $this->changeTabOnCurrentPage('general');
-            $this->assertInputFieldValueEqual('sip_secret',  $params['secret']);
-
-            // Раскрываем расширенные опции
-            $this->openAccordionOnThePage();
-            $this->assertInputFieldValueEqual('mobile_dialstring',  $params['mobile']);
-            $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
-            $this->assertMenuItemSelected('sip_transport', $params['sip_transport']);
-            $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['sip_manualattributes']);
+        // Expand advanced options and assert values
+        $this->openAccordionOnThePage();
+        $this->assertInputFieldValueEqual('mobile_dialstring', $params['mobile']);
+        $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
+        $this->assertMenuItemSelected('sip_transport', $params['sip_transport']);
+        $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['sip_manualattributes']);
     }
+
 
     /**
      * Dataset provider

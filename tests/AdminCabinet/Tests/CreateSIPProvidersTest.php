@@ -21,15 +21,20 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
-class CreateSIPProviders extends MikoPBXTestsBaseAlias
+/**
+ * Class to create SIP providers in the admin cabinet.
+ */
+class CreateSIPProvidersTest extends MikoPBXTestsBaseAlias
 {
     /**
+     * Test to create a SIP provider.
+     *
      * @depends      testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params
+     * @param array $params The parameters for creating the SIP provider.
      */
-    public function testCreateSIPProvider($params): void
+    public function testCreateSIPProvider(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickDeleteButtonOnRowWithText($params['description']);
@@ -42,18 +47,18 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         );
         $this->selectDropdownItem('registration_type', $params['registration_type']);
         $this->changeInputField('description', $params['description']);
-        if ($params['registration_type']==='outbound') {
+        if ($params['registration_type'] === 'outbound') {
             $this->changeInputField('host', $params['host']);
             $this->changeInputField('username', $params['username']);
         }
-        if ($params['registration_type']==='none') {
+        if ($params['registration_type'] === 'none') {
             $this->changeInputField('host', $params['host']);
         } else {
             $this->changeInputField('secret', $params['password']);
         }
         $this->selectDropdownItem('dtmfmode', $params['dtmfmode']);
 
-        // Раскрываем расширенные опции
+        // Expand advanced options
         $this->openAccordionOnThePage();
         $this->changeInputField('port', $params['port']);
         $this->changeCheckBoxState('qualify', $params['qualify']);
@@ -61,7 +66,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             $this->changeInputField('qualifyfreq', $params['qualifyfreq']);
         }
         $this->changeInputField('outbound_proxy', $params['outbound_proxy']);
-        if ($params['disablefromuser']!==false) {
+        if ($params['disablefromuser'] !== false) {
             $this->changeInputField('fromuser', $params['fromuser']);
         }
         $this->changeInputField('fromdomain', $params['fromdomain']);
@@ -78,17 +83,18 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->assertMenuItemSelected('registration_type', $params['registration_type']);
         $this->assertInputFieldValueEqual('description', $params['description']);
 
-        if ($params['registration_type']==='outbound') {
+        if ($params['registration_type'] === 'outbound') {
             $this->assertInputFieldValueEqual('host', $params['host']);
             $this->assertInputFieldValueEqual('username', $params['username']);
         }
-        if ($params['registration_type']==='none') {
+        if ($params['registration_type'] === 'none') {
             $this->assertInputFieldValueEqual('host', $params['host']);
-        }  else {
+        } else {
             $this->assertInputFieldValueEqual('secret', $params['password']);
         }
         $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
-        // Раскрываем расширенные опции
+
+        // Expand advanced options
         $this->openAccordionOnThePage();
 
         $this->assertInputFieldValueEqual('port', $params['port']);
@@ -97,7 +103,7 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
             $this->assertInputFieldValueEqual('qualifyfreq', $params['qualifyfreq']);
         }
         $this->assertInputFieldValueEqual('outbound_proxy', $params['outbound_proxy']);
-        if ($params['disablefromuser']!==false) {
+        if ($params['disablefromuser'] !== false) {
             $this->assertInputFieldValueEqual('fromuser', $params['fromuser']);
         }
         $this->assertInputFieldValueEqual('fromdomain', $params['fromdomain']);
@@ -106,33 +112,32 @@ class CreateSIPProviders extends MikoPBXTestsBaseAlias
         $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
     }
 
-
     /**
-     * Dataset provider
+     * Dataset provider for SIP provider creation parameters.
      *
      * @return array
      */
     public function additionProvider(): array
     {
-        $params   = [];
+        $params = [];
         $params[] = [
             [
-                'type'              => 'sip',
-                'uniqid'            => 'SIP-1683372701',
+                'type' => 'sip',
+                'uniqid' => 'SIP-1683372701',
                 'registration_type' => 'outbound',
-                'description'       => 'PCTEL',
-                'host'              => 'pctel.ru',
-                'username'          => 'pctel',
-                'password'          => 'asdfasdfas',
-                'dtmfmode'          => 'auto',
-                'port'              => 5062,
-                'qualify'           => false,
-                'qualifyfreq'       => 62,
-                'outbound_proxy'    => 'proxy.miko.ru:5080',
-                'fromuser'          => 'testFromUser',
-                'fromdomain'        => 'TestFromDomain',
-                'disablefromuser'   => false,
-                'manualattributes'  => '',
+                'description' => 'PCTEL',
+                'host' => 'pctel.ru',
+                'username' => 'pctel',
+                'password' => 'asdfasdfas',
+                'dtmfmode' => 'auto',
+                'port' => 5062,
+                'qualify' => false,
+                'qualifyfreq' => 62,
+                'outbound_proxy' => 'proxy.miko.ru:5080',
+                'fromuser' => 'testFromUser',
+                'fromdomain' => 'TestFromDomain',
+                'disablefromuser' => false,
+                'manualattributes' => '',
             ],
         ];
 

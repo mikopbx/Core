@@ -23,41 +23,50 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
-class CreateCallQueue extends MikoPBXTestsBaseAlias
+/**
+ * Class CreateCallQueue
+ *
+ * This class contains tests for creating and managing call queues.
+ */
+class CreateCallQueueTest extends MikoPBXTestsBaseAlias
 {
     /**
+     * Test creating a call queue.
+     *
      * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params
+     * @param array $params The parameters for the call queue.
      */
-    public function testCreateCallQueue($params):void
+    public function testCreateCallQueue(array $params): void
     {
-
+        // Navigate to the call queues page and delete any existing queues with the same name
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
         $this->clickDeleteButtonOnRowWithText($params['name']);
 
+        // Click the "Modify" button to create a new call queue
         $this->clickButtonByHref('/admin-cabinet/call-queues/modify');
 
-        // Fix uniqid to compare reference data in /etc folder for every build
+        // Set the unique ID using JavaScript to ensure consistency across builds
         self::$driver->executeScript(
             "$('#queue-form').form('set value','uniqid','{$params['uniqid']}');"
         );
 
+        // Fill in basic information for the call queue
         $this->changeTextAreaValue('description', $params['description']);
         $this->changeInputField('name', $params['name']);
-        
-        // Добавляем агентов очереди
+
+        // Add agents to the queue
         foreach ($params['agents'] as $agent) {
             $this->selectDropdownItem('extensionselect', $agent);
         }
 
         $this->selectDropdownItem('strategy', $params['strategy']);
 
-        // Раскрываем расширенные опции
+        // Expand advanced options
         $this->openAccordionOnThePage();
 
-        // Заполняем поля из базы данных с исходными данными
+        // Fill in advanced options from the database with initial data
         $this->changeInputField('extension', $params['extension']);
         $this->changeInputField('seconds_to_ring_each_member', $params['seconds_to_ring_each_member']);
         $this->changeInputField('seconds_for_wrapup', $params['seconds_for_wrapup']);
@@ -75,28 +84,36 @@ class CreateCallQueue extends MikoPBXTestsBaseAlias
         $this->selectDropdownItem('timeout_extension', $params['timeout_extension']);
         $this->selectDropdownItem('redirect_to_extension_if_empty', $params['redirect_to_extension_if_empty']);
 
+        // Submit the form to create the call queue
         $this->submitForm('queue-form');
+
+        // Navigate back to the call queues page
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
 
+        // Click the "Modify" button on the newly created call queue
         $this->clickModifyButtonOnRowWithText($params['name']);
+
+        // Verify that the name input field matches the expected name
         $this->assertInputFieldValueEqual('name', $params['name']);
         $this->assertInputFieldValueEqual('extension', $params['extension']);
         $this->assertTextAreaValueIsEqual('description', $params['description']);
 
-        // Обойдем всех членов очереди, проверим что они есть
+        // Check that all agents in the queue are present
         foreach ($params['agents'] as $agent) {
             $xpath = '//table[@id="extensionsTable"]//td[contains(text(), "'.$agent.'")]';
             $members = self::$driver->findElements(WebDriverBy::xpath($xpath));
-            if (count($members)===0){
+            if (count($members) === 0) {
                 $this->assertTrue(false, 'Not found agent '.$agent.' in queue agents list');
             }
-
         }
+
+        // Check that selected strategy matches
         $this->assertMenuItemSelected('strategy', $params['strategy']);
 
-        // Раскрываем расширенные опции
+        // Expand advanced options
         $this->openAccordionOnThePage();
 
+        // Check that advanced option fields match expected values
         $this->assertInputFieldValueEqual('seconds_to_ring_each_member', $params['seconds_to_ring_each_member']);
         $this->assertInputFieldValueEqual('seconds_for_wrapup', $params['seconds_for_wrapup']);
         $this->assertCheckBoxStageIsEqual('recive_calls_while_on_a_call', $params['recive_calls_while_on_a_call']);
@@ -112,64 +129,66 @@ class CreateCallQueue extends MikoPBXTestsBaseAlias
 
         $this->assertMenuItemSelected('timeout_extension', $params['timeout_extension']);
         $this->assertMenuItemSelected('redirect_to_extension_if_empty', $params['redirect_to_extension_if_empty']);
-
     }
 
     /**
-     * Dataset provider
+     * Dataset provider for call queue parameters.
+     *
      * @return array
      */
-     public function additionProvider(): array
-     {
-         $params = [];
-         $params[] = [[
-             'description' => 'Sales department queue, the first line of agents',
-             'name'        => 'Sales department',
-             'uniqid'      => 'QUEUE-AFDE5973B8115C2B9743C68BF51BFD26',
-             'extension'   => 20020,
-             'seconds_to_ring_each_member'=>14,
-             'seconds_for_wrapup'=>12,
-             'recive_calls_while_on_a_call'=> true,
-             'caller_hear'=>'ringing', //'moh'
-             'announce_position'=> true,
-             'announce_hold_time'=>false,
-             'periodic_announce_sound_id'=>'2',
-             'periodic_announce_frequency'=>24,
-             'timeout_to_redirect_to_extension'=>18,
-             'timeout_extension'=>'201',
-             'redirect_to_extension_if_empty'=>'202',
-             'agents'      => [
-                 '201',
-                 '202',
-                 '203',
-             ],
-             'strategy'=>'linear'
+    public function additionProvider(): array
+    {
+        $params = [];
+        $params[] = [
+            [
+                'description' => 'Sales department queue, the first line of agents',
+                'name' => 'Sales department',
+                'uniqid' => 'QUEUE-AFDE5973B8115C2B9743C68BF51BFD26',
+                'extension' => 20020,
+                'seconds_to_ring_each_member' => 14,
+                'seconds_for_wrapup' => 12,
+                'recive_calls_while_on_a_call' => true,
+                'caller_hear' => 'ringing',
+                'announce_position' => true,
+                'announce_hold_time' => false,
+                'periodic_announce_sound_id' => '2',
+                'periodic_announce_frequency' => 24,
+                'timeout_to_redirect_to_extension' => 18,
+                'timeout_extension' => '201',
+                'redirect_to_extension_if_empty' => '202',
+                'agents' => [
+                    '201',
+                    '202',
+                    '203',
+                ],
+                'strategy' => 'linear'
+            ]
+        ];
+        $params[] = [
+            [
+                'description' => 'Accountant department queue, the second line of agents',
+                'name' => 'Accountant department',
+                'uniqid' => 'QUEUE-C02B7C0BBE8F0A48DE1CDF21DBADC25',
+                'extension' => 20021,
+                'seconds_to_ring_each_member' => 14,
+                'seconds_for_wrapup' => 13,
+                'recive_calls_while_on_a_call' => false,
+                'caller_hear' => 'moh',
+                'announce_position' => false,
+                'announce_hold_time' => true,
+                'periodic_announce_sound_id' => '2',
+                'periodic_announce_frequency' => 24,
+                'timeout_to_redirect_to_extension' => 18,
+                'timeout_extension' => '202',
+                'redirect_to_extension_if_empty' => '201',
+                'agents' => [
+                    '202',
+                    '203',
+                ],
+                'strategy' => 'leastrecent'
+            ]
+        ];
 
-         ]];
-         $params[] = [[
-             'description' => 'Accountant department queue, the second line of agents',
-             'name'        => 'Accountant department',
-             'uniqid'      => 'QUEUE-C02B7C0BBE8F0A48DE1CDF21DBADC25A',
-             'extension'   => 20021,
-             'seconds_to_ring_each_member'=>14,
-             'seconds_for_wrapup'=>13,
-             'recive_calls_while_on_a_call'=> false,
-             'caller_hear'=>'moh',
-             'announce_position'=> false,
-             'announce_hold_time'=>true,
-             'periodic_announce_sound_id'=>'2',
-             'periodic_announce_frequency'=>24,
-             'timeout_to_redirect_to_extension'=>18,
-             'timeout_extension'=>'202',
-             'redirect_to_extension_if_empty'=>'201',
-             'agents'      => [
-                 '202',
-                 '203',
-             ],
-             'strategy'=>'leastrecent'
-
-         ]];
-
-         return $params;
-     }
+        return $params;
+    }
 }

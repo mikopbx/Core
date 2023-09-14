@@ -645,6 +645,4 @@ class MikoPBXTestsBase extends BrowserStackTest
         }
         return $elementFound;
     }
-
-
 }

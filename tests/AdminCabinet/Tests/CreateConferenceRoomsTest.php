@@ -22,54 +22,75 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
+/**
+ * Class CreateConferenceRoomsTest
+ *
+ * This class contains tests for adding conference rooms.
+ */
 class CreateConferenceRoomsTest extends MikoPBXTestsBase
 {
     /**
+     * Test adding a conference room.
+     *
      * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params
+     * @param array $params The parameters for the conference room.
      */
-    public function testAddConference(array $params):void{
-
+    public function testAddConference(array $params): void
+    {
+        // Navigate to the conference rooms page and delete any existing rooms with the same name
         $this->clickSidebarMenuItemByHref('/admin-cabinet/conference-rooms/index/');
         $this->clickDeleteButtonOnRowWithText($params['name']);
 
+        // Click the "Modify" button to add a new conference room
         $this->clickButtonByHref('/admin-cabinet/conference-rooms/modify');
+
+        // Set the extension and name for the conference room
         $this->changeInputField('extension', $params['extension']);
         $this->changeInputField('name', $params['name']);
 
-        // Save conference
+        // Save the conference room
         $this->submitForm('conference-room-form');
 
+        // Navigate back to the conference rooms page
         $this->clickSidebarMenuItemByHref('/admin-cabinet/conference-rooms/index/');
+
+        // Click the "Modify" button on the newly added conference room
         $this->clickModifyButtonOnRowWithText($params['name']);
+
+        // Verify that the name and extension fields match the expected values
         $this->assertInputFieldValueEqual('name', $params['name']);
         $this->assertInputFieldValueEqual('extension', $params['extension']);
     }
 
     /**
-     * Dataset provider
+     * Dataset provider for conference room parameters.
+     *
      * @return array
      */
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [[
-            'name' => 'The first conference room',
-            'extension'    => '11112',
-        ]];
-        $params[] = [[
-            'name' => 'The second conference room',
-            'extension'    => '11113',
-        ]];
-        $params[] = [[
-            'name' => 'The third conference room',
-            'extension'    => '11114',
-        ]];
-
+        $params[] = [
+            [
+                'name' => 'The first conference room',
+                'extension' => '11112',
+            ]
+        ];
+        $params[] = [
+            [
+                'name' => 'The second conference room',
+                'extension' => '11113',
+            ]
+        ];
+        $params[] = [
+            [
+                'name' => 'The third conference room',
+                'extension' => '11114',
+            ]
+        ];
 
         return $params;
     }
-
 }

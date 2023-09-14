@@ -22,21 +22,26 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
-
+/**
+ * Class to test the deletion of a provider in the admin cabinet.
+ */
 class DeleteProviderTest extends MikoPBXTestsBase
 {
     /**
+     * Test the deletion of a provider.
+     *
      * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params;
+     * @param array $params The parameters for the test.
      */
-    public function testDeleteProvider($params):void
+    public function testDeleteProvider(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickModifyButtonOnRowWithText($params['description']);
+
         // TESTS
-        $xpath                   = "//input[@name = 'uniqid']";
+        $xpath = "//input[@name = 'uniqid']";
         $input_UniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
         $elementID = $input_UniqueID->getAttribute('value');
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
@@ -44,31 +49,32 @@ class DeleteProviderTest extends MikoPBXTestsBase
         $this->clickDeleteButtonOnRowWithText($params['description']);
         $this->waitForAjax();
 
-        // Try to find element with ID on page
+        // Try to find element with ID on the page
 
-        $xpath                   = "//table[@id='providers-table']//tr[@id='{$elementID}']";
+        $xpath = "//table[@id='providers-table']//tr[@id='{$elementID}']";
         $els = self::$driver->findElements(WebDriverBy::xpath($xpath));
 
-        if ($params['possibleToDelete']){
-            if (count($els)>0){
+        if ($params['possibleToDelete']) {
+            if (count($els) > 0) {
                 $this->fail("Unexpectedly element was found by " . $xpath . PHP_EOL);
             }
         } else {
-            if (count($els) === 0){
+            if (count($els) === 0) {
                 $this->fail("Unexpectedly element was not found by " . $xpath . PHP_EOL);
             }
-            // Check warning message on page top
-            $xpath                   = "//div[contains(@class,'message') and contains(@class,'negative')]";
+            // Check warning message on the page top
+            $xpath = "//div[contains(@class,'message') and contains(@class,'negative')]";
             $errorMessage = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $this->assertTrue($errorMessage->isDisplayed());
         }
 
-        // increment assertion counter
+        // Increment the assertion counter
         $this->assertTrue(true);
     }
 
     /**
-     * Dataset provider
+     * Dataset provider for provider deletion parameters.
+     *
      * @return array
      */
     public function additionProvider(): array
@@ -76,14 +82,16 @@ class DeleteProviderTest extends MikoPBXTestsBase
         $params = [];
         $params[] = [
             [
-                'description'   => 'Mango office for delete',
-                'possibleToDelete'=>true
-            ]];
+                'description' => 'Mango office for delete',
+                'possibleToDelete' => true
+            ]
+        ];
         $params[] = [
             [
-                'description'   => 'VoxlinkIAX for delete',
-                'possibleToDelete'=>true
-            ]];
+                'description' => 'VoxlinkIAX for delete',
+                'possibleToDelete' => true
+            ]
+        ];
         return $params;
     }
 }

@@ -21,29 +21,30 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
-class CheckDropdownsOnAddExtensions extends MikoPBXTestsBase
+class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
 {
     /**
-     * @depends      testLogin
+     * Test checking dropdown menus when adding extensions.
+     *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param $params
+     * @param array $params The parameters for the extension.
      *
      * @throws \Facebook\WebDriver\Exception\NoSuchElementException
      * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testDropdowns($params): void
+    public function testDropdowns(array $params): void
     {
-
         // Routing
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
 
         $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $params['number']);
 
-        //Asserts
-        if ($elementFound){
-            $this->fail('Found menuitem ' . $params['number'] .' before creating it on Incoming routes modify '. PHP_EOL);
+        // Asserts
+        if ($elementFound) {
+            $this->fail('Found menuitem ' . $params['number'] .' before creating it on Incoming routes modify ' . PHP_EOL);
         }
 
         // Extensions
@@ -53,25 +54,23 @@ class CheckDropdownsOnAddExtensions extends MikoPBXTestsBase
         $this->changeTabOnCurrentPage('routing');
         $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $params['number']);
 
-        //Asserts
-        if ($elementFound){
-            $this->fail('Found menuitem ' . $params['number'] .' before creating it on Extension routing tab '. PHP_EOL);
+        // Asserts
+        if ($elementFound) {
+            $this->fail('Found menuitem ' . $params['number'] .' before creating it on Extension routing tab ' . PHP_EOL);
         }
 
         $createExtension = new CreateExtensionsTest();
         $createExtension->testCreateExtensions($this->additionProvider());
 
-
-
         // Routing
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
 
         $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $params['number']);
 
-        //Asserts
-        if (!$elementFound){
-            $this->fail('Not found menuitem ' . $params['number'] .' after creating it on Incoming routes modify '. PHP_EOL);
+        // Asserts
+        if (!$elementFound) {
+            $this->fail('Not found menuitem ' . $params['number'] .' after creating it on Incoming routes modify ' . PHP_EOL);
         }
 
         // Extensions
@@ -81,31 +80,32 @@ class CheckDropdownsOnAddExtensions extends MikoPBXTestsBase
         $this->changeTabOnCurrentPage('routing');
         $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $params['number']);
 
-        //Asserts
-        if (!$elementFound){
-            $this->fail('Not found menuitem ' . $params['number'] .' after creating it on Extension routing tab '. PHP_EOL);
+        // Asserts
+        if (!$elementFound) {
+            $this->fail('Not found menuitem ' . $params['number'] .' after creating it on Extension routing tab ' . PHP_EOL);
         }
-
     }
 
     /**
-     * Dataset provider
+     * Dataset provider for extension parameters.
+     *
      * @return array
      */
     public function additionProvider(): array
     {
         return [
-                'number'   => 245,
-                'email'    => 'ntele@miko.ru',
-                'username' => 'Nikita Telegrafov',
-                'mobile'   => '79051454089',
-                'secret'   => '23542354wet',
-                'sip_enableRecording'=>false,
-                'sip_dtmfmode'=>'auto_info',
-                'sip_networkfilterid'=>'none',
-                'sip_transport'=>'udp',
-                'sip_manualattributes'=>'',
-
-            ];
+            [
+                'number'             => 245,
+                'email'              => 'ntele@miko.ru',
+                'username'           => 'Nikita Telegrafov',
+                'mobile'             => '79051454089',
+                'secret'             => '23542354wet',
+                'sip_enableRecording'=> false,
+                'sip_dtmfmode'       => 'auto_info',
+                'sip_networkfilterid'=> 'none',
+                'sip_transport'      => 'udp',
+                'sip_manualattributes'=> '',
+            ]
+        ];
     }
 }

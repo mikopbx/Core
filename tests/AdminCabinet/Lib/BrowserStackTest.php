@@ -27,15 +27,35 @@ use GuzzleHttp\Client as GuzzleHttpClient;
 
 require_once 'globals.php';
 
+/**
+ * Class BrowserStackTest
+ * @package MikoPBX\Tests\AdminCabinet\Lib
+ */
 class BrowserStackTest extends TestCase
 {
+    /**
+     * @var RemoteWebDriver
+     */
     protected static RemoteWebDriver $driver;
+
+    /**
+     * @var BrowserStackLocal
+     */
     protected static BrowserStackLocal $bs_local;
+
+    /**
+     * @var bool
+     */
     protected static bool $testResult;
+
+    /**
+     * @var array
+     */
     protected static array $failureConditions;
 
     /**
-     * Before all tests
+     * Set up before all tests
+     *
      * @throws \BrowserStack\LocalException
      */
     public static function setUpBeforeClass(): void
@@ -89,7 +109,8 @@ class BrowserStackTest extends TestCase
 
 
     /**
-     * Before execute test we set it name to RemoteWebdriver
+     * Set up before each test
+     *
      * @throws GuzzleException
      */
     public function setUp(): void
@@ -109,7 +130,7 @@ class BrowserStackTest extends TestCase
     }
 
     /**
-     * After execute test we will update his status
+     * Tear down after each test
      */
     public function tearDown(): void
     {
@@ -121,7 +142,7 @@ class BrowserStackTest extends TestCase
     }
 
     /**
-     * After all tests
+     * Tear down after all tests
      */
     public static function tearDownAfterClass(): void
     {

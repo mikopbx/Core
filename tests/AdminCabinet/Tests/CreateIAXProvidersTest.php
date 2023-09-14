@@ -21,15 +21,20 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
-class CreateIAXProviders extends MikoPBXTestsBaseAlias
+/**
+ * Class to test the creation and modification of IAX providers in the admin cabinet.
+ */
+class CreateIAXProvidersTest extends MikoPBXTestsBaseAlias
 {
     /**
+     * Test the creation and modification of IAX providers.
+     *
      * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params
+     * @param array $params The parameters for creating the IAX provider.
      */
-    public function testCreateIaxProvider($params):void
+    public function testCreateIaxProvider(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickDeleteButtonOnRowWithText($params['description']);
@@ -46,7 +51,7 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
         $this->changeInputField('username', $params['username']);
         $this->changeInputField('secret', $params['password']);
 
-        // Раскрываем расширенные опции
+        // Expand advanced options
         $this->openAccordionOnThePage();
         $this->changeCheckBoxState('qualify', $params['qualify']);
 
@@ -65,9 +70,8 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
         $this->assertInputFieldValueEqual('username', $params['username']);
         $this->assertInputFieldValueEqual('secret', $params['password']);
 
-        // Раскрываем расширенные опции
+        // Expand advanced options
         $this->openAccordionOnThePage();
-
 
         $this->assertCheckBoxStageIsEqual('qualify', $params['qualify']);
 
@@ -76,36 +80,40 @@ class CreateIAXProviders extends MikoPBXTestsBaseAlias
     }
 
     /**
-     * Dataset provider
+     * Dataset provider for IAX provider creation parameters.
+     *
      * @return array
      */
-    public function additionProvider():array
+    public function additionProvider(): array
     {
         $params = [];
-        $params[] = [[
-            'type'=>'iax',
-            'uniqid'=>'IAX-1683372799',
-            'description' => 'VoxlinkIAX',
-            'host' => 'vox.link.ru',
-            'username'        => 'line1',
-            'password'        => 'voxvoxSecret',
-            'qualify'         => true,
-            'noregister'=>true,
-            'manualattributes'=>'',
-        ]];
-        $params[] = [[
-            'type'=>'iax',
-            'uniqid'=>'IAX-1683372823',
-            'description' => 'VoxlinkIAX for delete',
-            'host' => 'vox.link2.ru',
-            'username'        => 'line1',
-            'password'        => 'voxvoxSecret',
-            'qualify'         => true,
-            'noregister'=>true,
-            'manualattributes'=>'',
-        ]];
+        $params[] = [
+            [
+                'type' => 'iax',
+                'uniqid' => 'IAX-1683372799',
+                'description' => 'VoxlinkIAX',
+                'host' => 'vox.link.ru',
+                'username' => 'line1',
+                'password' => 'voxvoxSecret',
+                'qualify' => true,
+                'noregister' => true,
+                'manualattributes' => '',
+            ]
+        ];
+        $params[] = [
+            [
+                'type' => 'iax',
+                'uniqid' => 'IAX-1683372823',
+                'description' => 'VoxlinkIAX for delete',
+                'host' => 'vox.link2.ru',
+                'username' => 'line1',
+                'password' => 'voxvoxSecret',
+                'qualify' => true,
+                'noregister' => true,
+                'manualattributes' => '',
+            ]
+        ];
 
         return $params;
     }
-
 }

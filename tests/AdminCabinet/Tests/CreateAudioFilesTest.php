@@ -23,75 +23,91 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
+/**
+ * Class CreateAudioFilesTest
+ *
+ * This class contains tests for creating and managing audio files.
+ */
 class CreateAudioFilesTest extends MikoPBXTestsBase
 {
     /**
-     * @depends      testLogin
+     * Test creating an audio file.
+     *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params
+     * @param array $params The parameters for the audio file.
      *
      * @throws \Facebook\WebDriver\Exception\NoSuchElementException
      * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testCreateAudioFile($params):void
+    public function testCreateAudioFile(array $params): void
     {
+        // Navigate to the sound files page and delete any existing files with the same name
         $this->clickSidebarMenuItemByHref('/admin-cabinet/sound-files/index/');
         $this->clickDeleteButtonOnRowWithText($params['name']);
 
+        // Click the "Add Custom Sound File" button
         $this->clickButtonByHref('/admin-cabinet/sound-files/modify/custom');
 
+        // Upload the audio file
         $this->changeFileField('sound-file', $params['path']);
 
+        // Wait for the form to finish loading
         self::$driver->wait(2);
         self::$driver->wait(30, 500)->until(
             function ($driver) {
                 $xpath = '//form[@id="sound-file-form"]';
                 $form = $driver->findElement(WebDriverBy::xpath($xpath));
                 $class = $form->getAttribute('class');
-                return stripos($class, 'loading')===false;
+                return stripos($class, 'loading') === false;
             }
         );
 
-
+        // Set the name for the audio file
         $this->changeInputField('name', $params['name']);
 
+        // Submit the form to create the audio file
         $this->submitForm('sound-file-form');
 
+        // Navigate back to the sound files page
         $this->clickSidebarMenuItemByHref('/admin-cabinet/sound-files/index/');
 
+        // Click the "Modify" button on the newly created audio file
         $this->clickModifyButtonOnRowWithText($params['name']);
+
+        // Verify that the name input field matches the expected name
         $this->assertInputFieldValueEqual('name', $params['name']);
     }
 
-
     /**
-     * Dataset provider
+     * Dataset provider for audio file parameters.
+     *
      * @return array
      */
     public function additionProvider(): array
     {
-        $params = [];
-        $params[] = [[
-            'name' => 'The first audio record',
-            'path'    => 'C:\Users\hello\Documents\audio\250Hz_44100Hz_16bit_05sec.wav',
-            'for_delete'=> false,
-        ]];
-        $params[] = [[
-            'name' => 'The second audio record',
-            'path'    => 'C:\Users\hello\Documents\audio\blind_willie.mp3',
-            'for_delete'=> false,
-        ]];
-        $params[] = [[
-            'name' => 'The third audio record',
-            'path'    => 'C:\Users\hello\Documents\audio\first_noel.mp3',
-            'for_delete'=> false,
-        ]];
-        $params[] = [[
-            'name' => 'The fourth audio record',
-            'path'    => 'C:\Users\hello\Documents\audio\first_noel.mp3',
-            'for_delete'=> true,
-        ]];
-        return $params;
+        return [
+            [
+                'name' => 'The first audio record',
+                'path' => 'C:\Users\hello\Documents\audio\250Hz_44100Hz_16bit_05sec.wav',
+                'for_delete' => false,
+            ],
+            [
+                'name' => 'The second audio record',
+                'path' => 'C:\Users\hello\Documents\audio\blind_willie.mp3',
+                'for_delete' => false,
+            ],
+            [
+                'name' => 'The third audio record',
+                'path' => 'C:\Users\hello\Documents\audio\first_noel.mp3',
+                'for_delete' => false,
+            ],
+            [
+                'name' => 'The fourth audio record',
+                'path' => 'C:\Users\hello\Documents\audio\first_noel.mp3',
+                'for_delete' => true,
+            ],
+        ];
     }
 }

@@ -19,41 +19,46 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class CheckDropdownBeforeCreateAudioFileTest extends MikoPBXTestsBase
 {
     /**
-     * @depends      testLogin
-     * @dataProvider additionProvider
+     * Test checking the dropdown menu before creating an audio file.
      *
-     * @param array $params
+     * @depends testLogin
+     * @dataProvider audioFilesProvider
      *
+     * @param array $params The parameters for the audio file.
      */
-    public function testCheckDropdownBeforeCreateAudioFiles(array $params):void
+    public function testCheckDropdownBeforeCreateAudioFiles(array $params): void
     {
+        // Navigate to the recording settings page
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/recording");
 
+        // Check if the specified element exists in the dropdown menu
         $elementFound = $this->checkIfElementExistOnDropdownMenu('PBXRecordAnnouncementIn', $params['name']);
 
-        //Asserts
-        if ($elementFound){
+        // Asserts
+        if ($elementFound) {
             $this->fail('Found menuitem ' . $params['name'] . PHP_EOL);
         } else {
-            // increment assertion counter
+            // Increment assertion counter
             $this->assertTrue(true);
         }
     }
 
-
     /**
-     * Dataset provider
+     * Dataset provider that retrieves data from CreateAudioFilesTest.
+     *
      * @return array
      */
-    public function additionProvider(): array
+    public function audioFilesProvider(): array
     {
+        // Create an instance of CreateAudioFilesTest to access its dataset provider
         $audioFiles = new CreateAudioFilesTest();
+
+        // Return data from the dataset provider of CreateAudioFilesTest
         return $audioFiles->additionProvider();
     }
 }
