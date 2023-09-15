@@ -109,6 +109,19 @@ const PbxApi = {
     // Users
     usersAvailable: `${Config.pbxUrl}/pbxcore/api/users/available?email={email}`, // Checks the email uniqueness.
 
+    // Call queues
+    callQueuesDeleteRecord: `${Config.pbxUrl}/pbxcore/api/call-queues/deleteRecord`, // Deletes the call queue record with its dependent tables.
+
+    // Conference rooms
+    conferenceRoomsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/conference-rooms/deleteRecord`, // Deletes the conference room record with its dependent tables.
+
+    // IVR menu
+    ivrMenuDeleteRecord: `${Config.pbxUrl}/pbxcore/api/ivr-menu/deleteRecord`, // Deletes the ivr menu record with its dependent tables.
+
+    // Dialplan applications
+    dialplanApplicationsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/dialplan-applications/deleteRecord`, // Deletes the call-queues record with its dependent tables.
+
+
 
     /**
      * Tries to parse a JSON string.
@@ -1556,7 +1569,7 @@ const PbxApi = {
             },
         });
     },
-
+    
 };
 
 // requirejs(["pbx/PbxAPI/extensionsAPI"]);

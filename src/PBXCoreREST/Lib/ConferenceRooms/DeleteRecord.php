@@ -17,26 +17,26 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib\Extensions;
+namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 
-use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\ConferenceRooms;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di;
 
 /**
  *  Class DeleteRecord
- *  Delete an internal number and all its dependencies including mobile and forwarding settings.
+ *  Delete a conference room and all its dependencies.
  *
- * @package MikoPBX\PBXCoreREST\Lib\Extensions
+ * @package MikoPBX\PBXCoreREST\Lib\ConferenceRooms
  */
 class DeleteRecord extends \Phalcon\Di\Injectable
 {
 
     /**
-     * Deletes the extension record with its dependent tables.
+     * Deletes the conference room record with its dependent tables.
      *
-     * @param string $id ID of the extension to be deleted.
+     * @param string $id The ID of the conference room to be deleted.
      * @return PBXApiResult Result of the delete operation.
      */
     public static function main(string $id): PBXApiResult
@@ -48,27 +48,20 @@ class DeleteRecord extends \Phalcon\Di\Injectable
         $di = Di::getDefault();
         $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
 
-        $extension = Extensions::findFirstById($id);
-        if ($extension===null){
-            $res->messages['error'][] = 'Extension with id '.$id.' does not exist';
+        // Find the room by ID
+        $record = ConferenceRooms::findFirstByUniqid($id);
+        if ($record===null){
+            $res->messages['error'][] = 'ConferenceRoom with id '.$id.' does not exist';
             $res->success = false;
             return  $res;
         }
 
         $db->begin();
 
-        // To avoid circular references, we first delete the forwarding settings
-        // for this account, as it may refer to itself.
-        $forwardingRights = $extension->ExtensionForwardingRights;
-        if ($forwardingRights!==null && !$forwardingRights->delete()) {
-            $res->messages['error'][] = implode(PHP_EOL,$forwardingRights->getMessages());
-            $res->success = false;
-        }
-
-        // Delete User
-        $user = $extension->Users;
-        if ($user !==null && !$user->delete()) {
-            $res->messages['error'][] = implode(PHP_EOL, $user->getMessages());
+        // Delete associated extensions
+        $extension = $record->Extensions;
+        if ($extension!==null && !$extension->delete()) {
+            $res->messages['error'][] = implode(PHP_EOL, $extension->getMessages());
             $res->success = false;
         }
 

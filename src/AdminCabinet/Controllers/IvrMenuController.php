@@ -352,43 +352,4 @@ class IvrMenuController extends BaseController
         return true;
     }
 
-    /**
-     * Delete an IVR menu.
-     *
-     * @param string $uniqid The unique ID of the IVR menu.
-     */
-    public function deleteAction(string $uniqid = '')
-    {
-        if ($uniqid === '') {
-            return;
-        }
-
-        // Find the IVR menu by its unique ID
-        $ivrMenu = IvrMenu::findFirstByUniqid($uniqid);
-        if ($ivrMenu === null) {
-            return;
-        }
-
-        $this->db->begin();
-        $errors = false;
-
-        // Delete the associated extension
-        $extension = $ivrMenu->Extensions;
-        if ( ! $extension->delete()) {
-            $errors = $extension->getMessages();
-        }
-
-        // Check for errors during deletion
-        if ($errors) {
-            $this->flash->warning(implode('<br>', $errors));
-            $this->db->rollback();
-        } else {
-            $this->db->commit();
-        }
-
-        // Redirect to the IVR menu index page
-        $this->forward('ivr-menu/index');
-    }
-
-
 }

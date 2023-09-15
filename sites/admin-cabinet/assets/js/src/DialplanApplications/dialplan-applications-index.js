@@ -16,15 +16,17 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SemanticLocalization */
+/* global globalRootUrl, SemanticLocalization, UserMessage, DialplanApplicationsAPI */
 
 /**
- * The DialplanApplicationsTable object.
+ * The dialplanApplicationsIndex object.
  * Manages the operations and behaviors of the Dialplan applications table in the UI.
  *
- * @module DialplanApplicationsTable
+ * @module dialplanApplicationsIndex
  */
-const DialplanApplicationsTable = {
+const dialplanApplicationsIndex = {
+
+    $dialplanApplicationsTable: $('#dialplan-applications-table'),
 
     /**
      * Initializes the Dialplan Applications Table.
@@ -53,12 +55,43 @@ const DialplanApplicationsTable = {
             const id = $(e.target).closest('tr').attr('id');
             window.location = `${globalRootUrl}dialplan-applications/modify/${id}`;
         });
+
+        // Set up delete functionality on delete button click.
+        $('body').on('click', 'a.delete', (e) => {
+            e.preventDefault();
+            $(e.target).addClass('disabled');
+            // Get the dialplan application  ID from the closest table row.
+            const rowId = $(e.target).closest('tr').attr('id');
+
+            // Remove any previous AJAX messages.
+            $('.message.ajax').remove();
+
+            // Call the PbxApi method to delete the dialplan application record.
+            DialplanApplicationsAPI.deleteRecord(rowId, dialplanApplicationsIndex.cbAfterDeleteRecord);
+        });
+
+    },
+    /**
+     * Callback function executed after deleting a record.
+     * @param {Object} response - The response object from the API.
+     */
+    cbAfterDeleteRecord(response){
+        if (response.result === true) {
+            // Remove the deleted record's table row.
+            dialplanApplicationsIndex.$dialplanApplicationsTable.find(`tr[id=${response.data.id}]`).remove();
+            // Call the callback function for data change.
+            Extensions.cbOnDataChanged();
+        } else {
+            // Show an error message if deletion was not successful.
+            UserMessage.showError(response.messages.error, globalTranslate.da_ImpossibleToDeleteDialplanApplication);
+        }
+        $('a.delete').removeClass('disabled');
     },
 
 };
 
 // Initialize the Dialplan Applications table when the document is ready
 $(document).ready(() => {
-    DialplanApplicationsTable.initialize();
+    dialplanApplicationsIndex.initialize();
 });
 

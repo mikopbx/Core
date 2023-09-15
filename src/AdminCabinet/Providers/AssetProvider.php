@@ -317,6 +317,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/PbxAPI/callQueuesAPI.js', true)
                 ->addJs('js/pbx/CallQueues/callqueues-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
@@ -338,6 +339,7 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'index') {
             $this->footerCollectionJS
+                ->addJs('js/pbx/PbxAPI/conferenceRoomsAPI.js', true)
                 ->addJs('js/pbx/ConferenceRooms/conference-rooms-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
@@ -636,6 +638,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/PbxAPI/ivrMenuAPI.js', true)
                 ->addJs('js/pbx/IvrMenu/ivrmenu-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
@@ -774,6 +777,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/PbxAPI/dialplanApplicationsAPI.js', true)
                 ->addJs('js/pbx/DialplanApplications/dialplan-applications-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionACE

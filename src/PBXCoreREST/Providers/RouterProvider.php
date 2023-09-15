@@ -46,6 +46,14 @@ use MikoPBX\PBXCoreREST\Controllers\
     Advices\GetController as AdvicesGetController,
     Extensions\GetController as ExtensionsGetController,
     Extensions\PostController as ExtensionsPostController,
+    CallQueues\GetController as CallQueuesGetController,
+    CallQueues\PostController as CallQueuesPostController,
+    IvrMenu\GetController as IvrMenuGetController,
+    IvrMenu\PostController as IvrMenuPostController,
+    DialplanApplications\GetController as DialplanApplicationsGetController,
+    DialplanApplications\PostController as DialplanApplicationsPostController,
+    ConferenceRooms\GetController as ConferenceRoomsGetController,
+    ConferenceRooms\PostController as ConferenceRoomsPostController,
     Users\GetController as UsersGetController,
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController
@@ -99,6 +107,7 @@ class RouterProvider implements ServiceProviderInterface
      */
     private function attachRoutes(Micro $application): void
     {
+
         // Add hard coded routes
         $routes = $this->getRoutes();
 
@@ -162,6 +171,18 @@ class RouterProvider implements ServiceProviderInterface
 
             [ExtensionsGetController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'get', '/'],
             [ExtensionsPostController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'post', '/'],
+
+            [CallQueuesGetController::class, 'callAction', '/pbxcore/api/call-queues/{actionName}', 'get', '/'],
+            [CallQueuesPostController::class, 'callAction', '/pbxcore/api/call-queues/{actionName}', 'post', '/'],
+
+            [IvrMenuGetController::class, 'callAction', '/pbxcore/api/ivr-menu/{actionName}', 'get', '/'],
+            [IvrMenuPostController::class, 'callAction', '/pbxcore/api/ivr-menu/{actionName}', 'post', '/'],
+
+            [ConferenceRoomsGetController::class, 'callAction', '/pbxcore/api/conference-rooms/{actionName}', 'get', '/'],
+            [ConferenceRoomsPostController::class, 'callAction', '/pbxcore/api/conference-rooms/{actionName}', 'post', '/'],
+
+            [DialplanApplicationsGetController::class, 'callAction', '/pbxcore/api/dialplan-applications/{actionName}', 'get', '/'],
+            [DialplanApplicationsPostController::class, 'callAction', '/pbxcore/api/dialplan-applications/{actionName}', 'post', '/'],
 
             [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'get', '/'],
 

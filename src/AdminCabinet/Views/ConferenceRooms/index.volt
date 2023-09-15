@@ -3,7 +3,7 @@
 {% endif %}
     {% for record in records %}
         {% if loop.first %}
-            <table class="ui selectable compact unstackable table" id="routingTable">
+            <table class="ui selectable compact unstackable table" id="conference-rooms-table">
             <thead>
             <tr>
                 <th>{{ t._('cr_ColumnExtension') }}</th>

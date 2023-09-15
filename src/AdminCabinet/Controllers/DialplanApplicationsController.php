@@ -171,36 +171,4 @@ class DialplanApplicationsController extends BaseController
         return true;
     }
 
-    /**
-     * Deletes DialplanApplications from database
-     *
-     * @param string $uniqid Dialplan Application record ID
-     */
-    public function deleteAction(string $uniqid = ''):void
-    {
-        if ($uniqid === '') {
-            return;
-        }
-
-        $appRecord = DialplanApplications::findFirstByUniqid($uniqid);
-        if ($appRecord === null) {
-            return;
-        }
-
-        $this->db->begin();
-        $errors = false;
-        $extension = $appRecord->Extensions;
-        if ( ! $extension->delete()) {
-            $errors = $extension->getMessages();
-        }
-
-        if ($errors) {
-            $this->flash->warning(implode('<br>', $errors));
-            $this->db->rollback();
-        } else {
-            $this->db->commit();
-        }
-
-        $this->forward('dialplan-applications/index');
-    }
 }

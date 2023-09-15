@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global globalRootUrl, SemanticLocalization */
+/* global globalRootUrl, SemanticLocalization, UserMessage, Extensions, CallQueuesAPI */
 
 /**
  * callQueuesTable module.
@@ -40,7 +40,40 @@ const callQueuesTable = {
 
         // Initialize the data table for the call queues table.
         callQueuesTable.initializeDataTable();
+
+        // Set up delete functionality on delete button click.
+        $('body').on('click', 'a.delete', (e) => {
+            e.preventDefault();
+            $(e.target).addClass('disabled');
+            // Get the call queue ID from the closest table row.
+            const callQueueId = $(e.target).closest('tr').attr('id');
+
+            // Remove any previous AJAX messages.
+            $('.message.ajax').remove();
+
+            // Call the PbxApi method to delete the call queue record.
+            CallQueuesAPI.deleteRecord(callQueueId, callQueuesTable.cbAfterDeleteRecord);
+        });
+
     },
+
+    /**
+     * Callback function executed after deleting a record.
+     * @param {Object} response - The response object from the API.
+     */
+    cbAfterDeleteRecord(response){
+        if (response.result === true) {
+            // Remove the deleted record's table row.
+            callQueuesTable.$queuesTable.find(`tr[id=${response.data.id}]`).remove();
+            // Call the callback function for data change.
+            Extensions.cbOnDataChanged();
+        } else {
+            // Show an error message if deletion was not successful.
+            UserMessage.showError(response.messages.error, globalTranslate.cq_ImpossibleToDeleteCallQueue);
+        }
+        $('a.delete').removeClass('disabled');
+    },
+
     /**
      * Initialize the DataTable for the call queues table.
      * This adds additional functionality like sorting and pagination.

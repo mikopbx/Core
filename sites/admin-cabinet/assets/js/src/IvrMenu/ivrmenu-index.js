@@ -16,14 +16,14 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SemanticLocalization */
+/* global globalRootUrl, SemanticLocalization, UserMessage,  */
 
 /**
  * Define object which manage IVR (Interactive Voice Menu) list
  *
- * @module IvrMenuTable
+ * @module ivrMenuIndex
  */
-const IvrMenuTable = {
+const ivrMenuIndex = {
     $ivrTable: $('#ivr-menu-table'),
     initialize() {
 
@@ -35,14 +35,28 @@ const IvrMenuTable = {
         });
 
         // Initialize the data table
-        IvrMenuTable.initializeDataTable();
+        ivrMenuIndex.initializeDataTable();
+
+        // Set up delete functionality on delete button click.
+        $('body').on('click', 'a.delete', (e) => {
+            e.preventDefault();
+            $(e.target).addClass('disabled');
+            // Get the ivr menu  ID from the closest table row.
+            const rowId = $(e.target).closest('tr').attr('id');
+
+            // Remove any previous AJAX messages.
+            $('.message.ajax').remove();
+
+            // Call the PbxApi method to delete the IVR menu record.
+            IVRMenuAPI.deleteRecord(rowId, ivrMenuIndex.cbAfterDeleteRecord);
+        });
     },
 
     /**
      * Initialize data tables on table
      */
     initializeDataTable() {
-        IvrMenuTable.$ivrTable.DataTable({
+        ivrMenuIndex.$ivrTable.DataTable({
             lengthChange: false, // Disable ability to change number of entries shown
             paging: false, // Disable pagination
             columns: [
@@ -60,12 +74,29 @@ const IvrMenuTable = {
         // Move the "Add New" button to the first eight-column div
         $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
     },
+
+    /**
+     * Callback function executed after deleting a record.
+     * @param {Object} response - The response object from the API.
+     */
+    cbAfterDeleteRecord(response){
+        if (response.result === true) {
+            // Remove the deleted record's table row.
+            ivrMenuIndex.$ivrTable.find(`tr[id=${response.data.id}]`).remove();
+            // Call the callback function for data change.
+            Extensions.cbOnDataChanged();
+        } else {
+            // Show an error message if deletion was not successful.
+            UserMessage.showError(response.messages.error, globalTranslate.iv_ImpossibleToDeleteIVRMenu);
+        }
+        $('a.delete').removeClass('disabled');
+    },
 };
 
 /**
  *  Initialize IVR menu table on document ready
  */
 $(document).ready(() => {
-    IvrMenuTable.initialize();
+    ivrMenuIndex.initialize();
 });
 
