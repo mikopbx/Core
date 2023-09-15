@@ -428,6 +428,31 @@ const Extensions = {
         })
     },
 
+
+    /**
+     * Get SIP password for selected extension.
+     * @param {string} number - The number of the extension.
+     * @param {function} callback - The callback function
+     */
+    getSecret( number, callback) {
+        let secret = '';
+        $.api({
+            url: PbxApi.extensionsGetSecret,
+            on: 'now',
+            urlData: {
+                number: number
+            },
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+        });
+        return secret;
+    },
+
 };
 
 /**

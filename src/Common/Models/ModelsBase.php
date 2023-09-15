@@ -553,6 +553,11 @@ class ModelsBase extends Model
                 break;
             case Users::class:
                 $name = '<i class="user outline icon"></i> ' . $this->username;
+                foreach ($this->Extensions??[] as $extension){
+                    if ($extension->type===Extensions::TYPE_SIP){
+                        $name .= ' <'.$extension->number.'>';
+                    }
+                }
                 break;
             case SoundFiles::class:
                 $name = '<i class="file audio outline icon"></i> ';

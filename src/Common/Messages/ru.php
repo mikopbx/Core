@@ -468,6 +468,7 @@ return [
     'ex_dropdownCategory_SYSTEM' => 'Служебные номера',
     'ex_dropdownCategory_PARKING'=> 'Слоты парковки',
     'ex_ImpossibleToDeleteExtension' => 'Невозможно удалить сотрудника, т.к. существуют следующие ссылки',
+    'ex_ImpossibleToGetSecret'=> 'Не удалось получить пароль пользователя',
     'am_TableColumnName' => 'Имя',
     'am_TableColumnRead' => 'Доступ на чтение',
     'am_TableColumnWrite' => 'Доступ на запись',

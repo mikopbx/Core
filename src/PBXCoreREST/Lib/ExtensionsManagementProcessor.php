@@ -63,7 +63,7 @@ class ExtensionsManagementProcessor extends Injectable
                 if (!empty($data['id'])) {
                     $res = DeleteRecord::main($data['id']);
                 } else {
-                    $res->messages['error'][] = 'empty ID in POST/GET data';
+                    $res->messages['error'][] = 'Empty ID in POST/GET data';
                 }
                 break;
             case 'getForSelect':
@@ -86,6 +86,13 @@ class ExtensionsManagementProcessor extends Injectable
             case 'getPhoneRepresent':
                 if (!empty($data['number'])) {
                     $res = Utils::getPhoneRepresent($data['number']);
+                } else {
+                    $res->messages['error'][] = 'Empty number value in POST/GET data';
+                }
+                break;
+            case 'getSecret':
+                if (!empty($data['number'])) {
+                    $res = Utils::getSipSecret($data['number']);
                 } else {
                     $res->messages['error'][] = 'Empty number value in POST/GET data';
                 }

@@ -42,6 +42,9 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     public function testChangeExtension(array $params):void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->changeInputField('globalsearch', $params['username']);
+        $this->waitForAjax();
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('number', $params['number']);

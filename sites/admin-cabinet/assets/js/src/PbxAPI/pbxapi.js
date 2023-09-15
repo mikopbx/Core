@@ -105,6 +105,7 @@ const PbxApi = {
     extensionsGetRecord: `${Config.pbxUrl}/pbxcore/api/extensions/getRecord?id={id}`, // Get data structure for saveRecord request, if id parameter is empty it returns structure with default data.
     extensionsSaveRecord: `${Config.pbxUrl}/pbxcore/api/extensions/saveRecord`, // Saves extensions, sip, users, external phones, forwarding rights with POST data.
     extensionsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/extensions/deleteRecord`, // Deletes the extension record with its dependent tables.
+    extensionsGetSecret: `${Config.pbxUrl}/pbxcore/api/extensions/getSecret?number={number}`, // Get extension sip secret.
 
     // Users
     usersAvailable: `${Config.pbxUrl}/pbxcore/api/users/available?email={email}`, // Checks the email uniqueness.

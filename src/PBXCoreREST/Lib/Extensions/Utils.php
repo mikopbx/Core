@@ -97,7 +97,7 @@ class Utils extends Injectable
     }
 
     /**
-     * Check the availability of a number in the extensions.js JavaScript script.
+     * Check the availability of a number in the extensionsAPI.js JavaScript script.
      *
      * @param string $number The internal number of the user.
      * @return PBXApiResult Result of the availability check.
@@ -127,6 +127,28 @@ class Utils extends Injectable
                     $res->data['represent'] = 'ex_ThisNumberIsNotFree';
             }
 
+            return $res;
+        }
+        return $res;
+    }
+
+    /**
+     * Get the SIP secret for the extension extensionsAPI.js JavaScript script.
+     *
+     * @param string $number The extension number
+     * @return PBXApiResult Result with SIP secret
+     */
+    public static function getSipSecret(string $number): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $res->success = true;
+        $res->data['number'] = $number;
+        $res->data['secret'] = '';
+
+        $extension = Extensions::findFirstByNumber($number);
+        if ($extension !== null) {
+            $res->data['secret'] = $extension->Sip->secret??'';
             return $res;
         }
         return $res;

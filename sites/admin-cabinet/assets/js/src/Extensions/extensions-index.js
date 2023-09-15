@@ -26,7 +26,31 @@
  */
 const extensionsIndex = {
     maskList: null,
+
+    /**
+     * The extensions table element.
+     * @type {jQuery}
+     */
     $extensionsList: $('#extensions-table'),
+
+    /**
+     * The global search input element.
+     * @type {jQuery}
+     */
+    $globalSearch: $('#globalsearch'),
+
+    /**
+     * The data table object.
+     * @type {Object}
+     */
+    dataTable: {},
+
+    /**
+     * The document body.
+     * @type {jQuery}
+     */
+    $body: $('body'),
+
 
     /**
      * Initialize the ExtensionsIndex module.
@@ -41,26 +65,109 @@ const extensionsIndex = {
             }
         });
 
-        // Initialize the input mask for mobile numbers.
-        extensionsIndex.initializeInputmask($('input.mobile-number-input'));
-
         // Set up the DataTable on the extensions list.
         extensionsIndex.$extensionsList.DataTable({
-            lengthChange: false,
-            paging: false,
-            columns: [
-                {orderable: false, searchable: false, "width": "0"},
-                null,
-                null,
-                null,
-                null,
-                {orderable: false, searchable: false},
-            ],
-            autoWidth: false,
-            order: [1, 'asc'],
-            language: SemanticLocalization.dataTableLocalisation,
-            drawCallback() {
+            search: {
+                search: `${extensionsIndex.$globalSearch.val()}`,
             },
+            columnDefs: [{
+                "defaultContent": "-",
+                "targets": "_all"
+            }],
+            columns: [
+                {
+                    name: 'status',
+                    orderable: false,  // This column is not orderable
+                    searchable: false  // This column is not searchable
+                },
+                {
+                    name: 'username',
+                    data: 'Users.username'
+                },
+                {
+                    name: 'number',
+                    data: 'CAST(Extensions.number AS INTEGER)'
+                },
+                {
+                    name: 'mobile',
+                    data: 'CAST(ExternalExtensions.number AS INTEGER)'
+                },
+                {
+                    name: 'email',
+                    data: 'Users.email'
+                },
+                {
+                    name: 'buttons',
+                    orderable: false,  // This column is not orderable
+                    searchable: false  // This column is not searchable
+                },
+            ],
+            order: [[1, 'asc']],
+            serverSide: true,
+            processing: true,
+            ajax: {
+                url: `${globalRootUrl}extensions/getNewRecords`,
+                type: 'POST',
+            },
+            paging: true,
+            // stateSave: true,
+            sDom: 'rtip',
+            deferRender: true,
+            pageLength: 16,
+            scrollCollapse: true,
+            // scroller: true,
+            language: SemanticLocalization.dataTableLocalisation,
+            /**
+             * Constructs the Extensions row.
+             * @param {HTMLElement} row - The row element.
+             * @param {Array} data - The row data.
+             */
+            createdRow(row, data) {
+                const $templateRow  =  $('.extension-row-tpl').clone(true);
+                const $avatar = $templateRow.find('.avatar');
+                $avatar.attr('src',data.avatar);
+                $avatar.after(data.username);
+                $templateRow.find('.number').text(data.number);
+                $templateRow.find('.mobile input').attr('value', data.mobile);
+                $templateRow.find('.email').text(data.email);
+
+                const $editButton = $templateRow.find('.action-buttons .button.edit');
+                if ($editButton!==undefined){
+                    $editButton.attr('href',`${globalRootUrl}extensions/modify/${data.id}`)
+                }
+
+                const $clipboardButton = $templateRow.find('.action-buttons .button.clipboard');
+                if ($clipboardButton!==undefined){
+                    $clipboardButton.attr('data-value',data.number)
+                }
+                $(row).attr('data-value', data.number).html($templateRow.html());
+            },
+
+            /**
+             * Draw event - fired once the table has completed a draw.
+             */
+            drawCallback() {
+                // Initialize the input mask for mobile numbers.
+                extensionsIndex.initializeInputmask($('input.mobile-number-input'));
+                // Set up ClipboardJS for copying to the clipboard.
+                $('.clipboard').popup({
+                    on: 'manual',
+                });
+            },
+        });
+        extensionsIndex.dataTable = extensionsIndex.$extensionsList.DataTable();
+
+        extensionsIndex.$globalSearch.on('keyup', (e) => {
+            if (e.keyCode === 13
+                || e.keyCode === 8
+                || extensionsIndex.$globalSearch.val().length === 0) {
+                const text = extensionsIndex.$globalSearch.val();
+                extensionsIndex.applyFilter(text);
+            }
+        });
+
+        extensionsIndex.dataTable.on('draw', () => {
+            extensionsIndex.$globalSearch.closest('div').removeClass('loading');
         });
 
         // Move the "Add New" button to the first eight-column div.
@@ -72,29 +179,9 @@ const extensionsIndex = {
             window.location = `${globalRootUrl}extensions/modify/${id}`;
         });
 
-        // Set up ClipboardJS for copying to the clipboard.
-        const clipboard = new ClipboardJS('.clipboard');
-        $('.clipboard').popup({
-            on: 'manual',
-        });
-
-        // Set up 'success' event listener for the clipboard.
-        clipboard.on('success', (e) => {
-            $(e.trigger).popup('show');
-            setTimeout(() => {
-                $(e.trigger).popup('hide');
-            }, 1500);
-            e.clearSelection();
-        });
-
-        // Set up 'error' event listener for the clipboard.
-        clipboard.on('error', (e) => {
-            console.error('Action:', e.action);
-            console.error('Trigger:', e.trigger);
-        });
 
         // Set up delete functionality on delete button click.
-        $('body').on('click', 'a.delete', (e) => {
+        extensionsIndex.$body.on('click', 'a.delete', (e) => {
             e.preventDefault();
             $(e.target).addClass('disabled');
             // Get the extension ID from the closest table row.
@@ -106,6 +193,22 @@ const extensionsIndex = {
             // Call the PbxApi method to delete the extension record.
             PbxApi.ExtensionsDeleteRecord(extensionId, extensionsIndex.cbAfterDeleteRecord);
         });
+
+        // Set up copy secret button click.
+        extensionsIndex.$body.on('click', 'a.clipboard', (e) => {
+            e.preventDefault();
+            $(e.target).closest('div.button').addClass('disabled');
+
+            // Get the number from the closest table row.
+            const number = $(e.target).closest('tr').attr('data-value');
+
+            // Remove any previous AJAX messages.
+            $('.message.ajax').remove();
+
+            // Call the PbxApi method to get the extension secret.
+            Extensions.getSecret(number, extensionsIndex.cbAfterGetSecret);
+        });
+
     },
 
     /**
@@ -123,6 +226,25 @@ const extensionsIndex = {
             UserMessage.showError(response.messages.error, globalTranslate.ex_ImpossibleToDeleteExtension);
         }
         $('a.delete').removeClass('disabled');
+    },
+
+    /**
+     * Callback function executed after cet extension secret.
+     * @param {Object} response - The response object from the API.
+     */
+    cbAfterGetSecret(response){
+        if (response.result === true) {
+            const $clipboardButton = extensionsIndex.$extensionsList.find(`a.clipboard[data-value=${response.data.number}]`);
+            navigator.clipboard.writeText(response.data.secret)
+            $clipboardButton.popup('show');
+                setTimeout(() => {
+                    $clipboardButton.popup('hide');
+                }, 1500);
+        } else {
+            // Show an error message if deletion was not successful.
+            UserMessage.showError(response.messages.error, globalTranslate.ex_ImpossibleToGetSecret);
+        }
+        $('a.clipboard').removeClass('disabled');
     },
 
     /**
@@ -148,6 +270,14 @@ const extensionsIndex = {
             list: extensionsIndex.maskList,
             listKey: 'mask',
         });
+    },
+    /**
+     * Applies the filter to the data table.
+     * @param {string} text - The filter text.
+     */
+    applyFilter(text) {
+        extensionsIndex.dataTable.search(text).draw();
+        extensionsIndex.$globalSearch.closest('div').addClass('loading');
     },
 };
 
