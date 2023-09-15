@@ -472,9 +472,13 @@ class AsteriskManager
                 }
                 if($parameters['ActionID'] === $m['ActionID']){
                     // This is the event for the last request of the current worker
-                    $parameters['data'][$m['Event']][] = $m;
+                    if (array_key_exists('Event', $m)){
+                        $parameters['data'][$m['Event']][] = $m;
+                    } else {
+                        Util::sysLogMsg(__METHOD__, "No key Event on AMI Answer:" . implode(' ',$m), LOG_DEBUG);
+                    }
                     $m = [];
-                }elseif(isset($m['Event'])){
+                } elseif(isset($m['Event'])){
                     // These are other events not related to the last request
                     $this->processEvent($parameters);
                 }
