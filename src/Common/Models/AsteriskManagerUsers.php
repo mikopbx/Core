@@ -19,7 +19,9 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use Phalcon\Mvc\Model\Relation;
+use Phalcon\Security\Random;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
@@ -138,6 +140,13 @@ class AsteriskManagerUsers extends ModelsBase
     public ?string $verbose = '';
 
     /**
+     * Flag indicating if user has command access
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $command = '';
+
+    /**
      * ID of the network filter associated with the user
      *
      * @Column(type="integer", nullable=true)
@@ -191,5 +200,23 @@ class AsteriskManagerUsers extends ModelsBase
         );
 
         return $this->validate($validation);
+    }
+
+    /**
+     * Generates a random AMI password.
+     *
+     * @return string The generated AMI password.
+     */
+    public static function generateAMIPassword(): string
+    {
+        $random = new Random();
+        $passwordLength = 8;
+        try {
+            $password = $random->base64Safe($passwordLength);
+        } catch (\Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            $password = md5(microtime());
+        }
+        return $password;
     }
 }

@@ -484,6 +484,7 @@ return [
     'am_ValidationAMINameIsEmpty' => 'Не указано имя учетной записи',
     'am_ValidationAMISecretIsEmpty' => 'Не заполнен пароль',
     'am_ErrorThisUsernameInNotAvailable' => 'Запись с таким именем уже существует',
+    'am_NoAnyServersYet'=>'Здесь еще нет ни одного AMI пользователя',
     'tf_ActionPlayMessage' => 'Проиграть файл <b>%message%</b>',
     'tf_ActionTransferToExtension' => 'Перевести вызов на <b>%extension%</b>',
     'tf_TableColumnDatePeriod' => 'Период',

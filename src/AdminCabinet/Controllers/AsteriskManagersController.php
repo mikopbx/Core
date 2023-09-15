@@ -46,6 +46,7 @@ class AsteriskManagersController extends BaseController
             'system',
             'user',
             'verbose',
+            'command'
         ];
         parent::initialize();
     }
@@ -80,6 +81,7 @@ class AsteriskManagersController extends BaseController
         $manager = AsteriskManagerUsers::findFirstById($id);
         if ($manager === null) {
             $manager = new AsteriskManagerUsers();
+            $manager->secret = AsteriskManagerUsers::generateAMIPassword();
         }
 
         $arrNetworkFilters = [];

@@ -117,6 +117,7 @@ class ManagerConf extends AsteriskConfigClass
                     'dtmf',
                     'log',
                     'system',
+                    'command',
                     'verbose',
                     'user',
                 ];

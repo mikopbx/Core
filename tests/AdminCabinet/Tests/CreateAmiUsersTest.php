@@ -84,6 +84,7 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
         $this->findCheckOnPageAndMarkIt('config', $params['config']);
         $this->findCheckOnPageAndMarkIt('dtmf', $params['dtmf']);
         $this->findCheckOnPageAndMarkIt('system', $params['system']);
+        $this->findCheckOnPageAndMarkIt('command', $params['command']);
         $this->findCheckOnPageAndMarkIt('verbose', $params['verbose']);
 
         // Submit the form to create the AMI user
@@ -109,6 +110,7 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
         $this->findCheckOnPageAndCompareCondition('config', $params['config']);
         $this->findCheckOnPageAndCompareCondition('dtmf', $params['dtmf']);
         $this->findCheckOnPageAndCompareCondition('system', $params['system']);
+        $this->findCheckOnPageAndCompareCondition('command', $params['command']);
         $this->findCheckOnPageAndCompareCondition('verbose', $params['verbose']);
     }
 
@@ -135,6 +137,7 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
                 'config'      => 'readwrite',
                 'dtmf'        => 'readwrite',
                 'system'      => 'readwrite',
+                'command'      => 'readwrite',
                 'verbose'     => 'read',
             ],
             [
@@ -152,6 +155,7 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
                 'config'      => 'read',
                 'dtmf'        => 'read',
                 'system'      => 'read',
+                'command'     => 'read',
                 'verbose'     => 'read',
             ],
         ];
