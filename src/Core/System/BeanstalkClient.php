@@ -39,6 +39,8 @@ class BeanstalkClient extends Injectable
 
     public const QUEUE_ERROR = 'queue_error';
 
+    public const RESPONSE_IN_FILE = 'response-in-file';
+
     /** @var Pheanstalk */
     private Pheanstalk $queue;
     private bool $connected = false;

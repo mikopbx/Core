@@ -33,6 +33,8 @@ class BeanstalkConf extends Injectable
 {
     public const PROC_NAME = 'beanstalkd';
 
+    public const JOB_DATA_SIZE_LIMIT = 524280;
+
     /**
      * Restarts Beanstalk server.
      *
@@ -43,7 +45,7 @@ class BeanstalkConf extends Injectable
     public function reStart(): void
     {
         $config = $this->getDI()->get('config')->beanstalk;
-        $conf   = "-l {$config->host} -p {$config->port} -z 524280";
+        $conf   = "-l {$config->host} -p {$config->port} -z ".self::JOB_DATA_SIZE_LIMIT;
         $result = Processes::safeStartDaemon(self::PROC_NAME, $conf);
         if(!$result){
             sleep(10);

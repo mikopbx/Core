@@ -21,11 +21,10 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
-use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Configs\BeanstalkConf, Processes, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use Throwable;
 use function xdebug_break;
@@ -63,7 +62,7 @@ class WorkerApiCommands extends WorkerBase
     {
         /** @var BeanstalkConnectionWorkerApiProvider $beanstalk */
         $beanstalk = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
-        if($beanstalk->isConnected() === false){
+        if ($beanstalk->isConnected() === false) {
             Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
             sleep(2);
             return;
@@ -84,45 +83,66 @@ class WorkerApiCommands extends WorkerBase
      */
     public function prepareAnswer(BeanstalkClient $message): void
     {
-        $res            = new PBXApiResult();
-        $res->processor = __METHOD__;
-        try {
-            $request   = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
-            $processor = $request['processor'];
-            $res->processor = $processor;
-            // Old style, we can remove it in 2025
-            if ($processor === 'modules'){
-                $processor = PbxExtensionsProcessor::class;
-            }
+        // Use fork to run the callback in a separate process
+        $pid = pcntl_fork();
+        if ($pid == -1) {
+            // Fork failed
+            throw new \RuntimeException("Failed to fork a new process.");
+        } elseif ($pid == 0) {
+            $res = new PBXApiResult();
+            $res->processor = __METHOD__;
+            try {
+                $request = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
+                $processor = $request['processor'];
+                $res->processor = $processor;
+                // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
+                // and set XDEBUG_SESSION Cookie header on REST request to debug it
+                if (isset($request['debug']) && $request['debug'] === true && extension_loaded('xdebug')) {
+                    xdebug_break();
+                }
 
-            // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
-            // and set XDEBUG_SESSION Cookie header on REST request to debug it
-            if (isset($request['debug']) && $request['debug'] === true && extension_loaded('xdebug')) {
-                xdebug_break();
-            }
-
-            if (method_exists($processor, 'callback')) {
-                $res = $processor::callback($request);
-            } else {
-                $res->success    = false;
-                $res->messages['error'][] = "Unknown processor - {$processor} in prepareAnswer";
-            }
-        } catch (Throwable $exception) {
-            $request        = [];
-            $this->needRestart = true;
-            // Prepare answer with pretty error description
-            $res->messages['error'][] = CriticalErrorsHandler::handleExceptionWithSyslog($exception);
-        } finally {
-            $encodedResult = json_encode($res->getResult());
-            if ($encodedResult===false){
-                $res->data=[];
-                $res->messages['error'][]='It is impossible to encode to json current processor answer';
+                // This is the child process
+                if (method_exists($processor, 'callback')) {
+                    $res = $processor::callback($request);
+                } else {
+                    $res->success = false;
+                    $res->messages['error'][] = "Unknown processor - {$processor} in prepareAnswer";
+                }
+            } catch (Throwable $exception) {
+                $request = [];
+                $this->needRestart = true;
+                // Prepare answer with pretty error description
+                $res->messages['error'][] = CriticalErrorsHandler::handleExceptionWithSyslog($exception);
+            } finally {
                 $encodedResult = json_encode($res->getResult());
+                if ($encodedResult === false) {
+                    $res->data = [];
+                    $res->messages['error'][] = 'It is impossible to encode to json current processor answer';
+                    $encodedResult = json_encode($res->getResult());
+                }
+
+                // Check response size and write in on file if it bigger than Beanstalk can digest
+                if (strlen($encodedResult)>BeanstalkConf::JOB_DATA_SIZE_LIMIT){
+                    $dirsConfig  = $this->di->getShared('config');
+                    $filenameTmp = $dirsConfig->path('www.downloadCacheDir') . '/temp-' . __FUNCTION__ . '_' . microtime() . '.data';
+                    if (file_put_contents($filenameTmp, serialize($res->getResult()))){
+                        $encodedResult = json_encode([BeanstalkClient::RESPONSE_IN_FILE=>$filenameTmp]);
+                    } else {
+                        $res->data = [];
+                        $res->messages['error'][] = 'It is impossible to write answer into file '.$filenameTmp;
+                        $encodedResult = json_encode($res->getResult());
+                    }
+                }
+
+                $message->reply($encodedResult);
+                if ($res->success) {
+                    $this->checkNeedReload($request);
+                }
             }
-            $message->reply($encodedResult);
-            if ($res->success) {
-                $this->checkNeedReload($request);
-            }
+            exit(0); // Exit the child process
+        } else {
+            // This is the parent process
+            pcntl_wait($status); // Wait for the child process to complete
         }
 
     }
@@ -156,18 +176,17 @@ class WorkerApiCommands extends WorkerBase
     private function getNeedRestartActions(): array
     {
         return [
-            SystemManagementProcessor::class  => [
+            SystemManagementProcessor::class => [
                 'restoreDefault',
             ],
-            ModulesManagementProcessor::class  => [
+            ModulesManagementProcessor::class => [
                 'enableModule',
                 'disableModule',
                 'uninstallModule',
             ],
         ];
     }
-
 }
 
 // Start worker process
-WorkerApiCommands::startWorker($argv??[]);
+WorkerApiCommands::startWorker($argv ?? []);

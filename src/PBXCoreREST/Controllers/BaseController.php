@@ -89,6 +89,10 @@ class BaseController extends Controller
                 $response = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
                 if (array_key_exists(BeanstalkClient::QUEUE_ERROR, $response)){
                     $this->response->setPayloadError($response[BeanstalkClient::QUEUE_ERROR]);
+                } elseif (array_key_exists(BeanstalkClient::RESPONSE_IN_FILE, $response)){
+                    $tempFile = $response[BeanstalkClient::RESPONSE_IN_FILE];
+                    $response = unserialize(file_get_contents($tempFile));
+                    $this->response->setPayloadSuccess($response);
                 } else {
                     $this->response->setPayloadSuccess($response);
                 }
