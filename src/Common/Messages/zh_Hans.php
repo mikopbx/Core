@@ -1201,4 +1201,10 @@ return [
     'sd_ToolTipAutoUpdate' => '自动更新屏幕内容',
     'sd_ToolTipErase' => '清除文件',
     'ex_dropdownCategory_PARKING' => '停车位',
+    'cq_ImpossibleToDeleteCallQueue' => '无法删除呼叫队列，因为有以下链接',
+    'iv_ImpossibleToDeleteIVRMenu' => 'IVR 菜单无法删除，有指向它的活动链接',
+    'da_ImpossibleToDeleteDialplanApplication' => '无法删除拨号方案应用程序，它有链接',
+    'cr_ImpossibleToDeleteConferenceRoom' => '该会议室无法删除',
+    'ex_ImpossibleToGetSecret' => '获取用户密码失败',
+    'am_NoAnyServersYet' => '这里还没有 AMI 用户',
 ];

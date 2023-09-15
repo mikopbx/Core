@@ -1201,4 +1201,10 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'sd_ToolTipAutoUpdate' => 'Ekran məzmununu avtomatik yeniləyin',
     'sd_ToolTipErase' => 'Faylı təmizləyin',
     'ex_dropdownCategory_PARKING' => 'parkinq yerləri',
+    'cq_ImpossibleToDeleteCallQueue' => 'Zəng növbəsini silmək mümkün deyil, çünki aşağıdakı linklər var',
+    'iv_ImpossibleToDeleteIVRMenu' => 'IVR menyusunu silmək mümkün deyil, ona aktiv keçidlər var',
+    'da_ImpossibleToDeleteDialplanApplication' => 'Dialplans tətbiqini silmək mümkün deyil, onun keçidləri var',
+    'cr_ImpossibleToDeleteConferenceRoom' => 'Bu konfrans otağı silinə bilməz',
+    'am_NoAnyServersYet' => 'Burada hələ AMI istifadəçisi yoxdur',
+    'ex_ImpossibleToGetSecret' => 'İstifadəçi parolunu əldə etmək alınmadı',
 ];

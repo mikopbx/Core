@@ -1201,4 +1201,10 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'sd_ToolTipRefresh' => 'Obtenez le dernier fichier journal',
     'sd_ToolTipAutoUpdate' => 'Mettre à jour automatiquement le contenu de l\'écran',
     'ex_dropdownCategory_PARKING' => 'places de stationnement',
+    'cq_ImpossibleToDeleteCallQueue' => 'Il est impossible de supprimer une file d\'attente d\'appels car il y a les liens suivants',
+    'iv_ImpossibleToDeleteIVRMenu' => 'Il est impossible de supprimer le menu IVR, il existe des liens actifs vers celui-ci',
+    'cr_ImpossibleToDeleteConferenceRoom' => 'Cette salle de conférence ne peut pas être supprimée',
+    'da_ImpossibleToDeleteDialplanApplication' => 'Impossible de supprimer l\'application Dialplans, elle contient des liens',
+    'ex_ImpossibleToGetSecret' => 'Échec de l\'obtention du mot de passe utilisateur',
+    'am_NoAnyServersYet' => 'Il n\'y a pas encore d\'utilisateurs AMI ici',
 ];

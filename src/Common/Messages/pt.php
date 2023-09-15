@@ -1201,4 +1201,10 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'sd_ToolTipAutoUpdate' => 'Atualizar automaticamente o conteúdo da tela',
     'sd_ToolTipErase' => 'Arquivo limpo',
     'ex_dropdownCategory_PARKING' => 'vagas de estacionamento',
+    'cq_ImpossibleToDeleteCallQueue' => 'É impossível excluir uma fila de chamadas porque existem links a seguir',
+    'iv_ImpossibleToDeleteIVRMenu' => 'É impossível excluir o menu IVR, existem links ativos para ele',
+    'da_ImpossibleToDeleteDialplanApplication' => 'Não é possível excluir o aplicativo dialplans, ele contém links',
+    'cr_ImpossibleToDeleteConferenceRoom' => 'Esta sala de conferência não pode ser excluída',
+    'ex_ImpossibleToGetSecret' => 'Falha ao obter a senha do usuário',
+    'am_NoAnyServersYet' => 'Ainda não há usuários AMI aqui',
 ];
