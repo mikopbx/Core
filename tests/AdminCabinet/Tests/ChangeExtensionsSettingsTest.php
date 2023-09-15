@@ -76,6 +76,9 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     {
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->changeInputField('globalsearch', $params['username']);
+        $this->waitForAjax();
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('mobile_number', $params['mobile']);
@@ -115,6 +118,9 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     public function testClearMobile(array $params):void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->changeInputField('globalsearch', $params['username']);
+        $this->waitForAjax();
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('mobile_number', '');
@@ -154,6 +160,9 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     public function testChangeEmail(array $params):void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->changeInputField('globalsearch', $params['username']);
+        $this->waitForAjax();
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
@@ -183,6 +192,9 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     public function testClearEmail(array $params):void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->changeInputField('globalsearch', $params['username']);
+        $this->waitForAjax();
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
@@ -211,6 +223,9 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     public function testChangeForwarding(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->changeInputField('globalsearch', $params['username']);
+        $this->waitForAjax();
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
@@ -249,6 +264,9 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     public function testChangeExtensions(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->changeInputField('globalsearch', $params['username']);
+        $this->waitForAjax();
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
