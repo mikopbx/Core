@@ -121,7 +121,8 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
      */
     public function additionProvider(): array
     {
-        return [
+        $params = [];
+        $params[] = [
             [
                 'description' => 'The first ami user',
                 'username'    => 'firstAmiUser4Test',
@@ -139,7 +140,8 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
                 'system'      => 'readwrite',
                 'command'      => 'readwrite',
                 'verbose'     => 'read',
-            ],
+            ]];
+        $params[] = [
             [
                 'description' => 'The second one user',
                 'username'    => 'secondAmiUser4Test',
@@ -157,8 +159,9 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
                 'system'      => 'read',
                 'command'     => 'read',
                 'verbose'     => 'read',
-            ],
-        ];
+            ]];
+
+        return $params;
     }
 
     /**

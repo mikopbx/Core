@@ -26,5 +26,5 @@
         <th class="one wide">{{ t._('cdr_ColumnDuration') }}</th>
     </tr>
     </thead>
-    <tbody>
+    <tbody></tbody>
 </table>

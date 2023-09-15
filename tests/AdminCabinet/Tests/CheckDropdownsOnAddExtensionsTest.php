@@ -93,7 +93,8 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
      */
     public function additionProvider(): array
     {
-        return [
+        $params = [];
+        $params[] = [
             [
                 'number'             => 245,
                 'email'              => 'ntele@miko.ru',
@@ -107,5 +108,6 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
                 'sip_manualattributes'=> '',
             ]
         ];
+        return $params;
     }
 }

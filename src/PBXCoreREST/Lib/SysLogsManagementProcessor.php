@@ -97,7 +97,7 @@ class SysLogsManagementProcessor extends Injectable
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function getLogFromFile(string $filename, string $filter = '', $lines = 500, $offset = 0): PBXApiResult
+    public static function getLogFromFile(string $filename, string $filter = '', int $lines = 500, int $offset = 0): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;

@@ -80,7 +80,7 @@
 
 
 {% if amiUsers|length == 0  %}
-    <div class="ui placeholder basic segment">
+    <div class="ui placeholder segment">
         <div class="ui icon header">
             <i class="asterisk icon"></i>
             {{ t._('am_NoAnyServersYet') }}
