@@ -7,7 +7,7 @@
         </div>
         <div class="ui seven wide column">
             <div class="ui icon fluid input">
-                <input type="search" id="globalsearch" name="globalsearch" placeholder="{{ t._('Enter search') }}"
+                <input type="search" id="global-search" name="global-search" placeholder="{{ t._('Enter search') }}"
                        aria-controls="KeysTable">
                 <i class="icon search"></i>
             </div>

@@ -90,13 +90,6 @@ class ExtensionsManagementProcessor extends Injectable
                     $res->messages['error'][] = 'Empty number value in POST/GET data';
                 }
                 break;
-            case 'getSecret':
-                if (!empty($data['number'])) {
-                    $res = Utils::getSipSecret($data['number']);
-                } else {
-                    $res->messages['error'][] = 'Empty number value in POST/GET data';
-                }
-                break;
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }

@@ -645,4 +645,26 @@ class MikoPBXTestsBase extends BrowserStackTest
         }
         return $elementFound;
     }
+
+    /**
+     * Fills the DataTable search input field and triggers a 'keyup' event to initiate the search.
+     *
+     * @param string $name  The name of the input field.
+     * @param string $value The value to set in the input field.
+     *
+     * @return void
+     */
+    protected function fillDataTableSearchInput(string $name, string $value):void
+    {
+        // Change the value of the input field
+        $this->changeInputField($name, $value);
+
+        // Use JavaScript to trigger a 'keyup' event with keyCode 13 (Enter) on the input element
+        // This is needed to initiate the search in the DataTable
+        self::$driver->executeScript("$('#{$name}').trigger($.Event('keyup', { keyCode: 13 }));");
+
+        // Wait for any AJAX calls to complete
+        $this->waitForAjax();
+    }
+
 }

@@ -61,6 +61,7 @@ const PbxApi = {
     sipGetRegistry: `${Config.pbxUrl}/pbxcore/api/sip/getRegistry`, //  Retrieves the statuses of SIP providers registration.
     sipGetPeersStatus: `${Config.pbxUrl}/pbxcore/api/sip/getPeersStatuses`, // Retrieves the statuses of SIP peers.
     sipGetPeerStatus: `${Config.pbxUrl}/pbxcore/api/sip/getSipPeer`, //  Retrieves the status of provided SIP peer.
+    sipGetSecret: `${Config.pbxUrl}/pbxcore/api/sip/getSecret?number={number}`, // Get extension sip secret.
 
     // IAXStackProcessor
     iaxGetRegistry: `${Config.pbxUrl}/pbxcore/api/iax/getRegistry`, // Retrieves the statuses of IAX providers registration.
@@ -105,7 +106,6 @@ const PbxApi = {
     extensionsGetRecord: `${Config.pbxUrl}/pbxcore/api/extensions/getRecord?id={id}`, // Get data structure for saveRecord request, if id parameter is empty it returns structure with default data.
     extensionsSaveRecord: `${Config.pbxUrl}/pbxcore/api/extensions/saveRecord`, // Saves extensions, sip, users, external phones, forwarding rights with POST data.
     extensionsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/extensions/deleteRecord`, // Deletes the extension record with its dependent tables.
-    extensionsGetSecret: `${Config.pbxUrl}/pbxcore/api/extensions/getSecret?number={number}`, // Get extension sip secret.
 
     // Users
     usersAvailable: `${Config.pbxUrl}/pbxcore/api/users/available?email={email}`, // Checks the email uniqueness.

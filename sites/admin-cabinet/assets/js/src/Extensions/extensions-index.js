@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, ClipboardJS, SemanticLocalization, InputMaskPatterns, UserMessage, globalTranslate, Inputmask */
+/* global globalRootUrl, SipAPI, SemanticLocalization, InputMaskPatterns, UserMessage, globalTranslate, Inputmask */
 
 
 /**
@@ -37,7 +37,7 @@ const extensionsIndex = {
      * The global search input element.
      * @type {jQuery}
      */
-    $globalSearch: $('#globalsearch'),
+    $globalSearch: $('#global-search'),
 
     /**
      * The data table object.
@@ -54,11 +54,11 @@ const extensionsIndex = {
 
     /**
      * Initialize the ExtensionsIndex module.
-     * This function sets up necessary interactivity and features on the page.
+     * Sets up necessary interactivity and features on the page.
      */
     initialize() {
 
-        // Loop over each avatar and provide a default source if one does not exist.
+        // Handle avatars with missing src
         $('.avatar').each(function () {
             if ($(this).attr('src') === '') {
                 $(this).attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
@@ -66,6 +66,51 @@ const extensionsIndex = {
         });
 
         // Set up the DataTable on the extensions list.
+        extensionsIndex.initializeDataTable();
+
+        // Move the "Add New" button to the first eight-column div.
+        $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
+
+        // Set up double-click behavior on the extension rows.
+        $('.extension-row td').on('dblclick', (e) => {
+            const id = $(e.target).closest('tr').attr('id');
+            window.location = `${globalRootUrl}extensions/modify/${id}`;
+        });
+
+        // Set up delete functionality on delete button click.
+        extensionsIndex.$body.on('click', 'a.delete', (e) => {
+            e.preventDefault();
+            $(e.target).addClass('disabled');
+            // Get the extension ID from the closest table row.
+            const extensionId = $(e.target).closest('tr').attr('id');
+
+            // Remove any previous AJAX messages.
+            $('.message.ajax').remove();
+
+            // Call the PbxApi method to delete the extension record.
+            PbxApi.ExtensionsDeleteRecord(extensionId, extensionsIndex.cbAfterDeleteRecord);
+        });
+
+        // Set up copy secret button click.
+        extensionsIndex.$body.on('click', 'a.clipboard', (e) => {
+            e.preventDefault();
+            $(e.target).closest('div.button').addClass('disabled');
+
+            // Get the number from the closest table row.
+            const number = $(e.target).closest('tr').attr('data-value');
+
+            // Remove any previous AJAX messages.
+            $('.message.ajax').remove();
+
+            // Call the PbxApi method to get the extension secret.
+            SipAPI.getSecret(number, extensionsIndex.cbAfterGetSecret);
+        });
+
+    },
+
+    // Set up the DataTable on the extensions list.
+    initializeDataTable(){
+
         extensionsIndex.$extensionsList.DataTable({
             search: {
                 search: `${extensionsIndex.$globalSearch.val()}`,
@@ -149,7 +194,7 @@ const extensionsIndex = {
             drawCallback() {
                 // Initialize the input mask for mobile numbers.
                 extensionsIndex.initializeInputmask($('input.mobile-number-input'));
-                // Set up ClipboardJS for copying to the clipboard.
+                // Set up popups.
                 $('.clipboard').popup({
                     on: 'manual',
                 });
@@ -160,7 +205,7 @@ const extensionsIndex = {
         extensionsIndex.$globalSearch.on('keyup', (e) => {
             if (e.keyCode === 13
                 || e.keyCode === 8
-                || extensionsIndex.$globalSearch.val().length === 0) {
+                || extensionsIndex.$globalSearch.val().length > 2) {
                 const text = extensionsIndex.$globalSearch.val();
                 extensionsIndex.applyFilter(text);
             }
@@ -169,46 +214,6 @@ const extensionsIndex = {
         extensionsIndex.dataTable.on('draw', () => {
             extensionsIndex.$globalSearch.closest('div').removeClass('loading');
         });
-
-        // Move the "Add New" button to the first eight-column div.
-        $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
-
-        // Set up double-click behavior on the extension rows.
-        $('.extension-row td').on('dblclick', (e) => {
-            const id = $(e.target).closest('tr').attr('id');
-            window.location = `${globalRootUrl}extensions/modify/${id}`;
-        });
-
-
-        // Set up delete functionality on delete button click.
-        extensionsIndex.$body.on('click', 'a.delete', (e) => {
-            e.preventDefault();
-            $(e.target).addClass('disabled');
-            // Get the extension ID from the closest table row.
-            const extensionId = $(e.target).closest('tr').attr('id');
-
-            // Remove any previous AJAX messages.
-            $('.message.ajax').remove();
-
-            // Call the PbxApi method to delete the extension record.
-            PbxApi.ExtensionsDeleteRecord(extensionId, extensionsIndex.cbAfterDeleteRecord);
-        });
-
-        // Set up copy secret button click.
-        extensionsIndex.$body.on('click', 'a.clipboard', (e) => {
-            e.preventDefault();
-            $(e.target).closest('div.button').addClass('disabled');
-
-            // Get the number from the closest table row.
-            const number = $(e.target).closest('tr').attr('data-value');
-
-            // Remove any previous AJAX messages.
-            $('.message.ajax').remove();
-
-            // Call the PbxApi method to get the extension secret.
-            Extensions.getSecret(number, extensionsIndex.cbAfterGetSecret);
-        });
-
     },
 
     /**

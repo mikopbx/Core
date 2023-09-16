@@ -40,8 +40,7 @@ class DeleteExtensionTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         // Fill search field
-        $this->changeInputField('globalsearch', $params['username']);
-        $this->waitForAjax();
+        $this->fillDataTableSearchInput('global-search', $params['username']);
         $this->clickModifyButtonOnRowWithText($params['username']);
 
         // TESTS
@@ -51,8 +50,7 @@ class DeleteExtensionTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         // Fill search field
-        $this->changeInputField('globalsearch', $params['username']);
-        $this->waitForAjax();
+        $this->fillDataTableSearchInput('global-search', $params['username']);
         $this->clickDeleteButtonOnRowWithText($params['username']);
         $this->waitForAjax();
 

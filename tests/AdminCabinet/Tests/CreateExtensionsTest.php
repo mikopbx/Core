@@ -42,8 +42,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         // Fill search field
-        $this->changeInputField('globalsearch', $params['username']);
-        $this->waitForAjax();
+        $this->fillDataTableSearchInput('global-search', $params['username']);
 
         // Delete any existing extension with the same username
         $this->clickDeleteButtonOnRowWithText($params['username']);
@@ -92,8 +91,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
         // Navigate back to the extensions page
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->changeInputField('globalsearch', $params['username']);
-        $this->waitForAjax();
+        $this->fillDataTableSearchInput('global-search', $params['username']);
         $this->clickModifyButtonOnRowWithText($params['username']);
 
         // Assert input field values

@@ -56,11 +56,15 @@ class GetController extends BaseController
      * Retrieves the statuses of SIP peers.
      * @Get("/getPeersStatuses")
      *
+     * Returns extensions secret for the peer number.
+     * @Get("/getSecret")
+     *
      * @return void
      *
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker(SIPStackProcessor::class, $actionName);
+        $requestData = $this->request->get();
+        $this->sendRequestToBackendWorker(SIPStackProcessor::class, $actionName, $requestData);
     }
 }

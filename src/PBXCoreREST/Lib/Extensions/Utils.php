@@ -132,25 +132,4 @@ class Utils extends Injectable
         return $res;
     }
 
-    /**
-     * Get the SIP secret for the extension extensionsAPI.js JavaScript script.
-     *
-     * @param string $number The extension number
-     * @return PBXApiResult Result with SIP secret
-     */
-    public static function getSipSecret(string $number): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $res->success = true;
-        $res->data['number'] = $number;
-        $res->data['secret'] = '';
-
-        $extension = Extensions::findFirstByNumber($number);
-        if ($extension !== null) {
-            $res->data['secret'] = $extension->Sip->secret??'';
-            return $res;
-        }
-        return $res;
-    }
 }

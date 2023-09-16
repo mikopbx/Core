@@ -32,7 +32,6 @@ use MikoPBX\PBXCoreREST\Lib\ExtensionsManagementProcessor;
  * curl http://127.0.0.1/pbxcore/api/extensions/available?number=225;
  * curl http://127.0.0.1/pbxcore/api/extensions/getPhoneRepresent?number=225;
  * curl http://127.0.0.1/pbxcore/api/extensions/getRecord?id=195
- * curl http://127.0.0.1/pbxcore/api/extensions/getSecret?number=195
  */
 class GetController extends BaseController
 {
@@ -53,9 +52,6 @@ class GetController extends BaseController
      *
      * Returns CallerID names for the number.
      * @Get("/getPhoneRepresent")
-     *
-     * Returns extensions SIP secret the number.
-     * @Get("/getSecret")
      *
      * @return void
      */
