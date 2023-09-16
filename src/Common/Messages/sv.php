@@ -1201,4 +1201,10 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'sd_ToolTipErase' => 'Rensa filen',
     'sd_ToolTipDownload' => 'Ladda ner loggfil',
     'ex_dropdownCategory_PARKING' => 'parkeringsplatser',
+    'cq_ImpossibleToDeleteCallQueue' => 'Det är omöjligt att ta bort en samtalskö pga det finns följande länkar',
+    'da_ImpossibleToDeleteDialplanApplication' => 'Det går inte att ta bort dialplans-appen, den har länkar',
+    'cr_ImpossibleToDeleteConferenceRoom' => 'Detta konferensrum kan inte raderas',
+    'iv_ImpossibleToDeleteIVRMenu' => 'Det är omöjligt att ta bort IVR-menyn, det finns aktiva länkar till den',
+    'ex_ImpossibleToGetSecret' => 'Det gick inte att få användarlösenord',
+    'am_NoAnyServersYet' => 'Det finns inga AMI-användare här än',
 ];

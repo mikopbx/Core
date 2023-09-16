@@ -1201,4 +1201,10 @@ return [
     'sd_ToolTipAutoUpdate' => 'ეკრანის შინაარსის ავტომატურად განახლება',
     'sd_ToolTipErase' => 'ფაილის გასუფთავება',
     'ex_dropdownCategory_PARKING' => 'პარკირების ადგილები',
+    'cq_ImpossibleToDeleteCallQueue' => 'შეუძლებელია ზარის რიგის წაშლა, რადგან არის შემდეგი ბმულები',
+    'iv_ImpossibleToDeleteIVRMenu' => 'IVR მენიუს წაშლა შეუძლებელია, მასზე აქტიური ბმულებია',
+    'da_ImpossibleToDeleteDialplanApplication' => 'Dialplans აპის წაშლა შეუძლებელია, მას აქვს ბმულები',
+    'cr_ImpossibleToDeleteConferenceRoom' => 'ამ საკონფერენციო ოთახის წაშლა შეუძლებელია',
+    'ex_ImpossibleToGetSecret' => 'მომხმარებლის პაროლის მიღება ვერ მოხერხდა',
+    'am_NoAnyServersYet' => 'აქ ჯერ არ არის AMI მომხმარებლები',
 ];

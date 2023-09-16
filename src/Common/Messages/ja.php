@@ -1201,4 +1201,10 @@ return [
     'sd_ToolTipRefresh' => '最新のログファイルを取得する',
     'sd_ToolTipErase' => 'クリアファイル',
     'ex_dropdownCategory_PARKING' => '駐車スロット',
+    'cq_ImpossibleToDeleteCallQueue' => 'コールキューを削除することはできません。次のリンクがあります',
+    'iv_ImpossibleToDeleteIVRMenu' => 'IVR メニューを削除することはできません。IVR メニューへのアクティブなリンクが存在します。',
+    'da_ImpossibleToDeleteDialplanApplication' => 'ダイヤルプラン アプリを削除できません。リンクが含まれています',
+    'cr_ImpossibleToDeleteConferenceRoom' => 'この会議室は削除できません',
+    'ex_ImpossibleToGetSecret' => 'ユーザーパスワードの取得に失敗しました',
+    'am_NoAnyServersYet' => 'ここにはまだ AMI ユーザーがいません',
 ];

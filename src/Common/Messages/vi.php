@@ -1201,4 +1201,10 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'sd_ToolTipErase' => 'Xóa tập tin',
     'sd_ToolTipAutoUpdate' => 'Tự động cập nhật nội dung màn hình',
     'ex_dropdownCategory_PARKING' => 'chỗ đậu xe',
+    'iv_ImpossibleToDeleteIVRMenu' => 'Không thể xóa menu IVR, có các liên kết hoạt động với nó',
+    'da_ImpossibleToDeleteDialplanApplication' => 'Không thể xóa ứng dụng dialplans, nó có liên kết',
+    'cr_ImpossibleToDeleteConferenceRoom' => 'Không thể xóa phòng hội thảo này',
+    'cq_ImpossibleToDeleteCallQueue' => 'Không thể xóa hàng đợi cuộc gọi vì có các liên kết sau',
+    'am_NoAnyServersYet' => 'Chưa có người dùng AMI nào ở đây',
+    'ex_ImpossibleToGetSecret' => 'Không lấy được mật khẩu người dùng',
 ];

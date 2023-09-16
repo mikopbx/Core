@@ -1201,4 +1201,10 @@ return [
     'sd_ToolTipAutoUpdate' => 'Автоматично оновлювати вміст на екрані',
     'sd_ToolTipErase' => 'Очистити файл',
     'ex_dropdownCategory_PARKING' => 'Слоти паркування',
+    'iv_ImpossibleToDeleteIVRMenu' => 'Неможливо видалити IVR меню, на нього є активні посилання',
+    'cq_ImpossibleToDeleteCallQueue' => 'Неможливо видалити чергу викликів, т.к. існують наступні посилання',
+    'da_ImpossibleToDeleteDialplanApplication' => 'Неможливо видалити програму діалпланів, на неї є посилання',
+    'cr_ImpossibleToDeleteConferenceRoom' => 'Неможливо видалити цю конференц кімнату',
+    'am_NoAnyServersYet' => 'Тут ще немає жодного AMI користувача',
+    'ex_ImpossibleToGetSecret' => 'Неможливо отримати пароль користувача',
 ];

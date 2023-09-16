@@ -1201,4 +1201,10 @@ return [
     'sd_ToolTipAutoUpdate' => 'Αυτόματη ενημέρωση περιεχομένου οθόνης',
     'sd_ToolTipErase' => 'Καθαρο ΑΡΧΕΙΟ',
     'ex_dropdownCategory_PARKING' => 'θέσεις στάθμευσης',
+    'iv_ImpossibleToDeleteIVRMenu' => 'Είναι αδύνατο να διαγράψετε το μενού IVR, υπάρχουν ενεργοί σύνδεσμοι σε αυτό',
+    'da_ImpossibleToDeleteDialplanApplication' => 'Δεν είναι δυνατή η διαγραφή της εφαρμογής dialplans, έχει συνδέσμους',
+    'cr_ImpossibleToDeleteConferenceRoom' => 'Αυτή η αίθουσα συνεδριάσεων δεν μπορεί να διαγραφεί',
+    'cq_ImpossibleToDeleteCallQueue' => 'Είναι αδύνατο να διαγράψετε μια ουρά κλήσεων επειδή υπάρχουν οι παρακάτω σύνδεσμοι',
+    'ex_ImpossibleToGetSecret' => 'Αποτυχία λήψης κωδικού πρόσβασης χρήστη',
+    'am_NoAnyServersYet' => 'Δεν υπάρχουν ακόμη χρήστες AMI εδώ',
 ];
