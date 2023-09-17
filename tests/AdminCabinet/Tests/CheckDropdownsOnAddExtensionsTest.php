@@ -60,7 +60,7 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         }
 
         $createExtension = new CreateExtensionsTest();
-        $createExtension->testCreateExtensions(...$this->additionProvider());
+        $createExtension->testCreateExtensions($this->additionProvider()[0][0]);
 
         // Routing
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');

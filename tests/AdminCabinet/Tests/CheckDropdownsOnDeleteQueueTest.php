@@ -89,7 +89,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Delete Call queue
         $deleteCallQueue = new DeleteCallQueueTest();
-        $deleteCallQueue->testDeleteCallQueue(...$this->additionProvider());
+        $deleteCallQueue->testDeleteCallQueue($this->additionProvider()[0][0]);
 
         // Check again
 
