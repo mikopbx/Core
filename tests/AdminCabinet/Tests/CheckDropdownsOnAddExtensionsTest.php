@@ -34,7 +34,7 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
      * @throws \Facebook\WebDriver\Exception\NoSuchElementException
      * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testDropdowns(array $params): void
+    public function testDropdownsOnCreateExtension(array $params): void
     {
         // Routing
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
@@ -60,7 +60,7 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         }
 
         $createExtension = new CreateExtensionsTest();
-        $createExtension->testCreateExtensions($this->additionProvider());
+        $createExtension->testCreateExtensions(...$this->additionProvider());
 
         // Routing
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');

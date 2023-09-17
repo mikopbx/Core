@@ -126,27 +126,29 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         }
 
         // Assert the result of clicking
-        foreach ($checkBoxItems as $checkBoxItem) {
-            $changed = false;
-            // Check if the module is enabled or disabled
-            $maximumWaitTime = 45;
-            $waitTime = 0;
-            while ($waitTime < $maximumWaitTime) {
-                if (($enable && $checkBoxItem->isSelected()) || (!$enable && !$checkBoxItem->isSelected())) {
-                    $changed = true;
-                    break;
-                }
-                sleep(5);
-                $waitTime += 5;
-            }
 
-            if (!$changed) {
-                $this->fail("Module {$moduleId} state was not changed during {$maximumWaitTime} seconds" . PHP_EOL);
-            } else {
-                // Increment assertion counter
-                $this->assertTrue(true);
+        $changed = false;
+        // Check if the module is enabled or disabled
+        $maximumWaitTime = 45;
+        $waitTime = 0;
+        while ($waitTime < $maximumWaitTime) {
+            $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]/parent::div';
+            $checkBoxItemNew = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            if (($enable && $checkBoxItemNew->isSelected()) || (!$enable && !$checkBoxItemNew->isSelected())) {
+                $changed = true;
+                break;
             }
+            sleep(5);
+            $waitTime += 5;
         }
+
+        if (!$changed) {
+            $this->fail("Module {$moduleId} state was not changed during {$maximumWaitTime} seconds" . PHP_EOL);
+        } else {
+            // Increment assertion counter
+            $this->assertTrue(true);
+        }
+
     }
 
     /**

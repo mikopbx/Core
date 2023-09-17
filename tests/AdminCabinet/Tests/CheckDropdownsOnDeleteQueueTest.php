@@ -26,7 +26,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
     /**
      * Test checking dropdown menus when adding extensions.
      *
-     * @depends testLogin
+     * @depends      testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the extension.
@@ -34,7 +34,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
      * @throws \Facebook\WebDriver\Exception\NoSuchElementException
      * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testDropdowns(array $params): void
+    public function testDropdownsOnCreateDeleteQueue(array $params): void
     {
         // Routing
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
@@ -44,7 +44,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if ($elementFound) {
-            $this->fail('Found menuitem ' . $params['number'] .' before creating it on Incoming routes modify ' . PHP_EOL);
+            $this->fail('Found menuitem ' . $params['number'] . ' before creating it on Incoming routes modify ' . PHP_EOL);
         }
 
         // Extensions
@@ -56,7 +56,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if ($elementFound) {
-            $this->fail('Found menuitem ' . $params['number'] .' before creating it on Extension routing tab ' . PHP_EOL);
+            $this->fail('Found menuitem ' . $params['number'] . ' before creating it on Extension routing tab ' . PHP_EOL);
         }
 
         // Create Call queue
@@ -71,7 +71,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if (!$elementFound) {
-            $this->fail('Not found menuitem ' . $params['number'] .' after creating it on Incoming routes modify ' . PHP_EOL);
+            $this->fail('Not found menuitem ' . $params['number'] . ' after creating it on Incoming routes modify ' . PHP_EOL);
         }
 
         // Extensions
@@ -83,13 +83,13 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if (!$elementFound) {
-            $this->fail('Not found menuitem ' . $params['number'] .' after creating it on Extension routing tab ' . PHP_EOL);
+            $this->fail('Not found menuitem ' . $params['number'] . ' after creating it on Extension routing tab ' . PHP_EOL);
         }
 
 
         // Delete Call queue
         $deleteCallQueue = new DeleteCallQueueTest();
-        $deleteCallQueue->testDeleteCallQueue($this->additionProvider());
+        $deleteCallQueue->testDeleteCallQueue(...$this->additionProvider());
 
         // Check again
 
@@ -101,7 +101,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if ($elementFound) {
-            $this->fail('Found menuitem ' . $params['number'] .' before creating it on Incoming routes modify ' . PHP_EOL);
+            $this->fail('Found menuitem ' . $params['number'] . ' before creating it on Incoming routes modify ' . PHP_EOL);
         }
 
         // Extensions
@@ -113,7 +113,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if ($elementFound) {
-            $this->fail('Found menuitem ' . $params['number'] .' before creating it on Extension routing tab ' . PHP_EOL);
+            $this->fail('Found menuitem ' . $params['number'] . ' before creating it on Extension routing tab ' . PHP_EOL);
         }
     }
 
@@ -124,7 +124,9 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
      */
     public function additionProvider(): array
     {
-        return [
+        $params = [];
+        $params[] = [
+            [
                 'description' => 'Accountant department for test dropdown',
                 'name' => 'Accountant department for test dropdown',
                 'uniqid' => 'QUEUE-C02B7C0BBE8F0A48DE1CDF21DBADC29',
@@ -145,6 +147,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
                     '203',
                 ],
                 'strategy' => 'leastrecent'
-        ];
+            ]];
+        return $params;
     }
 }
