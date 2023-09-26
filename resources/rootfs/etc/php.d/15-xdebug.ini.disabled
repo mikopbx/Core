@@ -1,3 +1,5 @@
+zend_extension=xdebug.so
+
 [Xdebug]
 xdebug.remote_enable=1
 xdebug.remote_host=172.16.162.1

@@ -18,6 +18,7 @@
 #
 
 PATH=$PATH:/sbin:/usr/sbin:/bin:/usr/bin:/usr/sbin
+export XDEBUG_CONFIG='';
 # export TERM=xterm-color
 
 # Set environment variables

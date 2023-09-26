@@ -136,7 +136,7 @@ debug)
   # Enable xdebug in PHP if it's not enabled
   if [ ! -f /etc/php.d/15-xdebug.ini ]; then
     cp /etc/php.d/15-xdebug.ini.disabled /etc/php.d/15-xdebug.ini;
-    sed -i "s/xdebug.remote_host = .*/xdebug.remote_host = ${ipDebugger}/" /etc/php.d/15-xdebug.ini;
+    sed -i "s/xdebug.remote_host=.*/xdebug.remote_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini;
   fi;
 
   # Start the PHP script with xdebug enabled
@@ -152,13 +152,13 @@ xdebug)
       enable-cli)
         echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
         echo "Changing xdebug.remote_host to address ${ipDebugger} ..."
-        sed "s/xdebug.remote_host = .*/xdebug.remote_host = ${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
+        sed "s/xdebug.remote_host=.*/xdebug.remote_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
         echo "Done"
         ;;
       enable-www)
         echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
         echo "Changing xdebug.remote_host to address ${ipDebugger} ..."
-        sed "s/xdebug.remote_host = .*/xdebug.remote_host = ${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
+        sed "s/xdebug.remote_host=.*/xdebug.remote_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
         echo "killing the php-fpm processes ..."
         killall php-fpm
         sleep 5;
