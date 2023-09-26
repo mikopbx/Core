@@ -25,6 +25,7 @@ use MikoPBX\Core\System\{BeanstalkClient, Configs\BeanstalkConf, Processes, Util
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use Throwable;
 use function xdebug_break;
@@ -95,6 +96,10 @@ class WorkerApiCommands extends WorkerBase
                 $request = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
                 $processor = $request['processor'];
                 $res->processor = $processor;
+                // Old style, we can remove it in 2025
+                if ($processor === 'modules'){
+                    $processor = PbxExtensionsProcessor::class;
+                }
                 // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
                 // and set XDEBUG_SESSION Cookie header on REST request to debug it
                 if (isset($request['debug']) && $request['debug'] === true && extension_loaded('xdebug')) {
