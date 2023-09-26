@@ -151,14 +151,13 @@ xdebug)
     case "${action}" in
       enable-cli)
         echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
-        echo "Changing xdebug.remote_host to address $1 ..."
+        echo "Changing xdebug.remote_host to address ${ipDebugger} ..."
         sed "s/xdebug.remote_host = .*/xdebug.remote_host = ${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
-        export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_autostart=0 remote_port=9000 remote_host=${ipDebugger} remote_connect_back=0";
         echo "Done"
         ;;
       enable-www)
         echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
-        echo "Changing xdebug.remote_host to address $1 ..."
+        echo "Changing xdebug.remote_host to address ${ipDebugger} ..."
         sed "s/xdebug.remote_host = .*/xdebug.remote_host = ${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
         echo "killing the php-fpm processes ..."
         killall php-fpm
