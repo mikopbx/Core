@@ -188,7 +188,6 @@ class Entrypoint
             $this->incSettings[$dataPath]['port'] = $newValue;
             $newData = json_encode($this->incSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
             $res = file_put_contents(self::pathInc, $newData);
-            file_put_contents(appPath('config/mikopbx-settings.json'), $newData);
             $result = (false !== $res);
         } else {
             $res = Processes::mwExec("sqlite3 " . self::PATH_DB . " 'UPDATE m_PbxSettings SET value=\"$newValue\" WHERE key=\"$dataPath\"'");

@@ -31,15 +31,6 @@ export PATH
 createBootConfFiles() {
   # Define the root directory for the user
   usrDir='/offload/rootfs/usr'
-
-  # Define the location of the config file
-  confFile="${usrDir}/www/config/mikopbx-settings.json"
-  if [ -f "${confFile}" ]; then
-    # If it exists, copy it to /etc/inc directory
-    echoToTeletype " - Copy phalcon config file to /etc/inc ..."
-    mkdir -p /etc/inc/
-    cp "$confFile" /etc/inc/
-  fi
 }
 
 # Function to check the existence and integrity of the offload disk

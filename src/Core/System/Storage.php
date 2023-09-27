@@ -1249,8 +1249,11 @@ class Storage extends Di\Injectable
      */
     private function updateConfigWithNewMountPoint(string $mount_point): void
     {
-        $staticSettingsFile = '/etc/inc/mikopbx-settings.json';
-        $staticSettingsFileOrig = appPath('config/mikopbx-settings.json');
+        $settingsFile = '/etc/inc/mikopbx-settings.json';
+        $staticSettingsFileOrig = '/etc/inc/mikopbx-settings-orig.json';
+        if (!file_exists($staticSettingsFileOrig)){
+            copy($settingsFile, $staticSettingsFileOrig);
+        }
 
         $jsonString = file_get_contents($staticSettingsFileOrig);
         try {
@@ -1267,7 +1270,7 @@ class Storage extends Di\Injectable
         }
 
         $newJsonString = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        file_put_contents($staticSettingsFile, $newJsonString);
+        file_put_contents($settingsFile, $newJsonString);
         $this->updateEnvironmentAfterChangeMountPoint();
     }
 
