@@ -77,12 +77,12 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         $xpath = '//tr[@id="' . $params['moduleId'] . '"]//a[contains(@href,"delete")]';
         $found = false;
         while ($waitTime < $maximumWaitTime) {
+            sleep(5);
             $els = self::$driver->findElements((WebDriverBy::xpath($xpath)));
             if (count($els) > 0) {
                 $found = true;
                 break;
             }
-            sleep(5);
             $waitTime += 5;
         }
         if (!$found) {
@@ -122,23 +122,22 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
                 $actions->moveToElement($checkBoxItem);
                 $actions->perform();
                 $checkBoxItem->click();
+                $this->waitForAjax();
             }
         }
 
         // Assert the result of clicking
-
         $changed = false;
         // Check if the module is enabled or disabled
         $maximumWaitTime = 45;
         $waitTime = 0;
         while ($waitTime < $maximumWaitTime) {
-            $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]';
+            sleep(5);
             $checkBoxItemNew = self::$driver->findElement(WebDriverBy::xpath($xpath));
             if (($enable && $checkBoxItemNew->isSelected()) || (!$enable && !$checkBoxItemNew->isSelected())) {
                 $changed = true;
                 break;
             }
-            sleep(5);
             $waitTime += 5;
         }
 
