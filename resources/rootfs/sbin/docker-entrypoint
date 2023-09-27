@@ -23,8 +23,8 @@ kernelVersion="$(/bin/uname -r | /bin/cut -f 1 -d '.')";
 
 # Ensure the kernel version is 5, otherwise terminate the script with an error message
 if [ ! "$kernelVersion" = '5' ]; then
-  echo 'ERROR: Only linux 5 is supported...';
-  exit 4;
+  echo "Attention: Only linux with core version 5 was tested... Your installation has the $kernelVersion kernel version";
+  #exit 4;
 fi
 
 # Define a cleanup function to be used upon receiving certain signals
