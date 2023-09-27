@@ -288,6 +288,7 @@ class PbxExtensionUtils
             if (!empty($moduleUniqueId)) {
                 // Disable the module using its unique ID
                 self::forceDisableModule($moduleUniqueId);
+                Util::sysLogMsg(__CLASS__, "The module {$moduleUniqueId} was disabled because an exception occurred in it", LOG_ERR);
             }
         }
     }

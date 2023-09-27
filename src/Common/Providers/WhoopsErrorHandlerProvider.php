@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
+use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Throwable;
 use Whoops\Handler\JsonResponseHandler;
@@ -54,6 +55,9 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
                 $whoops->pushHandler(function ($exception) {
                     return WhoopsErrorHandlerProvider::handleModuleException($exception);
                 });
+                $whoops->pushHandler(function ($exception) {
+                    return WhoopsErrorHandlerProvider::handleAndLogTheException($exception);
+                });
                 if (Whoops\Util\Misc::isAjaxRequest()) {
                     $handler = new JsonResponseHandler();
                 } elseif (Whoops\Util\Misc::isCommandLine()) {
@@ -69,7 +73,20 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
     }
 
     /**
-     * Handles a Whoops exception and disables the corresponding module.
+     * Handles exception and write message into syslog.
+     *
+     * @param Throwable $exception The exception to handle.
+     * @return int The Whoops handler status.
+     */
+    private static function handleAndLogTheException(Throwable $exception): int
+    {
+        $message = WhoopsErrorHandlerProvider::makePrettyErrorDescription($exception);
+        Util::sysLogMsg(__METHOD__, $message, LOG_ERR);
+        return \Whoops\Handler\Handler::DONE;
+    }
+
+    /**
+     * Handles exception and disables the corresponding module.
      *
      * @param Throwable $exception The exception to handle.
      * @return int The Whoops handler status.
@@ -80,6 +97,7 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
         PbxExtensionUtils::disableBadModule($exceptionFile);
         return \Whoops\Handler\Handler::DONE;
     }
+
 
     /**
      * Generates an error description for a given exception.

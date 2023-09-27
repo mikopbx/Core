@@ -50,7 +50,7 @@ class CriticalErrorsHandler
 
         // Whoops
         $message = WhoopsErrorHandlerProvider::makePrettyErrorDescription($exception, false);
-        Util::sysLogMsg("EXCEPTION", $message, LOG_ERR);
+        Util::sysLogMsg(__METHOD__, $message, LOG_ERR);
         return $message;
     }
 
@@ -61,10 +61,6 @@ class CriticalErrorsHandler
      */
     public static function handleException(Throwable $exception): void
     {
-        // Check if the problem in external module - disable it
-        $exceptionFile = $exception->getFile();
-        PbxExtensionUtils::disableBadModule($exceptionFile);
-
         // Sentry
         $di = Di::getDefault();
         $sentryErrorHandler = $di->get(SentryErrorHandlerProvider::SERVICE_NAME);
