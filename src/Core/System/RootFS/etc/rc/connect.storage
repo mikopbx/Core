@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Core\Rc;
+namespace MikoPBX\Core\RootFS\etc\rc;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use MikoPBX\Core\System\{Configs\SyslogConf,

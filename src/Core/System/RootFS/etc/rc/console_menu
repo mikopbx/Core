@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-namespace MikoPBX\Core\Rc;
+namespace MikoPBX\Core\RootFS\etc\rc;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
@@ -45,7 +45,7 @@ use MikoPBX\Core\System\{Configs\IptablesConf,
 use MikoPBX\Service\Main;
 require_once('Globals.php');
 
-class ConsoleMenu{
+class console_menu {
 
     private bool $isLiveCd;
     private bool $isDocker;
@@ -755,6 +755,6 @@ class ConsoleMenu{
     }
 }
 
-$cMenu = new ConsoleMenu();
+$cMenu = new console_menu();
 $cMenu->start();
 

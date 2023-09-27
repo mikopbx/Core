@@ -1597,7 +1597,6 @@ class Storage extends Di\Injectable
 
         // Add executable rights to the directories
         $exec_dirs[] = appPath('src/Core/Asterisk/agi-bin');
-        $exec_dirs[] = appPath('src/Core/Rc');
         Util::addExecutableRights(implode(' ', $exec_dirs));
 
         $mountPath = Util::which('mount');

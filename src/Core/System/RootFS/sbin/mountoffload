@@ -32,16 +32,6 @@ createBootConfFiles() {
   # Define the root directory for the user
   usrDir='/offload/rootfs/usr'
 
-  # Define the location of the rc directory
-  rcDir="${usrDir}/www/src/Core/Rc"
-  if [ -d "${rcDir}" ]; then
-    # If it exists, create a symlink for /etc/rc
-    echoToTeletype " - Create symlink for /etc/rc ..."
-    rm -rf /etc/rc
-    ln -s "${rcDir}" /etc/rc
-  fi
-  sleep 5
-
   # Define the location of the config file
   confFile="${usrDir}/www/config/mikopbx-settings.json"
   if [ -f "${confFile}" ]; then
