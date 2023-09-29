@@ -133,6 +133,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         $waitTime = 0;
         while ($waitTime < $maximumWaitTime) {
             sleep(5);
+            $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]';
             $checkBoxItemNew = self::$driver->findElement(WebDriverBy::xpath($xpath));
             if (($enable && $checkBoxItemNew->isSelected()) || (!$enable && !$checkBoxItemNew->isSelected())) {
                 $changed = true;
