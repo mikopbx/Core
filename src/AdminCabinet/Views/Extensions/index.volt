@@ -23,7 +23,7 @@
         <th>{{ t._('ex_Name') }}</th>
         <th class="center aligned">{{ t._('ex_Extension') }}</th>
         <th class="center aligned">{{ t._('ex_Mobile') }}</th>
-        <th class="hide-on-mobile">{{ t._('ex_Email') }}</th>
+        <th class="">{{ t._('ex_Email') }}</th>
         <th></th>
     </tr>
     </thead>

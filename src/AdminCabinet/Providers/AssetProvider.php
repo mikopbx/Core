@@ -733,11 +733,14 @@ class AssetProvider implements ServiceProviderInterface
     private function makeExtensionsAssets(string $action): void
     {
         if ($action === 'index') {
-            $this->headerCollectionCSS->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true);
+            $this->headerCollectionCSS
+                ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
+                ->addCss('css/vendor/datatable/responsive/responsive.semanticui.min.css', true);
 
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
-                //->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/datatable/responsive/dataTables.responsive.min.js', true)
+                ->addJs('js/vendor/datatable/responsive/responsive.semanticui.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask-multi.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)

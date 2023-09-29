@@ -1,4 +1,4 @@
-<td class="right aligned">
+<td class="ui right aligned">
     <div class="ui small basic icon buttons action-buttons">
         {% if clipboard is not empty and ((isAllowed('edit') or isAllowed('modify'))) %}
             <a class="ui button clipboard" data-clipboard-text="{{ clipboard }}" data-variation="basic"

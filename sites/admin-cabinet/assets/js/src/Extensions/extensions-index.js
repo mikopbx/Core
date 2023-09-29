@@ -110,41 +110,48 @@ const extensionsIndex = {
 
     // Set up the DataTable on the extensions list.
     initializeDataTable(){
-
         extensionsIndex.$extensionsList.DataTable({
             search: {
                 search: `${extensionsIndex.$globalSearch.val()}`,
             },
-            columnDefs: [{
-                "defaultContent": "-",
-                "targets": "_all"
-            }],
+            columnDefs: [
+                { defaultContent: "-",  targets: "_all"},
+                { responsivePriority: 1,  targets: 0},
+                { responsivePriority: 1,  targets: 1},
+                { responsivePriority: 3,  targets: 2},
+                { responsivePriority: 4,  targets: 3},
+                { responsivePriority: 5,  targets: 4},
+                { responsivePriority: 1,  targets: -1},
+            ],
+            responsive: {
+                details: false
+            },
             columns: [
                 {
                     name: 'status',
                     orderable: false,  // This column is not orderable
-                    searchable: false  // This column is not searchable
+                    searchable: false  // This column is not searchable,
                 },
                 {
                     name: 'username',
-                    data: 'Users.username'
+                    data: 'Users.username',
                 },
                 {
                     name: 'number',
-                    data: 'CAST(Extensions.number AS INTEGER)'
+                    data: 'CAST(Extensions.number AS INTEGER)',
                 },
                 {
                     name: 'mobile',
-                    data: 'CAST(ExternalExtensions.number AS INTEGER)'
+                    data: 'CAST(ExternalExtensions.number AS INTEGER)',
                 },
                 {
                     name: 'email',
-                    data: 'Users.email'
+                    data: 'Users.email',
                 },
                 {
                     name: 'buttons',
                     orderable: false,  // This column is not orderable
-                    searchable: false  // This column is not searchable
+                    searchable: false,  // This column is not searchable
                 },
             ],
             order: [[1, 'asc']],
@@ -158,7 +165,7 @@ const extensionsIndex = {
             // stateSave: true,
             sDom: 'rtip',
             deferRender: true,
-            pageLength: 16,
+            pageLength: extensionsIndex.calculatePageLength(),
             scrollCollapse: true,
             // scroller: true,
             language: SemanticLocalization.dataTableLocalisation,
@@ -185,9 +192,14 @@ const extensionsIndex = {
                 if ($clipboardButton!==undefined){
                     $clipboardButton.attr('data-value',data.number)
                 }
-                $(row).attr('data-value', data.number).html($templateRow.html());
+                $(row).attr('data-value', data.number);
+                $.each($('td', $templateRow), (index, value) => {
+                    $('td', row).eq(index)
+                        .html($(value).html())
+                        .addClass($(value).attr('class'))
+                    ;
+                });
             },
-
             /**
              * Draw event - fired once the table has completed a draw.
              */
@@ -214,6 +226,18 @@ const extensionsIndex = {
         extensionsIndex.dataTable.on('draw', () => {
             extensionsIndex.$globalSearch.closest('div').removeClass('loading');
         });
+    },
+
+    calculatePageLength() {
+        // Calculate row height
+        let rowHeight = extensionsIndex.$extensionsList.find('tr').first().outerHeight();
+
+        // Calculate window height and available space for table
+        const windowHeight = window.innerHeight;
+        const headerFooterHeight = 400; // Estimate height for header, footer, and other elements
+
+        // Calculate new page length
+        return Math.floor((windowHeight - headerFooterHeight) / rowHeight);
     },
 
     /**
