@@ -74,18 +74,18 @@ const callDetailRecords = {
             },
             serverSide: true,
             processing: true,
+            columnDefs: [
+                { defaultContent: "-",  targets: "_all"},
+            ],
             ajax: {
                 url: `${globalRootUrl}call-detail-records/getNewRecords`,
                 type: 'POST',
             },
             paging: true,
-            scrollY: $(window).height() - callDetailRecords.$cdrTable.offset().top-150,
-            // stateSave: true,
+            //scrollY: $(window).height() - callDetailRecords.$cdrTable.offset().top-150,
             sDom: 'rtip',
             deferRender: true,
-            pageLength: 17,
-            // scrollCollapse: true,
-            // scroller: true,
+            pageLength: callDetailRecords.calculatePageLength(),
 
             /**
              * Constructs the CDR row.
@@ -227,7 +227,17 @@ const callDetailRecords = {
         return htmlPlayer;
     },
 
+    calculatePageLength() {
+        // Calculate row height
+        let rowHeight = callDetailRecords.$cdrTable.find('tbody > tr').first().outerHeight();
 
+        // Calculate window height and available space for table
+        const windowHeight = window.innerHeight;
+        const headerFooterHeight = 400; // Estimate height for header, footer, and other elements
+
+        // Calculate new page length
+        return Math.floor((windowHeight - headerFooterHeight) / rowHeight);
+    },
     /**
      * Initializes the date range selector.
      */

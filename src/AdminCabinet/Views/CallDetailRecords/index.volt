@@ -26,5 +26,9 @@
         <th class="one wide">{{ t._('cdr_ColumnDuration') }}</th>
     </tr>
     </thead>
-    <tbody></tbody>
+    <tbody>
+    <tr>
+        <td colspan="5" class="dataTables_empty">{{ t._('dt_TableIsEmpty') }}</td>
+    </tr>
+    </tbody>
 </table>
