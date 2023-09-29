@@ -47,8 +47,8 @@
             [
                 'id': '',
                 'clipboard' : '#',
-                'edit' : '#',
-                'delete': '#']) }}
+                'edit' : 'extensions/modify/',
+                'delete': 'extensions/delete/']) }}
     </tr>
     </tbody>
 
