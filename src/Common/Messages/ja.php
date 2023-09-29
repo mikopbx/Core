@@ -1207,4 +1207,5 @@ return [
     'cr_ImpossibleToDeleteConferenceRoom' => 'この会議室は削除できません',
     'ex_ImpossibleToGetSecret' => 'ユーザーパスワードの取得に失敗しました',
     'am_NoAnyServersYet' => 'ここにはまだ AMI ユーザーがいません',
+    'pr_Note' => 'プロバイダーに関する注意事項または役立つ情報',
 ];

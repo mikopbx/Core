@@ -1207,4 +1207,5 @@ return [
     'cr_ImpossibleToDeleteConferenceRoom' => '该会议室无法删除',
     'ex_ImpossibleToGetSecret' => '获取用户密码失败',
     'am_NoAnyServersYet' => '这里还没有 AMI 用户',
+    'pr_Note' => '有关提供商的注释或有用信息',
 ];

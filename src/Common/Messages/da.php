@@ -1207,4 +1207,5 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'cr_ImpossibleToDeleteConferenceRoom' => 'Dette mødelokale kan ikke slettes',
     'ex_ImpossibleToGetSecret' => 'Kunne ikke hente brugeradgangskode',
     'am_NoAnyServersYet' => 'Der er ingen AMI-brugere her endnu',
+    'pr_Note' => 'Bemærk eller nyttige oplysninger om udbyderen',
 ];

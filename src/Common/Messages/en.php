@@ -1210,4 +1210,5 @@ The coupon can be activated once, after which it becomes redeemed.',
     'cr_ImpossibleToDeleteConferenceRoom' => 'This conference room cannot be deleted',
     'ex_ImpossibleToGetSecret' => 'Failed to obtain user password',
     'am_NoAnyServersYet' => 'There are no AMI users here yet',
+    'pr_Note' => 'Note or useful information about the provider',
 ];

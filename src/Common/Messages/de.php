@@ -1210,4 +1210,5 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'da_ImpossibleToDeleteDialplanApplication' => 'Die Wählplan-App kann nicht gelöscht werden, sie enthält Links',
     'ex_ImpossibleToGetSecret' => 'Benutzerkennwort konnte nicht abgerufen werden',
     'am_NoAnyServersYet' => 'Es gibt hier noch keine AMI-Benutzer',
+    'pr_Note' => 'Hinweis oder nützliche Informationen zum Anbieter',
 ];

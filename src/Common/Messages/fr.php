@@ -1207,4 +1207,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'da_ImpossibleToDeleteDialplanApplication' => 'Impossible de supprimer l\'application Dialplans, elle contient des liens',
     'ex_ImpossibleToGetSecret' => 'Échec de l\'obtention du mot de passe utilisateur',
     'am_NoAnyServersYet' => 'Il n\'y a pas encore d\'utilisateurs AMI ici',
+    'pr_Note' => 'Remarque ou informations utiles sur le fournisseur',
 ];

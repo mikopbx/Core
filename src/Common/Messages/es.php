@@ -1207,4 +1207,5 @@ El cupón se puede activar una vez y luego se canjea.',
     'cr_ImpossibleToDeleteConferenceRoom' => 'Esta sala de conferencias no se puede eliminar.',
     'ex_ImpossibleToGetSecret' => 'No se pudo obtener la contraseña de usuario',
     'am_NoAnyServersYet' => 'Aún no hay usuarios de AMI aquí',
+    'pr_Note' => 'Nota o información útil sobre el proveedor',
 ];

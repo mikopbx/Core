@@ -1206,4 +1206,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'cr_ImpossibleToDeleteConferenceRoom' => 'Esta sala de conferência não pode ser excluída',
     'ex_ImpossibleToGetSecret' => 'Falha ao obter a senha do usuário',
     'am_NoAnyServersYet' => 'Ainda não há usuários AMI aqui',
+    'pr_Note' => 'Nota ou informações úteis sobre o provedor',
 ];

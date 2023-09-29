@@ -1207,4 +1207,5 @@ Il coupon può essere attivato una volta, dopodiché viene riscattato.',
     'cr_ImpossibleToDeleteConferenceRoom' => 'Questa sala conferenze non può essere eliminata',
     'ex_ImpossibleToGetSecret' => 'Impossibile ottenere la password utente',
     'am_NoAnyServersYet' => 'Non ci sono ancora utenti AMI qui',
+    'pr_Note' => 'Nota o informazioni utili sul fornitore',
 ];

@@ -1207,4 +1207,5 @@ return [
     'cr_ImpossibleToDeleteConferenceRoom' => 'ამ საკონფერენციო ოთახის წაშლა შეუძლებელია',
     'ex_ImpossibleToGetSecret' => 'მომხმარებლის პაროლის მიღება ვერ მოხერხდა',
     'am_NoAnyServersYet' => 'აქ ჯერ არ არის AMI მომხმარებლები',
+    'pr_Note' => 'შენიშვნა ან სასარგებლო ინფორმაცია პროვაიდერის შესახებ',
 ];

@@ -1207,4 +1207,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'cr_ImpossibleToDeleteConferenceRoom' => 'Bu konfrans otağı silinə bilməz',
     'am_NoAnyServersYet' => 'Burada hələ AMI istifadəçisi yoxdur',
     'ex_ImpossibleToGetSecret' => 'İstifadəçi parolunu əldə etmək alınmadı',
+    'pr_Note' => 'Qeyd və ya provayder haqqında faydalı məlumat',
 ];

@@ -1224,4 +1224,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'cr_ImpossibleToDeleteConferenceRoom' => 'Bu konferans odası silinemez',
     'am_NoAnyServersYet' => 'Burada henüz AMI kullanıcısı yok',
     'ex_ImpossibleToGetSecret' => 'Kullanıcı şifresi alınamadı',
+    'pr_Note' => 'Sağlayıcı hakkında not veya faydalı bilgiler',
 ];

@@ -1207,4 +1207,5 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'cq_ImpossibleToDeleteCallQueue' => 'Không thể xóa hàng đợi cuộc gọi vì có các liên kết sau',
     'am_NoAnyServersYet' => 'Chưa có người dùng AMI nào ở đây',
     'ex_ImpossibleToGetSecret' => 'Không lấy được mật khẩu người dùng',
+    'pr_Note' => 'Lưu ý hoặc thông tin hữu ích về nhà cung cấp',
 ];

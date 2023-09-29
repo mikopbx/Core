@@ -1207,4 +1207,5 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'cq_ImpossibleToDeleteCallQueue' => 'Nie można usunąć kolejki połączeń, ponieważ znajdują się następujące linki',
     'ex_ImpossibleToGetSecret' => 'Nie udało się uzyskać hasła użytkownika',
     'am_NoAnyServersYet' => 'Nie ma tu jeszcze żadnych użytkowników AMI',
+    'pr_Note' => 'Uwaga lub przydatne informacje o dostawcy',
 ];

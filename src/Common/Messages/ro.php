@@ -1240,4 +1240,5 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'cq_ImpossibleToDeleteCallQueue' => 'Este imposibil să ștergeți o coadă de apeluri deoarece există următoarele link-uri',
     'am_NoAnyServersYet' => 'Nu există încă utilizatori AMI aici',
     'ex_ImpossibleToGetSecret' => 'Nu s-a putut obține parola de utilizator',
+    'pr_Note' => 'Notă sau informații utile despre furnizor',
 ];

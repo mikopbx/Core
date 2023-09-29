@@ -1207,4 +1207,5 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'cr_ImpossibleToDeleteConferenceRoom' => 'Tuto konferenční místnost nelze smazat',
     'ex_ImpossibleToGetSecret' => 'Nepodařilo se získat uživatelské heslo',
     'am_NoAnyServersYet' => 'Zatím zde nejsou žádní uživatelé AMI',
+    'pr_Note' => 'Poznámka nebo užitečné informace o poskytovateli',
 ];

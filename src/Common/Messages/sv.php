@@ -1207,4 +1207,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'iv_ImpossibleToDeleteIVRMenu' => 'Det är omöjligt att ta bort IVR-menyn, det finns aktiva länkar till den',
     'ex_ImpossibleToGetSecret' => 'Det gick inte att få användarlösenord',
     'am_NoAnyServersYet' => 'Det finns inga AMI-användare här än',
+    'pr_Note' => 'Notera eller användbar information om leverantören',
 ];

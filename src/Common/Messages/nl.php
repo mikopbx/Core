@@ -1257,4 +1257,5 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'cr_ImpossibleToDeleteConferenceRoom' => 'Deze vergaderruimte kan niet worden verwijderd',
     'ex_ImpossibleToGetSecret' => 'Kan gebruikerswachtwoord niet verkrijgen',
     'am_NoAnyServersYet' => 'Er zijn hier nog geen AMI-gebruikers',
+    'pr_Note' => 'Opmerking of nuttige informatie over de aanbieder',
 ];

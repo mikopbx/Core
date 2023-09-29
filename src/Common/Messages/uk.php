@@ -1207,4 +1207,5 @@ return [
     'cr_ImpossibleToDeleteConferenceRoom' => 'Неможливо видалити цю конференц кімнату',
     'am_NoAnyServersYet' => 'Тут ще немає жодного AMI користувача',
     'ex_ImpossibleToGetSecret' => 'Неможливо отримати пароль користувача',
+    'pr_Note' => 'Нотатка або корисна інформація про провайдера',
 ];
