@@ -19,10 +19,10 @@
  <phpunit bootstrap="../../vendor/autoload.php">
     <testsuites>
         <testsuite name="TestMikoPBX">
-<!--                <file>Tests/DeleteExtensionTest.php</file>-->
-<!--                <file>Tests/DeleteExtensionFromDropDownTest.php</file>-->
-            <file>Tests/CheckDropdownsOnDeleteQueueTest.php</file>
-<!--            <file>Tests/InstallModulesTest.php</file>-->
+<!--            <file>Tests/DeleteExtensionTest.php</file>-->
+<!--            <file>Tests/DeleteExtensionFromDropDownTest.php</file>-->
+<!--            <file>Tests/CheckDropdownsOnDeleteQueueTest.php</file>-->
+            <file>Tests/InstallModulesTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>
