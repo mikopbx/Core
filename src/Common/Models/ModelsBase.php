@@ -354,13 +354,17 @@ class ModelsBase extends Model
                 $name = '<i class="users icon"></i> ';
                 $name .= empty($this->id)
                     ? $this->t('mo_NewElementCallQueues')
-                    : $this->t('mo_CallQueueShort4Dropdown') . ': ' . $this->name;
+                    : $this->t('mo_CallQueueShort4Dropdown') . ': '
+                    . $this->name
+                    . " <{$this->extension}>";
                 break;
             case ConferenceRooms::class:
                 $name = '<i class="phone volume icon"></i> ';
                 $name .= empty($this->id)
                     ? $this->t('mo_NewElementConferenceRooms')
-                    : $this->t('mo_ConferenceRoomsShort4Dropdown') . ': ' . $this->name;
+                    : $this->t('mo_ConferenceRoomsShort4Dropdown') . ': '
+                    . $this->name
+                    . " <{$this->extension}>";
                 break;
             case CustomFiles::class:
                 $name = "<i class='file icon'></i> {$this->filepath}";
@@ -369,8 +373,9 @@ class ModelsBase extends Model
                 $name = '<i class="php icon"></i> ';
                 $name .= empty($this->id)
                     ? $this->t('mo_NewElementDialplanApplications')
-                    : $this->t('mo_ApplicationShort4Dropdown') . ': ' . $this->name;
-                break;
+                    : $this->t('mo_ApplicationShort4Dropdown') . ': '
+                    . $this->name
+                    . " <{$this->extension}>";
                 break;
             case ExtensionForwardingRights::class:
                 $name = $this->Extensions->getRepresent();
@@ -443,10 +448,12 @@ class ModelsBase extends Model
                 $name = '<i class="sitemap icon"></i> ';
                 $name .= empty($this->id)
                     ? $this->t('mo_NewElementIvrMenu')
-                    : $this->t('mo_IVRMenuShort4Dropdown') . ': ' . $this->name;
+                    : $this->t('mo_IVRMenuShort4Dropdown') . ': '
+                    . $this->name
+                    . " <{$this->extension}>";
                 break;
             case IvrMenuActions::class:
-                $name = $this->IvrMenu->name;
+                $name = $this->Extensions->getRepresent();
                 break;
             case Codecs::class:
                 $name = $this->name;
