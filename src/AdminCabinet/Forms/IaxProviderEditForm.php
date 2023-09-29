@@ -81,5 +81,7 @@ class IaxProviderEditForm extends BaseForm
         // Manualattributes
         $this->addTextArea('manualattributes', $entity->getManualAttributes(), 80);
 
+        // Note
+        $this->addTextArea('note', $options['note'], 80,['class'=>'confidential-field']);
     }
 }

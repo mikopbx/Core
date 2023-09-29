@@ -233,6 +233,7 @@ return [
     'pr_RTPPortRange' => 'Диапазон RTP портов',
     'pr_RTPPortFrom' => 'С',
     'pr_RTPPortTo' => 'по',
+    'pr_Note'=>'Заметка или полезная информация о провайдере',
     'gs_RTPStunServer' => 'Адрес STUN сервера (пример: stun.test.net:10000)',
     'gs_UseWebRTC' => 'Использовать WebRTC',
     'gs_Store1MonthOfRecords' => '1 месяц',

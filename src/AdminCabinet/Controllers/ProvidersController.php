@@ -85,7 +85,8 @@ class ProvidersController extends BaseController
         }
         $this->view->secret = $provider->Sip->secret;
         $this->view->hostsTable = $hostsTable;
-        $this->view->form = new SipProviderEditForm($provider->Sip);
+        $options = ['note' => $provider->note];
+        $this->view->form = new SipProviderEditForm($provider->Sip, $options);
         $this->view->represent = $provider->getRepresent();
     }
 
@@ -109,8 +110,8 @@ class ProvidersController extends BaseController
             $provider->Iax->disabled = '0';
             $provider->Iax->qualify = '1';
         }
-
-        $this->view->form = new IaxProviderEditForm($provider->Iax);
+        $options = ['note' => $provider->note];
+        $this->view->form = new IaxProviderEditForm($provider->Iax, $options);
         $this->view->represent = $provider->getRepresent();
     }
 
@@ -244,6 +245,9 @@ class ProvidersController extends BaseController
             }
         }
 
+        if (isset($data['note'])){
+            $provider->note = $data['note'];
+        }
         if ($provider->save() === false) {
             $errors = $provider->getMessages();
             $this->flash->warning(implode('<br>', $errors));
