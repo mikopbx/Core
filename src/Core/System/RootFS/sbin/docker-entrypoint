@@ -22,7 +22,7 @@
 kernelVersion="$(/bin/uname -r | /bin/cut -f 1 -d '.')";
 
 # Ensure the kernel version is 5, otherwise terminate the script with an error message
-if [ ! "$kernelVersion" = '5' ]; then
+if [ ! "$kernelVersion" = '5' ] || [ ! "$kernelVersion" = '6' ]; then
   echo "Attention: Only linux with core version 5 was tested... Your installation has the $kernelVersion kernel version";
   #exit 4;
 fi
