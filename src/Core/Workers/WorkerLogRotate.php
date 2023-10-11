@@ -22,6 +22,7 @@ require_once 'Globals.php';
 
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
@@ -51,8 +52,9 @@ class WorkerLogRotate extends WorkerBase
         if ($lastLogRotate === null) {
 
             // Perform log rotation for system logs
-            PHPConf::rotateLog();
+            PHPConf::logRotate();
             PBX::logRotate();
+            Fail2BanConf::logRotate();
 
             // Perform log rotation for module logs
             $plugins = PbxExtensionModules::getEnabledModulesArray();

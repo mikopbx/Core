@@ -73,7 +73,7 @@ class PHPConf extends Injectable
      *
      * @return void
      */
-    public static function rotateLog(): void
+    public static function logRotate(): void
     {
         $logrotatePath = Util::which('logrotate');
 

@@ -29,6 +29,7 @@ use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use MikoPBX\Modules\Config\SystemConfigInterface;
+use Phalcon\Di;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
 use SQLite3;
@@ -81,8 +82,8 @@ class Fail2BanConf extends Injectable
     private function fail2banIsRunning(): bool
     {
         $fail2banPath = Util::which('fail2ban-client');
-        $res_ping     = Processes::mwExec("{$fail2banPath} ping");
-        $res_stat     = Processes::mwExec("{$fail2banPath} status");
+        $res_ping     = Processes::mwExec("$fail2banPath ping");
+        $res_stat     = Processes::mwExec("$fail2banPath status");
 
         $result = false;
         if ($res_ping === 0 && $res_stat === 0) {
@@ -99,14 +100,13 @@ class Fail2BanConf extends Injectable
     {
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemctlPath} restart fail2ban");
-
+            Processes::mwExec("$systemctlPath restart fail2ban");
             return;
         }
-        //T2SDE or Docker
+        // T2SDE or Docker
         Processes::killByName('fail2ban-server');
         $fail2banPath = Util::which('fail2ban-client');
-        $cmd_start    = "{$fail2banPath} -x start";
+        $cmd_start    = "$fail2banPath -x start";
         $command      = "($cmd_start;) > /dev/null 2>&1 &";
         Processes::mwExec($command);
     }
@@ -124,12 +124,78 @@ class Fail2BanConf extends Injectable
         }
         $fail2ban = new self();
         if($fail2ban->fail2ban_enable && !empty($pid)){
+            $fail2ban->generateConf();
             $fail2ban->generateModulesFilters();
             $fail2ban->generateModulesJailsLocal();
             // Reload the configuration without restarting Fail2Ban.
-            Processes::mwExecBg("{$fail2banPath} reload");
+            Processes::mwExecBg("$fail2banPath reload");
         }
     }
+
+    /**
+     * Generating the fail2ban.conf config
+     * @return void
+     */
+    private function generateConf():void
+    {
+        $log_dir = System::getLogDir() . '/fail2ban/';
+        $lofFileName = "$log_dir/fail2ban.log";
+        Util::mwMkdir($log_dir);
+        $conf = '['.'Definition'.']'.PHP_EOL.
+                'loglevel = INFO'.PHP_EOL.
+                'logtarget = FILE'.PHP_EOL.
+                "syslogsocket = $lofFileName".PHP_EOL.
+                'socket = /var/run/fail2ban/fail2ban.sock'.PHP_EOL.
+                'pidfile = /var/run/fail2ban/fail2ban.pid'.PHP_EOL.
+                'dbfile = /var/lib/fail2ban/fail2ban.sqlite3'.PHP_EOL.
+                'dbpurgeage = 1d'.PHP_EOL;
+        Util::fileWriteContent('/etc/fail2ban/fail2ban.conf', $conf);
+        if(!file_exists($lofFileName)){
+            file_put_contents($lofFileName, '');
+        }
+    }
+
+    /**
+     * Rotates the fail2ban log files.
+     */
+    public static function logRotate(): void
+    {
+        $di           = Di::getDefault();
+        $fail2banPath = Util::which('fail2ban-client');
+
+        if ($di === null) {
+            return;
+        }
+        $max_size    = 10;
+        $log_dir     = System::getLogDir() . '/fail2ban/';
+        $text_config = $log_dir."fail2ban.log {
+    nocreate
+    nocopytruncate
+    delaycompress
+    nomissingok
+    start 0
+    rotate 9
+    size {$max_size}M
+    missingok
+    noolddir
+    postrotate
+        $fail2banPath set logtarget {$log_dir}fail2ban.log > /dev/null 2> /dev/null
+    endscript
+    create 640 www www 
+}";
+        $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
+        $path_conf   = $varEtcDir . '/fail2ban_logrotate.conf';
+        file_put_contents($path_conf, $text_config);
+        $mb10 = $max_size * 1024 * 1024;
+
+        $options = '';
+        if (Util::mFileSize("{$log_dir}fail2ban.log") > $mb10) {
+            $options = '-f';
+        }
+        $logrotatePath = Util::which('logrotate');
+        Processes::mwExecBg("$logrotatePath $options '$path_conf' > /dev/null 2> /dev/null");
+    }
+
 
     /**
      * Checks whether BANS table exists in DB or not
@@ -153,10 +219,10 @@ class Fail2BanConf extends Injectable
     {
         if (Util::isSystemctl()) {
             $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemctlPath} stop fail2ban");
+            Processes::mwExec("$systemctlPath stop fail2ban");
         } else {
             $fail2banPath = Util::which('fail2ban-client');
-            Processes::mwExec("{$fail2banPath} -x stop");
+            Processes::mwExec("$fail2banPath -x stop");
         }
     }
 
@@ -194,12 +260,12 @@ class Fail2BanConf extends Injectable
                 if (file_exists("$old_dir_db/$filename")) {
                     // Move the file to the new location.
                     $mvPath = Util::which('mv');
-                    Processes::mwExec("{$mvPath} '$old_dir_db/$filename' '$dir_db/$filename'");
+                    Processes::mwExec("$mvPath '$old_dir_db/$filename' '$dir_db/$filename'");
                 }
             }
         }else{
             $sqlite3Path = Util::which('sqlite3');
-            Processes::mwExec("{$sqlite3Path} {$dir_db}/{$filename} 'vacuum'");
+            Processes::mwExec("$sqlite3Path $dir_db/$filename 'vacuum'");
             $create_link = true;
         }
 
@@ -250,19 +316,21 @@ class Fail2BanConf extends Injectable
 
         // Generate the Fail2Ban configuration
         $config       = "[DEFAULT]\n" .
-            "ignoreip = 127.0.0.1 {$user_whitelist}\n\n";
+            "ignoreip = 127.0.0.1 $user_whitelist\n\n";
 
         $syslog_file = SyslogConf::getSyslogFile();
 
+        $commonParams = "enabled = true".PHP_EOL .
+                        "maxretry = $max_retry\n" .
+                        "findtime = $find_time\n" .
+                        "bantime = $ban_time\n" .
+                        "logencoding = utf-8".PHP_EOL;
+
         foreach ($jails as $jail => $action) {
-            $config .= "[{$jail}]\n" .
-                "enabled = true\n" .
-                "logpath = {$syslog_file}\n" .
-                "maxretry = {$max_retry}\n" .
-                "findtime = {$find_time}\n" .
-                "bantime = {$ban_time}\n" .
-                "logencoding = utf-8\n" .
-                "action = {$action}\n\n";
+            $config .= "[$jail]\n" .
+                $commonParams.
+                "logpath = $syslog_file\n" .
+                "action = $action\n\n";
         }
 
         $log_dir = System::getLogDir() . '/asterisk/';
@@ -270,42 +338,26 @@ class Fail2BanConf extends Injectable
         // Add specific jail configurations for Asterisk logs
         $config  .= "[asterisk_security_log]\n" .
             "enabled = true\n" .
-            "filter = asterisk-main\n" .
+            $commonParams.
             'action = miko-iptables-multiport-all[name=ASTERISK, port="'.implode(',', $asteriskPorts).'"]'. PHP_EOL.
-            "logencoding = utf-8\n" .
-            "maxretry = {$max_retry}\n" .
-            "findtime = {$find_time}\n" .
-            "bantime = {$ban_time}\n" .
             "logpath = {$log_dir}security_log\n\n";
 
         $config .= "[asterisk_error]\n" .
-            "enabled = true\n" .
+            $commonParams.
             "filter = asterisk-main\n" .
             'action = miko-iptables-multiport-all[name=ASTERISK_ERROR, port="'.implode(',', $asteriskPorts).'"]'. PHP_EOL.
-            "maxretry = {$max_retry}\n" .
-            "findtime = {$find_time}\n" .
-            "bantime = {$ban_time}\n" .
-            "logencoding = utf-8\n" .
             "logpath = {$log_dir}error\n\n";
 
         $config .= "[asterisk_public]\n" .
-            "enabled = true\n" .
+            $commonParams.
             "filter = asterisk-main\n" .
             'action = miko-iptables-multiport-all[name=ASTERISK_PUBLIC, port="'.implode(',', $asteriskPorts).'"]'. PHP_EOL.
-            "maxretry = {$max_retry}\n" .
-            "findtime = {$find_time}\n" .
-            "bantime = {$ban_time}\n" .
-            "logencoding = utf-8\n" .
             "logpath = {$log_dir}messages\n\n";
 
         $config .= "[asterisk_ami]\n" .
-            "enabled = true\n" .
+            $commonParams.
             "filter = asterisk-ami\n" .
             'action = miko-iptables-multiport-all[name=ASTERISK_AMI, port="'.implode(',', $asteriskAMI).'"]'. PHP_EOL.
-            "maxretry = {$max_retry}\n" .
-            "findtime = {$find_time}\n" .
-            "bantime = {$ban_time}\n" .
-            "logencoding = utf-8\n" .
             "logpath = {$log_dir}messages\n\n";
 
         // Write the Fail2Ban configuration to the jail.local file
@@ -346,7 +398,7 @@ class Fail2BanConf extends Injectable
                 "[Init]".PHP_EOL.PHP_EOL;
 
         // Write the configuration string to the configuration file
-        file_put_contents("{$path}/miko-iptables-multiport-all.conf", $conf);
+        file_put_contents("$path/miko-iptables-multiport-all.conf", $conf);
     }
 
 
@@ -364,10 +416,11 @@ class Fail2BanConf extends Injectable
         // Define the path to the filter files
         $filterPath = self::FILTER_PATH;
 
+        $commonConf = "[INCLUDES]" . PHP_EOL.
+            "before = common.conf" . PHP_EOL .
+            "[Definition]". PHP_EOL;
         // Construct the MikoPBX web interface configuration string
-        $conf = "[INCLUDES]\n" .
-            "before = common.conf\n" .
-            "[Definition]\n" .
+        $conf = $commonConf .
             "_daemon = [\S\W\s]+web_auth\n" .
             'failregex = \sFrom:\s<HOST>\sUserAgent:(\S|\s)*Wrong password$' . "\n" .
             '            ^(\S|\s)*nginx:\s+\d+/\d+/\d+\s+(\S|\s)*status\s+403(\S|\s)*client:\s+<HOST>(\S|\s)*' . "\n" .
@@ -375,12 +428,10 @@ class Fail2BanConf extends Injectable
             "ignoreregex =\n";
 
         // Write the configuration to the MikoPBX web interface file
-        file_put_contents("{$filterPath}/mikopbx-www.conf", $conf);
+        file_put_contents("$filterPath/mikopbx-www.conf", $conf);
 
         // Construct the Dropbear SSH server configuration string
-        $conf = "[INCLUDES]\n" .
-            "before = common.conf\n" .
-            "[Definition]\n" .
+        $conf = $commonConf .
             "_daemon = (authpriv.warn )?dropbear\n" .
             'prefregex = ^%(__prefix_line)s<F-CONTENT>(?:[Ll]ogin|[Bb]ad|[Ee]xit).+</F-CONTENT>$' . "\n" .
             'failregex = ^[Ll]ogin attempt for nonexistent user (\'.*\' )?from <HOST>:\d+$' . "\n" .
@@ -389,12 +440,10 @@ class Fail2BanConf extends Injectable
             "ignoreregex =\n";
 
         // Write the configuration to the Dropbear SSH server file
-        file_put_contents("{$filterPath}/dropbear.conf", $conf);
+        file_put_contents("$filterPath/dropbear.conf", $conf);
 
         // Construct the Asterisk AMI configuration string
-        $conf = "[INCLUDES]".PHP_EOL.
-                "before = common.conf".PHP_EOL.PHP_EOL.
-                "[Definition]".PHP_EOL.PHP_EOL.
+        $conf = $commonConf.
                 "_daemon = asterisk".PHP_EOL.PHP_EOL.
                 "__pid_re = (?:\[\d+\])".PHP_EOL.
                 "_c_ooooo = (\[C-\d+[a-z]*\]?)".PHP_EOL.PHP_EOL.
@@ -402,16 +451,13 @@ class Fail2BanConf extends Injectable
                 "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed to authenticate as '[^']*'\$".PHP_EOL.
                 "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s(?:\sHost)? <HOST> failed to authenticate as '[^']*'\$".PHP_EOL.PHP_EOL.
                 "ignoreregex =".PHP_EOL.PHP_EOL;
-
         // Write the configuration to the Asterisk AMI file
-        file_put_contents("{$filterPath}/asterisk-ami.conf", $conf);
+        file_put_contents("$filterPath/asterisk-ami.conf", $conf);
 
 
         // Construct the Asterisk security configuration string
 
-        $conf = "[INCLUDES]".PHP_EOL.
-                "before = common.conf".PHP_EOL.PHP_EOL.
-                "[Definition]".PHP_EOL.PHP_EOL.
+        $conf = $commonConf.
                 "_daemon = asterisk".PHP_EOL.PHP_EOL.
                 "__pid_re = (?:\[\d+\])".PHP_EOL.
                 "_c_ooooo = (\[C-\d+[a-z]*\]?)".PHP_EOL.PHP_EOL.
@@ -430,7 +476,7 @@ class Fail2BanConf extends Injectable
                 'ignoreregex = Service="AMI"'.PHP_EOL.PHP_EOL;
 
         // Write the configuration to the Asterisk security file
-        file_put_contents("{$filterPath}/asterisk-main.conf", $conf);
+        file_put_contents("$filterPath/asterisk-main.conf", $conf);
 
         // Generate the module filters
         $this->generateModulesFilters();
@@ -443,13 +489,13 @@ class Fail2BanConf extends Injectable
     {
         $filterPath        = self::FILTER_PATH;
         $rmPath            = Util::which('rm');
-        Processes::mwExec("{$rmPath} -rf {$filterPath}/module_*.conf");
+        Processes::mwExec("$rmPath -rf $filterPath/module_*.conf");
 
         // Add additional modules routes
         $additionalModulesJails = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GENERATE_FAIL2BAN_JAILS);
         foreach ($additionalModulesJails as $moduleUniqueId=>$moduleJailText) {
             $fileName = Text::uncamelize($moduleUniqueId,'_').'.conf';
-            file_put_contents("{$filterPath}/{$fileName}", $moduleJailText);
+            file_put_contents("$filterPath/$fileName", $moduleJailText);
         }
     }
 
@@ -482,7 +528,7 @@ class Fail2BanConf extends Injectable
         $extension = 'conf';
 
         // Delete all existing jail configuration files
-        Processes::mwExec("rm -rf ".self::JAILS_DIR."/{$prefix}*.{$extension}");
+        Processes::mwExec("rm -rf ".self::JAILS_DIR."/$prefix*.$extension");
 
         // Get the system log file
         $syslog_file = SyslogConf::getSyslogFile();
@@ -497,17 +543,17 @@ class Fail2BanConf extends Injectable
             $fileName = Text::uncamelize($moduleUniqueId,'_');
 
             // Construct the configuration string for the module
-            $config = "[{$fileName}]\n" .
+            $config = "[$fileName]\n" .
                 "enabled = true\n" .
-                "logpath = {$syslog_file}\n" .
-                "maxretry = {$max_retry}\n" .
-                "findtime = {$find_time}\n" .
-                "bantime = {$ban_time}\n" .
+                "logpath = $syslog_file\n" .
+                "maxretry = $max_retry\n" .
+                "findtime = $find_time\n" .
+                "bantime = $ban_time\n" .
                 "logencoding = utf-8\n" .
-                "action = iptables-allports[name={$moduleUniqueId}, protocol=all]\n\n";
+                "action = iptables-allports[name=$moduleUniqueId, protocol=all]\n\n";
 
             // Write the configuration to the jail's configuration file
-            file_put_contents(self::JAILS_DIR."/{$prefix}{$fileName}.{$extension}", $config);
+            file_put_contents(self::JAILS_DIR."/".$prefix."$fileName.$extension", $config);
         }
     }
 
@@ -530,9 +576,9 @@ class Fail2BanConf extends Injectable
 
         // If rule exists, extract its properties.
         if ($res !== null) {
-            $max_retry = intval($res->maxretry);
-            $find_time = intval($res->findtime);
-            $ban_time = intval($res->bantime);
+            $max_retry = (int) $res->maxretry;
+            $find_time = (int) $res->findtime;
+            $ban_time = (int) $res->bantime;
 
             // Explode whitelist IPs into array.
             $whitelist = (string) $res->whitelist;
@@ -550,7 +596,7 @@ class Fail2BanConf extends Injectable
 
             // Add each filter's permit IP to user whitelist.
             foreach ($net_filters as $filter) {
-                $user_whitelist .= "{$filter->permit} ";
+                $user_whitelist .= "$filter->permit ";
             }
 
             // Trim any trailing spaces from the user whitelist.
