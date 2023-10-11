@@ -273,15 +273,14 @@ class InternalContexts extends AsteriskConfigClass
 
         // Generate additional modules internal context
         $conf .= $this->generateAdditionalModulesInternalContext();
-
         // Handle invalid numbers
-        $conf .= 'exten => i,1,NoOp(-- INVALID NUMBER --)' . "\n\t";
-        $conf .= 'same => n,Set(DIALSTATUS=INVALID_NUMBER)' . "\n\t";
-        $conf .= 'same => n,Playback(privacy-incorrect,noanswer)' . "\n\t";
-        $conf .= 'same => n,Hangup()' . "\n";
+        $conf .= 'exten => i,1,NoOp(-- INVALID NUMBER --)' . PHP_EOL."\t";
+        $conf .= 'same => n,Set(DIALSTATUS=INVALID_NUMBER)' . PHP_EOL."\t";
+        $conf .= 'same => n,Playback(privacy-incorrect,noanswer)' . PHP_EOL."\t";
+        $conf .= 'same => n,Hangup()' . PHP_EOL;
 
         // Handle hangup conditions during transfer
-        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n\n";
+        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . PHP_EOL . PHP_EOL;
 
         // Handle hangup, busy signals and direct inward dialing to user
         $conf .= 'exten => hangup,1,Set(MASTER_CHANNEL(M_DIALSTATUS)=ANSWER)'.PHP_EOL."\t";
@@ -292,11 +291,12 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,Hangup()'.PHP_EOL.PHP_EOL;
 
         // Define internal incoming call context
-        $conf .= "[internal-incoming]\n";
-        $conf .= 'exten => ' . ExtensionsConf::ALL_NUMBER_EXTENSION . ',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . " \n\t";
-        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${CHANNEL})' . " \n\t";
-        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT)=${EMPTY_VAR})' . " \n\t";
-        $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " \n\n";
+        $conf .= "[internal-incoming]".PHP_EOL;
+        $conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION. ',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . PHP_EOL."\t";
+        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${CHANNEL})' . PHP_EOL."\t";
+        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT)=${EMPTY_VAR})' . PHP_EOL."\t";
+        $conf .= 'same => n,Goto(internal,${EXTEN},1)' . PHP_EOL;
+        $conf .= 'exten => _[hit],1,Hangup()' . PHP_EOL . PHP_EOL;
 
         // Return the generated configuration string
         return $conf;
