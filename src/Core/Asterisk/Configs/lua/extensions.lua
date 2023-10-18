@@ -828,11 +828,10 @@ function event_dial_answer()
             local stereoMode = get_variable("MONITOR_STEREO");
             local mixOptions = '';
             if('1' == stereoMode )then
-            mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+                mixOptions = "aSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
             else
-            mixOptions = 'ab';
+                mixOptions = 'a';
             end
-
             app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
             app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
             data['recordingfile']  	= mixFileName .. ".mp3";
