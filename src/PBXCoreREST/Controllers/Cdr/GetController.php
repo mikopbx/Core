@@ -109,7 +109,7 @@ class GetController extends BaseController
     {
         $filename  = $this->request->get('view');
         if(empty($filename)){
-            $this->sendError(Response::NOT_FOUND, $filename);
+            $this->sendError(Response::NOT_FOUND, 'Empty filename');
             return;
         }
         $extension = Util::getExtensionOfFile($filename);
