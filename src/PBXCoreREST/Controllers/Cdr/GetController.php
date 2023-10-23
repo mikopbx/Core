@@ -108,6 +108,10 @@ class GetController extends BaseController
     private function playback(): void
     {
         $filename  = $this->request->get('view');
+        if(empty($filename)){
+            $this->sendError(Response::NOT_FOUND, $filename);
+            return;
+        }
         $extension = Util::getExtensionOfFile($filename);
         if (in_array($extension, ['mp3', 'wav']) && Util::recFileExists($filename)) {
             $ctype = '';
