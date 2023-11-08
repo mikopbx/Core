@@ -55,7 +55,7 @@ class FirewallManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         switch ($action) {
             case 'unBanIp':
-                $res = self::fail2banUnbanAll($data['ip']);
+                $res = self::fail2banUnbanAll($data['ip']??'');
                 break;
             case 'getBannedIp':
                 $res = self::getBannedIp();
