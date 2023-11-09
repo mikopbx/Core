@@ -909,20 +909,22 @@ function event_dial_answer()
         set_variable("MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
         set_variable("MASTER_CHANNEL(M_TIMEOUT_CHANNEL)", '');
 
+        local disableAnnonceIn  = get_variable('MASTER_CHANNEL(DISABLE_ANNONCE)');
         local needAnnonceIn  = get_variable('MASTER_CHANNEL(IN_NEED_ANNONCE)');
         local fileAnnonceIn  = get_variable('PBX_REC_ANNONCE_IN');
-        app["NoOp"]('needAnnonceIn: '.. needAnnonceIn .. '. fileAnnonceIn: ' .. fileAnnonceIn);
-        if( needAnnonceIn == '1' and fileAnnonceIn ~= '' )then
+        app["NoOp"]('needAnnonceIn: '.. needAnnonceIn .. '. fileAnnonceIn: ' .. fileAnnonceIn.. '. disableAnnonceIn: ' .. disableAnnonceIn);
+        if( needAnnonceIn == '1' and fileAnnonceIn ~= '' and disableAnnonceIn ~= '1' )then
             local posSlash = masterChannel:find('/') + 1;
             local dst_chan = masterChannel:sub(posSlash);
             app["Originate"]('Local/'..dst_chan..'@annonce-spy,exten,annonce-playback-in,annonce,1,2,a');
             set_variable("MASTER_CHANNEL(IN_NEED_ANNONCE)", '0');
         end
 
-        local needAnnonceOut = get_variable('OUT_NEED_ANNONCE');
-        local fileAnnonceOut = get_variable('PBX_REC_ANNONCE_OUT');
-        app["NoOp"]('needAnnonceOut: '.. needAnnonceOut .. '. fileAnnonceOut: ' .. fileAnnonceOut);
-        if( needAnnonceOut == '1' and fileAnnonceOut ~= '' )then
+        local disableAnnonceOut  = get_variable('DISABLE_ANNONCE');
+        local needAnnonceOut     = get_variable('OUT_NEED_ANNONCE');
+        local fileAnnonceOut     = get_variable('PBX_REC_ANNONCE_OUT');
+        app["NoOp"]('needAnnonceOut: '.. needAnnonceOut .. '. fileAnnonceOut: ' .. fileAnnonceOut.. '. disableAnnonceOut: ' .. disableAnnonceOut);
+        if( needAnnonceOut == '1' and fileAnnonceOut ~= '' and disableAnnonceOut ~= '1' )then
             local posSlash = masterChannel:find('/') + 1;
             local dst_chan = masterChannel:sub(posSlash);
             app["Originate"]('Local/'..dst_chan..'@annonce-spy,exten,annonce-playback-out,annonce,1,2,a');
