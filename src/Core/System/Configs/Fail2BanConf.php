@@ -138,10 +138,11 @@ class Fail2BanConf extends Injectable
      */
     private function generateConf():void
     {
-        $log_dir = System::getLogDir() . '/fail2ban/';
+        $log_dir = System::getLogDir() . '/fail2ban';
         $lofFileName = "$log_dir/fail2ban.log";
         Util::mwMkdir($log_dir);
         $conf = '['.'Definition'.']'.PHP_EOL.
+                'allowipv6 = auto'.PHP_EOL.
                 'loglevel = INFO'.PHP_EOL.
                 'logtarget = FILE'.PHP_EOL.
                 "syslogsocket = $lofFileName".PHP_EOL.
@@ -282,6 +283,7 @@ class Fail2BanConf extends Injectable
     public function writeConfig(): void
     {
         // Initialize properties
+        $this->generateConf();
         [$max_retry, $find_time, $ban_time, $user_whitelist] = $this->initProperty();
         $this->generateActions();
         $this->generateJails();
@@ -311,15 +313,12 @@ class Fail2BanConf extends Injectable
             'dropbear'    => 'miko-iptables-multiport-all[name=SSH, port="'.implode(',', $sshPort).'"]',
             'mikopbx-www' => 'miko-iptables-multiport-all[name=HTTP, port="'.implode(',', $httpPorts).'"]',
         ];
-
         $this->generateModulesJailsLocal($max_retry, $find_time, $ban_time);
 
         // Generate the Fail2Ban configuration
         $config       = "[DEFAULT]\n" .
             "ignoreip = 127.0.0.1 $user_whitelist\n\n";
-
         $syslog_file = SyslogConf::getSyslogFile();
-
         $commonParams = "enabled = true".PHP_EOL .
                         "maxretry = $max_retry\n" .
                         "findtime = $find_time\n" .
@@ -332,34 +331,20 @@ class Fail2BanConf extends Injectable
                 "logpath = $syslog_file\n" .
                 "action = $action\n\n";
         }
-
         $log_dir = System::getLogDir() . '/asterisk/';
-
-        // Add specific jail configurations for Asterisk logs
-        $config  .= "[asterisk_security_log]\n" .
-            "enabled = true\n" .
-            $commonParams.
-            'action = miko-iptables-multiport-all[name=ASTERISK, port="'.implode(',', $asteriskPorts).'"]'. PHP_EOL.
-            "logpath = {$log_dir}security_log\n\n";
-
-        $config .= "[asterisk_error]\n" .
-            $commonParams.
-            "filter = asterisk-main\n" .
-            'action = miko-iptables-multiport-all[name=ASTERISK_ERROR, port="'.implode(',', $asteriskPorts).'"]'. PHP_EOL.
-            "logpath = {$log_dir}error\n\n";
-
-        $config .= "[asterisk_public]\n" .
-            $commonParams.
-            "filter = asterisk-main\n" .
-            'action = miko-iptables-multiport-all[name=ASTERISK_PUBLIC, port="'.implode(',', $asteriskPorts).'"]'. PHP_EOL.
-            "logpath = {$log_dir}messages\n\n";
-
-        $config .= "[asterisk_ami]\n" .
-            $commonParams.
-            "filter = asterisk-ami\n" .
-            'action = miko-iptables-multiport-all[name=ASTERISK_AMI, port="'.implode(',', $asteriskAMI).'"]'. PHP_EOL.
-            "logpath = {$log_dir}messages\n\n";
-
+        $jails = [
+            'asterisk_security_log' => ['security_log', '', $asteriskPorts],
+            'asterisk_error'        => ['error', '_ERROR', $asteriskPorts],
+            'asterisk_public'       => ['messages', '_PUBLIC', $asteriskPorts],
+            'asterisk_ami'          => ['messages', '_AMI', $asteriskAMI],
+        ];
+        foreach ($jails as $jail => [$logPrefix, $actionNamePrefix, $ports]) {
+            $config  .= "[$jail]" . PHP_EOL.
+                $commonParams.
+                "filter = asterisk-main" . PHP_EOL.
+                'action = miko-iptables-multiport-all[name=ASTERISK'.$actionNamePrefix.', port="'.implode(',', $ports).'"]'. PHP_EOL.
+                "logpath = {$log_dir}$logPrefix". PHP_EOL. PHP_EOL;
+        }
         // Write the Fail2Ban configuration to the jail.local file
         Util::fileWriteContent('/etc/fail2ban/jail.local', $config);
     }
