@@ -128,17 +128,12 @@ class DataStructure
         if (empty($this->mobile_dialstring)) {
             $this->mobile_dialstring = $this->mobile_number;
         }
-
-        if (!empty($this->fwd_forwarding)){
-            $this->fwd_forwarding = preg_replace('/\D/', '', $this->fwd_forwarding);
+        $properties = ['fwd_forwarding', 'fwd_forwardingonunavailable', 'fwd_forwardingonbusy'];
+        foreach ($properties as $property) {
+            if (!empty($this->{$property}) && !in_array($this->{$property}, ['voicemail', 'busy', 'hangup'])) {
+                $this->{$property} = preg_replace('/\D/', '', $this->{$property});
+            }
         }
-        if (!empty($this->fwd_forwardingonunavailable)){
-            $this->fwd_forwardingonunavailable = preg_replace('/\D/', '', $this->fwd_forwardingonunavailable);
-        }
-        if (!empty($this->fwd_forwardingonbusy)){
-            $this->fwd_forwardingonbusy = preg_replace('/\D/', '', $this->fwd_forwardingonbusy);
-        }
-
     }
 
     /**
