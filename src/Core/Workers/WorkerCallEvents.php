@@ -333,7 +333,7 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Calls the events worker.
      *
-     * @param  $tube The tube object.
+     * @param  $tube object.
      *
      * @return void
      */
@@ -349,8 +349,9 @@ class WorkerCallEvents extends WorkerBase
         if ('ANSWER' === $event) {
             ActionCelAnswer::execute($this, $data);
             return;
-        } // If event is not 'USER_DEFINED', return
-        elseif ('USER_DEFINED' !== $event) {
+        }
+        // If event is not 'USER_DEFINED', return
+        if ('USER_DEFINED' !== $event) {
             return;
         }
 
