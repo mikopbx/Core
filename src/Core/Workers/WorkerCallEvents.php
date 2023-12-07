@@ -162,6 +162,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public function setMonitorFilenameOptions(string $full_name, string $sub_dir, string $file_name): array
     {
+        $full_name = Util::trimExtensionForFile($full_name).'.wav';
         if (!file_exists($full_name)) {
             $monitor_dir = Storage::getMonitorDir();
             if (empty($sub_dir)) {
