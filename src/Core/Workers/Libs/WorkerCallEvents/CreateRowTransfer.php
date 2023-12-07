@@ -148,7 +148,7 @@ class CreateRowTransfer
      */
     private static function isFailRedirect($calls_data): bool
     {
-        return empty($calls_data[0]['answer']) && count($calls_data) === 1 && !empty($calls_data[0]['recordingfile']);
+        return empty($calls_data[0]['answer']) && count($calls_data) === 1;
     }
 
     /**
@@ -163,7 +163,6 @@ class CreateRowTransfer
         // Resume recording when transfer is interrupted.
         $row_data = $calls_data[0];
         $chan = ($data['agi_channel'] === $row_data['src_chan']) ? $row_data['dst_chan'] : $row_data['src_chan'];
-
         // Find not ended call detail records.
         $filter = [
             'linkedid=:linkedid: AND endtime = ""',
@@ -173,11 +172,11 @@ class CreateRowTransfer
             'order' => 'is_app',
         ];
         /** @var CallDetailRecordsTmp $not_ended_cdr */
-        $cdr = CallDetailRecordsTmp::find($filter);
+        $cdrData = CallDetailRecordsTmp::find($filter);
         /** @var CallDetailRecordsTmp $row */
         $not_ended_cdr = null;
         $transferNotComplete = false;
-        foreach ($cdr as $row) {
+        foreach ($cdrData as $row) {
             if ($row->transfer === '1' && ($row->src_chan === $chan || $row->dst_chan === $chan)) {
                 $not_ended_cdr = $row;
             }
@@ -188,9 +187,7 @@ class CreateRowTransfer
         }
         if ($not_ended_cdr !== null && !$transferNotComplete) {
             $worker->StopMixMonitor($not_ended_cdr->src_chan, 'fillFailRedirectCdrData');
-
             // Check if recording file is not empty and enable monitor for the call.
-            // TODO::Need Check
             if (!empty($not_ended_cdr->recordingfile) && $worker->enableMonitor($not_ended_cdr->src_num, $not_ended_cdr->dst_num)) {
                 $worker->MixMonitor($not_ended_cdr->dst_chan, '', '', $not_ended_cdr->recordingfile, 'fillFailRedirectCdrData');
             }
