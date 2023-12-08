@@ -1419,6 +1419,7 @@ class Storage extends Di\Injectable
         Util::createUpdateSymlink($filePath, '/etc/asterisk/extensions.lua');
 
         $this->clearCacheFiles();
+        $this->clearTmpFiles();
         $this->applyFolderRights();
         Processes::mwExec("{$mountPath} -o remount,ro /offload 2> /dev/null");
     }
@@ -1505,6 +1506,33 @@ class Storage extends Di\Injectable
         if (is_dir('/mountpoint') && self::isStorageDiskMounted()) {
             Processes::mwExec("{$rmPath} -rf /mountpoint");
         }
+    }
+
+    /**
+     * @return void
+     */
+    private function clearTmpFiles(): void
+    {
+        $busyboxPath = Util::which('busybox');
+        $tmpDir = $this->config->path('core.tempDir');
+        if(!file_exists($tmpDir)){
+            return;
+        }
+        // Trying to get a list of files
+        Processes::mwExec("$busyboxPath timeout 10 $busyboxPath find $tmpDir -type f", $out, $ret);
+        if($ret !== 0){
+            // there are too many files in the temporary directory, we will clear them
+            // it may cause a failure when setting access rights (chown)
+            $resDirForRm = "$tmpDir-".time();
+            shell_exec("$busyboxPath mv '$tmpDir' '$resDirForRm'");
+            if(file_exists("$resDirForRm/swapfile")){
+                // Saving only the swap file
+                shell_exec("$busyboxPath mv '$resDirForRm/swapfile' '$tmpDir/swapfile'");
+            }
+            // Let's start deleting temporary files
+            Processes::mwExecBg("/usr/bin/nice -n 19 $busyboxPath rm -rf $resDirForRm");
+        }
+        Util::mwMkdir($tmpDir, true);
     }
 
     /**
