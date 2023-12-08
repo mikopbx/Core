@@ -59,9 +59,9 @@ find_set_mtu()
     n=0;
     while [ $n -lt 100 ]; do
         n=$((n + 1));
-        /sbin/ping -c 1 -s "$PKT_SIZE" -M do -I "$2" "$host_main" 2>&1 | /bin/busybox grep -i 'Message too long'
+        /sbin/ping -c 1 -s "$PKT_SIZE" -M do -I "$2" "$1" 2>&1 | /bin/busybox grep -i 'Message too long'
         result="$?";
-        echo /sbin/ping -c 1 -s "$PKT_SIZE" -M do -I "$2" "$host_main";
+        echo /sbin/ping -c 1 -s "$PKT_SIZE" -M do -I "$2" "$1";
         if [ "$result" = "1" ];then
             mtu_main="$PKT_SIZE";
             setMtu "$2" "$mtu_main";
