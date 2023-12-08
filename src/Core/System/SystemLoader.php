@@ -174,11 +174,6 @@ class SystemLoader extends Di\Injectable
         $this->echoStartMsg(' - Update configs...');
         $this->echoResultMsg();
 
-        // Load kernel modules
-        $this->echoStartMsg(' - Load kernel modules...');
-        $resKernelModules = $system->loadKernelModules();
-        $this->echoResultMsg($resKernelModules);
-
         // Configure VM tools
         $this->echoStartMsg(' - Configuring VM tools...');
         $vmwareTools    = new VmToolsConf();

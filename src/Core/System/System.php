@@ -408,32 +408,6 @@ class System extends Di\Injectable
     }
 
     /**
-     * Loads additional kernel modules.
-     *
-     * @return bool - Returns true if modules are loaded successfully.
-     */
-    public function loadKernelModules(): bool
-    {
-        // If the system is running in Docker, no need to load kernel modules
-        if(Util::isDocker()){
-            return true;
-        }
-
-        // Paths to system commands
-        $modprobePath = Util::which('modprobe');
-        $ulimitPath   = Util::which('ulimit');
-
-        // Load dahdi and dahdi_transcode modules and set ulimit values
-        $res1 = Processes::mwExec("{$modprobePath} -q dahdi");
-        $res2 = Processes::mwExec("{$modprobePath} -q dahdi_transcode");
-        Processes::mwExec("{$ulimitPath} -n 4096");
-        Processes::mwExec("{$ulimitPath} -p 4096");
-
-        // Return true if both modules loaded successfully
-        return ($res1 === 0 && $res2 === 0);
-    }
-
-    /**
      * Calculate the hash of SSL certificates and extract them from ca-certificates.crt.
      *
      * @return void
