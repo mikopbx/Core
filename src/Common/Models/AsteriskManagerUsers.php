@@ -140,11 +140,11 @@ class AsteriskManagerUsers extends ModelsBase
     public ?string $verbose = '';
 
     /**
-     * Flag indicating if user has command access
+     * Flag indicating if user has command access.
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string $command = '';
+    public ?string  $command = '';
 
     /**
      * ID of the network filter associated with the user

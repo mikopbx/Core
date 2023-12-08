@@ -91,8 +91,7 @@ class AsteriskManagersController extends BaseController
                 'AMI',
             ]
         );
-        $arrNetworkFilters['none']
-                           = $this->translation->_('ex_NoNetworkFilter');
+        $arrNetworkFilters['none'] = $this->translation->_('ex_NoNetworkFilter');
         foreach ($networkFilters as $filter) {
             $arrNetworkFilters[$filter->id] = $filter->getRepresent();
         }
@@ -116,10 +115,9 @@ class AsteriskManagersController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (!$this->request->isPost()) {
             return;
         }
-
         $data    = $this->request->getPost();
         $manager = null;
         if (isset($data['id'])) {
@@ -128,25 +126,21 @@ class AsteriskManagersController extends BaseController
         if ($manager === null) {
             $manager = new AsteriskManagerUsers();
         }
-
         foreach ($manager as $name => $value) {
             if (in_array($name, $this->arrCheckBoxes, true)) {
-                $manager->$name = '';
-                $manager->$name .= ($data[$name . '_read'] === 'on') ? 'read' : '';
-                $manager->$name .= ($data[$name . '_write'] === 'on') ? 'write' : '';
+                $manager->$name = ($data[$name . '_read'] === 'on') ? 'read' : '';
+                $manager->$name.= ($data[$name . '_write'] === 'on') ? 'write' : '';
                 continue;
             }
-
             if ( ! array_key_exists($name, $data)) {
                 continue;
             }
             $manager->$name = $data[$name];
         }
         $errors = false;
-        if ( ! $manager->save()) {
+        if (!$manager->save()) {
             $errors = $manager->getMessages();
         }
-
         if ($errors) {
             $this->flash->error(implode('<br>', $errors));
             $this->view->success = false;
