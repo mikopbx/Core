@@ -110,9 +110,13 @@ class Request extends PhRequest
         foreach ($additionalRoutes as $additionalRoutesFromModule){
             foreach ($additionalRoutesFromModule as $additionalRoute) {
                 $noAuth = $additionalRoute[5] ?? false;
-                if ($noAuth === true
-                    && stripos($pattern, $additionalRoute[2]) === 0) {
-                    return true; // Allow request without authentication
+                // Let's prepare a regular expression to check the URI
+                $resultPattern = '/^'.str_replace('/', '\/', $additionalRoute[2]).'/';
+                $resultPattern = preg_replace('/\{[^\/]+\}/', '[^\/]+', $resultPattern);
+                // Let's check the URI
+                if ($noAuth === true && preg_match($resultPattern, $pattern)) {
+                    // Allow request without authentication
+                    return true;
                 }
             }
         }
