@@ -805,7 +805,11 @@ class SIPConf extends AsteriskConfigClass
                 continue;
             }
             // How to make some order of overrides?
-            $newOptions = $newOptionsSet;
+            foreach ($newOptionsSet as $key => $value){
+                if(isset($newOptions[$key])){
+                    $newOptions[$key] = $value;
+                }
+            }
         }
         return $newOptions;
     }
