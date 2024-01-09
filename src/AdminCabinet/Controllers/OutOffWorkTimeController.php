@@ -24,9 +24,9 @@ use MikoPBX\Common\Models\{Extensions,
     IncomingRoutingTable,
     OutWorkTimes,
     OutWorkTimesRouts,
-    PbxSettings,
     Sip,
     SoundFiles};
+use MikoPBX\Core\Asterisk\Configs\SIPConf;
 
 class OutOffWorkTimeController extends BaseController
 {
@@ -160,6 +160,22 @@ class OutOffWorkTimeController extends BaseController
         $allowedRules    = OutWorkTimesRouts::find($parameters)->toArray();
         $allowedRulesIds = array_column($allowedRules, 'rule_id');
 
+
+        $filter = [
+            'conditions' => 'type="friend"',
+            'columns' => 'host,port,uniqid,registration_type',
+        ];
+        $data = Sip::find($filter)->toArray();
+        $providersId = [];
+        foreach ($data as $providerData){
+            if($providerData['registration_type'] === Sip::REG_TYPE_INBOUND || empty($providerData['host'])){
+                $providersId[$providerData['uniqid']] = $providerData['uniqid'];
+            }else{
+                $providersId[$providerData['uniqid']] = SIPConf::getContextId($providerData['host'] . $providerData['port']);
+            }
+        }
+        unset($data);
+
         // Get the list of allowed routing rules
         $rules        = IncomingRoutingTable::find(['order' => 'priority', 'conditions' => 'id>1']);
         $routingTable = [];
@@ -180,6 +196,7 @@ class OutOffWorkTimeController extends BaseController
                 'timeout'   => $rule->timeout,
                 'provider'  => $rule->Providers ? $rule->Providers->getRepresent() : '',
                 'provider-uniqid'  => $rule->Providers ? $rule->Providers->uniqid : 'none',
+                'context-id'  => $rule->Providers ? $providersId[$rule->Providers->uniqid] : 'none',
                 'disabled'  => $provByType->disabled,
                 'extension' => $rule->extension,
                 'callerid'  => $extension ? $extension->getRepresent() : '',

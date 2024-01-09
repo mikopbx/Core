@@ -107,7 +107,7 @@
 
         <tr class="rule-row" id="{{ rule['id'] }}">
             <td class="collapsing">
-                <div class="ui fitted toggle checkbox" data-did="{{ rule['number'] }}-{{ rule['provider-uniqid'] }}">
+                <div class="ui fitted toggle checkbox" data-did="{{ rule['number'] }}-{{ rule['provider-uniqid'] }}" data-context-id="{{ rule['context-id'] }}">
                     <input type="checkbox" {% if rule['status']!=='disabled' %} checked {% endif %}
                            name="rule-{{ rule['id'] }}" data-value="{{ rule['id'] }}">
                     <label for="rule-{{ rule['id'] }}"></label>

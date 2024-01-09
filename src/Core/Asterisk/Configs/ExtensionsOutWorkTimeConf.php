@@ -127,6 +127,9 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         $trueContext = [];
         $confByContext = [];
         foreach ($routesData as $didData) {
+            if(($trueContext[$didData['context']]??false) === true){
+                continue;
+            }
             $confByContext[$didData['context']][$didData['did']] = ($didData['enable']) ? '' : false;
             if ($didData['enable']) {
                 $trueContext[$didData['context']] = true;
