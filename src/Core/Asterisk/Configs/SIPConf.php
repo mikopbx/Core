@@ -1049,7 +1049,9 @@ class SIPConf extends AsteriskConfigClass
             'sdp_session'     => 'mikopbx',
             'language'        => $language,
             'aors'            => $provider['uniqid'],
-            'timers'          => ' no',
+            'timers'          => 'no',
+            'rtp_timeout'     => '30',
+            'rtp_timeout_hold'=> '30',
         ];
 
         if(!empty($provider['transport'])){
@@ -1294,6 +1296,8 @@ class SIPConf extends AsteriskConfigClass
             'outbound_auth'        => $peer['extension'],
             'acl'                  => "acl_{$peer['extension']}",
             'timers'               => 'no',
+            'rtp_timeout'          => '30',
+            'rtp_timeout_hold'     => '30',
             'message_context'      => 'messages',
         ];
 
