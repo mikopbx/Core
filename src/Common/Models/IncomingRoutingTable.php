@@ -145,6 +145,19 @@ class IncomingRoutingTable extends ModelsBase
                 ],
             ]
         );
+
+        $this->hasOne(
+            'id',
+            OutWorkTimesRouts::class,
+            'routId',
+            [
+                'alias' => 'OutWorkTimesRouts',
+                'foreignKey' => [
+                    'allowNulls' => false,
+                    'action' => Relation::ACTION_CASCADE,
+                ],
+            ]
+        );
     }
 
 }

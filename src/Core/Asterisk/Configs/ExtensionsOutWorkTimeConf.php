@@ -50,9 +50,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
     public function extensionGenContexts(): string
     {
         $this->generateOutWorkTimes();
-        $conf = $this->conf;
-        $this->conf = '';
-        return $conf;
+        return $this->conf;
     }
 
     /**
@@ -96,7 +94,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         $parameters = [
             'columns' => 'routId,timeConditionId',
         ];
-        $allowedRouts = OutWorkTimesRouts::find($parameters);
+        $allowedRouts  = OutWorkTimesRouts::find($parameters);
         $allowedRulesIds = array_column($allowedRouts->toArray(), 'routId');
         $filter = [
             'order' => 'priority',
@@ -144,6 +142,9 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
 
         $tcData = [];
         foreach ($allowedRouts as $tcRoute) {
+            if(!isset($routesData[$tcRoute->routId])){
+                continue;
+            }
             $tcData["" . $tcRoute->timeConditionId][] = $routesData[$tcRoute->routId];
         }
         return [$tcData, $confByContext];
