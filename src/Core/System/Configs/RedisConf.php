@@ -81,8 +81,19 @@ class RedisConf extends Injectable
         $config = $this->getDI()->get(ConfigProvider::SERVICE_NAME)->redis;
         $this->port = $config->port;
         $conf   = "bind {$config->host}" . PHP_EOL;
-        $conf   .= "port {$config->port}" . PHP_EOL;
-        $conf   .= "dir /var/tmp" . PHP_EOL;
+        $conf  .= "port {$config->port}" . PHP_EOL;
+        $conf  .= "dir /var/tmp" . PHP_EOL;
+        $conf  .= "loglevel notice" . PHP_EOL;
+        $conf  .= "syslog-enabled yes" . PHP_EOL;
+        $conf  .= "syslog-ident redis" . PHP_EOL;
         file_put_contents(self::CONF_FILE, $conf);
+
+        Util::mwMkdir('/etc/rsyslog.d');
+        $log_fileRedis       = SyslogConf::getSyslogFile('redis');
+        $pathScriptRedis     = SyslogConf::createRotateScript('redis');
+        $confSyslogD = '$outchannel log_redis,'.$log_fileRedis.',10485760,'.$pathScriptRedis.PHP_EOL.
+            'if $programname == "redis-server" then :omfile:$log_redis'.PHP_EOL.
+            'if $programname == "redis-server" then stop'.PHP_EOL;
+        file_put_contents('/etc/rsyslog.d/redis.conf', $confSyslogD);
     }
 }
