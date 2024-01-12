@@ -53,26 +53,49 @@ class ProvidersController extends BaseController
     /**
      * Opens the SIP provider card and fills in default values.
      *
-     * @param string $uniqid Unique identifier of the provider (optional) when opening an existing one.
+     * @param string $uniqId Unique identifier of the provider (optional) when opening an existing one.
      */
-    public function modifysipAction(string $uniqid = ''): void
+    public function modifysipAction(string $uniqId = ''): void
     {
-        $provider = Providers::findFirstByUniqid($uniqid);
-
+        $idIsEmpty = false;
+        if(empty($uniqId)){
+            $idIsEmpty = true;
+            $uniqId = (string)($_GET['copy-source']??'');
+        }
+        /** @var Providers $provider */
+        $provider = Providers::findFirstByUniqid($uniqId);
         if ($provider === null) {
-            $uniqid = Sip::generateUniqueID('SIP-');
+            $uniqId = Sip::generateUniqueID('SIP-');
             $provider = new Providers();
             $provider->type = 'SIP';
-            $provider->uniqid = $uniqid;
-            $provider->sipuid = $uniqid;
+            $provider->uniqid = $uniqId;
+            $provider->sipuid = $uniqId;
             $provider->Sip = new Sip();
-            $provider->Sip->uniqid = $uniqid;
+            $provider->Sip->uniqid = $uniqId;
             $provider->Sip->type = 'friend';
             $provider->Sip->port = 5060;
             $provider->Sip->disabled = '0';
             $provider->Sip->qualifyfreq = 60;
             $provider->Sip->qualify = '1';
             $provider->Sip->secret = SIP::generateSipPassword();
+        }elseif($idIsEmpty){
+            $uniqId = Sip::generateUniqueID('SIP-');
+            $oldProvider = $provider;
+            $provider = new Providers();
+            foreach ($oldProvider->toArray() as $key => $value){
+                $provider->writeAttribute($key, $value);
+            }
+            $provider->Sip = new Sip();
+            foreach ($oldProvider->Sip->toArray() as $key => $value){
+                $provider->Sip->writeAttribute($key, $value);
+            }
+            $provider->id     = '';
+            $provider->uniqid = $uniqId;
+            $provider->sipuid = $uniqId;
+            $provider->Sip->description = '';
+            $provider->Sip->id     = '';
+            $provider->Sip->uniqid = $uniqId;
+            $provider->Sip->secret = md5(microtime());
         }
 
         $providerHost = $provider->Sip->host;
@@ -95,20 +118,44 @@ class ProvidersController extends BaseController
      *
      * @param string $uniqid Unique identifier of the provider (optional) when opening an existing one.
      */
-    public function modifyiaxAction(string $uniqid = ''): void
+    public function modifyiaxAction(string $uniqId = ''): void
     {
-        $provider = Providers::findFirstByUniqid($uniqid);
+        $idIsEmpty = false;
+        if(empty($uniqId)){
+            $idIsEmpty = true;
+            $uniqId = (string)($_GET['copy-source']??'');
+        }
+
+        $provider = Providers::findFirstByUniqid($uniqId);
 
         if ($provider === null) {
-            $uniqid = Iax::generateUniqueID('IAX-');
+            $uniqId = Iax::generateUniqueID('IAX-');
             $provider = new Providers();
             $provider->type = 'IAX';
-            $provider->uniqid = $uniqid;
-            $provider->iaxuid = $uniqid;
+            $provider->uniqid = $uniqId;
+            $provider->iaxuid = $uniqId;
             $provider->Iax = new Iax();
-            $provider->Iax->uniqid = $uniqid;
+            $provider->Iax->uniqid = $uniqId;
             $provider->Iax->disabled = '0';
             $provider->Iax->qualify = '1';
+        }elseif($idIsEmpty){
+            $uniqId = Iax::generateUniqueID('IAX-');
+            $oldProvider = $provider;
+            $provider = new Providers();
+            foreach ($oldProvider->toArray() as $key => $value){
+                $provider->writeAttribute($key, $value);
+            }
+            $provider->Iax = new Iax();
+            foreach ($oldProvider->Iax->toArray() as $key => $value){
+                $provider->Iax->writeAttribute($key, $value);
+            }
+            $provider->id     = '';
+            $provider->uniqid = $uniqId;
+            $provider->sipuid = $uniqId;
+            $provider->Iax->description = '';
+            $provider->Iax->id     = '';
+            $provider->Iax->uniqid = $uniqId;
+            $provider->Iax->secret = md5(microtime());
         }
         $options = ['note' => $provider->note];
         $this->view->form = new IaxProviderEditForm($provider->Iax, $options);

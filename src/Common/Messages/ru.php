@@ -194,6 +194,7 @@ return [
     'bt_ToolTipEdit' => 'Изменить',
     'bt_ToolTipRestore' => 'Восстановить',
     'bt_ToolTipDownload' => 'Скачать',
+    'bt_ToolTipCopy'   => 'Копировать',
     'bt_ToolTipDelete' => 'Удалить',
     'bt_ToolTipUpgradeOnline' => 'Обновить онлайн',
     'ms_SuccessfulSaved' => 'Настройки сохранены',

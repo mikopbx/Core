@@ -103,16 +103,27 @@ class IncomingRoutesController extends BaseController
     {
         if ((int)$ruleId === 1) {
             $this->forward('incoming-routes/index');
+            return;
         } // First row is the default route, don't modify it.
 
+        $idIsEmpty = false;
+        if(empty($ruleId)){
+            $idIsEmpty = true;
+            $ruleId = (string)($_GET['copy-source']??'');
+        }
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
         if ($rule === null) {
-            $parameters = [
-                'column' => 'priority',
-                'conditions'=>'id!=1'
-            ];
             $rule = new IncomingRoutingTable();
-            $rule->priority = (int)IncomingRoutingTable::maximum($parameters)+1;
+            $rule->priority = IncomingRoutingTable::getMaxNewPriority();
+        }elseif($idIsEmpty) {
+            $oldRule = $rule;
+            $rule     = new IncomingRoutingTable();
+            foreach ($oldRule->toArray() as $key => $value){
+                $rule->writeAttribute($key, $value);
+            }
+            $rule->id   = '';
+            $rule->note = "";
+            $rule->priority = IncomingRoutingTable::getMaxNewPriority();
         }
 
         if (empty($rule->provider)){

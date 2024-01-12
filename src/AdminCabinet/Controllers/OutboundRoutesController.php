@@ -78,10 +78,26 @@ class OutboundRoutesController extends BaseController
      */
     public function modifyAction($id = ''): void
     {
+        $idIsEmpty = false;
+        if(empty($id)){
+            $idIsEmpty = true;
+            $id = (string)($_GET['copy-source']??'');
+        }
+
         $rule = OutgoingRoutingTable::findFirstByid($id);
         if ($rule === null) {
             $rule = new OutgoingRoutingTable();
             $rule->priority = (int)OutgoingRoutingTable::maximum(['column' => 'priority'])+1;
+        }elseif($idIsEmpty){
+            $oldRule = $rule;
+            $rule = new OutgoingRoutingTable();
+            $rule->priority = (int)OutgoingRoutingTable::maximum(['column' => 'priority'])+1;
+            foreach ($oldRule->toArray() as $key => $value){
+                $rule->writeAttribute($key, $value);
+            }
+            $rule->rulename = '';
+            $rule->id = '';
+
         }
 
         $providers     = Providers::find();

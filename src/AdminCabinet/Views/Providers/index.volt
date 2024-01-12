@@ -60,6 +60,7 @@
                 [
                     'id': provider['uniqid'],
                     'edit' : 'providers/modify'~ provider['type']|lower~'/',
+                    'copy' : 'providers/modify'~ provider['type']|lower~'?copy-source=',
                     'delete': 'providers/delete/'
                 ]) }}
         </tr>

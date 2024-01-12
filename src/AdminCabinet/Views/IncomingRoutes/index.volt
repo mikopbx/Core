@@ -64,6 +64,7 @@
                 [
                     'id': rule['id'],
                     'edit' : 'incoming-routes/modify/',
+                    'copy' : 'incoming-routes/modify?copy-source=',
                     'delete': 'incoming-routes/delete/'
                 ]) }}
         </tr>

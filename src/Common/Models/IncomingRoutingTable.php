@@ -160,5 +160,18 @@ class IncomingRoutingTable extends ModelsBase
         );
     }
 
+    /**
+     * Returns the maximum priority value of +1
+     * @return int
+     */
+    public static function getMaxNewPriority():int
+    {
+        $parameters = [
+            'column' => 'priority',
+            'conditions'=>'id!=1'
+        ];
+        return (int)IncomingRoutingTable::maximum($parameters)+1;
+    }
+
 }
 
