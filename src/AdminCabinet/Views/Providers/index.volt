@@ -7,7 +7,7 @@
             <i class="icon attention"></i>
         </div>
         <div class="description">
-            {{ t._('pr_DeleteDescription') }}
+            {{ t._('pr_DeleteDescription_v2') }}
         </div>
     </div>
     <div class="actions">
