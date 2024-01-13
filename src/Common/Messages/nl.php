@@ -1258,4 +1258,7 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'ex_ImpossibleToGetSecret' => 'Kan gebruikerswachtwoord niet verkrijgen',
     'am_NoAnyServersYet' => 'Er zijn hier nog geen AMI-gebruikers',
     'pr_Note' => 'Opmerking of nuttige informatie over de aanbieder',
+    'bt_ToolTipCopy' => 'Kopiëren',
+    'ir_AnyProvider_v2' => 'Geen verbinding met een provider, geen autorisatie',
+    'pr_DeleteDescription_v2' => 'Samen met de provider worden alle bijbehorende uitgaande routeringsregels verwijderd en in de inkomende routeringsregels worden alle links vervangen door “Geen verbinding met een provider, geen autorisatie”',
 ];

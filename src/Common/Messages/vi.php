@@ -1208,4 +1208,7 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'am_NoAnyServersYet' => 'Chưa có người dùng AMI nào ở đây',
     'ex_ImpossibleToGetSecret' => 'Không lấy được mật khẩu người dùng',
     'pr_Note' => 'Lưu ý hoặc thông tin hữu ích về nhà cung cấp',
+    'bt_ToolTipCopy' => 'Sao chép',
+    'pr_DeleteDescription_v2' => 'Cùng với nhà cung cấp, tất cả các quy tắc định tuyến đi liên quan sẽ bị xóa và trong các quy tắc định tuyến đến, tất cả các liên kết sẽ được thay thế bằng “Không có kết nối với nhà cung cấp, không có ủy quyền”',
+    'ir_AnyProvider_v2' => 'Không có kết nối với nhà cung cấp, không có ủy quyền',
 ];

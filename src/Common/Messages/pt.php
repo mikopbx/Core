@@ -1208,4 +1208,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_ImpossibleToGetSecret' => 'Falha ao obter a senha do usuário',
     'am_NoAnyServersYet' => 'Ainda não há usuários AMI aqui',
     'pr_Note' => 'Nota ou informações úteis sobre o provedor',
+    'bt_ToolTipCopy' => 'cópia de',
+    'pr_DeleteDescription_v2' => 'Juntamente com o provedor, todas as regras de roteamento de saída associadas serão excluídas e nas regras de roteamento de entrada todos os links serão substituídos por “Sem conexão com um provedor, sem autorização”',
+    'ir_AnyProvider_v2' => 'Sem conexão com um provedor, sem autorização',
 ];

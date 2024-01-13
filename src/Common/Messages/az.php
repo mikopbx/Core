@@ -1208,4 +1208,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'am_NoAnyServersYet' => 'Burada hələ AMI istifadəçisi yoxdur',
     'ex_ImpossibleToGetSecret' => 'İstifadəçi parolunu əldə etmək alınmadı',
     'pr_Note' => 'Qeyd və ya provayder haqqında faydalı məlumat',
+    'bt_ToolTipCopy' => 'Kopyalayın',
+    'ir_AnyProvider_v2' => 'Provayderlə əlaqə yoxdur, icazə yoxdur',
+    'pr_DeleteDescription_v2' => 'Provayderlə birlikdə bütün əlaqəli gedən marşrutlaşdırma qaydaları silinəcək və gələn marşrutlaşdırma qaydalarında bütün keçidlər “Provayderlə əlaqə yoxdur, icazə yoxdur” ilə əvəz olunacaq.',
 ];

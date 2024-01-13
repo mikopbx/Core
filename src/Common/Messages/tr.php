@@ -1225,4 +1225,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'am_NoAnyServersYet' => 'Burada henüz AMI kullanıcısı yok',
     'ex_ImpossibleToGetSecret' => 'Kullanıcı şifresi alınamadı',
     'pr_Note' => 'Sağlayıcı hakkında not veya faydalı bilgiler',
+    'bt_ToolTipCopy' => 'Kopyala',
+    'pr_DeleteDescription_v2' => 'Sağlayıcıyla birlikte ilgili tüm giden yönlendirme kuralları silinecek ve gelen yönlendirme kurallarında tüm bağlantılar “Sağlayıcıyla bağlantı yok, yetki yok” olarak değiştirilecek.',
+    'ir_AnyProvider_v2' => 'Sağlayıcıyla bağlantı yok, yetki yok',
 ];

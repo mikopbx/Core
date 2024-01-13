@@ -1208,4 +1208,7 @@ El cupón se puede activar una vez y luego se canjea.',
     'ex_ImpossibleToGetSecret' => 'No se pudo obtener la contraseña de usuario',
     'am_NoAnyServersYet' => 'Aún no hay usuarios de AMI aquí',
     'pr_Note' => 'Nota o información útil sobre el proveedor',
+    'bt_ToolTipCopy' => 'Copiar',
+    'ir_AnyProvider_v2' => 'Sin conexión a un proveedor, sin autorización',
+    'pr_DeleteDescription_v2' => 'Junto con el proveedor, se eliminarán todas las reglas de enrutamiento salientes asociadas y, en las reglas de enrutamiento entrantes, todos los enlaces se reemplazarán con "Sin conexión a un proveedor, sin autorización".',
 ];

@@ -1211,4 +1211,7 @@ The coupon can be activated once, after which it becomes redeemed.',
     'ex_ImpossibleToGetSecret' => 'Failed to obtain user password',
     'am_NoAnyServersYet' => 'There are no AMI users here yet',
     'pr_Note' => 'Note or useful information about the provider',
+    'bt_ToolTipCopy' => 'Copy',
+    'ir_AnyProvider_v2' => 'No connection to a provider, no authorization',
+    'pr_DeleteDescription_v2' => 'Together with the provider, all associated outgoing routing rules will be deleted, and in the incoming routing rules, all links will be replaced with “No connection to a provider, no authorization”',
 ];

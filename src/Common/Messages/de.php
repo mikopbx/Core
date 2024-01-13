@@ -1211,4 +1211,7 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'ex_ImpossibleToGetSecret' => 'Benutzerkennwort konnte nicht abgerufen werden',
     'am_NoAnyServersYet' => 'Es gibt hier noch keine AMI-Benutzer',
     'pr_Note' => 'Hinweis oder nützliche Informationen zum Anbieter',
+    'bt_ToolTipCopy' => 'Kopieren',
+    'pr_DeleteDescription_v2' => 'Gemeinsam mit dem Provider werden alle zugehörigen Outgoing-Routing-Regeln gelöscht und in den Incoming-Routing-Regeln alle Links durch „Keine Verbindung zu einem Provider, keine Autorisierung“ ersetzt.',
+    'ir_AnyProvider_v2' => 'Keine Verbindung zu einem Anbieter, keine Autorisierung',
 ];

@@ -1208,4 +1208,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ex_ImpossibleToGetSecret' => 'Det gick inte att få användarlösenord',
     'am_NoAnyServersYet' => 'Det finns inga AMI-användare här än',
     'pr_Note' => 'Notera eller användbar information om leverantören',
+    'bt_ToolTipCopy' => 'Kopiera',
+    'pr_DeleteDescription_v2' => 'Tillsammans med leverantören kommer alla associerade regler för utgående routing att raderas, och i de inkommande routingreglerna kommer alla länkar att ersättas med "Ingen anslutning till en leverantör, ingen behörighet"',
+    'ir_AnyProvider_v2' => 'Ingen anslutning till en leverantör, ingen auktorisering',
 ];

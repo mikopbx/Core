@@ -1241,4 +1241,7 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'am_NoAnyServersYet' => 'Nu există încă utilizatori AMI aici',
     'ex_ImpossibleToGetSecret' => 'Nu s-a putut obține parola de utilizator',
     'pr_Note' => 'Notă sau informații utile despre furnizor',
+    'bt_ToolTipCopy' => 'Copie',
+    'pr_DeleteDescription_v2' => 'Împreună cu furnizorul, toate regulile de rutare de ieșire asociate vor fi șterse, iar în regulile de rutare de intrare, toate legăturile vor fi înlocuite cu „Fără conexiune la un furnizor, fără autorizare”',
+    'ir_AnyProvider_v2' => 'Fără conexiune cu un furnizor, fără autorizare',
 ];

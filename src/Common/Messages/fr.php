@@ -1208,4 +1208,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ex_ImpossibleToGetSecret' => 'Échec de l\'obtention du mot de passe utilisateur',
     'am_NoAnyServersYet' => 'Il n\'y a pas encore d\'utilisateurs AMI ici',
     'pr_Note' => 'Remarque ou informations utiles sur le fournisseur',
+    'bt_ToolTipCopy' => 'Copie',
+    'ir_AnyProvider_v2' => 'Pas de connexion à un fournisseur, pas d\'autorisation',
+    'pr_DeleteDescription_v2' => 'Avec le fournisseur, toutes les règles de routage sortant associées seront supprimées, et dans les règles de routage entrant, tous les liens seront remplacés par « Pas de connexion à un fournisseur, pas d\'autorisation ».',
 ];

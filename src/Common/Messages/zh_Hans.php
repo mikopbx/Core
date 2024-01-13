@@ -1208,4 +1208,7 @@ return [
     'ex_ImpossibleToGetSecret' => '获取用户密码失败',
     'am_NoAnyServersYet' => '这里还没有 AMI 用户',
     'pr_Note' => '有关提供商的注释或有用信息',
+    'bt_ToolTipCopy' => '复制',
+    'pr_DeleteDescription_v2' => '与提供商一起，所有关联的传出路由规则都将被删除，并且在传入路由规则中，所有链接都将替换为“不连接到提供商，无授权”',
+    'ir_AnyProvider_v2' => '没有与提供商的连接，没有授权',
 ];

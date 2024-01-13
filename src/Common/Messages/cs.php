@@ -1208,4 +1208,7 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'ex_ImpossibleToGetSecret' => 'Nepodařilo se získat uživatelské heslo',
     'am_NoAnyServersYet' => 'Zatím zde nejsou žádní uživatelé AMI',
     'pr_Note' => 'Poznámka nebo užitečné informace o poskytovateli',
+    'bt_ToolTipCopy' => 'kopírovat',
+    'pr_DeleteDescription_v2' => 'Společně s poskytovatelem budou smazána všechna související pravidla odchozího směrování a v pravidlech příchozího směrování budou všechny odkazy nahrazeny textem „Žádné připojení k poskytovateli, žádná autorizace“',
+    'ir_AnyProvider_v2' => 'Žádné spojení s poskytovatelem, žádná autorizace',
 ];

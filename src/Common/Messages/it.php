@@ -1208,4 +1208,7 @@ Il coupon può essere attivato una volta, dopodiché viene riscattato.',
     'ex_ImpossibleToGetSecret' => 'Impossibile ottenere la password utente',
     'am_NoAnyServersYet' => 'Non ci sono ancora utenti AMI qui',
     'pr_Note' => 'Nota o informazioni utili sul fornitore',
+    'bt_ToolTipCopy' => 'copia',
+    'pr_DeleteDescription_v2' => 'Insieme al provider verranno cancellate tutte le regole di routing in uscita associate e nelle regole di routing in entrata tutti i collegamenti verranno sostituiti con "Nessuna connessione a un provider, nessuna autorizzazione"',
+    'ir_AnyProvider_v2' => 'Nessuna connessione a un provider, nessuna autorizzazione',
 ];

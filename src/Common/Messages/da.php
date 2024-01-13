@@ -1208,4 +1208,7 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'ex_ImpossibleToGetSecret' => 'Kunne ikke hente brugeradgangskode',
     'am_NoAnyServersYet' => 'Der er ingen AMI-brugere her endnu',
     'pr_Note' => 'Bemærk eller nyttige oplysninger om udbyderen',
+    'bt_ToolTipCopy' => 'Kopi',
+    'ir_AnyProvider_v2' => 'Ingen forbindelse til en udbyder, ingen autorisation',
+    'pr_DeleteDescription_v2' => 'Sammen med udbyderen vil alle tilknyttede udgående routing-regler blive slettet, og i de indgående routing-regler vil alle links blive erstattet med "Ingen forbindelse til en udbyder, ingen autorisation"',
 ];

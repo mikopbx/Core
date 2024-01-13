@@ -1208,4 +1208,7 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'ex_ImpossibleToGetSecret' => 'Nie udało się uzyskać hasła użytkownika',
     'am_NoAnyServersYet' => 'Nie ma tu jeszcze żadnych użytkowników AMI',
     'pr_Note' => 'Uwaga lub przydatne informacje o dostawcy',
+    'bt_ToolTipCopy' => 'Kopiuj',
+    'ir_AnyProvider_v2' => 'Brak połączenia z dostawcą, brak autoryzacji',
+    'pr_DeleteDescription_v2' => 'Wraz z dostawcą wszystkie powiązane reguły routingu wychodzącego zostaną usunięte, a w regułach routingu przychodzącego wszystkie linki zostaną zastąpione słowami „Brak połączenia z dostawcą, brak autoryzacji”',
 ];
