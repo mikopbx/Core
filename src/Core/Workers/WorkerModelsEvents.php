@@ -55,6 +55,7 @@ use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\QueueConf;
+use MikoPBX\Core\Asterisk\Configs\ResParkingConf;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\{BeanstalkClient,
     Configs\CronConf,
@@ -89,63 +90,35 @@ ini_set('display_startup_errors', 1);
 class WorkerModelsEvents extends WorkerBase
 {
     private const R_MANAGERS = 'reloadManager';
-
     private const R_QUEUES = 'reloadQueues';
-
     private const R_DIALPLAN = 'reloadDialplan';
-
+    private const R_PARKING  = 'reloadParking';
     private const R_CUSTOM_F = 'updateCustomFiles';
-
     private const R_FIREWALL = 'reloadFirewall';
-
     private const R_NETWORK = 'networkReload';
-
     private const R_IAX = 'reloadIax';
-
     private const R_SIP = 'reloadSip';
-
     private const R_RTP = 'rtpReload';
-
     private const R_PBX_CORE = 'pbxCoreReload';
-
     private const R_FEATURES = 'reloadFeatures';
-
     private const R_CRON = 'reloadCron';
-
     public const  R_NGINX = 'reloadNginx';
-
     public const  R_NGINX_CONF = 'reloadNginxConf';
-
     public const  R_FAIL2BAN_CONF = 'reloadFail2BanConf';
-
     private const R_PHP_FPM = 'reloadPHPFPM';
-
     private const R_TIMEZONE = 'updateTomeZone';
-
     private const R_SYSLOG = 'restartSyslogD';
-
     private const R_SSH = 'reloadSSH';
-
     private const R_LICENSE = 'reloadLicense';
-
     private const R_NATS = 'reloadNats';
-
     private const R_VOICEMAIL = 'reloadVoicemail';
-
     private const R_REST_API_WORKER = 'reloadRestAPIWorker';
-
     private const R_CALL_EVENTS_WORKER = 'reloadWorkerCallEvents';
-
     private const R_PBX_MODULE_STATE = 'afterModuleStateChanged';
-
     private const R_MOH = 'reloadMoh';
-
     private const R_NTP = 'reloadNtp';
-
     private const R_UPDATE_REC_SAVE_PERIOD = 'updateRecordSavePeriod';
-
     private const R_ADVICES = 'cleanupAdvicesCache';
-
     private const R_SENTRY = 'reloadSentry';
 
     private int $last_change;
@@ -197,6 +170,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_RTP,
             self::R_IAX,
             self::R_DIALPLAN,
+            self::R_PARKING,
             self::R_QUEUES,
             self::R_MANAGERS,
             self::R_CUSTOM_F,
@@ -233,9 +207,6 @@ class WorkerModelsEvents extends WorkerBase
             'settingName' => [
                 'PBXLanguage',
                 'PBXInternalExtensionLength',
-                PbxSettingsConstants::PBX_CALL_PARKING_EXT,
-                PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT,
-                PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT,
                 'PBXFeatureAttendedTransfer',
                 'PBXFeatureBlindTransfer',
                 'PBXFeatureDigitTimeout',
@@ -246,6 +217,20 @@ class WorkerModelsEvents extends WorkerBase
             'functions' => [
                 self::R_FEATURES,
                 self::R_DIALPLAN,
+            ],
+        ];
+
+        // Parking settings
+        $tables[] = [
+            'settingName' => [
+                PbxSettingsConstants::PBX_CALL_PARKING_EXT,
+                PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT,
+                PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT,
+            ],
+            'functions' => [
+                self::R_FEATURES, // ??? parkcall in features.conf ???
+                self::R_DIALPLAN,
+                self::R_PARKING,
             ],
         ];
 
@@ -957,6 +942,18 @@ class WorkerModelsEvents extends WorkerBase
     public function reloadDialplan(): void
     {
         PBX::dialplanReload();
+    }
+
+    /**
+     * Reloads res_parking
+     * @return void
+     */
+    public function reloadParking(): void
+    {
+        $parkingConf = new ResParkingConf();
+        $parkingConf->generateConfig();
+        $asteriskPath = Util::which('asterisk');
+        Processes::mwExec("$asteriskPath -rx 'module reload res_parking'", $arr_out);
     }
 
     /**
