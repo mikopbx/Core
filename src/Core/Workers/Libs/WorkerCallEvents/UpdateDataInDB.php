@@ -95,7 +95,6 @@ class UpdateDataInDB
                 $insert_data['src_chan'],
                 $insert_data['dst_chan'],
                 $insert_data['work_completed'],
-                $insert_data['did'],
                 $insert_data['id'],
                 $insert_data['from_account'],
                 $insert_data['to_account'],
