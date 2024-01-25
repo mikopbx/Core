@@ -172,13 +172,15 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
      */
     private function findCheckOnPageAndMarkIt(string $key, string $value): void
     {
-        $this->changeCheckBoxState("{$key}_main", false);
-        if (strpos($value, 'read') !== false && strpos($value, 'write') !== false) {
-            $this->changeCheckBoxState("{$key}_main", true);
-        } elseif (strpos($value, 'read') !== false) {
+        if (strpos($value, 'read') !== false) {
             $this->changeCheckBoxState("{$key}_read", true);
-        } elseif (strpos($value, 'write') !== false) {
+        } else {
+            $this->changeCheckBoxState("{$key}_read", false);
+        }
+        if (strpos($value, 'write') !== false) {
             $this->changeCheckBoxState("{$key}_write", true);
+        } else {
+            $this->changeCheckBoxState("{$key}_write", false);
         }
     }
 
@@ -199,10 +201,6 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
             $this->assertCheckBoxStageIsEqual("{$key}_write", true);
         } else {
             $this->assertCheckBoxStageIsEqual("{$key}_write", false);
-        }
-
-        if (strpos($value, 'read') === false && strpos($value, 'write') === false) {
-            $this->assertCheckBoxStageIsEqual("{$key}_main", false);
         }
     }
 }
