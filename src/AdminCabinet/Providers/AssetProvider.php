@@ -23,6 +23,8 @@ namespace MikoPBX\AdminCabinet\Providers;
 
 use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\AdminCabinet\Plugins\AssetManager as Manager;
+use MikoPBX\Common\Providers\LanguageProvider;
+use MikoPBX\Common\Providers\MessagesProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Core\System\Configs\SentryConf;
@@ -286,11 +288,11 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeLocalizationAssets(DiInterface $di, string $version): void
     {
-        $language = $di->getShared('language');
+        $language = $di->getShared(LanguageProvider::SERVICE_NAME);
         $fileName = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
         if (!file_exists($fileName)) {
             $arrStr = [];
-            foreach ($di->getShared('messages') as $key => $value) {
+            foreach ($di->getShared(MessagesProvider::SERVICE_NAME) as $key => $value) {
                 $arrStr[$key] = str_replace(
                     "'",
                     "\\'",
