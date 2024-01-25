@@ -50,7 +50,7 @@ class AdvicesProcessor extends Injectable
         $action = $request['action'];
         if ('getList' === $action) {
             $proc = new self();
-            $res = $proc->getAdvicesAction();
+            $res = $proc->getAdviceAction();
         } else {
             $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
         }
@@ -63,7 +63,7 @@ class AdvicesProcessor extends Injectable
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    private function getAdvicesAction(): PBXApiResult
+    private function getAdviceAction(): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
