@@ -44,18 +44,19 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
         );
 
-        // Change SSH password
-        self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/ssh");
-        $this->changeInputField('SSHPassword', $params['password']);
-        $this->changeInputField('SSHPasswordRepeat', $params['password']);
+        $currentUrl = self::$driver->getCurrentUrl();
 
-        // Change WebAdmin password
-        self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/passwords");
-        $this->changeInputField('WebAdminPassword', $params['password']);
-        $this->changeInputField('WebAdminPasswordRepeat', $params['password']);
-
-        // Submit the form
-        $this->submitForm('general-settings-form');
+        if (strpos($currentUrl, 'ssh') !== false) {
+            // Change SSH password
+            $this->changePassword('ssh', 'SSHPassword', $params['password']);;
+            // Change WebAdmin password
+            $this->changePassword('passwords', 'WebAdminPassword', $params['password']);
+        } else {
+            // Change WebAdmin password
+            $this->changePassword('passwords', 'WebAdminPassword', $params['password']);
+            // Change SSH password
+            $this->changePassword('ssh', 'SSHPassword', $params['password']);;
+        }
 
         // Click on the sidebar menu item to refresh the page
         $this->clickSidebarMenuItemByHref("/admin-cabinet/general-settings/modify/");
@@ -70,6 +71,15 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
         $this->assertInputFieldValueEqual('WebAdminPassword', $params['checkPassword'], true);
         $this->assertInputFieldValueEqual('WebAdminPasswordRepeat', $params['checkPassword'], true);
     }
+
+    // Change password field
+    function changePassword(string $path, string $passwordFieldName, string $password) {
+        self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$path}");
+        $this->changeInputField($passwordFieldName, $password);
+        $this->changeInputField($passwordFieldName . 'Repeat', $password);
+        $this->submitForm('general-settings-form');
+    }
+
 
     /**
      * Dataset provider for password change test.
