@@ -57,7 +57,7 @@ class Entrypoint
 
             // General settings.
             'SSH_PORT' => PbxSettingsConstants::SSH_PORT,
-            'WEB_PORT' => 'WEBPort',
+            'WEB_PORT' => PbxSettingsConstants::WEB_PORT,
             'WEB_HTTPS_PORT' => 'WEBHTTPSPort',
             'SIP_PORT' => 'SIPPort',
             'TLS_PORT' => 'TLS_PORT',

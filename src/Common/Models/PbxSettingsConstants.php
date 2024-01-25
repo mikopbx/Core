@@ -8,8 +8,14 @@ namespace MikoPBX\Common\Models;
  */
 abstract class PbxSettingsConstants
 {
+    // Common
     const WWW_ENCRYPTION_KEY = 'WWWEncryptionKey';
+    const CLOUD_INSTANCE_ID = 'CloudInstanceId';
 
+    // WWW constants
+    const WEB_PORT = 'WEBPort';
+    const WEB_ADMIN_LOGIN = 'WebAdminLogin';
+    const WEB_ADMIN_PASSWORD = 'WebAdminPassword';
 
     // SSH constants
     const SSH_PASSWORD = 'SSHPassword';

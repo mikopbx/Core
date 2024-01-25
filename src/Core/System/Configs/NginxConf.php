@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Network;
@@ -109,7 +110,7 @@ class NginxConf extends Injectable
         }
 
         // HTTP
-        $WEBPort      = $this->mikoPBXConfig->getGeneralSettings('WEBPort');
+        $WEBPort      = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_PORT);
         $WEBHTTPSPort = $this->mikoPBXConfig->getGeneralSettings('WEBHTTPSPort');
 
         $config = file_get_contents("{$httpConfigFile}.original");

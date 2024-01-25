@@ -344,7 +344,7 @@ class WorkerModelsEvents extends WorkerBase
                 'AMIPort',
                 'AJAMPort',
                 'AJAMPortTLS',
-                'WEBPort',
+                PbxSettingsConstants::WEB_PORT,
                 'WEBHTTPSPort',
                 PbxSettingsConstants::SSH_PORT,
                 'PBXFirewallEnabled',
@@ -359,7 +359,7 @@ class WorkerModelsEvents extends WorkerBase
         // FirewallParameters
         $tables[] = [
             'settingName' => [
-                'WEBPort',
+                PbxSettingsConstants::WEB_PORT,
                 'WEBHTTPSPort',
                 'WEBHTTPSPublicKey',
                 'WEBHTTPSPrivateKey',
@@ -471,7 +471,7 @@ class WorkerModelsEvents extends WorkerBase
         // Advices
         $tables[] = [
             'settingName' => [
-                'WebAdminPassword',
+                PbxSettingsConstants::WEB_ADMIN_PASSWORD,
                 PbxSettingsConstants::SSH_PASSWORD,
                 'PBXFirewallEnabled',
             ],

@@ -149,11 +149,11 @@ class FirewallRules extends ModelsBase
             'WEB' => [
                 'rules' => [
                     [
-                        'portfrom' => $protectedPortSet['WEBPort'],
-                        'portto' => $protectedPortSet['WEBPort'],
+                        'portfrom' => $protectedPortSet[PbxSettingsConstants::WEB_PORT],
+                        'portto' => $protectedPortSet[PbxSettingsConstants::WEB_PORT],
                         'protocol' => 'tcp',
-                        'portFromKey' => 'WEBPort',
-                        'portToKey' => 'WEBPort',
+                        'portFromKey' => PbxSettingsConstants::WEB_PORT,
+                        'portToKey' => PbxSettingsConstants::WEB_PORT,
                     ],
                     [
                         'portfrom' => $protectedPortSet['WEBHTTPSPort'],
@@ -252,7 +252,7 @@ class FirewallRules extends ModelsBase
             'AMIPort',
             'AJAMPort',
             'AJAMPortTLS',
-            'WEBPort',
+            PbxSettingsConstants::WEB_PORT,
             'WEBHTTPSPort',
             PbxSettingsConstants::SSH_PORT,
         ];

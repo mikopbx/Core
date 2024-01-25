@@ -61,7 +61,7 @@ class GeneralSettingsEditForm extends BaseForm
                 case 'AJAMPort':
                 case 'AJAMPortTLS':
                 case PbxSettingsConstants::SSH_PORT:
-                case 'WEBPort':
+                case PbxSettingsConstants::WEB_PORT:
                 case 'WEBHTTPSPort':
                 case PbxSettingsConstants::PBX_CALL_PARKING_EXT:
                 case PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT:
@@ -80,7 +80,7 @@ class GeneralSettingsEditForm extends BaseForm
                         )
                     );
                     break;
-                case 'WebAdminPassword':
+                case PbxSettingsConstants::WEB_ADMIN_PASSWORD:
                     $this->add(new Password($key, ['value' => self::HIDDEN_PASSWORD]));
                     $this->add(
                         new Password(

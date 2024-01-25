@@ -108,8 +108,8 @@ class RestoreDefaultSettings extends \Phalcon\Di\Injectable
             'RedirectToHttps',
             'PBXLanguage',
             'PBXVersion',
-            'WebAdminLogin',
-            'WebAdminPassword',
+            PbxSettingsConstants::WEB_ADMIN_LOGIN,
+            PbxSettingsConstants::WEB_ADMIN_PASSWORD,
             'WebAdminLanguage',
         ];
         foreach ($defaultValues as $key=>$defaultValue){

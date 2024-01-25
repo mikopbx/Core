@@ -26,6 +26,7 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7\Message;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\DiInterface;
@@ -68,7 +69,7 @@ class PBXCoreRESTClientProvider implements ServiceProviderInterface
         $requestData['headers'] = $headers;
 
         // Get the web port from PbxSettings
-        $webPort = PbxSettings::getValueByKey('WEBPort');
+        $webPort = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_PORT);
 
         // Create a new HTTP client instance
         $client = new Client([

@@ -107,7 +107,7 @@ class PbxSettings extends ModelsBase
             'SSHecdsaKey' => '',
             PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD => '0',
             'SSHLanguage' => 'en',
-            'WEBPort' => '80',
+            PbxSettingsConstants::WEB_PORT => '80',
             'WEBHTTPSPort' => '443',
             'WEBHTTPSPublicKey' => '',
             'WEBHTTPSPrivateKey' => '',
@@ -154,12 +154,13 @@ class PbxSettings extends ModelsBase
             'PBXTimezone' => 'Europe/Moscow',
             'PBXVersion' => '2020.1.1',
             'PBXAllowGuestCalls' => '0',
-            'WebAdminLogin' => 'admin',
-            'WebAdminPassword' => 'admin',
+            PbxSettingsConstants::WEB_ADMIN_LOGIN => 'admin',
+            PbxSettingsConstants::WEB_ADMIN_PASSWORD => 'admin',
             'WebAdminLanguage' => 'en',
             'SystemNotificationsEmail' => '',
             'SystemEmailForMissed' => '',
             'SendMetrics' => '1',
+            PbxSettingsConstants::CLOUD_INSTANCE_ID => '',
         ];
     }
 

@@ -290,7 +290,7 @@ class Fail2BanConf extends Injectable
 
         // Define ports for different services
         $httpPorts = [
-            $this->allPbxSettings['WEBPort'],
+            $this->allPbxSettings[PbxSettingsConstants::WEB_PORT],
             $this->allPbxSettings['WEBHTTPSPort']
         ];
         $sshPort = [

@@ -269,8 +269,8 @@ class CloudProvisioning
         if (empty($webPassword)) {
             return;
         }
-        $this->updatePbxSettings('WebAdminPassword', $webPassword);
-        $this->updatePbxSettings('CloudInstanceId', $webPassword);
+        $this->updatePbxSettings(PbxSettingsConstants::WEB_ADMIN_PASSWORD, $webPassword);
+        $this->updatePbxSettings(PbxSettingsConstants::CLOUD_INSTANCE_ID, $webPassword);
     }
 
     /**

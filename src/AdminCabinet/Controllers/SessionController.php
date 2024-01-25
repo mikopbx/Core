@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
@@ -63,8 +64,8 @@ class SessionController extends BaseController
         $loginFromUser = $this->request->getPost('login');
         $passFromUser = $this->request->getPost('password');
         $this->flash->clear();
-        $login = PbxSettings::getValueByKey('WebAdminLogin');
-        $passwordHash = PbxSettings::getValueByKey('WebAdminPassword');
+        $login = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
+        $passwordHash = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
 
         $userLoggedIn = false;
         $sessionParams = [];
