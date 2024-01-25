@@ -81,8 +81,8 @@ class GeneralSettingsController extends BaseController
         // Initialize an array to keep track of passwords that fail the check
         $passwordCheckFail = [];
 
-        $cloudInstanceId = $data['CloudInstanceId'] ?? '';
-        $checkPasswordFields = [PbxSettingsConstants::SSH_PASSWORD, 'WebAdminPassword'];
+        $cloudInstanceId = $data[PbxSettingsConstants::CLOUD_INSTANCE_ID] ?? '';
+        $checkPasswordFields = [PbxSettingsConstants::SSH_PASSWORD, PbxSettingsConstants::WEB_ADMIN_PASSWORD];
 
         // If SSH is disabled, remove the SSH_PASSWORD key
         if ($data[PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD] === 'on') {
@@ -236,7 +236,7 @@ class GeneralSettingsController extends BaseController
         if (isset($data[PbxSettingsConstants::SSH_PASSWORD])) {
             if ($data[PbxSettingsConstants::SSH_PASSWORD] === $pbxSettings[PbxSettingsConstants::SSH_PASSWORD]
                 || $data[PbxSettingsConstants::SSH_PASSWORD] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
-                $data[PbxSettingsConstants::SSH_PASSWORD_HASH_STRING] = md5($data['WebAdminPassword']);
+                $data[PbxSettingsConstants::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettingsConstants::WEB_ADMIN_PASSWORD]);
             } else {
                 $data[PbxSettingsConstants::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettingsConstants::SSH_PASSWORD]);
             }
@@ -261,7 +261,7 @@ class GeneralSettingsController extends BaseController
                 case PbxSettingsConstants::SSH_PASSWORD:
                     // Set newValue as WebAdminPassword if SSHPassword is the same as the default value
                     if ($data[$key] === $value) {
-                        $newValue = $data['WebAdminPassword'];
+                        $newValue = $data[PbxSettingsConstants::WEB_ADMIN_PASSWORD];
                     } elseif ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $data[$key];
                     } else {
@@ -275,7 +275,7 @@ class GeneralSettingsController extends BaseController
                 case 'PBXFeatureTransferDigitTimeout':
                     $newValue = ceil((int)$data['PBXFeatureDigitTimeout'] / 1000);
                     break;
-                case 'WebAdminPassword':
+                case PbxSettingsConstants::WEB_ADMIN_PASSWORD:
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $this->security->hash($data[$key]);
                     } else {

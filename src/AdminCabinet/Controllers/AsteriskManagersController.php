@@ -126,6 +126,9 @@ class AsteriskManagersController extends BaseController
         if ($manager === null) {
             $manager = new AsteriskManagerUsers();
         }
+
+        $manager->weakSecret = '0';
+
         foreach ($manager as $name => $value) {
             if (in_array($name, $this->arrCheckBoxes, true)) {
                 $manager->$name = ($data[$name . '_read'] === 'on') ? 'read' : '';
@@ -137,18 +140,7 @@ class AsteriskManagersController extends BaseController
             }
             $manager->$name = $data[$name];
         }
-        $errors = false;
-        if (!$manager->save()) {
-            $errors = $manager->getMessages();
-        }
-        if ($errors) {
-            $this->flash->error(implode('<br>', $errors));
-            $this->view->success = false;
-        } else {
-            $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-            $this->view->success = true;
-            $this->view->reload  = "asterisk-managers/modify/{$manager->id}";
-        }
+        $this->saveEntity($manager, "asterisk-managers/modify/{$manager->id}");
     }
 
     /**

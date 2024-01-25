@@ -28,7 +28,6 @@ use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
-use Phalcon\Text;
 
 /**
  * SecurityPlugin

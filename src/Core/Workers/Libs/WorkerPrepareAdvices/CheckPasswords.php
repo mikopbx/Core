@@ -30,7 +30,7 @@ use Phalcon\Di\Injectable;
 
 /**
  * Class CheckPasswords
- * This class is responsible for checking passwords quality on backend.
+ * This class is responsible for checking password quality on backend.
  *
  * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices
  */
@@ -44,127 +44,140 @@ class CheckPasswords extends Injectable
      */
     public function process(): array
     {
-        $fields = [];
-
-        // WebAdminPassword and SSHPassword
-        $messages = $this->preparePasswordFields($fields);
-
-        // SIP passwords
-        $this->prepareSipFields($fields);
-
-        // AMI Passwords
-        $this->prepareAmiFields($fields);
-
-        $cloudInstanceId = PbxSettings::getValueByKey('CloudInstanceId');
-        foreach ($fields as $key => $value) {
-            if ($cloudInstanceId !== $value['record'] && !Util::isSimplePassword($value['record'])) {
-                continue;
-            }
-
-            if (in_array($key, ['WebAdminPassword', PbxSettingsConstants::SSH_PASSWORD], true)) {
-                $messages['needUpdate'][] = $key;
-            }
-            $messages['warning'][] =
-                [
-                    'messageTpl'=>$value['message'],
-                    'messageParams'=> [
-                        'record' => $value['name'],
-                        'url' => $this->url->get($value['urlTemplate']),
-                    ]
-                ];
-        }
-
-        return $messages;
-    }
-
-
-    /**
-     * Prepares array of system passwords with representation to check password quality.
-     *
-     * @param array $fields
-     * @return array
-     */
-    private function preparePasswordFields(array &$fields): array
-    {
         $messages = [];
 
-        $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
-        $fields = [
-            'WebAdminPassword' => [
-                'urlTemplate' => 'general-settings/modify/#/passwords',
-                'message' => 'adv_WebPasswordWeak',
-                'name'  => 'WEB password',
-                'record' => PbxSettings::getValueByKey('WebAdminPassword')
-            ],
-            PbxSettingsConstants::SSH_PASSWORD => [
-                'urlTemplate' => 'general-settings/modify/#/ssh',
-                'message' => 'adv_SshPasswordWeak',
-                'name'  => 'SSH password',
-                'record' => PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD)
-            ],
-        ];
-        if ($arrOfDefaultValues['WebAdminPassword'] === PbxSettings::getValueByKey('WebAdminPassword')) {
-            $messages['error'][] = [
-                'messageTpl'=>'adv_YouUseDefaultWebPassword',
-                'messageParams'=>[
-                    'url'=>$this->url->get('general-settings/modify/#/passwords')
-                ]
-            ];
-            unset($fields['WebAdminPassword']);
-            $messages['needUpdate'][] = 'WebAdminPassword';
-        }
-        if ($arrOfDefaultValues[PbxSettingsConstants::SSH_PASSWORD] === PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD)) {
-            $messages['error'][] = [
-                'messageTpl'=>'adv_YouUseDefaultSSHPassword',
-                'messageParams'=>[
-                    'url'=>$this->url->get('general-settings/modify/#/ssh')
-                ]
-            ];
-            unset($fields[PbxSettingsConstants::SSH_PASSWORD]);
-            $messages['needUpdate'][] = PbxSettingsConstants::SSH_PASSWORD;
-        } elseif (PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE) !== md5_file('/etc/shadow')) {
-            $messages['warning'][] = [
-                'messageTpl'=>'adv_SSHPPasswordCorrupt',
-                'messageParams'=>[
-                    'url'=>$this->url->get('general-settings/modify/#/ssh')
-                ]
-            ];
-        }
+        $this->checkWebPassword($messages);
+
+        $this->checkSSHPassword($messages);
+
+        $this->checkSipSecrets($messages);
+
+        $this->checkAmiSecrets($messages);
+
         return $messages;
     }
 
     /**
-     * Prepares array of ami passwords with representation to check password quality.
-     * @param array $fields
-     * @return void
+     * Checks WEB password quality.
+     *
+     * @param array $messages
      */
-    private function prepareAmiFields(array &$fields): void
+    private function checkWebPassword(array &$messages): void
     {
-        $amiUsersData = AsteriskManagerUsers::find([
-                'columns' => 'id, username, secret']
-        );
-        foreach ($amiUsersData as $amiUser) {
-            $fields[$amiUser->username] = [
-                'urlTemplate' => 'asterisk-managers/modify/' . $amiUser->id,
-                'message' => 'adv_AmiPasswordWeak',
-                'name'  => $amiUser->username,
-                'record' => $amiUser->secret
+        $passwords = $this->getPasswordCollection();
+
+        if ($passwords->web === $passwords->cloudInstanceId) {
+            return; // It is OK
+        }
+
+        $messageParams = [
+            'name' => 'WEB password',
+            'url' => $this->url->get('general-settings/modify/#/passwords')
+        ];
+
+        if ($passwords->webByDefault === $passwords->web) {
+            // Check for default password
+            $messages['error'][] = [
+                'messageTpl' => 'adv_YouUseDefaultWebPassword',
+                'messageParams' => $messageParams
             ];
+            $messages['needUpdate'][] = PbxSettingsConstants::WEB_ADMIN_PASSWORD;
+        } elseif (Util::isSimplePassword($passwords->web)) {
+            // Check for weak password
+            $messages['error'][] = [
+                'messageTpl' => 'adv_WebPasswordWeak',
+                'messageParams' => $messageParams
+            ];
+            $messages['needUpdate'][] = PbxSettingsConstants::WEB_ADMIN_PASSWORD;
         }
     }
 
     /**
-     * Prepares array of sip passwords with representation to check password quality.
-     * @param array $fields
+     * Prepare a password collection object
+     *
+     * @return \stdClass
+     */
+    public function getPasswordCollection(): \stdClass
+    {
+        $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
+
+        $passwords = new \stdClass();
+        $passwords->web = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
+        $passwords->webByDefault = $arrOfDefaultValues[PbxSettingsConstants::WEB_ADMIN_PASSWORD];
+        $passwords->ssh = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
+        $passwords->sshByDefault = $arrOfDefaultValues[PbxSettingsConstants::SSH_PASSWORD];
+        $passwords->sshHashFile = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE);
+        $passwords->cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
+        return $passwords;
+    }
+
+    /**
+     * Checks SSH password quality and /etc/shadow integrity
+     *
+     * @param array $messages
+     */
+    private function checkSSHPassword(array &$messages): void
+    {
+        $passwords = $this->getPasswordCollection();
+
+        $messageParams = [
+            'name' => 'SSH password',
+            'url' => $this->url->get('general-settings/modify/#/ssh')
+        ];
+
+        if ($passwords->sshByDefault === $passwords->ssh) {
+            // Check for default password
+            $messages['error'][] = [
+                'messageTpl' => 'adv_YouUseDefaultSSHPassword',
+                'messageParams' => $messageParams
+            ];
+            $messages['needUpdate'][] = PbxSettingsConstants::SSH_PASSWORD;
+        } elseif ($passwords->ssh === $passwords->cloudInstanceId) {
+            // It Is ok
+        } elseif (Util::isSimplePassword($passwords->ssh)) {
+            // Check for weak password
+            $messages['warning'][] = [
+                'messageTpl' => 'adv_SshPasswordWeak',
+                'messageParams' => $messageParams
+            ];
+        } elseif ($passwords->sshHashFile !== md5_file('/etc/shadow')) {
+            // Check for shadow file integrity
+            $messages['error'][] = [
+                'messageTpl' => 'adv_SSHPPasswordCorrupt',
+                'messageParams' => $messageParams
+            ];
+            $messages['needUpdate'][] = PbxSettingsConstants::SSH_PASSWORD;
+        }
+    }
+
+    /**
+     * Prepares an array of sip passwords with representation to check password quality.
+     * @param array $messages
      * @return void
      */
-    private function prepareSipFields(array &$fields): void
+    private function checkSipSecrets(array &$messages): void
     {
+
+        // Check passwords and save status
+        $parameters = [
+            'conditions' => 'weakSecret="0"'
+        ];
+
+        $sipRecordsToCheck = SIP::find($parameters);
+        foreach ($sipRecordsToCheck as $sipRecord) {
+            if (Util::isSimplePassword($sipRecord->secret)) {
+                $sipRecord->assign(['weakSecret' => '2']); // Weak password
+            } else {
+                $sipRecord->assign(['weakSecret' => '1']); // OK, it is a strong password
+            }
+        }
+
+        // Collect weak Extensions records
         $parameters = [
             'models' => [
                 'Extensions' => Extensions::class,
             ],
-            'conditions' => 'Extensions.is_general_user_number = "1"',
+            'conditions' => 'Extensions.is_general_user_number = "1" AND Sip.weakSecret="2"',
             'columns' => [
                 'id' => 'Extensions.id',
                 'username' => 'Extensions.callerid',
@@ -191,13 +204,55 @@ class CheckPasswords extends Injectable
 
         foreach ($queryResult as $user) {
             $key = "{$user->username} <{$user->number}>";
-            $fields[$key] = [
-                'urlTemplate' => 'extensions/modify/' . $user->id,
-                'message' => 'adv_SipPasswordWeak',
-                'name'  => $key,
-                'record' => $user->secret
-            ];
+            $messages['warning'][] =
+                [
+                    'messageTpl' => 'adv_SipPasswordWeak',
+                    'messageParams' => [
+                        'record' => $key,
+                        'url' => $this->url->get('extensions/modify/' . $user->id),
+                    ]
+                ];
         }
     }
 
+    /**
+     * Prepares an array of ami passwords with representation to check password weakness.
+     * @param array $messages
+     * @return void
+     */
+    private function checkAmiSecrets(array &$messages): void
+    {
+        // Check passwords and save status
+        $parameters = [
+            'conditions' => 'weakSecret="0"'
+        ];
+
+        $amiUsersToCheck = AsteriskManagerUsers::find($parameters);
+        foreach ($amiUsersToCheck as $amiUser) {
+            if (Util::isSimplePassword($amiUser->secret)) {
+                $amiUser->assign(['weakSecret' => '2']); // Weak password
+            } else {
+                $amiUser->assign(['weakSecret' => '1']); // OK, it is a strong password
+            }
+        }
+
+        // Collect weak AMI records
+        $parameters = [
+            'columns' => 'id, username, secret',
+            'conditions' => 'weakSecret="2"'
+        ];
+
+        $amiUsersData = AsteriskManagerUsers::find($parameters);
+
+        foreach ($amiUsersData as $amiUser) {
+            $messages['warning'][] =
+                [
+                    'messageTpl' => 'adv_AmiPasswordWeak',
+                    'messageParams' => [
+                        'record' => $amiUser->username,
+                        'url' => $this->url->get('asterisk-managers/modify/' . $amiUser->id),
+                    ]
+                ];
+        }
+    }
 }

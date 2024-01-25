@@ -233,6 +233,9 @@ class SaveRecord extends Injectable
         $metaData = Di::getDefault()->get(ModelsMetadataProvider::SERVICE_NAME);
         foreach ($metaData->getAttributes($sipEntity) as $name) {
             switch ($name) {
+                case 'weakSecret':
+                    $sipEntity->$name = '0';
+                    break;
                 case 'networkfilterid':
                     if ($dataStructure->sip_networkfilterid === 'none') {
                         $sipEntity->$name = null;
