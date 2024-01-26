@@ -30,7 +30,6 @@ class DeleteExtensionTest extends MikoPBXTestsBase
     /**
      * Test the deletion of an extension.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test.

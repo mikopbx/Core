@@ -31,7 +31,6 @@ class CustomFileChangeTest extends MikoPBXTestsBase
     /**
      * Test to change a custom file.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for changing the custom file.

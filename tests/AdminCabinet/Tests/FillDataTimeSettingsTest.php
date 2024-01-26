@@ -29,7 +29,6 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
     /**
      * Test the change of date and time settings.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test.

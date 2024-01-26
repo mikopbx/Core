@@ -31,7 +31,6 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
     /**
      * Test adding a new VLAN configuration.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for configuring a new VLAN.

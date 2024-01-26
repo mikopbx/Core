@@ -34,7 +34,6 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     /**
      * Test changing extension settings.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test case.
@@ -66,7 +65,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     /**
      * Test changing mobile settings for an extension.
      *
-     * @depends testLogin
+     * @depends testChangeExtension
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test case.
@@ -108,7 +107,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     /**
      * Test clearing mobile settings for an extension.
      *
-     * @depends testLogin
+     * @depends testChangeMobile
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test case.
@@ -149,7 +148,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     /**
      * Test changing email settings for an extension.
      *
-     * @depends testLogin
+     * @depends testClearMobile
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test case.
@@ -180,7 +179,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     /**
      * Test clearing email settings for an extension.
      *
-     * @depends testLogin
+     * @depends testChangeEmail
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test case.
@@ -210,7 +209,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     /**
      * Test changing forwarding settings for an extension.
      *
-     * @depends testLogin
+     * @depends testClearEmail
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test case.
@@ -250,7 +249,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     /**
      * Test changing various extension settings.
      *
-     * @depends testLogin
+     * @depends testChangeForwarding
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test case.

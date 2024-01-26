@@ -34,7 +34,6 @@ class ChangeCallQueueTest extends MikoPBXTestsBase
     /**
      * Test changing call queue extension settings.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test case.

@@ -96,7 +96,7 @@ class BrowserStackTest extends TestCase
         // Set the URL for the BrowserStack WebDriver endpoint
         $url  = "https://" . $GLOBALS['BROWSERSTACK_USERNAME'] . ":" . $GLOBALS['BROWSERSTACK_ACCESS_KEY'] . "@" . $CONFIG['server'] . "/wd/hub";
 
-        // Set the  build capabilities
+        // Set the build capabilities
         $caps['build'] = $GLOBALS['BUILD_NUMBER'];
 
         // Create a new WebDriver instance with the specified URL and capabilities
@@ -127,6 +127,14 @@ class BrowserStackTest extends TestCase
 
         // Maximize Browser size
         self::$driver->manage()->window()->maximize();
+
+        $cookies = unserialize(file_get_contents('C:\Users\hello\Documents\cookies.txt'));
+        foreach ($cookies as $cookie) {
+            self::$driver->manage()->addCookie($cookie);
+        }
+
+        // Go to the index page
+        self::$driver->navigate()->to($GLOBALS['SERVER_PBX']);
     }
 
     /**

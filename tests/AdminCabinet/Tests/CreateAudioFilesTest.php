@@ -33,7 +33,6 @@ class CreateAudioFilesTest extends MikoPBXTestsBase
     /**
      * Test creating an audio file.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the audio file.

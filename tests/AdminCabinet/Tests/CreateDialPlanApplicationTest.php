@@ -26,7 +26,6 @@ class CreateDialPlanApplicationTest extends MikoPBXTestsBase
     /**
      * Test creating a new dialplan application.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the new application.

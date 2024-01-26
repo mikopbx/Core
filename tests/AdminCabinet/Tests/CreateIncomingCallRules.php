@@ -30,7 +30,6 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
     /**
      * Test the deletion of all incoming call rules.
      *
-     * @depends testLogin
      */
     public function testDeleteCallRules(): void
     {
@@ -44,7 +43,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
     /**
      * Test the creation and modification of incoming call rules.
      *
-     * @depends      testLogin
+     * @depends      testDeleteCallRules
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for creating the incoming call rule.

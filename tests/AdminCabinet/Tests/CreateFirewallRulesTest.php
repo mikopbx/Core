@@ -30,7 +30,6 @@ class CreateFirewallRulesTest extends MikoPBXTestsBase
     /**
      * Test the deletion of all firewall rules.
      *
-     * @depends testLogin
      */
     public function testDeleteAllFirewallRules(): void
     {
@@ -44,7 +43,7 @@ class CreateFirewallRulesTest extends MikoPBXTestsBase
     /**
      * Test the creation and modification of firewall rules.
      *
-     * @depends testLogin
+     * @depends testDeleteAllFirewallRules
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for creating the rule.

@@ -30,8 +30,6 @@ class DeleteCallQueueTest extends MikoPBXTestsBase
     /**
      * Test the deletion of an extension.
      *
-     * @depends testLogin
-     *
      * @param array $params The parameters for the test.
      */
     public function testDeleteCallQueue(array $params): void

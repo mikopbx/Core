@@ -28,7 +28,6 @@ class CreateExtensionsTest extends MikoPBXTestsBase
     /**
      * Test the creation of extensions.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for creating the extension.

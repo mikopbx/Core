@@ -31,7 +31,6 @@ class CreateIVRMenusTest extends MikoPBXTestsBase
     /**
      * Test the creation and modification of IVR menus.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for creating the IVR menu.

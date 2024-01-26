@@ -28,7 +28,6 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
     /**
      * Test changing a weak password and verifying the changes.
      *
-     * @depends testLogin
      * @dataProvider passwordChangeProvider
      *
      * @param array $params The parameters for password change.

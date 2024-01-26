@@ -29,7 +29,6 @@ class CreateFail2BanRulesTest extends MikoPBXTestsBase
     /**
      * Test the creation of Fail2Ban rules.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for creating the rule.

@@ -30,7 +30,6 @@ class DeleteProviderTest extends MikoPBXTestsBase
     /**
      * Test the deletion of a provider.
      *
-     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test.
