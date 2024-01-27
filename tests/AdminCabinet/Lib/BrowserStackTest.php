@@ -160,7 +160,7 @@ class BrowserStackTest extends TestCase
     {
         $loginTest = new LoginTest();
         $loginParams = $loginTest->loginDataProvider();
-        $loginTest->testLogin($loginParams);
+        $loginTest->testLogin($loginParams[0][0]);
         self::$driver->get($GLOBALS['SERVER_PBX']);
         // Save auth cookie
         $cookies = self::$driver->manage()->getCookies();
