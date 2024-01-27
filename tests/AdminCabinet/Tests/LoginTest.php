@@ -44,9 +44,6 @@ class LoginTest extends MikoPBXTestsBase {
 
         $this->assertElementNotFound(WebDriverBy::xpath("//input[@type = 'text' and @id = 'login' and @name = 'login']"));
 
-        // Save auth cookie
-        $cookies = self::$driver->manage()->getCookies();
-        file_put_contents('C:\Users\hello\Documents\cookies.txt', serialize($cookies));
     }
 
     /**
