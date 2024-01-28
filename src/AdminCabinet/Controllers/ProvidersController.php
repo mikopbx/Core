@@ -65,7 +65,7 @@ class ProvidersController extends BaseController
         /** @var Providers $provider */
         $provider = Providers::findFirstByUniqid($uniqId);
         if ($provider === null) {
-            $uniqId = Sip::generateUniqueID('SIP-');
+            $uniqId = Sip::generateUniqueID('SIP-TRUNK-');
             $provider = new Providers();
             $provider->type = 'SIP';
             $provider->uniqid = $uniqId;
@@ -78,8 +78,8 @@ class ProvidersController extends BaseController
             $provider->Sip->qualifyfreq = 60;
             $provider->Sip->qualify = '1';
             $provider->Sip->secret = SIP::generateSipPassword();
-        }elseif($idIsEmpty){
-            $uniqId = Sip::generateUniqueID('SIP-');
+        } elseif($idIsEmpty){
+            $uniqId = Sip::generateUniqueID('SIP-TRUNK-');
             $oldProvider = $provider;
             $provider = new Providers();
             foreach ($oldProvider->toArray() as $key => $value){
@@ -129,7 +129,7 @@ class ProvidersController extends BaseController
         $provider = Providers::findFirstByUniqid($uniqId);
 
         if ($provider === null) {
-            $uniqId = Iax::generateUniqueID('IAX-');
+            $uniqId = Iax::generateUniqueID('IAX-TRUNK-');
             $provider = new Providers();
             $provider->type = 'IAX';
             $provider->uniqid = $uniqId;
@@ -139,7 +139,7 @@ class ProvidersController extends BaseController
             $provider->Iax->disabled = '0';
             $provider->Iax->qualify = '1';
         }elseif($idIsEmpty){
-            $uniqId = Iax::generateUniqueID('IAX-');
+            $uniqId = Iax::generateUniqueID('IAX-TRUNK-');
             $oldProvider = $provider;
             $provider = new Providers();
             foreach ($oldProvider->toArray() as $key => $value){
