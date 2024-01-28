@@ -61,8 +61,8 @@ class SessionController extends BaseController
         if (!$this->request->isPost()) {
             $this->forward('session/index');
         }
-        $loginFromUser = $this->request->getPost('login');
-        $passFromUser = $this->request->getPost('password');
+        $loginFromUser = (string)$this->request->getPost('login', null, 'guest');
+        $passFromUser = (string)$this->request->getPost('password', null, 'guest');
         $this->flash->clear();
         $login = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
         $passwordHash = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
