@@ -79,9 +79,9 @@ class IaxProviderEditForm extends BaseForm
         $this->add(new Check('noregister', $cheskarr));
 
         // Manualattributes
-        $this->addTextArea('manualattributes', $entity->getManualAttributes(), 80);
+        $this->addTextArea('manualattributes', $entity->getManualAttributes()??'', 80);
 
         // Note
-        $this->addTextArea('note', $options['note'], 80,['class'=>'confidential-field']);
+        $this->addTextArea('note', $options['note']??'', 80,['class'=>'confidential-field']);
     }
 }

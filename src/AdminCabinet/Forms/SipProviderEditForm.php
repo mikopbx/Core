@@ -177,9 +177,9 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Check('receive_calls_without_auth', $cheskarr));
 
         // Manualattributes
-        $this->addTextArea('manualattributes', $entity->getManualAttributes(), 65);
+        $this->addTextArea('manualattributes', $entity->getManualAttributes()??'', 65);
 
         // Note
-        $this->addTextArea('note', $options['note'], 80,['class'=>'confidential-field']);
+        $this->addTextArea('note', $options['note']??'', 80, ['class'=>'confidential-field']);
     }
 }
