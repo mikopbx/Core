@@ -129,6 +129,7 @@
             </div>
         </div>
         <label>{{ t._('nw_PublicAddress') }}</label>
+        <div class="ui info message">{{ t._('nw_ExternIpHostMessage1') }} </div>
         <div class="inline fields">
             <div class="field max-width-400">
                 {{ form.render('extipaddr') }}
