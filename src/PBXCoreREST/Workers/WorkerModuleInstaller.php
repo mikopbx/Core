@@ -27,6 +27,7 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use Throwable;
+use ZipArchive;
 
 /**
  * The WorkerModuleInstaller class is responsible for handling the installation of a module from a file
@@ -84,9 +85,14 @@ class WorkerModuleInstaller extends WorkerBase
 
         file_put_contents( $this->progress_file, '25');
         // Unzip module folder
-        $semZaPath = Util::which('7za');
-        $exitCode = Processes::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
-        if ($exitCode !== 0) {
+        $zip = new ZipArchive();
+        if($zip->open($filePath)){
+            $result = $zip->extractTo($currentModuleDir);
+            $zip->close();
+        }else{
+            $result = false;
+        }
+        if ($result === false) {
             file_put_contents($this->error_file, 'Error occurred during module extraction.', FILE_APPEND);
             return;
         }

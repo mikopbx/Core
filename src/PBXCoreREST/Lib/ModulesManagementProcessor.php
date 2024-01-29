@@ -34,6 +34,7 @@ use MikoPBX\PBXCoreREST\Workers\WorkerModuleInstaller;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 use GuzzleHttp;
+use ZipArchive;
 
 
 /**
@@ -464,25 +465,22 @@ class ModulesManagementProcessor extends Injectable
         $res->processor = __METHOD__;
 
         if (file_exists($filePath)) {
-            $sevenZaPath = Util::which('7za');
-            $grepPath = Util::which('grep');
-            $echoPath = Util::which('echo');
-            $awkPath = Util::which('awk');
-            $cmd = 'f="' . $filePath . '"; p=`' . $sevenZaPath . ' l $f | ' . $grepPath . ' module.json`;if [ "$?" == "0" ]; then ' . $sevenZaPath . ' -so e -y -r $f `' . $echoPath . ' $p |  ' . $awkPath . ' -F" " \'{print $6}\'`; fi';
-
-            Processes::mwExec($cmd, $out);
-            $settings = json_decode(implode("\n", $out), true);
-
-            $moduleUniqueID = $settings['moduleUniqueID'] ?? null;
+            $moduleUniqueID = false;
+            $zip = new ZipArchive();
+            if ($zip->open($filePath) === TRUE) {
+                $out = $zip->getFromName('module.json');
+                $zip->close();
+                $settings       = json_decode($out, true);
+                $moduleUniqueID = $settings['moduleUniqueID'] ?? null;
+            }
             if (!$moduleUniqueID) {
                 $res->messages[] = 'The" moduleUniqueID " in the module file is not described.the json or file does not exist.';
-
                 return $res;
             }
             $res->success = true;
             $res->data = [
                 'filePath' => $filePath,
-                'uniqid' => $moduleUniqueID,
+                'uniqid'   => $moduleUniqueID,
             ];
         }
 
