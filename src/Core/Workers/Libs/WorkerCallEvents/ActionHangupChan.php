@@ -211,7 +211,7 @@ class ActionHangupChan
      *
      * @return void
      */
-    private static function hangupChanCheckSipTrtansfer(WorkerCallEvents $worker, $data, $channels): void
+    public static function hangupChanCheckSipTrtansfer(WorkerCallEvents $worker, $data, $channels): void
     {
         $not_local = (stripos($data['agi_channel'], 'local/') === false);
         if ($not_local === false || $data['OLD_LINKEDID'] !== $data['linkedid']) {

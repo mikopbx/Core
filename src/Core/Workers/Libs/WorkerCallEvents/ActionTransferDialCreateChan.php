@@ -42,7 +42,7 @@ class ActionTransferDialCreateChan
     {
         $chan = $data['dst_chan'] ?? '';
         if (!empty($chan)) {
-            $worker->addActiveChan($chan);
+            $worker->addActiveChan($chan, $data['linkedid']);
         }
         $filter = [
             'UNIQUEID=:UNIQUEID: AND endtime = "" AND answer = ""',
