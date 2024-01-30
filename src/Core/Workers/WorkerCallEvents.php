@@ -26,6 +26,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\Asterisk\Configs\CelConf;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
 use Phalcon\Exception;
@@ -360,10 +361,10 @@ class WorkerCallEvents extends WorkerBase
 
         // If event is 'ANSWER', call ActionCelAnswer::execute and return
         if ('ANSWER' === $event) {
-            ActionCelAnswer::executeAnswer($this, $data);
+            ActionCelAnswer::execute($this, $data);
         }
         if('ATTENDEDTRANSFER' === $event){
-            ActionCelAnswer::executeTransfer($this, $data);
+            ActionCelAttendedTransfer::execute($this, $data);
         }
         // If event is not 'USER_DEFINED', return
         if ('USER_DEFINED' !== $event) {
