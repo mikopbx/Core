@@ -38,14 +38,14 @@ class ActionDial
      * @param array $data Data related to the event.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         // Retrieve source channel from the data
         $chan = $data['src_chan'] ?? '';
 
         // If the source channel is not empty, add it to the active channels
         if (!empty($chan)) {
-            $worker->addActiveChan($chan);
+            $worker->addActiveChan($chan, $data['linkedid']);
         }
 
         // Insert the data to the database

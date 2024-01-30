@@ -65,7 +65,7 @@ class ProvidersController extends BaseController
         /** @var Providers $provider */
         $provider = Providers::findFirstByUniqid($uniqId);
         if ($provider === null) {
-            $uniqId = Sip::generateUniqueID('SIP-');
+            $uniqId = Sip::generateUniqueID('SIP-TRUNK-');
             $provider = new Providers();
             $provider->type = 'SIP';
             $provider->uniqid = $uniqId;
@@ -79,7 +79,7 @@ class ProvidersController extends BaseController
             $provider->Sip->qualify = '1';
             $provider->Sip->secret = SIP::generateSipPassword();
         }elseif($idIsEmpty){
-            $uniqId = Sip::generateUniqueID('SIP-');
+            $uniqId = Sip::generateUniqueID('SIP-TRUNK-');
             $oldProvider = $provider;
             $provider = new Providers();
             foreach ($oldProvider->toArray() as $key => $value){

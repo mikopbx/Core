@@ -47,7 +47,7 @@ class ActionDialCreateChan
         // If the destination channel is not empty, add it to the active channels in the worker.
         $chan = $data['dst_chan'] ?? '';
         if (!empty($chan)) {
-            $worker->addActiveChan($chan);
+            $worker->addActiveChan($chan, $data['linkedid']);
         }
 
         // Get the filter conditions based on the data.

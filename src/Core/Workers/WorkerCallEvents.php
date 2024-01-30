@@ -61,13 +61,13 @@ class WorkerCallEvents extends WorkerBase
      *
      * @return void
      */
-    public function addActiveChan(string $channel): void
+    public function addActiveChan(string $channel, string $id = ''): void
     {
         // Exclude local channels
         if (stripos($channel, 'local') === 0) {
             return;
         }
-        $this->activeChannels[$channel] = true;
+        $this->activeChannels[$channel] = $id;
     }
 
     /**
@@ -92,6 +92,18 @@ class WorkerCallEvents extends WorkerBase
     public function existsActiveChan(string $channel): bool
     {
         return isset($this->activeChannels[$channel]);
+    }
+
+    /**
+     * Get chan linked ID.
+     *
+     * @param string $channel The name of the channel to check.
+     *
+     * @return string channel ID
+     */
+    public function getActiveChanId(string $channel): string
+    {
+        return $this->activeChannels[$channel]??'';
     }
 
     /**
@@ -348,8 +360,10 @@ class WorkerCallEvents extends WorkerBase
 
         // If event is 'ANSWER', call ActionCelAnswer::execute and return
         if ('ANSWER' === $event) {
-            ActionCelAnswer::execute($this, $data);
-            return;
+            ActionCelAnswer::executeAnswer($this, $data);
+        }
+        if('ATTENDEDTRANSFER' === $event){
+            ActionCelAnswer::executeTransfer($this, $data);
         }
         // If event is not 'USER_DEFINED', return
         if ('USER_DEFINED' !== $event) {
