@@ -44,7 +44,7 @@ class CelConf extends AsteriskConfigClass
 
         $conf = "[general]\n" .
             "enable=yes\n" .
-            "events=USER_DEFINED,ANSWER\n" .
+            "events=USER_DEFINED,ANSWER,ATTENDEDTRANSFER\n" .
             "dateformat = %F %T\n\n" .
             "[manager]\n" .
             "enabled = yes\n\n";
