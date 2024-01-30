@@ -23,7 +23,9 @@ require_once 'Globals.php';
 use MikoPBX\Core\System\{BeanstalkClient, Storage, Util};
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\Asterisk\Configs\CelConf;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
@@ -32,7 +34,7 @@ use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
 use Phalcon\Exception;
 use Phalcon\Text;
 use Throwable;
-
+use DateTime;
 
 /**
  * Class WorkerCallEvents
@@ -54,6 +56,8 @@ class WorkerCallEvents extends WorkerBase
     private array $innerNumbers = [];
     private array $exceptionsNumbers = [];
     private bool $notRecInner = false;
+
+    private int $deleteCdrTimer = 61;
 
     /**
      * Adds a new active channel to the cache.
@@ -226,6 +230,7 @@ class WorkerCallEvents extends WorkerBase
     {
         // Update the recording options for the worker
         $this->updateRecordingOptions();
+        $this->deleteOldRecords();
 
         // Initialize the mixMonitorChannels and checkChanHangupTransfer arrays
         $this->mixMonitorChannels = [];
@@ -342,6 +347,7 @@ class WorkerCallEvents extends WorkerBase
     {
         parent::pingCallBack($message);
         $this->updateRecordingOptions();
+        $this->deleteOldRecords();
     }
 
     /**
@@ -470,6 +476,27 @@ class WorkerCallEvents extends WorkerBase
     public function errorHandler($m): void
     {
         Util::sysLogMsg(self::class . '_ERROR', $m, LOG_ERR);
+    }
+
+    /**
+     * Clearing old cdr records
+     * @return void
+     */
+    public function deleteOldRecords(): void
+    {
+        // Cleaning will be performed every ping
+        $this->deleteCdrTimer++;
+        if($this->deleteCdrTimer <= 61){
+            return;
+        }
+        $this->deleteCdrTimer = 0;
+        $savePeriod = (int)PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD);
+        if($savePeriod < 30){
+            return;
+        }
+        $limitData  = (new DateTime())->modify("-$savePeriod days")->format('Y-m-d');
+        $connection = $this->di->get(CDRDatabaseProvider::SERVICE_NAME);
+        $connection->execute("DELETE FROM cdr_general WHERE start < '$limitData'");
     }
 }
 

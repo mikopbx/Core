@@ -31,4 +31,7 @@ abstract class PbxSettingsConstants
     const PBX_CALL_PARKING_DURATION = 'PBXCallParkingDuration';
     const PBX_CALL_PARKING_START_SLOT = 'PBXCallParkingStartSlot';
     const PBX_CALL_PARKING_END_SLOT = 'PBXCallParkingEndSlot';
+
+    // Records settings
+    const PBX_RECORD_SAVE_PERIOD = 'PBXRecordSavePeriod';
 }

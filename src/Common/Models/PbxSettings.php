@@ -137,7 +137,7 @@ class PbxSettings extends ModelsBase
             'PBXSplitAudioThread' => '0',
             'PBXRecordAnnouncementIn' => '',
             'PBXRecordAnnouncementOut' => '',
-            'PBXRecordSavePeriod' => '',
+            PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD => '',
             PbxSettingsConstants::PBX_CALL_PARKING_EXT => '800',
             PbxSettingsConstants::PBX_CALL_PARKING_FEATURE => '*2',
             PbxSettingsConstants::PBX_CALL_PARKING_DURATION => '50',
@@ -175,7 +175,7 @@ class PbxSettings extends ModelsBase
     {
         $parameters = [
             'cache' => [
-                'key' => ModelsBase::makeCacheKey(PbxSettings::class, 'getValueByKey'),
+                'key' => ModelsBase::makeCacheKey(self::class, 'getValueByKey'),
                 'lifetime' => 3600,
             ],
         ];

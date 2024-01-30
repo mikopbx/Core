@@ -249,7 +249,7 @@ class WorkerModelsEvents extends WorkerBase
         // CallRecordSettings / The period of storing conversation records
         $tables[] = [
             'settingName' => [
-                'PBXRecordSavePeriod',
+                PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD,
             ],
             'functions' => [
                 self::R_UPDATE_REC_SAVE_PERIOD,

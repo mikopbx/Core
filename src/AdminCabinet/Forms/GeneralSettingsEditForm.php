@@ -45,7 +45,7 @@ class GeneralSettingsEditForm extends BaseForm
 
         foreach ($options as $key => $value) {
             switch ($key) {
-                case 'PBXRecordSavePeriod':
+                case PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD:
                 case '***ALL HIDDEN ABOVE***':
                     $this->add(new Hidden($key, ['value' => $value]));
                     break;
