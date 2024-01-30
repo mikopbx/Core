@@ -129,7 +129,7 @@ class ProvidersController extends BaseController
         $provider = Providers::findFirstByUniqid($uniqId);
 
         if ($provider === null) {
-            $uniqId = Iax::generateUniqueID('IAX-');
+            $uniqId = Iax::generateUniqueID('IAX-TRUNK-');
             $provider = new Providers();
             $provider->type = 'IAX';
             $provider->uniqid = $uniqId;
@@ -139,7 +139,7 @@ class ProvidersController extends BaseController
             $provider->Iax->disabled = '0';
             $provider->Iax->qualify = '1';
         }elseif($idIsEmpty){
-            $uniqId = Iax::generateUniqueID('IAX-');
+            $uniqId = Iax::generateUniqueID('IAX-TRUNK-');
             $oldProvider = $provider;
             $provider = new Providers();
             foreach ($oldProvider->toArray() as $key => $value){
