@@ -302,6 +302,7 @@ return [
     'ir_busy_signal' => 'Воспроизвести сигнал занято',
     'ir_hangup' => 'Положить трубку',
     'ir_extension' => 'Перевести вызов',
+    'ir_playback' => 'Воспроизвести медиа файл',
     'ir_ExtensionSelect' => 'На номер',
     'ir_RuleAssignIf' => 'Правило сработает при звонке на',
     'ir_DidNumber' => 'Дополнительный номер (DID)',

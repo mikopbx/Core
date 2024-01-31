@@ -21,10 +21,12 @@ namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
 
 use MikoPBX\Common\Models\IncomingRoutingTable;
+use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ConferenceConf;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
+use MikoPBX\Core\System\Util;
 
 
 /**
@@ -305,11 +307,34 @@ class IncomingContexts extends AsteriskConfigClass
                                 " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?'."Dial(Local/{$rout['extension']}@internal-incoming,{$timeout},".'${TRANSFER_OPTIONS}'."Kg));";
         }
 
+        $mediaFile = $this->getSoundFilePath($rout);
+        if(!empty($mediaFile)){
+            $this->rout_data_dial[$rout_number] .= " \n\t" . 'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?Playback('.$mediaFile.'));' . PHP_EOL;
+        }
+
         // Add the generated commands to the route data.
         $this->rout_data_dial[$rout_number] .= $dialplanCommands;
 
         // Handle duplicate dial actions for the route.
         $this->duplicateDialActionsRoutNumber($rout, $dialplanCommands, $number);
+    }
+
+    /**
+     * Get path ro sound file
+     * @param array $rout
+     * @return string
+     */
+    public function getSoundFilePath(array $rout):string
+    {
+        if(empty($rout['audio_message_id'])){
+            return '';
+        }
+        $res           = SoundFiles::findFirst($rout['audio_message_id']);
+        $audio_message = $res === null ? '' : (string)$res->path;
+        if(file_exists($audio_message)){
+            return Util::trimExtensionForFile($audio_message);
+        }
+        return '';
     }
 
     /**
@@ -548,11 +573,17 @@ class IncomingContexts extends AsteriskConfigClass
             $conf .= " \t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-after-dial-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-after-dial-custom,${EXTEN},1)' . "\n";
 
             // Check if the dial status is 'busy'
-            $conf .= " \t" . 'same => n,ExecIf($["${M_DIALSTATUS}" == "BUSY"]?Busy(2));' . "\n";
+            $conf .= " \t" . 'same => n,ExecIf($["${M_DIALSTATUS}" == "BUSY"]?Busy(2));' . PHP_EOL;
 
-            // If the action is 'busy', set the dialplan to busy
-        } elseif ('busy' === $default_action->action) {
-            $conf .= "\t" . "same => n,Busy(2)" . "\n";
+        // If the action is 'playback', hangup call
+        } elseif (IncomingRoutingTable::ACTION_PLAYBACK === $default_action->action) {
+            $mediaFile = $this->getSoundFilePath($default_action->toArray());
+            if(!empty($mediaFile)){
+                $conf .= " \n\t" . 'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER"]?Playback('.$mediaFile.'));' . PHP_EOL;
+            }
+        // If the action is 'busy', set the dialplan to busy
+        } elseif (IncomingRoutingTable::ACTION_BUSY === $default_action->action) {
+            $conf .= "\t" . "same => n,Busy(2)" . PHP_EOL;
         }
 
         // Return the constructed dialplan

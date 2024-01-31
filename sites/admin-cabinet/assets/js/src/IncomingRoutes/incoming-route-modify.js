@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, Extensions, Form */
+/* global $,globalRootUrl,globalTranslate, Extensions, Form */
 
 
 /**
@@ -67,6 +67,9 @@ const incomingRouteModify = {
 
         // Setup the dropdown for provider field
         incomingRouteModify.$providerDropDown.dropdown();
+
+        // Initialize audio message dropdowns
+        $('.audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
 
         // Initialize the form
         incomingRouteModify.initializeForm();

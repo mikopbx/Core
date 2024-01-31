@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
@@ -41,9 +42,10 @@ class DefaultIncomingRouteForm extends BaseForm
                 case 'action' :
                 {
                     $arrDefaultActions = [
-                        'busy' => $this->translation->_('ir_busy_signal'),
-                        'hangup' => $this->translation->_('ir_hangup'),
-                        'extension' => $this->translation->_('ir_extension'),
+                        IncomingRoutingTable::ACTION_BUSY       => $this->translation->_('ir_busy_signal'),
+                        IncomingRoutingTable::ACTION_HANGUP     => $this->translation->_('ir_hangup'),
+                        IncomingRoutingTable::ACTION_EXTENSION  => $this->translation->_('ir_extension'),
+                        IncomingRoutingTable::ACTION_PLAYBACK   => $this->translation->_('ir_playback'),
                     ];
 
                     $defaultActions = new Select(
@@ -59,6 +61,20 @@ class DefaultIncomingRouteForm extends BaseForm
                     );
                     $this->add($defaultActions);
                     break;
+                }
+                case 'audio_message_id' :{
+                    // Audio_message_id
+                    $audioMessage = new Select(
+                        'audio_message_id', $options['soundfiles'], [
+                                              'using' => [
+                                                  'id',
+                                                  'name',
+                                              ],
+                                              'useEmpty' => false,
+                                              'class' => 'ui selection dropdown search audio-message-select',
+                                          ]
+                    );
+                    $this->add($audioMessage);
                 }
                 case 'extension' :
                 {

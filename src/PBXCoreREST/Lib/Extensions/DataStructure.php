@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\ExternalPhones;
+use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\Sip;
 
 class DataStructure
@@ -130,7 +131,7 @@ class DataStructure
         }
         $properties = ['fwd_forwarding', 'fwd_forwardingonunavailable', 'fwd_forwardingonbusy'];
         foreach ($properties as $property) {
-            if (!empty($this->{$property}) && !in_array($this->{$property}, ['voicemail', 'busy', 'hangup'])) {
+            if (!empty($this->{$property}) && !in_array($this->{$property}, [IncomingRoutingTable::ACTION_VOICEMAIL, IncomingRoutingTable::ACTION_BUSY, IncomingRoutingTable::ACTION_HANGUP], true)) {
                 $this->{$property} = preg_replace('/\D/', '', $this->{$property});
             }
         }

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -73,7 +74,7 @@ class CreateDefaultIncomingCallRule extends MikoPBXTestsBase
         $params = [];
         $params[] = [
             [
-                'action' => 'busy',
+                'action' => IncomingRoutingTable::ACTION_BUSY,
             ]
         ];
 

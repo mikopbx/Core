@@ -244,10 +244,10 @@ class RestoreDefaultSettings extends \Phalcon\Di\Injectable
                     '000063',   // Reads back the extension
                     '000064',   // 0000MILLI
                     '10003246', // Echo test
-                    'hangup',   // System Extension
-                    'busy',     // System Extension
-                    'did2user', // System Extension
-                    'voicemail',// System Extension
+                    IncomingRoutingTable::ACTION_HANGUP,   // System Extension
+                    IncomingRoutingTable::ACTION_BUSY,     // System Extension
+                    IncomingRoutingTable::ACTION_DID, // System Extension
+                    IncomingRoutingTable::ACTION_VOICEMAIL,// System Extension
                 ],
             ],
         ];

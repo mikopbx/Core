@@ -23,6 +23,7 @@
     </div>
 </div>
 <div class="ui info message">{{ t._('ir_DidNumberDescription') }}</div>
+{{ partial("partials/playAddNewSound", ['label': t._('iv_PlaySound'), 'id':'audio_message_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
 <h3 class="ui dividing header ">{{ t._("ir_CallTransferTo") }}</h3>
 
 <div class="field max-width-500">

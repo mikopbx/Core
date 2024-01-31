@@ -660,9 +660,13 @@ class AssetProvider implements ServiceProviderInterface
         if ($action === 'index') {
             $this->footerCollectionJS->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
+                ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
+                ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-modify.js', true);
         }
     }

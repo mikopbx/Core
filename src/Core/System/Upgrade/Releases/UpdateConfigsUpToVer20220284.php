@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Upgrade\Releases;
 
 use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use Phalcon\Di\Injectable;
 
@@ -40,9 +41,9 @@ class UpdateConfigsUpToVer20220284 extends Injectable implements UpgradeSystemCo
     public function processUpdate():void
     {
         $extensions = [
-            'hangup',
-            'busy',
-            'did2user'
+            IncomingRoutingTable::ACTION_HANGUP,
+            IncomingRoutingTable::ACTION_BUSY,
+            IncomingRoutingTable::ACTION_DID
         ];
         foreach ($extensions as $extension){
             $data                = Extensions::findFirst('number="' . $extension . '"');

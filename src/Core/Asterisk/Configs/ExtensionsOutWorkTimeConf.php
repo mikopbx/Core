@@ -402,7 +402,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
      */
     private function initRuleAppData($ruleData, string &$conf_out_set_var): array
     {
-        if ('extension' === $ruleData['action']) {
+        if (IncomingRoutingTable::ACTION_EXTENSION === $ruleData['action']) {
             $appName = 'GotoIfTime';
             $appdata = "internal,{$ruleData['extension']},1";
         } else {

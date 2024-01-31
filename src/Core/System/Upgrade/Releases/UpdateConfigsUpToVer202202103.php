@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\FirewallRules;
+use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
@@ -155,7 +156,7 @@ class UpdateConfigsUpToVer202202103 extends Injectable implements UpgradeSystemC
     private function updateExtensions():void
     {
         $extensions = [
-            'voicemail',
+            IncomingRoutingTable::ACTION_VOICEMAIL,
         ];
         foreach ($extensions as $extension){
             $data                = Extensions::findFirst('number="' . $extension . '"');

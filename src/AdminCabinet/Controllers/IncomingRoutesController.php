@@ -21,7 +21,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\DefaultIncomingRouteForm;
 use MikoPBX\AdminCabinet\Forms\IncomingRouteEditForm;
-use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, OutWorkTimesRouts, Sip};
+use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, OutWorkTimesRouts, Sip, SoundFiles};
 
 
 class IncomingRoutesController extends BaseController
@@ -87,7 +87,19 @@ class IncomingRoutesController extends BaseController
             $forwardingExtensions[$record->number] = $record ? $record->getRepresent() : '';
         }
 
-        $form                     = new DefaultIncomingRouteForm($defaultRule, ['extensions' => $forwardingExtensions]);
+        $soundFilesList = [];
+        // Retrieve custom sound files for IVR
+        $soundFiles = SoundFiles::find('category="custom"');
+        foreach ($soundFiles as $soundFile) {
+            $soundFilesList[$soundFile->id] = $soundFile->name;
+        }
+        unset($soundFiles);
+
+        $form = new DefaultIncomingRouteForm(
+            $defaultRule, [
+            'extensions' => $forwardingExtensions,
+            'soundfiles' => $soundFilesList,
+        ]);
         $this->view->form         = $form;
         $this->view->routingTable = $routingTable;
         $this->view->submitMode   = null;
@@ -130,7 +142,14 @@ class IncomingRoutesController extends BaseController
             $rule->provider = 'none';
         }
 
-        $this->view->form      = new IncomingRouteEditForm($rule);
+        $soundFilesList = [];
+        // Retrieve custom sound files for IVR
+        $soundFiles = SoundFiles::find('category="custom"');
+        foreach ($soundFiles as $soundFile) {
+            $soundFilesList[$soundFile->id] = $soundFile->name;
+        }
+        unset($soundFiles);
+        $this->view->form      = new IncomingRouteEditForm($rule, ['soundfiles' => $soundFilesList]);
         $this->view->represent = $rule->getRepresent();
     }
 
@@ -156,6 +175,7 @@ class IncomingRoutesController extends BaseController
 
         foreach ($rule as $name => $value) {
             switch ($name) {
+                case 'audio_message_id':
                 case 'provider':
                     if ($data[$name] === 'none') {
                         $rule->$name = null;

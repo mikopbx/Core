@@ -28,6 +28,13 @@ use Phalcon\Mvc\Model\Relation;
  */
 class IncomingRoutingTable extends ModelsBase
 {
+    public const ACTION_EXTENSION = 'extension';
+    public const ACTION_HANGUP    = 'hangup';
+    public const ACTION_BUSY      = 'busy';
+    public const ACTION_DID       = 'did2user';
+    public const ACTION_VOICEMAIL = 'voicemail';
+    public const ACTION_PLAYBACK  = 'playback';
+
     /**
      * @Primary
      * @Identity
@@ -93,6 +100,13 @@ class IncomingRoutingTable extends ModelsBase
     public ?string $note = '';
 
     /**
+     *  ID of the audio greeting message record.
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $audio_message_id = '';
+
+    /**
      * Resets default rule to busy action
      */
     public static function resetDefaultRoute(): IncomingRoutingTable
@@ -106,7 +120,7 @@ class IncomingRoutingTable extends ModelsBase
             $defaultRule = new self();
             $defaultRule->id = 1;
         }
-        $defaultRule->action = 'busy';
+        $defaultRule->action = self::ACTION_BUSY;
         $defaultRule->priority = 9999;
         $defaultRule->rulename = 'default action';
         $defaultRule->save();

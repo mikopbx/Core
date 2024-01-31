@@ -89,6 +89,19 @@ class IncomingRouteEditForm extends BaseForm
             ]
         );
         $this->add($extension);
+
+        // Audio_message_id
+        $audioMessage = new Select(
+            'audio_message_id', $options['soundfiles'], [
+                                  'using' => [
+                                      'id',
+                                      'name',
+                                  ],
+                                  'useEmpty' => false,
+                                  'class' => 'ui selection dropdown search audio-message-select',
+                              ]
+        );
+        $this->add($audioMessage);
     }
 
     /**
