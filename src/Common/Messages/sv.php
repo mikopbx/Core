@@ -1211,4 +1211,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'bt_ToolTipCopy' => 'Kopiera',
     'pr_DeleteDescription_v2' => 'Tillsammans med leverantören kommer alla associerade regler för utgående routing att raderas, och i de inkommande routingreglerna kommer alla länkar att ersättas med "Ingen anslutning till en leverantör, ingen behörighet"',
     'ir_AnyProvider_v2' => 'Ingen anslutning till en leverantör, ingen auktorisering',
+    'nw_ExternIpHostMessage1' => 'Om det behövs kan du ange den externa SIP-porten med ett kolon efter värdnamnet eller IP-adressen',
+    'ir_playback' => 'Spela mediafil',
 ];

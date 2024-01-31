@@ -1214,4 +1214,6 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'bt_ToolTipCopy' => 'Kopieren',
     'pr_DeleteDescription_v2' => 'Gemeinsam mit dem Provider werden alle zugehörigen Outgoing-Routing-Regeln gelöscht und in den Incoming-Routing-Regeln alle Links durch „Keine Verbindung zu einem Provider, keine Autorisierung“ ersetzt.',
     'ir_AnyProvider_v2' => 'Keine Verbindung zu einem Anbieter, keine Autorisierung',
+    'nw_ExternIpHostMessage1' => 'Bei Bedarf können Sie den externen SIP-Port mit einem Doppelpunkt hinter dem Hostnamen oder der IP-Adresse angeben',
+    'ir_playback' => 'Mediendatei abspielen',
 ];

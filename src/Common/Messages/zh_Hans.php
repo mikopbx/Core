@@ -1211,4 +1211,6 @@ return [
     'bt_ToolTipCopy' => '复制',
     'pr_DeleteDescription_v2' => '与提供商一起，所有关联的传出路由规则都将被删除，并且在传入路由规则中，所有链接都将替换为“不连接到提供商，无授权”',
     'ir_AnyProvider_v2' => '没有与提供商的连接，没有授权',
+    'ir_playback' => '播放媒体文件',
+    'nw_ExternIpHostMessage1' => '如有必要，您可以在主机名或 IP 地址后使用冒号指定外部 SIP 端口',
 ];

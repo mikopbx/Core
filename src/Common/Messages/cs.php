@@ -1211,4 +1211,6 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'bt_ToolTipCopy' => 'kopírovat',
     'pr_DeleteDescription_v2' => 'Společně s poskytovatelem budou smazána všechna související pravidla odchozího směrování a v pravidlech příchozího směrování budou všechny odkazy nahrazeny textem „Žádné připojení k poskytovateli, žádná autorizace“',
     'ir_AnyProvider_v2' => 'Žádné spojení s poskytovatelem, žádná autorizace',
+    'nw_ExternIpHostMessage1' => 'V případě potřeby můžete zadat externí port SIP pomocí dvojtečky za názvem hostitele nebo IP adresou',
+    'ir_playback' => 'Přehrát mediální soubor',
 ];

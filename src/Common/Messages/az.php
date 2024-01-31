@@ -1211,4 +1211,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'bt_ToolTipCopy' => 'Kopyalayın',
     'ir_AnyProvider_v2' => 'Provayderlə əlaqə yoxdur, icazə yoxdur',
     'pr_DeleteDescription_v2' => 'Provayderlə birlikdə bütün əlaqəli gedən marşrutlaşdırma qaydaları silinəcək və gələn marşrutlaşdırma qaydalarında bütün keçidlər “Provayderlə əlaqə yoxdur, icazə yoxdur” ilə əvəz olunacaq.',
+    'nw_ExternIpHostMessage1' => 'Lazım gələrsə, host adından və ya IP ünvanından sonra iki nöqtə ilə xarici SIP portunu təyin edə bilərsiniz',
+    'ir_playback' => 'Media faylını çalın',
 ];

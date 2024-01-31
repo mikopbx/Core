@@ -1211,4 +1211,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'bt_ToolTipCopy' => 'Copie',
     'ir_AnyProvider_v2' => 'Pas de connexion à un fournisseur, pas d\'autorisation',
     'pr_DeleteDescription_v2' => 'Avec le fournisseur, toutes les règles de routage sortant associées seront supprimées, et dans les règles de routage entrant, tous les liens seront remplacés par « Pas de connexion à un fournisseur, pas d\'autorisation ».',
+    'nw_ExternIpHostMessage1' => 'Si nécessaire, vous pouvez spécifier le port SIP externe à l\'aide de deux-points après le nom d\'hôte ou l\'adresse IP.',
+    'ir_playback' => 'Lire un fichier multimédia',
 ];

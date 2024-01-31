@@ -1214,4 +1214,6 @@ The coupon can be activated once, after which it becomes redeemed.',
     'bt_ToolTipCopy' => 'Copy',
     'ir_AnyProvider_v2' => 'No connection to a provider, no authorization',
     'pr_DeleteDescription_v2' => 'Together with the provider, all associated outgoing routing rules will be deleted, and in the incoming routing rules, all links will be replaced with “No connection to a provider, no authorization”',
+    'nw_ExternIpHostMessage1' => 'If necessary, you can specify the external SIP port using a colon after the host name or IP address',
+    'ir_playback' => 'Play media file',
 ];

@@ -1211,4 +1211,6 @@ El cupón se puede activar una vez y luego se canjea.',
     'bt_ToolTipCopy' => 'Copiar',
     'ir_AnyProvider_v2' => 'Sin conexión a un proveedor, sin autorización',
     'pr_DeleteDescription_v2' => 'Junto con el proveedor, se eliminarán todas las reglas de enrutamiento salientes asociadas y, en las reglas de enrutamiento entrantes, todos los enlaces se reemplazarán con "Sin conexión a un proveedor, sin autorización".',
+    'nw_ExternIpHostMessage1' => 'Si es necesario, puede especificar el puerto SIP externo usando dos puntos después del nombre del host o la dirección IP.',
+    'ir_playback' => 'Reproducir archivo multimedia',
 ];

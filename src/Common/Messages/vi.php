@@ -1211,4 +1211,6 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'bt_ToolTipCopy' => 'Sao chép',
     'pr_DeleteDescription_v2' => 'Cùng với nhà cung cấp, tất cả các quy tắc định tuyến đi liên quan sẽ bị xóa và trong các quy tắc định tuyến đến, tất cả các liên kết sẽ được thay thế bằng “Không có kết nối với nhà cung cấp, không có ủy quyền”',
     'ir_AnyProvider_v2' => 'Không có kết nối với nhà cung cấp, không có ủy quyền',
+    'nw_ExternIpHostMessage1' => 'Nếu cần, bạn có thể chỉ định cổng SIP bên ngoài bằng dấu hai chấm sau tên máy chủ hoặc địa chỉ IP',
+    'ir_playback' => 'Phát tập tin phương tiện',
 ];

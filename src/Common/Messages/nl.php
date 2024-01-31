@@ -1261,4 +1261,6 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'bt_ToolTipCopy' => 'Kopiëren',
     'ir_AnyProvider_v2' => 'Geen verbinding met een provider, geen autorisatie',
     'pr_DeleteDescription_v2' => 'Samen met de provider worden alle bijbehorende uitgaande routeringsregels verwijderd en in de inkomende routeringsregels worden alle links vervangen door “Geen verbinding met een provider, geen autorisatie”',
+    'nw_ExternIpHostMessage1' => 'Indien nodig kunt u de externe SIP-poort opgeven met een dubbele punt achter de hostnaam of het IP-adres',
+    'ir_playback' => 'Mediabestand afspelen',
 ];

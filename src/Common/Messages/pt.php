@@ -1211,4 +1211,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'bt_ToolTipCopy' => 'cópia de',
     'pr_DeleteDescription_v2' => 'Juntamente com o provedor, todas as regras de roteamento de saída associadas serão excluídas e nas regras de roteamento de entrada todos os links serão substituídos por “Sem conexão com um provedor, sem autorização”',
     'ir_AnyProvider_v2' => 'Sem conexão com um provedor, sem autorização',
+    'nw_ExternIpHostMessage1' => 'Se necessário, você pode especificar a porta SIP externa usando dois pontos após o nome do host ou endereço IP',
+    'ir_playback' => 'Reproduzir arquivo de mídia',
 ];

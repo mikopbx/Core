@@ -1211,4 +1211,6 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'bt_ToolTipCopy' => 'Kopi',
     'ir_AnyProvider_v2' => 'Ingen forbindelse til en udbyder, ingen autorisation',
     'pr_DeleteDescription_v2' => 'Sammen med udbyderen vil alle tilknyttede udgående routing-regler blive slettet, og i de indgående routing-regler vil alle links blive erstattet med "Ingen forbindelse til en udbyder, ingen autorisation"',
+    'nw_ExternIpHostMessage1' => 'Om nødvendigt kan du angive den eksterne SIP-port ved hjælp af et kolon efter værtsnavnet eller IP-adressen',
+    'ir_playback' => 'Afspil mediefil',
 ];

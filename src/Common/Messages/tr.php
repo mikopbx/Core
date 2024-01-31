@@ -1228,4 +1228,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'bt_ToolTipCopy' => 'Kopyala',
     'pr_DeleteDescription_v2' => 'Sağlayıcıyla birlikte ilgili tüm giden yönlendirme kuralları silinecek ve gelen yönlendirme kurallarında tüm bağlantılar “Sağlayıcıyla bağlantı yok, yetki yok” olarak değiştirilecek.',
     'ir_AnyProvider_v2' => 'Sağlayıcıyla bağlantı yok, yetki yok',
+    'nw_ExternIpHostMessage1' => 'Gerekirse, ana bilgisayar adından veya IP adresinden sonra iki nokta üst üste kullanarak harici SIP bağlantı noktasını belirleyebilirsiniz.',
+    'ir_playback' => 'Medya dosyasını oynat',
 ];
