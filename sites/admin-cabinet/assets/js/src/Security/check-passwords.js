@@ -56,8 +56,6 @@ const checkPasswordWorker = {
         }
         if (window.location.pathname !== checkPasswordWorker.generalSettingsUrl) {
             window.location.href = `${checkPasswordWorker.generalSettingsUrl}#/${tab}`;
-        } else {
-            $(window).trigger('GS-ActivateTab', [tab]);
         }
     },
 };
