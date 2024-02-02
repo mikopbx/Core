@@ -73,15 +73,6 @@ trait LoginTrait
      */
     private function performLogin(string $cookieFile, array $params): void
     {
-        $loginTest = new LoginTest();
-        $loginParams = $loginTest->loginDataProvider();
-        $loginTest->testLogin($loginParams[0][0]);
-        self::$driver->get($GLOBALS['SERVER_PBX']);
-        // Save auth cookie
-        $cookies = self::$driver->manage()->getCookies();
-        file_put_contents($cookieFile, serialize($cookies));
-
-
         self::$driver->get($GLOBALS['SERVER_PBX']);
         $this->changeInputField('login', $params['login']);
         $this->changeInputField('password', $params['password']);
@@ -109,6 +100,17 @@ trait LoginTrait
             $elements = $driver->findElements(WebDriverBy::id("top-menu-search"));
             return count($elements) > 0;
         });
+
+        $loggedIn = self::$driver->findElement(WebDriverBy::id('top-menu-search'));
+
+        if (!$loggedIn){
+            $this->assertFalse(true);
+        } else {
+            // Save auth cookie
+            $cookies = self::$driver->manage()->getCookies();
+            file_put_contents($cookieFile, serialize($cookies));
+            $this->assertTrue(true);
+        }
 
         $this->assertElementNotFound(WebDriverBy::xpath("//input[@type = 'text' and @id = 'login' and @name = 'login']"));
     }
