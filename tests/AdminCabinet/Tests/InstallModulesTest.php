@@ -32,7 +32,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
 {
     /**
      * Test to install a module.
-     *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test.

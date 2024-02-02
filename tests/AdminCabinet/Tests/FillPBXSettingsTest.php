@@ -30,7 +30,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
 {
     /**
      * Test to fill PBX settings.
-     *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $dataSet The parameters for the test.

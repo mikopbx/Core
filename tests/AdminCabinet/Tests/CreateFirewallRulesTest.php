@@ -29,7 +29,7 @@ class CreateFirewallRulesTest extends MikoPBXTestsBase
 {
     /**
      * Test the deletion of all firewall rules.
-     *
+     * @depends testLogin
      */
     public function testDeleteAllFirewallRules(): void
     {

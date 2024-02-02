@@ -33,6 +33,7 @@ class CreateCallQueueTest extends MikoPBXTestsBaseAlias
     /**
      * Test creating a call queue.
      *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the call queue.

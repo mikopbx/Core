@@ -28,7 +28,7 @@ class CreateSIPProvidersTest extends MikoPBXTestsBaseAlias
 {
     /**
      * Test to create a SIP provider.
-     *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for creating the SIP provider.

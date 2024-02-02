@@ -26,6 +26,7 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
     /**
      * Test checking dropdown menus when adding extensions.
      *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the extension.

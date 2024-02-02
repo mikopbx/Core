@@ -27,4 +27,108 @@ use Facebook\WebDriver\WebDriverBy;
 trait LoginTrait
 {
 
+    /**
+     * Perform the login operation with cookie file
+     *
+     * @dataProvider loginDataProvider
+     *
+     * @param array $params The login parameters.
+     */
+    public function testLogin(array $params): void
+    {
+        $cookieFile = 'C:\Users\hello\Documents\cookies.txt';
+
+        // Go to the index page
+        self::$driver->get($GLOBALS['SERVER_PBX']);
+
+        $loggedIn = false;
+        // Check previous login by cookie
+        if (file_exists($cookieFile)) {
+            $cookies = unserialize(file_get_contents($cookieFile));
+            foreach ($cookies as $cookie) {
+                self::$driver->manage()->addCookie($cookie);
+            }
+            // Go to the index page
+            self::$driver->navigate()->to($GLOBALS['SERVER_PBX']);
+            self::$driver->wait(10, 500)->until(function ($driver) {
+                $elements = $driver->findElements(WebDriverBy::id("top-menu-search"));
+                return count($elements) > 0;
+            });
+            $loggedIn = self::$driver->findElement(WebDriverBy::id('top-menu-search'));
+        }
+        if (!$loggedIn){
+            $this->performLogin($cookieFile, $params);
+        } else {
+            $this->assertTrue(true);
+        }
+    }
+
+    /**
+     * Perform full login test
+     * @param string $cookieFile
+     * @param array $params
+     * @return void
+     * @throws \Facebook\WebDriver\Exception\NoSuchElementException
+     * @throws \Facebook\WebDriver\Exception\TimeoutException
+     */
+    private function performLogin(string $cookieFile, array $params): void
+    {
+        $loginTest = new LoginTest();
+        $loginParams = $loginTest->loginDataProvider();
+        $loginTest->testLogin($loginParams[0][0]);
+        self::$driver->get($GLOBALS['SERVER_PBX']);
+        // Save auth cookie
+        $cookies = self::$driver->manage()->getCookies();
+        file_put_contents($cookieFile, serialize($cookies));
+
+
+        self::$driver->get($GLOBALS['SERVER_PBX']);
+        $this->changeInputField('login', $params['login']);
+        $this->changeInputField('password', $params['password']);
+
+        $xpath = '//form[@id="login-form"]//ancestor::div[@id="submitbutton"]';
+
+        $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $button_Submit->click();
+        $this->waitForAjax();
+
+        $xpath = '//div[contains(@class,"error") and contains(@class,"message")]';
+        $errorMessages = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        if (count($errorMessages) > 0) {
+            foreach ($errorMessages as $errorMessage) {
+                if ($errorMessage->isDisplayed()) {
+                    $this->changeInputField('password', $params['password2']);
+                    $xpath = '//form[@id="login-form"]//ancestor::div[@id="submitbutton"]';
+                    $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
+                    $button_Submit->click();
+                }
+            }
+        }
+
+        self::$driver->wait(10, 500)->until(function ($driver) {
+            $elements = $driver->findElements(WebDriverBy::id("top-menu-search"));
+            return count($elements) > 0;
+        });
+
+        $this->assertElementNotFound(WebDriverBy::xpath("//input[@type = 'text' and @id = 'login' and @name = 'login']"));
+    }
+
+    /**
+     * Provide login data for testing.
+     *
+     * @return array
+     */
+    public function loginDataProvider(): array
+    {
+        $params = [];
+        $params[] = [
+            [
+                'login' => 'admin',
+                'password' => '123456789MikoPBX#1',
+                'password2' => 'admin',
+            ],
+        ];
+
+        return $params;
+    }
 }

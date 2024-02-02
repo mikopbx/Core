@@ -32,6 +32,7 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
     /**
      * Test adding a conference room.
      *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the conference room.

@@ -29,7 +29,7 @@ class CreateOutgoingCallRulesTest extends MikoPBXTestsBase
 {
     /**
      * Test to delete all existing rules.
-     *
+     * @depends testLogin
      */
     public function testDeleteAllRules(): void
     {

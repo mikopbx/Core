@@ -29,6 +29,7 @@ class CreateIAXProvidersTest extends MikoPBXTestsBaseAlias
     /**
      * Test the creation and modification of IAX providers.
      *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for creating the IAX provider.

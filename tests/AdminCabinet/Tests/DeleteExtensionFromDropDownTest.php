@@ -29,6 +29,7 @@ class DeleteExtensionFromDropDownTest extends MikoPBXTestsBase
     /**
      * Test if the extension is present in the dropdown menu after deletion.
      *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the test.

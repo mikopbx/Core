@@ -28,6 +28,7 @@ class ChangeLicenseKeyTest extends MikoPBXTestsBase
     /**
      * Test filling and verifying the license key.
      *
+     * @depends testLogin
      * @dataProvider licenseKeyProvider
      *
      * @param string $licenseKey The license key to test.

@@ -34,7 +34,6 @@ require_once 'globals.php';
  */
 class BrowserStackTest extends TestCase
 {
-    const COOKIE_FILE = 'C:\Users\hello\Documents\cookies.txt';
     /**
      * @var RemoteWebDriver
      */
@@ -131,40 +130,6 @@ class BrowserStackTest extends TestCase
         // Maximize Browser size
         self::$driver->manage()->window()->maximize();
 
-        // Go to the index page
-        self::$driver->get($GLOBALS['SERVER_PBX']);
-
-        if (file_exists(self::COOKIE_FILE)){
-            $cookies = unserialize(file_get_contents(self::COOKIE_FILE));
-            foreach ($cookies as $cookie) {
-                self::$driver->manage()->addCookie($cookie);
-            }
-            // Go to the index page
-            self::$driver->navigate()->to($GLOBALS['SERVER_PBX']);
-        } else {
-            $this->performLogin();
-        }
-
-    }
-
-    /**
-     * Performs the login procedure using parameters from the Login Test's Data Provider.
-     * After successful authentication, saves the cookies to a file for subsequent use.
-     *
-     * This method is intended to be called within the setUp of tests that require pre-authentication.
-     * It uses the global variable $GLOBALS['SERVER_PBX'] to determine the base URL of the web application.
-     *
-     * @throws \Exception If there is an error writing the cookies file.
-     */
-    private function performLogin(): void
-    {
-        $loginTest = new LoginTest();
-        $loginParams = $loginTest->loginDataProvider();
-        $loginTest->testLogin($loginParams[0][0]);
-        self::$driver->get($GLOBALS['SERVER_PBX']);
-        // Save auth cookie
-        $cookies = self::$driver->manage()->getCookies();
-        file_put_contents(self::COOKIE_FILE, serialize($cookies));
     }
 
     /**

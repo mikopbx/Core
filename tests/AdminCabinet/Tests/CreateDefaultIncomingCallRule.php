@@ -31,7 +31,7 @@ class CreateDefaultIncomingCallRule extends MikoPBXTestsBase
 {
     /**
      * Test changing the default incoming call rule.
-     *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the default rule.

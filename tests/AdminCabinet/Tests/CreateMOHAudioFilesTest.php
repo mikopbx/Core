@@ -31,6 +31,7 @@ class CreateMOHAudioFilesTest extends MikoPBXTestsBase
     /**
      * Test the creation of MOH audio files.
      *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for creating the MOH audio file.

@@ -33,7 +33,7 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
 {
     /**
      * Test deleting AMI users.
-     *
+     * @depends testLogin
      */
     public function testDeleteAmiUsers(): void
     {
@@ -53,7 +53,7 @@ class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
     /**
      * Test adding an AMI user.
      *
-     * @depends testLogin
+     * @depends testDeleteAmiUsers
      * @dataProvider additionProvider
      *
      * @param array $params The parameters for the AMI user.

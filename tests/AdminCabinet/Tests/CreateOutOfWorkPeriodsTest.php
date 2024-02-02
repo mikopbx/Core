@@ -29,7 +29,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
 {
     /**
      * Test to delete all existing out-of-work time rules.
-     *
+     * @depends testLogin
      */
     public function testDeleteOutOfWorkRules(): void
     {

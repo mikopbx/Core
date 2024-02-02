@@ -26,6 +26,7 @@ class CheckDropdownBeforeCreateAudioFileTest extends MikoPBXTestsBase
     /**
      * Test checking the dropdown menu before creating an audio file.
      *
+     * @depends testLogin
      * @dataProvider audioFilesProvider
      *
      * @param array $params The parameters for the audio file.
