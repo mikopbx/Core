@@ -44,19 +44,12 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
         );
 
-        $currentUrl = self::$driver->getCurrentUrl();
+        // Change SSH password
+        $this->changePassword('ssh', 'SSHPassword', $params['password']);;
+        // Change WebAdmin password
+        $this->changePassword('passwords', 'WebAdminPassword', $params['password']);
 
-        if (strpos($currentUrl, 'ssh') !== false) {
-            // Change SSH password
-            $this->changePassword('ssh', 'SSHPassword', $params['password']);;
-            // Change WebAdmin password
-            $this->changePassword('passwords', 'WebAdminPassword', $params['password']);
-        } else {
-            // Change WebAdmin password
-            $this->changePassword('passwords', 'WebAdminPassword', $params['password']);
-            // Change SSH password
-            $this->changePassword('ssh', 'SSHPassword', $params['password']);;
-        }
+        $this->submitForm('general-settings-form');
 
         // Click on the sidebar menu item to refresh the page
         $this->clickSidebarMenuItemByHref("/admin-cabinet/general-settings/modify/");
@@ -77,7 +70,6 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$path}");
         $this->changeInputField($passwordFieldName, $password);
         $this->changeInputField($passwordFieldName . 'Repeat', $password);
-        $this->submitForm('general-settings-form');
     }
 
 
