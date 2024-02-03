@@ -24,6 +24,7 @@ use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\Interactions\WebDriverActions;
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverElement;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use MikoPBX\Tests\AdminCabinet\Tests\LoginTrait;
 
@@ -671,9 +672,14 @@ class MikoPBXTestsBase extends BrowserStackTest
             $menuItem = self::$driver->wait()->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
             );
-            $menuItem[0]->click();
-            $elementFound = true;
-            self::annotate('Element was found!');
+            if (is_array($menuItem)){
+                $menuItem = $menuItem[0];
+            }
+            if ($menuItem instanceof WebDriverElement) {
+                $menuItem->click();
+                $elementFound = true;
+                self::annotate('Element was found!');
+            }
         } catch (NoSuchElementException $e) {
             self::annotate('Element not found (NoSuchElementException) ' . $e->getMessage());
         } catch (Exception $e) {
