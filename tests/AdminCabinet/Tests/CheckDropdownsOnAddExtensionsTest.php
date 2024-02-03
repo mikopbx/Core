@@ -96,7 +96,7 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         $params = [];
         $params[] = [
             [
-                'number'             => 245,
+                'number'             => 246,
                 'email'              => 'ntele@miko.ru',
                 'username'           => 'Nikita Telegrafov',
                 'mobile'             => '79051454089',

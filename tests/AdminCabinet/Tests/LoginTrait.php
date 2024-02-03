@@ -73,7 +73,7 @@ trait LoginTrait
             self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Login using credentials","level": "info"}}');
             $this->performLogin($cookieFile, $params);
         } else {
-            self::$driver->executeScript('browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"passed", "reason": "Logged in with cookies!"}}' );
+            self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Logged in using cookies","level": "info"}}');
             $this->assertTrue(true);
         }
     }
@@ -125,8 +125,7 @@ trait LoginTrait
             $cookies = self::$driver->manage()->getCookies();
             file_put_contents($cookieFile, serialize($cookies));
             $this->assertTrue(true);
-            self::$driver->executeScript('browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"passed", "reason": "Logged in with login/password!"}}' );
-
+            self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Logged in with login/password!","level": "info"}}');
         }
 
         $this->assertElementNotFound(WebDriverBy::xpath("//input[@type = 'text' and @id = 'login' and @name = 'login']"));

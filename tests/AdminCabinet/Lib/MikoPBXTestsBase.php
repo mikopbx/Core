@@ -41,6 +41,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function selectDropdownItem(string $name, string $value): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Select '.$name.' menu item with value='.$value.'","level": "info"}}');
+
         // Check selected value
         $xpath = '//select[@name="' . $name . '"]/option[@selected="selected"]';
         $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
@@ -91,6 +93,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function waitForAjax(): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Waiting for AJAX","level": "info"}}');
+
         while (true) // Handle timeout somewhere
         {
             $ajaxIsComplete = (bool)(self::$driver->executeScript("return window.jQuery&&jQuery.active == 0"));
@@ -111,6 +115,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function selectDropdownItemByName(string $name, string $value): string
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Select '.$name.' menu item with text='.$value.'","level": "info"}}');
+
         // Check selected value
         $xpath = '//select[@name="' . $name . '"]/option[@selected="selected"]';
         $selectedExtensions = self::$driver->findElements(WebDriverBy::xpath($xpath));
@@ -215,6 +221,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function changeTextAreaValue(string $name, string $value, bool $skipIfNotExist = false): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Change text area '.$name.' with value='.$value.'","level": "info"}}');
+
         $xpath = ('//textarea[@name="' . $name . '"]');
         $textAreaItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         $actions = new WebDriverActions(self::$driver);
@@ -254,6 +262,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function changeFileField(string $name, string $value, bool $skipIfNotExist = false): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Change file area '.$name.' with value='.$value.'","level": "info"}}');
+
         $xpath = '//input[@name="' . $name . '" and (@type = "file")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($inputItems as $inputItem) {
@@ -273,6 +283,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function changeInputField(string $name, string $value, bool $skipIfNotExist = false): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Change input field '.$name.' with value='.$value.'","level": "info"}}');
+
         $xpath = '//input[@name="' . $name . '" and (@type="text" or @type="password" or @type="number" or @type="hidden" or @type="search")]';
         $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         $actions = new WebDriverActions(self::$driver);
@@ -328,8 +340,10 @@ class MikoPBXTestsBase extends BrowserStackTest
      * @param bool $enabled
      * @param bool $skipIfNotExist
      */
-    protected function changeCheckBoxState(string $name, bool $enabled, $skipIfNotExist = false): void
+    protected function changeCheckBoxState(string $name, bool $enabled, bool $skipIfNotExist = false): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Change checkbox '.$name.' with value='.$enabled.'","level": "info"}}');
+
         $xpath = '//input[@name="' . $name . '" and @type="checkbox"]';
         $checkBoxItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($checkBoxItems as $checkBoxItem) {
@@ -382,6 +396,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function submitForm(string $formId): void
     {
+
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Submit the form","level": "info"}}');
         $xpath = '//form[@id="' . $formId . '"]//ancestor::div[@id="submitbutton"]';
         try {
             $button_Submit = self::$driver->findElement(WebDriverBy::xpath($xpath));
@@ -413,6 +429,7 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function clickSidebarMenuItemByHref(string $href): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Click sidebar menu item with href='.$href.'","level": "info"}}');
         try {
             $xpath = '//div[@id="sidebar-menu"]//ancestor::a[contains(@class, "item") and contains(@href ,"' . $href . '")]';
             $sidebarItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
@@ -435,6 +452,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function clickModifyButtonOnRowWithText(string $text): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Click modify button with text='.$text.'","level": "info"}}');
+
         $xpath = ('//td[contains(text(),"' . $text . '")]/parent::tr[contains(@class, "row")]//a[contains(@href,"modify")]');
         try {
             $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
@@ -457,6 +476,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function clickModifyButtonOnRowWithID(string $id): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Click modify button with id='.$id.'","level": "info"}}');
+
         $xpath = ('//tr[contains(@class, "row") and @id="' . $id . '"]//a[contains(@href,"modify")]');
         try {
             $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
@@ -479,6 +500,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function clickDeleteButtonOnRowWithText(string $text): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Click delete button with text='.$text.'","level": "info"}}');
+
         $xpath = ('//td[contains(text(),"' . $text . '")]/ancestor::tr[contains(@class, "row")]//a[contains(@href,"delete")]');
         try {
             $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
@@ -502,6 +525,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function clickButtonByHref(string $href): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Click button with href='.$href.'","level": "info"}}');
+
         try {
             $xpath = "//a[@href = '{$href}']";
             $button_AddNew = self::$driver->findElement(WebDriverBy::xpath($xpath));
@@ -520,10 +545,11 @@ class MikoPBXTestsBase extends BrowserStackTest
     /**
      * Select tab in tabular menu by anchor
      *
-     * @param $anchor
+     * @param string $anchor
      */
-    protected function changeTabOnCurrentPage($anchor): void
+    protected function changeTabOnCurrentPage(string $anchor): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Change tab with anchor='.$anchor.'","level": "info"}}');
         try {
             $xpath = "//div[contains(@class, 'menu')]//a[contains(@data-tab,'{$anchor}')]";
             $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
@@ -543,6 +569,7 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function openAccordionOnThePage(): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Open accordion","level": "info"}}');
         try {
             $xpath = "//div[contains(@class, 'ui') and contains(@class, 'accordion')]";
             $accordion = self::$driver->findElement(WebDriverBy::xpath($xpath));
@@ -584,6 +611,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function deleteAllRecordsOnTable(string $tableId): void
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Delete all records on table with id='.$tableId.'", "level": "info"}}');
+
         $xpath = "//table[@id='{$tableId}']//a[contains(@href,'delete') and not(contains(@class,'disabled'))]";
         $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
         while (count($deleteButtons) > 0) {
@@ -610,6 +639,7 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function checkIfElementExistOnDropdownMenu(string $name, string $value): bool
     {
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Trying to click on element with text='.$value.' on menu '.$name.'","level": "info"}}');
         $xpath = '//select[@name="' . $name . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"dropdown")]';
         $xpath .= '| //div[@id="' . $name . '" and contains(@class, "ui") and contains(@class ,"dropdown") ]';
         $elementFound = false;
@@ -636,12 +666,13 @@ class MikoPBXTestsBase extends BrowserStackTest
             $menuItem = self::$driver->wait()->until(
                 WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
             );
-            $menuItem->click();
+            $menuItem[0]->click();
             $elementFound = true;
+            self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Element was found!","level": "info"}}');
         } catch (NoSuchElementException $e) {
-            //
+            self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Element not found (NoSuchElementException)","level": "info"}}');
         } catch (Exception $e) {
-            ///
+            self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Element not found (Code Exception)","level": "info"}}');
         }
         return $elementFound;
     }
@@ -656,6 +687,9 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function fillDataTableSearchInput(string $name, string $value):void
     {
+
+        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Fill datatable search input field '.$name.' with value='.$value.'","level": "info"}}');
+
         // Change the value of the input field
         $this->changeInputField($name, $value);
 
@@ -667,4 +701,16 @@ class MikoPBXTestsBase extends BrowserStackTest
         $this->waitForAjax();
     }
 
+
+    /**
+     * Fails a test with the given message.
+     *
+     *
+     * @psalm-return never-return
+     */
+    public static function fail(string $message = ''): void
+    {
+        self::$driver->executeScript('browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"failed", "reason": "'.$message.'"}}');
+        parent::fail($message);
+    }
 }
