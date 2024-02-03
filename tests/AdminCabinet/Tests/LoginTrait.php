@@ -36,18 +36,6 @@ trait LoginTrait
      */
     public function testLogin(array $params): void
     {
-
-//        self::$driver->executeScript('browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"passed", "reason": "Title matched!"}}' );
-//        # logging completion of scenario
-//        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Search in wiki successful","level": "info"}}');
-//        // ELSE
-//        self::$driver->executeScript('browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"failed", "reason": "Title not matched!"}}');
-//        # logging completion of scenario
-//        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Search in wiki failed","level": "error"}}');
-//        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Search in wiki","level": "info"}}');
-//        # logging variable for debugging purpose
-//        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"title  = '+ self::$driver->getTitle() + '","level": "debug"}}');
-
         $cookieFile = 'C:\Users\hello\Documents\cookies.txt';
 
         // Go to the index page
@@ -56,7 +44,7 @@ trait LoginTrait
         $loggedIn = false;
         // Check previous login by cookie
         if (file_exists($cookieFile)) {
-            self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Try to login using cookies","level": "info"}}');
+            self::annotate('Try to login using cookies');
             $cookies = unserialize(file_get_contents($cookieFile));
             foreach ($cookies as $cookie) {
                 self::$driver->manage()->addCookie($cookie);
@@ -70,10 +58,10 @@ trait LoginTrait
             $loggedIn = self::$driver->findElement(WebDriverBy::id('top-menu-search'));
         }
         if (!$loggedIn){
-            self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Login using credentials","level": "info"}}');
+            self::annotate('Login using credentials');
             $this->performLogin($cookieFile, $params);
         } else {
-            self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Logged in using cookies","level": "info"}}');
+            self::annotate('Logged in using cookies');
             $this->assertTrue(true);
         }
     }
@@ -119,13 +107,13 @@ trait LoginTrait
 
         if (!$loggedIn){
             $this->assertFalse(true);
-            self::$driver->executeScript('browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"failed", "reason": "Neither cookies, not login password works!"}}');
+            self::setSessionStatus('Neither cookies, not login password works!');
         } else {
             // Save auth cookie
             $cookies = self::$driver->manage()->getCookies();
             file_put_contents($cookieFile, serialize($cookies));
             $this->assertTrue(true);
-            self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Logged in with login/password!","level": "info"}}');
+            self::annotate('Logged in with login/password!');
         }
 
         $this->assertElementNotFound(WebDriverBy::xpath("//input[@type = 'text' and @id = 'login' and @name = 'login']"));
