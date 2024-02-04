@@ -161,6 +161,7 @@ class PbxSettings extends ModelsBase
             'SystemEmailForMissed' => '',
             'SendMetrics' => '1',
             PbxSettingsConstants::CLOUD_INSTANCE_ID => '',
+            PbxSettingsConstants::DISABLE_ALL_MODULES=> '0',
         ];
     }
 

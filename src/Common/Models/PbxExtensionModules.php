@@ -104,11 +104,17 @@ class PbxExtensionModules extends ModelsBase
     public ?string $disabled = '1';
 
     /**
-     * Prepares array of enabled modules params for reading
+     * Prepares an array of enabled modules params for reading
      * @return array
      */
     public static function getEnabledModulesArray(): array
     {
+        // Check if it globally disabled
+        if (PbxSettings::getValueByKey(PbxSettingsConstants::DISABLE_ALL_MODULES)==='1'){
+            return [];
+        }
+
+        // Get the list of disabled modules
         $parameters = [
             'conditions' => 'disabled="0"',
             'columns' => 'uniqid',
@@ -121,7 +127,7 @@ class PbxExtensionModules extends ModelsBase
     }
 
     /**
-     * Prepares array of modules params for reading
+     * Prepares an array of modules params for reading
      * @return array
      */
     public static function getModulesArray(): array

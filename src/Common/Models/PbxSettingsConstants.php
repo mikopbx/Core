@@ -34,4 +34,7 @@ abstract class PbxSettingsConstants
 
     // Records settings
     const PBX_RECORD_SAVE_PERIOD = 'PBXRecordSavePeriod';
+
+    // External modules
+    const DISABLE_ALL_MODULES = 'DisableAllModules'; // Disable all modules if it set to '1'
 }
