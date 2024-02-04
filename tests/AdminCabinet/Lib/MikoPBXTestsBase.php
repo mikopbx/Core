@@ -107,7 +107,7 @@ class MikoPBXTestsBase extends BrowserStackTest
 //        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"title  = '+ self::$driver->getTitle() + '","level": "debug"}}');
 
         $message = 'browserstack_executor: {"action": "annotate", "arguments": {"data": "';
-        $message .= urlencode($text);
+        $message .= stripcslashes($text);
         $message .= '", "level": "info"}}';
 
         self::$driver->executeScript($message);
@@ -153,7 +153,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         $message = 'browserstack_executor: {"action": "setSessionStatus", "arguments": {"status": "';
         $message .= $status;
         $message .= '", "reason": "';
-        $message .= urlencode($text);
+        $message .= stripcslashes($text);
         $message .= '"}}';
         self::$driver->executeScript($message);
     }

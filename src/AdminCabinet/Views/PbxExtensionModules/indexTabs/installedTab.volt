@@ -30,8 +30,21 @@
     <tr class="module-row" id="{{ module['uniqid'] }}">
         <td class="collapsing no-modify-columns">
             <div class="ui toggle checkbox" data-value="{{ module['uniqid'] }}">
-                <input type="checkbox" {% if module['status']!=='disabled' %} checked {% endif %}/> <label></label>
+                    <input type="checkbox" {% if module['status']!=='disabled' %}checked="checked" {% endif %} /> <label></label>
             </div>
+            {% if module['disableReason']=='DisabledByException' %}
+                <i class="bug red icon wide popup-on-click vertically-aligned"
+                   data-html="<div class='header'>{{ t._('ext_DisableReasonHeader') }}</div><div class='content'>{{ t._('ext_ModuleExecutionProblem') }}:<br>{{ module['disableReasonText'] }}</div></div>"
+                >
+                </i>
+            {% elseif module['disableReason']=='DisabledByLicense' %}
+                <i class="ui icons vertically-aligned popup-on-click"
+                   data-html="<div class='header'>{{ t._('ext_DisableReasonHeader') }}</div><div class='content'>{{ t._('ext_ModuleLicenseProblem') }}:<br>{{ module['disableReasonText'] }}</div></div>"
+                >
+                    <i class="big red dont icon"></i>
+                    <i class="key icon"></i>
+                </i>
+            {% endif %}
         </td>
         <td class="{{ module['status'] }} disability">{{ t._('Breadcrumb'~module['uniqid']) }} <i
                     class="status-icon"></i><br><span

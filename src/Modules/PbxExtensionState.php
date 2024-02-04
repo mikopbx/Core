@@ -43,6 +43,11 @@ use Throwable;
  */
 class PbxExtensionState extends Injectable
 {
+
+    const DISABLED_BY_EXCEPTION = 'DisabledByException';
+    const DISABLED_BY_USER = 'DisabledByUser';
+    const DISABLED_BY_LICENSE = 'DisabledByLicense';
+
     private array $messages;
     private $lic_feature_id;
     private string $moduleUniqueID;
@@ -222,13 +227,16 @@ class PbxExtensionState extends Injectable
     }
 
     /**
-     * Disables the extension module and performs necessary checks.
+     * Disables the extension module and performs the necessary checks.
+     *
+     * @param string $reason The reason why the module was disabled as a flag
+     * @param string $reasonText The reason why the module was disabled in text mode, some logs
      *
      * @return bool True if the module was successfully disabled, false otherwise.
      */
-    public function disableModule(): bool
+    public function disableModule(string $reason='', string $reasonText=''): bool
     {
-        // Perform necessary checks before disabling the module
+        // Perform the necessary checks before disabling the module
         $success = $this->makeBeforeDisableTest();
         if ( ! $success) {
             return false;
@@ -237,7 +245,6 @@ class PbxExtensionState extends Injectable
         // Disable firewall settings and the module
         if ( ! $this->disableFirewallSettings()) {
             $this->messages[] = $this->translation->_("ext_ErrorOnDisableFirewallSettings");
-
             return false;
         }
 
@@ -251,6 +258,8 @@ class PbxExtensionState extends Injectable
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ($module !== null) {
             $module->disabled = '1';
+            $module->disableReason = $reason;
+            $module->disableReasonText = $reasonText;
             $module->save();
         }
 
@@ -278,7 +287,7 @@ class PbxExtensionState extends Injectable
     }
 
     /**
-     * Performs necessary checks before disabling the module.
+     * Performs the necessary checks before disabling the module.
      *
      * @return bool True if the checks pass and the module can be disabled, false otherwise.
      */

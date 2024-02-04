@@ -104,6 +104,20 @@ class PbxExtensionModules extends ModelsBase
     public ?string $disabled = '1';
 
     /**
+     * Store the reason why the module was disabled as a flag
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $disableReason = '';
+
+    /**
+     * Store the reason why the module was disabled in text mode, some logs
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $disableReasonText = '';
+
+    /**
      * Prepares an array of enabled modules params for reading
      * @return array
      */

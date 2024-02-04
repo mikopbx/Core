@@ -86,7 +86,9 @@ class ModulesManagementProcessor extends Injectable
                     break;
                 case 'disableModule':
                     $moduleUniqueID = $data['uniqid'];
-                    $res = self::disableModule($moduleUniqueID);
+                    $reason = $data['reason']??'';
+                    $reasonText = $data['reasonText']??'';
+                    $res = self::disableModule($moduleUniqueID, $reason, $reasonText);
                     break;
                 case 'uninstallModule':
                     $moduleUniqueID = $data['uniqid'];
@@ -266,15 +268,16 @@ class ModulesManagementProcessor extends Injectable
      * Disables extension module.
      *
      * @param string $moduleUniqueID
-     *
+     * @param string $reason Store the reason why the module was disabled as a flag
+     * @param string $reasonText Store the reason why the module was disabled in text mode, some logs
      * @return PBXApiResult An object containing the result of the API call.
      */
-    private static function disableModule(string $moduleUniqueID): PBXApiResult
+    private static function disableModule(string $moduleUniqueID, string $reason='', string $reasonText=''): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
-        if ($moduleStateProcessor->disableModule() === false) {
+        if ($moduleStateProcessor->disableModule($reason, $reasonText) === false) {
             $res->success = false;
             $res->messages = $moduleStateProcessor->getMessages();
         } else {

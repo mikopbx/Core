@@ -94,7 +94,8 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
     private static function handleModuleException(Throwable $exception): int
     {
         $exceptionFile = $exception->getFile();
-        PbxExtensionUtils::disableBadModule($exceptionFile);
+        $exceptionMessage = WhoopsErrorHandlerProvider::makePrettyErrorDescription($exception);
+        PbxExtensionUtils::disableBadModule($exceptionFile, $exceptionMessage);
         return \Whoops\Handler\Handler::DONE;
     }
 

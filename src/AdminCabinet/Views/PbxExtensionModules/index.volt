@@ -25,15 +25,15 @@
 </div>
 
 <div class="ui tab" data-tab="installed">
-    {{ partial("PbxExtensionModules/installedTab")}}
+    {{ partial("PbxExtensionModules/indexTabs/installedTab")}}
 </div>
 
 <div class="ui tab disable-if-no-internet" data-tab="marketplace">
-{{ partial("PbxExtensionModules/marketplaceTab")}}
+{{ partial("PbxExtensionModules/indexTabs/marketplaceTab")}}
 </div>
 
 <div class="ui tab segment disable-if-no-internet" data-tab="licensing">
-{{ partial("PbxExtensionModules/licensingTab")}}
+{{ partial("PbxExtensionModules/indexTabs/licensingTab")}}
 </div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",

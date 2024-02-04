@@ -1004,7 +1004,7 @@ const PbxApi = {
             url: PbxApi.modulesDisableModule,
             on: 'now',
             method: 'POST',
-            data: {uniqid: moduleUniqueID},
+            data: {uniqid: moduleUniqueID, reason: 'DisabledByUser'},
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response, true);

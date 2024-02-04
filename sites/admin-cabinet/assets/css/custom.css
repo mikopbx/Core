@@ -650,3 +650,8 @@ Limit fields width
         display: none;
     }
 }
+
+/* Align vertically icon in cell for PBXExtension */
+i.vertically-aligned {
+    vertical-align: super;
+}

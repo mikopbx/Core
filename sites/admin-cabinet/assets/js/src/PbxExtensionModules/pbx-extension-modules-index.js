@@ -66,6 +66,12 @@ const extensionModules = {
     checkBoxes: [],
 
     /**
+     * jQuery object for icon with popup text
+     * @type {jQuery}
+     */
+    $popupOnClick: $('i.popup-on-click'),
+
+    /**
      * jQuery object for the tabular menu.
      * @type {jQuery}
      */
@@ -84,6 +90,13 @@ const extensionModules = {
         extensionModules.$deleteModalForm.modal();
 
         extensionModules.initializeDataTable();
+
+        extensionModules.$popupOnClick.popup({
+            on    : 'click',
+            className: {
+                popup: 'ui popup wide'
+            }
+        });
 
         PbxApi.ModulesGetAvailable(extensionModules.cbParseModuleUpdates);
         extensionModules.$checkboxes.each((index, obj) => {
