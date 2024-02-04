@@ -51,11 +51,11 @@ trait LoginTrait
             }
             // Go to the index page
             self::$driver->navigate()->to($GLOBALS['SERVER_PBX']);
-            self::$driver->wait(10, 500)->until(function ($driver) {
+            self::$driver->wait(5, 1000)->until(function ($driver) {
                 $elements = $driver->findElements(WebDriverBy::id("top-menu-search"));
                 return count($elements) > 0;
             });
-            $loggedIn = self::$driver->findElement(WebDriverBy::id('top-menu-search'));
+            $loggedIn = count(self::$driver->findElements(WebDriverBy::id('top-menu-search')))>0;
         }
         if (!$loggedIn){
             self::annotate('Login using credentials');
