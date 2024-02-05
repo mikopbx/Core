@@ -1213,4 +1213,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'pr_DeleteDescription_v2' => 'Avec le fournisseur, toutes les règles de routage sortant associées seront supprimées, et dans les règles de routage entrant, tous les liens seront remplacés par « Pas de connexion à un fournisseur, pas d\'autorisation ».',
     'nw_ExternIpHostMessage1' => 'Si nécessaire, vous pouvez spécifier le port SIP externe à l\'aide de deux-points après le nom d\'hôte ou l\'adresse IP.',
     'ir_playback' => 'Lire un fichier multimédia',
+    'ext_ModuleExecutionProblem' => 'Une erreur grave s\'est produite :',
+    'ext_DisableReasonHeader' => 'Le module a été désactivé automatiquement',
+    'gs_DisableAllModules' => 'Désactiver le marché',
 ];

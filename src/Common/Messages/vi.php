@@ -1213,4 +1213,7 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'ir_AnyProvider_v2' => 'Không có kết nối với nhà cung cấp, không có ủy quyền',
     'nw_ExternIpHostMessage1' => 'Nếu cần, bạn có thể chỉ định cổng SIP bên ngoài bằng dấu hai chấm sau tên máy chủ hoặc địa chỉ IP',
     'ir_playback' => 'Phát tập tin phương tiện',
+    'ext_ModuleExecutionProblem' => 'Đã xảy ra lỗi nghiêm trọng:',
+    'ext_DisableReasonHeader' => 'Mô-đun đã bị vô hiệu hóa tự động',
+    'gs_DisableAllModules' => 'Vô hiệu hóa thị trường',
 ];

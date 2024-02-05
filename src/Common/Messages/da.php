@@ -1213,4 +1213,7 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'pr_DeleteDescription_v2' => 'Sammen med udbyderen vil alle tilknyttede udgående routing-regler blive slettet, og i de indgående routing-regler vil alle links blive erstattet med "Ingen forbindelse til en udbyder, ingen autorisation"',
     'nw_ExternIpHostMessage1' => 'Om nødvendigt kan du angive den eksterne SIP-port ved hjælp af et kolon efter værtsnavnet eller IP-adressen',
     'ir_playback' => 'Afspil mediefil',
+    'ext_ModuleExecutionProblem' => 'Der opstod en alvorlig fejl:',
+    'ext_DisableReasonHeader' => 'Modulet blev automatisk deaktiveret',
+    'gs_DisableAllModules' => 'Deaktiver markedsplads',
 ];

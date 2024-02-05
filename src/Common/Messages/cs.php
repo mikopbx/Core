@@ -1213,4 +1213,7 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'ir_AnyProvider_v2' => 'Žádné spojení s poskytovatelem, žádná autorizace',
     'nw_ExternIpHostMessage1' => 'V případě potřeby můžete zadat externí port SIP pomocí dvojtečky za názvem hostitele nebo IP adresou',
     'ir_playback' => 'Přehrát mediální soubor',
+    'ext_ModuleExecutionProblem' => 'Došlo k závažné chybě:',
+    'ext_DisableReasonHeader' => 'Modul byl automaticky deaktivován',
+    'gs_DisableAllModules' => 'Zakázat tržiště',
 ];

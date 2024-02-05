@@ -1246,4 +1246,7 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'ir_AnyProvider_v2' => 'Fără conexiune cu un furnizor, fără autorizare',
     'nw_ExternIpHostMessage1' => 'Dacă este necesar, puteți specifica portul SIP extern folosind două puncte după numele gazdei sau adresa IP',
     'ir_playback' => 'Redați fișierul media',
+    'ext_ModuleExecutionProblem' => 'A apărut o eroare gravă:',
+    'ext_DisableReasonHeader' => 'Modulul a fost dezactivat automat',
+    'gs_DisableAllModules' => 'Dezactivați piața',
 ];

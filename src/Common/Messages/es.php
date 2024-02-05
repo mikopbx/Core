@@ -1213,4 +1213,7 @@ El cupón se puede activar una vez y luego se canjea.',
     'pr_DeleteDescription_v2' => 'Junto con el proveedor, se eliminarán todas las reglas de enrutamiento salientes asociadas y, en las reglas de enrutamiento entrantes, todos los enlaces se reemplazarán con "Sin conexión a un proveedor, sin autorización".',
     'nw_ExternIpHostMessage1' => 'Si es necesario, puede especificar el puerto SIP externo usando dos puntos después del nombre del host o la dirección IP.',
     'ir_playback' => 'Reproducir archivo multimedia',
+    'ext_ModuleExecutionProblem' => 'Se produjo un error grave:',
+    'ext_DisableReasonHeader' => 'El módulo se deshabilitó automáticamente.',
+    'gs_DisableAllModules' => 'Deshabilitar mercado',
 ];

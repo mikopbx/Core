@@ -1213,4 +1213,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ir_AnyProvider_v2' => 'Ingen anslutning till en leverantör, ingen auktorisering',
     'nw_ExternIpHostMessage1' => 'Om det behövs kan du ange den externa SIP-porten med ett kolon efter värdnamnet eller IP-adressen',
     'ir_playback' => 'Spela mediafil',
+    'ext_ModuleExecutionProblem' => 'Ett allvarligt fel inträffade:',
+    'ext_DisableReasonHeader' => 'Modulen inaktiverades automatiskt',
+    'gs_DisableAllModules' => 'Inaktivera marknadsplats',
 ];

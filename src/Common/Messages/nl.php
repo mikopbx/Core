@@ -1263,4 +1263,7 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'pr_DeleteDescription_v2' => 'Samen met de provider worden alle bijbehorende uitgaande routeringsregels verwijderd en in de inkomende routeringsregels worden alle links vervangen door “Geen verbinding met een provider, geen autorisatie”',
     'nw_ExternIpHostMessage1' => 'Indien nodig kunt u de externe SIP-poort opgeven met een dubbele punt achter de hostnaam of het IP-adres',
     'ir_playback' => 'Mediabestand afspelen',
+    'ext_ModuleExecutionProblem' => 'Er is een ernstige fout opgetreden:',
+    'ext_DisableReasonHeader' => 'De module werd automatisch uitgeschakeld',
+    'gs_DisableAllModules' => 'Schakel marktplaats uit',
 ];
