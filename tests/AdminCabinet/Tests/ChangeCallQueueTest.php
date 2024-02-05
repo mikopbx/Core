@@ -21,6 +21,7 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -32,6 +33,18 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 class ChangeCallQueueTest extends MikoPBXTestsBase
 {
     /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Change parameters of the existing call queue");
+    }
+
+    /**
      * Test changing call queue extension settings.
      *
      * @depends testLogin
@@ -41,6 +54,7 @@ class ChangeCallQueueTest extends MikoPBXTestsBase
      */
     public function testChangeCallQueueExtension(array $params): void
     {
+
         // Click on the call queue menu item in the sidebar
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
 

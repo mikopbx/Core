@@ -41,7 +41,7 @@ trait LoginTrait
         $loggedIn = false;
         // Check previous login by cookie
         if (file_exists($cookieFile)) {
-            self::annotate('Try to login using cookies');
+            self::annotate('Test action: Try to login using cookies');
             $cookies = unserialize(file_get_contents($cookieFile));
             foreach ($cookies as $cookie) {
                 self::$driver->manage()->addCookie($cookie);
@@ -55,10 +55,10 @@ trait LoginTrait
             $loggedIn = count(self::$driver->findElements(WebDriverBy::id('top-menu-search')))>0;
         }
         if (!$loggedIn){
-            self::annotate('Login using credentials');
+            self::annotate('Test action: Login using credentials');
             $this->performLogin($cookieFile, $params);
         } else {
-            self::annotate('Logged in using cookies');
+            self::annotate('Test action: Logged in using cookies');
             $this->assertTrue(true);
         }
     }
@@ -104,13 +104,13 @@ trait LoginTrait
 
         if (!$loggedIn){
             $this->assertFalse(true);
-            self::setSessionStatus('Neither cookies, not login password works!');
+            self::setSessionStatus('Neither cookies, not login password works!','failed');
         } else {
             // Save auth cookie
             $cookies = self::$driver->manage()->getCookies();
             file_put_contents($cookieFile, serialize($cookies));
             $this->assertTrue(true);
-            self::annotate('Logged in with login/password!');
+            self::annotate('Test action: Logged in with login/password!');
         }
 
         $this->assertElementNotFound(WebDriverBy::xpath("//input[@type = 'text' and @id = 'login' and @name = 'login']"));
