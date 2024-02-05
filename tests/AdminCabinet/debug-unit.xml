@@ -22,7 +22,7 @@
 <!--            <file>Tests/DeleteExtensionTest.php</file>-->
 <!--            <file>Tests/DeleteExtensionFromDropDownTest.php</file>-->
 <!--            <file>Tests/CheckDropdownsOnDeleteQueueTest.php</file>-->
-            <file>Tests/InstallModulesTest.php</file>
+            <file>Tests/FillPBXSettingsTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

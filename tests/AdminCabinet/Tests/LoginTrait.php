@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
@@ -132,7 +133,7 @@ trait LoginTrait
     /**
      * Check if the user is logged in by checking if the search field is visible.
      * @return bool
-     * @throws \Facebook\WebDriver\Exception\NoSuchElementException
+     *
      */
     private function isUserLoggedIn(): bool
     {
@@ -143,9 +144,14 @@ trait LoginTrait
                 )
             );
             return true;
+        } catch (NoSuchElementException $e) {
+
         } catch (TimeOutException $e) {
-            return false;
+
+        } catch (\Exception $e) {
+            $this->fail($e->getMessage());
         }
+        return false;
     }
 
     /**
