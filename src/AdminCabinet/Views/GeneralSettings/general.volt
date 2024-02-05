@@ -22,12 +22,6 @@
     </div>
 </div>
 <div class="field">
-    <label>{{ t._('gs_PBXFeatureDigitTimeout') }}</label>
-    <div class="field max-width-100">
-        {{ form.render('PBXFeatureDigitTimeout') }}
-    </div>
-</div>
-<div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
             <label>{{ t._('gs_PBXAllowGuestCalls') }}</label>
@@ -48,6 +42,14 @@
         <div class="ui toggle checkbox">
             <label>{{ t._('gs_SendAnonymousMetrics') }}</label>
             {{ form.render('SendMetrics') }}
+        </div>
+    </div>
+</div>
+<div class="field">
+    <div class="ui segment">
+        <div class="ui toggle checkbox">
+            <label>{{ t._('gs_DisableAllModules') }}</label>
+            {{ form.render('DisableAllModules') }}
         </div>
     </div>
 </div>

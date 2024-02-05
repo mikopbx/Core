@@ -188,6 +188,7 @@ class GeneralSettingsEditForm extends BaseForm
                 case 'RedirectToHttps':
                 case 'PBXSplitAudioThread':
                 case 'PBXAllowGuestCalls':
+                case PbxSettingsConstants::DISABLE_ALL_MODULES:
                 case PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD:
                 case '***ALL CHECK BOXES ABOVE***':
                     $cheskarr = ['value' => null];

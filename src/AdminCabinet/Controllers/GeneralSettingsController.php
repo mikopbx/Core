@@ -255,6 +255,7 @@ class GeneralSettingsController extends BaseController
                 case 'UseWebRTC':
                 case PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD:
                 case 'PBXAllowGuestCalls':
+                case PbxSettingsConstants::DISABLE_ALL_MODULES:
                 case '***ALL CHECK BOXES ABOVE***':
                     $newValue = ($data[$key] === 'on') ? '1' : '0';
                     break;
