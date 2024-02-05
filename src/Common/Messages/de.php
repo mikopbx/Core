@@ -1216,4 +1216,7 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'ir_AnyProvider_v2' => 'Keine Verbindung zu einem Anbieter, keine Autorisierung',
     'nw_ExternIpHostMessage1' => 'Bei Bedarf können Sie den externen SIP-Port mit einem Doppelpunkt hinter dem Hostnamen oder der IP-Adresse angeben',
     'ir_playback' => 'Mediendatei abspielen',
+    'ext_ModuleExecutionProblem' => 'Es ist ein schwerwiegender Fehler aufgetreten:',
+    'ext_DisableReasonHeader' => 'Das Modul wurde automatisch deaktiviert',
+    'gs_DisableAllModules' => 'Marktplatz deaktivieren',
 ];

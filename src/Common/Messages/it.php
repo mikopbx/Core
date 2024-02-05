@@ -1213,4 +1213,7 @@ Il coupon può essere attivato una volta, dopodiché viene riscattato.',
     'ir_AnyProvider_v2' => 'Nessuna connessione a un provider, nessuna autorizzazione',
     'nw_ExternIpHostMessage1' => 'Se necessario, è possibile specificare la porta SIP esterna utilizzando i due punti dopo il nome host o l\'indirizzo IP',
     'ir_playback' => 'Riproduci file multimediale',
+    'ext_ModuleExecutionProblem' => 'Si è verificato un errore grave:',
+    'ext_DisableReasonHeader' => 'Il modulo è stato disabilitato automaticamente',
+    'gs_DisableAllModules' => 'Disabilita il mercato',
 ];

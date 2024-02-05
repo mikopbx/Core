@@ -1213,4 +1213,7 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'pr_DeleteDescription_v2' => 'Wraz z dostawcą wszystkie powiązane reguły routingu wychodzącego zostaną usunięte, a w regułach routingu przychodzącego wszystkie linki zostaną zastąpione słowami „Brak połączenia z dostawcą, brak autoryzacji”',
     'nw_ExternIpHostMessage1' => 'W razie potrzeby możesz określić zewnętrzny port SIP, używając dwukropka po nazwie hosta lub adresie IP',
     'ir_playback' => 'Odtwórz plik multimedialny',
+    'ext_ModuleExecutionProblem' => 'Wystąpił poważny błąd:',
+    'ext_DisableReasonHeader' => 'Moduł został automatycznie wyłączony',
+    'gs_DisableAllModules' => 'Wyłącz rynek',
 ];

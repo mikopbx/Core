@@ -1213,4 +1213,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ir_AnyProvider_v2' => 'Sem conexão com um provedor, sem autorização',
     'nw_ExternIpHostMessage1' => 'Se necessário, você pode especificar a porta SIP externa usando dois pontos após o nome do host ou endereço IP',
     'ir_playback' => 'Reproduzir arquivo de mídia',
+    'ext_ModuleExecutionProblem' => 'Ocorreu um erro grave:',
+    'ext_DisableReasonHeader' => 'O módulo foi desativado automaticamente',
+    'gs_DisableAllModules' => 'Desativar mercado',
 ];

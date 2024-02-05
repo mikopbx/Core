@@ -1213,4 +1213,7 @@ return [
     'pr_DeleteDescription_v2' => 'プロバイダーとともに、関連する送信ルーティング ルールがすべて削除され、受信ルーティング ルールではすべてのリンクが「プロバイダーへの接続なし、承認なし」に置き換えられます。',
     'nw_ExternIpHostMessage1' => '必要に応じて、ホスト名または IP アドレスの後にコロンを使用して外部 SIP ポートを指定できます。',
     'ir_playback' => 'メディアファイルを再生する',
+    'ext_ModuleExecutionProblem' => '重大なエラーが発生しました:',
+    'ext_DisableReasonHeader' => 'モジュールは自動的に無効になりました',
+    'gs_DisableAllModules' => 'マーケットプレイスを無効にする',
 ];

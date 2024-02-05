@@ -1213,4 +1213,7 @@ return [
     'ir_AnyProvider_v2' => '没有与提供商的连接，没有授权',
     'ir_playback' => '播放媒体文件',
     'nw_ExternIpHostMessage1' => '如有必要，您可以在主机名或 IP 地址后使用冒号指定外部 SIP 端口',
+    'ext_ModuleExecutionProblem' => '发生严重错误：',
+    'ext_DisableReasonHeader' => '该模块被自动禁用',
+    'gs_DisableAllModules' => '禁用市场',
 ];

@@ -1213,4 +1213,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'pr_DeleteDescription_v2' => 'Provayderlə birlikdə bütün əlaqəli gedən marşrutlaşdırma qaydaları silinəcək və gələn marşrutlaşdırma qaydalarında bütün keçidlər “Provayderlə əlaqə yoxdur, icazə yoxdur” ilə əvəz olunacaq.',
     'nw_ExternIpHostMessage1' => 'Lazım gələrsə, host adından və ya IP ünvanından sonra iki nöqtə ilə xarici SIP portunu təyin edə bilərsiniz',
     'ir_playback' => 'Media faylını çalın',
+    'ext_ModuleExecutionProblem' => 'Ciddi xəta baş verdi:',
+    'ext_DisableReasonHeader' => 'Modul avtomatik olaraq söndürüldü',
+    'gs_DisableAllModules' => 'Bazar yerini deaktiv edin',
 ];

@@ -1230,4 +1230,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'ir_AnyProvider_v2' => 'Sağlayıcıyla bağlantı yok, yetki yok',
     'nw_ExternIpHostMessage1' => 'Gerekirse, ana bilgisayar adından veya IP adresinden sonra iki nokta üst üste kullanarak harici SIP bağlantı noktasını belirleyebilirsiniz.',
     'ir_playback' => 'Medya dosyasını oynat',
+    'ext_ModuleExecutionProblem' => 'Ciddi bir hata oluştu:',
+    'ext_DisableReasonHeader' => 'Modül otomatik olarak devre dışı bırakıldı',
+    'gs_DisableAllModules' => 'Pazar yerini devre dışı bırak',
 ];
