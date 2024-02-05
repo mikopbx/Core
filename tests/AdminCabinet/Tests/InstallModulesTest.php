@@ -39,6 +39,8 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
      */
     public function testInstallModule(array $params): void
     {
+        $this->setSessionName("Test: Install new module");
+
         $this->clickSidebarMenuItemByHref("/admin-cabinet/pbx-extension-modules/index/");
         $this->changeTabOnCurrentPage('installed');
 

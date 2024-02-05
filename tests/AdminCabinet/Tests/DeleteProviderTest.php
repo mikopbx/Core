@@ -36,6 +36,8 @@ class DeleteProviderTest extends MikoPBXTestsBase
      */
     public function testDeleteProvider(array $params): void
     {
+        $this->setSessionName("Test: Delete providers");
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickModifyButtonOnRowWithText($params['description']);
 

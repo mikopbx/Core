@@ -37,6 +37,8 @@ class DeleteAudioFileTest extends MikoPBXTestsBase
      */
     public function testDeleteAudioFile(array $params): void
     {
+        $this->setSessionName("Test: Delete audio files");
+
         if (!$params['for_delete']) {
             $this->assertTrue(true);
             return;

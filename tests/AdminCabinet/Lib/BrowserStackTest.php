@@ -119,7 +119,7 @@ class BrowserStackTest extends TestCase
     {
         parent::setUp();
         $sessionID = self::$driver->getSessionID();
-        $name = $this->getName(false);
+        $name = $this->getName(true);
 
         $client = new GuzzleHttpClient();
         $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
@@ -130,6 +130,8 @@ class BrowserStackTest extends TestCase
         // Maximize Browser size
         self::$driver->manage()->window()->maximize();
 
+        // Go to the index page
+        self::$driver->get($GLOBALS['SERVER_PBX']);
     }
 
     /**
@@ -140,7 +142,7 @@ class BrowserStackTest extends TestCase
         parent::tearDown();
         if ($this->getStatus()!==0){
             self::$testResult = false;
-            self::$failureConditions[] = 'Test: '.$this->getName().' Message:'. $this->getStatusMessage();
+            self::$failureConditions[] = 'Test: '.$this->getName(true).' Message:'. $this->getStatusMessage();
         }
     }
 
@@ -160,7 +162,6 @@ class BrowserStackTest extends TestCase
                 'reason' => $statusMessage,
             ]
         ]);
-
 
         self::$driver->quit();
         if (isset(self::$bs_local) && self::$bs_local) {

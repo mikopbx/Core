@@ -35,12 +35,14 @@ class DeleteCallQueueTest extends MikoPBXTestsBase
      */
     public function testDeleteCallQueue(array $params): void
     {
+        $this->setSessionName("Test: Delete Call Queues");
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
         $this->clickDeleteButtonOnRowWithText($params['name']);
 
         $this->waitForAjax();
 
-        // Try to find element with name on page
+        // Try to find an element with name on page
         $xpath = "//table[@id='queues-table']//tr[@id='{$params['uniqid']}']";
         $els = self::$driver->findElements(WebDriverBy::xpath($xpath));
 

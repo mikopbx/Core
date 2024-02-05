@@ -35,6 +35,8 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
      */
     public function testChangeDataTimeSettings(array $params): void
     {
+        $this->setSessionName("Test: Fill date time settings");
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/time-settings/modify/');
         $this->selectDropdownItem('PBXTimezone', $params['PBXTimezone']);
         $this->changeCheckBoxState('PBXManualTimeSettings', $params['PBXManualTimeSettings']);

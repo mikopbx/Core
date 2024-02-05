@@ -35,6 +35,8 @@ class CreateSIPProvidersTest extends MikoPBXTestsBaseAlias
      */
     public function testCreateSIPProvider(array $params): void
     {
+        $this->setSessionName("Test: Create a new SIP providers");
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickDeleteButtonOnRowWithText($params['description']);
 

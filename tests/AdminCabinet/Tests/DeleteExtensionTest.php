@@ -36,6 +36,8 @@ class DeleteExtensionTest extends MikoPBXTestsBase
      */
     public function testDeleteExtension(array $params): void
     {
+        $this->setSessionName("Test: Delete extensions");
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         // Fill search field

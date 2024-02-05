@@ -50,6 +50,8 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
      */
     public function testCreateOutOfWorkTimePeriod(array $params): void
     {
+        $this->setSessionName("Test: Delete out of work rules and create new rules");
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/out-off-work-time/index/');
         $this->clickButtonByHref('/admin-cabinet/out-off-work-time/modify');
         $this->changeTextAreaValue('description', $params['description']);

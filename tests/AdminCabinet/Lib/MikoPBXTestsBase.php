@@ -90,26 +90,24 @@ class MikoPBXTestsBase extends BrowserStackTest
 
     /**
      * @param string $text
+     * @param string $level
      * @return void
      */
-    public static function annotate(string $text)
+    public static function annotate(string $text, string $level='info')
     {
+        // Create an associative array with the structure you want to encode as JSON
+        $data = [
+            'action' => 'annotate',
+            'arguments' => [
+                'level' => $level,
+                'data' => $text
+            ]
+        ];
 
-//        self::$driver->executeScript('browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"passed", "reason": "Title matched!"}}' );
-//        # logging completion of scenario
-//        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Search in wiki successful","level": "info"}}');
-//        // ELSE
-//        self::$driver->executeScript('browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"failed", "reason": "Title not matched!"}}');
-//        # logging completion of scenario
-//        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Search in wiki failed","level": "error"}}');
-//        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Scenario : Search in wiki","level": "info"}}');
-//        # logging variable for debugging purpose
-//        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"title  = '+ self::$driver->getTitle() + '","level": "debug"}}');
+        // Encode the array as a JSON string
+        $message = 'browserstack_executor: ' . json_encode($data, JSON_PRETTY_PRINT);
 
-        $message = 'browserstack_executor: {"action": "annotate", "arguments": {"data": "';
-        $message .= stripcslashes($text);
-        $message .= '", "level": "info"}}';
-
+        // Execute the script with the encoded message
         self::$driver->executeScript($message);
     }
 
@@ -137,7 +135,6 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     public static function fail(string $message = ''): void
     {
-
         self::setSessionStatus($message);
         parent::fail($message);
     }
@@ -150,11 +147,42 @@ class MikoPBXTestsBase extends BrowserStackTest
     public static function setSessionStatus(string $text, string $status = 'failed')
     {
 
-        $message = 'browserstack_executor: {"action": "setSessionStatus", "arguments": {"status": "';
-        $message .= $status;
-        $message .= '", "reason": "';
-        $message .= stripcslashes($text);
-        $message .= '"}}';
+        // Create an associative array with the structure you want to encode as JSON
+        $data = [
+            'action' => 'setSessionStatus',
+            'arguments' => [
+                'status' => $status,
+                'reason' => $text
+            ]
+        ];
+
+        // Encode the array as a JSON string
+        $message = 'browserstack_executor: ' . json_encode($data, JSON_PRETTY_PRINT);
+
+        // Execute the script with the encoded message
+        self::$driver->executeScript($message);
+    }
+
+    /**
+     * Update current session name
+     * @param string $name
+     * @return void
+     */
+    public static function setSessionName(string $name)
+    {
+
+        // Create an associative array with the structure you want to encode as JSON
+        $data = [
+            'action' => 'setSessionName',
+            'arguments' => [
+                'name' => $name
+            ]
+        ];
+
+        // Encode the array as a JSON string
+        $message = 'browserstack_executor: ' . json_encode($data, JSON_PRETTY_PRINT);
+
+        // Execute the script with the encoded message
         self::$driver->executeScript($message);
     }
 

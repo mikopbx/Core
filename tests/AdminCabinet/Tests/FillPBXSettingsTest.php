@@ -37,6 +37,8 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
      */
     public function testFillPBXSettings(array $dataSet): void
     {
+        $this->setSessionName("Test: Fill general settings");
+
         $this->clickSidebarMenuItemByHref("/admin-cabinet/general-settings/modify/");
 
         foreach ($dataSet as $key => $value) {

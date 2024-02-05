@@ -38,9 +38,6 @@ trait LoginTrait
     {
         $cookieFile = 'C:\Users\hello\Documents\cookies.txt';
 
-        // Go to the index page
-        self::$driver->get($GLOBALS['SERVER_PBX']);
-
         $loggedIn = false;
         // Check previous login by cookie
         if (file_exists($cookieFile)) {

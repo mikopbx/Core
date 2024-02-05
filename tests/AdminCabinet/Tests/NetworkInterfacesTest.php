@@ -38,7 +38,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
      */
     public function testAddNewVLAN(array $params): void
     {
-        self::$driver->executeScript('browserstack_executor: {"action": "annotate", "arguments": {"data":"Test case:Add new VLAN","level": "info"}}');
+        $this->setSessionName("Test: Add new VLAN");
 
         // Click on the network modification page in the admin cabinet.
         $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");

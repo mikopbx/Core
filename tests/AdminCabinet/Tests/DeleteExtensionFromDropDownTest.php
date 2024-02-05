@@ -36,6 +36,8 @@ class DeleteExtensionFromDropDownTest extends MikoPBXTestsBase
      */
     public function testDropdownOnDeletedExtensions(array $params): void
     {
+        $this->setSessionName("Test: Check dropdowns after delete extensions");
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
 
         $this->selectDropdownItem('action', 'extension');

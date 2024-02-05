@@ -40,6 +40,8 @@ class CustomFileChangeTest extends MikoPBXTestsBase
      */
     public function testChangeCustomFile(array $params): void
     {
+        $this->setSessionName("Test: Make custom files change");
+
         // Scroll to the bottom of the sidebar menu to access the files page
         self::$driver->executeScript('document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);');
         $this->clickSidebarMenuItemByHref("/admin-cabinet/custom-files/index/");
