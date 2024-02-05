@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -27,6 +28,19 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class DeleteCallQueueTest extends MikoPBXTestsBase
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Delete Call Queues");
+    }
+
     /**
      * Test the deletion of an extension.
      *
@@ -35,7 +49,6 @@ class DeleteCallQueueTest extends MikoPBXTestsBase
      */
     public function testDeleteCallQueue(array $params): void
     {
-        $this->setSessionName("Test: Delete Call Queues");
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
         $this->clickDeleteButtonOnRowWithText($params['name']);

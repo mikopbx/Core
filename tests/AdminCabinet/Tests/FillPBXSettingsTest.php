@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
@@ -29,6 +30,18 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 class FillPBXSettingsTest extends MikoPBXTestsBase
 {
     /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Fill general settings");
+    }
+
+    /**
      * Test to fill PBX settings.
      * @depends testLogin
      * @dataProvider additionProvider
@@ -37,8 +50,6 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
      */
     public function testFillPBXSettings(array $dataSet): void
     {
-        $this->setSessionName("Test: Fill general settings");
-
         $this->clickSidebarMenuItemByHref("/admin-cabinet/general-settings/modify/");
 
         foreach ($dataSet as $key => $value) {

@@ -19,10 +19,24 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class CreateDialPlanApplicationTest extends MikoPBXTestsBase
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Creating dialplan application");
+    }
+
     /**
      * Test creating a new dialplan application.
      *
@@ -33,6 +47,7 @@ class CreateDialPlanApplicationTest extends MikoPBXTestsBase
      */
     public function testCreateNewApplication(array $params): void
     {
+
         // Navigate to the dialplan applications page
         $this->clickSidebarMenuItemByHref("/admin-cabinet/dialplan-applications/index/");
 

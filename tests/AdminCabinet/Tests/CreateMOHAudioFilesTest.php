@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -27,6 +28,18 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class CreateMOHAudioFilesTest extends MikoPBXTestsBase
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Create MOH files");
+    }
 
     /**
      * Test the creation of MOH audio files.

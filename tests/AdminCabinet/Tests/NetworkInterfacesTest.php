@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -28,6 +29,18 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class NetworkInterfacesTest extends MikoPBXTestsBase
 {
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Add new VLAN with settings");
+    }
+
     /**
      * Test adding a new VLAN configuration.
      *
@@ -38,8 +51,6 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
      */
     public function testAddNewVLAN(array $params): void
     {
-        $this->setSessionName("Test: Add new VLAN");
-
         // Click on the network modification page in the admin cabinet.
         $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
 

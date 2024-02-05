@@ -152,7 +152,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             'action' => 'setSessionStatus',
             'arguments' => [
                 'status' => $status,
-                'reason' => $text
+                'reason' => substr($text,0,256)
             ]
         ];
 

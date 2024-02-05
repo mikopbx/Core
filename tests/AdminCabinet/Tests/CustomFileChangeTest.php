@@ -21,6 +21,7 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -28,6 +29,19 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class CustomFileChangeTest extends MikoPBXTestsBase
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Make custom files changes");
+    }
+
     /**
      * Test to change a custom file.
      * @depends testLogin
@@ -40,8 +54,6 @@ class CustomFileChangeTest extends MikoPBXTestsBase
      */
     public function testChangeCustomFile(array $params): void
     {
-        $this->setSessionName("Test: Make custom files change");
-
         // Scroll to the bottom of the sidebar menu to access the files page
         self::$driver->executeScript('document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);');
         $this->clickSidebarMenuItemByHref("/admin-cabinet/custom-files/index/");

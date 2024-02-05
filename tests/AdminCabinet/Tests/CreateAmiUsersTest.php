@@ -21,6 +21,7 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
@@ -31,6 +32,19 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
  */
 class CreateAmiUsersTest extends MikoPBXTestsBaseAlias
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Creating AMI users");
+    }
+
     /**
      * Test deleting AMI users.
      * @depends testLogin

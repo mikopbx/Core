@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -27,6 +28,19 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class DeleteProviderTest extends MikoPBXTestsBase
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Delete providers");
+    }
+
     /**
      * Test the deletion of a provider.
      * @depends testLogin
@@ -36,8 +50,6 @@ class DeleteProviderTest extends MikoPBXTestsBase
      */
     public function testDeleteProvider(array $params): void
     {
-        $this->setSessionName("Test: Delete providers");
-
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickModifyButtonOnRowWithText($params['description']);
 

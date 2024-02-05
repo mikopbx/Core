@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -27,6 +28,18 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class DeleteExtensionTest extends MikoPBXTestsBase
 {
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Delete extensions");
+    }
+
     /**
      * Test the deletion of an extension.
      * @depends testLogin
@@ -36,8 +49,6 @@ class DeleteExtensionTest extends MikoPBXTestsBase
      */
     public function testDeleteExtension(array $params): void
     {
-        $this->setSessionName("Test: Delete extensions");
-
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         // Fill search field

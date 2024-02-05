@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -26,6 +27,18 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class FillDataTimeSettingsTest extends MikoPBXTestsBase
 {
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Fill date time settings");
+    }
+
     /**
      * Test the change of date and time settings.
      * @depends testLogin
@@ -35,8 +48,6 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
      */
     public function testChangeDataTimeSettings(array $params): void
     {
-        $this->setSessionName("Test: Fill date time settings");
-
         $this->clickSidebarMenuItemByHref('/admin-cabinet/time-settings/modify/');
         $this->selectDropdownItem('PBXTimezone', $params['PBXTimezone']);
         $this->changeCheckBoxState('PBXManualTimeSettings', $params['PBXManualTimeSettings']);

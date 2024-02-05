@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
 /**
@@ -26,6 +27,18 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
  */
 class CreateIAXProvidersTest extends MikoPBXTestsBaseAlias
 {
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Create IAX providers");
+    }
+
     /**
      * Test the creation and modification of IAX providers.
      *

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -26,6 +27,19 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class DeleteExtensionFromDropDownTest extends MikoPBXTestsBase
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Check dropdowns after delete extensions");
+    }
+
     /**
      * Test if the extension is present in the dropdown menu after deletion.
      *
@@ -36,8 +50,6 @@ class DeleteExtensionFromDropDownTest extends MikoPBXTestsBase
      */
     public function testDropdownOnDeletedExtensions(array $params): void
     {
-        $this->setSessionName("Test: Check dropdowns after delete extensions");
-
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
 
         $this->selectDropdownItem('action', 'extension');

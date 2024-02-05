@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
 /**
@@ -26,6 +27,20 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
  */
 class CreateSIPProvidersTest extends MikoPBXTestsBaseAlias
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Create SIP providers");
+    }
+
+
     /**
      * Test to create a SIP provider.
      * @depends testLogin
@@ -35,8 +50,6 @@ class CreateSIPProvidersTest extends MikoPBXTestsBaseAlias
      */
     public function testCreateSIPProvider(array $params): void
     {
-        $this->setSessionName("Test: Create a new SIP providers");
-
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickDeleteButtonOnRowWithText($params['description']);
 

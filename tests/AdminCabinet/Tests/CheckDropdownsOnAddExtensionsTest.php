@@ -19,10 +19,24 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Check extension selection dropdown menus after adding extensions");
+    }
+
     /**
      * Test checking dropdown menus when adding extensions.
      *

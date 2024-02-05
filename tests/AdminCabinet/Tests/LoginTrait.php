@@ -36,6 +36,8 @@ trait LoginTrait
      */
     public function testLogin(array $params): void
     {
+        $this->waitForAjax();
+
         $cookieFile = 'C:\Users\hello\Documents\cookies.txt';
 
         $loggedIn = false;
@@ -73,6 +75,8 @@ trait LoginTrait
      */
     private function performLogin(string $cookieFile, array $params): void
     {
+        $this->waitForAjax();
+
         $this->changeInputField('login', $params['login']);
         $this->changeInputField('password', $params['password']);
 

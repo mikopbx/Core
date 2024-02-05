@@ -19,12 +19,26 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 {
+
     /**
-     * Test checking dropdown menus when adding extensions.
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Checking dropdown menus after deleting call queue.");
+    }
+
+    /**
+     * Test checking dropdown menus after deleting queue.
      *
      * @depends testLogin
      * @dataProvider additionProvider

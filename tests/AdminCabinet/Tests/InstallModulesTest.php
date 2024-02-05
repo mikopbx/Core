@@ -23,6 +23,7 @@ use Exception;
 use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\Interactions\WebDriverActions;
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
 /**
@@ -30,6 +31,18 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
  */
 class InstallModulesTest extends MikoPBXTestsBaseAlias
 {
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Install new module");
+    }
+
     /**
      * Test to install a module.
      * @depends testLogin
@@ -39,8 +52,6 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
      */
     public function testInstallModule(array $params): void
     {
-        $this->setSessionName("Test: Install new module");
-
         $this->clickSidebarMenuItemByHref("/admin-cabinet/pbx-extension-modules/index/");
         $this->changeTabOnCurrentPage('installed');
 

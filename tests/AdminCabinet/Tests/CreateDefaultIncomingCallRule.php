@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
@@ -29,6 +30,19 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class CreateDefaultIncomingCallRule extends MikoPBXTestsBase
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Changing incoming routes rule (by default)");
+    }
+
     /**
      * Test changing the default incoming call rule.
      * @depends testLogin

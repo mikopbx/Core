@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -27,6 +28,19 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class DeleteAudioFileTest extends MikoPBXTestsBase
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Delete audio files");
+    }
+
     /**
      * Test to delete an audio file.
      *
@@ -37,8 +51,6 @@ class DeleteAudioFileTest extends MikoPBXTestsBase
      */
     public function testDeleteAudioFile(array $params): void
     {
-        $this->setSessionName("Test: Delete audio files");
-
         if (!$params['for_delete']) {
             $this->assertTrue(true);
             return;

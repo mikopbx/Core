@@ -21,6 +21,7 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
 /**
@@ -30,6 +31,19 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
  */
 class CreateCallQueueTest extends MikoPBXTestsBaseAlias
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Creating Call queues");
+    }
+
     /**
      * Test creating a call queue.
      *

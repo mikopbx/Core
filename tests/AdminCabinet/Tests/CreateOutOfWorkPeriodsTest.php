@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -27,6 +28,19 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  */
 class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
 {
+
+    /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Create and delete out of work rules");
+    }
+
     /**
      * Test to delete all existing out-of-work time rules.
      * @depends testLogin
@@ -50,8 +64,6 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
      */
     public function testCreateOutOfWorkTimePeriod(array $params): void
     {
-        $this->setSessionName("Test: Delete out of work rules and create new rules");
-
         $this->clickSidebarMenuItemByHref('/admin-cabinet/out-off-work-time/index/');
         $this->clickButtonByHref('/admin-cabinet/out-off-work-time/modify');
         $this->changeTextAreaValue('description', $params['description']);
