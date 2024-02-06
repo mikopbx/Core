@@ -93,7 +93,7 @@ const callDetailRecords = {
              * @param {Array} data - The row data.
              */
             createdRow(row, data) {
-                if (data.DT_RowClass === 'detailed') {
+                if (data.DT_RowClass.indexOf("detailed") >= 0) {
                     $('td', row).eq(0).html('<i class="icon caret down"></i>');
                 } else {
                     $('td', row).eq(0).html('');
@@ -245,12 +245,12 @@ const callDetailRecords = {
         const options = {};
 
         options.ranges = {
-            [globalTranslate.сal_Today]: [moment(), moment()],
-            [globalTranslate.сal_Yesterday]: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-            [globalTranslate.сal_LastWeek]: [moment().subtract(6, 'days'), moment()],
-            [globalTranslate.сal_Last30Days]: [moment().subtract(29, 'days'), moment()],
-            [globalTranslate.сal_ThisMonth]: [moment().startOf('month'), moment().endOf('month')],
-            [globalTranslate.сal_LastMonth]: [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            [globalTranslate.cal_Today]: [moment(), moment()],
+            [globalTranslate.cal_Yesterday]: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+            [globalTranslate.cal_LastWeek]: [moment().subtract(6, 'days'), moment()],
+            [globalTranslate.cal_Last30Days]: [moment().subtract(29, 'days'), moment()],
+            [globalTranslate.cal_ThisMonth]: [moment().startOf('month'), moment().endOf('month')],
+            [globalTranslate.cal_LastMonth]: [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
         };
         options.alwaysShowCalendars = true;
         options.autoUpdateInput = true;

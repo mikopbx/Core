@@ -237,7 +237,7 @@ class OutgoingContext extends AsteriskConfigClass
 
         // Set ROUTFOUND and PROVIDER_ID variables
         $conf .= 'same => n,Set(ROUTFOUND=1)' . "\n\t";
-        $conf .= "same => n,Set(PROVIDER_ID={$rout['providerid']})" . "\n\t";
+        $conf .= "same => n,Set(_PROVIDER_ID={$rout['providerid']})" . "\n\t";
 
         // Set DOPTIONS based on EXTERNALPHONE and src_number
         $conf .= 'same => n,ExecIf($["${EXTERNALPHONE}" == "${src_number}"]?Set(DOPTIONS=tk))' . "\n\t";

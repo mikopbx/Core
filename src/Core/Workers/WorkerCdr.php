@@ -168,7 +168,7 @@ class WorkerCdr extends WorkerBase
                 'billsec' => $billsec,
                 'disposition' => $disposition,
                 'UNIQUEID' => $row['UNIQUEID'],
-                'recordingfile' => ($disposition === 'ANSWERED') ? $row['recordingfile'] : '',
+                'recordingfile' => $row['recordingfile'],
                 'tmp_linked_id' => $row['linkedid'],
             ];
 
@@ -267,31 +267,7 @@ class WorkerCdr extends WorkerBase
     {
 
         // If billsec is less than or equal to zero, the call wasn't answered
-        if ($billsec <= 0) {
-            $row['answer'] = '';
-            $billsec = 0;
-
-            // If there is a recording file
-            if (!empty($row['recordingfile'])) {
-
-                // If the destination channel is an application, there can't be a call recording
-                // The recording must belong to an endpoint device
-                if ($row['dst_chan'] === "App:{$row['dst_num']}") {
-                    $row['recordingfile'] = '';
-                } else {
-                    // Remove the recording files
-                    $p_info = pathinfo($row['recordingfile']);
-                    $fileName = $p_info['dirname'] . '/' . $p_info['filename'];
-                    $file_list = [$fileName . '.mp3', $fileName . '.wav', $fileName . '_in.wav', $fileName . '_out.wav',];
-                    foreach ($file_list as $file) {
-                        if (!file_exists($file) || is_dir($file)) {
-                            continue;
-                        }
-                        Processes::mwExec("rm -rf '{$file}'");
-                    }
-                }
-            }
-        } elseif (trim($row['recordingfile']) !== '') {
+        if (!empty(trim($row['recordingfile']))) {
             // If the call channel with ID doesn't exist anymore, it's safe to remove temporary files
             $p_info = pathinfo($row['recordingfile']);
 
@@ -304,8 +280,9 @@ class WorkerCdr extends WorkerBase
             // Get the directory with current month's recordings
             $dir = dirname($p_info['dirname'], 2);
             Processes::mwExecBg("{$nicePath} -n -19 {$lostWav2mp3Path} '$dir'");
-
             // After a successful conversion, the original recording files will be deleted
+        }else{
+            $row['recordingfile'] = '';
         }
         return array($row, $billsec);
     }

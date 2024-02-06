@@ -339,7 +339,7 @@ function event_dial(without_event)
     data['action'] = "dial";
     if(IS_ORGNT ~= '')then
         -- Adjust channel and destination for originate calls
-        agi_channel = get_variable('MASTER_CHANNEL(CHANNEL)')
+        agi_channel         = get_variable('MASTER_CHANNEL(CHANNEL)')
         dst_num  	        = get_variable("CALLERID(num)")
         src_num  	        = get_variable("EXTEN")
         data['dialstatus']  = 'ORIGINATE';
@@ -715,6 +715,11 @@ function event_dial_create_chan()
     data['dst_chan']	= get_variable("CHANNEL");
     data['linkedid']    = get_variable("CHANNEL(linkedid)");
 
+    if(get_variable('PROVIDER_ID') ~= '')then
+        -- outgoing call
+        app["NoOp"]('__TO_CHAN set to '..data['dst_chan']);
+        set_variable("MASTER_CHANNEL(__TO_CHAN)", data['dst_chan']);
+    end
     -- Check if the destination channel is local and retrieve the account name if it is not
     local is_local = string.lower(data['dst_chan']):find("local/") ~= nil
     if(is_local ~= true)then
@@ -1466,6 +1471,23 @@ function event_dial_app()
 
     -- Call the event_dial() function to handle the common dial logic
     data = event_dial(true);
+
+    local monDir = get_variable("MONITOR_DIR");
+    if(monDir ~= '' and get_variable('NEED_MONITOR')=='1' and  monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then
+        app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
+        local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
+        local stereoMode = get_variable("MONITOR_STEREO");
+        local mixOptions = '';
+        if('1' == stereoMode )then
+            mixOptions = "aSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+        else
+            mixOptions = 'a';
+        end
+        app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
+        app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
+        data['recordingfile']  	= mixFileName .. ".mp3";
+        app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..CHANNEL);
+    end
 
     -- Set the destination channel, number, and is_app flag
     data['dst_chan'] = 'App:'..extension;
