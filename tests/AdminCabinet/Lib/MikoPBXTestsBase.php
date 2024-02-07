@@ -698,7 +698,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             //Try to find need string with value
             $xpath = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[contains(text(),"' . $value . '")]';
             self::$driver->wait(5, 500)->until(
-                WebDriverExpectedCondition::visibilityOfElementLocated(
+                WebDriverExpectedCondition::presenceOfElementLocated(
                     WebDriverBy::xpath($xpath)
                 )
             );
