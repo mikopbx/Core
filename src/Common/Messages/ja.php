@@ -867,7 +867,6 @@ return [
     'cal_Today' => '今日は',
     'cal_Yesterday' => '昨日',
     'cal_LastWeek' => '過去7日間',
-    'сal_Last30Days' => '過去30日間',
     'cal_ThisMonth' => '今月',
     'cal_LastMonth' => '先月',
     'cal_ApplyBtn' => '応募するには',
@@ -1216,4 +1215,5 @@ return [
     'ext_ModuleExecutionProblem' => '重大なエラーが発生しました:',
     'ext_DisableReasonHeader' => 'モジュールは自動的に無効になりました',
     'gs_DisableAllModules' => 'マーケットプレイスを無効にする',
+    'cal_Last30Days' => '過去 30 日間',
 ];
