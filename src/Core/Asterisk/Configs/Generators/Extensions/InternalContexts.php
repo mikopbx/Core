@@ -395,13 +395,17 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,ExecIf($["${TRANSFER_OPTIONS}x" == "x" || "${ISTRANSFER}x" != "x"]?Set(TRANSFER_OPTIONS=Tt))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},${TRANSFER_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" == "x"]?Gosub(dial_end,${EXTEN},1))' . " \n\t";
-        $conf .= 'same => n(fw_start),NoOp(start dial hangup)' . " \n\t";
-
+        $conf .= 'same => n(fw_start),NoOp()' . " \n\t";
+        // Redirection can be disabled for internal with the FW_DISABLE_ATRANSFER / FW_DISABLE_INTERNAL option
+        $conf .= 'same => n,ExecIf($["${ATTENDEDTRANSFER}x" != "x" && "${FW_DISABLE_ATRANSFER}" == "1"]?Set(FW_DISABLE=1))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x" && "${FW_DISABLE_TRANSFER}" == "1"]?Set(FW_DISABLE=1))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${FW_DISABLE}" == "1" && "${FW_DISABLE_INTERNAL}" == "1"]?Goto(${EXTEN},fw_end))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${FROM_DID}${TO_CHAN}x" == "x" && "${FW_DISABLE_INTERNAL}" == "1"]?Goto(${EXTEN},fw_end))' . " \n\t";
         // QUEUE_SRC_CHAN - set if the call is a server action to an agent in the queue.
         // Checking if call forwarding is needed.
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${ISTRANSFER}x" != "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${QUEUE_SRC_CHAN}x" == "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
+        $conf .= 'same => n(fw_end),ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
         // Handle hangup conditions during transfer
