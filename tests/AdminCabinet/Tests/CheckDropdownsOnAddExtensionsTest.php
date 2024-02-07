@@ -54,11 +54,14 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
 
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $params['number']);
+        // Prepare user representation
+        $extensionTPL = sprintf('%s <%s>', $params['username'] , $params['number']);
+
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $extensionTPL);
 
         // Asserts
         if ($elementFound) {
-            $this->fail('Found menuitem ' . $params['number'] .' before creating it on Incoming routes modify ' . PHP_EOL);
+            $this->fail('Found menuitem ' . $extensionTPL .' before creating it on Incoming routes modify ' . PHP_EOL);
         }
 
         // Extensions
@@ -66,11 +69,11 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
         $this->changeTabOnCurrentPage('routing');
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $params['number']);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $extensionTPL);
 
         // Asserts
         if ($elementFound) {
-            $this->fail('Found menuitem ' . $params['number'] .' before creating it on Extension routing tab ' . PHP_EOL);
+            $this->fail('Found menuitem ' . $extensionTPL .' before creating it on Extension routing tab ' . PHP_EOL);
         }
 
         $createExtension = new CreateExtensionsTest();
@@ -80,11 +83,11 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
 
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $params['number']);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $extensionTPL);
 
         // Asserts
         if (!$elementFound) {
-            $this->fail('Not found menuitem ' . $params['number'] .' after creating it on Incoming routes modify ' . PHP_EOL);
+            $this->fail('Not found menuitem ' . $extensionTPL .' after creating it on Incoming routes modify ' . PHP_EOL);
         }
 
         // Extensions
@@ -92,11 +95,11 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
         $this->changeTabOnCurrentPage('routing');
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $params['number']);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $extensionTPL);
 
         // Asserts
         if (!$elementFound) {
-            $this->fail('Not found menuitem ' . $params['number'] .' after creating it on Extension routing tab ' . PHP_EOL);
+            $this->fail('Not found menuitem ' . $extensionTPL .' after creating it on Extension routing tab ' . PHP_EOL);
         }
     }
 

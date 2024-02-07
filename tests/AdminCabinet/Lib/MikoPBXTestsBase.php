@@ -697,17 +697,13 @@ class MikoPBXTestsBase extends BrowserStackTest
 
             //Try to find need string with value
             $xpath = '//div[contains(@class, "menu") and contains(@class ,"visible")]/div[contains(text(),"' . $value . '")]';
-            $menuItem = self::$driver->wait()->until(
-                WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
+            self::$driver->wait(5, 500)->until(
+                WebDriverExpectedCondition::visibilityOfElementLocated(
+                    WebDriverBy::xpath($xpath)
+                )
             );
-            if (is_array($menuItem)){
-                $menuItem = $menuItem[0];
-            }
-            if ($menuItem instanceof WebDriverElement) {
-                $menuItem->click();
-                $elementFound = true;
-                self::annotate("Test action: Element with text=$value was found!");
-            }
+            $elementFound = true;
+            self::annotate("Test action: Element with text=$value was found!");
         } catch (NoSuchElementException $e) {
             self::annotate("Test action: Element with text=$value not found (NoSuchElementException) " . $e->getMessage());
         } catch (Exception $e) {
