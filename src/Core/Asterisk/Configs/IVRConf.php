@@ -77,7 +77,7 @@ class IVRConf extends AsteriskConfigClass
             $conf          .= 'same => n,Answer()' . "\n\t";
             $conf          .= 'same => n,Set(try_count=0);' . "\n\t";
             $conf          .= 'same => n(ivr_start),ExecIf($[${try_count} > ' . $ivr['number_of_repeat'] . ']?StopMixMonitor())' . "\n\t";
-            $conf          .= 'same => n(ivr_start),GotoIf($[${try_count} > ' . $ivr['number_of_repeat'] . ']?internal,' . $ivr['timeout_extension'] . ',1)' . "\n\t";
+            $conf          .= 'same => n,GotoIf($[${try_count} > ' . $ivr['number_of_repeat'] . ']?internal,' . $ivr['timeout_extension'] . ',1)' . "\n\t";
             $conf          .= 'same => n,Set(try_count=$[${try_count} + 1])' . "\n\t";
             $conf          .= "same => n,Set(TIMEOUT(digit)=2) \n\t";
             $conf          .= "same => n,Background({$audio_message}) \n\t";

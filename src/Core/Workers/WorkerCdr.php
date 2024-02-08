@@ -229,11 +229,7 @@ class WorkerCdr extends WorkerBase
         }
 
         // If the disposition is not 'ANSWERED' and there's a recording file, delete it
-        if ($disposition !== 'ANSWERED') {
-            if (file_exists($row['recordingfile']) && !is_dir($row['recordingfile'])) {
-                Processes::mwExec("rm -rf {$row['recordingfile']}");
-            }
-        } elseif (!empty($row['recordingfile']) &&
+        if (!empty($row['recordingfile']) &&
             !file_exists($row['recordingfile']) &&
             !file_exists(Util::trimExtensionForFile($row['recordingfile']) . '.wav')) {
 
