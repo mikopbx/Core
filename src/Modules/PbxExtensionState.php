@@ -123,8 +123,17 @@ class PbxExtensionState extends Injectable
             $result = $this->license->featureAvailable($this->lic_feature_id);
             if ($result['success'] === false) {
                 $textError = (string)($result['error']??'');
-                $this->messages['license'][] = $this->license->translateLicenseErrorMessage($textError);
+                $reasonText = $this->license->translateLicenseErrorMessage($textError);
+                $this->messages['license'][] = $reasonText;
 
+                // Find and update the module's disabled flag in the database
+                $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
+                if ($module !== null) {
+                    $module->disabled = '1';
+                    $module->disableReason = self::DISABLED_BY_LICENSE;
+                    $module->disableReasonText = $reasonText;
+                    $module->save();
+                }
                 return false;
             }
         }

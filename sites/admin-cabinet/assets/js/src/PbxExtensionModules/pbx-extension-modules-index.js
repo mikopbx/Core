@@ -63,6 +63,12 @@ const extensionModules = {
 
     pbxLicense: globalPBXLicense.trim(),
 
+    /**
+     * jQuery object for the button which responsible for update all installed modules
+     * @type {jQuery}
+     */
+    $btnUpdateAllModules: $('#update-all-modules-button'),
+
     checkBoxes: [],
 
     /**
@@ -105,6 +111,9 @@ const extensionModules = {
             pageStatus.initialize(uniqId, false);
             extensionModules.checkBoxes.push(pageStatus);
         });
+
+        extensionModules.$btnUpdateAllModules.hide(); // Until at least one update available
+        extensionModules.$btnUpdateAllModules.on('click', extensionModules.updateAllModules);
     },
 
     /**
@@ -304,6 +313,7 @@ const extensionModules = {
 			<span class="percent"></span>
 			</a>`;
         $moduleRow.find('.action-buttons').prepend(dynamicButton);
+        // extensionModules.$btnUpdateAllModules.show(); TODO::We have to refactor the class before
     },
 
     /**
@@ -419,6 +429,13 @@ const extensionModules = {
                 },
             })
             .modal('show');
+    },
+
+    /**
+     * Callback function after click on the update all modules button
+     */
+    updateAllModules(){
+        // TODO:AfterRefactoring
     },
 
     /**

@@ -43,7 +43,8 @@ class RestAPI extends Micro
 
         // Start application
         try {
-            $application->handle($_SERVER['REQUEST_URI']);
+            $requestUri = sprintf('/pbxcore%s',$_REQUEST['_url']);
+            $application->handle($requestUri);
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleException($e);
         }

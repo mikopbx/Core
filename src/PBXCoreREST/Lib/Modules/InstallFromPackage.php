@@ -47,7 +47,7 @@ class InstallFromPackage extends \Phalcon\Di\Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $resModuleMetadata = Common::getMetadataFromModuleFile($filePath);
+        $resModuleMetadata = GetMetadataFromModulePackage::main($filePath);
         if (!$resModuleMetadata->success) {
             return $resModuleMetadata;
         }

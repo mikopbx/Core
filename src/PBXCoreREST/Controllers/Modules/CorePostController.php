@@ -62,6 +62,13 @@ class CorePostController extends BaseController
      * Retrieves the installation link for a module.
      * @Post("/getModuleLink")
      *
+     * Updates all installed modules.
+     * @Post("/updateAll")
+     *
+     * Retrieves the module.json information from uploaded zip archive.
+     * @Post("/getMetadataFromModulePackage")
+     *
+     *
      * @return void
      */
     public function callAction(string $actionName): void
@@ -70,6 +77,7 @@ class CorePostController extends BaseController
 
         switch ($actionName){
             case 'installFromRepo':
+            case 'updateAll':
                 $this->sendRequestToBackendWorkerAsync(ModulesManagementProcessor::class, $actionName, $data);
                 break;
             default:

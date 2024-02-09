@@ -53,6 +53,8 @@ const PbxApi = {
     modulesUnInstallModule: `${Config.pbxUrl}/pbxcore/api/modules/core/uninstallModule`, // Uninstall extension module.
     modulesGetAvailable: `${Config.pbxUrl}/pbxcore/api/modules/core/getAvailableModules`, // Retrieves available modules on MIKO repository.
     modulesGetLink: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleLink`, // Retrieves the installation link for a module.
+    modulesUpdateAll: `${Config.pbxUrl}/pbxcore/api/modules/core/updateAll`, // Update all installed modules.
+    modulesGetMetadataFromModulePackage: `${Config.pbxUrl}/pbxcore/api/modules/core/getMetadataFromModulePackage`, // Retrieves the module.json information from uploaded zip archive.
 
     // FirewallManagementProcessor
     firewallGetBannedIp: `${Config.pbxUrl}/pbxcore/api/firewall/getBannedIp`, // Retrieve a list of banned IP addresses or get data for a specific IP address.
@@ -1132,6 +1134,56 @@ const PbxApi = {
         });
     },
 
+    /**
+     * Retrieves the module.json information from uploaded zip archive.
+     *
+     * @param {string} filePath - The file path of the module.
+     * @param {function} callback - The callback function to process response.
+     * @returns {void}
+     */
+    ModulesGetMetadataFromModulePackage(filePath, callback) {
+        $.api({
+            url: PbxApi.modulesGetMetadataFromModulePackage,
+            on: 'now',
+            method: 'POST',
+            data: {filePath: filePath},
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(true, response);
+            },
+            onFailure(response) {
+                callback(false, response);
+            },
+            onError(response) {
+                callback(false, response);
+            },
+        });
+    },
+
+    /**
+     * Updates all installed modules.
+     *
+     * @param {function} callback - The callback function to process response.
+     * @returns {void} Returns true.
+     */
+    ModulesUpdateAll(callback) {
+        $.api({
+            url: PbxApi.modulesUpdateAll,
+            on: 'now',
+            method: 'POST',
+            data: {},
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response.data, true);
+            },
+            onFailure(response) {
+                callback(response, false);
+            },
+            onError(response) {
+                callback(response, false);
+            },
+        });
+    },
 
     /**
      * Downloads new firmware from the provided URL.

@@ -23,11 +23,11 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use ZipArchive;
 
 /**
- *  Common methods for module manipulation
+ * Class GetMetadataFromModulePackage
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class Common extends \Phalcon\Di\Injectable
+class GetMetadataFromModulePackage extends \Phalcon\Di\Injectable
 {
     /**
      * Unpacks a module ZIP file and retrieves metadata information from the JSON config inside.
@@ -36,7 +36,7 @@ class Common extends \Phalcon\Di\Injectable
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function getMetadataFromModuleFile(string $filePath): PBXApiResult
+    public static function main(string $filePath): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;

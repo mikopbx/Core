@@ -20,8 +20,9 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\Modules\DisableModule;
-use MikoPBX\PBXCoreREST\Lib\Modules\enableModule;
-use MikoPBX\PBXCoreREST\Lib\Modules\getAvailableModules;
+use MikoPBX\PBXCoreREST\Lib\Modules\EnableModule;
+use MikoPBX\PBXCoreREST\Lib\Modules\GetAvailableModules;
+use MikoPBX\PBXCoreREST\Lib\Modules\GetMetadataFromModulePackage;
 use MikoPBX\PBXCoreREST\Lib\Modules\GetModuleInfo;
 use MikoPBX\PBXCoreREST\Lib\Modules\GetModuleLink;
 use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromPackage;
@@ -30,6 +31,7 @@ use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromRepo;
 use MikoPBX\PBXCoreREST\Lib\Modules\StartDownload;
 use MikoPBX\PBXCoreREST\Lib\Modules\StatusOfModuleInstallation;
 use MikoPBX\PBXCoreREST\Lib\Modules\UninstallModule;
+use MikoPBX\PBXCoreREST\Lib\Modules\UpdateAll;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
@@ -72,10 +74,19 @@ class ModulesManagementProcessor extends Injectable
                     $filePath = $data['filePath'];
                     $res = InstallFromPackage::main($filePath);
                     break;
+                case 'getMetadataFromModulePackage':
+                    $filePath = $data['filePath'];
+                    $res = GetMetadataFromModulePackage::main($filePath);
+                    break;
                 case 'installFromRepo':
                     $moduleUniqueID = $data['uniqid'];
                     $releaseId = $data['releaseId'];
                     InstallFromRepo::main($moduleUniqueID, $releaseId);
+                    $res->success = true;
+                    break;
+                case 'updateAll':
+                    UpdateAll::main();
+                    $res->success = true;
                     break;
                 case 'getModuleInfo':
                     $moduleUniqueID = $data['uniqid'];

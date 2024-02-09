@@ -22,7 +22,13 @@
             <th>{{ t._('ext_TableColumnDescription') }}</th>
             <th>{{ t._('ext_TableColumnDeveloper') }}</th>
             <th>{{ t._('ext_TableColumnVersion') }}</th>
-            <th colspan="2"></th>
+            <th colspan="2" class="ui right aligned">
+                <div class="ui small basic icon buttons action-buttons">
+                    <a class="ui button popuped disable-if-no-internet" data-content="{{ t._('ext_UpdateAllModules') }}" id="update-all-modules-button">
+                        <i class="icon redo blue" ></i>
+                    </a>
+                </div>
+            </th>
         </tr>
         </thead>
         <tbody>

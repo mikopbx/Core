@@ -20,12 +20,10 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 
-use malkusch\lock\mutex\PHPRedisMutex;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
 
 /**
  * Handles the installation of new modules.
@@ -57,11 +55,11 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
      */
     public static function main(string $moduleUniqueID, int $releaseId = 0): void
     {
-        // Calculate total mutex timeout
+        // Calculate total mutex timeout and extra 5 seconds to prevent installing the same module in the second thread
         $mutexTimeout = self::INSTALLATION_TIMEOUT+self::DOWNLOAD_TIMEOUT+5;
 
         // Create a mutex to ensure synchronized access
-        $mutex = self::createMutex('InstallFromRepo', $moduleUniqueID, $mutexTimeout);
+        $mutex = Util::createMutex('InstallFromRepo', $moduleUniqueID, $mutexTimeout);
 
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -125,22 +123,7 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
 
     }
 
-    /**
-     * Creates a mutex to ensure synchronized module installation.
-     *
-     * @param string $namespace Namespace for the mutex, used to differentiate mutexes.
-     * @param string $uniqueId Unique identifier for the mutex, usually the module ID.
-     * @param int $timeout Timeout in seconds for the mutex.
-     *
-     * @return PHPRedisMutex Returns an instance of PHPRedisMutex.
-     */
-    public static function createMutex(string $namespace, string $uniqueId, int $timeout = 5): PHPRedisMutex
-    {
-        $di = Di::getDefault();
-        $redisAdapter = $di->get(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
-        $mutexKey = "Mutex:$namespace-" . md5($uniqueId);
-        return new PHPRedisMutex([$redisAdapter], $mutexKey, $timeout);
-    }
+
 
     /**
      * Retrieves the release information for a specific module.

@@ -71,7 +71,7 @@ class StatusOfModuleInstallation extends \Phalcon\Di\Injectable
             $res->data[self::I_STATUS_PROGRESS] = '100';
             $res->data[self::I_STATUS] = self::INSTALLATION_COMPLETE;
 
-            $resModuleMetadata = Common::getMetadataFromModuleFile($filePath);
+            $resModuleMetadata = GetMetadataFromModulePackage::main($filePath);
             if ($resModuleMetadata->success) {
                 $res->data['uniqid'] = $resModuleMetadata->data['uniqid'];
             }

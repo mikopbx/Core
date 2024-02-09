@@ -120,7 +120,7 @@ class BaseController extends Controller
             $beanstalkQueue->publish($requestMessage, null, $priority, 0, $maxTimeout);
             $response = new PBXApiResult();
             $response->success = true;
-            $response->message = "The async command $actionName was job scheduled";
+            $response->messages['info'][] = "The async job $actionName was scheduled";
             $this->response->setPayloadSuccess($response->getResult());
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);

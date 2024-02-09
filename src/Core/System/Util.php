@@ -22,9 +22,11 @@ namespace MikoPBX\Core\System;
 use DateTime;
 use Exception;
 use MikoPBX\Common\Models\{CustomFiles};
+use malkusch\lock\mutex\PHPRedisMutex;
 use MikoPBX\Common\Providers\AmiConnectionCommand;
 use MikoPBX\Common\Providers\AmiConnectionListener;
 use MikoPBX\Common\Providers\LoggerProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di;
@@ -929,4 +931,21 @@ class Util
         return $filename;
     }
 
+
+    /**
+     * Creates a mutex to ensure synchronized module installation.
+     *
+     * @param string $namespace Namespace for the mutex, used to differentiate mutexes.
+     * @param string $uniqueId Unique identifier for the mutex, usually the module ID.
+     * @param int $timeout Timeout in seconds for the mutex.
+     *
+     * @return PHPRedisMutex Returns an instance of PHPRedisMutex.
+     */
+    public static function createMutex(string $namespace, string $uniqueId, int $timeout = 5): PHPRedisMutex
+    {
+        $di = Di::getDefault();
+        $redisAdapter = $di->get(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+        $mutexKey = "Mutex:$namespace-" . md5($uniqueId);
+        return new PHPRedisMutex([$redisAdapter], $mutexKey, $timeout);
+    }
 }
