@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
@@ -275,7 +276,7 @@ class LicenseManagementProcessor extends Injectable
         $dataMetrics['CountSipExtensions'] = $extensions->count();
 
         // Interface language
-        $dataMetrics['WebAdminLanguage'] = PbxSettings::getValueByKey('WebAdminLanguage');
+        $dataMetrics['WebAdminLanguage'] = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
 
         // PBX language
         $dataMetrics['PBXLanguage'] = PbxSettings::getValueByKey('PBXLanguage');

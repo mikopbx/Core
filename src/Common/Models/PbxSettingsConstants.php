@@ -11,6 +11,7 @@ abstract class PbxSettingsConstants
     // Common
     const WWW_ENCRYPTION_KEY = 'WWWEncryptionKey';
     const CLOUD_INSTANCE_ID = 'CloudInstanceId';
+    const WEB_ADMIN_LANGUAGE = 'WebAdminLanguage';
 
     // WWW constants
     const WEB_PORT = 'WEBPort';

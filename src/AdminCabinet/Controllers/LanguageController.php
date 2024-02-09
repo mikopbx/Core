@@ -20,6 +20,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Di;
 
@@ -42,11 +43,11 @@ class LanguageController extends BaseController
         if (!isset($newLanguage)) {
             return;
         }
-        $languageSettings = PbxSettings::findFirstByKey('WebAdminLanguage');
+        $languageSettings = PbxSettings::findFirstByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
         if ($languageSettings === null) {
             $languageSettings = new PbxSettings();
-            $languageSettings->key = 'WebAdminLanguage';
-            $languageSettings->value = PbxSettings::getDefaultArrayValues()['WebAdminLanguage'];
+            $languageSettings->key = PbxSettingsConstants::WEB_ADMIN_LANGUAGE;
+            $languageSettings->value = PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::WEB_ADMIN_LANGUAGE];
         }
         if ($newLanguage !== $languageSettings->value) {
             $languageSettings->value = $newLanguage;

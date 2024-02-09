@@ -45,7 +45,8 @@ const PbxApi = {
     // ModulesManagementProcessor
     modulesModuleStartDownload: `${Config.pbxUrl}/pbxcore/api/modules/core/moduleStartDownload`, // Starts the module download in a separate background process
     modulesModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/modules/core/moduleDownloadStatus`, // Returns the download status of a module.
-    modulesInstallModule: `${Config.pbxUrl}/pbxcore/api/modules/core/installNewModule`, // Installs a new additional extension module from an early uploaded zip archive.
+    modulesInstallFromPackage: `${Config.pbxUrl}/pbxcore/api/modules/core/installFromPackage`, // Installs a new additional extension module from an early uploaded zip archive.
+    modulesInstallFromRepo: `${Config.pbxUrl}/pbxcore/api/modules/core/installFromRepo`, // Installs a new additional extension module from a repository.
     modulesGetModuleInstallationStatus: `${Config.pbxUrl}/pbxcore/api/modules/core/statusOfModuleInstallation`, // Checks the status of a module installation by the provided zip file path.
     modulesEnableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/enableModule`, // Enables extension module.
     modulesDisableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/disableModule`, // Disables extension module.
@@ -845,13 +846,46 @@ const PbxApi = {
      *                              It will receive the response object.
      * @returns {void}
      */
-    ModulesInstallModule(filePath, callback) {
+    ModulesInstallFromPackage(filePath, callback) {
         $.api({
-            url: PbxApi.modulesInstallModule,
+            url: PbxApi.modulesInstallFromPackage,
             on: 'now',
             method: 'POST',
             data: {
                 filePath
+            },
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError(response) {
+                callback(response);
+            },
+        });
+    },
+
+
+    /**
+     * Installs a new additional extension module from an early uploaded zip archive.
+     *
+     * @param {Object} params - The parameters required for uploading the module.
+     * @param {string} params.uniqid - The unique ID of the module.
+     * @param {string} params.releaseId - The unique ID of the release or 0 if we want the last one.
+     * @param {function} callback - The callback function to be called after attempting to install the module.
+     *                              It will receive the response object.
+     * @returns {void}
+     */
+    ModulesInstallFromRepo(params, callback) {
+        $.api({
+            url: PbxApi.modulesInstallFromRepo,
+            on: 'now',
+            method: 'POST',
+            data: {
+                uniqid: params.uniqid,
+                releaseId: params.releaseId,
             },
             successTest: PbxApi.successTest,
             onSuccess(response) {

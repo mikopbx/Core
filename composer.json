@@ -3,9 +3,11 @@
     "description": "Free PBX system for SMB based on Asterisk",
     "homepage": "https://www.mikopbx.com",
     "require": {
+        "php": "^7.4",
         "ext-curl": "*",
         "ext-iconv": "*",
         "ext-json": "*",
+        "ext-ldap": "*",
         "ext-openssl": "*",
         "ext-pcntl": "*",
         "ext-pdo": "*",
@@ -15,15 +17,16 @@
         "ext-sockets": "*",
         "ext-sqlite3": "*",
         "ext-zip": "*",
-        "ext-ldap": "*",
         "filp/whoops": "^2.15.2",
         "guzzlehttp/guzzle": "^7.5.3",
+        "malkusch/lock": "*",
         "pda/pheanstalk": "^4.0",
         "php-mime-mail-parser/php-mime-mail-parser": "^7.0",
         "php-school/cli-menu": "^4.0",
         "php-school/terminal": "^0.2.1",
         "phplucidframe/console-table": "^1.2",
         "phpmailer/phpmailer": "^6.1",
+        "psr/log": "^1.0.1",
         "recoil/react": "^1.0",
         "recoil/recoil": "^1.0",
         "repejota/nats": "0.8.4",
@@ -74,13 +77,11 @@
         {
             "name": "Alexey Portnov",
             "email": "apor@miko.ru",
-            "homepage": "https://www.facebook.com/PortnovAlexey",
             "role": "Developer"
         },
         {
             "name": "Nikolay Beketov",
             "email": "nbek@miko.ru",
-            "homepage": "http://facebook.com/jorikfon",
             "role": "Developer"
         }
     ],

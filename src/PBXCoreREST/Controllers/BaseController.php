@@ -25,6 +25,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use Phalcon\Mvc\Controller;
 use Pheanstalk\Pheanstalk;
@@ -59,25 +60,8 @@ class BaseController extends Controller
         int $priority = Pheanstalk::DEFAULT_PRIORITY
     ): void
     {
-        // Old style modules, we can remove it after 2025
-        if ($processor === 'modules'){
-            $processor = PbxExtensionsProcessor::class;
-        }
+        list($debug, $requestMessage) = $this->prepareRequestMessage($processor, $payload, $actionName, $moduleName);
 
-        // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
-        // and set XDEBUG_SESSION Cookie header on REST request to debug it
-        // The set will break the WorkerApiCommands() execution on prepareAnswer method
-        $debug = strpos($this->request->getHeader('Cookie'),'XDEBUG_SESSION')!==false;
-
-        $requestMessage = [
-            'processor' => $processor,
-            'data'      => $payload,
-            'action'    => $actionName,
-            'debug'     => $debug
-        ];
-        if ($processor === PbxExtensionsProcessor::class){
-            $requestMessage['module'] = $moduleName;
-        }
         try {
             $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
             $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
@@ -106,6 +90,45 @@ class BaseController extends Controller
     }
 
     /**
+     * Send a request to the backend worker without waiting for a result.
+     *
+     * @param string $processor The name of the processor.
+     * @param string $actionName The name of the action.
+     * @param mixed|null $payload The payload data to send with the request.
+     * @param string $moduleName The name of the module (only for 'modules' processor).
+     * @param int $maxTimeout The maximum timeout for the request in seconds.
+     * @param int $priority The priority of the request.
+     *
+     * @return void
+     *
+     */
+    public function sendRequestToBackendWorkerAsync(
+        string $processor,
+        string $actionName,
+               $payload = null,
+        string $moduleName='',
+        int $maxTimeout = 10,
+        int $priority = Pheanstalk::DEFAULT_PRIORITY
+    ): void
+    {
+        list($debug, $requestMessage) = $this->prepareRequestMessage($processor, $payload, $actionName, $moduleName);
+        try {
+            $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
+            if ($debug){
+                $maxTimeout = 9999;
+            }
+            $beanstalkQueue->publish($requestMessage, null, $priority, 0, $maxTimeout);
+            $response = new PBXApiResult();
+            $response->success = true;
+            $response->message = "The async command $actionName was job scheduled";
+            $this->response->setPayloadSuccess($response->getResult());
+        } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            $this->sendError(Response::BAD_REQUEST, $e->getMessage());
+        }
+    }
+
+    /**
      * Sets the response with an error code
      *
      * @param int    $code
@@ -117,6 +140,39 @@ class BaseController extends Controller
             ->response
             ->setPayloadError($this->response->getHttpCodeDescription($code) . ' ' . $description)
             ->setStatusCode($code);
+    }
+
+    /**
+     * Prepare a request message for sending to backend worker
+     *
+     * @param string $processor
+     * @param $payload
+     * @param string $actionName
+     * @param string $moduleName
+     * @return array
+     */
+    public function prepareRequestMessage(string $processor, $payload, string $actionName, string $moduleName): array
+    {
+        // Old style modules, we can remove it after 2025
+        if ($processor === 'modules') {
+            $processor = PbxExtensionsProcessor::class;
+        }
+
+        // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
+        // and set XDEBUG_SESSION Cookie header on REST request to debug it
+        // The set will break the WorkerApiCommands() execution on prepareAnswer method
+        $debug = strpos($this->request->getHeader('Cookie'), 'XDEBUG_SESSION') !== false;
+
+        $requestMessage = [
+            'processor' => $processor,
+            'data' => $payload,
+            'action' => $actionName,
+            'debug' => $debug
+        ];
+        if ($processor === PbxExtensionsProcessor::class) {
+            $requestMessage['module'] = $moduleName;
+        }
+        return array($debug, $requestMessage);
     }
 
 }

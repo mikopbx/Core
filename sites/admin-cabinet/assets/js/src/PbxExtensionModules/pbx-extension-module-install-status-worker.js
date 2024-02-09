@@ -140,7 +140,7 @@ const installStatusLoopWorker = {
             });
             if (installStatusLoopWorker.needEnableAfterInstall) {
                 // Enable the installed module and redirect to the module index page
-                PbxApi.ModulesEnableModule(
+                    PbxApi.ModulesEnableModule(
                     response.data.uniqid,
                     () => {
                         window.location = `${globalRootUrl}pbx-extension-modules/index/`;

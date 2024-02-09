@@ -423,7 +423,7 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 'SSHLanguage',
-                'WebAdminLanguage',
+                PbxSettingsConstants::WEB_ADMIN_LANGUAGE,
             ],
             'functions' => [
                 self::R_REST_API_WORKER,

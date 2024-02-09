@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di\DiInterface;
@@ -50,7 +51,7 @@ class LanguageProvider implements ServiceProviderInterface
                     if (cli_get_process_title() === WorkerApiCommands::class
                         || $di->has('PREFERRED_LANG_WEB')
                         || cli_get_process_title() === WorkerModelsEvents::class) {
-                        $language = PbxSettings::getValueByKey('WebAdminLanguage');
+                        $language = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
                     } else {
                         $language = PbxSettings::getValueByKey('SSHLanguage');
                     }
@@ -58,7 +59,7 @@ class LanguageProvider implements ServiceProviderInterface
                     $session = $di->getShared(SessionProvider::SERVICE_NAME);
                     $language = $session->get('WebAdminLanguage')??'';
                     if (empty($language)){
-                        $language = PbxSettings::getValueByKey('WebAdminLanguage');
+                        $language = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
                     }
                 }
                 return $language;

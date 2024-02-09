@@ -115,7 +115,7 @@ const upgradeStatusLoopWorker = {
             upgradeStatusLoopWorker.oldPercent = response.d_status_progress;
         } else if (response.d_status === 'DOWNLOAD_COMPLETE') {
             $('i.loading.redo').closest('a').find('.percent').text('100%');
-            PbxApi.ModulesInstallModule(response.filePath, upgradeStatusLoopWorker.cbAfterModuleInstall);
+            PbxApi.ModulesInstallFromPackage(response.filePath, upgradeStatusLoopWorker.cbAfterModuleInstall);
             window.clearTimeout(upgradeStatusLoopWorker.timeoutHandle);
         }
     },
