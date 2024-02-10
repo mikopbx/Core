@@ -1216,4 +1216,8 @@ Il coupon può essere attivato una volta, dopodiché viene riscattato.',
     'ext_ModuleExecutionProblem' => 'Si è verificato un errore grave:',
     'ext_DisableReasonHeader' => 'Il modulo è stato disabilitato automaticamente',
     'gs_DisableAllModules' => 'Disabilita il mercato',
+    'ext_UpdateAllModules' => 'Aggiorna tutti i moduli installati',
+    'ext_EmptyRepoAnswer' => 'Non sono disponibili versioni per installare il modulo',
+    'ext_ErrDownloadTimeout' => 'Impossibile scaricare l\'aggiornamento del modulo. Timeout per l\'operazione.',
+    'ext_ErrInstallationTimeout' => 'Impossibile installare il modulo. Timeout per l\'operazione.',
 ];

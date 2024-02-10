@@ -1219,4 +1219,8 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'ext_ModuleExecutionProblem' => 'Es ist ein schwerwiegender Fehler aufgetreten:',
     'ext_DisableReasonHeader' => 'Das Modul wurde automatisch deaktiviert',
     'gs_DisableAllModules' => 'Marktplatz deaktivieren',
+    'ext_UpdateAllModules' => 'Aktualisieren Sie alle installierten Module',
+    'ext_EmptyRepoAnswer' => 'Für die Installation des Moduls sind keine Releases verfügbar',
+    'ext_ErrDownloadTimeout' => 'Modul-Update konnte nicht heruntergeladen werden. Timeout für den Betrieb.',
+    'ext_ErrInstallationTimeout' => 'Modul konnte nicht installiert werden. Timeout für den Betrieb.',
 ];

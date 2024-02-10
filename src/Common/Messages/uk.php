@@ -1216,4 +1216,8 @@ return [
     'ext_ModuleExecutionProblem' => 'Виникла серйозна помилка:',
     'ext_DisableReasonHeader' => 'Модуль було вимкнено автоматично',
     'gs_DisableAllModules' => 'Вимкнути маркетплейс',
+    'ext_UpdateAllModules' => 'Оновити встановлені всі модулі',
+    'ext_EmptyRepoAnswer' => 'Немає доступних релізів для встановлення модуля',
+    'ext_ErrDownloadTimeout' => 'Не вдалося завантажити оновлення модуля. Таймаут на операцію.',
+    'ext_ErrInstallationTimeout' => 'Не вдалося встановити модуль. Таймаут на операцію.',
 ];

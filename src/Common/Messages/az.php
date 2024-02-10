@@ -1216,4 +1216,8 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ext_ModuleExecutionProblem' => 'Ciddi xəta baş verdi:',
     'ext_DisableReasonHeader' => 'Modul avtomatik olaraq söndürüldü',
     'gs_DisableAllModules' => 'Bazar yerini deaktiv edin',
+    'ext_UpdateAllModules' => 'Bütün quraşdırılmış modulları yeniləyin',
+    'ext_EmptyRepoAnswer' => 'Modulu quraşdırmaq üçün heç bir buraxılış yoxdur',
+    'ext_ErrDownloadTimeout' => 'Modul yeniləməsini endirmək alınmadı. Əməliyyat üçün vaxt aşımı.',
+    'ext_ErrInstallationTimeout' => 'Modulu quraşdırmaq alınmadı. Əməliyyat üçün vaxt aşımı.',
 ];

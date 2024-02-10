@@ -1266,4 +1266,8 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'ext_ModuleExecutionProblem' => 'Er is een ernstige fout opgetreden:',
     'ext_DisableReasonHeader' => 'De module werd automatisch uitgeschakeld',
     'gs_DisableAllModules' => 'Schakel marktplaats uit',
+    'ext_UpdateAllModules' => 'Update alle geïnstalleerde modules',
+    'ext_EmptyRepoAnswer' => 'Er zijn geen releases beschikbaar om de module te installeren',
+    'ext_ErrDownloadTimeout' => 'Kan de module-update niet downloaden. Time-out voor bediening.',
+    'ext_ErrInstallationTimeout' => 'Kan de module niet installeren. Time-out voor bediening.',
 ];

@@ -1216,4 +1216,8 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ext_ModuleExecutionProblem' => 'Ett allvarligt fel inträffade:',
     'ext_DisableReasonHeader' => 'Modulen inaktiverades automatiskt',
     'gs_DisableAllModules' => 'Inaktivera marknadsplats',
+    'ext_UpdateAllModules' => 'Uppdatera alla installerade moduler',
+    'ext_EmptyRepoAnswer' => 'Det finns inga tillgängliga versioner för att installera modulen',
+    'ext_ErrDownloadTimeout' => 'Det gick inte att ladda ned moduluppdateringen. Timeout för drift.',
+    'ext_ErrInstallationTimeout' => 'Det gick inte att installera modulen. Timeout för drift.',
 ];

@@ -1216,4 +1216,8 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'ext_ModuleExecutionProblem' => 'Đã xảy ra lỗi nghiêm trọng:',
     'ext_DisableReasonHeader' => 'Mô-đun đã bị vô hiệu hóa tự động',
     'gs_DisableAllModules' => 'Vô hiệu hóa thị trường',
+    'ext_UpdateAllModules' => 'Cập nhật tất cả các mô-đun đã cài đặt',
+    'ext_EmptyRepoAnswer' => 'Không có bản phát hành nào để cài đặt mô-đun',
+    'ext_ErrDownloadTimeout' => 'Không thể tải xuống bản cập nhật mô-đun. Hết thời gian hoạt động.',
+    'ext_ErrInstallationTimeout' => 'Không thể cài đặt mô-đun. Hết thời gian hoạt động.',
 ];

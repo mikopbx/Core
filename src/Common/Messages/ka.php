@@ -1216,4 +1216,8 @@ return [
     'ext_ModuleExecutionProblem' => 'სერიოზული შეცდომა მოხდა:',
     'ext_DisableReasonHeader' => 'მოდული ავტომატურად გამორთული იყო',
     'gs_DisableAllModules' => 'გამორთეთ ბაზარი',
+    'ext_UpdateAllModules' => 'განაახლეთ ყველა დაინსტალირებული მოდული',
+    'ext_EmptyRepoAnswer' => 'მოდულის ინსტალაციისთვის არ არის ხელმისაწვდომი გამოშვებები',
+    'ext_ErrDownloadTimeout' => 'მოდულის განახლების ჩამოტვირთვა ვერ მოხერხდა. მოქმედების ვადა.',
+    'ext_ErrInstallationTimeout' => 'მოდულის დაყენება ვერ მოხერხდა. მოქმედების ვადა.',
 ];

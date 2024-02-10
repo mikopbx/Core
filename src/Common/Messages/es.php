@@ -1216,4 +1216,8 @@ El cupón se puede activar una vez y luego se canjea.',
     'ext_ModuleExecutionProblem' => 'Se produjo un error grave:',
     'ext_DisableReasonHeader' => 'El módulo se deshabilitó automáticamente.',
     'gs_DisableAllModules' => 'Deshabilitar mercado',
+    'ext_UpdateAllModules' => 'Actualizar todos los módulos instalados',
+    'ext_EmptyRepoAnswer' => 'No hay versiones disponibles para instalar el módulo.',
+    'ext_ErrDownloadTimeout' => 'No se pudo descargar la actualización del módulo. Tiempo de espera para la operación.',
+    'ext_ErrInstallationTimeout' => 'No se pudo instalar el módulo. Tiempo de espera para la operación.',
 ];

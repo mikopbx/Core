@@ -1216,4 +1216,8 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'ext_ModuleExecutionProblem' => 'Der opstod en alvorlig fejl:',
     'ext_DisableReasonHeader' => 'Modulet blev automatisk deaktiveret',
     'gs_DisableAllModules' => 'Deaktiver markedsplads',
+    'ext_UpdateAllModules' => 'Opdater alle installerede moduler',
+    'ext_EmptyRepoAnswer' => 'Der er ingen tilgængelige udgivelser til at installere modulet',
+    'ext_ErrDownloadTimeout' => 'Kunne ikke downloade modulopdatering. Timeout for drift.',
+    'ext_ErrInstallationTimeout' => 'Kunne ikke installere modulet. Timeout for drift.',
 ];

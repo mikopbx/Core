@@ -1216,4 +1216,8 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'ext_ModuleExecutionProblem' => 'Wystąpił poważny błąd:',
     'ext_DisableReasonHeader' => 'Moduł został automatycznie wyłączony',
     'gs_DisableAllModules' => 'Wyłącz rynek',
+    'ext_UpdateAllModules' => 'Zaktualizuj wszystkie zainstalowane moduły',
+    'ext_EmptyRepoAnswer' => 'Nie ma dostępnych wersji umożliwiających zainstalowanie modułu',
+    'ext_ErrDownloadTimeout' => 'Nie udało się pobrać aktualizacji modułu. Limit czasu operacji.',
+    'ext_ErrInstallationTimeout' => 'Nie udało się zainstalować modułu. Limit czasu operacji.',
 ];

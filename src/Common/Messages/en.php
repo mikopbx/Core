@@ -1219,4 +1219,8 @@ The coupon can be activated once, after which it becomes redeemed.',
     'ext_ModuleExecutionProblem' => 'A serious error occurred:',
     'ext_DisableReasonHeader' => 'The module was disabled automatically',
     'gs_DisableAllModules' => 'Disable marketplace',
+    'ext_UpdateAllModules' => 'Update all installed modules',
+    'ext_EmptyRepoAnswer' => 'There are no releases available to install the module',
+    'ext_ErrDownloadTimeout' => 'Failed to download module update. Timeout for operation.',
+    'ext_ErrInstallationTimeout' => 'Failed to install module. Timeout for operation.',
 ];

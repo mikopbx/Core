@@ -1233,4 +1233,8 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'ext_ModuleExecutionProblem' => 'Ciddi bir hata oluştu:',
     'ext_DisableReasonHeader' => 'Modül otomatik olarak devre dışı bırakıldı',
     'gs_DisableAllModules' => 'Pazar yerini devre dışı bırak',
+    'ext_UpdateAllModules' => 'Kurulu tüm modülleri güncelle',
+    'ext_EmptyRepoAnswer' => 'Modülü yüklemek için mevcut sürüm yok',
+    'ext_ErrDownloadTimeout' => 'Modül güncellemesi indirilemedi. İşlem için zaman aşımı.',
+    'ext_ErrInstallationTimeout' => 'Modül yüklenemedi. İşlem için zaman aşımı.',
 ];

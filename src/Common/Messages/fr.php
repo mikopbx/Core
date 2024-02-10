@@ -1216,4 +1216,8 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ext_ModuleExecutionProblem' => 'Une erreur grave s\'est produite :',
     'ext_DisableReasonHeader' => 'Le module a été désactivé automatiquement',
     'gs_DisableAllModules' => 'Désactiver le marché',
+    'ext_UpdateAllModules' => 'Mettre à jour tous les modules installés',
+    'ext_EmptyRepoAnswer' => 'Aucune version n\'est disponible pour installer le module',
+    'ext_ErrDownloadTimeout' => 'Échec du téléchargement de la mise à jour du module. Délai d\'attente pour l\'opération.',
+    'ext_ErrInstallationTimeout' => 'Échec de l\'installation du module. Délai d\'attente pour l\'opération.',
 ];

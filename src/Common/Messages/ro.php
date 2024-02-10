@@ -1249,4 +1249,8 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'ext_ModuleExecutionProblem' => 'A apărut o eroare gravă:',
     'ext_DisableReasonHeader' => 'Modulul a fost dezactivat automat',
     'gs_DisableAllModules' => 'Dezactivați piața',
+    'ext_UpdateAllModules' => 'Actualizați toate modulele instalate',
+    'ext_EmptyRepoAnswer' => 'Nu există versiuni disponibile pentru a instala modulul',
+    'ext_ErrDownloadTimeout' => 'Nu s-a putut descărca actualizarea modulului. Timeout pentru funcționare.',
+    'ext_ErrInstallationTimeout' => 'Nu s-a putut instala modulul. Timeout pentru funcționare.',
 ];

@@ -1216,4 +1216,8 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'ext_ModuleExecutionProblem' => 'Došlo k závažné chybě:',
     'ext_DisableReasonHeader' => 'Modul byl automaticky deaktivován',
     'gs_DisableAllModules' => 'Zakázat tržiště',
+    'ext_UpdateAllModules' => 'Aktualizujte všechny nainstalované moduly',
+    'ext_EmptyRepoAnswer' => 'Nejsou k dispozici žádné verze pro instalaci modulu',
+    'ext_ErrDownloadTimeout' => 'Stažení aktualizace modulu se nezdařilo. Časový limit pro operaci.',
+    'ext_ErrInstallationTimeout' => 'Modul se nepodařilo nainstalovat. Časový limit pro operaci.',
 ];

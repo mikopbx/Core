@@ -1216,4 +1216,8 @@ return [
     'ext_DisableReasonHeader' => 'モジュールは自動的に無効になりました',
     'gs_DisableAllModules' => 'マーケットプレイスを無効にする',
     'cal_Last30Days' => '過去 30 日間',
+    'ext_UpdateAllModules' => 'インストールされているすべてのモジュールを更新する',
+    'ext_EmptyRepoAnswer' => 'モジュールをインストールできるリリースはありません',
+    'ext_ErrDownloadTimeout' => 'モジュールアップデートのダウンロードに失敗しました。操作のタイムアウト。',
+    'ext_ErrInstallationTimeout' => 'モジュールのインストールに失敗しました。操作のタイムアウト。',
 ];

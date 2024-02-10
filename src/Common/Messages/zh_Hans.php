@@ -1216,4 +1216,8 @@ return [
     'ext_ModuleExecutionProblem' => '发生严重错误：',
     'ext_DisableReasonHeader' => '该模块被自动禁用',
     'gs_DisableAllModules' => '禁用市场',
+    'ext_UpdateAllModules' => '更新所有已安装的模块',
+    'ext_EmptyRepoAnswer' => '没有可用于安装该模块的版本',
+    'ext_ErrDownloadTimeout' => '下载模块更新失败。操作超时。',
+    'ext_ErrInstallationTimeout' => '安装模块失败。操作超时。',
 ];

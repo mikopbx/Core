@@ -1216,4 +1216,8 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ext_ModuleExecutionProblem' => 'Ocorreu um erro grave:',
     'ext_DisableReasonHeader' => 'O módulo foi desativado automaticamente',
     'gs_DisableAllModules' => 'Desativar mercado',
+    'ext_UpdateAllModules' => 'Atualize todos os módulos instalados',
+    'ext_EmptyRepoAnswer' => 'Não há versões disponíveis para instalar o módulo',
+    'ext_ErrDownloadTimeout' => 'Falha ao baixar a atualização do módulo. Tempo limite para operação.',
+    'ext_ErrInstallationTimeout' => 'Falha ao instalar o módulo. Tempo limite para operação.',
 ];
