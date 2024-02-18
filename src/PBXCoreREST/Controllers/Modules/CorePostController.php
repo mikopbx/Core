@@ -74,15 +74,14 @@ class CorePostController extends BaseController
     public function callAction(string $actionName): void
     {
         $data = $this->request->getPost();
-
         switch ($actionName){
             case 'installFromRepo':
             case 'updateAll':
-                $this->sendRequestToBackendWorkerAsync(ModulesManagementProcessor::class, $actionName, $data);
+                // Extended timeout for long async operation
+                $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data,'',600);
                 break;
             default:
                 $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data);
-                break;
         }
 
     }

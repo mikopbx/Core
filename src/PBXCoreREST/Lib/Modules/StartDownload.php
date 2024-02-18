@@ -80,7 +80,8 @@ class StartDownload extends \Phalcon\Di\Injectable
         Processes::mwExecBg("{$phpPath} -f {$workerDownloaderPath} start {$moduleDirTmp}/download_settings.json");
 
         $res->data['uniqid'] = $moduleUniqueID;
-        $res->data['d_status'] = 'DOWNLOAD_IN_PROGRESS';
+        $res->data[DownloadStatus::D_STATUS] = DownloadStatus::DOWNLOAD_IN_PROGRESS;
+        $res->data[DownloadStatus::D_STATUS_PROGRESS] = '0';
         $res->success = true;
 
         return $res;

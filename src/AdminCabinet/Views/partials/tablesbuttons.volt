@@ -15,7 +15,7 @@
             {{ link_to(restore ~ id, '<i class="icon cog blue"></i> ', "class": "ui button restore popuped", "data-content": t._('bt_ToolTipRestore')) }}
         {% endif %}
         {% if download is not empty and isAllowed('download') %}
-            {{ link_to(download ~ id, '<i class="icon download blue"></i> ', "class": "ui button download popuped", "data-content": t._('bt_ToolTipDownload')) }}
+            {{ link_to(download ~ id, '<i class="icon download blue"></i> <span class="percent"></span>', "class": "ui button download popuped", "data-content": t._('bt_ToolTipDownload')) }}
         {% endif %}
         {% if copy is not empty and isAllowed('copy') %}
             {{ link_to(copy ~ id, '<i class="icon copy outline blue"></i> ', "class": "ui button copy popuped", "data-content": t._('bt_ToolTipCopy')) }}

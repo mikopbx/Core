@@ -1,50 +1,33 @@
--- Определение пути к файлу для отладочной информации
-local debug_file_path = "/storage/usbdisk1/mikopbx/tmp/www_cache/upload_cache/nchan.txt"
-
--- Функция для записи отладочной информации в файл
-local function write_debug_info(data)
-    local file, err = io.open(debug_file_path, "a") -- Открытие файла в режиме добавления
-    if not file then
-        ngx.log(ngx.ERR, "Ошибка открытия файла для отладки: ", err)
-        return
-    end
-    file:write(data .. "\n") -- Запись данных в файл
-    file:close()
-end
-
--- Проверка наличия параметра token в запросе
+-- Check if the token parameter is present in the request
 local token = ngx.var.arg_token
-write_debug_info("Token: " .. (token or "nil"))
 
 if not token then
-    -- Выполнение внутреннего подзапроса, если token не предоставлен
-    local res = ngx.location.capture("/pbxcore/api/system/checkNchanAuth")
-    write_debug_info("Sub-request status: " .. res.status)
+
+    -- Extract the part of the URI that contains the queue name
+    local queue_name = ngx.var[1]
+
+    -- Perform a GET request to /pbxcore/api/nchan/<queueName>
+    local res = ngx.location.capture("/pbxcore/api/nchan/" .. ngx.escape_uri(queue_name))
 
     if res.status == 200 then
-        -- Авторизация разрешена, если ответ 200
-        write_debug_info("Authorization allowed")
+        -- Authorization is granted if the response is 200
         return
     else
-        -- Перенаправление на аутентификацию, если ответ не 200
-        write_debug_info("Redirecting to auth due to sub-request response")
+        -- Redirect to authentication if the response is not 200
         return ngx.exec("/pbxcore/api/nchan/auth")
     end
 else
-    -- Проверка существования файла токена
+    -- Check for the existence of the token file
     local file_path = "/var/etc/auth/" .. token
     local file = io.open(file_path, "rb")
     if file then
         file:close()
-        write_debug_info("Token file exists, authorization allowed")
         return
     else
-        -- Перенаправление на аутентификацию, если файл токена не существует
-        write_debug_info("Token file does not exist, redirecting to auth")
+        -- Redirect to authentication if the token file does not exist
         return ngx.exec("/pbxcore/api/nchan/auth")
     end
 end
 
--- Отказ в доступе, если ни одно из условий не выполнено
-write_debug_info("Access denied")
+-- Deny access if none of the conditions are met
 ngx.exit(403)

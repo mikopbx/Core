@@ -77,9 +77,9 @@
             {{ t._('ext_NoInstalledModules') }}
         </div>
         {% if PBXLicense=='' %}
-            {{ link_to("pbx-extension-modules/index/#/licensing", '<i class="store icon"></i> '~t._('ext_GoToRegistration'), "class": "ui icon labeled blue button") }}
+            {{ link_to("pbx-extension-modules/index/#/licensing", '<i class="store icon"></i> '~t._('ext_GoToRegistration'), "class": "ui icon labeled blue button prevent-word-wrap") }}
         {% else %}
-            {{ link_to("pbx-extension-modules/index/#/marketplace", '<i class="key icon"></i> '~t._('ext_GoToMarketplace'), "class": "ui icon labeled blue button") }}
+            {{ link_to("pbx-extension-modules/index/#/marketplace", '<i class="key icon"></i> '~t._('ext_GoToMarketplace'), "class": "ui icon labeled blue button prevent-word-wrap") }}
         {% endif %}
     </div>
 {% endif %}

@@ -38,6 +38,8 @@ use Throwable;
  */
 class BaseController extends Controller
 {
+
+
     /**
      * Send a request to the backend worker.
      *
@@ -90,45 +92,6 @@ class BaseController extends Controller
     }
 
     /**
-     * Send a request to the backend worker without waiting for a result.
-     *
-     * @param string $processor The name of the processor.
-     * @param string $actionName The name of the action.
-     * @param mixed|null $payload The payload data to send with the request.
-     * @param string $moduleName The name of the module (only for 'modules' processor).
-     * @param int $maxTimeout The maximum timeout for the request in seconds.
-     * @param int $priority The priority of the request.
-     *
-     * @return void
-     *
-     */
-    public function sendRequestToBackendWorkerAsync(
-        string $processor,
-        string $actionName,
-               $payload = null,
-        string $moduleName='',
-        int $maxTimeout = 10,
-        int $priority = Pheanstalk::DEFAULT_PRIORITY
-    ): void
-    {
-        list($debug, $requestMessage) = $this->prepareRequestMessage($processor, $payload, $actionName, $moduleName);
-        try {
-            $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
-            if ($debug){
-                $maxTimeout = 9999;
-            }
-            $beanstalkQueue->publish($requestMessage, null, $priority, 0, $maxTimeout);
-            $response = new PBXApiResult();
-            $response->success = true;
-            $response->messages['info'][] = "The async job $actionName was scheduled";
-            $this->response->setPayloadSuccess($response->getResult());
-        } catch (Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $this->sendError(Response::BAD_REQUEST, $e->getMessage());
-        }
-    }
-
-    /**
      * Sets the response with an error code
      *
      * @param int    $code
@@ -167,8 +130,15 @@ class BaseController extends Controller
             'processor' => $processor,
             'data' => $payload,
             'action' => $actionName,
+            'async'=> false,
+            'asyncChannelId'=> '',
             'debug' => $debug
         ];
+        if ($this->request->isAsyncRequest()){
+            $requestMessage['async']= true;
+            $requestMessage['asyncChannelId']= $this->request->getAsyncRequestChannelId();
+        }
+
         if ($processor === PbxExtensionsProcessor::class) {
             $requestMessage['module'] = $moduleName;
         }

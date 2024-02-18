@@ -97,7 +97,7 @@ class WorkerApiCommands extends WorkerBase
                 $processor = $request['processor'];
                 $res->processor = $processor;
                 // Old style, we can remove it in 2025
-                if ($processor === 'modules'){
+                if ($processor === 'modules') {
                     $processor = PbxExtensionsProcessor::class;
                 }
                 // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
@@ -108,7 +108,16 @@ class WorkerApiCommands extends WorkerBase
 
                 // This is the child process
                 if (method_exists($processor, 'callback')) {
-                    $res = $processor::callback($request);
+                    // Execute async job
+                    if ($request['async'] === true) {
+                        $res->success = true;
+                        $res->messages['info'][] = "The async job {$request['action']} starts in background, you will receive answer on {$request['asyncChannel']} nchan channel";
+                        $encodedResult = json_encode($res->getResult());
+                        $message->reply($encodedResult);
+                        $processor::callback($request);
+                    } else {
+                        $res = $processor::callback($request);
+                    }
                 } else {
                     $res->success = false;
                     $res->messages['error'][] = "Unknown processor - {$processor} in prepareAnswer";
@@ -119,27 +128,28 @@ class WorkerApiCommands extends WorkerBase
                 // Prepare answer with pretty error description
                 $res->messages['error'][] = CriticalErrorsHandler::handleExceptionWithSyslog($exception);
             } finally {
-                $encodedResult = json_encode($res->getResult());
-                if ($encodedResult === false) {
-                    $res->data = [];
-                    $res->messages['error'][] = 'It is impossible to encode to json current processor answer';
+                if ($request['async'] === false) {
                     $encodedResult = json_encode($res->getResult());
-                }
-
-                // Check response size and write in on file if it bigger than Beanstalk can digest
-                if (strlen($encodedResult)>BeanstalkConf::JOB_DATA_SIZE_LIMIT){
-                    $dirsConfig  = $this->di->getShared('config');
-                    $filenameTmp = $dirsConfig->path('www.downloadCacheDir') . '/temp-' . __FUNCTION__ . '_' . microtime() . '.data';
-                    if (file_put_contents($filenameTmp, serialize($res->getResult()))){
-                        $encodedResult = json_encode([BeanstalkClient::RESPONSE_IN_FILE=>$filenameTmp]);
-                    } else {
+                    if ($encodedResult === false) {
                         $res->data = [];
-                        $res->messages['error'][] = 'It is impossible to write answer into file '.$filenameTmp;
+                        $res->messages['error'][] = 'It is impossible to encode to json current processor answer';
                         $encodedResult = json_encode($res->getResult());
                     }
-                }
 
-                $message->reply($encodedResult);
+                    // Check the response size and write in on file if it bigger than Beanstalk can digest
+                    if (strlen($encodedResult) > BeanstalkConf::JOB_DATA_SIZE_LIMIT) {
+                        $dirsConfig = $this->di->getShared('config');
+                        $filenameTmp = $dirsConfig->path('www.downloadCacheDir') . '/temp-' . __FUNCTION__ . '_' . microtime() . '.data';
+                        if (file_put_contents($filenameTmp, serialize($res->getResult()))) {
+                            $encodedResult = json_encode([BeanstalkClient::RESPONSE_IN_FILE => $filenameTmp]);
+                        } else {
+                            $res->data = [];
+                            $res->messages['error'][] = 'It is impossible to write answer into file ' . $filenameTmp;
+                            $encodedResult = json_encode($res->getResult());
+                        }
+                    }
+                    $message->reply($encodedResult);
+                }
                 if ($res->success) {
                     $this->checkNeedReload($request);
                 }

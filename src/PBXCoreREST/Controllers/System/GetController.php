@@ -54,10 +54,6 @@ class GetController extends BaseController
      * Ping backend (described in nginx.conf)
      * @Get("/ping")
      *
-     * Check user authentication for nchan
-     * @Get("/checkNchanAuth")
-     *
-     *
      * Reboot the operating system.
      * @Get("/reboot")
      *
@@ -77,12 +73,6 @@ class GetController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        switch ($actionName){
-            case 'checkNchanAuth':
-                $this->response->setPayloadSuccess('authenticated');
-                break;
-            default:
-                $this->sendRequestToBackendWorker(SystemManagementProcessor::class, $actionName, $_REQUEST);
-         }
+        $this->sendRequestToBackendWorker(SystemManagementProcessor::class, $actionName, $_REQUEST);
     }
 }

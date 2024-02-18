@@ -19,11 +19,12 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
-
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di;
 
 /**
  * Handles the installation of new modules.
@@ -33,33 +34,67 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  */
 class InstallFromRepo extends \Phalcon\Di\Injectable
 {
-    public const CHANNEL_INSTALL_NAME = 'http://127.0.0.1/pbxcore/api/nchan/pub/install-module';
 
     // Error messages
     const ERR_EMPTY_REPO_RESULT = "ext_EmptyRepoAnswer";
+
+    const MSG_NO_LICENSE_REQ = "ext_NoLicenseRequired";
     const ERR_DOWNLOAD_TIMEOUT = "ext_ErrDownloadTimeout";
     const ERR_INSTALLATION_TIMEOUT = "ext_ErrInstallationTimeout";
+
+    const ERR_EMPTY_GET_MODULE_LINK = "ext_WrongGetModuleLink";
 
     // Timeout values
     const INSTALLATION_TIMEOUT = 120;
     const DOWNLOAD_TIMEOUT = 120;
+
+    // Install stage
+    const STAGE_I_GET_RELEASE = 'Stage_I_GetRelease';
+    const STAGE_II_CHECK_LICENSE = 'Stage_II_CheckLicense';
+    const STAGE_III_GET_LINK = 'Stage_III_GetDownloadLink';
+    const STAGE_IV_DOWNLOAD_MODULE = 'Stage_IV_DownloadModule';
+    const STAGE_V_INSTALL_MODULE = 'Stage_V_InstallModule';
+    const STAGE_VI_ENABLE_MODULE = 'Stage_VI_EnableModule';
+    const STAGE_VII_FINAL_STATUS = 'Stage_VII_FinalStatus';
+
+
+    // The unique identifier for the module to be installed.
+    private string $moduleUniqueId;
+
+    // Optional release ID for the module. Defaults to 0.
+    private int $moduleReleaseId = 0;
+
+    // Pub/sub nchan channel id to send response
+    private string $asyncChannelId;
+
+    /**
+     *
+     * @param string $moduleUniqueId
+     * @param int $moduleReleaseId
+     * @param string $asyncChannelId
+     */
+    public function __construct(string $asyncChannelId, string $moduleUniqueId, int $moduleReleaseId=0)
+    {
+        $this->moduleUniqueId = $moduleUniqueId;
+        $this->moduleReleaseId = $moduleReleaseId;
+        $this->asyncChannelId = $asyncChannelId;
+    }
+
 
     /**
      * Main entry point to install a new module.
      * This function handles the entire process of installing a new module, including
      * acquiring a mutex, checking the license, downloading, and installing the module.
      *
-     * @param string $moduleUniqueID The unique identifier for the module to be installed.
-     * @param int $releaseId Optional release ID for the module. Defaults to 0.
      *
      */
-    public static function main(string $moduleUniqueID, int $releaseId = 0): void
+    public function start(): void
     {
         // Calculate total mutex timeout and extra 5 seconds to prevent installing the same module in the second thread
         $mutexTimeout = self::INSTALLATION_TIMEOUT+self::DOWNLOAD_TIMEOUT+5;
 
         // Create a mutex to ensure synchronized access
-        $mutex = Util::createMutex('InstallFromRepo', $moduleUniqueID, $mutexTimeout);
+        $mutex = Util::createMutex('InstallFromRepo', $this->moduleUniqueId, $mutexTimeout);
 
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -68,31 +103,34 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
         // Synchronize the installation process
         try{
             $mutex->synchronized(
-            function () use ($moduleUniqueID, $releaseId, &$res): void {
+            function () use (&$res): void {
 
                 // Retrieve release information
-                list($releaseInfoResult, $res->success) = self::getReleaseInfo($moduleUniqueID, $releaseId);
+                list($releaseInfoResult, $res->success) = $this->getReleaseInfo();
+                $this->pushMessageToBrowser(self::STAGE_I_GET_RELEASE, $releaseInfoResult);
                 if (!$res->success) {
-                    $res->messages['error'][] = $releaseInfoResult;
+                    $res->messages['error'] = $releaseInfoResult;
                     return;
                 }
 
                 // Capture the license for the module
-                list($licenseResult, $res->success) = self::captureFeature($releaseInfoResult);
+                list($licenseResult, $res->success) = $this->captureFeature($releaseInfoResult);
+                $this->pushMessageToBrowser( self::STAGE_II_CHECK_LICENSE, $licenseResult);
                 if (!$res->success) {
                     $res->messages = $licenseResult;
                     return;
                 }
 
                 // Get the download link for the module
-                list($moduleLinkResult, $res->success) = self::getModuleLink($releaseInfoResult);
+                list($moduleLinkResult, $res->success) = $this->getModuleLink($releaseInfoResult);
+                $this->pushMessageToBrowser( self::STAGE_III_GET_LINK, $moduleLinkResult);
                 if (!$res->success) {
                     $res->messages['error'][] = $moduleLinkResult;
                     return;
                 }
 
                 // Download the module
-                list($downloadResult, $res->success) = self::downloadModule($moduleLinkResult, $moduleUniqueID);
+                list($downloadResult, $res->success) = $this->downloadModule($moduleLinkResult);
                 if (!$res->success) {
                     $res->messages['error'][] = $downloadResult;
                     return;
@@ -101,14 +139,14 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
                 }
 
                 // Install the downloaded module
-                list($installationResult, $res->success) = self::installNewModule($filePath, $moduleUniqueID);
+                list($installationResult, $res->success) = $this->installNewModule($filePath);
                 if (!$res->success) {
                     $res->messages['error'][] = $installationResult;
                     return;
                 }
 
                 // Enable the module if it was previously enabled
-                list($enableResult, $res->success) = self::enableModule($moduleUniqueID, $installationResult);
+                list($enableResult, $res->success) = $this->enableModule($installationResult);
                 if (!$res->success) {
                     $res->messages['error'][] = $enableResult;
                 }
@@ -118,49 +156,40 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
             $res->messages['error'][] = $e->getMessage();
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         } finally {
-            self::pushMessageToBrowser($res->getResult());
+            $this->pushMessageToBrowser( self::STAGE_VII_FINAL_STATUS, $res->getResult());
         }
 
     }
-
-
 
     /**
      * Retrieves the release information for a specific module.
      * This function gets detailed information about the release based on the unique module ID and release ID.
      *
-     * @param string $moduleUniqueID Unique identifier for the module.
-     * @param int $releaseId Optional release ID. If not specified, the latest release is selected.
-     *
      * @return array An array containing the release information and a success flag.
      */
-    private static function getReleaseInfo(string $moduleUniqueID, int $releaseId = 0): array
+    private function getReleaseInfo(): array
     {
         // Retrieve module information
-        $moduleInfo = GetModuleInfo::main($moduleUniqueID);
+        $moduleInfo = GetModuleInfo::main($this->moduleUniqueId);
 
         // Check if release information is available
         if (empty($moduleInfo->data['releases'])) {
-            return [self::ERR_EMPTY_REPO_RESULT, false];
+            return [[self::ERR_EMPTY_REPO_RESULT], false];
         }
         $releaseInfo['releaseID'] = 0;
-        $releaseInfo['moduleUniqueID'] = $moduleUniqueID;
 
         // Find the specified release or the latest one
         foreach ($moduleInfo->data['releases'] as $release) {
-            if ($release['releaseID'] === $releaseId) {
+            if ($release['releaseID'] === $this->moduleReleaseId) {
                 $releaseInfo['releaseID'] = $release['releaseID'];
-                $releaseInfo['hash'] = $release['hash'];
                 break;
             } elseif ($release['releaseID'] > $releaseInfo['releaseID']) {
                 $releaseInfo['releaseID'] = $release['releaseID'];
-                $releaseInfo['hash'] = $release['hash'];
             }
         }
         // Additional information for license management
-        $releaseInfo['licFeatureId'] = intval($releaseInfo['lic_feature_id']);
-        $releaseInfo['licProductId'] = intval($releaseInfo['lic_product_id']);
-
+        $releaseInfo['licFeatureId'] = intval($moduleInfo->data['lic_feature_id']);
+        $releaseInfo['licProductId'] = intval($moduleInfo->data['lic_product_id']);
         return [$releaseInfo, true];
     }
 
@@ -172,11 +201,11 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
      *
      * @return array An array containing the license capture result and a success flag.
      */
-    private static function captureFeature(array $releaseInfo): array
+    private function captureFeature(array $releaseInfo): array
     {
         // Check if a feature license is required
-        if ($releaseInfo['featureId'] === 0) {
-            return [[], true]; // No license required
+        if ($releaseInfo['licFeatureId'] === 0) {
+            return [[self::MSG_NO_LICENSE_REQ], true]; // No license required
         }
 
         // Prepare license capture request
@@ -198,10 +227,17 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
      *
      * @return array An array containing the download link and a success flag.
      */
-    private static function getModuleLink(array $releaseInfo): array
+    private function getModuleLink(array $releaseInfo): array
     {
         $res = GetModuleLink::main($releaseInfo['releaseID']);
-        return [$res->messages, $res->success];
+        if ($res->success){
+            $modules =  $res->data['modules']??[];
+            if (count($modules) > 0){
+                return [$modules[0], true];
+            }
+            return [[self::ERR_EMPTY_GET_MODULE_LINK], false];
+        }
+        return [$res->messages, false];
     }
 
     /**
@@ -212,42 +248,38 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
      *
      * @return array An array containing the path to the downloaded module or an error message, and a success flag.
      */
-    private static function downloadModule(array $moduleLink, string $moduleUniqueID): array
+    private function downloadModule(array $moduleLink): array
     {
         // Initialization
-        $url = $moduleLink['download_link'];
-        $md5 = $moduleLink['hash'];
+        $url = $moduleLink['href'];
+        $md5 = $moduleLink['md5'];
         $maximumDownloadTime = self::DOWNLOAD_TIMEOUT;
 
         // Start the download
-        $res = StartDownload::main($moduleUniqueID, $url, $md5);
+        $res = StartDownload::main($this->moduleUniqueId, $url, $md5);
+        $this->pushMessageToBrowser( self::STAGE_IV_DOWNLOAD_MODULE, $res->getResult());
         if (!$res->success) {
             return [$res->messages, false];
         }
 
         // Monitor download progress
         while ($maximumDownloadTime > 0) {
-            $res = DownloadStatus::main($moduleUniqueID);
-            if (!$res->success) {
-                return [$res->messages, false];
-            } elseif ($res->data[DownloadStatus::D_STATUS] = DownloadStatus::DOWNLOAD_IN_PROGRESS) {
+            $resDownloadStatus = DownloadStatus::main($this->moduleUniqueId);
+            $this->pushMessageToBrowser( self::STAGE_IV_DOWNLOAD_MODULE, $resDownloadStatus->getResult());
+            if (!$resDownloadStatus->success) {
+                return [$resDownloadStatus->messages, false];
+            } elseif ($resDownloadStatus->data[DownloadStatus::D_STATUS] === DownloadStatus::DOWNLOAD_IN_PROGRESS) {
                 sleep(1); // Adjust sleep time as needed
-                $message = [
-                    'action' => 'DownloadStatus',
-                    'uniqueId' => $moduleUniqueID,
-                    'data' => $res->data,
-                ];
-                self::pushMessageToBrowser($message);
                 $maximumDownloadTime--;
-            } elseif ($res->data[DownloadStatus::D_STATUS] = DownloadStatus::DOWNLOAD_COMPLETE) {
-                return [$res->data[DownloadStatus::FILE_PATH], true];
+            } elseif ($resDownloadStatus->data[DownloadStatus::D_STATUS] === DownloadStatus::DOWNLOAD_COMPLETE) {
+                return [$resDownloadStatus->data[DownloadStatus::FILE_PATH], true];
             }
         }
 
         // Download timeout
+        $this->pushMessageToBrowser( self::STAGE_IV_DOWNLOAD_MODULE, [self::ERR_DOWNLOAD_TIMEOUT]);
         return [self::ERR_DOWNLOAD_TIMEOUT, false];
     }
-
 
     /**
      * Installs the module from the specified file path.
@@ -257,37 +289,34 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
      *
      * @return array An array containing the installation result and a success flag.
      */
-    private static function installNewModule(string $filePath, string $moduleUniqueID):array
+    private function installNewModule(string $filePath):array
     {
         // Initialization
         $maximumInstallationTime = self::INSTALLATION_TIMEOUT;
 
         // Start installation
-        $res = InstallFromPackage::main($filePath);
-        if (!$res->success) {
-            return [$res->messages, false];
+        $installationResult = InstallFromPackage::main($filePath);
+        $this->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, $installationResult->getResult());
+        if (!$installationResult->success) {
+            return [$installationResult->messages, false];
         }
 
         // Monitor installation progress
         while ($maximumInstallationTime > 0) {
-            $res = StatusOfModuleInstallation::main($filePath);
-            if (!$res->success) {
-                return [$res->messages, false];
-            } elseif ($res->data[StatusOfModuleInstallation::I_STATUS] = StatusOfModuleInstallation::INSTALLATION_IN_PROGRESS) {
+            $resStatus = StatusOfModuleInstallation::main($filePath);
+            $this->pushMessageToBrowser( self::STAGE_V_INSTALL_MODULE, $resStatus->getResult());
+            if (!$resStatus->success) {
+                return [$resStatus->messages, false];
+            } elseif ($resStatus->data[StatusOfModuleInstallation::I_STATUS] === StatusOfModuleInstallation::INSTALLATION_IN_PROGRESS) {
                 sleep(1); // Adjust sleep time as needed
-                $message = [
-                    'action' => 'StatusOfModuleInstallation',
-                    'uniqueId' => $moduleUniqueID,
-                    'data' => $res->data,
-                ];
-                self::pushMessageToBrowser($message);
                 $maximumInstallationTime--;
-            } elseif ($res->data[StatusOfModuleInstallation::I_STATUS] = StatusOfModuleInstallation::INSTALLATION_COMPLETE) {
-                return [true, true];
+            } elseif ($resStatus->data[StatusOfModuleInstallation::I_STATUS] === StatusOfModuleInstallation::INSTALLATION_COMPLETE) {
+                return [$installationResult, true];
             }
         }
 
         // Installation timeout
+        $this->pushMessageToBrowser( self::STAGE_V_INSTALL_MODULE, [self::ERR_INSTALLATION_TIMEOUT]);
         return [self::ERR_INSTALLATION_TIMEOUT, false];
     }
 
@@ -295,16 +324,16 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
      * Enables the module if it was previously enabled.
      * This function checks the installation result and enables the module if needed.
      *
-     * @param string $moduleUniqueID Unique identifier for the module.
      * @param PBXApiResult $installationResult Result object from the installation process.
      *
      * @return array An array containing the module enabling process result and a success flag.
      */
-    private static function enableModule(string $moduleUniqueID, PBXApiResult $installationResult):array
+    private function enableModule( PBXApiResult $installationResult):array
     {
         // Check if the module was previously enabled
         if ($installationResult->data[InstallFromPackage::MODULE_WAS_ENABLED]){
-            $res = EnableModule::main($moduleUniqueID);
+            $res = EnableModule::main($this->moduleUniqueId);
+            $this->pushMessageToBrowser(self::STAGE_VI_ENABLE_MODULE, $res->getResult());
             return [$res->messages, $res->success];
         }
         return [[], true];
@@ -312,22 +341,26 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
 
     /**
      * Pushes messages to browser
-     * @param array $message
+     * @param string $stage installation stage name
+     * @param array $data pushing data
      * @return void
      */
-    public static function pushMessageToBrowser(array $message):void
+    private function pushMessageToBrowser( string $stage, array $data):void
     {
-        $client  = new \GuzzleHttp\Client();
-        $options = [
-            'timeout'       => 5,
-            'http_errors'   => false,
-            'headers'       => [],
-            'json'          => $message,
+        $message = [
+            'stage' => $stage,
+            'moduleUniqueId' => $this->moduleUniqueId,
+            'stageDetails' => $data,
+            'pid'=>posix_getpid()
         ];
-        try {
-            $client->request('POST', self::CHANNEL_INSTALL_NAME, $options);
-        } catch (\Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        }
+
+        $di = Di::getDefault();
+        $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+            '/pbxcore/api/nchan/pub/'.$this->asyncChannelId,
+            PBXCoreRESTClientProvider::HTTP_METHOD_POST,
+            $message,
+            ['Content-Type' => 'application/json']
+        ]);
+
     }
 }

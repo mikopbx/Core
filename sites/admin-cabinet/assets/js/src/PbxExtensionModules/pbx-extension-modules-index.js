@@ -84,6 +84,17 @@ const extensionModules = {
     $tabMenuItems: $('#pbx-extensions-tab-menu .item'),
 
     /**
+     * EventSource object for the module installation and upgrade status
+     * @type {EventSource}
+     */
+    eventSource: null,
+
+    /**
+     * PUB/SUB channel ID
+     */
+    channelId: 'install-module',
+
+    /**
      * Initialize extensionModules list
      */
     initialize() {
@@ -114,6 +125,9 @@ const extensionModules = {
 
         extensionModules.$btnUpdateAllModules.hide(); // Until at least one update available
         extensionModules.$btnUpdateAllModules.on('click', extensionModules.updateAllModules);
+
+        extensionModules.startListenPushNotifications();
+
     },
 
     /**
@@ -185,49 +199,28 @@ const extensionModules = {
          * Event handler for the download link click event.
          * @param {Event} e - The click event object.
          */
-        $('a.download').on('click', (e) => {
+        $('a.download, a.update').on('click', (e) => {
             e.preventDefault();
             $('a.button').addClass('disabled');
-            const params = {};
-            const $aLink = $(e.target).closest('a');
-            $aLink.removeClass('disabled');
-            $aLink.addClass('loading');
-            params.uniqid = $aLink.attr('data-uniqid');
-            params.releaseId = $aLink.attr('data-id');
-            params.size = $aLink.attr('data-size');
-            params.licProductId = $aLink.attr('data-productid');
-            params.licFeatureId = $aLink.attr('data-featureid');
-            params.action = 'install';
-            params.aLink = $aLink;
+            const $currentButton = $(e.target).closest('tr').find('a.button');
+            $currentButton.removeClass('disabled');
+            $currentButton.find('i')
+                .removeClass('download')
+                .removeClass('redo')
+                .addClass('spinner loading');
+            $currentButton.find('span.percent').text('0%');
+            let params = {};
+            params.uniqid = $currentButton.attr('data-uniqid');
+            params.releaseId = $currentButton.attr('data-id');
+            params.channelId = extensionModules.channelId;
+            $('tr.table-error-messages').remove();
+            $('tr.error').removeClass('error');
             if (extensionModules.pbxLicense === '') {
                 window.location = `${globalRootUrl}pbx-extension-modules/index#/licensing`;
             } else {
-                PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
-            }
-        });
-
-        /**
-         * Event handler for the update link click event.
-         * @param {Event} e - The click event object.
-         */
-        $('a.update').on('click', (e) => {
-            e.preventDefault();
-            $('a.button').addClass('disabled');
-            const params = {};
-            const $aLink = $(e.target).closest('a');
-            $aLink.removeClass('disabled');
-            params.licProductId = $aLink.attr('data-productid');
-            params.licFeatureId = $aLink.attr('data-featureid');
-            params.action = 'update';
-            params.releaseId = $aLink.attr('data-id');
-            params.uniqid = $aLink.attr('data-uniqid');
-            params.size = $aLink.attr('data-size');
-            params.aLink = $aLink;
-            if (extensionModules.pbxLicense === '')
-            {
-                window.location = `${globalRootUrl}pbx-extension-modules/index#/licensing`;
-            } else {
-                PbxApi.LicenseCaptureFeatureForProductId(params, extensionModules.cbAfterLicenseCheck);
+                PbxApi.ModulesInstallFromRepo(params, (response) => {
+                    console.log(response);
+                });
             }
         });
 
@@ -239,9 +232,8 @@ const extensionModules = {
             e.preventDefault();
             $('a.button').addClass('disabled');
             $(e.target).closest('a').removeClass('disabled');
-            const params = [];
-            const $aLink = $(e.target).closest('tr');
-            params.uniqid = $aLink.attr('id');
+            const params = {};
+            params.uniqid = $(e.target).closest('tr').attr('id');
             extensionModules.deleteModule(params);
         });
         $('a[data-content]').popup();
@@ -262,7 +254,7 @@ const extensionModules = {
         if (obj.commercial !== '0') {
             additionalIcon = '<i class="ui donate icon"></i>';
         }
-        const dymanicRow = `
+        const dynamicRow = `
 			<tr class="new-module-row" id="${obj.uniqid}">
 						<td>${additionalIcon} ${decodeURIComponent(obj.name)}<br>
 						<span class="features">${decodeURIComponent(obj.description)} ${promoLink}</span>
@@ -270,20 +262,17 @@ const extensionModules = {
 						<td>${decodeURIComponent(obj.developer)}</td>
 						<td class="center aligned version">${obj.version}</td>
 						<td class="right aligned collapsing">
-    						<div class="ui small basic icon buttons action-buttons">
-    							<a href="#" class="ui button download disable-if-no-internet" 
+    							<a href="#" class="ui icon basic button download popuped disable-if-no-internet" 
 									data-content= "${globalTranslate.ext_InstallModule}"
 									data-uniqid = "${obj.uniqid}"
 									data-size = "${obj.size}"
-									data-productId = "${obj.lic_product_id}"
-									data-featureId = "${obj.lic_feature_id}" 
 									data-id ="${obj.release_id}">
 									<i class="icon download blue"></i> 
 									<span class="percent"></span>
 								</a>
-    						</div>
+    				    </td>		
 			</tr>`;
-        $('#new-modules-table tbody').append(dymanicRow);
+        $('#new-modules-table tbody').append(dynamicRow);
     },
 
     /**
@@ -292,7 +281,7 @@ const extensionModules = {
      */
     addUpdateButtonToRow(obj) {
         const $moduleRow = $(`tr.module-row#${obj.uniqid}`);
-        const $currentUpdateButton = $moduleRow.find('a.update');
+        const $currentUpdateButton = $moduleRow.find('a.download');
         if ($currentUpdateButton.length > 0) {
             const oldVer = $currentUpdateButton.attr('data-ver');
             const newVer = obj.version;
@@ -302,101 +291,20 @@ const extensionModules = {
         }
         $currentUpdateButton.remove();
         const dynamicButton
-            = `<a href="#" class="ui button update popuped disable-if-no-internet" 
+            = `<a href="#" class="ui basic button update popuped disable-if-no-internet" 
 			data-content="${globalTranslate.ext_UpdateModule}"
 			data-ver ="${obj.version}"
+			data-size = "${obj.size}"
 			data-uniqid ="${obj.uniqid}" 
-			data-productId = "${obj.lic_product_id}"
-			data-featureId = "${obj.lic_feature_id}" 
 			data-id ="${obj.release_id}">
 			<i class="icon redo blue"></i> 
 			<span class="percent"></span>
 			</a>`;
         $moduleRow.find('.action-buttons').prepend(dynamicButton);
-        // extensionModules.$btnUpdateAllModules.show(); TODO::We have to refactor the class before
+        extensionModules.$btnUpdateAllModules.show();
     },
 
-    /**
-     * Callback function after checking the license.
-     * If the feature is captured, it makes a request to the server
-     * to get the module installation link.
-     * @param {Object} params - The parameters for the request.
-     * @param {boolean} result - The result of the license check.
-     */
-    cbAfterLicenseCheck(params, result) {
-        if (result === true) {
-            PbxApi.ModulesGetModuleLink(
-                params,
-                extensionModules.cbGetModuleInstallLinkSuccess,
-                extensionModules.cbGetModuleInstallLinkFailure,
-            );
-        } else if (result === false && params.length > 0) {
-            UserMessage.showLicenseError(globalTranslate.ext_LicenseProblemHeader, params);
-            $('a.button').removeClass('disabled').removeClass('loading');
-        } else {
-            UserMessage.showLicenseError(globalTranslate.ext_LicenseProblemHeader, [globalTranslate.ext_NoLicenseAvailable]);
-            $('a.button').removeClass('disabled').removeClass('loading');
-        }
 
-    },
-
-    /**
-     * Callback function after successfully obtaining the module installation link from the website.
-     * @param {Object} params - The parameters for the request.
-     * @param {Object} response - The response containing the module information.
-     */
-    cbGetModuleInstallLinkSuccess(params, response) {
-        const newParams = params;
-        response.modules.forEach((obj) => {
-            newParams.md5 = obj.md5;
-            newParams.updateLink = obj.href;
-            if (newParams.action === 'update') {
-                params.aLink.find('i').addClass('loading');
-            } else {
-                params.aLink.removeClass('loading');
-                params.aLink.find('i').addClass('loading redo').removeClass('download');
-            }
-            extensionModules.installModule(newParams);
-        });
-    },
-
-    /**
-     * Callback function when the website fails to provide the module installation link due to the required feature not being captured.
-     * @param {Object} params - The parameters for the request.
-     */
-    cbGetModuleInstallLinkFailure(params) {
-        $('a.button').removeClass('disabled');
-        if (params.action === 'update') {
-            params.aLink.find('i').removeClass('loading');
-        } else {
-            params.aLink.find('i').removeClass('loading redo').addClass('download');
-        }
-        UserMessage.showMultiString(globalTranslate.ext_GetLinkError);
-    },
-
-    /**
-     * Install a module.
-     * @param {Object} params - The request parameters.
-     */
-    installModule(params) {
-        PbxApi.ModulesModuleStartDownload(params, (response) => {
-            if (response === true) {
-                upgradeStatusLoopWorker.initialize(params.uniqid);
-            } else {
-                if (response.messages !== undefined) {
-                    UserMessage.showMultiString(response.messages);
-                } else {
-                    UserMessage.showMultiString(globalTranslate.ext_InstallationError);
-                }
-                params.aLink.removeClass('disabled');
-                if (params.action === 'update') {
-                    params.aLink.find('i').removeClass('loading');
-                } else {
-                    params.aLink.find('i').removeClass('loading redo').addClass('download');
-                }
-            }
-        });
-    },
     /**
      * Delete a module.
      * @param {Object} params - The request parameters.
@@ -435,7 +343,17 @@ const extensionModules = {
      * Callback function after click on the update all modules button
      */
     updateAllModules(){
-        // TODO:AfterRefactoring
+        $('a.button').addClass('disabled');
+        const $currentButton = $(e.target).closest('a');
+        $currentButton.removeClass('disabled');
+        $currentButton.closest('i.icon')
+            .removeClass('redo')
+            .addClass('spinner loading');
+        let params = {};
+        params.channelId = extensionModules.channelId;
+        PbxApi.ModulesUpdateAll(params, (response) => {
+            console.log(response);
+        });
     },
 
     /**
@@ -508,6 +426,120 @@ const extensionModules = {
         return 0;
     },
 
+    /**
+     * Starts listen to push notifications from backend
+     */
+    startListenPushNotifications() {
+        const lastEventIdKey = `lastEventId`;
+        let lastEventId = localStorage.getItem(lastEventIdKey);
+        const subPath = lastEventId ? `/pbxcore/api/nchan/sub/${extensionModules.channelId}?last_event_id=${lastEventId}` : `/pbxcore/api/nchan/sub/${extensionModules.channelId}`;
+        extensionModules.eventSource = new EventSource(subPath);
+
+        extensionModules.eventSource.addEventListener('message', e => {
+            const response = JSON.parse(e.data);
+            console.log('New message: ', response);
+            extensionModules.processModuleInstallation(response);
+            localStorage.setItem(lastEventIdKey, e.lastEventId);
+        });
+    },
+    /**
+     * Parses push events from backend and process them
+     * @param response
+     */
+    processModuleInstallation(response){
+        const moduleUniqueId = response.moduleUniqueId;
+        const stage = response.stage;
+        const stageDetails = response.stageDetails;
+        const $row = $(`#${moduleUniqueId}`);
+        if (stage ==='Stage_I_GetRelease'){
+            $row.find('span.percent').text('1%');
+        } else if (stage === 'Stage_II_CheckLicense'){
+            $row.find('span.percent').text('2%');
+        } else if (stage === 'Stage_III_GetDownloadLink'){
+            $row.find('span.percent').text('3%');
+        } else if (stage === 'Stage_IV_DownloadModule'){
+            extensionModules.cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails);
+        } else if (stage === 'Stage_V_InstallModule'){
+            extensionModules.cbAfterReceiveNewInstallationStatus(moduleUniqueId, stageDetails);
+        } else if (stage === 'Stage_VI_EnableModule'){
+
+        } else if (stage === 'Stage_VII_FinalStatus'){
+
+            if (stageDetails.result===true){
+                    window.location = `${globalRootUrl}pbx-extension-modules/index/`;
+            } else {
+                if (stageDetails.messages !== undefined) {
+                    extensionModules.showModuleInstallationError($row, globalTranslate.ext_InstallationError, stageDetails.messages);
+                } else {
+                    extensionModules.showModuleInstallationError($row, globalTranslate.ext_InstallationError);
+                }
+            }
+        }
+    },
+
+    /**
+     * Callback function to refresh the module download status.
+     * @param {string} moduleUniqueId
+     * @param {object} stageDetails - The response object containing the download status.
+     */
+    cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails) {
+
+        const $row = $(`#${moduleUniqueId}`);
+
+        // Check module download status
+        if (stageDetails.data.d_status === 'DOWNLOAD_IN_PROGRESS') {
+            const downloadProgress = Math.max(Math.round(parseInt(stageDetails.data.d_status_progress, 10)/2), 3);
+            $row.find('span.percent').text(`${downloadProgress}%`);
+        } else if (stageDetails.d_status === 'DOWNLOAD_COMPLETE') {
+            $row.find('span.percent').text('50%');
+        }
+    },
+
+    /**
+     * Callback function after receiving the new installation status.
+     * @param {string} moduleUniqueId
+     * @param {object} stageDetails - The response object containing the installation status.
+     */
+    cbAfterReceiveNewInstallationStatus(moduleUniqueId, stageDetails) {
+        // Check module installation status
+        const $row = $(`#${moduleUniqueId}`);
+        if (stageDetails.data.i_status === 'INSTALLATION_IN_PROGRESS') {
+            const installationProgress = Math.round(parseInt(stageDetails.data.i_status_progress, 10)/2+50);
+            $row.find('span.percent').text(`${installationProgress}%`);
+        } else if (stageDetails.data.i_status === 'INSTALLATION_COMPLETE') {
+            $row.find('span.percent').text('100%');
+        }
+    },
+
+    /**
+     * Reset the download/update button to default stage
+     * @param $row
+     */
+    resetButtonView($row){
+        $('a.button').removeClass('disabled');
+        $row.find('i.loading').removeClass('spinner loading');
+        $row.find('a.download i').addClass('download');
+        $row.find('a.update i').addClass('redo');
+        $row.find('span.percent').text('');
+    },
+
+    /**
+     * Shows module installation error above the module row
+     * @param $row
+     * @param header
+     * @param messages
+     */
+    showModuleInstallationError($row, header, messages='') {
+        extensionModules.resetButtonView($row);
+        if (messages.license!==undefined){
+            const manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="${Config.keyManagementUrl}" target="_blank">${Config.keyManagementSite}</a>`;
+            messages.license.push(manageLink);
+        }
+        const textDescription = UserMessage.convertToText(messages);
+        const htmlMessage=  `<tr class="ui error center aligned table-error-messages"><td colspan="4"><div class="ui header">${header}</div><p>${textDescription}</p></div></td></tr>`;
+        $row.addClass('error');
+        $row.before(htmlMessage);
+    }
 };
 
 // When the document is ready, initialize the external modules table

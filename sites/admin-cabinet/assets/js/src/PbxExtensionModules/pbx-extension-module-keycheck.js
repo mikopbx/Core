@@ -128,10 +128,10 @@ const keyCheck = {
         keyCheck.$email.inputmask('email');
 
         // Restore previous license error message to prevent blinking
-        const previousKeyMessage = sessionStorage.getItem(`previousKeyMessage${globalWebAdminLanguage}`);
-        if (previousKeyMessage && globalPBXLicense.length>0) {
-            UserMessage.showLicenseError(globalTranslate.lic_LicenseProblem, JSON.parse(previousKeyMessage),true)
-        }
+        // const previousKeyMessage = sessionStorage.getItem(`previousKeyMessage${globalWebAdminLanguage}`);
+        // if (previousKeyMessage && globalPBXLicense.length>0) {
+        //     UserMessage.showLicenseError(globalTranslate.lic_LicenseProblem, JSON.parse(previousKeyMessage),true)
+        // }
 
         // Handle save key button click
         keyCheck.$saveKeyButton.on('click', () => {
@@ -218,8 +218,8 @@ const keyCheck = {
                 keyCheck.$filledLicenseKeyHeader.show();
             } else {
                 // Failed to check license status with error messages
-                sessionStorage.setItem(`previousKeyMessage${globalWebAdminLanguage}`, JSON.stringify(response.messages));
-                UserMessage.showLicenseError(globalTranslate.lic_LicenseProblem, response.messages, true);
+                //sessionStorage.setItem(`previousKeyMessage${globalWebAdminLanguage}`, JSON.stringify(response.messages));
+                //UserMessage.showLicenseError(globalTranslate.lic_LicenseProblem, response.messages, true);
                 keyCheck.$filledLicenseKeyHeader.show();
             }
         }

@@ -38,6 +38,9 @@ body {
 .prevent-word-wrap {
     white-space: nowrap;
 }
+.ui.placeholder.segment .button.prevent-word-wrap{
+    max-width: 25rem;
+}
 
 /* No internet warning on license page */
 div.show-if-no-internet {

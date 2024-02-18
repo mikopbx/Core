@@ -33,9 +33,9 @@ use SimpleXMLElement;
  * Class LicenseManagementProcessor
  *
  * @package MikoPBX\PBXCoreREST\Lib
- * @property \MikoPBX\Common\Providers\MarketPlaceProvider     license
+ * @property \MikoPBX\Common\Providers\MarketPlaceProvider license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
- * @property \Phalcon\Config                               config
+ * @property \Phalcon\Config config
  */
 class LicenseManagementProcessor extends Injectable
 {
@@ -49,9 +49,9 @@ class LicenseManagementProcessor extends Injectable
      */
     public static function callBack(array $request): PBXApiResult
     {
-        $action         = $request['action'];
-        $data           = $request['data'];
-        $res            = new PBXApiResult();
+        $action = $request['action'];
+        $data = $request['data'];
+        $res = new PBXApiResult();
         $res->processor = __METHOD__;
         switch ($action) {
             case 'resetKey':
@@ -83,7 +83,7 @@ class LicenseManagementProcessor extends Injectable
                 $res = $proc->pingAction();
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }
 
         $res->function = $action;
@@ -96,10 +96,10 @@ class LicenseManagementProcessor extends Injectable
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    private function resetLicenseAction():PBXApiResult
+    private function resetLicenseAction(): PBXApiResult
     {
         $mikoPBXConfig = new MikoPBXConfig();
-        $res           = new PBXApiResult();
+        $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $mikoPBXConfig->resetGeneralSettings('PBXLicense');
         $res->success = true;
@@ -117,7 +117,7 @@ class LicenseManagementProcessor extends Injectable
     private function processUserRequestAction(array $data): PBXApiResult
     {
         $mikoPBXConfig = new MikoPBXConfig();
-        $res           = new PBXApiResult();
+        $res = new PBXApiResult();
         $res->processor = __METHOD__;
         if (strlen($data['licKey']) === 28 && Text::startsWith($data['licKey'], 'MIKO-')) {
             ModelsBase::clearCache(PbxSettings::class);
@@ -131,25 +131,25 @@ class LicenseManagementProcessor extends Injectable
                     $res->data['PBXLicense'] = $data['licKey'];
                     $res->messages['info'][] = $this->translation->_('lic_SuccessfulActivation');
                     $res->success = true;
-                } elseif ( ! empty($licenseInfo) && strpos($licenseInfo, '2026') !== false) {
+                } elseif (!empty($licenseInfo) && strpos($licenseInfo, '2026') !== false) {
                     $res->messages['license'][] = $this->translation->_('lic_FailedCheckLicense2026');
-                    $res->success    = false;
-                } elseif ( ! empty($licenseInfo)) {
+                    $res->success = false;
+                } elseif (!empty($licenseInfo)) {
                     $res->messages['license'][] = $licenseInfo;
-                    $res->success    = false;
+                    $res->success = false;
                 } else {
                     $res->messages['license'][] = $this->translation->_('lic_FailedCheckLicense');
-                    $res->success    = false;
+                    $res->success = false;
                 }
             }
-            if ( ! empty($data['coupon'])) {
+            if (!empty($data['coupon'])) {
                 $result = $this->license->activateCoupon($data['coupon']);
                 if ($result === true) {
-                    $res->messages['info'][]= $this->translation->_('lic_SuccessfulCouponActivation');
-                    $res->success    = true;
+                    $res->messages['info'][] = $this->translation->_('lic_SuccessfulCouponActivation');
+                    $res->success = true;
                 } else {
-                    $res->messages['license'][]= $this->license->translateLicenseErrorMessage((string)$result);
-                    $res->success    = false;
+                    $res->messages['license'][] = $this->license->translateLicenseErrorMessage((string)$result);
+                    $res->success = false;
                 }
             }
         } else { // Only add trial for license key
@@ -158,13 +158,13 @@ class LicenseManagementProcessor extends Injectable
                 && Text::startsWith($newLicenseKey, 'MIKO-')) {
                 $mikoPBXConfig->setGeneralSettings('PBXLicense', $newLicenseKey);
                 $this->license->changeLicenseKey($newLicenseKey);
-                $res->success    = true;
+                $res->success = true;
                 $res->data['PBXLicense'] = $newLicenseKey;
                 $res->messages['info'] = $this->translation->_('lic_SuccessfulActivation');
             } else {
                 // No internet connection, or wrong data sent to license server, or something else
                 $res->messages['license'][] = $this->license->translateLicenseErrorMessage($newLicenseKey);
-                $res->success    = false;
+                $res->success = false;
             }
         }
         return $res;
@@ -183,8 +183,8 @@ class LicenseManagementProcessor extends Injectable
         if ((strlen($licenseKey) === 28
             && Text::startsWith($licenseKey, 'MIKO-')
         )) {
-            $licenseInfo              = $this->license->getLicenseInfo($licenseKey);
-            $res->success             = true;
+            $licenseInfo = $this->license->getLicenseInfo($licenseKey);
+            $res->success = true;
             $res->data['licenseInfo'] = json_encode($licenseInfo);
         } else {
             $res->messages['error'][] = $this->translation->_('lic_WrongLicenseKeyOrEmpty');
@@ -205,7 +205,7 @@ class LicenseManagementProcessor extends Injectable
         $checkBaseFeature = $this->license->featureAvailable(33);
         if ($checkBaseFeature['success'] === false) {
             $res->success = false;
-            $textError = (string)($checkBaseFeature['error']??'');
+            $textError = (string)($checkBaseFeature['error'] ?? '');
             $res->messages['license'][] = $this->license->translateLicenseErrorMessage($textError);
         } else {
             $res->success = true;
@@ -229,8 +229,8 @@ class LicenseManagementProcessor extends Injectable
         $licFeatureId = $data['licFeatureId'];
         $licProductId = $data['licProductId'];
 
-        if ( ! isset($licFeatureId, $licProductId)) {
-            $res->messages[]='The feature id or product id is empty.';
+        if (!isset($licFeatureId, $licProductId)) {
+            $res->messages[] = 'The feature id or product id is empty.';
             return $res;
         }
         $res->success = true;
@@ -243,7 +243,7 @@ class LicenseManagementProcessor extends Injectable
                 // 2.Try to capture feature
                 $result = $this->license->captureFeature($licFeatureId);
                 if ($result['success'] === false) {
-                    $textError = (string)($result['error']??'');
+                    $textError = (string)($result['error'] ?? '');
                     $res->messages['license'][] = $this->license->translateLicenseErrorMessage($textError);
                     $res->success = false;
                 }
@@ -261,7 +261,7 @@ class LicenseManagementProcessor extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $res->success= true;
+        $res->success = true;
 
         // License Key
         $licenseKey = PbxSettings::getValueByKey('PBXLicense');
@@ -272,7 +272,7 @@ class LicenseManagementProcessor extends Injectable
         $dataMetrics['PBXname'] = 'MikoPBX@' . PbxSettings::getValueByKey('PBXVersion');
 
         // SIP Extensions count
-        $extensions                   = Extensions::find('type="'.Extensions::TYPE_SIP.'"');
+        $extensions = Extensions::find('type="' . Extensions::TYPE_SIP . '"');
         $dataMetrics['CountSipExtensions'] = $extensions->count();
 
         // Interface language
@@ -295,8 +295,14 @@ class LicenseManagementProcessor extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $result = $this->license->ping();
-        $res->success= $result['success'] === true;
+        $i = 0;
+        do {
+            $i++;
+            sleep(1);
+            $result = $this->license->ping();
+        } while ($result['success'] !== true or $i <= 3);
+
+        $res->success = $result['success'] === true;
         return $res;
     }
 }

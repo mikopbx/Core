@@ -535,7 +535,6 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-merging-status-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-modules-index.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-nchan-worker.js', true)
                 ->addJs('js/vendor/semantic/progress.min.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-ping-lic-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-add-new.js', true)

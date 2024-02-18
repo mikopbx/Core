@@ -49,6 +49,7 @@ class PBXCoreRESTClientProvider implements ServiceProviderInterface
      * @param string $url - The API endpoint URL.
      * @param string $method - The HTTP method (default: 'GET').
      * @param array $data - Optional data to include in the request.
+     * @param array $headers - Optional headers to include in the request.
      * @return PBXApiResult - The response from the API as PBXApiResult class.
      */
     private static function restApiRequest(string $url, string $method = self::HTTP_METHOD_GET, array $data = [], array $headers = []): PBXApiResult
@@ -61,7 +62,11 @@ class PBXCoreRESTClientProvider implements ServiceProviderInterface
                 $requestData = ['query'=>$data];
                 break;
             case self::HTTP_METHOD_POST:
-                $requestData = ['form_params'=>$data];
+                if (isset($headers['Content-Type']) && $headers['Content-Type'] === 'application/json') {
+                    $requestData = ['json' => $data];
+                } else {
+                    $requestData = ['form_params' => $data];
+                }
                 break;
             default:
                 $requestData=$data;
@@ -109,8 +114,8 @@ class PBXCoreRESTClientProvider implements ServiceProviderInterface
     {
         $di->set(
             self::SERVICE_NAME,
-            function (string $url, string $method = self::HTTP_METHOD_GET, array $data = []): PBXApiResult {
-                return self::restApiRequest($url, $method, $data);
+            function (string $url, string $method = self::HTTP_METHOD_GET, array $data = [], array $headers=[]): PBXApiResult {
+                return self::restApiRequest($url, $method, $data, $headers);
             }
         );
     }

@@ -55,6 +55,7 @@ use MikoPBX\PBXCoreREST\Controllers\
     ConferenceRooms\GetController as ConferenceRoomsGetController,
     ConferenceRooms\PostController as ConferenceRoomsPostController,
     Users\GetController as UsersGetController,
+    Nchan\GetController as NchanGetController,
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController
 };
@@ -185,6 +186,8 @@ class RouterProvider implements ServiceProviderInterface
             [DialplanApplicationsPostController::class, 'callAction', '/pbxcore/api/dialplan-applications/{actionName}', 'post', '/'],
 
             [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'get', '/'],
+
+            [NchanGetController::class, 'callAction', '/pbxcore/api/nchan/{queueName}', 'get', '/'],
 
             [LicenseGetController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'get', '/'],
             [LicensePostController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'post', '/'],

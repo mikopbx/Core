@@ -18,13 +18,9 @@
         <table class="ui very basic table">
             <tr>
                 <td>
-                     <div class="confidential-field"></div>
+                    <div ><span class="confidential-field"></span><i class="times circle outline red icon disable-if-no-internet popuped" data-content=" {{ t._('lic_ResetLicenseSettings') }}" id="reset-license-button"></i></div>
                 </td>
-                <td>
-                    <button class="ui labeled icon button prevent-word-wrap disable-if-no-internet" id="reset-license-button">
-                        <i class="recycle icon"></i>
-                        {{ t._('lic_ResetLicenseSettings') }}
-                    </button>
+                <td class="right aligned">
                     <a class="ui labeled icon teal button prevent-word-wrap" href="#" target="_blank" id="manage-license-button">
                         <i class="toolbox icon"></i>
                         {{ t._('lic_ManageLicenseKey') }}

@@ -876,6 +876,7 @@ const PbxApi = {
      * @param {Object} params - The parameters required for uploading the module.
      * @param {string} params.uniqid - The unique ID of the module.
      * @param {string} params.releaseId - The unique ID of the release or 0 if we want the last one.
+     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
      * @param {function} callback - The callback function to be called after attempting to install the module.
      *                              It will receive the response object.
      * @returns {void}
@@ -888,6 +889,10 @@ const PbxApi = {
             data: {
                 uniqid: params.uniqid,
                 releaseId: params.releaseId,
+            },
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
             },
             successTest: PbxApi.successTest,
             onSuccess(response) {
@@ -1163,24 +1168,30 @@ const PbxApi = {
     /**
      * Updates all installed modules.
      *
+     * @param params
+     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
      * @param {function} callback - The callback function to process response.
      * @returns {void} Returns true.
      */
-    ModulesUpdateAll(callback) {
+    ModulesUpdateAll(params, callback) {
         $.api({
             url: PbxApi.modulesUpdateAll,
             on: 'now',
             method: 'POST',
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
+            },
             data: {},
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(response.data, true);
+                callback(response);
             },
             onFailure(response) {
-                callback(response, false);
+                callback(response);
             },
             onError(response) {
-                callback(response, false);
+                callback(response);
             },
         });
     },

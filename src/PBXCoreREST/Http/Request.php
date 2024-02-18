@@ -38,6 +38,24 @@ use Phalcon\Mvc\Micro;
 class Request extends PhRequest
 {
     /**
+     * Check the header of request to understand if it needs async response or not
+     * @return bool
+     */
+    public function isAsyncRequest(): bool
+    {
+        return !empty($this->getHeader('X-Async-Response-Channel-Id'));
+    }
+
+    /**
+     * Channel to push request
+     * @return string
+     */
+    public function getAsyncRequestChannelId(): string
+    {
+        return $this->getHeader('X-Async-Response-Channel-Id')??'';
+    }
+
+    /**
      * Check if the request is coming from localhost.
      *
      * @return bool

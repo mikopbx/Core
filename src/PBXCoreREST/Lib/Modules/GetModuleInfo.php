@@ -19,6 +19,9 @@ use Phalcon\Di;
  */
 class GetModuleInfo  extends \Phalcon\Di\Injectable
 {
+    const WRONG_MODULE_INFO = 'Wrong module info';
+
+
     /**
      * Retrieves module information from repository and store the information in local cache
      *
@@ -77,8 +80,14 @@ class GetModuleInfo  extends \Phalcon\Di\Injectable
                 return $res;
             }
         }
-        $res->data = json_decode($body, true)??[];
-        $res->success = true;
+        $result =  json_decode($body, true);
+        if (array_key_exists('data', $result)) {
+            $res->data = $result['data'];
+            $res->success = true;
+        } else {
+            $res->success    = false;
+            $res->messages[] = self::WRONG_MODULE_INFO;
+        }
 
         return $res;
     }
