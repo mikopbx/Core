@@ -51,9 +51,15 @@ if [ "$storageNotExists" = '0' ]; then
 fi
 
 # Set aliases
-alias ls='ls --color=auto'
-alias myip="curl http://ipecho.net/plain; echo"
-alias remount-offload="_remountOffload"
+alias ls='ls --color=auto';
+alias myip="curl http://ipecho.net/plain; echo";
+alias remount-offload="_remountOffload";
+alias ps='ps -A -f';
+alias sqlite3='sqlite3 -table';
+alias sngrep='sngrep -r';
+alias df='df -H';
+alias du='du -ch';
+alias free='free -h';
 
 # Set prompt
 PS1='\w\$ '
