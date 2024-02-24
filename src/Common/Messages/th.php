@@ -886,7 +886,7 @@ return [
     'lic_FailedCheckLicenseNotPbxResponse' => 'ATS ไม่ตอบสนองต่อการร้องขอข้อมูลเกี่ยวกับใบอนุญาต บริการไม่พร้อมใช้งาน',
     'lic_UnknownLicenseMessage' => 'ไม่มีการตอบสนองจากระบบการออกใบอนุญาต',
     'lic_ManagementTabHeader' => 'การลงทะเบียนและการจัดการใบอนุญาต',
-    'lic_FirstQuestionHeader' => 'จำเป็นต้องลงทะเบียนหรือไม่?',
+    'lic_FirstQuestionHeader' => 'คุณลงทะเบียนหรือยัง?',
     'lic_FirstQuestionAnswer' => 'ฟังก์ชั่นพื้นฐานของ MikoPBX นั้นฟรีโดยสมบูรณ์และไม่จำกัดด้วยใบอนุญาต การขาดใบอนุญาตไม่ส่งผลกระทบต่อการโทรแต่อย่างใด<br> คุณสามารถลงทะเบียนและยกเลิกการลงทะเบียนในตลาดซื้อขายได้ตลอดเวลา',
     'lic_MarketplaceHeader' => 'ตลาดเป็นโอกาสเพิ่มเติม',
     'lic_MarketplaceText' => 'การลงทะเบียนใน Marketplace จะทำให้คุณสามารถเข้าถึงโมดูลและส่วนขยายเพิ่มเติมได้<br>มีโมดูลฟรีที่เราลบออกจากฟังก์ชันพื้นฐานเพื่อทำให้การตั้งค่าเริ่มต้นง่ายขึ้น เช่นเดียวกับโมดูลที่ต้องชำระเงินจากเราและนักพัฒนารายอื่นๆ<br>หากคุณ เป็นนักพัฒนา คุณสามารถติดต่อ <a href="mailto:developers@mikopbx.com">ติดต่อเรา</a> เพื่อขอคำแนะนำเกี่ยวกับวิธีพัฒนาโมดูลของคุณเองและเพิ่มลงใน Marketplace',
@@ -1099,7 +1099,7 @@ return [
     'Enter a number' => 'กรอกหมายเลขทีม',
     'Press ENTER to continue.' => 'กด ENTER เพื่อดำเนินการต่อ…',
     'this_is' => 'นี่คือ ',
-    'Do you want to use DHCP to configure your LAN interface?' => 'ฉันควรใช้เซิร์ฟเวอร์ DHCP เพื่อกำหนดค่าอินเทอร์เฟซ LAN หรือไม่',
+    'Do you want to use DHCP to configure your LAN interface?' => 'ใช้เซิร์ฟเวอร์ DHCP เพื่อกำหนดค่าอินเทอร์เฟซ LAN หรือไม่',
     'The LAN interface will now be configured via DHCP...' => "อินเทอร์เฟซ LAN จะถูกกำหนดค่าโดยใช้ DHCP…",
     'The LAN interface will now be configured ...' => "การตั้งค่าอินเทอร์เฟซ LAN…",
     'Enter the new LAN IP address: ' => 'ป้อนที่อยู่ IP ของ LAN ใหม่:',
@@ -1180,4 +1180,5 @@ return [
     'adv_SSHPasswordMismatchStringsHash' => 'รหัสผ่าน SSH ถูกเปลี่ยนนอกเว็บอินเตอร์เฟส MikoPBX',
     'adv_SSHPasswordMismatchFilesHash' => 'รหัสผ่าน MikoPBX SSH แตกต่างจากรหัสผ่านที่ตั้งไว้ในไฟล์กำหนดค่า บางทีอาจมีการเปลี่ยนแปลงด้วยตนเองจากคอนโซล PBX',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'ความสนใจ! ตรวจพบปัญหาใน MikoPBX ของคุณ!',
+    'or_ValidateBeginPattern' => 'ข้อผิดพลาดในช่องของตัวกรองการโทร. มันสามารถมีตัวเลขและตัวอักษร: )',
 ];
