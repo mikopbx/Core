@@ -86,14 +86,17 @@ class WorkerApiCommands extends WorkerBase
     {
         // Use fork to run the callback in a separate process
         $pid = pcntl_fork();
-        if ($pid == -1) {
+        if ($pid === -1) {
             // Fork failed
             throw new \RuntimeException("Failed to fork a new process.");
-        } elseif ($pid == 0) {
+        }
+        if ($pid === 0) {
             $res = new PBXApiResult();
             $res->processor = __METHOD__;
+            $async = false;
             try {
                 $request = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
+                $async   = ($request['async']??false) === true;
                 $processor = $request['processor'];
                 $res->processor = $processor;
                 // Old style, we can remove it in 2025
@@ -109,7 +112,7 @@ class WorkerApiCommands extends WorkerBase
                 // This is the child process
                 if (method_exists($processor, 'callback')) {
                     // Execute async job
-                    if ($request['async'] === true) {
+                    if ($async) {
                         $res->success = true;
                         $res->messages['info'][] = "The async job {$request['action']} starts in background, you will receive answer on {$request['asyncChannel']} nchan channel";
                         $encodedResult = json_encode($res->getResult());
@@ -128,7 +131,7 @@ class WorkerApiCommands extends WorkerBase
                 // Prepare answer with pretty error description
                 $res->messages['error'][] = CriticalErrorsHandler::handleExceptionWithSyslog($exception);
             } finally {
-                if ($request['async'] === false) {
+                if ($async === false) {
                     $encodedResult = json_encode($res->getResult());
                     if ($encodedResult === false) {
                         $res->data = [];
@@ -155,11 +158,9 @@ class WorkerApiCommands extends WorkerBase
                 }
             }
             exit(0); // Exit the child process
-        } else {
-            // This is the parent process
-            pcntl_wait($status); // Wait for the child process to complete
         }
-
+        // This is the parent process
+        pcntl_wait($status); // Wait for the child process to complete
     }
 
     /**

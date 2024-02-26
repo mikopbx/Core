@@ -53,7 +53,7 @@ class SysLogsManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         switch ($action) {
             case 'getLogFromFile':
-                $res = self::getLogFromFile($data['filename'], $data['filter'], $data['lines'], $data['offset']);
+                $res = self::getLogFromFile($data);
                 break;
             case 'prepareLog':
                 $res = self::prepareLog(false);
@@ -90,15 +90,17 @@ class SysLogsManagementProcessor extends Injectable
     /**
      * Gets partially filtered log file strings.
      *
-     * @param string $filename
-     * @param string $filter
-     * @param int    $lines
-     * @param int    $offset
+     * @param array $data
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function getLogFromFile(string $filename, string $filter = '', int $lines = 500, int $offset = 0): PBXApiResult
+    public static function getLogFromFile(array $data): PBXApiResult
     {
+        $filename = (string) ($data['filename']??'');
+        $filter   = (string) ($data['filter']??'');
+        $lines    = (int) ($data['lines']??'');
+        $offset   = (int) ($data['offset']??'');
+
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         $filename       = System::getLogDir() . '/' . $filename;
@@ -114,8 +116,6 @@ class SysLogsManagementProcessor extends Injectable
             }
             $tail         = Util::which('tail');
             $filter       = escapeshellarg($filter);
-            $offset       = (int)$offset;
-            $lines        = (int)$lines;
             $linesPlusOffset = $lines+$offset;
 
             $di          = Di::getDefault();
