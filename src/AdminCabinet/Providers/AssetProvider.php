@@ -534,7 +534,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-install-status-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-merging-status-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-modules-index.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-index.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-detail.js', true)
                 ->addJs('js/vendor/semantic/progress.min.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-ping-lic-worker.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-add-new.js', true)
@@ -547,7 +548,8 @@ class AssetProvider implements ServiceProviderInterface
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
                 ->addCss('css/vendor/semantic/modal.min.css', true)
-                ->addCss('css/vendor/semantic/progress.min.css', true);
+                ->addCss('css/vendor/semantic/progress.min.css', true)
+                ->addCss('css/slider.css', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)

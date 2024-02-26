@@ -68,6 +68,8 @@ class CorePostController extends BaseController
      * Retrieves the module.json information from uploaded zip archive.
      * @Post("/getMetadataFromModulePackage")
      *
+     * Retrieves the module description from the repository.
+     * @Post("/getModuleInfo")
      *
      * @return void
      */

@@ -1,4 +1,5 @@
 {{ partial("PbxExtensionModules/moduleDeleteModal")}}
+{{ partial("PbxExtensionModules/moduleDetailsModal")}}
 
 <div class="show-if-no-internet">
     <div class="ui negative message">

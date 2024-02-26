@@ -55,6 +55,7 @@ const PbxApi = {
     modulesGetLink: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleLink`, // Retrieves the installation link for a module.
     modulesUpdateAll: `${Config.pbxUrl}/pbxcore/api/modules/core/updateAll`, // Update all installed modules.
     modulesGetMetadataFromModulePackage: `${Config.pbxUrl}/pbxcore/api/modules/core/getMetadataFromModulePackage`, // Retrieves the module.json information from uploaded zip archive.
+    modulesGetModuleInfo: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleInfo`, // Retrieves the module description from the repository.
 
     // FirewallManagementProcessor
     firewallGetBannedIp: `${Config.pbxUrl}/pbxcore/api/firewall/getBannedIp`, // Retrieve a list of banned IP addresses or get data for a specific IP address.
@@ -1152,6 +1153,33 @@ const PbxApi = {
             on: 'now',
             method: 'POST',
             data: {filePath: filePath},
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(true, response);
+            },
+            onFailure(response) {
+                callback(false, response);
+            },
+            onError(response) {
+                callback(false, response);
+            },
+        });
+    },
+
+    /**
+     * Retrieves the module detail information from the repository.
+     *
+     * @param params
+     * @param {string} params.uniqid - The unique ID of the module.
+     * @param {function} callback - The callback function to process response.
+     * @returns {void}
+     */
+    ModulesGetModuleInfo(params, callback) {
+        $.api({
+            url: PbxApi.modulesGetModuleInfo,
+            on: 'now',
+            method: 'POST',
+            data: {uniqid: params.uniqid},
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(true, response);
