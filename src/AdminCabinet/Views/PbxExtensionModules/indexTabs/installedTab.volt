@@ -33,7 +33,7 @@
         </thead>
         <tbody>
     {% endif %}
-    <tr class="module-row" id="{{ module['uniqid'] }}">
+    <tr class="module-row" data-id="{{ module['uniqid'] }}" data-version="{{ module['version'] }}">
         <td class="collapsing no-modify-columns">
             <div class="ui toggle checkbox" data-value="{{ module['uniqid'] }}">
                     <input type="checkbox" {% if module['status']!=='disabled' %}checked="checked" {% endif %} /> <label></label>
@@ -52,11 +52,11 @@
                 </i>
             {% endif %}
         </td>
-        <td class="{{ module['status'] }} disability">{{ t._('Breadcrumb'~module['uniqid']) }} <i
+        <td class="{{ module['status'] }} disability show-details-on-click">{{ t._('Breadcrumb'~module['uniqid']) }} <i
                     class="status-icon"></i><br><span
                     class="features">{{ t._('SubHeader'~module['uniqid']) }}</span></td>
-        <td class="{{ module['status'] }} disability">{{ module['developer'] }}</td>
-        <td class="{{ module['status'] }} disability version">{{ module['version'] }}</td>
+        <td class="{{ module['status'] }} disability show-details-on-click">{{ module['developer'] }}</td>
+        <td class="{{ module['status'] }} disability version show-details-on-click">{{ module['version'] }}</td>
         {{ partial("partials/tablesbuttons",
             [
                 'id': '',

@@ -167,7 +167,7 @@ const extensionModules = {
             }
 
             // Check if the module is already installed and offer an update
-            const $moduleRow = $(`tr.module-row#${obj.uniqid}`);
+            const $moduleRow = $(`tr.module-row[data-id=${obj.uniqid}]`);
             if ($moduleRow.length > 0) {
                 const oldVer = $moduleRow.find('td.version').text();
                 const newVer = obj.version;
@@ -175,7 +175,7 @@ const extensionModules = {
                     extensionModules.addUpdateButtonToRow(obj);
                 }
             } else {
-                const $newModuleRow = $(`tr.new-module-row#${obj.uniqid}`);
+                const $newModuleRow = $(`tr.new-module-row[data-id=${obj.uniqid}]`);
                 if ($newModuleRow.length > 0) {
                     const oldVer = $newModuleRow.find('td.version').text();
                     const newVer = obj.version;
@@ -199,20 +199,23 @@ const extensionModules = {
          * Event handler for the download link click event.
          * @param {Event} e - The click event object.
          */
-        $('a.download, a.update').on('click', (e) => {
+        $(document).on('click','a.download, a.update', (e) => {
             e.preventDefault();
             $('a.button').addClass('disabled');
-            const $currentButton = $(e.target).closest('tr').find('a.button');
-            $currentButton.removeClass('disabled');
-            $currentButton.find('i')
+            const $currentButton = $(e.target).closest('a.button');
+            let params = {};
+            params.uniqid = $currentButton.data('uniqid');
+            params.releaseId = $currentButton.data('releaseid');
+            params.channelId = extensionModules.channelId;
+            $(`#modal-${params.uniqid}`).modal('hide');
+
+            const $moduleButtons = $(`a[data-uniqid=${params.uniqid}]`);
+            $moduleButtons.removeClass('disabled');
+            $moduleButtons.find('i')
                 .removeClass('download')
                 .removeClass('redo')
                 .addClass('spinner loading');
-            $currentButton.find('span.percent').text('0%');
-            let params = {};
-            params.uniqid = $currentButton.attr('data-uniqid');
-            params.releaseId = $currentButton.attr('data-id');
-            params.channelId = extensionModules.channelId;
+            $moduleButtons.find('span.percent').text('0%');
             $('tr.table-error-messages').remove();
             $('tr.error').removeClass('error');
             if (extensionModules.pbxLicense === '') {
@@ -233,7 +236,7 @@ const extensionModules = {
             $('a.button').addClass('disabled');
             $(e.target).closest('a').removeClass('disabled');
             const params = {};
-            params.uniqid = $(e.target).closest('tr').attr('id');
+            params.uniqid = $(e.target).closest('tr').data('id');
             extensionModules.deleteModule(params);
         });
         $('a[data-content]').popup();
@@ -255,18 +258,18 @@ const extensionModules = {
             additionalIcon = '<i class="ui donate icon"></i>';
         }
         const dynamicRow = `
-			<tr class="new-module-row" id="${obj.uniqid}">
-						<td>${additionalIcon} ${decodeURIComponent(obj.name)}<br>
-						<span class="features">${decodeURIComponent(obj.description)} ${promoLink}</span>
+			<tr class="new-module-row" data-id="${obj.uniqid}">
+						<td class="show-details-on-click">${additionalIcon} ${decodeURIComponent(obj.name)}<br>
+						    <span class="features">${decodeURIComponent(obj.description)} ${promoLink}</span>
 						</td>
-						<td>${decodeURIComponent(obj.developer)}</td>
-						<td class="center aligned version">${obj.version}</td>
+						<td class="show-details-on-click">${decodeURIComponent(obj.developer)}</td>
+						<td class="center aligned version show-details-on-click">${obj.version}</td>
 						<td class="right aligned collapsing">
     							<a href="#" class="ui icon basic button download popuped disable-if-no-internet" 
 									data-content= "${globalTranslate.ext_InstallModule}"
 									data-uniqid = "${obj.uniqid}"
 									data-size = "${obj.size}"
-									data-id ="${obj.release_id}">
+									data-releaseid ="${obj.release_id}">
 									<i class="icon download blue"></i> 
 									<span class="percent"></span>
 								</a>
@@ -280,7 +283,7 @@ const extensionModules = {
      * @param {Object} obj - The module object containing information.
      */
     addUpdateButtonToRow(obj) {
-        const $moduleRow = $(`tr.module-row#${obj.uniqid}`);
+        const $moduleRow = $(`tr.module-row[data-id=${obj.uniqid}]`);
         const $currentUpdateButton = $moduleRow.find('a.download');
         if ($currentUpdateButton.length > 0) {
             const oldVer = $currentUpdateButton.attr('data-ver');
@@ -296,7 +299,7 @@ const extensionModules = {
 			data-ver ="${obj.version}"
 			data-size = "${obj.size}"
 			data-uniqid ="${obj.uniqid}" 
-			data-id ="${obj.release_id}">
+			data-releaseid ="${obj.release_id}">
 			<i class="icon redo blue"></i> 
 			<span class="percent"></span>
 			</a>`;
@@ -379,7 +382,7 @@ const extensionModules = {
      * @param {string} v2 - The second version to compare.
      * @param {object} [options] - Optional configuration options.
      * @param {boolean} [options.lexicographical] - Whether to perform lexicographical comparison (default: false).
-     * @param {boolean} [options.zeroExtend] - Whether to zero-extend the shorter version (default: false).
+     * @param {boolean} [options.zeroExtend] - Weather to zero-extend the shorter version (default: false).
      * @returns {number} - A number indicating the comparison result: 0 if versions are equal, 1 if v1 is greater, -1 if v2 is greater, or NaN if the versions are invalid.
      */
     versionCompare(v1, v2, options) {
@@ -484,8 +487,7 @@ const extensionModules = {
      */
     cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails) {
 
-        const $row = $(`#${moduleUniqueId}`);
-
+        const $row = $(`tr[data-uniqid=${moduleUniqueId}]`);
         // Check module download status
         if (stageDetails.data.d_status === 'DOWNLOAD_IN_PROGRESS') {
             const downloadProgress = Math.max(Math.round(parseInt(stageDetails.data.d_status_progress, 10)/2), 3);
@@ -502,7 +504,7 @@ const extensionModules = {
      */
     cbAfterReceiveNewInstallationStatus(moduleUniqueId, stageDetails) {
         // Check module installation status
-        const $row = $(`#${moduleUniqueId}`);
+        const $row = $(`tr[data-uniqid=${moduleUniqueId}]`);
         if (stageDetails.data.i_status === 'INSTALLATION_IN_PROGRESS') {
             const installationProgress = Math.round(parseInt(stageDetails.data.i_status_progress, 10)/2+50);
             $row.find('span.percent').text(`${installationProgress}%`);

@@ -57,6 +57,8 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
     const STAGE_VI_ENABLE_MODULE = 'Stage_VI_EnableModule';
     const STAGE_VII_FINAL_STATUS = 'Stage_VII_FinalStatus';
 
+    // Pub/sub nchan channel id to send response
+    private string $asyncChannelId;
 
     // The unique identifier for the module to be installed.
     private string $moduleUniqueId;
@@ -64,20 +66,17 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
     // Optional release ID for the module. Defaults to 0.
     private int $moduleReleaseId = 0;
 
-    // Pub/sub nchan channel id to send response
-    private string $asyncChannelId;
 
     /**
-     *
+     * @param string $asyncChannelId
      * @param string $moduleUniqueId
      * @param int $moduleReleaseId
-     * @param string $asyncChannelId
      */
     public function __construct(string $asyncChannelId, string $moduleUniqueId, int $moduleReleaseId=0)
     {
+        $this->asyncChannelId = $asyncChannelId;
         $this->moduleUniqueId = $moduleUniqueId;
         $this->moduleReleaseId = $moduleReleaseId;
-        $this->asyncChannelId = $asyncChannelId;
     }
 
 
@@ -180,10 +179,10 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
 
         // Find the specified release or the latest one
         foreach ($moduleInfo->data['releases'] as $release) {
-            if ($release['releaseID'] === $this->moduleReleaseId) {
+            if (intval($release['releaseID']) === $this->moduleReleaseId) {
                 $releaseInfo['releaseID'] = $release['releaseID'];
                 break;
-            } elseif ($release['releaseID'] > $releaseInfo['releaseID']) {
+            } elseif (intval($release['releaseID']) > $releaseInfo['releaseID']) {
                 $releaseInfo['releaseID'] = $release['releaseID'];
             }
         }

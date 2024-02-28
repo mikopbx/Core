@@ -549,7 +549,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
                 ->addCss('css/vendor/semantic/modal.min.css', true)
                 ->addCss('css/vendor/semantic/progress.min.css', true)
-                ->addCss('css/slider.css', true);
+                ->addCss('css/slides.css', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)

@@ -81,7 +81,7 @@ class ModulesManagementProcessor extends Injectable
                 case 'installFromRepo':
                     $asyncChannelId = $request['asyncChannelId'];
                     $moduleUniqueID = $data['uniqid'];
-                    $releaseId = $data['releaseId'];
+                    $releaseId = intval($data['releaseId'])??0;
                     $installer = new InstallFromRepo($asyncChannelId, $moduleUniqueID, $releaseId);
                     $installer->start();
                     $res->success = true;

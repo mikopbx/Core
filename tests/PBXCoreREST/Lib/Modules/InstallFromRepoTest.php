@@ -10,7 +10,11 @@ class InstallFromRepoTest extends AbstractUnitTest
 
     public function testMain()
     {
-        InstallFromRepo::main('ModuleDocker',1321);
+        $asyncChannelId = 'install-modules';
+        $moduleUniqueID = 'ModulePT1CCore';
+        $releaseId = intval('1206')??0;
+        $installer = new InstallFromRepo($asyncChannelId, $moduleUniqueID, $releaseId);
+        $installer->start();
         $this->assertTrue(true);
     }
 }

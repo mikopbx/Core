@@ -654,7 +654,13 @@ Limit fields width
     }
 }
 
-/* Align vertically icon in cell for PBXExtension */
+/* Align vertically icon in cell for PbxExtensionModules */
 i.vertically-aligned {
     vertical-align: super;
+}
+
+/* Change cursor to pointer on PbxExtensionModules page */
+tr.new-module-row td.show-details-on-click,
+tr.module-row td.show-details-on-click {
+    cursor: pointer;
 }

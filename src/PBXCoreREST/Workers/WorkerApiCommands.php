@@ -114,7 +114,7 @@ class WorkerApiCommands extends WorkerBase
                     // Execute async job
                     if ($async) {
                         $res->success = true;
-                        $res->messages['info'][] = "The async job {$request['action']} starts in background, you will receive answer on {$request['asyncChannel']} nchan channel";
+                        $res->messages['info'][] = "The async job {$request['action']} starts in background, you will receive answer on {$request['asyncChannelId']} nchan channel";
                         $encodedResult = json_encode($res->getResult());
                         $message->reply($encodedResult);
                         $processor::callback($request);
