@@ -103,6 +103,7 @@ class LanguageController extends BaseController
             'vi' => ['name' => $translation->_('ex_Vietnamese'), 'flag' => 'vietnam'],
             'az' => ['name' => $translation->_('ex_Azerbaijan'), 'flag' => 'azerbaijan'],
             'ro' => ['name' => $translation->_('ex_Romanian'), 'flag' => 'romania'],
+            'th' => ['name' => $translation->_('ex_Thai'), 'flag' => 'thailand'],
             'zh_Hans' => ['name' => $translation->_('ex_Chinese'), 'flag' => 'china'],
         ];
     }

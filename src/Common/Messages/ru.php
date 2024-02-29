@@ -40,6 +40,7 @@ return [
     'ex_Georgian' => 'ქართველი',
     'ex_Azerbaijan' => 'Azərbaycan',
     'ex_Romanian' => 'Română',
+    'ex_Thai'=>'ไทย',
     'January' => 'Январь',
     'February' => 'Февраль',
     'March' => 'Март',
