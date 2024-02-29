@@ -34,6 +34,30 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
+    'ex_Russian' => 'Русский',
+    'ex_English' => 'English',
+    'ex_EnglishUK' => 'English(UK)',
+    'ex_Japanese' => '日本語',
+    'ex_Deutsch' => 'Deutsch',
+    'ex_Danish' => 'Dansk',
+    'ex_Spanish' => 'Espanol',
+    'ex_Greek' => 'Ελληνική',
+    'ex_French' => 'Le français',
+    'ex_Italian' => 'Italiano',
+    'ex_Portuguese' => 'Português',
+    'ex_PortugueseBrazil' => 'Português (Brazil)',
+    'ex_Ukrainian' => 'Українська',
+    'ex_Vietnamese' => 'Tiếng việt',
+    'ex_Chinese' => '中国人',
+    'ex_Polish' => 'Polskie',
+    'ex_Dutch' => 'Nederlands',
+    'ex_Swedish' => 'Svenska',
+    'ex_Czech' => 'Čeština',
+    'ex_Turkish' => 'Türkçe',
+    'ex_Georgian' => 'ქართველი',
+    'ex_Azerbaijan' => 'Azərbaycan',
+    'ex_Romanian' => 'Română',
+    'ex_Thai'=>'ไทย',
     'March' => 'maart',
     'February' => 'februari',
     'January' => 'januari',
@@ -1125,8 +1149,6 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'Subnet masks are to be entered as bit counts (as in CIDR notation).' => 'Subnetmasker in CIDR-indeling (1-32)',
     'mm_Update' => 'PBX-update',
     'adv_PopupHeader' => 'De volgende problemen zijn gevonden:',
-    'ex_Azerbaijan' => 'Azərbaycan',
-    'ex_Romanian' => 'Romana',
     'upd_EnterIHaveBackupPhrasePreText' => 'Voer de volgende zin in het invoerveld in om het systeem bij te werken:',
     'upd_EnterIHaveBackupPhrase' => 'Ja, ik heb een back-up',
     'gs_SetPasswordError' => 'Wachtwoord - %password% kan niet worden gebruikt, het is aanwezig in het eenvoudige wachtwoordwoordenboek.',
@@ -1144,78 +1166,6 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'cf_OriginalFileHeader' => 'De originele inhoud van het bestand dat door het systeem is gegenereerd',
     'cf_UserEditHeader' => 'Redacteur om wijzigingen aan te brengen',
     'cf_ResultFileHeader' => 'Bestandsinhoud met wijzigingen',
-    'ex_English' => 'English',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_Greek' => 'Ελληνική',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_PortugueseBrazil' => 'Português (Brazil)',
-    'ex_Ukrainian' => 'Українська',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Polish' => 'Polskie',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'Svenska',
-    'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türkçe',
-    'ex_Georgian' => 'ქართველი',
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    'ex_Russian' => 'Русский',
     'lic_LicenseProblem' => 'Probleem met registratie in de Marktplaats',
     'lic_ManageLicense' => 'Om de licentie te beheren, de bindingen opnieuw in te stellen, problemen te analyseren, naar de site te gaan ',
     'lic_ManageLicenseKeyOnSitePreLinkText' => 'Om de licentie te beheren, hostbindingen opnieuw in te stellen, statistieken te bekijken',

@@ -55,6 +55,7 @@ return [
     'ex_Czech' => 'Čeština',
     'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
+    'ex_Thai'=>'ไทย',
     'cal_Last30Days' => 'Últimos 30 dias',
     'cal_LastWeek' => 'Últimos 7 dias',
     'cal_Yesterday' => 'Ontem',

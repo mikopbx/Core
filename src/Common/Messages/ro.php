@@ -17,6 +17,30 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
+    'ex_Russian' => 'Русский',
+    'ex_English' => 'English',
+    'ex_EnglishUK' => 'English(UK)',
+    'ex_Japanese' => '日本語',
+    'ex_Deutsch' => 'Deutsch',
+    'ex_Danish' => 'Dansk',
+    'ex_Spanish' => 'Espanol',
+    'ex_Greek' => 'Ελληνική',
+    'ex_French' => 'Le français',
+    'ex_Italian' => 'Italiano',
+    'ex_Portuguese' => 'Português',
+    'ex_PortugueseBrazil' => 'Português (Brazil)',
+    'ex_Ukrainian' => 'Українська',
+    'ex_Vietnamese' => 'Tiếng việt',
+    'ex_Chinese' => '中国人',
+    'ex_Polish' => 'Polskie',
+    'ex_Dutch' => 'Nederlands',
+    'ex_Swedish' => 'Svenska',
+    'ex_Czech' => 'Čeština',
+    'ex_Turkish' => 'Türkçe',
+    'ex_Georgian' => 'ქართველი',
+    'ex_Azerbaijan' => 'Azərbaycan',
+    'ex_Romanian' => 'Română',
+    'ex_Thai'=>'ไทย',
     'BreadcrumbPBXCoreREST' => 'API-ul REST',
     'BreadcrumbRestart' => 'Repornirea sistemului',
     'pr_DTMFMode' => 'modul DTMF',
@@ -1108,10 +1132,8 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'adv_SSHPPasswordCorrupt' => 'Parola SSH setată în interfața web nu se potrivește cu cea actuală din sistem. <a target="_blank" href=\'%url%\'>remediere</a>',
     'adv_PopupHeader' => 'Au fost găsite următoarele probleme:',
     'adv_SystemBrokenComment' => 'Fișierele de sistem au fost modificate. Efectuați o restaurare/actualizare a sistemului.',
-    'ex_Romanian' => 'Romană',
     'upd_EnterIHaveBackupPhrasePreText' => 'Pentru a actualiza sistemul, introduceți următoarea frază în câmpul de introducere:',
     'upd_EnterIHaveBackupPhrase' => 'Da, am o copie de rezervă',
-    'ex_Azerbaijan' => 'Azərbaycan',
     'gs_SetPasswordError' => 'Parola - %password% nu poate fi utilizată, este prezentă în dicționarul de parole simple.',
     'adv_WebPasswordWeak' => 'Parola simplă de administrator în interfața web <a href=\'%url%\'>schimbați</a>',
     'adv_SshPasswordWeak' => 'Parola simplă a contului SSH <a href=\'%url%\'>modificare</a>',
@@ -1129,78 +1151,6 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'cf_ResultFileHeader' => 'Conținutul fișierului cu modificări',
     'lic_LicenseProblem' => 'Problemă cu înregistrarea în Piață',
     'lic_ManageLicense' => 'Pentru a gestiona licența, resetați legările, analizați problemele, accesați site-ul ',
-    'ex_English' => 'English',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_French' => 'Le français',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Greek' => 'Ελληνική',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_PortugueseBrazil' => 'Português (Brazil)',
-    'ex_Polish' => 'Polskie',
-    'ex_Ukrainian' => 'Українська',
-    'ex_Swedish' => 'Svenska',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Turkish' => 'Türkçe',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Czech' => 'Čeština',
-    'ex_Georgian' => 'ქართველი',
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    'ex_Russian' => 'Русский',
     'lic_ManageLicenseKeyOnSitePreLinkText' => 'Pentru a gestiona licența, resetați legăturile gazdei, vizualizați statisticile',
     'lic_ManageLicenseKeyOnSiteLinkText' => 'legătură',
     'ext_NoAvailableModules' => 'Nu există module disponibile pentru instalare',
