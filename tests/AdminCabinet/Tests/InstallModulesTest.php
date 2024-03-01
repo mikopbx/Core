@@ -56,7 +56,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         $this->changeTabOnCurrentPage('installed');
 
         // Delete old module
-        $xpath = '//tr[@id="' . $params['moduleId'] . '"]//a[contains(@href,"delete")]';
+        $xpath = $this->getDeleteButtonXpath($params['moduleId'] );
         try {
             $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tableButtonModify->click();
@@ -71,7 +71,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
 
         // Install new one
         $this->changeTabOnCurrentPage('marketplace');
-        $xpath = '//a[contains(@data-uniqid,"' . $params['moduleId'] . '")]';
+        $xpath = $this->getInstallButtonXpath($params['moduleId'] );
         try {
             $tableButtonInstall = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tableButtonInstall->click();
@@ -86,7 +86,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         $this->changeTabOnCurrentPage('installed');
         $maximumWaitTime = 120;
         $waitTime = 0;
-        $xpath = '//tr[@id="' . $params['moduleId'] . '"]//a[contains(@href,"delete")]';
+        $xpath = $this->getDeleteButtonXpath($params['moduleId'] );
         $found = false;
         while ($waitTime < $maximumWaitTime) {
             sleep(5);
@@ -123,12 +123,12 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
      */
     private function changeModuleState(string $moduleId, bool $enable = true): void
     {
-        $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]';
+        $xpath = $this->getToggleCheckboxXpath($moduleId);
         $checkBoxItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($checkBoxItems as $checkBoxItem) {
             if (($enable && !$checkBoxItem->isSelected()) || (!$enable && $checkBoxItem->isSelected())) {
                 // Find the checkbox item's parent div and perform necessary actions
-                $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]/parent::div';
+                $xpath = '//tr[contains(@class,"module-row") and @data-id="' . $moduleId . '"]//input[@type="checkbox"]/parent::div';
                 $checkBoxItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
                 $actions = new WebDriverActions(self::$driver);
                 $actions->moveToElement($checkBoxItem);
@@ -145,7 +145,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         $waitTime = 0;
         while ($waitTime < $maximumWaitTime) {
             sleep(5);
-            $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]';
+            $xpath = $this->getToggleCheckboxXpath($moduleId);
             $checkBoxItemNew = self::$driver->findElement(WebDriverBy::xpath($xpath));
             if (($enable && $checkBoxItemNew->isSelected()) || (!$enable && !$checkBoxItemNew->isSelected())) {
                 $changed = true;
@@ -221,5 +221,20 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         ];
 
         return $params;
+    }
+
+    private function getDeleteButtonXpath(string $moduleUniqueId):string
+    {
+        return '//tr[contains(@class,"module-row") and @data-id="' . $moduleUniqueId . '"]//a[contains(@class,"delete")]';
+    }
+
+    private function getInstallButtonXpath(string $moduleUniqueId):string
+    {
+        return '//tr[contains(@class,"new-module-row") and @data-id="' . $moduleUniqueId . '"]//a[contains(@class,"download")]';
+    }
+
+    private function getToggleCheckboxXpath(string $moduleUniqueId):string
+    {
+        return '//tr[contains(@class,"module-row") and @data-id="' . $moduleUniqueId . '"]//input[@type="checkbox"]';
     }
 }
