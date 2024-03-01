@@ -108,15 +108,13 @@ class QueueConf extends AsteriskConfigClass
         $queue_ext_conf = '';
         $db_data        = $this->getQueueData();
         foreach ($db_data as $queue) {
-            $calleridPrefix = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $queue['callerid_prefix'] ?? '');
-
             $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
-            $reservExtension = $queue['redirect_to_extension_if_empty']??'';
-            if(!empty($reservExtension)){
+            $reservedExtension = trim($queue['redirect_to_extension_if_empty']);
+            if(!empty($reservedExtension)){
                 // Check if the queue is empty.
                 $queue_ext_conf .= 'same => n,Set(mLogged=${QUEUE_MEMBER('.$queue['uniqid'].',logged)})'.PHP_EOL."\t";
                 $queue_ext_conf .= 'same => n,ExecIf($["${mLogged}" == "0"]?Set(pt1c_UNIQUEID=${UNDEFINED}))'.PHP_EOL."\t";
-                $queue_ext_conf .= 'same => n,GotoIf($["${mLogged}" == "0"]?internal,'.$reservExtension.',1)'.PHP_EOL."\t";
+                $queue_ext_conf .= 'same => n,GotoIf($["${mLogged}" == "0"]?internal,'.$reservedExtension.',1)'.PHP_EOL."\t";
             }
             // Redirect the call to the queue.
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
@@ -125,26 +123,27 @@ class QueueConf extends AsteriskConfigClass
             $queue_ext_conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(queue-pre-dial-custom,${EXTEN},1)}" == "1"]?queue-pre-dial-custom,${EXTEN},1)'."\n\t";
             $queue_ext_conf .= "same => n,Answer() \n\t";
             $queue_ext_conf .= 'same => n,Gosub(queue_start,${EXTEN},1)' . "\n\t";
-            $options = '';
+            $options = '${MQ_OPTIONS}';
             if (isset($queue['caller_hear']) && $queue['caller_hear'] === 'ringing') {
                 $options .= 'r';
             }
-            $ringlength = (trim($queue['timeout_to_redirect_to_extension']) === '') ? 300 : $queue['timeout_to_redirect_to_extension'];
-            if ( ! empty($calleridPrefix)) {
-                $queue_ext_conf .= "same => n,Set(CALLERID(name)={$calleridPrefix}:" . '${CALLERID(name)}' . ") \n\t";
+            $cid = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $queue['callerid_prefix'] ?? '');
+            if (!empty($cid)) {
+                $queue_ext_conf .= "same => n,Set(CALLERID(name)=$cid:" . '${CALLERID(name)}' . ") \n\t";
             }
-            $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT\${MQ_OPTIONS}{$options},,,{$ringlength},,,queue_agent_answer) \n\t";
+            $ringLength = trim($queue['timeout_to_redirect_to_extension']);
+            $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT$options,,,$ringLength,,,queue_agent_answer) \n\t";
             // Notify about the end of the queue.
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
-
-            if (trim($queue['timeout_extension']) !== '') {
+            $timeoutExtension = trim($queue['timeout_extension']);
+            if ($timeoutExtension !== '') {
                 // If no answer within the timeout, perform redirection.
-                $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,' . $queue['timeout_extension'] . ',1))' . " \n\t";
+                $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,'.$timeoutExtension.',1))' . " \n\t";
             }
-            if (!empty($reservExtension)) {
+            if (!empty($reservedExtension)) {
                 // If the queue is empty, perform redirection.
                 $exp            = '$["${QUEUESTATUS}" == "JOINEMPTY" || "${QUEUESTATUS}" == "LEAVEEMPTY" ]';
-                $queue_ext_conf .= 'same => n,ExecIf('.$exp.'?Goto(internal,'.$reservExtension.',1))' . " \n\t";
+                $queue_ext_conf .= 'same => n,ExecIf('.$exp.'?Goto(internal,'.$reservedExtension.',1))' . " \n\t";
             }
             $queue_ext_conf .= "\n";
         }
