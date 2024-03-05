@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Modules;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerDownloader;
 use Phalcon\Di;
@@ -80,8 +81,8 @@ class StartDownload extends \Phalcon\Di\Injectable
         Processes::mwExecBg("{$phpPath} -f {$workerDownloaderPath} start {$moduleDirTmp}/download_settings.json");
 
         $res->data['uniqid'] = $moduleUniqueID;
-        $res->data[DownloadStatus::D_STATUS] = DownloadStatus::DOWNLOAD_IN_PROGRESS;
-        $res->data[DownloadStatus::D_STATUS_PROGRESS] = '0';
+        $res->data[FilesConstants::D_STATUS] = FilesConstants::DOWNLOAD_IN_PROGRESS;
+        $res->data[FilesConstants::D_STATUS_PROGRESS] = '0';
         $res->success = true;
 
         return $res;

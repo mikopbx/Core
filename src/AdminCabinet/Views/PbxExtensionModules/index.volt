@@ -16,6 +16,14 @@
     </div>
 </div>
 
+<div class="ui basic segment" id="upload-progress-bar-block">
+    <div class="ui indicating progress" id="upload-progress-bar">
+        <div class="bar">
+            <div class="progress"></div>
+        </div>
+        <div class="label" id="upload-progress-bar-label"></div>
+    </div>
+</div>
 <div class="ui pointing menu" id="pbx-extensions-tab-menu">
     <a class="item active" data-tab="installed">{{ t._('ext_InstalledModules') }}</a>
     <a class="item disable-if-no-internet" data-tab="marketplace">{{ t._('ext_Marketplace') }}</a>

@@ -72,7 +72,11 @@ class ModulesManagementProcessor extends Injectable
                     break;
                 case 'installFromPackage':
                     $filePath = $data['filePath'];
-                    $res = InstallFromPackage::main($filePath);
+                    $fileId = $data['fileId'];
+                    $asyncChannelId = $request['asyncChannelId'];
+                    $installer = new InstallFromPackage($asyncChannelId, $filePath, $fileId);
+                    $installer->start();
+                    $res->success = true;
                     break;
                 case 'getMetadataFromModulePackage':
                     $filePath = $data['filePath'];

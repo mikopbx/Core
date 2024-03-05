@@ -1,4 +1,4 @@
-<div class="ui large scrolling modal" id="module-details-template">
+<div class="ui large scrolling modal module-detail-popup" id="module-details-template">
     <i class="close icon"></i>
     <div class="ui basic segment">
         <div class="ui inverted active dimmer">
@@ -43,6 +43,7 @@
                 <div class="ui attached menu module-details-menu">
                     <a class="item active" data-tab="description">{{ t._('ext_ModuleDescriptionTab') }}</a>
                     <a class="item" data-tab="changelog">{{ t._('ext_ModuleChangelogTab') }}</a>
+                    <a class="item" data-tab="eula">{{ t._('ext_ModuleEulaTab') }}</a>
                     {{ partial("PbxExtensionModules/hookVoltBlock",
                         ['arrayOfPartials':hookVoltBlock('TabularMenu')])
                     }}
@@ -53,8 +54,13 @@
                     {# tabScreenshotsWithSliderAndmoduleDescriptionAndUsefulLinks #}
                 </div>
 
-                <div class="ui tab attached segment module-changelog" data-tab="changelog">
+                <div class="ui tab attached segment" data-tab="changelog">
                     {# tabChangeLogs with install button #}
+                    <div class="ui container module-changelog"></div>
+                </div>
+
+                <div class="ui tab attached segment" data-tab="eula">
+                    <div class="ui container module-eula"></div>
                 </div>
 
                 {{ partial("PbxExtensionModules/hookVoltBlock",

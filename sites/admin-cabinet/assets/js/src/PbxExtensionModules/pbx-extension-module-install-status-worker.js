@@ -24,133 +24,187 @@
  * @module installStatusLoopWorker
  */
 const installStatusLoopWorker = {
-
     /**
-     * Time in milliseconds before fetching new status request.
-     * @type {number}
-     */
-    timeOut: 1000,
-
-    /**
-     * The id of the timer function for the status worker.
-     * @type {number}
-     */
-    timeOutHandle: 0,
-
-    /**
-     * The file path of the module being installed.
-     * @type {string}
-     */
-    filePath: '',
-
-    /**
-     * The number of iterations performed.
-     * @type {number}
-     */
-    iterations: 0,
-
-    /**
-     * The previous progress percentage.
-     * @type {string}
-     */
-    oldPercent: '0',
-
-    /**
-     * Flag indicating if enabling is needed after installation.
-     * @type {boolean}
-     */
-    needEnableAfterInstall: false,
-
-    /**
-     * The progress bar label element.
+     * The progress bar element.
      * @type {jQuery}
      */
     $progressBar: $('#upload-progress-bar'),
 
     /**
-     * Module Unique id.
-     * @type string
+     * The progress bar block.
+     * @type {jQuery}
      */
-    moduleUniqid: '',
-
+    $progressBarBlock: $('#upload-progress-bar-block'),
 
     /**
-     * Initializes the installStatusLoopWorker object.
-     * @param {string} filePath - The file path of the module being installed.
-     * @param {boolean} [needEnable=false] - Flag indicating if enabling is needed after installation.
+     * The progress bar label element.
+     * @type {jQuery}
      */
-    initialize(filePath, needEnable = false) {
-        installStatusLoopWorker.filePath = filePath;
-        installStatusLoopWorker.iterations = 0;
-        installStatusLoopWorker.needEnableAfterInstall = needEnable;
-        installStatusLoopWorker.restartWorker();
+    $progressBarLabel: $('#upload-progress-bar-label'),
+
+    /**
+     * EventSource object for the module installation and upgrade status
+     * @type {EventSource}
+     */
+    eventSource: null,
+
+    /**
+     * PUB/SUB channel ID
+     */
+    channelId: 'install-module',
+
+    initialize(){
+        installStatusLoopWorker.startListenPushNotifications();
     },
 
     /**
-     * Restarts the worker.
+     * Starts listen to push notifications from backend
      */
-    restartWorker() {
-        window.clearTimeout(installStatusLoopWorker.timeoutHandle);
-        installStatusLoopWorker.worker();
+    startListenPushNotifications() {
+        const lastEventIdKey = `lastEventId`;
+        let lastEventId = localStorage.getItem(lastEventIdKey);
+        const subPath = lastEventId ? `/pbxcore/api/nchan/sub/${installStatusLoopWorker.channelId}?last_event_id=${lastEventId}` : `/pbxcore/api/nchan/sub/${installStatusLoopWorker.channelId}`;
+        installStatusLoopWorker.eventSource = new EventSource(subPath);
+
+        installStatusLoopWorker.eventSource.addEventListener('message', e => {
+            const response = JSON.parse(e.data);
+            console.log('New message: ', response);
+            installStatusLoopWorker.processModuleInstallation(response);
+            localStorage.setItem(lastEventIdKey, e.lastEventId);
+        });
+    },
+    /**
+     * Parses push events from backend and process them
+     * @param {object} response
+     */
+    processModuleInstallation(response){
+        const moduleUniqueId = response.moduleUniqueId;
+        const stage = response.stage;
+        const stageDetails = response.stageDetails;
+        const $row = $(`#${moduleUniqueId}`);
+        if (stage ==='Stage_I_GetRelease'){
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_GetReleaseInProgress, 1);
+        } else if (stage === 'Stage_II_CheckLicense'){
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_CheckLicenseInProgress, 2);
+        } else if (stage === 'Stage_III_GetDownloadLink'){
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_CheckLicenseInProgress, 3);
+        } else if (stage === 'Stage_IV_DownloadModule'){
+            installStatusLoopWorker.cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails);
+        } else if (stage === 'Stage_I_UploadModule'){
+            installStatusLoopWorker.cbAfterReceiveNewUploadStatus(moduleUniqueId, stageDetails);
+        } else if (stage === 'Stage_V_InstallModule'){
+            installStatusLoopWorker.cbAfterReceiveNewInstallationStatus(moduleUniqueId, stageDetails);
+        } else if (stage === 'Stage_VI_EnableModule'){
+
+        } else if (stage === 'Stage_VII_FinalStatus'){
+            if (stageDetails.result===true){
+                window.location = `${globalRootUrl}pbx-extension-modules/index/`;
+            } else {
+                installStatusLoopWorker.$progressBarBlock.hide();
+                if (stageDetails.messages !== undefined) {
+                    installStatusLoopWorker.showModuleInstallationError($row, globalTranslate.ext_InstallationError, stageDetails.messages);
+                } else {
+                    installStatusLoopWorker.showModuleInstallationError($row, globalTranslate.ext_InstallationError);
+                }
+            }
+        }
     },
 
     /**
-     * Worker function for checking the installation status.
+     * Callback function to refresh the module download status.
+     * @param {string} moduleUniqueId
+     * @param {object} stageDetails - The response object containing the download status.
      */
-    worker() {
-        window.clearTimeout(installStatusLoopWorker.timeoutHandle);
-        PbxApi.ModulesGetModuleInstallationStatus(
-            installStatusLoopWorker.filePath,
-            installStatusLoopWorker.cbAfterReceiveNewStatus
-        );
+    cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails) {
+        // Check module download status
+        if (stageDetails.data.d_status === 'DOWNLOAD_IN_PROGRESS') {
+            const downloadProgress = Math.max(Math.round(parseInt(stageDetails.data.d_status_progress, 10)/2), 3);
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_DownloadInProgress, downloadProgress);
+        } else if (stageDetails.d_status === 'DOWNLOAD_COMPLETE') {
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_DownloadInProgress, 50);
+        }
+    },
+
+    /**
+     * Callback function to refresh the module upload status.
+     * @param {string} moduleUniqueId
+     * @param {object} stageDetails - The response object containing the upload status.
+     */
+    cbAfterReceiveNewUploadStatus(moduleUniqueId, stageDetails) {
+        // Check module download status
+        if (stageDetails.data.d_status === 'UPLOAD_IN_PROGRESS') {
+            const uploadProgress = Math.max(Math.round(parseInt(stageDetails.data.d_status_progress, 10)/2), 3);
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_UploadInProgress, uploadProgress);
+        } else if (stageDetails.d_status === 'UPLOAD_COMPLETE') {
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_UploadInProgress, 50);
+        }
     },
 
     /**
      * Callback function after receiving the new installation status.
-     * @param {boolean} result - The result of the installation status check.
-     * @param {object} response - The response object containing the installation status.
+     * @param {string} moduleUniqueId
+     * @param {object} stageDetails - The response object containing the installation status.
      */
-    cbAfterReceiveNewStatus(result, response) {
-        installStatusLoopWorker.iterations += 1;
-        installStatusLoopWorker.timeoutHandle =
-            window.setTimeout(installStatusLoopWorker.worker, installStatusLoopWorker.timeOut);
-
-        // Check installation status
-        if (result === false
-            && installStatusLoopWorker.iterations < 50) {
-            window.clearTimeout(installStatusLoopWorker.timeoutHandle);
-        } else if (installStatusLoopWorker.iterations > 50
-            || response.data.i_status === 'INSTALLATION_ERROR'
-            || response.data.i_status === 'PROGRESS_FILE_NOT_FOUND'
-        ) {
-            window.clearTimeout(installStatusLoopWorker.timeoutHandle);
-            UserMessage.showMultiString(response.messages, globalTranslate.ext_InstallationError);
-            $('.loading').removeClass('loading');
-        } else if (response.data.i_status === 'INSTALLATION_IN_PROGRESS') {
-            installStatusLoopWorker.$progressBar.progress({
-                percent: parseInt(response.data.i_status_progress, 10),
-            });
-            if (installStatusLoopWorker.oldPercent !== response.data.i_status_progress) {
-                installStatusLoopWorker.iterations = 0;
-            }
-            installStatusLoopWorker.oldPercent = response.data.i_status_progress;
-        } else if (response.data.i_status === 'INSTALLATION_COMPLETE') {
-            installStatusLoopWorker.$progressBar.progress({
-                percent: 100,
-            });
-            if (installStatusLoopWorker.needEnableAfterInstall) {
-                // Enable the installed module and redirect to the module index page
-                    PbxApi.ModulesEnableModule(
-                    response.data.uniqid,
-                    () => {
-                        window.location = `${globalRootUrl}pbx-extension-modules/index/`;
-                    },
-                );
-            } else {
-                // Redirect to the module index page
-                window.location = `${globalRootUrl}pbx-extension-modules/index/`;
-            }
-            window.clearTimeout(installStatusLoopWorker.timeoutHandle);
+    cbAfterReceiveNewInstallationStatus(moduleUniqueId, stageDetails) {
+        // Check module installation status
+        if (stageDetails.data.i_status === 'INSTALLATION_IN_PROGRESS') {
+            const installationProgress = Math.round(parseInt(stageDetails.data.i_status_progress, 10)/2+50);
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, installationProgress);
+        } else if (stageDetails.data.i_status === 'INSTALLATION_COMPLETE') {
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, 100);
         }
     },
+
+    /**
+     * Reset the download/update button to default stage
+     * @param {jQuery} $row
+     */
+    resetButtonView($row){
+        $('a.button').removeClass('disabled');
+        $row.find('i.loading').removeClass('spinner loading');
+        $row.find('a.download i').addClass('download');
+        $row.find('a.update i').addClass('redo');
+    },
+
+    /**
+     * Shows module installation error above the module row
+     * @param {jQuery} $row
+     * @param {string} header
+     * @param messages
+     */
+    showModuleInstallationError($row, header, messages='') {
+        installStatusLoopWorker.resetButtonView($row);
+        if (messages.license!==undefined){
+            const manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="${Config.keyManagementUrl}" target="_blank">${Config.keyManagementSite}</a>`;
+            messages.license.push(manageLink);
+        }
+        const textDescription = UserMessage.convertToText(messages);
+        const htmlMessage=  `<tr class="ui error center aligned table-error-messages"><td colspan="4"><div class="ui header">${header}</div><p>${textDescription}</p></div></td></tr>`;
+        $row.addClass('error');
+        $row.before(htmlMessage);
+    },
+
+    /**
+     * Shows module installation progress bar and installation status
+     * @param {string} moduleUniqueId
+     * @param {string} header
+     * @param {int} percent
+     */
+    updateProgressBar(moduleUniqueId, header, percent=0){
+        let moduleName = $(`tr.new-module-row[data-id=${moduleUniqueId}]`).data('name');
+        if (moduleName === undefined){
+            moduleName = '';
+        }
+        installStatusLoopWorker.$progressBarBlock.show();
+        installStatusLoopWorker.$progressBar.show();
+        if (header){
+            const barText= moduleName+': '+header;
+            installStatusLoopWorker.$progressBarLabel.text(barText);
+        }
+        if (percent>0){
+            installStatusLoopWorker.$progressBar.progress({
+                percent: percent,
+            });
+        }
+    }
 };

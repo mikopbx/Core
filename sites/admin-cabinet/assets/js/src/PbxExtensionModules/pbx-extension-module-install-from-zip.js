@@ -16,19 +16,27 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global UserMessage, globalTranslate, PbxApi, mergingCheckWorker */
+/* global UserMessage, globalTranslate, PbxApi, installStatusLoopWorker */
 
 /**
  * Object for handling the addition of a new extension from a ZIP file.
  *
  * @module addNewExtension
  */
-const addNewExtension = {
+const installationFromZip = {
     /**
      * The upload button element.
      * @type {jQuery}
      */
     $uploadButton: $('#add-new-button'),
+
+
+    /**
+     * The progress bar block.
+     * @type {jQuery}
+     */
+    $progressBarBlock: $('#upload-progress-bar-block'),
+
 
     /**
      * The progress bar element.
@@ -49,11 +57,16 @@ const addNewExtension = {
     uploadInProgress: false,
 
     /**
+     * PUB/SUB channel ID
+     */
+    channelId: 'install-module',
+
+    /**
      * Initializes the addNewExtension object.
      */
     initialize() {
-        addNewExtension.$progressBar.hide();
-        PbxApi.SystemUploadFileAttachToBtn('add-new-button', ['zip'], addNewExtension.cbResumableUploadFile);
+        installationFromZip.$progressBar.hide();
+        PbxApi.SystemUploadFileAttachToBtn('add-new-button', ['zip'], installationFromZip.cbResumableUploadFile);
     },
 
     /**
@@ -64,22 +77,23 @@ const addNewExtension = {
     cbResumableUploadFile(action, params) {
         switch (action) {
             case 'fileSuccess':
-                addNewExtension.checkStatusFileMerging(params.response);
+                installationFromZip.checkStatusFileMerging(params.response);
                 break;
             case 'uploadStart':
-                addNewExtension.uploadInProgress = true;
-                addNewExtension.$uploadButton.addClass('loading');
-                addNewExtension.$progressBar.show();
-                addNewExtension.$progressBarLabel.text(globalTranslate.ext_UploadInProgress);
+                installationFromZip.uploadInProgress = true;
+                installationFromZip.$uploadButton.addClass('loading');
+                installationFromZip.$progressBar.show();
+                installationFromZip.$progressBarBlock.show();
+                installationFromZip.$progressBarLabel.text(globalTranslate.ext_UploadInProgress);
                 break;
             case 'progress':
-                addNewExtension.$progressBar.progress({
+                installationFromZip.$progressBar.progress({
                     percent: parseInt(params.percent, 10),
                 });
                 break;
             case 'error':
-                addNewExtension.$progressBarLabel.text(globalTranslate.ext_UploadError);
-                addNewExtension.$uploadButton.removeClass('loading');
+                installationFromZip.$progressBarLabel.text(globalTranslate.ext_UploadError);
+                installationFromZip.$uploadButton.removeClass('loading');
                 UserMessage.showMultiString(globalTranslate.ext_UploadError);
                 break;
             default:
@@ -100,14 +114,20 @@ const addNewExtension = {
             UserMessage.showMultiString(`${globalTranslate.ext_UploadError}`);
             return;
         }
-        const fileID = json.data.upload_id;
-        const filePath = json.data.filename;
-        mergingCheckWorker.initialize(fileID, filePath);
+        const params = {
+            fileId: json.data.upload_id,
+            filePath: json.data.filename,
+            channelId: installationFromZip.channelId
+        };
+        PbxApi.ModulesInstallFromPackage(params,  (response) => {
+            console.log(response);
+            installStatusLoopWorker.initialize();
+        });
     },
 
 };
 
 // When the document is ready, initialize the external modules management interface.
 $(document).ready(() => {
-    addNewExtension.initialize();
+    installationFromZip.initialize();
 });

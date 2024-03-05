@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,76 +17,68 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib\Modules;
+namespace MikoPBX\PBXCoreREST\Lib\Files;
 
-use MikoPBX\Common\Providers\ConfigProvider;
+
 use MikoPBX\Core\System\Processes;
-use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
 
 /**
- *  Class DownloadStatus
- *  Returns the download status of a module.
+ * Class FirmwareDownloadStatus
+ * Get the progress status of the firmware file download.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class DownloadStatus extends \Phalcon\Di\Injectable
+class FirmwareDownloadStatus extends \Phalcon\Di\Injectable
 {
-
     /**
-     * Returns the download status of a module.
+     * Get the progress status of the firmware file download.
      *
-     * @param string $moduleUniqueID The unique ID of the module.
+     * @param string $imgFileName The filename of the firmware file.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function main(string $moduleUniqueID): PBXApiResult
+    public static function main(string $imgFileName): PBXApiResult
     {
         clearstatcache();
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $di = Di::getDefault();
-        if ($di !== null) {
-            $tempDir = $di->getShared(ConfigProvider::SERVICE_NAME)->path('www.uploadDir');
-        } else {
-            $tempDir = '/tmp';
-        }
-        $moduleDirTmp = $tempDir . '/' . $moduleUniqueID;
-        $progress_file = $moduleDirTmp . '/progress';
-        $error = '';
-        if (file_exists($moduleDirTmp . '/error')) {
-            $error = trim(file_get_contents($moduleDirTmp . '/error'));
-        }
+        $res->success = true;
+
+        $firmwareDirTmp = dirname($imgFileName);
+        $progress_file = $firmwareDirTmp . '/progress';
 
         // Wait until a download process started
-        $d_pid = Processes::getPidOfProcess("{$moduleDirTmp}/download_settings.json");
+        $d_pid = Processes::getPidOfProcess("{$firmwareDirTmp}/download_settings.json");
         if (empty($d_pid)) {
             usleep(500000);
+        }
+        $error = '';
+        if (file_exists("{$firmwareDirTmp}/error")) {
+            $error = trim(file_get_contents("{$firmwareDirTmp}/error"));
         }
 
         if (!file_exists($progress_file)) {
             $res->data[FilesConstants::D_STATUS_PROGRESS] = '0';
-            $res->data[FilesConstants::D_STATUS] = FilesConstants::STATUS_NOT_FOUND;
+            $res->messages[] = FilesConstants::STATUS_NOT_FOUND;
             $res->success = false;
         } elseif ('' !== $error) {
             $res->data[FilesConstants::D_STATUS] = FilesConstants::DOWNLOAD_ERROR;
             $res->data[FilesConstants::D_STATUS_PROGRESS] = file_get_contents($progress_file);
-            $res->data[FilesConstants::D_ERROR] = $error;
-            $res->messages[] = file_get_contents($moduleDirTmp . '/error');
+            $res->messages[] = file_get_contents("{$firmwareDirTmp}/error");
             $res->success = false;
         } elseif ('100' === file_get_contents($progress_file)) {
             $res->data[FilesConstants::D_STATUS_PROGRESS] = '100';
             $res->data[FilesConstants::D_STATUS] = FilesConstants::DOWNLOAD_COMPLETE;
-            $res->data[FilesConstants::FILE_PATH] = "$moduleDirTmp/modulefile.zip";
+            $res->data[FilesConstants::FILE_PATH] = $imgFileName;
             $res->success = true;
         } else {
             $res->data[FilesConstants::D_STATUS_PROGRESS] = file_get_contents($progress_file);
-            $d_pid = Processes::getPidOfProcess($moduleDirTmp . '/download_settings.json');
+            $d_pid = Processes::getPidOfProcess("{$firmwareDirTmp}/download_settings.json");
             if (empty($d_pid)) {
                 $res->data[FilesConstants::D_STATUS] = FilesConstants::DOWNLOAD_ERROR;
-                if (file_exists($moduleDirTmp . '/error')) {
-                    $res->messages[] = file_get_contents($moduleDirTmp . '/error');
+                if (file_exists("{$firmwareDirTmp}/error")) {
+                    $res->messages[] = file_get_contents("{$firmwareDirTmp}/error");
                 } else {
                     $res->messages[] = "Download process interrupted at {$res->data['d_status_progress']}%";
                 }
@@ -99,5 +91,4 @@ class DownloadStatus extends \Phalcon\Di\Injectable
 
         return $res;
     }
-
 }

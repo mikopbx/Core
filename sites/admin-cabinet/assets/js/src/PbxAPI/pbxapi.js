@@ -844,18 +844,26 @@ const PbxApi = {
     /**
      * Installs a new additional extension module from an early uploaded zip archive.
      *
-     * @param {string} filePath - The file path of the module to be installed.
+     * @param {Object} params - The parameters required for uploading the module.
+     * @param {string} params.filePath - The uploaded file path.
+     * @param {string} params.fileId - The unique ID of uploaded module file.
+     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
      * @param {function} callback - The callback function to be called after attempting to install the module.
      *                              It will receive the response object.
      * @returns {void}
      */
-    ModulesInstallFromPackage(filePath, callback) {
+    ModulesInstallFromPackage(params, callback) {
         $.api({
             url: PbxApi.modulesInstallFromPackage,
             on: 'now',
             method: 'POST',
             data: {
-                filePath
+                filePath: params.filePath,
+                fileId: params.fileId,
+            },
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
             },
             successTest: PbxApi.successTest,
             onSuccess(response) {
@@ -872,7 +880,7 @@ const PbxApi = {
 
 
     /**
-     * Installs a new additional extension module from an early uploaded zip archive.
+     * Installs a new additional extension module from mikopbx repository.
      *
      * @param {Object} params - The parameters required for uploading the module.
      * @param {string} params.uniqid - The unique ID of the module.

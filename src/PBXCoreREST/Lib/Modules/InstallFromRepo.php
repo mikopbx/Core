@@ -20,11 +20,10 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
 
 /**
  * Handles the installation of new modules.
@@ -32,45 +31,19 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class InstallFromRepo extends \Phalcon\Di\Injectable
+class InstallFromRepo extends ModuleInstallationBase
 {
-
-    // Error messages
-    const ERR_EMPTY_REPO_RESULT = "ext_EmptyRepoAnswer";
-
-    const MSG_NO_LICENSE_REQ = "ext_NoLicenseRequired";
-    const ERR_DOWNLOAD_TIMEOUT = "ext_ErrDownloadTimeout";
-    const ERR_INSTALLATION_TIMEOUT = "ext_ErrInstallationTimeout";
-
-    const ERR_EMPTY_GET_MODULE_LINK = "ext_WrongGetModuleLink";
-
-    // Timeout values
-    const INSTALLATION_TIMEOUT = 120;
     const DOWNLOAD_TIMEOUT = 120;
-
-    // Install stage
-    const STAGE_I_GET_RELEASE = 'Stage_I_GetRelease';
-    const STAGE_II_CHECK_LICENSE = 'Stage_II_CheckLicense';
-    const STAGE_III_GET_LINK = 'Stage_III_GetDownloadLink';
-    const STAGE_IV_DOWNLOAD_MODULE = 'Stage_IV_DownloadModule';
-    const STAGE_V_INSTALL_MODULE = 'Stage_V_InstallModule';
-    const STAGE_VI_ENABLE_MODULE = 'Stage_VI_EnableModule';
-    const STAGE_VII_FINAL_STATUS = 'Stage_VII_FinalStatus';
-
-    // Pub/sub nchan channel id to send response
-    private string $asyncChannelId;
-
-    // The unique identifier for the module to be installed.
-    private string $moduleUniqueId;
 
     // Optional release ID for the module. Defaults to 0.
     private int $moduleReleaseId = 0;
 
-
     /**
-     * @param string $asyncChannelId
-     * @param string $moduleUniqueId
-     * @param int $moduleReleaseId
+     * Class constructor
+     *
+     * @param string $asyncChannelId Pub/sub nchan channel id to send response to frontend
+     * @param string $moduleUniqueId The unique identifier for the module to be installed.
+     * @param int $moduleReleaseId Optional release ID for the module. Defaults to 0.
      */
     public function __construct(string $asyncChannelId, string $moduleUniqueId, int $moduleReleaseId=0)
     {
@@ -84,8 +57,6 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
      * Main entry point to install a new module.
      * This function handles the entire process of installing a new module, including
      * acquiring a mutex, checking the license, downloading, and installing the module.
-     *
-     *
      */
     public function start(): void
     {
@@ -93,7 +64,7 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
         $mutexTimeout = self::INSTALLATION_TIMEOUT+self::DOWNLOAD_TIMEOUT+5;
 
         // Create a mutex to ensure synchronized access
-        $mutex = Util::createMutex('InstallFromRepo', $this->moduleUniqueId, $mutexTimeout);
+        $mutex = Util::createMutex(self::INSTALLATION_MUTEX, $this->moduleUniqueId, $mutexTimeout);
 
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -157,7 +128,6 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
         } finally {
             $this->pushMessageToBrowser( self::STAGE_VII_FINAL_STATUS, $res->getResult());
         }
-
     }
 
     /**
@@ -267,11 +237,11 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
             $this->pushMessageToBrowser( self::STAGE_IV_DOWNLOAD_MODULE, $resDownloadStatus->getResult());
             if (!$resDownloadStatus->success) {
                 return [$resDownloadStatus->messages, false];
-            } elseif ($resDownloadStatus->data[DownloadStatus::D_STATUS] === DownloadStatus::DOWNLOAD_IN_PROGRESS) {
+            } elseif ($resDownloadStatus->data[FilesConstants::D_STATUS] === FilesConstants::DOWNLOAD_IN_PROGRESS) {
                 sleep(1); // Adjust sleep time as needed
                 $maximumDownloadTime--;
-            } elseif ($resDownloadStatus->data[DownloadStatus::D_STATUS] === DownloadStatus::DOWNLOAD_COMPLETE) {
-                return [$resDownloadStatus->data[DownloadStatus::FILE_PATH], true];
+            } elseif ($resDownloadStatus->data[FilesConstants::D_STATUS] === FilesConstants::DOWNLOAD_COMPLETE) {
+                return [$resDownloadStatus->data[FilesConstants::FILE_PATH], true];
             }
         }
 
@@ -280,86 +250,5 @@ class InstallFromRepo extends \Phalcon\Di\Injectable
         return [self::ERR_DOWNLOAD_TIMEOUT, false];
     }
 
-    /**
-     * Installs the module from the specified file path.
-     * This function manages the module installation process, ensuring completion within the defined timeout.
-     *
-     * @param string $filePath Path to the module file.
-     *
-     * @return array An array containing the installation result and a success flag.
-     */
-    private function installNewModule(string $filePath):array
-    {
-        // Initialization
-        $maximumInstallationTime = self::INSTALLATION_TIMEOUT;
 
-        // Start installation
-        $installationResult = InstallFromPackage::main($filePath);
-        $this->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, $installationResult->getResult());
-        if (!$installationResult->success) {
-            return [$installationResult->messages, false];
-        }
-
-        // Monitor installation progress
-        while ($maximumInstallationTime > 0) {
-            $resStatus = StatusOfModuleInstallation::main($filePath);
-            $this->pushMessageToBrowser( self::STAGE_V_INSTALL_MODULE, $resStatus->getResult());
-            if (!$resStatus->success) {
-                return [$resStatus->messages, false];
-            } elseif ($resStatus->data[StatusOfModuleInstallation::I_STATUS] === StatusOfModuleInstallation::INSTALLATION_IN_PROGRESS) {
-                sleep(1); // Adjust sleep time as needed
-                $maximumInstallationTime--;
-            } elseif ($resStatus->data[StatusOfModuleInstallation::I_STATUS] === StatusOfModuleInstallation::INSTALLATION_COMPLETE) {
-                return [$installationResult, true];
-            }
-        }
-
-        // Installation timeout
-        $this->pushMessageToBrowser( self::STAGE_V_INSTALL_MODULE, [self::ERR_INSTALLATION_TIMEOUT]);
-        return [self::ERR_INSTALLATION_TIMEOUT, false];
-    }
-
-    /**
-     * Enables the module if it was previously enabled.
-     * This function checks the installation result and enables the module if needed.
-     *
-     * @param PBXApiResult $installationResult Result object from the installation process.
-     *
-     * @return array An array containing the module enabling process result and a success flag.
-     */
-    private function enableModule( PBXApiResult $installationResult):array
-    {
-        // Check if the module was previously enabled
-        if ($installationResult->data[InstallFromPackage::MODULE_WAS_ENABLED]){
-            $res = EnableModule::main($this->moduleUniqueId);
-            $this->pushMessageToBrowser(self::STAGE_VI_ENABLE_MODULE, $res->getResult());
-            return [$res->messages, $res->success];
-        }
-        return [[], true];
-    }
-
-    /**
-     * Pushes messages to browser
-     * @param string $stage installation stage name
-     * @param array $data pushing data
-     * @return void
-     */
-    private function pushMessageToBrowser( string $stage, array $data):void
-    {
-        $message = [
-            'stage' => $stage,
-            'moduleUniqueId' => $this->moduleUniqueId,
-            'stageDetails' => $data,
-            'pid'=>posix_getpid()
-        ];
-
-        $di = Di::getDefault();
-        $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-            '/pbxcore/api/nchan/pub/'.$this->asyncChannelId,
-            PBXCoreRESTClientProvider::HTTP_METHOD_POST,
-            $message,
-            ['Content-Type' => 'application/json']
-        ]);
-
-    }
 }

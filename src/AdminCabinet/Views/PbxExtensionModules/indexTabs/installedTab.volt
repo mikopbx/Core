@@ -3,16 +3,6 @@
 <a href="https://docs.mikopbx.com/mikopbx-development/" target="_blank" class="ui basic button add-new"><i
             class="plus icon"></i> {{ t._('ext_CreateNewExtension') }}</a>
 
-<div>
-    <input type="file" name="update-file" accept=".zip" style="display: none!important;"/>
-    <div class="ui indicating progress" id="upload-progress-bar">
-        <div class="bar">
-            <div class="progress"></div>
-        </div>
-        <div class="label" id="upload-progress-bar-label"></div>
-    </div>
-</div>
-
 {% for module in modulelist %}
     {% if loop.first %}
         <table class="ui selectable unstackable table" id="installed-modules-table">
@@ -22,13 +12,7 @@
             <th>{{ t._('ext_TableColumnDescription') }}</th>
             <th>{{ t._('ext_TableColumnDeveloper') }}</th>
             <th>{{ t._('ext_TableColumnVersion') }}</th>
-            <th colspan="2" class="ui right aligned">
-                <div class="ui small basic icon buttons action-buttons">
-                    <a class="ui button popuped disable-if-no-internet" data-content="{{ t._('ext_UpdateAllModules') }}" id="update-all-modules-button">
-                        <i class="icon redo blue" ></i>
-                    </a>
-                </div>
-            </th>
+            <th colspan="2" class="ui right aligned"></th>
         </tr>
         </thead>
         <tbody>

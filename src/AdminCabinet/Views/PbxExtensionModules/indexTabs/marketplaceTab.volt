@@ -3,13 +3,19 @@
     <p></p>
 </div>
 
-<table class="ui celled unstackable table" id="new-modules-table" style="display: none;">
+<input type="file" name="update-file" accept=".zip" style="display: none!important;"/>
+
+<table class="ui celled selectable unstackable table" id="new-modules-table" style="display: none;">
     <thead>
     <tr>
         <th>{{ t._('ext_TableColumnDescription') }}</th>
         <th class="collapsing">{{ t._('ext_TableColumnDeveloper') }}</th>
         <th class="collapsing center aligned column">{{ t._('ext_TableColumnVersion') }}</th>
-        <th class="collapsing column"></th>
+        <th class="collapsing column"><div class="ui small basic icon buttons action-buttons">
+                <a class="ui button popuped disable-if-no-internet" data-content="{{ t._('ext_UpdateAllModules') }}" id="update-all-modules-button">
+                    <i class="icon redo blue" ></i>
+                </a>
+            </div></th>
     </tr>
     </thead>
     <tbody>

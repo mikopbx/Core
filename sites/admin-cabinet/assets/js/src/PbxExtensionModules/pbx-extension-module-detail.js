@@ -36,17 +36,14 @@ const extensionModuleDetail = {
      */
     $moduleDetailPopup: undefined,
 
-    /**
-     * The table rows which activate a detail popup.
-     * @type {string}
-     */
-    popupActivators: 'tr.module-row, tr.new-module-row',
 
     /**
      * Initialize extensionModuleDetail
      */
     initialize() {
-        $(document).on('click', extensionModuleDetail.popupActivators, (event)=>{
+        // The table rows which activate a detail popup.
+        $(document).on('click', 'tr.new-module-row', (event)=>{
+            event.preventDefault();
             const params = {};
             const $target = $(event.target);
             if ($target.closest('td').hasClass('show-details-on-click')){
@@ -163,6 +160,13 @@ const extensionModuleDetail = {
             // Initialize images slider
             extensionModuleDetail.initializeSlider($newPopup);
 
+            // Total count of installations
+            if (repoData.eula) {
+                $newPopup.find('.module-eula').html(UserMessage.convertToText(repoData.eula));
+            } else {
+                $newPopup.find('a[data-tab="eula"]').hide();
+            }
+
             // Initialize tab menu
             $newPopup.find('.module-details-menu .item').tab();
 
@@ -213,8 +217,9 @@ const extensionModuleDetail = {
         let html = '';
         $.each(repoData.releases, function (index, release) {
             const sizeText = extensionModuleDetail.convertBytesToReadableFormat(release.size);
-            const changeLogText = UserMessage.convertToText(release.changelog)
+            const changeLogText = UserMessage.convertToText(release.changelog);
             html+=`<div class="ui header">${globalTranslate.ext_InstallModuleReleaseTag}: ${release.version}</div>`;
+            html+=`<div class=""><i class="icon grey download"></i> ${release.downloads}</div>`;
             html+=`<p>${changeLogText}</p>`;
             html+=`<a href="#" class="ui icon labeled basic blue button download"
                data-uniqid = "${repoData.uniqid}"
