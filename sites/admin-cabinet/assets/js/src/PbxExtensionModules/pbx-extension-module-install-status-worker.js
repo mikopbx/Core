@@ -19,46 +19,57 @@
 /* global globalRootUrl, PbxApi, globalTranslate, UserMessage */
 
 /**
- * Monitors the status of module installation.
+ * Handles real-time monitoring and updates of module installation statuses.
+ * Utilizes server-sent events to receive updates and reflects these changes in the UI,
+ * particularly in the progress bar and status messages displayed to the user.
  *
  * @module installStatusLoopWorker
  */
 const installStatusLoopWorker = {
     /**
-     * The progress bar element.
+     * The jQuery object representing the progress bar element in the DOM.
+     * Used to visually indicate the progress of module installation or updates.
      * @type {jQuery}
      */
     $progressBar: $('#upload-progress-bar'),
 
     /**
-     * The progress bar block.
+     * The jQuery object for the container of the progress bar.
+     * This element is shown and hidden based on the presence of active installation or update processes.
      * @type {jQuery}
      */
     $progressBarBlock: $('#upload-progress-bar-block'),
 
     /**
-     * The progress bar label element.
+     * The jQuery object for the label element associated with the progress bar.
+     * Used to display textual information about the current stage of the installation or update process.
      * @type {jQuery}
      */
     $progressBarLabel: $('#upload-progress-bar-label'),
 
     /**
-     * EventSource object for the module installation and upgrade status
+     * The EventSource object used for receiving real-time updates from the server about module installation statuses.
+     * This allows for a push-based mechanism to keep the UI updated with the latest progress information.
      * @type {EventSource}
      */
     eventSource: null,
 
     /**
-     * PUB/SUB channel ID
+     * The identifier for the PUB/SUB channel used to subscribe to installation status updates.
+     * This ensures that the client is listening on the correct channel for relevant events.
      */
     channelId: 'install-module',
 
+    /**
+     * Initializes the installStatusLoopWorker module by setting up the connection to receive server-sent events.
+     */
     initialize(){
         installStatusLoopWorker.startListenPushNotifications();
     },
 
     /**
-     * Starts listen to push notifications from backend
+     * Establishes a connection to the server to start receiving real-time updates on module installation progress.
+     * Utilizes the EventSource API to listen for messages on a specified channel.
      */
     startListenPushNotifications() {
         const lastEventIdKey = `lastEventId`;
@@ -68,14 +79,16 @@ const installStatusLoopWorker = {
 
         installStatusLoopWorker.eventSource.addEventListener('message', e => {
             const response = JSON.parse(e.data);
-            console.log('New message: ', response);
             installStatusLoopWorker.processModuleInstallation(response);
             localStorage.setItem(lastEventIdKey, e.lastEventId);
         });
     },
+
     /**
-     * Parses push events from backend and process them
-     * @param {object} response
+     * Processes incoming server-sent events related to module installation.
+     * Updates the UI based on the current stage of installation, download, upload, or error states.
+     *
+     * @param {Object} response - The data payload of the server-sent event, containing details about the installation stage and progress.
      */
     processModuleInstallation(response){
         const moduleUniqueId = response.moduleUniqueId;
@@ -111,9 +124,11 @@ const installStatusLoopWorker = {
     },
 
     /**
-     * Callback function to refresh the module download status.
-     * @param {string} moduleUniqueId
-     * @param {object} stageDetails - The response object containing the download status.
+     * Updates the UI to reflect the progress of a module download.
+     * Adjusts the progress bar and status message based on the details provided in the server-sent event.
+     *
+     * @param {string} moduleUniqueId - The unique identifier of the module being downloaded.
+     * @param {Object} stageDetails - Detailed information about the download progress.
      */
     cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails) {
         // Check module download status
@@ -126,9 +141,11 @@ const installStatusLoopWorker = {
     },
 
     /**
-     * Callback function to refresh the module upload status.
-     * @param {string} moduleUniqueId
-     * @param {object} stageDetails - The response object containing the upload status.
+     * Updates the UI to reflect the progress of a module upload.
+     * Adjusts the progress bar and status message based on the details provided in the server-sent event.
+     *
+     * @param {string} moduleUniqueId - The unique identifier of the module being uploaded.
+     * @param {Object} stageDetails - Detailed information about the upload progress.
      */
     cbAfterReceiveNewUploadStatus(moduleUniqueId, stageDetails) {
         // Check module download status
@@ -141,9 +158,11 @@ const installStatusLoopWorker = {
     },
 
     /**
-     * Callback function after receiving the new installation status.
-     * @param {string} moduleUniqueId
-     * @param {object} stageDetails - The response object containing the installation status.
+     * Handles updates on the installation progress of a module.
+     * Updates the progress bar and status message based on the information received in the server-sent event.
+     *
+     * @param {string} moduleUniqueId - The unique identifier of the module being installed.
+     * @param {Object} stageDetails - Detailed information about the installation progress.
      */
     cbAfterReceiveNewInstallationStatus(moduleUniqueId, stageDetails) {
         // Check module installation status
@@ -156,8 +175,10 @@ const installStatusLoopWorker = {
     },
 
     /**
-     * Reset the download/update button to default stage
-     * @param {jQuery} $row
+     * Resets the UI elements associated with a module row to their default state.
+     * This is typically called after an installation process completes or fails.
+     *
+     * @param {jQuery} $row - The jQuery object representing the row in the UI associated with the module.
      */
     resetButtonView($row){
         $('a.button').removeClass('disabled');
@@ -167,10 +188,12 @@ const installStatusLoopWorker = {
     },
 
     /**
-     * Shows module installation error above the module row
-     * @param {jQuery} $row
-     * @param {string} header
-     * @param messages
+     * Displays an error message related to module installation in the UI.
+     * This function is called when an installation fails, providing feedback to the user.
+     *
+     * @param {jQuery} $row - The jQuery object representing the row in the UI associated with the module.
+     * @param {string} header - The header text for the error message.
+     * @param {Object} messages - Detailed error messages to be displayed.
      */
     showModuleInstallationError($row, header, messages='') {
         installStatusLoopWorker.resetButtonView($row);
@@ -185,10 +208,12 @@ const installStatusLoopWorker = {
     },
 
     /**
-     * Shows module installation progress bar and installation status
-     * @param {string} moduleUniqueId
-     * @param {string} header
-     * @param {int} percent
+     * Updates the progress bar and status message to reflect the current state of a module installation process.
+     * This function is used throughout different stages of installation to provide real-time feedback to the user.
+     *
+     * @param {string} moduleUniqueId - The unique identifier of the module.
+     * @param {string} header - The status message to be displayed above the progress bar.
+     * @param {number} [percent=0] - The current progress percentage to be reflected in the progress bar.
      */
     updateProgressBar(moduleUniqueId, header, percent=0){
         let moduleName = $(`tr.new-module-row[data-id=${moduleUniqueId}]`).data('name');

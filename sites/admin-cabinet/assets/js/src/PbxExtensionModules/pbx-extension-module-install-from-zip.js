@@ -19,50 +19,57 @@
 /* global UserMessage, globalTranslate, PbxApi, installStatusLoopWorker */
 
 /**
- * Object for handling the addition of a new extension from a ZIP file.
+ * Handles the process of installing new PBX extensions from a ZIP file.
+ * This includes managing file uploads, displaying upload progress, and initiating the installation process.
  *
  * @module addNewExtension
  */
 const installationFromZip = {
     /**
-     * The upload button element.
+     * The jQuery object representing the upload button element in the DOM.
+     * Users interact with this button to select and upload ZIP files containing new extensions.
      * @type {jQuery}
      */
     $uploadButton: $('#add-new-button'),
 
 
     /**
-     * The progress bar block.
+     * The jQuery object for the block element that contains the progress bar.
+     * This element is shown during the file upload process to provide visual feedback to the user.
      * @type {jQuery}
      */
     $progressBarBlock: $('#upload-progress-bar-block'),
 
-
     /**
-     * The progress bar element.
+     * The jQuery object for the actual progress bar element.
+     * It visually represents the progress of the file upload operation to the user.
      * @type {jQuery}
      */
     $progressBar: $('#upload-progress-bar'),
 
     /**
-     * The progress bar label element.
+     * The jQuery object for the label element associated with the progress bar.
+     * This label provides textual feedback about the upload status (e.g., percentage completed, errors).
      * @type {jQuery}
      */
     $progressBarLabel: $('#upload-progress-bar-label'),
 
     /**
-     * Flag indicating if an upload is in progress.
+     * A flag indicating whether a file upload is currently in progress.
+     * This helps manage the UI state and prevent multiple concurrent uploads.
      * @type {boolean}
      */
     uploadInProgress: false,
 
     /**
-     * PUB/SUB channel ID
+     * A unique identifier for the PUB/SUB channel used to monitor the installation process.
+     * This allows the system to receive updates about the installation status.
      */
     channelId: 'install-module',
 
     /**
-     * Initializes the addNewExtension object.
+     * Initializes the installationFromZip module by setting up the necessary UI elements
+     * and attaching event listeners for file uploads.
      */
     initialize() {
         installationFromZip.$progressBar.hide();
@@ -70,9 +77,12 @@ const installationFromZip = {
     },
 
     /**
-     * Callback function for resumable file upload.
-     * @param {string} action - The action of the upload.
-     * @param {object} params - Additional parameters for the upload.
+     * Handles the various stages of the file upload process, including starting the upload,
+     * tracking progress, and handling success or error events.
+     *
+     * @param {string} action - The current action or stage of the file upload process.
+     * @param {object} params - Additional parameters related to the current upload action,
+     *                          such as progress percentage or response data on completion.
      */
     cbResumableUploadFile(action, params) {
         switch (action) {
@@ -99,10 +109,14 @@ const installationFromZip = {
             default:
         }
     },
-    
+
     /**
-     * Checks the status of the file merging process.
-     * @param {string} response - The response from the /pbxcore/api/upload/status function.
+     * Checks the status of the file merging process on the server after a successful upload.
+     * This step is necessary to ensure that the uploaded ZIP file is properly processed
+     * and ready for installation.
+     *
+     * @param {string} response - The server's response from the file upload process,
+     *                            containing information necessary to proceed with the installation.
      */
     checkStatusFileMerging(response) {
         if (response === undefined || PbxApi.tryParseJSON(response) === false) {
@@ -120,14 +134,16 @@ const installationFromZip = {
             channelId: installationFromZip.channelId
         };
         PbxApi.ModulesInstallFromPackage(params,  (response) => {
-            console.log(response);
-            installStatusLoopWorker.initialize();
+            if (response.result === true) {
+                installStatusLoopWorker.initialize();
+            }
         });
     },
 
 };
 
-// When the document is ready, initialize the external modules management interface.
+// Initializes the installationFromZip module when the DOM is fully loaded,
+// allowing users to upload and install extensions from ZIP files.
 $(document).ready(() => {
     installationFromZip.initialize();
 });

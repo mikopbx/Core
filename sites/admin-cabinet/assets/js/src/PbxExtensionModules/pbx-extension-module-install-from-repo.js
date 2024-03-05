@@ -19,31 +19,43 @@
 /* global globalRootUrl, PbxApi, globalPBXLicense, globalTranslate, UserMessage, globalPBXVersion, installStatusLoopWorker */
 
 /**
- * Represents list of extension modules.
- * @class instalationFromRepo
+ * Manages the installation and updating of PBX extension modules from a repository.
+ * It provides functionality to update individual modules or all modules at once,
+ * and displays progress information to the user.
+ *
+ * @class installationFromRepo
  * @memberof module:PbxExtensionModules
  */
 const installationFromRepo = {
 
+    /**
+     * The current version of the PBX system, with development version identifiers removed.
+     * @type {string}
+     */
     pbxVersion: globalPBXVersion.replace(/-dev/i, ''),
 
+    /**
+     * The license key for the PBX system, trimmed of any leading or trailing whitespace.
+     * @type {string}
+     */
     pbxLicense: globalPBXLicense.trim(),
 
     /**
-     * jQuery object for the button which responsible for update all installed modules
+     * jQuery object for the button responsible for updating all installed modules.
      * @type {jQuery}
      */
     $btnUpdateAllModules: $('#update-all-modules-button'),
 
     /**
-     * The progress bar block.
+     * jQuery object for the block that contains the progress bar, used to indicate
+     * the progress of module installation or updating processes.
      * @type {jQuery}
      */
     $progressBarBlock: $('#upload-progress-bar-block'),
 
-
     /**
-     * Initialize extensionModules list
+     * Initializes the installationFromRepo module. Sets up event handlers for UI interactions
+     * and hides UI elements that are not immediately needed.
      */
     initialize() {
         installationFromRepo.initializeButtonEvents();
@@ -52,6 +64,11 @@ const installationFromRepo = {
         installationFromRepo.$btnUpdateAllModules.hide(); // Until at least one update available
     },
 
+    /**
+     * Sets up event handlers for button clicks within the module.
+     * This includes handling the installation and update of individual
+     * modules as well as the bulk update functionality.
+     */
     initializeButtonEvents(){
         /**
          * Event handler for the download link click event.
@@ -84,8 +101,9 @@ const installationFromRepo = {
                 window.location = `${globalRootUrl}pbx-extension-modules/index#/licensing`;
             } else {
                 PbxApi.ModulesInstallFromRepo(params, (response) => {
-                    console.log(response);
-                    installStatusLoopWorker.initialize();
+                   if (response.result === true){
+                       installStatusLoopWorker.initialize();
+                   }
                 });
             }
         });
@@ -94,7 +112,12 @@ const installationFromRepo = {
     },
 
     /**
-     * Callback function after click on the update all modules button
+     * Handles the process of updating all installed modules.
+     * Triggered when the 'Update All' button is clicked.
+     * It disables UI elements to prevent additional user actions during the update process and initiates
+     * the update via the PBX API.
+     *
+     * @param {Event} e - The click event object associated with the 'Update All' button click.
      */
     updateAllModules(e){
         e.preventDefault();
@@ -108,14 +131,16 @@ const installationFromRepo = {
             channelId: installStatusLoopWorker.channelId
         };
         PbxApi.ModulesUpdateAll(params, (response) => {
-            console.log(response);
-            installStatusLoopWorker.initialize();
+            if (response.result === true) {
+                installStatusLoopWorker.initialize();
+            }
         });
     },
 
 };
 
-// When the document is ready, initialize the external modules table
+// Initializes the installationFromRepo module when the document is ready,
+// preparing the extension modules management UI.
 $(document).ready(() => {
     installationFromRepo.initialize();
 });

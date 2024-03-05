@@ -37,7 +37,6 @@ const extensionModules = {
      */
     $checkboxes: $('.module-row .checkbox'),
 
-
     /**
      * Store array of module checkboxes.
      * @type {array}

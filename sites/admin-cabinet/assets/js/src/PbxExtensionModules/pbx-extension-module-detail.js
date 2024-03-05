@@ -38,7 +38,9 @@ const extensionModuleDetail = {
 
 
     /**
-     * Initialize extensionModuleDetail
+     * Initializes the extensionModuleDetail object.
+     * This method sets up the necessary event handlers to trigger the display of module details
+     * when a user clicks on a module row within the PBX system interface.
      */
     initialize() {
         // The table rows which activate a detail popup.
@@ -66,6 +68,15 @@ const extensionModuleDetail = {
             }
         });
     },
+
+    /**
+     * Initializes the slider functionality within the module detail modal.
+     * This allows users to navigate through any available screenshots or additional informational slides
+     * by clicking left or right arrows within the modal.
+     *
+     * @param {jQuery} modalForm - The modal form within which the slider is to be initialized.
+     * This form should contain elements with classes `.slides`, `.right`, `.left`, and `.slide` for the slider to function.
+     */
     initializeSlider(modalForm){
         modalForm.find('.slides .right')
             .on('click', ()=> {
@@ -85,12 +96,23 @@ const extensionModuleDetail = {
                     .addClass('active');
             });
     },
+
+    /**
+     * Callback function to handle the response after fetching module details from the API.
+     * It populates the module detail popup with the retrieved data, including name, logo, version, and other module-specific information.
+     *
+     * @param {boolean} result - A boolean indicating if the API request was successful.
+     * @param {Object} response - The data returned from the API request, expected to contain module details such as name,
+     *                            logo URL, version, and other relevant information.
+     */
     cbAfterGetModuleDetails(result, response) {
         if(result) {
             const repoData = response.data;
 
             const $newPopup = extensionModuleDetail.$moduleDetailPopup;
 
+
+            // Populate various elements in the popup with data from the response
             // Module name
             if (repoData.name !== undefined) {
                 $newPopup.find('.module-name').text(repoData.name);
@@ -157,7 +179,7 @@ const extensionModuleDetail = {
             const changelogView = extensionModuleDetail.prepareChangeLogView(repoData);
             $newPopup.find('.module-changelog').html(changelogView);
 
-            // Initialize images slider
+            // Initialize the image slider for screenshots, if any
             extensionModuleDetail.initializeSlider($newPopup);
 
             // Total count of installations
@@ -170,20 +192,45 @@ const extensionModuleDetail = {
             // Initialize tab menu
             $newPopup.find('.module-details-menu .item').tab();
 
+            // Hide the dimmer to reveal the popup content
             $newPopup.find('.dimmer').removeClass('active');
         }
     },
+
+    /**
+     * Converts a byte value to a human-readable format in megabytes (Mb).
+     * This method is useful for displaying file sizes in a more understandable format to users.
+     *
+     * @param {number} bytes - The size in bytes to be converted.
+     * @return {string} The formatted size in megabytes (Mb) with two decimal places.
+     */
      convertBytesToReadableFormat(bytes) {
         const megabytes = bytes / (1024*1024);
         const roundedMegabytes = megabytes.toFixed(2);
         return `${roundedMegabytes} Mb`;
     },
+
+    /**
+     * Generates and returns HTML content to display commercial information about the module.
+     * This distinguishes between commercial and free modules with an appropriate icon and text.
+     *
+     * @param {string} commercial - A string indicating the commercial status of the module ('1' for commercial, otherwise free).
+     * @return {string} HTML string representing the commercial status of the module.
+     */
     prepareCommercialView(commercial) {
         if(commercial==='1'){
             return '<i class="ui donate icon"></i> '+globalTranslate.ext_CommercialModule;
         }
         return '<i class="puzzle piece icon"></i> '+globalTranslate.ext_FreeModule;
     },
+
+    /**
+     * Creates and returns HTML content for displaying module screenshots.
+     * If there are multiple screenshots, they will be included in a navigable slider.
+     *
+     * @param {Array} screenshots - An array of objects representing screenshots, each containing URL and name properties.
+     * @return {string} HTML content for the screenshot slider.
+     */
     prepareScreenshotsView(screenshots) {
         let html =
             '            <div class="ui container slides">\n' +
@@ -199,6 +246,14 @@ const extensionModuleDetail = {
         html += '</div>';
         return html;
     },
+
+    /**
+     * Generates and returns HTML content for the module's description section.
+     * This includes the module name, a textual description, and any useful links provided.
+     *
+     * @param {Object} repoData - An object containing the module's metadata, including name, description, and promotional link.
+     * @return {string} HTML content for the module's description section.
+     */
     prepareDescriptionView(repoData) {
         let html = `<div class="ui header">${repoData.name}</div>`;
         html += `<p>${repoData.description}</p>`;
@@ -208,11 +263,27 @@ const extensionModuleDetail = {
         html += '</ul>';
         return html;
     },
+
+    /**
+     * Generates and returns HTML content to display the developer's information for the module.
+     * This is typically a simple textual representation of the developer's name or identifier.
+     *
+     * @param {Object} repoData - An object containing the module's metadata, including developer information.
+     * @return {string} HTML content for the developer information section.
+     */
     prepareDeveloperView(repoData) {
         let html = '';
         html += `${repoData.developer}`;
         return html;
     },
+
+    /**
+     * Generates and returns HTML content for displaying the module's changelog.
+     * Each release within the module's history is presented with version information, download count, and a detailed changelog.
+     *
+     * @param {Object} repoData - An object containing the module's metadata, including an array of release objects with version, download count, and changelog information.
+     * @return {string} HTML content for the module's changelog section.
+     */
     prepareChangeLogView(repoData) {
         let html = '';
         $.each(repoData.releases, function (index, release) {
