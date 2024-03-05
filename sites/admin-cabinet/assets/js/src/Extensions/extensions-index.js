@@ -111,6 +111,9 @@ const extensionsIndex = {
     // Set up the DataTable on the extensions list.
     initializeDataTable(){
         extensionsIndex.$extensionsList.DataTable({
+            // Enable state saving to automatically save and restore the table's state
+            stateSave: true,
+
             search: {
                 search: `${extensionsIndex.$globalSearch.val()}`,
             },
