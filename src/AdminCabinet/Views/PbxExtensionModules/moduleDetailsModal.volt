@@ -1,5 +1,6 @@
 <div class="ui large scrolling modal module-detail-popup" id="module-details-template">
     <i class="close icon"></i>
+    <div class="ui top right attached label"> <i class="icon download"></i><span class="module-count-installed">{# countOfInstallations #}</span></div>
     <div class="ui basic segment">
         <div class="ui inverted active dimmer">
             <div class="ui text loader">Loading</div>
@@ -17,7 +18,7 @@
                 </div>
             </div>
             <div class="one wide column">
-                <i class="icon download"></i><span class="module-count-installed">{# countOfInstallations #}</span>
+
             </div>
         </div>
 

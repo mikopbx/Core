@@ -1059,6 +1059,7 @@ return [
     'ext_FreeModule'=>'Бесплатный модуль',
     'ext_ShowModuleRepoDetails'=>'Открыть подробное описание модуля',
     'ext_ModuleEulaTab'=>'Лицензионное соглашение',
+    'ext_FromDate'=>'выпущен',
     'DimmerWaitForPBXIsOnline' => 'Разрыв связи с ядром PBX …',
     'DimmerWaitForPBXOnlineDescription' => 'Это нормально, если станция перезагружается. <br>Как только связь восстановится, страница обновится автоматически!',
     'loc_NoResult' => 'Ничего не найдено',

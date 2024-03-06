@@ -287,17 +287,24 @@ const extensionModuleDetail = {
     prepareChangeLogView(repoData) {
         let html = '';
         $.each(repoData.releases, function (index, release) {
+            let releaseDate = release.created;
+            releaseDate = releaseDate.split(" ")[0];
             const sizeText = extensionModuleDetail.convertBytesToReadableFormat(release.size);
-            const changeLogText = UserMessage.convertToText(release.changelog);
-            html+=`<div class="ui header">${globalTranslate.ext_InstallModuleReleaseTag}: ${release.version}</div>`;
-            html+=`<div class=""><i class="icon grey download"></i> ${release.downloads}</div>`;
-            html+=`<p>${changeLogText}</p>`;
-            html+=`<a href="#" class="ui icon labeled basic blue button download"
+            let changeLogText = UserMessage.convertToText(release.changelog);
+            if (changeLogText === 'null') {
+                changeLogText = '';
+            }
+            html += '<div class="ui clearing segment">';
+            html += `<div class="ui top attached label">${globalTranslate.ext_InstallModuleReleaseTag}: ${release.version} ${globalTranslate.ext_FromDate} ${releaseDate}</div>`;
+            html += `<div class="ui top right attached label"><i class="icon grey download"></i> <span class="ui mini gray text">${release.downloads}</span></div>`;
+            html += `<div class='ui basic segment'><p>${changeLogText}</p>`;
+            html += `<a href="#" class="ui icon labeled small blue right floated button download"
                data-uniqid = "${repoData.uniqid}"
                data-releaseid ="${release.releaseID}">
                 <i class="icon download"></i>
                 ${globalTranslate.ext_InstallModuleVersion} ${release.version} (${sizeText})
             </a>`;
+            html += '</div></div>';
         });
         return html;
     }
