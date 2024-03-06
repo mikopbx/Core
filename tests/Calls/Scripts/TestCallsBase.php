@@ -320,7 +320,7 @@ class TestCallsBase {
      */
     protected function checkCdr(): void
     {
-        sleep(6);
+        sleep(15);
         // Проверяем результат.
         $filter = [
             'work_completed=1',
