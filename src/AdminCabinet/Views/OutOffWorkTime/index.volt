@@ -7,6 +7,7 @@
             <thead>
             <tr>
                 <th></th>
+                <th></th>
                 <th>{{ t._('tf_TableColumnDatePeriod') }}</th>
                 <th class="hide-on-mobile">{{ t._('tf_TableColumnNotes') }}</th>
                 <th class="right aligned">{{ t._('tf_TableColumnAction') }}</th>
@@ -17,10 +18,11 @@
         {% endif %}
 
         <tr class="frame-row" id="{{ record['id'] }}">
-            <td>
+            <td class="collapsing dragHandle"><i class="sort grey icon"></i></td>
+            <td class="collapsing">
                 {% if (record['allowRestriction']=='1') %}
                     <div class="ui basic icon button" data-variation="wide" data-content="{{ t._('tf_AllowRestriction') }}" data-position="top right">
-                        <i class="map signs icon"></i>
+                        <i class="filter icon"></i>
                     </div>
                 {% endif %}
             </td>

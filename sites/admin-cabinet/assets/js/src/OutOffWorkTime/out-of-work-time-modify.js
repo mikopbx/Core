@@ -251,12 +251,19 @@ const outOfWorkTimeRecord = {
         // Bind checkbox change event for inbound rules table
         $('#inbound-rules-table .ui.checkbox').checkbox({
             onChange: function () {
+                let newState = 'unchecked';
                 // Handle the change event for inbound rules table checkbox
                 if ($(this).parent().checkbox('is checked')) {
-                    $('#inbound-rules-table .ui.checkbox[data-context-id=' + $(this).parent().attr('data-context-id') + ']').checkbox('set checked')
-                } else {
-                    $('#inbound-rules-table .ui.checkbox[data-context-id=' + $(this).parent().attr('data-context-id') + ']').checkbox('set unchecked')
+                    newState = 'checked';
                 }
+                let did = $(this).parent().attr('data-did');
+                let filter = '#inbound-rules-table .ui.checkbox[data-context-id=' + $(this).parent().attr('data-context-id') + ']';
+                if(did !== '' && newState === 'checked'){
+                    filter = filter + '.ui.checkbox[data-did='+did+']';
+                }else if(did === '' && newState === 'unchecked'){
+                    filter = filter + '.ui.checkbox[data-did=""]';
+                }
+                $(filter).checkbox('set '+newState);
             }
         });
 

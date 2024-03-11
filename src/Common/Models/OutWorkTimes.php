@@ -112,6 +112,12 @@ class OutWorkTimes extends ModelsBase
      */
     public ?string $allowRestriction = '0';
 
+    /**
+     * Priority level of the routing rule
+     *
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $priority = '0';
 
     /**
      * Initialize the model.

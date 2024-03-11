@@ -39,7 +39,7 @@ class OutOffWorkTimeController extends BaseController
     {
         // Define query parameters for retrieving OutWorkTimes data from the database.
         $parameters = [
-            'order' => 'date_from, weekday_from, time_from',
+            'order' => 'priority, date_from, weekday_from, time_from',
         ];
 
         // Initialize an empty array to hold the retrieved OutWorkTimes data.
@@ -79,6 +79,24 @@ class OutOffWorkTimeController extends BaseController
         $this->view->indexTable = $timeframesTable;
     }
 
+    public function changePriorityAction(): void
+    {
+        $this->view->disable();
+        $result = true;
+
+        if ( ! $this->request->isPost()) {
+            return;
+        }
+        $priorityTable = $this->request->getPost();
+        $rules = OutWorkTimes::find();
+        foreach ($rules as $rule){
+            if (array_key_exists ( $rule->id, $priorityTable)){
+                $rule->priority = $priorityTable[$rule->id];
+                $result         .= $rule->update();
+            }
+        }
+        echo json_encode($result);
+    }
 
     /**
      * This function modifies the OutWorkTimes data based on the provided ID.
