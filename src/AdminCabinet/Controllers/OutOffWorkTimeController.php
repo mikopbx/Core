@@ -272,6 +272,9 @@ class OutOffWorkTimeController extends BaseController
                         $timeFrame->$name = '0';
                     }
                     break;
+                case 'calType':
+                    $timeFrame->$name = ($data[$name] === 'none') ? '' : $data[$name];
+                    break;
                 case 'date_from':
                 case 'date_to':
                 case 'time_from':

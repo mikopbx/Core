@@ -209,10 +209,10 @@ class ModulesConf extends AsteriskConfigClass
 
         // Check if specific files exist and add modules accordingly
         if(file_exists('/dev/dahdi/transcode')){
-          $modules[] = 'app_meetme.so';
-          $modules[] = 'chan_dahdi.so';
-          $modules[] = 'res_timing_dahdi.so';
-          $modules[] = 'codec_dahdi.so';
+            $modules[] = 'app_meetme.so';
+            $modules[] = 'chan_dahdi.so';
+            $modules[] = 'res_timing_dahdi.so';
+            $modules[] = 'codec_dahdi.so';
         }
 
         foreach ($modules as $value) {

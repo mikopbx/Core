@@ -26,6 +26,7 @@ use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -44,12 +45,45 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
     private string $conf = '';
 
     /**
+     * Generates core modules config files
+     */
+    protected function generateConfigProtected(): void
+    {
+        $config = '';
+        /** @var OutWorkTimes $rule */
+        $rules = OutWorkTimes::find();
+        foreach ($rules as $rule){
+            if(empty($rule->calType)){
+                continue;
+            }
+            $config.= "[calendar-$rule->id]".PHP_EOL.
+                'type='.$rule->calType.PHP_EOL.
+                'url='.$rule->calUrl.PHP_EOL.
+                'user='.$rule->calUser.PHP_EOL.
+                'secret='.$rule->calSecret.PHP_EOL.
+                'refresh=1'.PHP_EOL.
+                'timeframe=10'.PHP_EOL.
+                'channel = Local/s@calendar-event'.PHP_EOL.
+                'app = Hangup'. PHP_EOL.PHP_EOL;
+        }
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/calendar.conf', $config);
+        $arr_out      = [];
+        $pid = Processes::getPidOfProcess('asterisk');
+        if(!empty($pid)){
+            $asteriskPath = Util::which('asterisk');
+            Processes::mwExec("{$asteriskPath} -rx 'module reload res_calendar'", $arr_out);
+        }
+
+    }
+
+    /**
      * Generates the extension contexts for out of work time configurations.
      *
      * @return string The generated configuration.
      */
     public function extensionGenContexts(): string
     {
+        $this->generateConfigProtected();
         $this->generateOutWorkTimes();
         return $this->conf;
     }
@@ -77,13 +111,61 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
      */
     private function generateOutWorkTimes(): void
     {
-        $this->conf = "\n\n[playback-exit]\n";
-        $this->conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,Gosub(dial_outworktimes,${EXTEN},1)' . "\n\t";
-        $this->conf .= 'same => n,Playback(${filename})' . "\n\t";
-        $this->conf .= 'same => n,Hangup()' . "\n";
-        $this->conf .= 'exten => _[hit],1,Hangup()' . PHP_EOL . PHP_EOL;
+        $this->conf =   PHP_EOL."[playback-exit]".PHP_EOL.
+                        'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,Gosub(dial_outworktimes,${EXTEN},1)' . PHP_EOL."\t".
+                        'same => n,Playback(${filename})' . PHP_EOL. "\t".
+                        'same => n,Hangup()'.PHP_EOL.
+                        'exten => _[hit],1,Hangup()'.PHP_EOL.PHP_EOL;
+        $this->conf .=  '[calendar-event]'.PHP_EOL.
+                        'exten  => s,1,NoOp( calendar: ${CALENDAR_EVENT(calendar)}, summary: ${CALENDAR_EVENT(summary)} )'.PHP_EOL."\t".
+	                    'same => n,NoOp( description: ${CALENDAR_EVENT(description)} )'.PHP_EOL."\t".
+	                    'same => n,NoOp( start: ${CALENDAR_EVENT(start)}, end: ${CALENDAR_EVENT(end)})'.PHP_EOL."\t".
+	                    'same => n,NoOp( busystate: ${CALENDAR_EVENT(busystate)} )'.PHP_EOL."\t".
+	                    'same => n,answer()'.PHP_EOL."\t".
+	                    'same => n,Wait(2)' . PHP_EOL . PHP_EOL;
 
-        $this->getWorkTimeDialplan();
+        $routesData = $this->getRoutesData();
+        $additionalContexts = '';
+        $conf_out_set_var = '';
+        $data = OutWorkTimes::find(['order'=>'priority, date_from'])->toArray();
+        $this->conf .= "[" . self::OUT_WORK_TIME_CONTEXT . "]".PHP_EOL;
+        $this->conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,Set(currentYear=${STRFTIME(,,%Y)})' . "\n\t";
+        foreach ($data as $ruleData) {
+            $contextId = 'check-out-work-time-'.$ruleData['id'];
+            $this->conf .= 'same => n,Gosub('.$contextId.',${EXTEN},1)'.PHP_EOL."\t";
+            [, $years] = $this->getOutWorkIntervals($ruleData['date_from'], $ruleData['date_to']);
+            $additionalContexts.= '['.$contextId.']'.PHP_EOL;
+            $additionalContexts.= 'exten => _[0-9*#+a-zA-Z]!,1,NoOp()'.PHP_EOL."\t";
+            if(!empty($years)){
+                $additionalContexts.= 'same => n,Set(TMP_YEARS='.implode('-',$years).'-)'.PHP_EOL."\t";
+                $additionalContexts.= 'same => n,ExecIf($["STRREPLACE(TMP_YEARS,currentYear)" == "${TMP_YEARS}"]?return)'.PHP_EOL."\t";
+            }
+            // Restrictions for the route are not allowed for this rule.
+            if ($ruleData['allowRestriction'] === '1') {
+                $additionalContexts.= 'same => n,ExecIf($["${DIALPLAN_EXISTS('.$contextId.'-${contextID},${EXTEN},1)}" == "0"]?return)'.PHP_EOL."\t";
+            }
+            if(empty($ruleData['calType'])){
+                $this->generateOutWorkRule($ruleData, $conf_out_set_var, $additionalContexts);
+            }else{
+                $appdata = $this->initRuleAppData($ruleData, $conf_out_set_var);
+                $additionalContexts.= 'same => n,GotoIf(${CALENDAR_BUSY(calendar-'.$ruleData['id'].')}?'.$appdata.')'.PHP_EOL."\t";
+            }
+            $additionalContexts.= 'same => n,return'.PHP_EOL;
+            $additionalContexts.= 'exten => _[hit],1,Hangup()'.PHP_EOL;
+            $contextData = $routesData[$ruleData['id']]??[];
+            foreach ($contextData as $subContext => $arrayDid){
+                $additionalContexts.= "[$contextId-$subContext]".PHP_EOL;
+                foreach (array_unique($arrayDid) as $did){
+                    $additionalContexts .= "exten => $did,1,NoOp(-)" . PHP_EOL;
+                }
+            }
+            $additionalContexts.= PHP_EOL;
+
+        }
+        $this->conf .= "same => n,return".PHP_EOL;
+        $this->conf .= 'exten => _[hit],1,Hangup()' . PHP_EOL.PHP_EOL;
+        $this->conf .= $additionalContexts.PHP_EOL;
+        $this->conf .= PHP_EOL.$conf_out_set_var.PHP_EOL;
     }
 
     /**
@@ -128,52 +210,6 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
             }
         }
         return $routesData;
-    }
-
-    /**
-     * Generates the work time dialplan configuration.
-     * @return void
-     */
-    private function getWorkTimeDialplan(): void
-    {
-        $routesData = $this->getRoutesData();
-        $additionalContexts = '';
-        $conf_out_set_var = '';
-        $data = OutWorkTimes::find(['order' => 'priority, date_from'])->toArray();
-        $this->conf .= "[" . self::OUT_WORK_TIME_CONTEXT . "]".PHP_EOL;
-        $this->conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,Set(currentYear=${STRFTIME(,,%Y)})' . "\n\t";
-        foreach ($data as $ruleData) {
-            $contextId = 'check-out-work-time-'.$ruleData['id'];
-            $this->conf .= 'same => n,Gosub('.$contextId.',${EXTEN},1)'.PHP_EOL."\t";
-            [, $years] = $this->getOutWorkIntervals($ruleData['date_from'], $ruleData['date_to']);
-            $additionalContexts.= '['.$contextId.']'.PHP_EOL;
-            $additionalContexts.= 'exten => _[0-9*#+a-zA-Z]!,1,NoOp()'.PHP_EOL."\t";
-            if(!empty($years)){
-                $additionalContexts.= 'same => n,Set(TMP_YEARS='.implode('-',$years).'-)'.PHP_EOL."\t";
-                $additionalContexts.= 'same => n,ExecIf($["STRREPLACE(TMP_YEARS,currentYear)" == "${TMP_YEARS}"]?return)'.PHP_EOL."\t";
-            }
-            // Restrictions for the route are not allowed for this rule.
-            if ($ruleData['allowRestriction'] === '1') {
-                $additionalContexts.= 'same => n,ExecIf($["${DIALPLAN_EXISTS('.$contextId.'-${contextID},${EXTEN},1)}" == "0"]?return)'.PHP_EOL."\t";
-            }
-            $this->generateOutWorkRule($ruleData, $conf_out_set_var, $additionalContexts);
-
-            $additionalContexts.= 'same => n,return'.PHP_EOL;
-            $additionalContexts.= 'exten => _[hit],1,Hangup()'.PHP_EOL;
-            $contextData = $routesData[$ruleData['id']]??[];
-            foreach ($contextData as $subContext => $arrayDid){
-                $additionalContexts.= "[$contextId-$subContext]".PHP_EOL;
-                foreach (array_unique($arrayDid) as $did){
-                    $additionalContexts .= "exten => $did,1,NoOp(-)" . PHP_EOL;
-                }
-            }
-            $additionalContexts.= PHP_EOL;
-
-        }
-        $this->conf .= "same => n,return".PHP_EOL;
-        $this->conf .= 'exten => _[hit],1,Hangup()' . PHP_EOL.PHP_EOL;
-        $this->conf .= $additionalContexts.PHP_EOL;
-        $this->conf .= PHP_EOL.$conf_out_set_var.PHP_EOL;
     }
 
     /**
@@ -241,10 +277,10 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         $weekdays   = $this->getWeekDayInterval($out_data);
 
         [$mDays, $months] = $this->initDaysMonthsInterval($out_data);
-        [$appName, $appdata] = $this->initRuleAppData($out_data, $conf_out_set_var);
+        $appdata = $this->initRuleAppData($out_data, $conf_out_set_var);
 
         foreach ($timesArray as $times) {
-            $conf .= "same => n,{$appName}($times,$weekdays,$mDays,$months?{$appdata})\n\t";
+            $conf .= "same => n,GotoIfTime($times,$weekdays,$mDays,$months?{$appdata})\n\t";
         }
     }
 
@@ -297,11 +333,10 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
      * @param array $ruleData The rule data.
      * @param string $conf_out_set_var The reference to the configuration variable for output.
      *
-     * @return array An array containing the application name and data.
+     * @return string An array containing the data.
      */
-    private function initRuleAppData($ruleData, string &$conf_out_set_var): array
+    private function initRuleAppData($ruleData, string &$conf_out_set_var): string
     {
-        $appName = 'GotoIfTime';
         if (IncomingRoutingTable::ACTION_EXTENSION === $ruleData['action']) {
             $appdata = "internal,{$ruleData['extension']},1";
         } else {
@@ -318,7 +353,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
             }
             $appdata = $dialplanName . ',${EXTEN},1';
         }
-        return array($appName, $appdata);
+        return $appdata;
     }
 
     /**
@@ -375,4 +410,11 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         return array($mDays, $months);
     }
 
+    public function generateModulesConf(): string
+    {
+        return "load => res_calendar.so".PHP_EOL.
+               "load => res_calendar_caldav.so".PHP_EOL.
+               "load => res_calendar_ews.so".PHP_EOL.
+               "load => res_calendar_icalendar.so".PHP_EOL;
+    }
 }
