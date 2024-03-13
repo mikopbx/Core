@@ -1238,4 +1238,12 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ext_ErrUploadTimeout' => 'Falha ao carregar o arquivo do módulo. Tempo limite para operação.',
     'ext_ShowModuleRepoDetails' => 'Abra a descrição detalhada do módulo',
     'ext_ModuleEulaTab' => 'Contrato de licença',
+    'tf_calUrl' => 'URL do calendário',
+    'tf_calUser' => 'Nome de usuário',
+    'tf_calSecret' => 'Senha',
+    'tf_calType' => 'Tipo',
+    'tf_CAL_TYPE_NONE' => 'Ordinário',
+    'tf_CAL_TYPE_CALDAV' => 'CalDAV',
+    'tf_CAL_TYPE_ICAL' => 'iCal',
+    'tf_ValidateCalUri' => 'O campo "URL do calendário" contém um valor incorreto.',
 ];

@@ -1238,4 +1238,12 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ext_DownloadInProgress' => 'Téléchargement du module…',
     'ext_CheckLicenseInProgress' => 'Vérification du permis.…',
     'ext_ModuleEulaTab' => 'Accord de licence',
+    'tf_calUrl' => 'URL du calendrier',
+    'tf_calUser' => 'Nom d\'utilisateur',
+    'tf_calSecret' => 'Mot de passe',
+    'tf_calType' => 'Taper',
+    'tf_CAL_TYPE_NONE' => 'Ordinaire',
+    'tf_CAL_TYPE_CALDAV' => 'CalDAV',
+    'tf_CAL_TYPE_ICAL' => 'iCal',
+    'tf_ValidateCalUri' => 'Le champ "URL du calendrier" contient une valeur incorrecte.',
 ];

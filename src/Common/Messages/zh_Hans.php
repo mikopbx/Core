@@ -1204,4 +1204,12 @@ return [
     'ext_ErrUploadTimeout' => '上传模块文件失败。操作超时。',
     'ext_ShowModuleRepoDetails' => '打开详细模块描述',
     'ext_ModuleEulaTab' => '许可协议',
+    'tf_calUser' => '用户名',
+    'tf_calSecret' => '密码',
+    'tf_calType' => '类型',
+    'tf_CAL_TYPE_NONE' => '普通的',
+    'tf_CAL_TYPE_CALDAV' => '加州DAV',
+    'tf_CAL_TYPE_ICAL' => '钙',
+    'tf_ValidateCalUri' => '“日历 URL”字段包含不正确的值。',
+    'tf_calUrl' => '日历网址',
 ];

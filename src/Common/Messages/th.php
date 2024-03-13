@@ -1201,4 +1201,12 @@ return [
     'ext_ErrUploadTimeout' => 'ไม่สามารถอัปโหลดไฟล์โมดูล หมดเวลาสำหรับการดำเนินการ',
     'ext_ShowModuleRepoDetails' => 'เปิดคำอธิบายโมดูลโดยละเอียด',
     'ext_ModuleEulaTab' => 'ข้อตกลง',
+    'tf_ValidateCalUri' => 'ช่อง "URL ของปฏิทิน" มีค่าที่ไม่ถูกต้อง',
+    'tf_calUrl' => 'URL ปฏิทิน',
+    'tf_calUser' => 'ชื่อผู้ใช้',
+    'tf_calSecret' => 'รหัสผ่าน',
+    'tf_calType' => 'พิมพ์',
+    'tf_CAL_TYPE_NONE' => 'สามัญ',
+    'tf_CAL_TYPE_CALDAV' => 'คาลดีเอวี',
+    'tf_CAL_TYPE_ICAL' => 'ไอแคล',
 ];

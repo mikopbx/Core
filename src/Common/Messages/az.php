@@ -1237,4 +1237,12 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ext_ErrUploadTimeout' => 'Modul faylını yükləmək alınmadı. Əməliyyat üçün vaxt aşımı.',
     'ext_ShowModuleRepoDetails' => 'Ətraflı modul təsvirini açın',
     'ext_ModuleEulaTab' => 'Lisenziya müqaviləsi',
+    'tf_calUrl' => 'Təqvim URL-i',
+    'tf_calUser' => 'İstifadəçi adı',
+    'tf_calSecret' => 'parol',
+    'tf_calType' => 'Növ',
+    'tf_CAL_TYPE_NONE' => 'Adi siravi',
+    'tf_CAL_TYPE_CALDAV' => 'CalDAV',
+    'tf_CAL_TYPE_ICAL' => 'iCal',
+    'tf_ValidateCalUri' => '"Təqvim URL" sahəsində yanlış dəyər var.',
 ];

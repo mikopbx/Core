@@ -1238,4 +1238,12 @@ return [
     'ext_DownloadInProgress' => 'Λήψη της ενότητας…',
     'ext_ErrUploadTimeout' => 'Απέτυχε η μεταφόρτωση του αρχείου μονάδας. Χρονικό όριο λειτουργίας.',
     'ext_ShowModuleRepoDetails' => 'Ανοίξτε τη λεπτομερή περιγραφή της ενότητας',
+    'tf_calUrl' => 'URL ημερολογίου',
+    'tf_calUser' => 'Όνομα χρήστη',
+    'tf_calSecret' => 'Κωδικός πρόσβασης',
+    'tf_calType' => 'Τύπος',
+    'tf_CAL_TYPE_CALDAV' => 'CalDAV',
+    'tf_CAL_TYPE_ICAL' => 'iCal',
+    'tf_ValidateCalUri' => 'Το πεδίο "Διεύθυνση URL ημερολογίου" περιέχει μια εσφαλμένη τιμή.',
+    'tf_CAL_TYPE_NONE' => 'Συνήθης',
 ];

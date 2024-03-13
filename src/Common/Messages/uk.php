@@ -1238,4 +1238,12 @@ return [
     'ext_CheckLicenseInProgress' => 'Перевірка ліцензії …',
     'ext_ShowModuleRepoDetails' => 'Відкрити докладний опис модуля',
     'ext_ModuleEulaTab' => 'Ліцензійну угоду',
+    'tf_calUrl' => 'URL календаря',
+    'tf_calUser' => 'Ім\'я користувача',
+    'tf_calSecret' => 'Пароль',
+    'tf_calType' => 'Тип',
+    'tf_CAL_TYPE_NONE' => 'Звичайний',
+    'tf_CAL_TYPE_CALDAV' => 'CalDAV',
+    'tf_CAL_TYPE_ICAL' => 'iCal',
+    'tf_ValidateCalUri' => 'Поле URL календаря містить не коректне значення.',
 ];

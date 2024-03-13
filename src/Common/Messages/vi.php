@@ -1204,4 +1204,12 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'ext_ShowModuleRepoDetails' => 'Mở mô tả mô-đun chi tiết',
     'ext_DownloadInProgress' => 'Đang tải xuống mô-đun…',
     'ext_ModuleEulaTab' => 'Thỏa thuận cấp phép',
+    'tf_calUrl' => 'URL lịch',
+    'tf_calUser' => 'tên tài khoản',
+    'tf_calSecret' => 'Mật khẩu',
+    'tf_calType' => 'Kiểu',
+    'tf_CAL_TYPE_NONE' => 'Bình thường',
+    'tf_CAL_TYPE_CALDAV' => 'CalDAV',
+    'tf_CAL_TYPE_ICAL' => 'iCal',
+    'tf_ValidateCalUri' => 'Trường "URL lịch" chứa giá trị không chính xác.',
 ];

@@ -1238,4 +1238,12 @@ return [
     'ext_ErrUploadTimeout' => 'モジュールファイルのアップロードに失敗しました。操作のタイムアウト。',
     'ext_ShowModuleRepoDetails' => 'モジュールの詳細な説明を開く',
     'ext_ModuleEulaTab' => 'ライセンス契約',
+    'tf_calUrl' => 'カレンダーのURL',
+    'tf_calUser' => 'ユーザー名',
+    'tf_calSecret' => 'パスワード',
+    'tf_calType' => 'タイプ',
+    'tf_CAL_TYPE_NONE' => '普通',
+    'tf_CAL_TYPE_CALDAV' => 'カルダブ',
+    'tf_CAL_TYPE_ICAL' => 'iCal',
+    'tf_ValidateCalUri' => '「カレンダー URL」フィールドに不正な値が含まれています。',
 ];
