@@ -58,11 +58,11 @@ class StatusOfModuleInstallation extends \Phalcon\Di\Injectable
         $progress_file = $temp_dir . '/installation_progress';
         $error_file = $temp_dir . '/installation_error';
         if (!file_exists($error_file) || !file_exists($progress_file)) {
-            $res->success = true;
+            $res->success = false;
             $res->data[self::I_STATUS] = self::PROGRESS_FILE_NOT_FOUND;
             $res->data[self::I_STATUS_PROGRESS] = '0';
         } elseif (file_get_contents($error_file) !== '') {
-            $res->success = true;
+            $res->success = false;
             $res->data[self::I_STATUS] = self::INSTALLATION_ERROR;
             $res->data[self::I_STATUS_PROGRESS] = '0';
             $res->messages['error'][] = file_get_contents($error_file);

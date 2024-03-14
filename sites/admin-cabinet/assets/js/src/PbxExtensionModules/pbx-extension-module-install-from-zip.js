@@ -134,9 +134,7 @@ const installationFromZip = {
             channelId: installationFromZip.channelId
         };
         PbxApi.ModulesInstallFromPackage(params,  (response) => {
-            if (response.result === true) {
-                installStatusLoopWorker.initialize();
-            }
+            console.debug(response);
         });
     },
 

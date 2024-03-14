@@ -80,6 +80,7 @@ const installStatusLoopWorker = {
         installStatusLoopWorker.eventSource.addEventListener('message', e => {
             const response = JSON.parse(e.data);
             installStatusLoopWorker.processModuleInstallation(response);
+            console.debug(response);
             localStorage.setItem(lastEventIdKey, e.lastEventId);
         });
     },
@@ -94,7 +95,7 @@ const installStatusLoopWorker = {
         const moduleUniqueId = response.moduleUniqueId;
         const stage = response.stage;
         const stageDetails = response.stageDetails;
-        const $row = $(`#${moduleUniqueId}`);
+        const $row = $(`tr[data-id=${moduleUniqueId}]`);
         if (stage ==='Stage_I_GetRelease'){
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_GetReleaseInProgress, 1);
         } else if (stage === 'Stage_II_CheckLicense'){
@@ -110,15 +111,15 @@ const installStatusLoopWorker = {
         } else if (stage === 'Stage_VI_EnableModule'){
 
         } else if (stage === 'Stage_VII_FinalStatus'){
-            if (stageDetails.result===true){
-                window.location = `${globalRootUrl}pbx-extension-modules/index/`;
-            } else {
+            if (stageDetails.result===false){
                 installStatusLoopWorker.$progressBarBlock.hide();
                 if (stageDetails.messages !== undefined) {
                     installStatusLoopWorker.showModuleInstallationError($row, globalTranslate.ext_InstallationError, stageDetails.messages);
                 } else {
                     installStatusLoopWorker.showModuleInstallationError($row, globalTranslate.ext_InstallationError);
                 }
+            } else {
+                window.location = `${globalRootUrl}pbx-extension-modules/index/`;
             }
         }
     },
@@ -216,6 +217,9 @@ const installStatusLoopWorker = {
      * @param {number} [percent=0] - The current progress percentage to be reflected in the progress bar.
      */
     updateProgressBar(moduleUniqueId, header, percent=0){
+        if (moduleUniqueId === undefined || moduleUniqueId === ''){
+            return;
+        }
         let moduleName = $(`tr.new-module-row[data-id=${moduleUniqueId}]`).data('name');
         if (moduleName === undefined){
             moduleName = '';
@@ -233,3 +237,8 @@ const installStatusLoopWorker = {
         }
     }
 };
+
+// Initializes the installStatusLoopWorker module when the DOM is fully loaded.
+$(document).ready(() => {
+    installStatusLoopWorker.initialize();
+});

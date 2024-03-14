@@ -33,29 +33,41 @@ class UpdateAll extends \Phalcon\Di\Injectable
 
     /**
      * Update all installed modules
+     * @param string $asyncChannelId Pub/sub nchan channel id to send response to frontend
+     * @param array $modulesForUpdate The list of module unique ID for update.
      * @return void
      */
-    public static function main(): void
+    public static function main(string $asyncChannelId, array $modulesForUpdate): void
     {
         // Get a list of installed modules
         $parameters=[
-            'columns'=>['uniqid']
+            'columns'=>[
+                'uniqid'
+            ],
+            'conditions'=>'uniqid IN ({uniqid:array})',
+            'bind'=>
+                [
+                    'uniqid'=>$modulesForUpdate
+                ]
         ];
-        $installedModules = PbxExtensionModules::find($parameters);
+        $installedModules = PbxExtensionModules::find($parameters)->toArray();
 
         // Calculate total mutex timeout and extra 5 seconds to prevent installing the same module in the second thread
-        $installationTimeout = InstallFromRepo::DOWNLOAD_TIMEOUT+InstallFromRepo::INSTALLATION_TIMEOUT+5;
-        $mutexTimeout = $installedModules->count()*($installationTimeout);
+        $installationTimeout = InstallFromRepo::DOWNLOAD_TIMEOUT+ ModuleInstallationBase::INSTALLATION_TIMEOUT+5;
+        $mutexTimeout = count($installedModules)*($installationTimeout);
         // Create a mutex to ensure synchronized access
         $mutex = Util::createMutex('UpdateAll', 'singleThread', $mutexTimeout);
 
         // Synchronize the update process
         try{
             $mutex->synchronized(
-                function () use ($installedModules): void {
+                function () use ($installedModules, $asyncChannelId): void {
                     // Cycle by them and call install from repository
                     foreach ($installedModules as $module) {
-                        InstallFromRepo::main($module['uniqid']);
+                        $moduleUniqueID = $module['uniqid'];
+                        $releaseId = 0;
+                        $installer = new InstallFromRepo($asyncChannelId, $moduleUniqueID, $releaseId);
+                        $installer->start();
                     }
                 });
         } catch (\Throwable $e) {

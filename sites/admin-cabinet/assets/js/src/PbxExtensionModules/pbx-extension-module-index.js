@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global SemanticLocalization, PbxExtensionStatus */
+/* global SemanticLocalization, PbxExtensionStatus, keyCheck */
 
 /**
  * Represents list of extension modules.
@@ -63,6 +63,11 @@ const extensionModules = {
         extensionModules.$tabMenuItems.tab({
             history: true,
             historyType: 'hash',
+            onVisible(){
+                if ($(this).data('tab')==='licensing'){
+                    PbxApi.LicenseGetLicenseInfo(keyCheck.cbAfterGetLicenseInfo);
+                }
+            }
         });
 
         extensionModules.initializeDataTable();

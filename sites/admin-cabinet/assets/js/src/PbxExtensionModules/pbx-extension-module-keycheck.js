@@ -172,7 +172,6 @@ const keyCheck = {
             keyCheck.$filledLicenseKeyHeader.show();
             keyCheck.$manageKeyButton.attr('href',Config.keyManagementUrl);
             PbxApi.LicenseGetMikoPBXFeatureStatus(keyCheck.cbAfterGetMikoPBXFeatureStatus);
-            PbxApi.LicenseGetLicenseInfo(keyCheck.cbAfterGetLicenseInfo);
             keyCheck.$emptyLicenseKeyInfo.hide();
             keyCheck.$filledLicenseKeyInfo.show();
         } else {

@@ -1206,6 +1206,7 @@ const PbxApi = {
      *
      * @param params
      * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
+     * @param {array} params.modulesForUpdate - The list of module unique ID for update.
      * @param {function} callback - The callback function to process response.
      * @returns {void} Returns true.
      */
@@ -1218,7 +1219,9 @@ const PbxApi = {
                 xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
                 return xhr;
             },
-            data: {},
+            data: {
+                modulesForUpdate:params.modulesForUpdate
+            },
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response);

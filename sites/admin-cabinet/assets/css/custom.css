@@ -42,16 +42,6 @@ body {
     max-width: 25rem;
 }
 
-/* No internet warning on license page */
-div.show-if-no-internet {
-    display: none;
-}
-
-/* No license warning on license page */
-div.show-if-license-fail {
-    display: none;
-}
-
 /* Sidebar menu button */
 #sidebar-menu-button {
     display: none;
@@ -135,7 +125,7 @@ div.show-if-license-fail {
     padding-top: 2em;
 }
 
-/* Drag and prop tables point view BEGIN*/
+/* Drag and prop tables point view BEGIN */
 .dragHandle {
     cursor: move;
 }
@@ -174,20 +164,6 @@ div.show-if-license-fail {
 /* Users avatars */
 td.disabled img {
     filter: opacity(50%);
-}
-
-/* Save configuration button */
-#apply-configuration-button {
-    display: none;
-}
-
-/* Table with vertical text on header line */
-.verticalTableHeader {
-    text-align: center;
-    white-space: nowrap;
-    transform-origin: 50% 50%;
-    transform: rotate(90deg);
-
 }
 
 /* Code editor */
@@ -263,7 +239,6 @@ th.sorting:after {
     content: '\f0dc';
 }
 
-
 tr {
     cursor: pointer;
 }
@@ -338,7 +313,6 @@ div#pbx-version {
 #cdr-table {
     font-size: 12px;
 }
-
 
 /* CDR player */
 .cdr-player .ui.range {
@@ -444,59 +418,6 @@ th.firewall-category > div > span {
     border-bottom: 1px solid rgba(34, 36, 38, .15);
 }
 
-
-/* Angled headers on Firewall page */
-th.ami-category {
-    height: 28px;
-    white-space: nowrap;
-}
-
-th.ami-category > div {
-    transform: /* Magic Numbers */ translate(16px, 14px) /* 45 is really 360 - 45 */ rotate(315deg);
-    width: 20px;
-}
-
-th.ami-category > div > span {
-    border-bottom: 1px solid #ccc;
-    padding: 6px 1px;
-    font-size: 0.9rem;
-    display: inline-block;
-    min-width: 65px;
-}
-
-#ami-table tbody > tr {
-    background: white;
-}
-
-#ami-table tbody > tr > td {
-    padding: 0.5em 0.5em;
-}
-
-#ami-table tbody > tr > td.marks {
-    border-right: 1px solid rgba(34, 36, 38, .15);
-}
-
-#ami-table tbody > tr > td:first-child {
-    border-right: 1px solid rgba(34, 36, 38, .15);
-    border-left: 1px solid rgba(34, 36, 38, .15);
-}
-
-#ami-table tbody > tr > td:last-child {
-    border-right: 1px solid rgba(34, 36, 38, .15);
-}
-
-#ami-table tbody > tr:last-child > td {
-    border-bottom: 1px solid rgba(34, 36, 38, .15);
-}
-
-
-/**
-Plugins extensions
- */
-a.ui.button.pbx-extensions-settings {
-    margin-top: -7px;
-}
-
 /**
 Sound player slider
  */
@@ -543,13 +464,6 @@ Sets padding to correct show slider labels inside segment block
     padding-left: 35px;
     padding-right: 35px;
     margin-top: 5px;
-}
-
-/**
-Hide module status toggle by default, it will show from pbx-extension-module-status.js
- */
-#module-status-toggle-segment {
-    display: none;
 }
 
 /*
@@ -654,27 +568,9 @@ Limit fields width
     }
 }
 
-/* Align vertically icon in cell for PbxExtensionModules */
-i.vertically-aligned {
-    vertical-align: super;
-}
-
-/* Change cursor to pointer on PbxExtensionModules page */
-tr.new-module-row td.show-details-on-click{
-    cursor: pointer;
-}
-
-div.module-eula,
-div.module-changelog {
-    overflow-y: auto;
-    height: 832px;
-}
-
-div.module-eula {
-    font-family: 'Roboto', sans-serif;
-    line-height: 1.4em;
-}
-
-div.module-detail-popup{
-    height: 1100px;
+/**
+Plugins extensions settings button
+ */
+a.ui.button.pbx-extensions-settings {
+    margin-top: -7px;
 }

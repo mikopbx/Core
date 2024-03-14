@@ -168,7 +168,8 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function signalHandler(int $signal): void
     {
-        Util::sysLogMsg(static::class, "Receive signal to restart  " . $signal, LOG_DEBUG);
+        $processTitle = cli_get_process_title();
+        Util::sysLogMsg($processTitle, "Receive signal to restart  " . $signal, LOG_DEBUG);
         $this->needRestart = true;
     }
 
@@ -180,14 +181,14 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     public function shutdownHandler(): void
     {
         $timeElapsedSecs = round(microtime(true) - $this->workerStartTime, 2);
-
+        $processTitle = cli_get_process_title();
         $e = error_get_last();
         if ($e === null) {
-            Util::sysLogMsg(static::class, "shutdownHandler after {$timeElapsedSecs} seconds", LOG_DEBUG);
+            Util::sysLogMsg($processTitle, "shutdownHandler after {$timeElapsedSecs} seconds", LOG_DEBUG);
         } else {
             $details = implode(PHP_EOL,$e);
             Util::sysLogMsg(
-                static::class,
+                $processTitle,
                 "shutdownHandler after {$timeElapsedSecs} seconds with error: {$details}",
                 LOG_DEBUG
             );
@@ -203,8 +204,9 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function pingCallBack(BeanstalkClient $message): void
     {
+        $processTitle = cli_get_process_title();
         Util::sysLogMsg(
-            static::class,
+            $processTitle,
             "pingCallBack on ".__CLASS__." with message: ".json_encode($message->getBody()),
             LOG_DEBUG
         );

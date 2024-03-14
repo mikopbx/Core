@@ -171,6 +171,7 @@ const marketplace = {
                                         data-content= "${globalTranslate.ext_InstallModule}"
                                         data-uniqid = "${obj.uniqid}"
                                         data-size = "${obj.size}"
+                                        data-version ="${obj.version}"
                                         data-releaseid ="${obj.release_id}">
                                         <i class="icon download blue"></i> 
                                     </a>
@@ -191,7 +192,7 @@ const marketplace = {
         const dynamicButton
             = `<a href="#" class="ui basic icon button update popuped disable-if-no-internet" 
 			data-content="${globalTranslate.ext_UpdateModule}"
-			data-ver ="${obj.version}"
+			data-version ="${obj.version}"
 			data-size = "${obj.size}"
 			data-uniqid ="${obj.uniqid}" 
 			data-releaseid ="${obj.release_id}">
@@ -231,8 +232,8 @@ const marketplace = {
     versionCompare(v1, v2, options) {
         const lexicographical = options && options.lexicographical;
         const zeroExtend = options && options.zeroExtend;
-        let v1parts = v1.split('.');
-        let v2parts = v2.split('.');
+        let v1parts = String(v1).split('.');
+        let v2parts = String(v2).split('.');
 
         function isValidPart(x) {
             return (lexicographical ? /^\d+[A-Za-z]*$/ : /^\d+$/).test(x);

@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Di\Injectable;
 use Phalcon\Text;
@@ -179,17 +180,29 @@ class LicenseManagementProcessor extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+
+        // Retrieve the last get license request from the cache
         $licenseKey = PbxSettings::getValueByKey('PBXLicense');
         if ((strlen($licenseKey) === 28
             && Text::startsWith($licenseKey, 'MIKO-')
         )) {
-            $licenseInfo = $this->license->getLicenseInfo($licenseKey);
-            $res->success = true;
-            $res->data['licenseInfo'] = json_encode($licenseInfo);
+            $cacheKey = 'PBXCoreREST:LicenseManagementProcessor:getLicenseInfoAction:'.$licenseKey;
+            $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
+            $lastGetLicenseInfo = $managedCache->get($cacheKey);
+            if ($lastGetLicenseInfo === null) {
+                $licenseInfo =  $this->license->getLicenseInfo($licenseKey);
+                    if ($licenseInfo instanceof SimpleXMLElement) {
+                        $res->success = true;
+                        $res->data['licenseInfo'] = json_encode($licenseInfo);
+                    }
+                $managedCache->set($cacheKey, $res->data['licenseInfo'], 120); // Check not often than every 2 minutes
+            } else {
+                $res->data['licenseInfo']=$lastGetLicenseInfo;
+                $res->success = true;
+            }
         } else {
             $res->messages['error'][] = $this->translation->_('lic_WrongLicenseKeyOrEmpty');
         }
-
         return $res;
     }
 
@@ -202,7 +215,7 @@ class LicenseManagementProcessor extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $checkBaseFeature = $this->license->featureAvailable(33);
+        $checkBaseFeature = $this->license->captureFeature(33);
         if ($checkBaseFeature['success'] === false) {
             $res->success = false;
             $textError = (string)($checkBaseFeature['error'] ?? '');
@@ -263,25 +276,35 @@ class LicenseManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         $res->success = true;
 
-        // License Key
-        $licenseKey = PbxSettings::getValueByKey('PBXLicense');
+        $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
+        $cacheKey = 'PBXCoreREST:LicenseManagementProcessor:sendMetricsAction';
 
-        $dataMetrics = [];
+        // Retrieve the last send metrics timestamp from the cache
+        $lastSend = $managedCache->get($cacheKey);
+        if ($lastSend === null) {
+            // Store the current timestamp in the cache to track the last repository check
+            $managedCache->set($cacheKey, time(), 86400); // Not often than once a day
 
-        // PBXVersion
-        $dataMetrics['PBXname'] = 'MikoPBX@' . PbxSettings::getValueByKey('PBXVersion');
+            // License Key
+            $licenseKey = PbxSettings::getValueByKey('PBXLicense');
 
-        // SIP Extensions count
-        $extensions = Extensions::find('type="' . Extensions::TYPE_SIP . '"');
-        $dataMetrics['CountSipExtensions'] = $extensions->count();
+            $dataMetrics = [];
 
-        // Interface language
-        $dataMetrics['WebAdminLanguage'] = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
+            // PBXVersion
+            $dataMetrics['PBXname'] = 'MikoPBX@' . PbxSettings::getValueByKey('PBXVersion');
 
-        // PBX language
-        $dataMetrics['PBXLanguage'] = PbxSettings::getValueByKey('PBXLanguage');
+            // SIP Extensions count
+            $extensions = Extensions::find('type="' . Extensions::TYPE_SIP . '"');
+            $dataMetrics['CountSipExtensions'] = $extensions->count();
 
-        $this->license->sendLicenseMetrics($licenseKey, $dataMetrics);
+            // Interface language
+            $dataMetrics['WebAdminLanguage'] = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
+
+            // PBX language
+            $dataMetrics['PBXLanguage'] = PbxSettings::getValueByKey('PBXLanguage');
+
+            $this->license->sendLicenseMetrics($licenseKey, $dataMetrics);
+        }
 
         return $res;
     }
@@ -295,13 +318,7 @@ class LicenseManagementProcessor extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $i = 0;
-        do {
-            $i++;
-            sleep(1);
-            $result = $this->license->ping();
-        } while ($result['success'] !== true or $i <= 3);
-
+        $result = $this->license->ping();
         $res->success = $result['success'] === true;
         return $res;
     }

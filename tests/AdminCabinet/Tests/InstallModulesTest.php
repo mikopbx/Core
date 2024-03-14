@@ -21,6 +21,7 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Exception;
 use Facebook\WebDriver\Exception\NoSuchElementException;
+use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\Interactions\WebDriverActions;
 use Facebook\WebDriver\WebDriverBy;
 use GuzzleHttp\Exception\GuzzleException;
@@ -80,6 +81,17 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
             echo('Not found row with module =' . $params['moduleId'] . ' to install' . PHP_EOL);
         } catch (Exception $e) {
             echo('Unknown error ' . $e->getMessage() . PHP_EOL);
+        }
+
+        // Wait for the modal form button and push it
+        $xpath = $this->getModalApproveButtonXpath();
+        try {
+            $buttonApprove = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            $buttonApprove->click();
+            $this->waitForAjax();
+        } catch (Exception $e) {
+            echo('Not found approve button to start install the module'. PHP_EOL);
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
 
         // Wait for the installation and test it
@@ -236,5 +248,10 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
     private function getToggleCheckboxXpath(string $moduleUniqueId):string
     {
         return '//tr[contains(@class,"module-row") and @data-id="' . $moduleUniqueId . '"]//input[@type="checkbox"]';
+    }
+
+    private function getModalApproveButtonXpath():string
+    {
+        return '//div[@id="install-modal-form" and contains(@class,"visible")]//div[contains(@class,"approve button")]';
     }
 }

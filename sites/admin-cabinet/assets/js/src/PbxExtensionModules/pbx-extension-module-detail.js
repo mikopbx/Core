@@ -300,6 +300,7 @@ const extensionModuleDetail = {
             html += `<div class='ui basic segment'><p>${changeLogText}</p>`;
             html += `<a href="#" class="ui icon labeled small blue right floated button download"
                data-uniqid = "${repoData.uniqid}"
+               data-version = "${release.version}"
                data-releaseid ="${release.releaseID}">
                 <i class="icon download"></i>
                 ${globalTranslate.ext_InstallModuleVersion} ${release.version} (${sizeText})

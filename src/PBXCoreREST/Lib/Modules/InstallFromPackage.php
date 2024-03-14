@@ -72,7 +72,7 @@ class InstallFromPackage extends ModuleInstallationBase
         $res->processor = __METHOD__;
         $res->success = true;
 
-        // Synchronize the installation process
+        // Singleton the installation process
         try{
             $mutex->synchronized(
                 function () use (&$res): void {

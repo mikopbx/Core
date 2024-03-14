@@ -111,6 +111,8 @@ class WorkerApiCommands extends WorkerBase
 
                 // This is the child process
                 if (method_exists($processor, 'callback')) {
+
+                    cli_set_process_title(__CLASS__.'-'.$request['action']);
                     // Execute async job
                     if ($async) {
                         $res->success = true;

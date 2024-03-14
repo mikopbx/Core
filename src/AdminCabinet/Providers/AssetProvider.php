@@ -300,7 +300,21 @@ class AssetProvider implements ServiceProviderInterface
                 );
             }
             $scriptArray = json_encode($arrStr);
-            file_put_contents($fileName, "globalTranslate = {$scriptArray}");
+            $proxyCode = "
+                const globalTranslateArray = {$scriptArray};
+                
+                globalTranslate = new Proxy(globalTranslateArray, {
+                    get: function(target, prop, receiver) {
+                    // Check if the property exists in the target
+                    if (prop in target) {
+                        return target[prop];
+                    }
+                    // Return the key itself if no translation is found
+                    return prop;
+                    }
+                });
+                ";
+            file_put_contents($fileName, $proxyCode);
         }
 
         $langJSFile = "js/cache/localization-{$language}-{$version}.min.js";
@@ -524,6 +538,8 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makePbxExtensionModulesAssets(string $action): void
     {
+        $this->semanticCollectionCSS->addCss('css/PbxExtensionModules/index.css', true);
+
         if ($action === 'index') {
             $this->semanticCollectionJS->addJs('js/vendor/semantic/modal.min.js', true);
             $this->footerCollectionJS
@@ -550,7 +566,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
                 ->addCss('css/vendor/semantic/modal.min.css', true)
                 ->addCss('css/vendor/semantic/progress.min.css', true)
-                ->addCss('css/slides.css', true);
+                ->addCss('css/PbxExtensionModules/slides.css', true);
+
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
@@ -876,6 +893,8 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/AsteriskManagers/manager-modify.js', true);
+
+            $this->semanticCollectionCSS->addCss('css/AsteriskManagers/manager-modify.css', true);
         }
     }
 
