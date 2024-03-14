@@ -312,9 +312,10 @@ class Processes
      * @param string $args The arguments for the process.
      * @param int $attemptsCount The number of attempts to start the process.
      * @param int $timout The timeout between attempts in microseconds.
+     * @param string $outFile The path to the output file.
      * @return bool True if the process starts successfully, false otherwise.
      */
-    public static function safeStartDaemon(string $procName, string $args, int $attemptsCount = 20, int $timout = 1000000): bool
+    public static function safeStartDaemon(string $procName, string $args, int $attemptsCount = 20, int $timout = 1000000, string $outFile='/dev/null'): bool
     {
         $result = true;
         $baseName = "safe-{$procName}";
@@ -323,7 +324,7 @@ class Processes
         self::killByName($baseName);
         self::killByName($procName);
         // Start the process in the background.
-        self::mwExecBg("{$safeLink} {$args}");
+        self::mwExecBg("{$safeLink} {$args}", $outFile);
 
         // Wait for the process to start.
         $ch = 1;

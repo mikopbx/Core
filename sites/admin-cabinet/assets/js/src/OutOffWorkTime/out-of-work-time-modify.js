@@ -56,6 +56,15 @@ const outOfWorkTimeRecord = {
                 },
             ],
         },
+        calUrl: {
+            identifier: 'calUrl',
+            rules: [
+                {
+                    type   : 'customNotEmptyIfCalType',
+                    prompt : globalTranslate.tf_ValidateCalUri
+                }
+            ]
+        },
         extension: {
             identifier: 'extension',
             rules: [
@@ -172,6 +181,14 @@ const outOfWorkTimeRecord = {
                     outOfWorkTimeRecord.toggleDisabledFieldClass();
                 },
             });
+        // Initialize the calType dropdown
+        $('#calType')
+            .dropdown({
+                onChange() {
+                    // Handle the change event for the action dropdown
+                    outOfWorkTimeRecord.toggleDisabledFieldClass();
+                },
+            });
 
         // Initialize the weekday_from dropdown
         $('#weekday_from')
@@ -251,12 +268,19 @@ const outOfWorkTimeRecord = {
         // Bind checkbox change event for inbound rules table
         $('#inbound-rules-table .ui.checkbox').checkbox({
             onChange: function () {
+                let newState = 'unchecked';
                 // Handle the change event for inbound rules table checkbox
                 if ($(this).parent().checkbox('is checked')) {
-                    $('#inbound-rules-table .ui.checkbox[data-context-id=' + $(this).parent().attr('data-context-id') + ']').checkbox('set checked')
-                } else {
-                    $('#inbound-rules-table .ui.checkbox[data-context-id=' + $(this).parent().attr('data-context-id') + ']').checkbox('set unchecked')
+                    newState = 'checked';
                 }
+                let did = $(this).parent().attr('data-did');
+                let filter = '#inbound-rules-table .ui.checkbox[data-context-id=' + $(this).parent().attr('data-context-id') + ']';
+                if(did !== '' && newState === 'checked'){
+                    filter = filter + '.ui.checkbox[data-did='+did+']';
+                }else if(did === '' && newState === 'unchecked'){
+                    filter = filter + '.ui.checkbox[data-did=""]';
+                }
+                $(filter).checkbox('set '+newState);
             }
         });
 
@@ -303,14 +327,21 @@ const outOfWorkTimeRecord = {
      * Toggles the visibility of certain field groups based on the selected action value.
      */
     toggleDisabledFieldClass() {
-        if (outOfWorkTimeRecord.$formObj.form('get value', 'action') === 'extension') {
+        if(outOfWorkTimeRecord.$formObj.form('get value', 'action') === 'extension') {
             $('#extension-group').show();
             $('#audio-file-group').hide();
             $('#audio_message_id').dropdown('clear');
-        } else {
+        }else{
             $('#extension-group').hide();
             $('#audio-file-group').show();
             outOfWorkTimeRecord.$formObj.form('set value', 'extension', -1);
+        }
+        if(outOfWorkTimeRecord.$formObj.form('get value', 'calType') === 'none'){
+            $('#call-type-main-tab').show();
+            $('#call-type-calendar-tab').hide();
+        }else{
+            $('#call-type-main-tab').hide();
+            $('#call-type-calendar-tab').show();
         }
     },
 
@@ -428,6 +459,25 @@ $.fn.form.settings.rules.customNotEmptyIfActionRule = (value, action) => {
     }
     return true;
 };
+
+/**
+ * Custom form validation rule that checks if a value is not empty based on a specific action.
+ *
+ * @param {string} value - The value to be validated.
+ * @returns {boolean} Returns true if the value is not empty or the action does not match, false otherwise.
+ */
+$.fn.form.settings.rules.customNotEmptyIfCalType = (value) => {
+    if ($('#calType').val() === 'none') {
+        return true;
+    }
+    try {
+        let url = new URL(value);
+    } catch (_) {
+        return false;
+    }
+    return true;
+};
+
 
 /**
  *  Initialize out of work form on document ready

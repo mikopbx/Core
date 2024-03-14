@@ -19,9 +19,11 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
+use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
@@ -88,6 +90,28 @@ class TimeFrameEditForm extends BaseForm
                     );
                     $this->add($action);
                     break;
+                case 'calType' :
+                    $calTypeArray = [
+                        OutWorkTimes::CAL_TYPE_NONE     => $this->translation->_('tf_CAL_TYPE_NONE'),
+                        OutWorkTimes::CAL_TYPE_CALDAV   => $this->translation->_('tf_CAL_TYPE_CALDAV'),
+                        OutWorkTimes::CAL_TYPE_ICAL     => $this->translation->_('tf_CAL_TYPE_ICAL'),
+                    ];
+                    if (empty($value)) {
+                        $value = OutWorkTimes::CAL_TYPE_NONE;
+                    }
+                    $calType = new Select(
+                        $key, $calTypeArray, [
+                           'using' => [
+                               'id',
+                               'name',
+                           ],
+                           'useEmpty' => false,
+                           'value' => $value,
+                           'class' => 'ui selection dropdown search',
+                       ]
+                    );
+                    $this->add($calType);
+                    break;
                 case 'weekday_from' :
                 case 'weekday_to' :
                     $action = new Select(
@@ -105,6 +129,9 @@ class TimeFrameEditForm extends BaseForm
                     break;
                 case 'description' :
                     $this->addTextArea($key, $value??'', 65);
+                    break;
+                case 'calSecret' :
+                    $this->add(new Password($key, ['value' => $value]));
                     break;
                 default :
                     $this->add(new Text($key, ['autocomplete' => 'off']));

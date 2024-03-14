@@ -586,6 +586,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->headerCollectionCSS->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/OutOffWorkTime/out-of-work-times-index.js', true);
         } elseif ($action === 'modify') {
             $this->semanticCollectionCSS->addCss('css/vendor/semantic/calendar.min.css', true);

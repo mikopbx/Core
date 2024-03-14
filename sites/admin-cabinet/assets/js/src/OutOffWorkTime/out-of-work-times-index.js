@@ -41,14 +41,14 @@ const OutOfWorkTimesTable = {
             lengthChange: false,
             paging: false,
             columns: [
-                null,
+                {orderable: false},
+                {orderable: false},
                 {orderable: false},
                 null,
                 null,
                 {orderable: false},
             ],
             autoWidth: false,
-            order: [1, 'asc'],
             language: SemanticLocalization.dataTableLocalisation,
             "drawCallback": function (settings) {
                 $("[data-content!=''][data-content]").popup();
@@ -63,7 +63,40 @@ const OutOfWorkTimesTable = {
             const id = $(e.target).closest('tr').attr('id');
             OutOfWorkTimesTable.deleteRule(id);
         });
+
+        // Initialize table drag-and-drop with the appropriate callbacks
+        $('#time-frames-table').tableDnD({
+            onDrop: OutOfWorkTimesTable.cbOnDrop, // Callback on dropping an item
+            onDragClass: 'hoveringRow', // CSS class while dragging
+            dragHandle: '.dragHandle',  // Handle for dragging
+        });
     },
+
+    /**
+     * Callback to execute after dropping an element
+     */
+    cbOnDrop() {
+        let priorityWasChanged = false;
+        const priorityData = {};
+        $('.frame-row').each((index, obj) => {
+            const ruleId = $(obj).attr('id');
+            const oldPriority = parseInt($(obj).attr('data-value'), 10);
+            const newPriority = obj.rowIndex;
+            if (oldPriority !== newPriority) {
+                priorityWasChanged = true;
+                priorityData[ruleId] = newPriority;
+            }
+        });
+        if (priorityWasChanged) {
+            $.api({
+                on: 'now',
+                url: `${globalRootUrl}out-off-work-time/changePriority`,
+                method: 'POST',
+                data: priorityData,
+            });
+        }
+    },
+
     /**
      * Deletes an extension with the given ID.
      * @param {string} id - The ID of the rule to delete.

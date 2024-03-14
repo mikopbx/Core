@@ -1020,10 +1020,9 @@ class SIPConf extends AsteriskConfigClass
             $from_user   = $from;
             $contactUser = $from;
         }
-
         $language   = $this->generalSettings['PBXLanguage'];
-
-        if (count($this->contexts_data[$provider['context_id']]) === 1) {
+        if ($provider['registration_type'] === Sip::REG_TYPE_INBOUND
+            || count($this->contexts_data[$provider['context_id']]) === 1) {
             $context_id = $provider['uniqid'];
             $context = "{$context_id}-incoming";
         } else {
@@ -1079,7 +1078,7 @@ class SIPConf extends AsteriskConfigClass
 
         // Add configuration section header
         $conf    .= "[{$provider['uniqid']}]".PHP_EOL;
-        $conf    .= 'set_var=contextID='.$provider['context_id'].PHP_EOL;
+        $conf    .= 'set_var=contextID='.$context.PHP_EOL;
 
         // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
