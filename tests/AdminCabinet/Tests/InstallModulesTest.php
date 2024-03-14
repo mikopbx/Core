@@ -88,10 +88,10 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         // Wait for the modal form button and push it
         $xpath = $this->getModalApproveButtonXpath();
         try {
-            // Wait for the approve button to be clickable
+            sleep(2);
+            // Wait for the approval button to be clickable
             $wait = new WebDriverWait(self::$driver, 10); // Wait up to 10 seconds
             $buttonApprove = $wait->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath($xpath)));
-
             $buttonApprove->click();
             $this->waitForAjax();
         } catch (TimeoutException $e) {
@@ -104,24 +104,29 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
 
         // Wait for the installation and test it
         $this->changeTabOnCurrentPage('installed');
-        $maximumWaitTime = 120;
-        $waitTime = 0;
-        $xpath = $this->getDeleteButtonXpath($params['moduleId'] );
-        $found = false;
-        while ($waitTime < $maximumWaitTime) {
-            sleep(5);
-            $els = self::$driver->findElements((WebDriverBy::xpath($xpath)));
-            if (count($els) > 0) {
-                $found = true;
-                break;
-            }
-            $waitTime += 5;
-        }
-        if (!$found) {
-            $this->fail("Not found element by " . $xpath . PHP_EOL);
-        } else {
-            // Increment assertion counter
+
+        try {
+            // Initialize WebDriverWait with a timeout of 120 seconds
+            $wait = new WebDriverWait(self::$driver, 120);
+
+            // Define the XPath for the Delete button of the installed module
+            $deleteButtonXpath = $this->getDeleteButtonXpath($params['moduleId']);
+
+            // Use WebDriverWait to wait until the Delete button is present and visible
+            // This ensures that the module has been installed
+            $wait->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::xpath($deleteButtonXpath)));
+
+            // If the Delete button is found, the module is installed successfully
             $this->assertTrue(true);
+        } catch (NoSuchElementException $e) {
+            // Handle the case where the Delete button is not found
+            $this->fail('Not found the Delete button on this page in changeTabOnCurrentPage' . PHP_EOL);
+        } catch (TimeOutException $e) {
+            // Handle the case where the Delete button does not become visible within the expected time
+            $this->fail('Timed out waiting for the Delete button to become visible for module' . PHP_EOL);
+        } catch (Exception $e) {
+            // Handle any other exceptions
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
 
         // Enable the installed module
