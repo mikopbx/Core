@@ -24,6 +24,8 @@ use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\Interactions\WebDriverActions;
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverExpectedCondition;
+use Facebook\WebDriver\WebDriverWait;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
@@ -86,9 +88,15 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         // Wait for the modal form button and push it
         $xpath = $this->getModalApproveButtonXpath();
         try {
-            $buttonApprove = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            // Wait for the approve button to be clickable
+            $wait = new WebDriverWait(self::$driver, 10); // Wait up to 10 seconds
+            $buttonApprove = $wait->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath($xpath)));
+
             $buttonApprove->click();
             $this->waitForAjax();
+        } catch (TimeoutException $e) {
+            echo('Timeout waiting for approve button to be clickable'. PHP_EOL);
+            $this->fail('Timeout error ' . $e->getMessage() . PHP_EOL);
         } catch (Exception $e) {
             echo('Not found approve button to start install the module'. PHP_EOL);
             $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
