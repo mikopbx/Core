@@ -211,10 +211,10 @@ class ModuleInstallationBase extends \Phalcon\Di\Injectable
             json_encode($install_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
         );
         $phpPath = Util::which('php');
-        $workerFilesMergerPath = Util::getFilePathByClassName(WorkerModuleInstaller::class);
+        $workerModuleInstallerPath = Util::getFilePathByClassName(WorkerModuleInstaller::class);
 
         // Execute the background process to install the module
-        Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
+        Processes::mwExecBg("{$phpPath} -f {$workerModuleInstallerPath} start '{$settings_file}'");
         $res->data[FilesConstants::FILE_PATH] = $filePath;
         $res->data[self::MODULE_WAS_ENABLED] = $moduleWasEnabled;
         $res->success = true;
