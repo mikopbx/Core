@@ -48,6 +48,12 @@ class OutOffWorkTimeController extends BaseController
         // Retrieve OutWorkTimes data from the database using the query parameters defined earlier.
         $timeFrames = OutWorkTimes::find($parameters);
 
+        $calTypeArray = [
+            OutWorkTimes::CAL_TYPE_NONE     => '',
+            OutWorkTimes::CAL_TYPE_CALDAV   => $this->translation->_('tf_CAL_TYPE_CALDAV'),
+            OutWorkTimes::CAL_TYPE_ICAL     => $this->translation->_('tf_CAL_TYPE_ICAL'),
+        ];
+
         // Iterate over each OutWorkTimes record and format it into an array for displaying on the index page.
         foreach ($timeFrames as $timeFrame) {
             // If the description is less than 45 characters, use the entire string.
@@ -60,6 +66,7 @@ class OutOffWorkTimeController extends BaseController
             // Add the formatted OutWorkTimes record to the array of records to be displayed on the index page.
             $timeframesTable[] = [
                 'id'               => $timeFrame->id,
+                'calType'          => $calTypeArray[$timeFrame->calType],
                 'date_from'        => ( ! empty($timeFrame->date_from)) > 0 ? date("d.m.Y", $timeFrame->date_from) : '',
                 'date_to'          => ( ! empty($timeFrame->date_to)) > 0 ? date("d.m.Y", $timeFrame->date_to) : '',
                 'weekday_from'     => ( ! empty($timeFrame->weekday_from)) ? $this->translation->_(date('D',strtotime("Sunday +{$timeFrame->weekday_from} days"))) : '',
