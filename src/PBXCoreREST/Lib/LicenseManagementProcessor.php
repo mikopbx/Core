@@ -318,8 +318,26 @@ class LicenseManagementProcessor extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $result = $this->license->ping();
-        $res->success = $result['success'] === true;
+
+        // Loop up to 3 attempts
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $result = $this->license->ping();
+
+            // Return success at the first successful ping
+            if ($result['success'] === true) {
+                $res->success = true;
+                return $res;
+            }
+
+            // Wait for 3 seconds before the next attempt, if the previous one was unsuccessful
+            // and it's not the last attempt
+            if ($attempt < 2) {
+                sleep(3);
+            }
+        }
+
+        // If the code reaches this point, all three attempts have failed
+        $res->success = false;
         return $res;
     }
 }
