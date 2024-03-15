@@ -106,10 +106,24 @@ const extensionsIndex = {
             SipAPI.getSecret(number, extensionsIndex.cbAfterGetSecret);
         });
 
+
+        // Reset datatable sorts and page
+        $("a[href='/admin-cabinet/extensions/index/#reset-cache']").on('click', function(e) {
+                e.preventDefault();
+                extensionsIndex.$extensionsList.DataTable().state.clear();
+                window.location.hash = '#reset-cache';
+                window.location.reload();
+        });
+
     },
 
     // Set up the DataTable on the extensions list.
     initializeDataTable(){
+
+        if (window.location.hash === "#reset-cache") {
+            localStorage.removeItem('DataTables_extensions-table_/admin-cabinet/extensions/index/');
+        }
+
         extensionsIndex.$extensionsList.DataTable({
             // Enable state saving to automatically save and restore the table's state
             stateSave: true,

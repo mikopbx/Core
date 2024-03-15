@@ -73,7 +73,7 @@ class Elements extends Injectable
                         'caption' => 'mm_Extensions',
                         'iconclass' => 'user outline',
                         'action' => 'index',
-                        'param' => '',
+                        'param' => '#reset-cache',
                         'style' => '',
                     ],
                     CallQueuesController::class => [
