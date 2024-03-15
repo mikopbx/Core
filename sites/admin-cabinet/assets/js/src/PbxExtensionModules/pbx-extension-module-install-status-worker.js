@@ -72,7 +72,7 @@ const installStatusLoopWorker = {
      * Utilizes the EventSource API to listen for messages on a specified channel.
      */
     startListenPushNotifications() {
-        const lastEventIdKey = `lastEventId`;
+        const lastEventIdKey = `${installStatusLoopWorker.channelId}-lastEventId`;
         let lastEventId = localStorage.getItem(lastEventIdKey);
         const subPath = lastEventId ? `/pbxcore/api/nchan/sub/${installStatusLoopWorker.channelId}?last_event_id=${lastEventId}` : `/pbxcore/api/nchan/sub/${installStatusLoopWorker.channelId}`;
         installStatusLoopWorker.eventSource = new EventSource(subPath);
