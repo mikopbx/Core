@@ -116,9 +116,8 @@ class PbxExtensionStatus {
             this.$toggle.checkbox('set checked');
             this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
             this.$disabilityFields.removeClass('disabled');
-            if (response !== undefined && response.messages !== undefined) {
-                UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
-            }
+            const $row = $(`tr[data-id=${this.uniqid}]`);
+            this.showModuleError($row, response.messages, globalTranslate.ext_ModuleChangeStatusError);
         }
         this.$allToggles.removeClass('disabled');
         $('a.button').removeClass('disabled');
@@ -156,18 +155,40 @@ class PbxExtensionStatus {
             this.$toggle.checkbox('set unchecked');
             this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusDisabled);
             this.$disabilityFields.addClass('disabled');
-            if (response !== undefined && response.messages !== undefined) {
-                if (response.messages.license!==undefined){
-                    UserMessage.showLicenseError(globalTranslate.ext_ModuleLicenseProblem, response.messages.license);
-                } else {
-                    UserMessage.showMultiString(response.messages, globalTranslate.ext_ModuleChangeStatusError);
-                }
-
-            }
+            const $row = $(`tr[data-id=${this.uniqid}]`);
+            this.showModuleError($row, globalTranslate.ext_ModuleChangeStatusError, response.messages);
         }
         this.$allToggles.removeClass('disabled');
         this.$statusIcon.removeClass('spinner loading icon');
         $('a.button').removeClass('disabled');
+    }
+
+    /**
+     * Displays an error message related to module status in the UI.
+     * @param {jQuery} $row - The jQuery object representing the row in the UI associated with the module.
+     * @param {string} header - The header text for the error message.
+     * @param {Object} messages - Detailed error messages to be displayed.
+     */
+    showModuleError($row, header, messages='') {
+        if (messages===undefined){
+            return;
+        }
+        if ($row.length===0){
+            if (messages.license!==undefined){
+                UserMessage.showLicenseError(globalTranslate.ext_ModuleLicenseProblem, messages.license);
+            } else {
+                UserMessage.showMultiString(messages, globalTranslate.ext_ModuleChangeStatusError);
+            }
+            return;
+        }
+        if (messages.license!==undefined){
+            const manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="${Config.keyManagementUrl}" target="_blank">${Config.keyManagementSite}</a>`;
+            messages.license.push(manageLink);
+        }
+        const textDescription = UserMessage.convertToText(messages);
+        const htmlMessage=  `<tr class="ui error center aligned table-error-messages"><td colspan="5"><div class="ui header">${header}</div><p>${textDescription}</p></div></td></tr>`;
+        $row.addClass('error');
+        $row.before(htmlMessage);
     }
 }
 

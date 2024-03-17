@@ -56,6 +56,7 @@ class WorkerModuleInstaller extends WorkerBase
             return;
         }
         $settings = json_decode(file_get_contents($settings_file), true);
+        cli_set_process_title(__CLASS__.'-'.$settings['uniqid']);
         $temp_dir            = dirname($settings['filePath']);
         $this->progress_file = $temp_dir . '/installation_progress';
         $this->error_file    = $temp_dir . '/installation_error';
@@ -119,5 +120,5 @@ class WorkerModuleInstaller extends WorkerBase
     }
 }
 
-// Start worker process
+// Start a worker process
 WorkerModuleInstaller::startWorker($argv??[]);

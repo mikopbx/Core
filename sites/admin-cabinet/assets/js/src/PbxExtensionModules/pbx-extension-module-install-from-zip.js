@@ -98,7 +98,7 @@ const installationFromZip = {
                 break;
             case 'progress':
                 installationFromZip.$progressBar.progress({
-                    percent: parseInt(params.percent, 10),
+                    percent: Math.max(Math.round(parseInt(params.percent, 10)/2)-2, 1),
                 });
                 break;
             case 'error':

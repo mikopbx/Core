@@ -79,8 +79,8 @@ const installStatusLoopWorker = {
 
         installStatusLoopWorker.eventSource.addEventListener('message', e => {
             const response = JSON.parse(e.data);
-            installStatusLoopWorker.processModuleInstallation(response);
             console.debug(response);
+            installStatusLoopWorker.processModuleInstallation(response);
             localStorage.setItem(lastEventIdKey, e.lastEventId);
         });
     },
@@ -134,9 +134,9 @@ const installStatusLoopWorker = {
     cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails) {
         // Check module download status
         if (stageDetails.data.d_status === 'DOWNLOAD_IN_PROGRESS') {
-            const downloadProgress = Math.max(Math.round(parseInt(stageDetails.data.d_status_progress, 10)/2), 3);
+            const downloadProgress = Math.max(Math.round(parseInt(stageDetails.data.d_status_progress, 10)/2)-1, 3);
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_DownloadInProgress, downloadProgress);
-        } else if (stageDetails.d_status === 'DOWNLOAD_COMPLETE') {
+        } else if (stageDetails.data.d_status === 'DOWNLOAD_COMPLETE') {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_DownloadInProgress, 50);
         }
     },
@@ -149,11 +149,10 @@ const installStatusLoopWorker = {
      * @param {Object} stageDetails - Detailed information about the upload progress.
      */
     cbAfterReceiveNewUploadStatus(moduleUniqueId, stageDetails) {
-        // Check module download status
+        // Check module upload status
         if (stageDetails.data.d_status === 'UPLOAD_IN_PROGRESS') {
-            const uploadProgress = Math.max(Math.round(parseInt(stageDetails.data.d_status_progress, 10)/2), 3);
-            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_UploadInProgress, uploadProgress);
-        } else if (stageDetails.d_status === 'UPLOAD_COMPLETE') {
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_UploadInProgress, 49);
+        } else if (stageDetails.data.d_status === 'UPLOAD_COMPLETE') {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_UploadInProgress, 50);
         }
     },
@@ -197,6 +196,14 @@ const installStatusLoopWorker = {
      * @param {Object} messages - Detailed error messages to be displayed.
      */
     showModuleInstallationError($row, header, messages='') {
+        if (messages===undefined){
+            return;
+        }
+        if ($row.length===0){
+            UserMessage.showMultiString(messages, header);
+            $('#add-new-button').removeClass('loading');
+            return;
+        }
         installStatusLoopWorker.resetButtonView($row);
         if (messages.license!==undefined){
             const manageLink = `<br>${globalTranslate.lic_ManageLicense} <a href="${Config.keyManagementUrl}" target="_blank">${Config.keyManagementSite}</a>`;

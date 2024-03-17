@@ -79,29 +79,28 @@ class InstallFromPackage extends ModuleInstallationBase
 
                     // Wait until file upload and merge
                     list($fileUploadResult, $res->success) = $this->waitForFileUpload($this->fileId);
-                    $this->pushMessageToBrowser(self::STAGE_I_UPLOAD_MODULE, $fileUploadResult);
                     if (!$res->success) {
-                        $res->messages['error'] = $fileUploadResult;
+                        $res->messages = $fileUploadResult;
                         return;
                     }
 
                     // Install the downloaded module
                     list($installationResult, $res->success) = $this->installNewModule($this->filePath);
                     if (!$res->success) {
-                        $res->messages['error'][] = $installationResult;
+                        $res->messages = $installationResult;
                         return;
                     }
 
                     // Enable the module if it was previously enabled
                     list($enableResult, $res->success) = $this->enableModule($installationResult);
                     if (!$res->success) {
-                        $res->messages['error'][] = $enableResult;
+                        $res->messages = $enableResult;
                     }
 
                 });
         } catch (\Throwable $e) {
             $res->success = false;
-            $res->messages['error'][] = $e->getMessage();
+            $res->messages['error'] = $e->getMessage();
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         } finally {
             $this->pushMessageToBrowser( self::STAGE_VII_FINAL_STATUS, $res->getResult());

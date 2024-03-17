@@ -95,14 +95,14 @@ class InstallFromRepo extends ModuleInstallationBase
                 list($moduleLinkResult, $res->success) = $this->getModuleLink($releaseInfoResult);
                 $this->pushMessageToBrowser( self::STAGE_III_GET_LINK, $moduleLinkResult);
                 if (!$res->success) {
-                    $res->messages['error'][] = $moduleLinkResult;
+                    $res->messages = $moduleLinkResult;
                     return;
                 }
 
                 // Download the module
                 list($downloadResult, $res->success) = $this->downloadModule($moduleLinkResult);
                 if (!$res->success) {
-                    $res->messages['error'][] = $downloadResult;
+                    $res->messages = $downloadResult;
                     return;
                 } else {
                     $filePath = $downloadResult; // Path to the downloaded module
@@ -111,14 +111,14 @@ class InstallFromRepo extends ModuleInstallationBase
                 // Install the downloaded module
                 list($installationResult, $res->success) = $this->installNewModule($filePath);
                 if (!$res->success) {
-                    $res->messages['error'][] = $installationResult;
+                    $res->messages = $installationResult;
                     return;
                 }
 
                 // Enable the module if it was previously enabled
                 list($enableResult, $res->success) = $this->enableModule($installationResult);
                 if (!$res->success) {
-                    $res->messages['error'][] = $enableResult;
+                    $res->messages = $enableResult;
                 }
             });
         } catch (\Throwable $e) {
