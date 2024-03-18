@@ -120,7 +120,11 @@ class SysLogsManagementProcessor extends Injectable
 
             $di          = Di::getDefault();
             $dirsConfig  = $di->getShared('config');
-            $filenameTmp = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.log';
+            $cacheDir    = $dirsConfig->path('www.downloadCacheDir');
+            if(!file_exists($cacheDir)){
+                Util::mwMkdir($cacheDir, true);
+            }
+            $filenameTmp = $cacheDir. '/' . __FUNCTION__ . '_' . time() . '.log';
             if (empty($filter)){
                 $cmd         = "{$tail} -n {$linesPlusOffset} {$filename}";
             } else {
