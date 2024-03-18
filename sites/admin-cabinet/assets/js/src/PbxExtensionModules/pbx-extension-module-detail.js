@@ -116,13 +116,12 @@ const extensionModuleDetail = {
             // Module name
             if (repoData.name !== undefined) {
                 $newPopup.find('.module-name').text(repoData.name);
+                $newPopup.find('.module-logo').attr('alt', repoData.name);
             }
 
             // Module logo
             if (repoData.logotype && repoData.logotype!=='') {
                 $newPopup.find('.module-logo').attr('src', repoData.logotype);
-            } else {
-                $newPopup.find('.module-logo').replaceWith('<i class="icon puzzle"></i>');
             }
 
             // Module uniqid
@@ -298,6 +297,8 @@ const extensionModuleDetail = {
             html += `<div class="ui top attached label">${globalTranslate.ext_InstallModuleReleaseTag}: ${release.version} ${globalTranslate.ext_FromDate} ${releaseDate}</div>`;
             html += `<div class="ui top right attached label"><i class="icon grey download"></i> <span class="ui mini gray text">${release.downloads}</span></div>`;
             html += `<div class='ui basic segment'><p>${changeLogText}</p>`;
+
+            html += `<p><b>${globalTranslate.ext_SystemVersionRequired}: ${release.require_version}</b></p>`;
             html += `<a href="#" class="ui icon labeled small blue right floated button download"
                data-uniqid = "${repoData.uniqid}"
                data-version = "${release.version}"

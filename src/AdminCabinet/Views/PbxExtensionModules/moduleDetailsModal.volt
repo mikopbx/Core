@@ -10,7 +10,7 @@
         <div class="middle aligned row">
             <div class="fifteen wide column">
                 <div class="ui huge header">
-                    <img class="module-logo" src="{# logoUrl #}" alt="{# modulename #}"/>
+                    <img class="module-logo" src="{{ url() }}assets/img/module-default-image.svg" alt="{# modulename #}"/>
                     <div class="content">
                         <span class="module-name">{# modulename #}</span>
                         <div class="sub header module-id" >{# moduleUniqueID #}</div>
