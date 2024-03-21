@@ -833,7 +833,7 @@ function event_dial_answer()
             local stereoMode = get_variable("MONITOR_STEREO");
             local mixOptions = '';
             if('1' == stereoMode )then
-                mixOptions = "aSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+                mixOptions = "ar("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
             else
                 mixOptions = 'a';
             end
@@ -1127,7 +1127,7 @@ function event_transfer_dial_answer()
             local stereoMode = get_variable("MONITOR_STEREO");
             local mixOptions = '';
             if('1' == stereoMode )then
-                mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+                mixOptions = "abr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
             else
                 mixOptions = 'ab';
             end
@@ -1479,7 +1479,7 @@ function event_dial_app()
         local stereoMode = get_variable("MONITOR_STEREO");
         local mixOptions = '';
         if('1' == stereoMode )then
-            mixOptions = "aSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+            mixOptions = "ar("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
         else
             mixOptions = 'a';
         end
