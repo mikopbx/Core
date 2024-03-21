@@ -254,7 +254,7 @@ const extensionsIndex = {
         const headerFooterHeight = 400; // Estimate height for header, footer, and other elements
 
         // Calculate new page length
-        return Math.floor((windowHeight - headerFooterHeight) / rowHeight);
+        return Math.max(Math.floor((windowHeight - headerFooterHeight) / rowHeight), 5);
     },
 
     /**
