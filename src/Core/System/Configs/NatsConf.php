@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
@@ -86,7 +87,7 @@ class NatsConf extends Injectable
         $conf_file = "$confDir/natsd.conf";
         Util::fileWriteContent($conf_file, $config);
 
-        $lic = $this->mikoPBXConfig->getGeneralSettings('PBXLicense');
+        $lic = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::PBX_LICENSE);
         file_put_contents("$sessionsDir/license.key", $lic);
 
         if (file_exists($pid_file)) {

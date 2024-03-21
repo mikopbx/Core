@@ -145,5 +145,7 @@ abstract class PbxSettingsConstants
     // Metrics and analytics
     const SEND_METRICS = 'SendMetrics';
 
+    const PBX_LICENSE = 'PBXLicense';
+
 
 }

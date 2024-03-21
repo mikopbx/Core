@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use Phalcon\Text;
@@ -63,7 +64,7 @@ class WorkerMarketplaceChecker extends WorkerBase
         }
 
         // Retrieve the last get license request from the cache
-        $licenseKey = PbxSettings::getValueByKey('PBXLicense');
+        $licenseKey = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
         if ((strlen($licenseKey) === 28
             && Text::startsWith($licenseKey, 'MIKO-')
         )) {

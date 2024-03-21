@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -45,7 +46,7 @@ class GetModuleLink extends \Phalcon\Di\Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $licenseKey = PbxSettings::getValueByKey('PBXLicense');
+        $licenseKey = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
 
         $client = new GuzzleHttp\Client();
         $body = '';

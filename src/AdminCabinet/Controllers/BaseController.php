@@ -72,11 +72,11 @@ class BaseController extends Controller
     protected function prepareView(): void
     {
         // Set the default timezone based on PBX settings
-        date_default_timezone_set(PbxSettings::getValueByKey(P));
+        date_default_timezone_set(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE));
 
         // Set PBXLicense view variable if session exists
         if ($this->session->has(SessionController::SESSION_ID)) {
-            $this->view->PBXLicense = PbxSettings::getValueByKey('PBXLicense');
+            $this->view->PBXLicense = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
         } else {
             $this->view->PBXLicense = '';
         }

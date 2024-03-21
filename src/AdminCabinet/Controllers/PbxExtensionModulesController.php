@@ -23,7 +23,7 @@ use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
 use MikoPBX\AdminCabinet\Forms\LicensingChangeLicenseKeyForm;
 use MikoPBX\AdminCabinet\Forms\LicensingGetKeyForm;
 use MikoPBX\AdminCabinet\Forms\PbxExtensionModuleSettingsForm;
-use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
+use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
 use MikoPBX\Modules\PbxExtensionState;
 use Phalcon\Text;
 
@@ -68,7 +68,7 @@ class PbxExtensionModulesController extends BaseController
         $this->view->modulelist = $moduleList;
 
         // License key management tab //
-        $licKey = PbxSettings::getValueByKey('PBXLicense');
+        $licKey = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
         if (strlen($licKey) !== 28
             || !Text::startsWith($licKey, 'MIKO-')) {
             $licKey = '';

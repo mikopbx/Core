@@ -22,7 +22,6 @@ namespace MikoPBX\Core\System;
 use MikoPBX\Common\Models\{LanInterfaces, PbxSettings, PbxSettingsConstants};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di\Injectable;
-use Symfony\Component\Process\Process;
 use Throwable;
 
 /**

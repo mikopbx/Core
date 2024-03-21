@@ -163,6 +163,7 @@ class PbxSettings extends ModelsBase
             PbxSettingsConstants::SEND_METRICS => '1',
             PbxSettingsConstants::CLOUD_INSTANCE_ID => '',
             PbxSettingsConstants::DISABLE_ALL_MODULES=> '0',
+            PbxSettingsConstants::PBX_LICENSE=>'',
         ];
     }
 

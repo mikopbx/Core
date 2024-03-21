@@ -434,7 +434,7 @@ class WorkerModelsEvents extends WorkerBase
         // LicenseSettings
         $tables[] = [
             'settingName' => [
-                'PBXLicense',
+                PbxSettingsConstants::PBX_LICENSE,
             ],
             'functions' => [
                 self::R_LICENSE,
