@@ -23,6 +23,7 @@ use DateTime;
 use DateTimeZone;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\Asterisk\Configs\H323Conf;
 use MikoPBX\Core\Asterisk\Configs\HepConf;
 use MikoPBX\Core\System\Configs\CronConf;
@@ -307,7 +308,7 @@ class System extends Di\Injectable
         $datePath = Util::which('date');
 
         // Fetch timezone from database
-        $db_tz = PbxSettings::getValueByKey('PBXTimezone');
+        $db_tz = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
         $origin_tz = '';
 
         // Read existing timezone from file if it exists
@@ -373,7 +374,7 @@ class System extends Di\Injectable
     {
 
         // Get the timezone setting from the database
-        $timezone = PbxSettings::getValueByKey('PBXTimezone');
+        $timezone = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
 
         // If /etc/TZ or /etc/localtime exist, delete them
         if (file_exists('/etc/TZ')) {

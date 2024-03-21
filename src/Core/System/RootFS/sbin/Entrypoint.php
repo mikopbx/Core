@@ -58,15 +58,15 @@ class Entrypoint
             // General settings.
             'SSH_PORT' => PbxSettingsConstants::SSH_PORT,
             'WEB_PORT' => PbxSettingsConstants::WEB_PORT,
-            'WEB_HTTPS_PORT' => 'WEBHTTPSPort',
-            'SIP_PORT' => 'SIPPort',
-            'TLS_PORT' => 'TLS_PORT',
-            'RTP_FROM' => 'RTPPortFrom',
-            'RTP_TO' => 'RTPPortTo',
-            'IAX_PORT' => 'IAXPort',
-            'AMI_PORT' => 'AMIPort',
-            'AJAM_PORT' => 'AJAMPort',
-            'AJAM_PORT_TLS' => 'AJAMPortTLS',
+            'WEB_HTTPS_PORT' => PbxSettingsConstants::WEB_HTTPS_PORT,
+            'SIP_PORT' => PbxSettingsConstants::SIP_PORT,
+            'TLS_PORT' => PbxSettingsConstants::TLS_PORT,
+            'RTP_FROM' => PbxSettingsConstants::RTP_PORT_FROM,
+            'RTP_TO' => PbxSettingsConstants::RTP_PORT_TO,
+            'IAX_PORT' => PbxSettingsConstants::IAX_PORT,
+            'AMI_PORT' => PbxSettingsConstants::AMI_PORT,
+            'AJAM_PORT' => PbxSettingsConstants::AJAM_PORT,
+            'AJAM_PORT_TLS' => PbxSettingsConstants::AJAM_PORT_TLS,
         ];
     }
 

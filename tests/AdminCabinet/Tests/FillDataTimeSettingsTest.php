@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use GuzzleHttp\Exception\GuzzleException;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -49,25 +50,25 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
     public function testChangeDataTimeSettings(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/time-settings/modify/');
-        $this->selectDropdownItem('PBXTimezone', $params['PBXTimezone']);
-        $this->changeCheckBoxState('PBXManualTimeSettings', $params['PBXManualTimeSettings']);
+        $this->selectDropdownItem(PbxSettingsConstants::PBX_TIMEZONE, $params[PbxSettingsConstants::PBX_TIMEZONE]);
+        $this->changeCheckBoxState(PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS, $params[PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS]);
 
-        if ($params['PBXManualTimeSettings']) {
+        if ($params[PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS]) {
             $this->changeInputField('ManualDateTime', $params['ManualDateTime']);
         } else {
-            $this->changeTextAreaValue('NTPServer', $params['NTPServer']);
+            $this->changeTextAreaValue(PbxSettingsConstants::NTP_SERVER, $params['NTPServer']);
         }
 
         // Save the settings
         $this->submitForm('time-settings-form');
         $this->clickSidebarMenuItemByHref('/admin-cabinet/time-settings/modify/');
 
-        $this->assertMenuItemSelected('PBXTimezone', $params['PBXTimezone']);
+        $this->assertMenuItemSelected(PbxSettingsConstants::PBX_TIMEZONE, $params['PBXTimezone']);
 
-        if ($params['PBXManualTimeSettings']) {
+        if ($params[PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS]) {
             // $this->assertInputFieldValueEqual('ManualDateTime', $params['ManualDateTime']);
         } else {
-            $this->assertTextAreaValueIsEqual('NTPServer', $params['NTPServer']);
+            $this->assertTextAreaValueIsEqual(PbxSettingsConstants::NTP_SERVER, $params['NTPServer']);
         }
     }
 
@@ -81,18 +82,18 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         $params = [];
         $params[] = [
             [
-                'PBXTimezone' => 'Europe/Riga',
-                'PBXManualTimeSettings' => true,
+                PbxSettingsConstants::PBX_TIMEZONE => 'Europe/Riga',
+                PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS => true,
                 'ManualDateTime' => '01/01/2020, 1:01:01 PM',
-                'NTPServer' => '',
+                PbxSettingsConstants::NTP_SERVER => '',
             ],
         ];
         $params[] = [
             [
-                'PBXTimezone' => 'Europe/Riga',
-                'PBXManualTimeSettings' => false,
+                PbxSettingsConstants::PBX_TIMEZONE => 'Europe/Riga',
+                PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS => false,
                 'ManualDateTime' => '',
-                'NTPServer' => '0.pool.ntp.org',
+                PbxSettingsConstants::NTP_SERVER => '0.pool.ntp.org',
             ],
         ];
         return $params;

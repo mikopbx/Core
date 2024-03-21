@@ -22,7 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use DateTime;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\CDRConfigInterface;
-use MikoPBX\Common\Models\{PbxSettings};
+use MikoPBX\Common\Models\{PbxSettings, PbxSettingsConstants};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 
 class CallDetailRecordsController extends BaseController
@@ -223,7 +223,7 @@ class CallDetailRecordsController extends BaseController
 
         if (preg_match_all("/\d+/", $searchPhrase, $matches)) {
             $needCloseAnd = false;
-            $extensionsLength = PbxSettings::getValueByKey('PBXInternalExtensionLength');
+            $extensionsLength = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH);
             if ($parameters['conditions'] !== '') {
                 $parameters['conditions'] .= ' AND (';
                 $needCloseAnd = true;

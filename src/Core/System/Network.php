@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Common\Models\{LanInterfaces, PbxSettings};
+use MikoPBX\Common\Models\{LanInterfaces, PbxSettings, PbxSettingsConstants};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di\Injectable;
 use Symfony\Component\Process\Process;
@@ -108,7 +108,7 @@ class Network extends Injectable
             }
         }
         unset($interfaces);
-        $port = PbxSettings::getValueByKey('WEBHTTPSPort');
+        $port = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_HTTPS_PORT);
         $info = PHP_EOL . "   The web interface is available at the addresses:" . PHP_EOL . PHP_EOL;
         foreach ($addresses['local'] as $address) {
             if (empty($address)) {

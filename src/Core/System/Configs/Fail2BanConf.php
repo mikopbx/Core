@@ -58,7 +58,7 @@ class Fail2BanConf extends Injectable
     public function __construct()
     {
         $this->allPbxSettings  = PbxSettings::getAllPbxSettings();
-        $fail2ban_enable       = $this->allPbxSettings['PBXFail2BanEnabled'];
+        $fail2ban_enable       = $this->allPbxSettings[PbxSettingsConstants::PBX_FAIL2BAN_ENABLED];
         $this->fail2ban_enable = ($fail2ban_enable === '1');
     }
 
@@ -291,21 +291,21 @@ class Fail2BanConf extends Injectable
         // Define ports for different services
         $httpPorts = [
             $this->allPbxSettings[PbxSettingsConstants::WEB_PORT],
-            $this->allPbxSettings['WEBHTTPSPort']
+            $this->allPbxSettings[PbxSettingsConstants::WEB_HTTPS_PORT]
         ];
         $sshPort = [
             $this->allPbxSettings[PbxSettingsConstants::SSH_PORT],
         ];
         $asteriskPorts = [
-            $this->allPbxSettings['SIPPort'],
-            $this->allPbxSettings['TLS_PORT'],
-            $this->allPbxSettings['IAXPort'],
-            $this->allPbxSettings['RTPPortFrom'].':'.$this->allPbxSettings['RTPPortTo'],
-            $this->allPbxSettings['AJAMPortTLS']
+            $this->allPbxSettings[PbxSettingsConstants::SIP_PORT],
+            $this->allPbxSettings[PbxSettingsConstants::TLS_PORT],
+            $this->allPbxSettings[PbxSettingsConstants::IAX_PORT],
+            $this->allPbxSettings[PbxSettingsConstants::RTP_PORT_FROM].':'.$this->allPbxSettings[PbxSettingsConstants::RTP_PORT_TO],
+            $this->allPbxSettings[PbxSettingsConstants::AJAM_PORT_TLS]
         ];
         $asteriskAMI = [
-            $this->allPbxSettings['AMIPort'],
-            $this->allPbxSettings['AJAMPort'],
+            $this->allPbxSettings[PbxSettingsConstants::AMI_PORT],
+            $this->allPbxSettings[PbxSettingsConstants::AJAM_PORT],
         ];
 
         // Define jails and their corresponding actions

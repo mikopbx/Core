@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
@@ -59,9 +60,9 @@ class Fail2BanEditForm extends BaseForm
         }
 
         $cheskarr = ['value' => null];
-        if ($options['PBXFail2BanEnabled'] === "1") {
+        if ($options[PbxSettingsConstants::PBX_FAIL2BAN_ENABLED] === "1") {
             $cheskarr = ['checked' => 'checked', 'value' => null];
         }
-        $this->add(new Check('PBXFail2BanEnabled', $cheskarr));
+        $this->add(new Check(PbxSettingsConstants::PBX_FAIL2BAN_ENABLED, $cheskarr));
     }
 }

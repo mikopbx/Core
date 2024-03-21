@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use Exception;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Service\Main;
@@ -139,7 +140,7 @@ class SysinfoManagementProcessor extends Injectable
      */
     private static function getPBXVersion(): string
     {
-        $version = PbxSettings::getValueByKey('PBXVersion');
+        $version = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
         $content = '─────────────────────────────────────── PBXVersion ───────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
         $content .= $version . PHP_EOL;

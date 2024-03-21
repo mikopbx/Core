@@ -24,7 +24,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
-use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
+use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 use Throwable;
@@ -234,7 +234,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     public function checkCompatibility():bool
     {
         // Get the current PBX version from the settings.
-        $currentVersionPBX = PbxSettings::getValueByKey('PBXVersion');
+        $currentVersionPBX = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
 
         // Remove any '-dev' suffix from the version.
         $currentVersionPBX = str_replace('-dev', '', $currentVersionPBX);

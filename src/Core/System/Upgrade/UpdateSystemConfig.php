@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\Upgrade;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Storage;
@@ -52,7 +53,7 @@ class UpdateSystemConfig extends Di\Injectable
         $this->deleteLostModules();
         // Clear all caches on any changed models
         ModelsBase::clearCache(PbxSettings::class);
-        $previous_version = (string)str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings('PBXVersion'));
+        $previous_version = (string)str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::PBX_VERSION));
         $current_version  = (string)str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {
             $upgradeClasses      = [];
@@ -76,7 +77,7 @@ class UpdateSystemConfig extends Di\Injectable
             }
 
             $this->updateConfigEveryNewRelease();
-            $this->mikoPBXConfig->setGeneralSettings('PBXVersion', trim(file_get_contents('/etc/version')));
+            $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::PBX_VERSION, trim(file_get_contents('/etc/version')));
         }
         Storage::moveReadOnlySoundsToStorage();
         Storage::copyMohFilesToStorage();

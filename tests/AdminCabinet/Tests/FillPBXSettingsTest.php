@@ -165,11 +165,11 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
 
         $params[] = [
             [
-                'Name'                   => 'Тестовая 72',
-                'Description'            => 'log: admin  pass: 123456789MikoPBX#1 last test:' . date("Y-m-d H:i:s"),
-                'PBXLanguage'            => 'en-en',
-                'PBXRecordCalls'         => true,
-                'SendMetrics'            => false,
+                PbxSettingsConstants::PBX_NAME                 => 'Тестовая 72',
+                PbxSettingsConstants::PBX_DESCRIPTION            => 'log: admin  pass: 123456789MikoPBX#1 last test:' . date("Y-m-d H:i:s"),
+                PbxSettingsConstants::PBX_LANGUAGE            => 'en-en',
+                PbxSettingsConstants::PBX_RECORD_CALLS         => true,
+                PbxSettingsConstants::SEND_METRICS            => false,
                 PbxSettingsConstants::SSH_AUTHORIZED_KEYS      => $SSHAuthorizedKeys,
                 'codec_alaw'             => true,
                 'codec_ulaw'             => false,

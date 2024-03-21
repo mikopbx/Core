@@ -32,8 +32,6 @@ use Phalcon\Di;
 class LanguageController extends BaseController
 {
 
-    public const WEB_ADMIN_LANGUAGE = 'WebAdminLanguage';
-
     /**
      * Updates system settings for language
      *
@@ -62,7 +60,7 @@ class LanguageController extends BaseController
     {
         $newLanguage = $this->request->getPost('newLanguage', 'string');
         if (array_key_exists($newLanguage, self::getAvailableWebAdminLanguages())) {
-            $this->session->set(LanguageController::WEB_ADMIN_LANGUAGE, $newLanguage);
+            $this->session->set(PbxSettingsConstants::WEB_ADMIN_LANGUAGE, $newLanguage);
             if ($this->session->has(SessionController::SESSION_ID)) {
                 self::updateSystemLanguage($newLanguage);
             }

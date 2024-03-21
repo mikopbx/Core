@@ -291,7 +291,7 @@ class LicenseManagementProcessor extends Injectable
             $dataMetrics = [];
 
             // PBXVersion
-            $dataMetrics['PBXname'] = 'MikoPBX@' . PbxSettings::getValueByKey('PBXVersion');
+            $dataMetrics['PBXname'] = 'MikoPBX@' . PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
 
             // SIP Extensions count
             $extensions = Extensions::find('type="' . Extensions::TYPE_SIP . '"');
@@ -301,7 +301,7 @@ class LicenseManagementProcessor extends Injectable
             $dataMetrics['WebAdminLanguage'] = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
 
             // PBX language
-            $dataMetrics['PBXLanguage'] = PbxSettings::getValueByKey('PBXLanguage');
+            $dataMetrics['PBXLanguage'] = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LANGUAGE);
 
             $this->license->sendLicenseMetrics($licenseKey, $dataMetrics);
         }

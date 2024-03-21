@@ -19,6 +19,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
@@ -39,7 +40,7 @@ class NTPConf extends Injectable
      */
     public static function configure(): void
     {
-        $ntp_servers = PbxSettings::getValueByKey('NTPServer');
+        $ntp_servers = PbxSettings::getValueByKey(PbxSettingsConstants::NTP_SERVER);
         $ntp_servers = preg_split('/\r\n|\r|\n| /', $ntp_servers);
         $ntp_conf = '';
         foreach ($ntp_servers as $ntp_server){
@@ -60,7 +61,7 @@ server 2.pool.ntp.org';
             // T2SDE or Docker
             Processes::killByName("ntpd");
             usleep(500000);
-            $manual_time = PbxSettings::getValueByKey('PBXManualTimeSettings');
+            $manual_time = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS);
             if ($manual_time !== '1') {
                 $ntpdPath = Util::which('ntpd');
                 Processes::mwExec($ntpdPath);

@@ -19,17 +19,18 @@
 
 namespace MikoPBX\Tests\Core\System\Upgrade;
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
-class UpdateSystemConfigTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
+class UpdateSystemConfigTest extends AbstractUnitTest
 {
 
     public function testUpdateConfigs()
     {
         $mikoPBXConfig = new MikoPBXConfig();
-        $mikoPBXConfig->setGeneralSettings('PBXVersion','2020.2.700');
+        $mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::PBX_VERSION,'2020.2.700');
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
     }

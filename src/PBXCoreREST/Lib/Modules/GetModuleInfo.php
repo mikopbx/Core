@@ -45,7 +45,7 @@ class GetModuleInfo  extends \Phalcon\Di\Injectable
         if ($managedCache->has($cacheKey)){
             $body = $managedCache->get($cacheKey);
         } else {
-            $PBXVersion = PbxSettings::getValueByKey('PBXVersion');
+            $PBXVersion = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
             $PBXVersion = (string)str_ireplace('-dev', '', $PBXVersion);
             $body = '';
             $client = new GuzzleHttp\Client();

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -42,7 +43,7 @@ class FeaturesConf extends AsteriskConfigClass
      */
     public function extensionGlobals(): string
     {
-        return "PICKUP_EXTEN={$this->generalSettings['PBXFeaturePickupExten']}\n";
+        return "PICKUP_EXTEN={$this->generalSettings[PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN]}\n";
     }
 
     /**
@@ -52,22 +53,22 @@ class FeaturesConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $atxTimeout = $this->generalSettings['PBXFeatureAtxferNoAnswerTimeout'];
+        $atxTimeout = $this->generalSettings[PbxSettingsConstants::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT];
         if (empty($atxTimeout)) {
             $atxTimeout = 45;
         }
         $conf = "[general]\n" .
-            "featuredigittimeout = {$this->generalSettings['PBXFeatureDigitTimeout']}\n" .
+            "featuredigittimeout = {$this->generalSettings[PbxSettingsConstants::PBX_FEATURE_DIGIT_TIMEOUT]}\n" .
             "atxfernoanswertimeout = {$atxTimeout}\n" .
-            "transferdigittimeout = {$this->generalSettings['PBXFeatureTransferDigitTimeout']}\n" .
-            "pickupexten = {$this->generalSettings['PBXFeaturePickupExten']}\n" .
+            "transferdigittimeout = {$this->generalSettings[PbxSettingsConstants::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT]}\n" .
+            "pickupexten = {$this->generalSettings[PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN]}\n" .
             "atxferabort = *0\n" .
             "\n" .
             "[applicationmap]\n\n" .
             "[featuremap]\n" .
-            "atxfer => {$this->generalSettings['PBXFeatureAttendedTransfer']}\n" .
+            "atxfer => {$this->generalSettings[PbxSettingsConstants::PBX_FEATURE_ATTENDED_TRANSFER]}\n" .
             "disconnect = *0\n" .
-            "blindxfer => {$this->generalSettings['PBXFeatureBlindTransfer']}\n" .
+            "blindxfer => {$this->generalSettings[PbxSettingsConstants::PBX_FEATURE_BLIND_TRANSFER]}\n" .
             "\n";
 
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GET_FEATURE_MAP);

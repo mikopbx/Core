@@ -21,6 +21,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\MailSettingsEditForm;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 
 class MailSettingsController extends BaseController
 {
@@ -52,24 +53,24 @@ class MailSettingsController extends BaseController
     private function getEmailSettingsArray(): array
     {
         return [
-            'MailSMTPHost',
-            'MailSMTPPort',
-            'MailSMTPUsername',
-            'MailSMTPPassword',
-            'MailEnableNotifications',
-            'MailSMTPFromUsername',
-            'MailSMTPSenderAddress',
-            'MailSMTPUseTLS',
-            'MailSMTPCertCheck',
-            'MailTplMissedCallSubject',
-            'MailTplMissedCallBody',
-            'MailTplMissedCallFooter',
-            'MailTplVoicemailSubject',
-            'MailTplVoicemailBody',
-            'MailTplVoicemailFooter',
-            'SystemNotificationsEmail',
-            'SystemEmailForMissed',
-            'VoicemailNotificationsEmail',
+            PbxSettingsConstants::MAIL_SMTP_HOST,
+            PbxSettingsConstants::MAIL_SMTP_PORT,
+            PbxSettingsConstants::MAIL_SMTP_USERNAME,
+            PbxSettingsConstants::MAIL_SMTP_PASSWORD,
+            PbxSettingsConstants::MAIL_ENABLE_NOTIFICATIONS,
+            PbxSettingsConstants::MAIL_SMTP_FROM_USERNAME,
+            PbxSettingsConstants::MAIL_SMTP_SENDER_ADDRESS,
+            PbxSettingsConstants::MAIL_SMTP_USE_TLS,
+            PbxSettingsConstants::MAIL_SMTP_CERT_CHECK,
+            PbxSettingsConstants::MAIL_TPL_MISSED_CALL_SUBJECT,
+            PbxSettingsConstants::MAIL_TPL_MISSED_CALL_BODY,
+            PbxSettingsConstants::MAIL_TPL_MISSED_CALL_FOOTER,
+            PbxSettingsConstants::MAIL_TPL_VOICEMAIL_SUBJECT,
+            PbxSettingsConstants::MAIL_TPL_VOICEMAIL_BODY,
+            PbxSettingsConstants::MAIL_TPL_VOICEMAIL_FOOTER,
+            PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL,
+            PbxSettingsConstants::SYSTEM_EMAIL_FOR_MISSED,
+            PbxSettingsConstants::VOICEMAIL_NOTIFICATIONS_EMAIL,
         ];
     }
 
@@ -93,9 +94,9 @@ class MailSettingsController extends BaseController
             }
 
             switch ($key) {
-                case "MailEnableNotifications":
-                case "MailSMTPUseTLS":
-                case "MailSMTPCertCheck":
+                case PbxSettingsConstants::MAIL_ENABLE_NOTIFICATIONS:
+                case PbxSettingsConstants::MAIL_SMTP_USE_TLS:
+                case PbxSettingsConstants::MAIL_SMTP_CERT_CHECK:
                 case "***ALL CHECK BOXES ABOVE***":
                     $record->value = ($data[$key] == 'on') ? "1" : "0";
                     break;

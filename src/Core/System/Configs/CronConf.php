@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
@@ -87,7 +88,7 @@ class CronConf extends Injectable
         $phpPath               = Util::which('php');
         $WorkerSafeScripts     = "$phpPath -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
 
-        $restart_night = $this->mikoPBXConfig->getGeneralSettings('RestartEveryNight');
+        $restart_night = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::RESTART_EVERY_NIGHT);
         $asteriskPath  = Util::which('asterisk');
         $ntpdPath      = Util::which('ntpd');
         $dumpPath      = Util::which('dump-conf-db');

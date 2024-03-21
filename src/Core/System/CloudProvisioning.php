@@ -65,7 +65,7 @@ class CloudProvisioning
         $cp->updatePbxSettings(self::PBX_SETTING_KEY, $resultProvisioning);
         if ($resultProvisioning === '1') {
             // Enable firewall.
-            $cp->updatePbxSettings('PBXFirewallEnabled', '1');
+            $cp->updatePbxSettings(PbxSettingsConstants::PBX_FIREWALL_ENABLED, '1');
             $cp->updatePbxSettings('PBXFail2BanEnabled', '1');
             $cp->checkConnectStorage();
         }

@@ -333,9 +333,9 @@ class WorkerCallEvents extends WorkerBase
         }
 
         // Set some class properties based on the PbxSettings values
-        $this->notRecInner = PbxSettings::getValueByKey('PBXRecordCallsInner') === '0';
-        $this->record_calls = PbxSettings::getValueByKey('PBXRecordCalls') === '1';
-        $this->split_audio_thread = PbxSettings::getValueByKey('PBXSplitAudioThread') === '1';
+        $this->notRecInner = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_CALLS_INNER) === '0';
+        $this->record_calls = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_CALLS) === '1';
+        $this->split_audio_thread = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD) === '1';
     }
 
     /**

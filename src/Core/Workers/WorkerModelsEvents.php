@@ -206,14 +206,14 @@ class WorkerModelsEvents extends WorkerBase
         // FeaturesSettings
         $tables[] = [
             'settingName' => [
-                'PBXLanguage',
-                'PBXInternalExtensionLength',
-                'PBXFeatureAttendedTransfer',
-                'PBXFeatureBlindTransfer',
-                'PBXFeatureDigitTimeout',
-                'PBXFeatureAtxferNoAnswerTimeout',
-                'PBXFeatureTransferDigitTimeout',
-                'PBXFeaturePickupExten',
+                PbxSettingsConstants::PBX_LANGUAGE,
+                PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH,
+                PbxSettingsConstants::PBX_FEATURE_ATTENDED_TRANSFER,
+                PbxSettingsConstants::PBX_FEATURE_BLIND_TRANSFER,
+                PbxSettingsConstants::PBX_FEATURE_DIGIT_TIMEOUT,
+                PbxSettingsConstants::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT,
+                PbxSettingsConstants::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT,
+                PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN,
             ],
             'functions' => [
                 self::R_FEATURES,
@@ -238,9 +238,9 @@ class WorkerModelsEvents extends WorkerBase
         // CallRecordSettings
         $tables[] = [
             'settingName' => [
-                'PBXRecordCalls',
-                'PBXRecordCallsInner',
-                'PBXSplitAudioThread',
+                PbxSettingsConstants::PBX_RECORD_CALLS,
+                PbxSettingsConstants::PBX_RECORD_CALLS_INNER,
+                PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD,
             ],
             'functions' => [
                 self::R_DIALPLAN,
@@ -260,9 +260,9 @@ class WorkerModelsEvents extends WorkerBase
         // AMIParameters
         $tables[] = [
             'settingName' => [
-                'AMIPort',
-                'AJAMPort',
-                'AJAMPortTLS',
+                PbxSettingsConstants::AMI_PORT,
+                PbxSettingsConstants::AJAM_PORT,
+                PbxSettingsConstants::AJAM_PORT_TLS,
             ],
             'functions' => [
                 self::R_MANAGERS,
@@ -272,7 +272,7 @@ class WorkerModelsEvents extends WorkerBase
         // IaxParameters
         $tables[] = [
             'settingName' => [
-                'IAXPort',
+                PbxSettingsConstants::IAX_PORT,
             ],
             'functions' => [
                 self::R_IAX,
@@ -282,8 +282,8 @@ class WorkerModelsEvents extends WorkerBase
         // Guest calls without authorization
         $tables[] = [
             'settingName' => [
-                'PBXAllowGuestCalls',
-                'UseWebRTC',
+                PbxSettingsConstants::PBX_ALLOW_GUEST_CALLS,
+                PbxSettingsConstants::USE_WEB_RTC,
             ],
             'functions' => [
                 self::R_SIP,
@@ -294,12 +294,12 @@ class WorkerModelsEvents extends WorkerBase
         // SipParameters
         $tables[] = [
             'settingName' => [
-                'SIPPort',
-                'TLS_PORT',
-                'SIPDefaultExpiry',
-                'SIPMinExpiry',
-                'SIPMaxExpiry',
-                'PBXLanguage',
+                PbxSettingsConstants::SIP_PORT,
+                PbxSettingsConstants::TLS_PORT,
+                PbxSettingsConstants::SIP_DEFAULT_EXPIRY,
+                PbxSettingsConstants::SIP_MIN_EXPIRY,
+                PbxSettingsConstants::SIP_MAX_EXPIRY,
+                PbxSettingsConstants::PBX_LANGUAGE,
             ],
             'functions' => [
                 self::R_SIP,
@@ -309,9 +309,9 @@ class WorkerModelsEvents extends WorkerBase
         // RTPParameters
         $tables[] = [
             'settingName' => [
-                'RTPPortFrom',
-                'RTPPortTo',
-                'RTPStunServer',
+                PbxSettingsConstants::RTP_PORT_FROM,
+                PbxSettingsConstants::RTP_PORT_TO,
+                PbxSettingsConstants::RTP_STUN_SERVER,
             ],
             'functions' => [
                 self::R_RTP,
@@ -322,10 +322,10 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 PbxSettingsConstants::SSH_PORT,
-                'SSHRsaKey',
-                'SSHDssKey',
+                PbxSettingsConstants::SSH_RSA_KEY,
+                PbxSettingsConstants::SSH_DSS_KEY,
                 PbxSettingsConstants::SSH_PASSWORD,
-                'SSHecdsaKey',
+                PbxSettingsConstants::SSH_ECDSA_KEY,
                 PbxSettingsConstants::SSH_AUTHORIZED_KEYS,
                 PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD,
             ],
@@ -337,19 +337,19 @@ class WorkerModelsEvents extends WorkerBase
         // FirewallParameters
         $tables[] = [
             'settingName' => [
-                'SIPPort',
-                'TLS_PORT',
-                'RTPPortFrom',
-                'RTPPortTo',
-                'IAXPort',
-                'AMIPort',
-                'AJAMPort',
-                'AJAMPortTLS',
+                PbxSettingsConstants::SIP_PORT,
+                PbxSettingsConstants::TLS_PORT,
+                PbxSettingsConstants::RTP_PORT_FROM,
+                PbxSettingsConstants::RTP_PORT_TO,
+                PbxSettingsConstants::IAX_PORT,
+                PbxSettingsConstants::AMI_PORT,
+                PbxSettingsConstants::AJAM_PORT,
+                PbxSettingsConstants::AJAM_PORT_TLS,
                 PbxSettingsConstants::WEB_PORT,
-                'WEBHTTPSPort',
+                PbxSettingsConstants::WEB_HTTPS_PORT,
                 PbxSettingsConstants::SSH_PORT,
-                'PBXFirewallEnabled',
-                'PBXFail2BanEnabled',
+                PbxSettingsConstants::PBX_FIREWALL_ENABLED,
+                PbxSettingsConstants::PBX_FAIL2BAN_ENABLED,
             ],
             'functions' => [
                 self::R_FIREWALL,
@@ -361,10 +361,10 @@ class WorkerModelsEvents extends WorkerBase
         $tables[] = [
             'settingName' => [
                 PbxSettingsConstants::WEB_PORT,
-                'WEBHTTPSPort',
-                'WEBHTTPSPublicKey',
-                'WEBHTTPSPrivateKey',
-                'RedirectToHttps',
+                PbxSettingsConstants::WEB_HTTPS_PORT,
+                PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY,
+                PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY,
+                PbxSettingsConstants::REDIRECT_TO_HTTPS,
             ],
             'functions' => [
                 self::R_NGINX,
@@ -374,7 +374,7 @@ class WorkerModelsEvents extends WorkerBase
         // CronParameters
         $tables[] = [
             'settingName' => [
-                'RestartEveryNight',
+                PbxSettingsConstants::RESTART_EVERY_NIGHT,
             ],
             'functions' => [
                 self::R_CRON,
@@ -384,9 +384,9 @@ class WorkerModelsEvents extends WorkerBase
         // DialplanParameters
         $tables[] = [
             'settingName' => [
-                'PBXLanguage',
-                'PBXRecordAnnouncementIn',
-                'PBXRecordAnnouncementOut',
+                PbxSettingsConstants::PBX_LANGUAGE,
+                PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_IN,
+                PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_OUT,
             ],
             'functions' => [
                 self::R_DIALPLAN,
@@ -395,7 +395,7 @@ class WorkerModelsEvents extends WorkerBase
         // DialplanParameters
         $tables[] = [
             'settingName' => [
-                'PBXLanguage',
+                PbxSettingsConstants::PBX_LANGUAGE,
             ],
             'functions' => [
                 self::R_PBX_CORE,
@@ -405,15 +405,15 @@ class WorkerModelsEvents extends WorkerBase
         // VoiceMailParameters
         $tables[] = [
             'settingName' => [
-                'MailTplVoicemailSubject',
-                'MailTplVoicemailBody',
-                'MailTplVoicemailFooter',
-                'MailSMTPSenderAddress',
-                'MailSMTPUsername',
-                'PBXTimezone',
-                'VoicemailNotificationsEmail',
-                'SystemNotificationsEmail',
-                'SystemEmailForMissed',
+                PbxSettingsConstants::MAIL_TPL_VOICEMAIL_SUBJECT,
+                PbxSettingsConstants::MAIL_TPL_VOICEMAIL_BODY,
+                PbxSettingsConstants::MAIL_TPL_VOICEMAIL_FOOTER,
+                PbxSettingsConstants::MAIL_SMTP_SENDER_ADDRESS,
+                PbxSettingsConstants::MAIL_SMTP_USERNAME,
+                PbxSettingsConstants::PBX_TIMEZONE,
+                PbxSettingsConstants::VOICEMAIL_NOTIFICATIONS_EMAIL,
+                PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL,
+                PbxSettingsConstants::SYSTEM_EMAIL_FOR_MISSED,
             ],
             'functions' => [
                 self::R_VOICEMAIL,
@@ -445,7 +445,7 @@ class WorkerModelsEvents extends WorkerBase
         // TimeZoneSettings
         $tables[] = [
             'settingName' => [
-                'PBXTimezone',
+                PbxSettingsConstants::PBX_TIMEZONE,
             ],
             'functions' => [
                 self::R_TIMEZONE,
@@ -460,9 +460,9 @@ class WorkerModelsEvents extends WorkerBase
         // NTPSettings
         $tables[] = [
             'settingName' => [
-                'PBXManualTimeSettings',
-                'NTPServer',
-                'PBXTimezone',
+                PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS,
+                PbxSettingsConstants::NTP_SERVER,
+                PbxSettingsConstants::PBX_TIMEZONE,
             ],
             'functions' => [
                 self::R_NTP,
@@ -474,7 +474,7 @@ class WorkerModelsEvents extends WorkerBase
             'settingName' => [
                 PbxSettingsConstants::WEB_ADMIN_PASSWORD,
                 PbxSettingsConstants::SSH_PASSWORD,
-                'PBXFirewallEnabled',
+                PbxSettingsConstants::PBX_FIREWALL_ENABLED,
             ],
             'functions' => [
                 self::R_ADVICES,
@@ -484,7 +484,7 @@ class WorkerModelsEvents extends WorkerBase
         // Sentry
         $tables[] = [
             'settingName' => [
-                'SendMetrics',
+                PbxSettingsConstants::SEND_METRICS,
             ],
             'functions' => [
                 self::R_SENTRY,

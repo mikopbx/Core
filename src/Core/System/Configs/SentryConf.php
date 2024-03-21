@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di\Injectable;
 
@@ -42,7 +43,7 @@ class SentryConf extends Injectable
      */
     public function configure(): void
     {
-        if (PbxSettings::getValueByKey('SendMetrics') === '1') {
+        if (PbxSettings::getValueByKey(PbxSettingsConstants::SEND_METRICS) === '1') {
             touch(self::CONF_FILE);
         } elseif (file_exists(self::CONF_FILE)) {
             unlink(self::CONF_FILE);

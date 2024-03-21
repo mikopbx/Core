@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Http\Response;
 use Phalcon\Di\Injectable;
@@ -42,7 +43,7 @@ class CheckUpdates extends Injectable
     public function process(): array
     {
         $messages = [];
-        $PBXVersion = PbxSettings::getValueByKey('PBXVersion');
+        $PBXVersion = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
 
         $client = new GuzzleHttp\Client();
         try {

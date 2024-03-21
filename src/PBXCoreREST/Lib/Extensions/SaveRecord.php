@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\ExternalPhones;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
@@ -152,7 +153,7 @@ class SaveRecord extends Injectable
         foreach ($metaData->getAttributes($userEntity) as $name) {
             switch ($name) {
                 case 'language':
-                    $userEntity->$name = PbxSettings::getValueByKey('PBXLanguage');
+                    $userEntity->$name = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LANGUAGE);
                     break;
                 default:
                     $propertyKey = 'user_' . $name;

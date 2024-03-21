@@ -111,12 +111,12 @@ class NginxConf extends Injectable
 
         // HTTP
         $WEBPort      = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_PORT);
-        $WEBHTTPSPort = $this->mikoPBXConfig->getGeneralSettings('WEBHTTPSPort');
+        $WEBHTTPSPort = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PORT);
 
         $config = file_get_contents("{$httpConfigFile}.original");
         $config = str_replace(['<DNS>', '<WEBPort>'], [$dns_server, $WEBPort], $config);
 
-        $RedirectToHttps = $this->mikoPBXConfig->getGeneralSettings('RedirectToHttps');
+        $RedirectToHttps = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::REDIRECT_TO_HTTPS);
         if ($RedirectToHttps === '1' && $not_ssl === false) {
             $includeRow = 'include mikopbx/locations/*.conf;';
 
@@ -129,8 +129,8 @@ class NginxConf extends Injectable
         file_put_contents($httpConfigFile, $config);
 
         // SSL
-        $WEBHTTPSPublicKey  = $this->mikoPBXConfig->getGeneralSettings('WEBHTTPSPublicKey');
-        $WEBHTTPSPrivateKey = $this->mikoPBXConfig->getGeneralSettings('WEBHTTPSPrivateKey');
+        $WEBHTTPSPublicKey  = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY);
+        $WEBHTTPSPrivateKey = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY);
         if (
             $not_ssl === false
             && ! empty($WEBHTTPSPublicKey)

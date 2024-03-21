@@ -18,6 +18,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\Asterisk\AGI;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{ResParkingConf};
@@ -183,7 +184,7 @@ function Event_dial_answer($agi, $action)
     $PICKUPEER     = trim('' . $agi->get_variable("PICKUPEER", true));
     $data['dnid']  = $agi->request['agi_dnid'];
     $mikoPBXConfig = new MikoPBXConfig();
-    $pickupexten   = $mikoPBXConfig->getGeneralSettings('PBXFeaturePickupExten');
+    $pickupexten   = $mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN);
     if ('unknown' == $data['dnid'] && $PICKUPEER != '') {
         // Most likely an answer to a call from 1C.
         $data['dnid'] = $pickupexten;

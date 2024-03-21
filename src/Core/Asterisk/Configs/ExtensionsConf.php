@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\{Storage, Util};
 
 /**
@@ -64,17 +65,17 @@ class ExtensionsConf extends AsteriskConfigClass
         /** @scrutinizer ignore-call */
         $conf              = "[globals]" .PHP_EOL.
             "TRANSFER_CONTEXT=internal-transfer;".PHP_EOL;
-        if ($this->generalSettings['PBXRecordCalls'] === '1') {
+        if ($this->generalSettings[PbxSettingsConstants::PBX_RECORD_CALLS] === '1') {
             $conf .= "MONITOR_DIR=" . Storage::getMonitorDir() .PHP_EOL;
-            $conf .= "MONITOR_STEREO=" . $this->generalSettings['PBXSplitAudioThread'] .PHP_EOL;
+            $conf .= "MONITOR_STEREO=" . $this->generalSettings[PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD] .PHP_EOL;
         }
-        if ($this->generalSettings['PBXRecordCallsInner'] === '0') {
+        if ($this->generalSettings[PbxSettingsConstants::PBX_RECORD_CALLS_INNER] === '0') {
             $conf .= "MONITOR_INNER=0".PHP_EOL;
         }else{
             $conf .= "MONITOR_INNER=1".PHP_EOL;
         }
-        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementIn']).PHP_EOL;
-        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementOut']).PHP_EOL;
+        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings[PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_IN]).PHP_EOL;
+        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings[PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_OUT]).PHP_EOL;
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GLOBALS);
         $conf .= PHP_EOL.PHP_EOL;
         $conf .= "[general]".PHP_EOL;

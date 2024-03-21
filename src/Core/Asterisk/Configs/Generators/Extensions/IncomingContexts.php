@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
 
 use MikoPBX\Common\Models\IncomingRoutingTable;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ConferenceConf;
@@ -99,7 +100,7 @@ class IncomingContexts extends AsteriskConfigClass
     {
         $this->confExtensions = ConferenceConf::getConferenceExtensions();
         $this->routes         = $this->getRoutes();
-        $this->lang           = str_replace('_', '-', $this->generalSettings['PBXLanguage']);
+        $this->lang           = str_replace('_', '-', $this->generalSettings[PbxSettingsConstants::PBX_LANGUAGE]);
         $this->need_def_rout  = $this->checkNeedDefRout();
     }
 

@@ -22,6 +22,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
@@ -48,7 +49,7 @@ class ActionDialAnswer
     public static function execute(WorkerCallEvents $worker, $data): void
     {
         // Retrieve the pickup extension number from the PBX settings.
-        $pickupexten = PbxSettings::getValueByKey('PBXFeaturePickupExten');
+        $pickupexten = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN);
 
         // Check if the dialed number (dnid) matches the pickup extension.
         if (trim($data['dnid']) === $pickupexten) {

@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use Phalcon\Di;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -45,19 +46,19 @@ class Notifications
     {
         $mikoPBXConfig = new MikoPBXConfig();
         $this->settings = $mikoPBXConfig->getGeneralSettings();
-        $this->enableNotifications = $this->settings['MailEnableNotifications'] === '1';
+        $this->enableNotifications = $this->settings[PbxSettingsConstants::MAIL_ENABLE_NOTIFICATIONS] === '1';
 
-        $mailSMTPSenderAddress = $this->settings['MailSMTPSenderAddress'] ?? '';
+        $mailSMTPSenderAddress = $this->settings[PbxSettingsConstants::MAIL_SMTP_SENDER_ADDRESS] ?? '';
         if (!empty($mailSMTPSenderAddress)) {
             $this->fromAddres = $mailSMTPSenderAddress;
         } else {
-            $this->fromAddres = $this->settings['MailSMTPUsername'];
+            $this->fromAddres = $this->settings[PbxSettingsConstants::MAIL_SMTP_USERNAME];
         }
 
-        if (empty($this->settings['MailSMTPFromUsername'])) {
-            $this->fromName = 'MikoPBX Notification';
+        if (empty($this->settings[PbxSettingsConstants::MAIL_SMTP_FROM_USERNAME])) {
+            $this->fromName = 'MikoPBX notification';
         } else {
-            $this->fromName = $this->settings['MailSMTPFromUsername'];
+            $this->fromName = $this->settings[PbxSettingsConstants::MAIL_SMTP_FROM_USERNAME];
         }
     }
 
@@ -108,7 +109,7 @@ class Notifications
         $text = $text . '<br><br>' . Network::getInfoMessage();
 
         // Get the admin email address from PbxSettings.
-        $adminMail = PbxSettings::getValueByKey('SystemNotificationsEmail');
+        $adminMail = PbxSettings::getValueByKey(PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL);
         $notify = new Notifications();
         $result = $notify->sendMail($adminMail, $subject, trim($text));
 
@@ -128,7 +129,7 @@ class Notifications
         if (!self::checkConnection(self::TYPE_PHP_MAILER)) {
             return false;
         }
-        $systemNotificationsEmail = $this->settings['SystemNotificationsEmail'];
+        $systemNotificationsEmail = $this->settings[PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL];
         $result = $this->sendMail($systemNotificationsEmail, 'Test mail from MIKO PBX', '<b>Test message</b><hr>');
         return ($result === true);
     }
@@ -206,20 +207,20 @@ class Notifications
         $mail->isSMTP();
         $mail->SMTPDebug = 0;
         $mail->Timeout = 5;
-        $mail->Host = $this->settings['MailSMTPHost'];
-        if ($this->settings["MailSMTPUseTLS"] === "1") {
+        $mail->Host = $this->settings[PbxSettingsConstants::MAIL_SMTP_HOST];
+        if ($this->settings[PbxSettingsConstants::MAIL_SMTP_USE_TLS] === "1") {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             // $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         } else {
             $mail->SMTPSecure = '';
         }
-        if (empty($this->settings['MailSMTPUsername']) && empty($this->settings['MailSMTPPassword'])) {
+        if (empty($this->settings[PbxSettingsConstants::MAIL_SMTP_USERNAME]) && empty($this->settings[PbxSettingsConstants::MAIL_SMTP_PASSWORD])) {
             $mail->SMTPAuth = false;
         } else {
             $mail->SMTPAuth = true;
-            $mail->Username = $this->settings['MailSMTPUsername'];
-            $mail->Password = $this->settings['MailSMTPPassword'];
-            if ($this->settings["MailSMTPCertCheck"] !== '1') {
+            $mail->Username = $this->settings[PbxSettingsConstants::MAIL_SMTP_USERNAME];
+            $mail->Password = $this->settings[PbxSettingsConstants::MAIL_SMTP_PASSWORD];
+            if ($this->settings[PbxSettingsConstants::MAIL_SMTP_CERT_CHECK] !== '1') {
                 $mail->SMTPOptions = [
                     'ssl' => [
                         'verify_peer' => false,
@@ -229,7 +230,7 @@ class Notifications
                 ];
             }
         }
-        $mail->Port = (integer)$this->settings['MailSMTPPort'];
+        $mail->Port = (integer)$this->settings[PbxSettingsConstants::MAIL_SMTP_PORT];
         $mail->CharSet = 'UTF-8';
 
         return $mail;

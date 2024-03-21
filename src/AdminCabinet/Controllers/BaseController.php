@@ -22,7 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
-use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
+use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
 use Phalcon\Http\ResponseInterface;
 use Phalcon\Mvc\{Controller, Dispatcher, View};
 use Phalcon\Tag;
@@ -72,7 +72,7 @@ class BaseController extends Controller
     protected function prepareView(): void
     {
         // Set the default timezone based on PBX settings
-        date_default_timezone_set(PbxSettings::getValueByKey('PBXTimezone'));
+        date_default_timezone_set(PbxSettings::getValueByKey(P));
 
         // Set PBXLicense view variable if session exists
         if ($this->session->has(SessionController::SESSION_ID)) {
@@ -110,11 +110,11 @@ class BaseController extends Controller
         $this->view->urlToLogo = $this->url->get('assets/img/logo-mikopbx.svg');
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent = '';
-        $this->view->WebAdminLanguage = $this->session->get(LanguageController::WEB_ADMIN_LANGUAGE)??PbxSettings::getValueByKey('WebAdminLanguage');
+        $this->view->WebAdminLanguage = $this->session->get(PbxSettingsConstants::WEB_ADMIN_LANGUAGE)??PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
         $this->view->AvailableLanguages = json_encode(LanguageController::getAvailableWebAdminLanguages());
         $this->view->submitMode = $this->session->get('SubmitMode') ?? 'SaveSettings';
         $this->view->lastSentryEventId = $this->setLastSentryEventId();
-        $this->view->PBXVersion = PbxSettings::getValueByKey('PBXVersion');
+        $this->view->PBXVersion = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
         $this->view->MetaTegHeadDescription = $this->translation->_('MetaTegHeadDescription');
         $this->view->isExternalModuleController = $this->isExternalModuleController;
 

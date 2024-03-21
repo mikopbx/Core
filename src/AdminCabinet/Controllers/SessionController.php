@@ -47,9 +47,9 @@ class SessionController extends BaseController
     public function indexAction(): void
     {
         $this->view->NameFromSettings
-            = PbxSettings::getValueByKey('Name');
+            = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_NAME);
         $this->view->DescriptionFromSettings
-            = PbxSettings::getValueByKey('Description');
+            = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_DESCRIPTION);
         $this->view->form = new LoginForm();
     }
 
@@ -97,8 +97,8 @@ class SessionController extends BaseController
         if ($userLoggedIn) {
             // Register the session with the specified parameters
             $this->_registerSession($sessionParams);
-            if ($this->session->has(LanguageController::WEB_ADMIN_LANGUAGE)){
-                LanguageController::updateSystemLanguage($this->session->get(LanguageController::WEB_ADMIN_LANGUAGE));
+            if ($this->session->has(PbxSettingsConstants::WEB_ADMIN_LANGUAGE)){
+                LanguageController::updateSystemLanguage($this->session->get(PbxSettingsConstants::WEB_ADMIN_LANGUAGE));
             }
             $this->view->success = true;
             $backUri = $this->request->getPost('backUri');

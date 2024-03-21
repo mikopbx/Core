@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, Users};
+use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, PbxSettingsConstants, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 
@@ -82,7 +82,7 @@ class WorkerCdr extends WorkerBase
         // Retrieve system settings
         $this->internal_numbers = [];
         $this->no_answered_calls = [];
-        $this->emailForMissed = PbxSettings::getValueByKey('SystemEmailForMissed');
+        $this->emailForMissed = PbxSettings::getValueByKey(PbxSettingsConstants::SYSTEM_EMAIL_FOR_MISSED);
 
         // Construct parameters for user data query
         $usersClass = Users::class;

@@ -245,16 +245,16 @@ class GeneralSettingsController extends BaseController
         // Update PBX settings
         foreach ($pbxSettings as $key => $value) {
             switch ($key) {
-                case 'PBXRecordCalls':
-                case 'PBXRecordCallsInner':
-                case 'AJAMEnabled':
-                case 'AMIEnabled':
-                case 'RestartEveryNight':
-                case 'RedirectToHttps':
-                case 'PBXSplitAudioThread':
-                case 'UseWebRTC':
+                case PbxSettingsConstants::PBX_RECORD_CALLS:
+                case PbxSettingsConstants::PBX_RECORD_CALLS_INNER:
+                case PbxSettingsConstants::AJAM_ENABLED:
+                case PbxSettingsConstants::AMI_ENABLED:
+                case PbxSettingsConstants::RESTART_EVERY_NIGHT:
+                case PbxSettingsConstants::REDIRECT_TO_HTTPS:
+                case PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD:
+                case PbxSettingsConstants::USE_WEB_RTC:
                 case PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD:
-                case 'PBXAllowGuestCalls':
+                case PbxSettingsConstants::PBX_ALLOW_GUEST_CALLS:
                 case PbxSettingsConstants::DISABLE_ALL_MODULES:
                 case '***ALL CHECK BOXES ABOVE***':
                     $newValue = ($data[$key] === 'on') ? '1' : '0';
@@ -269,12 +269,12 @@ class GeneralSettingsController extends BaseController
                         continue 2;
                     }
                     break;
-                case 'SendMetrics':
+                case PbxSettingsConstants::SEND_METRICS:
                     $newValue = ($data[$key] === 'on') ? '1' : '0';
-                    $this->session->set('SendMetrics', $newValue);
+                    $this->session->set(PbxSettingsConstants::SEND_METRICS, $newValue);
                     break;
-                case 'PBXFeatureTransferDigitTimeout':
-                    $newValue = ceil((int)$data['PBXFeatureDigitTimeout'] / 1000);
+                case PbxSettingsConstants::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT:
+                    $newValue = ceil((int)$data[PbxSettingsConstants::PBX_FEATURE_DIGIT_TIMEOUT] / 1000);
                     break;
                 case PbxSettingsConstants::WEB_ADMIN_PASSWORD:
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {

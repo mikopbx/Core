@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Iax;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\Util;
 
@@ -79,7 +80,7 @@ class IAXConf extends AsteriskConfigClass
      */
     private function generateGeneral(): string
     {
-        $iax_port = (trim($this->generalSettings['IAXPort']) !== '') ? $this->generalSettings['IAXPort'] : '4569';
+        $iax_port = (trim($this->generalSettings[PbxSettingsConstants::IAX_PORT]) !== '') ? $this->generalSettings[PbxSettingsConstants::IAX_PORT] : '4569';
         $conf     = '[general]' . "\n";
         // $conf .= "context=public-direct-dial \n";
         $conf .= "bindport={$iax_port}\n";
@@ -103,7 +104,7 @@ class IAXConf extends AsteriskConfigClass
         $reg_strings = '';
         $prov_config = '';
 
-        $lang      = str_replace('_', '-', strtolower($this->generalSettings['PBXLanguage']));
+        $lang      = str_replace('_', '-', strtolower($this->generalSettings[PbxSettingsConstants::PBX_LANGUAGE]));
         $providers = $this->getProviders();
         foreach ($providers as $provider) {
             $prov_config .= "[{$provider['uniqid']}];\n";

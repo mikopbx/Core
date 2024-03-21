@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
@@ -56,8 +57,8 @@ class UpdateConfigsUpToVer202202103 extends Injectable implements UpgradeSystemC
      * @return void
      */
     private function updateFirewallRules():void{
-        $colName = 'TLS_PORT';
-        $portTls = PbxSettings::getValueByKey('TLS_PORT');
+        $colName = PbxSettingsConstants::TLS_PORT;
+        $portTls = PbxSettings::getValueByKey(PbxSettingsConstants::TLS_PORT);
 
         /** @var NetworkFilters $net */
         $nets = NetworkFilters::find(['columns' => 'id']);
