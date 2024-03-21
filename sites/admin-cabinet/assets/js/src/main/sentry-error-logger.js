@@ -59,6 +59,11 @@ Sentry.onLoad(() => {
             if (event.exception) {
                 const error = hint.originalException;
                 if (error && error.message && error.message.length > 0) {
+
+                    // Log the error message to the console
+                    console.error("Captured error:", error);
+
+                    // Generate a hash from the error message
                     const s = error.message;
                     let hash = 0;
                     let i;
@@ -68,10 +73,13 @@ Sentry.onLoad(() => {
                         hash = ((hash << 5) - hash) + chr;
                         hash |= 0; // Convert to 32bit integer
                     }
+
+                    // Show the Sentry report dialog
                     globalShowSentryReportDialog(hash, hint.eventId);
                 }
 
             }
+            // Return the event for Sentry to process
             return event;
         },
     });
@@ -85,4 +93,3 @@ Sentry.onLoad(() => {
         globalShowSentryReportDialog(globalLastSentryEventId);
     }
 });
-
