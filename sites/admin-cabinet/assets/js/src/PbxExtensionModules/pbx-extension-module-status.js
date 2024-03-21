@@ -117,7 +117,7 @@ class PbxExtensionStatus {
             this.changeLabelText(globalTranslate.ext_ModuleDisabledStatusEnabled);
             this.$disabilityFields.removeClass('disabled');
             const $row = $(`tr[data-id=${this.uniqid}]`);
-            this.showModuleError($row, response.messages, globalTranslate.ext_ModuleChangeStatusError);
+            this.showModuleError($row, globalTranslate.ext_ModuleChangeStatusError, response.messages);
         }
         this.$allToggles.removeClass('disabled');
         $('a.button').removeClass('disabled');
@@ -186,8 +186,19 @@ class PbxExtensionStatus {
             messages.license.push(manageLink);
         }
         const textDescription = UserMessage.convertToText(messages);
-        const htmlMessage=  `<tr class="ui error center aligned table-error-messages"><td colspan="5"><div class="ui header">${header}</div><p>${textDescription}</p></div></td></tr>`;
-        $row.addClass('error');
+        const htmlMessage=  `<tr class="ui warning table-error-messages">
+                                        <td colspan="5">
+                                        <div class="ui center aligned icon header">
+                                        <i class="exclamation triangle icon"></i>
+                                          <div class="content">
+                                            ${header}
+                                          </div>
+                                        </div>
+                                            <p>${textDescription}</p>
+                                        </div>
+                                        </td>
+                                    </tr>`;
+        $row.addClass('warning');
         $row.before(htmlMessage);
     }
 }
