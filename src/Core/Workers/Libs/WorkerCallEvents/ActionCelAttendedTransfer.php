@@ -59,6 +59,7 @@ class ActionCelAttendedTransfer
                     'linkedid2' => $chanId2,
                 ],
             ];
+            $n_data=[];
             $n_data['action'] = 'sip_transfer';
             /** @var CallDetailRecordsTmp $row */
             $m_data = CallDetailRecordsTmp::find($filter);

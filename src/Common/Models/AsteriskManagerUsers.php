@@ -163,7 +163,7 @@ class AsteriskManagerUsers extends ModelsBase
     /**
      * Status of the user secret check by weak dictionary (0 = not checked, 1 = ok, 2 = weak).
      *
-     * @Column(type="integer", nullable=true, default="0")
+     * @Column(type="string", nullable=true, default="0")
      */
     public ?string $weakSecret = '0';
 

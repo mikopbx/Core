@@ -26,7 +26,6 @@ use MikoPBX\Common\Models\{OutgoingRoutingTable, Providers};
 class OutboundRoutesController extends BaseController
 {
 
-
     /**
      * Builds the list outgoing routes
      */
@@ -76,7 +75,7 @@ class OutboundRoutesController extends BaseController
      *
      * @param string $id
      */
-    public function modifyAction($id = ''): void
+    public function modifyAction(string $id = ''): void
     {
         $idIsEmpty = false;
         if(empty($id)){
@@ -97,7 +96,6 @@ class OutboundRoutesController extends BaseController
             }
             $rule->rulename = '';
             $rule->id = '';
-
         }
 
         $providers     = Providers::find();

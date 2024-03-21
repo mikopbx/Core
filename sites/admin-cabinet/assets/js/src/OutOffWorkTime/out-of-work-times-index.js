@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,$ */
+/* global globalRootUrl, DataTable, $ */
 
 /**
  * Object for managing the Out-of-Work Times table.
@@ -24,6 +24,12 @@
  * @module OutOfWorkTimesTable
  */
 const OutOfWorkTimesTable = {
+
+    /**
+     * jQuery object for the table with time frame records.
+     * @type {jQuery}
+     */
+    $timeFramesTable: $('#time-frames-table'),
 
     /**
      * Initializes the Out-of-Work Times table.
@@ -37,7 +43,7 @@ const OutOfWorkTimesTable = {
         });
 
         // Initialize DataTable
-        $('#time-frames-table').DataTable({
+        OutOfWorkTimesTable.$timeFramesTable.DataTable({
             lengthChange: false,
             paging: false,
             columns: [
@@ -65,7 +71,7 @@ const OutOfWorkTimesTable = {
         });
 
         // Initialize table drag-and-drop with the appropriate callbacks
-        $('#time-frames-table').tableDnD({
+        OutOfWorkTimesTable.$timeFramesTable.tableDnD({
             onDrop: OutOfWorkTimesTable.cbOnDrop, // Callback on dropping an item
             onDragClass: 'hoveringRow', // CSS class while dragging
             dragHandle: '.dragHandle',  // Handle for dragging
@@ -113,7 +119,7 @@ const OutOfWorkTimesTable = {
             },
             onSuccess(response) {
                 if (response.success === true) {
-                    $('#time-frames-table').find(`tr[id=${id}]`).remove();
+                    OutOfWorkTimesTable.$timeFramesTable.find(`tr[id=${id}]`).remove();
                 } else {
                     UserMessage.showError(response.message.error, globalTranslate.ex_ImpossibleToDeleteExtension);
                 }

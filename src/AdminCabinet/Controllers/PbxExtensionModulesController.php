@@ -23,6 +23,7 @@ use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
 use MikoPBX\AdminCabinet\Forms\LicensingChangeLicenseKeyForm;
 use MikoPBX\AdminCabinet\Forms\LicensingGetKeyForm;
 use MikoPBX\AdminCabinet\Forms\PbxExtensionModuleSettingsForm;
+use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
 use MikoPBX\Modules\PbxExtensionState;
 use Phalcon\Text;
@@ -60,7 +61,8 @@ class PbxExtensionModulesController extends BaseController
                 // Translate the license message
                 if ($moduleRecord['disableReason'] === PbxExtensionState::DISABLED_BY_LICENSE
                     && isset($moduleRecord['disableReasonText'])) {
-                    $moduleRecord['disableReasonText'] = $this->license->translateLicenseErrorMessage((string)$moduleRecord['disableReasonText']);
+                    $lic = $this->di->getShared(MarketPlaceProvider::SERVICE_NAME);
+                    $moduleRecord['disableReasonText'] = $lic->translateLicenseErrorMessage((string)$moduleRecord['disableReasonText']);
                 }
             }
             $moduleList[] = $moduleRecord;

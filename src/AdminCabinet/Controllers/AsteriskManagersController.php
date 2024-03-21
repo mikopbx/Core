@@ -66,8 +66,8 @@ class AsteriskManagersController extends BaseController
         foreach ($networkFilters as $filter) {
             $arrNetworkFilters[$filter->id] = $filter->getRepresent();
         }
-        $this->view->networkFilters = $arrNetworkFilters;
-        $this->view->amiUsers       = $amiUsers;
+        $this->view->setVar('networkFilters', $arrNetworkFilters);
+        $this->view->setVar('amiUsers', $amiUsers);
     }
 
 
@@ -105,8 +105,8 @@ class AsteriskManagersController extends BaseController
             ]
         );
 
-        $this->view->arrCheckBoxes = $this->arrCheckBoxes;
-        $this->view->represent     = $manager->getRepresent();
+        $this->view->setVar('arrCheckBoxes', $this->arrCheckBoxes);
+        $this->view->setVar('represent', $manager->getRepresent());
     }
 
 
@@ -178,7 +178,7 @@ class AsteriskManagersController extends BaseController
             $result             = false;
             $this->view->userId = $amiUser->id;
         }
-        $this->view->nameAvailable = $result;
-        $this->view->success = true;
+        $this->view->setVar('nameAvailable', $result);
+        $this->view->setVar('success', true);
     }
 }

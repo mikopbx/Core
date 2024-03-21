@@ -63,7 +63,7 @@ class ExtensionsController extends BaseController
         }
 
         // Execute the query and populate recordsFiltered
-        $this->executeCountQuery($parameters);
+        $this->executeCountQuery($searchPhrase['value'], $parameters);
 
         // Update query parameters for the main query
         $this->updateMainQueryParameters($parameters, $order, $columns, $recordsPerPage, $position);
@@ -134,16 +134,16 @@ class ExtensionsController extends BaseController
      *
      * @param array $parameters The query parameters
      */
-    private function executeCountQuery(array $parameters): void
+    private function executeCountQuery(string $searchPhrase, array $parameters): void
     {
         $parameters['columns'] = 'COUNT(DISTINCT(Users.id)) as rows';
         // Count the number of unique calls considering filters
-        if (!empty($searchPhrase['value'])) {
-            $this->prepareConditionsForSearchPhrases($searchPhrase['value'], $parameters);
+        if (!empty($searchPhrase)) {
+            $this->prepareConditionsForSearchPhrases($searchPhrase, $parameters);
         }
         $query = $this->di->get('modelsManager')->createBuilder($parameters)->getQuery();
         $recordsFilteredReq = $query->execute()->toArray();
-        $this->view->recordsFiltered = $recordsFilteredReq[0]['rows'] ?? 0;
+        $this->view->setVar('recordsFiltered', $recordsFilteredReq[0]['rows'] ?? 0);
     }
 
     /**

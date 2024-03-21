@@ -110,11 +110,20 @@ class NginxConf extends Injectable
         }
 
         // HTTP
-        $WEBPort      = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_PORT);
-        $WEBHTTPSPort = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PORT);
+        $WEBPort      = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_PORT);
+        $WEBHTTPSPort = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PORT);
 
         $config = file_get_contents("{$httpConfigFile}.original");
-        $config = str_replace(['<DNS>', '<WEBPort>'], [$dns_server, $WEBPort], $config);
+
+        // Define the placeholders that will be replaced in the configuration string.
+        $placeholders = ['<DNS>', '<WEBPort>'];
+
+        // Specify the actual values that will replace the placeholders.
+        $replacementValues = [$dns_server, $WEBPort];
+
+        // Replace placeholders in the configuration string with the actual values.
+        // This operation updates DNS and Web Port settings in the configuration.
+        $config = str_replace($placeholders, $replacementValues, $config);
 
         $RedirectToHttps = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::REDIRECT_TO_HTTPS);
         if ($RedirectToHttps === '1' && $not_ssl === false) {
@@ -129,8 +138,8 @@ class NginxConf extends Injectable
         file_put_contents($httpConfigFile, $config);
 
         // SSL
-        $WEBHTTPSPublicKey  = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY);
-        $WEBHTTPSPrivateKey = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY);
+        $WEBHTTPSPublicKey  = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY);
+        $WEBHTTPSPrivateKey = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY);
         if (
             $not_ssl === false
             && ! empty($WEBHTTPSPublicKey)
@@ -141,7 +150,17 @@ class NginxConf extends Injectable
             file_put_contents($public_filename, $WEBHTTPSPublicKey);
             file_put_contents($private_filename, $WEBHTTPSPrivateKey);
             $config = file_get_contents("{$httpsConfigFile}.original");
-            $config = str_replace(['<DNS>', '<WEBHTTPSPort>'], [$dns_server, $WEBHTTPSPort], $config);
+
+            // Define the placeholders that will be replaced in the configuration string.
+            $placeholders = ['<DNS>', '<WEBHTTPSPort>'];
+
+            // Specify the actual values that will replace the placeholders.
+            $replacementValues = [$dns_server, $WEBHTTPSPort];
+
+            // Replace placeholders in the configuration string with the actual values.
+            // This operation updates DNS and Web https Port settings in the configuration.
+            $config = str_replace($placeholders, $replacementValues, $config);
+
             file_put_contents($httpsConfigFile, $config);
         } elseif (file_exists($httpsConfigFile)) {
             unlink($httpsConfigFile);

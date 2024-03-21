@@ -142,19 +142,6 @@ class SecurityPlugin extends Injectable
     }
 
     /**
-     * Redirects the user to a 404 error page.
-     * @param $dispatcher Dispatcher instance for handling the redirection.
-     */
-    private function forwardTo404Error($dispatcher): void{
-        $dispatcher->forward([
-            'module' => 'admin-cabinet',
-            'controller' => 'errors',
-            'action' => 'show404',
-            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
-        ]);
-    }
-
-    /**
      * Redirects the user to the login page.
      * @param $dispatcher Dispatcher instance for handling the redirection.
      */
