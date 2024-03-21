@@ -135,6 +135,11 @@ const installationFromZip = {
         };
         PbxApi.ModulesInstallFromPackage(params,  (response) => {
             console.debug(response);
+            if (response.result === true) {
+                $('html, body').animate({
+                    scrollTop: installationFromZip.$progressBarBlock.offset().top,
+                }, 2000);
+            }
         });
     },
 

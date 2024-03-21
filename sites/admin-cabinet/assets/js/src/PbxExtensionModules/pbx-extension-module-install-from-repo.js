@@ -153,6 +153,11 @@ const installationFromRepo = {
 
                     PbxApi.ModulesInstallFromRepo(params, (response) => {
                         console.debug(response);
+                        if (response.result === true) {
+                            $('html, body').animate({
+                                scrollTop: installationFromRepo.$progressBarBlock.offset().top,
+                            }, 2000);
+                        }
                     });
 
                     return true;

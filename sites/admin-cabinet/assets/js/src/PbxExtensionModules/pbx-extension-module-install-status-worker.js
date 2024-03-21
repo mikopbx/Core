@@ -210,9 +210,23 @@ const installStatusLoopWorker = {
             messages.license.push(manageLink);
         }
         const textDescription = UserMessage.convertToText(messages);
-        const htmlMessage=  `<tr class="ui error center aligned table-error-messages"><td colspan="5"><div class="ui header">${header}</div><p>${textDescription}</p></div></td></tr>`;
-        $row.addClass('error');
+        const htmlMessage=  `<tr class="ui warning table-error-messages">
+                                        <td colspan="5">
+                                        <div class="ui center aligned icon header">
+                                        <i class="exclamation triangle icon"></i>
+                                          <div class="content">
+                                            ${header}
+                                          </div>
+                                        </div>
+                                            <p>${textDescription}</p>
+                                        </div>
+                                        </td>
+                                    </tr>`;
+        $row.addClass('warning');
         $row.before(htmlMessage);
+        $('html, body').animate({
+            scrollTop: $row.offset().top,
+        }, 2000);
     },
 
     /**
