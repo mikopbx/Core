@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\RootFS\etc\rc;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Config\RegisterDIServices;
 use Phalcon\Di;
@@ -363,7 +364,7 @@ class console_menu {
                 "[$index] $name",
                 function () use ($language) {
                     $mikoPBXConfig = new MikoPBXConfig();
-                    $mikoPBXConfig->setGeneralSettings('SSHLanguage', $language);
+                    $mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::SSH_LANGUAGE, $language);
                     $di = Di::getDefault();
                     if($di){
                         $di->remove(TranslationProvider::SERVICE_NAME);

@@ -102,7 +102,7 @@ class RestoreDefaultSettings extends \Phalcon\Di\Injectable
             'SSHDssKey',
             PbxSettingsConstants::SSH_AUTHORIZED_KEYS,
             'SSHecdsaKey',
-            'SSHLanguage',
+            PbxSettingsConstants::SSH_LANGUAGE,
             'WEBHTTPSPublicKey',
             'WEBHTTPSPrivateKey',
             'RedirectToHttps',

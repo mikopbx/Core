@@ -294,7 +294,7 @@ class PBXInstaller extends Di\Injectable
     private function copyConfiguration()
     {
         $mikoPBXconfig = new MikoPBXConfig();
-        $lang = $mikoPBXconfig->getGeneralSettings('SSHLanguage');
+        $lang = $mikoPBXconfig->getGeneralSettings(PbxSettingsConstants::SSH_LANGUAGE);
 
         $filename = $this->config->path('database.dbfile');
         $result_db_file = '/mnttmp/conf/mikopbx.db';

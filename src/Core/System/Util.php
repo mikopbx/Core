@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\{CustomFiles};
 use malkusch\lock\mutex\PHPRedisMutex;
 use MikoPBX\Common\Providers\AmiConnectionCommand;
 use MikoPBX\Common\Providers\AmiConnectionListener;
+use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\LoggerProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
@@ -477,11 +478,11 @@ class Util
         $di = Di::getDefault();
         if ($di !== null) {
             if (!$cliLang) {
-                $di->setShared('PREFERRED_LANG_WEB', true);
+                $di->setShared(LanguageProvider::PREFERRED_LANG_WEB, true);
             }
             $text = $di->getShared(TranslationProvider::SERVICE_NAME)->_($text);
             if (!$cliLang) {
-                $di->remove('PREFERRED_LANG_WEB');
+                $di->remove(LanguageProvider::PREFERRED_LANG_WEB);
             }
         }
         return $text;

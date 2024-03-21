@@ -106,7 +106,7 @@ class PbxSettings extends ModelsBase
             PbxSettingsConstants::SSH_AUTHORIZED_KEYS => '',
             'SSHecdsaKey' => '',
             PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD => '0',
-            'SSHLanguage' => 'en',
+            PbxSettingsConstants::SSH_LANGUAGE => 'en',
             PbxSettingsConstants::WEB_PORT => '80',
             'WEBHTTPSPort' => '443',
             'WEBHTTPSPublicKey' => '',

@@ -423,7 +423,7 @@ class WorkerModelsEvents extends WorkerBase
         // VisualLanguageSettings
         $tables[] = [
             'settingName' => [
-                'SSHLanguage',
+                PbxSettingsConstants::SSH_LANGUAGE,
                 PbxSettingsConstants::WEB_ADMIN_LANGUAGE,
             ],
             'functions' => [
