@@ -75,12 +75,7 @@ class SecurityPlugin extends Injectable
                 $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
             } else {
                 // Redirect to login page for normal requests
-                $dispatcher->forward([
-                    'controller' => 'session',
-                    'action' => 'index',
-                    'module' => 'admin-cabinet',
-                    'namespace' => 'MikoPBX\AdminCabinet\Controllers'
-                ]);
+                $this->forwardToLoginPage($dispatcher);
             }
 
             return false;
@@ -92,15 +87,10 @@ class SecurityPlugin extends Injectable
             if (!class_exists($controllerClass)
                 || ($controllerClass === SessionController::class && strtoupper($action) !== 'END')) {
                 // Redirect to home page if controller does not set or user logged in but still on session page
+
                 $homePath = $this->session->get(SessionController::SESSION_ID)[SessionController::HOME_PAGE];
                 if (empty($homePath)){
-                    $dispatcher->forward([
-                        'module' => 'admin-cabinet',
-                        'controller' => 'errors',
-                        'action' => 'show404',
-                        'namespace' => 'MikoPBX\AdminCabinet\Controllers'
-                    ]);
-                    return true;
+                    $homePath='/admin-cabinet/extensions/index';
                 }
                 $module = explode('/', $homePath)[1];
                 $controller = explode('/', $homePath)[2];
@@ -112,17 +102,13 @@ class SecurityPlugin extends Injectable
                 ]);
                 return true;
             }
+
             if (!$this->isLocalHostRequest()
                 && !$this->isAllowedAction($controllerClass, $action)
                 && !in_array($controllerClass, $publicControllers)
             ) {
                 // Show a 401 error if not allowed
-                $dispatcher->forward([
-                    'module' => 'admin-cabinet',
-                    'controller' => 'errors',
-                    'action' => 'show401',
-                    'namespace' => 'MikoPBX\AdminCabinet\Controllers'
-                ]);
+                $this->forwardTo401Error($dispatcher);
                 return true;
             }
         }
@@ -130,7 +116,32 @@ class SecurityPlugin extends Injectable
         return true;
     }
 
+    private function forwardTo401Error($dispatcher): void{
+        $dispatcher->forward([
+            'module' => 'admin-cabinet',
+            'controller' => 'errors',
+            'action' => 'show401',
+            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
+        ]);
+    }
 
+    private function forwardTo404Error($dispatcher): void{
+        $dispatcher->forward([
+            'module' => 'admin-cabinet',
+            'controller' => 'errors',
+            'action' => 'show404',
+            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
+        ]);
+    }
+
+    private function forwardToLoginPage($dispatcher): void{
+        $dispatcher->forward([
+            'controller' => 'session',
+            'action' => 'index',
+            'module' => 'admin-cabinet',
+            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
+        ]);
+    }
     /**
      * Checks if the current user is authenticated.
      *
