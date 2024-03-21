@@ -62,9 +62,10 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
                 'user='.$rule->calUser.PHP_EOL.
                 'secret='.$rule->calSecret.PHP_EOL.
                 'refresh=1'.PHP_EOL.
-                'timeframe=10'.PHP_EOL.
+                'timeframe=60'.PHP_EOL.
                 'channel = Local/s@calendar-event'.PHP_EOL.
-                'app = Hangup'. PHP_EOL.PHP_EOL;
+                'app = Playback'.PHP_EOL.
+                'appdata = beep'. PHP_EOL.PHP_EOL;
         }
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/calendar.conf', $config);
         $arr_out      = [];
@@ -122,7 +123,8 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
 	                    'same => n,NoOp( start: ${CALENDAR_EVENT(start)}, end: ${CALENDAR_EVENT(end)})'.PHP_EOL."\t".
 	                    'same => n,NoOp( busystate: ${CALENDAR_EVENT(busystate)} )'.PHP_EOL."\t".
 	                    'same => n,answer()'.PHP_EOL."\t".
-	                    'same => n,Wait(2)' . PHP_EOL . PHP_EOL;
+	                    'same => n,Wait(2)' . PHP_EOL .
+	                    'same => n,hangup' . PHP_EOL . PHP_EOL;
 
         $routesData = $this->getRoutesData();
         $additionalContexts = '';
