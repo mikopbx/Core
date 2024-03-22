@@ -1222,4 +1222,5 @@ return [
     'ext_DowngradeModuleTitle' => '回滚模块版本',
     'ext_ModuleDowngradeDescription' => '该模块将回滚到之前的版本。设置将被保存，但对于付费模块，将首先检查许可证。请注意，回滚可能会更改数据结构，并且可能需要重新配置模块。回滚过程中，避免对系统进行其他操作。',
     'ext_InstallUpdateAction' => '执行',
+    'ext_SystemVersionRequired' => 'MikoPBX 的最低兼容版本',
 ];

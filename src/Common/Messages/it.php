@@ -1256,4 +1256,5 @@ Il coupon può essere attivato una volta, dopodiché viene riscattato.',
     'ext_UpdateAllModulesDescription' => 'Il sistema aggiornerà tutti i moduli installati alle versioni più recenti, mantenendo le impostazioni correnti. Si consiglia di non eseguire altre operazioni sul sistema durante il processo di aggiornamento.',
     'ext_ModuleUpdateDescription' => 'Il modulo selezionato verrà aggiornato all\'ultima versione dal repository e tutte le impostazioni verranno salvate. Per i moduli a pagamento viene prima verificata la licenza. Durante l\'aggiornamento si consiglia di astenersi dall\'eseguire altre azioni sul sistema.',
     'ext_ModuleDowngradeDescription' => 'Il modulo verrà riportato alla versione precedente. Le impostazioni verranno salvate, ma per i moduli a pagamento verrà prima verificata la licenza. Tieni presente che un rollback potrebbe modificare la struttura dei dati e potrebbe essere necessario riconfigurare il modulo. Durante il rollback, evitare di eseguire altre operazioni sul sistema.',
+    'ext_SystemVersionRequired' => 'Versione minima compatibile di MikoPBX',
 ];

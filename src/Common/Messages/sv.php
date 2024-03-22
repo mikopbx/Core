@@ -1222,4 +1222,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ext_ModuleUpdateDescription' => 'Den valda modulen kommer att uppdateras till den senaste versionen från förvaret, och alla inställningar kommer att sparas. För betalmoduler kontrolleras först licensen. Under uppdateringen rekommenderas det att avstå från att utföra andra åtgärder på systemet.',
     'ext_ModuleDowngradeDescription' => 'Modulen kommer att återställas till den tidigare versionen. Inställningarna kommer att sparas, men för betalmoduler kontrolleras licensen först. Observera att en återställning kan ändra datastrukturen och modulen kan behöva konfigureras om. Undvik att utföra andra operationer på systemet under återställningen.',
     'ext_InstallUpdateAction' => 'Kör',
+    'ext_SystemVersionRequired' => 'Minsta kompatibel version av MikoPBX',
 ];

@@ -1222,4 +1222,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'ext_DowngradeModuleTitle' => 'Bir modül sürümünü geri alma',
     'ext_ModuleDowngradeDescription' => 'Modül önceki sürüme geri döndürülecek. Ayarlar kaydedilecek ancak ücretli modüller için önce lisans kontrol edilecektir. Geri alma işleminin veri yapısını değiştirebileceğini ve modülün yeniden yapılandırılması gerekebileceğini lütfen unutmayın. Geri alma sırasında sistemde başka işlemler yapmaktan kaçının.',
     'ext_InstallUpdateAction' => 'Uygulamak',
+    'ext_SystemVersionRequired' => 'MikoPBX\'in minimum uyumlu sürümü',
 ];
