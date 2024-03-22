@@ -133,6 +133,9 @@ class SysLogsManagementProcessor extends Injectable
             if ($offset>0){
                 $cmd .= " | {$head} -n {$lines}";
             }
+
+            $sedPath = Util::which('sed');
+            $cmd .= ' | '.$sedPath.' -E \'s/\\\\([tnrfvb]|040)/ /g\'';
             $cmd .= " > $filenameTmp";
 
             Processes::mwExec("$cmd; chown www:www $filenameTmp");
