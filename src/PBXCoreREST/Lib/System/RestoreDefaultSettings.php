@@ -95,8 +95,8 @@ class RestoreDefaultSettings extends \Phalcon\Di\Injectable
         // Reset PBXSettings
         $defaultValues = PbxSettings::getDefaultArrayValues();
         $fixedKeys = [
-            'Name',
-            'Description',
+            PbxSettingsConstants::PBX_NAME,
+            PbxSettingsConstants::PBX_DESCRIPTION,
             PbxSettingsConstants::SSH_PASSWORD,
             PbxSettingsConstants::SSH_RSA_KEY,
             PbxSettingsConstants::SSH_DSS_KEY,
@@ -110,7 +110,7 @@ class RestoreDefaultSettings extends \Phalcon\Di\Injectable
             PbxSettingsConstants::PBX_VERSION,
             PbxSettingsConstants::WEB_ADMIN_LOGIN,
             PbxSettingsConstants::WEB_ADMIN_PASSWORD,
-            'WebAdminLanguage',
+            PbxSettingsConstants::WEB_ADMIN_LANGUAGE,
         ];
         foreach ($defaultValues as $key=>$defaultValue){
             if (in_array($key, $fixedKeys, true)){

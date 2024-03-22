@@ -110,7 +110,7 @@ class LanguageProvider implements ServiceProviderInterface
     private function getLanguageForWeb(DiInterface $di): string
     {
         $session = $di->getShared(SessionProvider::SERVICE_NAME);
-        $language = $session->get('WebAdminLanguage') ?? '';
+        $language = $session->get(PbxSettingsConstants::WEB_ADMIN_LANGUAGE) ?? '';
 
         if (empty($language)) {
             $language = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);

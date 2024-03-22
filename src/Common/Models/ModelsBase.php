@@ -199,10 +199,10 @@ class ModelsBase extends Model
     /**
      * Sends changed fields and class to WorkerModelsEvents
      *
-     * @param $action
+     * @param string $action
      * @param $changedFields
      */
-    private function sendChangesToBackend($action, $changedFields): void
+    private function sendChangesToBackend(string $action, $changedFields): void
     {
         // Add changed fields set to Beanstalkd queue
         $queue = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);

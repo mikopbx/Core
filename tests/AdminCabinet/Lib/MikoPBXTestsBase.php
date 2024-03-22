@@ -587,11 +587,12 @@ class MikoPBXTestsBase extends BrowserStackTest
         try {
             $jsScrollToTop = 'window.scrollTo(0, 0);';
             self::$driver->executeScript($jsScrollToTop);
-            sleep(1); // Give a brief moment for the scroll action to complete
+            sleep(3); // Give a brief moment for the scroll action to complete
 
             $xpath = "//div[contains(@class, 'menu')]//a[contains(@data-tab,'{$anchor}')]";
             $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $actions = new WebDriverActions(self::$driver);
+            $actions->moveToElement($tab);
             $actions->perform();
             $tab->click();
         } catch (NoSuchElementException $e) {

@@ -40,6 +40,8 @@ class SessionController extends BaseController
 
     public const HOME_PAGE = 'homePage';
 
+    public const USER_NAME = 'userName';
+
 
     /**
      * Renders the login page with form and settings values.
@@ -76,7 +78,8 @@ class SessionController extends BaseController
             {
             $sessionParams = [
                 SessionController::ROLE => AclProvider::ROLE_ADMINS,
-                SessionController::HOME_PAGE => $this->url->get('extensions/index')
+                SessionController::HOME_PAGE => $this->url->get('extensions/index'),
+                SessionController::USER_NAME => $login
             ];
             $userLoggedIn = true;
         } else {

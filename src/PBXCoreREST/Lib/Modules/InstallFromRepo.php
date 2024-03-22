@@ -145,6 +145,7 @@ class InstallFromRepo extends ModuleInstallationBase
         if (empty($moduleInfo->data['releases'])) {
             return [[self::ERR_EMPTY_REPO_RESULT], false];
         }
+        $releaseInfo =[];
         $releaseInfo['releaseID'] = 0;
 
         // Find the specified release or the latest one
