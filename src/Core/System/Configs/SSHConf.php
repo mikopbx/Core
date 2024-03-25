@@ -62,11 +62,11 @@ class SSHConf extends Injectable
         Util::mwMkdir($dropBearDir);
 
         $keytypes = [
-            "rsa"   => PbxSettingsConstants::SSH_RSA_KEY,
-            "dss"   => PbxSettingsConstants::SSH_DSS_KEY,
-            "ecdsa" => PbxSettingsConstants::SSH_ECDSA_KEY
+            "rsa"     => PbxSettingsConstants::SSH_RSA_KEY,
+            "dss"     => PbxSettingsConstants::SSH_DSS_KEY,
+            "ecdsa"   => PbxSettingsConstants::SSH_ECDSA_KEY,
+            "ed25519" => PbxSettingsConstants::SSH_ED25519_KEY
         ];
-
         $options = ($this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD) === '1')?'-s':'';
         // Get keys from DB
         $dropbearkeyPath = Util::which('dropbearkey');

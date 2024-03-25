@@ -79,6 +79,7 @@ abstract class PbxSettingsConstants
     const SSH_RSA_KEY = 'SSHRsaKey';
     const SSH_DSS_KEY = 'SSHDssKey';
     const SSH_ECDSA_KEY = 'SSHecdsaKey';
+    const SSH_ED25519_KEY = 'SSHed25519Key';
 
     // Web server settings
     const WEB_HTTPS_PORT = 'WEBHTTPSPort';
