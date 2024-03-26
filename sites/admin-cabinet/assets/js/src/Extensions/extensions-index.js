@@ -281,13 +281,13 @@ const extensionsIndex = {
     cbAfterGetSecret(response){
         if (response.result === true) {
             const $clipboardButton = extensionsIndex.$extensionsList.find(`a.clipboard[data-value=${response.data.number}]`);
-            navigator.clipboard.writeText(response.data.secret)
+            extensionsIndex.copyToClipboard(response.data.secret);
             $clipboardButton.popup('show');
                 setTimeout(() => {
                     $clipboardButton.popup('hide');
                 }, 1500);
         } else {
-            // Show an error message if deletion was not successful.
+            // Show an error message if get secret was not successful.
             UserMessage.showError(response.messages.error, globalTranslate.ex_ImpossibleToGetSecret);
         }
         $('a.clipboard').removeClass('disabled');
@@ -324,6 +324,35 @@ const extensionsIndex = {
     applyFilter(text) {
         extensionsIndex.dataTable.search(text).draw();
         extensionsIndex.$globalSearch.closest('div').addClass('loading');
+    },
+
+    /**
+     * Copies the text passed as param to the system clipboard
+     * Check if using HTTPS and navigator.clipboard is available
+     * Then uses standard clipboard API, otherwise uses fallback
+     */
+    copyToClipboard(content) {
+        if (window.isSecureContext && navigator.clipboard) {
+            navigator.clipboard.writeText(content);
+        } else {
+            extensionsIndex.unsecuredCopyToClipboard(content);
+        }
+    },
+    /**
+     * Put text variable into clipboard for unsecured connection.
+     * @param {string} content - The text value.
+     */
+    unsecuredCopyToClipboard(content) {
+        const textArea = document.createElement("textarea");
+        textArea.value=content;
+        document.body.appendChild(textArea);
+        textArea.focus();textArea.select();
+        try{
+            document.execCommand('copy')
+        } catch(err) {
+            console.error('Unable to copy to clipboard', err)
+        }
+        document.body.removeChild(textArea)
     },
 };
 
