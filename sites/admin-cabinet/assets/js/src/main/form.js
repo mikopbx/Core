@@ -159,7 +159,7 @@ const Form = {
      *  Changes the value of '$dirrtyField' to trigger
      *  the 'change' form event and enable submit button.
      */
-    dataChanged(){
+    dataChanged() {
         if (Form.enableDirrity) {
             Form.$dirrtyField.val(Math.random());
             Form.$dirrtyField.trigger('change');
@@ -229,44 +229,52 @@ const Form = {
                 Form.cbAfterSendForm(response);
 
                 // Check response conditions and perform necessary actions
-                if (response.success
-                    && response.reload.length > 0
-                    && Form.$submitModeInput.val() === 'SaveSettings') {
-                    // Redirect to the specified URL if conditions are met
-                    window.location = globalRootUrl + response.reload;
-                } else if (response.success && Form.$submitModeInput.val() === 'SaveSettingsAndAddNew') {
-                    // Handle SaveSettingsAndAddNew scenario
-                    if (Form.afterSubmitModifyUrl.length > 1) {
-                        window.location = Form.afterSubmitModifyUrl;
-                    } else {
-                        const emptyUrl = window.location.href.split('modify');
-                        let action = 'modify';
-                        let prefixData = emptyUrl[1].split('/');
-                        if (prefixData.length > 0) {
-                            action = action + prefixData[0];
-                        }
-                        if (emptyUrl.length > 1) {
-                            window.location = `${emptyUrl[0]}${action}/`;
-                        }
-                    }
-                } else if (response.success && Form.$submitModeInput.val() === 'SaveSettingsAndExit') {
-                    // Handle SaveSettingsAndExit scenario
-                    if (Form.afterSubmitIndexUrl.length > 1) {
-                        window.location = Form.afterSubmitIndexUrl;
-                    } else {
-                        const emptyUrl = window.location.href.split('modify');
-                        if (emptyUrl.length > 1) {
-                            window.location = `${emptyUrl[0]}index/`;
-                        }
-                    }
-                } else if (response.success && response.reload.length > 0) {
-                    // Redirect to the specified URL if conditions are met
-                    window.location = globalRootUrl + response.reload;
-                } else if (response.success && Form.enableDirrity) {
-                    // Initialize dirrity if conditions are met
-                    Form.initializeDirrity();
-                }
+                if (Form.checkSuccess(response)) {
+                    const submitMode = Form.$submitModeInput.val();
+                    const reloadPath = Form.getReloadPath(response);
 
+                    // Redirect based on submitMode and other conditions
+                    switch (submitMode) {
+                        case 'SaveSettings':
+                            // Redirect to the specified URL if conditions are met
+                            if (reloadPath.length > 0) {
+                                window.location = globalRootUrl + reloadPath;
+                            }
+                            break;
+                        case 'SaveSettingsAndAddNew':
+                            if (Form.afterSubmitModifyUrl.length > 1) {
+                                window.location = Form.afterSubmitModifyUrl;
+                            } else {
+                                const emptyUrl = window.location.href.split('modify');
+                                let action = 'modify';
+                                let prefixData = emptyUrl[1].split('/');
+                                if (prefixData.length > 0) {
+                                    action = action + prefixData[0];
+                                }
+                                if (emptyUrl.length > 1) {
+                                    window.location = `${emptyUrl[0]}${action}/`;
+                                }
+                            }
+                            break;
+                        case 'SaveSettingsAndExit':
+                            if (Form.afterSubmitIndexUrl.length > 1) {
+                                window.location = Form.afterSubmitIndexUrl;
+                            } else {
+                                Form.redirectToAction('index');
+                            }
+                            break;
+                        default:
+                            if (reloadPath.length > 0) {
+                                // Redirect to the specified URL if conditions are met
+                                window.location = globalRootUrl + reloadPath;
+                            } else if (Form.enableDirrity) {
+                                // Initialize dirrity if conditions are met
+                                Form.initializeDirrity();
+                            }
+                            break;
+                    }
+
+                }
                 // Remove 'loading' class from the submit button
                 Form.$submitButton.removeClass('loading');
             },
@@ -284,6 +292,30 @@ const Form = {
             },
 
         });
+    },
+    /**
+     * Checks if the response is successful
+     */
+    checkSuccess(response) {
+        return !!(response.success || response.result);
+    },
+
+    /**
+     * Extracts reload path from response.
+     */
+    getReloadPath(response) {
+        if (response.reload !== undefined && response.reload.length > 0) {
+            return response.reload;
+        }
+        return '';
+    },
+
+    /**
+     * Function to redirect to a specific action ('modify' or 'index')
+     */
+    redirectToAction(actionName) {
+        const baseUrl = window.location.href.split('modify')[0];
+        window.location = `${baseUrl}${actionName}/`;
     },
 
     /**
