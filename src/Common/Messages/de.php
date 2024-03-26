@@ -1259,4 +1259,5 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'ext_ModuleUpdateDescription' => 'Das ausgewählte Modul wird aus dem Repository auf die neueste Version aktualisiert und alle Einstellungen werden gespeichert. Bei kostenpflichtigen Modulen wird zunächst die Lizenz geprüft. Während des Updates wird empfohlen, keine anderen Aktionen am System durchzuführen.',
     'ext_DowngradeModuleTitle' => 'Rollback einer Modulversion',
     'ext_ModuleDowngradeDescription' => 'Das Modul wird auf die vorherige Version zurückgesetzt. Die Einstellungen werden gespeichert, bei kostenpflichtigen Modulen wird jedoch zunächst die Lizenz überprüft. Bitte beachten Sie, dass sich bei einem Rollback die Datenstruktur ändern kann und das Modul ggf. neu konfiguriert werden muss. Vermeiden Sie während des Rollbacks die Ausführung anderer Vorgänge auf dem System.',
+    'ext_SystemVersionRequired' => 'Mindestkompatible Version von MikoPBX',
 ];

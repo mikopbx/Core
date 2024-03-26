@@ -1256,4 +1256,5 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'ext_ModuleUpdateDescription' => 'Wybrany moduł zostanie zaktualizowany do najnowszej wersji z repozytorium, a wszystkie ustawienia zostaną zapisane. W przypadku modułów płatnych najpierw sprawdzana jest licencja. Podczas aktualizacji zaleca się powstrzymanie się od wykonywania innych czynności w systemie.',
     'ext_ModuleDowngradeDescription' => 'Moduł zostanie przywrócony do poprzedniej wersji. Ustawienia zostaną zapisane, ale w przypadku modułów płatnych najpierw zostanie sprawdzona licencja. Należy pamiętać, że wycofanie zmian może zmienić strukturę danych i może zaistnieć potrzeba ponownej konfiguracji modułu. Podczas wycofywania należy unikać wykonywania innych operacji w systemie.',
     'ext_InstallUpdateAction' => 'Wykonać',
+    'ext_SystemVersionRequired' => 'Minimalna kompatybilna wersja MikoPBX',
 ];

@@ -1255,4 +1255,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ext_ModuleUpdateDescription' => 'O módulo selecionado será atualizado para a versão mais recente do repositório e todas as configurações serão salvas. Para módulos pagos, a licença é verificada primeiro. Durante a atualização, é recomendável evitar realizar outras ações no sistema.',
     'ext_ModuleDowngradeDescription' => 'O módulo será revertido para a versão anterior. As configurações serão salvas, mas para módulos pagos a licença será verificada primeiro. Observe que uma reversão pode alterar a estrutura de dados e o módulo pode precisar ser reconfigurado. Durante a reversão, evite realizar outras operações no sistema.',
     'ext_InstallUpdateAction' => 'Executar',
+    'ext_SystemVersionRequired' => 'Versão mínima compatível do MikoPBX',
 ];

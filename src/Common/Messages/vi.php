@@ -1222,4 +1222,5 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'ext_DowngradeModuleTitle' => 'Khôi phục phiên bản mô-đun',
     'ext_ModuleDowngradeDescription' => 'Mô-đun sẽ được khôi phục về phiên bản trước. Cài đặt sẽ được lưu nhưng đối với các mô-đun trả phí, giấy phép sẽ được kiểm tra trước tiên. Xin lưu ý rằng việc khôi phục có thể thay đổi cấu trúc dữ liệu và mô-đun có thể cần phải được cấu hình lại. Trong quá trình khôi phục, tránh thực hiện các thao tác khác trên hệ thống.',
     'ext_InstallUpdateAction' => 'Hành hình',
+    'ext_SystemVersionRequired' => 'Phiên bản tương thích tối thiểu của MikoPBX',
 ];

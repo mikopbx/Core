@@ -1255,4 +1255,5 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'ext_UpdateModuleTitle' => 'Module-update',
     'ext_ModuleUpdateDescription' => 'De geselecteerde module wordt bijgewerkt naar de nieuwste versie uit de repository en alle instellingen worden opgeslagen. Bij betaalde modules wordt eerst de licentie gecontroleerd. Tijdens de update wordt aanbevolen om geen andere acties op het systeem uit te voeren.',
     'ext_ModuleDowngradeDescription' => 'De module wordt teruggedraaid naar de vorige versie. De instellingen worden opgeslagen, maar bij betaalde modules wordt eerst de licentie gecontroleerd. Houd er rekening mee dat een rollback de datastructuur kan veranderen en dat de module mogelijk opnieuw moet worden geconfigureerd. Vermijd tijdens het terugdraaien andere bewerkingen op het systeem uit te voeren.',
+    'ext_SystemVersionRequired' => 'Minimaal compatibele versie van MikoPBX',
 ];

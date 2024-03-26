@@ -1256,4 +1256,5 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'ext_ModuleUpdateDescription' => 'Det valgte modul vil blive opdateret til den seneste version fra lageret, og alle indstillinger vil blive gemt. For betalte moduler kontrolleres først licensen. Under opdateringen anbefales det at undlade at udføre andre handlinger på systemet.',
     'ext_DowngradeModuleTitle' => 'Vi ruller en modulversion tilbage',
     'ext_ModuleDowngradeDescription' => 'Modulet vil blive rullet tilbage til den tidligere version. Indstillingerne vil blive gemt, men for betalingsmoduler vil licensen blive tjekket først. Bemærk venligst, at en tilbagerulning kan ændre datastrukturen, og modulet skal muligvis omkonfigureres. Undgå at udføre andre handlinger på systemet under tilbagerulningen.',
+    'ext_SystemVersionRequired' => 'Minimum kompatibel version af MikoPBX',
 ];

@@ -714,12 +714,12 @@ class Util
         $need_create_link = true;
         if (is_link($link)) {
             $old_target = readlink($link);
-            $need_create_link = ($old_target != $target);
+            $need_create_link = ($old_target !== $target);
 
             // If needed, remove the old symlink.
             if ($need_create_link) {
                 $cpPath = self::which('cp');
-                Processes::mwExec("{$cpPath} {$old_target}/* {$target}");
+                Processes::mwExec("$cpPath $old_target/* $target");
                 unlink($link);
             }
         } elseif (is_dir($link)) {
@@ -737,7 +737,7 @@ class Util
 
         if ($need_create_link) {
             $lnPath = self::which('ln');
-            Processes::mwExec("{$lnPath} -s {$target}  {$link}");
+            Processes::mwExec("$lnPath -s $target $link");
         }
 
         return $need_create_link;

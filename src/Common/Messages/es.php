@@ -1256,4 +1256,5 @@ El cupón se puede activar una vez y luego se canjea.',
     'ext_ModuleUpdateDescription' => 'El módulo seleccionado se actualizará a la última versión del repositorio y se guardarán todas las configuraciones. Para los módulos pagos, primero se verifica la licencia. Durante la actualización, se recomienda abstenerse de realizar otras acciones en el sistema.',
     'ext_ModuleDowngradeDescription' => 'El módulo volverá a la versión anterior. La configuración se guardará, pero para los módulos pagos se verificará primero la licencia. Tenga en cuenta que una reversión puede cambiar la estructura de datos y es posible que sea necesario reconfigurar el módulo. Durante la reversión, evite realizar otras operaciones en el sistema.',
     'ext_InstallUpdateAction' => 'Ejecutar',
+    'ext_SystemVersionRequired' => 'Versión mínima compatible de MikoPBX',
 ];

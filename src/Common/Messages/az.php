@@ -1255,4 +1255,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ext_ModuleUpdateDescription' => 'Seçilmiş modul depodan ən son versiyaya yenilənəcək və bütün parametrlər yadda saxlanılacaq. Ödənişli modullar üçün əvvəlcə lisenziya yoxlanılır. Yeniləmə zamanı sistemdə digər hərəkətləri yerinə yetirməkdən çəkinmək tövsiyə olunur.',
     'ext_ModuleDowngradeDescription' => 'Modul əvvəlki versiyaya qaytarılacaq. Parametrlər saxlanacaq, lakin ödənişli modullar üçün əvvəlcə lisenziya yoxlanılacaq. Nəzərə alın ki, geri qaytarma məlumat strukturunu dəyişə bilər və modulun yenidən konfiqurasiyası tələb oluna bilər. Geri qaytarma zamanı sistemdə digər əməliyyatları yerinə yetirməkdən çəkinin.',
     'ext_InstallUpdateAction' => 'İcra etmək',
+    'ext_SystemVersionRequired' => 'MikoPBX-in minimum uyğun versiyası',
 ];
