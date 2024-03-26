@@ -144,6 +144,7 @@ class IncomingRoutesController extends BaseController
 
         $soundFilesList = [];
         // Retrieve custom sound files for IVR
+        $soundFilesList['none'] = '';
         $soundFiles = SoundFiles::find('category="custom"');
         foreach ($soundFiles as $soundFile) {
             $soundFilesList[$soundFile->id] = $soundFile->name;

@@ -64,8 +64,12 @@ class DefaultIncomingRouteForm extends BaseForm
                 }
                 case 'audio_message_id' :{
                     // Audio_message_id
+                    $fileId = (string)$options['soundfiles'];
+                    if(empty($fileId)){
+                        $fileId = 'none';
+                    }
                     $audioMessage = new Select(
-                        'audio_message_id', $options['soundfiles'], [
+                        'audio_message_id', $fileId, [
                                               'using' => [
                                                   'id',
                                                   'name',
