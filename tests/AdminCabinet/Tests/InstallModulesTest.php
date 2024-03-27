@@ -103,6 +103,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         }
 
         // Wait for the installation and test it
+        sleep(15);
         $this->changeTabOnCurrentPage('installed');
 
         try {
