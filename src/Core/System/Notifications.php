@@ -210,9 +210,9 @@ class Notifications
         $mail->Host = $this->settings[PbxSettingsConstants::MAIL_SMTP_HOST];
         if ($this->settings[PbxSettingsConstants::MAIL_SMTP_USE_TLS] === "1") {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            // $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         } else {
             $mail->SMTPSecure = '';
+            $mail->SMTPAutoTLS = false;
         }
         if (empty($this->settings[PbxSettingsConstants::MAIL_SMTP_USERNAME]) && empty($this->settings[PbxSettingsConstants::MAIL_SMTP_PASSWORD])) {
             $mail->SMTPAuth = false;
