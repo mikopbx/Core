@@ -80,9 +80,9 @@ class PbxSettings extends ModelsBase
     public static function getDefaultArrayValues(): array
     {
         return [
-            'Name' => 'PBX system',
+            PbxSettingsConstants::PBX_NAME => 'PBX system',
             PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE => 'REAL',//VMWARE,HYPERV,AWS,AZURE
-            'Description' => '',
+            PbxSettingsConstants::PBX_DESCRIPTION => '',
             PbxSettingsConstants::RESTART_EVERY_NIGHT => '0',
             PbxSettingsConstants::SIP_PORT => '5060',
             PbxSettingsConstants::TLS_PORT => '5061',

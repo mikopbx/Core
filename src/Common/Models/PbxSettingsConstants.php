@@ -14,6 +14,8 @@ abstract class PbxSettingsConstants
     const WEB_ADMIN_LANGUAGE = 'WebAdminLanguage';
     const SSH_LANGUAGE ='SSHLanguage';
 
+    const CLOUD_PROVISIONING = 'CloudProvisioning';
+
 
     // WWW constants
     const WEB_PORT = 'WEBPort';
