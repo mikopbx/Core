@@ -585,7 +585,7 @@ class MikoPBXTestsBase extends BrowserStackTest
     {
         self::annotate("Test action: Change tab with anchor=$anchor");
         try {
-            $jsScrollToTop = 'window.scrollTo(0, 0);';
+            $jsScrollToTop = "document.getElementById('main').scrollIntoView({block: 'start', inline: 'nearest', behavior: 'instant'})";
             self::$driver->executeScript($jsScrollToTop);
             sleep(3); // Give a brief moment for the scroll action to complete
 
