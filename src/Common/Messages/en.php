@@ -1260,4 +1260,6 @@ The coupon can be activated once, after which it becomes redeemed.',
     'ext_ModuleUpdateDescription' => 'The selected module will be updated to the latest version from the repository, and all settings will be saved. For paid modules, the license is first checked. During the update, it is recommended to refrain from performing other actions on the system.',
     'ext_ModuleDowngradeDescription' => 'The module will be rolled back to the previous version. The settings will be saved, but for paid modules the license will be checked first. Please note that a rollback may change the data structure and the module may need to be reconfigured. During the rollback, avoid performing other operations on the system.',
     'ext_SystemVersionRequired' => 'Minimum compatible version of MikoPBX',
+    'auth_DefaultCloudPasswordInstructions' => 'The default password is equal to the unique identifier of the virtual machine in the cloud',
+    'lic_HostLookupFailed' => 'No connection to the licensing server, DNS problem',
 ];

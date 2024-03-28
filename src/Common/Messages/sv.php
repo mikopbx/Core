@@ -1223,4 +1223,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ext_ModuleDowngradeDescription' => 'Modulen kommer att återställas till den tidigare versionen. Inställningarna kommer att sparas, men för betalmoduler kontrolleras licensen först. Observera att en återställning kan ändra datastrukturen och modulen kan behöva konfigureras om. Undvik att utföra andra operationer på systemet under återställningen.',
     'ext_InstallUpdateAction' => 'Kör',
     'ext_SystemVersionRequired' => 'Minsta kompatibel version av MikoPBX',
+    'auth_DefaultCloudPasswordInstructions' => 'Standardlösenordet är lika med den unika identifieraren för den virtuella maskinen i molnet',
+    'lic_HostLookupFailed' => 'Ingen anslutning till licensservern, DNS-problem',
 ];
