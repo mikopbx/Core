@@ -215,7 +215,7 @@ class LicenseManagementProcessor extends Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $checkBaseFeature = $this->license->captureFeature(33);
+        $checkBaseFeature = $this->license->featureAvailable(33);
         if ($checkBaseFeature['success'] === false) {
             $res->success = false;
             $textError = (string)($checkBaseFeature['error'] ?? '');
