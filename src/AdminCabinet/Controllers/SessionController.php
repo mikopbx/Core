@@ -52,6 +52,9 @@ class SessionController extends BaseController
             = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_NAME);
         $this->view->DescriptionFromSettings
             = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_DESCRIPTION);
+        if ($this->view->DescriptionFromSettings==='auth_DefaultCloudPasswordInstructions'){
+            $this->view->DescriptionFromSettings=$this->translation->_($this->view->DescriptionFromSettings);
+        }
         $this->view->form = new LoginForm();
     }
 
