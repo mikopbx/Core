@@ -22,62 +22,51 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Models\{AsteriskManagerUsers,
-    CallQueueMembers,
-    CallQueues,
-    Codecs,
-    ConferenceRooms,
-    CustomFiles,
-    DialplanApplications,
-    ExtensionForwardingRights,
-    Extensions,
-    ExternalPhones,
-    Fail2BanRules,
-    FirewallRules,
-    Iax,
-    IncomingRoutingTable,
-    IvrMenu,
-    IvrMenuActions,
-    LanInterfaces,
-    ModelsBase,
-    NetworkFilters,
-    OutgoingRoutingTable,
-    OutWorkTimes,
-    OutWorkTimesRouts,
-    PbxExtensionModules,
-    PbxSettings,
-    PbxSettingsConstants,
-    Sip,
-    SipHosts,
-    SoundFiles,
-    Users};
+use MikoPBX\Common\Models\{ModelsBase, PbxExtensionModules, PbxSettings};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
-use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
-use MikoPBX\Core\Asterisk\Configs\QueueConf;
-use MikoPBX\Core\Asterisk\Configs\ResParkingConf;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
-use MikoPBX\Core\System\{BeanstalkClient,
-    Configs\CronConf,
-    Configs\Fail2BanConf,
-    Configs\IptablesConf,
-    Configs\NatsConf,
-    Configs\NginxConf,
-    Configs\NTPConf,
-    Configs\PHPConf,
-    Configs\SentryConf,
-    Configs\SSHConf,
-    Configs\SyslogConf,
-    PBX,
-    Processes,
-    System,
-    Util
-};
+use MikoPBX\Core\System\{BeanstalkClient, Util};
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCustomFilesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFail2BanConfAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadLicenseAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadMOHAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNatsAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNetworkAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxConfAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNTPAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadParkingAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPBXCoreAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPHPFPMAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordSavePeriodAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRestAPIWorkerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRTPAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSentryAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSSHAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSyslogDAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadTimezoneAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadVoicemailAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadWorkerCallEventsAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessOtherModels;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessPBXSettings;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ReloadManager;
 use MikoPBX\Modules\Config\SystemConfigInterface;
-use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di;
 use Pheanstalk\Contract\PheanstalkInterface;
+use RuntimeException;
 use Throwable;
 
 ini_set('error_reporting', E_ALL);
@@ -90,570 +79,189 @@ ini_set('display_startup_errors', 1);
  */
 class WorkerModelsEvents extends WorkerBase
 {
-    private const R_MANAGERS = 'reloadManager';
-    private const R_QUEUES = 'reloadQueues';
-    private const R_DIALPLAN = 'reloadDialplan';
-    private const R_PARKING  = 'reloadParking';
-    private const R_CUSTOM_F = 'updateCustomFiles';
-    private const R_FIREWALL = 'reloadFirewall';
-    private const R_NETWORK = 'networkReload';
-    private const R_IAX = 'reloadIax';
-    private const R_SIP = 'reloadSip';
-    private const R_RTP = 'rtpReload';
-    private const R_PBX_CORE = 'pbxCoreReload';
-    private const R_FEATURES = 'reloadFeatures';
-    private const R_CRON = 'reloadCron';
+    public const R_MANAGERS = 'reloadManager';
+    public const R_QUEUES = 'reloadQueues';
+    public const R_DIALPLAN = 'reloadDialplan';
+    public const R_PARKING = 'reloadParking';
+    public const R_CUSTOM_F = 'updateCustomFiles';
+    public const R_FIREWALL = 'reloadFirewall';
+    public const R_NETWORK = 'networkReload';
+    public const R_IAX = 'reloadIax';
+    public const R_SIP = 'reloadSip';
+    public const R_RTP = 'rtpReload';
+    public const R_PBX_CORE = 'pbxCoreReload';
+    public const R_FEATURES = 'reloadFeatures';
+    public const R_CRON = 'reloadCron';
     public const  R_NGINX = 'reloadNginx';
     public const  R_NGINX_CONF = 'reloadNginxConf';
     public const  R_FAIL2BAN_CONF = 'reloadFail2BanConf';
-    private const R_PHP_FPM = 'reloadPHPFPM';
-    private const R_TIMEZONE = 'updateTomeZone';
-    private const R_SYSLOG = 'restartSyslogD';
-    private const R_SSH = 'reloadSSH';
-    private const R_LICENSE = 'reloadLicense';
-    private const R_NATS = 'reloadNats';
-    private const R_VOICEMAIL = 'reloadVoicemail';
-    private const R_REST_API_WORKER = 'reloadRestAPIWorker';
-    private const R_CALL_EVENTS_WORKER = 'reloadWorkerCallEvents';
-    private const R_PBX_MODULE_STATE = 'afterModuleStateChanged';
-    private const R_MOH = 'reloadMoh';
-    private const R_NTP = 'reloadNtp';
-    private const R_UPDATE_REC_SAVE_PERIOD = 'updateRecordSavePeriod';
-    private const R_ADVICES = 'cleanupAdvicesCache';
-    private const R_SENTRY = 'reloadSentry';
+    public const R_PHP_FPM = 'reloadPHPFPM';
+    public const R_TIMEZONE = 'updateTomeZone';
+    public const R_SYSLOG = 'restartSyslogD';
+    public const R_SSH = 'reloadSSH';
+    public const R_LICENSE = 'reloadLicense';
+    public const R_NATS = 'reloadNats';
+    public const R_VOICEMAIL = 'reloadVoicemail';
+    public const R_REST_API_WORKER = 'reloadRestAPIWorker';
+    public const R_CALL_EVENTS_WORKER = 'reloadWorkerCallEvents';
+    public const R_PBX_MODULE_STATE = 'afterModuleStateChanged';
+    public const R_MOH = 'reloadMoh';
+    public const R_NTP = 'reloadNtp';
+    public const R_UPDATE_REC_SAVE_PERIOD = 'updateRecordSavePeriod';
+    public const R_ADVICES = 'cleanupAdvicesCache';
+    public const R_RESET_DESCRIPTION = 'resetDescription';
+    public const R_SENTRY = 'reloadSentry';
 
     private int $last_change;
-    private array $modified_tables;
+    private array $modified_tables = [];
 
     private int $timeout = 2;
 
     // Array of core conf objects
     private array $arrAsteriskConfObjects;
-    private array $PRIORITY_R;
+
+    // Array of reload actions sorted by its priority
+    private array $reloadActions = [];
     private array $pbxSettingsDependencyTable = [];
     private array $modelsDependencyTable = [];
 
+    private BeanstalkClient $beanstalkClient;
+
+    private ReloadManager $reloadManager;
+
     /**
-     * Starts the models events worker.
+     * Starts the model events worker.
+     *
+     * This method initializes the worker, subscribes to necessary events, and enters a loop waiting for these events.
+     * It acts as the main entry point for the worker's lifecycle.
      *
      * @param array $argv The command-line arguments passed to the worker.
      * @return void
      */
     public function start(array $argv): void
     {
+        $this->initializeWorker();
+        $this->subscribeToEvents();
+        $this->waitForEvents();
+    }
+
+    /**
+     * Initializes the worker by setting up initial state, loading configurations, and preparing dependencies.
+     *
+     * It sets the last change time, gets shared instances from the DI container, initializes PBX settings and model dependency tables,
+     * and sets up priority actions for reload.
+     *
+     * @return void
+     */
+    private function initializeWorker(): void
+    {
+
+        $this->beanstalkClient = $this->getBeanstalkClient();
+
         $this->last_change = time() - 2;
 
+        // Array of core conf objects
         $this->arrAsteriskConfObjects = $this->di->getShared(AsteriskConfModulesProvider::SERVICE_NAME);
 
-        $this->initPbxSettingsDependencyTable();
-        $this->initModelsDependencyTable();
+        // Initializes the PBX settings dependency table.
+        $this->pbxSettingsDependencyTable = ProcessPBXSettings::getDependencyTable();
 
-        $this->PRIORITY_R = [
-            self::R_PBX_MODULE_STATE,
-            self::R_TIMEZONE,
-            self::R_SYSLOG,
-            self::R_REST_API_WORKER,
-            self::R_NETWORK,
-            self::R_FIREWALL,
-            self::R_FAIL2BAN_CONF,
-            self::R_SSH,
-            self::R_LICENSE,
-            self::R_SENTRY,
-            self::R_NATS,
-            self::R_NTP,
-            self::R_PHP_FPM,
-            self::R_NGINX,
-            self::R_NGINX_CONF,
-            self::R_CRON,
-            self::R_PBX_CORE,
-            self::R_FEATURES,
-            self::R_SIP,
-            self::R_RTP,
-            self::R_IAX,
-            self::R_DIALPLAN,
-            self::R_PARKING,
-            self::R_QUEUES,
-            self::R_MANAGERS,
-            self::R_CUSTOM_F,
-            self::R_VOICEMAIL,
-            self::R_MOH,
-            self::R_CALL_EVENTS_WORKER,
-            self::R_UPDATE_REC_SAVE_PERIOD,
-            self::R_ADVICES,
-        ];
+        // Initializes the models dependency table.
+        $this->modelsDependencyTable = ProcessOtherModels::getDependencyTable();
+
+        // Initializes the possible reload actions table.
+        $this->reloadActions = $this->getReloadActions();
+
+        // Initializes the reload manager.
+        $this->reloadManager = new ReloadManager($this->reloadActions);
 
         $this->modified_tables = [];
+    }
 
-        /** @var BeanstalkClient $client */
-        $client = $this->di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
-        $client->subscribe(self::class, [$this, 'processModelChanges']);
-        $client->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
-        $client->setTimeoutHandler([$this, 'timeoutHandler']);
-
-        while ($this->needRestart === false) {
-            $client->wait();
+    /**
+     * Create BeanstalkClient connection
+     * @return BeanstalkClient
+     */
+    private function getBeanstalkClient(): BeanstalkClient
+    {
+        $di = Di::getDefault();
+        if (!$di) {
+            throw new RuntimeException("Dependency Injection container is not set.");
         }
-        // Execute all collected changes before exit
-        $this->timeoutHandler();
+        return $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
     }
 
     /**
-     * Initializes the PBX settings dependency table.
+     * Get priority reload actions
+     * @return array
      */
-    private function initPbxSettingsDependencyTable(): void
+    private function getReloadActions(): array
     {
-        $tables = [];
-        // FeaturesSettings
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::PBX_LANGUAGE,
-                PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH,
-                PbxSettingsConstants::PBX_FEATURE_ATTENDED_TRANSFER,
-                PbxSettingsConstants::PBX_FEATURE_BLIND_TRANSFER,
-                PbxSettingsConstants::PBX_FEATURE_DIGIT_TIMEOUT,
-                PbxSettingsConstants::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT,
-                PbxSettingsConstants::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT,
-                PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN,
-            ],
-            'functions' => [
-                self::R_FEATURES,
-                self::R_DIALPLAN,
-            ],
+        return [
+            self::R_PBX_MODULE_STATE => new ReloadModuleStateAction(),
+            self::R_TIMEZONE => new ReloadTimezoneAction(),
+            self::R_SYSLOG => new ReloadSyslogDAction,
+            self::R_REST_API_WORKER => new ReloadRestAPIWorkerAction(),
+            self::R_NETWORK => new ReloadNetworkAction(),
+            self::R_FIREWALL => new ReloadFirewallAction(),
+            self::R_FAIL2BAN_CONF => new ReloadFail2BanConfAction(),
+            self::R_SSH => new ReloadSSHAction(),
+            self::R_LICENSE => new ReloadLicenseAction(),
+            self::R_SENTRY => new ReloadSentryAction(),
+            self::R_NATS => new ReloadNatsAction(),
+            self::R_NTP => new ReloadNTPAction(),
+            self::R_PHP_FPM => new ReloadPHPFPMAction(),
+            self::R_NGINX => new ReloadNginxAction(),
+            self::R_NGINX_CONF => new ReloadNginxConfAction(),
+            self::R_CRON => new ReloadCrondAction(),
+            self::R_PBX_CORE => new ReloadPBXCoreAction(),
+            self::R_FEATURES => new ReloadFeaturesAction(),
+            self::R_SIP => new ReloadPJSIPAction(),
+            self::R_RTP => new ReloadRTPAction(),
+            self::R_IAX => new ReloadIAXAction(),
+            self::R_DIALPLAN => new ReloadDialplanAction(),
+            self::R_PARKING => new ReloadParkingAction(),
+            self::R_QUEUES => new ReloadQueuesAction(),
+            self::R_MANAGERS => new ReloadManagerAction(),
+            self::R_CUSTOM_F => new ReloadCustomFilesAction(),
+            self::R_VOICEMAIL => new ReloadVoicemailAction(),
+            self::R_MOH => new ReloadMOHAction(),
+            self::R_CALL_EVENTS_WORKER => new ReloadWorkerCallEventsAction(),
+            self::R_UPDATE_REC_SAVE_PERIOD => new ReloadRecordSavePeriodAction(),
+            self::R_ADVICES => new ReloadAdviceAction(),
+            self::R_RESET_DESCRIPTION => new ReloadCloudDescriptionAction()
         ];
-
-        // Parking settings
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::PBX_CALL_PARKING_EXT,
-                PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT,
-                PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT,
-            ],
-            'functions' => [
-                self::R_FEATURES, // ??? parkcall in features.conf ???
-                self::R_DIALPLAN,
-                self::R_PARKING,
-            ],
-        ];
-
-        // CallRecordSettings
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::PBX_RECORD_CALLS,
-                PbxSettingsConstants::PBX_RECORD_CALLS_INNER,
-                PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD,
-            ],
-            'functions' => [
-                self::R_DIALPLAN,
-            ],
-        ];
-
-        // CallRecordSettings / The period of storing conversation records
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD,
-            ],
-            'functions' => [
-                self::R_UPDATE_REC_SAVE_PERIOD,
-            ],
-        ];
-
-        // AMIParameters
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::AMI_PORT,
-                PbxSettingsConstants::AJAM_PORT,
-                PbxSettingsConstants::AJAM_PORT_TLS,
-            ],
-            'functions' => [
-                self::R_MANAGERS,
-            ],
-        ];
-
-        // IaxParameters
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::IAX_PORT,
-            ],
-            'functions' => [
-                self::R_IAX,
-            ],
-        ];
-
-        // Guest calls without authorization
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::PBX_ALLOW_GUEST_CALLS,
-                PbxSettingsConstants::USE_WEB_RTC,
-            ],
-            'functions' => [
-                self::R_SIP,
-                self::R_DIALPLAN,
-            ],
-        ];
-
-        // SipParameters
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::SIP_PORT,
-                PbxSettingsConstants::TLS_PORT,
-                PbxSettingsConstants::SIP_DEFAULT_EXPIRY,
-                PbxSettingsConstants::SIP_MIN_EXPIRY,
-                PbxSettingsConstants::SIP_MAX_EXPIRY,
-                PbxSettingsConstants::PBX_LANGUAGE,
-            ],
-            'functions' => [
-                self::R_SIP,
-            ],
-        ];
-
-        // RTPParameters
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::RTP_PORT_FROM,
-                PbxSettingsConstants::RTP_PORT_TO,
-                PbxSettingsConstants::RTP_STUN_SERVER,
-            ],
-            'functions' => [
-                self::R_RTP,
-            ],
-        ];
-
-        // SSHParameters
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::SSH_PORT,
-                PbxSettingsConstants::SSH_RSA_KEY,
-                PbxSettingsConstants::SSH_DSS_KEY,
-                PbxSettingsConstants::SSH_PASSWORD,
-                PbxSettingsConstants::SSH_ECDSA_KEY,
-                PbxSettingsConstants::SSH_AUTHORIZED_KEYS,
-                PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD,
-            ],
-            'functions' => [
-                self::R_SSH,
-            ],
-        ];
-
-        // FirewallParameters
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::SIP_PORT,
-                PbxSettingsConstants::TLS_PORT,
-                PbxSettingsConstants::RTP_PORT_FROM,
-                PbxSettingsConstants::RTP_PORT_TO,
-                PbxSettingsConstants::IAX_PORT,
-                PbxSettingsConstants::AMI_PORT,
-                PbxSettingsConstants::AJAM_PORT,
-                PbxSettingsConstants::AJAM_PORT_TLS,
-                PbxSettingsConstants::WEB_PORT,
-                PbxSettingsConstants::WEB_HTTPS_PORT,
-                PbxSettingsConstants::SSH_PORT,
-                PbxSettingsConstants::PBX_FIREWALL_ENABLED,
-                PbxSettingsConstants::PBX_FAIL2BAN_ENABLED,
-            ],
-            'functions' => [
-                self::R_FIREWALL,
-            ],
-            'strPosKey' => 'FirewallSettings',
-        ];
-
-        // FirewallParameters
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::WEB_PORT,
-                PbxSettingsConstants::WEB_HTTPS_PORT,
-                PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY,
-                PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY,
-                PbxSettingsConstants::REDIRECT_TO_HTTPS,
-            ],
-            'functions' => [
-                self::R_NGINX,
-            ],
-        ];
-
-        // CronParameters
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::RESTART_EVERY_NIGHT,
-            ],
-            'functions' => [
-                self::R_CRON,
-            ],
-        ];
-
-        // DialplanParameters
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::PBX_LANGUAGE,
-                PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_IN,
-                PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_OUT,
-            ],
-            'functions' => [
-                self::R_DIALPLAN,
-            ],
-        ];
-        // DialplanParameters
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::PBX_LANGUAGE,
-            ],
-            'functions' => [
-                self::R_PBX_CORE,
-            ],
-        ];
-
-        // VoiceMailParameters
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::MAIL_TPL_VOICEMAIL_SUBJECT,
-                PbxSettingsConstants::MAIL_TPL_VOICEMAIL_BODY,
-                PbxSettingsConstants::MAIL_TPL_VOICEMAIL_FOOTER,
-                PbxSettingsConstants::MAIL_SMTP_SENDER_ADDRESS,
-                PbxSettingsConstants::MAIL_SMTP_USERNAME,
-                PbxSettingsConstants::PBX_TIMEZONE,
-                PbxSettingsConstants::VOICEMAIL_NOTIFICATIONS_EMAIL,
-                PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL,
-                PbxSettingsConstants::SYSTEM_EMAIL_FOR_MISSED,
-            ],
-            'functions' => [
-                self::R_VOICEMAIL,
-            ],
-        ];
-
-        // VisualLanguageSettings
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::SSH_LANGUAGE,
-                PbxSettingsConstants::WEB_ADMIN_LANGUAGE,
-            ],
-            'functions' => [
-                self::R_REST_API_WORKER,
-            ],
-        ];
-
-        // LicenseSettings
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::PBX_LICENSE,
-            ],
-            'functions' => [
-                self::R_LICENSE,
-                self::R_NATS,
-            ],
-        ];
-
-        // TimeZoneSettings
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::PBX_TIMEZONE,
-            ],
-            'functions' => [
-                self::R_TIMEZONE,
-                self::R_NGINX,
-                self::R_PHP_FPM,
-                self::R_REST_API_WORKER,
-                self::R_CALL_EVENTS_WORKER,
-                self::R_SYSLOG,
-            ],
-        ];
-
-        // NTPSettings
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS,
-                PbxSettingsConstants::NTP_SERVER,
-                PbxSettingsConstants::PBX_TIMEZONE,
-            ],
-            'functions' => [
-                self::R_NTP,
-            ],
-        ];
-
-        // Advices
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::WEB_ADMIN_PASSWORD,
-                PbxSettingsConstants::SSH_PASSWORD,
-                PbxSettingsConstants::PBX_FIREWALL_ENABLED,
-            ],
-            'functions' => [
-                self::R_ADVICES,
-            ],
-        ];
-
-        // Sentry
-        $tables[] = [
-            'settingName' => [
-                PbxSettingsConstants::SEND_METRICS,
-            ],
-            'functions' => [
-                self::R_SENTRY,
-            ],
-        ];
-
-        $this->pbxSettingsDependencyTable = $tables;
     }
 
     /**
-     * Initializes the models dependency table.
+     * Subscribes the worker to relevant Beanstalk queues for processing model changes and handling pings.
+     *
+     * It ensures that the worker listens for incoming messages related to model changes and system pings,
+     * setting up appropriate callbacks for each.
+     *
+     * @return void
      */
-    private function initModelsDependencyTable(): void
+    private function subscribeToEvents(): void
     {
-        $tables = [];
-        $tables[] = [
-            'settingName' => [
-                AsteriskManagerUsers::class,
-            ],
-            'functions' => [
-                self::R_MANAGERS,
-                self::R_ADVICES,
-            ],
-        ];
+        $this->beanstalkClient->subscribe(self::class, [$this, 'processModelChanges']);
+        $this->beanstalkClient->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
+        $this->beanstalkClient->setTimeoutHandler([$this, 'timeoutHandler']);
+    }
 
-        $tables[] = [
-            'settingName' => [
-                CallQueueMembers::class,
-            ],
-            'functions' => [
-                self::R_QUEUES,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                CallQueues::class,
-            ],
-            'functions' => [
-                self::R_QUEUES,
-                self::R_DIALPLAN,
-            ],
-        ];
-        $tables[] = [
-            'settingName' => [
-                ExternalPhones::class,
-                Extensions::class,
-                DialplanApplications::class,
-                IncomingRoutingTable::class,
-                IvrMenu::class,
-                IvrMenuActions::class,
-                OutgoingRoutingTable::class,
-                OutWorkTimes::class,
-                OutWorkTimesRouts::class,
-                ConferenceRooms::class,
-            ],
-            'functions' => [
-                self::R_DIALPLAN,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                CustomFiles::class,
-            ],
-            'functions' => [
-                self::R_CUSTOM_F,
-                self::R_ADVICES,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                Sip::class,
-            ],
-            'functions' => [
-                self::R_SIP,
-                self::R_DIALPLAN,
-                self::R_FIREWALL,
-                self::R_ADVICES,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                Users::class,
-                ExtensionForwardingRights::class,
-            ],
-            'functions' => [
-                self::R_SIP,
-                self::R_DIALPLAN,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                FirewallRules::class,
-                Fail2BanRules::class,
-            ],
-            'functions' => [
-                self::R_FIREWALL,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                Iax::class,
-            ],
-            'functions' => [
-                self::R_IAX,
-                self::R_DIALPLAN,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                Codecs::class,
-            ],
-            'functions' => [
-                self::R_IAX,
-                self::R_SIP,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                SoundFiles::class,
-            ],
-            'functions' => [
-                self::R_MOH,
-                self::R_DIALPLAN,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                LanInterfaces::class,
-            ],
-            'functions' => [
-                self::R_NETWORK,
-                self::R_IAX,
-                self::R_SIP,
-                self::R_ADVICES,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                SipHosts::class,
-            ],
-            'functions' => [
-                self::R_FIREWALL,
-                self::R_SIP,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                NetworkFilters::class,
-            ],
-            'functions' => [
-                self::R_FIREWALL,
-                self::R_SIP,
-                self::R_MANAGERS,
-                self::R_ADVICES,
-            ],
-        ];
-
-        $this->modelsDependencyTable = $tables;
+    /**
+     * Waits for events in a loop until a restart condition is met.
+     *
+     * This method keeps the worker in a loop, processing incoming events from the Beanstalk queue.
+     * The loop continues until an external condition triggers the need to restart the worker.
+     *
+     * @return void
+     */
+    private function waitForEvents(): void
+    {
+        while ($this->needRestart === false) {
+            $this->beanstalkClient->wait();
+        }
+        $this->timeoutHandler(); // Execute all collected changes before exit
     }
 
     /**
@@ -664,7 +272,6 @@ class WorkerModelsEvents extends WorkerBase
         $this->last_change = time() - $this->timeout;
         $this->startReload();
     }
-
 
     /**
      * Starts the reload process if there are modified tables.
@@ -685,9 +292,8 @@ class WorkerModelsEvents extends WorkerBase
         }
 
         // Process changes for each method in priority order
-        foreach ($this->PRIORITY_R as $method_name) {
+        foreach ($this->reloadActions as $method_name => $calledClass) {
             $action = $this->modified_tables[$method_name] ?? null;
-            $parameters = $this->modified_tables['parameters'][$method_name] ?? null;
 
             // Skip if there is no change for this method
             if ($action === null) {
@@ -695,14 +301,11 @@ class WorkerModelsEvents extends WorkerBase
             }
 
             // Call the method if it exists
-            if (method_exists($this, $method_name)) {
-                Util::sysLogMsg(__METHOD__, "Process changes by {$method_name}", LOG_DEBUG);
-                if ($parameters === null) {
-                    $this->$method_name();
-                } else {
-                    $this->$method_name($parameters);
-                }
-            }
+            $className = get_class($calledClass);
+            Util::sysLogMsg(__METHOD__, "Process reload action: {$className}", LOG_DEBUG);
+            $parameters = $this->modified_tables['parameters'][$method_name] ?? [];
+            $this->reloadManager->processReload($method_name, $parameters);
+
         }
 
         // Send information about models changes to additional modules bulky without any details
@@ -726,7 +329,8 @@ class WorkerModelsEvents extends WorkerBase
 
             // Check the source of the message and perform actions accordingly
             if ($receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_INVOKE_ACTION
-                && in_array($receivedMessage['action'], $this->PRIORITY_R, true)) {
+                && array_key_exists($receivedMessage['action'], $this->reloadActions))
+            {
                 // Store the modified table and its parameters
                 $this->modified_tables[$receivedMessage['action']] = true;
                 $this->modified_tables['parameters'][$receivedMessage['action']] = $receivedMessage['parameters'];
@@ -797,9 +401,7 @@ class WorkerModelsEvents extends WorkerBase
                 $dependencies = call_user_func([$configClassObj, AsteriskConfigInterface::GET_DEPENDENCE_MODELS]);
 
                 // Check if the called class is a dependency and the config class has the GET_SETTINGS method
-                if (in_array($called_class, $dependencies, true)
-                    && method_exists($configClassObj, AsteriskConfigInterface::GET_SETTINGS)
-                ) {
+                if (in_array($called_class, $dependencies, true) && method_exists($configClassObj, AsteriskConfigInterface::GET_SETTINGS)) {
                     // Retrieve the new settings for the config class
                     call_user_func([$configClassObj, AsteriskConfigInterface::GET_SETTINGS]);
                 }
@@ -886,7 +488,6 @@ class WorkerModelsEvents extends WorkerBase
         // Find the module settings record
         $moduleSettings = PbxExtensionModules::findFirstById($recordId);
         if ($moduleSettings !== null) {
-
             // Invoke the action for the PBX module state with the module settings data
             self::invokeAction(self::R_PBX_MODULE_STATE, $moduleSettings->toArray(), 50);
         }
@@ -910,325 +511,9 @@ class WorkerModelsEvents extends WorkerBase
         $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
 
         // Prepare the job data
-        $jobData = json_encode(
-            [
-                'source' => BeanstalkConnectionModelsProvider::SOURCE_INVOKE_ACTION,
-                'action' => $action,
-                'parameters' => $parameters,
-                'model' => ''
-            ]
-        );
-
+        $jobData = json_encode(['source' => BeanstalkConnectionModelsProvider::SOURCE_INVOKE_ACTION, 'action' => $action, 'parameters' => $parameters, 'model' => '']);
         // Publish the job to the Beanstalk queue
-        $queue->publish(
-            $jobData,
-            self::class,
-            $priority,
-            PheanstalkInterface::DEFAULT_DELAY,
-            3600
-        );
-    }
-
-    /**
-     * Restarts gnats queue server daemon
-     */
-    public function reloadNats(): void
-    {
-        $natsConf = new NatsConf();
-        $natsConf->reStart();
-    }
-
-    /**
-     * Reloads Asterisk dialplan
-     */
-    public function reloadDialplan(): void
-    {
-        PBX::dialplanReload();
-    }
-
-    /**
-     * Reloads res_parking
-     * @return void
-     */
-    public function reloadParking(): void
-    {
-        $parkingConf = new ResParkingConf();
-        $parkingConf->generateConfig();
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("$asteriskPath -rx 'module reload res_parking'", $arr_out);
-    }
-
-    /**
-     * Reloads Asterisk manager interface module
-     */
-    public function reloadManager(): void
-    {
-        PBX::managerReload();
-    }
-
-    /**
-     * Generates queue.conf and restart asterisk queue module
-     */
-    public function reloadQueues(): void
-    {
-        QueueConf::queueReload();
-    }
-
-    /**
-     * Updates custom changes in config files
-     */
-    public function updateCustomFiles(): void
-    {
-        System::updateCustomFiles();
-    }
-
-    /**
-     * Applies iptables settings and restart firewall
-     */
-    public function reloadFirewall(): void
-    {
-        IptablesConf::updateFirewallRules();
-        IptablesConf::reloadFirewall();
-    }
-
-    public function pbxCoreReload(): void
-    {
-        PBX::coreRestart();
-    }
-
-    /**
-     *  Refreshes networks configs and restarts network daemon
-     */
-    public function networkReload(): void
-    {
-        System::networkReload();
-    }
-
-    /**
-     * Refreshes IAX configs and reload iax2 module
-     */
-    public function reloadIax(): void
-    {
-        PBX::iaxReload();
-    }
-
-    /**
-     * Reloads MOH file list in Asterisk.
-     */
-    public function reloadMoh(): void
-    {
-        PBX::mohReload();
-    }
-
-    /**
-     * Refreshes SIP configs and reload PJSIP module
-     */
-    public function reloadSip(): void
-    {
-        PBX::sipReload();
-    }
-
-    /**
-     * Update RTP config file.
-     */
-    public function rtpReload(): void
-    {
-        PBX::rtpReload();
-    }
-
-    /**
-     *  Refreshes features configs and reload features module
-     */
-    public function reloadFeatures(): void
-    {
-        PBX::featuresReload();
-    }
-
-    /**
-     * Restarts CROND daemon
-     */
-    public function reloadCron(): void
-    {
-        $cron = new CronConf();
-        $cron->reStart();
-    }
-
-    /**
-     * Restarts NTP daemon
-     */
-    public function reloadNtp(): void
-    {
-        NTPConf::configure();
-    }
-
-    /**
-     * Update record save period
-     */
-    public function updateRecordSavePeriod(): void
-    {
-        PBX::updateSavePeriod();
-    }
-
-    /**
-     * Restarts Nginx daemon
-     */
-    public function reloadNginx(): void
-    {
-        $nginxConf = new NginxConf();
-        $nginxConf->generateConf();
-        $nginxConf->reStart();
-    }
-
-    /**
-     * Applies modules locations changes and restarts Nginx daemon
-     */
-    public function reloadNginxConf(): void
-    {
-        $nginxConf = new NginxConf();
-        $nginxConf->generateModulesConfigs();
-        $nginxConf->reStart();
-    }
-
-    /**
-     * Restarts Fail2Ban daemon
-     */
-    public function reloadFail2BanConf(): void
-    {
-        Fail2BanConf::reloadFail2ban();
-    }
-
-    /**
-     * Restarts PHP-FPM daemon
-     */
-    public function reloadPHPFPM(): void
-    {
-        PHPConf::reStart();
-    }
-
-    /**
-     * Configures SSH settings
-     */
-    public function reloadSSH(): void
-    {
-        $sshConf = new SSHConf();
-        $sshConf->configure();
-    }
-
-    /**
-     * Reconfigures TomeZone settings
-     */
-    public function updateTomeZone(): void
-    {
-        System::timezoneConfigure();
-    }
-
-    /**
-     * Restarts rsyslog daemon
-     */
-    public function restartSyslogD(): void
-    {
-        $syslogConf = new SyslogConf();
-        $syslogConf->reStart();
-    }
-
-    /**
-     *  Reloads Asterisk voicemail module
-     */
-    public function reloadVoicemail(): void
-    {
-        PBX::voicemailReload();
-    }
-
-    /**
-     *  Reloads WorkerApiCommands worker
-     */
-    public function reloadRestAPIWorker(): void
-    {
-        Processes::processPHPWorker(WorkerApiCommands::class);
-    }
-
-    /**
-     *  Reloads WorkerCallEvents worker
-     */
-    public function reloadWorkerCallEvents(): void
-    {
-        Processes::processPHPWorker(WorkerCallEvents::class);
-    }
-
-    /**
-     * Process after PBXExtension state changes
-     *
-     * @param array $pbxModuleRecord
-     */
-    public function afterModuleStateChanged(array $pbxModuleRecord): void
-    {
-        // Recreate modules array
-        PBXConfModulesProvider::recreateModulesProvider();
-
-        // Recreate database connections
-        ModulesDBConnectionsProvider::recreateModulesDBConnections();
-
-        // Hook module methods if they change system configs
-        $className = str_replace('Module', '', $pbxModuleRecord['uniqid']);
-        $configClassName = "Modules\\{$pbxModuleRecord['uniqid']}\\Lib\\{$className}Conf";
-        if (class_exists($configClassName)) {
-            $configClassObj = new $configClassName();
-
-            // Reconfigure fail2ban and restart iptables
-            if (method_exists($configClassObj, SystemConfigInterface::GENERATE_FAIL2BAN_JAILS)
-                && !empty(call_user_func([$configClassObj, SystemConfigInterface::GENERATE_FAIL2BAN_JAILS]))) {
-                $this->modified_tables[self::R_FAIL2BAN_CONF] = true;
-            }
-
-            // Refresh Nginx conf if module has any locations
-            if (method_exists($configClassObj, SystemConfigInterface::CREATE_NGINX_LOCATIONS)
-                && !empty(call_user_func([$configClassObj, SystemConfigInterface::CREATE_NGINX_LOCATIONS]))) {
-                $this->modified_tables[self::R_NGINX_CONF] = true;
-            }
-
-            // Refresh crontab rules if module has any for it
-            if (method_exists($configClassObj, SystemConfigInterface::CREATE_CRON_TASKS)) {
-                $tasks = [];
-                call_user_func_array([$configClassObj, SystemConfigInterface::CREATE_CRON_TASKS], [&$tasks]);
-                if (!empty($tasks)) {
-                    $this->modified_tables[self::R_CRON] = true;
-                }
-            }
-
-            // Reconfigure asterisk manager interface
-            if (method_exists($configClassObj, AsteriskConfigInterface::GENERATE_MANAGER_CONF)
-                && !empty(call_user_func([$configClassObj, AsteriskConfigInterface::GENERATE_MANAGER_CONF]))) {
-                $this->modified_tables[self::R_MANAGERS] = true;
-            }
-
-            // Hook modules AFTER_ methods
-            if ($pbxModuleRecord['disabled'] === '1'
-                && method_exists($configClassObj, SystemConfigInterface::ON_AFTER_MODULE_DISABLE)) {
-                call_user_func([$configClassObj, SystemConfigInterface::ON_AFTER_MODULE_DISABLE]);
-            } elseif ($pbxModuleRecord['disabled'] === '0'
-                && method_exists($configClassObj, SystemConfigInterface::ON_AFTER_MODULE_ENABLE)) {
-                call_user_func([$configClassObj, SystemConfigInterface::ON_AFTER_MODULE_ENABLE]);
-            }
-        }
-    }
-
-    /**
-     * Cleanup advices cache
-     * @return void
-     */
-    private function cleanupAdvicesCache(): void
-    {
-        WorkerPrepareAdvices::afterChangePBXSettings();
-    }
-
-    /**
-     * Configure the sentry error logger
-     * @return void
-     */
-    private function reloadSentry(): void
-    {
-        $sentryConf = new SentryConf();
-        $sentryConf->configure();
+        $queue->publish($jobData, self::class, $priority, PheanstalkInterface::DEFAULT_DELAY, 3600);
     }
 }
 
