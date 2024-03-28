@@ -19,11 +19,8 @@
 
 namespace MikoPBX\Core\System\CloudProvisioning;
 
-use MikoPBX\Core\System\Util;
-
 class YandexCloud extends CloudProvider
 {
-    const CLOUD_NAME='YandexCloud';
 
     /**
      * Performs the Yandex Cloud provisioning.
@@ -32,8 +29,6 @@ class YandexCloud extends CloudProvider
      */
     public function provision(): bool
     {
-        Util::sysLogMsg(__CLASS__, 'Try '.self::CLOUD_NAME.' provisioning... ');
-
         $curl = curl_init();
         $url = 'http://169.254.169.254/computeMetadata/v1/instance/?recursive=true';
         curl_setopt($curl, CURLOPT_URL, $url);
@@ -52,10 +47,13 @@ class YandexCloud extends CloudProvider
         // Update SSH keys, if available
         $this->updateSSHKeys($data['attributes']['ssh-keys'] ?? '');
 
-        // Update LAN settings with hostname and external IP address
+        // Update machine name
         $hostname = $data['name'] ?? '';
+        $this->updateHostName($hostname);
+
+        // Update LAN settings with the external IP address
         $extIp = $data['networkInterfaces'][0]['accessConfigs'][0]['externalIp'] ?? '';
-        $this->updateLanSettings($hostname, $extIp);
+        $this->updateLanSettings($extIp);
 
         // Update SSH and WEB passwords using some unique identifier from the metadata
         $vmId = $data['id'] ?? '';

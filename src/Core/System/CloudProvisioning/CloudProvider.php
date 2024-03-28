@@ -56,7 +56,7 @@ abstract class CloudProvider
      * @param string $keyName The key name.
      * @param mixed $data The data to be stored.
      */
-    protected function updatePbxSettings(string $keyName, $data): void
+    public function updatePbxSettings(string $keyName, $data): void
     {
         $setting = PbxSettings::findFirst('key="' . $keyName . '"');
         if (!$setting) {
@@ -76,10 +76,9 @@ abstract class CloudProvider
     /**
      * Updates the LAN settings.
      *
-     * @param string $hostname The hostname.
      * @param string $extipaddr The external IP address.
      */
-    protected function updateLanSettings(string $hostname, string $extipaddr): void
+    protected function updateLanSettings(string $extipaddr): void
     {
         // Attempt to get the external IP if it's not provided
         if (empty($extipaddr)) {
@@ -96,26 +95,29 @@ abstract class CloudProvider
         /** @var LanInterfaces $lanData */
         $lanData = LanInterfaces::findFirst();
         if ($lanData !== null) {
-            $updates = [];
             if (!empty($extipaddr)) {
                 $lanData->extipaddr = $extipaddr;
                 $lanData->topology = 'private';
-                $updates[] = "External IP: $extipaddr";
-            }
-            if (!empty($hostname)) {
-                $lanData->hostname = $hostname;
-                $this->updatePbxSettings(PbxSettingsConstants::PBX_NAME, $hostname);
-                $updates[] = "Hostname: $hostname";
             }
             $result = $lanData->save();
             if ($result) {
-                Util::sysLogMsg(__CLASS__, "Updated LAN settings: " . implode(", ", $updates));
+                Util::sysLogMsg(__CLASS__, "Updated LAN settings external IP: $extipaddr");
             } else {
-                Util::sysLogMsg(__CLASS__, "Failed to update LAN settings: " . implode(", ", $updates));
+                Util::sysLogMsg(__CLASS__, "Failed to update LAN settings external IP: $extipaddr");
             }
         } else {
-            Util::sysLogMsg(__CLASS__, "LAN interface not found. ($hostname $extipaddr)");
+            Util::sysLogMsg(__CLASS__, "LAN interface not found on cloud provisioning");
         }
+    }
+
+    /**
+     * Updates host name
+     *
+     * @param string $hostname The hostname.
+     */
+    protected function updateHostName(string $hostname): void
+    {
+        $this->updatePbxSettings(PbxSettingsConstants::PBX_NAME, $hostname);
     }
 
     /**
@@ -142,15 +144,7 @@ abstract class CloudProvider
         }
         $this->updatePbxSettings(PbxSettingsConstants::WEB_ADMIN_PASSWORD, $webPassword);
         $this->updatePbxSettings(PbxSettingsConstants::CLOUD_INSTANCE_ID, $webPassword);
-        $this->updatePbxSettings(PbxSettingsConstants::PBX_DESCRIPTION, 'Default password is the UniqueID value of your cloud instance');
+        $this->updatePbxSettings(PbxSettingsConstants::PBX_DESCRIPTION, 'auth_DefaultCloudPasswordInstructions');
     }
 
-    /**
-     * Checks and connects the storage disk automatically.
-     */
-    protected function checkConnectStorage(): void
-    {
-        $phpPath = Util::which('php');
-        Processes::mwExec($phpPath . ' -f /etc/rc/connect.storage auto');
-    }
 }

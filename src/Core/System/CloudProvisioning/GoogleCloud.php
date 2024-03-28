@@ -23,8 +23,6 @@ use MikoPBX\Core\System\Util;
 
 class GoogleCloud extends CloudProvider
 {
-    const CLOUD_NAME='GoogleCloud';
-
     /**
      * Performs the Google Cloud provisioning.
      * Google Cloud.
@@ -52,10 +50,13 @@ class GoogleCloud extends CloudProvider
         $data = json_decode($resultRequest, true);
         $this->updateSSHKeys($data['attributes']['ssh-keys'] ?? '');
 
-        // Update LAN settings with hostname and external IP address
+        // Update machine name
         $hostname = $data['name'] ?? '';
+        $this->updateHostName($hostname);
+
+        // Update LAN settings with the external IP address
         $extIp = $data['networkInterfaces'][0]['accessConfigs'][0]['externalIp'] ?? '';
-        $this->updateLanSettings($hostname, $extIp);
+        $this->updateLanSettings($extIp);
 
         // Update SSH and WEB passwords using some unique identifier from the metadata
         $vmId = $data['id'] ?? '';

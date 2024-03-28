@@ -25,8 +25,6 @@ use MikoPBX\Core\System\Util;
 
 class VKCloud extends CloudProvider
 {
-    const CLOUD_NAME='VKCloud';
-
     /**
      * Performs the VK Cloud Solutions provisioning.
      *
@@ -41,9 +39,12 @@ class VKCloud extends CloudProvider
             return false;
         }
 
-        // Update LAN settings with hostname and external IP address
+        // Update machine name
+        $this->updateHostName($hostname);
+
+        // Update LAN settings with the external IP address
         $extIp = $this->getMetaDataVCS('public-ipv4');
-        $this->updateLanSettings($hostname, $extIp);
+        $this->updateLanSettings($extIp);
 
         // Update SSH keys, if available
         $sshKey = '';

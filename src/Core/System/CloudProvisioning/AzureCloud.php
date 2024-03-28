@@ -24,8 +24,6 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class AzureCloud extends CloudProvider
 {
-    const CLOUD_NAME='AzureCloud';
-
     private Client $client;
 
     public function __construct()
@@ -47,12 +45,13 @@ class AzureCloud extends CloudProvider
             return false;
         }
 
-        // Extract machine name and external IP address from metadata
+        // Update machine name
         $hostname = $metadata['compute']['name'] ?? '';
-        $extIp = $metadata['network']['interface'][0]['ipv4']['ipAddress'][0]['publicIpAddress'] ?? '';
+        $this->updateHostName($hostname);
 
-        // Update LAN settings with hostname and external IP address
-        $this->updateLanSettings($hostname, $extIp);
+        // Update LAN settings the external IP address
+        $extIp = $metadata['network']['interface'][0]['ipv4']['ipAddress'][0]['publicIpAddress'] ?? '';
+        $this->updateLanSettings($extIp);
 
         // Update SSH keys, if available
         $sshKeys = array_column($metadata['compute']['publicKeys'] ?? [], 'keyData');
