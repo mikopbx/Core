@@ -267,13 +267,13 @@ const Form = {
                             if (reloadPath.length > 0) {
                                 // Redirect to the specified URL if conditions are met
                                 window.location = globalRootUrl + reloadPath;
-                            } else if (Form.enableDirrity) {
-                                // Initialize dirrity if conditions are met
-                                Form.initializeDirrity();
                             }
                             break;
                     }
-
+                    if (Form.enableDirrity) {
+                        // Initialize dirrity if conditions are met
+                        Form.initializeDirrity();
+                    }
                 }
                 // Remove 'loading' class from the submit button
                 Form.$submitButton.removeClass('loading');
