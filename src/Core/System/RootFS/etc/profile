@@ -50,8 +50,6 @@ if [ -f /var/etc/storage_device ]; then
       mkdir -p "$histDir";
       export HISTFILE="$histDir/.bash_history";
     fi
-else
-    echo "/var/etc/storage_device file not found."
 fi
 
 

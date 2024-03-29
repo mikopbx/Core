@@ -216,6 +216,10 @@ class SystemLoader extends Di\Injectable
         NTPConf::configure();
         $this->echoResultMsg();
 
+        // Try to provision the system in the cloud
+        $this->echoStartMsg('Check if cloud provisioning needs to be started...');
+        CloudProvisioning::start();
+
         // Do not need to set Debian SSH service
         if(!Util::isSystemctl()){
             $this->echoStartMsg(' - Configuring SSH console...');

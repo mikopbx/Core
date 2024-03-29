@@ -20,7 +20,6 @@
 
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Core\System\CloudProvisioning;
 
 require_once 'Globals.php';
 
@@ -63,9 +62,4 @@ if ($action === 'deconfig' && Util::isT2SdeLinux()) {
          */
         $network->udhcpcConfigureRenewBound();
     }
-
-    /**
-     * Start the cloud provisioning process.
-     */
-    CloudProvisioning::start();
 }

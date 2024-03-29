@@ -45,8 +45,6 @@ class CloudProvisioning
             // Already processed before.
             return;
         }
-        // If it is the first start, we have to activate network settings received from DHCP
-        System::networkReload();
 
         // Lists of possible cloud providers.
         $providers = [
