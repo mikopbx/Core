@@ -91,6 +91,6 @@ class CloudProvisioning
     private static function checkConnectStorage(): void
     {
         $phpPath = Util::which('php');
-        Processes::mwExec($phpPath . ' -f /etc/rc/connect.storage auto');
+        Processes::mwExecBg($phpPath . ' -f /etc/rc/connect.storage auto', '/var/log/storage-connect.log', 3);
     }
 }

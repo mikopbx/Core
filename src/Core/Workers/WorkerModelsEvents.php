@@ -22,6 +22,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudParametersAction;
 use MikoPBX\Common\Models\{ModelsBase, PbxExtensionModules, PbxSettings};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
@@ -111,6 +112,7 @@ class WorkerModelsEvents extends WorkerBase
     public const R_ADVICES = 'cleanupAdvicesCache';
     public const R_RESET_DESCRIPTION = 'resetDescription';
     public const R_SENTRY = 'reloadSentry';
+    public const R_CLOUD_PROVISION = 'ReloadCloudParametersAction';
 
     private int $last_change;
     private array $modified_tables = [];
@@ -229,7 +231,8 @@ class WorkerModelsEvents extends WorkerBase
             self::R_CALL_EVENTS_WORKER => new ReloadWorkerCallEventsAction(),
             self::R_UPDATE_REC_SAVE_PERIOD => new ReloadRecordSavePeriodAction(),
             self::R_ADVICES => new ReloadAdviceAction(),
-            self::R_RESET_DESCRIPTION => new ReloadCloudDescriptionAction()
+            self::R_RESET_DESCRIPTION => new ReloadCloudDescriptionAction(),
+            self::R_CLOUD_PROVISION => new ReloadCloudParametersAction()
         ];
     }
 

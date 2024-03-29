@@ -675,13 +675,15 @@ class Storage extends Di\Injectable
 
         // Check if the disk was mounted successfully
         if ($success === true) {
-            echo "\n " . Util::translate('Storage disk was mounted successfully...') . " \n\n";
+            Util::echoWithSyslog( "\n " . Util::translate('Storage disk was mounted successfully...') . " \n\n");
         } else {
-            echo "\n " . Util::translate('Failed to mount the disc...') . " \n\n";
+            Util::echoWithSyslog( "\n " . Util::translate('Failed to mount the disc...') . " \n\n");
         }
 
         sleep(3);
-        fclose($STDERR);
+        if ($STDERR!==false){
+            fclose($STDERR);
+        }
 
         return $success;
     }

@@ -2,8 +2,8 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
-use MikoPBX\Core\System\CloudProvisioning;
-use MikoPBX\Core\System\Network;
+use MikoPBX\Core\System\System;
+use MikoPBX\Core\Workers\WorkerModelsEvents;
 
 class ReloadNetworkAction implements ReloadActionInterface
 {
@@ -15,15 +15,10 @@ class ReloadNetworkAction implements ReloadActionInterface
      */
     public function execute(array $parameters = []): void
     {
-        // Create Network object and configure settings
-        $network = new Network();
-        $network->hostnameConfigure();
-        $network->resolvConfGenerate();
-        $network->loConfigure();
-        $network->lanConfigure();
-        $network->configureLanInDocker();
+        //  Refreshes networks configs and restarts network daemon.
+        System::networkReload();
 
-        // Check if it needs to get additional settings from the cloud
-        CloudProvisioning::start();
+        //  Refreshes cloud provision after all other tasks
+        WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_CLOUD_PROVISION, [],1000);
     }
 }
