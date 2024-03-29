@@ -8,6 +8,8 @@ use MikoPBX\Core\System\MikoPBXConfig;
 
 class ReloadCloudDescriptionAction implements ReloadActionInterface
 {
+    public const DEFAULT_PASSWORD_DESCRIPTION = 'auth_DefaultCloudPasswordInstructions';
+
     /**
      * Reset default cloud password instructions
      *
@@ -16,7 +18,14 @@ class ReloadCloudDescriptionAction implements ReloadActionInterface
      */
     public function execute(array $parameters = []): void
     {
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::PBX_DESCRIPTION)==='auth_DefaultCloudPasswordInstructions'){
+        $description = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_DESCRIPTION);
+        $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
+        $webAdminPassword = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
+
+        if ($cloudInstanceId === $webAdminPassword && $description!==self::DEFAULT_PASSWORD_DESCRIPTION){
+            $config = new MikoPBXConfig();
+            $config->setGeneralSettings(PbxSettingsConstants::PBX_DESCRIPTION, self::DEFAULT_PASSWORD_DESCRIPTION);
+        } elseIf ($description === self::DEFAULT_PASSWORD_DESCRIPTION) {
             $config = new MikoPBXConfig();
             $config->resetGeneralSettings(PbxSettingsConstants::PBX_DESCRIPTION);
         }
