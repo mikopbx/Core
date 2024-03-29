@@ -137,22 +137,6 @@ class System extends Di\Injectable
     }
 
     /**
-     * Refreshes networks configs and restarts network daemon.
-     *
-     * @return void
-     */
-    public static function networkReload(): void
-    {
-        // Create Network object and configure settings
-        $network = new Network();
-        $network->hostnameConfigure();
-        $network->resolvConfGenerate();
-        $network->loConfigure();
-        $network->lanConfigure();
-        $network->configureLanInDocker();
-    }
-
-    /**
      * Updates custom changes in config files
      *
      * @return void

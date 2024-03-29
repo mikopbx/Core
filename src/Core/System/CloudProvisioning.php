@@ -26,7 +26,6 @@ use MikoPBX\Core\System\CloudProvisioning\GoogleCloud;
 use MikoPBX\Core\System\CloudProvisioning\VKCloud;
 use MikoPBX\Core\System\CloudProvisioning\YandexCloud;
 
-
 /**
  * Class CloudProvisioning
  *
@@ -61,9 +60,8 @@ class CloudProvisioning
                 Util::sysLogMsg(__CLASS__, "Provisioning on $cloudName has been successfully completed.");
                 // Provisioning succeeded, break out of the loop
                 break;
-            } else {
-                Util::sysLogMsg(__CLASS__, "Provisioning on $cloudName has not been completed. This may be due to being in a different environment or a non-cloud setting.");
             }
+            Util::sysLogMsg(__CLASS__, "Provisioning on $cloudName has not been completed. This may be due to being in a different environment or a non-cloud setting.");
         }
     }
 

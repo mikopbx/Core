@@ -433,7 +433,7 @@ class Storage extends Di\Injectable
      * @param bool $bg Whether to run the command in the background.
      * @return bool Returns true if the disk formatting process is initiated, false otherwise.
      */
-    public function formatDiskLocal(string $device, bool $bg = false)
+    public function formatDiskLocal(string $device, bool $bg = false): bool
     {
         $partedPath = Util::which('parted');
 
@@ -460,7 +460,6 @@ class Storage extends Di\Injectable
      */
     private function formatDiskLocalPart2(string $device, bool $bg = false): bool
     {
-
         // Determine the device ID based on the last character of the device path
         if (is_numeric(substr($device, -1))) {
             $device_id = "";
@@ -472,16 +471,17 @@ class Storage extends Di\Injectable
         $cmd = "{$mkfsPath} {$device}{$device_id}";
         if ($bg === false) {
             // Execute the mkfs command and check the return value
-            $retVal = (Processes::mwExec("{$cmd} 2>&1") === 0);
+            $retVal = Processes::mwExec("{$cmd} 2>&1");
             Util::sysLogMsg(__CLASS__, "{$cmd} returned {$retVal}");
+            $result = ($retVal === 0);
         } else {
             usleep(200000);
             // Execute the mkfs command in the background
             Processes::mwExecBg($cmd);
-            $retVal = true;
+            $result = true;
         }
 
-        return $retVal;
+        return $result;
     }
 
     /**
@@ -1697,7 +1697,7 @@ class Storage extends Di\Injectable
      * @param array $deviceInfo The device information.
      * @return array An array containing format and file system information for each device partition.
      */
-    public function determineFormatFs(array $deviceInfo)
+    public function determineFormatFs(array $deviceInfo): array
     {
         $allow_formats = ['ext2', 'ext4', 'fat', 'ntfs', 'msdos'];
         $device = basename($deviceInfo['name'] ?? '');
