@@ -107,8 +107,10 @@ class Network extends Injectable
             }
         }
         unset($interfaces);
+
+        // Local network
         $port = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_HTTPS_PORT);
-        $info = PHP_EOL . "   The web interface is available at the addresses:" . PHP_EOL . PHP_EOL;
+        $info = PHP_EOL . "   The web interface is available at the local net addresses:" . PHP_EOL . PHP_EOL;
         foreach ($addresses['local'] as $address) {
             if (empty($address)) {
                 continue;
@@ -116,14 +118,27 @@ class Network extends Injectable
             $info .= "    - https://$address:$port" . PHP_EOL;
         }
         $info .= PHP_EOL;
-        $info .= "   The web interface is available at the external addresses:" . PHP_EOL . PHP_EOL;
-        foreach ($addresses['external'] as $address) {
-            if (empty($address)) {
-                continue;
+
+        // External web address info
+        if (!empty($addresses['external'])){
+            $info .= "   The web interface is available at the external addresses:" . PHP_EOL . PHP_EOL;
+            foreach ($addresses['external'] as $address) {
+                if (empty($address)) {
+                    continue;
+                }
+                $info .= "    - https://$address:$port" . PHP_EOL;
             }
-            $info .= "    - https://$address:$port" . PHP_EOL;
+            $info .= PHP_EOL;
         }
-        $info .= PHP_EOL;
+
+        // Default web user info
+        if (PbxSettings::getValueByKey(PbxSettingsConstants::PBX_DESCRIPTION)==='auth_DefaultCloudPasswordInstructions'){
+            $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
+            $instanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
+            $info .= "   You should use the next credentials:" . PHP_EOL . PHP_EOL;
+            $info .= "   Login: $adminUser" . PHP_EOL . PHP_EOL;
+            $info .= "   Password: $instanceId" . PHP_EOL . PHP_EOL;
+        }
 
         return $info;
     }

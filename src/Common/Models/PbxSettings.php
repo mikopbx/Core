@@ -61,6 +61,7 @@ class PbxSettings extends ModelsBase
                 'lifetime' => 3600,
             ],
         ];
+
         $currentSettings = parent::find($parameters);
 
         foreach ($currentSettings as $record) {

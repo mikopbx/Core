@@ -454,7 +454,7 @@ class SysinfoManagementProcessor extends Injectable
 
             return $res;
         }
-        $url = 'https://ipinfo.io/json';
+        $url = 'ifconfig.me';
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_TIMEOUT, 2);
@@ -463,15 +463,12 @@ class SysinfoManagementProcessor extends Injectable
             $resultRequest = curl_exec($curl);
         } catch (Exception $e) {
             $res->messages[] = $e->getMessage();
-
             return $res;
         }
         curl_close($curl);
-        if (is_string($resultRequest)
-            && Util::isJson($resultRequest)) {
+        if (is_string($resultRequest)) {
             $res->success    = true;
-            $response        = json_decode($resultRequest, true);
-            $res->data['ip'] = $response['ip'];
+            $res->data['ip'] = $resultRequest;
         } else {
             $res->messages[] = 'Error format data ';
         }

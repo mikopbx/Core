@@ -41,7 +41,6 @@ class AzureCloud extends CloudProvider
         $metadata = $this->retrieveInstanceMetadata();
         if ($metadata === null || $metadata['compute']['azEnvironment'] !== 'AzurePublicCloud') {
             // If metadata is null or the environment is not AzurePublicCloud, do not proceed with provisioning.
-            Util::sysLogMsg(__CLASS__, "Not an Azure environment. Provisioning aborted.");
             return false;
         }
 

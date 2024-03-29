@@ -147,14 +147,21 @@ class SystemManagementProcessor extends Injectable
 
         if ( ! file_exists($tempFilename)) {
             $res->success    = false;
-            $res->messages[] = "Update file '{$tempFilename}' not found.";
+            $res->messages[] = "The update file '{$tempFilename}' could not be found.";
 
             return $res;
         }
 
         if ( ! file_exists('/var/etc/cfdevice')) {
             $res->success    = false;
-            $res->messages[] = "The system is not installed";
+            $res->messages[] = "The system setup has not been initiated.";
+
+            return $res;
+        }
+
+        if ( ! file_exists('/var/etc/storage_device')) {
+            $res->success    = false;
+            $res->messages[] = "The storage disk has not been mounted yet!";
 
             return $res;
         }
@@ -184,7 +191,7 @@ class SystemManagementProcessor extends Injectable
             System::rebootSyncBg();
         }else{
             $res->success    = false;
-            $res->messages[] = "Fail mount boot device...";
+            $res->messages[] = "Failed to mount the boot device...";
         }
 
         return $res;

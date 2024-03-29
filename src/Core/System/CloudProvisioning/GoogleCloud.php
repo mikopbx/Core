@@ -31,7 +31,6 @@ class GoogleCloud extends CloudProvider
      */
     public function provision(): bool
     {
-        Util::sysLogMsg(__CLASS__, "Try Google Cloud provisioning... ");
         $curl = curl_init();
         $url = 'http://169.254.169.254/computeMetadata/v1/instance/?recursive=true';
         curl_setopt($curl, CURLOPT_URL, $url);

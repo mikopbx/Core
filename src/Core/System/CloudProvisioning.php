@@ -55,12 +55,14 @@ class CloudProvisioning
         ];
 
         foreach ($providers as $cloudName => $provider) {
-            Util::sysLogMsg(__CLASS__, "Try $cloudName provisioning... ");
+            Util::sysLogMsg(__CLASS__, "Attempting to provision on $cloudName... ");
             if ($provider->provision()) {
-                self::afterProvisioning($provider);
-                Util::sysLogMsg(__CLASS__, "$cloudName provisioning completed.");
+                self::afterProvisioning($provider, $cloudName);
+                Util::sysLogMsg(__CLASS__, "Provisioning on $cloudName has been successfully completed.");
                 // Provisioning succeeded, break out of the loop
                 break;
+            } else {
+                Util::sysLogMsg(__CLASS__, "Provisioning on $cloudName has not been completed. This may be due to being in a different environment or a non-cloud setting.");
             }
         }
     }
@@ -68,9 +70,10 @@ class CloudProvisioning
     /**
      * After provisioning, perform the following actions:
      * @param $provider mixed The provider object.
+     * @param string $cloudName The name of the cloud.
      * @return void
      */
-    public static function afterProvisioning($provider): void
+    public static function afterProvisioning($provider, string $cloudName): void
     {
         // Enable firewall and Fail2Ban
         $provider->updatePbxSettings(PbxSettingsConstants::PBX_FIREWALL_ENABLED, '1');
@@ -81,7 +84,7 @@ class CloudProvisioning
 
         // Mark provisioning as completed
         $provider->updatePbxSettings(PbxSettingsConstants::CLOUD_PROVISIONING, '1');
-        $provider->updatePbxSettings(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE, $provider::CLOUD_NAME);
+        $provider->updatePbxSettings(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE, $cloudName);
     }
 
     /**

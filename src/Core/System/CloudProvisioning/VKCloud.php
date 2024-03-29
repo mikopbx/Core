@@ -32,8 +32,6 @@ class VKCloud extends CloudProvider
      */
     public function provision(): bool
     {
-        Util::sysLogMsg(__CLASS__, "Try VK Cloud provisioning... ");
-
         $hostname = $this->getMetaDataVCS('hostname');
         if (empty($hostname)) {
             return false;
