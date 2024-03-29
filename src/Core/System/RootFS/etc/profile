@@ -41,14 +41,19 @@ shopt -s dirspell
 shopt -s cmdhist
 
 # Check storage device and set history file accordingly
-storageDevice="$(cat /var/etc/storage_device)";
-/bin/busybox mount | /bin/busybox grep " $storageDevice " > /dev/null 2> /dev/null;
-storageNotExists="$?";
-if [ "$storageNotExists" = '0' ]; then
-  histDir="$storageDevice/mikopbx/log/bash";
-  mkdir -p "$histDir";
-  export HISTFILE="$histDir/.bash_history";
+if [ -f /var/etc/storage_device ]; then
+    storageDevice="$(cat /var/etc/storage_device)";
+    /bin/busybox mount | /bin/busybox grep " $storageDevice " > /dev/null 2> /dev/null;
+    storageNotExists="$?";
+    if [ "$storageNotExists" = '0' ]; then
+      histDir="$storageDevice/mikopbx/log/bash";
+      mkdir -p "$histDir";
+      export HISTFILE="$histDir/.bash_history";
+    fi
+else
+    echo "/var/etc/storage_device file not found."
 fi
+
 
 # Set aliases
 alias ls='ls --color=auto';
