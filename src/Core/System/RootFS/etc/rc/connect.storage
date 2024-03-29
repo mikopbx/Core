@@ -116,15 +116,16 @@ function selectAndConfigureStorageDisk(string $automatic): bool
 
     echo "\n ".Util::translate('Select the drive to store the data.');
     echo "\n ".Util::translate('Selected disk:')."\033[33;1m [{$selected_disk['id']}] \033[0m \n\n";
-    echo "\n ".Util::translate('Valid disks are:')." \n\n";
+    Util::echoWithSyslog("\n ".Util::translate('Valid disks are:')." \n\n");
     foreach ($validDisks as $disk) {
-        echo $disk;
+        Util::echoWithSyslog($disk);
     }
     echo "\n";
 
     // Check if the disk selection should be automatic
     if($automatic === 'auto'){
         $target_disk_storage = $selected_disk['id'];
+        Util::echoWithSyslog("Automatically selected disk is $target_disk_storage");
     }else{
         // Otherwise, prompt the user to enter a disk
         do {

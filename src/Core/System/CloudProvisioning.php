@@ -45,6 +45,8 @@ class CloudProvisioning
             // Already processed before.
             return;
         }
+        // If it is the first start, we have to activate network settings received from DHCP
+        System::networkReload();
 
         // Lists of possible cloud providers.
         $providers = [
@@ -79,12 +81,12 @@ class CloudProvisioning
         $provider->updatePbxSettings(PbxSettingsConstants::PBX_FIREWALL_ENABLED, '1');
         $provider->updatePbxSettings(PbxSettingsConstants::PBX_FAIL2BAN_ENABLED, '1');
 
-        // Connect storage
-        self::checkConnectStorage();
-
         // Mark provisioning as completed
         $provider->updatePbxSettings(PbxSettingsConstants::CLOUD_PROVISIONING, '1');
         $provider->updatePbxSettings(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE, $cloudName);
+
+        // Connect storage
+        self::checkConnectStorage();
     }
 
     /**

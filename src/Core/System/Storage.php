@@ -578,7 +578,7 @@ class Storage extends Di\Injectable
         if ($bg === false) {
             // Execute the mkfs command and check the return value
             $retVal = (Processes::mwExec("{$cmd} 2>&1") === 0);
-            Util::sysLogMsg(__CLASS__, "{$mkfsPath} returned {$retVal}");
+            Util::sysLogMsg(__CLASS__, "{$cmd} returned {$retVal}");
         } else {
             usleep(200000);
             // Execute the mkfs command in the background
