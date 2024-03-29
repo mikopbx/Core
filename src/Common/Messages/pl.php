@@ -1257,4 +1257,6 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'ext_ModuleDowngradeDescription' => 'Moduł zostanie przywrócony do poprzedniej wersji. Ustawienia zostaną zapisane, ale w przypadku modułów płatnych najpierw zostanie sprawdzona licencja. Należy pamiętać, że wycofanie zmian może zmienić strukturę danych i może zaistnieć potrzeba ponownej konfiguracji modułu. Podczas wycofywania należy unikać wykonywania innych operacji w systemie.',
     'ext_InstallUpdateAction' => 'Wykonać',
     'ext_SystemVersionRequired' => 'Minimalna kompatybilna wersja MikoPBX',
+    'auth_DefaultCloudPasswordInstructions' => 'Domyślne hasło jest równe unikalnemu identyfikatorowi maszyny wirtualnej w chmurze',
+    'lic_HostLookupFailed' => 'Brak połączenia z serwerem licencyjnym, problem z DNS',
 ];

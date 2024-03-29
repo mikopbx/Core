@@ -1257,4 +1257,6 @@ El cupón se puede activar una vez y luego se canjea.',
     'ext_ModuleDowngradeDescription' => 'El módulo volverá a la versión anterior. La configuración se guardará, pero para los módulos pagos se verificará primero la licencia. Tenga en cuenta que una reversión puede cambiar la estructura de datos y es posible que sea necesario reconfigurar el módulo. Durante la reversión, evite realizar otras operaciones en el sistema.',
     'ext_InstallUpdateAction' => 'Ejecutar',
     'ext_SystemVersionRequired' => 'Versión mínima compatible de MikoPBX',
+    'auth_DefaultCloudPasswordInstructions' => 'La contraseña predeterminada es igual al identificador único de la máquina virtual en la nube',
+    'lic_HostLookupFailed' => 'No hay conexión con el servidor de licencias, problema de DNS',
 ];

@@ -1239,4 +1239,6 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'ext_ModuleUpdateDescription' => 'Modulul selectat va fi actualizat la cea mai recentă versiune din depozit și toate setările vor fi salvate. Pentru modulele plătite, licența este mai întâi verificată. În timpul actualizării, se recomandă să vă abțineți de la efectuarea altor acțiuni asupra sistemului.',
     'ext_ModuleDowngradeDescription' => 'Modulul va fi revenit la versiunea anterioară. Setările vor fi salvate, dar pentru modulele plătite licența va fi verificată mai întâi. Vă rugăm să rețineți că o derulare înapoi poate modifica structura datelor și poate fi necesar ca modulul să fie reconfigurat. În timpul derulării înapoi, evitați să efectuați alte operațiuni pe sistem.',
     'ext_SystemVersionRequired' => 'Versiunea minimă compatibilă de MikoPBX',
+    'auth_DefaultCloudPasswordInstructions' => 'Parola implicită este egală cu identificatorul unic al mașinii virtuale din cloud',
+    'lic_HostLookupFailed' => 'Fără conexiune la serverul de licențiere, problemă DNS',
 ];

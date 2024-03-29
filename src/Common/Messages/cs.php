@@ -1257,4 +1257,6 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'ext_ModuleUpdateDescription' => 'Vybraný modul bude aktualizován na nejnovější verzi z úložiště a všechna nastavení budou uložena. U placených modulů se nejprve zkontroluje licence. Během aktualizace se doporučuje zdržet se provádění jiných akcí v systému.',
     'ext_ModuleDowngradeDescription' => 'Modul bude vrácen zpět na předchozí verzi. Nastavení se uloží, ale u placených modulů se nejprve zkontroluje licence. Upozorňujeme, že vrácení změn může změnit strukturu dat a modul může být nutné překonfigurovat. Během vrácení zpět se vyhněte provádění jiných operací v systému.',
     'ext_SystemVersionRequired' => 'Minimální kompatibilní verze MikoPBX',
+    'auth_DefaultCloudPasswordInstructions' => 'Výchozí heslo se rovná jedinečnému identifikátoru virtuálního počítače v cloudu',
+    'lic_HostLookupFailed' => 'Žádné připojení k licenčnímu serveru, problém s DNS',
 ];

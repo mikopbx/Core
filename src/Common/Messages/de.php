@@ -1260,4 +1260,6 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'ext_DowngradeModuleTitle' => 'Rollback einer Modulversion',
     'ext_ModuleDowngradeDescription' => 'Das Modul wird auf die vorherige Version zurückgesetzt. Die Einstellungen werden gespeichert, bei kostenpflichtigen Modulen wird jedoch zunächst die Lizenz überprüft. Bitte beachten Sie, dass sich bei einem Rollback die Datenstruktur ändern kann und das Modul ggf. neu konfiguriert werden muss. Vermeiden Sie während des Rollbacks die Ausführung anderer Vorgänge auf dem System.',
     'ext_SystemVersionRequired' => 'Mindestkompatible Version von MikoPBX',
+    'auth_DefaultCloudPasswordInstructions' => 'Das Standardkennwort entspricht der eindeutigen Kennung der virtuellen Maschine in der Cloud',
+    'lic_HostLookupFailed' => 'Keine Verbindung zum Lizenzserver, DNS-Problem',
 ];

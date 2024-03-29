@@ -929,7 +929,7 @@ return [
     'lic_ManageLicenseKeyOnSiteLinkText' => 'по ссылке',
     'lic_ManageLicenseKey' => 'Управление лицензией',
     'lic_GeneralError' => 'Ошибка при попытке активации лицензии',
-    'lic_HostLookupFailed'=>'Нет связи с сервером лицензирования, проблема с DNS',
+    'lic_HostLookupFailed' => 'Нет связи с сервером лицензирования, проблема с DNS',
     'er_Home' => 'Перейти в начало',
     'rs_RestartPhoneSystem' => 'Перезагрузить MikoPBX',
     'rs_ShutDownPhoneSystem' => 'Выключить MikoPBX',
