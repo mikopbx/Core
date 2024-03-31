@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
@@ -177,25 +178,29 @@ class PbxSettings extends ModelsBase
      */
     public static function getValueByKey(string $key): string
     {
-        $parameters = [
-            'cache' => [
-                'key' => ModelsBase::makeCacheKey(self::class, 'getValueByKey'),
-                'lifetime' => 3600,
-            ],
-        ];
-        $currentSettings = parent::find($parameters);
+        try {
+            $parameters = [
+                'cache' => [
+                    'key' => ModelsBase::makeCacheKey(self::class, 'getValueByKey'),
+                    'lifetime' => 3600,
+                ],
+            ];
+            $currentSettings = parent::find($parameters);
 
-        foreach ($currentSettings as $record) {
-            if ($record->key === $key
-                && isset($record->value)
-            ) {
-                return $record->value;
+            foreach ($currentSettings as $record) {
+                if ($record->key === $key
+                    && isset($record->value)
+                ) {
+                    return $record->value;
+                }
             }
-        }
 
-        $arrOfDefaultValues = self::getDefaultArrayValues();
-        if (array_key_exists($key, $arrOfDefaultValues)) {
-            return $arrOfDefaultValues[$key];
+            $arrOfDefaultValues = self::getDefaultArrayValues();
+            if (array_key_exists($key, $arrOfDefaultValues)) {
+                return $arrOfDefaultValues[$key];
+            }
+        } catch (\Throwable $e) {
+            CriticalErrorsHandler::handleException($e);
         }
 
         return '';

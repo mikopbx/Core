@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use ErrorException;
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Models\PbxSettings;
@@ -69,20 +70,15 @@ class SessionController extends BaseController
         $loginFromUser = (string)$this->request->getPost('login', null, 'guest');
         $passFromUser = (string)$this->request->getPost('password', null, 'guest');
         $this->flash->clear();
-        $login = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
-        $passwordHash = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
-
         $userLoggedIn = false;
         $sessionParams = [];
-
         // Check if the provided login and password match the stored values
-        if ($login === $loginFromUser
-            && ($this->security->checkHash($passFromUser, $passwordHash) || $passwordHash === $passFromUser))
+        if ($this->checkCredentials($loginFromUser, $passFromUser))
             {
             $sessionParams = [
                 SessionController::ROLE => AclProvider::ROLE_ADMINS,
                 SessionController::HOME_PAGE => $this->url->get('extensions/index'),
-                SessionController::USER_NAME => $login
+                SessionController::USER_NAME => $loginFromUser
             ];
             $userLoggedIn = true;
         } else {
@@ -201,5 +197,40 @@ class SessionController extends BaseController
         $this->session->remove(self::SESSION_ID);
         $this->session->destroy();
         $this->clearAuthCookies();
+    }
+
+    /**
+     * Checks if the provided login and password match the stored values
+     * @param string $login Login name from user input.
+     * @param string $password Password from user input.
+     * @return bool
+     * @throws ErrorException
+     */
+    private function checkCredentials(string $login, string $password):bool
+    {
+        // Check admin login name
+        $storedLogin = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
+        if ($storedLogin !== $login) {
+            return false;
+        }
+
+        // Old password check method
+        $passwordHash = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
+        if ($passwordHash === $password) {
+            return true;
+        }
+
+        // New password check method
+        set_error_handler(function($severity, $message, $file, $line) {
+            throw new ErrorException($message, 0, $severity, $file, $line);
+        });
+
+        try {
+            $result = $this->security->checkHash($password, $passwordHash);
+        } catch (ErrorException $e) {
+            $result = false;
+        }
+        restore_error_handler();
+        return $result;
     }
 }
