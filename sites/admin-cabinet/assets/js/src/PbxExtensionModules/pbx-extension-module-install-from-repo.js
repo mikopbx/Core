@@ -35,12 +35,6 @@ const installationFromRepo = {
     pbxVersion: globalPBXVersion.replace(/-dev/i, ''),
 
     /**
-     * The license key for the PBX system, trimmed of any leading or trailing whitespace.
-     * @type {string}
-     */
-    pbxLicense: globalPBXLicense.trim(),
-
-    /**
      * jQuery object for the button responsible for updating all installed modules.
      * @type {jQuery}
      */
@@ -83,7 +77,7 @@ const installationFromRepo = {
         $(document).on('click', 'a.download, a.update', (e) => {
             e.preventDefault();
             const $currentButton = $(e.target).closest('a.button');
-            if (installationFromRepo.pbxLicense === '') {
+            if (globalPBXLicense.trim() === '') {
                 window.location = `${globalRootUrl}pbx-extension-modules/index#/licensing`;
             } else {
                 installationFromRepo.openInstallModuleModal($currentButton);
