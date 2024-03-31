@@ -650,6 +650,8 @@ class Storage extends Di\Injectable
         if ($success === true && $automatic === 'auto') {
             System::rebootSync();
             return true;
+        } elseif ($automatic === 'auto') {
+            Util::echoWithSyslog(' - Storage disk was not mounted automatically ... ' . PHP_EOL);
         }
 
         fclose(STDERR);
@@ -840,12 +842,13 @@ class Storage extends Di\Injectable
             $dev = $this->getStorageDev($disk, $cf_disk);
             // Check if the disk exists
             if (!$this->hddExists($dev)) {
+                Util::sysLogMsg(__METHOD__, "HDD - $dev doesn't exist");
                 continue;
             }
 
             // Check if the disk is marked as media or storage_dev_file doesn't exist
             if ($disk['media'] === '1' || !file_exists($storage_dev_file)) {
-                // Update the storage_dev_file and the mount point configuration
+                Util::sysLogMsg(__METHOD__, "Update the storage_dev_file and the mount point configuration");
                 file_put_contents($storage_dev_file, "/storage/usbdisk{$disk['id']}");
                 $this->updateConfigWithNewMountPoint("/storage/usbdisk{$disk['id']}");
             }
@@ -854,13 +857,14 @@ class Storage extends Di\Injectable
 
             // Check if the file system type matches the expected type
             if ($formatFs !== $disk['filesystemtype'] && !($formatFs === 'ext4' && $disk['filesystemtype'] === 'ext2')) {
-                Util::sysLogMsg('Storage', "The file system type has changed {$disk['filesystemtype']} -> {$formatFs}. The disk will not be connected.");
+                Util::sysLogMsg(__METHOD__, "The file system type has changed {$disk['filesystemtype']} -> {$formatFs}. The disk will not be connected.");
                 continue;
             }
             $str_uid = 'UUID=' . $this->getUuid($dev);
             $conf .= "{$str_uid} /storage/usbdisk{$disk['id']} {$formatFs} async,rw 0 0\n";
             $mount_point = "/storage/usbdisk{$disk['id']}";
             Util::mwMkdir($mount_point);
+            Util::sysLogMsg(__METHOD__, "Create mount point: $conf");
         }
 
         // Save the configuration to the fstab file
@@ -1137,7 +1141,8 @@ class Storage extends Di\Injectable
 
         // Mount the file systems
         $mountPath = Util::which('mount');
-        Processes::mwExec("{$mountPath} -a 2> /dev/null");
+        $resultOfMount = Processes::mwExec("{$mountPath} -a 2> /dev/null");
+        Util::sysLogMsg(__METHOD__, "The mount disks result according to /etc/fstab is $resultOfMount");
 
         // Add regular www rights to /cf directory
         Util::addRegularWWWRights('/cf');
@@ -1874,7 +1879,7 @@ class Storage extends Di\Injectable
 
         // Check if the directory was created successfully
         if (!file_exists($dir)) {
-            Util::sysLogMsg('Storage', "Unable mount $dev $format to $dir. Unable create dir.");
+            Util::sysLogMsg(__Method__, "Unable mount $dev $format to $dir. Unable create dir.");
 
             return false;
         }

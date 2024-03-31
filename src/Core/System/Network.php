@@ -132,12 +132,13 @@ class Network extends Injectable
         }
 
         // Default web user info
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::PBX_DESCRIPTION)==='auth_DefaultCloudPasswordInstructions'){
+        $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
+        $webAdminPassword = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
+        if ($cloudInstanceId===$webAdminPassword){
             $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
-            $instanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
-            $info .= "   You should use the next credentials:" . PHP_EOL . PHP_EOL;
-            $info .= "   Login: $adminUser" . PHP_EOL . PHP_EOL;
-            $info .= "   Password: $instanceId" . PHP_EOL . PHP_EOL;
+            $info .= "  You should use the next credentials:" . PHP_EOL . PHP_EOL;
+            $info .= "      Login: $adminUser" . PHP_EOL . PHP_EOL;
+            $info .= "      Password: $cloudInstanceId" . PHP_EOL . PHP_EOL;
         }
 
         return $info;
