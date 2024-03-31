@@ -31,7 +31,7 @@ use MikoPBX\Modules\Config\WebUIConfigInterface;
 /**
  * SessionController
  *
- * Allows to authenticate users
+ * Allows authenticating users
  */
 class SessionController extends BaseController
 {

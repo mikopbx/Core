@@ -106,38 +106,34 @@ const fail2BanIndex = {
         let htmlTable = `<h2 class="ui header">${globalTranslate.f2b_TableBannedHeader}</h2>`;
         htmlTable += '<table class="ui very compact unstackable table">';
         htmlTable += '<thead>';
-        htmlTable += `<th>${globalTranslate.f2b_Reason}</th>`;
         htmlTable += `<th>${globalTranslate.f2b_IpAddres}</th>`;
-        htmlTable += `<th>${globalTranslate.f2b_BanedTime}</th>`;
+        htmlTable += `<th>${globalTranslate.f2b_Reason}</th>`;
         htmlTable += '<th></th>';
         htmlTable += '</thead>';
         htmlTable += '<tbody>';
-        response.sort((a, b) => {
-            const keyA = a.timeofban;
-            const keyB = b.timeofban;
-            // Compare the 2 dates
-            if (keyA < keyB) return 1;
-            if (keyA > keyB) return -1;
-            return 0;
-        });
-        $.each(response, (key, value) => {
-            const blockDate = new Date(value.timeofban * 1000);
-            let reason = `f2b_Jail_${value.jail}`;
-            if (reason in globalTranslate) {
-                reason = globalTranslate[reason];
-            }
+        Object.keys(response).forEach(ip => {
+            const bans = response[ip];
+            let reasonsDatesHtml = '';
+            bans.forEach(ban => {
+                const blockDate = new Date(ban.timeofban * 1000);
+                let reason = `f2b_Jail_${ban.jail}`;
+                if (reason in globalTranslate) {
+                    reason = globalTranslate[reason];
+                }
+                reasonsDatesHtml += `${reason}—${blockDate.toLocaleString()}<br>`;
+            });
 
             htmlTable += '<tr>';
-            htmlTable += `<td>${reason}</td>`;
-            htmlTable += `<td>${value.ip}</td>`;
-            htmlTable += `<td>${blockDate.toLocaleString()}</td>`;
-            htmlTable += `<td class="right aligned collapsing"><button class="ui icon basic mini button unban-button" data-value="${value.ip}"><i class="icon trash red"></i>${globalTranslate.f2b_Unban}</button></td>`;
+            htmlTable += `<td>${ip}</td>`;
+            htmlTable += `<td>${reasonsDatesHtml}</td>`;
+            htmlTable += `<td class="right aligned collapsing"><button class="ui icon basic mini button unban-button" data-value="${ip}"><i class="icon trash red"></i>${globalTranslate.f2b_Unban}</button></td>`;
             htmlTable += '</tr>';
         });
-        if (response.length === 0) {
-            htmlTable += `<tr><td colspan="4" class="center aligned">${globalTranslate.f2b_TableBannedEmpty}</td></tr>`;
+
+        if (Object.keys(response).length === 0) {
+            htmlTable += `<tr><td colspan="3" class="center aligned">${globalTranslate.f2b_TableBannedEmpty}</td></tr>`;
         }
-        htmlTable += '<tbody>';
+        htmlTable += '</tbody>';
         htmlTable += '</table>';
         fail2BanIndex.$bannedIpList.html(htmlTable);
     },
