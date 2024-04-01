@@ -109,6 +109,15 @@ const fail2BanIndex = {
      *
      */
     initializeDataTable(){
+        $('#fail2ban-tab-menu .item').tab({
+            onVisible(){
+                if ($(this).data('tab')==='banned' && fail2BanIndex.dataTable!==null){
+                    const newPageLength = fail2BanIndex.calculatePageLength();
+                    fail2BanIndex.dataTable.page.len(newPageLength).draw(false);
+                }
+            }
+        });
+
         fail2BanIndex.dataTable = fail2BanIndex.$bannedIpListTable.DataTable({
             // destroy: true,
             lengthChange: false,
@@ -205,7 +214,7 @@ const fail2BanIndex = {
      */
     calculatePageLength() {
         // Calculate row height
-        let rowHeight = fail2BanIndex.$bannedIpListTable.find('tr').first().outerHeight();
+        let rowHeight = fail2BanIndex.$bannedIpListTable.find('tr').last().outerHeight();
         // Calculate window height and available space for table
         const windowHeight = window.innerHeight;
         const headerFooterHeight = 400; // Estimate height for header, footer, and other elements
