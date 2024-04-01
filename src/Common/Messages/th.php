@@ -1223,4 +1223,6 @@ return [
     'lic_NoInetNetSettings' => "ตรวจสอบการตั้งค่า <b>DNS</b> และ <b>เกตเวย์</b> ในการตั้งค่า <a href='%url%'>เครือข่าย</a>",
     'auth_DefaultCloudPasswordInstructions' => 'รหัสผ่านเริ่มต้นจะเท่ากับตัวระบุเฉพาะของเครื่องเสมือนในระบบคลาวด์',
     'lic_HostLookupFailed' => 'ไม่มีการเชื่อมต่อกับเซิร์ฟเวอร์ลิขสิทธิ์ ปัญหา DNS',
+    'f2b_SettingsTabHeader' => 'การตั้งค่าการป้องกัน',
+    'f2b_BannedIpTabHeader' => 'ที่อยู่ที่ถูกบล็อก',
 ];

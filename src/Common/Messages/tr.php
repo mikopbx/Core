@@ -1225,4 +1225,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'ext_SystemVersionRequired' => 'MikoPBX\'in minimum uyumlu sürümü',
     'auth_DefaultCloudPasswordInstructions' => 'Varsayılan şifre, buluttaki sanal makinenin benzersiz tanımlayıcısına eşittir',
     'lic_HostLookupFailed' => 'Lisans sunucusuyla bağlantı yok, DNS sorunu',
+    'f2b_SettingsTabHeader' => 'Korumayı ayarlama',
+    'f2b_BannedIpTabHeader' => 'Engellenen adresler',
 ];

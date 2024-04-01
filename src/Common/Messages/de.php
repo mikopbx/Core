@@ -1262,4 +1262,6 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'ext_SystemVersionRequired' => 'Mindestkompatible Version von MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'Das Standardkennwort entspricht der eindeutigen Kennung der virtuellen Maschine in der Cloud',
     'lic_HostLookupFailed' => 'Keine Verbindung zum Lizenzserver, DNS-Problem',
+    'f2b_BannedIpTabHeader' => 'Blockierte Adressen',
+    'f2b_SettingsTabHeader' => 'Schutz einrichten',
 ];

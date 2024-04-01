@@ -1259,4 +1259,6 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'ext_SystemVersionRequired' => 'Minimalna kompatybilna wersja MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'Domyślne hasło jest równe unikalnemu identyfikatorowi maszyny wirtualnej w chmurze',
     'lic_HostLookupFailed' => 'Brak połączenia z serwerem licencyjnym, problem z DNS',
+    'f2b_SettingsTabHeader' => 'Konfigurowanie ochrony',
+    'f2b_BannedIpTabHeader' => 'Zablokowane adresy',
 ];

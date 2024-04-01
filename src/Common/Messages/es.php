@@ -1259,4 +1259,6 @@ El cupón se puede activar una vez y luego se canjea.',
     'ext_SystemVersionRequired' => 'Versión mínima compatible de MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'La contraseña predeterminada es igual al identificador único de la máquina virtual en la nube',
     'lic_HostLookupFailed' => 'No hay conexión con el servidor de licencias, problema de DNS',
+    'f2b_SettingsTabHeader' => 'Configurar la protección',
+    'f2b_BannedIpTabHeader' => 'Direcciones bloqueadas',
 ];

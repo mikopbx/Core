@@ -1259,4 +1259,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ext_SystemVersionRequired' => 'Versão mínima compatível do MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'A senha padrão é igual ao identificador exclusivo da máquina virtual na nuvem',
     'lic_HostLookupFailed' => 'Sem conexão com o servidor de licenciamento, problema de DNS',
+    'f2b_SettingsTabHeader' => 'Configurando proteção',
+    'f2b_BannedIpTabHeader' => 'Endereços bloqueados',
 ];

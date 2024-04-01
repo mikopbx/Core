@@ -1259,4 +1259,6 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'ext_SystemVersionRequired' => 'Minimum kompatibel version af MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'Standardadgangskoden er lig med den unikke identifikator for den virtuelle maskine i skyen',
     'lic_HostLookupFailed' => 'Ingen forbindelse til licensserveren, DNS-problem',
+    'f2b_SettingsTabHeader' => 'Opsætning af beskyttelse',
+    'f2b_BannedIpTabHeader' => 'Spærrede adresser',
 ];

@@ -1225,4 +1225,6 @@ return [
     'ext_SystemVersionRequired' => 'MikoPBX 的最低兼容版本',
     'auth_DefaultCloudPasswordInstructions' => '默认密码等于虚拟机在云中的唯一标识符',
     'lic_HostLookupFailed' => '没有连接到许可服务器，DNS 问题',
+    'f2b_SettingsTabHeader' => '设置保护',
+    'f2b_BannedIpTabHeader' => '被阻止的地址',
 ];

@@ -1225,4 +1225,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ext_SystemVersionRequired' => 'Minsta kompatibel version av MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'Standardlösenordet är lika med den unika identifieraren för den virtuella maskinen i molnet',
     'lic_HostLookupFailed' => 'Ingen anslutning till licensservern, DNS-problem',
+    'f2b_SettingsTabHeader' => 'Sätta upp skydd',
+    'f2b_BannedIpTabHeader' => 'Blockerade adresser',
 ];

@@ -1259,4 +1259,6 @@ return [
     'ext_SystemVersionRequired' => 'Ελάχιστη συμβατή έκδοση του MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'Ο προεπιλεγμένος κωδικός πρόσβασης είναι ίσος με το μοναδικό αναγνωριστικό της εικονικής μηχανής στο cloud',
     'lic_HostLookupFailed' => 'Δεν υπάρχει σύνδεση με τον διακομιστή αδειών χρήσης, πρόβλημα DNS',
+    'f2b_SettingsTabHeader' => 'Ρύθμιση προστασίας',
+    'f2b_BannedIpTabHeader' => 'Αποκλεισμένες διευθύνσεις',
 ];
