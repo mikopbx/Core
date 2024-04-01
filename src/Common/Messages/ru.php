@@ -974,6 +974,8 @@ return [
     'f2b_ValidateFindTimeRange' => 'Не правильно задан период анализа попыток авторизации',
     'f2b_ValidateBanTimeRange' => 'Не правильно указан период блокировки',
     'f2b_TableBannedEmpty' => 'Данных нет',
+    'f2b_SettingsTabHeader'=>'Настройка защиты',
+    'f2b_BannedIpTabHeader'=>'Заблокированные адреса',
     'upd_FileName' => 'Выберите файл обновления',
     'upd_UpdateSystem' => 'Применить обновление',
     'upd_VersionColumn' => 'Версия',

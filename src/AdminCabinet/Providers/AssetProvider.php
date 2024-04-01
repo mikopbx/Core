@@ -746,7 +746,13 @@ class AssetProvider implements ServiceProviderInterface
     private function makeFail2BanAssets(string $action): void
     {
         if ($action === 'index') {
+            $this->headerCollectionCSS->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
+                ->addCss('css/vendor/datatable/responsive/responsive.semanticui.min.css', true);
+
             $this->footerCollectionJS
+                ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/vendor/datatable/responsive/dataTables.responsive.min.js', true)
+                ->addJs('js/vendor/datatable/responsive/responsive.semanticui.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/Fail2Ban/fail-to-ban-index.js', true);
         }

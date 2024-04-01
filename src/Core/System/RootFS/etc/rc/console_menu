@@ -80,7 +80,7 @@ class console_menu {
         $buildtime      = trim(file_get_contents('/etc/version.buildtime'));
 
         // Copyright information
-        $copyright_info = 'MikoPBX is Copyright © 2017-2023. All rights reserved.' . PHP_EOL .
+        $copyright_info = 'MikoPBX is Copyright © 2017-2024. All rights reserved.' . PHP_EOL .
             "   \033[01;31m" . $liveCdText . "\033[39m";
 
 
