@@ -1241,4 +1241,6 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'ext_SystemVersionRequired' => 'Versiunea minimă compatibilă de MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'Parola implicită este egală cu identificatorul unic al mașinii virtuale din cloud',
     'lic_HostLookupFailed' => 'Fără conexiune la serverul de licențiere, problemă DNS',
+    'f2b_SettingsTabHeader' => 'Configurarea protecției',
+    'f2b_BannedIpTabHeader' => 'Adrese blocate',
 ];

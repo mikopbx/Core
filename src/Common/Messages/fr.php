@@ -1259,4 +1259,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ext_SystemVersionRequired' => 'Version minimale compatible de MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'Le mot de passe par défaut est égal à l\'identifiant unique de la machine virtuelle dans le cloud',
     'lic_HostLookupFailed' => 'Pas de connexion au serveur de licences, problème DNS',
+    'f2b_SettingsTabHeader' => 'Mise en place d\'une protection',
+    'f2b_BannedIpTabHeader' => 'Adresses bloquées',
 ];

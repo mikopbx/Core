@@ -1258,4 +1258,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ext_SystemVersionRequired' => 'MikoPBX-in minimum uyğun versiyası',
     'auth_DefaultCloudPasswordInstructions' => 'Standart parol buluddakı virtual maşının unikal identifikatoruna bərabərdir',
     'lic_HostLookupFailed' => 'Lisenziyalaşdırma serveri ilə əlaqə yoxdur, DNS problemi',
+    'f2b_SettingsTabHeader' => 'Mühafizənin qurulması',
+    'f2b_BannedIpTabHeader' => 'Bloklanmış ünvanlar',
 ];

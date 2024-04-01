@@ -1259,4 +1259,6 @@ return [
     'ext_SystemVersionRequired' => 'MikoPBX-ის მინიმალური თავსებადი ვერსია',
     'auth_DefaultCloudPasswordInstructions' => 'ნაგულისხმევი პაროლი უდრის ღრუბელში არსებული ვირტუალური მანქანის უნიკალურ იდენტიფიკატორს',
     'lic_HostLookupFailed' => 'არ არის კავშირი ლიცენზირების სერვერთან, DNS პრობლემა',
+    'f2b_SettingsTabHeader' => 'დაცვის დაყენება',
+    'f2b_BannedIpTabHeader' => 'დაბლოკილი მისამართები',
 ];

@@ -1259,4 +1259,6 @@ Il coupon può essere attivato una volta, dopodiché viene riscattato.',
     'ext_SystemVersionRequired' => 'Versione minima compatibile di MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'La password predefinita è uguale all\'identificatore univoco della macchina virtuale nel cloud',
     'lic_HostLookupFailed' => 'Nessuna connessione al server delle licenze, problema DNS',
+    'f2b_SettingsTabHeader' => 'Impostazione della protezione',
+    'f2b_BannedIpTabHeader' => 'Indirizzi bloccati',
 ];

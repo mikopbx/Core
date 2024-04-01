@@ -1258,4 +1258,6 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'ext_SystemVersionRequired' => 'Minimaal compatibele versie van MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'Het standaardwachtwoord is gelijk aan de unieke identificatie van de virtuele machine in de cloud',
     'lic_HostLookupFailed' => 'Geen verbinding met de licentieserver, DNS-probleem',
+    'f2b_SettingsTabHeader' => 'Beveiliging instellen',
+    'f2b_BannedIpTabHeader' => 'Geblokkeerde adressen',
 ];

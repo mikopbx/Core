@@ -1259,4 +1259,6 @@ return [
     'ext_SystemVersionRequired' => 'Мінімально сумісна версія MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'Пароль за замовчуванням дорівнює унікальному ідентифікатору віртуальної машини у хмарі',
     'lic_HostLookupFailed' => 'Немає зв\'язку з сервером ліцензування, проблема з DNS',
+    'f2b_SettingsTabHeader' => 'Налаштування захисту',
+    'f2b_BannedIpTabHeader' => 'Заблоковані адреси',
 ];

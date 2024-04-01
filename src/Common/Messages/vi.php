@@ -1225,4 +1225,6 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'ext_SystemVersionRequired' => 'Phiên bản tương thích tối thiểu của MikoPBX',
     'auth_DefaultCloudPasswordInstructions' => 'Mật khẩu mặc định bằng mã định danh duy nhất của máy ảo trên đám mây',
     'lic_HostLookupFailed' => 'Không có kết nối với máy chủ cấp phép, sự cố DNS',
+    'f2b_BannedIpTabHeader' => 'Địa chỉ bị chặn',
+    'f2b_SettingsTabHeader' => 'Thiết lập bảo vệ',
 ];

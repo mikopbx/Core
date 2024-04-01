@@ -1259,4 +1259,6 @@ return [
     'ext_SystemVersionRequired' => 'MikoPBX の互換性のある最小バージョン',
     'auth_DefaultCloudPasswordInstructions' => 'デフォルトのパスワードは、クラウド内の仮想マシンの一意の識別子と同じです。',
     'lic_HostLookupFailed' => 'ライセンスサーバーに接続できない、DNS の問題',
+    'f2b_SettingsTabHeader' => '保護の設定',
+    'f2b_BannedIpTabHeader' => 'ブロックされたアドレス',
 ];
