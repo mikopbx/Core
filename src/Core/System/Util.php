@@ -809,6 +809,30 @@ class Util
     }
 
     /**
+     * Echoes a message and logs it to the ttyS0.
+     *
+     * @param string $message The message to echo and log.
+     *
+     * @return void
+     */
+    public static function echoToTeletype(string $message): void
+    {
+        // Log to serial tty
+        $message.=PHP_EOL;
+        echo $message;
+        for ($i = 0; $i <= 5; $i++) {
+            $device = "/dev/ttyS$i";
+            // Получаем результат выполнения команды
+            $result = shell_exec("/bin/busybox setserial -g \"$device\" 2> /dev/null");
+            // Если результат не пустой
+            if (!empty($result)) {
+                // Выполняем аналогичное
+                file_put_contents($device, $message, FILE_APPEND);
+            }
+        }
+    }
+
+    /**
      * Adds executable rights to files in a folder.
      *
      * @param string $folder The folder path.

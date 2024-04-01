@@ -514,30 +514,24 @@ class Storage extends Di\Injectable
      */
     public static function selectAndConfigureStorageDisk(string $automatic): bool
     {
-        // Open standard input in binary mode for interactive reading
-        $fp = fopen('php://stdin', 'rb');
-        $storage = new Storage();
+        $storage = new self();
 
         // Check if the storage disk is already mounted
-        if (Storage::isStorageDiskMounted()) {
-            echo "\n " . Util::translate('Storage disk is already mounted...') . " \n\n";
+        if (self::isStorageDiskMounted()) {
+            Util::echoToTeletype(PHP_EOL." " . Util::translate('Storage disk is already mounted...') . " ".PHP_EOL);
             sleep(2);
             return true;
         }
 
         $validDisks = [];
-
         // Get all available hard drives
         $all_hdd = $storage->getAllHdd();
-
         $system_disk = '';
-
         $selected_disk = ['size' => 0, 'id' => ''];
-
         // Iterate through all available hard drives
         foreach ($all_hdd as $disk) {
             $additional = '';
-            $devName = Storage::getDevPartName($disk['id'], '4');
+            $devName = self::getDevPartName($disk['id'], '4');
             $isLiveCd = ($disk['sys_disk'] && file_exists('/offload/livecd'));
             $isMountedSysDisk = (!empty($disk['mounted']) && $disk['sys_disk'] && file_exists("/dev/$devName"));
 
@@ -556,9 +550,9 @@ class Storage extends Di\Injectable
             }
 
             $part = $disk['sys_disk'] ? '4' : '1';
-            $devName = Storage::getDevPartName($disk['id'], $part);
+            $devName = self::getDevPartName($disk['id'], $part);
             $devFour = '/dev/' . $devName;
-            if (Storage::isStorageDisk($devFour)) {
+            if (self::isStorageDisk($devFour)) {
                 $additional .= "\033[33;1m [STORAGE] \033[0m";
             }
 
@@ -582,29 +576,30 @@ class Storage extends Di\Injectable
             $validDisks[$disk['id']] = "  - {$disk['id']}, {$disk['size_text']}, {$disk['vendor']}$additional\n";
         }
 
-        if (count($validDisks) === 0) {
+        if (empty($validDisks)) {
             // If no valid disks were found, log a message and return 0
-            echo "\n " . Util::translate('Valid disks not found...') . " \n";
+            Util::echoToTeletype(Util::translate('Valid disks not found...'));
             sleep(3);
             return false;
         }
 
-        echo "\n " . Util::translate('Select the drive to store the data.');
-        echo "\n " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m \n\n";
-        Util::echoWithSyslog("\n " . Util::translate('Valid disks are:') . " \n\n");
-        foreach ($validDisks as $disk) {
-            Util::echoWithSyslog($disk);
-        }
-        echo "\n";
-
         // Check if the disk selection should be automatic
         if ($automatic === 'auto') {
             $target_disk_storage = $selected_disk['id'];
-            Util::echoWithSyslog("Automatically selected disk is $target_disk_storage");
+            Util::echoToTeletype("Automatically selected disk is $target_disk_storage");
         } else {
+            echo PHP_EOL." " . Util::translate('Select the drive to store the data.');
+            echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
+            Util::echoWithSyslog(PHP_EOL." " . Util::translate('Valid disks are:') . " ".PHP_EOL.PHP_EOL);
+            foreach ($validDisks as $disk) {
+                Util::echoWithSyslog($disk);
+            }
+            echo PHP_EOL;
+            // Open standard input in binary mode for interactive reading
+            $fp = fopen('php://stdin', 'rb');
             // Otherwise, prompt the user to enter a disk
             do {
-                echo "\n" . Util::translate('Enter the device name:') . Util::translate('(default value = ') . $selected_disk['id'] . ') :';
+                echo PHP_EOL . Util::translate('Enter the device name:') . Util::translate('(default value = ') . $selected_disk['id'] . ') :';
                 $target_disk_storage = trim(fgets($fp));
                 if ($target_disk_storage === '') {
                     $target_disk_storage = $selected_disk['id'];
@@ -619,11 +614,11 @@ class Storage extends Di\Injectable
         } else {
             $part = "1";
         }
-        $partName = Storage::getDevPartName($target_disk_storage, $part);
+        $partName = self::getDevPartName($target_disk_storage, $part);
         $part_disk = "/dev/$partName";
-        if ($part === '1' && !Storage::isStorageDisk($part_disk)) {
+        if ($part === '1' && !self::isStorageDisk($part_disk)) {
             $storage->formatDiskLocal($dev_disk);
-            $partName = Storage::getDevPartName($target_disk_storage, $part);
+            $partName = self::getDevPartName($target_disk_storage, $part);
             $part_disk = "/dev/$partName";
         }
 
@@ -646,12 +641,16 @@ class Storage extends Di\Injectable
         // Configure the storage
         $storage->configure();
         MainDatabaseProvider::recreateDBConnections();
-        $success = Storage::isStorageDiskMounted();
+        $success = self::isStorageDiskMounted();
         if ($success === true && $automatic === 'auto') {
+            Util::echoToTeletype(' - The data storage disk has been successfully mounted ... ');
+            sleep(2);
             System::rebootSync();
             return true;
-        } elseif ($automatic === 'auto') {
-            Util::echoWithSyslog(' - Storage disk was not mounted automatically ... ' . PHP_EOL);
+        }
+
+        if ($automatic === 'auto') {
+            Util::echoToTeletype(' - Storage disk was not mounted automatically ... ');
         }
 
         fclose(STDERR);
@@ -873,7 +872,7 @@ class Storage extends Di\Injectable
         // Create necessary working directories
         $this->createWorkDirs();
 
-        // Setup the PHP log configuration
+        // Set up the PHP log configuration
         PHPConf::setupLog();
     }
 
@@ -1107,15 +1106,15 @@ class Storage extends Di\Injectable
         // Create the mount point directory for additional disks
         Util::mwMkdir('/storage');
         $chmodPath = Util::which('chmod');
-        Processes::mwExec("{$chmodPath} 755 /storage");
+        Processes::mwExec("$chmodPath 755 /storage");
 
-        // Check if cfdevice file exists
+        // Check if cf device file exists
         if (!file_exists($varEtcDir . '/cfdevice')) {
             return;
         }
         $fstab = '';
 
-        // Read cfdevice file
+        // Read cf device file
         $file_data = file_get_contents($varEtcDir . '/cfdevice');
         $cf_disk = trim($file_data);
         if ('' === $cf_disk) {
@@ -1124,26 +1123,28 @@ class Storage extends Di\Injectable
         $part2 = self::getDevPartName($cf_disk, '2');
         $part3 = self::getDevPartName($cf_disk, '3');
 
-        $uid_part2 = 'UUID=' . $this->getUuid("/dev/{$part2}");
+        $uid_part2 = 'UUID=' . $this->getUuid("/dev/$part2");
         $format_p2 = $this->getFsType($part2);
-        $uid_part3 = 'UUID=' . $this->getUuid("/dev/{$part3}");
+        $uid_part3 = 'UUID=' . $this->getUuid("/dev/$part3");
         $format_p3 = $this->getFsType($part3);
 
-        $fstab .= "{$uid_part2} /offload {$format_p2} ro 0 0\n";
-        $fstab .= "{$uid_part3} /cf {$format_p3} rw 1 1\n";
+        $fstab .= "$uid_part2 /offload $format_p2 ro 0 0\n";
+        $fstab .= "$uid_part3 /cf $format_p3 rw 1 1\n";
         $fstab .= $conf;
 
         // Write fstab file
         file_put_contents("/etc/fstab", $fstab);
 
-        // Duplicate for vmtoolsd
+        // Duplicate for vm tools d
         file_put_contents("/etc/mtab", $fstab);
 
         // Mount the file systems
-        $mountPath = Util::which('mount');
-        $resultOfMount = Processes::mwExec("{$mountPath} -a 2> /dev/null");
-        Util::sysLogMsg(__METHOD__, "The mount disks result according to /etc/fstab is $resultOfMount");
-
+        $mountPath     = Util::which('mount');
+        $resultOfMount = Processes::mwExec("$mountPath -a", $out);
+        Util::echoToTeletype(" - The mount disks result according to /etc/fstab is $resultOfMount");
+        if($resultOfMount !== 0){
+            Util::echoToTeletype(" - Error mount ". implode(' ', $out));
+        }
         // Add regular www rights to /cf directory
         Util::addRegularWWWRights('/cf');
     }

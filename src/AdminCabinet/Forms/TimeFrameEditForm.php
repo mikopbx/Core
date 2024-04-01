@@ -94,7 +94,8 @@ class TimeFrameEditForm extends BaseForm
                     $calTypeArray = [
                         OutWorkTimes::CAL_TYPE_NONE     => $this->translation->_('tf_CAL_TYPE_NONE'),
                         OutWorkTimes::CAL_TYPE_CALDAV   => $this->translation->_('tf_CAL_TYPE_CALDAV'),
-                        OutWorkTimes::CAL_TYPE_ICAL     => $this->translation->_('tf_CAL_TYPE_ICAL'),
+                        // TODO / It is broken, while we turn it off
+                        // OutWorkTimes::CAL_TYPE_ICAL     => $this->translation->_('tf_CAL_TYPE_ICAL'),
                     ];
                     if (empty($value)) {
                         $value = OutWorkTimes::CAL_TYPE_NONE;
