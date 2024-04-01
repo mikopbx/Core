@@ -94,7 +94,14 @@ class IAXStackProcessor extends Injectable
                             // Peer without registration.
                             $arr_status = explode(' ', $amiPeer['Status']);
                             $currentPeer['state'] = strtoupper($arr_status[0]);
-                            $currentPeer['time-response'] = strtoupper(str_replace(['(', ')'], '', $arr_status[1]));
+                            // Check if the expected index exists before trying to access it.
+                            if (isset($arr_status[1])) {
+                                $currentPeer['time-response'] = strtoupper(str_replace(['(', ')'], '', $arr_status[1]));
+                            } else {
+                                // Handle the case where $arr_status[1] is not set.
+                                // You might want to assign a default value or handle this scenario appropriately.
+                                $currentPeer['time-response'] = 'N/A';
+                            }
                         } else {
                             $currentPeer['state'] = 'Error register.';
                             // Parse active registrations

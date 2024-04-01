@@ -45,11 +45,11 @@
         </div>
     </div>
 </div>
-<div class="field">
-    <div class="ui segment">
-        <div class="ui toggle checkbox">
-            <label>{{ t._('gs_DisableAllModules') }}</label>
-            {{ form.render('DisableAllModules') }}
-        </div>
-    </div>
-</div>
+{#<div class="field">#}
+{#    <div class="ui segment">#}
+{#        <div class="ui toggle checkbox">#}
+{#            <label>{{ t._('gs_DisableAllModules') }}</label>#}
+{#            {{ form.render('DisableAllModules') }}#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
