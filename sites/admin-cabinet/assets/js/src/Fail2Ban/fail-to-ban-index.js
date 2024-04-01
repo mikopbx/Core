@@ -144,6 +144,15 @@ const fail2BanIndex = {
             ],
             order: [0, 'asc'],
             language: SemanticLocalization.dataTableLocalisation,
+            /**
+             * Constructs the Extensions row.
+             * @param {HTMLElement} row - The row element.
+             * @param {Array} data - The row data.
+             */
+            createdRow(row, data) {
+                $('td', row).eq(0).addClass('collapsing');
+                $('td', row).eq(2).addClass('collapsing');
+            },
         });
     },
 
@@ -174,7 +183,7 @@ const fail2BanIndex = {
             const row = [
                 ip,
                 reasonsDatesCombined,
-                `<button class="ui icon basic mini button unban-button" data-value="${ip}"><i class="icon trash red"></i>${globalTranslate.f2b_Unban}</button>`
+                `<button class="ui icon basic mini button right floated unban-button" data-value="${ip}"><i class="icon trash red"></i>${globalTranslate.f2b_Unban}</button>`
             ];
             newData.push(row);
         });

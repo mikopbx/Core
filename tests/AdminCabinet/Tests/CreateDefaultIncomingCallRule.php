@@ -20,7 +20,6 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use GuzzleHttp\Exception\GuzzleException;
-use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -88,7 +87,7 @@ class CreateDefaultIncomingCallRule extends MikoPBXTestsBase
         $params = [];
         $params[] = [
             [
-                'action' => IncomingRoutingTable::ACTION_BUSY,
+                'action' => 'busy',
             ]
         ];
 

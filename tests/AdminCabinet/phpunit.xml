@@ -20,6 +20,8 @@
     <testsuites>
         <testsuite name="TestMikoPBX">
             <file>Tests/ChangeWeakPasswordTest.php</file>
+            <file>Tests/ChangeLicenseKeyTest.php</file>
+            <file>Tests/InstallModulesTest.php</file>
             <file>Tests/FillPBXSettingsTest.php</file>
             <file>Tests/CustomFileChangeTest.php</file>
             <file>Tests/CheckDropdownBeforeCreateAudioFileTest.php</file>
@@ -49,8 +51,6 @@
             <file>Tests/DeleteExtensionTest.php</file>
             <file>Tests/DeleteExtensionFromDropDownTest.php</file>
             <file>Tests/DeleteProviderTest.php</file>
-            <file>Tests/ChangeLicenseKeyTest.php</file>
-            <file>Tests/InstallModulesTest.php</file>
             <file>Tests/CheckDropdownsOnAddExtensionsTest.php</file>
             <file>Tests/CheckDropdownsOnDeleteQueueTest.php</file>
         </testsuite>

@@ -67,7 +67,7 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
             $tableButtonModify->click();
 
         } catch (NoSuchElementException $e) {
-            echo('Not found row with module =' . $params['moduleId'] . ' on this page' . PHP_EOL);
+            echo('Not found row with module =' . $params['moduleId'] . ' on this page before installation. It is OK!' . PHP_EOL);
         } catch (Exception $e) {
             echo('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
@@ -197,49 +197,49 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['ModuleAutoprovision'] = [
             [
                 'moduleId' => 'ModuleAutoprovision',
                 'enable' => true,
             ],
         ];
-        $params[] = [
+        $params['ModuleBackup'] = [
             [
                 'moduleId' => 'ModuleBackup',
                 'enable' => true,
             ],
         ];
-        $params[] = [
+        $params['ModuleCTIClient'] = [
             [
                 'moduleId' => 'ModuleCTIClient',
                 'enable' => false,
             ],
         ];
-        $params[] = [
+        $params['ModuleDocker'] = [
             [
                 'moduleId' => 'ModuleDocker',
                 'enable' => false,
             ],
         ];
-        $params[] = [
+        $params['ModulePhoneBook'] = [
             [
                 'moduleId' => 'ModulePhoneBook',
                 'enable' => true,
             ],
         ];
-        $params[] = [
+        $params['ModuleSmartIVR'] = [
             [
                 'moduleId' => 'ModuleSmartIVR',
                 'enable' => true,
             ],
         ];
-        $params[] = [
+        $params['ModuleTelegramNotify'] = [
             [
                 'moduleId' => 'ModuleTelegramNotify',
                 'enable' => false,
             ],
         ];
-        $params[] = [
+        $params['ModuleUsersGroups'] = [
             [
                 'moduleId' => 'ModuleUsersGroups',
                 'enable' => true,
