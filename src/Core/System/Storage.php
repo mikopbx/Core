@@ -1141,7 +1141,7 @@ class Storage extends Di\Injectable
         // Mount the file systems
         $mountPath     = Util::which('mount');
         $resultOfMount = Processes::mwExec("$mountPath -a", $out);
-        Util::echoToTeletype(" - The mount disks result according to /etc/fstab is $resultOfMount");
+        Util::echoToTeletype(PHP_EOL." - The mount disks result according to /etc/fstab is $resultOfMount");
         if($resultOfMount !== 0){
             Util::echoToTeletype(" - Error mount ". implode(' ', $out));
         }

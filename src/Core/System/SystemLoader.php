@@ -137,12 +137,12 @@ class SystemLoader extends Di\Injectable
 
         // Mount the storage disk
         $storage       = new Storage();
-        $this->echoStartMsg(' - Mount storage disk...');
         if($itIsT2SDELinux){
             // Do not need to set on Docker or Debian linux
             $storage->saveFstab();
         }
         $storage->configure();
+        $this->echoStartMsg(' - Mount storage disk...');
         $this->echoResultMsg();
 
         // Additional tasks for T2SDELinux
