@@ -518,7 +518,7 @@ class Storage extends Di\Injectable
 
         // Check if the storage disk is already mounted
         if (self::isStorageDiskMounted()) {
-            Util::echoToTeletype(PHP_EOL." " . Util::translate('Storage disk is already mounted...') . " ".PHP_EOL);
+            Util::echoToTeletype(PHP_EOL." " . Util::translate('Storage disk is already mounted...') . " ");
             sleep(2);
             return true;
         }
@@ -586,7 +586,7 @@ class Storage extends Di\Injectable
         // Check if the disk selection should be automatic
         if ($automatic === 'auto') {
             $target_disk_storage = $selected_disk['id'];
-            Util::echoToTeletype("Automatically selected disk is $target_disk_storage");
+            Util::echoToTeletype("Automatically selected storage disk is $target_disk_storage");
         } else {
             echo PHP_EOL." " . Util::translate('Select the drive to store the data.');
             echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
@@ -1083,14 +1083,19 @@ class Storage extends Di\Injectable
     private function hddExists(string $disk): bool
     {
         if (is_dir($disk)) {
+            Util::sysLogMsg(__METHOD__, $disk.' is a dir, not disk', LOG_DEBUG);
             return false;
         }
-        $result = false;
-        $uid = $this->getUuid($disk);
-        if (!empty($uid) && file_exists($disk)) {
-            $result = true;
+        if (!file_exists($disk)){
+            Util::sysLogMsg(__METHOD__, "Check if the file with name $disk exists fail", LOG_DEBUG);
+            return false;
         }
-        return $result;
+
+        $uid = $this->getUuid($disk);
+        if (!empty($uid)) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1926,7 +1931,7 @@ class Storage extends Di\Injectable
         } else {
             $result = '';
         }
-
+        Util::echoToTeletype("UUID for device $device is $result");
         return $result;
     }
 

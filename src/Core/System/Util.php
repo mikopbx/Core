@@ -808,6 +808,7 @@ class Util
         self::sysLogMsg(static::class, $message, LOG_INFO);
     }
 
+
     /**
      * Echoes a message and logs it to the ttyS0.
      *
@@ -818,19 +819,22 @@ class Util
     public static function echoToTeletype(string $message): void
     {
         // Log to serial tty
-        $message.=PHP_EOL;
+        $message .= PHP_EOL;
         echo $message;
         for ($i = 0; $i <= 5; $i++) {
             $device = "/dev/ttyS$i";
-            // Получаем результат выполнения команды
+            // Get the result of the command execution
             $result = shell_exec("/bin/busybox setserial -g \"$device\" 2> /dev/null");
-            // Если результат не пустой
+            // If the result is not empty
             if (!empty($result)) {
-                // Выполняем аналогичное
+                // Perform the same
                 file_put_contents($device, $message, FILE_APPEND);
             }
         }
+        // Log the message to the system log with LOG_INFO level
+        self::sysLogMsg(static::class, $message, LOG_INFO);
     }
+
 
     /**
      * Adds executable rights to files in a folder.
