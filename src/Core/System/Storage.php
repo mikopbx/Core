@@ -448,6 +448,12 @@ class Storage extends Di\Injectable
             sleep(1);
         }
 
+        // Touch the disk to update disk tables
+        $partprobePath = Util::which('partprobe');
+        Processes::mwExec(
+            "{$partprobePath} '{$device}'"
+        );
+
         return $this->formatDiskLocalPart2($device, $bg);
     }
 
