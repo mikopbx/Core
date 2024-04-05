@@ -120,15 +120,15 @@ class QueueConf extends AsteriskConfigClass
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
             $queue_ext_conf .= 'same => n,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
             $queue_ext_conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
-            $queue_ext_conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(queue-pre-dial-custom,${EXTEN},1)}" == "1"]?queue-pre-dial-custom,${EXTEN},1)'."\n\t";
             $options = '${MQ_OPTIONS}';
             $callerHear = $queue['caller_hear'] ?? '';
             if ($callerHear === 'ringing') {
-                $options .= 'r';
+                $queue_ext_conf .= 'same => n,Set(MQ_OPTIONS=${MQ_OPTIONS}r)'."\n\t";
             }else{
                 // We answer if you need MOH
                 $queue_ext_conf .= "same => n,Answer() \n\t";
             }
+            $queue_ext_conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(queue-pre-dial-custom,${EXTEN},1)}" == "1"]?queue-pre-dial-custom,${EXTEN},1)'."\n\t";
             $queue_ext_conf .= 'same => n,Gosub(queue_start,${EXTEN},1)' . "\n\t";
             $cid = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $queue['callerid_prefix'] ?? '');
             if (!empty($cid)) {
