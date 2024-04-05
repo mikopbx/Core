@@ -83,7 +83,7 @@ class PbxSettings extends ModelsBase
     {
         return [
             PbxSettingsConstants::PBX_NAME => 'PBX system',
-            PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE => 'REAL',//VMWARE,HYPERV,AWS,AZURE
+            PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE => 'REAL',// VMWARE,HYPER-V,AWS,AZURE,DOCKER
             PbxSettingsConstants::PBX_DESCRIPTION => '',
             PbxSettingsConstants::RESTART_EVERY_NIGHT => '0',
             PbxSettingsConstants::SIP_PORT => '5060',
