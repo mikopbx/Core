@@ -823,8 +823,9 @@ class Util
         echo $message;
         for ($i = 0; $i <= 5; $i++) {
             $device = "/dev/ttyS$i";
+            $busyboxPath = self::which('busybox');
             // Get the result of the command execution
-            $result = shell_exec("/bin/busybox setserial -g \"$device\" 2> /dev/null");
+            $result = shell_exec("$busyboxPath setserial -g \"$device\" | $busyboxPath grep -v unknown 2> /dev/null");
             // If the result is not empty
             if (!empty($result)) {
                 // Perform the same
