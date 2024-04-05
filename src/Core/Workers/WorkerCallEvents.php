@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{BeanstalkClient, Storage, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Directories, Util};
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
@@ -181,7 +181,7 @@ class WorkerCallEvents extends WorkerBase
     {
         $full_name = Util::trimExtensionForFile($full_name).'.wav';
         if (!file_exists($full_name)) {
-            $monitor_dir = Storage::getMonitorDir();
+            $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
             if (empty($sub_dir)) {
                 $sub_dir = date('Y/m/d/H/');
             }

@@ -38,7 +38,6 @@ use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di;
 use function MikoPBX\Common\Config\appPath;
 
-
 /**
  * Class Storage
  *
@@ -50,58 +49,20 @@ use function MikoPBX\Common\Config\appPath;
 class Storage extends Di\Injectable
 {
     /**
-     * Returns the monitor directory path.
-     *
-     * @return string The monitor directory path.
-     */
-    public static function getMonitorDir(): string
-    {
-        $di = Di::getDefault();
-        if ($di !== null) {
-            return $di->getConfig()->path('asterisk.monitordir');
-        }
-
-        return '/tmp';
-    }
-
-    /**
-     * Get the media directory path.
-     *
-     * @return string The media directory path.
-     */
-    public static function getMediaDir(): string
-    {
-        $di = Di::getDefault();
-        if ($di !== null) {
-            return $di->getConfig()->path('core.mediaMountPoint');
-        }
-
-        // If the Dependency Injection container is not available or the configuration option is not set,
-        // return the default media directory path '/tmp'
-        return '/tmp';
-    }
-
-    /**
      * Move read-only sounds to the storage.
      * This function assumes a storage disk is mounted.
      *
      * @return void
      */
-    public static function moveReadOnlySoundsToStorage(): void
+    public function moveReadOnlySoundsToStorage(): void
     {
         // Check if a storage disk is mounted
         if (!self::isStorageDiskMounted()) {
             return;
         }
-        $di = Di::getDefault();
-
-        // Check if the Dependency Injection container is available
-        if ($di === null) {
-            return;
-        }
 
         // Create the current media directory if it doesn't exist
-        $currentMediaDir = $di->getConfig()->path('asterisk.customSoundDir') . '/';
+        $currentMediaDir =  $this->config->path('asterisk.customSoundDir'). '/';
         if (!file_exists($currentMediaDir)) {
             Util::mwMkdir($currentMediaDir);
         }
@@ -139,7 +100,6 @@ class Storage extends Di\Injectable
      */
     public static function isStorageDiskMounted(string $filter = '', string &$mount_dir = ''): bool
     {
-
         // Check if it's a T2Sde Linux and /storage/usbdisk1/ exists
         if (!Util::isT2SdeLinux()
             && file_exists('/storage/usbdisk1/')
@@ -148,17 +108,7 @@ class Storage extends Di\Injectable
             return true;
         }
         if ('' === $filter) {
-
-
-            $di = Di::getDefault();
-
-            // Check if the Dependency Injection container is available
-            if ($di !== null) {
-                $varEtcDir = $di->getConfig()->path('core.varEtcDir');
-            } else {
-                $varEtcDir = '/var/etc';
-            }
-
+            $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
             $filename = "{$varEtcDir}/storage_device";
 
             // If the storage_device file exists, read its contents as the filter, otherwise use 'usbdisk1' as the filter
@@ -186,28 +136,20 @@ class Storage extends Di\Injectable
      *
      * @return void
      */
-    public static function copyMohFilesToStorage(): void
+    public function copyMohFilesToStorage(): void
     {
-
         // Check if a storage disk is mounted
         if (!self::isStorageDiskMounted()) {
             return;
         }
 
-        // Check if the Dependency Injection container is available
-        $di = Di::getDefault();
-        if ($di === null) {
-            return;
-        }
-        $config = $di->getConfig();
-        $oldMohDir = $config->path('asterisk.astvarlibdir') . '/sounds/moh';
-        $currentMohDir = $config->path('asterisk.mohdir');
+        $oldMohDir =  $this->config->path('asterisk.astvarlibdir'). '/sounds/moh';
+        $currentMohDir = $this->config->path('asterisk.mohdir');
 
         // If the old MOH directory doesn't exist or unable to create the current MOH directory, return
         if (!file_exists($oldMohDir) || Util::mwMkdir($currentMohDir)) {
             return;
         }
-
 
         $files = scandir($oldMohDir);
 
@@ -232,14 +174,14 @@ class Storage extends Di\Injectable
      * Mount an SFTP disk.
      *
      * @param string $host The SFTP server host.
-     * @param int $port The SFTP server port.
+     * @param string $port The SFTP server port.
      * @param string $user The SFTP server username.
      * @param string $pass The SFTP server password.
      * @param string $remote_dir The remote directory on the SFTP server.
      * @param string $local_dir The local directory to mount the SFTP disk.
      * @return bool Returns true if the SFTP disk is successfully mounted, false otherwise.
      */
-    public static function mountSftpDisk(string $host, string $port, string $user, string $pass, string $remout_dir, string $local_dir): bool
+    public static function mountSftpDisk(string $host, string $port, string $user, string $pass, string $remote_dir, string $local_dir): bool
     {
 
         // Create the local directory if it doesn't exist
@@ -250,7 +192,7 @@ class Storage extends Di\Injectable
         $sshfsPath = Util::which('sshfs');
 
         // Build the command to mount the SFTP disk
-        $command = "{$timeoutPath} 3 {$sshfsPath} -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " . "{$user}@{$host}:{$remout_dir} {$local_dir} << EOF\n" . "{$pass}\n" . "EOF\n";
+        $command = "{$timeoutPath} 3 {$sshfsPath} -p {$port} -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " . "{$user}@{$host}:{$remote_dir} {$local_dir} << EOF\n" . "{$pass}\n" . "EOF\n";
 
         // Execute the command to mount the SFTP disk
         Processes::mwExec($command, $out);
@@ -275,7 +217,7 @@ class Storage extends Di\Injectable
      * @param string $local_dir The local directory to mount the FTP disk.
      * @return bool Returns true if the FTP disk is successfully mounted, false otherwise.
      */
-    public static function mountFtp(string $host, string $port, string $user, string $pass, string $remout_dir, string $local_dir): bool
+    public static function mountFtp(string $host, string $port, string $user, string $pass, string $remote_dir, string $local_dir): bool
     {
 
         // Create the local directory if it doesn't exist
@@ -297,8 +239,8 @@ class Storage extends Di\Injectable
         if (!empty($port)) {
             $connect_line .= ":{$port}";
         }
-        if (!empty($remout_dir)) {
-            $connect_line .= "$remout_dir";
+        if (!empty($remote_dir)) {
+            $connect_line .= "$remote_dir";
         }
 
         $timeoutPath = Util::which('timeout');
@@ -929,6 +871,9 @@ class Storage extends Di\Injectable
         ConfigProvider::recreateConfigProvider();
         $this->config = $this->di->get('config');
 
+        // Reload cached values
+        Directories::reset();
+
         // Reload classes from system and storage disks
         ClassLoader::init();
 
@@ -1022,6 +967,7 @@ class Storage extends Di\Injectable
     }
 
     /**
+     * Clear files in temp directories
      * @return void
      */
     private function clearTmpFiles(): void
@@ -1937,7 +1883,6 @@ class Storage extends Di\Injectable
         } else {
             $result = '';
         }
-        Util::echoToTeletype("UUID for device $device is $result");
         return $result;
     }
 
@@ -1966,4 +1911,16 @@ class Storage extends Di\Injectable
         }
         return '';
     }
+
+    /**
+     * Returns the monitor directory path.
+     * @deprecated Use Directories class instead
+     *
+     * @return string The monitor directory path.
+     */
+    public static function getMonitorDir(): string
+    {
+        return Directories::getDir(Directories::AST_MONITOR_DIR);
+    }
+
 }

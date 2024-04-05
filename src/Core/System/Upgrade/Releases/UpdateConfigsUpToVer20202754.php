@@ -225,7 +225,8 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
      */
     private function copyMohFilesToStorage(): void
     {
-        Storage::copyMohFilesToStorage();
+        $storage = new Storage();
+        $storage->copyMohFilesToStorage();
     }
 
     /**
@@ -306,6 +307,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
      */
     private function moveReadOnlySoundsToStorage(): void
     {
-        Storage::moveReadOnlySoundsToStorage();
+        $storage = new Storage();
+        $storage->moveReadOnlySoundsToStorage();
     }
 }

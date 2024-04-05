@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{Processes, Storage, Util};
+use MikoPBX\Core\System\{Directories, Processes, Storage, Util};
 
 /**
  * WorkerRemoveOldRecords is a worker class responsible for cleaning monitor records.
@@ -112,7 +112,7 @@ class WorkerRemoveOldRecords extends WorkerBase
             // Disk cleanup is not required
             return;
         }
-        $monitor_dir = Storage::getMonitorDir();
+        $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
         $out = [];
 
         // Get the oldest directories in the monitor directory

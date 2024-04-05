@@ -21,8 +21,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Sip;
@@ -162,7 +162,7 @@ class VoiceMailConf extends AsteriskConfigClass
         $recordingFile = '';
 
         // Define the directory path for storing the recording file
-        $monitor_dir = Storage::getMonitorDir();
+        $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
         $sub_dir     = date('Y/m/d', $time);
         $dirName = "$monitor_dir/$sub_dir/INBOX/";
 

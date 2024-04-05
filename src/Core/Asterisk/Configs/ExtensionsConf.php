@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
 use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Core\System\{Storage, Util};
+use MikoPBX\Core\System\{Directories, Util};
 
 /**
  * Represents the Asterisk configuration class for handling extensions.conf and 99-extensions-override.lua
@@ -66,7 +66,8 @@ class ExtensionsConf extends AsteriskConfigClass
         $conf              = "[globals]" .PHP_EOL.
             "TRANSFER_CONTEXT=internal-transfer;".PHP_EOL;
         if ($this->generalSettings[PbxSettingsConstants::PBX_RECORD_CALLS] === '1') {
-            $conf .= "MONITOR_DIR=" . Storage::getMonitorDir() .PHP_EOL;
+            $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
+            $conf .= "MONITOR_DIR=" . $monitorDir .PHP_EOL;
             $conf .= "MONITOR_STEREO=" . $this->generalSettings[PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD] .PHP_EOL;
         }
         if ($this->generalSettings[PbxSettingsConstants::PBX_RECORD_CALLS_INNER] === '0') {
