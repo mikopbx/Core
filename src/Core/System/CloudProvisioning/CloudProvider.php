@@ -23,7 +23,6 @@ use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\SSHConf;
-use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 
@@ -66,9 +65,9 @@ abstract class CloudProvider
         $setting->value = $data;
         $result = $setting->save();
         if ($result) {
-            Util::sysLogMsg(__CLASS__, "Update $keyName ... ");
+            Util::echoToTeletype("Update $keyName ... ");
         } else {
-            Util::sysLogMsg(__CLASS__, "FAIL Update $keyName ... ");
+            Util::echoToTeletype("FAIL Update $keyName ... ");
         }
         unset($setting);
     }
@@ -85,9 +84,9 @@ abstract class CloudProvider
             $ipInfoResult = SysinfoManagementProcessor::getExternalIpInfo();
             if ($ipInfoResult->success && isset($ipInfoResult->data['ip'])) {
                 $extipaddr = $ipInfoResult->data['ip'];
-                Util::sysLogMsg(__CLASS__, "Retrieved external IP: $extipaddr");
+                Util::echoToTeletype("Retrieved external IP: $extipaddr");
             } else {
-                Util::sysLogMsg(__CLASS__, "Failed to retrieve external IP. Error: " . implode(", ", $ipInfoResult->messages));
+                Util::echoToTeletype("Failed to retrieve external IP. Error: " . implode(", ", $ipInfoResult->messages));
                 $extipaddr = '';
             }
         }
@@ -96,17 +95,22 @@ abstract class CloudProvider
         $lanData = LanInterfaces::findFirst();
         if ($lanData !== null) {
             if (!empty($extipaddr)) {
-                $lanData->extipaddr = $extipaddr;
-                $lanData->topology = 'private';
+                if ($lanData->ipaddr===$extipaddr) {
+                    $lanData->topology = LanInterfaces::TOPOLOGY_PUBLIC;
+                } else {
+                    $lanData->extipaddr = $extipaddr;
+                    $lanData->topology = LanInterfaces::TOPOLOGY_PRIVATE;
+                    $lanData->autoUpdateExtIp = '1';
+                }
             }
             $result = $lanData->save();
             if ($result) {
-                Util::sysLogMsg(__CLASS__, "Updated LAN settings external IP: $extipaddr");
+                Util::echoToTeletype("Updated LAN settings external IP: $extipaddr");
             } else {
-                Util::sysLogMsg(__CLASS__, "Failed to update LAN settings external IP: $extipaddr");
+                Util::echoToTeletype("Failed to update LAN settings external IP: $extipaddr");
             }
         } else {
-            Util::sysLogMsg(__CLASS__, "LAN interface not found on cloud provisioning");
+            Util::echoToTeletype("LAN interface not found on cloud provisioning");
         }
     }
 

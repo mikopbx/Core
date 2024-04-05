@@ -22,6 +22,7 @@ use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
@@ -191,7 +192,8 @@ class TestCallsBase {
      */
     private function actionOriginateGeneral(string $src, string $dst){
         self::printInfo("Start originate (general)... $src to $dst");
-        $outgoingDir = dirname(Storage::getMonitorDir()) . "/outgoing";
+        $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
+        $outgoingDir = dirname($monitorDir) . "/outgoing";
         $conf = "Channel: Local/$src@internal-originate".PHP_EOL.
             "Context: all_peers".PHP_EOL.
             "Extension: $dst".PHP_EOL.

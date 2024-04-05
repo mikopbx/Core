@@ -54,9 +54,6 @@ class StorageTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
     {
     }
 
-    public function testGetMediaDir()
-    {
-    }
 
     public function testSaveDiskSettings()
     {

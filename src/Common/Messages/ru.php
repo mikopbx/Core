@@ -607,6 +607,7 @@ return [
     'nw_DeleteCurrentInterface' => 'Удалить этот интерфейс',
     'nw_NetworkAddressTranslations' => 'Топология сети',
     'nw_ExternIpHostMessage1' => 'При необходимости вы можете указать внешний SIP порт через двоеточие после имени хоста или IP адреса',
+    'nw_UpdateExternalIPAutomaticallyOnReboot'=>'Обновлять внешний IP адрес MikoPBX при каждой перезагрузке',
     'gs_MainTab' => 'Основные',
     'gs_FeaturesTab' => 'Переводы вызовов',
     'gs_SIPTab' => 'SIP',

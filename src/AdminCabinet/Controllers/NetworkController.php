@@ -183,6 +183,9 @@ class NetworkController extends BaseController
                         $eth->$name = LanInterfaces::findFirstById($data[$name . '_' . $eth->id])->interface;
                     }
                     break;
+                case 'autoUpdateExtIp':
+                    $eth->$name = ($data[$name] === 'on') ? '1' : '0';
+                    break;
                 case 'domain':
                 case 'hostname':
                 case 'gateway':

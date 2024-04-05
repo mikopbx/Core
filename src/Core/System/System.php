@@ -150,6 +150,7 @@ class System extends Di\Injectable
         $network->loConfigure();
         $network->lanConfigure();
         $network->configureLanInDocker();
+        $network->updateExternalIp();
     }
     /**
      * Updates custom changes in config files

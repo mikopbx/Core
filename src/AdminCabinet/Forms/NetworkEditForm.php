@@ -47,11 +47,22 @@ class NetworkEditForm extends BaseForm
         $this->add(new Text('extipaddr'));
         $this->add(new Text('exthostname'));
 
+
+        // topology
         $cheskArr = ['value' => null];
         if ($entity->topology == 'private') {
             $cheskArr = ['checked' => 'checked', 'value' => null];
         }
         $this->add(new Check('usenat', $cheskArr));
+
+         // autoUpdateExtIp
+        $cheskArr = ['value' => null];
+        if ($entity->autoUpdateExtIp == '1') {
+            $cheskArr = ['checked' => 'checked', 'value' => null];
+        }
+        $this->add(new Check('autoUpdateExtIp', $cheskArr));
+
+        // interfaces
         $arrInterfaces = [];
         foreach ($options['eths'] as $eth) {
             $this->add(
@@ -167,7 +178,7 @@ class NetworkEditForm extends BaseForm
         $this->add($internetInterface);
 
 
-        // Поля для вновь добавляемого интерфейса
+        // Template for new lan
         $newInterface = new Select(
             'interface_0', $arrRealInterfaces, [
                 'using' => [

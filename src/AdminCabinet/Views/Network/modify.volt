@@ -140,6 +140,12 @@
                 </button>
             </div>
         </div>
+        <div class="field">
+            <div class="ui toggle checkbox">
+                {{ form.render('autoUpdateExtIp') }}
+                <label>{{ t._('nw_UpdateExternalIPAutomaticallyOnReboot') }}</label>
+            </div>
+        </div>
     </div>
     <div class="field nated-settings-group">
         <label>{{ t._('nw_PublicHostName') }}</label>

@@ -54,14 +54,14 @@ class CloudProvisioning
         ];
 
         foreach ($providers as $cloudName => $provider) {
-            Util::sysLogMsg(__CLASS__, "Attempting to provision on $cloudName... ");
+            Util::echoToTeletype("Attempting to provision on $cloudName... ");
             if ($provider->provision()) {
                 self::afterProvisioning($provider, $cloudName);
-                Util::sysLogMsg(__CLASS__, "Provisioning on $cloudName has been successfully completed.");
+                Util::teletypeEchoDone("Provisioning on $cloudName has been successfully completed.", true);
                 // Provisioning succeeded, break out of the loop
                 break;
             }
-            Util::sysLogMsg(__CLASS__, "Provisioning on $cloudName has not been completed. This may be due to being in a different environment or a non-cloud setting.");
+            Util::teletypeEchoDone("Provisioning on $cloudName has not been completed.", false);
         }
     }
 
@@ -91,6 +91,6 @@ class CloudProvisioning
     private static function checkConnectStorage(): void
     {
         $phpPath = Util::which('php');
-        Processes::mwExecBg($phpPath . ' -f /etc/rc/connect.storage auto', '/var/log/storage-connect.log', 5);
+        Processes::mwExec($phpPath . ' -f /etc/rc/connect.storage auto');
     }
 }

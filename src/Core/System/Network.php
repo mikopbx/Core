@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\{LanInterfaces, PbxSettings, PbxSettingsConstants};
 use MikoPBX\Core\Utilities\SubnetCalculator;
+use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use Phalcon\Di\Injectable;
 use Throwable;
 
@@ -120,7 +121,7 @@ class Network extends Injectable
         $info .= PHP_EOL;
 
         // External web address info
-        if (!empty($addresses['external'])){
+        if (!empty($addresses['external'])) {
             $info .= "   The web interface is available at the external addresses:" . PHP_EOL . PHP_EOL;
             foreach ($addresses['external'] as $address) {
                 if (empty($address)) {
@@ -134,7 +135,7 @@ class Network extends Injectable
         // Default web user info
         $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
         $webAdminPassword = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
-        if ($cloudInstanceId===$webAdminPassword){
+        if ($cloudInstanceId === $webAdminPassword) {
             $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
             $info .= "  You should use the next credentials:" . PHP_EOL . PHP_EOL;
             $info .= "      Login: $adminUser" . PHP_EOL . PHP_EOL;
@@ -654,9 +655,10 @@ class Network extends Injectable
         $data->internet = ($general === true) ? '1' : '0';
         $data->disabled = '0';
         $data->vlanid = '0';
-        $data->hostname = 'mikopbx';
+        $data->hostname = 'MikoPBX';
         $data->domain = '';
-        $data->topology = 'private';
+        $data->topology = LanInterfaces::TOPOLOGY_PRIVATE;
+        $data->autoUpdateExtIp = '1';
         $data->primarydns = '';
         $data->save();
 
@@ -746,7 +748,7 @@ class Network extends Injectable
                 'subnet' => $busyboxPath . ' ifconfig eth0 | awk \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
                 'ipaddr' => $busyboxPath . ' ifconfig eth0 | awk \'/inet / {sub("addr:", "", $2); print $2}\'',
                 'gateway' => $busyboxPath . ' route -n | awk \'/^0.0.0.0/ {print $2}\'',
-                'hostname'=> $busyboxPath . ' hostname',
+                'hostname' => $busyboxPath . ' hostname',
             ];
             $data = [];
             foreach ($commands as $key => $command) {
@@ -1164,4 +1166,30 @@ class Network extends Injectable
 
         return $interface;
     }
+
+    /**
+     * Update external IP address
+     */
+    public function updateExternalIp(): void
+    {
+        $ipInfoResult = SysinfoManagementProcessor::getExternalIpInfo();
+        if ($ipInfoResult->success && isset($ipInfoResult->data['ip'])) {
+            $currentIP = $ipInfoResult->data['ip'];
+            $lanData = LanInterfaces::find('autoUpdateExtIp=1');
+            foreach ($lanData as $lan) {
+                $oldExtIp = $lan->extipaddr;
+                $parts = explode(':', $oldExtIp);
+                $oldIP = $parts[0]; // Only IP part of the address
+                $port = isset($parts[1]) ? ':' . $parts[1] : '';
+                if ($oldIP !== $currentIP) {
+                    $newExtIp = $currentIP . $port;
+                    $lan->extipaddr = $newExtIp;
+                    if ($lan->save()) {
+                        Util::sysLogMsg(__METHOD__, "External IP address updated for interface {$lan->interface}");
+                    }
+                }
+            }
+        }
+    }
+
 }
