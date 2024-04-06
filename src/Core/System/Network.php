@@ -812,48 +812,57 @@ class Network extends Injectable
     }
 
     /**
-     * Renews and configures the network settings after successful DHCP negotiation.
+     * Processes DHCP renewal and binding for network interfaces.
+     *
+     * This function configures the network interface based on DHCP lease information.
+     * It sets up the interface IP, subnet mask, default gateway, and static routes.
+     * It also handles interface configuration deinitialization, DNS settings update, and MTU settings.
      *
      * @return void
      */
     public function udhcpcConfigureRenewBound(): void
     {
-        // Initialize the environment variables array.
+        // Initialize an array to store environment variables related to network configuration.
         $env_vars = [
-            'broadcast' => '',
-            'interface' => '',
-            'ip' => '',
-            'router' => '',
+            'broadcast' => '', // 10.0.0.255
+            'interface' => '', // eth0
+            'ip' => '', // 10.0.0.249
+            'router' => '', // 10.0.0.1
             'timesvr' => '',
             'namesvr' => '',
-            'dns' => '',
-            'hostname' => '',
-            'subnet' => '',
-            'serverid' => '',
+            'dns' => '', // 10.0.0.254
+            'hostname' => '', // bad
+            'subnet' => '', // 255.255.255.0
+            'serverid' => '', // 10.0.0.1
             'ipttl' => '',
-            'lease' => '',
-            'domain' => '',
+            'lease' => '', // 86400
+            'domain' => '', // bad
+            'mtu'=>'' , // 1500
+            'staticroutes'=> '', // 0.0.0.0/0 10.0.0.1 169.254.169.254/32 10.0.0.65 0.0.0.0/0 10.0.0.1
+            'mask' => '', // 24
         ];
 
+        // Check for debug mode to enable logging.
         $debugMode = $this->di->getShared('config')->path('core.debugMode');
-        // Get the values of environment variables.
+
+        // Retrieve and trim the values of the required environment variables.
         foreach ($env_vars as $key => $value) {
             $env_vars[$key] = trim(getenv($key));
         }
-        $BROADCAST = ($env_vars['broadcast'] === '') ? "" : "broadcast {$env_vars['broadcast']}";
-        if ($env_vars['subnet'] === '255.255.255.255' || $env_vars['subnet'] === '') {
-            // support /32 address assignment
-            // https://forummikrotik.ru/viewtopic.php?f=3&t=6246&start=40
-            $NET_MASK = '';
-        } else {
-            $NET_MASK = "netmask {$env_vars['subnet']}";
-        }
+        unset($value);
 
-        // Configure the interface.
+        // Configure broadcast address if provided, otherwise leave it blank.
+        $BROADCAST = !empty($env_vars['broadcast']) ? "broadcast {$env_vars['broadcast']}" : "";
+
+        // Handle subnet mask for /32 assignments and other cases.
+        $NET_MASK = (!empty($env_vars['subnet']) && $env_vars['subnet'] !== '255.255.255.255') ? "netmask {$env_vars['subnet']}" : "";
+
+        // Configure the network interface with the provided IP, broadcast, and subnet mask.
         $busyboxPath = Util::which('busybox');
         Processes::mwExec("{$busyboxPath} ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
 
-        // Remove old default routes.
+
+        // Remove any existing default gateway routes associated with this interface.
         while (true) {
             $out = [];
             Processes::mwExec("route del default gw 0.0.0.0 dev {$env_vars['interface']}", $out);
@@ -866,28 +875,25 @@ class Network extends Injectable
             } // Otherwise, it will be an infinite loop.
         }
 
-        // Add default routes.
-        /** @var LanInterfaces $if_data */
+        // Add a default gateway route if a router address is provided and the interface is for the internet.
         $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
         $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
-        if ('' !== $env_vars['router'] && $is_inet === 1) {
-            // Only add default route if this interface is for internet.
+        if (!empty($env_vars['router']) && $is_inet === 1) {
+            // Only add the default route if this interface is for the internet.
             $routers = explode(' ', $env_vars['router']);
             foreach ($routers as $router) {
                 Processes::mwExec("route add default gw {$router} dev {$env_vars['interface']}");
             }
         }
+
+        // Add custom static routes if any are provided.
+        $this->addStaticRoutes($env_vars['staticroutes'], $env_vars['interface']);
+
         // Add custom routes.
-        if (file_exists('/etc/static-routes')) {
-            $busyboxPath = Util::which('busybox');
-            $grepPath = Util::which('grep');
-            $awkPath = Util::which('awk');
-            $catPath = Util::which('cat');
-            $shPath = Util::which('sh');
-            Processes::mwExec(
-                "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}' | {$grepPath} '{$env_vars['interface']}' | {$shPath}"
-            );
-        }
+        $this->addCustomStaticRoutes($env_vars['interface']);
+
+
+        // Setup DNS.
         $named_dns = [];
         if ('' !== $env_vars['dns']) {
             $named_dns = explode(' ', $env_vars['dns']);
@@ -899,15 +905,14 @@ class Network extends Injectable
 
         // Save information to the database.
         $data = [
-            'subnet' => $env_vars['subnet'],
+            'subnet' => '',
             'ipaddr' => $env_vars['ip'],
             'gateway' => $env_vars['router'],
         ];
         if (Verify::isIpAddress($env_vars['ip'])) {
             $data['subnet'] = $this->netMaskToCidr($env_vars['subnet']);
-        } else {
-            $data['subnet'] = '';
         }
+
         $this->updateIfSettings($data, $env_vars['interface']);
 
         $data = [
@@ -974,10 +979,6 @@ class Network extends Injectable
 
         // Get the values of environment variables.
         foreach ($env_vars as $key => $value) {
-            $var_name = "{$prefix}{$value}";
-            if (empty($var_name)) {
-                continue;
-            }
             $env_vars[$key] = trim(getenv("{$prefix}{$value}"));
         }
 
@@ -996,14 +997,12 @@ class Network extends Injectable
 
         // Save information to the database.
         $data = [
-            'subnet' => $env_vars['subnet'],
+            'subnet' => '',
             'ipaddr' => $env_vars['ip'],
             'gateway' => $env_vars['router'],
         ];
         if (Verify::isIpAddress($env_vars['ip'])) {
             $data['subnet'] = $this->netMaskToCidr($env_vars['subnet']);
-        } else {
-            $data['subnet'] = '';
         }
         $this->updateIfSettings($data, $env_vars['interface']);
         $data = [
@@ -1189,6 +1188,59 @@ class Network extends Injectable
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Add static routes based on DHCP provided static routes information.
+     * Parses the `staticroutes` environment variable and adds each route to the system.
+     *
+     * @param string $staticRoutes The static routes string from DHCP, format: "destination gateway"
+     * @param string $interface The network interface to add routes to, e.g., eth0
+     * @return void
+     */
+    private function addStaticRoutes(string $staticRoutes, string $interface): void
+    {
+        if (empty($staticRoutes)) {
+            return;
+        }
+
+        // Split the static routes string into individual routes.
+        $routes = explode(' ', $staticRoutes);
+        $processedRoutes = []; // To keep track of processed routes and avoid duplicates.
+
+        $busyboxPath = Util::which('busybox');
+
+        // Iterate through the routes, adding each to the system.
+        for ($i = 0; $i < count($routes); $i += 2) {
+            $destination = $routes[$i];
+            $gateway = $routes[$i + 1] ?? '';
+
+            // Check if the route has already been processed to prevent duplicates.
+            if (!empty($destination) && !empty($gateway) && !in_array($destination, $processedRoutes)) {
+                Processes::mwExec("$busyboxPath ip route add $destination via $gateway dev $interface");
+                $processedRoutes[] = $destination; // Mark this route as processed.
+            }
+        }
+    }
+
+    /**
+     * Add custom static routes based on the `/etc/static-routes` file.
+     *
+     * @param string $interface The network interface to add routes to, e.g., eth0
+     * @return void
+     */
+    private function addCustomStaticRoutes(string $interface): void
+    {
+        if (file_exists('/etc/static-routes')) {
+            $busyboxPath = Util::which('busybox');
+            $grepPath = Util::which('grep');
+            $awkPath = Util::which('awk');
+            $catPath = Util::which('cat');
+            $shPath = Util::which('sh');
+            Processes::mwExec(
+                "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}' | {$grepPath} '{$interface}' | {$shPath}"
+            );
         }
     }
 
