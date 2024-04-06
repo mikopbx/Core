@@ -116,7 +116,12 @@ class Network extends Injectable
             if (empty($address)) {
                 continue;
             }
-            $info .= "    - https://$address:$port" . PHP_EOL;
+            if ($port === '443'){
+                $info .= "    - https://$address" . PHP_EOL;
+            } else {
+                $info .= "    - https://$address:$port" . PHP_EOL;
+            }
+
         }
         $info .= PHP_EOL;
 
@@ -127,7 +132,11 @@ class Network extends Injectable
                 if (empty($address)) {
                     continue;
                 }
-                $info .= "    - https://$address:$port" . PHP_EOL;
+                if ($port === '443'){
+                    $info .= "    - https://$address" . PHP_EOL;
+                } else {
+                    $info .= "    - https://$address:$port" . PHP_EOL;
+                }
             }
             $info .= PHP_EOL;
         }
@@ -294,7 +303,7 @@ class Network extends Injectable
      *
      * @param array $named_dns An array of named DNS servers.
      */
-    public function generatePdnsdConfig($named_dns): void
+    public function generatePdnsdConfig(array $named_dns): void
     {
         $tempDir = $this->di->getShared('config')->path('core.tempDir');
         $cache_dir = $tempDir . '/pdnsd/cache';
@@ -791,140 +800,6 @@ class Network extends Injectable
     }
 
     /**
-     * Checks if the network settings have changed.
-     *
-     * @param array $data The new network settings.
-     * @param array $dbData The existing network settings from the database.
-     *
-     * @return bool  Returns true if the settings have changed, false otherwise.
-     */
-    private function settingsIsChange(array $data, array $dbData): bool
-    {
-        $isChange = false;
-        foreach ($dbData as $key => $value) {
-            if (!isset($data[$key]) || (string)$value === (string)$data[$key]) {
-                continue;
-            }
-            Util::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
-            $isChange = true;
-        }
-        return $isChange;
-    }
-
-    /**
-     * Processes DHCP renewal and binding for network interfaces.
-     *
-     * This function configures the network interface based on DHCP lease information.
-     * It sets up the interface IP, subnet mask, default gateway, and static routes.
-     * It also handles interface configuration deinitialization, DNS settings update, and MTU settings.
-     *
-     * @return void
-     */
-    public function udhcpcConfigureRenewBound(): void
-    {
-        // Initialize an array to store environment variables related to network configuration.
-        $env_vars = [
-            'broadcast' => '', // 10.0.0.255
-            'interface' => '', // eth0
-            'ip' => '', // 10.0.0.249
-            'router' => '', // 10.0.0.1
-            'timesvr' => '',
-            'namesvr' => '',
-            'dns' => '', // 10.0.0.254
-            'hostname' => '', // bad
-            'subnet' => '', // 255.255.255.0
-            'serverid' => '', // 10.0.0.1
-            'ipttl' => '',
-            'lease' => '', // 86400
-            'domain' => '', // bad
-            'mtu'=>'' , // 1500
-            'staticroutes'=> '', // 0.0.0.0/0 10.0.0.1 169.254.169.254/32 10.0.0.65 0.0.0.0/0 10.0.0.1
-            'mask' => '', // 24
-        ];
-
-        // Check for debug mode to enable logging.
-        $debugMode = $this->di->getShared('config')->path('core.debugMode');
-
-        // Retrieve and trim the values of the required environment variables.
-        foreach ($env_vars as $key => $value) {
-            $env_vars[$key] = trim(getenv($key));
-        }
-        unset($value);
-
-        // Configure broadcast address if provided, otherwise leave it blank.
-        $BROADCAST = !empty($env_vars['broadcast']) ? "broadcast {$env_vars['broadcast']}" : "";
-
-        // Handle subnet mask for /32 assignments and other cases.
-        $NET_MASK = (!empty($env_vars['subnet']) && $env_vars['subnet'] !== '255.255.255.255') ? "netmask {$env_vars['subnet']}" : "";
-
-        // Configure the network interface with the provided IP, broadcast, and subnet mask.
-        $busyboxPath = Util::which('busybox');
-        Processes::mwExec("{$busyboxPath} ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
-
-
-        // Remove any existing default gateway routes associated with this interface.
-        while (true) {
-            $out = [];
-            Processes::mwExec("route del default gw 0.0.0.0 dev {$env_vars['interface']}", $out);
-            if (trim(implode('', $out)) !== '') {
-                // An error occurred, indicating that all routes have been cleared.
-                break;
-            }
-            if ($debugMode) {
-                break;
-            } // Otherwise, it will be an infinite loop.
-        }
-
-        // Add a default gateway route if a router address is provided and the interface is for the internet.
-        $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
-        $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
-        if (!empty($env_vars['router']) && $is_inet === 1) {
-            // Only add the default route if this interface is for the internet.
-            $routers = explode(' ', $env_vars['router']);
-            foreach ($routers as $router) {
-                Processes::mwExec("route add default gw {$router} dev {$env_vars['interface']}");
-            }
-        }
-
-        // Add custom static routes if any are provided.
-        $this->addStaticRoutes($env_vars['staticroutes'], $env_vars['interface']);
-
-        // Add custom routes.
-        $this->addCustomStaticRoutes($env_vars['interface']);
-
-
-        // Setup DNS.
-        $named_dns = [];
-        if ('' !== $env_vars['dns']) {
-            $named_dns = explode(' ', $env_vars['dns']);
-        }
-        if ($is_inet === 1) {
-            // Only generate pdnsd config if this interface is for internet.
-            $this->generatePdnsdConfig($named_dns);
-        }
-
-        // Save information to the database.
-        $data = [
-            'subnet' => '',
-            'ipaddr' => $env_vars['ip'],
-            'gateway' => $env_vars['router'],
-        ];
-        if (Verify::isIpAddress($env_vars['ip'])) {
-            $data['subnet'] = $this->netMaskToCidr($env_vars['subnet']);
-        }
-
-        $this->updateIfSettings($data, $env_vars['interface']);
-
-        $data = [
-            'primarydns' => $named_dns[0] ?? '',
-            'secondarydns' => $named_dns[1] ?? '',
-        ];
-        $this->updateDnsSettings($data, $env_vars['interface']);
-
-        Processes::mwExecBg("/etc/rc/networking.set.mtu '{$env_vars['interface']}'");
-    }
-
-    /**
      * Updates the DNS settings with the provided data.
      *
      * @param array $data The data to update the DNS settings with.
@@ -932,7 +807,7 @@ class Network extends Injectable
      *
      * @return void
      */
-    public function updateDnsSettings($data, $name): void
+    public function updateDnsSettings(array $data, string $name): void
     {
         /** @var LanInterfaces $res */
         $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
@@ -951,65 +826,24 @@ class Network extends Injectable
     }
 
     /**
-     * Renews and configures the network settings after successful DHCP negotiation using systemd environment variables.
-     * For OS systemctl (Debian).
-     *  Configures LAN interface FROM dhcpc (renew_bound).
-     * @return void
+     * Checks if the network settings have changed.
+     *
+     * @param array $data The new network settings.
+     * @param array $dbData The existing network settings from the database.
+     *
+     * @return bool  Returns true if the settings have changed, false otherwise.
      */
-    public function udhcpcConfigureRenewBoundSystemCtl(): void
+    public function settingsIsChange(array $data, array $dbData): bool
     {
-        $prefix = "new_";
-
-        // Initialize the environment variables array.
-        $env_vars = [
-            'broadcast' => 'broadcast_address',
-            'interface' => 'interface',
-            'ip' => 'ip_address',
-            'router' => 'routers',
-            'timesvr' => '',
-            'namesvr' => 'netbios_name_servers',
-            'dns' => 'domain_name_servers',
-            'hostname' => 'host_name',
-            'subnet' => 'subnet_mask',
-            'serverid' => '',
-            'ipttl' => '',
-            'lease' => 'new_dhcp_lease_time',
-            'domain' => 'domain_name',
-        ];
-
-        // Get the values of environment variables.
-        foreach ($env_vars as $key => $value) {
-            $env_vars[$key] = trim(getenv("{$prefix}{$value}"));
+        $isChange = false;
+        foreach ($dbData as $key => $value) {
+            if (!isset($data[$key]) || (string)$value === (string)$data[$key]) {
+                continue;
+            }
+            Util::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
+            $isChange = true;
         }
-
-        /** @var LanInterfaces $if_data */
-        $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
-        $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
-
-        $named_dns = [];
-        if ('' !== $env_vars['dns']) {
-            $named_dns = explode(' ', $env_vars['dns']);
-        }
-        if ($is_inet === '1') {
-            // Only generate pdnsd config if this interface is for internet.
-            $this->generatePdnsdConfig($named_dns);
-        }
-
-        // Save information to the database.
-        $data = [
-            'subnet' => '',
-            'ipaddr' => $env_vars['ip'],
-            'gateway' => $env_vars['router'],
-        ];
-        if (Verify::isIpAddress($env_vars['ip'])) {
-            $data['subnet'] = $this->netMaskToCidr($env_vars['subnet']);
-        }
-        $this->updateIfSettings($data, $env_vars['interface']);
-        $data = [
-            'primarydns' => $named_dns[0] ?? '',
-            'secondarydns' => $named_dns[1] ?? '',
-        ];
-        $this->updateDnsSettings($data, $env_vars['interface']);
+        return $isChange;
     }
 
     /**
@@ -1042,22 +876,7 @@ class Network extends Injectable
         return $res->toArray();
     }
 
-    /**
-     * Performs deconfiguration of the udhcpc configuration.
-     */
-    public function udhcpcConfigureDeconfig(): void
-    {
-        $interface = trim(getenv('interface'));
 
-        // For MIKO LFS Edition.
-        $busyboxPath = Util::which('busybox');
-
-        // Bring the interface up.
-        Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
-
-        // Set a default IP configuration for the interface.
-        Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
-    }
 
     /**
      * Updates the network settings with the provided data.
@@ -1192,57 +1011,58 @@ class Network extends Injectable
     }
 
     /**
-     * Add static routes based on DHCP provided static routes information.
-     * Parses the `staticroutes` environment variable and adds each route to the system.
-     *
-     * @param string $staticRoutes The static routes string from DHCP, format: "destination gateway"
-     * @param string $interface The network interface to add routes to, e.g., eth0
+     * Execute cli command to set up network
+     * @param string $action Action to perform (start or stop)
      * @return void
      */
-    private function addStaticRoutes(string $staticRoutes, string $interface): void
+    public function cliAction(string $action): void
     {
-        if (empty($staticRoutes)) {
+        /**
+         * If running inside a Docker container, exit the script.
+         */
+        if (Util::isDocker()) {
             return;
         }
 
-        // Split the static routes string into individual routes.
-        $routes = explode(' ', $staticRoutes);
-        $processedRoutes = []; // To keep track of processed routes and avoid duplicates.
+        if ('start' === $action) {
 
-        $busyboxPath = Util::which('busybox');
+            /**
+             * Generate the resolv.conf file for DNS configuration.
+             */
+            $this->resolvConfGenerate();
+            if (Util::isT2SdeLinux()) {
+                /**
+                 * Configure the loopback interface for T2SDE Linux.
+                 */
+                $this->loConfigure();
+            }
+            /**
+             * Configure the LAN interfaces.
+             */
+            $this->lanConfigure();
+        } elseif ('stop' === $action) {
+            if (Util::isSystemctl()) {
+                /**
+                 * Stop networking using systemctl (systemd-based systems).
+                 */
+                $systemctlPath = Util::which('systemctl');
+                Processes::mwExec("{$systemctlPath} stop networking");
+            } else {
+                /**
+                 * Stop networking on T2SDE (non-systemd) systems.
+                 */
+                $if_list      = $this->getInterfaces();
+                $arr_commands = [];
+                $ifconfigPath = Util::which('ifconfig');
+                foreach ($if_list as $if_name => $data) {
+                    $arr_commands[] = "{$ifconfigPath} $if_name down";
+                }
 
-        // Iterate through the routes, adding each to the system.
-        $countRoutes = count($routes);
-        for ($i = 0; $i < $countRoutes; $i += 2) {
-            $destination = $routes[$i];
-            $gateway = $routes[$i + 1] ?? '';
-
-            // Check if the route has already been processed to prevent duplicates.
-            if (!empty($destination) && !empty($gateway) && !in_array($destination, $processedRoutes)) {
-                Processes::mwExec("$busyboxPath ip route add $destination via $gateway dev $interface");
-                $processedRoutes[] = $destination; // Mark this route as processed.
+                /**
+                 * Execute the stop commands for each interface.
+                 */
+                Processes::mwExecCommands($arr_commands, $out, 'net_stop');
             }
         }
     }
-
-    /**
-     * Add custom static routes based on the `/etc/static-routes` file.
-     *
-     * @param string $interface The network interface to add routes to, e.g., eth0
-     * @return void
-     */
-    private function addCustomStaticRoutes(string $interface): void
-    {
-        if (file_exists('/etc/static-routes')) {
-            $busyboxPath = Util::which('busybox');
-            $grepPath = Util::which('grep');
-            $awkPath = Util::which('awk');
-            $catPath = Util::which('cat');
-            $shPath = Util::which('sh');
-            Processes::mwExec(
-                "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}' | {$grepPath} '{$interface}' | {$shPath}"
-            );
-        }
-    }
-
 }
