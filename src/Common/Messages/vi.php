@@ -1227,4 +1227,5 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'lic_HostLookupFailed' => 'Không có kết nối với máy chủ cấp phép, sự cố DNS',
     'f2b_BannedIpTabHeader' => 'Địa chỉ bị chặn',
     'f2b_SettingsTabHeader' => 'Thiết lập bảo vệ',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Cập nhật địa chỉ IP bên ngoài MikoPBX mỗi khi bạn khởi động lại',
 ];

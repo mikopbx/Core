@@ -1227,4 +1227,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'lic_HostLookupFailed' => 'Ingen anslutning till licensservern, DNS-problem',
     'f2b_SettingsTabHeader' => 'Sätta upp skydd',
     'f2b_BannedIpTabHeader' => 'Blockerade adresser',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Uppdatera MikoPBX extern IP-adress varje gång du startar om',
 ];

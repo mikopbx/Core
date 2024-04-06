@@ -1261,4 +1261,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'lic_HostLookupFailed' => 'Pas de connexion au serveur de licences, problème DNS',
     'f2b_SettingsTabHeader' => 'Mise en place d\'une protection',
     'f2b_BannedIpTabHeader' => 'Adresses bloquées',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Mettez à jour l\'adresse IP externe du MikoPBX à chaque redémarrage',
 ];

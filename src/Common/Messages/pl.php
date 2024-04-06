@@ -1261,4 +1261,5 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'lic_HostLookupFailed' => 'Brak połączenia z serwerem licencyjnym, problem z DNS',
     'f2b_SettingsTabHeader' => 'Konfigurowanie ochrony',
     'f2b_BannedIpTabHeader' => 'Zablokowane adresy',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Aktualizuj zewnętrzny adres IP MikoPBX przy każdym ponownym uruchomieniu',
 ];

@@ -1261,4 +1261,5 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'lic_HostLookupFailed' => 'Žádné připojení k licenčnímu serveru, problém s DNS',
     'f2b_SettingsTabHeader' => 'Nastavení ochrany',
     'f2b_BannedIpTabHeader' => 'Blokované adresy',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Aktualizujte externí IP adresu MikoPBX při každém restartu',
 ];
