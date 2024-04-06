@@ -122,6 +122,11 @@ abstract class CloudProvider
     protected function updateHostName(string $hostname): void
     {
         $this->updatePbxSettings(PbxSettingsConstants::PBX_NAME, $hostname);
+        $lanData = LanInterfaces::findFirst();
+        if ($lanData !== null) {
+            $lanData->hostname = $hostname;
+            $lanData->save();
+        }
     }
 
     /**
