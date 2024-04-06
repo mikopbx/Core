@@ -40,7 +40,7 @@ class ResetLicenseAction extends \Phalcon\Di\Injectable
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function main(array $data): PBXApiResult
+    public static function main(): PBXApiResult
     {
         $mikoPBXConfig = new MikoPBXConfig();
         $res = new PBXApiResult();

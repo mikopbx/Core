@@ -27,7 +27,6 @@ use MikoPBX\PBXCoreREST\Lib\License\ProcessUserRequestAction;
 use MikoPBX\PBXCoreREST\Lib\License\ResetLicenseAction;
 use MikoPBX\PBXCoreREST\Lib\License\SendMetricsAction;
 use Phalcon\Di\Injectable;
-use function MikoPBX\PBXCoreREST\Lib\License\ResetLicenseAction;
 
 /**
  * Class LicenseManagementProcessor

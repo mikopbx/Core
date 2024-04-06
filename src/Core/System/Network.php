@@ -1212,7 +1212,8 @@ class Network extends Injectable
         $busyboxPath = Util::which('busybox');
 
         // Iterate through the routes, adding each to the system.
-        for ($i = 0; $i < count($routes); $i += 2) {
+        $countRoutes = count($routes);
+        for ($i = 0; $i < $countRoutes; $i += 2) {
             $destination = $routes[$i];
             $gateway = $routes[$i + 1] ?? '';
 
