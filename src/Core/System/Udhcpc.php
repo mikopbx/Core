@@ -50,18 +50,18 @@ class Udhcpc extends Network
              * Perform deconfiguration for T2SDE Linux.
              */
 
-            $this->udhcpcConfigureDeconfig();
+            $this->deconfigAction();
         } elseif ('bound' === $action || 'renew' === $action) {
             if (Util::isSystemctl()) {
                 /**
                  * Perform configuration renewal and bound actions using systemctl (systemd-based systems).
                  */
-                $this->configureRenewBoundSystemCtl();
+                $this->renewBoundSystemCtlAction();
             } elseif (Util::isT2SdeLinux()) {
                 /**
                  * Perform configuration renewal and bound actions for T2SDE Linux.
                  */
-                $this->configureRenewBound();
+                $this->renewBoundAction();
             }
         }
     }
@@ -69,7 +69,7 @@ class Udhcpc extends Network
     /**
      * Performs deconfiguration of the udhcpc configuration.
      */
-    private function udhcpcConfigureDeconfig(): void
+    private function deconfigAction(): void
     {
         $interface = trim(getenv('interface'));
 
@@ -89,7 +89,7 @@ class Udhcpc extends Network
      *  Configures LAN interface FROM dhcpc (renew_bound).
      * @return void
      */
-    public function configureRenewBoundSystemCtl(): void
+    public function renewBoundSystemCtlAction(): void
     {
         $prefix = "new_";
 
@@ -154,7 +154,7 @@ class Udhcpc extends Network
      *
      * @return void
      */
-    public function configureRenewBound(): void
+    public function renewBoundAction(): void
     {
         // Initialize an array to store environment variables related to network configuration.
         $env_vars = [
