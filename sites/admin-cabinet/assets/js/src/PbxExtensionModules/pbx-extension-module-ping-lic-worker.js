@@ -72,10 +72,13 @@ const PingLicenseServerWorker = {
     },
 
     /**
-     * Worker function for checking the internet connection on background.
+     * Worker function for checking the internet connection on a background.
      */
     worker() {
-        PbxApi.LicensePing(PingLicenseServerWorker.cbAfterResponse);
+        const isConnected = sessionStorage.getItem(PingLicenseServerWorker.cacheKey);
+        if (isConnected === 'false') {
+            PbxApi.LicensePing(PingLicenseServerWorker.cbAfterResponse);
+        }
     },
 
     /**
@@ -102,7 +105,7 @@ const PingLicenseServerWorker = {
      */
     changeTabsAvailability()
     {
-        let isConnected = sessionStorage.getItem(PingLicenseServerWorker.cacheKey);
+        const isConnected = sessionStorage.getItem(PingLicenseServerWorker.cacheKey);
 
         if (isConnected === 'false') {
             // The internet is not available
