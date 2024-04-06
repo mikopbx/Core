@@ -18,8 +18,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-use MikoPBX\Core\System\Network;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\Udhcpc;
 
 require_once 'Globals.php';
 
@@ -28,38 +27,5 @@ require_once 'Globals.php';
  */
 $action  = strtolower(trim($argv[1]));
 
-/**
- * Create a new instance of the Network class.
- */
-$network = new Network();
-
-/**
- * Check if running inside a Docker container.
- * If true, skip the action and exit the script.
- */
-if(Util::isDocker()){
-    Util::sysLogMsg(basename(__FILE__), "Skipped action {$action}... because of docker", LOG_DEBUG);
-    exit(0);
-} else {
-    Util::sysLogMsg(basename(__FILE__), "Starting action {$action}...", LOG_DEBUG);
-}
-
-if ($action === 'deconfig' && Util::isT2SdeLinux()) {
-    /**
-     * Perform deconfiguration for T2SDE Linux.
-     */
-
-    $network->udhcpcConfigureDeconfig();
-} elseif ('bound' === $action || 'renew' === $action) {
-    if (Util::isSystemctl()) {
-        /**
-         * Perform configuration renewal and bound actions using systemctl (systemd-based systems).
-         */
-        $network->udhcpcConfigureRenewBoundSystemCtl();
-    } elseif (Util::isT2SdeLinux()) {
-        /**
-         * Perform configuration renewal and bound actions for T2SDE Linux.
-         */
-        $network->udhcpcConfigureRenewBound();
-    }
-}
+$udhcpcClient = new Udhcpc();
+$udhcpcClient->configure($action);
