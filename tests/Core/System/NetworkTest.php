@@ -24,14 +24,6 @@ use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class NetworkTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
 {
-
-    public function testUpdateIfSettings()
-    {
-        $network = new Network();
-        $network->udhcpcConfigureDeconfig();
-        $this->assertTrue(true);
-    }
-
     public function testGetInfoMessage()
     {
         $networkInfo = Network::getInfoMessage();

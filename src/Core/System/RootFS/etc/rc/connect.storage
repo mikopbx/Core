@@ -1,3 +1,4 @@
+#!/usr/bin/php -f
 <?php
 /*
  * MikoPBX - free phone system for small business

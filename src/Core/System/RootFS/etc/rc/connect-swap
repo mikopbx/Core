@@ -27,4 +27,3 @@ require_once('Globals.php');
 // Create instance of Storage and mount swap
 $storage = new Storage();
 $storage->mountSwap();
-

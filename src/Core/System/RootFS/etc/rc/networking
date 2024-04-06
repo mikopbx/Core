@@ -20,61 +20,13 @@
 
 namespace MikoPBX\Core\RootFS\etc\rc;
 
-use MikoPBX\Core\System\{Processes, Util, Network};
+use MikoPBX\Core\System\Network;
 
 require_once('Globals.php');
-
-/**
- * If running inside a Docker container, exit the script.
- */
-if (Util::isDocker()) {
-    exit(0);
-}
 
 /**
  * Get the action parameter from the command line arguments.
  * Default to an empty string if not provided.
  */
-$action = $argv[1]??'';
-if ('start' === $action) {
-    $network = new Network();
-
-    /**
-     * Generate the resolv.conf file for DNS configuration.
-     */
-    $network->resolvConfGenerate();
-    if (Util::isT2SdeLinux()) {
-        /**
-         * Configure the loopback interface for T2SDE Linux.
-         */
-        $network->loConfigure();
-    }
-    /**
-     * Configure the LAN interfaces.
-     */
-    $network->lanConfigure();
-} elseif ('stop' === $action) {
-    if (Util::isSystemctl()) {
-        /**
-         * Stop networking using systemctl (systemd-based systems).
-         */
-        $systemctlPath = Util::which('systemctl');
-        Processes::mwExec("{$systemctlPath} stop networking");
-    } else {
-        /**
-         * Stop networking on T2SDE (non-systemd) systems.
-         */
-        $network      = new Network();
-        $if_list      = $network->getInterfaces();
-        $arr_commands = [];
-        $ifconfigPath = Util::which('ifconfig');
-        foreach ($if_list as $if_name => $data) {
-            $arr_commands[] = "{$ifconfigPath} $if_name down";
-        }
-
-        /**
-         * Execute the stop commands for each interface.
-         */
-        Processes::mwExecCommands($arr_commands, $out, 'net_stop');
-    }
-}
+$network = new Network();
+$network->cliAction($argv[1]??'');

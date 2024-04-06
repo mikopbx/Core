@@ -86,7 +86,3 @@ find_set_mtu "$host_main" "$eth"
 if [ "${mtu_main}x" != "x" ] && [ "${mtu_main}" != "1500" ];then
     /bin/busybox logger -t 'Set.MTU' "For $eth $mtu_main"
 fi
-
-
-
-
