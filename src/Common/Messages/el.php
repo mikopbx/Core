@@ -1261,4 +1261,5 @@ return [
     'lic_HostLookupFailed' => 'Δεν υπάρχει σύνδεση με τον διακομιστή αδειών χρήσης, πρόβλημα DNS',
     'f2b_SettingsTabHeader' => 'Ρύθμιση προστασίας',
     'f2b_BannedIpTabHeader' => 'Αποκλεισμένες διευθύνσεις',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Ενημερώστε την εξωτερική διεύθυνση IP του MikoPBX κάθε φορά που κάνετε επανεκκίνηση',
 ];

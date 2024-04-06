@@ -1264,4 +1264,5 @@ The coupon can be activated once, after which it becomes redeemed.',
     'lic_HostLookupFailed' => 'No connection to the licensing server, DNS problem',
     'f2b_SettingsTabHeader' => 'Setting up protection',
     'f2b_BannedIpTabHeader' => 'Blocked addresses',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Update MikoPBX external IP address every time you reboot',
 ];

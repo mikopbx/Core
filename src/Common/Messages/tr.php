@@ -1227,4 +1227,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'lic_HostLookupFailed' => 'Lisans sunucusuyla bağlantı yok, DNS sorunu',
     'f2b_SettingsTabHeader' => 'Korumayı ayarlama',
     'f2b_BannedIpTabHeader' => 'Engellenen adresler',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Her yeniden başlatışınızda MikoPBX harici IP adresini güncelleyin',
 ];

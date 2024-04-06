@@ -1260,4 +1260,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'lic_HostLookupFailed' => 'Sem conexão com o servidor de licenciamento, problema de DNS',
     'f2b_SettingsTabHeader' => 'Configurando proteção',
     'f2b_BannedIpTabHeader' => 'Endereços bloqueados',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Atualize o endereço IP externo do MikoPBX sempre que você reiniciar',
 ];

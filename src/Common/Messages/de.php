@@ -1264,4 +1264,5 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'lic_HostLookupFailed' => 'Keine Verbindung zum Lizenzserver, DNS-Problem',
     'f2b_BannedIpTabHeader' => 'Blockierte Adressen',
     'f2b_SettingsTabHeader' => 'Schutz einrichten',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Aktualisieren Sie die externe IP-Adresse von MikoPBX bei jedem Neustart',
 ];

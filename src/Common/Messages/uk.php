@@ -1261,4 +1261,5 @@ return [
     'lic_HostLookupFailed' => 'Немає зв\'язку з сервером ліцензування, проблема з DNS',
     'f2b_SettingsTabHeader' => 'Налаштування захисту',
     'f2b_BannedIpTabHeader' => 'Заблоковані адреси',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Оновити зовнішню IP-адресу MikoPBX при кожному перезавантаженні',
 ];

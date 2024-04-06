@@ -1261,4 +1261,5 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'lic_HostLookupFailed' => 'Ingen forbindelse til licensserveren, DNS-problem',
     'f2b_SettingsTabHeader' => 'Opsætning af beskyttelse',
     'f2b_BannedIpTabHeader' => 'Spærrede adresser',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Opdater MikoPBX ekstern IP-adresse hver gang du genstarter',
 ];

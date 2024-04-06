@@ -1261,4 +1261,5 @@ El cupón se puede activar una vez y luego se canjea.',
     'lic_HostLookupFailed' => 'No hay conexión con el servidor de licencias, problema de DNS',
     'f2b_SettingsTabHeader' => 'Configurar la protección',
     'f2b_BannedIpTabHeader' => 'Direcciones bloqueadas',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Actualice la dirección IP externa de MikoPBX cada vez que reinicie',
 ];
