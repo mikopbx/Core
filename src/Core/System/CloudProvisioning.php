@@ -80,17 +80,6 @@ class CloudProvisioning
         $provider->updatePbxSettings(PbxSettingsConstants::CLOUD_PROVISIONING, '1');
         $provider->updatePbxSettings(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE, $cloudName);
 
-        // Connect storage
-        self::checkConnectStorage();
-    }
-
-    /**
-     * Checks and connects the storage disk automatically.
-     */
-    private static function checkConnectStorage(): void
-    {
-        $phpPath = Util::which('php');
-        Processes::mwExec($phpPath . ' -f /etc/rc/connect.storage auto');
     }
 
     /**
@@ -101,13 +90,6 @@ class CloudProvisioning
         if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"') === null) {
             return true;    // Need provision
         }
-
-        // In some Clouds the virtual machine starts immediately before the storage disk was attached
-        $storageMounted = Storage::isStorageDiskMounted();
-        if ($storageMounted === false) {
-            return true;    // Need provision
-        } else {
-            return false;   // No need provision
-        }
+        return false;   // Provisioning is already completed
     }
 }

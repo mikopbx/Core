@@ -23,6 +23,8 @@ use Error;
 use JsonException;
 use MikoPBX\Common\Config\ClassLoader;
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\ConfigProvider;
@@ -1922,4 +1924,18 @@ class Storage extends Di\Injectable
         return Directories::getDir(Directories::AST_MONITOR_DIR);
     }
 
+    /**
+     * Connect storage in a cloud if it was provisioned but not connected.
+     *
+     * @return void
+     */
+    public static function connectStorageInCloud(): bool
+    {
+        if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"') === null) {
+            return true;    // It is not a cloud
+        }
+
+        // In some Clouds the virtual machine starts immediately before the storage disk was attached
+        return Storage::selectAndConfigureStorageDisk('auto');
+    }
 }
