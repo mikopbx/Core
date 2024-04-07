@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - uses: yesolutions/mirror-action@master
+      - uses: jorikfon/mirror-action@master
         with:
           REMOTE: git@gitverse.ru:2222/mikopbx/Core.git
           GIT_SSH_PRIVATE_KEY: ${{ secrets.GITVERSE_SSH_PRIVATE_KEY }}
