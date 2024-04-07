@@ -228,7 +228,6 @@ class SystemLoader extends Di\Injectable
         if (!$itIsDocker) {
             $this->echoStartMsg(' - Cloud provisioning...'."\n");
             CloudProvisioning::start();
-            $this->echoResultMsg();
         }
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
 
