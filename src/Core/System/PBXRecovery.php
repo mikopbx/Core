@@ -85,26 +85,26 @@ class PBXRecovery
      *
      * Executes the appropriate recovery process based on the user's selection.
      *
-     * @param int $input User's selection input
+     * @param string $input User's selection input
      */
-    private function handleInput(int $input)
+    private function handleInput(string $input)
     {
         switch ($input) {
-            case 1:
+            case '1':
                 // Prepare for installation
                 file_put_contents('/tmp/ejectcd', '');
                 $installer = new PBXInstaller();
                 $installer->run();
                 sleep(300);
                 break;
-            case 2:
+            case '2':
                 // Prepare for reinstalling
                 file_put_contents('/tmp/ejectcd', '');
                 $pbx_firmwarePath = Util::which('pbx_firmware');
                 Processes::mwExecBg("{$pbx_firmwarePath} /offload/firmware.img.gz {$this->DEVICE}");
                 sleep(600);
                 break;
-            case 3:
+            case '3':
                 // Cancel operation
                 sleep(2);
                 break;

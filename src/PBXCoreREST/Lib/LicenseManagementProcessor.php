@@ -52,7 +52,7 @@ class LicenseManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         switch ($action) {
             case 'resetKey':
-                $res = ResetLicenseAction::main($data);
+                $res = ResetLicenseAction::main();
                 break;
             case 'processUserRequest':
                 $res = ProcessUserRequestAction::main($data);

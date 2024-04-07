@@ -74,10 +74,14 @@ class PBXInstaller extends Di\Injectable
     public function run()
     {
         $this->scanAllHdd();
-        $this->processValidDisks();
-        $this->promptForTargetDisk();
-        $this->confirmInstallation();
-        $this->proceedInstallation();
+        if ($this->processValidDisks()){
+            $this->promptForTargetDisk();
+            if ($this->confirmInstallation()) {
+                $this->proceedInstallation();
+            }
+        }
+
+
     }
 
     /**
@@ -131,13 +135,13 @@ class PBXInstaller extends Di\Injectable
     /**
      * Process the valid disks and select one for installation.
      */
-    private function processValidDisks(): void
+    private function processValidDisks(): bool
     {
         // If no valid disks were found, print a message and sleep for 3 seconds, then return 0
         if (count($this->valid_disks) === 0) {
             echo "\n " . Util::translate('Valid disks not found...') . " \n";
             sleep(3);
-            exit(0);
+            return false;
         }
 
         // If valid disks were found, print prompts for the user to select a disk
@@ -150,6 +154,7 @@ class PBXInstaller extends Di\Injectable
             echo $disk;
         }
         echo "\n";
+        return true;
     }
 
     /**
@@ -173,7 +178,7 @@ class PBXInstaller extends Di\Injectable
     /**
      * Confirm the installation from the user.
      */
-    private function confirmInstallation()
+    private function confirmInstallation(): bool
     {
         // Warning and confirmation prompt
         echo '
@@ -192,9 +197,10 @@ class PBXInstaller extends Di\Injectable
         // If the user doesn't confirm, save the system disk info to a temp file and exit
         if (strtolower(trim(fgets($this->fp))) !== 'y') {
             sleep(3);
-            exit(0);
+            return false;
         }
 
+        return true;
     }
 
     /**
@@ -203,7 +209,7 @@ class PBXInstaller extends Di\Injectable
     private function proceedInstallation()
     {
         // Save the target disk to a file
-        file_put_contents( $this->config->path('core.varEtcDir') . '/cfdevice', $this->target_disk);
+        file_put_contents($this->config->path('core.varEtcDir') . '/cfdevice', $this->target_disk);
 
         // Start the installation process
         echo "Installing PBX...\n";
@@ -272,7 +278,7 @@ class PBXInstaller extends Di\Injectable
     private function mountStorage()
     {
         // Connect the disk for data storage.
-        include '/etc/rc/connect.storage';
+        Storage::selectAndConfigureStorageDisk('0');
 
         // Back up the table with disk information.
         echo 'Copying configuration...';

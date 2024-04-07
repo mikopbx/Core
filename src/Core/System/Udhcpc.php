@@ -39,10 +39,10 @@ class Udhcpc extends Network
          * If true, skip the action and exit the script.
          */
         if(Util::isDocker()){
-            Util::sysLogMsg(basename(__FILE__), "Skipped action {$action}... because of docker", LOG_DEBUG);
-            exit(0);
+            Util::sysLogMsg(__METHOD__, "Skipped action {$action}... because of docker", LOG_DEBUG);
+            return;
         } else {
-            Util::sysLogMsg(basename(__FILE__), "Starting action {$action}...", LOG_DEBUG);
+            Util::sysLogMsg(__METHOD__, "Starting action {$action}...", LOG_DEBUG);
         }
 
         if ($action === 'deconfig' && Util::isT2SdeLinux()) {
