@@ -4,18 +4,13 @@ on: [push]
 
 jobs:
   mirror_to_gitverse:
-
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - name: Mirror to GitVerse
-        uses: pixta-dev/repository-mirroring-action@v1
+      - uses: yesolutions/mirror-action@master
         with:
-          target_repo_url: ssh://git@gitverse.ru:2222/mikopbx/Core.git
-          ssh_private_key: ${{ secrets.GITVERSE_SSH_PRIVATE_KEY }}
-          ssh_username: ${{ secrets.GITVERSE_SSH_PRIVATE_KEY_ID }}
+          REMOTE: git@gitverse.ru:2222/mikopbx/Core.git
+          GIT_SSH_PRIVATE_KEY: ${{ secrets.GITVERSE_SSH_PRIVATE_KEY }}
+          GIT_SSH_NO_VERIFY_HOST: "true"
