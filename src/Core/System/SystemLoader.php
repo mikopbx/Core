@@ -224,6 +224,12 @@ class SystemLoader extends Di\Injectable
             $this->echoResultMsg($resSsh);
         }
 
+        // Start cloud provisioning
+        if (!$itIsDocker) {
+            $this->echoStartMsg(' - Cloud provisioning...'."\n");
+            CloudProvisioning::start();
+            $this->echoResultMsg();
+        }
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
 
         return true;

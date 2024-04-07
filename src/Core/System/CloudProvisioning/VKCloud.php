@@ -25,6 +25,7 @@ use MikoPBX\Core\System\Util;
 
 class VKCloud extends CloudProvider
 {
+    public const CloudID = 'VKCloud';
     /**
      * Performs the VK Cloud Solutions provisioning.
      *

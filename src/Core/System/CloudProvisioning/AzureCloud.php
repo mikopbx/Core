@@ -24,6 +24,8 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class AzureCloud extends CloudProvider
 {
+    public const CloudID = 'AzureCloud';
+
     private Client $client;
 
     public function __construct()

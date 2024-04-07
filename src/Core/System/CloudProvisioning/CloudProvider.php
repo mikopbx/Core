@@ -90,19 +90,20 @@ abstract class CloudProvider
                 $extipaddr = '';
             }
         }
-
+        if (!empty($extipaddr)) {
+            return;
+        }
         /** @var LanInterfaces $lanData */
         $lanData = LanInterfaces::findFirst();
         if ($lanData !== null) {
-            if (!empty($extipaddr)) {
-                if ($lanData->ipaddr===$extipaddr) {
-                    $lanData->topology = LanInterfaces::TOPOLOGY_PUBLIC;
-                } else {
-                    $lanData->extipaddr = $extipaddr;
-                    $lanData->topology = LanInterfaces::TOPOLOGY_PRIVATE;
-                    $lanData->autoUpdateExtIp = '1';
-                }
+            if ($lanData->ipaddr === $extipaddr) {
+                $lanData->topology = LanInterfaces::TOPOLOGY_PUBLIC;
+            } else {
+                $lanData->extipaddr = $extipaddr;
+                $lanData->topology = LanInterfaces::TOPOLOGY_PRIVATE;
+                $lanData->autoUpdateExtIp = '1';
             }
+
             $result = $lanData->save();
             if ($result) {
                 Util::echoToTeletype("Updated LAN settings external IP: $extipaddr");

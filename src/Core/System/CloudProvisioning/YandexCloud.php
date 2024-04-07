@@ -21,7 +21,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 
 class YandexCloud extends CloudProvider
 {
-
+    public const CloudID = 'YandexCloud';
     /**
      * Performs the Yandex Cloud provisioning.
      *

@@ -40,28 +40,27 @@ class CloudProvisioning
      */
     public static function start(): void
     {
-        if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"')) {
-            // Already processed before.
+        if (self::checkItNeedToStartProvisioning()===false){
+            Util::echoResult("   |- Provisioning was already completed.");
             return;
         }
 
         // Lists of possible cloud providers.
         $providers = [
-            'Yandex Cloud' => new YandexCloud(),
-            'VK Cloud' => new VKCloud(),
-            'Google Cloud' => new GoogleCloud(),
-            'Azure Cloud' => new AzureCloud(),
+            YandexCloud::CloudID => new YandexCloud(),
+            VKCloud::CloudID => new VKCloud(),
+            GoogleCloud::CloudID => new GoogleCloud(),
+            AzureCloud::CloudID => new AzureCloud(),
         ];
 
-        foreach ($providers as $cloudName => $provider) {
-            Util::echoToTeletype("Attempting to provision on $cloudName... ");
+        foreach ($providers as $cloudId => $provider) {
             if ($provider->provision()) {
-                self::afterProvisioning($provider, $cloudName);
-                Util::teletypeEchoDone("Provisioning on $cloudName has been successfully completed.", true);
+                self::afterProvisioning($provider, $cloudId);
+                Util::echoResult("   |- Provisioning on $cloudId has been successfully completed.");
                 // Provisioning succeeded, break out of the loop
                 break;
             }
-            Util::teletypeEchoDone("Provisioning on $cloudName has not been completed.", false);
+            Util::echoResult("   |- Attempting to provision on $cloudId",false);
         }
     }
 
@@ -92,5 +91,23 @@ class CloudProvisioning
     {
         $phpPath = Util::which('php');
         Processes::mwExec($phpPath . ' -f /etc/rc/connect.storage auto');
+    }
+
+    /**
+     * Checks if provisioning is needed.
+     */
+    private static function checkItNeedToStartProvisioning(): bool
+    {
+        if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"') === null) {
+            return true;    // Need provision
+        }
+
+        // In some Clouds the virtual machine starts immediately before the storage disk was attached
+        $storageMounted = Storage::isStorageDiskMounted();
+        if ($storageMounted === false) {
+            return true;    // Need provision
+        } else {
+            return false;   // No need provision
+        }
     }
 }

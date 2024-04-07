@@ -23,6 +23,8 @@ use MikoPBX\Core\System\Util;
 
 class GoogleCloud extends CloudProvider
 {
+    public const CloudID = 'GoogleCloud';
+
     /**
      * Performs the Google Cloud provisioning.
      * Google Cloud.
