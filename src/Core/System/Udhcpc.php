@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Core\Workers\WorkerModelsEvents;
 
 /**
  * Class Udhcpc
@@ -143,6 +144,8 @@ class Udhcpc extends Network
             'secondarydns' => $named_dns[1] ?? '',
         ];
         $this->updateDnsSettings($data, $env_vars['interface']);
+
+        Processes::mwExec("/etc/rc/networking.set.mtu '{$env_vars['interface']}'");
     }
 
     /**
@@ -226,7 +229,6 @@ class Udhcpc extends Network
         // Add custom routes.
         $this->addCustomStaticRoutes($env_vars['interface']);
 
-
         // Setup DNS.
         $named_dns = [];
         if ('' !== $env_vars['dns']) {
@@ -255,7 +257,7 @@ class Udhcpc extends Network
         ];
         $this->updateDnsSettings($data, $env_vars['interface']);
 
-        Processes::mwExecBg("/etc/rc/networking.set.mtu '{$env_vars['interface']}'");
+        Processes::mwExec("/etc/rc/networking.set.mtu '{$env_vars['interface']}'");
     }
 
     /**

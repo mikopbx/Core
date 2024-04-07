@@ -17,8 +17,5 @@ class ReloadNetworkAction implements ReloadActionInterface
     {
         //  Refreshes networks configs and restarts network daemon.
         System::networkReload();
-
-        //  Refreshes cloud provision after all other tasks
-        WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_CLOUD_PROVISION, [],1000);
     }
 }

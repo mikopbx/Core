@@ -667,7 +667,7 @@ class Network extends Injectable
         $data->hostname = 'MikoPBX';
         $data->domain = '';
         $data->topology = LanInterfaces::TOPOLOGY_PRIVATE;
-        $data->autoUpdateExtIp = '1';
+        $data->autoUpdateExtIp = ($general === true) ? '1' : '0';;
         $data->primarydns = '';
         $data->save();
 

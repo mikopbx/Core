@@ -65,9 +65,9 @@ abstract class CloudProvider
         $setting->value = $data;
         $result = $setting->save();
         if ($result) {
-            Util::echoToTeletype("Update $keyName ... ");
+            Util::echoResult("   |- Update PbxSettings - $keyName ... ");
         } else {
-            Util::echoToTeletype("FAIL Update $keyName ... ");
+            Util::echoResult("   |- Update PbxSettings - $keyName ... ", false);
         }
         unset($setting);
     }
@@ -79,18 +79,7 @@ abstract class CloudProvider
      */
     protected function updateLanSettings(string $extipaddr): void
     {
-        // Attempt to get the external IP if it's not provided
         if (empty($extipaddr)) {
-            $ipInfoResult = SysinfoManagementProcessor::getExternalIpInfo();
-            if ($ipInfoResult->success && isset($ipInfoResult->data['ip'])) {
-                $extipaddr = $ipInfoResult->data['ip'];
-                Util::echoToTeletype("Retrieved external IP: $extipaddr");
-            } else {
-                Util::echoToTeletype("Failed to retrieve external IP. Error: " . implode(", ", $ipInfoResult->messages));
-                $extipaddr = '';
-            }
-        }
-        if (!empty($extipaddr)) {
             return;
         }
         /** @var LanInterfaces $lanData */
@@ -101,17 +90,16 @@ abstract class CloudProvider
             } else {
                 $lanData->extipaddr = $extipaddr;
                 $lanData->topology = LanInterfaces::TOPOLOGY_PRIVATE;
-                $lanData->autoUpdateExtIp = '1';
             }
 
             $result = $lanData->save();
             if ($result) {
-                Util::echoToTeletype("Updated LAN settings external IP: $extipaddr");
+                Util::echoResult("   |- Update LAN settings external IP: $extipaddr");
             } else {
-                Util::echoToTeletype("Failed to update LAN settings external IP: $extipaddr");
+                Util::echoResult("   |- Update LAN settings external IP: $extipaddr", false);
             }
         } else {
-            Util::echoToTeletype("LAN interface not found on cloud provisioning");
+            Util::echoResult("   |- LAN interface not found", false);
         }
     }
 

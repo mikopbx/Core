@@ -229,6 +229,12 @@ class SystemLoader extends Di\Injectable
             $this->echoStartMsg(' - Cloud provisioning...'."\n");
             CloudProvisioning::start();
         }
+
+        // Update external IP if needed
+        $this->echoStartMsg(' - Update external IP...');
+        $network->updateExternalIp();
+        $this->echoResultMsg();
+
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
 
         return true;
