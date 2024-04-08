@@ -22,44 +22,46 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp;
 
-class VKCloud extends CloudProvider
+class AWSCloud extends CloudProvider
 {
-    public const CloudID = 'VKCloud';
+    public const CloudID = 'AWSCloud';
     /**
-     * Performs the VK Cloud Solutions provisioning.
+     * Performs the Amazon Web Services cloud provisioning.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
     public function provision(): bool
     {
         // Cloud check
-        $checkValue = $this->getMetaDataVCS('services/partition');
-        if ($checkValue==='aws'){
-            return false; // It is AWS, not VK
+        $checkValue = $this->getMetaDataAWS('services/partition');
+        if ($checkValue!=='aws'){
+            return false;
         }
 
-        // Update machine name
-        $hostname = $this->getMetaDataVCS('hostname');
+        // Get host name
+        $hostname = $this->getMetaDataAWS('hostname');
         if (empty($hostname)) {
             return false;
         }
+
+        // Update machine name
         $this->updateHostName($hostname);
 
         // Update LAN settings with the external IP address
-        $extIp = $this->getMetaDataVCS('public-ipv4');
+        $extIp = $this->getMetaDataAWS('public-ipv4');
         $this->updateLanSettings($extIp);
 
         // Update SSH keys, if available
         $sshKey = '';
-        $sshKeys = $this->getMetaDataVCS('public-keys');
+        $sshKeys = $this->getMetaDataAWS('public-keys');
         $sshId = explode('=', $sshKeys)[0] ?? '';
         if ($sshId !== '') {
-            $sshKey = $this->getMetaDataVCS("public-keys/$sshId/openssh-key");
+            $sshKey = $this->getMetaDataAWS("public-keys/$sshId/openssh-key");
         }
         $this->updateSSHKeys($sshKey);
 
         // Update SSH and WEB passwords using some unique identifier from the metadata
-        $vmId = $this->getMetaDataVCS('instance-id')??'';
+        $vmId = $this->getMetaDataAWS('instance-id')??'';
         $this->updateSSHPassword($vmId);
         $this->updateWebPassword($vmId);
 
@@ -72,7 +74,7 @@ class VKCloud extends CloudProvider
      * @param string $url The URL of the metadata endpoint.
      * @return string The response body.
      */
-    private function getMetaDataVCS(string $url): string
+    private function getMetaDataAWS(string $url): string
     {
         $baseUrl = 'http://169.254.169.254/latest/meta-data/';
         $client = new GuzzleHttp\Client();

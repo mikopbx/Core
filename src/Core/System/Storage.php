@@ -382,43 +382,34 @@ class Storage extends Di\Injectable
         $partedPath = Util::which('parted');
 
         // Execute the parted command to format the disk with msdos partition table and ext4 partition
-        $retVal = Processes::mwExec(
-            "{$partedPath} --script --align optimal '{$device}' 'mklabel msdos mkpart primary ext4 0% 100%'"
-        );
+        $command = "{$partedPath} --script --align optimal '{$device}' 'mklabel msdos mkpart primary ext4 0% 100%'";
+        $retVal = Processes::mwExec($command);
 
         // Log the result of the parted command
-        Util::sysLogMsg(__CLASS__, "{$partedPath} returned {$retVal}");
-        if (false === $bg) {
-            sleep(1);
-        }
+        Util::sysLogMsg(__CLASS__, "{$command} returned {$retVal}",LOG_INFO);
+
+        sleep(2);
 
         // Touch the disk to update disk tables
         $partprobePath = Util::which('partprobe');
         Processes::mwExec(
             "{$partprobePath} '{$device}'"
         );
-
-        return $this->formatDiskLocalPart2($device, $bg);
+        $partition = self::getDevPartName($device, '1');
+        return $this->formatDiskLocalPart2($partition, $bg);
     }
 
     /**
      * Format a disk locally (part 2) using mkfs command.
      *
-     * @param string $device The device path of the disk.
+     * @param string $partition The partition for format, "/dev/sdb1" or "/dev/nvme0n1p1".
      * @param bool $bg Whether to run the command in the background.
      * @return bool Returns true if the disk formatting process is successfully completed, false otherwise.
      */
-    private function formatDiskLocalPart2(string $device, bool $bg = false): bool
+    private function formatDiskLocalPart2(string $partition, bool $bg = false): bool
     {
-        // Determine the device ID based on the last character of the device path
-        if (is_numeric(substr($device, -1))) {
-            $device_id = "";
-        } else {
-            $device_id = "1";
-        }
-        $format = 'ext4';
-        $mkfsPath = Util::which("mkfs.{$format}");
-        $cmd = "{$mkfsPath} {$device}{$device_id}";
+        $mkfsPath = Util::which("mkfs.ext4");
+        $cmd = "{$mkfsPath} /dev/{$partition}";
         if ($bg === false) {
             // Execute the mkfs command and check the return value
             $retVal = Processes::mwExec("{$cmd} 2>&1");
@@ -523,12 +514,12 @@ class Storage extends Di\Injectable
             }
 
             // Add the valid disk to the validDisks array
-            $validDisks[$disk['id']] = "  - {$disk['id']}, {$disk['size_text']}, {$disk['vendor']}$additional\n";
+            $validDisks[$disk['id']] = "      |- {$disk['id']}, {$disk['size_text']}, {$disk['vendor']}$additional\n";
         }
 
         if (empty($validDisks)) {
             // If no valid disks were found, log a message and return 0
-            Util::echoToTeletype(Util::translate('Valid disks not found...'));
+            Util::echoToTeletype('   |- '.Util::translate('Valid disks not found...'));
             sleep(3);
             return false;
         }
@@ -536,7 +527,7 @@ class Storage extends Di\Injectable
         // Check if the disk selection should be automatic
         if ($automatic === 'auto') {
             $target_disk_storage = $selected_disk['id'];
-            Util::echoToTeletype("Automatically selected storage disk is $target_disk_storage");
+            Util::echoToTeletype('   |- '."Automatically selected storage disk is $target_disk_storage");
         } else {
             echo PHP_EOL." " . Util::translate('Select the drive to store the data.');
             echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
@@ -593,18 +584,18 @@ class Storage extends Di\Injectable
         MainDatabaseProvider::recreateDBConnections();
         $success = self::isStorageDiskMounted();
         if ($success === true && $automatic === 'auto') {
-            Util::echoToTeletype(' - The data storage disk has been successfully mounted ... ');
+            Util::echoToTeletype('   |- The data storage disk has been successfully mounted ... ');
             sleep(2);
             System::rebootSync();
             return true;
         }
 
         if ($automatic === 'auto') {
-            Util::echoToTeletype(' - Storage disk was not mounted automatically ... ');
+            Util::echoToTeletype('   |- Storage disk was not mounted automatically ... ');
         }
 
         fclose(STDERR);
-        Util::echoWithSyslog(' - Update database ... ' . PHP_EOL);
+        Util::echoWithSyslog('   |- Update database ... ' . PHP_EOL);
 
         // Update the database
         $dbUpdater = new UpdateDatabase();
@@ -626,9 +617,9 @@ class Storage extends Di\Injectable
 
         // Check if the disk was mounted successfully
         if ($success === true) {
-            Util::echoWithSyslog( "\n " . Util::translate('Storage disk was mounted successfully...') . " \n\n");
+            Util::echoWithSyslog( "\n   |- " . Util::translate('Storage disk was mounted successfully...') . " \n\n");
         } else {
-            Util::echoWithSyslog( "\n " . Util::translate('Failed to mount the disc...') . " \n\n");
+            Util::echoWithSyslog( "\n   |- " . Util::translate('Failed to mount the disc...') . " \n\n");
         }
 
         sleep(3);
@@ -1029,26 +1020,49 @@ class Storage extends Di\Injectable
     }
 
     /**
-     * Checks if the HDD exists.
+     * Checks if a hard drive exists based on the provided disk identifier.
      *
-     * @param string $disk The HDD device.
-     * @return bool True if the HDD exists, false otherwise.
+     * @param string $disk The disk identifier, such as a device path.
+     * @return bool Returns true if the disk exists and has a non-empty UUID, false otherwise.
      */
     private function hddExists(string $disk): bool
     {
+        // Check if the given disk identifier points to a directory.
         if (is_dir($disk)) {
-            Util::sysLogMsg(__METHOD__, $disk.' is a dir, not disk', LOG_DEBUG);
-            return false;
-        }
-        if (!file_exists($disk)){
-            Util::sysLogMsg(__METHOD__, "Check if the file with name $disk exists fail", LOG_DEBUG);
+            Util::sysLogMsg(__METHOD__, $disk . ' is a dir, not disk', LOG_DEBUG);
             return false;
         }
 
-        $uid = $this->getUuid($disk);
-        if (!empty($uid)) {
-            return true;
+        // Check if the file corresponding to the disk exists.
+        if (!file_exists($disk)) {
+            Util::sysLogMsg(__METHOD__, "Check if the file with name $disk exists failed", LOG_DEBUG);
+            return false;
         }
+
+        // Record the start time for timeout purposes.
+        $startTime = time();
+
+        // Loop for up to 10 seconds or until a non-empty UUID is found.
+        while (true) {
+            // Retrieve the UUID for the disk.
+            $uid = $this->getUuid($disk);
+            Util::sysLogMsg(__METHOD__, "Disk with name $disk has GUID: $uid", LOG_DEBUG);
+
+            // If the UUID is not empty, the disk exists.
+            if (!empty($uid)) {
+                return true;
+            }
+
+            // Exit the loop if 10 seconds have passed.
+            if ((time() - $startTime) >= 10) {
+                break;
+            }
+
+            // Wait for 1 second before the next iteration to avoid high CPU usage.
+            sleep(1);
+        }
+
+        // If the UUID remains empty after 10 seconds, the disk does not exist.
         return false;
     }
 
@@ -1932,7 +1946,8 @@ class Storage extends Di\Injectable
     public static function connectStorageInCloud(): bool
     {
         if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"') === null) {
-            return true;    // It is not a cloud
+            Util::echoResult("   |- It is not a cloud installation.");
+            return true;
         }
 
         // In some Clouds the virtual machine starts immediately before the storage disk was attached

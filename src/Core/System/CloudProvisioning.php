@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Core\System\CloudProvisioning\AWSCloud;
 use MikoPBX\Core\System\CloudProvisioning\AzureCloud;
 use MikoPBX\Core\System\CloudProvisioning\GoogleCloud;
 use MikoPBX\Core\System\CloudProvisioning\VKCloud;
@@ -51,6 +52,7 @@ class CloudProvisioning
             VKCloud::CloudID => new VKCloud(),
             GoogleCloud::CloudID => new GoogleCloud(),
             AzureCloud::CloudID => new AzureCloud(),
+            AWSCloud::CloudID => new AWSCloud(),
         ];
 
         foreach ($providers as $cloudId => $provider) {

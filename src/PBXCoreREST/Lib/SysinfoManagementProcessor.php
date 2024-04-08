@@ -141,9 +141,13 @@ class SysinfoManagementProcessor extends Injectable
     private static function getPBXVersion(): string
     {
         $version = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
+        $installationType = PbxSettings::getValueByKey(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE);
         $content = '─────────────────────────────────────── PBXVersion ───────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
         $content .= $version . PHP_EOL;
+        if ($installationType){
+            $content .= 'Machine environment: '.$installationType . PHP_EOL;
+        }
         $content .= PHP_EOL . PHP_EOL;
         return $content;
     }
