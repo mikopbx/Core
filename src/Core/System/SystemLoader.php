@@ -57,6 +57,23 @@ class SystemLoader extends Di\Injectable
     private string $stageMessage = '';
 
     /**
+     * Check if the system is running in Docker
+     *
+     * @var bool
+     */
+
+    private bool $isDocker = false;
+
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->isDocker = Util::isDocker();
+    }
+
+
+    /**
      * Echoes the starting message for a stage.
      *
      * @param string $message The message to echo.
@@ -64,19 +81,23 @@ class SystemLoader extends Di\Injectable
     private function echoStartMsg(string $message):void
     {
         $this->stageMessage = $message;
-        Util::teletypeEcho($message);
-        Util::echoWithSyslog($this->stageMessage);
+        if (!$this->isDocker){
+            SystemMessages::echoToTeletype($this->stageMessage);
+        }
+        SystemMessages::echoWithSyslog($this->stageMessage);
     }
 
     /**
      * Echoes the result message for a stage.
      *
-     * @param bool $result The result of the stage.
+     * @param string $result The result of the stage.
      */
-    private function echoResultMsg(bool $result = true):void
+    private function echoResultMsg(string $result = SystemMessages::RESULT_DONE):void
     {
-        Util::echoResult($this->stageMessage, $result);
-        Util::teletypeEchoDone($this->stageMessage, $result);
+        SystemMessages::echoResult($this->stageMessage, $result);
+        if (!$this->isDocker){
+            SystemMessages::teletypeEchoResult($this->stageMessage, $result);
+        }
         $this->stageMessage = '';
     }
 
@@ -98,9 +119,6 @@ class SystemLoader extends Di\Injectable
 
         // Check if the system is running on T2SDELinux
         $itIsT2SDELinux = Util::isT2SdeLinux();
-
-        // Check if the system is running in Docker
-        $itIsDocker = Util::isDocker();
 
         // Mark the registry as booting
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = true;
@@ -168,7 +186,7 @@ class SystemLoader extends Di\Injectable
         $this->echoResultMsg();
 
         // Update the system configuration and applications
-        $this->echoStartMsg(' - Update configs and applications...'."\n");
+        $this->echoStartMsg(' - Update configs and applications...'.PHP_EOL);
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
         $this->echoStartMsg(' - Update configs...');
@@ -193,7 +211,7 @@ class SystemLoader extends Di\Injectable
 
         // Configure LAN interface
         $this->echoStartMsg(' - Configuring LAN interface...');
-        if ($itIsDocker){
+        if ($this->isDocker){
             $network->configureLanInDocker();
         } else {
             $network->lanConfigure();
@@ -225,13 +243,13 @@ class SystemLoader extends Di\Injectable
         }
 
         // Start cloud provisioning
-        if (!$itIsDocker) {
+        if (!$this->isDocker) {
             $this->echoStartMsg(' - Cloud provisioning...'."\n");
             CloudProvisioning::start();
             $this->echoResultMsg();
 
             // Connect storage in a cloud if needed
-            $this->echoStartMsg(' - Auto connect storage for cloud ..."\n"');
+            $this->echoStartMsg(' - Auto connect storage for a cloud ..."\n"');
             $connectResult = Storage::connectStorageInCloud();
             $this->echoResultMsg($connectResult);
         }

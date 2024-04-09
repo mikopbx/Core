@@ -21,8 +21,8 @@
 require_once('Globals.php');
 
 use MikoPBX\Core\System\DockerEntrypoint;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 
-Util::echoWithSyslog(' - Start Entrypoint (php)... ' . PHP_EOL);
+SystemMessages::echoWithSyslog(' - Start Entrypoint (php)... ' . PHP_EOL);
 $main = new DockerEntrypoint();
 $main->start();

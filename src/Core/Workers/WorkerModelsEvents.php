@@ -28,7 +28,7 @@ use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
-use MikoPBX\Core\System\{BeanstalkClient, Util};
+use MikoPBX\Core\System\{BeanstalkClient, SystemMessages, Util};
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
@@ -305,7 +305,7 @@ class WorkerModelsEvents extends WorkerBase
 
             // Call the method if it exists
             $className = get_class($calledClass);
-            Util::sysLogMsg(__METHOD__, "Process reload action: {$className}", LOG_DEBUG);
+            SystemMessages::sysLogMsg(__METHOD__, "Process reload action: {$className}", LOG_DEBUG);
             $parameters = $this->modified_tables['parameters'][$method_name] ?? [];
             $this->reloadManager->processReload($method_name, $parameters);
 
@@ -368,7 +368,7 @@ class WorkerModelsEvents extends WorkerBase
     {
         $count_changes = count($this->modified_tables);
         $called_class = $data['model'] ?? '';
-        Util::sysLogMsg(__METHOD__, "New changes " . json_encode($data), LOG_DEBUG);
+        SystemMessages::sysLogMsg(__METHOD__, "New changes " . json_encode($data), LOG_DEBUG);
 
         // Clear cache for the called class
         ModelsBase::clearCache($called_class);

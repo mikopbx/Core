@@ -21,7 +21,7 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
-use MikoPBX\Core\System\{BeanstalkClient, Configs\BeanstalkConf, Processes, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Configs\BeanstalkConf, Processes, SystemMessages};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -64,7 +64,7 @@ class WorkerApiCommands extends WorkerBase
         /** @var BeanstalkConnectionWorkerApiProvider $beanstalk */
         $beanstalk = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
         if ($beanstalk->isConnected() === false) {
-            Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
+            SystemMessages::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
             sleep(2);
             return;
         }

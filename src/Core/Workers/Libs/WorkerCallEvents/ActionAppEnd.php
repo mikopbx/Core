@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
 /**
@@ -54,7 +54,7 @@ class ActionAppEnd
 
             // Check if the record was updated successfully, if not log the error messages
             if (!$res) {
-                Util::sysLogMsg(static::class, implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg(static::class, implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }

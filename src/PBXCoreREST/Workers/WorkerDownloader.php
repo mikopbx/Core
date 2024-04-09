@@ -20,8 +20,8 @@
 namespace MikoPBX\PBXCoreREST\Workers;
 require_once 'Globals.php';
 
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
-use MikoPBX\Core\System\Util;
 use GuzzleHttp;
 use Psr\Http\Message\ResponseInterface;
 
@@ -55,7 +55,7 @@ class WorkerDownloader extends WorkerBase
         if (file_exists($filename)) {
             $this->settings = json_decode(file_get_contents($filename), true);
         } else {
-            Util::sysLogMsg(__CLASS__, 'Wrong download settings', LOG_ERR);
+            SystemMessages::sysLogMsg(__CLASS__, 'Wrong download settings', LOG_ERR);
             return;
         }
         ini_set('memory_limit', '300M');
@@ -66,7 +66,7 @@ class WorkerDownloader extends WorkerBase
         $result = $this->getFile();
         $result = $result && $this->checkFile();
         if ( ! $result) {
-            Util::sysLogMsg(__CLASS__, 'Download error...', LOG_ERR);
+            SystemMessages::sysLogMsg(__CLASS__, 'Download error...', LOG_ERR);
         }
     }
 
@@ -107,7 +107,7 @@ class WorkerDownloader extends WorkerBase
             if(time() - $this->lastUpdate > 30){
                 $this->httpCode = -1;
                 $error = 'Fail download file... No progress for more than 30 seconds.';
-                Util::sysLogMsg(__CLASS__, $error, LOG_ERR);
+                SystemMessages::sysLogMsg(__CLASS__, $error, LOG_ERR);
                 file_put_contents($this->error_file, $error, FILE_APPEND);
                 break;
             }

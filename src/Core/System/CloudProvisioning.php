@@ -42,7 +42,9 @@ class CloudProvisioning
     public static function start(): void
     {
         if (self::checkItNeedToStartProvisioning()===false){
-            Util::echoResult("   |- Provisioning was already completed.");
+            $message = "  |- Provisioning was already completed.";
+            SystemMessages::echoToTeletype($message);
+            SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
             return;
         }
 
@@ -56,13 +58,15 @@ class CloudProvisioning
         ];
 
         foreach ($providers as $cloudId => $provider) {
+            $message = "   |- Attempting to provision on $cloudId";
+            SystemMessages::echoToTeletype($message);
             if ($provider->provision()) {
                 self::afterProvisioning($provider, $cloudId);
-                Util::echoResult("   |- Provisioning on $cloudId has been successfully completed.");
+                SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_DONE);
                 // Provisioning succeeded, break out of the loop
                 break;
             }
-            Util::echoResult("   |- Attempting to provision on $cloudId",false);
+            SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
         }
     }
 

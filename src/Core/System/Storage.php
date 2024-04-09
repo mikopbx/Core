@@ -386,7 +386,7 @@ class Storage extends Di\Injectable
         $retVal = Processes::mwExec($command);
 
         // Log the result of the parted command
-        Util::sysLogMsg(__CLASS__, "{$command} returned {$retVal}",LOG_INFO);
+        SystemMessages::sysLogMsg(__CLASS__, "{$command} returned {$retVal}",LOG_INFO);
 
         sleep(2);
 
@@ -413,7 +413,7 @@ class Storage extends Di\Injectable
         if ($bg === false) {
             // Execute the mkfs command and check the return value
             $retVal = Processes::mwExec("{$cmd} 2>&1");
-            Util::sysLogMsg(__CLASS__, "{$cmd} returned {$retVal}");
+            SystemMessages::sysLogMsg(__CLASS__, "{$cmd} returned {$retVal}");
             $result = ($retVal === 0);
         } else {
             usleep(200000);
@@ -459,7 +459,7 @@ class Storage extends Di\Injectable
 
         // Check if the storage disk is already mounted
         if (self::isStorageDiskMounted()) {
-            Util::echoToTeletype(PHP_EOL." " . Util::translate('Storage disk is already mounted...') . " ");
+            SystemMessages::echoToTeletype(PHP_EOL." " . Util::translate('Storage disk is already mounted...') . " ");
             sleep(2);
             return true;
         }
@@ -519,7 +519,7 @@ class Storage extends Di\Injectable
 
         if (empty($validDisks)) {
             // If no valid disks were found, log a message and return 0
-            Util::echoToTeletype('   |- '.Util::translate('Valid disks not found...'));
+            SystemMessages::echoToTeletype('   |- '.Util::translate('Valid disks not found...'));
             sleep(3);
             return false;
         }
@@ -527,13 +527,13 @@ class Storage extends Di\Injectable
         // Check if the disk selection should be automatic
         if ($automatic === 'auto') {
             $target_disk_storage = $selected_disk['id'];
-            Util::echoToTeletype('   |- '."Automatically selected storage disk is $target_disk_storage");
+            SystemMessages::echoToTeletype('   |- '."Automatically selected storage disk is $target_disk_storage");
         } else {
             echo PHP_EOL." " . Util::translate('Select the drive to store the data.');
             echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
-            Util::echoWithSyslog(PHP_EOL." " . Util::translate('Valid disks are:') . " ".PHP_EOL.PHP_EOL);
+            SystemMessages::echoWithSyslog(PHP_EOL." " . Util::translate('Valid disks are:') . " ".PHP_EOL.PHP_EOL);
             foreach ($validDisks as $disk) {
-                Util::echoWithSyslog($disk);
+                SystemMessages::echoWithSyslog($disk);
             }
             echo PHP_EOL;
             // Open standard input in binary mode for interactive reading
@@ -584,18 +584,18 @@ class Storage extends Di\Injectable
         MainDatabaseProvider::recreateDBConnections();
         $success = self::isStorageDiskMounted();
         if ($success === true && $automatic === 'auto') {
-            Util::echoToTeletype('   |- The data storage disk has been successfully mounted ... ');
+            SystemMessages::echoToTeletype('   |- The data storage disk has been successfully mounted ... ');
             sleep(2);
             System::rebootSync();
             return true;
         }
 
         if ($automatic === 'auto') {
-            Util::echoToTeletype('   |- Storage disk was not mounted automatically ... ');
+            SystemMessages::echoToTeletype('   |- Storage disk was not mounted automatically ... ');
         }
 
         fclose(STDERR);
-        Util::echoWithSyslog('   |- Update database ... ' . PHP_EOL);
+        SystemMessages::echoWithSyslog('   |- Update database ... ' . PHP_EOL);
 
         // Update the database
         $dbUpdater = new UpdateDatabase();
@@ -617,9 +617,9 @@ class Storage extends Di\Injectable
 
         // Check if the disk was mounted successfully
         if ($success === true) {
-            Util::echoWithSyslog( "\n   |- " . Util::translate('Storage disk was mounted successfully...') . " \n\n");
+            SystemMessages::echoWithSyslog( "\n   |- " . Util::translate('Storage disk was mounted successfully...') . " \n\n");
         } else {
-            Util::echoWithSyslog( "\n   |- " . Util::translate('Failed to mount the disc...') . " \n\n");
+            SystemMessages::echoWithSyslog( "\n   |- " . Util::translate('Failed to mount the disc...') . " \n\n");
         }
 
         sleep(3);
@@ -782,13 +782,13 @@ class Storage extends Di\Injectable
             $dev = $this->getStorageDev($disk, $cf_disk);
             // Check if the disk exists
             if (!$this->hddExists($dev)) {
-                Util::sysLogMsg(__METHOD__, "HDD - $dev doesn't exist");
+                SystemMessages::sysLogMsg(__METHOD__, "HDD - $dev doesn't exist");
                 continue;
             }
 
             // Check if the disk is marked as media or storage_dev_file doesn't exist
             if ($disk['media'] === '1' || !file_exists($storage_dev_file)) {
-                Util::sysLogMsg(__METHOD__, "Update the storage_dev_file and the mount point configuration");
+                SystemMessages::sysLogMsg(__METHOD__, "Update the storage_dev_file and the mount point configuration");
                 file_put_contents($storage_dev_file, "/storage/usbdisk{$disk['id']}");
                 $this->updateConfigWithNewMountPoint("/storage/usbdisk{$disk['id']}");
             }
@@ -797,14 +797,14 @@ class Storage extends Di\Injectable
 
             // Check if the file system type matches the expected type
             if ($formatFs !== $disk['filesystemtype'] && !($formatFs === 'ext4' && $disk['filesystemtype'] === 'ext2')) {
-                Util::sysLogMsg(__METHOD__, "The file system type has changed {$disk['filesystemtype']} -> {$formatFs}. The disk will not be connected.");
+                SystemMessages::sysLogMsg(__METHOD__, "The file system type has changed {$disk['filesystemtype']} -> {$formatFs}. The disk will not be connected.");
                 continue;
             }
             $str_uid = 'UUID=' . $this->getUuid($dev);
             $conf .= "{$str_uid} /storage/usbdisk{$disk['id']} {$formatFs} async,rw 0 0\n";
             $mount_point = "/storage/usbdisk{$disk['id']}";
             Util::mwMkdir($mount_point);
-            Util::sysLogMsg(__METHOD__, "Create mount point: $conf");
+            SystemMessages::sysLogMsg(__METHOD__, "Create mount point: $conf");
         }
 
         // Save the configuration to the fstab file
@@ -1029,13 +1029,13 @@ class Storage extends Di\Injectable
     {
         // Check if the given disk identifier points to a directory.
         if (is_dir($disk)) {
-            Util::sysLogMsg(__METHOD__, $disk . ' is a dir, not disk', LOG_DEBUG);
+            SystemMessages::sysLogMsg(__METHOD__, $disk . ' is a dir, not disk', LOG_DEBUG);
             return false;
         }
 
         // Check if the file corresponding to the disk exists.
         if (!file_exists($disk)) {
-            Util::sysLogMsg(__METHOD__, "Check if the file with name $disk exists failed", LOG_DEBUG);
+            SystemMessages::sysLogMsg(__METHOD__, "Check if the file with name $disk exists failed", LOG_DEBUG);
             return false;
         }
 
@@ -1046,7 +1046,7 @@ class Storage extends Di\Injectable
         while (true) {
             // Retrieve the UUID for the disk.
             $uid = $this->getUuid($disk);
-            Util::sysLogMsg(__METHOD__, "Disk with name $disk has GUID: $uid", LOG_DEBUG);
+            SystemMessages::sysLogMsg(__METHOD__, "Disk with name $disk has GUID: $uid", LOG_DEBUG);
 
             // If the UUID is not empty, the disk exists.
             if (!empty($uid)) {
@@ -1115,7 +1115,7 @@ class Storage extends Di\Injectable
         $mountPath     = Util::which('mount');
         $resultOfMount = Processes::mwExec("$mountPath -a", $out);
         if($resultOfMount !== 0){
-            Util::echoToTeletype(" - Error mount ". implode(' ', $out));
+            SystemMessages::echoToTeletype(" - Error mount ". implode(' ', $out));
         }
         // Add regular www rights to /cf directory
         Util::addRegularWWWRights('/cf');
@@ -1356,7 +1356,7 @@ class Storage extends Di\Injectable
         }
         $swapOnCmd = Util::which('swapon');
         $result = Processes::mwExec("{$swapOnCmd} {$swapFile}");
-        Util::sysLogMsg('Swap', 'connect swap result: ' . $result, LOG_INFO);
+        SystemMessages::sysLogMsg('Swap', 'connect swap result: ' . $result, LOG_INFO);
     }
 
     /**
@@ -1389,7 +1389,7 @@ class Storage extends Di\Injectable
         $countBlock = $swapSize * $bs;
         $ddCmd = Util::which('dd');
 
-        Util::sysLogMsg('Swap', 'make swap ' . $swapFile, LOG_INFO);
+        SystemMessages::sysLogMsg('Swap', 'make swap ' . $swapFile, LOG_INFO);
 
         // Create swap file using dd command
         Processes::mwExec("{$ddCmd} if=/dev/zero of={$swapFile} bs={$bs} count={$countBlock}");
@@ -1852,7 +1852,7 @@ class Storage extends Di\Injectable
 
         // Check if the directory was created successfully
         if (!file_exists($dir)) {
-            Util::sysLogMsg(__Method__, "Unable mount $dev $format to $dir. Unable create dir.");
+            SystemMessages::sysLogMsg(__Method__, "Unable mount $dev $format to $dir. Unable create dir.");
 
             return false;
         }
@@ -1946,7 +1946,7 @@ class Storage extends Di\Injectable
     public static function connectStorageInCloud(): bool
     {
         if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"') === null) {
-            Util::echoResult("   |- It is not a cloud installation.");
+            SystemMessages::echoResult("   |- It is not a cloud installation.");
             return true;
         }
 

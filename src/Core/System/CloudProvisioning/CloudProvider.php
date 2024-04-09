@@ -23,8 +23,8 @@ use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\SSHConf;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 
 abstract class CloudProvider
 {
@@ -64,10 +64,12 @@ abstract class CloudProvider
         }
         $setting->value = $data;
         $result = $setting->save();
+        $message = "   |- Update PbxSettings - $keyName ... ";
+        SystemMessages::echoToTeletype($message);
         if ($result) {
-            Util::echoResult("   |- Update PbxSettings - $keyName ... ");
+            SystemMessages::teletypeEchoResult($message);
         } else {
-            Util::echoResult("   |- Update PbxSettings - $keyName ... ", false);
+            SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
         }
         unset($setting);
     }
@@ -79,27 +81,31 @@ abstract class CloudProvider
      */
     protected function updateLanSettings(string $extipaddr): void
     {
-        if (empty($extipaddr)) {
-            return;
-        }
         /** @var LanInterfaces $lanData */
         $lanData = LanInterfaces::findFirst();
         if ($lanData !== null) {
-            if ($lanData->ipaddr === $extipaddr) {
+
+            if (empty($extipaddr)) {
+                $lanData->autoUpdateExtIp='1';
+            } elseif ($lanData->ipaddr === $extipaddr) {
                 $lanData->topology = LanInterfaces::TOPOLOGY_PUBLIC;
             } else {
                 $lanData->extipaddr = $extipaddr;
                 $lanData->topology = LanInterfaces::TOPOLOGY_PRIVATE;
+                $lanData->autoUpdateExtIp='1';
             }
-
+            $message = "   |- Update LAN settings external IP: $extipaddr";
+            SystemMessages::echoToTeletype($message);
             $result = $lanData->save();
             if ($result) {
-                Util::echoResult("   |- Update LAN settings external IP: $extipaddr");
+                SystemMessages::teletypeEchoResult($message);
             } else {
-                Util::echoResult("   |- Update LAN settings external IP: $extipaddr", false);
+                SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
             }
         } else {
-            Util::echoResult("   |- LAN interface not found", false);
+            $message = "   |- LAN interface not found";
+            SystemMessages::echoToTeletype($message);
+            SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
         }
     }
 

@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Throwable;
 use Whoops\Handler\JsonResponseHandler;
@@ -81,7 +81,7 @@ class WhoopsErrorHandlerProvider implements ServiceProviderInterface
     private static function handleAndLogTheException(Throwable $exception): int
     {
         $message = WhoopsErrorHandlerProvider::makePrettyErrorDescription($exception);
-        Util::sysLogMsg(__METHOD__, $message, LOG_ERR);
+        SystemMessages::sysLogMsg(__METHOD__, $message, LOG_ERR);
         return \Whoops\Handler\Handler::DONE;
     }
 

@@ -20,7 +20,7 @@
 namespace MikoPBX\Common\Models;
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
@@ -190,7 +190,7 @@ class PbxExtensionModules extends ModelsBase
      */
     public function afterSave(): void
     {
-        Util::sysLogMsg(__METHOD__, "After save ", LOG_DEBUG);
+        SystemMessages::sysLogMsg(__METHOD__, "After save ", LOG_DEBUG);
         PBXConfModulesProvider::recreateModulesProvider();
     }
 
@@ -199,7 +199,7 @@ class PbxExtensionModules extends ModelsBase
      */
     public function afterDelete(): void
     {
-        Util::sysLogMsg(__METHOD__, "After delete ", LOG_DEBUG);
+        SystemMessages::sysLogMsg(__METHOD__, "After delete ", LOG_DEBUG);
         PBXConfModulesProvider::recreateModulesProvider();
     }
 }

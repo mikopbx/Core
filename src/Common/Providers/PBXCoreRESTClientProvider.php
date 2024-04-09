@@ -27,7 +27,7 @@ use GuzzleHttp\Psr7\Message;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -94,7 +94,7 @@ class PBXCoreRESTClientProvider implements ServiceProviderInterface
         } catch (ClientException $e) {
             // Handle client exception
             $message = "Rest API request error " . Message::toString($e->getResponse());
-            Util::sysLogMsg(__METHOD__, $message, LOG_DEBUG);
+            SystemMessages::sysLogMsg(__METHOD__, $message, LOG_DEBUG);
             $res->messages['error'][] = $message;
         } catch (\Throwable $e) {
             // Handle other exceptions and log using CriticalErrorsHandler

@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\{FirewallRules, NetworkFilters, PbxSettings, PbxSettingsConstants, Sip};
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
 use Phalcon\Di\Injectable;
@@ -251,7 +252,7 @@ class IptablesConf extends Injectable
             /** @var NetworkFilters $network_filter */
             $network_filter = NetworkFilters::findFirst($rule->networkfilterid);
             if ($network_filter === null) {
-                Util::sysLogMsg('Firewall', "network_filter_id not found $rule->networkfilterid", LOG_WARNING);
+                SystemMessages::sysLogMsg('Firewall', "network_filter_id not found $rule->networkfilterid", LOG_WARNING);
                 continue;
             }
             if ('0.0.0.0/0' === $network_filter->permit && $rule->action !== 'allow') {

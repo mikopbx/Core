@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -84,7 +85,7 @@ class ExtensionsInterception extends AsteriskConfigClass
             }
         }
         if(empty($interceptionChannel)){
-            Util::sysLogMsg('Interception', "Chan for $providerId not found...");
+            SystemMessages::sysLogMsg('Interception', "Chan for $providerId not found...");
             return;
         }
         $variable    = "pt1c_cid={$dest_number},ALLOW_MULTY_ANSWER=1,_INTECEPTION_CNANNEL={$interceptionChannel},_OLD_LINKEDID={$interceptionLinkedId}";

@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
 /**
@@ -61,7 +61,7 @@ class ActionTransferDialAnswer
             }
             $res = $row->save();
             if (!$res) {
-                Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }

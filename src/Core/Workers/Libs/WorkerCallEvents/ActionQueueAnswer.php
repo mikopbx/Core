@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
 /**
@@ -55,7 +55,7 @@ class ActionQueueAnswer
             $row->writeAttribute('endtime', $data['answer']);
             $res = $row->save();
             if (!$res) {
-                Util::sysLogMsg('Action_queue_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg('Action_queue_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }

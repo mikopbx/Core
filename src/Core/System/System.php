@@ -88,11 +88,11 @@ class System extends Di\Injectable
         $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'],['',''],$di->getConfig()->path('core.confBackupDir'));
         $confFile    = $di->getConfig()->path('database.dbfile');
         foreach ($storages as $dev => $fs){
-            Util::teletypeEcho("    - mount $dev ..."."\n");
+            SystemMessages::echoToTeletype("    - mount $dev ..."."\n");
             Util::mwMkdir($tmpMountDir."/$dev");
             $res = Storage::mountDisk($dev, $fs, $tmpMountDir."/$dev");
             if(!$res){
-                Util::teletypeEcho("    - fail mount $dev ..."."\n");
+                SystemMessages::echoToTeletype("    - fail mount $dev ..."."\n");
             }
         }
         $pathBusybox = Util::which('busybox');
@@ -105,12 +105,12 @@ class System extends Di\Injectable
         if(empty($lastBackUp)){
             return;
         }
-        Util::teletypeEcho("    - Restore $lastBackUp ..."."\n");
+        SystemMessages::echoToTeletype("    - Restore $lastBackUp ..."."\n");
         shell_exec("$pathRm -rf {$confFile}*");
         shell_exec("$pathGzip -c -d $lastBackUp | sqlite3 $confFile");
         Processes::mwExec("$pathSqlite3 $confFile 'select * from m_Storage'", $out, $ret);
         if($ret !== 0){
-            Util::teletypeEcho("    - fail restore $lastBackUp ..."."\n");
+            SystemMessages::echoToTeletype("    - fail restore $lastBackUp ..."."\n");
             copy('/conf.default/mikopbx.db', $confFile);
         }elseif(!$this->isDefaultConf()){
             self::rebootSync();

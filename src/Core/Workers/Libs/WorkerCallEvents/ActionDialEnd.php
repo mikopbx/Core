@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
 /**
@@ -53,7 +53,7 @@ class ActionDialEnd
             $row->writeAttribute('endtime', $data['endtime']);
             $res = $row->update();
             if (!$res) {
-                Util::sysLogMsg(static::class, implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg(static::class, implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }

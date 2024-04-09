@@ -145,7 +145,7 @@ class Notifications
         $phpPath = Util::which('php');
         $result = Processes::mwExec("$timeoutPath 5 $phpPath -f /etc/rc/emailTestConnection.php " . $type);
         if ($result !== 0) {
-            Util::sysLogMsg('PHPMailer', 'Error connect to SMTP server... (' . $type . ')', LOG_ERR);
+            SystemMessages::sysLogMsg('PHPMailer', 'Error connect to SMTP server... (' . $type . ')', LOG_ERR);
         }
 
         return ($result === 0);
@@ -192,7 +192,7 @@ class Notifications
             $messages[] = $e->getMessage();
         }
         if (!empty($messages)) {
-            Util::sysLogMsg('PHPMailer', implode(' ', $messages), LOG_ERR);
+            SystemMessages::sysLogMsg('PHPMailer', implode(' ', $messages), LOG_ERR);
         }
         return true;
     }

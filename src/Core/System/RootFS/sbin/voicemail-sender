@@ -4,6 +4,7 @@
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Notifications;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Common\Models\PbxSettings;
@@ -73,7 +74,7 @@ try {
     $result = $notify->sendMail(implode(',', array_unique($toMails)), $subject, $message, $recordingFile);
 }catch (Throwable $e){
     $recordingFile = '';
-    Util::sysLogMsg('Voicemail-Sender', $e->getMessage());
+    SystemMessages::sysLogMsg('Voicemail-Sender', $e->getMessage());
 }
 
 $data = [

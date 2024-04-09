@@ -22,6 +22,7 @@ namespace MikoPBX\Modules\Setup;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
@@ -496,7 +497,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         try {
             $module->wiki_links = json_encode($this->wiki_links, JSON_THROW_ON_ERROR);
         }catch (\JsonException $e){
-            Util::sysLogMsg(__CLASS__, $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, $e->getMessage());
         }
 
         return $module->save();
@@ -584,7 +585,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      */
     public function locString(string $stringId): string
     {
-        Util::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
+        SystemMessages::sysLogMsg('Util', 'Deprecated call ' . __METHOD__ . ' from ' . static::class, LOG_DEBUG);
         return $this->translation->_($stringId);
     }
 }

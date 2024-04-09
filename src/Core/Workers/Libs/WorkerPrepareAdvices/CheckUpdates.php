@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Response;
 use Phalcon\Di\Injectable;
 use GuzzleHttp;
@@ -60,7 +60,7 @@ class CheckUpdates extends Injectable
             $code = $res->getStatusCode();
         } catch (\Throwable $e) {
             $code = Response::INTERNAL_SERVER_ERROR;
-            Util::sysLogMsg(static::class, $e->getMessage());
+            SystemMessages::sysLogMsg(static::class, $e->getMessage());
         }
 
         if ($code !== Response::OK) {

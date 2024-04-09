@@ -33,7 +33,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
-use MikoPBX\Core\System\{MikoPBXConfig, Network, Processes, Util};
+use MikoPBX\Core\System\{MikoPBXConfig, Network, Processes, SystemMessages, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use Phalcon\Di;
 use Throwable;
@@ -167,7 +167,7 @@ class SIPConf extends AsteriskConfigClass
             try {
                 $sub = new SubnetCalculator($lan_config['ipaddr'], $lan_config['subnet']);
             } catch (Throwable $e) {
-                Util::sysLogMsg(self::class, $e->getMessage(), LOG_ERR);
+                SystemMessages::sysLogMsg(self::class, $e->getMessage(), LOG_ERR);
                 continue;
             }
             $net = $sub->getNetworkPortion() . '/' . $lan_config['subnet'];
@@ -628,7 +628,7 @@ class SIPConf extends AsteriskConfigClass
 
         // Check if external hostname is provided and can be resolved
         if(!empty($externalHostName) && !$resolveOk){
-            Util::sysLogMsg('DNS', "ERROR: DNS $externalHostName not resolved, It will not be used in SIP signaling.");
+            SystemMessages::sysLogMsg('DNS', "ERROR: DNS $externalHostName not resolved, It will not be used in SIP signaling.");
         }
 
         // Configure NAT settings for private topology

@@ -117,9 +117,9 @@ class Network extends Injectable
                 continue;
             }
             if ($port === '443'){
-                $info .= "    - https://$address" . PHP_EOL;
+                $info .= "  https://$address" . PHP_EOL;
             } else {
-                $info .= "    - https://$address:$port" . PHP_EOL;
+                $info .= "  https://$address:$port" . PHP_EOL;
             }
 
         }
@@ -133,9 +133,9 @@ class Network extends Injectable
                     continue;
                 }
                 if ($port === '443'){
-                    $info .= "    - https://$address" . PHP_EOL;
+                    $info .= "  https://$address" . PHP_EOL;
                 } else {
-                    $info .= "    - https://$address:$port" . PHP_EOL;
+                    $info .= "  https://$address:$port" . PHP_EOL;
                 }
             }
             $info .= PHP_EOL;
@@ -840,7 +840,7 @@ class Network extends Injectable
             if (!isset($data[$key]) || (string)$value === (string)$data[$key]) {
                 continue;
             }
-            Util::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
+            SystemMessages::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
             $isChange = true;
         }
         return $isChange;
@@ -1003,7 +1003,7 @@ class Network extends Injectable
                     $newExtIp = $currentIP . $port;
                     $lan->extipaddr = $newExtIp;
                     if ($lan->save()) {
-                        Util::sysLogMsg(__METHOD__, "External IP address updated for interface {$lan->interface}");
+                        SystemMessages::sysLogMsg(__METHOD__, "External IP address updated for interface {$lan->interface}");
                     }
                 }
             }

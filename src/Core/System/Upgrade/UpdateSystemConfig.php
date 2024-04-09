@@ -26,7 +26,7 @@ use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Storage;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Di;
 
@@ -72,7 +72,7 @@ class UpdateSystemConfig extends Di\Injectable
                 if (version_compare($previous_version, $releaseNumber, '<')) {
                     $processor = new $upgradeClass();
                     $processor->processUpdate();
-                    Util::echoResult(' - UpdateConfigs: Upgrade system up to ' . $releaseNumber . ' ');
+                    SystemMessages::echoResult(' - UpdateConfigs: Upgrade system up to ' . $releaseNumber . ' ');
                 }
             }
 

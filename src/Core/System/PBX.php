@@ -277,7 +277,7 @@ class PBX extends Injectable
             Processes::mwExec("{$asteriskPath} -rx 'module reload acl'");
             Processes::mwExec("{$asteriskPath} -rx 'core reload'");
         } else {
-            Util::sysLogMsg('SIP RELOAD', 'Need reload asterisk',LOG_INFO);
+            SystemMessages::sysLogMsg('SIP RELOAD', 'Need reload asterisk',LOG_INFO);
             // Terminate channels.
             Processes::mwExec("{$asteriskPath} -rx 'channel request hangup all'");
             usleep(500000);
@@ -344,7 +344,7 @@ class PBX extends Injectable
             sleep(1);
             $time = microtime(true) - $time_start;
             if ($time > 60) {
-                Util::sysLogMsg(__CLASS__, 'Error: Asterisk has not booted');
+                SystemMessages::sysLogMsg(__CLASS__, 'Error: Asterisk has not booted');
                 break;
             }
         }
@@ -374,7 +374,7 @@ class PBX extends Injectable
 
         self::dialplanReload();
         if ($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting) {
-            Util::echoResult('   |- dialplan reload');
+            SystemMessages::echoResult('   |- dialplan reload');
         }
         // Create the call history database.
         /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */

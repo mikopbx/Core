@@ -42,6 +42,7 @@ use MikoPBX\Common\Models\Users;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
@@ -325,7 +326,7 @@ class RestoreDefaultSettings extends \Phalcon\Di\Injectable
         $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
         foreach ($currentSlots as $currentSlot) {
             if (!$currentSlot->delete()) {
-                Util::sysLogMsg(
+                SystemMessages::sysLogMsg(
                     __CLASS__,
                     'Can not delete extenison ' . $currentSlot->number . ' from \MikoPBX\Common\Models\Extensions ' . implode($currentSlot->getMessages()),
                     LOG_ERR
@@ -346,7 +347,7 @@ class RestoreDefaultSettings extends \Phalcon\Di\Injectable
             $record->number = $number;
             $record->show_in_phonebook = '0';
             if (!$record->create()) {
-                Util::sysLogMsg(
+                SystemMessages::sysLogMsg(
                     __CLASS__,
                     'Can not create extenison ' . $record->number . ' from \MikoPBX\Common\Models\Extensions ' . implode($record->getMessages()),
                     LOG_ERR

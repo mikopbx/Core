@@ -24,7 +24,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckConnection;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckCorruptedFiles;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckFirewalls;
@@ -104,7 +104,7 @@ class WorkerPrepareAdvices extends WorkerBase
             }
             $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 5) {
-                Util::sysLogMsg(
+                SystemMessages::sysLogMsg(
                     __METHOD__,
                     "WARNING: Service WorkerPrepareAdvices:{$adviceType['type']} processed more than {$timeElapsedSecs} seconds",
                     LOG_WARNING

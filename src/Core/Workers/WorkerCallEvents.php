@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{BeanstalkClient, Directories, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Directories, SystemMessages, Util};
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
@@ -243,7 +243,7 @@ class WorkerCallEvents extends WorkerBase
         $client = new BeanstalkClient(self::class);
         if ($client->isConnected() === false) {
             // Log the failed connection and pause for 2 seconds before returning
-            Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
+            SystemMessages::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
             sleep(2);
             return;
         }
@@ -475,7 +475,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public function errorHandler($m): void
     {
-        Util::sysLogMsg(self::class . '_ERROR', $m, LOG_ERR);
+        SystemMessages::sysLogMsg(self::class . '_ERROR', $m, LOG_ERR);
     }
 
     /**

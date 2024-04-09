@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
 
@@ -42,7 +43,7 @@ class InsertDataToDB
     public static function execute($data): void
     {
         if (empty($data['UNIQUEID'])) {
-            Util::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data), LOG_DEBUG);
+            SystemMessages::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data), LOG_DEBUG);
             return;
         }
 
@@ -118,7 +119,7 @@ class InsertDataToDB
 
             $res = $new_m_data->save();
             if (!$res) {
-                Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
+                SystemMessages::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
             }
         }
     }
@@ -149,7 +150,7 @@ class InsertDataToDB
         }
         $res = $m_data->save();
         if (!$res) {
-            Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
+            SystemMessages::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
         }
     }
 

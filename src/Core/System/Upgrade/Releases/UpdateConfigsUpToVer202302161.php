@@ -23,8 +23,8 @@ use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
-use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemConfigInterface
@@ -77,7 +77,7 @@ class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemC
             $codecData->disabled = '1';
             $codecData->description = $desc;
             if (!$codecData->save()) {
-                Util::sysLogMsg(
+                SystemMessages::sysLogMsg(
                     __CLASS__,
                     'Can not update codec info ' . $codecData->name . ' from \MikoPBX\Common\Models\Codecs',
                     LOG_ERR
@@ -97,7 +97,7 @@ class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemC
         $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
         foreach ($currentSlots as $currentSlot) {
             if (!$currentSlot->delete()) {
-                Util::sysLogMsg(
+                SystemMessages::sysLogMsg(
                     __CLASS__,
                     'Can not delete extenison ' . $currentSlot->number . ' from \MikoPBX\Common\Models\Extensions ' . implode($currentSlot->getMessages()),
                     LOG_ERR
@@ -118,7 +118,7 @@ class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemC
             $record->number = $number;
             $record->show_in_phonebook = '0';
             if (!$record->create()) {
-                Util::sysLogMsg(
+                SystemMessages::sysLogMsg(
                     __CLASS__,
                     'Can not create extenison ' . $record->number . ' from \MikoPBX\Common\Models\Extensions ' . implode($record->getMessages()),
                     LOG_ERR

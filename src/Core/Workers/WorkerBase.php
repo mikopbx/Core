@@ -23,6 +23,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Text;
@@ -148,7 +149,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
                 // Create a new worker instance and start it
                 $worker = new $workerClassname();
                 $worker->start($argv);
-                Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
+                SystemMessages::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
             } catch (Throwable $e) {
                 // Handle exceptions, log error messages, and pause execution
                 CriticalErrorsHandler::handleExceptionWithSyslog($e);
@@ -169,7 +170,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     public function signalHandler(int $signal): void
     {
         $processTitle = cli_get_process_title();
-        Util::sysLogMsg($processTitle, "Receive signal to restart  " . $signal, LOG_DEBUG);
+        SystemMessages::sysLogMsg($processTitle, "Receive signal to restart  " . $signal, LOG_DEBUG);
         $this->needRestart = true;
     }
 
@@ -184,10 +185,10 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         $processTitle = cli_get_process_title();
         $e = error_get_last();
         if ($e === null) {
-            Util::sysLogMsg($processTitle, "shutdownHandler after {$timeElapsedSecs} seconds", LOG_DEBUG);
+            SystemMessages::sysLogMsg($processTitle, "shutdownHandler after {$timeElapsedSecs} seconds", LOG_DEBUG);
         } else {
             $details = implode(PHP_EOL,$e);
-            Util::sysLogMsg(
+            SystemMessages::sysLogMsg(
                 $processTitle,
                 "shutdownHandler after {$timeElapsedSecs} seconds with error: {$details}",
                 LOG_DEBUG
@@ -205,7 +206,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     public function pingCallBack(BeanstalkClient $message): void
     {
         $processTitle = cli_get_process_title();
-        Util::sysLogMsg(
+        SystemMessages::sysLogMsg(
             $processTitle,
             "pingCallBack on ".__CLASS__." with message: ".json_encode($message->getBody()),
             LOG_DEBUG

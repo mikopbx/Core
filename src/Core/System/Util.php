@@ -26,7 +26,6 @@ use malkusch\lock\mutex\PHPRedisMutex;
 use MikoPBX\Common\Providers\AmiConnectionCommand;
 use MikoPBX\Common\Providers\AmiConnectionListener;
 use MikoPBX\Common\Providers\LanguageProvider;
-use MikoPBX\Common\Providers\LoggerProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
@@ -309,22 +308,6 @@ class Util
     }
 
     /**
-     * Adds messages to Syslog.
-     *
-     * @param string $ident The category, class, or method identification.
-     * @param string $message The log message.
-     * @param int $level The log level (default: LOG_WARNING).
-     *
-     * @return void
-     */
-    public static function sysLogMsg(string $ident, string $message, $level = LOG_WARNING): void
-    {
-        /** @var \Phalcon\Logger $logger */
-        $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
-        $logger->log($level, "{$message} on {$ident}");
-    }
-
-    /**
      * Returns the current date as a string with millisecond precision.
      *
      * @return string|null The current date string, or null on error.
@@ -603,104 +586,6 @@ class Util
     }
 
     /**
-     * Outputs a message to the main teletype.
-     *
-     * @param string $message The message to output.
-     * @param string $ttyPath The path to the teletype device (default: '/dev/ttyS0').
-     *
-     * @return void
-     */
-    public static function teletypeEcho(string $message, string $ttyPath = '/dev/ttyS0'): void
-    {
-        $pathBusyBox = self::which('busybox');
-        $ttyTittle = trim(shell_exec("$pathBusyBox setserial -g $ttyPath 2> /dev/null"));
-        if (strpos($ttyTittle, $ttyPath) !== false && strpos($ttyTittle, 'unknown') === false) {
-            /** @scrutinizer ignore-unhandled */ @file_put_contents($ttyPath, $message, FILE_APPEND);
-        }
-    }
-
-    /**
-     * Echoes a teletype message with "DONE" or "FAIL" status.
-     *
-     * @param string $message The main message to display.
-     * @param mixed $result The result status.
-     *
-     * @return void
-     */
-    public static function teletypeEchoDone(string $message, $result): void
-    {
-        $len = max(0, 80 - strlen($message) - 9);
-        $spaces = str_repeat('.', $len);
-        if ($result === false) {
-            $message = " \033[31;1mFAIL\033[0m \n";
-        } else {
-            $message = " \033[32;1mDONE\033[0m \n";
-        }
-        self::teletypeEcho($spaces . $message);
-    }
-
-    /**
-     * Echoes a "DONE" or "FAIL" message based on the result status.
-     *
-     * @param bool $result The result status (true by default).
-     *
-     * @return void
-     */
-    public static function echoDone(bool $result = true): void
-    {
-        if ($result === false) {
-            echo "\033[31;1mFAIL\033[0m \n";
-        } else {
-            echo "\033[32;1mDONE\033[0m \n";
-        }
-    }
-
-    /**
-     * Echoes a result message with progress dots.
-     *
-     * @param string $message The result message to echo.
-     * @param bool $result The result status (true by default).
-     *
-     * @return void
-     */
-    public static function echoResult(string $message, bool $result = true): void
-    {
-        $cols = self::getCountCols();
-        if (!is_numeric($cols)) {
-            // Failed to retrieve the screen width.
-            return;
-        }
-        $len = $cols - strlen($message) - 8;
-        if ($len < 2) {
-            // Incorrect screen width.
-            return;
-        }
-
-        $spaces = str_repeat('.', $len);
-        echo "\r" . $message . $spaces;
-        self::echoDone($result);
-    }
-
-    /**
-     * Gets the count of columns in the terminal window.
-     *
-     * @return string The count of columns.
-     */
-    public static function getCountCols(): string
-    {
-        $len = 1 * trim(shell_exec('tput cols'));
-
-        // If the count of columns is zero, set it to a default value of 80
-        if ($len === 0) {
-            $len = 80;
-        } else {
-            // Limit the count of columns to a maximum of 80
-            $len = min($len, 80);
-        }
-        return $len;
-    }
-
-    /**
      * Creates or updates a symlink to a target path.
      *
      * @param string $target The target path.
@@ -765,7 +650,7 @@ class Util
                         && !mkdir($path, 0755, true)
                         && !is_dir($path)) {
                         $result = false;
-                        self::sysLogMsg('Util', 'Error on create folder ' . $path, LOG_ERR);
+                        SystemMessages::sysLogMsg(__METHOD__, 'Error on create folder ' . $path, LOG_ERR);
                     }
                     if ($addWWWRights) {
                         self::addRegularWWWRights($path);
@@ -793,49 +678,6 @@ class Util
             Processes::mwExec("{$chownPath} -R www:www {$folder}");
         }
     }
-
-    /**
-     * Echoes a message and logs it to the system log.
-     *
-     * @param string $message The message to echo and log.
-     *
-     * @return void
-     */
-    public static function echoWithSyslog(string $message): void
-    {
-        echo $message;
-        // Log the message to the system log with LOG_INFO level
-        self::sysLogMsg(static::class, $message, LOG_INFO);
-    }
-
-
-    /**
-     * Echoes a message and logs it to the ttyS0.
-     *
-     * @param string $message The message to echo and log.
-     *
-     * @return void
-     */
-    public static function echoToTeletype(string $message): void
-    {
-        // Log to serial tty
-        $message .= PHP_EOL;
-        echo $message;
-        for ($i = 0; $i <= 5; $i++) {
-            $device = "/dev/ttyS$i";
-            $busyboxPath = self::which('busybox');
-            // Get the result of the command execution
-            $result = shell_exec("$busyboxPath setserial -g \"$device\" | $busyboxPath grep -v unknown 2> /dev/null");
-            // If the result is not empty
-            if (!empty($result)) {
-                // Perform the same
-                file_put_contents($device, $message, FILE_APPEND);
-            }
-        }
-        // Log the message to the system log with LOG_INFO level
-        self::sysLogMsg(static::class, $message, LOG_INFO);
-    }
-
 
     /**
      * Adds executable rights to files in a folder.
@@ -955,7 +797,7 @@ class Util
             $reflection = new ReflectionClass($className);
             $filename = $reflection->getFileName();
         } catch (ReflectionException $exception) {
-            self::sysLogMsg(__METHOD__, 'ReflectionException ' . $exception->getMessage(), LOG_ERR);
+            SystemMessages::sysLogMsg(__METHOD__, 'ReflectionException ' . $exception->getMessage(), LOG_ERR);
         }
 
         return $filename;
@@ -978,4 +820,34 @@ class Util
         $mutexKey = "Mutex:$namespace-" . md5($uniqueId);
         return new PHPRedisMutex([$redisAdapter], $mutexKey, $timeout);
     }
+
+    /**
+     * Adds messages to Syslog.
+     * @depricated Use SystemMessages::sysLogMsg instead
+     *
+     * @param string $ident The category, class, or method identification.
+     * @param string $message The log message.
+     * @param int $level The log level (default: LOG_WARNING).
+     *
+     * @return void
+     */
+    public static function sysLogMsg(string $ident, string $message, int $level = LOG_WARNING): void
+    {
+        SystemMessages::sysLogMsg($ident, $message, $level);
+    }
+
+
+    /**
+     * Echoes a message and logs it to the system log.
+     * @depricated Use SystemMessages::echoWithSyslog instead
+     *
+     * @param string $message The message to echo and log.
+     *
+     * @return void
+     */
+    public static function echoWithSyslog(string $message): void
+    {
+        SystemMessages::echoWithSyslog($message);
+    }
+
 }

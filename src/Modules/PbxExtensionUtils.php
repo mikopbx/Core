@@ -23,6 +23,7 @@ namespace MikoPBX\Modules;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Mvc\Application;
@@ -289,7 +290,7 @@ class PbxExtensionUtils
             if (!empty($moduleUniqueId)) {
                 // Disable the module using its unique ID
                 self::forceDisableModule($moduleUniqueId, $exceptionMessage);
-                Util::sysLogMsg(__CLASS__, "The module {$moduleUniqueId} was disabled because an exception occurred in it", LOG_ERR);
+                SystemMessages::sysLogMsg(__CLASS__, "The module {$moduleUniqueId} was disabled because an exception occurred in it", LOG_ERR);
             }
         }
     }
@@ -310,12 +311,12 @@ class PbxExtensionUtils
             $moduleStateProcessor->disableModule($reason, $reasonText);
         } catch (Throwable $exception) {
             // Log an error message if module disabling fails
-            Util::sysLogMsg(__CLASS__, "Can not disable module {$moduleUniqueId} Message: {$exception}", LOG_ERR);
+            SystemMessages::sysLogMsg(__CLASS__, "Can not disable module {$moduleUniqueId} Message: {$exception}", LOG_ERR);
         } finally {
             // Update module status to disabled if it was not already disabled
             $currentModule = PbxExtensionModules::findFirstByUniqid($moduleUniqueId);
             if ($currentModule->disabled === '0') {
-                Util::sysLogMsg(__CLASS__, "Force disable module {$moduleUniqueId} on the PbxExtensionModules table", LOG_ERR);
+                SystemMessages::sysLogMsg(__CLASS__, "Force disable module {$moduleUniqueId} on the PbxExtensionModules table", LOG_ERR);
                 $currentModule->disabled = '1';
                 $currentModule->disableReason = $reason;
                 $currentModule->disableReasonText = $reasonText;

@@ -24,7 +24,7 @@ require_once 'Globals.php';
 use Generator;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, Util};
+use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, SystemMessages, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -188,11 +188,11 @@ class WorkerSafeScriptsCore extends WorkerBase
             }
             if (false === $result) {
                 Processes::processPHPWorker($workerClassName);
-                Util::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
+                SystemMessages::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
             }
             $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 10) {
-                Util::sysLogMsg(
+                SystemMessages::sysLogMsg(
                     __METHOD__,
                     "WARNING: Service {$workerClassName} processed more than {$timeElapsedSecs} seconds",
                     LOG_WARNING
@@ -222,7 +222,7 @@ class WorkerSafeScriptsCore extends WorkerBase
         }
         $timeElapsedSecs = round(microtime(true) - $start, 2);
         if ($timeElapsedSecs > 10) {
-            Util::sysLogMsg(
+            SystemMessages::sysLogMsg(
                 __CLASS__,
                 "WARNING: Service {$workerClassName} processed more than {$timeElapsedSecs} seconds",
                 LOG_WARNING
@@ -253,13 +253,13 @@ class WorkerSafeScriptsCore extends WorkerBase
                 $am = Util::getAstManager();
                 $res_ping = $am->pingAMIListener($this->makePingTubeName($workerClassName));
                 if (false === $res_ping) {
-                    Util::sysLogMsg(__METHOD__, 'Restart...', LOG_ERR);
+                    SystemMessages::sysLogMsg(__METHOD__, 'Restart...', LOG_ERR);
                 }
             }
 
             if ($res_ping === false && $level < 10) {
                 Processes::processPHPWorker($workerClassName);
-                Util::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
+                SystemMessages::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
                 // Wait 1 second while service will be ready to listen requests
                 sleep(1);
 
@@ -268,7 +268,7 @@ class WorkerSafeScriptsCore extends WorkerBase
             }
             $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 10) {
-                Util::sysLogMsg(
+                SystemMessages::sysLogMsg(
                     __METHOD__,
                     "WARNING: Service {$workerClassName} processed more than {$timeElapsedSecs} seconds",
                     LOG_WARNING
@@ -304,7 +304,7 @@ try {
         cli_set_process_title("{$workerClassname} {$argv[1]}");
         $activeProcesses = Processes::getPidOfProcess("{$workerClassname} {$argv[1]}", posix_getpid());
         if (!empty($activeProcesses)) {
-            Util::sysLogMsg($workerClassname, "WARNING: Other started process {$activeProcesses} with parameter: {$argv[1]} is working now...", LOG_DEBUG);
+            SystemMessages::sysLogMsg($workerClassname, "WARNING: Other started process {$activeProcesses} with parameter: {$argv[1]} is working now...", LOG_DEBUG);
             return;
         }
         $worker = new $workerClassname();
@@ -312,10 +312,10 @@ try {
         // Depending on the command-line argument, start or restart the worker.
         if ($argv[1] === 'start') {
             $worker->start($argv);
-            Util::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
+            SystemMessages::sysLogMsg($workerClassname, "Normal exit after start ended", LOG_DEBUG);
         } elseif ($argv[1] === 'restart' || $argv[1] === 'reload') {
             $worker->restart();
-            Util::sysLogMsg($workerClassname, "Normal exit after restart ended", LOG_DEBUG);
+            SystemMessages::sysLogMsg($workerClassname, "Normal exit after restart ended", LOG_DEBUG);
         }
     }
 } catch (Throwable $e) {

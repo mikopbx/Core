@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
 /**
@@ -118,7 +118,7 @@ class ActionDialCreateChan
             // Save the updated record. If saving fails, log the error message.
             $res = $row->save();
             if (!$res) {
-                Util::sysLogMsg('Action_dial_create_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg('Action_dial_create_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }

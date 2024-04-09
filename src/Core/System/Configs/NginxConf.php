@@ -24,6 +24,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use MikoPBX\Modules\Config\SystemConfigInterface;
@@ -170,7 +171,7 @@ class NginxConf extends Injectable
         $currentConfigIsGood = $this->testCurrentNginxConfig();
         if ($level < 1 && ! $currentConfigIsGood) {
             ++$level;
-            Util::sysLogMsg('nginx', 'Failed test config file. SSL will be disable...', LOG_ERR);
+            SystemMessages::sysLogMsg('nginx', 'Failed test config file. SSL will be disable...', LOG_ERR);
             $this->generateConf(true, $level);
         }
         // Add additional rules from modules
@@ -217,7 +218,7 @@ class NginxConf extends Injectable
             }
             // Config test failed. Rollback the config.
             Processes::mwExec("{$rmPath} {$confFileName}");
-            Util::sysLogMsg('nginx', 'Failed test config file for module' . $moduleUniqueId, LOG_ERR);
+            SystemMessages::sysLogMsg('nginx', 'Failed test config file for module' . $moduleUniqueId, LOG_ERR);
         }
     }
 }

@@ -24,6 +24,7 @@ require_once 'Globals.php';
 
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use Throwable;
@@ -52,7 +53,7 @@ class WorkerModuleInstaller extends WorkerBase
 
         // Check if the settings file exists
         if ( ! file_exists($settings_file)) {
-            Util::sysLogMsg(__CLASS__, 'File with settings did not found', LOG_ERR);
+            SystemMessages::sysLogMsg(__CLASS__, 'File with settings did not found', LOG_ERR);
             return;
         }
         $settings = json_decode(file_get_contents($settings_file), true);

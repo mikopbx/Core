@@ -23,7 +23,7 @@ namespace MikoPBX\Common\Handlers;
 
 use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
 use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Di;
 use Throwable;
 /**
@@ -49,7 +49,7 @@ class CriticalErrorsHandler
 
         // Whoops
         $message = WhoopsErrorHandlerProvider::makePrettyErrorDescription($exception, false);
-        Util::sysLogMsg(__METHOD__, $message, LOG_ERR);
+        SystemMessages::sysLogMsg(__METHOD__, $message, LOG_ERR);
         return $message;
     }
 

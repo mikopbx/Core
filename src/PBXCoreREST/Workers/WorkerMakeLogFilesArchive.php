@@ -24,6 +24,7 @@ require_once 'Globals.php';
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use ZipArchive;
@@ -51,7 +52,7 @@ class WorkerMakeLogFilesArchive extends WorkerBase
 
         // Check if the settings file exists
         if ( ! file_exists($settings_file)) {
-            Util::sysLogMsg("WorkerMakeLogFilesArchive", 'File with settings not found', LOG_ERR);
+            SystemMessages::sysLogMsg("WorkerMakeLogFilesArchive", 'File with settings not found', LOG_ERR);
 
             return;
         }
@@ -59,7 +60,7 @@ class WorkerMakeLogFilesArchive extends WorkerBase
 
         // Check if the 'result_file' key is present in the settings file
         if ( ! isset($file_data['result_file'])) {
-            Util::sysLogMsg("WorkerMakeLogFilesArchive", 'Wrong settings', LOG_ERR);
+            SystemMessages::sysLogMsg("WorkerMakeLogFilesArchive", 'Wrong settings', LOG_ERR);
 
             return;
         }

@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{Directories, Processes, Storage, Util};
+use MikoPBX\Core\System\{Directories, Processes, Storage, SystemMessages, Util};
 
 /**
  * WorkerRemoveOldRecords is a worker class responsible for cleaning monitor records.
@@ -52,7 +52,7 @@ class WorkerRemoveOldRecords extends WorkerBase
             }
             [$need_alert, $need_clean, $test_alert] = $this->check($disk);
             if ($need_alert) {
-                Util::sysLogMsg("STORAGE", $test_alert);
+                SystemMessages::sysLogMsg("STORAGE", $test_alert);
             }
             if ($need_clean) {
                 $this->cleanStorage();

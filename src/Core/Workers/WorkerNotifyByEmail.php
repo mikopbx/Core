@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, Util};
+use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, SystemMessages, Util};
 use MikoPBX\Common\Models\PbxSettingsConstants;
 
 /**
@@ -40,7 +40,7 @@ class WorkerNotifyByEmail extends WorkerBase
     {
         $client = new BeanstalkClient(__CLASS__);
         if ($client->isConnected() === false) {
-            Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
+            SystemMessages::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
             sleep(2);
             return;
         }

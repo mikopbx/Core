@@ -116,7 +116,7 @@ class DockerEntrypoint extends Di\Injectable
      */
     public function checkUpdate(): void
     {
-        Util::echoWithSyslog(' - Check update... ' . PHP_EOL);
+        SystemMessages::echoWithSyslog(' - Check update... ' . PHP_EOL);
         $this->initSettings();
         foreach ($this->env as $key => $dataPath) {
             $newValue = getenv($key);
@@ -185,7 +185,7 @@ class DockerEntrypoint extends Di\Injectable
     private function updateSetting(string $dataPath, string $newValue, bool $isInc): void
     {
         $msg = " - Update $dataPath (port) to '$newValue' ..." . PHP_EOL;
-        Util::echoWithSyslog($msg);
+        SystemMessages::echoWithSyslog($msg);
         if ($isInc === true) {
             $this->incSettings[$dataPath]['port'] = $newValue;
             $newData = json_encode($this->incSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
@@ -195,7 +195,12 @@ class DockerEntrypoint extends Di\Injectable
             $res = Processes::mwExec("sqlite3 " . self::PATH_DB . " 'UPDATE m_PbxSettings SET value=\"$newValue\" WHERE key=\"$dataPath\"'");
             $result = ($res === 0);
         }
-        Util::echoResult($msg, $result);
+        if ($result){
+            SystemMessages::echoResult($msg);
+        } else {
+            SystemMessages::echoResult($msg, SystemMessages::RESULT_FAILED);
+        }
+
     }
 
     /**
@@ -206,7 +211,7 @@ class DockerEntrypoint extends Di\Injectable
      */
     private function changeWwwUserID(string $newUserId, string $newGroupId): void
     {
-        Util::echoWithSyslog(' - Check user id... ' . PHP_EOL);
+        SystemMessages::echoWithSyslog(' - Check user id... ' . PHP_EOL);
         $pidIdPath = '/cf/conf/user.id';
         $pidGrPath = '/cf/conf/group.id';
 
@@ -222,8 +227,8 @@ class DockerEntrypoint extends Di\Injectable
         $currentUserId = trim(shell_exec("grep '^$userID:' < /etc/shadow | cut -d ':' -f 3"));
         $currentGroupId = trim(shell_exec("grep '^$userID:' < /etc/shadow | cut -d ':' -f 4"));
 
-        Util::echoWithSyslog(" - Old user id: $currentUserId; New user id: $newUserId" . PHP_EOL);
-        Util::echoWithSyslog(" - Old group id: $currentGroupId; New user id: $newGroupId" . PHP_EOL);
+        SystemMessages::echoWithSyslog(" - Old user id: $currentUserId; New user id: $newUserId" . PHP_EOL);
+        SystemMessages::echoWithSyslog(" - Old group id: $currentGroupId; New user id: $newGroupId" . PHP_EOL);
         if (!empty($currentUserId) && !empty($newUserId) && $currentUserId !== $newUserId) {
             $commands[] = "sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
             $id = '';

@@ -18,7 +18,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-use MikoPBX\Core\System\{BeanstalkClient, Util};
+use MikoPBX\Core\System\{BeanstalkClient, SystemMessages};
 use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\Core\Asterisk\AGI;
 
@@ -52,8 +52,8 @@ try {
             $agi->exec_goto('internal', $exten, '1');
         }
     } else {
-        Util::sysLogMsg('CheckRedirect', "Error get data from queue 'WorkerCdr::SELECT_CDR_TUBE'. ", LOG_ERR);
+        SystemMessages::sysLogMsg('CheckRedirect', "Error get data from queue 'WorkerCdr::SELECT_CDR_TUBE'. ", LOG_ERR);
     }
 } catch (\Throwable $e) {
-    Util::sysLogMsg('CheckRedirect', $e->getMessage(), LOG_ERR);
+    SystemMessages::sysLogMsg('CheckRedirect', $e->getMessage(), LOG_ERR);
 }

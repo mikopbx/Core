@@ -121,7 +121,7 @@ class Processes
         $phpPath = Util::which('php');
         $WorkerSafeScripts = "{$phpPath} -f {$workerSafeScriptsPath} restart > /dev/null 2> /dev/null";
         self::mwExec($WorkerSafeScripts);
-        Util::sysLogMsg(static::class, "Service asked for WorkerSafeScriptsCore restart", LOG_DEBUG);
+        SystemMessages::sysLogMsg(static::class, "Service asked for WorkerSafeScriptsCore restart", LOG_DEBUG);
     }
 
     /**
@@ -137,7 +137,7 @@ class Processes
         string $action = 'restart'
     ): void
     {
-        Util::sysLogMsg(__METHOD__, "processPHPWorker " . $className . " action-" . $action, LOG_DEBUG);
+        SystemMessages::sysLogMsg(__METHOD__, "processPHPWorker " . $className . " action-" . $action, LOG_DEBUG);
         $workerPath = Util::getFilePathByClassName($className);
         if (empty($workerPath)) {
             return;
@@ -337,7 +337,7 @@ class Processes
             $ch++;
         }
         if (empty($pid)) {
-            Util::echoWithSyslog(" - Wait for start '{$procName}' fail" . PHP_EOL);
+            SystemMessages::echoWithSyslog(" - Wait for start '{$procName}' fail" . PHP_EOL);
             $result = false;
         }
 
