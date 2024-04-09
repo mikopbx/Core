@@ -196,7 +196,7 @@ class SystemLoader extends Di\Injectable
         $this->echoStartMsg(' - Configuring VM tools...');
         $vmwareTools    = new VmToolsConf();
         $resultVMTools  = $vmwareTools->configure();
-        $this->echoResultMsg($resultVMTools);
+        $this->echoResultMsg((string)$resultVMTools);
 
         // Configure the system hostname
         $this->echoStartMsg(' - Configuring hostname...');
@@ -239,7 +239,7 @@ class SystemLoader extends Di\Injectable
             $this->echoStartMsg(' - Configuring SSH console...');
             $sshConf = new SSHConf();
             $resSsh  = $sshConf->configure();
-            $this->echoResultMsg($resSsh);
+            $this->echoResultMsg((string)$resSsh);
         }
 
         // Start cloud provisioning
@@ -296,7 +296,7 @@ class SystemLoader extends Di\Injectable
         // Wait for Asterisk to fully boot and reload SIP settings
         $this->echoStartMsg(' - Wait asterisk fully booted...');
         $asteriskResult = PBX::waitFullyBooted();
-        $this->echoResultMsg($asteriskResult);
+        $this->echoResultMsg((string)$asteriskResult);
         if($asteriskResult){
             $this->echoStartMsg(' - Reload SIP settings in AstDB...');
             $sip = new SIPConf();

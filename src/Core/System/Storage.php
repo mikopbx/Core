@@ -459,7 +459,7 @@ class Storage extends Di\Injectable
 
         // Check if the storage disk is already mounted
         if (self::isStorageDiskMounted()) {
-            SystemMessages::echoToTeletype(PHP_EOL." " . Util::translate('Storage disk is already mounted...') . " ");
+            SystemMessages::echoWithSyslog(PHP_EOL." " . Util::translate('Storage disk is already mounted...') . " ");
             sleep(2);
             return true;
         }
@@ -519,7 +519,7 @@ class Storage extends Di\Injectable
 
         if (empty($validDisks)) {
             // If no valid disks were found, log a message and return 0
-            SystemMessages::echoToTeletype('   |- '.Util::translate('Valid disks not found...'));
+            SystemMessages::echoWithSyslog('   |- '.Util::translate('Valid disks not found...'));
             sleep(3);
             return false;
         }
@@ -1941,16 +1941,19 @@ class Storage extends Di\Injectable
     /**
      * Connect storage in a cloud if it was provisioned but not connected.
      *
-     * @return void
+     * @return string connection result
      */
-    public static function connectStorageInCloud(): bool
+    public static function connectStorageInCloud(): string
     {
         if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"') === null) {
-            SystemMessages::echoResult("   |- It is not a cloud installation.");
-            return true;
+            return SystemMessages::RESULT_SKIPPED;
         }
 
         // In some Clouds the virtual machine starts immediately before the storage disk was attached
-        return Storage::selectAndConfigureStorageDisk('auto');
+        if (!Storage::selectAndConfigureStorageDisk('auto')){
+            return SystemMessages::RESULT_FAILED;
+        }
+
+        return SystemMessages::RESULT_DONE;
     }
 }
