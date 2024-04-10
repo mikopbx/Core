@@ -276,7 +276,7 @@ class SystemLoader extends Di\Injectable
         }
 
         // Connect storage in a cloud if needed
-        $this->echoStartMsg(' - Auto connect storage for a cloud ...'.PHP_EOL);
+        $this->echoStartMsg(' - Auto connect storage for a cloud ...');
         if (!$this->isDocker && !$this->isRecoveryMode) {
             $connectResult = Storage::connectStorageInCloud();
             $this->echoResultMsg($connectResult);

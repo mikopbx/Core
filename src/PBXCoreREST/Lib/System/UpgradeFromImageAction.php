@@ -161,10 +161,9 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
     {
         $messages = [];
         $updateSh = "#!/bin/sh".PHP_EOL.
-            'rm -rf "$0";'.PHP_EOL.
             "export storage_uuid='{$parameters['storage_uuid']}';".PHP_EOL.
-            "export cf_uuid='{$parameters['cf_uuid']};".PHP_EOL.
-            "export updateFile='{$parameters['imageFileLocation']};".PHP_EOL;
+            "export cf_uuid='{$parameters['cf_uuid']}';".PHP_EOL.
+            "export updateFile='{$parameters['imageFileLocation']}';".PHP_EOL;
 
         // Mount boot partition
         $systemDir = '/system';

@@ -53,6 +53,8 @@ do
       # shellcheck source=/system/update.sh
       source "$updateScript";
 
+      rm "$updateScript";
+
       # Umount the disk.
       umount "$disk";
 
