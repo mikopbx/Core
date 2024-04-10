@@ -42,9 +42,9 @@ if [ "$md5Hash" != "$(/bin/gunzip -c "${img_file}" |/bin/busybox md5sum | /bin/b
     echoToTeletype " - The checksum of the system image does not match.";
     echoToTeletype " - Update aborted...";
     rm -rf "$img_file";
-    sleep 3;
     # Set a flag to indicate rebooting.
     touch /tmp/rebooting;
+    exit 0;
 else
     # Inform the user of successful checksum verification
     echoToTeletype " - Successful checksum verification";
@@ -146,6 +146,7 @@ if [ -f /offload/livecd ]; then
   echoToTeletype " - rebooting system..."
   # Set a flag to indicate rebooting.
   touch /tmp/rebooting;
+  exit 0;
 else
   # Format the 3rd partition and mount it as /cf/. Then, copy the configuration back and remove the image file
   echo " - conf partition: ${partition3Name}";
