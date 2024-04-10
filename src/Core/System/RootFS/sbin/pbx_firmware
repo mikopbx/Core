@@ -22,7 +22,7 @@
 
 # Assign input arguments to variables
 img_file="$1";
-device="$2"
+systemDevice="$2"
 
 # Redirect standard input, output and error to /dev/console
 exec </dev/console >/dev/console 2>/dev/console;
@@ -69,7 +69,7 @@ else
   mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
 
   # Get the name of the mounted storage and the 4th partition (if it exists)
-  partition4Name=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$(cat /var/etc/cfdevice)")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/busybox sort -u)
+  partition4Name=$(/bin/lsblk -r | /bin/busybox grep "${systemDevice}" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/busybox sort -u)
 
   # If the 4th partition is not the same as the mounted storage
   if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
@@ -84,7 +84,7 @@ else
 
     # Copy the configuration to the storage and backup the system image
     echoToTeletype " - backup system img to storage ...";
-    /bin/pv -p "/dev/$(/bin/busybox basename "$(cat /var/etc/cfdevice)")" | /bin/gzip | dd of="$backupImg" bs=512 >/dev/null 2>&1;
+    /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=512 >/dev/null 2>&1;
   else
     # Storage is on the main disk which needs to be unmounted, so move the image to RAM
     echoToTeletype " - move img to RAM ..."
@@ -110,29 +110,29 @@ fi
 echoToTeletype " - installing image..."
 if [ -r "${img_file}" ]; then
   # Use pv to monitor the progress of the data being piped to the dd command
-  /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$device" bs=512 >/dev/null 2>&1;
+  /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=512 >/dev/null 2>&1;
   resultPv="$?";
 
    # If the pv command fails or there aren't three primary partitions, restore the system image from the backup
-  if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "${device}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
+  if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "/dev/${systemDevice}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
     if [ -f "$backupImg" ]; then
-      /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$device" bs=512 >/dev/null 2>&1;
+      /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=512 >/dev/null 2>&1;
     fi;
   fi;
   rm -rf "$backupImg";
   echoToTeletype " - dd end working...";
 
   # Update the partition table
-  /sbin/initial.storage.part.four create "$device";
+  /sbin/initial.storage.part.four create "/dev/${systemDevice}";
   echoToTeletype " - disk part four result ${?}...";
 fi
 
-# Reread the partition table of the device
-/sbin/blockdev --rereadpt "$device" > /dev/null 2>&1
+# Reread the partition table of the system device
+/sbin/blockdev --rereadpt "/dev/${systemDevice}" > /dev/null 2>&1
 sleep 3;
 
 # Get the name of the 3rd partition
-partition3Name=$(/bin/lsblk -r -p | /bin/busybox grep "$(/bin/busybox basename "$device")" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u)
+partition3Name=$(/bin/lsblk -r -p | /bin/busybox grep "${systemDevice}" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u)
 
 # If the livecd file exists, re-mount /conf.recover, restore configuration, and reboot the system
 if [ -f /offload/livecd ]; then

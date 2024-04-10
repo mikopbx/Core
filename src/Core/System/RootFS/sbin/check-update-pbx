@@ -66,7 +66,8 @@ do
       systemDevice="$(/bin/lsblk -o UUID,PKNAME -p | /bin/busybox grep "$cf_uuid" | /bin/busybox cut -f 2 -d ' ')";
 
       # Check if the system device exists.
-      if [ -b "$systemDevice" ]; then
+      if [ -b "systemDevice" ]; then
+        systemDevice = "$(basename $systemDevice)";
         mkdir -p /var/etc;
         echo '/storage/usbdisk1' > /var/etc/storage_device;
         echo "$systemDevice" > /var/etc/cfdevice;
