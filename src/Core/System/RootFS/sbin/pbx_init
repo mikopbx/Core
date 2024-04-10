@@ -47,7 +47,24 @@ while : ; do
 
     if [ -f /tmp/rebooting ]; then
         echo "Waiting for a reboot (${0})";
+
+        # Waiting timeout
+        WAIT_TIME=10
+        counter=0
+
+        while [ $counter -lt $WAIT_TIME ]; do
+            if [ ! -f /tmp/rebooting ]; then
+                # Flag file was deleted
+                echo "System reboot was cancelled"
+                exit 0
+            fi
+            sleep 1
+            counter=$((counter+1))
+        done
+
+        echo "Reboot the system..."
         /sbin/pbx_reboot;
+
         # Wait for reboot for 10 seconds.
         # dd if=/dev/urandom bs=1 count=10 2>/dev/null | pv -pL 1 | dd of=/dev/null 2>/dev/null;
     fi

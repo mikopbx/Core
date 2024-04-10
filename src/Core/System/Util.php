@@ -850,4 +850,15 @@ class Util
         SystemMessages::echoWithSyslog($message);
     }
 
+    /**
+     * Is recovery mode
+     *
+     * @return bool
+     */
+    public static function isRecoveryMode(): bool
+    {
+        return file_exists('/offload/livecd');
+    }
+
+
 }

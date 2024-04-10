@@ -155,7 +155,7 @@ mountDiskPart()
   uuid="$1";
   mountpoint="$2";
   if [ '1' = "$(/sbin/blkid | /bin/busybox grep "$uuid" > /dev/null)" ]; then
-    echoToTeletype ' - Storage disk not found...'
+    echoToTeletype " - Storage disk with UUID=${uuid} not found..."
     exit 1;
   fi
 
@@ -163,7 +163,7 @@ mountDiskPart()
   mount -rw UUID="$uuid" "$mountpoint" 2> /dev/null;
   MOUNT_RESULT=$?;
   if [ ! "${MOUNT_RESULT}" = "0" ] ; then
-    echoToTeletype ' - Fail mount storage...'
+    echoToTeletype " - Fail mount storage with UUID=${uuid} to ${mountpoint} ..."
     exit 1;
   fi
 }

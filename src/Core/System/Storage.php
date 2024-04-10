@@ -78,7 +78,7 @@ class Storage extends Di\Injectable
 
                 // Copy the sound file to the new path
                 if (copy($soundFile->path, $newPath)) {
-                    SystemManagementProcessor::convertAudioFile($newPath);
+                    ConvertAudioFileAction::main($newPath);
 
                     // Update the sound file path and extension
                     $soundFile->path = Util::trimExtensionForFile($newPath) . ".mp3";

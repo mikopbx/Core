@@ -61,8 +61,16 @@ class SystemLoader extends Di\Injectable
      *
      * @var bool
      */
-
     private bool $isDocker = false;
+
+
+    /**
+     * Check if the system is running from live cd
+     *
+     * @var bool
+     */
+    private bool $isRecoveryMode = false;
+
 
     /**
      * Constructor
@@ -70,6 +78,7 @@ class SystemLoader extends Di\Injectable
     public function __construct()
     {
         $this->isDocker = Util::isDocker();
+        $this->isRecoveryMode = Util::isRecoveryMode();
     }
 
 
@@ -111,7 +120,7 @@ class SystemLoader extends Di\Injectable
         $system = new System();
         // Is the configuration default?
         // Try restore config...
-        if($system->isDefaultConf() && !file_exists('/offload/livecd')){
+        if($system->isDefaultConf() && !$this->isRecoveryMode){
             $this->echoStartMsg(' - Try restore backup of settings... ');
             $system->tryRestoreConf();
             $this->echoResultMsg();
@@ -144,14 +153,22 @@ class SystemLoader extends Di\Injectable
 
         // Configure Sentry error logger
         $this->echoStartMsg(' - Configuring sentry error logger ...');
-        $sentryConf = new SentryConf();
-        $sentryConf->configure();
-        $this->echoResultMsg();
+        if (!$this->isRecoveryMode){
+            $sentryConf = new SentryConf();
+            $sentryConf->configure();
+            $this->echoResultMsg();
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
 
         // Configure the system timezone
         $this->echoStartMsg(' - Configuring timezone...');
-        $system::timezoneConfigure();
-        $this->echoResultMsg();
+        if (!$this->isRecoveryMode){
+            System::timezoneConfigure();
+            $this->echoResultMsg();
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
 
         // Mount the storage disk
         $storage       = new Storage();
@@ -194,9 +211,13 @@ class SystemLoader extends Di\Injectable
 
         // Configure VM tools
         $this->echoStartMsg(' - Configuring VM tools...');
-        $vmwareTools    = new VmToolsConf();
-        $resultVMTools  = $vmwareTools->configure();
-        $this->echoResultMsg((string)$resultVMTools);
+        if (!$this->isRecoveryMode){
+            $vmwareTools    = new VmToolsConf();
+            $resultVMTools  = $vmwareTools->configure();
+            $this->echoResultMsg((string)$resultVMTools);
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
 
         // Configure the system hostname
         $this->echoStartMsg(' - Configuring hostname...');
@@ -231,8 +252,12 @@ class SystemLoader extends Di\Injectable
 
         // Configure NTP
         $this->echoStartMsg(' - Configuring ntpd...');
-        NTPConf::configure();
-        $this->echoResultMsg();
+        if (!$this->isRecoveryMode){
+            NTPConf::configure();
+            $this->echoResultMsg();
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
 
         // Do not need to set Debian SSH service
         if(!Util::isSystemctl()){
@@ -243,21 +268,30 @@ class SystemLoader extends Di\Injectable
         }
 
         // Start cloud provisioning
-        if (!$this->isDocker) {
-            $this->echoStartMsg(' - Cloud provisioning...'.PHP_EOL);
+        $this->echoStartMsg(' - Cloud provisioning...'.PHP_EOL);
+        if (!$this->isDocker && !$this->isRecoveryMode) {
             CloudProvisioning::start();
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
 
-            // Connect storage in a cloud if needed
-            $this->echoStartMsg(' - Auto connect storage for a cloud ...'.PHP_EOL);
+        // Connect storage in a cloud if needed
+        $this->echoStartMsg(' - Auto connect storage for a cloud ...'.PHP_EOL);
+        if (!$this->isDocker && !$this->isRecoveryMode) {
             $connectResult = Storage::connectStorageInCloud();
             $this->echoResultMsg($connectResult);
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
         // Update external IP if needed
-        $this->echoStartMsg(' - Update external IP...');
-        $network->updateExternalIp();
-        $this->echoResultMsg();
-
+        if (!$this->isRecoveryMode) {
+            $this->echoStartMsg(' - Update external IP...');
+            $network->updateExternalIp();
+            $this->echoResultMsg();
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
 
         return true;

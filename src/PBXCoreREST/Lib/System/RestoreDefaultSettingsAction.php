@@ -54,7 +54,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\System
  */
-class RestoreDefaultSettings extends \Phalcon\Di\Injectable
+class RestoreDefaultSettingsAction extends \Phalcon\Di\Injectable
 {
     /**
      * Restore default system settings.

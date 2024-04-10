@@ -1,8 +1,7 @@
-#!/usr/bin/php -f
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,24 +17,27 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Core\RootFS\etc\rc;
-use MikoPBX\Core\System\{Processes, Util, SystemLoader};
+namespace MikoPBX\PBXCoreREST\Lib\System;
 
-require_once('Globals.php');
+use MikoPBX\Core\System\System;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
-// Sleep if /tmp/ejectcd file exists
-if(file_exists('/tmp/ejectcd')){
-    sleep(15);
-}
-
-// Create an instance of SystemLoader and start the system
-$mikoPBX = new SystemLoader();
-$result = $mikoPBX->startSystem();
-
-// Run /etc/rc/bootup_pbx in background if system start is successful
-if((true === $result)
-    && ! Util::isRecoveryMode()
-    && ! Util::isDocker()
-) {
-    Processes::mwExecBg('/etc/rc/bootup_pbx');
+/**
+ *
+ * @package MikoPBX\PBXCoreREST\Lib\System
+ */
+class ShutdownAction extends \Phalcon\Di\Injectable
+{
+    /**
+     *
+     * @return PBXApiResult An object containing the result of the API call.
+     */
+    public static function main(): PBXApiResult
+    {
+        $res            = new PBXApiResult();
+        $res->processor = __METHOD__;
+        System::shutdown();
+        $res->success = true;
+        return $res;
+    }
 }
