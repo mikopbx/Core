@@ -151,4 +151,6 @@ abstract class PbxSettingsConstants
     const PBX_LICENSE = 'PBXLicense';
 
 
+    // Other
+    const DEFAULT_CLOUD_PASSWORD_DESCRIPTION = 'auth_DefaultCloudPasswordInstructions';
 }

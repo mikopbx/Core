@@ -20,11 +20,8 @@
 
 namespace MikoPBX\Core\RootFS\etc\rc;
 
-use MikoPBX\Core\System\{SystemMessages, SystemLoader};
+use MikoPBX\Core\System\SystemLoader;
 require_once('Globals.php');
-
-SystemMessages::echoWithSyslog(' - Start /etc/rc/bootup_pbx ...'.PHP_EOL);
-SystemMessages::echoWithSyslog(' - Start SystemLoader ...'.PHP_EOL);
 
 // Create instance of SystemLoader and start MikoPBX
 $mikoPBX = new SystemLoader();

@@ -19,21 +19,17 @@
  */
 
 namespace MikoPBX\Core\RootFS\etc\rc;
-use MikoPBX\Core\System\{Processes, SystemMessages, Util, SystemLoader};
+use MikoPBX\Core\System\{Processes, Util, SystemLoader};
 
 require_once('Globals.php');
-
-// Echo message with syslog
-SystemMessages::echoWithSyslog(' - Start /etc/rc/bootup ...'.PHP_EOL);
 
 // Sleep if /tmp/ejectcd file exists
 if(file_exists('/tmp/ejectcd')){
     sleep(15);
 }
 
-// Create instance of SystemLoader and start the system
+// Create an instance of SystemLoader and start the system
 $mikoPBX = new SystemLoader();
-SystemMessages::echoWithSyslog(' - Start SystemLoader\startSystem...'.PHP_EOL);
 $result = $mikoPBX->startSystem();
 
 // Run /etc/rc/bootup_pbx in background if system start is successful

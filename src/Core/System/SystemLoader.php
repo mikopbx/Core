@@ -244,12 +244,11 @@ class SystemLoader extends Di\Injectable
 
         // Start cloud provisioning
         if (!$this->isDocker) {
-            $this->echoStartMsg(' - Cloud provisioning...'."\n");
+            $this->echoStartMsg(' - Cloud provisioning...'.PHP_EOL);
             CloudProvisioning::start();
-            $this->echoResultMsg();
 
             // Connect storage in a cloud if needed
-            $this->echoStartMsg(' - Auto connect storage for a cloud ..."\n"');
+            $this->echoStartMsg(' - Auto connect storage for a cloud ...'.PHP_EOL);
             $connectResult = Storage::connectStorageInCloud();
             $this->echoResultMsg($connectResult);
         }

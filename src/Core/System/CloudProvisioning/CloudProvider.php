@@ -148,6 +148,7 @@ abstract class CloudProvider
         }
         $this->updatePbxSettings(PbxSettingsConstants::WEB_ADMIN_PASSWORD, $webPassword);
         $this->updatePbxSettings(PbxSettingsConstants::CLOUD_INSTANCE_ID, $webPassword);
+        $this->updatePbxSettings(PbxSettingsConstants::PBX_DESCRIPTION, PbxSettingsConstants::DEFAULT_CLOUD_PASSWORD_DESCRIPTION);
     }
 
 }

@@ -41,7 +41,7 @@ class CloudProvisioning
      */
     public static function start(): void
     {
-        if (self::checkItNeedToStartProvisioning()===false){
+        if (self::checkItNeedToStartProvisioning() === false) {
             $message = "  |- Provisioning was already completed.";
             SystemMessages::echoToTeletype($message);
             SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
@@ -71,6 +71,17 @@ class CloudProvisioning
     }
 
     /**
+     * Checks if provisioning is needed.
+     */
+    private static function checkItNeedToStartProvisioning(): bool
+    {
+        if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"') === null) {
+            return true;    // Need provision
+        }
+        return false;   // Provisioning is already completed
+    }
+
+    /**
      * After provisioning, perform the following actions:
      * @param $provider mixed The provider object.
      * @param string $cloudName The name of the cloud.
@@ -86,16 +97,5 @@ class CloudProvisioning
         $provider->updatePbxSettings(PbxSettingsConstants::CLOUD_PROVISIONING, '1');
         $provider->updatePbxSettings(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE, $cloudName);
 
-    }
-
-    /**
-     * Checks if provisioning is needed.
-     */
-    private static function checkItNeedToStartProvisioning(): bool
-    {
-        if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"') === null) {
-            return true;    // Need provision
-        }
-        return false;   // Provisioning is already completed
     }
 }

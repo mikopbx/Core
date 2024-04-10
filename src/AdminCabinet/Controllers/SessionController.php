@@ -49,14 +49,13 @@ class SessionController extends BaseController
      */
     public function indexAction(): void
     {
-        $this->view->NameFromSettings
-            = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_NAME);
-        $this->view->DescriptionFromSettings
-            = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_DESCRIPTION);
-        if ($this->view->DescriptionFromSettings==='auth_DefaultCloudPasswordInstructions'){
-            $this->view->DescriptionFromSettings=$this->translation->_($this->view->DescriptionFromSettings);
+        $this->view->setVar('NameFromSettings', PbxSettings::getValueByKey(PbxSettingsConstants::PBX_NAME));
+        $description = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_DESCRIPTION);
+        if ($description===PbxSettingsConstants::DEFAULT_CLOUD_PASSWORD_DESCRIPTION){
+            $description=$this->translation->_($description);
         }
-        $this->view->form = new LoginForm();
+        $this->view->setVar('DescriptionFromSettings', $description);
+        $this->view->setVar('form', new LoginForm());
     }
 
     /**
