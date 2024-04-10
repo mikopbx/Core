@@ -19,8 +19,8 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\Firewall\Fail2banUnban;
-use MikoPBX\PBXCoreREST\Lib\Firewall\GetBannedIp;
+use MikoPBX\PBXCoreREST\Lib\Firewall\Fail2BanUnbanAction;
+use MikoPBX\PBXCoreREST\Lib\Firewall\GetBannedIpAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -49,10 +49,10 @@ class FirewallManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         switch ($action) {
             case 'unBanIp':
-                $res = Fail2banUnban::main($data['ip']??'');
+                $res = Fail2BanUnbanAction::main($data['ip']??'');
                 break;
             case 'getBannedIp':
-                $res = GetBannedIp::main();
+                $res = GetBannedIpAction::main();
                 break;
             default:
                 $res->messages['error'][] = "Unknown action - {$action} in ".__CLASS__;

@@ -18,6 +18,10 @@
  */
 namespace MikoPBX\PBXCoreREST\Lib\Files;
 
+
+/**
+ * @package MikoPBX\PBXCoreREST\Lib\Files
+ */
 abstract class FilesConstants
 {
     const STATUS_NOT_FOUND = 'NOT_FOUND';

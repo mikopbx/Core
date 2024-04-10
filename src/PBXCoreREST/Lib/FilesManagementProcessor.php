@@ -19,12 +19,12 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\Files\DownloadNewFirmware;
-use MikoPBX\PBXCoreREST\Lib\Files\FirmwareDownloadStatus;
-use MikoPBX\PBXCoreREST\Lib\Files\GetFileContent;
-use MikoPBX\PBXCoreREST\Lib\Files\RemoveAudioFile;
-use MikoPBX\PBXCoreREST\Lib\Files\StatusUploadFile;
-use MikoPBX\PBXCoreREST\Lib\Files\UploadFile;
+use MikoPBX\PBXCoreREST\Lib\Files\DownloadNewFirmwareAction;
+use MikoPBX\PBXCoreREST\Lib\Files\FirmwareDownloadStatusAction;
+use MikoPBX\PBXCoreREST\Lib\Files\GetFileContentAction;
+use MikoPBX\PBXCoreREST\Lib\Files\RemoveAudioFileAction;
+use MikoPBX\PBXCoreREST\Lib\Files\StatusUploadFileAction;
+use MikoPBX\PBXCoreREST\Lib\Files\UploadFileAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -52,23 +52,23 @@ class FilesManagementProcessor extends Injectable
         $postData = $request['data'];
         switch ($action) {
             case 'uploadFile':
-                $res = UploadFile::main($postData);
+                $res = UploadFileAction::main($postData);
                 break;
             case 'statusUploadFile':
                 $upload_id = $postData['id'] ?? '';
-                $res = StatusUploadFile::main($upload_id);
+                $res = StatusUploadFileAction::main($upload_id);
                 break;
             case 'removeAudioFile':
-                $res = RemoveAudioFile::main($postData['filename']);
+                $res = RemoveAudioFileAction::main($postData['filename']);
                 break;
             case 'getFileContent':
-                $res = GetFileContent::main($postData['filename'], $postData['needOriginal'] === 'true');
+                $res = GetFileContentAction::main($postData['filename'], $postData['needOriginal'] === 'true');
                 break;
             case 'downloadNewFirmware':
-                $res = DownloadNewFirmware::main($postData);
+                $res = DownloadNewFirmwareAction::main($postData);
                 break;
             case 'firmwareDownloadStatus':
-                $res = FirmwareDownloadStatus::main($postData['filename']);
+                $res = FirmwareDownloadStatusAction::main($postData['filename']);
                 break;
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;

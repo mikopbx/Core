@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,39 +17,37 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib\License;
+namespace MikoPBX\PBXCoreREST\Lib\Sip;
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Common\Providers\MarketPlaceProvider;
-use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
-
 
 /**
- * Class ResetLicenseAction
- * Reset license key.
+ * Get the SIP secret for the extension sipAPI.js JavaScript script.
  *
- * @property \MikoPBX\Common\Providers\MarketPlaceProvider license
- * @package MikoPBX\PBXCoreREST\Lib\License
+ * @package MikoPBX\PBXCoreREST\Lib\Sip
  */
-class ResetLicenseAction extends \Phalcon\Di\Injectable
+class GetSipSecretAction extends \Phalcon\Di\Injectable
 {
     /**
-     * Reset license key.
+     * Get the SIP secret for the AJAX request.
      *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @param string $number The extension number
+     * @return PBXApiResult Result with SIP secret
      */
-    public static function main(): PBXApiResult
+    public static function main(string $number): PBXApiResult
     {
-        $mikoPBXConfig = new MikoPBXConfig();
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $mikoPBXConfig->resetGeneralSettings(PbxSettingsConstants::PBX_LICENSE);
         $res->success = true;
-        $di = Di::getDefault();
-        $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
-        $license->changeLicenseKey('');
+        $res->data['number'] = $number;
+        $res->data['secret'] = '';
+
+        $extension = Extensions::findFirstByNumber($number);
+        if ($extension !== null) {
+            $res->data['secret'] = $extension->Sip->secret??'';
+            return $res;
+        }
         return $res;
     }
 }

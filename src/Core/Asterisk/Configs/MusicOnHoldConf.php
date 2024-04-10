@@ -23,7 +23,7 @@ use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
 
 /**
  * Class MusicOnHoldConf
@@ -99,7 +99,7 @@ class MusicOnHoldConf extends AsteriskConfigClass
             Processes::mwExec("{$cpPath} $srcFile {$resultMp3}");
 
             // Convert the MP3 file to WAV format
-            SystemManagementProcessor::convertAudioFile($resultMp3);
+            ConvertAudioFileAction::main($resultMp3);
             if ( ! file_exists($resultWav)) {
                 SystemMessages::sysLogMsg(static::class, "Failed to convert file {$resultWav}...");
             }

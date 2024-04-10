@@ -26,7 +26,7 @@ use Phalcon\Di;
 /**
  * Class PingAction
  * Sends ping request to the license server.
- * @package MikoPBX\PBXCoreREST\Lib\Modules
+ * @package MikoPBX\PBXCoreREST\Lib\License
  */
 class PingAction extends \Phalcon\Di\Injectable
 {

@@ -33,7 +33,7 @@ use SimpleXMLElement;
 /**
  * Class ProcessUserRequestAction
  * Check and update license key on database.
- * @package MikoPBX\PBXCoreREST\Lib\Modules
+ * @package MikoPBX\PBXCoreREST\Lib\License
  */
 class ProcessUserRequestAction extends \Phalcon\Di\Injectable
 {

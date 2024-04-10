@@ -17,49 +17,38 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib;
+namespace MikoPBX\PBXCoreREST\Lib\Sip;
 
-use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\DeleteRecordAction;
-use Phalcon\Di\Injectable;
+use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Class ConferenceRoomsManagementProcessor
+ * Retrieves the statuses of SIP peers.
  *
- * @package MikoPBX\PBXCoreREST\Lib
- *
+ * @package MikoPBX\PBXCoreREST\Lib\Sip
  */
-class ConferenceRoomsManagementProcessor extends Injectable
+class GetPeersStatusesAction extends \Phalcon\Di\Injectable
 {
+
     /**
-     * Processes Conference Rooms management requests
-     *
-     * @param array $request
+     * Retrieves the statuses of SIP peers.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function callBack(array $request): PBXApiResult
+    public static function main(): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-
-        $action = $request['action'];
-        $data = $request['data'];
-        switch ($action) {
-            case 'deleteRecord':
-                if (!empty($data['id'])) {
-                    $res = DeleteRecordAction::main($data['id']);
-                } else {
-                    $res->messages['error'][] = 'Empty ID in POST/GET data';
-                }
-                break;
-            default:
-                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
+        try {
+            $am = Util::getAstManager('off');
+            $peers = $am->getPjSipPeers();
+            $res->success = true;
+            $res->data = $peers;
+        } catch (\Throwable $e) {
+            $res->success = false;
+            $res->messages[] = $e->getMessage();
         }
-
-        $res->function = $action;
 
         return $res;
     }
-
-
 }

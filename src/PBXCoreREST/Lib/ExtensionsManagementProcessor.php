@@ -19,10 +19,10 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\Extensions\DeleteRecord;
-use MikoPBX\PBXCoreREST\Lib\Extensions\Dropdowns;
-use MikoPBX\PBXCoreREST\Lib\Extensions\GetRecord;
-use MikoPBX\PBXCoreREST\Lib\Extensions\SaveRecord;
+use MikoPBX\PBXCoreREST\Lib\Extensions\DeleteRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Extensions\DropdownsAction;
+use MikoPBX\PBXCoreREST\Lib\Extensions\GetRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Extensions\SaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Extensions\Utils;
 use Phalcon\Di\Injectable;
 
@@ -50,24 +50,24 @@ class ExtensionsManagementProcessor extends Injectable
         $data = $request['data'];
         switch ($action) {
             case 'getRecord':
-                $res = GetRecord::main($data['id'] ?? '');
+                $res = GetRecordAction::main($data['id'] ?? '');
                 break;
             case 'saveRecord':
                 if (!empty($data['number'])) {
-                    $res = SaveRecord::main($data);
+                    $res = SaveRecordAction::main($data);
                 } else {
                     $res->messages['error'][] = 'Empty number value in POST/GET data';
                 }
                 break;
             case 'deleteRecord':
                 if (!empty($data['id'])) {
-                    $res = DeleteRecord::main($data['id']);
+                    $res = DeleteRecordAction::main($data['id']);
                 } else {
                     $res->messages['error'][] = 'Empty ID in POST/GET data';
                 }
                 break;
             case 'getForSelect':
-                $res = Dropdowns::getForSelect($data['type'] ?? 'all');
+                $res = DropdownsAction::getForSelect($data['type'] ?? 'all');
                 break;
             case 'available':
                 if (!empty($data['number'])) {

@@ -30,7 +30,7 @@ use Phalcon\Di;
 /**
  * Class SendMetricsAction
  * Sends PBX metrics to the license server.
- * @package MikoPBX\PBXCoreREST\Lib\Modules
+ * @package MikoPBX\PBXCoreREST\Lib\License
  */
 class SendMetricsAction extends \Phalcon\Di\Injectable
 {

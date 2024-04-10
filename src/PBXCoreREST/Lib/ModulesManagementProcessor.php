@@ -19,19 +19,19 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\Modules\DisableModule;
-use MikoPBX\PBXCoreREST\Lib\Modules\EnableModule;
-use MikoPBX\PBXCoreREST\Lib\Modules\GetAvailableModules;
-use MikoPBX\PBXCoreREST\Lib\Modules\GetMetadataFromModulePackage;
-use MikoPBX\PBXCoreREST\Lib\Modules\GetModuleInfo;
-use MikoPBX\PBXCoreREST\Lib\Modules\GetModuleLink;
-use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromPackage;
-use MikoPBX\PBXCoreREST\Lib\Modules\DownloadStatus;
-use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromRepo;
-use MikoPBX\PBXCoreREST\Lib\Modules\StartDownload;
-use MikoPBX\PBXCoreREST\Lib\Modules\StatusOfModuleInstallation;
-use MikoPBX\PBXCoreREST\Lib\Modules\UninstallModule;
-use MikoPBX\PBXCoreREST\Lib\Modules\UpdateAll;
+use MikoPBX\PBXCoreREST\Lib\Modules\DisableModuleAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\EnableModuleAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\GetAvailableModulesAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\GetMetadataFromModulePackageAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\GetModuleInfoAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\GetModuleLinkAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromPackageAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\DownloadStatusAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\InstallFromRepoAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\StartDownloadAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\StatusOfModuleInstallationAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\UninstallModuleAction;
+use MikoPBX\PBXCoreREST\Lib\Modules\UpdateAllAction;
 use Phalcon\Di;
 use Phalcon\Di\Injectable;
 
@@ -64,67 +64,67 @@ class ModulesManagementProcessor extends Injectable
                     $module = $request['data']['uniqid'];
                     $url = $request['data']['url'];
                     $md5 = $request['data']['md5'];
-                    $res = StartDownload::main($module, $url, $md5);
+                    $res = StartDownloadAction::main($module, $url, $md5);
                     break;
                 case 'moduleDownloadStatus':
                     $module = $request['data']['uniqid'];
-                    $res = DownloadStatus::main($module);
+                    $res = DownloadStatusAction::main($module);
                     break;
                 case 'installFromPackage':
                     $filePath = $data['filePath'];
                     $fileId = $data['fileId'];
                     $asyncChannelId = $request['asyncChannelId'];
-                    $installer = new InstallFromPackage($asyncChannelId, $filePath, $fileId);
+                    $installer = new InstallFromPackageAction($asyncChannelId, $filePath, $fileId);
                     $installer->start();
                     $res->success = true;
                     break;
                 case 'getMetadataFromModulePackage':
                     $filePath = $data['filePath'];
-                    $res = GetMetadataFromModulePackage::main($filePath);
+                    $res = GetMetadataFromModulePackageAction::main($filePath);
                     break;
                 case 'installFromRepo':
                     $asyncChannelId = $request['asyncChannelId'];
                     $moduleUniqueID = $data['uniqid'];
                     $releaseId = intval($data['releaseId']??0);
-                    $installer = new InstallFromRepo($asyncChannelId, $moduleUniqueID, $releaseId);
+                    $installer = new InstallFromRepoAction($asyncChannelId, $moduleUniqueID, $releaseId);
                     $installer->start();
                     $res->success = true;
                     break;
                 case 'updateAll':
                     $asyncChannelId = $request['asyncChannelId'];
                     $modulesForUpdate = $data['modulesForUpdate'];
-                    UpdateAll::main($asyncChannelId, $modulesForUpdate);
+                    UpdateAllAction::main($asyncChannelId, $modulesForUpdate);
                     $res->success = true;
                     break;
                 case 'getModuleInfo':
                     $moduleUniqueID = $data['uniqid'];
-                    $res = GetModuleInfo::main($moduleUniqueID);
+                    $res = GetModuleInfoAction::main($moduleUniqueID);
                     break;
                 case 'statusOfModuleInstallation':
                     $filePath = $data['filePath'];
-                    $res = StatusOfModuleInstallation::main($filePath);
+                    $res = StatusOfModuleInstallationAction::main($filePath);
                     break;
                 case 'enableModule':
                     $moduleUniqueID = $data['uniqid'];
-                    $res = EnableModule::main($moduleUniqueID);
+                    $res = EnableModuleAction::main($moduleUniqueID);
                     break;
                 case 'disableModule':
                     $moduleUniqueID = $data['uniqid'];
                     $reason = $data['reason']??'';
                     $reasonText = $data['reasonText']??'';
-                    $res = DisableModule::main($moduleUniqueID, $reason, $reasonText);
+                    $res = DisableModuleAction::main($moduleUniqueID, $reason, $reasonText);
                     break;
                 case 'uninstallModule':
                     $moduleUniqueID = $data['uniqid'];
                     $keepSettings = $data['keepSettings'] === 'true';
-                    $res = UninstallModule::main($moduleUniqueID, $keepSettings);
+                    $res = UninstallModuleAction::main($moduleUniqueID, $keepSettings);
                     break;
                 case 'getAvailableModules':
-                    $res = GetAvailableModules::main();
+                    $res = GetAvailableModulesAction::main();
                     break;
                 case 'getModuleLink':
                     $moduleReleaseId = $data['releaseId'];
-                    $res = GetModuleLink::main($moduleReleaseId);
+                    $res = GetModuleLinkAction::main($moduleReleaseId);
                     break;
                 default:
                     $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;

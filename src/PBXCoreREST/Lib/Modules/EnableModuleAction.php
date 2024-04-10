@@ -17,49 +17,41 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib;
+namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
-use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\DeleteRecordAction;
-use Phalcon\Di\Injectable;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Modules\PbxExtensionState;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Class ConferenceRoomsManagementProcessor
+ *  Class EnableModule
+ *  Enables extension module.
  *
- * @package MikoPBX\PBXCoreREST\Lib
- *
+ * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class ConferenceRoomsManagementProcessor extends Injectable
+class EnableModuleAction extends \Phalcon\Di\Injectable
 {
     /**
-     * Processes Conference Rooms management requests
+     * Enables extension module.
      *
-     * @param array $request
+     * @param string $moduleUniqueID
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function callBack(array $request): PBXApiResult
+    public static function main(string $moduleUniqueID): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-
-        $action = $request['action'];
-        $data = $request['data'];
-        switch ($action) {
-            case 'deleteRecord':
-                if (!empty($data['id'])) {
-                    $res = DeleteRecordAction::main($data['id']);
-                } else {
-                    $res->messages['error'][] = 'Empty ID in POST/GET data';
-                }
-                break;
-            default:
-                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
+        $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
+        if ($moduleStateProcessor->enableModule() === false) {
+            $res->success = false;
+            $res->messages = $moduleStateProcessor->getMessages();
+        } else {
+            PBXConfModulesProvider::recreateModulesProvider();
+            $res->data = $moduleStateProcessor->getMessages();
+            $res->success = true;
         }
-
-        $res->function = $action;
 
         return $res;
     }
-
-
 }

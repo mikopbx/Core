@@ -31,7 +31,7 @@ use Phalcon\Text;
 /**
  * Class GetMikoPBXFeatureStatusAction
  * Check for free MikoPBX base license.
- * @package MikoPBX\PBXCoreREST\Lib\Modules
+ * @package MikoPBX\PBXCoreREST\Lib\License
  */
 class GetMikoPBXFeatureStatusAction extends \Phalcon\Di\Injectable
 {

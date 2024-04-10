@@ -35,7 +35,7 @@ use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
-use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di;
 use function MikoPBX\Common\Config\appPath;

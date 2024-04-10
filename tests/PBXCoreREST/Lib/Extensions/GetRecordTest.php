@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Tests\PBXCoreREST\Lib\Extensions;
 
-use MikoPBX\PBXCoreREST\Lib\Extensions\GetRecord;
+use MikoPBX\PBXCoreREST\Lib\Extensions\GetRecordAction;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class GetRecordTest extends AbstractUnitTest
@@ -27,7 +27,7 @@ class GetRecordTest extends AbstractUnitTest
 
     public function testMain()
     {
-        $res = GetRecord::main('');
+        $res = GetRecordAction::main('');
         $this->assertTrue($res->success);
     }
 }

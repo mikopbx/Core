@@ -27,7 +27,7 @@ use Phalcon\Di;
  * Class CaptureFeatureForProductIdAction
  * Tries to capture feature.
  *
- * @package MikoPBX\PBXCoreREST\Lib\Modules
+ * @package MikoPBX\PBXCoreREST\Lib\License
  */
 class CaptureFeatureForProductIdAction extends \Phalcon\Di\Injectable
 {

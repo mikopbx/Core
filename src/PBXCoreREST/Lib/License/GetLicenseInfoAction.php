@@ -32,7 +32,7 @@ use SimpleXMLElement;
 /**
  * Class GetLicenseInfoAction
  * Returns license info from license server by key.
- * @package MikoPBX\PBXCoreREST\Lib\Modules
+ * @package MikoPBX\PBXCoreREST\Lib\License
  */
 class GetLicenseInfoAction extends \Phalcon\Di\Injectable
 {

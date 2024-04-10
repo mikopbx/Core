@@ -92,14 +92,14 @@ class ModuleInstallationBase extends \Phalcon\Di\Injectable
 
         // Monitor installation progress
         while ($maximumInstallationTime > 0) {
-            $resStatus = StatusOfModuleInstallation::main($filePath);
+            $resStatus = StatusOfModuleInstallationAction::main($filePath);
             $this->pushMessageToBrowser( self::STAGE_V_INSTALL_MODULE, $resStatus->getResult());
             if (!$resStatus->success) {
                 return [$resStatus->messages, false];
-            } elseif ($resStatus->data[StatusOfModuleInstallation::I_STATUS] === StatusOfModuleInstallation::INSTALLATION_IN_PROGRESS) {
+            } elseif ($resStatus->data[StatusOfModuleInstallationAction::I_STATUS] === StatusOfModuleInstallationAction::INSTALLATION_IN_PROGRESS) {
                 sleep(1); // Adjust sleep time as needed
                 $maximumInstallationTime--;
-            } elseif ($resStatus->data[StatusOfModuleInstallation::I_STATUS] === StatusOfModuleInstallation::INSTALLATION_COMPLETE) {
+            } elseif ($resStatus->data[StatusOfModuleInstallationAction::I_STATUS] === StatusOfModuleInstallationAction::INSTALLATION_COMPLETE) {
                 return [$installationResult, true];
             }
         }
@@ -121,7 +121,7 @@ class ModuleInstallationBase extends \Phalcon\Di\Injectable
     {
         // Check if the module was previously enabled
         if ($installationResult->data[self::MODULE_WAS_ENABLED]){
-            $res = EnableModule::main($this->moduleUniqueId);
+            $res = EnableModuleAction::main($this->moduleUniqueId);
             $this->pushMessageToBrowser(self::STAGE_VI_ENABLE_MODULE, $res->getResult());
             return [$res->messages, $res->success];
         }
@@ -164,7 +164,7 @@ class ModuleInstallationBase extends \Phalcon\Di\Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $resModuleMetadata = GetMetadataFromModulePackage::main($filePath);
+        $resModuleMetadata = GetMetadataFromModulePackageAction::main($filePath);
         if (!$resModuleMetadata->success) {
             return $resModuleMetadata;
         }
@@ -175,7 +175,7 @@ class ModuleInstallationBase extends \Phalcon\Di\Injectable
         // Disable the module if it's enabled
         $moduleWasEnabled = false;
         if (PbxExtensionUtils::isEnabled($this->moduleUniqueId)) {
-            $res = DisableModule::main($this->moduleUniqueId);
+            $res = DisableModuleAction::main($this->moduleUniqueId);
             if (!$res->success) {
                 return $res;
             }
@@ -186,7 +186,7 @@ class ModuleInstallationBase extends \Phalcon\Di\Injectable
         $needBackup = is_dir($currentModuleDir);
 
         if ($needBackup) {
-            UninstallModule::main($this->moduleUniqueId, true);
+            UninstallModuleAction::main($this->moduleUniqueId, true);
         }
 
         // Start the background process to install the module

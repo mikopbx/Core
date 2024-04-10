@@ -20,10 +20,10 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 
-use MikoPBX\PBXCoreREST\Lib\Sip\GetPeersStatuses;
-use MikoPBX\PBXCoreREST\Lib\Sip\GetPeerStatus;
-use MikoPBX\PBXCoreREST\Lib\Sip\GetRegistry;
-use MikoPBX\PBXCoreREST\Lib\Sip\GetSipSecret;
+use MikoPBX\PBXCoreREST\Lib\Sip\GetPeersStatusesAction;
+use MikoPBX\PBXCoreREST\Lib\Sip\GetPeerStatusAction;
+use MikoPBX\PBXCoreREST\Lib\Sip\GetRegistryAction;
+use MikoPBX\PBXCoreREST\Lib\Sip\GetSipSecretAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -51,21 +51,21 @@ class SIPStackProcessor extends Injectable
         $res->processor = __METHOD__;
         switch ($action) {
             case 'getPeersStatuses':
-                $res = GetPeersStatuses::main();
+                $res = GetPeersStatusesAction::main();
                 break;
             case 'getSipPeer':
                 if (!empty($data['peer'])) {
-                    $res = GetPeerStatus::main($data['peer']);
+                    $res = GetPeerStatusAction::main($data['peer']);
                 } else {
                     $res->messages['error'][] = 'Empty peer value in POST/GET data';
                 }
                 break;
             case 'getRegistry':
-                $res = GetRegistry::main();
+                $res = GetRegistryAction::main();
                 break;
             case 'getSecret':
                 if (!empty($data['number'])) {
-                    $res = GetSipSecret::main($data['number']);
+                    $res = GetSipSecretAction::main($data['number']);
                 } else {
                     $res->messages['error'][] = 'Empty number value in POST/GET data';
                 }

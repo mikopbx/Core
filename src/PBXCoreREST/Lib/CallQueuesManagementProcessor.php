@@ -19,7 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\CallQueues\DeleteRecord;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\DeleteRecordAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -47,7 +47,7 @@ class CallQueuesManagementProcessor extends Injectable
         switch ($action) {
             case 'deleteRecord':
                 if (!empty($data['id'])) {
-                    $res = DeleteRecord::main($data['id']);
+                    $res = DeleteRecordAction::main($data['id']);
                 } else {
                     $res->messages['error'][] = 'Empty ID in POST/GET data';
                 }
