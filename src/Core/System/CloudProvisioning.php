@@ -62,6 +62,8 @@ class CloudProvisioning
             SystemMessages::echoToTeletype($message);
             if ($provider->provision()) {
                 self::afterProvisioning($provider, $cloudId);
+                $message = " - Cloud provisioning on $cloudId...";
+                SystemMessages::echoToTeletype($message);
                 SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_DONE);
                 // Provisioning succeeded, break out of the loop
                 break;

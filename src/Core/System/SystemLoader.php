@@ -268,7 +268,7 @@ class SystemLoader extends Di\Injectable
         }
 
         // Start cloud provisioning
-        $this->echoStartMsg(' - Cloud provisioning...'.PHP_EOL);
+        $this->echoStartMsg(' - Attempt to cloud provisioning...'.PHP_EOL);
         if (!$this->isDocker && !$this->isRecoveryMode) {
             CloudProvisioning::start();
         } else {

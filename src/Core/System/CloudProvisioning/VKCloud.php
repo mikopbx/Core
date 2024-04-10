@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp;
+use MikoPBX\Core\System\SystemMessages;
 
 class VKCloud extends CloudProvider
 {
@@ -43,6 +44,9 @@ class VKCloud extends CloudProvider
         if (empty($hostname)) {
             return false;
         }
+
+        SystemMessages::echoToTeletype(PHP_EOL);
+
         $this->updateHostName($hostname);
 
         // Update LAN settings with the external IP address

@@ -19,6 +19,8 @@
 
 namespace MikoPBX\Core\System\CloudProvisioning;
 
+use MikoPBX\Core\System\SystemMessages;
+
 class YandexCloud extends CloudProvider
 {
     public const CloudID = 'YandexCloud';
@@ -43,6 +45,8 @@ class YandexCloud extends CloudProvider
             return false;
         }
         $data = json_decode($resultRequest, true);
+
+        SystemMessages::echoToTeletype(PHP_EOL);
 
         // Update SSH keys, if available
         $this->updateSSHKeys($data['attributes']['ssh-keys'] ?? '');

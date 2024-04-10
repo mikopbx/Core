@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp;
+use MikoPBX\Core\System\SystemMessages;
 
 class AWSCloud extends CloudProvider
 {
@@ -43,6 +44,8 @@ class AWSCloud extends CloudProvider
         if (empty($hostname)) {
             return false;
         }
+
+        SystemMessages::echoToTeletype(PHP_EOL);
 
         // Update machine name
         $this->updateHostName($hostname);

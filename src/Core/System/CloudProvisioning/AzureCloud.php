@@ -18,6 +18,7 @@
  */
 
 namespace MikoPBX\Core\System\CloudProvisioning;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -45,6 +46,8 @@ class AzureCloud extends CloudProvider
             // If metadata is null or the environment is not AzurePublicCloud, do not proceed with provisioning.
             return false;
         }
+
+        SystemMessages::echoToTeletype(PHP_EOL);
 
         // Update machine name
         $hostname = $metadata['compute']['name'] ?? '';

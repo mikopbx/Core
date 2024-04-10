@@ -64,7 +64,7 @@ abstract class CloudProvider
         }
         $setting->value = $data;
         $result = $setting->save();
-        $message = "   |- Update PbxSettings - $keyName ... ";
+        $message = "      |- Update PbxSettings - $keyName ... ";
         SystemMessages::echoToTeletype($message);
         if ($result) {
             SystemMessages::teletypeEchoResult($message);
@@ -94,7 +94,7 @@ abstract class CloudProvider
                 $lanData->topology = LanInterfaces::TOPOLOGY_PRIVATE;
                 $lanData->autoUpdateExtIp='1';
             }
-            $message = "   |- Update LAN settings external IP: $extipaddr";
+            $message = "      |- Update LAN settings external IP: $extipaddr";
             SystemMessages::echoToTeletype($message);
             $result = $lanData->save();
             if ($result) {
@@ -103,7 +103,7 @@ abstract class CloudProvider
                 SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
             }
         } else {
-            $message = "   |- LAN interface not found";
+            $message = "      |- LAN interface not found";
             SystemMessages::echoToTeletype($message);
             SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
         }

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System\CloudProvisioning;
 
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
 class GoogleCloud extends CloudProvider
@@ -46,6 +47,8 @@ class GoogleCloud extends CloudProvider
         if ($http_code !== 200 || !is_string($resultRequest)) {
             return false;
         }
+
+        SystemMessages::echoToTeletype(PHP_EOL);
 
         // Update SSH keys, if available
         $data = json_decode($resultRequest, true);

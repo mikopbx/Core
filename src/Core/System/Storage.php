@@ -527,7 +527,7 @@ class Storage extends Di\Injectable
         // Check if the disk selection should be automatic
         if ($automatic === 'auto') {
             $target_disk_storage = $selected_disk['id'];
-            SystemMessages::echoToTeletype('   |- '."Automatically selected storage disk is $target_disk_storage");
+            SystemMessages::echoToTeletype(PHP_EOL.'   |- '."Automatically selected storage disk is $target_disk_storage");
         } else {
             echo PHP_EOL." " . Util::translate('Select the drive to store the data.');
             echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
@@ -584,14 +584,14 @@ class Storage extends Di\Injectable
         MainDatabaseProvider::recreateDBConnections();
         $success = self::isStorageDiskMounted();
         if ($success === true && $automatic === 'auto') {
-            SystemMessages::echoToTeletype('   |- The data storage disk has been successfully mounted ... ');
+            SystemMessages::echoToTeletype(PHP_EOL.'   |- The data storage disk has been successfully mounted ... ');
             sleep(2);
             System::rebootSync();
             return true;
         }
 
         if ($automatic === 'auto') {
-            SystemMessages::echoToTeletype('   |- Storage disk was not mounted automatically ... ');
+            SystemMessages::echoToTeletype(PHP_EOL.'   |- Storage disk was not mounted automatically ... ');
         }
 
         fclose(STDERR);

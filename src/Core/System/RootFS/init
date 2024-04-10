@@ -52,7 +52,7 @@ if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar
        devName="$(/bin/busybox basename "$dev")";
        echo " - Device $dev name - $devName";
        echo >> "$resFileInitTab";
-       echo "::respawn:/bin/sh -c 'sleep 5; exec /sbin/agetty -a root -h -t 60 $devName 115200 vt102'" >> "$resFileInitTab"
+       echo "::respawn:/bin/sh -c 'sleep 10; exec /sbin/agetty -a root -h -t 60 $devName 115200 vt102'" >> "$resFileInitTab"
     fi;
   done
 
