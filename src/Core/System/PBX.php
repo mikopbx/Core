@@ -358,10 +358,6 @@ class PBX extends Injectable
      */
     public function configure(): array
     {
-        $result = [
-            'result' => 'ERROR',
-        ];
-
         if ( ! $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting) {
             $this->stop();
         }
@@ -388,7 +384,7 @@ class PBX extends Injectable
         } else {
             CdrDb::checkDb();
         }
-
+        $result=[];
         $result['result'] = 'Success';
 
         return $result;
