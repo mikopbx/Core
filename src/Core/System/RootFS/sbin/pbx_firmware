@@ -30,7 +30,7 @@ exec </dev/console >/dev/console 2>/dev/console;
 # Inform the user of the firmware upgrade process
 echoToTeletype;
 echoToTeletype " - Firmware upgrade in progress...";
-echoToTeletype " - backing up configuration...";
+echoToTeletype " - Backing up configuration...";
 
 # Create a temporary directory to backup configuration
 mkdir -p /tmp/configbak;
@@ -54,7 +54,7 @@ fi
 if [ -f /offload/livecd ]; then
   # Copy the configuration to the backup directory and unmount /conf.recover
   /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak;
-  echoToTeletype " - unmounting /conf.recover...";
+  echoToTeletype " - Unmounting /conf.recover...";
   /bin/umount -f /conf.recover;
 else
 
@@ -74,7 +74,7 @@ else
   # If the 4th partition is not the same as the mounted storage
   if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
     # Storage is on a separate disk. Proceed with the freeup, backup and update procedures
-    echoToTeletype " - free storage ...";
+    echoToTeletype " - Free storage ...";
     /sbin/freestorage "doNotUnMount";
 
     # Define the backup directory and image path
@@ -83,7 +83,7 @@ else
     rm -rf "$backupDir"; mkdir -p "$backupDir";
 
     # Copy the configuration to the storage and backup the system image
-    echoToTeletype " - backup system img to storage ...";
+    echoToTeletype " - Backup system img to storage ...";
     /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=512 >/dev/null 2>&1;
   else
     # Storage is on the main disk which needs to be unmounted, so move the image to RAM
@@ -98,7 +98,7 @@ else
     fi
 
      # Free up the storage
-    echoToTeletype " - free storage ...";
+    echoToTeletype " - Free storage ...";
     /sbin/freestorage;
   fi
 
@@ -107,7 +107,7 @@ else
 fi
 
 # Inform the user of the installation process
-echoToTeletype " - installing image..."
+echoToTeletype " - Installing image..."
 if [ -r "${img_file}" ]; then
   # Use pv to monitor the progress of the data being piped to the dd command
   /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=512 >/dev/null 2>&1;
@@ -124,7 +124,7 @@ if [ -r "${img_file}" ]; then
 
   # Update the partition table
   /sbin/initial.storage.part.four create "/dev/${systemDevice}";
-  echoToTeletype " - disk part four result ${?}...";
+  echoToTeletype " - Disk part four result ${?}...";
 fi
 
 # Reread the partition table of the system device
@@ -136,20 +136,20 @@ partition3Name=$(/bin/lsblk -r -p | /bin/busybox grep "${systemDevice}" | /bin/b
 
 # If the livecd file exists, re-mount /conf.recover, restore configuration, and reboot the system
 if [ -f /offload/livecd ]; then
-  echoToTeletype " - re-mounting /conf.recover read/write..."
+  echoToTeletype " - Re-mounting /conf.recover read/write..."
   /bin/mount -w -o noatime "${partition3Name}" /conf.recover
   rm -f /conf.recover/conf/*
-  echoToTeletype " - restoring configuration"
+  echoToTeletype " - Restoring configuration"
   /bin/busybox cp -p /tmp/configbak/* /conf.recover/conf/
   touch /tmp/ejectcd
 
-  echoToTeletype " - rebooting system..."
+  echoToTeletype " - Rebooting system..."
   # Set a flag to indicate rebooting.
   touch /tmp/rebooting;
   exit 0;
 else
   # Format the 3rd partition and mount it as /cf/. Then, copy the configuration back and remove the image file
-  echo " - conf partition: ${partition3Name}";
+  echo " - Conf partition: ${partition3Name}";
   /bin/busybox yes | /sbin/mkfs.ext4 "${partition3Name}" > /dev/null 2> /dev/null;
   /bin/mount -w -o noatime "${partition3Name}" /cf/
   mkdir -p /cf/conf/;

@@ -71,8 +71,8 @@ find_set_mtu()
     done
 }
 
-# Terminate processes related to 'networking.set.mtu' with SIGTERM signal
-killprocesses "networking.set.mtu $eth" '-TERM' 0;
+# Terminate processes related to 'networking_set_mtu' with SIGTERM signal
+killprocesses "networking_set_mtu $eth" '-TERM' 0;
 
 # Set MTU value to 1500 for the specified network interface
 setMtu "$eth" "1500";

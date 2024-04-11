@@ -49,7 +49,7 @@ for sig in SIGINT SIGTERM SIGHUP SIGQUIT EXIT; do
 done
 
 # Start the PHP script in the background
-php -f /sbin/Entrypoint.php &
+php -f /offload/rootfs/usr/www/src/Core/System/DockerEntrypoint.php &
 
 # Enter an infinite loop to keep the script running
 while true; do sleep 1; done

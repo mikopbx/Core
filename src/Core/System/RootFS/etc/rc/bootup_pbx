@@ -26,3 +26,6 @@ require_once('Globals.php');
 // Create instance of SystemLoader and start MikoPBX
 $mikoPBX = new SystemLoader();
 $mikoPBX->startMikoPBX();
+
+// Start SSH autologin in console session
+file_put_contents('/etc/ssh-tty-autologin',1);

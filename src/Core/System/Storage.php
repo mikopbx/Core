@@ -519,7 +519,9 @@ class Storage extends Di\Injectable
 
         if (empty($validDisks)) {
             // If no valid disks were found, log a message and return 0
-            SystemMessages::echoWithSyslog('   |- '.Util::translate('Valid disks not found...'));
+            $message = '   |- '.Util::translate('Valid disks not found...');
+            SystemMessages::echoWithSyslog($message);
+            SystemMessages::echoToTeletype(PHP_EOL.$message);
             sleep(3);
             return false;
         }

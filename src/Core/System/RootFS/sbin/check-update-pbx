@@ -43,6 +43,10 @@ do
 
    # Check if the update script exists.
   if [ -f "$updateScript" ];then
+
+    # Start SSH autologin in console session immediately
+    touch /etc/ssh-tty-autologin;
+
     echoToTeletype " - Start update script $updateScript...";
 
     # Execute the update script in a subshell.
@@ -63,11 +67,10 @@ do
       mountDiskPart "$cf_uuid" '/cf'
 
       # Get the system device based on the cf UUID.
-      systemDevice="$(/bin/lsblk -o UUID,PKNAME -p | /bin/busybox grep "$cf_uuid" | /bin/busybox cut -f 2 -d ' ')";
+      systemDevice="$(/bin/lsblk -o UUID,PKNAME | /bin/busybox grep "$cf_uuid" | /bin/busybox cut -f 2 -d ' ')";
 
       # Check if the system device exists.
-      if [ -b "$systemDevice" ]; then
-        systemDevice = "$(basename $systemDevice)";
+      if [ -b "/dev/${systemDevice}" ]; then
         mkdir -p /var/etc;
         echo '/storage/usbdisk1' > /var/etc/storage_device;
         echo "$systemDevice" > /var/etc/cfdevice;

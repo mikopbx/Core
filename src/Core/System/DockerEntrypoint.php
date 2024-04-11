@@ -24,6 +24,7 @@ use JsonException;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use Phalcon\Di;
 
+require_once 'Globals.php';
 /**
  * The entry point class for MikoPBX.
  */
@@ -258,3 +259,7 @@ class DockerEntrypoint extends Di\Injectable
         }
     }
 }
+
+SystemMessages::echoWithSyslog(' - Start Entrypoint (php)... ' . PHP_EOL);
+$main = new DockerEntrypoint();
+$main->start();

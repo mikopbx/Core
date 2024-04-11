@@ -20,13 +20,14 @@
 namespace MikoPBX\Tests\Core\System;
 
 use MikoPBX\Core\System\Network;
+use MikoPBX\Core\System\SystemLoader;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class NetworkTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
 {
     public function testGetInfoMessage()
     {
-        $networkInfo = Network::getInfoMessage();
+        $networkInfo = SystemLoader::getInfoMessage();
         $this->assertTrue(true);
     }
 }

@@ -66,7 +66,6 @@ class SystemMessages extends Di\Injectable
     public static function echoToTeletype(string $message): void
     {
         // Log to serial tty
-        echo $message;
         for ($i = 0; $i <= 5; $i++) {
             $device = "/dev/ttyS$i";
             $busyboxPath = Util::which('busybox');
@@ -125,7 +124,7 @@ class SystemMessages extends Di\Injectable
 
         $spaces = str_repeat('.', $len);
         $formattedResult = self::getFormattedResult($result);
-        echo "\r" . $message . $spaces. $formattedResult;
+        echo $spaces. $formattedResult;
     }
 
     /**

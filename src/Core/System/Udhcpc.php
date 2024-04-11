@@ -145,7 +145,7 @@ class Udhcpc extends Network
         ];
         $this->updateDnsSettings($data, $env_vars['interface']);
 
-        Processes::mwExec("/etc/rc/networking.set.mtu '{$env_vars['interface']}'");
+        Processes::mwExec("/etc/rc/networking_set_mtu '{$env_vars['interface']}'");
     }
 
     /**
@@ -257,7 +257,7 @@ class Udhcpc extends Network
         ];
         $this->updateDnsSettings($data, $env_vars['interface']);
 
-        Processes::mwExec("/etc/rc/networking.set.mtu '{$env_vars['interface']}'");
+        Processes::mwExec("/etc/rc/networking_set_mtu '{$env_vars['interface']}'");
     }
 
     /**

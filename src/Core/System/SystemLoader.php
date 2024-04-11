@@ -19,6 +19,9 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
@@ -90,9 +93,7 @@ class SystemLoader extends Di\Injectable
     private function echoStartMsg(string $message):void
     {
         $this->stageMessage = $message;
-        if (!$this->isDocker){
-            SystemMessages::echoToTeletype($this->stageMessage);
-        }
+        SystemMessages::echoToTeletype($this->stageMessage);
         SystemMessages::echoWithSyslog($this->stageMessage);
     }
 
@@ -103,10 +104,8 @@ class SystemLoader extends Di\Injectable
      */
     private function echoResultMsg(string $result = SystemMessages::RESULT_DONE):void
     {
+        SystemMessages::teletypeEchoResult($this->stageMessage, $result);
         SystemMessages::echoResult($this->stageMessage, $result);
-        if (!$this->isDocker){
-            SystemMessages::teletypeEchoResult($this->stageMessage, $result);
-        }
         $this->stageMessage = '';
     }
 
@@ -183,7 +182,7 @@ class SystemLoader extends Di\Injectable
         // Additional tasks for T2SDELinux
         if($itIsT2SDELinux) {
             $this->echoStartMsg(' - Connect swap...');
-            Processes::mwExecBg('/etc/rc/connect-swap');
+            Processes::mwExecBg('/etc/rc/connect_swap');
             $this->echoResultMsg();
         }
 
@@ -268,10 +267,11 @@ class SystemLoader extends Di\Injectable
         }
 
         // Start cloud provisioning
-        $this->echoStartMsg(' - Attempt to cloud provisioning...'.PHP_EOL);
         if (!$this->isDocker && !$this->isRecoveryMode) {
+            $this->echoStartMsg(' - Attempt to cloud provisioning...'.PHP_EOL);
             CloudProvisioning::start();
         } else {
+            $this->echoStartMsg(' - Attempt to cloud provisioning...');
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
@@ -352,14 +352,109 @@ class SystemLoader extends Di\Injectable
 
         // Log that all services are fully loaded if Asterisk is fully booted
         if($asteriskResult){
-            $this->echoStartMsg(' - All services are fully loaded');
+            $this->echoStartMsg("┌────────────────────────────────────────────────┐".PHP_EOL);
+            $this->echoStartMsg("│                                                │".PHP_EOL);
+            $this->echoStartMsg("│  🌟 MikoPBX - All services are fully loaded 🌟 │".PHP_EOL);
+            $this->echoStartMsg("│                                                │".PHP_EOL);
+            $this->echoStartMsg("├────────────────────────────────────────────────┤");
         }
 
         // Display network information
-        $this->echoStartMsg(Network::getInfoMessage());
+        $this->echoStartMsg(self::getInfoMessage());
 
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
 
         return true;
+    }
+
+    /**
+     * Retrieves the information message containing available web interface addresses.
+     *
+     * @return string The information message.
+     */
+    public static function getInfoMessage(): string
+    {
+        $addresses = [
+            'local' => [],
+            'external' => []
+        ];
+        /** @var LanInterfaces $interface */
+        $interfaces = LanInterfaces::find("disabled='0'");
+        foreach ($interfaces as $interface) {
+            if (!empty($interface->ipaddr)) {
+                $addresses['local'][] = $interface->ipaddr;
+            }
+            if (!empty($interface->exthostname) && !in_array($interface->exthostname, $addresses['local'], true)) {
+                $addresses['external'][] = explode(':', $interface->exthostname)[0] ?? '';
+            }
+            if (!empty($interface->extipaddr) && !in_array($interface->extipaddr, $addresses['local'], true)) {
+                $addresses['external'][] = explode(':', $interface->extipaddr)[0] ?? '';
+            }
+        }
+        unset($interfaces);
+
+        // Assuming a total width of 50 characters for each line
+        $lineWidth = 53;
+        $addressSpace = $lineWidth - 7 - 5; // 7 for "│    ➜ " and 5 for " │" at the end
+
+        // Local network
+        $port = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_HTTPS_PORT);
+        $info = PHP_EOL . "│                                                │";
+        $info .= PHP_EOL . "│           🌐 Web Interface Access 🌐           │";
+        $info .= PHP_EOL . "│                                                │";
+        $info .= PHP_EOL . "│    Local Network Address:                      │";
+        foreach ($addresses['local'] as $address) {
+            if (empty($address)) {
+                continue;
+            }
+            $formattedAddress = $port === '443' ? "https://$address" : "https://$address:$port";
+
+            // Ensure the address fits within the designated space, truncating if necessary
+            $formattedAddress = strlen($formattedAddress) > $addressSpace ? substr($formattedAddress, 0, $addressSpace - 3) . '...' : $formattedAddress;
+
+            // Use sprintf to format the string with padding to ensure constant length
+            $info .= PHP_EOL . sprintf("│    ➜ %-{$addressSpace}s │", $formattedAddress);
+
+        }
+        $info .= PHP_EOL."│                                                │";
+
+        // External web address info
+        if (!empty($addresses['external'])) {
+            $info .= PHP_EOL . "│    External Network Address:                   │";
+            foreach ($addresses['external'] as $address) {
+                if (empty($address)) {
+                    continue;
+                }
+                $formattedAddress = $port === '443' ? "https://$address" : "https://$address:$port";
+
+                // Ensure the address fits within the designated space, truncating if necessary
+                $formattedAddress = strlen($formattedAddress) > $addressSpace ? substr($formattedAddress, 0, $addressSpace - 3) . '...' : $formattedAddress;
+
+                // Use sprintf to format the string with padding to ensure constant length
+                $info .= PHP_EOL . sprintf("│    ➜ %-{$addressSpace}s │", $formattedAddress);
+
+            }
+            $info .= PHP_EOL . "│                                                │";
+        }
+
+        // Default web user info
+        $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
+        $webAdminPassword = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
+        $defaultPassword = PbxSettings::getDefaultArrayValues(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
+        if ($cloudInstanceId === $webAdminPassword || $webAdminPassword===$defaultPassword) {
+            $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
+            $info .= PHP_EOL . "│    🔑 Default Credentials:                     │";
+            // Login
+            $loginSpace = $lineWidth - 12 - 5; // 7 for "│    Login: " and 5 for " │" at the end
+            $loginLine = sprintf("│    Login: %-{$loginSpace}s │", $adminUser); // Format the login line
+            $info .= PHP_EOL . $loginLine;
+
+            // Password
+            $passwordSpace = $lineWidth - 15 - 5; // 7 for "│    Password: " and 5 for " │" at the end
+            $passwordLine = sprintf("│    Password: %-{$passwordSpace}s │", $cloudInstanceId); // Format the password line
+            $info .= PHP_EOL . $passwordLine;
+        }
+        $info .= PHP_EOL . "└────────────────────────────────────────────────┘".PHP_EOL .PHP_EOL;
+        return $info;
     }
 }

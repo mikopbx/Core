@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Common\Models\{LanInterfaces, PbxSettings, PbxSettingsConstants};
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 use Phalcon\Di\Injectable;
@@ -81,77 +81,6 @@ class Network extends Injectable
         }
         Processes::mwExec($command, $names);
         return $names;
-    }
-
-    /**
-     * Retrieves the information message containing available web interface addresses.
-     *
-     * @return string The information message.
-     */
-    public static function getInfoMessage(): string
-    {
-        $addresses = [
-            'local' => [],
-            'external' => []
-        ];
-        /** @var LanInterfaces $interface */
-        $interfaces = LanInterfaces::find("disabled='0'");
-        foreach ($interfaces as $interface) {
-            if (!empty($interface->ipaddr)) {
-                $addresses['local'][] = $interface->ipaddr;
-            }
-            if (!empty($interface->exthostname) && !in_array($interface->exthostname, $addresses['local'], true)) {
-                $addresses['external'][] = explode(':', $interface->exthostname)[0] ?? '';
-            }
-            if (!empty($interface->extipaddr) && !in_array($interface->extipaddr, $addresses['local'], true)) {
-                $addresses['external'][] = explode(':', $interface->extipaddr)[0] ?? '';
-            }
-        }
-        unset($interfaces);
-
-        // Local network
-        $port = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_HTTPS_PORT);
-        $info = PHP_EOL . "   The web interface is available at the local net addresses:" . PHP_EOL . PHP_EOL;
-        foreach ($addresses['local'] as $address) {
-            if (empty($address)) {
-                continue;
-            }
-            if ($port === '443'){
-                $info .= "  https://$address" . PHP_EOL;
-            } else {
-                $info .= "  https://$address:$port" . PHP_EOL;
-            }
-
-        }
-        $info .= PHP_EOL;
-
-        // External web address info
-        if (!empty($addresses['external'])) {
-            $info .= "   The web interface is available at the external addresses:" . PHP_EOL . PHP_EOL;
-            foreach ($addresses['external'] as $address) {
-                if (empty($address)) {
-                    continue;
-                }
-                if ($port === '443'){
-                    $info .= "  https://$address" . PHP_EOL;
-                } else {
-                    $info .= "  https://$address:$port" . PHP_EOL;
-                }
-            }
-            $info .= PHP_EOL;
-        }
-
-        // Default web user info
-        $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
-        $webAdminPassword = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
-        if ($cloudInstanceId === $webAdminPassword) {
-            $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
-            $info .= "  You should use the next credentials:" . PHP_EOL . PHP_EOL;
-            $info .= "      Login: $adminUser" . PHP_EOL . PHP_EOL;
-            $info .= "      Password: $cloudInstanceId" . PHP_EOL . PHP_EOL;
-        }
-
-        return $info;
     }
 
     /**
@@ -439,7 +368,7 @@ class Network extends Injectable
                 $nohupPath = Util::which('nohup');
 
                 // Obtain IP and wait for the process to finish
-                $workerPath = '/etc/rc/udhcpc.configure';
+                $workerPath = '/etc/rc/udhcpc_configure';
                 $options = '-t 6 -T 5 -q -n';
                 $arr_commands[] = "{$udhcpcPath} {$options} -i {$if_name} -x hostname:{$hostname} -s {$workerPath}";
                 // Start a new udhcpc process in the background
@@ -500,7 +429,7 @@ class Network extends Injectable
         $this->hostsGenerate();
 
         foreach ($eth_mtu as $eth) {
-            Processes::mwExecBg("/etc/rc/networking.set.mtu '{$eth}'");
+            Processes::mwExecBg("/etc/rc/networking_set_mtu '{$eth}'");
         }
 
         // Additional "manual" routes

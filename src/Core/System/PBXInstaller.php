@@ -269,7 +269,7 @@ class PBXInstaller extends Di\Injectable
     private function createStoragePartition()
     {
         echo " - Create storage partition...\n";
-        passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial.storage.part.four create /dev/{$this->target_disk}");
+        passthru("exec </dev/console >/dev/console 2>/dev/console; /etc/rc/initial_storage_part_four create /dev/{$this->target_disk}");
     }
 
     /**

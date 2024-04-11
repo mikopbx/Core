@@ -187,6 +187,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
         if ($this->booting === true && !empty($this->description)) {
             $this->stageMessage = "   |- generate config {$this->description}...";
             SystemMessages::echoWithSyslog($this->stageMessage);  // Output the message and log it in syslog
+            SystemMessages::echoToTeletype($this->stageMessage); // Output to TTY
         }
     }
 
@@ -213,7 +214,9 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     protected function echoDone(): void
     {
         if ($this->booting === true && !empty($this->description)) {
-            SystemMessages::echoResult($this->stageMessage); // Output the completion message
+            // Output the completion message
+            SystemMessages::echoResult($this->stageMessage);
+            SystemMessages::teletypeEchoResult($this->stageMessage);
             $this->stageMessage = '';
         }
     }

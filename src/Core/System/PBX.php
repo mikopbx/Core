@@ -374,7 +374,11 @@ class PBX extends Injectable
 
         self::dialplanReload();
         if ($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting) {
-            SystemMessages::echoResult('   |- dialplan reload');
+            $message = '   |- dialplan reload';
+            SystemMessages::echoToTeletype($message);
+            SystemMessages::echoWithSyslog($message);
+            SystemMessages::echoResult($message);
+            SystemMessages::teletypeEchoResult($message);
         }
         // Create the call history database.
         /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
@@ -399,9 +403,9 @@ class PBX extends Injectable
         if ($di === null) {
             return;
         }
-        $extensions = new ExtensionsConf();
-        $extensions->generateConfig();
         if ($di->getShared(RegistryProvider::SERVICE_NAME)->booting !== true) {
+            $extensions = new ExtensionsConf();
+            $extensions->generateConfig();
             $path_asterisk = Util::which('asterisk');
             Processes::mwExec("{$path_asterisk} -rx 'dialplan reload'");
             Processes::mwExec("{$path_asterisk} -rx 'module reload pbx_lua.so'");

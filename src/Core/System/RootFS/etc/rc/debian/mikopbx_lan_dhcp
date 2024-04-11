@@ -11,6 +11,6 @@ case "${reason}" in BOUND|RENEW|REBIND|REBOOT)
     }
 
     # Execute PHP script with specific configuration based on the lease event
-    /usr/bin/php -f /etc/rc/udhcpc.configure "${reason}"
+    /usr/bin/php -f /etc/rc/udhcpc_configure "${reason}"
 ;;
 esac
