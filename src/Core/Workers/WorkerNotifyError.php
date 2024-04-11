@@ -20,9 +20,11 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
+use Throwable;
 
 /**
  * WorkerNotifyError is a worker class responsible for checking the significant advices messages and sent it to system administrator.
@@ -45,19 +47,22 @@ class WorkerNotifyError extends WorkerBase
         // Retrieve the last error check timestamp from the cache
         $lastErrorsCheck = $managedCache->get($cacheKey);
         if ($lastErrorsCheck === null) {
-            $restResponse = AdvicesProcessor::callBack(['action' => 'getList']);
-            $errorMessages = $restResponse->data['advices']['error']??[];
-            if ($restResponse->success and $errorMessages!==[]) {
-                Notifications::sendAdminNotification('adv_ThereIsSomeTroublesWithMikoPBX', $errorMessages);
+            try {
+                $restResponse = AdvicesProcessor::callBack(['action' => 'getList']);
+                $errorMessages = $restResponse->data['advices']['error'] ?? [];
+                if ($restResponse->success and $errorMessages !== []) {
+                    Notifications::sendAdminNotification('adv_ThereIsSomeTroublesWithMikoPBX', $errorMessages);
+                }
+                // Store the current timestamp in the cache to track the last error check
+                $managedCache->set($cacheKey, time(), 3600); // Check every hour
+            } catch (Throwable $exception) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($exception);
             }
-
-            // Store the current timestamp in the cache to track the last error check
-            $managedCache->set($cacheKey, time(), 3600); // Check every hour
         }
 
     }
 
 }
 
-// Start worker process
+// Start a worker process
 WorkerNotifyError::startWorker($argv ?? []);
