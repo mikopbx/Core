@@ -91,19 +91,19 @@ class CreateMOHAudioFilesTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['The first MOH audio record 250Hz_44100Hz_16bit_05sec.wav'] = [
             [
                 'name' => 'The first MOH audio record',
                 'path'    => 'C:\Users\hello\Documents\audio\250Hz_44100Hz_16bit_05sec.wav',
             ]
         ];
-        $params[] = [
+        $params['The second MOH audio record blind_willie.mp3'] = [
             [
                 'name' => 'The second MOH audio record',
                 'path'    => 'C:\Users\hello\Documents\audio\blind_willie.mp3',
             ]
         ];
-        $params[] = [
+        $params['The third MOH audio record first_noel.mp3'] = [
             [
                 'name' => 'The third MOH audio record',
                 'path'    => 'C:\Users\hello\Documents\audio\first_noel.mp3',

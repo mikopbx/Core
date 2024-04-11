@@ -100,7 +100,7 @@ class CreateIAXProvidersTest extends MikoPBXTestsBaseAlias
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['VoxlinkIAX'] = [
             [
                 'type' => 'iax',
                 'uniqid' => 'IAX-1683372799',
@@ -113,7 +113,7 @@ class CreateIAXProvidersTest extends MikoPBXTestsBaseAlias
                 'manualattributes' => '',
             ]
         ];
-        $params[] = [
+        $params['VoxlinkIAX for delete'] = [
             [
                 'type' => 'iax',
                 'uniqid' => 'IAX-1683372823',

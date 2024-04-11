@@ -116,7 +116,7 @@ class CreateIVRMenusTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['Second IVR menu 20021'] = [
             [
                 'description' => 'Second level IVR menu, with extra menu items',
                 'name'        => 'Second IVR menu',
@@ -134,7 +134,7 @@ class CreateIVRMenusTest extends MikoPBXTestsBase
             ]
         ];
 
-        $params[] = [
+        $params['Main IVR menu 20020'] = [
             [
                 'description' => 'First level IVR menu, with agents numbers and another IVR menu included',
                 'name'        => 'Main IVR menu',

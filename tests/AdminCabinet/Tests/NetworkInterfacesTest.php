@@ -108,7 +108,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['eth0'] = [
             [
                 'name_0' => 'vlan22',
                 'interface_0' => '1',

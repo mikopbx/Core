@@ -93,13 +93,13 @@ class DeleteProviderTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['Mango office for delete'] = [
             [
                 'description' => 'Mango office for delete',
                 'possibleToDelete' => true
             ]
         ];
-        $params[] = [
+        $params['VoxlinkIAX for delete'] = [
             [
                 'description' => 'VoxlinkIAX for delete',
                 'possibleToDelete' => true

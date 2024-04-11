@@ -153,7 +153,7 @@ class CreateCallQueueTest extends MikoPBXTestsBaseAlias
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['Sales department <20020>'] = [
             [
                 'description' => 'Sales department queue, the first line of agents',
                 'name' => 'Sales department',
@@ -178,7 +178,7 @@ class CreateCallQueueTest extends MikoPBXTestsBaseAlias
                 'strategy' => 'linear'
             ]
         ];
-        $params[] = [
+        $params['Accountant department <20021>'] = [
             [
                 'description' => 'Accountant department queue, the second line of agents',
                 'name' => 'Accountant department',

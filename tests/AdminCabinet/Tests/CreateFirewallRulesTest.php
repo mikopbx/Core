@@ -102,7 +102,7 @@ class CreateFirewallRulesTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['MikoNetwork'] = [
             [
                 'description' => 'MikoNetwork',
                 'network' => '172.16.32.0',
@@ -119,7 +119,7 @@ class CreateFirewallRulesTest extends MikoPBXTestsBase
                 ],
             ]
         ];
-        $params[] = [
+        $params['Nikolay macbook'] = [
             [
                 'description' => 'Nikolay macbook',
                 'network' => '172.16.32.69',
@@ -136,7 +136,7 @@ class CreateFirewallRulesTest extends MikoPBXTestsBase
                 ],
             ]
         ];
-        $params[] = [
+        $params['MIKOVPN'] = [
             [
                 'description' => 'MIKOVPN',
                 'network' => '172.16.34.0',

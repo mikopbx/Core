@@ -111,7 +111,7 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['Nikita Telegrafov <246>'] = [
             [
                 'number'             => 246,
                 'email'              => 'ntele@miko.ru',

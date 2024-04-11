@@ -134,7 +134,7 @@ class CreateSIPProvidersTest extends MikoPBXTestsBaseAlias
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['PCTEL'] = [
             [
                 'type' => 'sip',
                 'uniqid' => 'SIP-1683372701',
@@ -155,7 +155,7 @@ class CreateSIPProvidersTest extends MikoPBXTestsBaseAlias
             ],
         ];
 
-        $params[] = [
+        $params['Mango office'] = [
             [
                 'type'              => 'sip',
                 'uniqid'            => 'SIP-1683372722',
@@ -177,7 +177,7 @@ class CreateSIPProvidersTest extends MikoPBXTestsBaseAlias
         ];
 
 
-        $params[] = [
+        $params['Provider for CTI tests'] = [
             [
                 'type'             => 'sip',
                 'uniqid'           => 'SIP-1683372744',
@@ -199,7 +199,7 @@ class CreateSIPProvidersTest extends MikoPBXTestsBaseAlias
             ],
         ];
 
-        $params[] = [
+        $params['Mango office for delete'] = [
             [
                 'type'              => 'sip',
                 'uniqid'            => 'SIP-1683372748',

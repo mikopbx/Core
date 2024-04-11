@@ -85,19 +85,19 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['The first conference room <11112>'] = [
             [
                 'name' => 'The first conference room',
                 'extension' => '11112',
             ]
         ];
-        $params[] = [
+        $params['The second conference room <11113>'] = [
             [
                 'name' => 'The second conference room',
                 'extension' => '11113',
             ]
         ];
-        $params[] = [
+        $params['The third conference room <11114>'] = [
             [
                 'name' => 'The third conference room',
                 'extension' => '11114',

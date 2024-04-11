@@ -157,7 +157,7 @@ class ChangeCallQueueTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params   = [];
-        $params[] = [
+        $params['Sales department2 <20025>'] = [
             [
                 'description'                      => 'Sales department queue, the first line of agents2',
                 'name'                             => 'Sales department2',

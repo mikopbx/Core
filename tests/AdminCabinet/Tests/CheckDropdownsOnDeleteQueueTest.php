@@ -139,7 +139,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['Accountant department for test dropdown'] = [
             [
                 'description' => 'Accountant department for test dropdown',
                 'name' => 'Accountant department for test dropdown',

@@ -97,13 +97,13 @@ class DeleteExtensionTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['Alexandra Pushina'] = [
             [
                 'username' => 'Alexandra Pushina',
                 'possibleToDelete' => true
             ]
         ];
-        $params[] = [
+        $params['Smith James'] = [
             [
                 'username' => 'Smith James',
                 'possibleToDelete' => false

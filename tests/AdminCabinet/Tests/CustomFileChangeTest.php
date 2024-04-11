@@ -117,7 +117,7 @@ class CustomFileChangeTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['crontabs'] = [
             [
                 'filePath' => '/var/spool/cron/crontabs/root',
                 'mode' => 'append',

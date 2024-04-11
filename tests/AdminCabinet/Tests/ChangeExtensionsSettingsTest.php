@@ -345,7 +345,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     {
 
         $params = [];
-        $params[] = [
+        $params['Alexandra Pushina <289>'] = [
             [
                 'number'   => 289,
                 'email'    => 'mask@miko.ru',

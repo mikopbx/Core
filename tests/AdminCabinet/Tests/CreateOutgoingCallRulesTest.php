@@ -106,7 +106,7 @@ class CreateOutgoingCallRulesTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['Local outgoing calls'] = [
             [
                 'rulename' => 'Local outgoing calls',
                 'note' => 'Calls only at local landlines',
@@ -118,7 +118,7 @@ class CreateOutgoingCallRulesTest extends MikoPBXTestsBase
                 'providerName' => '',
             ]
         ];
-        $params[] = [
+        $params['International outgoing calls'] = [
             [
                 'rulename' => 'International outgoing calls',
                 'note' => 'Calls to everywhere',
@@ -131,7 +131,7 @@ class CreateOutgoingCallRulesTest extends MikoPBXTestsBase
             ]
         ];
 
-        $params[] = [
+        $params['Outgoing calls for CTI tests 1'] = [
             [
                 'rulename' => 'Outgoing calls for CTI tests 1',
                 'note' => '',
@@ -144,7 +144,7 @@ class CreateOutgoingCallRulesTest extends MikoPBXTestsBase
             ]
         ];
 
-        $params[] = [
+        $params['Outgoing calls for CTI tests 2'] = [
             [
                 'rulename' => 'Outgoing calls for CTI tests 2',
                 'note' => '1. The client calls in the company

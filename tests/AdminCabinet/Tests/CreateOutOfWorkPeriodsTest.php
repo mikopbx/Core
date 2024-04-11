@@ -173,7 +173,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['OutOfWork new year holidays'] = [
             [
                 'description' => 'New year holidays',
                 'date_from' => '1 January, 2020',
@@ -189,7 +189,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
             ]
         ];
 
-        $params[] = [
+        $params['OutOfWork first May holidays'] = [
             [
                 'description' => 'First May holidays',
                 'date_from' => '1 May, 2020',
@@ -205,7 +205,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
             ]
         ];
 
-        $params[] = [
+        $params['OutOfWork Weekend'] = [
             [
                 'description' => 'Weekend',
                 'date_from' => '',
@@ -226,7 +226,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
             ]
         ];
 
-        $params[] = [
+        $params['OutOfWork morning'] = [
             [
                 'description' => 'OutOfWork morning',
                 'date_from' => '',
@@ -247,7 +247,7 @@ class CreateOutOfWorkPeriodsTest extends MikoPBXTestsBase
             ]
         ];
 
-        $params[] = [
+        $params['OutOfWork evening'] = [
             [
                 'description' => 'OutOfWork evening',
                 'date_from' => '',

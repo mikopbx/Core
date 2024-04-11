@@ -97,7 +97,7 @@ class CreateDialPlanApplicationTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['Test Dialplan application with plain text 132456789'] = [
             [
                 'extension' => '132456789',
                 'uniqid' => 'DIALPLAN-APP-146CBFBBF6EB4237EA15B2EC3E67B787',
@@ -122,7 +122,7 @@ n,Goto(5)',
             ]
         ];
 
-        $params[] = [
+        $params['1C MIKO SMART IVR 10000123'] = [
             [
                 'extension' => '10000123',
                 'uniqid' => 'DIALPLAN-APP-146CBFBBF6EB4237EA15B2EC3E67B784',

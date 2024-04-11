@@ -140,7 +140,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['Eugeniy Makrchev <235>'] = [
             [
                 'number'   => 235,
                 'email'    => 'emar@miko.ru',
@@ -155,7 +155,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
 callerid=2546456<240>',
 
             ]];
-        $params[] = [
+        $params['Nikolay Beketov <229>'] = [
             [
                 'number'   => 229,
                 'email'    => 'nuberk@miko.ru',
@@ -169,7 +169,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'',
                ]];
 
-        $params[] = [
+        $params['Svetlana Vlasova <223>'] = [
             [
                 'number'   => 223,
                 'email'    => 'svlassvlas@miko.ru',
@@ -182,7 +182,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'tcp',
                 'sip_manualattributes'=>'',
               ]];
-        $params[] = [
+        $params['Natalia Beketova <217>'] = [
             [
                 'number'   => 217,
                 'email'    => 'nanabek@miko.ru',
@@ -196,7 +196,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'',
 
                 ]];
-        $params[] = [
+        $params['Julia Efimova <206>'] = [
             [
                 'number'   => 206,
                 'email'    => 'bubuh@miko.ru',
@@ -209,7 +209,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Alisher Usmanov <231>'] = [
             [
                 'number'   => 231,
                 'email'    => 'alish@miko.ru',
@@ -222,7 +222,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'tls',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Ivan Maltsev <236>'] = [
             [
                 'number'   => 236,
                 'email'    => 'imalll@miko.ru',
@@ -236,7 +236,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'',
             ]];
 
-        $params[] = [
+        $params['Alexandr Medvedev <214>'] = [
             [
                 'number'   => 214,
                 'email'    => 'alex@miko.ru',
@@ -249,7 +249,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Anna Mzhelskaya <212>'] = [
             [
                 'number'   => 212,
                 'email'    => 'amzh@miko.ru',
@@ -262,7 +262,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Viktor Mitin <210>'] = [
             [
                 'number'   => 210,
                 'email'    => 'vmit@miko.ru',
@@ -275,7 +275,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Anton Pasutin <228>'] = [
             [
                 'number'   => 228,
                 'email'    => 'apas@miko.ru',
@@ -288,7 +288,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Kristina Perfileva <213>'] = [
             [
                 'number'   => 213,
                 'email'    => 'kper@miko.ru',
@@ -301,7 +301,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Alexey Portnov <204>'] = [
             [
                 'number'   => 204,
                 'email'    => 'apore@miko.ru',
@@ -314,7 +314,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Tatiana Portnova <233>'] = [
             [
                 'number'   => 233,
                 'email'    => 'tpora@miko.ru',
@@ -328,7 +328,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'',
 
             ]];
-        $params[] = [
+        $params['Alexandra Pushina <254>'] = [
             [
                 'number'   => 254,
                 'email'    => 'apushh@miko.ru',
@@ -341,7 +341,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Dmitri Fomichev <253>'] = [
             [
                 'number'   => 253,
                 'email'    => 'dfom@miko.ru',
@@ -355,7 +355,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'',
 
             ]];
-        $params[] = [
+        $params['Daria Holodova <230>'] = [
             [
                 'number'   => 230,
                 'email'    => 'dhol@miko.ru',
@@ -368,7 +368,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'tls',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Ilia Tsvetkov <219>'] = [
             [
                 'number'   => 219,
                 'email'    => 'icvetf@miko.ru',
@@ -382,7 +382,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'[endpoint]
 callerid=2546456<240>',
             ]];
-        $params[] = [
+        $params['Maxim Tsvetkov <240>'] = [
             [
                 'number'   => 240,
                 'email'    => 'mcvetfd@miko.ru',
@@ -396,7 +396,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'[endpoint]
 callerid=2546456<240>',
             ]];
-        $params[] = [
+        $params['Viktor Chentcov <251>'] = [
             [
                 'number'   => 251,
                 'email'    => 'vchen@miko.ru',
@@ -411,7 +411,7 @@ callerid=2546456<240>',
 callerid=2546456<251>',
 
             ]];
-        $params[] = [
+        $params['Evgenia Chulkova <234>'] = [
             [
                 'number'   => 234,
                 'email'    => 'esam@miko.ru',

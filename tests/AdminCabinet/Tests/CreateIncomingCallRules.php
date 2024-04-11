@@ -101,7 +101,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['First rule'] = [
             [
                 'rulename' => 'First rule',
                 'note' => '',
@@ -113,7 +113,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
             ],
         ];
 
-        $params[] = [
+        $params['Second rule'] = [
             [
                 'rulename' => 'Second rule',
                 'note' => '',
@@ -125,7 +125,7 @@ class CreateIncomingCallRules extends MikoPBXTestsBase
             ],
         ];
 
-        $params[] = [
+        $params['Rule for test provider'] = [
             [
                 'rulename' => 'Rule for test provider',
                 'note' => '1. The client calls in the company
