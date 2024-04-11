@@ -176,4 +176,26 @@ class SystemMessages extends Di\Injectable
         $logger->log($level, "{$message} on {$ident}");
     }
 
+
+    /**
+     * Echoes the starting message for a stage.
+     *
+     * @param string $message The message to echo.
+     */
+    public static function echoStartMsg(string $message): void
+    {
+        SystemMessages::echoToTeletype($message);
+        SystemMessages::echoWithSyslog($message);
+    }
+
+    /**
+     * Echoes the result message for a stage.
+     *
+     * @param string $result The result of the stage.
+     */
+    public static function echoResultMsg(string $message, string $result = SystemMessages::RESULT_DONE): void
+    {
+        SystemMessages::teletypeEchoResult($message, $result);
+        SystemMessages::echoResult($message, $result);
+    }
 }

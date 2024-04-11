@@ -72,7 +72,9 @@ class UpdateSystemConfig extends Di\Injectable
                 if (version_compare($previous_version, $releaseNumber, '<')) {
                     $processor = new $upgradeClass();
                     $processor->processUpdate();
-                    SystemMessages::echoResult(' - UpdateConfigs: Upgrade system up to ' . $releaseNumber . ' ');
+                    $message = ' - UpdateConfigs: Upgrade system up to ' . $releaseNumber . ' ';
+                    SystemMessages::echoStartMsg($message);
+                    SystemMessages::echoResultMsg($message);
                 }
             }
 
