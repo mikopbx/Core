@@ -440,7 +440,7 @@ class SystemLoader extends Di\Injectable
         // Default web user info
         $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
         $webAdminPassword = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
-        $defaultPassword = PbxSettings::getDefaultArrayValues(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
+        $defaultPassword = PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::WEB_ADMIN_PASSWORD];
         if ($cloudInstanceId === $webAdminPassword || $webAdminPassword===$defaultPassword) {
             $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
             $info .= PHP_EOL . "│    🔑 Default Credentials:                     │";
