@@ -101,7 +101,7 @@ fi
 
 # Running a system check for updates
 echoToTeletype
-echoToTeletype " - Start /sbin/check-update-pbx..."
+echoToTeletype " - Start /sbin/check-update-pbx script ..."
 /sbin/check-update-pbx
 
 # If the system is rebooting, terminate the script
@@ -111,9 +111,9 @@ fi
 
 # Mounting offload and configuration directories
 echoToTeletype
-echoToTeletype " - Start /sbin/mountoffload..."
+echoToTeletype " - Start /sbin/mountoffload script..."
 /sbin/mountoffload
-echoToTeletype " - Start /etc/rc/mountconfdir..."
+echoToTeletype " - Start /etc/rc/mountconfdir script..."
 /etc/rc/mountconfdir
 
 # Booting up the system

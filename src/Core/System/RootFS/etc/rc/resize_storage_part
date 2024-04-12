@@ -106,9 +106,9 @@ echo " - Delta: ${delta}Mb"
 portion=$((delta * 10000 / total))
 if [[ "$portion" -le 500 ]]; then
     # The delta is less than or equal to 5 percent, so no resizing will be performed
-    echo " - delta is less than five percent.";
-    echo " - the partition size will not be changed.";
-    sleep 1;
+    echo " - The delta is less than or equal to 5 percent from the old partition size.";
+    echo " - No resizing will be performed.";
+    sleep 10;
     exit 3;
 fi;
 
@@ -183,4 +183,5 @@ perform_fs_operations() {
 perform_fs_operations "$partitionName"
 
 echo " - Resize of the storage disk was successfully done."
+sleep 5
 exit 0

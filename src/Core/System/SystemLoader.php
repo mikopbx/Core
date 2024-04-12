@@ -347,10 +347,18 @@ class SystemLoader extends Di\Injectable
         $nginx->reStart();
         $this->echoResultMsg();
 
-        // Display network information
-        $this->echoStartMsg(SystemMessages::getInfoMessage(true));
-
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
+
+        // Display network information
+        $headerMessage = "All services are fully loaded welcome";
+        $welcomeMessage = SystemMessages::getInfoMessage($headerMessage,true);
+        $this->echoStartMsg($welcomeMessage);
+
+        if (!$this->isDocker){
+            // Display the console menu info
+            $message =  PHP_EOL. PHP_EOL.'Run /etc/rc/console_menu if you want to start the console menu...' . PHP_EOL;
+            SystemMessages::echoToTeletype($message);
+        }
 
         return true;
     }

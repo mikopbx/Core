@@ -108,7 +108,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         $message = 'browserstack_executor: ' . json_encode($data, JSON_PRETTY_PRINT);
 
         // Execute the script with the encoded message
-        self::$driver->executeScript($message);
+        // Temporary disable because of many problems on BrowserStack self::$driver->executeScript($message);
     }
 
     /**
@@ -160,7 +160,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         $message = 'browserstack_executor: ' . json_encode($data, JSON_PRETTY_PRINT);
 
         // Execute the script with the encoded message
-        self::$driver->executeScript($message);
+        // Temporary disable because of many problems on BrowserStack  self::$driver->executeScript($message);
     }
 
     /**
@@ -183,7 +183,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         $message = 'browserstack_executor: ' . json_encode($data, JSON_PRETTY_PRINT);
 
         // Execute the script with the encoded message
-        self::$driver->executeScript($message);
+        // Temporary disable because of many problems on BrowserStack  self::$driver->executeScript($message);
     }
 
     /**

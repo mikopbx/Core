@@ -36,8 +36,8 @@ class SetDateAction extends \Phalcon\Di\Injectable
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $res->success           = true;
-        $res->success = System::setDate($data['timestamp'], $data['userTimeZone']);
+        $timeStamp = intval($data['timestamp']);
+        $res->success = System::setDate($timeStamp, $data['userTimeZone']);
         return $res;
     }
 }

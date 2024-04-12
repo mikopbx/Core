@@ -204,19 +204,24 @@ class SystemMessages extends Di\Injectable
 
     /**
      * Retrieves the information message containing available web interface addresses.
+     * @param string $header Message header
      * @param bool $showCredentials Optional, if true the message will have the login information
      * @return string The information message.
      */
-    public static function getInfoMessage(bool $showCredentials=false): string
+    public static function getInfoMessage(string $header, bool $showCredentials=false): string
     {
         // Assuming a total width of 53 characters for each line
         $lineWidth = 53;
-
+        $version = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
         $info = PHP_EOL . "+-----------------------------------------------+";
         $info .= PHP_EOL . "|                                                |";
-        $headerSpace = $lineWidth - 3 - 5; // 3 for "|     MikoPBX - All services are fully loaded  " and 5 for " |" at the end
-        $headerLine = sprintf("|  %-{$headerSpace}s |", " MikoPBX - All services are fully loaded ");
+        $headerSpace = $lineWidth - 5 - 5; // 5 for "|     MikoPBX - All services are fully loaded" and 5 for " |" at the end
+        $headerLine = sprintf("|    %-{$headerSpace}s |", $header);
         $info .= PHP_EOL . $headerLine;
+        $info .= PHP_EOL . "|                                                |";
+        $versionSpace = $lineWidth - 5 - 5; // 5 for "|     MikoPBX - 2024.1.24-dev" and 5 for " |" at the end
+        $versionLine = sprintf("|    %-{$versionSpace}s |", 'MikoPBX '.$version);
+        $info .= PHP_EOL . $versionLine;
         $info .= PHP_EOL . "|                                                |";
         $info .= PHP_EOL . "+-----------------------------------------------+";
 
@@ -249,14 +254,14 @@ class SystemMessages extends Di\Injectable
         $info .= PHP_EOL . "|                                                |";
         $info .= PHP_EOL . "|    Local Network Address:                      |";
 
-        $addressSpace = $lineWidth - 7 - 5; // 7 for "|    ➜ " and 5 for " |" at the end
+        $addressSpace = $lineWidth - 5 - 5; // 7 for "|    ➜ " and 5 for " |" at the end
         foreach ($addresses['local'] as $address) {
             if (empty($address)) {
                 continue;
             }
             $formattedAddress = $port === '443' ? "https://$address" : "https://$address:$port";
             // Use sprintf to format the string with padding to ensure constant length
-            $info .= PHP_EOL . sprintf("|    ➜ %-{$addressSpace}s |", $formattedAddress);
+            $info .= PHP_EOL . sprintf("|    %-{$addressSpace}s |", $formattedAddress);
 
         }
         $info .= PHP_EOL . "|                                                |";
@@ -270,7 +275,7 @@ class SystemMessages extends Di\Injectable
                 }
                 $formattedAddress = $port === '443' ? "https://$address" : "https://$address:$port";
                 // Use sprintf to format the string with padding to ensure constant length
-                $info .= PHP_EOL . sprintf("|    ➜ %-{$addressSpace}s |", $formattedAddress);
+                $info .= PHP_EOL . sprintf("|    %-{$addressSpace}s |", $formattedAddress);
 
             }
             $info .= PHP_EOL . "|                                                |";
@@ -285,7 +290,7 @@ class SystemMessages extends Di\Injectable
                 $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
 
                 $credentialSpace = $lineWidth - 5 - 3; // 5 for "|     Default Credentials: " and 3 for " |"
-                $credentialLine = sprintf("|    %-{$credentialSpace}s |", " Default web credentials:");
+                $credentialLine = sprintf("|    %-{$credentialSpace}s |", "Default web credentials:");
                 $info .= PHP_EOL . $credentialLine;
                 // Login
                 $loginSpace = $lineWidth - 12 - 5; // 12 for "|    Login: " and 5 for " |" at the end

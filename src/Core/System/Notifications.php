@@ -106,7 +106,7 @@ class Notifications
         foreach ($messages as $message) {
             $text .= '<br>' . Util::translate($message, false);
         }
-        $text = $text . '<br><br>' . SystemMessages::getInfoMessage();
+        $text = $text . '<br><br>' . SystemMessages::getInfoMessage("The MikoPBX connection information");
 
         // Get the admin email address from PbxSettings.
         $adminMail = PbxSettings::getValueByKey(PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL);

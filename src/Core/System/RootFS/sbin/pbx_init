@@ -46,7 +46,8 @@ while : ; do
     fi
 
     if [ -f /tmp/rebooting ]; then
-        echo "Waiting for a reboot (${0})";
+        echo "Waiting for a reboot (${0}) you can cancel it executing rm /tmp/rebooting";
+        echoToTeletype "Waiting for a reboot (${0}) you can cancel it executing rm /tmp/rebooting"
 
         # Waiting timeout
         WAIT_TIME=10
@@ -56,6 +57,7 @@ while : ; do
             if [ ! -f /tmp/rebooting ]; then
                 # Flag file was deleted
                 echo "System reboot was cancelled"
+                echoToTeletype "System reboot was cancelled"
                 exit 0
             fi
             sleep 1
