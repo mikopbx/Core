@@ -993,10 +993,10 @@ class Storage extends Di\Injectable
      * Retrieves the storage device for the given disk.
      *
      * @param array $disk The disk information.
-     * @param string $cfDisk The cf_disk information.
+     * @param string $cf_disk The cf_disk information.
      * @return string The storage device path.
      */
-    private function getStorageDev($disk, $cf_disk): string
+    private function getStorageDev(array $disk, string $cf_disk): string
     {
         if (!empty($disk['uniqid']) && strpos($disk['uniqid'], 'STORAGE-DISK') === false) {
             // Find the partition name by UID.

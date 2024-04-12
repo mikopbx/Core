@@ -638,8 +638,6 @@ class ConsoleMenu
                         sleep(2);
                         exit(0);
                     }
-
-                    passthru('/sbin/freestorage');
                     passthru('/etc/rc/resize_storage_part ' . escapeshellarg($data->device), $return_var);
                     echo "resize storage return $return_var";
                     sleep(2);
