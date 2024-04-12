@@ -208,102 +208,108 @@ class SystemMessages extends Di\Injectable
      * @param bool $showCredentials Optional, if true the message will have the login information
      * @return string The information message.
      */
-    public static function getInfoMessage(string $header, bool $showCredentials=false): string
-    {
-        // Assuming a total width of 53 characters for each line
-        $lineWidth = 53;
+    public static function getInfoMessage(string $header, bool $showCredentials = false): string {
+        $lineWidth = 70;
+        $borderLine = str_repeat('+', $lineWidth);
+        $emptyLine = "|" . str_repeat(' ', $lineWidth - 2) . "|";
         $version = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
-        $info = PHP_EOL . "+-----------------------------------------------+";
-        $info .= PHP_EOL . "|                                                |";
-        $headerSpace = $lineWidth - 5 - 5; // 5 for "|     MikoPBX - All services are fully loaded" and 5 for " |" at the end
-        $headerLine = sprintf("|    %-{$headerSpace}s |", $header);
-        $info .= PHP_EOL . $headerLine;
-        $info .= PHP_EOL . "|                                                |";
-        $versionSpace = $lineWidth - 5 - 5; // 5 for "|     MikoPBX - 2024.1.24-dev" and 5 for " |" at the end
-        $versionLine = sprintf("|    %-{$versionSpace}s |", 'MikoPBX '.$version);
-        $info .= PHP_EOL . $versionLine;
-        $info .= PHP_EOL . "|                                                |";
-        $info .= PHP_EOL . "+-----------------------------------------------+";
 
-        $addresses = [
-            'local' => [],
-            'external' => []
-        ];
-        /** @var LanInterfaces $interface */
+        $info = PHP_EOL . $borderLine;
+        $info .= PHP_EOL . self::formatLine($header, $lineWidth, 'center');
+        $info .= PHP_EOL . self::formatLine("MikoPBX " . $version, $lineWidth, 'center');
+        $info .= PHP_EOL . $borderLine;
+
+        $addresses = self::getNetworkAddresses();
+        $port = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_HTTPS_PORT);
+        $info .= PHP_EOL . self::formatLine("Web Interface Access", $lineWidth, 'center');
+        $info .= PHP_EOL . $emptyLine;
+
+        foreach (['local' => "Local Network Address:", 'external' => "External Network Address:"] as $type => $label) {
+            if (!empty($addresses[$type])) {
+                $info .= PHP_EOL . self::formatLine($label, $lineWidth);
+                foreach ($addresses[$type] as $address) {
+                    $formattedAddress = $port === '443' ? "https://$address" : "https://$address:$port";
+                    $info .= PHP_EOL . self::formatLine($formattedAddress, $lineWidth);
+                }
+                $info .= PHP_EOL . $emptyLine;
+            }
+        }
+
+        if ($showCredentials) {
+            $info .= PHP_EOL . self::showCredentials($lineWidth);
+        }
+
+        $info .= PHP_EOL . $emptyLine  . PHP_EOL .$borderLine. PHP_EOL;
+        return $info;
+    }
+
+
+    /**
+     * Formats a given string to fit within a specified width inside a text box.
+     *
+     * This function formats a line by applying padding around the text to align it
+     * according to the specified alignment parameter. It can align text to the left (default)
+     * or center it within the line. The line is framed with vertical bars on each side.
+     *
+     * @param string $content The text content to be formatted within the line.
+     * @param int $lineWidth The total width of the line, including the border characters.
+     * @param string $align The text alignment within the line. Valid values are 'left' or 'center'.
+     *                      Default is 'left', which aligns the text to the left with padding on the right.
+     *                      If set to 'center', the text will be centered with padding on both sides.
+     *
+     * @return string The formatted line with the text aligned as specified.
+     */
+    private static function formatLine(string $content, int $lineWidth, string $align = 'left'): string {
+        $padding = $lineWidth - 4 - mb_strlen($content);  // 4 characters are taken by the borders "| "
+        if ($align === 'center') {
+            // Center the content by splitting the padding on both sides
+            $leftPadding = intdiv($padding, 2);
+            $rightPadding = $padding - $leftPadding;
+            return "| " . str_repeat(' ', $leftPadding) . $content . str_repeat(' ', $rightPadding) . " |";
+        } else {
+            // Left align the content (default behavior)
+            return "| " . $content . str_repeat(' ', $padding) . " |";
+        }
+    }
+
+
+    /**
+     * Retrieves the local and external network addresses.
+     * @return array|array[]
+     */
+    private static function getNetworkAddresses(): array {
+        $addresses = ['local' => [], 'external' => []];
         $interfaces = LanInterfaces::find("disabled='0'");
         foreach ($interfaces as $interface) {
             if (!empty($interface->ipaddr)) {
                 $addresses['local'][] = $interface->ipaddr;
             }
-            if (!empty($interface->exthostname) && !in_array($interface->exthostname, $addresses['local'], true)) {
-                $addresses['external'][] = explode(':', $interface->exthostname)[0] ?? '';
+            if (!empty($interface->exthostname)) {
+                $addresses['external'][] = strtok($interface->exthostname, ':');
             }
-            if (!empty($interface->extipaddr) && !in_array($interface->extipaddr, $addresses['local'], true)) {
-                $addresses['external'][] = explode(':', $interface->extipaddr)[0] ?? '';
-            }
-        }
-        unset($interfaces);
-
-
-        // Local network
-        $port = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_HTTPS_PORT);
-        $info .= PHP_EOL . "|                                                |";
-        $headerSpace = $lineWidth - 13 - 5; // 13 for "|    Web Interface Access " and 5 for " |"
-        $headerLine = sprintf("|            %-{$headerSpace}s |", " Web Interface Access ");
-        $info .= PHP_EOL . $headerLine;
-        $info .= PHP_EOL . "|                                                |";
-        $info .= PHP_EOL . "|    Local Network Address:                      |";
-
-        $addressSpace = $lineWidth - 5 - 5; // 7 for "|    ➜ " and 5 for " |" at the end
-        foreach ($addresses['local'] as $address) {
-            if (empty($address)) {
-                continue;
-            }
-            $formattedAddress = $port === '443' ? "https://$address" : "https://$address:$port";
-            // Use sprintf to format the string with padding to ensure constant length
-            $info .= PHP_EOL . sprintf("|    %-{$addressSpace}s |", $formattedAddress);
-
-        }
-        $info .= PHP_EOL . "|                                                |";
-
-        // External web address info
-        if (!empty($addresses['external'])) {
-            $info .= PHP_EOL . "|    External Network Address:                   |";
-            foreach ($addresses['external'] as $address) {
-                if (empty($address)) {
-                    continue;
-                }
-                $formattedAddress = $port === '443' ? "https://$address" : "https://$address:$port";
-                // Use sprintf to format the string with padding to ensure constant length
-                $info .= PHP_EOL . sprintf("|    %-{$addressSpace}s |", $formattedAddress);
-
-            }
-            $info .= PHP_EOL . "|                                                |";
-        }
-
-        if ($showCredentials) {
-            // Default web user info
-            $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
-            $webAdminPassword = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
-            $defaultPassword = PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::WEB_ADMIN_PASSWORD];
-            if ($cloudInstanceId === $webAdminPassword || $webAdminPassword === $defaultPassword) {
-                $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
-
-                $credentialSpace = $lineWidth - 5 - 3; // 5 for "|     Default Credentials: " and 3 for " |"
-                $credentialLine = sprintf("|    %-{$credentialSpace}s |", "Default web credentials:");
-                $info .= PHP_EOL . $credentialLine;
-                // Login
-                $loginSpace = $lineWidth - 12 - 5; // 12 for "|    Login: " and 5 for " |" at the end
-                $loginLine = sprintf("|    Login: %-{$loginSpace}s |", $adminUser); // Format the login line
-                $info .= PHP_EOL . $loginLine;
-
-                // Password
-                $passwordSpace = $lineWidth - 15 - 5; // 15 for "|    Password: " and 5 for " |" at the end
-                $passwordLine = sprintf("|    Password: %-{$passwordSpace}s |", $cloudInstanceId); // Format the password line
-                $info .= PHP_EOL . $passwordLine;
+            if (!empty($interface->extipaddr)) {
+                $addresses['external'][] = strtok($interface->extipaddr, ':');
             }
         }
-        $info .= PHP_EOL . "+-----------------------------------------------+" . PHP_EOL . PHP_EOL;
-        return $info;
+        return $addresses;
+    }
+
+    /**
+     * Retrieves the information message containing available web interface addresses.
+     * @param int $lineWidth
+     * @return string
+     */
+    private static function showCredentials(int $lineWidth): string {
+        $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
+        $webAdminPassword = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
+        $defaultPassword = PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::WEB_ADMIN_PASSWORD];
+        if ($cloudInstanceId === $webAdminPassword || $webAdminPassword === $defaultPassword) {
+            $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
+            $info = self::formatLine("Default web credentials:", $lineWidth);
+            $info .= PHP_EOL . self::formatLine("   Login: $adminUser", $lineWidth);
+            $info .= PHP_EOL . self::formatLine("   Password: $cloudInstanceId", $lineWidth);
+            return $info;
+        }
+        return '';
     }
 }

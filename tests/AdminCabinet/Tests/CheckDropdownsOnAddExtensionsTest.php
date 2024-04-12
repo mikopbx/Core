@@ -77,7 +77,7 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         }
 
         $createExtension = new CreateExtensionsTest();
-        $createExtension->testCreateExtensions($this->additionProvider()[0][0]);
+        $createExtension->testCreateExtensions($this->additionProvider()['Nikita Telegrafov <246>'][0]);
 
         // Routing
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');

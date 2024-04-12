@@ -354,7 +354,7 @@ class SystemLoader extends Di\Injectable
         $welcomeMessage = SystemMessages::getInfoMessage($headerMessage,true);
         $this->echoStartMsg($welcomeMessage);
 
-        if (!$this->isDocker){
+         if (!$this->isDocker){
             // Display the console menu info
             $message =  PHP_EOL. PHP_EOL.'Run /etc/rc/console_menu if you want to start the console menu...' . PHP_EOL;
             SystemMessages::echoToTeletype($message);

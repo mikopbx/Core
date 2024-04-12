@@ -75,7 +75,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Create Call queue
         $createCallQueue = new CreateCallQueueTest();
-        $createCallQueue->testCreateCallQueue($this->additionProvider()[0][0]);
+        $createCallQueue->testCreateCallQueue($this->additionProvider()['Accountant department for test dropdown'][0]);
 
         // Routing
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
@@ -103,7 +103,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Delete Call queue
         $deleteCallQueue = new DeleteCallQueueTest();
-        $deleteCallQueue->testDeleteCallQueue($this->additionProvider()[0][0]);
+        $deleteCallQueue->testDeleteCallQueue($this->additionProvider()['Accountant department for test dropdown'][0]);
 
         // Check again
 
