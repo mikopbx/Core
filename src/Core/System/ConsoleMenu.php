@@ -642,6 +642,7 @@ class ConsoleMenu
                     echo "resize storage return $return_var";
                     sleep(2);
                     if ($return_var === 0) {
+                        file_put_contents('/tmp/ejectcd', '');
                         $pbx_rebootPath = Util::which('pbx_reboot');
                         Processes::mwExecBg($pbx_rebootPath);
                     }
