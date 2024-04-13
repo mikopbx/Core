@@ -56,23 +56,8 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
     public function testInstallModule(array $params): void
     {
         $this->clickSidebarMenuItemByHref("/admin-cabinet/pbx-extension-modules/index/");
-        $this->changeTabOnCurrentPage('installed');
 
-        // Delete old module
-        $xpath = $this->getDeleteButtonXpath($params['moduleId'] );
-        try {
-            $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $tableButtonModify->click();
-            sleep(2);
-            $tableButtonModify->click();
-
-        } catch (NoSuchElementException $e) {
-            echo('Not found row with module =' . $params['moduleId'] . ' on this page before installation. It is OK!' . PHP_EOL);
-        } catch (Exception $e) {
-            echo('Unknown error ' . $e->getMessage() . PHP_EOL);
-        }
-
-        // Install new one
+        // Install new module
         $this->changeTabOnCurrentPage('marketplace');
         $xpath = $this->getInstallButtonXpath($params['moduleId'] );
         try {
@@ -103,8 +88,6 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
         }
 
         // Wait for the installation and test it
-        sleep(15);
-        $this->changeTabOnCurrentPage('installed');
 
         try {
             // Initialize WebDriverWait with a timeout of 120 seconds

@@ -110,30 +110,33 @@ const marketplace = {
      */
     cbParseModuleUpdates(response) {
         marketplace.$marketplaceLoader.hide();
-        response.modules.forEach((obj) => {
-            // Check if this module is compatible with the PBX based on version number
-            const minAppropriateVersionPBX = obj.min_pbx_version;
-            const newModuleVersion = obj.version;
-            const currentVersionPBX = marketplace.pbxVersion;
-            if (marketplace.versionCompare(currentVersionPBX, minAppropriateVersionPBX) < 0) {
-                return;
-            }
 
-            // Add new module row
-            marketplace.addModuleDescription(obj);
-
-            // Check if the module is already installed and offer an update
-            const $moduleRow = $(`tr.module-row[data-id=${obj.uniqid}]`);
-            if ($moduleRow.length > 0) {
-                const installedVer = $moduleRow.find('td.version').text();
-                const versionCompareResult = marketplace.versionCompare(newModuleVersion, installedVer);
-                if ( versionCompareResult > 0) {
-                    marketplace.addUpdateButtonToRow(obj);
-                }  else if ( versionCompareResult === 0) {
-                    marketplace.changeDownloadButtonOnRow(obj);
+        if (response && Array.isArray(response.modules)) {
+            response.modules.forEach((obj) => {
+                // Check if this module is compatible with the PBX based on version number
+                const minAppropriateVersionPBX = obj.min_pbx_version;
+                const newModuleVersion = obj.version;
+                const currentVersionPBX = marketplace.pbxVersion;
+                if (marketplace.versionCompare(currentVersionPBX, minAppropriateVersionPBX) < 0) {
+                    return;
                 }
-            }
-        });
+
+                // Add new module row
+                marketplace.addModuleDescription(obj);
+
+                // Check if the module is already installed and offer an update
+                const $moduleRow = $(`tr.module-row[data-id=${obj.uniqid}]`);
+                if ($moduleRow.length > 0) {
+                    const installedVer = $moduleRow.find('td.version').text();
+                    const versionCompareResult = marketplace.versionCompare(newModuleVersion, installedVer);
+                    if (versionCompareResult > 0) {
+                        marketplace.addUpdateButtonToRow(obj);
+                    } else if (versionCompareResult === 0) {
+                        marketplace.changeDownloadButtonOnRow(obj);
+                    }
+                }
+            });
+        }
 
         if ($('tr.new-module-row').length>0){
             marketplace.$noNewModulesSegment.hide();
