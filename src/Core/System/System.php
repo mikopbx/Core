@@ -122,18 +122,13 @@ class System extends Di\Injectable
 
     /**
      * Returns the directory where logs are stored.
+     * @depricated use Directories::getDir(Directories::CORE_LOGS_DIR);
      *
      * @return string - Directory path where logs are stored.
      */
     public static function getLogDir(): string
     {
-        $di = Di::getDefault();
-        if ($di !== null) {
-            return $di->getConfig()->path('core.logsDir');
-        }
-
-        // Default logs directory
-        return '/var/log';
+        return Directories::getDir(Directories::CORE_LOGS_DIR);
     }
 
     /**

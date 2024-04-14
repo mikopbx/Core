@@ -55,7 +55,7 @@ class Directories extends Di\Injectable
         self::CORE_MODULES_DIR => '/mountpoint/mikopbx/custom_modules',
         self::CORE_TEMP_DIR => '/mountpoint/mikopbx/tmp',
         self::CORE_CONF_BACKUP_DIR => '/mountpoint/mikopbx/backup/db',
-        self::CORE_LOGS_DIR => '/mountpoint/mikopbx/log',
+        self::CORE_LOGS_DIR => '/var/log',
         self::CORE_MEDIA_MOUNT_POINT_DIR => '/mountpoint',
         self::CORE_FAIL2AN_DB_DIR => '/mountpoint/mikopbx/fail2ban',
         self::AST_VAR_LIB_DIR => '/offload/asterisk',

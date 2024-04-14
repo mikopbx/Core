@@ -48,6 +48,12 @@ class SyslogConf extends Injectable
         if(!empty($pidSyslogD)){
             $logreadPath = Util::which('logread');
             Processes::mwExec("$logreadPath  2>/dev/null >> " . self::SYS_LOG_LINK);
+            $oldLogPath = self::SYS_LOG_LINK;
+            if (!is_link($oldLogPath)) {
+                $newLogPath = self::getSyslogFile();
+                $catPath = Util::which('cat');
+                Processes::mwExec("$catPath $oldLogPath >> $newLogPath");
+            }
             Processes::killByName('syslogd');
         }
         Processes::safeStartDaemon(self::PROC_NAME, '-n');
@@ -78,6 +84,7 @@ class SyslogConf extends Injectable
     }
 
     /**
+     * Returns the path to the syslog file.
      * @param string $name
      * @return string
      */
@@ -85,7 +92,11 @@ class SyslogConf extends Injectable
     {
         $logDir = System::getLogDir() . '/system';
         Util::mwMkdir($logDir);
-        return "$logDir/$name";
+        $logFileName = $logDir . '/' . $name;
+        if (!file_exists($logFileName)){
+            file_put_contents($logFileName, '');
+        }
+        return "$logFileName";
     }
 
     /**

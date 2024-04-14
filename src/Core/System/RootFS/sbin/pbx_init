@@ -46,8 +46,8 @@ while : ; do
     fi
 
     if [ -f /tmp/rebooting ]; then
-        echo "Waiting for a reboot (${0}) you can cancel it executing rm /tmp/rebooting";
-        echoToTeletype "Waiting for a reboot (${0}) you can cancel it executing rm /tmp/rebooting"
+        echo "Reboot pending (${0}). Cancel with rm /tmp/rebooting";
+        echoToTeletype "Reboot pending (${0}). Cancel with rm /tmp/rebooting"
 
         # Waiting timeout
         WAIT_TIME=10
