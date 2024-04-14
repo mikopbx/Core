@@ -307,7 +307,7 @@ class SystemMessages extends Di\Injectable
             $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
             $info = self::formatLine("Default web credentials:", $lineWidth);
             $info .= PHP_EOL . self::formatLine("   Login: $adminUser", $lineWidth);
-            $info .= PHP_EOL . self::formatLine("   Password: $cloudInstanceId", $lineWidth);
+            $info .= PHP_EOL . self::formatLine("   Password: $webAdminPassword", $lineWidth);
             return $info;
         }
         return '';

@@ -1146,7 +1146,7 @@ return [
     'topMenu_SearchPlaceholder' => 'Введите поисковый запрос',
     'topMenu_SidebarButton' => 'Меню',
     'MIKO_PBX' => 'МИКО PBX',
-    'PBX is running in Live or Recovery mode' => 'Система загружена в режиме восстановления',
+    'PBX is running in Live or Recovery mode' => 'Система загружена в режиме восстановления (Live CD)',
     'LAN IP address assigned via DHCP' => 'LAN IP назначен через DHCP сервер',
     'LAN IP address' => 'LAN IP установлен вручную',
     'VLAN IP address assigned via' => 'VLAN IP: работает через',

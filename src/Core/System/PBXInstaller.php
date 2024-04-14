@@ -80,8 +80,6 @@ class PBXInstaller extends Di\Injectable
                 $this->proceedInstallation();
             }
         }
-
-
     }
 
     /**

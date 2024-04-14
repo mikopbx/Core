@@ -55,7 +55,7 @@ class PBXRecovery
     {
         $this->fp      = fopen('php://stdin', 'r');
         $this->storage = new Storage();
-        $this->DEVICE  = $this->storage->getRecoverDiskName();
+        $this->DEVICE  = basename($this->storage->getRecoverDiskName());
         $this->VERSION = trim(file_get_contents('/offload/version'));
     }
 
