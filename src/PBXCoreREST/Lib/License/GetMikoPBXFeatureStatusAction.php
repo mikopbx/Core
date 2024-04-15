@@ -66,11 +66,11 @@ class GetMikoPBXFeatureStatusAction extends \Phalcon\Di\Injectable
                     $cacheTimeout = 86400;
                 }
                 $res->success =  $lastMikoPBXFeatureInfo['success'];
-                $res->messages = $lastMikoPBXFeatureInfo['messages'];
+                $res->messages = $lastMikoPBXFeatureInfo['messages']??[];
                 $managedCache->set($cacheKey, $lastMikoPBXFeatureInfo, $cacheTimeout); // Check not often than every 2 minutes
             } else {
                 $res->success = $lastMikoPBXFeatureInfo['success'];
-                $res->messages = $lastMikoPBXFeatureInfo['messages'];
+                $res->messages = $lastMikoPBXFeatureInfo['messages']??[];
             }
         } else {
             $res->success = false;

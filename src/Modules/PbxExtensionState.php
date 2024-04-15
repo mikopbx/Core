@@ -211,8 +211,8 @@ class PbxExtensionState extends Injectable
                 $newRule->portto          = $detailRule['portto'];
                 $newRule->category        = $key;
                 $newRule->action          = $record['action'];
-                $newRule->portFromKey     = $detailRule['portFromKey'];
-                $newRule->portToKey       = $detailRule['portToKey'];
+                $newRule->portFromKey     = $detailRule['portFromKey']??$detailRule['name'];
+                $newRule->portToKey       = $detailRule['portToKey']??$detailRule['name'];
                 $newRule->description     = $detailRule['name'];
 
                 if (array_key_exists($network->id, $previousRules)) {
