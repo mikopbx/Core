@@ -43,7 +43,7 @@ use MikoPBX\PBXCoreREST\Controllers\
     Firewall\PostController as FirewallPostController,
     Files\GetController as FilesGetController,
     Files\PostController as FilesPostController,
-    Advices\GetController as AdvicesGetController,
+    Advice\GetController as AdviceGetController,
     Extensions\GetController as ExtensionsGetController,
     Extensions\PostController as ExtensionsPostController,
     CallQueues\GetController as CallQueuesGetController,
@@ -168,7 +168,7 @@ class RouterProvider implements ServiceProviderInterface
             [FilesGetController::class, 'callAction', '/pbxcore/api/files/{actionName}', 'get', '/'],
             [FilesPostController::class, 'callAction', '/pbxcore/api/files/{actionName}', 'post', '/'],
 
-            [AdvicesGetController::class, 'callAction', '/pbxcore/api/advices/{actionName}', 'get', '/'],
+            [AdviceGetController::class, 'callAction', '/pbxcore/api/advice/{actionName}', 'get', '/'],
 
             [ExtensionsGetController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'get', '/'],
             [ExtensionsPostController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'post', '/'],

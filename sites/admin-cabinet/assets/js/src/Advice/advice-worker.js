@@ -20,9 +20,9 @@
 
 /**
  * Advice Worker module.
- * @module advicesWorker
+ * @module adviceWorker
  */
-const advicesWorker = {
+const adviceWorker = {
 
     /**
      * Time in milliseconds before fetching new advice.
@@ -40,31 +40,31 @@ const advicesWorker = {
      * jQuery element for advice container.
      * @type {jQuery}
      */
-    $advices: $('#advices'),
+    $advice: $('#advice'),
 
     /**
      * jQuery element for advice bell button.
      * @type {jQuery}
      */
-    $advicesBellButton: $('#show-advices-button'),
+    $adviceBellButton: $('#show-advice-button'),
 
     /**
      * Initializes the advice worker.
      */
     initialize() {
-        advicesWorker.showPreviousAdvice();
+        adviceWorker.showPreviousAdvice();
 
         // Let's initiate the retrieval of new advice.
-        advicesWorker.restartWorker();
-        window.addEventListener('ConfigDataChanged', advicesWorker.cbOnDataChanged);
+        adviceWorker.restartWorker();
+        window.addEventListener('ConfigDataChanged', adviceWorker.cbOnDataChanged);
     },
 
     /**
-     * Restarts the advices worker.
+     * Restarts the advice worker.
      */
     restartWorker() {
-        window.clearTimeout(advicesWorker.timeoutHandle);
-        advicesWorker.worker();
+        window.clearTimeout(adviceWorker.timeoutHandle);
+        adviceWorker.worker();
     },
 
     /**
@@ -73,7 +73,7 @@ const advicesWorker = {
     cbOnDataChanged() {
         sessionStorage.removeItem(`previousAdvice${globalWebAdminLanguage}`);
         sessionStorage.removeItem(`previousAdviceBell${globalWebAdminLanguage}`);
-        setTimeout(advicesWorker.restartWorker, 3000);
+        setTimeout(adviceWorker.restartWorker, 3000);
     },
 
     /**
@@ -82,14 +82,14 @@ const advicesWorker = {
     showPreviousAdvice() {
         const previousAdviceBell = sessionStorage.getItem(`previousAdviceBell${globalWebAdminLanguage}`);
         if (previousAdviceBell) {
-            advicesWorker.$advicesBellButton.html(previousAdviceBell);
+            adviceWorker.$adviceBellButton.html(previousAdviceBell);
         }
         const previousAdvice = sessionStorage.getItem(`previousAdvice${globalWebAdminLanguage}`);
         if (previousAdvice) {
-            advicesWorker.$advices.html(previousAdvice);
-            advicesWorker.$advicesBellButton.popup({
+            adviceWorker.$advice.html(previousAdvice);
+            adviceWorker.$adviceBellButton.popup({
                     position: 'bottom left',
-                    popup: advicesWorker.$advices,
+                    popup: adviceWorker.$advice,
                     delay: {
                         show: 300,
                         hide: 10000,
@@ -101,10 +101,10 @@ const advicesWorker = {
     },
 
     /**
-     * Worker function for fetching advices.
+     * Worker function for fetching advice.
      */
     worker() {
-        PbxApi.AdvicesGetList(advicesWorker.cbAfterResponse);
+        PbxApi.AdviceGetList(adviceWorker.cbAfterResponse);
     },
 
     /**
@@ -115,22 +115,22 @@ const advicesWorker = {
         if (response === false) {
             return;
         }
-        advicesWorker.$advices.html('');
-        if (response.advices !== undefined) {
+        adviceWorker.$advice.html('');
+        if (response.advice !== undefined) {
             let htmlMessages = '';
             let countMessages = 0;
             let iconBellClass = '';
             htmlMessages += `<div class="ui header">${globalTranslate.adv_PopupHeader}</div>`;
             htmlMessages += '<div class="ui relaxed divided list">';
 
-            if (response.advices.needUpdate !== undefined
-                && response.advices.needUpdate.length > 0) {
-                $(window).trigger('SecurityWarning', [response.advices]);
+            if (response.advice.needUpdate !== undefined
+                && response.advice.needUpdate.length > 0) {
+                $(window).trigger('SecurityWarning', [response.advice]);
             }
 
-            if (response.advices.error !== undefined
-                && response.advices.error.length > 0) {
-                $.each(response.advices.error, (key, value) => {
+            if (response.advice.error !== undefined
+                && response.advice.error.length > 0) {
+                $.each(response.advice.error, (key, value) => {
                     htmlMessages += '<div class="item">';
                     htmlMessages += '<i class="frown outline red icon"></i>';
                     htmlMessages += `${value}`;
@@ -138,9 +138,9 @@ const advicesWorker = {
                     countMessages += 1;
                 });
             }
-            if (response.advices.warning !== undefined
-                && response.advices.warning.length > 0) {
-                $.each(response.advices.warning, (key, value) => {
+            if (response.advice.warning !== undefined
+                && response.advice.warning.length > 0) {
+                $.each(response.advice.warning, (key, value) => {
                     htmlMessages += '<div class="item yellow">';
                     htmlMessages += '<i class="meh outline yellow icon"></i>';
                     htmlMessages += `${value}`;
@@ -148,9 +148,9 @@ const advicesWorker = {
                     countMessages += 1;
                 });
             }
-            if (response.advices.info !== undefined
-                && response.advices.info.length > 0) {
-                $.each(response.advices.info, (key, value) => {
+            if (response.advice.info !== undefined
+                && response.advice.info.length > 0) {
+                $.each(response.advice.info, (key, value) => {
                     htmlMessages += '<div class="item">';
                     htmlMessages += '<i class="smile outline blue icon"></i>';
                     htmlMessages += `${value}`;
@@ -159,27 +159,27 @@ const advicesWorker = {
                 });
             }
 
-            if (response.advices.error !== undefined
-                && response.advices.error.length > 0) {
+            if (response.advice.error !== undefined
+                && response.advice.error.length > 0) {
                 iconBellClass = 'red icon bell';
-            } else if (response.advices.warning !== undefined
-                && response.advices.warning.length > 0) {
+            } else if (response.advice.warning !== undefined
+                && response.advice.warning.length > 0) {
                 iconBellClass = 'yellow icon bell';
 
-            } else if (response.advices.info !== undefined
-                && response.advices.info.length > 0) {
+            } else if (response.advice.info !== undefined
+                && response.advice.info.length > 0) {
                 iconBellClass = 'blue icon bell';
             }
             htmlMessages += '</div>';
-            advicesWorker.$advices.html(htmlMessages);
+            adviceWorker.$advice.html(htmlMessages);
             sessionStorage.setItem(`previousAdvice${globalWebAdminLanguage}`, htmlMessages);
 
             if (countMessages > 0) {
-                advicesWorker.$advicesBellButton
+                adviceWorker.$adviceBellButton
                     .html(`<i class="${iconBellClass}"></i>${countMessages}`)
                     .popup({
                         position: 'bottom left',
-                        popup: advicesWorker.$advices,
+                        popup: adviceWorker.$advice,
                         delay: {
                             show: 300,
                             hide: 10000,
@@ -187,32 +187,32 @@ const advicesWorker = {
                         on: 'click',
                         movePopup: false,
                     });
-                advicesWorker.$advicesBellButton.find('i')
+                adviceWorker.$adviceBellButton.find('i')
                     .transition('set looping')
                     .transition('pulse', '1000ms');
             } else {
-                advicesWorker.$advicesBellButton
+                adviceWorker.$adviceBellButton
                     .html(`<i class="grey icon bell"></i>`)
             }
-            sessionStorage.setItem(`previousAdviceBell${globalWebAdminLanguage}`, advicesWorker.$advicesBellButton.html());
-            advicesWorker.timeoutHandle = window.setTimeout(
-                advicesWorker.worker,
-                advicesWorker.timeOut,
+            sessionStorage.setItem(`previousAdviceBell${globalWebAdminLanguage}`, adviceWorker.$adviceBellButton.html());
+            adviceWorker.timeoutHandle = window.setTimeout(
+                adviceWorker.worker,
+                adviceWorker.timeOut,
             );
         } else if (response.success === true
-            && response.advices !== undefined
-            && response.advices.length === 0) {
+            && response.advice !== undefined
+            && response.advice.length === 0) {
             sessionStorage.removeItem(`previousAdvice${globalWebAdminLanguage}`);
             sessionStorage.removeItem(`previousAdviceBell${globalWebAdminLanguage}`);
-            advicesWorker.$advicesBellButton
+            adviceWorker.$adviceBellButton
                 .html('<i class="grey icon bell outline"></i>');
         }
     },
 };
 
 /**
- *  Initialize advices worker on document ready
+ *  Initialize advice worker on document ready
  */
 $(document).ready(() => {
-    advicesWorker.initialize();
+    adviceWorker.initialize();
 });

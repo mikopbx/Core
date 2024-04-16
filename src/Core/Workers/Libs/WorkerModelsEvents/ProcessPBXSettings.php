@@ -296,7 +296,7 @@ class ProcessPBXSettings extends Injectable
             ],
         ];
 
-        // Advices
+        // Advice
         $tables[] = [
             'settingName' => [
                 PbxSettingsConstants::WEB_ADMIN_PASSWORD,
@@ -304,7 +304,7 @@ class ProcessPBXSettings extends Injectable
                 PbxSettingsConstants::PBX_FIREWALL_ENABLED,
             ],
             'functions' => [
-                WorkerModelsEvents::R_ADVICES,
+                WorkerModelsEvents::R_ADVICE,
             ],
         ];
 

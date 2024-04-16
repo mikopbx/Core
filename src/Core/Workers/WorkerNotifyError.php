@@ -23,11 +23,11 @@ require_once 'Globals.php';
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Notifications;
-use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
+use MikoPBX\PBXCoreREST\Lib\AdviceProcessor;
 use Throwable;
 
 /**
- * WorkerNotifyError is a worker class responsible for checking the significant advices messages and sent it to system administrator.
+ * WorkerNotifyError is a worker class responsible for checking the significant advice messages and sent it to system administrator.
  *
  * @package MikoPBX\Core\Workers
  */
@@ -48,8 +48,8 @@ class WorkerNotifyError extends WorkerBase
         $lastErrorsCheck = $managedCache->get($cacheKey);
         if ($lastErrorsCheck === null) {
             try {
-                $restResponse = AdvicesProcessor::callBack(['action' => 'getList']);
-                $errorMessages = $restResponse->data['advices']['error'] ?? [];
+                $restResponse = AdviceProcessor::callBack(['action' => 'getList']);
+                $errorMessages = $restResponse->data['advice']['error'] ?? [];
                 if ($restResponse->success and $errorMessages !== []) {
                     Notifications::sendAdminNotification('adv_ThereIsSomeTroublesWithMikoPBX', $errorMessages);
                 }

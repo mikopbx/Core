@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices;
+namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\Extensions;
@@ -32,7 +32,7 @@ use Phalcon\Di\Injectable;
  * Class CheckPasswords
  * This class is responsible for checking password quality on backend.
  *
- * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices
+ * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice
  */
 class CheckPasswords extends Injectable
 {

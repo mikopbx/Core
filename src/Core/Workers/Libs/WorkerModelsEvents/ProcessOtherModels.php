@@ -41,7 +41,7 @@ class ProcessOtherModels extends Injectable
             ],
             'functions' => [
                 WorkerModelsEvents::R_MANAGERS,
-                WorkerModelsEvents::R_ADVICES,
+                WorkerModelsEvents::R_ADVICE,
             ],
         ];
 
@@ -87,7 +87,7 @@ class ProcessOtherModels extends Injectable
             ],
             'functions' => [
                 WorkerModelsEvents::R_CUSTOM_F,
-                WorkerModelsEvents::R_ADVICES,
+                WorkerModelsEvents::R_ADVICE,
             ],
         ];
 
@@ -99,7 +99,7 @@ class ProcessOtherModels extends Injectable
                 WorkerModelsEvents::R_SIP,
                 WorkerModelsEvents::R_DIALPLAN,
                 WorkerModelsEvents::R_FIREWALL,
-                WorkerModelsEvents::R_ADVICES,
+                WorkerModelsEvents::R_ADVICE,
             ],
         ];
 
@@ -162,7 +162,7 @@ class ProcessOtherModels extends Injectable
                 WorkerModelsEvents::R_NETWORK,
                 WorkerModelsEvents::R_IAX,
                 WorkerModelsEvents::R_SIP,
-                WorkerModelsEvents::R_ADVICES,
+                WorkerModelsEvents::R_ADVICE,
             ],
         ];
 
@@ -184,7 +184,7 @@ class ProcessOtherModels extends Injectable
                 WorkerModelsEvents::R_FIREWALL,
                 WorkerModelsEvents::R_SIP,
                 WorkerModelsEvents::R_MANAGERS,
-                WorkerModelsEvents::R_ADVICES,
+                WorkerModelsEvents::R_ADVICE,
             ],
         ];
         

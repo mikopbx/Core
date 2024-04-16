@@ -109,7 +109,7 @@ class WorkerModelsEvents extends WorkerBase
     public const R_MOH = 'reloadMoh';
     public const R_NTP = 'reloadNtp';
     public const R_UPDATE_REC_SAVE_PERIOD = 'updateRecordSavePeriod';
-    public const R_ADVICES = 'cleanupAdvicesCache';
+    public const R_ADVICE = 'cleanupAdviceCache';
     public const R_RESET_DESCRIPTION = 'resetDescription';
     public const R_SENTRY = 'reloadSentry';
     public const R_CLOUD_PROVISION = 'ReloadCloudParametersAction';
@@ -230,7 +230,7 @@ class WorkerModelsEvents extends WorkerBase
             self::R_MOH => new ReloadMOHAction(),
             self::R_CALL_EVENTS_WORKER => new ReloadWorkerCallEventsAction(),
             self::R_UPDATE_REC_SAVE_PERIOD => new ReloadRecordSavePeriodAction(),
-            self::R_ADVICES => new ReloadAdviceAction(),
+            self::R_ADVICE => new ReloadAdviceAction(),
             self::R_RESET_DESCRIPTION => new ReloadCloudDescriptionAction(),
             self::R_CLOUD_PROVISION => new ReloadCloudParametersAction()
         ];

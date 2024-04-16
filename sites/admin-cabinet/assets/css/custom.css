@@ -450,9 +450,9 @@ Blur passwords, secrets
 }
 
 /**
-Sets minimum width for advices bell on main menu header
+Sets minimum width for advice bell on main menu header
  */
-#show-advices-button {
+#show-advice-button {
     min-width: 50px;
 }
 

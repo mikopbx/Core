@@ -17,40 +17,33 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices;
+namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
-use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use Phalcon\Di\Injectable;
+use MikoPBX\Service\Main;
 
 /**
- * Class CheckFirewalls
- * This class is responsible for checking firewall status on backend.
+ * Class CheckCorruptedFiles
+ * This class is responsible for checking corrupted files on backend.
  *
- * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices
+ * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice
  */
-class CheckFirewalls extends Injectable
+class CheckCorruptedFiles extends Injectable
 {
     /**
-     * Check the firewall status.
+     * Check for corrupted files.
      *
      * @return array An array containing warning messages.
-     *
      */
     public function process(): array
     {
         $messages = [];
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED) === '0'
-        || NetworkFilters::count() === 0
-        ) {
-            $messages['warning'][] =  [
-                'messageTpl'=>'adv_FirewallDisabled',
-                'messageParams'=>[
-                    'url'=>$this->url->get('firewall/index/')
-                ]
-            ];
+        $files = Main::checkForCorruptedFiles();
+        if (count($files) !== 0) {
+            $messages['warning'][] =  ['messageTpl'=>'adv_SystemBrokenComment'];
         }
+
         return $messages;
     }
+
 }

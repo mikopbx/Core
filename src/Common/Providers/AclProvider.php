@@ -82,7 +82,7 @@ class AclProvider implements ServiceProviderInterface
                     // Modules HOOK
                     PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_ACL_LIST_PREPARED, [&$acl]);
 
-                    // Allow to show ERROR controllers to everybody
+                    // Allow showing ERROR controllers to everybody
                     $acl->addComponent(new Component('Errors'), ['show401', 'show404', 'show500']);
                     $acl->allow('*', 'Errors', ['show401', 'show404', 'show500']);
 

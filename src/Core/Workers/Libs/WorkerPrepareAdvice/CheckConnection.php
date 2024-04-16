@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices;
+namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
@@ -28,7 +28,7 @@ use Phalcon\Di\Injectable;
  * Class CheckConnection
  * This class is responsible for checking internet connection on backend.
  *
- * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices
+ * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice
  */
 class CheckConnection extends Injectable
 {

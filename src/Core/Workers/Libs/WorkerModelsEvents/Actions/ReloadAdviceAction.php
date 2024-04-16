@@ -2,7 +2,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
-use MikoPBX\Core\Workers\WorkerPrepareAdvices;
+use MikoPBX\Core\Workers\WorkerPrepareAdvice;
 
 class ReloadAdviceAction implements ReloadActionInterface
 {
@@ -14,6 +14,6 @@ class ReloadAdviceAction implements ReloadActionInterface
      */
     public function execute(array $parameters = []): void
     {
-        WorkerPrepareAdvices::afterChangePBXSettings();
+        WorkerPrepareAdvice::afterChangePBXSettings();
     }
 }

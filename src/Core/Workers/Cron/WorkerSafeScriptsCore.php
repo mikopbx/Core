@@ -35,7 +35,7 @@ use MikoPBX\Core\Workers\WorkerMarketplaceChecker;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyError;
-use MikoPBX\Core\Workers\WorkerPrepareAdvices;
+use MikoPBX\Core\Workers\WorkerPrepareAdvice;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
@@ -110,7 +110,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerCheckFail2BanAlive::class,
                     WorkerLogRotate::class,
                     WorkerRemoveOldRecords::class,
-                    WorkerPrepareAdvices::class
+                    WorkerPrepareAdvice::class
                 ],
         ];
 

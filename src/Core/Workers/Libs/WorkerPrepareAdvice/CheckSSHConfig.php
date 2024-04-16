@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices;
+namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
@@ -27,7 +27,7 @@ use Phalcon\Di\Injectable;
  * Class CheckSSHConfig
  * This class is responsible for checking external changes ssh root password.
  *
- * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices
+ * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice
  */
 class CheckSSHConfig extends Injectable
 {

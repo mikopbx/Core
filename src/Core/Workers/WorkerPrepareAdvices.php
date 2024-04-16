@@ -25,13 +25,13 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckConnection;
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckCorruptedFiles;
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckFirewalls;
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckPasswords;
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckSSHConfig;
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckStorage;
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckUpdates;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckConnection;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckCorruptedFiles;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckFirewalls;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckPasswords;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHConfig;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckStorage;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckUpdates;
 use Phalcon\Di;
 use Recoil\React\ReactKernel;
 use Throwable;
@@ -40,11 +40,11 @@ require_once 'Globals.php';
 
 
 /**
- * WorkerPrepareAdvices is a worker class responsible for prepare system advices.
+ * WorkerPrepareAdvice is a worker class responsible for prepare system advice.
  *
  * @package MikoPBX\Core\Workers
  */
-class WorkerPrepareAdvices extends WorkerBase
+class WorkerPrepareAdvice extends WorkerBase
 {
     public const ARR_ADVICE_TYPES = [
         ['type' => CheckConnection::class, 'cacheTime' => 120],
@@ -56,7 +56,7 @@ class WorkerPrepareAdvices extends WorkerBase
         ['type' => CheckSSHConfig::class, 'cacheTime' => 3600],
     ];
 
-    // Array of generated advices
+    // Array of generated advice
     public array $messages;
 
     /**
@@ -106,7 +106,7 @@ class WorkerPrepareAdvices extends WorkerBase
             if ($timeElapsedSecs > 5) {
                 SystemMessages::sysLogMsg(
                     __METHOD__,
-                    "WARNING: Service WorkerPrepareAdvices:{$adviceType['type']} processed more than {$timeElapsedSecs} seconds",
+                    "WARNING: Service WorkerPrepareAdvice:{$adviceType['type']} processed more than {$timeElapsedSecs} seconds",
                     LOG_WARNING
                 );
             }
@@ -122,7 +122,7 @@ class WorkerPrepareAdvices extends WorkerBase
      */
     public static function getCacheKey(string $currentAdviceType): string
     {
-        return 'WorkerPrepareAdvices:' . $currentAdviceType;
+        return 'WorkerPrepareAdvice:' . $currentAdviceType;
     }
 
     /**
@@ -140,7 +140,7 @@ class WorkerPrepareAdvices extends WorkerBase
                 $managedCache->delete($cacheKey);
             }
         }
-        Processes::processPHPWorker(WorkerPrepareAdvices::class);
+        Processes::processPHPWorker(WorkerPrepareAdvice::class);
     }
 
     /**
@@ -157,4 +157,4 @@ class WorkerPrepareAdvices extends WorkerBase
 }
 
 // Start worker process
-WorkerPrepareAdvices::startWorker($argv ?? []);
+WorkerPrepareAdvice::startWorker($argv ?? []);

@@ -17,21 +17,21 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Controllers\Advices;
+namespace MikoPBX\PBXCoreREST\Controllers\Advice;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
+use MikoPBX\PBXCoreREST\Lib\AdviceProcessor;
 
 /**
- * Controller for handling advices and notifications related actions.
+ * Controller for handling advice and notifications related actions.
  *
- * @RoutePrefix("/pbxcore/api/advices")
+ * @RoutePrefix("/pbxcore/api/advice")
  *
- * @package MikoPBX\PBXCoreREST\Controllers\Advices
+ * @package MikoPBX\PBXCoreREST\Controllers\Advice
  *
  * @example
  *
- * curl http://127.0.0.1/pbxcore/api/advices/getList;
+ * curl http://127.0.0.1/pbxcore/api/advice/getList;
  *
  */
 class GetController extends BaseController
@@ -49,6 +49,6 @@ class GetController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker(AdvicesProcessor::class, $actionName, [],'', 10, 2048);
+        $this->sendRequestToBackendWorker(AdviceProcessor::class, $actionName, [],'', 10, 2048);
     }
 }

@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices;
+namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
@@ -27,7 +27,7 @@ use Phalcon\Di\Injectable;
  * Class CheckStorage
  * This class is responsible for checking free space on storage disk on backend.
  *
- * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices
+ * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice
  */
 class CheckStorage extends Injectable
 {

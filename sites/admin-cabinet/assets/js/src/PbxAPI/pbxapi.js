@@ -24,8 +24,8 @@
  */
 const PbxApi = {
 
-    // AdvicesProcessor
-    advicesGetList: `${Config.pbxUrl}/pbxcore/api/advices/getList`, // Generates a list of notifications about the system, firewall, passwords, and wrong settings.
+    // AdviceProcessor
+    adviceGetList: `${Config.pbxUrl}/pbxcore/api/advice/getList`, // Generates a list of notifications about the system, firewall, passwords, and wrong settings.
 
     // CdrDBProcessor
     pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`,  //  Get active channels. These are the unfinished calls (endtime IS NULL).
@@ -1475,9 +1475,9 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called with the response data or `false` in case of failure.
      * @returns {void}
      */
-    AdvicesGetList(callback) {
+    AdviceGetList(callback) {
         $.api({
-            url: PbxApi.advicesGetList,
+            url: PbxApi.adviceGetList,
             on: 'now',
             successTest: PbxApi.successTest,
             onSuccess(response) {

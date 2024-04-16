@@ -25,7 +25,7 @@ use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Core\Workers\WorkerPrepareAdvices;
+use MikoPBX\Core\Workers\WorkerPrepareAdvice;
 use Phalcon\Di\Injectable;
 
 /**
@@ -137,7 +137,7 @@ class SSHConf extends Injectable
         if($hashString !== md5($password)){
             $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING, md5($password));
             Notifications::sendAdminNotification('adv_SSHPasswordWasChangedSubject', ['adv_SSHPasswordWasChangedBody'],true);
-            WorkerPrepareAdvices::afterChangeSSHConf();
+            WorkerPrepareAdvice::afterChangeSSHConf();
         }
     }
 
