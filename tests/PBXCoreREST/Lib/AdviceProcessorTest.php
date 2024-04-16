@@ -19,15 +19,15 @@
 
 namespace MikoPBX\Tests\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
+use MikoPBX\PBXCoreREST\Lib\AdviceProcessor;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
-class AdvicesProcessorTest extends AbstractUnitTest
+class AdviceProcessorTest extends AbstractUnitTest
 {
 
-    public function testAdvicesCallBack()
+    public function testAdviceCallBack()
     {
-        $res = AdvicesProcessor::callBack(['action'=>'getList']);
+        $res = AdviceProcessor::callBack(['action'=>'getList']);
         $this->assertTrue($res->success);
 
     }

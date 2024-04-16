@@ -17,9 +17,9 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Tests\Core\Workers\Libs\WorkerPrepareAdvices;
+namespace MikoPBX\Tests\Core\Workers\Libs\WorkerPrepareAdvice;
 
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckSSHConfig;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHConfig;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class CheckSSHConfigTest extends AbstractUnitTest

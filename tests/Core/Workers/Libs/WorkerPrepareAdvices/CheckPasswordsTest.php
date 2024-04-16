@@ -17,9 +17,9 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Tests\Core\Workers\Libs\WorkerPrepareAdvices;
+namespace MikoPBX\Tests\Core\Workers\Libs\WorkerPrepareAdvice;
 
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvices\CheckPasswords;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckPasswords;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class CheckPasswordsTest extends AbstractUnitTest
