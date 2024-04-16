@@ -52,7 +52,7 @@ class DataStructure
     public int $sip_qualifyfreq = 60;
     public string $sip_enableRecording = '1';
     public string $sip_dtmfmode = 'auto';
-    public string $sip_transport = ' ';
+    public string $sip_transport = '';
     public string $sip_networkfilterid = 'none';
     public string $sip_manualattributes = '';
     public int $fwd_ringlength = 45;

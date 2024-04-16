@@ -1256,7 +1256,7 @@ class SIPConf extends AsteriskConfigClass
      * @return string The generated configuration string for the endpoint section.
      */
     private function generatePeerEndpoint(
-        $lang,
+        string $lang,
         array $peer,
         array $manual_attributes
     ): string {
@@ -1271,7 +1271,7 @@ class SIPConf extends AsteriskConfigClass
         }
 
         $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
-
+        $peer['transport'] = trim($peer['transport']);
         // Prepare the options for the endpoint section
         $options  = [
             'type'                 => 'endpoint',
