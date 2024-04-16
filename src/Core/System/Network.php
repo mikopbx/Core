@@ -21,7 +21,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Core\Utilities\SubnetCalculator;
-use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetExternalIpInfoAction;
 use Phalcon\Di\Injectable;
 use Throwable;
 
@@ -919,7 +919,7 @@ class Network extends Injectable
      */
     public function updateExternalIp(): void
     {
-        $ipInfoResult = SysinfoManagementProcessor::getExternalIpInfo();
+        $ipInfoResult = GetExternalIpInfoAction::main();
         if ($ipInfoResult->success && isset($ipInfoResult->data['ip'])) {
             $currentIP = $ipInfoResult->data['ip'];
             $lanData = LanInterfaces::find('autoUpdateExtIp=1');
