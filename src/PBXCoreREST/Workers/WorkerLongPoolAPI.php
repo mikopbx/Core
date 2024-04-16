@@ -23,9 +23,9 @@ require_once 'Globals.php';
 use MikoPBX\Common\Models\LongPollSubscribe;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\Workers\WorkerBase;
-use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
-use MikoPBX\PBXCoreREST\Lib\IAXStackProcessor;
-use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
+use MikoPBX\PBXCoreREST\Lib\CdrDB\GetActiveChannelsAction;
+use MikoPBX\PBXCoreREST\Lib\Sip\GetRegistryAction as GetSipRegistryAction;
+use MikoPBX\PBXCoreREST\Lib\Iax\GetRegistryAction as GetIaxRegistryAction;
 
 use Throwable;
 
@@ -162,11 +162,11 @@ class WorkerLongPoolAPI extends WorkerBase
         if ('ping' === $channel) {
             $data_for_send = 'PONG';
         } elseif ('getActiveChannels' === $channel) {
-            $data_for_send = CdrDBProcessor::getActiveChannels()->getResult();
+            $data_for_send = GetActiveChannelsAction::main()->getResult();
         } elseif ('getRegistry' === $channel) {
             $result        = [
-                'SIP' => SIPStackProcessor::getRegistry()->getResult(),
-                'IAX' => IAXStackProcessor::getRegistry()->getResult(),
+                'SIP' => GetSipRegistryAction::main()->getResult(),
+                'IAX' => GetIaxRegistryAction::main()->getResult(),
             ];
             $data_for_send = json_encode($result, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
         }

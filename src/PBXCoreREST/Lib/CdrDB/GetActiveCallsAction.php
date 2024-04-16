@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,46 +17,42 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib;
+namespace MikoPBX\PBXCoreREST\Lib\CdrDB;
 
-use MikoPBX\PBXCoreREST\Lib\CdrDB\GetActiveCallsAction;
-use MikoPBX\PBXCoreREST\Lib\CdrDB\GetActiveChannelsAction;
-use Phalcon\Di\Injectable;
+
+use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\Workers\WorkerCdr;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Class CdrDBProcessor
+ * Get active calls based on CDR data.
  *
- * @package MikoPBX\PBXCoreREST\Lib
- *
+ * @package MikoPBX\PBXCoreREST\Lib\CdrDB
  */
-class CdrDBProcessor extends Injectable
+class GetActiveCallsAction extends \Phalcon\Di\Injectable
 {
     /**
-     * Processes CDR table requests
-     *
-     * @param array $request
+     * Get active calls based on CDR data.
      *
      * @return PBXApiResult An object containing the result of the API call.
-     *
      */
-    public static function callBack(array $request): PBXApiResult
+    public static function main(): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $action = $request['action'];
-        switch ($action) {
-            case 'getActiveChannels':
-                $res = GetActiveChannelsAction::main();
-                break;
-            case 'getActiveCalls':
-                $res = GetActiveCallsAction::main();
-                break;
-            default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
-                break;
+        $res->success = true;
+        $filter  = [
+            'order'       => 'id',
+            'columns'     => 'start,answer,endtime,src_num,dst_num,did,linkedid',
+            'miko_tmp_db' => true,
+        ];
+        $client  = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
+        list($result, $message) = $client->sendRequest(json_encode($filter), 2);
+        if ($result === false) {
+            $res->data = [];
+        }else{
+            $res->data[] = $message;
         }
-        $res->function = $action;
         return $res;
     }
-
 }

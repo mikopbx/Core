@@ -27,8 +27,8 @@ use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetInfoAction;
 use ZipArchive;
-use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
 
 
 /**
@@ -82,7 +82,7 @@ class WorkerMakeLogFilesArchive extends WorkerBase
             $command = "{$findPath} {$logDir}/tcpDump -type f ";
         } else {
             // Collect system info
-            file_put_contents($systemInfoFile, SysinfoManagementProcessor::prepareSysyinfoContent());
+            file_put_contents($systemInfoFile, GetInfoAction::prepareSysyinfoContent());
             $command = "{$findPath} {$logDir} -type f ";
         }
         Processes::mwExec($command, $out);

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,46 +17,42 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib;
+namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
-use MikoPBX\PBXCoreREST\Lib\CdrDB\GetActiveCallsAction;
-use MikoPBX\PBXCoreREST\Lib\CdrDB\GetActiveChannelsAction;
-use Phalcon\Di\Injectable;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Class CdrDBProcessor
+ * Erase log file with the provided name.
  *
- * @package MikoPBX\PBXCoreREST\Lib
- *
+ * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class CdrDBProcessor extends Injectable
+class EraseFileAction extends \Phalcon\Di\Injectable
 {
     /**
-     * Processes CDR table requests
+     * Erase log file with the provided name.
      *
-     * @param array $request
+     * @param string $filename The name of the log file.
      *
      * @return PBXApiResult An object containing the result of the API call.
      *
      */
-    public static function callBack(array $request): PBXApiResult
+    public static function main(string $filename): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $action = $request['action'];
-        switch ($action) {
-            case 'getActiveChannels':
-                $res = GetActiveChannelsAction::main();
-                break;
-            case 'getActiveCalls':
-                $res = GetActiveCallsAction::main();
-                break;
-            default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
-                break;
+        $filename = System::getLogDir() . '/' . $filename;
+        if (!file_exists($filename)) {
+            $res->success = false;
+            $res->messages[] = 'File does not exist ' . $filename;
+        } else {
+            $echoPath = Util::which('echo');
+            Processes::mwExec("$echoPath ' ' > $filename");
+            $res->success = true;
         }
-        $res->function = $action;
+
         return $res;
     }
-
 }
