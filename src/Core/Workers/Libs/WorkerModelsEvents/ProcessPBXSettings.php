@@ -225,7 +225,7 @@ class ProcessPBXSettings extends Injectable
                 PbxSettingsConstants::PBX_LANGUAGE,
             ],
             'functions' => [
-                WorkerModelsEvents::R_PBX_CORE,
+                WorkerModelsEvents::R_PBX_CORE_RESTART,
             ],
         ];
 

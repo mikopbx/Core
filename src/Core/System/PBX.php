@@ -206,6 +206,7 @@ class PBX extends Injectable
         Processes::mwExec("{$asteriskPath} -rx 'moh reload'");
     }
 
+
     /**
      * Reloads the Asterisk voicemail module.
      */
@@ -307,17 +308,6 @@ class PBX extends Injectable
         Processes::mwExec("{$asteriskPath} -rx 'iax2 reload'");
     }
 
-    /**
-     * Reloads the music on hold module.
-     */
-    public static function mohReload(): void
-    {
-        $m = new MusicOnHoldConf();
-        $m->generateConfig();
-
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'moh reload'");
-    }
 
     /**
      * Waits for Asterisk to fully boot.

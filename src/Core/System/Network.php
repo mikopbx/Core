@@ -84,15 +84,411 @@ class Network extends Injectable
     }
 
     /**
-     * Configures the loopback interface (lo) with the IP address 127.0.0.1.
+     * Configures the LAN settings inside the Docker container.
+     *
+     * If the environment is not Docker, this method does nothing.
      *
      * @return void
      */
-    public function loConfigure(): void
+    public function configureLanInDocker(): void
     {
+        // Check if the environment is Docker
+        if (!Util::isDocker()) {
+            return;
+        }
+
+        // Find the path to the busybox binary
         $busyboxPath = Util::which('busybox');
-        $ifconfigPath = Util::which('ifconfig');
-        Processes::mwExec("{$busyboxPath} {$ifconfigPath} lo 127.0.0.1");
+
+        // Retrieve the network settings
+        $networks = $this->getGeneralNetSettings();
+
+        foreach ($networks as $if_data) {
+
+            $if_name = $if_data['interface'];
+            $if_name = escapeshellcmd(trim($if_name));
+
+            $commands = [
+                'subnet' => $busyboxPath . ' ifconfig eth0 | awk \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
+                'ipaddr' => $busyboxPath . ' ifconfig eth0 | awk \'/inet / {sub("addr:", "", $2); print $2}\'',
+                'gateway' => $busyboxPath . ' route -n | awk \'/^0.0.0.0/ {print $2}\'',
+                'hostname' => $busyboxPath . ' hostname',
+            ];
+            $data = [];
+            foreach ($commands as $key => $command) {
+                $output = [];
+                if (Processes::MWExec($command, $output) === 0) {
+                    $value = implode("", $output);
+                    if ($key === 'subnet') {
+                        $data[$key] = $this->netMaskToCidr($value);
+                    } else {
+                        $data[$key] = $value;
+                    }
+                }
+            }
+
+            // Save information to the database.
+            $this->updateIfSettings($data, $if_name);
+        }
+
+    }
+
+    /**
+     * Retrieves the general network settings and performs additional processing.
+     *
+     * @return array An array of network interfaces and their settings.
+     */
+    public function getGeneralNetSettings(): array
+    {
+        // Get the list of network interfaces visible to the operating system
+        $src_array_eth = $this->getInterfacesNames();
+
+        // Create a copy of the network interfaces array
+        $array_eth = $src_array_eth;
+
+        // Retrieve the LAN interface settings from the database
+        $res = LanInterfaces::find(['order' => 'interface,vlanid']);
+        $networks = $res->toArray();
+
+        if (count($networks) > 0) {
+            // Additional data processing
+            foreach ($networks as &$if_data) {
+                $if_data['interface_orign'] = $if_data['interface'];
+                $if_data['interface'] = ($if_data['vlanid'] > 0) ? "vlan{$if_data['vlanid']}" : $if_data['interface'];
+                $if_data['dhcp'] = ($if_data['vlanid'] > 0) ? 0 : $if_data['dhcp'];
+
+                if (Verify::isIpAddress($if_data['subnet'])) {
+                    $if_data['subnet'] = $this->netMaskToCidr($if_data['subnet']);
+                }
+
+                $key = array_search($if_data['interface_orign'], $src_array_eth, true);
+                if ($key !== false) {
+                    // Interface found
+                    // Remove the array element if it's not a VLAN
+                    if ($if_data['vlanid'] === '0') {
+                        unset($array_eth[$key]);
+                        $this->enableLanInterface($if_data['interface_orign']);
+                    }
+                } else {
+                    // Interface does not exist
+                    $this->disableLanInterface($if_data['interface_orign']);
+                    // Disable the interface
+                    $if_data['disabled'] = 1;
+                }
+            }
+            unset($if_data);
+        } elseif (count($array_eth) > 0) {
+            $networks = [];
+            // Configure the main interface
+            $networks[] = $this->addLanInterface($array_eth[0], true);
+            unset($array_eth[0]);
+        }
+        // $array_eth will contain only the elements without settings in the database
+        // Add the "default" settings for these interfaces
+        foreach ($array_eth as $eth) {
+            // Add the interface and disable it
+            $networks[] = $this->addLanInterface($eth, false);
+        }
+
+        // Check if there is an active internet interface, if not, set the first available interface as internet
+        $res = LanInterfaces::findFirst("internet = '1' AND disabled='0'");
+        if (null === $res) {
+            /** @var LanInterfaces $eth_settings */
+            $eth_settings = LanInterfaces::findFirst("disabled='0'");
+            if ($eth_settings !== null) {
+                $eth_settings->internet = 1;
+                $eth_settings->save();
+            }
+        }
+
+        return $networks;
+    }
+
+    /**
+     * Converts a net mask to CIDR notation.
+     *
+     * @param string $net_mask The net mask to convert.
+     * @return int The CIDR notation.
+     */
+    public function netMaskToCidr(string $net_mask): int
+    {
+        $bits = 0;
+        $net_mask = explode(".", $net_mask);
+
+        foreach ($net_mask as $oct_ect) {
+            $bits += strlen(str_replace("0", "", decbin((int)$oct_ect)));
+        }
+
+        return $bits;
+    }
+
+    /**
+     * Enables a LAN interface
+     *
+     * @param string $name The name of the interface to enable.
+     * @return void
+     */
+    public function enableLanInterface(string $name): void
+    {
+        $parameters = [
+            'conditions' => 'interface = :ifName: and disabled = :disabled:',
+            'bind' => [
+                'ifName' => $name,
+                'disabled' => 1,
+            ],
+        ];
+
+        $if_data = LanInterfaces::findFirst($parameters);
+        if ($if_data !== null) {
+            $if_data->disabled = 0;
+            $if_data->update();
+        }
+    }
+
+    /**
+     * Disables a LAN interface by setting its internet flag to 0 and disabled flag to 1.
+     *
+     * @param string $name The name of the interface to disable.
+     * @return void
+     */
+    public function disableLanInterface(string $name): void
+    {
+        $if_data = LanInterfaces::findFirst("interface = '{$name}'");
+        if ($if_data !== null) {
+            $if_data->internet = 0;
+            $if_data->disabled = 1;
+            $if_data->update();
+        }
+    }
+
+    /**
+     * Adds a LAN interface with the specified name and settings.
+     *
+     * @param string $name The name of the interface.
+     * @param bool $general Flag indicating if the interface is a general interface.
+     * @return array The array representation of the added interface.
+     */
+    private function addLanInterface(string $name, bool $general = false): array
+    {
+        $data = new LanInterfaces();
+        $data->name = $name;
+        $data->interface = $name;
+        $data->dhcp = '1';
+        $data->internet = ($general === true) ? '1' : '0';
+        $data->disabled = '0';
+        $data->vlanid = '0';
+        $data->hostname = 'MikoPBX';
+        $data->domain = '';
+        $data->topology = LanInterfaces::TOPOLOGY_PRIVATE;
+        $data->autoUpdateExtIp = ($general === true) ? '1' : '0';;
+        $data->primarydns = '';
+        $data->save();
+
+        return $data->toArray();
+    }
+
+    /**
+     * Updates the interface settings with the provided data.
+     *
+     * @param array $data The data to update the interface settings with.
+     * @param string $name The name of the interface.
+     *
+     * @return void;
+     */
+    public function updateIfSettings(array $data, string $name): void
+    {
+        /** @var LanInterfaces $res */
+        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
+            return;
+        }
+        foreach ($data as $key => $value) {
+            $res->writeAttribute($key, $value);
+        }
+        $res->save();
+    }
+
+    /**
+     * Checks if the network settings have changed.
+     *
+     * @param array $data The new network settings.
+     * @param array $dbData The existing network settings from the database.
+     *
+     * @return bool  Returns true if the settings have changed, false otherwise.
+     */
+    public function settingsIsChange(array $data, array $dbData): bool
+    {
+        $isChange = false;
+        foreach ($dbData as $key => $value) {
+            if (!isset($data[$key]) || (string)$value === (string)$data[$key]) {
+                continue;
+            }
+            SystemMessages::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
+            $isChange = true;
+        }
+        return $isChange;
+    }
+
+    /**
+     * Updates the DNS settings with the provided data.
+     *
+     * @param array $data The data to update the DNS settings with.
+     * @param string $name The name of the interface.
+     *
+     * @return void
+     */
+    public function updateDnsSettings(array $data, string $name): void
+    {
+        /** @var LanInterfaces $res */
+        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
+            return;
+        }
+        foreach ($data as $key => $value) {
+            $res->writeAttribute($key, $value);
+        }
+        if (empty($res->primarydns) && !empty($res->secondarydns)) {
+            // Swap primary and secondary DNS if primary is empty
+            $res->primarydns = $res->secondarydns;
+            $res->secondarydns = '';
+        }
+        $res->save();
+    }
+
+    /**
+     * Retrieves the interface name by its ID.
+     *
+     * @param string $id_net The ID of the network interface.
+     *
+     * @return string  The interface name.
+     */
+    public function getInterfaceNameById(string $id_net): string
+    {
+        $res = LanInterfaces::findFirstById($id_net);
+        if ($res !== null && $res->interface !== null) {
+            return $res->interface;
+        }
+
+        return '';
+    }
+
+    /**
+     * Retrieves the enabled LAN interfaces.
+     *
+     * @return array  An array of enabled LAN interfaces.
+     */
+    public function getEnabledLanInterfaces(): array
+    {
+        /** @var LanInterfaces $res */
+        $res = LanInterfaces::find('disabled=0');
+
+        return $res->toArray();
+    }
+
+    /**
+     * Updates the network settings with the provided data.
+     * @param array $data The network settings data to update.
+     */
+    public function updateNetSettings(array $data): void
+    {
+        $res = LanInterfaces::findFirst("internet = '1'");
+        $update_inet = false;
+        if ($res === null) {
+            // If no interface with internet connection is found, get the first interface.
+            $res = LanInterfaces::findFirst();
+            $update_inet = true;
+        }
+
+        if ($res !== null) {
+            foreach ($data as $key => $value) {
+                $res->$key = $value;
+            }
+            if ($update_inet === true) {
+                $res->internet = 1;
+            }
+            $res->save();
+        }
+    }
+
+    /**
+     * Update external IP address
+     */
+    public function updateExternalIp(): void
+    {
+        $ipInfoResult = GetExternalIpInfoAction::main();
+        if ($ipInfoResult->success && isset($ipInfoResult->data['ip'])) {
+            $currentIP = $ipInfoResult->data['ip'];
+            $lanData = LanInterfaces::find('autoUpdateExtIp=1');
+            foreach ($lanData as $lan) {
+                $oldExtIp = $lan->extipaddr;
+                $parts = explode(':', $oldExtIp);
+                $oldIP = $parts[0]; // Only IP part of the address
+                $port = isset($parts[1]) ? ':' . $parts[1] : '';
+                if ($oldIP !== $currentIP) {
+                    $newExtIp = $currentIP . $port;
+                    $lan->extipaddr = $newExtIp;
+                    if ($lan->save()) {
+                        SystemMessages::sysLogMsg(__METHOD__, "External IP address updated for interface {$lan->interface}");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Execute cli command to set up network
+     * @param string $action Action to perform (start or stop)
+     * @return void
+     */
+    public function cliAction(string $action): void
+    {
+        /**
+         * If running inside a Docker container, exit the script.
+         */
+        if (Util::isDocker()) {
+            return;
+        }
+
+        if ('start' === $action) {
+
+            /**
+             * Generate the resolv.conf file for DNS configuration.
+             */
+            $this->resolvConfGenerate();
+            if (Util::isT2SdeLinux()) {
+                /**
+                 * Configure the loopback interface for T2SDE Linux.
+                 */
+                $this->loConfigure();
+            }
+            /**
+             * Configure the LAN interfaces.
+             */
+            $this->lanConfigure();
+        } elseif ('stop' === $action) {
+            if (Util::isSystemctl()) {
+                /**
+                 * Stop networking using systemctl (systemd-based systems).
+                 */
+                $systemctlPath = Util::which('systemctl');
+                Processes::mwExec("{$systemctlPath} stop networking");
+            } else {
+                /**
+                 * Stop networking on T2SDE (non-systemd) systems.
+                 */
+                $if_list = $this->getInterfaces();
+                $arr_commands = [];
+                $ifconfigPath = Util::which('ifconfig');
+                foreach ($if_list as $if_name => $data) {
+                    $arr_commands[] = "{$ifconfigPath} $if_name down";
+                }
+
+                /**
+                 * Execute the stop commands for each interface.
+                 */
+                Processes::mwExecCommands($arr_commands, $out, 'net_stop');
+            }
+        }
     }
 
     /**
@@ -300,6 +696,18 @@ class Network extends Injectable
     }
 
     /**
+     * Configures the loopback interface (lo) with the IP address 127.0.0.1.
+     *
+     * @return void
+     */
+    public function loConfigure(): void
+    {
+        $busyboxPath = Util::which('busybox');
+        $ifconfigPath = Util::which('ifconfig');
+        Processes::mwExec("{$busyboxPath} {$ifconfigPath} lo 127.0.0.1");
+    }
+
+    /**
      * Configures the LAN interfaces and performs related network operations.
      *
      * @return int The result of the configuration process.
@@ -433,174 +841,9 @@ class Network extends Injectable
         }
 
         // Additional "manual" routes
-        Util::fileWriteContent('/etc/static-routes', '');
-        $arr_commands = [];
-        $out = [];
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
-        $catPath = Util::which('cat');
-        Processes::mwExec(
-            "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}'",
-            $arr_commands
-        );
-        Processes::mwExecCommands($arr_commands, $out, 'rout');
-
+        $this->addCustomStaticRoutes();
         $this->openVpnConfigure();
         return 0;
-    }
-
-    /**
-     * Retrieves the general network settings and performs additional processing.
-     *
-     * @return array An array of network interfaces and their settings.
-     */
-    public function getGeneralNetSettings(): array
-    {
-        // Get the list of network interfaces visible to the operating system
-        $src_array_eth = $this->getInterfacesNames();
-
-        // Create a copy of the network interfaces array
-        $array_eth = $src_array_eth;
-
-        // Retrieve the LAN interface settings from the database
-        $res = LanInterfaces::find(['order' => 'interface,vlanid']);
-        $networks = $res->toArray();
-
-        if (count($networks) > 0) {
-            // Additional data processing
-            foreach ($networks as &$if_data) {
-                $if_data['interface_orign'] = $if_data['interface'];
-                $if_data['interface'] = ($if_data['vlanid'] > 0) ? "vlan{$if_data['vlanid']}" : $if_data['interface'];
-                $if_data['dhcp'] = ($if_data['vlanid'] > 0) ? 0 : $if_data['dhcp'];
-
-                if (Verify::isIpAddress($if_data['subnet'])) {
-                    $if_data['subnet'] = $this->netMaskToCidr($if_data['subnet']);
-                }
-
-                $key = array_search($if_data['interface_orign'], $src_array_eth, true);
-                if ($key !== false) {
-                    // Interface found
-                    // Remove the array element if it's not a VLAN
-                    if ($if_data['vlanid'] === '0') {
-                        unset($array_eth[$key]);
-                        $this->enableLanInterface($if_data['interface_orign']);
-                    }
-                } else {
-                    // Interface does not exist
-                    $this->disableLanInterface($if_data['interface_orign']);
-                    // Disable the interface
-                    $if_data['disabled'] = 1;
-                }
-            }
-            unset($if_data);
-        } elseif (count($array_eth) > 0) {
-            $networks = [];
-            // Configure the main interface
-            $networks[] = $this->addLanInterface($array_eth[0], true);
-            unset($array_eth[0]);
-        }
-        // $array_eth will contain only the elements without settings in the database
-        // Add the "default" settings for these interfaces
-        foreach ($array_eth as $eth) {
-            // Add the interface and disable it
-            $networks[] = $this->addLanInterface($eth, false);
-        }
-
-        // Check if there is an active internet interface, if not, set the first available interface as internet
-        $res = LanInterfaces::findFirst("internet = '1' AND disabled='0'");
-        if (null === $res) {
-            /** @var LanInterfaces $eth_settings */
-            $eth_settings = LanInterfaces::findFirst("disabled='0'");
-            if ($eth_settings !== null) {
-                $eth_settings->internet = 1;
-                $eth_settings->save();
-            }
-        }
-
-        return $networks;
-    }
-
-    /**
-     * Converts a net mask to CIDR notation.
-     *
-     * @param string $net_mask The net mask to convert.
-     * @return int The CIDR notation.
-     */
-    public function netMaskToCidr(string $net_mask): int
-    {
-        $bits = 0;
-        $net_mask = explode(".", $net_mask);
-
-        foreach ($net_mask as $oct_ect) {
-            $bits += strlen(str_replace("0", "", decbin((int)$oct_ect)));
-        }
-
-        return $bits;
-    }
-
-    /**
-     * Enables a LAN interface
-     *
-     * @param string $name The name of the interface to enable.
-     * @return void
-     */
-    public function enableLanInterface(string $name): void
-    {
-        $parameters = [
-            'conditions' => 'interface = :ifName: and disabled = :disabled:',
-            'bind' => [
-                'ifName' => $name,
-                'disabled' => 1,
-            ],
-        ];
-
-        $if_data = LanInterfaces::findFirst($parameters);
-        if ($if_data !== null) {
-            $if_data->disabled = 0;
-            $if_data->update();
-        }
-    }
-
-    /**
-     * Disables a LAN interface by setting its internet flag to 0 and disabled flag to 1.
-     *
-     * @param string $name The name of the interface to disable.
-     * @return void
-     */
-    public function disableLanInterface(string $name): void
-    {
-        $if_data = LanInterfaces::findFirst("interface = '{$name}'");
-        if ($if_data !== null) {
-            $if_data->internet = 0;
-            $if_data->disabled = 1;
-            $if_data->update();
-        }
-    }
-
-    /**
-     * Adds a LAN interface with the specified name and settings.
-     *
-     * @param string $name The name of the interface.
-     * @param bool $general Flag indicating if the interface is a general interface.
-     * @return array The array representation of the added interface.
-     */
-    private function addLanInterface(string $name, bool $general = false): array
-    {
-        $data = new LanInterfaces();
-        $data->name = $name;
-        $data->interface = $name;
-        $data->dhcp = '1';
-        $data->internet = ($general === true) ? '1' : '0';
-        $data->disabled = '0';
-        $data->vlanid = '0';
-        $data->hostname = 'MikoPBX';
-        $data->domain = '';
-        $data->topology = LanInterfaces::TOPOLOGY_PRIVATE;
-        $data->autoUpdateExtIp = ($general === true) ? '1' : '0';;
-        $data->primarydns = '';
-        $data->save();
-
-        return $data->toArray();
     }
 
     /**
@@ -636,6 +879,30 @@ class Network extends Injectable
     }
 
     /**
+     * Add custom static routes based on the `/etc/static-routes` file.
+     *
+     * @param string $interface The network interface to add routes to, e.g., eth0 (optional)
+     * @return void
+     */
+    protected function addCustomStaticRoutes(string $interface = ''): void
+    {
+        Util::fileWriteContent('/etc/static-routes', '');
+
+        $busyboxPath = Util::which('busybox');
+        $grepPath = Util::which('grep');
+        $awkPath = Util::which('awk');
+        $catPath = Util::which('cat');
+        if (empty($interface)) {
+            $command = "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}'";
+        } else {
+            $command = "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}' | {$grepPath} '{$interface}'";
+        }
+        $arr_commands = [];
+        Processes::mwExec($command, $arr_commands);
+        Processes::mwExecCommands($arr_commands, $out, 'rout');
+    }
+
+    /**
      * Configuring OpenVPN. If a custom configuration file is specified in the system file customization, the network will be brought up.
      */
     public function openVpnConfigure(): void
@@ -654,181 +921,6 @@ class Network extends Injectable
         if (!empty($data)) {
             $openvpnPath = Util::which('openvpn');
             Processes::mwExecBg("{$openvpnPath} --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
-        }
-    }
-
-    /**
-     * Configures the LAN settings inside the Docker container.
-     *
-     * If the environment is not Docker, this method does nothing.
-     *
-     * @return void
-     */
-    public function configureLanInDocker(): void
-    {
-        // Check if the environment is Docker
-        if (!Util::isDocker()) {
-            return;
-        }
-
-        // Find the path to the busybox binary
-        $busyboxPath = Util::which('busybox');
-
-        // Retrieve the network settings
-        $networks = $this->getGeneralNetSettings();
-
-        foreach ($networks as $if_data) {
-
-            $if_name = $if_data['interface'];
-            $if_name = escapeshellcmd(trim($if_name));
-
-            $commands = [
-                'subnet' => $busyboxPath . ' ifconfig eth0 | awk \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
-                'ipaddr' => $busyboxPath . ' ifconfig eth0 | awk \'/inet / {sub("addr:", "", $2); print $2}\'',
-                'gateway' => $busyboxPath . ' route -n | awk \'/^0.0.0.0/ {print $2}\'',
-                'hostname' => $busyboxPath . ' hostname',
-            ];
-            $data = [];
-            foreach ($commands as $key => $command) {
-                $output = [];
-                if (Processes::MWExec($command, $output) === 0) {
-                    $value = implode("", $output);
-                    if ($key === 'subnet') {
-                        $data[$key] = $this->netMaskToCidr($value);
-                    } else {
-                        $data[$key] = $value;
-                    }
-                }
-            }
-
-            // Save information to the database.
-            $this->updateIfSettings($data, $if_name);
-        }
-
-    }
-
-    /**
-     * Updates the interface settings with the provided data.
-     *
-     * @param array $data The data to update the interface settings with.
-     * @param string $name The name of the interface.
-     *
-     * @return void;
-     */
-    public function updateIfSettings(array $data, string $name): void
-    {
-        /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
-        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
-            return;
-        }
-        foreach ($data as $key => $value) {
-            $res->writeAttribute($key, $value);
-        }
-        $res->save();
-    }
-
-    /**
-     * Updates the DNS settings with the provided data.
-     *
-     * @param array $data The data to update the DNS settings with.
-     * @param string $name The name of the interface.
-     *
-     * @return void
-     */
-    public function updateDnsSettings(array $data, string $name): void
-    {
-        /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
-        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
-            return;
-        }
-        foreach ($data as $key => $value) {
-            $res->writeAttribute($key, $value);
-        }
-        if (empty($res->primarydns) && !empty($res->secondarydns)) {
-            // Swap primary and secondary DNS if primary is empty
-            $res->primarydns = $res->secondarydns;
-            $res->secondarydns = '';
-        }
-        $res->save();
-    }
-
-    /**
-     * Checks if the network settings have changed.
-     *
-     * @param array $data The new network settings.
-     * @param array $dbData The existing network settings from the database.
-     *
-     * @return bool  Returns true if the settings have changed, false otherwise.
-     */
-    public function settingsIsChange(array $data, array $dbData): bool
-    {
-        $isChange = false;
-        foreach ($dbData as $key => $value) {
-            if (!isset($data[$key]) || (string)$value === (string)$data[$key]) {
-                continue;
-            }
-            SystemMessages::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
-            $isChange = true;
-        }
-        return $isChange;
-    }
-
-    /**
-     * Retrieves the interface name by its ID.
-     *
-     * @param string $id_net The ID of the network interface.
-     *
-     * @return string  The interface name.
-     */
-    public function getInterfaceNameById(string $id_net): string
-    {
-        $res = LanInterfaces::findFirstById($id_net);
-        if ($res !== null && $res->interface !== null) {
-            return $res->interface;
-        }
-
-        return '';
-    }
-
-    /**
-     * Retrieves the enabled LAN interfaces.
-     *
-     * @return array  An array of enabled LAN interfaces.
-     */
-    public function getEnabledLanInterfaces(): array
-    {
-        /** @var LanInterfaces $res */
-        $res = LanInterfaces::find('disabled=0');
-
-        return $res->toArray();
-    }
-
-
-
-    /**
-     * Updates the network settings with the provided data.
-     * @param array $data The network settings data to update.
-     */
-    public function updateNetSettings(array $data): void
-    {
-        $res = LanInterfaces::findFirst("internet = '1'");
-        $update_inet = false;
-        if ($res === null) {
-            // If no interface with internet connection is found, get the first interface.
-            $res = LanInterfaces::findFirst();
-            $update_inet = true;
-        }
-
-        if ($res !== null) {
-            foreach ($data as $key => $value) {
-                $res->$key = $value;
-            }
-            if ($update_inet === true) {
-                $res->internet = 1;
-            }
-            $res->save();
         }
     }
 
@@ -912,86 +1004,5 @@ class Network extends Injectable
         $interface['dns'] = $dnsSrv;
 
         return $interface;
-    }
-
-    /**
-     * Update external IP address
-     */
-    public function updateExternalIp(): void
-    {
-        $ipInfoResult = GetExternalIpInfoAction::main();
-        if ($ipInfoResult->success && isset($ipInfoResult->data['ip'])) {
-            $currentIP = $ipInfoResult->data['ip'];
-            $lanData = LanInterfaces::find('autoUpdateExtIp=1');
-            foreach ($lanData as $lan) {
-                $oldExtIp = $lan->extipaddr;
-                $parts = explode(':', $oldExtIp);
-                $oldIP = $parts[0]; // Only IP part of the address
-                $port = isset($parts[1]) ? ':' . $parts[1] : '';
-                if ($oldIP !== $currentIP) {
-                    $newExtIp = $currentIP . $port;
-                    $lan->extipaddr = $newExtIp;
-                    if ($lan->save()) {
-                        SystemMessages::sysLogMsg(__METHOD__, "External IP address updated for interface {$lan->interface}");
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Execute cli command to set up network
-     * @param string $action Action to perform (start or stop)
-     * @return void
-     */
-    public function cliAction(string $action): void
-    {
-        /**
-         * If running inside a Docker container, exit the script.
-         */
-        if (Util::isDocker()) {
-            return;
-        }
-
-        if ('start' === $action) {
-
-            /**
-             * Generate the resolv.conf file for DNS configuration.
-             */
-            $this->resolvConfGenerate();
-            if (Util::isT2SdeLinux()) {
-                /**
-                 * Configure the loopback interface for T2SDE Linux.
-                 */
-                $this->loConfigure();
-            }
-            /**
-             * Configure the LAN interfaces.
-             */
-            $this->lanConfigure();
-        } elseif ('stop' === $action) {
-            if (Util::isSystemctl()) {
-                /**
-                 * Stop networking using systemctl (systemd-based systems).
-                 */
-                $systemctlPath = Util::which('systemctl');
-                Processes::mwExec("{$systemctlPath} stop networking");
-            } else {
-                /**
-                 * Stop networking on T2SDE (non-systemd) systems.
-                 */
-                $if_list      = $this->getInterfaces();
-                $arr_commands = [];
-                $ifconfigPath = Util::which('ifconfig');
-                foreach ($if_list as $if_name => $data) {
-                    $arr_commands[] = "{$ifconfigPath} $if_name down";
-                }
-
-                /**
-                 * Execute the stop commands for each interface.
-                 */
-                Processes::mwExecCommands($arr_commands, $out, 'net_stop');
-            }
-        }
     }
 }

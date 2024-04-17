@@ -7,13 +7,16 @@ use MikoPBX\Core\System\PBX;
 class ReloadPBXCoreAction implements ReloadActionInterface
 {
     /**
-     * Restart PBX core.
+     * Reload PBX core.
      *
      * @param array $parameters
      * @return void
      */
     public function execute(array $parameters = []): void
     {
-        PBX::coreRestart();
+        PBX::sipReload();
+        PBX::iaxReload();
+        PBX::dialplanReload();
+        PBX::coreReload();
     }
 }

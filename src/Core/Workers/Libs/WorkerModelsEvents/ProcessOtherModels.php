@@ -7,7 +7,6 @@ use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\ConferenceRooms;
-use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\DialplanApplications;
 use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Models\Extensions;
@@ -78,16 +77,6 @@ class ProcessOtherModels extends Injectable
             ],
             'functions' => [
                 WorkerModelsEvents::R_DIALPLAN,
-            ],
-        ];
-
-        $tables[] = [
-            'settingName' => [
-                CustomFiles::class,
-            ],
-            'functions' => [
-                WorkerModelsEvents::R_CUSTOM_F,
-                WorkerModelsEvents::R_ADVICE,
             ],
         ];
 
@@ -187,7 +176,7 @@ class ProcessOtherModels extends Injectable
                 WorkerModelsEvents::R_ADVICE,
             ],
         ];
-        
+
         return $tables;
     }
 }

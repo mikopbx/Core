@@ -21,16 +21,10 @@ namespace MikoPBX\Core\System;
 
 use DateTime;
 use DateTimeZone;
-use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Core\Asterisk\Configs\H323Conf;
-use MikoPBX\Core\Asterisk\Configs\HepConf;
-use MikoPBX\Core\System\Configs\CronConf;
-use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\PHPConf;
-use MikoPBX\Core\System\Configs\NTPConf;
-use MikoPBX\Core\Asterisk\Configs\QueueConf;
+use MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Di;
 
 
@@ -147,88 +141,10 @@ class System extends Di\Injectable
         $network->configureLanInDocker();
         $network->updateExternalIp();
     }
-    /**
-     * Updates custom changes in config files
-     *
-     * @return void
-     */
-    public static function updateCustomFiles():void
-    {
-        $actions = [];
-
-        // Find all custom files marked as changed
-        /** @var CustomFiles $res_data */
-        $res_data = CustomFiles::find("changed = '1'");
-
-        // Process each changed file
-        foreach ($res_data as $file_data) {
-            // Always restart asterisk after any custom file change
-            $actions['asterisk_core_reload'] = 100;
-            $filename                        = basename($file_data->filepath);
-
-            // Process based on file name
-            switch ($filename) {
-                // Set actions based on the name of the changed file
-                case 'manager.conf':
-                    $actions['manager'] = 10;
-                    break;
-                case 'musiconhold.conf':
-                    $actions['musiconhold'] = 100;
-                    break;
-                case 'modules.conf':
-                    $actions['modules'] = 10;
-                    break;
-                case 'http.conf':
-                    $actions['manager'] = 10; //
-                    break;
-                case 'hep.conf':
-                    $actions['hep'] = 10; //
-                    break;
-                case 'root': // crontabs
-                    $actions['cron'] = 10;
-                    break;
-                case 'queues.conf':
-                    $actions['queues'] = 10;
-                    break;
-                case 'features.conf':
-                    $actions['features'] = 10;
-                    break;
-                case 'ntp.conf':
-                    $actions['ntp'] = 100;
-                    break;
-                case 'ooh323.conf':
-                    $actions['h323'] = 100;
-                    break;
-                case 'rtp.conf':
-                    $actions['rtp'] = 10;
-                    break;
-                case 'static-routes':
-                case 'openvpn.ovpn':
-                    $actions['network'] = 100;
-                    break;
-                case 'firewall_additional':
-                case 'jail.local':
-                    $actions['firewall'] = 100;
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        // Sort actions and invoke them
-        asort($actions);
-        self::invokeActions($actions);
-
-        // After actions are invoked, reset the changed status and save the file data
-        foreach ($res_data as $file_data) {
-            /** @var CustomFiles $file_data */
-            $file_data->writeAttribute("changed", '0');
-            $file_data->save();
-        }
-    }
 
     /**
      * Restart modules or services based on the provided actions.
+     * @depricated use WorkerModelsEvents::invokeAction($actions);
      *
      * @param array $actions - The actions to be performed.
      *
@@ -236,53 +152,15 @@ class System extends Di\Injectable
      */
     public static function invokeActions(array $actions): void
     {
-
         // Process each action
         foreach ($actions as $action => $value) {
             // Restart modules or services based on action
             switch ($action) {
                 case 'manager':
-                    PBX::managerReload();
-                    break;
-                case 'musiconhold':
-                    PBX::musicOnHoldReload();
-                    break;
-                case 'rtp':
-                    PBX::rtpReload();
-                    break;
-                case 'modules':
-                    PBX::modulesReload();
+                    WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_MANAGERS);
                     break;
                 case 'cron':
-                    $cron = new CronConf();
-                    $cron->reStart();
-                    break;
-                case 'queues':
-                    QueueConf::queueReload();
-                    break;
-                case 'features':
-                    PBX::managerReload(); //
-                    break;
-                case 'ntp':
-                    NTPConf::configure();
-                    break;
-                case 'firewall':
-                    IptablesConf::reloadFirewall();
-                    break;
-                case 'hep':
-                    HepConf::reload();
-                    break;
-                case 'h323':
-                    H323Conf::reload();
-                    break;
-                case 'network':
-                    System::networkReload();
-                    break;
-                case 'asterisk_core_reload':
-                    PBX::sipReload();
-                    PBX::iaxReload();
-                    PBX::dialplanReload();
-                    PBX::coreReload();
+                    WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_CRON);
                     break;
                 default:
             }

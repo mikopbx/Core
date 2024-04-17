@@ -2,18 +2,18 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
-use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\PBX;
 
-class ReloadCustomFilesAction implements ReloadActionInterface
+class ReloadModulesConfAction implements ReloadActionInterface
 {
     /**
-     * Updates custom changes in config files
+     * Update modules.conf file.
      *
      * @param array $parameters
      * @return void
      */
     public function execute(array $parameters = []): void
     {
-        System::updateCustomFiles();
+        PBX::modulesReload();
     }
 }

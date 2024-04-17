@@ -293,24 +293,4 @@ class Udhcpc extends Network
             }
         }
     }
-
-    /**
-     * Add custom static routes based on the `/etc/static-routes` file.
-     *
-     * @param string $interface The network interface to add routes to, e.g., eth0
-     * @return void
-     */
-    private function addCustomStaticRoutes(string $interface): void
-    {
-        if (file_exists('/etc/static-routes')) {
-            $busyboxPath = Util::which('busybox');
-            $grepPath = Util::which('grep');
-            $awkPath = Util::which('awk');
-            $catPath = Util::which('cat');
-            $shPath = Util::which('sh');
-            Processes::mwExec(
-                "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}' | {$grepPath} '{$interface}' | {$shPath}"
-            );
-        }
-    }
 }

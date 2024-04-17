@@ -2,18 +2,18 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
-use MikoPBX\Core\System\PBX;
+use MikoPBX\Core\Asterisk\Configs\H323Conf;
 
-class ReloadMOHAction implements ReloadActionInterface
+class ReloadH323Action implements ReloadActionInterface
 {
     /**
-     * Reloads MOH file list in Asterisk.
+     * Update H323 config file.
      *
      * @param array $parameters
      * @return void
      */
     public function execute(array $parameters = []): void
     {
-        PBX::musicOnHoldReload();
+        H323Conf::reload();
     }
 }

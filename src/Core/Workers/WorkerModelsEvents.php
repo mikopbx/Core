@@ -22,17 +22,16 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudParametersAction;
-use MikoPBX\Common\Models\{ModelsBase, PbxExtensionModules, PbxSettings};
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessCustomFiles;
+use MikoPBX\Common\Models\{CustomFiles, ModelsBase, PbxExtensionModules, PbxSettings};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
-use MikoPBX\Core\System\{BeanstalkClient, SystemMessages, Util};
+use MikoPBX\Core\System\{BeanstalkClient, SystemMessages};
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCustomFilesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFail2BanConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
@@ -48,7 +47,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNTPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadParkingAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPBXCoreAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\RestartPBXCoreAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPHPFPMAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
@@ -61,6 +60,11 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSyslogDAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadTimezoneAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadVoicemailAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadWorkerCallEventsAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudParametersAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadH323Action;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadHepAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPBXCoreAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessOtherModels;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessPBXSettings;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ReloadManager;
@@ -82,15 +86,18 @@ class WorkerModelsEvents extends WorkerBase
 {
     public const R_MANAGERS = 'reloadManager';
     public const R_QUEUES = 'reloadQueues';
+    public const R_MODULES_CONF = 'reloadModulesConf';
     public const R_DIALPLAN = 'reloadDialplan';
     public const R_PARKING = 'reloadParking';
-    public const R_CUSTOM_F = 'updateCustomFiles';
     public const R_FIREWALL = 'reloadFirewall';
     public const R_NETWORK = 'networkReload';
     public const R_IAX = 'reloadIax';
     public const R_SIP = 'reloadSip';
     public const R_RTP = 'rtpReload';
-    public const R_PBX_CORE = 'pbxCoreReload';
+    public const R_H323  = 'H323Reload';
+    public const R_HEP   = 'HepReload';
+    public const R_PBX_CORE_RESTART = 'pbxCoreRestart';
+    public const R_PBX_CORE_RELOAD = 'pbxCoreReload';
     public const R_FEATURES = 'reloadFeatures';
     public const R_CRON = 'reloadCron';
     public const  R_NGINX = 'reloadNginx';
@@ -124,8 +131,10 @@ class WorkerModelsEvents extends WorkerBase
 
     // Array of reload actions sorted by its priority
     private array $reloadActions = [];
+
+    private array $otherModelsDependencyTable = [];
     private array $pbxSettingsDependencyTable = [];
-    private array $modelsDependencyTable = [];
+    private array $customFilesDependencyTable = [];
 
     private BeanstalkClient $beanstalkClient;
 
@@ -165,11 +174,14 @@ class WorkerModelsEvents extends WorkerBase
         // Array of core conf objects
         $this->arrAsteriskConfObjects = $this->di->getShared(AsteriskConfModulesProvider::SERVICE_NAME);
 
-        // Initializes the PBX settings dependency table.
+        // Initializes the PBX settings model dependency table.
         $this->pbxSettingsDependencyTable = ProcessPBXSettings::getDependencyTable();
 
+        // Initializes the custom files models dependency table.
+        $this->customFilesDependencyTable = ProcessCustomFiles::getDependencyTable();
+
         // Initializes the models dependency table.
-        $this->modelsDependencyTable = ProcessOtherModels::getDependencyTable();
+        $this->otherModelsDependencyTable = ProcessOtherModels::getDependencyTable();
 
         // Initializes the possible reload actions table.
         $this->reloadActions = $this->getReloadActions();
@@ -216,16 +228,19 @@ class WorkerModelsEvents extends WorkerBase
             self::R_NGINX => new ReloadNginxAction(),
             self::R_NGINX_CONF => new ReloadNginxConfAction(),
             self::R_CRON => new ReloadCrondAction(),
-            self::R_PBX_CORE => new ReloadPBXCoreAction(),
+            self::R_PBX_CORE_RESTART => new RestartPBXCoreAction(),
+            self::R_PBX_CORE_RELOAD => new ReloadPBXCoreAction(),
+            self::R_MODULES_CONF  => new ReloadModulesConfAction(),
             self::R_FEATURES => new ReloadFeaturesAction(),
             self::R_SIP => new ReloadPJSIPAction(),
             self::R_RTP => new ReloadRTPAction(),
             self::R_IAX => new ReloadIAXAction(),
+            self::R_H323  => new ReloadH323Action(),
+            self::R_HEP  => new ReloadHepAction(),
             self::R_DIALPLAN => new ReloadDialplanAction(),
             self::R_PARKING => new ReloadParkingAction(),
             self::R_QUEUES => new ReloadQueuesAction(),
             self::R_MANAGERS => new ReloadManagerAction(),
-            self::R_CUSTOM_F => new ReloadCustomFilesAction(),
             self::R_VOICEMAIL => new ReloadVoicemailAction(),
             self::R_MOH => new ReloadMOHAction(),
             self::R_CALL_EVENTS_WORKER => new ReloadWorkerCallEventsAction(),
@@ -377,7 +392,10 @@ class WorkerModelsEvents extends WorkerBase
         $this->getNewSettingsForDependentModules($called_class);
 
         // Fill modified tables from models
-        $this->fillModifiedTablesFromModels($called_class);
+        $this->fillModifiedTablesFromOtherModels($called_class);
+
+        // Fill modified tables from PBX settings data
+        $this->fillModifiedTablesFromCustomFilesData($called_class, $data['recordId']);
 
         // Fill modified tables from PBX settings data
         $this->fillModifiedTablesFromPbxSettingsData($called_class, $data['recordId']);
@@ -421,9 +439,9 @@ class WorkerModelsEvents extends WorkerBase
      * @param string $called_class The called class.
      * @return void
      */
-    private function fillModifiedTablesFromModels(string $called_class): void
+    private function fillModifiedTablesFromOtherModels(string $called_class): void
     {
-        foreach ($this->modelsDependencyTable as $dependencyData) {
+        foreach ($this->otherModelsDependencyTable as $dependencyData) {
             if (!in_array($called_class, $dependencyData['settingName'], true)) {
                 continue;
             }
@@ -434,9 +452,41 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
+     * Fills the modified tables array based on the custom files data, the called class, and the record ID.
+     *
+     * @param string $called_class The called class (Must be CustomFiles)
+     * @param string $recordId The record ID.
+     * @return void
+     */
+    private function fillModifiedTablesFromCustomFilesData(string $called_class, string $recordId): void
+    {
+        // Check if the called class is not CustomFiles
+        if (CustomFiles::class !== $called_class) {
+            return;
+        }
+
+        $changedCustomFile = CustomFiles::findFirstById($recordId);
+        if ($changedCustomFile === null || $changedCustomFile->changed!=='1') {
+            return;
+        }
+
+        foreach ($this->customFilesDependencyTable as $dependencyData) {
+            // The rule for all files or the rule only for specific file
+            if ($dependencyData['filePath']==='*' || strcasecmp($changedCustomFile->filepath, $dependencyData['filePath']) === 0) {
+                foreach ($dependencyData['functions'] as $function) {
+                    $this->modified_tables[$function] = true;
+                }
+            }
+        }
+
+        // After actions are invoked, reset the changed status and save the file data
+        $changedCustomFile->writeAttribute("changed", '0');
+        $changedCustomFile->save();
+    }
+    /**
      * Fills the modified tables array based on the PBX settings data, the called class, and the record ID.
      *
-     * @param string $called_class The called class.
+     * @param string $called_class The called class (Must be PbxSettings)
      * @param string $recordId The record ID.
      * @return void
      */
