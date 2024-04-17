@@ -119,9 +119,11 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
      */
     private static function getStorageUID():string
     {
-        $busybox = Util::which('busybox');
+        $grep = Util::which('grep');
+        $cat = Util::which('cat');
+        $awk = Util::which('awk');
         $storageDeviceFile = self::STORAGE_DEVICE;
-        $cmd = "$busybox grep $($busybox  cat $storageDeviceFile) < /etc/fstab | $busybox awk -F'[= ]' '{ print \$2}'";
+        $cmd = "$grep $($cat $storageDeviceFile) < /etc/fstab | $awk -F'[= ]' '{ print \$2}'";
         return trim(shell_exec($cmd));
     }
 
@@ -132,8 +134,9 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
     */
     private static function getCfUID() :string
     {
-        $busybox = Util::which('busybox');
-        $cmd = "$busybox grep '/cf' < /etc/fstab | $busybox awk -F'[= ]' '{ print \$2}'";
+        $grep = Util::which('grep');
+        $awk = Util::which('awk');
+        $cmd = "$grep '/cf' < /etc/fstab | $awk -F'[= ]' '{ print \$2}'";
         return trim(shell_exec($cmd));
     }
 
@@ -145,8 +148,9 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
     private static function getBootPartitionName(string $cf_uuid) :string
     {
         $lsblk = Util::which('lsblk');
-        $busybox = Util::which('busybox');
-        $cmd = "$lsblk -o UUID,PKNAME -p | $busybox grep '$cf_uuid' | $busybox cut -f 2 -d ' '";
+        $grep = Util::which('grep');
+        $cut = Util::which('cut');
+        $cmd = "$lsblk -o UUID,PKNAME -p | $grep '$cf_uuid' | $cut -f 2 -d ' '";
         $bootDeviceName = trim(shell_exec($cmd));
         return Storage::getDevPartName($bootDeviceName, 1);
     }

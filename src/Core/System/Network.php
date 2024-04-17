@@ -98,7 +98,10 @@ class Network extends Injectable
         }
 
         // Find the path to the busybox binary
-        $busyboxPath = Util::which('busybox');
+        $ifconfig = Util::which('ifconfig');
+        $route = Util::which('route');
+        $awk = Util::which('awk');
+        $hostname = Util::which('hostname');
 
         // Retrieve the network settings
         $networks = $this->getGeneralNetSettings();
@@ -109,10 +112,10 @@ class Network extends Injectable
             $if_name = escapeshellcmd(trim($if_name));
 
             $commands = [
-                'subnet' => $busyboxPath . ' ifconfig eth0 | awk \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
-                'ipaddr' => $busyboxPath . ' ifconfig eth0 | awk \'/inet / {sub("addr:", "", $2); print $2}\'',
-                'gateway' => $busyboxPath . ' route -n | awk \'/^0.0.0.0/ {print $2}\'',
-                'hostname' => $busyboxPath . ' hostname',
+                'subnet' => $ifconfig . ' eth0 | '.$awk.' \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
+                'ipaddr' => $ifconfig . ' eth0 | '.$awk.' \'/inet / {sub("addr:", "", $2); print $2}\'',
+                'gateway' => $route . ' -n | '.$awk.' \'/^0.0.0.0/ {print $2}\'',
+                'hostname' => $hostname,
             ];
             $data = [];
             foreach ($commands as $key => $command) {
@@ -686,9 +689,8 @@ class Network extends Injectable
 
         // If pdnsd process is running, terminate the process
         if (!empty($pid)) {
-            $busyboxPath = Util::which('busybox');
-            $killPath = Util::which('kill');
-            Processes::mwExec("{$busyboxPath} {$killPath} '$pid'");
+            $kill = Util::which('kill');
+            Processes::mwExec("$kill '$pid'");
         }
 
         // Start the pdnsd service with the updated configuration
@@ -702,9 +704,8 @@ class Network extends Injectable
      */
     public function loConfigure(): void
     {
-        $busyboxPath = Util::which('busybox');
-        $ifconfigPath = Util::which('ifconfig');
-        Processes::mwExec("{$busyboxPath} {$ifconfigPath} lo 127.0.0.1");
+        $ifconfig = Util::which('ifconfig');
+        Processes::mwExec("$ifconfig lo 127.0.0.1");
     }
 
     /**
@@ -722,12 +723,13 @@ class Network extends Injectable
         $networks = $this->getGeneralNetSettings();
 
         // Retrieve the paths of required commands
-        $busyboxPath = Util::which('busybox');
-        $vconfigPath = Util::which('vconfig');
-        $killallPath = Util::which('killall');
+        $vconfig = Util::which('vconfig');
+        $killall = Util::which('killall');
+        $ifconfig = Util::which('ifconfig');
+
 
         $arr_commands = [];
-        $arr_commands[] = "{$killallPath} udhcpc";
+        $arr_commands[] = "$killall udhcpc";
         $eth_mtu = [];
         foreach ($networks as $if_data) {
             if ($if_data['disabled'] === '1') {
@@ -745,13 +747,13 @@ class Network extends Injectable
 
             if ($if_data['vlanid'] > 0) {
                 // Override the interface name for VLAN interfaces
-                $arr_commands[] = "{$vconfigPath} set_name_type VLAN_PLUS_VID_NO_PAD";
+                $arr_commands[] = "$vconfig set_name_type VLAN_PLUS_VID_NO_PAD";
                 // Add the new VLAN interface
-                $arr_commands[] = "{$vconfigPath} add {$if_data['interface_orign']} {$if_data['vlanid']}";
+                $arr_commands[] = "$vconfig add {$if_data['interface_orign']} {$if_data['vlanid']}";
             }
             // Disable and reset the interface
-            $arr_commands[] = "{$busyboxPath} ifconfig $if_name down";
-            $arr_commands[] = "{$busyboxPath} ifconfig $if_name 0.0.0.0";
+            $arr_commands[] = "$ifconfig $if_name down";
+            $arr_commands[] = "$ifconfig $if_name 0.0.0.0";
 
             $gw_param = '';
             if (trim($if_data['dhcp']) === '1') {
@@ -768,20 +770,20 @@ class Network extends Injectable
                 $pid_pcc = Processes::getPidOfProcess($pid_file);
                 if (!empty($pid_pcc) && file_exists($pid_file)) {
                     // Terminate the old udhcpc process
-                    $killPath = Util::which('kill');
-                    $catPath = Util::which('cat');
-                    system("{$killPath} `{$catPath} {$pid_file}` {$pid_pcc}");
+                    $kill = Util::which('kill');
+                    $cat = Util::which('cat');
+                    system("$kill `$cat {$pid_file}` {$pid_pcc}");
                 }
-                $udhcpcPath = Util::which('udhcpc');
-                $nohupPath = Util::which('nohup');
+                $udhcpc = Util::which('udhcpc');
+                $nohup = Util::which('nohup');
 
                 // Obtain IP and wait for the process to finish
                 $workerPath = '/etc/rc/udhcpc_configure';
                 $options = '-t 6 -T 5 -q -n';
-                $arr_commands[] = "{$udhcpcPath} {$options} -i {$if_name} -x hostname:{$hostname} -s {$workerPath}";
+                $arr_commands[] = "$udhcpc $options -i $if_name -x hostname:$hostname -s $workerPath";
                 // Start a new udhcpc process in the background
                 $options = '-t 6 -T 5 -S -b -n';
-                $arr_commands[] = "{$nohupPath} {$udhcpcPath} {$options} -p {$pid_file} -i {$if_name} -x hostname:{$hostname} -s {$workerPath} 2>&1 &";
+                $arr_commands[] = "$nohup $udhcpc $options -p {$pid_file} -i $if_name -x hostname:$hostname -s $workerPath 2>&1 &";
                 /*
                    udhcpc - utility for configuring the interface
                                - configures /etc/resolv.conf
@@ -808,15 +810,15 @@ class Network extends Injectable
                     continue;
                 }
 
-                $ifconfigPath = Util::which('ifconfig');
-                $arr_commands[] = "{$busyboxPath} {$ifconfigPath} $if_name $ipaddr netmask $subnet";
+                $ifconfig = Util::which('ifconfig');
+                $arr_commands[] = "$ifconfig $if_name $ipaddr netmask $subnet";
 
                 if ("" !== trim($gateway)) {
                     $gw_param = "gw $gateway";
                 }
 
-                $routePath = Util::which('route');
-                $arr_commands[] = "{$busyboxPath} {$routePath} del default $if_name";
+                $route = Util::which('route');
+                $arr_commands[] = "$route del default $if_name";
 
                 /** @var LanInterfaces $if_data */
                 $if_data = LanInterfaces::findFirst("id = '{$if_data['id']}'");
@@ -824,10 +826,10 @@ class Network extends Injectable
 
                 if ($is_inet === '1') {
                     // Create default route only if the interface is for internet
-                    $arr_commands[] = "{$busyboxPath} {$routePath} add default $gw_param dev $if_name";
+                    $arr_commands[] = "$route add default $gw_param dev $if_name";
                 }
                 // Bring up the interface
-                $arr_commands[] = "{$busyboxPath} {$ifconfigPath} $if_name up";
+                $arr_commands[] = "$ifconfig $if_name up";
 
                 $eth_mtu[] = $if_name;
             }
@@ -888,14 +890,13 @@ class Network extends Injectable
     {
         Util::fileWriteContent('/etc/static-routes', '');
 
-        $busyboxPath = Util::which('busybox');
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
-        $catPath = Util::which('cat');
+        $grep = Util::which('grep');
+        $awk = Util::which('awk');
+        $cat = Util::which('cat');
         if (empty($interface)) {
-            $command = "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}'";
+            $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}'";
         } else {
-            $command = "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}' | {$grepPath} '{$interface}'";
+            $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}' | $grep '{$interface}'";
         }
         $arr_commands = [];
         Processes::mwExec($command, $arr_commands);
@@ -915,12 +916,12 @@ class Network extends Injectable
         $pid = Processes::getPidOfProcess('openvpn');
         if (!empty($pid)) {
             // Terminate the process.
-            $busyboxPath = Util::which('busybox');
-            Processes::mwExec("{$busyboxPath} kill '$pid'");
+            $kill = Util::which('kill');
+            Processes::mwExec("$kill '$pid'");
         }
         if (!empty($data)) {
-            $openvpnPath = Util::which('openvpn');
-            Processes::mwExecBg("{$openvpnPath} --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
+            $openvpn = Util::which('openvpn');
+            Processes::mwExecBg("$openvpn --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
         }
     }
 
@@ -950,8 +951,8 @@ class Network extends Injectable
         $interface = [];
 
         // Get ifconfig's output for the specified interface.
-        $busyboxPath = Util::which('busybox');
-        Processes::mwExec("{$busyboxPath} ifconfig $name 2>/dev/null", $output);
+        $ifconfig = Util::which('ifconfig');
+        Processes::mwExec("$ifconfig $name 2>/dev/null", $output);
         $output = implode(" ", $output);
 
         // Parse MAC address.
@@ -975,15 +976,14 @@ class Network extends Injectable
         } else {
             $interface['up'] = false;
         }
-        $busyboxPath = Util::which('busybox');
 
         // Get the default gateway.
-        $grepPath = Util::which('grep');
-        $cutPath = Util::which('cut');
-        $routePath = Util::which('route');
+        $grep = Util::which('grep');
+        $cut = Util::which('cut');
+        $route = Util::which('route');
 
         Processes::mwExec(
-            "{$busyboxPath} {$routePath} -n | {$grepPath} {$name} | {$grepPath} \"^0.0.0.0\" | {$cutPath} -d ' ' -f 10",
+            "$route -n | $grep $name | $grep \"^0.0.0.0\" | $cut -d ' ' -f 10",
             $matches
         );
         $gw = (count($matches) > 0) ? $matches[0] : '';
@@ -992,8 +992,8 @@ class Network extends Injectable
         }
 
         // Get DNS servers.
-        $catPath = Util::which('cat');
-        Processes::mwExec("{$catPath} /etc/resolv.conf | {$grepPath} nameserver | {$cutPath} -d ' ' -f 2", $dnsout);
+        $cat = Util::which('cat');
+        Processes::mwExec("$cat /etc/resolv.conf | $grep nameserver | $cut -d ' ' -f 2", $dnsout);
 
         $dnsSrv = [];
         foreach ($dnsout as $line) {

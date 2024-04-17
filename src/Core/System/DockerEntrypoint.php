@@ -94,9 +94,9 @@ class DockerEntrypoint extends Di\Injectable
     public function start(): void
     {
         $this->workerStartTime = microtime(true);
-        $sysLogdPath = Util::which('syslogd');
+        $syslogd = Util::which('syslogd');
         // Start the system log.
-        Processes::mwExecBg($sysLogdPath . ' -S -C512');
+        Processes::mwExecBg($syslogd . ' -S -C512');
         $out = [];
         Processes::mwExec('sqlite3 ' . self::PATH_DB . ' .tables', $out);
         if (trim(implode('', $out)) === '') {

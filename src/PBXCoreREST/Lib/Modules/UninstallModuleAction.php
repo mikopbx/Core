@@ -49,16 +49,15 @@ class UninstallModuleAction extends \Phalcon\Di\Injectable
 
         // Kill all module processes
         if (is_dir("{$currentModuleDir}/bin")) {
-            $busyboxPath = Util::which('busybox');
-            $killPath = Util::which('kill');
-            $lsofPath = Util::which('lsof');
-            $grepPath = Util::which('grep');
-            $awkPath = Util::which('awk');
-            $uniqPath = Util::which('uniq');
+            $kill = Util::which('kill');
+            $lsof = Util::which('lsof');
+            $grep = Util::which('grep');
+            $awk = Util::which('awk');
+            $uniq = Util::which('uniq');
 
             // Execute the command to kill all processes related to the module
             Processes::mwExec(
-                "{$busyboxPath} {$killPath} -9 $({$lsofPath} {$currentModuleDir}/bin/* |  {$busyboxPath} {$grepPath} -v COMMAND | {$busyboxPath} {$awkPath}  '{ print $2}' | {$busyboxPath} {$uniqPath})"
+                "$kill -9 $($lsof {$currentModuleDir}/bin/* |  $grep -v COMMAND | $awk  '{ print $2}' | $uniq)"
             );
         }
 
@@ -80,10 +79,10 @@ class UninstallModuleAction extends \Phalcon\Di\Injectable
         } finally {
             if (is_dir($currentModuleDir)) {
                 // If the module directory still exists, force uninstallation
-                $rmPath = Util::which('rm');
+                $rm = Util::which('rm');
 
                 // Remove the module directory recursively
-                Processes::mwExec("{$rmPath} -rf {$currentModuleDir}");
+                Processes::mwExec("$rm -rf {$currentModuleDir}");
 
                 // Use the fallback class to unregister the module from the database
                 $moduleClass = PbxExtensionSetupFailure::class;

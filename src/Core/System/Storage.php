@@ -967,24 +967,27 @@ class Storage extends Di\Injectable
      */
     private function clearTmpFiles(): void
     {
-        $busyboxPath = Util::which('busybox');
+        $timeout = Util::which('timeout');
+        $find = Util::which('find');
+        $mv = Util::which('mv');
+        $nice = Util::which('nice');
         $tmpDir = $this->config->path('core.tempDir');
         if (!file_exists($tmpDir)) {
             return;
         }
         // Trying to get a list of files
-        Processes::mwExec("$busyboxPath timeout 10 $busyboxPath find $tmpDir -type f", $out, $ret);
+        Processes::mwExec("$timeout 10 $find $tmpDir -type f", $out, $ret);
         if ($ret !== 0) {
             // there are too many files in the temporary directory, we will clear them
             // it may cause a failure when setting access rights (chown)
             $resDirForRm = "$tmpDir-" . time();
-            shell_exec("$busyboxPath mv '$tmpDir' '$resDirForRm'");
+            shell_exec("$mv '$tmpDir' '$resDirForRm'");
             if (file_exists("$resDirForRm/swapfile")) {
                 // Saving only the swap file
-                shell_exec("$busyboxPath mv '$resDirForRm/swapfile' '$tmpDir/swapfile'");
+                shell_exec("$mv '$resDirForRm/swapfile' '$tmpDir/swapfile'");
             }
             // Let's start deleting temporary files
-            Processes::mwExecBg("/usr/bin/nice -n 19 $busyboxPath rm -rf $resDirForRm");
+            Processes::mwExecBg("$nice -n 19 $mv -rf $resDirForRm");
         }
         Util::mwMkdir($tmpDir, true);
     }
@@ -1000,9 +1003,10 @@ class Storage extends Di\Injectable
     {
         if (!empty($disk['uniqid']) && strpos($disk['uniqid'], 'STORAGE-DISK') === false) {
             // Find the partition name by UID.
-            $lsBlkPath = Util::which('lsblk');
-            $busyboxPath = Util::which('busybox');
-            $cmd = "{$lsBlkPath} -r -o NAME,UUID | {$busyboxPath} grep {$disk['uniqid']} | {$busyboxPath} cut -d ' ' -f 1";
+            $lsblk = Util::which('lsblk');
+            $grep = Util::which('grep');
+            $cut = Util::which('cut');
+            $cmd = "$lsblk -r -o NAME,UUID | $grep {$disk['uniqid']} | $cut -d ' ' -f 1";
             $dev = '/dev/' . trim(shell_exec($cmd));
             if ($this->hddExists($dev)) {
                 // Disk exists.
@@ -1809,11 +1813,10 @@ class Storage extends Di\Injectable
      */
     public function getFsType(string $device): string
     {
-        $blkidPath = Util::which('blkid');
-        $busyboxPath = Util::which('busybox');
-        $sedPath = Util::which('sed');
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
+        $blkid = Util::which('blkid');
+        $sed = Util::which('sed');
+        $grep = Util::which('grep');
+        $awk = Util::which('awk');
 
         // Remove '/dev/' from the device path
         $device = str_replace('/dev/', '', $device);
@@ -1821,7 +1824,7 @@ class Storage extends Di\Injectable
 
         // Execute the command to retrieve the file system type of the device
         Processes::mwExec(
-            "{$blkidPath} -ofull /dev/{$device} | {$busyboxPath} {$sedPath} -r 's/[[:alnum:]]+=/\\n&/g' | {$busyboxPath} {$grepPath} \"^TYPE=\" | {$busyboxPath} {$awkPath} -F \"\\\"\" '{print $2}'",
+            "$blkid -ofull /dev/{$device} | $sed -r 's/[[:alnum:]]+=/\\n&/g' | $grep \"^TYPE=\" | $awk -F \"\\\"\" '{print $2}'",
             $out
         );
         $format = implode('', $out);
@@ -1889,11 +1892,12 @@ class Storage extends Di\Injectable
         if (empty($device)) {
             return '';
         }
-        $lsBlkPath = Util::which('lsblk');
-        $busyboxPath = Util::which('busybox');
+        $lsblk = Util::which('lsblk');
+        $grep = Util::which('grep');
+        $cut = Util::which('cut');
 
         // Build the command to retrieve the UUID of the device
-        $cmd = "{$lsBlkPath} -r -o NAME,UUID | {$busyboxPath} grep " . basename($device) . " | {$busyboxPath} cut -d ' ' -f 2";
+        $cmd = "$lsblk -r -o NAME,UUID | $grep " . basename($device) . " | $cut -d ' ' -f 2";
         $res = Processes::mwExec($cmd, $output);
         if ($res === 0 && count($output) > 0) {
             $result = $output[0];

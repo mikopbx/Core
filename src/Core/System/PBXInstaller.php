@@ -231,13 +231,12 @@ class PBXInstaller extends Di\Injectable
     private function unmountPartitions()
     {
         echo " - Unmounting partitions...\n";
-        $grepPath = Util::which('grep');
-        $busyboxPath = Util::which('busybox');
-        $awkPath = Util::which('awk');
+        $grep = Util::which('grep');
+        $awk = Util::which('awk');
 
         // Get all mounted partitions
         $mnt_dirs = [];
-        Processes::mwExec("{$this->mountPath} | {$grepPath} '^/dev/{$this->target_disk}' | {$busyboxPath} {$awkPath} '{print $3}'", $mnt_dirs);
+        Processes::mwExec("{$this->mountPath} | $grep '^/dev/{$this->target_disk}' | $awk '{print $3}'", $mnt_dirs);
         foreach ($mnt_dirs as $mnt) {
             // Terminate all related processes.
             Processes::mwExec("/sbin/shell_functions.sh killprocesses '$mnt' -TERM 0;");

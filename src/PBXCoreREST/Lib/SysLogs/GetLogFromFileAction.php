@@ -19,8 +19,8 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di;
@@ -52,7 +52,7 @@ class GetLogFromFileAction extends \Phalcon\Di\Injectable
 
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $filename = System::getLogDir() . '/' . $filename;
+        $filename = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
         if (!file_exists($filename)) {
             $res->success = false;
             $res->messages[] = 'No access to the file ' . $filename;
@@ -68,8 +68,7 @@ class GetLogFromFileAction extends \Phalcon\Di\Injectable
             $linesPlusOffset = $lines + $offset;
 
             $di = Di::getDefault();
-            $dirsConfig = $di->getShared('config');
-            $cacheDir = $dirsConfig->path('www.downloadCacheDir');
+            $cacheDir = Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR);
             if (!file_exists($cacheDir)) {
                 Util::mwMkdir($cacheDir, true);
             }

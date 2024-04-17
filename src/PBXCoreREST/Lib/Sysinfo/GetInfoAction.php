@@ -226,9 +226,9 @@ class GetInfoAction extends \Phalcon\Di\Injectable
     {
         $content      = '─────────────────────────────────────── ifconfig ──────────────────────────────────────';
         $content     .= PHP_EOL . PHP_EOL;
-        $busyboxPath  = Util::which('busybox');
+        $ifconfig  = Util::which('ifconfig');
         $out          = [];
-        Processes::mwExec("$busyboxPath ifconfig", $out);
+        Processes::mwExec("$ifconfig", $out);
         $ifconfigOut  = implode(PHP_EOL, $out);
         $content     .= $ifconfigOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -244,9 +244,9 @@ class GetInfoAction extends \Phalcon\Di\Injectable
     {
         $content = '─────────────────────────────────────────── arp ──────────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        $busyboxPath = Util::which('busybox');
+        $arp = Util::which('arp');
         $out      = [];
-        Processes::mwExec("$busyboxPath arp", $out);
+        Processes::mwExec("$arp", $out);
         $arpOut   = implode(PHP_EOL, $out);
         $content .= $arpOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -262,9 +262,9 @@ class GetInfoAction extends \Phalcon\Di\Injectable
     {
         $content = '─────────────────────────────────────────── OS Name ──────────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        $busyboxPath = Util::which('busybox');
+        $uname = Util::which('uname');
         $out      = [];
-        Processes::mwExec("$busyboxPath uname -a", $out);
+        Processes::mwExec("$uname -a", $out);
         $arpOut   = implode(PHP_EOL, $out);
         $content .= $arpOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -280,9 +280,9 @@ class GetInfoAction extends \Phalcon\Di\Injectable
     {
         $content   = '────────────────────────────────────────── route ─────────────────────────────────────────';
         $content   .= PHP_EOL . PHP_EOL;
-        $busyboxPath = Util::which('busybox');
+        $route = Util::which('route');
         $out       = [];
-        Processes::mwExec("$busyboxPath route", $out);
+        Processes::mwExec($route, $out);
         $routeOut = implode(PHP_EOL, $out);
         $content  .= $routeOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;

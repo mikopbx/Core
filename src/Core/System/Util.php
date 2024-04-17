@@ -391,36 +391,48 @@ class Util
     public static function which(string $cmd): string
     {
         global $_ENV;
-        if (array_key_exists('PATH', $_ENV)) {
-            $binaryFolders = $_ENV['PATH'];
-
-            // Search for the command in each binary folder
-            foreach (explode(':', $binaryFolders) as $path) {
-                if (is_executable("{$path}/{$cmd}")) {
-                    return "{$path}/{$cmd}";
-                }
-            }
-        }
 
         // Default binary folders to search if PATH is not set or command is not found
-        $binaryFolders =
-            [
-                '/sbin',
-                '/bin',
-                '/usr/sbin',
-                '/usr/bin',
-                '/usr/local/bin',
-                '/usr/local/sbin',
-            ];
+        $binaryFolders = $_ENV['PATH'] ?? '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin:/usr/local/sbin';
 
-        // Search for the command in the default binary folders
-        foreach ($binaryFolders as $path) {
+        // Search for the command in each binary folder
+        foreach (explode(':', $binaryFolders) as $path) {
             if (is_executable("{$path}/{$cmd}")) {
                 return "{$path}/{$cmd}";
             }
         }
 
+        // Get BusyBox applets list from cache or generate it
+        $busyBoxApplets = self::getBusyBoxCommands();
+
+        // Check if the command is a BusyBox applet
+        if (in_array($cmd, $busyBoxApplets)) {
+            return "/bin/busybox $cmd"; // Prefix with 'busybox' if it is a BusyBox command
+        }
+
+        // Return the command as it is if not found and not a BusyBox applet
         return $cmd;
+    }
+
+    /**
+     * Fetches or generates the list of BusyBox commands.
+     *
+     * @return array List of BusyBox commands.
+     */
+    public static function getBusyBoxCommands(): array
+    {
+        $filename = '/etc/busybox-commands';
+        if (!file_exists($filename)) {
+            // Get the list of BusyBox commands by executing busybox --list
+            Processes::mwExec('busybox --list', $output);
+            // Save the output to a file
+            file_put_contents($filename, implode("\n", $output));
+            return $output;
+        } else {
+            // Read the list from the file
+            $commands = file($filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            return $commands;
+        }
     }
 
     /**
@@ -823,7 +835,7 @@ class Util
 
     /**
      * Adds messages to Syslog.
-     * @depricated Use SystemMessages::sysLogMsg instead
+     * @deprecated Use SystemMessages::sysLogMsg instead
      *
      * @param string $ident The category, class, or method identification.
      * @param string $message The log message.
@@ -839,7 +851,7 @@ class Util
 
     /**
      * Echoes a message and logs it to the system log.
-     * @depricated Use SystemMessages::echoWithSyslog instead
+     * @deprecated Use SystemMessages::echoWithSyslog instead
      *
      * @param string $message The message to echo and log.
      *

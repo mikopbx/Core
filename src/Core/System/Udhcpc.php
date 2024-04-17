@@ -75,13 +75,13 @@ class Udhcpc extends Network
         $interface = trim(getenv('interface'));
 
         // For MIKO LFS Edition.
-        $busyboxPath = Util::which('busybox');
+        $ifconfig = Util::which('ifconfig');
 
         // Bring the interface up.
-        Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
+        Processes::mwExec("$ifconfig $interface up");
 
         // Set a default IP configuration for the interface.
-        Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
+        Processes::mwExec("$ifconfig $interface 192.168.2.1 netmask 255.255.255.0");
     }
 
     /**
@@ -195,8 +195,8 @@ class Udhcpc extends Network
         $NET_MASK = (!empty($env_vars['subnet']) && $env_vars['subnet'] !== '255.255.255.255') ? "netmask {$env_vars['subnet']}" : "";
 
         // Configure the network interface with the provided IP, broadcast, and subnet mask.
-        $busyboxPath = Util::which('busybox');
-        Processes::mwExec("{$busyboxPath} ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
+        $ifconfig = Util::which('ifconfig');
+        Processes::mwExec("$ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
 
 
         // Remove any existing default gateway routes associated with this interface.
@@ -278,7 +278,7 @@ class Udhcpc extends Network
         $routes = explode(' ', $staticRoutes);
         $processedRoutes = []; // To keep track of processed routes and avoid duplicates.
 
-        $busyboxPath = Util::which('busybox');
+        $ip = Util::which('ip');
 
         // Iterate through the routes, adding each to the system.
         $countRoutes = count($routes);
@@ -288,7 +288,7 @@ class Udhcpc extends Network
 
             // Check if the route has already been processed to prevent duplicates.
             if (!empty($destination) && !empty($gateway) && !in_array($destination, $processedRoutes)) {
-                Processes::mwExec("$busyboxPath ip route add $destination via $gateway dev $interface");
+                Processes::mwExec("$ip route add $destination via $gateway dev $interface");
                 $processedRoutes[] = $destination; // Mark this route as processed.
             }
         }

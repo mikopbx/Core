@@ -94,16 +94,15 @@ class WorkerRemoveOldRecords extends WorkerBase
             return;
         }
         $out = [];
-        $busyboxPath = Util::which('busybox');
-        $mountPath = Util::which('mount');
-        $grepPath = Util::which('grep');
-        $headPath = Util::which('head');
-        $sortPath = Util::which('sort');
-        $findPath = Util::which('find');
-        $awkPath = Util::which('awk');
+        $mount = Util::which('mount');
+        $grep = Util::which('grep');
+        $head = Util::which('head');
+        $sort = Util::which('sort');
+        $find = Util::which('find');
+        $awk = Util::which('awk');
 
         // Get the device for the mount point
-        Processes::mwExec("{$mountPath} | {$busyboxPath} {$grepPath} {$mount_point} | {$busyboxPath} {$awkPath} '{print $1}' | {$headPath} -n 1", $out);
+        Processes::mwExec("$mount | $grep $mount_point | $awk '{print $1}' | $head -n 1", $out);
         $dev = implode('', $out);
 
         $s = new Storage();
@@ -117,11 +116,10 @@ class WorkerRemoveOldRecords extends WorkerBase
 
         // Get the oldest directories in the monitor directory
         Processes::mwExec(
-            "{$findPath} {$monitor_dir}/*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | {$sortPath} | {$headPath} -n 10 | {$busyboxPath} {$awkPath} '{print $2}'",
+            "$find {$monitor_dir}/*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | $sort | $head -n 10 | $awk '{print $2}'",
             $out
         );
-        $busyboxPath = Util::which('busybox');
-        $rmPath = Util::which('rm');
+        $rm = Util::which('rm');
 
         foreach ($out as $dir_info) {
             if (!is_dir($dir_info)) {
@@ -132,7 +130,7 @@ class WorkerRemoveOldRecords extends WorkerBase
                 // Disk cleanup is not required
                 break;
             }
-            Processes::mwExec("{$busyboxPath} {$rmPath} -rf {$dir_info}");
+            Processes::mwExec("$rm -rf {$dir_info}");
         }
     }
 }

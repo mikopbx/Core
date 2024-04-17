@@ -62,13 +62,13 @@ class CronConf extends Injectable
         $booting = $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting??false;
         $this->generateConfig($booting);
         if (Util::isSystemctl()) {
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemctlPath} restart ".self::PROC_NAME);
+            $systemctl = Util::which('systemctl');
+            Processes::mwExec("{$systemctl} restart ".self::PROC_NAME);
         } else {
             // T2SDE or Docker
-            $crondPath = Util::which(self::PROC_NAME);
+            $crond = Util::which(self::PROC_NAME);
             Processes::killByName(self::PROC_NAME);
-            Processes::mwExec("{$crondPath} -L /dev/null -l 8");
+            Processes::mwExec("$crond -L /dev/null -l 8");
         }
 
         return 0;
@@ -89,22 +89,22 @@ class CronConf extends Injectable
         $WorkerSafeScripts     = "$phpPath -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
 
         $restart_night = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::RESTART_EVERY_NIGHT);
-        $asteriskPath  = Util::which('asterisk');
-        $ntpdPath      = Util::which('ntpd');
-        $dumpPath      = Util::which('dump-conf-db');
+        $asterisk  = Util::which('asterisk');
+        $ntpd      = Util::which('ntpd');
+        $dump      = Util::which('dump-conf-db');
         $checkIpPath   = Util::which('check-out-ip');
         $recordsCleaner= Util::which('records-cleaner');
         $cleanerLinks  = Util::which('cleaner-download-links');
 
         // Restart every night if enabled
         if ($restart_night === '1') {
-            $mast_have[] = '0 1 * * * ' . $asteriskPath . ' -rx"core restart now" > /dev/null 2> /dev/null'.PHP_EOL;
+            $mast_have[] = '0 1 * * * ' . $asterisk . ' -rx"core restart now" > /dev/null 2> /dev/null'.PHP_EOL;
         }
         // Update NTP time every 5 minutes
-        $mast_have[] = '*/5 * * * * ' . $ntpdPath . ' -q > /dev/null 2> /dev/null'.PHP_EOL;
+        $mast_have[] = '*/5 * * * * ' . $ntpd . ' -q > /dev/null 2> /dev/null'.PHP_EOL;
 
         // Perform database dump every 5 minutes
-        $mast_have[] = '*/5 * * * * ' . "$dumpPath > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/5 * * * * ' . "$dump > /dev/null 2> /dev/null".PHP_EOL;
         // Clearing outdated conversation records
         $mast_have[] = '*/30 * * * * ' . "$recordsCleaner > /dev/null 2> /dev/null".PHP_EOL;
 

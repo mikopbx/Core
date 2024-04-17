@@ -122,12 +122,11 @@ class IptablesConf extends Injectable
             $out                 = [];
             Util::fileWriteContent('/etc/firewall_additional', '');
 
-            $catPath     = Util::which('cat');
-            $grepPath    = Util::which('grep');
-            $busyboxPath = Util::which('busybox');
-            $awkPath     = Util::which('awk');
+            $cat     = Util::which('cat');
+            $grep    = Util::which('grep');
+            $awk     = Util::which('awk');
             Processes::mwExec(
-                "$catPath /etc/firewall_additional | $grepPath -v '|' | $grepPath -v '&'| $grepPath '^iptables' | $busyboxPath $awkPath -F ';' '{print $1}'",
+                "$cat /etc/firewall_additional | $grep -v '|' | $grep -v '&'| $grep '^iptables' | $awk -F ';' '{print $1}'",
                 $arr_commands_custom
             );
 

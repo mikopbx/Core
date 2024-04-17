@@ -60,9 +60,9 @@ class System extends Di\Injectable
         }
         $sqlite3 = Util::which('sqlite3');
         $md5sum = Util::which('md5sum');
-        $busybox = Util::which('busybox');
-        $md5_1 = shell_exec("$sqlite3 ".$di->getConfig()->path('database.dbfile')." .dump | $md5sum | $busybox cut -f 1 -d ' '");
-        $md5_2 = shell_exec("$sqlite3 /conf.default/mikopbx.db .dump | $md5sum | $busybox cut -f 1 -d ' '");
+        $cut = Util::which('cut');
+        $md5_1 = shell_exec("$sqlite3 ".$di->getConfig()->path('database.dbfile')." .dump | $md5sum | $cut -f 1 -d ' '");
+        $md5_2 = shell_exec("$sqlite3 /conf.default/mikopbx.db .dump | $md5sum | $cut -f 1 -d ' '");
         return $md5_1 === $md5_2;
     }
 
@@ -89,20 +89,23 @@ class System extends Di\Injectable
                 SystemMessages::echoToTeletype("    - fail mount $dev ..."."\n");
             }
         }
-        $pathBusybox = Util::which('busybox');
-        $pathFind    = Util::which('find');
-        $pathMount   = Util::which('umount');
-        $pathRm    = Util::which('rm');
-        $pathGzip    = Util::which('gzip');
-        $pathSqlite3    = Util::which('sqlite3');
-        $lastBackUp  = trim(shell_exec("$pathFind $tmpMountDir/dev/*$backupDir -type f -printf '%T@ %p\\n' | $pathBusybox sort -n | $pathBusybox tail -1 | $pathBusybox cut -f2- -d' '"));
+
+        $tail    = Util::which('tail');
+        $sort    = Util::which('sort');
+        $find    = Util::which('find');
+        $mount   = Util::which('umount');
+        $rm    = Util::which('rm');
+        $cut    = Util::which('cut');
+        $gzip    = Util::which('gzip');
+        $sqlite3    = Util::which('sqlite3');
+        $lastBackUp  = trim(shell_exec("$find $tmpMountDir/dev/*$backupDir -type f -printf '%T@ %p\\n' | $sort -n | $tail -1 | $cut -f2- -d' '"));
         if(empty($lastBackUp)){
             return;
         }
         SystemMessages::echoToTeletype("    - Restore $lastBackUp ..."."\n");
-        shell_exec("$pathRm -rf {$confFile}*");
-        shell_exec("$pathGzip -c -d $lastBackUp | sqlite3 $confFile");
-        Processes::mwExec("$pathSqlite3 $confFile 'select * from m_Storage'", $out, $ret);
+        shell_exec("$rm -rf {$confFile}*");
+        shell_exec("$gzip -c -d $lastBackUp | sqlite3 $confFile");
+        Processes::mwExec("$sqlite3 $confFile 'select * from m_Storage'", $out, $ret);
         if($ret !== 0){
             SystemMessages::echoToTeletype("    - fail restore $lastBackUp ..."."\n");
             copy('/conf.default/mikopbx.db', $confFile);
@@ -110,13 +113,13 @@ class System extends Di\Injectable
             self::rebootSync();
         }
         foreach ($storages as $dev => $fs){
-            shell_exec("$pathMount $dev");
+            shell_exec("$mount $dev");
         }
     }
 
     /**
      * Returns the directory where logs are stored.
-     * @depricated use Directories::getDir(Directories::CORE_LOGS_DIR);
+     * @deprecated use Directories::getDir(Directories::CORE_LOGS_DIR);
      *
      * @return string - Directory path where logs are stored.
      */
@@ -144,7 +147,7 @@ class System extends Di\Injectable
 
     /**
      * Restart modules or services based on the provided actions.
-     * @depricated use WorkerModelsEvents::invokeAction($actions);
+     * @deprecated use WorkerModelsEvents::invokeAction($actions);
      *
      * @param array $actions - The actions to be performed.
      *

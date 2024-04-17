@@ -71,9 +71,10 @@ class SystemMessages extends Di\Injectable
         // Log to serial tty
         for ($i = 0; $i <= 5; $i++) {
             $device = "/dev/ttyS$i";
-            $busyboxPath = Util::which('busybox');
+            $setserial = Util::which('setserial');
+            $grep = Util::which('grep');
             // Get the result of the command execution
-            $result = shell_exec("$busyboxPath setserial -g \"$device\" | $busyboxPath grep -v unknown 2> /dev/null");
+            $result = shell_exec("$setserial -g \"$device\" | $grep -v unknown 2> /dev/null");
             // If the result is not empty
             if (!empty($result)) {
                 // Perform the same
