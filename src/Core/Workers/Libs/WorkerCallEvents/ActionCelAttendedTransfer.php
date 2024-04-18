@@ -50,6 +50,9 @@ class ActionCelAttendedTransfer
         }
         $chanId1 = $worker->getActiveChanId($extra['channel2_name']);
         $chanId2 = $worker->getActiveChanId($chanTarget);
+        if(empty($chanId1) || empty($chanId2)){
+            return;
+        }
 
         if($chanId1 !== $chanId2){
             $filter = [
