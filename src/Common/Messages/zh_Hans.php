@@ -1228,4 +1228,5 @@ return [
     'f2b_SettingsTabHeader' => '设置保护',
     'f2b_BannedIpTabHeader' => '被阻止的地址',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => '每次重新启动时更新 MikoPBX 外部 IP 地址',
+    'gs_SSHLogin' => '登录 SSH 控制台',
 ];

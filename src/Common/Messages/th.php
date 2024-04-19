@@ -1226,4 +1226,5 @@ return [
     'f2b_SettingsTabHeader' => 'การตั้งค่าการป้องกัน',
     'f2b_BannedIpTabHeader' => 'ที่อยู่ที่ถูกบล็อก',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'อัปเดตที่อยู่ IP ภายนอกของ MikoPBX ทุกครั้งที่คุณรีบูต',
+    'gs_SSHLogin' => 'เข้าสู่ระบบคอนโซล SSH',
 ];

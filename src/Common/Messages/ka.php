@@ -1262,4 +1262,5 @@ return [
     'f2b_SettingsTabHeader' => 'დაცვის დაყენება',
     'f2b_BannedIpTabHeader' => 'დაბლოკილი მისამართები',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'განაახლეთ MikoPBX გარე IP მისამართი ყოველი გადატვირთვისას',
+    'gs_SSHLogin' => 'შესვლა SSH კონსოლში',
 ];

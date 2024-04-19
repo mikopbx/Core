@@ -1262,4 +1262,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'f2b_SettingsTabHeader' => 'Configurando proteção',
     'f2b_BannedIpTabHeader' => 'Endereços bloqueados',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Atualize o endereço IP externo do MikoPBX sempre que você reiniciar',
+    'gs_SSHLogin' => 'Login para console SSH',
 ];

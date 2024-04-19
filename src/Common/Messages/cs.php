@@ -1262,4 +1262,5 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'f2b_SettingsTabHeader' => 'Nastavení ochrany',
     'f2b_BannedIpTabHeader' => 'Blokované adresy',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Aktualizujte externí IP adresu MikoPBX při každém restartu',
+    'gs_SSHLogin' => 'Přihlášení pro konzoli SSH',
 ];

@@ -1261,4 +1261,5 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'f2b_SettingsTabHeader' => 'Beveiliging instellen',
     'f2b_BannedIpTabHeader' => 'Geblokkeerde adressen',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Update het externe IP-adres van MikoPBX elke keer dat u opnieuw opstart',
+    'gs_SSHLogin' => 'Inloggen voor SSH-console',
 ];
