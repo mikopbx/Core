@@ -20,7 +20,6 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
-use MikoPBX\Core\Workers\WorkerModelsEvents;
 
 /**
  * Class Udhcpc

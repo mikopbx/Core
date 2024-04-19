@@ -24,6 +24,8 @@ use DateTimeZone;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\PHPConf;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Di;
 
@@ -147,7 +149,7 @@ class System extends Di\Injectable
 
     /**
      * Restart modules or services based on the provided actions.
-     * @deprecated use WorkerModelsEvents::invokeAction($actions);
+     * @deprecated use WorkerModelsEvents::invokeAction($actionClassNames);
      *
      * @param array $actions - The actions to be performed.
      *
@@ -160,10 +162,10 @@ class System extends Di\Injectable
             // Restart modules or services based on action
             switch ($action) {
                 case 'manager':
-                    WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_MANAGERS);
+                    WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
                     break;
                 case 'cron':
-                    WorkerModelsEvents::invokeAction(WorkerModelsEvents::R_CRON);
+                    WorkerModelsEvents::invokeAction(ReloadCrondAction::class);
                     break;
                 default:
             }

@@ -22,8 +22,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessCustomFiles;
-use MikoPBX\Common\Models\{CustomFiles, ModelsBase, PbxExtensionModules, PbxSettings};
+use MikoPBX\Common\Models\{CustomFiles, ModelsBase, PbxSettings};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
@@ -31,14 +30,17 @@ use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\{BeanstalkClient, SystemMessages};
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudParametersAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFail2BanConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadH323Action;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadHepAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadLicenseAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadMOHAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNatsAction;
@@ -47,7 +49,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNTPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadParkingAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\RestartPBXCoreAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPBXCoreAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPHPFPMAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
@@ -60,14 +62,11 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSyslogDAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadTimezoneAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadVoicemailAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadWorkerCallEventsAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudParametersAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadH323Action;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadHepAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPBXCoreAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\RestartPBXCoreAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessOtherModels;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessPBXSettings;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ReloadManager;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessCustomFiles;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di;
 use Pheanstalk\Contract\PheanstalkInterface;
@@ -84,47 +83,12 @@ ini_set('display_startup_errors', 1);
  */
 class WorkerModelsEvents extends WorkerBase
 {
-    public const R_MANAGERS = 'reloadManager';
-    public const R_QUEUES = 'reloadQueues';
-    public const R_MODULES_CONF = 'reloadModulesConf';
-    public const R_DIALPLAN = 'reloadDialplan';
-    public const R_PARKING = 'reloadParking';
-    public const R_FIREWALL = 'reloadFirewall';
-    public const R_NETWORK = 'networkReload';
-    public const R_IAX = 'reloadIax';
-    public const R_SIP = 'reloadSip';
-    public const R_RTP = 'rtpReload';
-    public const R_H323  = 'H323Reload';
-    public const R_HEP   = 'HepReload';
-    public const R_PBX_CORE_RESTART = 'pbxCoreRestart';
-    public const R_PBX_CORE_RELOAD = 'pbxCoreReload';
-    public const R_FEATURES = 'reloadFeatures';
-    public const R_CRON = 'reloadCron';
-    public const  R_NGINX = 'reloadNginx';
-    public const  R_NGINX_CONF = 'reloadNginxConf';
-    public const  R_FAIL2BAN_CONF = 'reloadFail2BanConf';
-    public const R_PHP_FPM = 'reloadPHPFPM';
-    public const R_TIMEZONE = 'updateTomeZone';
-    public const R_SYSLOG = 'restartSyslogD';
-    public const R_SSH = 'reloadSSH';
-    public const R_LICENSE = 'reloadLicense';
-    public const R_NATS = 'reloadNats';
-    public const R_VOICEMAIL = 'reloadVoicemail';
-    public const R_REST_API_WORKER = 'reloadRestAPIWorker';
-    public const R_CALL_EVENTS_WORKER = 'reloadWorkerCallEvents';
-    public const R_PBX_MODULE_STATE = 'afterModuleStateChanged';
-    public const R_MOH = 'reloadMoh';
-    public const R_NTP = 'reloadNtp';
-    public const R_UPDATE_REC_SAVE_PERIOD = 'updateRecordSavePeriod';
-    public const R_ADVICE = 'cleanupAdviceCache';
-    public const R_RESET_DESCRIPTION = 'resetDescription';
-    public const R_SENTRY = 'reloadSentry';
-    public const R_CLOUD_PROVISION = 'ReloadCloudParametersAction';
-
     private int $last_change;
-    private array $modified_tables = [];
 
-    private int $timeout = 2;
+    // Array of planned reload actions that need to be started
+    private array $plannedReloadActions = [];
+
+    private int $timeout = 5;
 
     // Array of core conf objects
     private array $arrAsteriskConfObjects;
@@ -138,7 +102,6 @@ class WorkerModelsEvents extends WorkerBase
 
     private BeanstalkClient $beanstalkClient;
 
-    private ReloadManager $reloadManager;
 
     /**
      * Starts the model events worker.
@@ -169,7 +132,7 @@ class WorkerModelsEvents extends WorkerBase
 
         $this->beanstalkClient = $this->getBeanstalkClient();
 
-        $this->last_change = time() - 2;
+        $this->last_change = time() - $this->timeout;
 
         // Array of core conf objects
         $this->arrAsteriskConfObjects = $this->di->getShared(AsteriskConfModulesProvider::SERVICE_NAME);
@@ -184,12 +147,9 @@ class WorkerModelsEvents extends WorkerBase
         $this->otherModelsDependencyTable = ProcessOtherModels::getDependencyTable();
 
         // Initializes the possible reload actions table.
-        $this->reloadActions = $this->getReloadActions();
+        $this->reloadActions = $this->getReloadActionsWithPriority();
 
-        // Initializes the reload manager.
-        $this->reloadManager = new ReloadManager($this->reloadActions);
-
-        $this->modified_tables = [];
+        $this->plannedReloadActions = [];
     }
 
     /**
@@ -209,45 +169,45 @@ class WorkerModelsEvents extends WorkerBase
      * Get priority reload actions
      * @return array
      */
-    private function getReloadActions(): array
+    private function getReloadActionsWithPriority(): array
     {
         return [
-            self::R_PBX_MODULE_STATE => new ReloadModuleStateAction(),
-            self::R_TIMEZONE => new ReloadTimezoneAction(),
-            self::R_SYSLOG => new ReloadSyslogDAction,
-            self::R_REST_API_WORKER => new ReloadRestAPIWorkerAction(),
-            self::R_NETWORK => new ReloadNetworkAction(),
-            self::R_FIREWALL => new ReloadFirewallAction(),
-            self::R_FAIL2BAN_CONF => new ReloadFail2BanConfAction(),
-            self::R_SSH => new ReloadSSHAction(),
-            self::R_LICENSE => new ReloadLicenseAction(),
-            self::R_SENTRY => new ReloadSentryAction(),
-            self::R_NATS => new ReloadNatsAction(),
-            self::R_NTP => new ReloadNTPAction(),
-            self::R_PHP_FPM => new ReloadPHPFPMAction(),
-            self::R_NGINX => new ReloadNginxAction(),
-            self::R_NGINX_CONF => new ReloadNginxConfAction(),
-            self::R_CRON => new ReloadCrondAction(),
-            self::R_PBX_CORE_RESTART => new RestartPBXCoreAction(),
-            self::R_PBX_CORE_RELOAD => new ReloadPBXCoreAction(),
-            self::R_MODULES_CONF  => new ReloadModulesConfAction(),
-            self::R_FEATURES => new ReloadFeaturesAction(),
-            self::R_SIP => new ReloadPJSIPAction(),
-            self::R_RTP => new ReloadRTPAction(),
-            self::R_IAX => new ReloadIAXAction(),
-            self::R_H323  => new ReloadH323Action(),
-            self::R_HEP  => new ReloadHepAction(),
-            self::R_DIALPLAN => new ReloadDialplanAction(),
-            self::R_PARKING => new ReloadParkingAction(),
-            self::R_QUEUES => new ReloadQueuesAction(),
-            self::R_MANAGERS => new ReloadManagerAction(),
-            self::R_VOICEMAIL => new ReloadVoicemailAction(),
-            self::R_MOH => new ReloadMOHAction(),
-            self::R_CALL_EVENTS_WORKER => new ReloadWorkerCallEventsAction(),
-            self::R_UPDATE_REC_SAVE_PERIOD => new ReloadRecordSavePeriodAction(),
-            self::R_ADVICE => new ReloadAdviceAction(),
-            self::R_RESET_DESCRIPTION => new ReloadCloudDescriptionAction(),
-            self::R_CLOUD_PROVISION => new ReloadCloudParametersAction()
+            ReloadModuleStateAction::class,
+            ReloadTimezoneAction::class,
+            ReloadSyslogDAction::class,
+            ReloadRestAPIWorkerAction::class,
+            ReloadNetworkAction::class,
+            ReloadFirewallAction::class,
+            ReloadFail2BanConfAction::class,
+            ReloadSSHAction::class,
+            ReloadLicenseAction::class,
+            ReloadSentryAction::class,
+            ReloadNatsAction::class,
+            ReloadNTPAction::class,
+            ReloadPHPFPMAction::class,
+            ReloadNginxAction::class,
+            ReloadNginxConfAction::class,
+            ReloadCrondAction::class,
+            RestartPBXCoreAction::class,
+            ReloadPBXCoreAction::class,
+            ReloadModulesConfAction::class,
+            ReloadFeaturesAction::class,
+            ReloadPJSIPAction::class,
+            ReloadRTPAction::class,
+            ReloadIAXAction::class,
+            ReloadH323Action::class,
+            ReloadHepAction::class,
+            ReloadDialplanAction::class,
+            ReloadParkingAction::class,
+            ReloadQueuesAction::class,
+            ReloadManagerAction::class,
+            ReloadVoicemailAction::class,
+            ReloadMOHAction::class,
+            ReloadWorkerCallEventsAction::class,
+            ReloadRecordSavePeriodAction::class,
+            ReloadAdviceAction::class,
+            ReloadCloudDescriptionAction::class,
+            ReloadCloudParametersAction::class
         ];
     }
 
@@ -298,39 +258,49 @@ class WorkerModelsEvents extends WorkerBase
      */
     private function startReload(): void
     {
-        // Check if there are any modified tables
-        if (count($this->modified_tables) === 0) {
+        // Check if there aren't any planned reload actions
+        if (count($this->plannedReloadActions) === 0) {
+            SystemMessages::sysLogMsg(__METHOD__, "No planed actions for reload", LOG_DEBUG);
             return;
         }
 
         // Check if enough time has passed since the last change
         $delta = time() - $this->last_change;
         if ($delta < $this->timeout) {
+            SystemMessages::sysLogMsg(__METHOD__, "Wait more time before starting the reload.", LOG_DEBUG);
             return;
         }
 
+        $executedActions = [];
         // Process changes for each method in priority order
-        foreach ($this->reloadActions as $method_name => $calledClass) {
-            $action = $this->modified_tables[$method_name] ?? null;
-
+        foreach ($this->reloadActions as $actionClassName) {
             // Skip if there is no change for this method
-            if ($action === null) {
+            if (!array_key_exists($actionClassName, $this->plannedReloadActions)) {
                 continue;
             }
-
             // Call the method if it exists
-            $className = get_class($calledClass);
-            SystemMessages::sysLogMsg(__METHOD__, "Process reload action: {$className}", LOG_DEBUG);
-            $parameters = $this->modified_tables['parameters'][$method_name] ?? [];
-            $this->reloadManager->processReload($method_name, $parameters);
+            try {
+                $parameters = $this->plannedReloadActions[$actionClassName]['parameters'];
+                $hashes = array_keys($parameters);
+                SystemMessages::sysLogMsg($actionClassName, "Start action for the next parameters hashes: ".PHP_EOL . json_encode($hashes, JSON_PRETTY_PRINT), LOG_DEBUG);
 
+                $actionObject = new $actionClassName();
+                $actionObject->execute($parameters);
+                $executedActions[] = $actionClassName;
+            } catch (Throwable $exception) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($exception);
+            }
+
+        }
+        if (count($executedActions)>0){
+            SystemMessages::sysLogMsg(__METHOD__, "Reload actions were executed in the next order: ".PHP_EOL . json_encode($executedActions, JSON_PRETTY_PRINT), LOG_DEBUG);
         }
 
         // Send information about models changes to additional modules bulky without any details
-        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::MODELS_EVENT_NEED_RELOAD, [$this->modified_tables]);
+        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::MODELS_EVENT_NEED_RELOAD, [$this->plannedReloadActions]);
 
         // Reset the modified tables array
-        $this->modified_tables = [];
+        $this->plannedReloadActions = [];
     }
 
     /**
@@ -347,11 +317,10 @@ class WorkerModelsEvents extends WorkerBase
 
             // Check the source of the message and perform actions accordingly
             if ($receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_INVOKE_ACTION
-                && array_key_exists($receivedMessage['action'], $this->reloadActions))
-            {
+                && in_array($receivedMessage['action'], $this->reloadActions)) {
                 // Store the modified table and its parameters
-                $this->modified_tables[$receivedMessage['action']] = true;
-                $this->modified_tables['parameters'][$receivedMessage['action']] = $receivedMessage['parameters'];
+                $this->planReloadAction($receivedMessage['action'], $receivedMessage['parameters']);
+
             } elseif ($receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED) {
 
                 // Fill the modified tables array with the changes from the received message
@@ -381,30 +350,27 @@ class WorkerModelsEvents extends WorkerBase
      */
     private function fillModifiedTables(array $data): void
     {
-        $count_changes = count($this->modified_tables);
-        $called_class = $data['model'] ?? '';
-        SystemMessages::sysLogMsg(__METHOD__, "New changes " . json_encode($data), LOG_DEBUG);
+        $countPlannedActions = count($this->plannedReloadActions);
+        $modifiedModel = $data['model'] ?? '';
+        if (empty($modifiedModel)){
+            return;
+        }
+
+        SystemMessages::sysLogMsg(__METHOD__, "New changes received:".PHP_EOL . json_encode($data, JSON_PRETTY_PRINT), LOG_DEBUG);
 
         // Clear cache for the called class
-        ModelsBase::clearCache($called_class);
+        ModelsBase::clearCache($modifiedModel);
 
         // Get new settings for dependent modules
-        $this->getNewSettingsForDependentModules($called_class);
+        $this->getNewSettingsForDependentModules($modifiedModel);
 
-        // Fill modified tables from models
-        $this->fillModifiedTablesFromOtherModels($called_class);
+        // Plan new reload actions
+        $this->planReloadActionsForCustomFiles($modifiedModel, $data);
+        $this->planReloadActionsForPbxSettings($modifiedModel, $data);
+        $this->planReloadActionsForOtherModels($modifiedModel, $data);
 
-        // Fill modified tables from PBX settings data
-        $this->fillModifiedTablesFromCustomFilesData($called_class, $data['recordId']);
-
-        // Fill modified tables from PBX settings data
-        $this->fillModifiedTablesFromPbxSettingsData($called_class, $data['recordId']);
-
-        // Fill modified tables from PBX extension modules
-        $this->fillModifiedTablesFromPbxExtensionModules($called_class, $data['recordId']);
-
-        // Start counting time when the first task is received
-        if ($count_changes === 0 && count($this->modified_tables) > 0) {
+        // Start counting time when the new reload actions were received
+        if ($countPlannedActions === 0 && count($this->plannedReloadActions) > 0) {
             $this->last_change = time();
         }
     }
@@ -412,17 +378,16 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * Retrieves new settings for dependent modules based on the called class.
      *
-     * @param string $called_class The called class for which to retrieve settings.
+     * @param string $modifiedModel The called class for which to retrieve settings.
      * @return void
      */
-    private function getNewSettingsForDependentModules(string $called_class): void
+    private function getNewSettingsForDependentModules(string $modifiedModel): void
     {
         foreach ($this->arrAsteriskConfObjects as $configClassObj) {
             try {
                 $dependencies = call_user_func([$configClassObj, AsteriskConfigInterface::GET_DEPENDENCE_MODELS]);
-
                 // Check if the called class is a dependency and the config class has the GET_SETTINGS method
-                if (in_array($called_class, $dependencies, true) && method_exists($configClassObj, AsteriskConfigInterface::GET_SETTINGS)) {
+                if (in_array($modifiedModel, $dependencies, true) && method_exists($configClassObj, AsteriskConfigInterface::GET_SETTINGS)) {
                     // Retrieve the new settings for the config class
                     call_user_func([$configClassObj, AsteriskConfigInterface::GET_SETTINGS]);
                 }
@@ -436,17 +401,18 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * Fills the modified tables array based on the models dependency table and the called class.
      *
-     * @param string $called_class The called class.
+     * @param string $called_class The called model class.
+     * @param array $modelData Data received during model change.
      * @return void
      */
-    private function fillModifiedTablesFromOtherModels(string $called_class): void
+    private function planReloadActionsForOtherModels(string $modifiedModel, array $modelData): void
     {
         foreach ($this->otherModelsDependencyTable as $dependencyData) {
-            if (!in_array($called_class, $dependencyData['settingName'], true)) {
+            if (!in_array($modifiedModel, $dependencyData['modelClasses'], true)) {
                 continue;
             }
-            foreach ($dependencyData['functions'] as $function) {
-                $this->modified_tables[$function] = true;
+            foreach ($dependencyData['actions'] as $action) {
+                $this->planReloadAction($action, $modelData);
             }
         }
     }
@@ -454,27 +420,27 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * Fills the modified tables array based on the custom files data, the called class, and the record ID.
      *
-     * @param string $called_class The called class (Must be CustomFiles)
-     * @param string $recordId The record ID.
+     * @param string $modifiedModel The modified model class (Must be CustomFiles)
+     * @param array $modelData Data received during model change.
      * @return void
      */
-    private function fillModifiedTablesFromCustomFilesData(string $called_class, string $recordId): void
+    private function planReloadActionsForCustomFiles(string $modifiedModel, array $modelData): void
     {
         // Check if the called class is not CustomFiles
-        if (CustomFiles::class !== $called_class) {
+        if (CustomFiles::class !== $modifiedModel || empty($modelData['recordId'])) {
             return;
         }
 
-        $changedCustomFile = CustomFiles::findFirstById($recordId);
-        if ($changedCustomFile === null || $changedCustomFile->changed!=='1') {
+        $changedCustomFile = CustomFiles::findFirstById($modelData['recordId']);
+        if ($changedCustomFile === null || $changedCustomFile->changed !== '1') {
             return;
         }
 
         foreach ($this->customFilesDependencyTable as $dependencyData) {
             // The rule for all files or the rule only for specific file
-            if ($dependencyData['filePath']==='*' || strcasecmp($changedCustomFile->filepath, $dependencyData['filePath']) === 0) {
-                foreach ($dependencyData['functions'] as $function) {
-                    $this->modified_tables[$function] = true;
+            if ($dependencyData['filePath'] === '*' || strcasecmp($changedCustomFile->filepath, $dependencyData['filePath']) === 0) {
+                foreach ($dependencyData['actions'] as $action) {
+                    $this->planReloadAction($action, $modelData);
                 }
             }
         }
@@ -483,17 +449,43 @@ class WorkerModelsEvents extends WorkerBase
         $changedCustomFile->writeAttribute("changed", '0');
         $changedCustomFile->save();
     }
+
+    /**
+     * Add new reload action with parameters to the planned reload actions array.
+     *
+     * @param string $action The name of the action to be executed.
+     * @param array $parameters The parameters to be passed to the action.
+     * @return void
+     */
+    private function planReloadAction(string $action, array $parameters = []): void
+    {
+        $newHash = $this->createUniqueKeyFromArray($parameters);
+        if (!array_key_exists($action, $this->plannedReloadActions)) {
+            $this->plannedReloadActions[$action]['parameters'][$newHash] = $parameters;
+            SystemMessages::sysLogMsg(__METHOD__, "New reload task $action planned with parameters (hash=$newHash):".PHP_EOL . json_encode($parameters, JSON_PRETTY_PRINT), LOG_DEBUG);
+        } else {
+            foreach ($this->plannedReloadActions[$action]['parameters'] as $oldHash=>$existParameters) {
+                if ($newHash === $oldHash) {
+                    return;
+                }
+                $this->plannedReloadActions[$action]['parameters'][$newHash] = $parameters;
+                SystemMessages::sysLogMsg(__METHOD__, "Existing reload task $action received a new parameters (hash=$newHash)".PHP_EOL . json_encode($parameters, JSON_PRETTY_PRINT), LOG_DEBUG);
+            }
+        }
+
+    }
+
     /**
      * Fills the modified tables array based on the PBX settings data, the called class, and the record ID.
      *
-     * @param string $called_class The called class (Must be PbxSettings)
-     * @param string $recordId The record ID.
+     * @param string $modifiedModel The modified model class (Must be PbxSettings)
+     * @param array $modelData Data received during model change.
      * @return void
      */
-    private function fillModifiedTablesFromPbxSettingsData(string $called_class, string $recordId): void
+    private function planReloadActionsForPbxSettings(string $modifiedModel, array $modelData): void
     {
         // Check if the called class is not PbxSettings
-        if (PbxSettings::class !== $called_class) {
+        if (PbxSettings::class !== $modifiedModel  || empty($modelData['recordId'])) {
             return;
         }
 
@@ -502,47 +494,25 @@ class WorkerModelsEvents extends WorkerBase
 
         // Find the PbxSettings record
         /** @var PbxSettings $pbxSettings */
-        $pbxSettings = PbxSettings::findFirstByKey($recordId);
+        $pbxSettings = PbxSettings::findFirstByKey($modelData['recordId']);
         if ($pbxSettings === null) {
             return;
         }
-        $settingName = $pbxSettings->key;
+        $key = $pbxSettings->key;
 
         // Iterate through the PBX settings dependency table and update the modified tables array
         foreach ($this->pbxSettingsDependencyTable as $data) {
-            $additionalConditions = (isset($data['strPosKey']) && strpos($settingName, $data['strPosKey']) !== false);
+            $additionalConditions = (isset($data['strPosKey']) && strpos($key, $data['strPosKey']) !== false);
 
             // Check additional conditions and the setting name
-            if (!$additionalConditions && !in_array($settingName, $data['settingName'], true)) {
+            if (!$additionalConditions && !in_array($key, $data['keys'], true)) {
                 continue;
             }
 
             // Update the modified tables array for each function
-            foreach ($data['functions'] as $function) {
-                $this->modified_tables[$function] = true;
+            foreach ($data['actions'] as $action) {
+                $this->planReloadAction($action, $modelData);
             }
-        }
-    }
-
-    /**
-     * Fills the modified tables array based on the PBX extension modules data, the called class, and the record ID.
-     *
-     * @param string $called_class The called class.
-     * @param string $recordId The record ID.
-     * @return void
-     */
-    private function fillModifiedTablesFromPbxExtensionModules(string $called_class, string $recordId): void
-    {
-        // Check if the called class is not PbxExtensionModules
-        if (PbxExtensionModules::class !== $called_class) {
-            return;
-        }
-
-        // Find the module settings record
-        $moduleSettings = PbxExtensionModules::findFirstById($recordId);
-        if ($moduleSettings !== null) {
-            // Invoke the action for the PBX module state with the module settings data
-            self::invokeAction(self::R_PBX_MODULE_STATE, $moduleSettings->toArray(), 50);
         }
     }
 
@@ -567,6 +537,28 @@ class WorkerModelsEvents extends WorkerBase
         $jobData = json_encode(['source' => BeanstalkConnectionModelsProvider::SOURCE_INVOKE_ACTION, 'action' => $action, 'parameters' => $parameters, 'model' => '']);
         // Publish the job to the Beanstalk queue
         $queue->publish($jobData, self::class, $priority, PheanstalkInterface::DEFAULT_DELAY, 3600);
+    }
+
+    /**
+     * Callback for the ping to keep the connection alive.
+     *
+     * @param BeanstalkClient $message The received message.
+     *
+     * @return void
+     */
+    public function pingCallBack(BeanstalkClient $message): void
+    {
+        // Start the reload process if there are modified tables
+        $this->startReload();
+        $message->reply(json_encode($message->getBody() . ':pong'));
+    }
+
+    private function createUniqueKeyFromArray(array $array) {
+        // Convert the array to JSON string
+        $json = json_encode($array);
+
+        // Create an MD5 hash of the JSON string
+        return md5($json);
     }
 }
 

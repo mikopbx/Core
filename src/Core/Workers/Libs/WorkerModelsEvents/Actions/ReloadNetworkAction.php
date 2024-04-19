@@ -3,7 +3,6 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
 use MikoPBX\Core\System\System;
-use MikoPBX\Core\Workers\WorkerModelsEvents;
 
 class ReloadNetworkAction implements ReloadActionInterface
 {

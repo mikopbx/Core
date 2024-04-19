@@ -22,11 +22,21 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
+use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SipHosts;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\Users;
-use MikoPBX\Core\Workers\WorkerModelsEvents;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadMOHAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNetworkAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
 use Phalcon\Di\Injectable;
 
 class ProcessOtherModels extends Injectable
@@ -35,35 +45,35 @@ class ProcessOtherModels extends Injectable
     {
         $tables = [];
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 AsteriskManagerUsers::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_MANAGERS,
-                WorkerModelsEvents::R_ADVICE,
+            'actions' => [
+                ReloadManagerAction::class,
+                ReloadAdviceAction::class,
             ],
         ];
 
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 CallQueueMembers::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_QUEUES,
+            'actions' => [
+                ReloadQueuesAction::class,
             ],
         ];
 
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 CallQueues::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_QUEUES,
-                WorkerModelsEvents::R_DIALPLAN,
+            'actions' => [
+                ReloadQueuesAction::class,
+                ReloadDialplanAction::class,
             ],
         ];
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 ExternalPhones::class,
                 Extensions::class,
                 DialplanApplications::class,
@@ -75,107 +85,117 @@ class ProcessOtherModels extends Injectable
                 OutWorkTimesRouts::class,
                 ConferenceRooms::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_DIALPLAN,
+            'actions' => [
+                ReloadDialplanAction::class,
             ],
         ];
 
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 Sip::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_SIP,
-                WorkerModelsEvents::R_DIALPLAN,
-                WorkerModelsEvents::R_FIREWALL,
-                WorkerModelsEvents::R_ADVICE,
+            'actions' => [
+                ReloadPJSIPAction::class,
+                ReloadDialplanAction::class,
+                ReloadFirewallAction::class,
+                ReloadAdviceAction::class,
             ],
         ];
 
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 Users::class,
                 ExtensionForwardingRights::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_SIP,
-                WorkerModelsEvents::R_DIALPLAN,
+            'actions' => [
+                ReloadPJSIPAction::class,
+                ReloadDialplanAction::class,
             ],
         ];
 
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 FirewallRules::class,
                 Fail2BanRules::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_FIREWALL,
+            'actions' => [
+                ReloadFirewallAction::class,
             ],
         ];
 
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 Iax::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_IAX,
-                WorkerModelsEvents::R_DIALPLAN,
+            'actions' => [
+                ReloadIAXAction::class,
+                ReloadDialplanAction::class,
             ],
         ];
 
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 Codecs::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_IAX,
-                WorkerModelsEvents::R_SIP,
+            'actions' => [
+                ReloadIAXAction::class,
+                ReloadPJSIPAction::class,
             ],
         ];
 
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 SoundFiles::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_MOH,
-                WorkerModelsEvents::R_DIALPLAN,
+            'actions' => [
+                ReloadMOHAction::class,
+                ReloadDialplanAction::class,
             ],
         ];
 
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 LanInterfaces::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_NETWORK,
-                WorkerModelsEvents::R_IAX,
-                WorkerModelsEvents::R_SIP,
-                WorkerModelsEvents::R_ADVICE,
+            'actions' => [
+                ReloadNetworkAction::class,
+                ReloadIAXAction::class,
+                ReloadPJSIPAction::class,
+                ReloadAdviceAction::class,
             ],
         ];
 
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 SipHosts::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_FIREWALL,
-                WorkerModelsEvents::R_SIP,
+            'actions' => [
+                ReloadFirewallAction::class,
+                ReloadPJSIPAction::class,
             ],
         ];
 
         $tables[] = [
-            'settingName' => [
+            'modelClasses' => [
                 NetworkFilters::class,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_FIREWALL,
-                WorkerModelsEvents::R_SIP,
-                WorkerModelsEvents::R_MANAGERS,
-                WorkerModelsEvents::R_ADVICE,
+            'actions' => [
+                ReloadFirewallAction::class,
+                ReloadPJSIPAction::class,
+                ReloadManagerAction::class,
+                ReloadAdviceAction::class,
             ],
         ];
+
+        $tables[] = [
+            'modelClasses' => [
+                PbxExtensionModules::class,
+            ],
+            'actions' => [
+                ReloadModuleStateAction::class
+            ],
+        ];
+
 
         return $tables;
     }

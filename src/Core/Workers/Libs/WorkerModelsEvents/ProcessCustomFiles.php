@@ -19,7 +19,20 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
 
-use MikoPBX\Core\Workers\WorkerModelsEvents;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadH323Action;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadHepAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadMOHAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNetworkAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNTPAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPBXCoreAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRTPAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
 use Phalcon\Di\Injectable;
 
 class ProcessCustomFiles extends Injectable
@@ -33,115 +46,115 @@ class ProcessCustomFiles extends Injectable
 
         $tables[] = [
             'filePath' => '*',
-            'functions' => [
-                WorkerModelsEvents::R_PBX_CORE_RELOAD,
-                WorkerModelsEvents::R_ADVICE,
+            'actions' => [
+                ReloadPBXCoreAction::class,
+                ReloadAdviceAction::class,
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/asterisk/manager.conf',
-            'functions' => [
-                WorkerModelsEvents::R_MANAGERS
+            'actions' => [
+                ReloadManagerAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/asterisk/musiconhold.conf',
-            'functions' => [
-                WorkerModelsEvents::R_MOH
+            'actions' => [
+                ReloadMOHAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/asterisk/modules.conf',
-            'functions' => [
-                WorkerModelsEvents::R_MODULES_CONF
+            'actions' => [
+                ReloadModulesConfAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/asterisk/hep.conf',
-            'functions' => [
-                WorkerModelsEvents::R_HEP
+            'actions' => [
+                ReloadHepAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/asterisk/http.conf',
-            'functions' => [
-                WorkerModelsEvents::R_MANAGERS
+            'actions' => [
+                ReloadManagerAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/var/spool/cron/crontabs/root',
-            'functions' => [
-                WorkerModelsEvents::R_CRON
+            'actions' => [
+                ReloadCrondAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/asterisk/queues.conf',
-            'functions' => [
-                WorkerModelsEvents::R_QUEUES
+            'actions' => [
+                ReloadQueuesAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/asterisk/features.conf',
-            'functions' => [
-                WorkerModelsEvents::R_FEATURES
+            'actions' => [
+                ReloadFeaturesAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/ntp.conf',
-            'functions' => [
-                WorkerModelsEvents::R_NTP
+            'actions' => [
+                ReloadNTPAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/asterisk/ooh323.conf',
-            'functions' => [
-                WorkerModelsEvents::R_H323
+            'actions' => [
+                ReloadH323Action::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/asterisk/rtp.conf',
-            'functions' => [
-                WorkerModelsEvents::R_RTP
+            'actions' => [
+                ReloadRTPAction::class
             ],
         ];
 
         // Restart network if the file /etc/static-routes was changed
         $tables[] = [
             'filePath' => '/etc/static-routes',
-            'functions' => [
-                WorkerModelsEvents::R_NETWORK
+            'actions' => [
+                ReloadNetworkAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/openvpn.ovpn',
-            'functions' => [
-                WorkerModelsEvents::R_NETWORK
+            'actions' => [
+                ReloadNetworkAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/firewall_additional',
-            'functions' => [
-                WorkerModelsEvents::R_FIREWALL
+            'actions' => [
+                ReloadFirewallAction::class
             ],
         ];
 
         $tables[] = [
             'filePath' => '/etc/fail2ban/jail.local',
-            'functions' => [
-                WorkerModelsEvents::R_FIREWALL
+            'actions' => [
+                ReloadFirewallAction::class
             ],
         ];
 

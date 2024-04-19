@@ -19,7 +19,31 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
 use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Core\Workers\WorkerModelsEvents;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadLicenseAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNatsAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNTPAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadParkingAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPHPFPMAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordSavePeriodAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRestAPIWorkerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRTPAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSentryAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSSHAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSyslogDAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadTimezoneAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadVoicemailAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadWorkerCallEventsAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\RestartPBXCoreAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
 use Phalcon\Di\Injectable;
 
 class ProcessPBXSettings extends Injectable
@@ -32,7 +56,7 @@ class ProcessPBXSettings extends Injectable
         $tables = [];
         // FeaturesSettings
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::PBX_LANGUAGE,
                 PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH,
                 PbxSettingsConstants::PBX_FEATURE_ATTENDED_TRANSFER,
@@ -42,85 +66,85 @@ class ProcessPBXSettings extends Injectable
                 PbxSettingsConstants::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT,
                 PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_FEATURES,
-                WorkerModelsEvents::R_DIALPLAN,
+            'actions' => [
+                ReloadFeaturesAction::class,
+                ReloadDialplanAction::class,
             ],
         ];
 
         // Parking settings
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::PBX_CALL_PARKING_EXT,
                 PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT,
                 PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_FEATURES, // ??? parkcall in features.conf ???
-                WorkerModelsEvents::R_DIALPLAN,
-                WorkerModelsEvents::R_PARKING,
+            'actions' => [
+                ReloadFeaturesAction::class, // ??? parkcall in features.conf ???
+                ReloadDialplanAction::class,
+                ReloadParkingAction::class,
             ],
         ];
 
         // CallRecordSettings
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::PBX_RECORD_CALLS,
                 PbxSettingsConstants::PBX_RECORD_CALLS_INNER,
                 PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_DIALPLAN,
+            'actions' => [
+                ReloadDialplanAction::class,
             ],
         ];
 
         // CallRecordSettings / The period of storing conversation records
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_UPDATE_REC_SAVE_PERIOD,
+            'actions' => [
+                ReloadRecordSavePeriodAction::class,
             ],
         ];
 
         // AMIParameters
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::AMI_PORT,
                 PbxSettingsConstants::AJAM_PORT,
                 PbxSettingsConstants::AJAM_PORT_TLS,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_MANAGERS,
+            'actions' => [
+                ReloadManagerAction::class,
             ],
         ];
 
         // IaxParameters
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::IAX_PORT,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_IAX,
+            'actions' => [
+                ReloadIAXAction::class,
             ],
         ];
 
         // Guest calls without authorization
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::PBX_ALLOW_GUEST_CALLS,
                 PbxSettingsConstants::USE_WEB_RTC,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_SIP,
-                WorkerModelsEvents::R_DIALPLAN,
+            'actions' => [
+                ReloadPJSIPAction::class,
+                ReloadDialplanAction::class,
             ],
         ];
 
         // SipParameters
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::SIP_PORT,
                 PbxSettingsConstants::TLS_PORT,
                 PbxSettingsConstants::SIP_DEFAULT_EXPIRY,
@@ -128,26 +152,27 @@ class ProcessPBXSettings extends Injectable
                 PbxSettingsConstants::SIP_MAX_EXPIRY,
                 PbxSettingsConstants::PBX_LANGUAGE,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_SIP,
+            'actions' => [
+                ReloadPJSIPAction::class,
             ],
         ];
 
         // RTPParameters
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::RTP_PORT_FROM,
                 PbxSettingsConstants::RTP_PORT_TO,
                 PbxSettingsConstants::RTP_STUN_SERVER,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_RTP,
+            'actions' => [
+                ReloadRTPAction::class,
             ],
         ];
 
         // SSHParameters
         $tables[] = [
-            'settingName' => [
+            'keys' => [
+                PbxSettingsConstants::SSH_LOGIN,
                 PbxSettingsConstants::SSH_PORT,
                 PbxSettingsConstants::SSH_RSA_KEY,
                 PbxSettingsConstants::SSH_DSS_KEY,
@@ -156,14 +181,14 @@ class ProcessPBXSettings extends Injectable
                 PbxSettingsConstants::SSH_AUTHORIZED_KEYS,
                 PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_SSH,
+            'actions' => [
+                ReloadSSHAction::class,
             ],
         ];
 
         // FirewallParameters
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::SIP_PORT,
                 PbxSettingsConstants::TLS_PORT,
                 PbxSettingsConstants::RTP_PORT_FROM,
@@ -178,60 +203,60 @@ class ProcessPBXSettings extends Injectable
                 PbxSettingsConstants::PBX_FIREWALL_ENABLED,
                 PbxSettingsConstants::PBX_FAIL2BAN_ENABLED,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_FIREWALL,
+            'actions' => [
+                ReloadFirewallAction::class,
             ],
             'strPosKey' => 'FirewallSettings',
         ];
 
         // FirewallParameters
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::WEB_PORT,
                 PbxSettingsConstants::WEB_HTTPS_PORT,
                 PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY,
                 PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY,
                 PbxSettingsConstants::REDIRECT_TO_HTTPS,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_NGINX,
+            'actions' => [
+                ReloadNginxAction::class,
             ],
         ];
 
         // CronParameters
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::RESTART_EVERY_NIGHT,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_CRON,
+            'actions' => [
+                ReloadCrondAction::class,
             ],
         ];
 
         // DialplanParameters
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::PBX_LANGUAGE,
                 PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_IN,
                 PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_OUT,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_DIALPLAN,
+            'actions' => [
+                ReloadDialplanAction::class,
             ],
         ];
         // DialplanParameters
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::PBX_LANGUAGE,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_PBX_CORE_RESTART,
+            'actions' => [
+                RestartPBXCoreAction::class,
             ],
         ];
 
         // VoiceMailParameters
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::MAIL_TPL_VOICEMAIL_SUBJECT,
                 PbxSettingsConstants::MAIL_TPL_VOICEMAIL_BODY,
                 PbxSettingsConstants::MAIL_TPL_VOICEMAIL_FOOTER,
@@ -242,89 +267,89 @@ class ProcessPBXSettings extends Injectable
                 PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL,
                 PbxSettingsConstants::SYSTEM_EMAIL_FOR_MISSED,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_VOICEMAIL,
+            'actions' => [
+                ReloadVoicemailAction::class,
             ],
         ];
 
         // VisualLanguageSettings
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::SSH_LANGUAGE,
                 PbxSettingsConstants::WEB_ADMIN_LANGUAGE,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_REST_API_WORKER,
+            'actions' => [
+                ReloadRestAPIWorkerAction::class,
             ],
         ];
 
         // LicenseSettings
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::PBX_LICENSE,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_LICENSE,
-                WorkerModelsEvents::R_NATS,
+            'actions' => [
+                ReloadLicenseAction::class,
+                ReloadNatsAction::class,
             ],
         ];
 
         // TimeZoneSettings
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::PBX_TIMEZONE,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_TIMEZONE,
-                WorkerModelsEvents::R_NGINX,
-                WorkerModelsEvents::R_PHP_FPM,
-                WorkerModelsEvents::R_REST_API_WORKER,
-                WorkerModelsEvents::R_CALL_EVENTS_WORKER,
-                WorkerModelsEvents::R_SYSLOG,
+            'actions' => [
+                ReloadTimezoneAction::class,
+                ReloadNginxAction::class,
+                ReloadPHPFPMAction::class,
+                ReloadRestAPIWorkerAction::class,
+                ReloadWorkerCallEventsAction::class,
+                ReloadSyslogDAction::class,
             ],
         ];
 
         // NTPSettings
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS,
                 PbxSettingsConstants::NTP_SERVER,
                 PbxSettingsConstants::PBX_TIMEZONE,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_NTP,
+            'actions' => [
+                ReloadNTPAction::class,
             ],
         ];
 
         // Advice
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::WEB_ADMIN_PASSWORD,
                 PbxSettingsConstants::SSH_PASSWORD,
                 PbxSettingsConstants::PBX_FIREWALL_ENABLED,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_ADVICE,
+            'actions' => [
+                ReloadAdviceAction::class,
             ],
         ];
 
         // Sentry
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::SEND_METRICS,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_SENTRY,
+            'actions' => [
+                ReloadSentryAction::class,
             ],
         ];
 
         // Default description texts
         $tables[] = [
-            'settingName' => [
+            'keys' => [
                 PbxSettingsConstants::WEB_ADMIN_PASSWORD,
             ],
-            'functions' => [
-                WorkerModelsEvents::R_RESET_DESCRIPTION,
+            'actions' => [
+                ReloadCloudDescriptionAction::class,
             ],
         ];
 
