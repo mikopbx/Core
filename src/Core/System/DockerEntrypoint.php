@@ -23,6 +23,7 @@ use Error;
 use JsonException;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use Phalcon\Di;
+use ReflectionClass;
 
 require_once 'Globals.php';
 /**
@@ -33,7 +34,6 @@ class DockerEntrypoint extends Di\Injectable
     public const  PATH_DB = '/cf/conf/mikopbx.db';
     private const  pathInc = '/etc/inc/mikopbx-settings.json';
     public float $workerStartTime;
-    private array $env;
     private array $incSettings;
     private array $settings;
 
@@ -45,33 +45,6 @@ class DockerEntrypoint extends Di\Injectable
         pcntl_async_signals(true);
         register_shutdown_function([$this, 'shutdownHandler']);
 
-        $this->env = [
-            // Identification of the WWW user.
-            'ID_WWW_USER' => '',
-            'ID_WWW_GROUP' => '',
-
-            //
-            'BEANSTALK_PORT' => 'beanstalk',
-            'REDIS_PORT' => 'redis',
-            'GNATS_PORT' => 'gnats',
-
-            // General settings.
-            'SSH_PORT' => PbxSettingsConstants::SSH_PORT,
-            'WEB_PORT' => PbxSettingsConstants::WEB_PORT,
-            'WEB_HTTPS_PORT' => PbxSettingsConstants::WEB_HTTPS_PORT,
-            'SIP_PORT' => PbxSettingsConstants::SIP_PORT,
-            'TLS_PORT' => PbxSettingsConstants::TLS_PORT,
-            'RTP_FROM' => PbxSettingsConstants::RTP_PORT_FROM,
-            'RTP_TO' => PbxSettingsConstants::RTP_PORT_TO,
-            'IAX_PORT' => PbxSettingsConstants::IAX_PORT,
-            'AMI_PORT' => PbxSettingsConstants::AMI_PORT,
-            'AJAM_PORT' => PbxSettingsConstants::AJAM_PORT,
-            'AJAM_PORT_TLS' => PbxSettingsConstants::AJAM_PORT_TLS,
-
-            // Environment
-            'VIRTUAL_HARDWARE_TYPE' => PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE,
-        ];
-        putenv("VIRTUAL_HARDWARE_TYPE=Docker");
     }
 
     /**
@@ -99,6 +72,7 @@ class DockerEntrypoint extends Di\Injectable
         // Start the system log.
         Processes::mwExecBg($syslogd . ' -S -C512');
 
+        // Prepare database
         $sqlite3 = Util::which('sqlite3');
         $rm = Util::which('rm');
         $cp = Util::which('cp');
@@ -109,7 +83,16 @@ class DockerEntrypoint extends Di\Injectable
             Processes::mwExec("$rm -rf " . self::PATH_DB . "; $cp /conf.default/mikopbx.db " . self::PATH_DB);
             Util::addRegularWWWRights(self::PATH_DB);
         }
-        $this->checkUpdate();
+        // Get default settings
+        $this->initSettings();
+
+        // Update DB values
+        $this->applyEnvironmentSettings();
+
+        // Update WWW user id and group id.
+        $this->changeWwwUserID();
+
+        // Start the MikoPBX system.
         shell_exec("$rm -rf /tmp/*");
         $commands = 'exec </dev/console >/dev/console 2>/dev/console;' .
             '/etc/rc/bootup 2>/dev/null && ' .
@@ -118,45 +101,11 @@ class DockerEntrypoint extends Di\Injectable
     }
 
     /**
-     * Checks if there is an indication to apply a custom port value and calls the updateSetting function.
-     */
-    public function checkUpdate(): void
-    {
-        SystemMessages::sysLogMsg(__METHOD__,' - Check for updates if any settings need to be updated.',LOG_INFO);
-        $this->initSettings();
-        foreach ($this->env as $key => $dataPath) {
-            $newValue = getenv($key);
-            if (!is_numeric($newValue)) {
-                continue;
-            }
-
-            if (empty($dataPath)) {
-                $this->env[$key] = $newValue;
-                continue;
-            }
-
-            $isInc = false;
-            $oldValue = $this->settings[$dataPath] ?? '';
-            if (empty($oldValue)) {
-                $oldValue = 1 * $this->incSettings[$dataPath]['port'] ?? 0;
-                $newValue = 1 * $newValue;
-                $isInc = true;
-            }
-
-            if (empty($oldValue) || $newValue === $oldValue) {
-                continue;
-            }
-            $this->updateSetting($dataPath, $newValue, $isInc);
-        }
-
-        $this->changeWwwUserID($this->env['ID_WWW_USER'], $this->env['ID_WWW_GROUP']);
-    }
-
-    /**
      * Initializes the settings. Required for checking and updating port settings.
      */
     private function initSettings(): void
     {
+        // Get settings from mikopbx-settings.json
         $jsonString = file_get_contents(self::pathInc);
         try {
             $this->incSettings = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
@@ -165,22 +114,20 @@ class DockerEntrypoint extends Di\Injectable
             throw new Error(self::pathInc . " has broken format");
         }
 
+        // Get settings from DB
         $out = [];
         $sqlite3 = Util::which('sqlite3');
-        $grep = Util::which('grep');
-        Processes::mwExec("$sqlite3 " . self::PATH_DB . " 'SELECT * FROM m_PbxSettings' | $grep -i port", $out);
+        Processes::mwExec("$sqlite3 " . self::PATH_DB . " 'SELECT * FROM m_PbxSettings'", $out);
         $this->settings = [];
-        $keys = array_flip($this->env);
         foreach ($out as $row) {
             $data = explode('|', $row);
             $key = $data[0] ?? '';
             $value = $data[1] ?? '';
-
-            if (!isset($keys[$key]) || empty($value)) {
-                continue;
-            }
             $this->settings[$key] = $value;
         }
+
+        // Add some extra information
+        putenv("VIRTUAL_HARDWARE_TYPE=Docker");
     }
 
     /**
@@ -188,35 +135,35 @@ class DockerEntrypoint extends Di\Injectable
      *
      * @param string $dataPath
      * @param string $newValue
-     * @param bool $isInc
      */
-    private function updateSetting(string $dataPath, string $newValue, bool $isInc): void
+    private function updateSetting(string $dataPath, string $newValue): void
     {
-        SystemMessages::sysLogMsg(__METHOD__, " - Update $dataPath to '$newValue'", LOG_INFO);
-        if ($isInc === true) {
+        $result = true;
+        if (!empty($this->incSettings[$dataPath]['port'])) {
             $this->incSettings[$dataPath]['port'] = $newValue;
             $newData = json_encode($this->incSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
             $res = file_put_contents(self::pathInc, $newData);
             $result = (false !== $res);
-        } else {
+            SystemMessages::sysLogMsg(__METHOD__, " - Update $dataPath to '$newValue' in ini file", LOG_INFO);
+        } elseif (array_key_exists($dataPath, $this->settings) && $this->settings[$dataPath]!==$newValue){
             $sqlite3 = Util::which('sqlite3');
             $res = Processes::mwExec("$sqlite3 " . self::PATH_DB . " 'UPDATE m_PbxSettings SET value=\"$newValue\" WHERE key=\"$dataPath\"'");
             $result = ($res === 0);
+            SystemMessages::sysLogMsg(__METHOD__, " - Update $dataPath to '$newValue' in DB", LOG_INFO);
         }
         if (!$result){
             SystemMessages::sysLogMsg(__METHOD__, " - Update $dataPath failed", LOG_ERR);
         }
-
     }
 
     /**
      * Changes the ID of the WWW user.
      *
-     * @param string $newUserId
-     * @param string $newGroupId
      */
-    private function changeWwwUserID(string $newUserId, string $newGroupId): void
+    private function changeWwwUserID(): void
     {
+        $newUserId = getenv('ID_WWW_USER');
+        $newGroupId = getenv('ID_WWW_GROUP');
         SystemMessages::sysLogMsg(__METHOD__,  ' - Check user id and group id for www',LOG_INFO);
         $pidIdPath = '/cf/conf/user.id';
         $pidGrPath = '/cf/conf/group.id';
@@ -267,6 +214,28 @@ class DockerEntrypoint extends Di\Injectable
         }
         if (!empty($commands)) {
             passthru(implode('; ', $commands));
+        }
+    }
+
+    /**
+     * Applies settings from environment variables to system constants.
+     */
+    private function applyEnvironmentSettings(): void
+    {
+        $extraConstants = [
+            'BEANSTALK_PORT' => 'beanstalk',
+            'REDIS_PORT' => 'redis',
+            'GNATS_PORT' => 'gnats',
+        ];
+
+        $reflection = new ReflectionClass(PbxSettingsConstants::class);
+        $constants = array_merge($reflection->getConstants(), $extraConstants);
+
+        foreach ($constants as $name => $dbKey) {
+            $envValue = getenv($name);
+            if ($envValue !== false) {
+                $this->updateSetting($dbKey, $envValue);
+            }
         }
     }
 }
