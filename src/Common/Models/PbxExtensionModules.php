@@ -190,7 +190,6 @@ class PbxExtensionModules extends ModelsBase
      */
     public function afterSave(): void
     {
-        SystemMessages::sysLogMsg(__METHOD__, "After save ", LOG_DEBUG);
         PBXConfModulesProvider::recreateModulesProvider();
     }
 
@@ -199,7 +198,6 @@ class PbxExtensionModules extends ModelsBase
      */
     public function afterDelete(): void
     {
-        SystemMessages::sysLogMsg(__METHOD__, "After delete ", LOG_DEBUG);
         PBXConfModulesProvider::recreateModulesProvider();
     }
 }
