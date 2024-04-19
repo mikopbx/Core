@@ -161,29 +161,46 @@ class GeneralSettingsController extends BaseController
 
 
     /**
-     * Create parking extensions.
+     * Create or update parking extensions by ensuring only necessary slots are modified.
+     * This method first fetches the existing parking slots and determines which slots
+     * need to be created or deleted based on the desired range and reserved slot.
+     * It aims to minimize database operations by only deleting slots that are no longer needed
+     * and creating new slots that do not exist yet, preserving all others.
      *
-     * @param int $startSlot
-     * @param int $endSlot
-     * @param int $reservedSlot
+     * @param int $startSlot The starting number of the parking slot range.
+     * @param int $endSlot The ending number of the parking slot range.
+     * @param int $reservedSlot The number of the reserved slot to be included outside the range.
      *
-     * @return array
+     * @return array Returns an array with two elements:
+     *               - bool: true if the operation was successful without any errors, false otherwise.
+     *               - array: an array of messages, primarily errors encountered during operations.
      */
     private function createParkingExtensions(int $startSlot, int $endSlot, int $reservedSlot): array
     {
         $messages = [];
-        // Delete all parking slots
+
+        // Retrieve all current parking slots.
         $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
-        foreach ($currentSlots as $currentSlot) {
-            if (!$currentSlot->delete()) {
-                $messages['error'][] = $currentSlot->getMessages();
+
+        // Create an array of desired numbers.
+        $desiredNumbers = range($startSlot, $endSlot);
+        $desiredNumbers[] = $reservedSlot;
+
+        // Determine slots to delete.
+        $currentNumbers = [];
+        foreach ($currentSlots as $slot) {
+            if (!in_array($slot->number, $desiredNumbers)) {
+                if (!$slot->delete()) {
+                    $messages['error'][] = $slot->getMessages();
+                }
+            } else {
+                $currentNumbers[] = $slot->number;
             }
         }
 
-        // Create an array of new numbers
-        $numbers = range($startSlot, $endSlot);
-        $numbers[] = $reservedSlot;
-        foreach ($numbers as $number) {
+        // Determine slots to create.
+        $numbersToCreate = array_diff($desiredNumbers, $currentNumbers);
+        foreach ($numbersToCreate as $number) {
             $record = new Extensions();
             $record->type = Extensions::TYPE_PARKING;
             $record->number = $number;
@@ -193,7 +210,8 @@ class GeneralSettingsController extends BaseController
             }
         }
 
-        $result = count($messages) === 0;
+        // Determine the overall result.
+        $result = count($messages['error'] ?? []) === 0;
         return [$result, $messages];
     }
 
