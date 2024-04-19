@@ -22,8 +22,9 @@ require_once 'Globals.php';
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Core\System\Notifications;
-use MikoPBX\PBXCoreREST\Lib\AdviceProcessor;
+use Phalcon\Di;
 use Throwable;
 
 /**
@@ -48,7 +49,12 @@ class WorkerNotifyError extends WorkerBase
         $lastErrorsCheck = $managedCache->get($cacheKey);
         if ($lastErrorsCheck === null) {
             try {
-                $restResponse = AdviceProcessor::callBack(['action' => 'getList']);
+                // Get user data from the API
+                $di = Di::getDefault();
+                $restResponse = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+                    '/pbxcore/api/advice/getList',
+                    PBXCoreRESTClientProvider::HTTP_METHOD_GET
+                ]);
                 $errorMessages = $restResponse->data['advice']['error'] ?? [];
                 if ($restResponse->success and $errorMessages !== []) {
                     Notifications::sendAdminNotification('adv_ThereIsSomeTroublesWithMikoPBX', $errorMessages);
