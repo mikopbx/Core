@@ -23,6 +23,7 @@ abstract class PbxSettingsConstants
     const WEB_ADMIN_PASSWORD = 'WebAdminPassword';
 
     // SSH constants
+    const SSH_LOGIN = 'SSHLogin';
     const SSH_PASSWORD = 'SSHPassword';
     const SSH_PASSWORD_HASH_FILE = 'SSHPasswordHashFile';
     const SSH_PASSWORD_HASH_STRING = 'SSHPasswordHashString';

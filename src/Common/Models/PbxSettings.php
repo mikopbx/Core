@@ -102,6 +102,7 @@ class PbxSettings extends ModelsBase
             PbxSettingsConstants::AJAM_PORT => '8088',
             PbxSettingsConstants::AJAM_PORT_TLS => '8089',
             PbxSettingsConstants::SSH_PORT => '22',
+            PbxSettingsConstants::SSH_LOGIN => 'root',
             PbxSettingsConstants::SSH_PASSWORD => 'admin',
             PbxSettingsConstants::SSH_RSA_KEY => '',
             PbxSettingsConstants::SSH_DSS_KEY => '',
