@@ -5,6 +5,7 @@
                data-content="{{ t._('bt_ToolTipCopyPassword') }}">
                 <i class="icons">
                     <i class="icon copy blue"></i>
+                    <i class="corner key icon"></i>
                 </i>
             </a>
         {% endif %}

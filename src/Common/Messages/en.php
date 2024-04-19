@@ -558,6 +558,7 @@ return [
     'gs_AJAMPortTLS' => 'Secure AJAM port',
     'gs_SSHPort' => 'SSH port',
     'adv_SSHPPasswordCorrupt' => 'The SSH password set in the web interface does not match the current one in the system. <a target="_blank" href=\'%url%\'>fix</a>',
+    'gs_SSHLogin'=>'SSH login name',
     'gs_SSHPassword' => 'SSH password',
     'gs_SSHAuthorizedKeys' => 'SSH Authorized Keys',
     'gs_SSHDisablePasswordLogins' => 'Disable password logins',

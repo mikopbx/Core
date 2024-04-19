@@ -127,13 +127,12 @@ abstract class CloudProvider
     /**
      * Updates the SSH password.
      */
-    protected function updateSSHPassword(string $hashSalt): void
+    protected function updateSSHCredentials(string $sshLogin, string $hashSalt): void
     {
         $data = md5(shell_exec(Util::which('ifconfig')) . $hashSalt . time());
+        $this->updatePbxSettings(PbxSettingsConstants::SSH_LOGIN, $sshLogin);
         $this->updatePbxSettings(PbxSettingsConstants::SSH_PASSWORD, $data);
         $this->updatePbxSettings(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD, '1');
-        $confSsh = new SSHConf();
-        $confSsh->updateShellPassword();
     }
 
     /**

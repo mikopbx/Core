@@ -65,7 +65,7 @@ class AWSCloud extends CloudProvider
 
         // Update SSH and WEB passwords using some unique identifier from the metadata
         $vmId = $this->getMetaDataAWS('instance-id')??'';
-        $this->updateSSHPassword($vmId);
+        $this->updateSSHCredentials('ec2-user', $vmId);
         $this->updateWebPassword($vmId);
 
         return true;

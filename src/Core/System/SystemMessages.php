@@ -56,7 +56,7 @@ class SystemMessages extends Di\Injectable
         $len = max(0, 80 - strlen($message) - 9);
         $spaces = str_repeat('.', $len);
         $formattedResult = self::getFormattedResult($result);
-        self::echoToTeletype($spaces.$formattedResult);
+        self::echoToTeletype($spaces . $formattedResult);
     }
 
     /**
@@ -128,7 +128,7 @@ class SystemMessages extends Di\Injectable
 
         $spaces = str_repeat('.', $len);
         $formattedResult = self::getFormattedResult($result);
-        echo $spaces. $formattedResult;
+        echo $spaces . $formattedResult;
     }
 
     /**
@@ -175,9 +175,8 @@ class SystemMessages extends Di\Injectable
      */
     public static function sysLogMsg(string $ident, string $message, int $level = LOG_WARNING): void
     {
-        /** @var \Phalcon\Logger $logger */
         $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
-        $logger->log($level, "{$message} on {$ident}");
+        $logger->log($level, "$message on $ident");
     }
 
 
@@ -209,7 +208,8 @@ class SystemMessages extends Di\Injectable
      * @param bool $showCredentials Optional, if true the message will have the login information
      * @return string The information message.
      */
-    public static function getInfoMessage(string $header, bool $showCredentials = false): string {
+    public static function getInfoMessage(string $header, bool $showCredentials = false): string
+    {
         $lineWidth = 70;
         $borderLine = str_repeat('+', $lineWidth);
         $emptyLine = "|" . str_repeat(' ', $lineWidth - 2) . "|";
@@ -237,10 +237,12 @@ class SystemMessages extends Di\Injectable
         }
 
         if ($showCredentials) {
-            $info .= PHP_EOL . self::showCredentials($lineWidth);
+            $info .= PHP_EOL . self::showWebCredentials($lineWidth);
+            $info .= PHP_EOL . $borderLine;
+            $info .= PHP_EOL . self::showSSHCredentials($lineWidth);
         }
 
-        $info .= PHP_EOL . $emptyLine  . PHP_EOL .$borderLine. PHP_EOL;
+        $info .= PHP_EOL . $emptyLine . PHP_EOL . $borderLine . PHP_EOL;
         return $info;
     }
 
@@ -260,7 +262,8 @@ class SystemMessages extends Di\Injectable
      *
      * @return string The formatted line with the text aligned as specified.
      */
-    private static function formatLine(string $content, int $lineWidth, string $align = 'left'): string {
+    private static function formatLine(string $content, int $lineWidth, string $align = 'left'): string
+    {
         $padding = $lineWidth - 4 - mb_strlen($content);  // 4 characters are taken by the borders "| "
         if ($align === 'center') {
             // Center the content by splitting the padding on both sides
@@ -278,7 +281,8 @@ class SystemMessages extends Di\Injectable
      * Retrieves the local and external network addresses.
      * @return array|array[]
      */
-    private static function getNetworkAddresses(): array {
+    private static function getNetworkAddresses(): array
+    {
         $addresses = ['local' => [], 'external' => []];
         $interfaces = LanInterfaces::find("disabled='0'");
         foreach ($interfaces as $interface) {
@@ -296,21 +300,56 @@ class SystemMessages extends Di\Injectable
     }
 
     /**
-     * Retrieves the information message containing available web interface addresses.
+     * Retrieves the information message containing available web interface credentials.
      * @param int $lineWidth
      * @return string
      */
-    private static function showCredentials(int $lineWidth): string {
+    private static function showWebCredentials(int $lineWidth): string
+    {
         $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
         $webAdminPassword = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
         $defaultPassword = PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::WEB_ADMIN_PASSWORD];
         if ($cloudInstanceId === $webAdminPassword || $webAdminPassword === $defaultPassword) {
             $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
-            $info = self::formatLine("Default web credentials:", $lineWidth);
+            $info = self::formatLine("Web credentials:", $lineWidth);
             $info .= PHP_EOL . self::formatLine("   Login: $adminUser", $lineWidth);
             $info .= PHP_EOL . self::formatLine("   Password: $webAdminPassword", $lineWidth);
-            return $info;
+        } else {
+            $info = '';
         }
-        return '';
+        return $info;
+    }
+
+    /**
+     * Retrieves the information message containing available ssh credentials.
+     * @param int $lineWidth
+     * @return string
+     */
+    private static function showSSHCredentials(int $lineWidth): string
+    {
+        $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
+        $sshUser = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LOGIN);
+        $sshPassword = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
+        $defaultSshPassword = PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::SSH_PASSWORD];
+        $sshPort = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PORT);
+        $authorizedKeys = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_AUTHORIZED_KEYS);
+        $disablePassLogin = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD);
+
+        if ($disablePassLogin === '1' and strlen($authorizedKeys)<80){
+            $info = self::formatLine("SSH access disabled!", $lineWidth);
+        } else {
+            $info = self::formatLine("SSH credentials:", $lineWidth);
+            $info .= PHP_EOL . self::formatLine("   Port: $sshPort", $lineWidth);
+            $info .= PHP_EOL . self::formatLine("   Login: $sshUser", $lineWidth);
+            if ($disablePassLogin === '1') {
+                $info .= PHP_EOL . self::formatLine("   Password access disabled, use ssh key pair.", $lineWidth);
+            } elseif ($sshPassword === $defaultSshPassword) {
+                $info .= PHP_EOL . self::formatLine("   Password: $sshPassword", $lineWidth);
+            } else {
+                $info .= PHP_EOL . self::formatLine("   Password: ***********", $lineWidth);
+            }
+        }
+
+        return $info;
     }
 }

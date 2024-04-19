@@ -42,12 +42,18 @@ class AzureCloud extends CloudProvider
     public function provision(): bool
     {
         $metadata = $this->retrieveInstanceMetadata();
-        if ($metadata === null || $metadata['compute']['azEnvironment'] !== 'AzurePublicCloud') {
+        if ($metadata === null
+            || $metadata['compute']['azEnvironment'] !== 'AzurePublicCloud'
+            || empty($metadata['compute']['vmId'])
+        ) {
             // If metadata is null or the environment is not AzurePublicCloud, do not proceed with provisioning.
             return false;
         }
 
         SystemMessages::echoToTeletype(PHP_EOL);
+
+        // Extract the admin username from the metadata
+        $adminUsername = $metadata['compute']['osProfile']['adminUsername'] ?? 'azureuser';
 
         // Update machine name
         $hostname = $metadata['compute']['name'] ?? '';
@@ -62,8 +68,8 @@ class AzureCloud extends CloudProvider
         $this->updateSSHKeys(implode(PHP_EOL, $sshKeys));
 
         // Update SSH anf WEB password using some unique identifier from the metadata
-        $vmId =$metadata['compute']['vmId'] ?? '';
-        $this->updateSSHPassword($vmId);
+        $vmId =$metadata['compute']['vmId'] ;
+        $this->updateSSHCredentials($adminUsername, $vmId);
         $this->updateWebPassword($vmId);
 
         return true;
@@ -87,7 +93,7 @@ class AzureCloud extends CloudProvider
                 return json_decode($response->getBody()->getContents(), true);
             }
         } catch (GuzzleException $e) {
-            Util::sysLogMsg(__CLASS__, "Failed to retrieve Azure instance metadata: " . $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to retrieve Azure instance metadata: " . $e->getMessage());
         }
 
         return null;

@@ -64,7 +64,7 @@ class VKCloud extends CloudProvider
 
         // Update SSH and WEB passwords using some unique identifier from the metadata
         $vmId = $this->getMetaDataVCS('instance-id')??'';
-        $this->updateSSHPassword($vmId);
+        $this->updateSSHCredentials('vk-user', $vmId);
         $this->updateWebPassword($vmId);
 
         return true;

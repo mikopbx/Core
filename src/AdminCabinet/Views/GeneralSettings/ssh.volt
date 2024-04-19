@@ -3,6 +3,10 @@
     {{ form.render('SSHPort') }}
 </div>
 <div class="field">
+    <label>{{ t._('gs_SSHLogin') }}</label>
+    {{ form.render('SSHLogin') }}
+</div>
+<div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
             <label>{{ t._('gs_SSHDisablePasswordLogins') }}</label>

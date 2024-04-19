@@ -20,53 +20,118 @@
 namespace MikoPBX\Core\System\CloudProvisioning;
 
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\System\Util;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 
 class GoogleCloud extends CloudProvider
 {
+    private Client $client;
+
+    public function __construct()
+    {
+        $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
+    }
+
     public const CloudID = 'GoogleCloud';
 
     /**
-     * Performs the Google Cloud provisioning.
-     * Google Cloud.
+     * Performs the Google Cloud provisioning using the Metadata Service.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
     public function provision(): bool
     {
-        $curl = curl_init();
-        $url = 'http://169.254.169.254/computeMetadata/v1/instance/?recursive=true';
-        curl_setopt($curl, CURLOPT_URL, $url);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_TIMEOUT, self::HTTP_TIMEOUT);
-        curl_setopt($curl, CURLOPT_HTTPHEADER, ['Metadata-Flavor:Google']);
-        $resultRequest = curl_exec($curl);
-
-        $http_code = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-        if ($http_code !== 200 || !is_string($resultRequest)) {
+        $metadata = $this->retrieveInstanceMetadata();
+        if ($metadata === null || empty($metadata['id'])) {
             return false;
         }
 
         SystemMessages::echoToTeletype(PHP_EOL);
 
-        // Update SSH keys, if available
-        $data = json_decode($resultRequest, true);
-        $this->updateSSHKeys($data['attributes']['ssh-keys'] ?? '');
+        // Extract SSH keys and primary SSH user
+        $sshKeys = $metadata['attributes']['ssh-keys'] ?? '';
+        $adminUsername = $this->extractPrimaryUser($sshKeys);
 
         // Update machine name
-        $hostname = $data['name'] ?? '';
+        $hostname = $metadata['name'] ?? '';
         $this->updateHostName($hostname);
 
         // Update LAN settings with the external IP address
-        $extIp = $data['networkInterfaces'][0]['accessConfigs'][0]['externalIp'] ?? '';
+        $extIp = $metadata['networkInterfaces'][0]['accessConfigs'][0]['externalIp'] ?? '';
         $this->updateLanSettings($extIp);
 
         // Update SSH and WEB passwords using some unique identifier from the metadata
-        $vmId = $data['id'] ?? '';
-        $this->updateSSHPassword($vmId);
+        $vmId = $metadata['id'];
+        $this->updateSSHCredentials($adminUsername, $vmId);
         $this->updateWebPassword($vmId);
 
         return true;
+    }
+
+    /**
+     * Retrieves Google Cloud instance metadata.
+     *
+     * @return array|null The instance metadata or null if retrieval failed.
+     */
+    private function retrieveInstanceMetadata(): ?array
+    {
+        try {
+            $response = $this->client->request('GET', 'http://169.254.169.254/computeMetadata/v1/instance/', [
+                'query' => ['recursive' => 'true'],
+                'headers' => ['Metadata-Flavor' => 'Google']
+            ]);
+
+            if ($response->getStatusCode() == 200) {
+                $metadata = json_decode($response->getBody()->getContents(), true);
+                // Verify that metadata contains the 'serviceAccounts' with 'gserviceaccount' in any value
+                if ($this->containsGoogleDomain($metadata)) {
+                    return $metadata;
+                } else {
+                    SystemMessages::sysLogMsg(__CLASS__, "Metadata does not contain 'gserviceaccount' in any service account.");
+                }
+            }
+        } catch (GuzzleException $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to retrieve Google Cloud instance metadata: " . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Extracts the primary username from SSH keys.
+     *
+     * @param string $sshKeys SSH keys string from metadata.
+     * @return string The primary SSH username extracted from SSH keys.
+     */
+    private function extractPrimaryUser(string $sshKeys): string
+    {
+        $lines = explode("\n", $sshKeys);
+        foreach ($lines as $line) {
+            $parts = explode(" ", $line);
+            if (count($parts) > 2) {
+                // The username usually follows the key, after the email or comment.
+                $usernamePart = explode(":", $parts[2]);
+                return $usernamePart[0];
+            }
+        }
+        return 'root'; // Fallback username if no valid line was found
+    }
+
+    /**
+     * Checks if the 'serviceAccounts' array contains the word 'gserviceaccount' in any value.
+     *
+     * @param array $metadata Metadata array from Google Cloud instance.
+     * @return bool True if 'gserviceaccount' is found in any service account, false otherwise.
+     */
+    private function containsGoogleDomain(array $metadata): bool
+    {
+        if (isset($metadata['serviceAccounts'])) {
+            foreach ($metadata['serviceAccounts'] as $account) {
+                if (strpos($account['email'], 'gserviceaccount') !== false) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
