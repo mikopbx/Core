@@ -89,7 +89,7 @@ class CallDetailRecordsController extends BaseController
                 'bind' => [
                     'ids' => $arrIDS[0],
                 ],
-                'order' => ['linkedid desc', 'id asc', 'start asc'],
+                'order' => ['linkedid desc', 'start asc', 'id asc'],
             ];
         } else {
             $parameters = [
@@ -98,7 +98,7 @@ class CallDetailRecordsController extends BaseController
                 'bind' => [
                     'ids' => $arrIDS,
                 ],
-                'order' => ['linkedid desc', 'id asc', 'start asc'],
+                'order' => ['linkedid desc', 'start asc', 'id asc'],
             ];
         }
 
