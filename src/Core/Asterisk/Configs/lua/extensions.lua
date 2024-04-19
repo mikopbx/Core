@@ -383,7 +383,12 @@ function event_dial(without_event)
     data['IS_ORGNT']     = (IS_ORGNT ~= '');
 
     set_variable("__pt1c_UNIQUEID", id);
-
+    local chanExists = get_variable('CHANNEL_EXISTS('..data['src_chan']..')');
+    if(chanExists ~= '1')then
+        app["NoOp"]('The channel '..data['src_chan']..' no longer exists ('..chanExists..'). We are completing the call.');
+        app["Hangup"]();
+        return {};
+    end
     if(without_event == false)then
         userevent_return(data)
     end
@@ -1028,7 +1033,12 @@ function event_transfer_dial()
     data['dst_num']  	= get_variable("EXTEN");
 
     set_variable("__transfer_UNIQUEID", id);
-
+    local chanExists = get_variable('CHANNEL_EXISTS('..data['src_chan']..')');
+    if(chanExists ~= '1')then
+        app["NoOp"]('The channel '..data['src_chan']..' no longer exists ('..chanExists..'). We are completing the call.');
+        app["Hangup"]();
+        return {};
+    end
     -- Send the data as a user event
     userevent_return(data)
 

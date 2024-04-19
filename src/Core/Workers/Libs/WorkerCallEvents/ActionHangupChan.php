@@ -43,7 +43,7 @@ class ActionHangupChan
      *
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         // Remove the agi_channel from the active channels in the worker.
         $worker->removeActiveChan($data['agi_channel']);
