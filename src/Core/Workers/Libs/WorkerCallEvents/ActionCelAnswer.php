@@ -54,7 +54,7 @@ class ActionCelAnswer
         $linkedId = Util::getAstManager('off')->GetVar($channel, 'CHANNEL(linkedid)', '', false);
 
         // If the linkedId matches the data LinkedID, return immediately
-        if ($linkedId === $data['LinkedID']) {
+        if (empty($linkedId) || $linkedId === $data['LinkedID']) {
             return;
         }
 
