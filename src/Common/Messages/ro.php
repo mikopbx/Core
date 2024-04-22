@@ -1244,4 +1244,5 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'f2b_SettingsTabHeader' => 'Configurarea protecției',
     'f2b_BannedIpTabHeader' => 'Adrese blocate',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Actualizați adresa IP externă MikoPBX de fiecare dată când reporniți',
+    'gs_SSHLogin' => 'Conectați-vă pentru consola SSH',
 ];

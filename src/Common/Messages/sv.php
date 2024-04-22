@@ -1228,4 +1228,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'f2b_SettingsTabHeader' => 'Sätta upp skydd',
     'f2b_BannedIpTabHeader' => 'Blockerade adresser',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Uppdatera MikoPBX extern IP-adress varje gång du startar om',
+    'gs_SSHLogin' => 'Logga in för SSH-konsolen',
 ];

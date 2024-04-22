@@ -1262,4 +1262,5 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'f2b_SettingsTabHeader' => 'Opsætning af beskyttelse',
     'f2b_BannedIpTabHeader' => 'Spærrede adresser',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Opdater MikoPBX ekstern IP-adresse hver gang du genstarter',
+    'gs_SSHLogin' => 'Log ind til SSH-konsollen',
 ];

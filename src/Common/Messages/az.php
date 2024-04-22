@@ -1261,4 +1261,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'f2b_SettingsTabHeader' => 'Mühafizənin qurulması',
     'f2b_BannedIpTabHeader' => 'Bloklanmış ünvanlar',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Hər dəfə yenidən işə saldığınız zaman MikoPBX xarici IP ünvanını yeniləyin',
+    'gs_SSHLogin' => 'SSH konsolu üçün daxil olun',
 ];

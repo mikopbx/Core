@@ -1262,4 +1262,5 @@ return [
     'f2b_SettingsTabHeader' => '保護の設定',
     'f2b_BannedIpTabHeader' => 'ブロックされたアドレス',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => '再起動するたびに MikoPBX 外部 IP アドレスを更新する',
+    'gs_SSHLogin' => 'SSHコンソールへのログイン',
 ];

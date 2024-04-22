@@ -1262,4 +1262,5 @@ return [
     'f2b_SettingsTabHeader' => 'Ρύθμιση προστασίας',
     'f2b_BannedIpTabHeader' => 'Αποκλεισμένες διευθύνσεις',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Ενημερώστε την εξωτερική διεύθυνση IP του MikoPBX κάθε φορά που κάνετε επανεκκίνηση',
+    'gs_SSHLogin' => 'Είσοδος για την κονσόλα SSH',
 ];

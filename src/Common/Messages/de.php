@@ -1265,4 +1265,5 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'f2b_BannedIpTabHeader' => 'Blockierte Adressen',
     'f2b_SettingsTabHeader' => 'Schutz einrichten',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Aktualisieren Sie die externe IP-Adresse von MikoPBX bei jedem Neustart',
+    'gs_SSHLogin' => 'Melden Sie sich für die SSH-Konsole an',
 ];

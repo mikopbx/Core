@@ -1262,4 +1262,5 @@ return [
     'f2b_SettingsTabHeader' => 'Налаштування захисту',
     'f2b_BannedIpTabHeader' => 'Заблоковані адреси',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Оновити зовнішню IP-адресу MikoPBX при кожному перезавантаженні',
+    'gs_SSHLogin' => 'Логін для SSH консолі',
 ];
