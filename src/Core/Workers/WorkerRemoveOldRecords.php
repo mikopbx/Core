@@ -105,8 +105,7 @@ class WorkerRemoveOldRecords extends WorkerBase
         Processes::mwExec("$mount | $grep $mount_point | $awk '{print $1}' | $head -n 1", $out);
         $dev = implode('', $out);
 
-        $s = new Storage();
-        $free_space = $s->getFreeSpace($dev);
+        $free_space = Storage::getFreeSpace($dev);
         if ($free_space > self::MIN_SPACE_MB) {
             // Disk cleanup is not required
             return;
@@ -125,7 +124,7 @@ class WorkerRemoveOldRecords extends WorkerBase
             if (!is_dir($dir_info)) {
                 continue;
             }
-            $free_space = $s->getFreeSpace($dev);
+            $free_space = Storage::getFreeSpace($dev);
             if ($free_space > self::MIN_SPACE_MB) {
                 // Disk cleanup is not required
                 break;
