@@ -76,7 +76,7 @@ class SSHConf extends Injectable
         $result = Processes::mwExec("$dropbear -p '$sshPort' $options -c /etc/rc/hello > /var/log/dropbear_start.log");
 
         $this->generateAuthorizedKeys($sshLogin);
-
+        $this->fixRights($sshLogin);
         return ($result === 0);
     }
 
@@ -172,7 +172,7 @@ class SSHConf extends Injectable
      * @param string $sshLogin SSH login username.
      * @return void
      */
-    public function updateShellPassword(string $sshLogin = 'root'): void
+    private function updateShellPassword(string $sshLogin = 'root'): void
     {
         $password = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
         $hashString = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING);
@@ -204,7 +204,7 @@ class SSHConf extends Injectable
      * @param string $sshLogin SSH login username.
      * @return void
      */
-    public function generateAuthorizedKeys(string $sshLogin = 'root'): void
+    private function generateAuthorizedKeys(string $sshLogin = 'root'): void
     {
         $homeDir = $this->getUserHomeDir($sshLogin);
         $sshDir = "$homeDir/.ssh";
@@ -212,5 +212,39 @@ class SSHConf extends Injectable
 
         $authorizedKeys = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_AUTHORIZED_KEYS);
         file_put_contents("{$sshDir}/authorized_keys", $authorizedKeys);
+    }
+
+    /**
+     * Corrects file permissions and ownership for SSH user directories.
+     *
+     * Sets appropriate permissions and ownership on the home directory and SSH-related files to secure the environment.
+     *
+     * @param string $sshLogin SSH login username.
+     * @return void
+     */
+    private function fixRights(string $sshLogin = 'root'): void
+    {
+        $homeDir = $this->getUserHomeDir($sshLogin);
+        $sshDir = "$homeDir/.ssh";
+        $authorizedKeysFile = "$sshDir/authorized_keys";
+
+        // Ensure the SSH directory exists before attempting to modify it
+        if (!file_exists($sshDir) || !file_exists($authorizedKeysFile)) {
+            return; // Early exit if essential directories or files are missing
+        }
+
+        // Commands used for modifying file permissions and ownership
+        $chmod = Util::which('chmod');
+        $chown = Util::which('chown');
+
+        // Set directory permissions securely
+        Processes::mwExec("$chmod 700 $homeDir"); // Only the user can access the home directory
+        Processes::mwExec("$chmod 700 $sshDir");  // Only the user can access the .ssh directory
+
+        // Set file permissions securely
+        Processes::mwExec("$chmod 600 $authorizedKeysFile"); // Only the user can read/write authorized_keys
+
+        // Change ownership to the user for both home and SSH directories
+        Processes::mwExec("$chown -R $sshLogin:$sshLogin $homeDir");
     }
 }
