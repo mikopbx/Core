@@ -12,29 +12,39 @@ fi
 #   $2: Mount point.
 mountDiskPart()
 {
-  local uuid="$1";
-  local mountpoint="$2";
-  if ! blkid | grep -q "$uuid"; then
-       echoToTeletype " - Storage disk with UUID=${uuid} not found..."
-       return 1
+  uuid="$1";
+  mountpoint="$2";
+  if [ '1' = "$(/sbin/blkid | /bin/busybox grep "$uuid" > /dev/null)" ]; then
+    echoToTeletype " - Storage disk with UUID=${uuid} not found..."
+    exit 1;
   fi
 
-  if ! mount -rw UUID="$uuid" "$mountpoint"; then
-        echoToTeletype " - Failed to mount storage with UUID=${uuid} at ${mountpoint}..."
-        return 1
+  mkdir -p "$mountpoint";
+  mount -rw UUID="$uuid" "$mountpoint" 2> /dev/null;
+  MOUNT_RESULT=$?;
+  if [ ! "${MOUNT_RESULT}" = "0" ] ; then
+    echoToTeletype " - Fail mount storage with UUID=${uuid} to ${mountpoint} ..."
+    exit 1;
   fi
 }
 
-  # echoToTeletype: Prints a message to the console and the serial port if available.
-  # Args:
-  #   $1: Message to be printed.
-echoToTeletype() {
-    local message="$1"
-    echo "$message"
-    local dev='/dev/ttyS0'
-    if [ "$(setserial -g "$dev" 2>/dev/null)" != "unknown" ]; then
-       echo "$message" >> "$dev"
-    fi
+# echoToTeletype: Prints a message to the console and the serial port if available.
+# Args:
+#   $1: Message to be printed.
+echoToTeletype()
+{
+  echo "$1";
+  dev='/dev/ttyS0';
+  serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
+  if [ "${serialInfo}x" = 'x' ]; then
+    return;
+  fi;
+  echo "$serialInfo" | /bin/grep unknown > /dev/null 2> /dev/null;
+  resultSetSerial="$?";
+  if [ ! "$resultSetSerial" = '0' ]; then
+     # Device ttys found
+     echo "$1" >> "$dev"
+  fi;
 }
 
 # Mounts storage and configuration partitions

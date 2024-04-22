@@ -39,6 +39,10 @@ searchNewFirmware() {
       continue;
     fi
     checkAndUpgrade "$disk";
+
+    # Umount boot disk
+    umount -f "$disk";
+
   done
 }
 

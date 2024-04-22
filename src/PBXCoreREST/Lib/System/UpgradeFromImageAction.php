@@ -218,6 +218,9 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
             $res->success = false;
         }
 
+        $umount = Util::which('mount');
+        Processes::mwExec("$umount /dev/{$parameters['bootPartitionName']}");
+
         return [$res->success, $res->messages];
     }
 
@@ -277,7 +280,18 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         self::destroyLoopDevice($loopDev);
         unlink($decompressedImg);
 
-        $res->data['message'] = "Upgrade process completed successfully.";
+        // Check files
+        if (filesize("{$desiredLocation}/firmware_upgrade.sh")===0
+            || filesize("{$desiredLocation}/pbx_firmware")===0
+            || filesize("{$desiredLocation}/version")===0
+        ) {
+            $res->success = false;
+            $res->messages[] = "Failed to extract required files from the initramfs image.";
+        } else {
+            $res->success = true;
+            $res->data['message'] = "Upgrade process completed successfully.";
+        }
+
         return $res;
     }
 
@@ -292,11 +306,11 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         $res->processor = __METHOD__;
         $res->success = true;
         $upgradeScript = '/sbin/firmware_upgrade.sh';
-        copy($upgradeScript, $desiredLocation);
+        $cp = Util::which('cp');
+        Processes::mwExec("$cp -f $upgradeScript $desiredLocation");
 
         $pbx_firmware = '/sbin/pbx_firmware';
-        copy($pbx_firmware, $desiredLocation);
-
+        Processes::mwExec("$cp -f $pbx_firmware $desiredLocation");
         return $res;
     }
 
@@ -334,8 +348,8 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
     {
         $gunzip = Util::which('gunzip');
         $cpio = Util::which('cpio');
-        $cmd = "$gunzip -c '{$initramfsPath}' | $cpio -i --to-stdout '{$filePath}' > '{$outputPath}'";
-        Processes::mwExec($cmd);
+        $cmd = "$gunzip -c '{$initramfsPath}' | $cpio -i --to-stdout '{$filePath}' 2>/dev/null> '{$outputPath}'";
+        exec($cmd);
     }
 
     /**
