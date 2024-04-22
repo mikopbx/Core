@@ -195,8 +195,6 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         $res->processor = __METHOD__;
         $res->success = true;
 
-        $upgradeScript = '/etc/rc/upgrade/firmware_upgrade.sh';
-
         // Mount boot partition
         $systemDir = '/system';
         Util::mwMkdir($systemDir);
@@ -205,12 +203,15 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         if ($result === 0) {
             $upgradeScriptDir = "$systemDir/upgrade";
             Util::mwMkdir($upgradeScriptDir);
+            self::prepareEnvironmentFile($upgradeScriptDir, $parameters);
+
             // Write the future release update script to the boot partition
             $res = self::extractNewUpdateScript($parameters['imageFileLocation'], $upgradeScriptDir);
-            if ($res->success) {
-                copy("$upgradeScript", "$upgradeScriptDir");
-                self::prepareEnvironmentFile($upgradeScriptDir, $parameters);
-                $res->messages[] = "The update script has been written to the boot partition.";
+            if (!$res->success) {
+                $res = self::extractCurrentUpdateScript($upgradeScriptDir);
+                if ($res->success) {
+                    $res->messages[] = "The update script has been written to the boot partition.";
+                }
             }
         } else {
             $res->messages[] = "Failed to mount the boot partition /dev/{$parameters['bootPartitionName']}";
@@ -266,6 +267,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
 
         // Extract files from initramfs.igz
         $initramfsPath = "{$mountPoint}/boot/initramfs.igz";
+        self::extractFileFromInitramfs($initramfsPath, 'sbin/firmware_upgrade.sh', "{$desiredLocation}/firmware_upgrade.sh");
         self::extractFileFromInitramfs($initramfsPath, 'sbin/pbx_firmware', "{$desiredLocation}/pbx_firmware");
         self::extractFileFromInitramfs($initramfsPath, 'etc/version', "{$desiredLocation}/version");
 
@@ -276,6 +278,25 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         unlink($decompressedImg);
 
         $res->data['message'] = "Upgrade process completed successfully.";
+        return $res;
+    }
+
+    /**
+     * Copy current release upgrade script to the desired location.
+     * @param string $desiredLocation The desired location for the extracted files.
+     * @return PBXApiResult
+     */
+    private static function extractCurrentUpdateScript(string $desiredLocation): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $res->success = true;
+        $upgradeScript = '/sbin/firmware_upgrade.sh';
+        copy($upgradeScript, $desiredLocation);
+
+        $pbx_firmware = '/sbin/pbx_firmware';
+        copy($pbx_firmware, $desiredLocation);
+
         return $res;
     }
 

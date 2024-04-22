@@ -45,7 +45,7 @@ searchNewFirmware() {
 # Function to check for and apply updates
 checkAndUpgrade() {
   local disk="$1"
-  updateFolder="/upgrade";
+  updateFolder="$systemDir/upgrade";
    # Check if the update folder exists.
   if [ -d "$updateFolder" ]; then
      # Start SSH autologin in console session immediately
