@@ -1,6 +1,6 @@
 #!/bin/sh
 # MikoPBX - free phone system for small business
-# Copyright © 2017-2022 Alexey Portnov and Nikolay Beketov
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,74 +20,55 @@
 systemDir='/system';
 mkdir "$systemDir";
 
-# Get a list of block devices with their UUIDs.
-list="$(/bin/lsblk -r -p -o NAME,UUID | /bin/busybox grep '1 ' | /bin/busybox cut -f 1 -d ' ')";
+# Function to mount disks smaller than 60MB
+searchNewFirmware() {
+  # Get a list of block devices with their UUIDs.
+  list="$(/bin/lsblk -r -p -o NAME,UUID | /bin/busybox grep '1 ' | /bin/busybox cut -f 1 -d ' ')";
+  # Iterate over the block devices.
+  for disk in $list; do
+    size="$(/bin/lsblk "$disk" -P -b -o SIZE | /bin/busybox cut -f 2 -d '"' | /bin/busybox cut -f 1 -d 'M')";
+    # Skip disks larger than 60MB.
+    if [ "$(printf "%.0f\n" "$((size / 1024 / 1024))")" -gt 60 ]; then
+       continue;
+    fi
 
-# Iterate over the block devices.
-for disk in $list
-do
-  size="$(/bin/lsblk "$disk" -P -b -o SIZE | /bin/busybox cut -f 2 -d '"' | /bin/busybox cut -f 1 -d 'M')";
+    # Mount the disk to the system directory if it less than 60 mb
+    mount "$disk" "$systemDir";
+    MOUNT_RESULT=$?;
+    if [ ! "${MOUNT_RESULT}" = "0" ] ; then
+      continue;
+    fi
+    checkAndUpgrade "$disk";
+  done
+}
 
-   # Skip disks larger than 60MB.
-  if [ "$(printf "%.0f\n" "$((size / 1024 / 1024))")" -gt 60 ]; then
-    continue;
-  fi
-
-  # Mount the disk to the system directory if it less than 60 mb
-  mount "$disk" "$systemDir";
-  MOUNT_RESULT=$?;
-  if [ ! "${MOUNT_RESULT}" = "0" ] ; then
-    continue;
-  fi
-  updateScript="$systemDir/update.sh";
-
-   # Check if the update script exists.
-  if [ -f "$updateScript" ];then
-
-    # Start SSH autologin in console session immediately
+# Function to check for and apply updates
+checkAndUpgrade() {
+  local disk="$1"
+  updateFolder="/upgrade";
+   # Check if the update folder exists.
+  if [ -d "$updateFolder" ]; then
+     # Start SSH autologin in console session immediately
     touch /etc/ssh-tty-autologin;
 
-    echoToTeletype " - Start update script $updateScript...";
+    # Move files to prevent cycle
+    mv "$updateFolder" /tmp
+    cd /tmp/upgrade
 
-    # Execute the update script in a subshell.
-    (
-      storage_uuid=''; cf_uuid=''; updateFile='';
+    # Umount boot disk
+    umount -f "$disk";
 
-      # Source the update script.
-      # shellcheck source=/system/update.sh
-      source "$updateScript";
-
-      rm "$updateScript";
-
-      # Umount the disk.
-      umount "$disk";
-
-      # Mount the storage and cf partitions.
-      mountDiskPart "$storage_uuid" '/storage/usbdisk1';
-      mountDiskPart "$cf_uuid" '/cf'
-
-      # Get the system device based on the cf UUID.
-      systemDevice="$(/bin/lsblk -o UUID,PKNAME | /bin/busybox grep "$cf_uuid" | /bin/busybox cut -f 2 -d ' ')";
-
-      # Check if the system device exists.
-      if [ -b "/dev/${systemDevice}" ]; then
-        mkdir -p /var/etc;
-        echo '/storage/usbdisk1' > /var/etc/storage_device;
-        echo "$systemDevice" > /var/etc/cfdevice;
-
-        # Call the pbx_firmware script with the update file and system device.
-        /sbin/pbx_firmware "$updateFile" "$systemDevice"
-      else
-        echoToTeletype ' - System disk not found...'
-      fi
-    );
+    # Start upgrade process
+    /bin/sh firmware_upgrade.sh
 
     # Set a flag to indicate rebooting.
     touch /tmp/rebooting;
-  fi;
-  umount -f "$disk";
-  exit 0;
-done
+    exit 0;
+  fi
+}
+
+# Start the process
+searchNewFirmware;
 
 # If no update script is found, print a message.
 echoToTeletype " - No update script found";

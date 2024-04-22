@@ -34,6 +34,8 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
     const CF_DEVICE = '/var/etc/cfdevice';
     const STORAGE_DEVICE = '/var/etc/storage_device';
 
+    const MIN_SPACE_MB = 400;
+
 
     /**
      * Upgrade the PBX using uploaded IMG file.
@@ -41,45 +43,54 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function main(string  $imageFileLocation): PBXApiResult
+    public static function main(string $imageFileLocation): PBXApiResult
     {
-        $res                  = new PBXApiResult();
-        $res->processor       = __METHOD__;
-        $res->success         = true;
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $res->success = true;
         $res->data['message'] = 'In progress...';
 
-        list( $res->success,  $res->messages) = self::validateParameters($imageFileLocation);
-        if (!$res->success){
-           return $res;
+        // Validate input parameters.
+        list($res->success, $res->messages) = self::validateParameters($imageFileLocation);
+        if (!$res->success) {
+            return $res;
         }
+
+        // Check free space
+        list($res->success, $res->messages) = self::calculateFreeSpace();
+        if (!$res->success) {
+            return $res;
+        }
+
         $res->data['imageFileLocation'] = $imageFileLocation;
 
         // Generate update script
         $res->data['storage_uuid'] = self::getStorageUID();
-        if ( empty($res->data['storage_uuid'])) {
-            $res->success    = false;
+        if (empty($res->data['storage_uuid'])) {
+            $res->success = false;
             $res->messages[] = "The storage disk uid is empty!";
             return $res;
         }
 
         // Get CF disk UID
         $res->data['cf_uuid'] = self::getCfUID();
-        if ( empty($res->data['cf_uuid'])) {
-            $res->success    = false;
+        if (empty($res->data['cf_uuid'])) {
+            $res->success = false;
             $res->messages[] = "The CF disk uid is empty!";
             return $res;
         }
 
         // Get Boot device name
         $res->data['bootPartitionName'] = self::getBootPartitionName($res->data['cf_uuid']);
-        if ( empty($res->data['bootPartitionName'])) {
-            $res->success    = false;
+        if (empty($res->data['bootPartitionName'])) {
+            $res->success = false;
             $res->messages[] = "The Boot partition name is empty!";
             return $res;
         }
 
-        list( $res->success,  $res->messages) = self::writeUpdateScript($res->data);
-        if ($res->success){
+        // Write update script
+        list($res->success, $res->messages) = self::writeUpdateScript($res->data);
+        if ($res->success) {
             System::rebootSyncBg();
         }
         return $res;
@@ -90,22 +101,22 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
      * @param string $imageFileLocation The location of the IMG file previously uploaded to the system.
      * @return array
      */
-    private static function validateParameters(string $imageFileLocation):array
+    private static function validateParameters(string $imageFileLocation): array
     {
         $success = true;
         $messages = [];
-        if ( ! file_exists($imageFileLocation)) {
-            $success    = false;
+        if (!file_exists($imageFileLocation)) {
+            $success = false;
             $messages[] = "The update file '{$imageFileLocation}' could not be found.";
         }
 
-        if ( ! file_exists(self::CF_DEVICE)) {
-            $success    = false;
+        if (!file_exists(self::CF_DEVICE)) {
+            $success = false;
             $messages[] = "The system setup has not been initiated.";
         }
 
-        if ( ! file_exists(self::STORAGE_DEVICE)) {
-            $success    = false;
+        if (!file_exists(self::STORAGE_DEVICE)) {
+            $success = false;
             $messages[] = "The storage disk has not been mounted yet!";
         }
 
@@ -117,7 +128,24 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
      *
      * @return string Storage disk UID
      */
-    private static function getStorageUID():string
+
+    /**
+     * Calculates the free space on the storage disk before upgrade.
+     * @return array
+     */
+    private static function calculateFreeSpace(): array
+    {
+        $success = true;
+        $messages = [];
+        $storageDevice = file_get_contents(self::STORAGE_DEVICE);
+        if (Storage::getFreeSpace($storageDevice) < self::MIN_SPACE_MB) {
+            $success = false;
+            $messages[] = "The storage disk has less than " . self::MIN_SPACE_MB . " MB free space.";
+        }
+        return [$success, $messages];
+    }
+
+    private static function getStorageUID(): string
     {
         $grep = Util::which('grep');
         $cat = Util::which('cat');
@@ -128,11 +156,11 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
     }
 
     /**
-    * Get configuration disk UID
-    *
-    * @return string configuration disk UID
-    */
-    private static function getCfUID() :string
+     * Get configuration disk UID
+     *
+     * @return string configuration disk UID
+     */
+    private static function getCfUID(): string
     {
         $grep = Util::which('grep');
         $awk = Util::which('awk');
@@ -145,7 +173,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
      *
      * @return string boot disk partition name
      */
-    private static function getBootPartitionName(string $cf_uuid) :string
+    private static function getBootPartitionName(string $cf_uuid): string
     {
         $lsblk = Util::which('lsblk');
         $grep = Util::which('grep');
@@ -161,25 +189,167 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
      * @param array $parameters An array containing the parameters for the script.
      * @return array
      */
-    private static function writeUpdateScript(array $parameters) :array
+    private static function writeUpdateScript(array $parameters): array
     {
-        $messages = [];
-        $updateSh = "#!/bin/sh".PHP_EOL.
-            "export storage_uuid='{$parameters['storage_uuid']}';".PHP_EOL.
-            "export cf_uuid='{$parameters['cf_uuid']}';".PHP_EOL.
-            "export updateFile='{$parameters['imageFileLocation']}';".PHP_EOL;
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $res->success = true;
+
+        $upgradeScript = '/etc/rc/upgrade/firmware_upgrade.sh';
 
         // Mount boot partition
         $systemDir = '/system';
         Util::mwMkdir($systemDir);
-        $result = Processes::mwExec("mount /dev/{$parameters['bootPartitionName']} $systemDir");
-        if($result === 0) {
-            file_put_contents("$systemDir/update.sh", $updateSh);
-            $success    = true;
+        $mount = Util::which('mount');
+        $result = Processes::mwExec("$mount /dev/{$parameters['bootPartitionName']} $systemDir");
+        if ($result === 0) {
+            $upgradeScriptDir = "$systemDir/upgrade";
+            Util::mwMkdir($upgradeScriptDir);
+            // Write the future release update script to the boot partition
+            $res = self::extractNewUpdateScript($parameters['imageFileLocation'], $upgradeScriptDir);
+            if ($res->success) {
+                copy("$upgradeScript", "$upgradeScriptDir");
+                self::prepareEnvironmentFile($upgradeScriptDir, $parameters);
+                $res->messages[] = "The update script has been written to the boot partition.";
+            }
         } else {
-            $messages[] = "Failed to mount the boot partition /dev/{$parameters['bootPartitionName']}";
-            $success    = false;
+            $res->messages[] = "Failed to mount the boot partition /dev/{$parameters['bootPartitionName']}";
+            $res->success = false;
         }
-        return [$success, $messages];
+
+        return [$res->success, $res->messages];
+    }
+
+    /**
+     * Prepares and executes a script to handle an IMG file upgrade.
+     *
+     * @param string $imageFileLocation The location of the IMG file.
+     * @param string $desiredLocation The desired location for the extracted files.
+     * @return PBXApiResult An object containing the result of the operation.
+     */
+    private static function extractNewUpdateScript(string $imageFileLocation, string $desiredLocation): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $res->success = true;
+
+        $decompressedImg = $imageFileLocation . '-decompressed.img';
+        $mountPoint = '/mnt/image_partition';
+
+        // Ensure mount point directory exists
+        Util::mwMkdir($mountPoint);
+        Util::mwMkdir($desiredLocation);
+
+        // Decompress the IMG file
+        $gunzip = Util::which('gunzip');
+        $decompressCmd = "$gunzip -c '{$imageFileLocation}' > '{$decompressedImg}'";
+        Processes::mwExec($decompressCmd);
+
+        // Setup loop device with the correct offset
+        $offset = 1024 * 512;
+        $loopDev = self::setupLoopDevice($decompressedImg, $offset);
+
+        if (empty($loopDev)) {
+            $res->success = false;
+            $res->messages[] = "Failed to set up the loop device.";
+            return $res;
+        }
+
+        // Mount the first partition as FAT16
+        $mount = Util::which('mount');
+        $result = Processes::mwExec("$mount -t vfat $loopDev $mountPoint -o ro,umask=0000");
+        if ($result !== 0) {
+            $res->success = false;
+            $res->messages[] = "Failed to mount the first partition. Check filesystem and options.";
+            return $res;
+        }
+
+        // Extract files from initramfs.igz
+        $initramfsPath = "{$mountPoint}/boot/initramfs.igz";
+        self::extractFileFromInitramfs($initramfsPath, 'sbin/pbx_firmware', "{$desiredLocation}/pbx_firmware");
+        self::extractFileFromInitramfs($initramfsPath, 'etc/version', "{$desiredLocation}/version");
+
+        // Clean-up
+        $umount = Util::which('umount');
+        Processes::mwExec("$umount $mountPoint");
+        self::destroyLoopDevice($loopDev);
+        unlink($decompressedImg);
+
+        $res->data['message'] = "Upgrade process completed successfully.";
+        return $res;
+    }
+
+    /**
+     * Sets up a loop device for a specified image file at a given offset.
+     *
+     * @param string $filePath The path to the file that needs a loop device.
+     * @param int $offset The byte offset at which to start the loop device.
+     * @return string|null The path to the loop device, or null if the setup failed.
+     */
+    private static function setupLoopDevice(string $filePath, int $offset): ?string
+    {
+        $losetup = Util::which('losetup');
+        $cmd = "{$losetup} --show -f -o {$offset} {$filePath}";
+
+        // Execute the command and capture the output
+        Processes::mwExec($cmd, $output, $returnVar);
+        if ($returnVar === 0 && !empty($output[0])) {
+            return $output[0];  // Returns the path to the loop device, e.g., /dev/loop0
+        }
+
+        return null;  // Return null if the command failed
+    }
+
+    /**
+     * Extracts a specific file from an initramfs image.
+     *
+     * @param string $initramfsPath The path to the initramfs file.
+     * @param string $filePath The path of the file inside the initramfs.
+     * @param string $outputPath Where to save the extracted file.
+     *
+     * @return void
+     */
+    private static function extractFileFromInitramfs(string $initramfsPath, string $filePath, string $outputPath): void
+    {
+        $gunzip = Util::which('gunzip');
+        $cpio = Util::which('cpio');
+        $cmd = "$gunzip -c '{$initramfsPath}' | $cpio -i --to-stdout '{$filePath}' > '{$outputPath}'";
+        Processes::mwExec($cmd);
+    }
+
+    /**
+     * Destroys a loop device, freeing it up for other uses.
+     *
+     * @param string $loopDevice The path to the loop device (e.g., /dev/loop0).
+     * @return void
+     */
+    private static function destroyLoopDevice(string $loopDevice): void
+    {
+        $losetup = Util::which('losetup');
+        $cmd = "{$losetup} -d {$loopDevice}";
+        Processes::mwExec($cmd, $output, $returnVar);
+    }
+
+    /**
+     * Prepares the .env file for the upgrade process.
+     *
+     * @param string $path The path to the directory containing the .env file.
+     * @param array $parameters An array containing the parameters for the .env file.
+     * @return void
+     */
+    private static function prepareEnvironmentFile(string $path, array $parameters): void
+    {
+        $envFilePath = "$path/.env";
+        $config = [
+            'STORAGE_UUID' => $parameters['storage_uuid'],
+            'CF_UUID' => $parameters['cf_uuid'],
+            'UPDATE_IMG_FILE' => $parameters['imageFileLocation'],
+        ];
+        $file = fopen($envFilePath, 'w');
+
+        foreach ($config as $key => $value) {
+            fwrite($file, "$key='$value'\n");
+        }
+        fclose($file);
     }
 }

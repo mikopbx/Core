@@ -1654,16 +1654,16 @@ class Storage extends Di\Injectable
      * @param string $hdd The name of the HDD.
      * @return int The free space in megabytes.
      */
-    public function getFreeSpace(string $hdd)
+    public static function getFreeSpace(string $hdd)
     {
         $out = [];
         $hdd = escapeshellarg($hdd);
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
-        $dfPath = Util::which('df');
+        $grep = Util::which('grep');
+        $awk = Util::which('awk');
+        $df = Util::which('df');
 
         // Execute df command to get the free space for the HDD
-        Processes::mwExec("{$dfPath} -m | {$grepPath} {$hdd} | {$awkPath} '{print $4}'", $out);
+        Processes::mwExec("$df -m | $grep $hdd | $awk '{print $4}'", $out);
         $result = 0;
 
         // Sum up the free space values
@@ -1887,7 +1887,7 @@ class Storage extends Di\Injectable
      * @param string $device The device path.
      * @return string The UUID of the device.
      */
-    public function getUuid(string $device): string
+    public static function getUuid(string $device): string
     {
         if (empty($device)) {
             return '';
