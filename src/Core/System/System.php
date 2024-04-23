@@ -227,6 +227,17 @@ class System extends Di\Injectable
     }
 
     /**
+     * Reboots the system after calling system_reboot_cleanup()
+     * @deprecated Use System::reboot() instead.
+     * @return void
+     */
+    public static function rebootSync(): void
+    {
+        System::reboot();
+    }
+
+
+    /**
      * Shutdown the system.
      */
     public static function shutdown(): void
