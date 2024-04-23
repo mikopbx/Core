@@ -20,7 +20,7 @@
 
 namespace MikoPBX\Core\RootFS\etc\rc;
 use Phalcon\Di;
-use MikoPBX\Core\System\{Processes, Util, Storage};
+use MikoPBX\Core\System\{Directories, Processes, Util, Storage};
 
 require_once('Globals.php');
 
@@ -41,14 +41,14 @@ EOD;
  * Retrieves the Phalcon configuration and sets the necessary paths.
  */
 $phalconConfig  = Di::getDefault()->get('config');
-$cfDir          = $phalconConfig->path('core.cfDir');
-$varEtcDir      = $phalconConfig->path('core.varEtcDir');
+$cfDir          = Directories::getDir(Directories::CORE_CF_DIR);
+$varEtcDir      = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
 $dbFile         = $phalconConfig->path('database.dbfile');
-$mountPath      = Util::which('mount');
-$unmountPath    = Util::which('umount');
-$sqlite3Path    = Util::which('sqlite3');
-$rmPath         = Util::which('rm');
-$mvPath         = Util::which('mv');
+$mount      = Util::which('mount');
+$umount    = Util::which('umount');
+$sqlite3    = Util::which('sqlite3');
+$rm         = Util::which('rm');
+$mv         = Util::which('mv');
 
 /**
  * The device containing the configuration file.
@@ -101,7 +101,7 @@ while ($attempts--) {
         // Check disk for errors.
         Processes::mwExec("if [ -b /dev/{$partName} ]; then {$fsckPath} -f -p /dev/{$partName}; fi;");
         // Mount the disk.
-        $resultMount = Processes::mwExec("{$mountPath} -t {$fsType} -rw UUID=\"{$uuid}\" {$cfDir}");
+        $resultMount = Processes::mwExec("{$mount} -t {$fsType} -rw UUID=\"{$uuid}\" {$cfDir}");
         if ($resultMount !== 0) {
             // Mounting error.
             continue;
@@ -109,22 +109,22 @@ while ($attempts--) {
 
         if (file_exists($dbFile) && filesize($dbFile) > 0) {
             $cfgdevice    = $disk;
-            echo " - Found configuration on $partName.\n";
+            echo " - Found configuration DB on $partName.\n";
             $old_db_name = '/cf/conf/mikozia.db';
             if (file_exists($old_db_name)) {
                 @unlink($dbFile);
                 @rename($old_db_name, $dbFile);
             }
-            if (Processes::mwExec("{$sqlite3Path} {$dbFile} 'VACUUM'") !== 0) {
+            if (Processes::mwExec("{$sqlite3} {$dbFile} 'VACUUM'") !== 0) {
                 $tmp_name = '/tmp/' . time() . '.db.dmp';
-                Processes::mwExec("{$sqlite3Path} {$dbFile} .dump | {$sqlite3Path} {$tmp_name}");
-                Processes::mwExec("{$rmPath} {$dbFile}*");
-                Processes::mwExec("{$mvPath} {$tmp_name} {$dbFile}");
+                Processes::mwExec("{$sqlite3} {$dbFile} .dump | {$sqlite3} {$tmp_name}");
+                Processes::mwExec("{$rm} {$dbFile}*");
+                Processes::mwExec("{$mv} {$tmp_name} {$dbFile}");
             }
             // Disk found and mounted, exit the loop.
             break;
         }
-        Processes::mwExec("{$unmountPath} -f /dev/{$partName}");
+        Processes::mwExec("{$umount} -f /dev/{$partName}");
     }
 
     if ($cfgdevice) {
