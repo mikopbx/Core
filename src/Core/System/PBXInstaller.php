@@ -288,7 +288,6 @@ class PBXInstaller extends Di\Injectable
         $mount = Util::which('mount');
         Processes::mwExec("{$mount} -w -o noatime {$confPartitionName} /mnttmp");
 
-
         $filename = $this->config->path('database.dbfile');
         $result_db_file = '/mnttmp/conf/mikopbx.db';
 

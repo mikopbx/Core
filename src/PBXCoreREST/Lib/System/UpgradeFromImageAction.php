@@ -81,10 +81,10 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         }
 
         // Get Boot device name
-        $res->data['bootPartitionName'] = self::getBootPartitionName($res->data['cf_uuid']);
-        if (empty($res->data['bootPartitionName'])) {
+        $res->data['bootPartition'] = self::getBootPartitionName($res->data['cf_uuid']);
+        if (empty($res->data['bootPartition'])) {
             $res->success = false;
-            $res->messages[] = "The Boot partition name is empty!";
+            $res->messages[] = "The Boot partition didn't find by cf_uuid={$res->data['cf_uuid']}!";
             return $res;
         }
 
@@ -199,7 +199,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         $systemDir = '/system';
         Util::mwMkdir($systemDir);
         $mount = Util::which('mount');
-        $result = Processes::mwExec("$mount /dev/{$parameters['bootPartitionName']} $systemDir");
+        $result = Processes::mwExec("$mount {$parameters['bootPartition']} $systemDir");
         if ($result === 0) {
             $upgradeScriptDir = "$systemDir/upgrade";
             Util::mwMkdir($upgradeScriptDir);
@@ -214,7 +214,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
                 }
             }
         } else {
-            $res->messages[] = "Failed to mount the boot partition /dev/{$parameters['bootPartitionName']}";
+            $res->messages[] = "Failed to mount the boot partition {$parameters['bootPartition']}";
             $res->success = false;
         }
 

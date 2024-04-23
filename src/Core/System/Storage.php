@@ -559,10 +559,10 @@ class Storage extends Di\Injectable
         }
         $partitionName = self::getDevPartName($target_disk_storage, $part);
         if ($part === '1' && !self::isStorageDisk($partitionName)) {
+            echo PHP_EOL . Util::translate('Partitioning and formating disk:').' '.$dev_disk;
             $storage->formatEntireDisk($dev_disk);
-        }
-
-        if($forceFormatStorage) {
+        } elseif($forceFormatStorage) {
+            echo PHP_EOL . Util::translate('Formating partition:').' '.$partitionName;
             $storage->formatPartition($partitionName);
         }
 

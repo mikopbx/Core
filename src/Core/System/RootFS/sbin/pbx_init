@@ -55,15 +55,15 @@ while : ; do
 
        while [ $counter -lt $WAIT_TIME ]; do
            if [ ! -f /tmp/rebooting ]; then
-               echo "System reboot was cancelled"
-               echoToTeletype "System reboot was cancelled"
-               exit 0
+               interrupted=1
+               break
            fi
            read -t 1 -n 1 input
            if [ "$input" = "c" ]; then
                echo "Reboot cancelled by user"
                echoToTeletype "Reboot cancelled by user"
                interrupted=1
+               rm /tmp/rebooting;
                break
            fi
            counter=$((counter + 1))

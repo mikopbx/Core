@@ -776,8 +776,8 @@ const PbxApi = {
             method: 'POST',
             data: {temp_filename: filePath},
             successTest: PbxApi.successTest,
-            onSuccess() {
-                callback(true);
+            onSuccess(response) {
+                callback(response);
             },
             onFailure(response) {
                 callback(response);
