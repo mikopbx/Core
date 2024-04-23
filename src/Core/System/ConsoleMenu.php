@@ -459,7 +459,8 @@ class ConsoleMenu
                         $menu->close();
                     } catch (Exception $e) {
                     }
-                    file_put_contents('/tmp/rebooting', '1');
+                    sleep(2);
+                    System::reboot();
                     exit(0);
                 }
             )

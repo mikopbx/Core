@@ -36,7 +36,7 @@ class RebootAction extends \Phalcon\Di\Injectable
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        System::rebootSync();
+        System::reboot();
         $res->success = true;
         return $res;
     }

@@ -589,7 +589,7 @@ class Storage extends Di\Injectable
         if ($success === true && $automatic) {
             SystemMessages::echoToTeletype(PHP_EOL.'   |- The data storage disk has been successfully mounted ... ');
             sleep(2);
-            System::rebootSync();
+            System::reboot();
             return true;
         }
 

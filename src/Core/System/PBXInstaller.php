@@ -215,7 +215,7 @@ class PBXInstaller extends Di\Injectable
 
         // Reboot
         file_put_contents('/tmp/ejectcd', '');
-        System::rebootSync();
+        System::reboot();
     }
 
     /**

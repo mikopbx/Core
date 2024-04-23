@@ -91,7 +91,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         // Write update script
         list($res->success, $res->messages) = self::writeUpdateScript($res->data);
         if ($res->success) {
-            System::rebootSyncBg();
+            System::reboot();
         }
         return $res;
     }

@@ -81,7 +81,8 @@ class System extends Di\Injectable
         $storage = new Storage();
         $storages = $storage->getStorageCandidate();
         $tmpMountDir = '/tmp/mnt';
-        $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'],['',''],$di->getConfig()->path('core.confBackupDir'));
+        $confBackupDir = Directories::getDir(Directories::CORE_CONF_BACKUP_DIR);
+        $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'],['',''],$confBackupDir);
         $confFile    = $di->getConfig()->path('database.dbfile');
         foreach ($storages as $dev => $fs){
             SystemMessages::echoToTeletype("    - mount $dev ..."."\n");
@@ -112,7 +113,7 @@ class System extends Di\Injectable
             SystemMessages::echoToTeletype("    - fail restore $lastBackUp ..."."\n");
             copy('/conf.default/mikopbx.db', $confFile);
         }elseif(!$this->isDefaultConf()){
-            self::rebootSync();
+            self::reboot();
         }
         foreach ($storages as $dev => $fs){
             shell_exec("$mount $dev");
@@ -219,19 +220,10 @@ class System extends Di\Injectable
      *
      * @return void
      */
-    public static function rebootSync(): void
+    public static function reboot(): void
     {
-        $pbx_rebootPath = Util::which('pbx_reboot');
-        Processes::mwExec("{$pbx_rebootPath} > /dev/null 2>&1");
-    }
-
-    /**
-     * Reboots the system after calling system_reboot_cleanup()
-     */
-    public static function rebootSyncBg(): void
-    {
-        $pbx_rebootPath = Util::which('pbx_reboot');
-        Processes::mwExecBg("{$pbx_rebootPath} > /dev/null 2>&1");
+        $pbx_reboot = Util::which('pbx_reboot');
+        Processes::mwExec("{$pbx_reboot} > /dev/null 2>&1");
     }
 
     /**
