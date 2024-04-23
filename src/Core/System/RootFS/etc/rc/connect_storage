@@ -22,5 +22,5 @@ namespace MikoPBX\Core\RootFS\etc\rc;
 use MikoPBX\Core\System\Storage;
 require_once('Globals.php');
 
-// Call the function with the first command line argument, or '0' if no argument is provided
-Storage::selectAndConfigureStorageDisk($argv[1] ?? '0');
+// Call the function with the first command line argument
+Storage::selectAndConfigureStorageDisk($argv[1]??'0'==='auto');

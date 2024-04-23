@@ -120,14 +120,14 @@ class Storage extends Di\Injectable
                 $filter = 'usbdisk1';
             }
         }
-        $grepPath = Util::which('grep');
-        $mountPath = Util::which('mount');
-        $awkPath = Util::which('awk');
+        $grep = Util::which('grep');
+        $mount = Util::which('mount');
+        $awk = Util::which('awk');
 
         $filter = escapeshellarg($filter);
 
         // Execute the command to filter the mount points based on the filter
-        $out = shell_exec("$mountPath | $grepPath $filter | {$awkPath} '{print $3}'");
+        $out = shell_exec("$mount | $grep $filter | {$awk} '{print $3}'");
         $mount_dir = trim($out);
         return ($mount_dir !== '');
     }
@@ -334,7 +334,7 @@ class Storage extends Di\Injectable
         if (empty($dir) || self::umountDisk($dir)) {
             $st = new Storage();
             // Initiate the file system creation process
-            $st->formatDiskLocal($dev, true);
+            $st->formatEntireDisk($dev, true);
             sleep(1);
 
             return (self::statusMkfs($dev) === 'inprogress');
@@ -352,37 +352,37 @@ class Storage extends Di\Injectable
      */
     public static function umountDisk(string $dir): bool
     {
-        $umountPath = Util::which('umount');
-        $rmPath = Util::which('rm');
+        $umount = Util::which('umount');
+        $rm = Util::which('rm');
 
         // If the disk is mounted, terminate processes using the disk and unmount it
         if (self::isStorageDiskMounted($dir)) {
             Processes::mwExec("/sbin/shell_functions.sh 'killprocesses' '$dir' -TERM 0");
-            Processes::mwExec("{$umountPath} {$dir}");
+            Processes::mwExec("{$umount} {$dir}");
         }
         $result = !self::isStorageDiskMounted($dir);
 
         // If the disk is successfully unmounted and the directory exists, remove the directory
         if ($result && file_exists($dir)) {
-            Processes::mwExec("{$rmPath} -rf '{$dir}'");
+            Processes::mwExec("{$rm} -rf '{$dir}'");
         }
 
         return $result;
     }
 
     /**
-     * Format a disk locally using parted command.
+     * Format a disk locally using parted command and create one partition
      *
      * @param string $device The device path of the disk.
      * @param bool $bg Whether to run the command in the background.
      * @return bool Returns true if the disk formatting process is initiated, false otherwise.
      */
-    public function formatDiskLocal(string $device, bool $bg = false): bool
+    public function formatEntireDisk(string $device, bool $bg = false): bool
     {
-        $partedPath = Util::which('parted');
+        $parted = Util::which('parted');
 
         // Execute the parted command to format the disk with msdos partition table and ext4 partition
-        $command = "{$partedPath} --script --align optimal '{$device}' 'mklabel msdos mkpart primary ext4 0% 100%'";
+        $command = "{$parted} --script --align optimal '{$device}' 'mklabel msdos mkpart primary ext4 0% 100%'";
         $retVal = Processes::mwExec($command);
 
         // Log the result of the parted command
@@ -391,12 +391,12 @@ class Storage extends Di\Injectable
         sleep(2);
 
         // Touch the disk to update disk tables
-        $partprobePath = Util::which('partprobe');
+        $partprobe = Util::which('partprobe');
         Processes::mwExec(
-            "{$partprobePath} '{$device}'"
+            "{$partprobe} '{$device}'"
         );
         $partition = self::getDevPartName($device, '1');
-        return $this->formatDiskLocalPart2($partition, $bg);
+        return $this->formatPartition($partition, $bg);
     }
 
     /**
@@ -406,10 +406,10 @@ class Storage extends Di\Injectable
      * @param bool $bg Whether to run the command in the background.
      * @return bool Returns true if the disk formatting process is successfully completed, false otherwise.
      */
-    private function formatDiskLocalPart2(string $partition, bool $bg = false): bool
+    public function formatPartition(string $partition, bool $bg = false): bool
     {
-        $mkfsPath = Util::which("mkfs.ext4");
-        $cmd = "{$mkfsPath} /dev/{$partition}";
+        $mkfs = Util::which("mkfs.ext4");
+        $cmd = "{$mkfs} {$partition}";
         if ($bg === false) {
             // Execute the mkfs command and check the return value
             $retVal = Processes::mwExec("{$cmd} 2>&1");
@@ -450,10 +450,11 @@ class Storage extends Di\Injectable
     /**
      * Selects the storage disk and performs the necessary configuration.
      *
-     * @param string $automatic Flag to determine if the disk should be selected automatically
+     * @param bool $automatic Flag to determine if the disk should be selected automatically
+     * @param bool $forceFormatStorage Flag to determine if the disk should be formatted
      * @return bool Returns true on success, false otherwise
      */
-    public static function selectAndConfigureStorageDisk(string $automatic): bool
+    public static function selectAndConfigureStorageDisk(bool $automatic=false, bool $forceFormatStorage = false): bool
     {
         $storage = new self();
 
@@ -472,9 +473,9 @@ class Storage extends Di\Injectable
         // Iterate through all available hard drives
         foreach ($all_hdd as $disk) {
             $additional = '';
-            $devName = self::getDevPartName($disk['id'], '4');
+            $fourthPartitionName = self::getDevPartName($disk['id'], '4');
             $isLiveCd = ($disk['sys_disk'] && file_exists('/offload/livecd'));
-            $isMountedSysDisk = (!empty($disk['mounted']) && $disk['sys_disk'] && file_exists("/dev/$devName"));
+            $isMountedSysDisk = (!empty($disk['mounted']) && $disk['sys_disk'] && file_exists($fourthPartitionName));
 
             // Check if the disk is a system disk and is mounted
             if ($isMountedSysDisk || $isLiveCd) {
@@ -491,9 +492,8 @@ class Storage extends Di\Injectable
             }
 
             $part = $disk['sys_disk'] ? '4' : '1';
-            $devName = self::getDevPartName($disk['id'], $part);
-            $devFour = '/dev/' . $devName;
-            if (self::isStorageDisk($devFour)) {
+            $partitionName = self::getDevPartName($disk['id'], $part);
+            if (self::isStorageDisk($partitionName)) {
                 $additional .= "\033[33;1m [STORAGE] \033[0m";
             }
 
@@ -501,7 +501,7 @@ class Storage extends Di\Injectable
             if ($disk['sys_disk']) {
                 $part4_found = false;
                 foreach ($disk['partitions'] as $partition) {
-                    if ($partition['dev'] === $devName && $partition['size'] > 1000) {
+                    if ('/dev/'.$partition['dev'] === $partitionName && $partition['size'] > 1000) {
                         $part4_found = true;
                     }
                 }
@@ -527,7 +527,7 @@ class Storage extends Di\Injectable
         }
 
         // Check if the disk selection should be automatic
-        if ($automatic === 'auto') {
+        if ($automatic) {
             $target_disk_storage = $selected_disk['id'];
             SystemMessages::echoToTeletype(PHP_EOL.'   |- '."Automatically selected storage disk is $target_disk_storage");
         } else {
@@ -557,18 +557,19 @@ class Storage extends Di\Injectable
         } else {
             $part = "1";
         }
-        $partName = self::getDevPartName($target_disk_storage, $part);
-        $part_disk = "/dev/$partName";
-        if ($part === '1' && !self::isStorageDisk($part_disk)) {
-            $storage->formatDiskLocal($dev_disk);
-            $partName = self::getDevPartName($target_disk_storage, $part);
-            $part_disk = "/dev/$partName";
+        $partitionName = self::getDevPartName($target_disk_storage, $part);
+        if ($part === '1' && !self::isStorageDisk($partitionName)) {
+            $storage->formatEntireDisk($dev_disk);
+        }
+
+        if($forceFormatStorage) {
+            $storage->formatPartition($partitionName);
         }
 
         // Create an array of disk data
         $data = [
             'device' => $dev_disk,
-            'uniqid' => $storage->getUuid($part_disk),
+            'uniqid' => $storage->getUuid($partitionName),
             'filesystemtype' => 'ext4',
             'name' => 'Storage №1'
         ];
@@ -585,14 +586,14 @@ class Storage extends Di\Injectable
         $storage->configure();
         MainDatabaseProvider::recreateDBConnections();
         $success = self::isStorageDiskMounted();
-        if ($success === true && $automatic === 'auto') {
+        if ($success === true && $automatic) {
             SystemMessages::echoToTeletype(PHP_EOL.'   |- The data storage disk has been successfully mounted ... ');
             sleep(2);
             System::rebootSync();
             return true;
         }
 
-        if ($automatic === 'auto') {
+        if ($automatic) {
             SystemMessages::echoToTeletype(PHP_EOL.'   |- Storage disk was not mounted automatically ... ');
         }
 
@@ -651,7 +652,7 @@ class Storage extends Di\Injectable
             ) . "\" | {$grepPath} \"{$part}\$\"";
         Processes::mwExec($command, $out);
         $devName = trim(implode('', $out));
-        return trim($devName);
+        return '/dev/'.trim($devName);
     }
 
     /**
@@ -679,11 +680,11 @@ class Storage extends Di\Injectable
         if ($format === '') {
             return false;
         }
-        $mountPath = Util::which('mount');
-        $umountPath = Util::which('umount');
-        $rmPath = Util::which('rm');
+        $mount = Util::which('mount');
+        $umount = Util::which('umount');
+        $rm = Util::which('rm');
 
-        Processes::mwExec("{$mountPath} -t {$format} {$uid_part} {$tmp_dir}", $out);
+        Processes::mwExec("{$mount} -t {$format} {$uid_part} {$tmp_dir}", $out);
         if (is_dir("{$tmp_dir}/mikopbx") && trim(implode('', $out)) === '') {
             // $out - empty string, no errors
             // mikopbx directory exists
@@ -692,12 +693,12 @@ class Storage extends Di\Injectable
 
         // Check if the storage disk is mounted, and unmount if necessary
         if (self::isStorageDiskMounted($device)) {
-            Processes::mwExec("{$umountPath} {$device}");
+            Processes::mwExec("{$umount} {$device}");
         }
 
         // Check if the storage disk is unmounted, and remove the temporary directory
         if (!self::isStorageDiskMounted($device)) {
-            Processes::mwExec("{$rmPath} -rf '{$tmp_dir}'");
+            Processes::mwExec("{$rm} -rf '{$tmp_dir}'");
         }
 
         return $result;
@@ -1021,8 +1022,7 @@ class Storage extends Di\Injectable
             // If it's a system disk, attempt to connect partition 4.
             $part = "4";
         }
-        $devName = self::getDevPartName($disk['device'], $part);
-        return '/dev/' . $devName;
+        return  self::getDevPartName($disk['device'], $part);
     }
 
     /**
@@ -1102,9 +1102,9 @@ class Storage extends Di\Injectable
         $part2 = self::getDevPartName($cf_disk, '2');
         $part3 = self::getDevPartName($cf_disk, '3');
 
-        $uid_part2 = 'UUID=' . $this->getUuid("/dev/$part2");
+        $uid_part2 = 'UUID=' . $this->getUuid("$part2");
         $format_p2 = $this->getFsType($part2);
-        $uid_part3 = 'UUID=' . $this->getUuid("/dev/$part3");
+        $uid_part3 = 'UUID=' . $this->getUuid("$part3");
         $format_p3 = $this->getFsType($part3);
 
         $fstab .= "$uid_part2 /offload $format_p2 ro 0 0\n";
@@ -1956,7 +1956,7 @@ class Storage extends Di\Injectable
         }
 
         // In some Clouds the virtual machine starts immediately before the storage disk was attached
-        if (!Storage::selectAndConfigureStorageDisk('auto')){
+        if (!Storage::selectAndConfigureStorageDisk(true)){
             return SystemMessages::RESULT_FAILED;
         }
 

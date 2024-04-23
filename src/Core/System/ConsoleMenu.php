@@ -565,7 +565,7 @@ class ConsoleMenu
                 function (CliMenu $menu) {
                     // Code for connecting storage
                     $menu->close();
-                    Storage::selectAndConfigureStorageDisk('0');
+                    Storage::selectAndConfigureStorageDisk();
                     sleep(1);
                     exit(0);
                 }
@@ -712,8 +712,8 @@ class ConsoleMenu
         } catch (Exception $e) {
         }
         file_put_contents('/tmp/ejectcd', '');
-        $installer = new PBXRecovery();
-        $installer->run();
+        $recovery = new PBXRecovery();
+        $recovery->run();
         exit(0);
     }
 

@@ -34,9 +34,6 @@ class PBXRecovery
     const GREENON  = "\033[32;1m";
     const GREENOFF = "\033[0m";
 
-    // Storage instance
-    private Storage $storage;
-
     // Recover disk name
     private string $DEVICE;
 
@@ -54,8 +51,8 @@ class PBXRecovery
     public function __construct()
     {
         $this->fp      = fopen('php://stdin', 'r');
-        $this->storage = new Storage();
-        $this->DEVICE  = basename($this->storage->getRecoverDiskName());
+        $storage = new Storage();
+        $this->DEVICE  = basename($storage->getRecoverDiskName());
         $this->VERSION = trim(file_get_contents('/offload/version'));
     }
 

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Config;
@@ -31,9 +32,6 @@ use Phalcon\Di;
  */
 class PBXInstaller extends Di\Injectable
 {
-    // Storage instance
-    private Storage $storage;
-
     /**
      * Access to the /etc/inc/mikopbx-settings.json values
      *
@@ -45,10 +43,6 @@ class PBXInstaller extends Di\Injectable
     private array $selected_disk = ['size' => 0, 'id' => ''];
     private string $target_disk = '';
 
-    // Path to system commands mount and umount
-    private string $mountPath = '';
-    private string $uMountPath = '';
-
     // File pointer
     private $fp;
 
@@ -58,14 +52,11 @@ class PBXInstaller extends Di\Injectable
      */
     public function __construct()
     {
-        $this->storage = new Storage();
 
         $this->config = Di::getDefault()->getShared(ConfigProvider::SERVICE_NAME);
 
         $this->fp = fopen('php://stdin', 'rb');
 
-        $this->mountPath = Util::which('mount');
-        $this->uMountPath = Util::which('umount');
     }
 
     /**
@@ -87,7 +78,8 @@ class PBXInstaller extends Di\Injectable
      */
     private function scanAllHdd()
     {
-        $all_hdd = $this->storage->getAllHdd();
+        $storage = new Storage();
+        $all_hdd = $storage->getAllHdd();
         foreach ($all_hdd as $disk) {
             $this->processDisk($disk);
         }
@@ -207,7 +199,8 @@ class PBXInstaller extends Di\Injectable
     private function proceedInstallation()
     {
         // Save the target disk to a file
-        file_put_contents($this->config->path('core.varEtcDir') . '/cfdevice', $this->target_disk);
+        $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
+        file_put_contents($varEtcDir . '/cfdevice', $this->target_disk);
 
         // Start the installation process
         echo "Installing PBX...\n";
@@ -216,8 +209,8 @@ class PBXInstaller extends Di\Injectable
         $this->createStoragePartition();
         $this->mountStorage();
         $this->copyConfiguration();
-
-        Processes::mwExec("{$this->uMountPath} /mnttmp");
+        $umount = Util::which('umount');
+        Processes::mwExec("$umount /mnttmp");
         echo "done\n";
 
         // Reboot
@@ -233,15 +226,17 @@ class PBXInstaller extends Di\Injectable
         echo " - Unmounting partitions...\n";
         $grep = Util::which('grep');
         $awk = Util::which('awk');
+        $mount = Util::which('mount');
+        $umount = Util::which('umount');
 
         // Get all mounted partitions
         $mnt_dirs = [];
-        Processes::mwExec("{$this->mountPath} | $grep '^/dev/{$this->target_disk}' | $awk '{print $3}'", $mnt_dirs);
+        Processes::mwExec("{$mount} | $grep '^/dev/{$this->target_disk}' | $awk '{print $3}'", $mnt_dirs);
         foreach ($mnt_dirs as $mnt) {
             // Terminate all related processes.
             Processes::mwExec("/sbin/shell_functions.sh killprocesses '$mnt' -TERM 0;");
             // Unmount.
-            Processes::mwExec("{$this->uMountPath} {$mnt}");
+            Processes::mwExec("{$umount} {$mnt}");
         }
     }
 
@@ -251,12 +246,12 @@ class PBXInstaller extends Di\Injectable
     private function unpackImage()
     {
         echo " - Unpacking img...\n";
-        $pvPath = Util::which('pv');
-        $ddPath = Util::which('dd');
-        $gunzipPath = Util::which('gunzip');
+        $pv = Util::which('pv');
+        $dd = Util::which('dd');
+        $gunzip = Util::which('gunzip');
 
         $install_cmd = 'exec < /dev/console > /dev/console 2>/dev/console;' .
-            "{$pvPath} -p /offload/firmware.img.gz | {$gunzipPath} | {$ddPath} of=/dev/{$this->target_disk} bs=512 2> /dev/null";
+            "{$pv} -p /offload/firmware.img.gz | {$gunzip} | {$dd} of=/dev/{$this->target_disk} bs=512 2> /dev/null";
         passthru($install_cmd);
     }
 
@@ -275,16 +270,7 @@ class PBXInstaller extends Di\Injectable
     private function mountStorage()
     {
         // Connect the disk for data storage.
-        Storage::selectAndConfigureStorageDisk('0');
-
-        // Back up the table with disk information.
-        echo 'Copying configuration...';
-        Util::mwMkdir('/mnttmp');
-
-        $partName = Storage::getDevPartName("/dev/{$this->target_disk}", '3');
-
-        // Mount the disk with settings.
-        Processes::mwExec("{$this->mountPath} -w -o noatime /dev/{$partName} /mnttmp");
+        Storage::selectAndConfigureStorageDisk(false,true);
     }
 
     /**
@@ -292,16 +278,24 @@ class PBXInstaller extends Di\Injectable
      */
     private function copyConfiguration()
     {
-        $mikoPBXconfig = new MikoPBXConfig();
-        $lang = $mikoPBXconfig->getGeneralSettings(PbxSettingsConstants::SSH_LANGUAGE);
+        // Back up the table with disk information.
+        echo 'Copying configuration...';
+        Util::mwMkdir('/mnttmp');
+
+        $confPartitionName = Storage::getDevPartName("/dev/{$this->target_disk}", '3');
+
+        // Mount the disk with settings.
+        $mount = Util::which('mount');
+        Processes::mwExec("{$mount} -w -o noatime {$confPartitionName} /mnttmp");
+
 
         $filename = $this->config->path('database.dbfile');
         $result_db_file = '/mnttmp/conf/mikopbx.db';
 
         /** Copy the settings database file. */
-        $cpPath = Util::which('cp');
-        $sqlite3Path = Util::which('sqlite3');
-        $grepPath = Util::which('grep');
+        $cp = Util::which('cp');
+        $sqlite3 = Util::which('sqlite3');
+        $grep = Util::which('grep');
         $dmpDbFile = tempnam('/tmp', 'storage');
 
         // Save dump of settings.
@@ -311,21 +305,22 @@ class PBXInstaller extends Di\Injectable
             $grepOptions .= " -e '^INSERT INTO {$table}'";
             $grepOptions .= " -e '^INSERT INTO \"{$table}'";
         }
-        system("{$sqlite3Path} {$filename} .dump | {$grepPath} {$grepOptions} > " . $dmpDbFile);
+        system("{$sqlite3} {$filename} .dump | {$grep} {$grepOptions} > " . $dmpDbFile);
 
         // If another language is selected - use another settings file.
+        $lang = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LANGUAGE);
         $filename_lang = "/offload/conf/mikopbx-{$lang}.db";
         if ($lang !== 'en' && file_exists($filename_lang)) {
             $filename = $filename_lang;
         }
 
         // Replace the settings file.
-        Processes::mwExec("{$cpPath} {$filename} {$result_db_file}");
-        system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_Storage'");
-        system("{$sqlite3Path} {$result_db_file} 'DELETE FROM m_LanInterfaces'");
+        Processes::mwExec("{$cp} {$filename} {$result_db_file}");
+        system("{$sqlite3} {$result_db_file} 'DELETE FROM m_Storage'");
+        system("{$sqlite3} {$result_db_file} 'DELETE FROM m_LanInterfaces'");
 
         // Restore settings from backup file.
-        system("{$sqlite3Path} {$result_db_file} < {$dmpDbFile}");
+        system("{$sqlite3} {$result_db_file} < {$dmpDbFile}");
         unlink($dmpDbFile);
     }
 }
