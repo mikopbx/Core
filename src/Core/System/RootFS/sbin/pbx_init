@@ -46,26 +46,37 @@ while : ; do
     fi
 
     if [ -f /tmp/rebooting ]; then
-        echo "Reboot pending (${0}). Cancel with rm /tmp/rebooting";
-        echoToTeletype "Reboot pending (${0}). Cancel with rm /tmp/rebooting"
+        echo "Reboot pending (${0}). Press 'c' to cancel rebooting.";
+        echoToTeletype "Reboot pending (${0}). Press 'c' to cancel rebooting."
 
-        # Waiting timeout
-        WAIT_TIME=10
-        counter=0
+       WAIT_TIME=10
+       counter=0
+       interrupted=0
 
-        while [ $counter -lt $WAIT_TIME ]; do
-            if [ ! -f /tmp/rebooting ]; then
-                # Flag file was deleted
-                echo "System reboot was cancelled"
-                echoToTeletype "System reboot was cancelled"
-                exit 0
-            fi
-            sleep 1
-            counter=$((counter+1))
-        done
+       while [ $counter -lt $WAIT_TIME ]; do
+           if [ ! -f /tmp/rebooting ]; then
+               echo "System reboot was cancelled"
+               echoToTeletype "System reboot was cancelled"
+               exit 0
+           fi
+           read -t 1 -n 1 input
+           if [ "$input" = "c" ]; then
+               echo "Reboot cancelled by user"
+               echoToTeletype "Reboot cancelled by user"
+               interrupted=1
+               break
+           fi
+           counter=$((counter + 1))
+       done
 
-        echo "Reboot the system..."
-        /sbin/pbx_reboot;
+       if [ $interrupted -eq 0 ]; then
+            echo "Reboot the system..."
+            echoToTeletype "Reboot the system..."
+           /sbin/pbx_reboot;
+       else
+           echo "Reboot has been cancelled, system will not reboot."
+           echoToTeletype "Reboot has been cancelled, system will not reboot."
+       fi
 
         # Wait for reboot for 10 seconds.
         # dd if=/dev/urandom bs=1 count=10 2>/dev/null | pv -pL 1 | dd of=/dev/null 2>/dev/null;
