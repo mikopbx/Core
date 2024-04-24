@@ -129,7 +129,7 @@ class PBXInstaller extends Di\Injectable
     {
         // If no valid disks were found, print a message and sleep for 3 seconds, then return 0
         if (count($this->valid_disks) === 0) {
-            echo "\n " . Util::translate('Valid disks not found...') . " \n";
+            SystemMessages::echoWithSyslog(PHP_EOL." " . Util::translate('Valid disks not found...') . " ".PHP_EOL);
             sleep(3);
             return false;
         }
@@ -203,7 +203,7 @@ class PBXInstaller extends Di\Injectable
         file_put_contents($varEtcDir . '/cfdevice', $this->target_disk);
 
         // Start the installation process
-        echo "Installing PBX...\n";
+        echo Util::translate("Installing PBX...").PHP_EOL;
         $this->unmountPartitions();
         $this->unpackImage();
         $this->mountStorage();
@@ -222,7 +222,7 @@ class PBXInstaller extends Di\Injectable
      */
     private function unmountPartitions()
     {
-        echo " - Unmounting partitions...\n";
+        echo Util::translate(" - Unmounting partitions...").PHP_EOL;
         $grep = Util::which('grep');
         $awk = Util::which('awk');
         $mount = Util::which('mount');
@@ -237,6 +237,8 @@ class PBXInstaller extends Di\Injectable
             // Unmount.
             Processes::mwExec("{$umount} {$mnt}");
         }
+
+        echo "done\n";
     }
 
     /**
@@ -244,7 +246,7 @@ class PBXInstaller extends Di\Injectable
      */
     private function unpackImage()
     {
-        echo " - Unpacking img...\n";
+        echo Util::translate(" - Unpacking img...");
         $pv = Util::which('pv');
         $dd = Util::which('dd');
         $gunzip = Util::which('gunzip');
@@ -252,6 +254,8 @@ class PBXInstaller extends Di\Injectable
         $install_cmd = 'exec < /dev/console > /dev/console 2>/dev/console;' .
             "{$pv} -p /offload/firmware.img.gz | {$gunzip} | {$dd} of=/dev/{$this->target_disk} bs=512 2> /dev/null";
         passthru($install_cmd);
+
+        echo "done\n";
     }
 
     /**
@@ -269,7 +273,7 @@ class PBXInstaller extends Di\Injectable
     private function copyConfiguration()
     {
         // Back up the table with disk information.
-        echo 'Copying configuration...';
+        echo Util::translate("Copying configuration...");
         Util::mwMkdir('/mnttmp');
 
         $confPartitionName = Storage::getDevPartName("/dev/{$this->target_disk}", '3');
@@ -311,5 +315,7 @@ class PBXInstaller extends Di\Injectable
         // Restore settings from backup file.
         system("{$sqlite3} {$result_db_file} < {$dmpDbFile}");
         unlink($dmpDbFile);
+
+        echo "done\n";
     }
 }

@@ -504,18 +504,8 @@ class Storage extends Di\Injectable
             }
 
             // Check if the disk is a system disk and has a valid partition
-            if ($disk['sys_disk']) {
-                $part4_found = false;
-                foreach ($disk['partitions'] as $partition) {
-                    if ('/dev/'.$partition['dev'] === $partitionName && $partition['size'] > 1000) {
-                        $part4_found = true;
-                    }
-                }
-                if ($part4_found === false) {
-                    continue;
-                }
-            } elseif ($disk['size'] < 1024) {
-                // If disk size is less than 1024, continue to the next iteration
+           if ($disk['size'] < 2*1024) {
+                // If the disk size is less than 2 gb, continue to the next iteration
                 continue;
             }
 
@@ -542,9 +532,9 @@ class Storage extends Di\Injectable
                 echo PHP_EOL." " . Util::translate('Warning! Selected disk will be formatted!');
             }
             echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
-            SystemMessages::echoWithSyslog(PHP_EOL." " . Util::translate('Valid disks are:') . " ".PHP_EOL.PHP_EOL);
+            echo(PHP_EOL." " . Util::translate('Valid disks are:') . " ".PHP_EOL.PHP_EOL);
             foreach ($validDisks as $disk) {
-                SystemMessages::echoWithSyslog($disk);
+                echo($disk);
             }
             echo PHP_EOL;
             // Open standard input in binary mode for interactive reading
@@ -570,11 +560,14 @@ class Storage extends Di\Injectable
         if ($part === '1' && (!self::isStorageDisk($partitionName) || $forceFormatStorage)) {
             echo PHP_EOL . Util::translate('Partitioning and formatting disk:').' '.$dev_disk;
             $storage->formatEntireDisk($dev_disk);
-        } elseif($forceFormatStorage) {
-            echo PHP_EOL . Util::translate('Formatting partition:').' '.$partitionName;
+        } elseif($part === '4' && $forceFormatStorage) {
+            echo PHP_EOL . Util::translate('Formatting partition:').' '.$dev_disk;
             passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four create {$dev_disk}");
+        } elseif($part === '4') {
+            echo PHP_EOL . Util::translate('Update storage partition:').' '.$dev_disk;
+            passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four update {$dev_disk}");
         }
-
+        $partitionName = self::getDevPartName($target_disk_storage, $part);
         // Create an array of disk data
         $data = [
             'device' => $dev_disk,
@@ -607,7 +600,7 @@ class Storage extends Di\Injectable
         }
 
         fclose(STDERR);
-        SystemMessages::echoWithSyslog('   |- Update database ... ' . PHP_EOL);
+        echo('   |- Update database ... ' . PHP_EOL);
 
         // Update the database
         $dbUpdater = new UpdateDatabase();

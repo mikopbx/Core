@@ -68,7 +68,7 @@ class PBXRecovery
         echo "\n";
         echo Util::translate("Install or recovery")."\n";
         echo "*******************************\n";
-        echo "1) ".Util::translate('Install').".   ".self::REDON.Util::translate('All settings will be lost!').self::REDOFF."\n";
+        echo "1) ".Util::translate('Install')." ".self::REDON.Util::translate('All settings will be lost!').self::REDOFF."\n";
         echo "2) ".Util::translate('Reinstall to')." ".$this->VERSION. ". ".self::GREENON.Util::translate('All settings will be kept!').self::GREENOFF."\n";
         echo "3) ".Util::translate('Cancel')."\n\n";
         echo Util::translate('Enter a number').": ";
@@ -97,7 +97,7 @@ class PBXRecovery
                 // Prepare for reinstalling
                 file_put_contents('/tmp/ejectcd', '');
                 $pbx_firmwarePath = Util::which('pbx_firmware');
-                Processes::mwExec("{$pbx_firmwarePath} /offload/firmware.img.gz {$this->DEVICE}");
+                passthru("{$pbx_firmwarePath} /offload/firmware.img.gz {$this->DEVICE}");
                 break;
             case '3':
                 // Cancel operation

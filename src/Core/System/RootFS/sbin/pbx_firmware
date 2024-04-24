@@ -125,7 +125,7 @@ if [ -r "${img_file}" ]; then
   echoToTeletype " - The execution of the dd command was finished...";
 
   # Update the partition table
-  /sbin/initial_storage_part_four create "/dev/${systemDevice}";
+  /sbin/initial_storage_part_four update "/dev/${systemDevice}";
   echoToTeletype " - Check if it necessary to update 4-th storage partition. The result is ${?}...";
 fi
 
