@@ -528,9 +528,6 @@ class Storage extends Di\Injectable
             SystemMessages::echoToTeletype(PHP_EOL.'   |- '."Automatically selected storage disk is $target_disk_storage");
         } else {
             echo PHP_EOL." " . Util::translate('Select the drive to store the data.');
-            if ($forceFormatStorage){
-                echo PHP_EOL." " . Util::translate('Warning! Selected disk will be formatted!');
-            }
             echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
             echo(PHP_EOL." " . Util::translate('Valid disks are:') . " ".PHP_EOL.PHP_EOL);
             foreach ($validDisks as $disk) {
@@ -539,6 +536,13 @@ class Storage extends Di\Injectable
             echo PHP_EOL;
             // Open standard input in binary mode for interactive reading
             $fp = fopen('php://stdin', 'rb');
+            if ($forceFormatStorage){
+                echo '*******************************************************************************
+* ' . Util::translate('WARNING').'
+* - ' . Util::translate('everything on this device will be erased!') . '
+* - ' . Util::translate('this cannot be undone!') . '
+*******************************************************************************';
+            }
             // Otherwise, prompt the user to enter a disk
             do {
                 echo PHP_EOL . Util::translate('Enter the device name:') . Util::translate('(default value = ') . $selected_disk['id'] . ') :';

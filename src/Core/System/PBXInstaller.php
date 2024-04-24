@@ -237,8 +237,6 @@ class PBXInstaller extends Di\Injectable
             // Unmount.
             Processes::mwExec("{$umount} {$mnt}");
         }
-
-        echo "done\n";
     }
 
     /**
@@ -246,7 +244,7 @@ class PBXInstaller extends Di\Injectable
      */
     private function unpackImage()
     {
-        echo Util::translate(" - Unpacking img...");
+        echo Util::translate(" - Unpacking img...").PHP_EOL;
         $pv = Util::which('pv');
         $dd = Util::which('dd');
         $gunzip = Util::which('gunzip');
@@ -254,8 +252,6 @@ class PBXInstaller extends Di\Injectable
         $install_cmd = 'exec < /dev/console > /dev/console 2>/dev/console;' .
             "{$pv} -p /offload/firmware.img.gz | {$gunzip} | {$dd} of=/dev/{$this->target_disk} bs=512 2> /dev/null";
         passthru($install_cmd);
-
-        echo "done\n";
     }
 
     /**
@@ -315,7 +311,5 @@ class PBXInstaller extends Di\Injectable
         // Restore settings from backup file.
         system("{$sqlite3} {$result_db_file} < {$dmpDbFile}");
         unlink($dmpDbFile);
-
-        echo "done\n";
     }
 }

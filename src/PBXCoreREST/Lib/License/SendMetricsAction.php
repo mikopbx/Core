@@ -77,6 +77,9 @@ class SendMetricsAction extends \Phalcon\Di\Injectable
             // PBX language
             $dataMetrics['PBXLanguage'] = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LANGUAGE);
 
+            // Virtual Hardware Type
+            $dataMetrics['VirtualHardwareType'] = PbxSettings::getValueByKey(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE);
+
             $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
             $license->sendLicenseMetrics($licenseKey, $dataMetrics);
         }

@@ -48,34 +48,25 @@ while : ; do
     if [ -f /tmp/rebooting ]; then
         echo "Reboot pending (${0}). Press 'c' to cancel rebooting.";
         echoToTeletype "Reboot pending (${0}). Press 'c' to cancel rebooting."
-
-       WAIT_TIME=10
-       counter=0
-       interrupted=0
-
-       while [ $counter -lt $WAIT_TIME ]; do
-           if [ ! -f /tmp/rebooting ]; then
-               interrupted=1
-               break
-           fi
-           read -t 1 -n 1 input
-           if [ "$input" = "c" ]; then
-               echo "Reboot cancelled by user"
-               echoToTeletype "Reboot cancelled by user"
-               interrupted=1
-               rm /tmp/rebooting;
-               break
-           fi
-           counter=$((counter + 1))
-       done
+        local counter=10
+        local interrupted=0
+        while [ $counter -gt 0 ]; do
+          read -t 1 -n 1 input
+          if [ "$input" = "C" ] || [ "$input" = "c" ]; then
+            echo "Reboot cancelled by user"
+            echoToTeletype "Reboot cancelled by user"
+             rm /tmp/rebooting;
+             interrupted=1
+             break
+          fi
+          echo -ne "Continuing in $counter seconds...\033[0K\r"
+          counter=$((counter - 1))
+        done
 
        if [ $interrupted -eq 0 ]; then
             echo "Reboot the system..."
             echoToTeletype "Reboot the system..."
            /sbin/pbx_reboot;
-       else
-           echo "Reboot has been cancelled, system will not reboot."
-           echoToTeletype "Reboot has been cancelled, system will not reboot."
        fi
 
         # Wait for reboot for 10 seconds.

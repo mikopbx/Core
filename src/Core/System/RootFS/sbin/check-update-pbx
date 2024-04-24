@@ -60,7 +60,7 @@ checkAndUpgrade() {
     cd /tmp/upgrade
 
     # Inform user and allow interrupting the upgrade process
-    echo "Press 'C' to cancel the upgrade or wait 10 seconds to continue."
+    echo "Press 'c' to cancel the upgrade or wait 10 seconds to continue."
     local counter=10
     while [ $counter -gt 0 ]; do
       read -t 1 -n 1 input
