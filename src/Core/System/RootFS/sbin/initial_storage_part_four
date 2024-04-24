@@ -57,14 +57,26 @@ fi
 
 # Get partition info for the device
 count=$(/sbin/sfdisk -l "${dev}" | /bin/busybox grep "^/dev" | /bin/busybox wc -l);
-if [ "$count" != "3" ];then
-   # We only add a partition if the device currently has 3 partitions. (This seems to be the case for system disks.)
-  exit 0;
-fi;
+if [ "$count" -eq "4" ]; then
+    # The fourth partition already exists, format it and resize
+    partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$dev")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/sort -u);
+    partitionFour="/dev/${partitionName}";
+    echo "Formatting and resizing the existing fourth partition ${partitionFour}..."
+    /sbin/parted --script "${dev}" resizepart 4 100%
+     sleep 2;
+    /sbin/mkfs.ext4 "${partitionFour}"
+elif [ "$count" -eq "3" ]; then
+    # There are only 3 partitions, add a new one
+    echo "Adding a new partition..."
 
-# Use parted to create a new partition on the device.
-# The new partition is primary, has ext4 filesystem, starts from 600MiB, and occupies the rest of the disk.
-/sbin/parted --script --align optimal "${dev}" 'mkpart primary ext4 600MiB 100%';
+    # Use parted to create a new partition on the device.
+    # The new partition is primary, has ext4 filesystem, starts from 600MiB, and occupies the rest of the disk.
+    /sbin/parted --script --align optimal "${dev}" 'mkpart primary ext4 600MiB 100%';
+else
+    # Not the expected number of partitions; exit
+    echo "Unexpected number of partitions. Exiting."
+    exit 0
+fi
 
 # Save the exit status of parted command
 resultParted=$?;

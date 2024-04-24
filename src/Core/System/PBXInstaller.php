@@ -206,7 +206,6 @@ class PBXInstaller extends Di\Injectable
         echo "Installing PBX...\n";
         $this->unmountPartitions();
         $this->unpackImage();
-        $this->createStoragePartition();
         $this->mountStorage();
         $this->copyConfiguration();
         $umount = Util::which('umount');
@@ -253,15 +252,6 @@ class PBXInstaller extends Di\Injectable
         $install_cmd = 'exec < /dev/console > /dev/console 2>/dev/console;' .
             "{$pv} -p /offload/firmware.img.gz | {$gunzip} | {$dd} of=/dev/{$this->target_disk} bs=512 2> /dev/null";
         passthru($install_cmd);
-    }
-
-    /**
-     * Create the storage partition on the target disk.
-     */
-    private function createStoragePartition()
-    {
-        echo " - Create storage partition...\n";
-        passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four create /dev/{$this->target_disk}");
     }
 
     /**

@@ -236,4 +236,20 @@ class PbxSettings extends ModelsBase
         return $this->validate($validation);
     }
 
+    /**
+     * Set value for key
+     * @param $key string settings key
+     * @param $value string value
+     * @return bool Whether the save was successful or not.
+     */
+    public static function setValue(string $key, string $value): bool
+    {
+        $record = self::findFirstByKey($key);
+        if ($record === null) {
+            $record = new self();
+            $record->key = $key;
+        }
+        $record->value = $value;
+        return $record->save();
+    }
 }

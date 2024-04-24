@@ -381,21 +381,27 @@ class Storage extends Di\Injectable
     {
         $parted = Util::which('parted');
 
-        // Execute the parted command to format the disk with msdos partition table and ext4 partition
-        $command = "{$parted} --script --align optimal '{$device}' 'mklabel msdos mkpart primary ext4 0% 100%'";
-        $retVal = Processes::mwExec($command);
+        // First, remove existing partitions and then create a new msdos partition table and ext4 partition
+        // This command deletes all existing partitions and creates a new primary partition using the full disk
+        $command = "{$parted} --script --align optimal '{$device}' 'mklabel msdos'";
+        Processes::mwExec($command);  // Apply the command to clear the partition table
 
-        // Log the result of the parted command
-        SystemMessages::sysLogMsg(__CLASS__, "{$command} returned {$retVal}",LOG_INFO);
+        // Now create a new partition that spans the entire disk
+        $createPartCommand = "{$parted} --script --align optimal '{$device}' 'mkpart primary ext4 0% 100%'";
+        $retVal = Processes::mwExec($createPartCommand);
 
-        sleep(2);
+        // Log the result of the create partition command
+        SystemMessages::sysLogMsg(__CLASS__, "{$createPartCommand} returned {$retVal}", LOG_INFO);
+
+        sleep(2); // Wait for the system to recognize changes to the partition table
 
         // Touch the disk to update disk tables
         $partprobe = Util::which('partprobe');
-        Processes::mwExec(
-            "{$partprobe} '{$device}'"
-        );
+        Processes::mwExec("{$partprobe} '{$device}'");
+
+        // Get the newly created partition name, assuming it's always the first partition after a fresh format
         $partition = self::getDevPartName($device, '1');
+
         return $this->formatPartition($partition, $bg);
     }
 
@@ -532,6 +538,9 @@ class Storage extends Di\Injectable
             SystemMessages::echoToTeletype(PHP_EOL.'   |- '."Automatically selected storage disk is $target_disk_storage");
         } else {
             echo PHP_EOL." " . Util::translate('Select the drive to store the data.');
+            if ($forceFormatStorage){
+                echo PHP_EOL." " . Util::translate('Warning! Selected disk will be formatted!');
+            }
             echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
             SystemMessages::echoWithSyslog(PHP_EOL." " . Util::translate('Valid disks are:') . " ".PHP_EOL.PHP_EOL);
             foreach ($validDisks as $disk) {
@@ -558,12 +567,12 @@ class Storage extends Di\Injectable
             $part = "1";
         }
         $partitionName = self::getDevPartName($target_disk_storage, $part);
-        if ($part === '1' && !self::isStorageDisk($partitionName)) {
-            echo PHP_EOL . Util::translate('Partitioning and formating disk:').' '.$dev_disk;
+        if ($part === '1' && (!self::isStorageDisk($partitionName) || $forceFormatStorage)) {
+            echo PHP_EOL . Util::translate('Partitioning and formatting disk:').' '.$dev_disk;
             $storage->formatEntireDisk($dev_disk);
         } elseif($forceFormatStorage) {
-            echo PHP_EOL . Util::translate('Formating partition:').' '.$partitionName;
-            $storage->formatPartition($partitionName);
+            echo PHP_EOL . Util::translate('Formatting partition:').' '.$partitionName;
+            passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four create {$dev_disk}");
         }
 
         // Create an array of disk data

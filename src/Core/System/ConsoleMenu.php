@@ -423,7 +423,7 @@ class ConsoleMenu
      */
     public function firewallWarning(): string
     {
-        // Check if firewall is disabled
+        // Check if the firewall is disabled
         if (PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED) === '0') {
             return "\033[01;34m (" . Util::translate('Firewall disabled') . ") \033[39m";
         }
@@ -514,8 +514,7 @@ class ConsoleMenu
     public function setupFirewall(CliMenu $menu): void
     {
         // Code for firewall optionn
-        $mikoPBXConfig = new MikoPBXConfig();
-        $firewall_enable = $mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::PBX_FIREWALL_ENABLED);
+        $firewall_enable = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED);
 
         if ($firewall_enable === '1') {
             $action = 'disable';
@@ -545,8 +544,8 @@ class ConsoleMenu
             if ('enable' === $action) {
                 $enable = '1';
             }
-            $mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::PBX_FIREWALL_ENABLED, $enable);
-            $mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::PBX_FAIL2BAN_ENABLED, $enable);
+            PbxSettings::setValue(PbxSettingsConstants::PBX_FIREWALL_ENABLED, $enable);
+            PbxSettings::setValue(PbxSettingsConstants::PBX_FAIL2BAN_ENABLED, $enable);
             IptablesConf::reloadFirewall();
             echo "Firewall is {$action}d...";
         }
