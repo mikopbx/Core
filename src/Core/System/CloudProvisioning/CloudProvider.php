@@ -28,7 +28,7 @@ use MikoPBX\Core\System\Util;
 
 abstract class CloudProvider
 {
-    protected const HTTP_TIMEOUT = 10;
+    protected const HTTP_TIMEOUT = 3;
 
     abstract public function provision(): bool;
 

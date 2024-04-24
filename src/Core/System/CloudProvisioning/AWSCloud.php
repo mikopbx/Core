@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System\CloudProvisioning;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp;
 use MikoPBX\Core\System\SystemMessages;
@@ -26,6 +27,14 @@ use MikoPBX\Core\System\SystemMessages;
 class AWSCloud extends CloudProvider
 {
     public const CloudID = 'AWSCloud';
+
+    private Client $client;
+
+    public function __construct()
+    {
+        $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
+    }
+
     /**
      * Performs the Amazon Web Services cloud provisioning.
      *
@@ -80,7 +89,6 @@ class AWSCloud extends CloudProvider
     private function getMetaDataAWS(string $url): string
     {
         $baseUrl = 'http://169.254.169.254/latest/meta-data/';
-        $client = new GuzzleHttp\Client();
         $headers = [];
         $params = [];
         $options = [
@@ -91,7 +99,7 @@ class AWSCloud extends CloudProvider
 
         $url = "$baseUrl/$url?" . http_build_query($params);
         try {
-            $res = $client->request('GET', $url, $options);
+            $res = $this->client->request('GET', $url, $options);
             $code = $res->getStatusCode();
         } catch (GuzzleHttp\Exception\ConnectException $e) {
             $code = 0;
