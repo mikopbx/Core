@@ -1263,4 +1263,13 @@ return [
     'f2b_BannedIpTabHeader' => 'დაბლოკილი მისამართები',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'განაახლეთ MikoPBX გარე IP მისამართი ყოველი გადატვირთვისას',
     'gs_SSHLogin' => 'შესვლა SSH კონსოლში',
+    'Warning! Selected disk will be formatted!' => 'ყურადღება! არჩეული დისკი დაფორმატდება და ყველა მონაცემი განადგურდება!',
+    'Installing PBX...' => 'MikoPBX-ის ინსტალაცია…',
+    ' - Unmounting partitions...' => 'დამონტაჟებული დისკის დანაყოფების დემონტაჟი…',
+    ' - Unpacking img...' => 'მიმდინარეობს სისტემის დანაყოფის განახლება…',
+    'Partitioning and formatting storage disk' => 'შექმენით დანაყოფი და დაფორმატეთ დისკი მოწყობილობაზე მონაცემების შესანახად',
+    'Update storage partition 4 on disk' => 'მეოთხე დანაყოფის განახლება დისკზე მონაცემების შესანახად',
+    'Copying configuration...' => 'პირველადი კონფიგურაციის პარამეტრების შევსება…',
+    'Formatting storage partition 4 on disk' => 'მეოთხე დანაყოფის ფორმატირება დისკზე მონაცემების შესანახად',
+    'Save storage disk settings' => 'დისკის პარამეტრების შენახვა შესანახად',
 ];

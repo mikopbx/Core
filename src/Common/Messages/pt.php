@@ -1263,4 +1263,13 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'f2b_BannedIpTabHeader' => 'Endereços bloqueados',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Atualize o endereço IP externo do MikoPBX sempre que você reiniciar',
     'gs_SSHLogin' => 'Login para console SSH',
+    'Warning! Selected disk will be formatted!' => 'Atenção! O disco selecionado será formatado e todos os dados serão destruídos!',
+    'Installing PBX...' => 'Instalando MikoPBX…',
+    ' - Unmounting partitions...' => 'Desmontando partições de disco montadas…',
+    ' - Unpacking img...' => 'Atualizando a partição do sistema…',
+    'Partitioning and formatting storage disk' => 'Crie uma partição e formate um disco para armazenar dados no dispositivo',
+    'Update storage partition 4 on disk' => 'Atualizando a quarta partição para armazenar dados no disco',
+    'Copying configuration...' => 'Preenchendo as configurações iniciais…',
+    'Formatting storage partition 4 on disk' => 'Formatando a quarta partição para armazenar dados no disco',
+    'Save storage disk settings' => 'Salvando configurações de disco para armazenamento',
 ];

@@ -1263,4 +1263,13 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'f2b_BannedIpTabHeader' => 'Adresses bloquées',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Mettez à jour l\'adresse IP externe du MikoPBX à chaque redémarrage',
     'gs_SSHLogin' => 'Connectez-vous à la console SSH',
+    'Warning! Selected disk will be formatted!' => 'Attention! Le disque sélectionné sera formaté et toutes les données seront détruites !',
+    'Installing PBX...' => 'Installation de MikoPBX…',
+    ' - Unmounting partitions...' => 'Démontage des partitions de disque montées…',
+    ' - Unpacking img...' => 'Mise à jour de la partition système…',
+    'Partitioning and formatting storage disk' => 'Créez une partition et formatez un disque pour stocker les données sur l\'appareil',
+    'Update storage partition 4 on disk' => 'Mise à jour de la quatrième partition pour stocker les données sur le disque',
+    'Copying configuration...' => 'Remplir les paramètres de configuration initiaux…',
+    'Formatting storage partition 4 on disk' => 'Formatage de la quatrième partition pour stocker les données sur le disque',
+    'Save storage disk settings' => 'Enregistrement des paramètres de disque pour le stockage',
 ];

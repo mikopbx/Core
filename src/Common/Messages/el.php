@@ -1263,4 +1263,13 @@ return [
     'f2b_BannedIpTabHeader' => 'Αποκλεισμένες διευθύνσεις',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Ενημερώστε την εξωτερική διεύθυνση IP του MikoPBX κάθε φορά που κάνετε επανεκκίνηση',
     'gs_SSHLogin' => 'Είσοδος για την κονσόλα SSH',
+    'Warning! Selected disk will be formatted!' => 'Προσοχή! Ο επιλεγμένος δίσκος θα μορφοποιηθεί και όλα τα δεδομένα θα καταστραφούν!',
+    'Installing PBX...' => 'Εγκατάσταση MikoPBX…',
+    ' - Unmounting partitions...' => 'Αποσυναρμολόγηση τοποθετημένων διαμερισμάτων δίσκων…',
+    ' - Unpacking img...' => 'Ενημέρωση του διαμερίσματος συστήματος…',
+    'Update storage partition 4 on disk' => 'Ενημέρωση του τέταρτου διαμερίσματος για αποθήκευση δεδομένων στο δίσκο',
+    'Formatting storage partition 4 on disk' => 'Μορφοποίηση του τέταρτου διαμερίσματος για αποθήκευση δεδομένων στο δίσκο',
+    'Partitioning and formatting storage disk' => 'Δημιουργήστε ένα διαμέρισμα και μορφοποιήστε έναν δίσκο για αποθήκευση δεδομένων στη συσκευή',
+    'Copying configuration...' => 'Συμπλήρωση αρχικών ρυθμίσεων διαμόρφωσης…',
+    'Save storage disk settings' => 'Αποθήκευση ρυθμίσεων δίσκου για αποθήκευση',
 ];

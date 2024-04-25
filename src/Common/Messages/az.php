@@ -1262,4 +1262,13 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'f2b_BannedIpTabHeader' => 'Bloklanmış ünvanlar',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Hər dəfə yenidən işə saldığınız zaman MikoPBX xarici IP ünvanını yeniləyin',
     'gs_SSHLogin' => 'SSH konsolu üçün daxil olun',
+    'Warning! Selected disk will be formatted!' => 'Diqqət! Seçilmiş disk formatlanacaq və bütün məlumatlar məhv ediləcək!',
+    ' - Unpacking img...' => 'Sistem bölməsi yenilənir…',
+    'Installing PBX...' => 'MikoPBX quraşdırılır…',
+    ' - Unmounting partitions...' => 'Quraşdırılmış disk bölmələri sökülür…',
+    'Partitioning and formatting storage disk' => 'Cihazda məlumatları saxlamaq üçün bölmə yaradın və diski formatlaşdırın',
+    'Update storage partition 4 on disk' => 'Diskdə məlumat saxlamaq üçün dördüncü bölmənin yenilənməsi',
+    'Copying configuration...' => 'İlkin konfiqurasiya parametrləri doldurulur…',
+    'Formatting storage partition 4 on disk' => 'Diskdə məlumat saxlamaq üçün dördüncü bölmənin formatlanması',
+    'Save storage disk settings' => 'Saxlama üçün disk parametrləri saxlanılır',
 ];

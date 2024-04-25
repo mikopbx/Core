@@ -1263,4 +1263,13 @@ return [
     'f2b_BannedIpTabHeader' => 'Заблоковані адреси',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Оновити зовнішню IP-адресу MikoPBX при кожному перезавантаженні',
     'gs_SSHLogin' => 'Логін для SSH консолі',
+    'Warning! Selected disk will be formatted!' => 'Увага! Вибраний диск буде відформатовано, усі дані знищені!',
+    'Installing PBX...' => 'Встановлюємо MikoPBX.',
+    ' - Unmounting partitions...' => 'Відключаємо змонтовані розділи диска.',
+    ' - Unpacking img...' => 'Оновлюємо системний розділ.',
+    'Partitioning and formatting storage disk' => 'Створення розділу та форматування диска для зберігання даних на пристрої',
+    'Update storage partition 4 on disk' => 'Оновлення четвертого розділу для зберігання даних на диску',
+    'Copying configuration...' => 'Заповнення початкових налаштувань конфігурації.',
+    'Formatting storage partition 4 on disk' => 'Форматування четвертого розділу для зберігання даних на диску',
+    'Save storage disk settings' => 'Збереження налаштувань диска для зберігання',
 ];

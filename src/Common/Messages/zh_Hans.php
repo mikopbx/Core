@@ -1229,4 +1229,13 @@ return [
     'f2b_BannedIpTabHeader' => '被阻止的地址',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => '每次重新启动时更新 MikoPBX 外部 IP 地址',
     'gs_SSHLogin' => '登录 SSH 控制台',
+    'Warning! Selected disk will be formatted!' => '注意力！所选磁盘将被格式化，所有数据将被销毁！',
+    ' - Unpacking img...' => '正在更新系统分区…',
+    'Installing PBX...' => '正在安装 MikoPBX…',
+    ' - Unmounting partitions...' => '正在卸载已安装的磁盘分区…',
+    'Formatting storage partition 4 on disk' => '格式化第四个分区以存储磁盘上的数据',
+    'Partitioning and formatting storage disk' => '创建分区并格式化磁盘以存储设备上的数据',
+    'Update storage partition 4 on disk' => '更新第四个分区以在磁盘上存储数据',
+    'Copying configuration...' => '正在填写初始配置设置…',
+    'Save storage disk settings' => '保存磁盘设置以进行存储',
 ];

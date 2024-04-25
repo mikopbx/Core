@@ -1229,4 +1229,13 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'f2b_SettingsTabHeader' => 'Thiết lập bảo vệ',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Cập nhật địa chỉ IP bên ngoài MikoPBX mỗi khi bạn khởi động lại',
     'gs_SSHLogin' => 'Đăng nhập vào bảng điều khiển SSH',
+    'Warning! Selected disk will be formatted!' => 'Chú ý! Đĩa đã chọn sẽ được định dạng và tất cả dữ liệu sẽ bị hủy!',
+    'Installing PBX...' => 'Đang cài đặt MikoPBX…',
+    ' - Unmounting partitions...' => 'Đang gỡ bỏ các phân vùng đĩa được gắn…',
+    ' - Unpacking img...' => 'Đang cập nhật phân vùng hệ thống…',
+    'Formatting storage partition 4 on disk' => 'Định dạng phân vùng thứ tư để lưu trữ dữ liệu trên đĩa',
+    'Partitioning and formatting storage disk' => 'Tạo phân vùng và format ổ đĩa để lưu trữ dữ liệu trên thiết bị',
+    'Update storage partition 4 on disk' => 'Cập nhật phân vùng thứ tư để lưu trữ dữ liệu trên đĩa',
+    'Copying configuration...' => 'Đang điền các cài đặt cấu hình ban đầu…',
+    'Save storage disk settings' => 'Lưu cài đặt đĩa để lưu trữ',
 ];

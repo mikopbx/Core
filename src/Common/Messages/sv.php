@@ -1229,4 +1229,13 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'f2b_BannedIpTabHeader' => 'Blockerade adresser',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Uppdatera MikoPBX extern IP-adress varje gång du startar om',
     'gs_SSHLogin' => 'Logga in för SSH-konsolen',
+    'Warning! Selected disk will be formatted!' => 'Uppmärksamhet! Den valda disken kommer att formateras och all data kommer att förstöras!',
+    'Installing PBX...' => 'Installerar MikoPBX…',
+    ' - Unmounting partitions...' => 'Demonterar monterade diskpartitioner…',
+    ' - Unpacking img...' => 'Uppdaterar systempartitionen…',
+    'Partitioning and formatting storage disk' => 'Skapa en partition och formatera en disk för att lagra data på enheten',
+    'Update storage partition 4 on disk' => 'Uppdaterar den fjärde partitionen för att lagra data på disk',
+    'Copying configuration...' => 'Fyller i initiala konfigurationsinställningar…',
+    'Formatting storage partition 4 on disk' => 'Formatera den fjärde partitionen för att lagra data på disken',
+    'Save storage disk settings' => 'Sparar diskinställningar för lagring',
 ];

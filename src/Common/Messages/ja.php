@@ -1263,4 +1263,13 @@ return [
     'f2b_BannedIpTabHeader' => 'ブロックされたアドレス',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => '再起動するたびに MikoPBX 外部 IP アドレスを更新する',
     'gs_SSHLogin' => 'SSHコンソールへのログイン',
+    'Warning! Selected disk will be formatted!' => '注意！選択したディスクはフォーマットされ、すべてのデータが破棄されます。',
+    ' - Unpacking img...' => 'システム パーティションを更新しています…',
+    'Installing PBX...' => 'MikoPBX をインストールしています…',
+    ' - Unmounting partitions...' => 'マウントされたディスク パーティションをマウント解除しています…',
+    'Partitioning and formatting storage disk' => 'パーティションを作成し、ディスクをフォーマットしてデバイスにデータを保存します',
+    'Update storage partition 4 on disk' => 'ディスク上にデータを保存するために 4 番目のパーティションを更新しています',
+    'Copying configuration...' => '初期構成設定を入力しています…',
+    'Formatting storage partition 4 on disk' => 'ディスクにデータを保存するために 4 番目のパーティションをフォーマットする',
+    'Save storage disk settings' => 'ストレージ用のディスク設定の保存',
 ];
