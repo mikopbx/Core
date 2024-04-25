@@ -572,14 +572,15 @@ class Storage extends Di\Injectable
             passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four update {$dev_disk}");
         }
         $partitionName = self::getDevPartName($target_disk_storage, $part);
+        $uuid = $storage->getUuid($partitionName);
         // Create an array of disk data
         $data = [
             'device' => $dev_disk,
-            'uniqid' => $storage->getUuid($partitionName),
+            'uniqid' => $uuid,
             'filesystemtype' => 'ext4',
             'name' => 'Storage №1'
         ];
-
+        echo PHP_EOL . Util::translate('Save storage disk settings').':'.PHP_EOL.json_encode($data, JSON_PRETTY_PRINT);
         // Save the disk settings
         $storage->saveDiskSettings($data);
         if (file_exists('/offload/livecd')) {
