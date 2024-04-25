@@ -63,7 +63,6 @@ if [ "$count" -eq "4" ]; then
 elif [ "$count" -eq "3" ]; then
     # There are only 3 partitions, add a new one
     echo "Adding a new partition..."
-
     # Use parted to create a new partition on the device.
     # The new partition is primary, has ext4 filesystem, starts from 600MiB, and occupies the rest of the disk.
     /sbin/parted --script --align optimal "${dev}" 'mkpart primary ext4 600MiB 100%';
@@ -99,9 +98,10 @@ done
 # If the partition was successfully created
 if [ "$resultParted" = "0" ];then
     if [ "$action" == "create" ]; then
-           /bin/busybox yes |/sbin/mkfs.ext4 "${partitionFour}"
-           sleep 3;
-           resize2fs ${partitionFour}
+        /sbin/mkfs.ext4 -qF "${partitionFour}"
+        sleep 5;
+        resize2fs ${partitionFour}
+        sleep 5;
     fi
 
     tmp_dir='/tmp/test_mnt';

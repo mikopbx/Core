@@ -40,6 +40,9 @@ shopt -s cdspell
 shopt -s dirspell
 shopt -s cmdhist
 
+defaultHistFile="/root/.bash_history"
+export HISTFILE=defaultHistFile
+
 # Check storage device and set history file accordingly
 if [ -f /var/etc/storage_device ]; then
     storageDevice="$(cat /var/etc/storage_device)";
