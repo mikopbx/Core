@@ -54,7 +54,7 @@ fi
 
 # Get partition info for the device
 count=$(/sbin/sfdisk -l "${dev}" | /bin/busybox grep "^/dev" | /bin/busybox wc -l);
-if [ "$count" -eq "4" ] then
+if [ "$count" -eq "4" ]; then
     # The fourth partition already exists, format it and resize
     partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$dev")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/sort -u);
     partitionFour="/dev/${partitionName}";
