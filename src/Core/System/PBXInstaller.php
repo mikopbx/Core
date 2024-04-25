@@ -284,18 +284,15 @@ class PBXInstaller extends Di\Injectable
         /** Copy the settings database file. */
         $cp = Util::which('cp');
         $sqlite3 = Util::which('sqlite3');
-        $grep = Util::which('grep');
         $dmpDbFile = tempnam('/tmp', 'storage');
 
         // Save dump of settings.
         $tables = ['m_Storage', 'm_LanInterfaces'];
-        $grepOptions = '';
+        file_put_contents($dmpDbFile, '');
         foreach ($tables as $table) {
-            $grepOptions .= " -e '^INSERT INTO {$table}'";
-            $grepOptions .= " -e '^INSERT INTO \"{$table}'";
+            shell_exec("sqlite3 /cf/conf/mikopbx.db '.schema $table' >> $dmpDbFile");
+            shell_exec("sqlite3 /cf/conf/mikopbx.db '.dump $table' >> $dmpDbFile");
         }
-        system("{$sqlite3} {$filename} .dump | {$grep} {$grepOptions} > " . $dmpDbFile);
-
         // If another language is selected - use another settings file.
         $lang = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LANGUAGE);
         $filename_lang = "/offload/conf/mikopbx-{$lang}.db";
@@ -305,8 +302,8 @@ class PBXInstaller extends Di\Injectable
 
         // Replace the settings file.
         Processes::mwExec("{$cp} {$filename} {$result_db_file}");
-        system("{$sqlite3} {$result_db_file} 'DELETE FROM m_Storage'");
-        system("{$sqlite3} {$result_db_file} 'DELETE FROM m_LanInterfaces'");
+        system("{$sqlite3} {$result_db_file} 'DROP TABLE IF EXISTS m_Storage'");
+        system("{$sqlite3} {$result_db_file} 'DROP TABLE IF EXISTS m_LanInterfaces'");
 
         // Restore settings from backup file.
         system("{$sqlite3} {$result_db_file} < {$dmpDbFile}");
