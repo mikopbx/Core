@@ -181,7 +181,7 @@ class ConsoleMenu
             'nl' => Util::translate('ex_Dutch'),
             'pl' => Util::translate('ex_Polish'),
             'sv' => Util::translate('ex_Swedish'),
-            'az' => Util::translate('ex_Azərbaycan'),
+            'az' => Util::translate('ex_Azerbaijan'),
             'ro' => Util::translate('ex_Romanian'),
             // not able to show in console without additional shell fonts, maybe later we add it
             // 'th' => Util::translate('ex_Thai'),

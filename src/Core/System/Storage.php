@@ -580,7 +580,7 @@ class Storage extends Di\Injectable
             'filesystemtype' => 'ext4',
             'name' => 'Storage №1'
         ];
-        echo PHP_EOL . Util::translate('Save storage disk settings').':'.PHP_EOL.json_encode($data, JSON_PRETTY_PRINT);
+        echo PHP_EOL . Util::translate('Save storage disk settings').':'.PHP_EOL.json_encode($data, JSON_PRETTY_PRINT). PHP_EOL ;
         // Save the disk settings
         $storage->saveDiskSettings($data);
         if (file_exists('/offload/livecd')) {
