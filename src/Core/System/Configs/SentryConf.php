@@ -45,26 +45,27 @@ class SentryConf extends Injectable
     {
         if (PbxSettings::getValueByKey(PbxSettingsConstants::SEND_METRICS) === '1') {
             touch(self::CONF_FILE);
+
+            $sentryConfig = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('sentry');
+
+            // Set up options for the Sentry client
+            $options = [
+                'dsn'         => $sentryConfig->dsn,
+                'environment' => $sentryConfig->enviroment??'development',
+                'traces_sample_rate' =>($sentryConfig->enviroment !== 'development') ? 0.05: 1.0,
+            ];
+
+            // Set 'release' option if /etc/version file exists
+            if (file_exists('/etc/version')) {
+                $pbxVersion    = str_replace("\n", "", file_get_contents('/etc/version', false));
+                $options['release']="mikopbx@{$pbxVersion}";
+            }
+            $conf = json_encode($options,JSON_PRETTY_PRINT);
+
+            file_put_contents(self::CONF_FILE, $conf);
+
         } elseif (file_exists(self::CONF_FILE)) {
             unlink(self::CONF_FILE);
-            return;
         }
-        $sentryConfig = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('sentry');
-
-        // Set up options for the Sentry client
-        $options = [
-            'dsn'         => $sentryConfig->dsn,
-            'environment' => $sentryConfig->enviroment??'development',
-            'traces_sample_rate' =>($sentryConfig->enviroment !== 'development') ? 0.05: 1.0,
-        ];
-
-        // Set 'release' option if /etc/version file exists
-        if (file_exists('/etc/version')) {
-            $pbxVersion    = str_replace("\n", "", file_get_contents('/etc/version', false));
-            $options['release']="mikopbx@{$pbxVersion}";
-        }
-        $conf = json_encode($options,JSON_PRETTY_PRINT);
-
-        file_put_contents(self::CONF_FILE, $conf);
     }
 }
