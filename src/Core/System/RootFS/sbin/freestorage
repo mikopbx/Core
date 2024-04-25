@@ -47,3 +47,5 @@ if [ ! "doNotUnMount" = "$1" ]; then
   f_umount "$storage";
 fi;
 
+export HISTFILE="/root/.bash_history";
+

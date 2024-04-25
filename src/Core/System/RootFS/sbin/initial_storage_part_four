@@ -54,14 +54,12 @@ fi
 
 # Get partition info for the device
 count=$(/sbin/sfdisk -l "${dev}" | /bin/busybox grep "^/dev" | /bin/busybox wc -l);
-if [ "$count" -eq "4" ] && [ "$action" == "create" ]; then
+if [ "$count" -eq "4" ] then
     # The fourth partition already exists, format it and resize
     partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$dev")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/sort -u);
     partitionFour="/dev/${partitionName}";
     echo "Formatting and resizing the existing fourth partition ${partitionFour}..."
     /sbin/parted --script "${dev}" resizepart 4 100%
-     sleep 2;
-    /sbin/mkfs.ext4 "${partitionFour}"
 elif [ "$count" -eq "3" ]; then
     # There are only 3 partitions, add a new one
     echo "Adding a new partition..."
@@ -100,8 +98,12 @@ done
 
 # If the partition was successfully created
 if [ "$resultParted" = "0" ];then
-    # e2fsck -f -p "${partitionFour}" 2> /dev/null > /dev/null;
-    # echo " - e2fsck... exit code $?";
+    if [ "$action" == "create" ]; then
+           /bin/busybox yes |/sbin/mkfs.ext4 "${partitionFour}"
+           sleep 3;
+           resize2fs ${partitionFour}
+    fi
+
     tmp_dir='/tmp/test_mnt';
     # Create a temporary directory for testing
     mkdir -p "$tmp_dir";
@@ -116,14 +118,10 @@ if [ "$resultParted" = "0" ];then
         echo " - mount ${partitionFour} exit code $mountResult";
         type='ext4';
         # If the mount failed, try to create an ext4 filesystem on the new partition
-        "mkfs.${type}" "${partitionFour}" 2> /dev/null > /dev/null;
+        /bin/busybox yes |"mkfs.${type}" "${partitionFour}" 2> /dev/null > /dev/null;
         mkfsResult=$?;
         if [ "$mkfsResult" != "0" ]; then
             echo " - ERROR: mkfs on '${partitionFour}' type '${type}' exit code '$mkfsResult'"
-
-        else
-           sleep 3;
-           resize2fs /dev/sda4
         fi;
 
         # Get the UUID of the new partition

@@ -60,18 +60,19 @@ checkAndUpgrade() {
     cd /tmp/upgrade
 
     # Inform user and allow interrupting the upgrade process
-    echo "Press 'c' to cancel the upgrade or wait 10 seconds to continue."
+    echoToTeletype "Found a new MikoPBX firmware."
+    echoToTeletype "Press 'c' to cancel the upgrade or wait 10 seconds to continue."
     local counter=10
     while [ $counter -gt 0 ]; do
       read -t 1 -n 1 input
       if [ "$input" = "C" ] || [ "$input" = "c" ]; then
-        echo "Upgrade cancelled by user."
-        return 1  # Exit the function early if 'C' is pressed
+        echoToTeletype "Upgrade cancelled by user."
+        return 1  # Exit the function early if 'c' is pressed
       fi
-      echo -ne "Continuing in $counter seconds...\033[0K\r"
+      echoToTeletype -ne "Continuing in $counter seconds...\033[0K\r"
       counter=$((counter - 1))
     done
-    echo "Starting upgrade process..."
+    echoToTeletype "Starting upgrade process..."
 
     # Umount boot disk
     umount -f "$disk";

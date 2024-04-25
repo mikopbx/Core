@@ -147,7 +147,7 @@ if [ -f /offload/livecd ]; then
 else
   # Format the 3rd partition and mount it as /cf/. Then, copy the configuration back and remove the image file
   echoToTeletype " - Format the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
-  /bin/busybox yes | /sbin/mkfs.ext4 "${partition3Name}" > /dev/null 2> /dev/null;
+  /bin/busybox yes |/sbin/mkfs.ext4 "${partition3Name}" > /dev/null 2> /dev/null;
   /bin/mount -w -o noatime "${partition3Name}" /cf/
   mkdir -p /cf/conf/;
   echoToTeletype " - Restoring the MikoPBX configuration settings...";
