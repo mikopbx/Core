@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
+export PATH
+
+if [ -f /sbin/shell_functions.sh ]; then
+. /sbin/shell_functions.sh;
+fi
+
+storage='/storage/usbdisk1';
+
+file_storage_device='/var/etc/storage_device';
+if [ -f "$file_storage_device" ] ; then
+    storage=$(cat "$file_storage_device");
+fi;
+
+# killing processes
+killprocess_by_name 'cron' -KILL 0;
+killprocess_by_name 'dropbear' -KILL 0;
+killprocess_by_name 'safe_asterisk' -KILL 0;
+killprocess_by_name 'pdnsd' -KILL 0;
+killprocesses '/sbin/monitord' -KILL 1;
+killprocesses "$storage" -TERM 3;
+killprocesses "$storage" -KILL 1;
+
+# umount  swap
+freeSwapByName "$storage";
+
+if [ ! "doNotUnMount" = "$1" ]; then
+
+  if [ -f "$HISTFILE" ] && [ "$HISTFILE" != "$defaultHistFile" ]; then
+      cp "$HISTFILE" "$defaultHistFile"
+      export HISTFILE="$defaultHistFile"
+  fi
+
+  f_umount "$storage";
+fi;

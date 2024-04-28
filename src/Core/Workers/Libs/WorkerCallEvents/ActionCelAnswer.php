@@ -42,19 +42,19 @@ class ActionCelAnswer
     public static function execute(WorkerCallEvents $worker, $data): void
     {
         $channel = $data['Channel'] ?? '';
+        $worker->addActiveChan($channel, $data['LinkedID']);
 
         // If no channel data, or if the channel is local, or if the channel is already active, return immediately
         if (empty($channel) || stripos($channel, 'local') === 0 || $worker->existsActiveChan($channel)) {
             return;
         }
-        $worker->addActiveChan($channel);
         usleep(100000);  // delay to ensure the channel is properly added
 
         // Retrieve the linked identifier for the channel
         $linkedId = Util::getAstManager('off')->GetVar($channel, 'CHANNEL(linkedid)', '', false);
 
         // If the linkedId matches the data LinkedID, return immediately
-        if ($linkedId === $data['LinkedID']) {
+        if (empty($linkedId) || $linkedId === $data['LinkedID']) {
             return;
         }
 
@@ -102,4 +102,5 @@ class ActionCelAnswer
             InsertDataToDB::execute($insert_data);
         }
     }
+
 }

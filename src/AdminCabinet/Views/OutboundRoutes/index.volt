@@ -56,6 +56,7 @@
                 [
                     'id': rule['id'],
                     'edit' : 'outbound-routes/modify/',
+                    'copy' : 'outbound-routes/modify?copy-source=',
                     'delete': 'outbound-routes/delete/'
                 ]) }}
         </tr>

@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System\Configs;
 
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
@@ -73,7 +74,7 @@ class PHPConf extends Injectable
      *
      * @return void
      */
-    public static function rotateLog(): void
+    public static function logRotate(): void
     {
         $logrotatePath = Util::which('logrotate');
 
@@ -117,7 +118,7 @@ class PHPConf extends Injectable
      */
     public static function phpTimeZoneConfigure(): void
     {
-        $timezone      = PbxSettings::getValueByKey('PBXTimezone');
+        $timezone      = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
         date_default_timezone_set($timezone);
         if (file_exists('/etc/TZ')) {
             $catPath = Util::which('cat');

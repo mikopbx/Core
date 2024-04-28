@@ -1,0 +1,144 @@
+#!/bin/bash
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+PATH=$PATH:/sbin:/usr/sbin:/bin:/usr/bin:/usr/sbin
+export XDEBUG_CONFIG='';
+# export TERM=xterm-color
+
+# Set environment variables
+export CLICOLOR=1
+export GREP_OPTIONS='--color=auto'
+export LSCOLORS=gxfxcxdxbxegedabagacad
+export HISTCONTROL=ignoredups
+export HISTFILESIZE=100000
+export HISTSIZE=5000
+export PROMPT_COMMAND='history -a'
+export HISTTIMEFORMAT="%F %T: "
+
+# Enable bash options
+shopt -s histappend
+shopt -s histreedit
+shopt -s histverify
+shopt -s autocd
+shopt -s cdspell
+shopt -s dirspell
+shopt -s cmdhist
+
+defaultHistFile="/root/.bash_history"
+export HISTFILE=defaultHistFile
+
+# Check storage device and set history file accordingly
+if [ -f /var/etc/storage_device ]; then
+    storageDevice="$(cat /var/etc/storage_device)";
+    /bin/busybox mount | /bin/busybox grep " $storageDevice " > /dev/null 2> /dev/null;
+    storageNotExists="$?";
+    if [ "$storageNotExists" = '0' ]; then
+      histDir="$storageDevice/mikopbx/log/bash";
+      mkdir -p "$histDir";
+      export HISTFILE="$histDir/.bash_history";
+    fi
+fi
+
+
+# Set aliases
+alias ls='ls --color=auto';
+alias myip="curl http://ipecho.net/plain; echo";
+alias remount-offload="_remountOffload";
+alias ps='ps -A -f';
+alias sqlite3='sqlite3 -table';
+alias sngrep='sngrep -r';
+alias df='df -H';
+alias du='du -ch';
+alias free='free -h';
+
+# Set prompt
+PS1='\w\$ '
+PS2='>'
+
+# Set language
+export LANG=en_US.utf8
+
+# Function to remount offload device
+_remountOffload()
+{
+  nowMode="$(mount | grep /offload | cut -d '(' -f 2 | cut -d ',' -f 1)";
+  mountPoint="$(mount | grep /offload | cut -d ' ' -f 1)";
+  if [ "${nowMode}" == 'rw' ]; then
+    newMode='ro';
+    mount -o remount,ro "$mountPoint";
+  else
+    newMode='rw';
+    mount -o remount,rw "$mountPoint";
+  fi;
+  echo "Mode for /offload ${newMode} disk:${mountPoint}";
+}
+
+# Function for pbx-console commands completion
+_pbxConsoleCommands()
+{
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+   # First-level subcommands
+    subcommands_1="cron services service"
+    subCommandsServices="restart start stop" # possible subcommands for 'service'
+     # Completion for first-level subcommands
+    if [[ ${COMP_CWORD} == 1 ]] ; then
+        COMPREPLY=( $(compgen -W "${subcommands_1}" -- ${cur}) )
+        return 0
+    fi
+
+    subcmd_1="${COMP_WORDS[1]}"  # The first-level subcommand is already entered at this point
+    case "${subcmd_1}" in #Дальше смотри, что она из себя представляет
+    services)
+       # Entered 'services history'; need to provide 'stop-all', 'start-all', 'restart-all'
+        if [[ ${COMP_CWORD} == 2 ]] ; then
+            cmd='stop-all start-all restart-all';
+            COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )
+            return 0
+        fi
+        ;;
+    service)
+       # Entered 'service history'; need to provide 'stop'
+        if [[ ${COMP_CWORD} == 3 ]] ; then
+            cmd='stop';
+            COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )
+            return 0
+        fi
+
+        if [[ ${COMP_CWORD} == 2 ]] ; then
+            # Get service names
+            subCommandsServices=$(ps | grep php | grep Worker | cut -d '}' -f2 | tr '\\' '/' | xargs basename -a);
+            COMPREPLY=( $(compgen -W "${subCommandsServices}" -- ${cur}) )
+            return 0
+        fi
+        ;;
+    cron)
+        # Entered 'cron history'; need to provide 'stop', 'start', 'show', 'restart'
+        if [[ ${COMP_CWORD} == 2 ]] ; then
+            cmd='stop start show restart';
+            COMPREPLY=( $(compgen -W "${cmd}" -- ${cur}) )
+            return 0
+        fi
+        ;;
+    esac
+    return 0
+
+}
+
+complete -F _pbxConsoleCommands pbx-console

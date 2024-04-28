@@ -23,6 +23,8 @@ namespace MikoPBX\AdminCabinet\Providers;
 
 use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\AdminCabinet\Plugins\AssetManager as Manager;
+use MikoPBX\Common\Providers\LanguageProvider;
+use MikoPBX\Common\Providers\MessagesProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Core\System\Configs\SentryConf;
@@ -238,7 +240,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/extensionsAPI.js', true)
                 ->addJs('js/pbx/main/connection-check-worker.js', true)
                 ->addJs('js/pbx/main/semantic-localization.js', true)
-                ->addJs('js/pbx/Advices/advices-worker.js', true)
+                ->addJs('js/pbx/Advice/advice-worker.js', true)
                 ->addJs('js/pbx/Security/check-passwords.js', true)
                 ->addJs('js/pbx/SendMetrics/send-metrics-index.js', true)
                 ->addJs('js/pbx/main/ssh-console.js', true)
@@ -286,11 +288,11 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeLocalizationAssets(DiInterface $di, string $version): void
     {
-        $language = $di->getShared('language');
+        $language = $di->getShared(LanguageProvider::SERVICE_NAME);
         $fileName = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
         if (!file_exists($fileName)) {
             $arrStr = [];
-            foreach ($di->getShared('messages') as $key => $value) {
+            foreach ($di->getShared(MessagesProvider::SERVICE_NAME) as $key => $value) {
                 $arrStr[$key] = str_replace(
                     "'",
                     "\\'",
@@ -298,7 +300,21 @@ class AssetProvider implements ServiceProviderInterface
                 );
             }
             $scriptArray = json_encode($arrStr);
-            file_put_contents($fileName, "globalTranslate = {$scriptArray}");
+            $proxyCode = "
+                const globalTranslateArray = {$scriptArray};
+                
+                globalTranslate = new Proxy(globalTranslateArray, {
+                    get: function(target, prop, receiver) {
+                    // Check if the property exists in the target
+                    if (prop in target) {
+                        return target[prop];
+                    }
+                    // Return the key itself if no translation is found
+                    return prop;
+                    }
+                });
+                ";
+            file_put_contents($fileName, $proxyCode);
         }
 
         $langJSFile = "js/cache/localization-{$language}-{$version}.min.js";
@@ -317,6 +333,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/PbxAPI/callQueuesAPI.js', true)
                 ->addJs('js/pbx/CallQueues/callqueues-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
@@ -338,6 +355,7 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'index') {
             $this->footerCollectionJS
+                ->addJs('js/pbx/PbxAPI/conferenceRoomsAPI.js', true)
                 ->addJs('js/pbx/ConferenceRooms/conference-rooms-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
@@ -520,20 +538,24 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makePbxExtensionModulesAssets(string $action): void
     {
+        $this->semanticCollectionCSS->addCss('css/PbxExtensionModules/index.css', true);
+
         if ($action === 'index') {
             $this->semanticCollectionJS->addJs('js/vendor/semantic/modal.min.js', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/resumable.js', true)
                 ->addJs('js/vendor/jquery.address.min.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-upgrade-status-worker.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-install-status-worker.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-merging-status-worker.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-modules-index.js', true)
                 ->addJs('js/vendor/semantic/progress.min.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-index.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-detail.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-delete.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-install-status-worker.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-install-from-repo.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-install-from-zip.js', true)
                 ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-ping-lic-worker.js', true)
-                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-add-new.js', true)
+                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-marketplace.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
@@ -543,7 +565,9 @@ class AssetProvider implements ServiceProviderInterface
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
                 ->addCss('css/vendor/semantic/modal.min.css', true)
-                ->addCss('css/vendor/semantic/progress.min.css', true);
+                ->addCss('css/vendor/semantic/progress.min.css', true)
+                ->addCss('css/PbxExtensionModules/slides.css', true);
+
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
@@ -562,6 +586,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->headerCollectionCSS->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/OutOffWorkTime/out-of-work-times-index.js', true);
         } elseif ($action === 'modify') {
             $this->semanticCollectionCSS->addCss('css/vendor/semantic/calendar.min.css', true);
@@ -636,6 +661,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/PbxAPI/ivrMenuAPI.js', true)
                 ->addJs('js/pbx/IvrMenu/ivrmenu-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
@@ -655,9 +681,13 @@ class AssetProvider implements ServiceProviderInterface
         if ($action === 'index') {
             $this->footerCollectionJS->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
+                ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
+                ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-modify.js', true);
         }
     }
@@ -716,7 +746,13 @@ class AssetProvider implements ServiceProviderInterface
     private function makeFail2BanAssets(string $action): void
     {
         if ($action === 'index') {
+            $this->headerCollectionCSS->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
+                ->addCss('css/vendor/datatable/responsive/responsive.semanticui.min.css', true);
+
             $this->footerCollectionJS
+                ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/vendor/datatable/responsive/dataTables.responsive.min.js', true)
+                ->addJs('js/vendor/datatable/responsive/responsive.semanticui.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/Fail2Ban/fail-to-ban-index.js', true);
         }
@@ -730,20 +766,23 @@ class AssetProvider implements ServiceProviderInterface
     private function makeExtensionsAssets(string $action): void
     {
         if ($action === 'index') {
-            $this->headerCollectionCSS->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true);
+            $this->headerCollectionCSS
+                ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
+                ->addCss('css/vendor/datatable/responsive/responsive.semanticui.min.css', true);
 
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
-                //->addJs('js/vendor/inputmask/inputmask.js', true)
+                ->addJs('js/vendor/datatable/responsive/dataTables.responsive.min.js', true)
+                ->addJs('js/vendor/datatable/responsive/responsive.semanticui.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask-multi.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
                 ->addJs('js/pbx/Extensions/input-mask-patterns.js', true)
+                ->addJs('js/pbx/PbxAPI/sipAPI.js', true)
                 ->addJs('js/pbx/Extensions/extensions-index.js', true)
                 ->addJs('js/pbx/Extensions/extensions-index-status-worker.js', true)
-                ->addJs('js/pbx/main/debugger-info.js', true)
-                ->addJs('js/vendor/clipboard/clipboard.js', true);
+                ->addJs('js/pbx/main/debugger-info.js', true);
         } elseif ($action === 'modify') {
             $this->semanticCollectionCSS->addCss('css/vendor/semantic/card.min.css', true);
             $this->footerCollectionJS
@@ -774,6 +813,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/PbxAPI/dialplanApplicationsAPI.js', true)
                 ->addJs('js/pbx/DialplanApplications/dialplan-applications-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionACE
@@ -860,6 +900,8 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/AsteriskManagers/manager-modify.js', true);
+
+            $this->semanticCollectionCSS->addCss('css/AsteriskManagers/manager-modify.css', true);
         }
     }
 

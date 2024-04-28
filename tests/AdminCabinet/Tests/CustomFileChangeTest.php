@@ -21,40 +21,60 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
+/**
+ * Class to test custom file changes in the admin cabinet.
+ */
 class CustomFileChangeTest extends MikoPBXTestsBase
 {
 
     /**
-     * @depends      testLogin
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Make custom files changes");
+    }
+
+    /**
+     * Test to change a custom file.
+     * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param $params
+     * @param array $params The parameters for changing the custom file.
      *
      * @throws \Facebook\WebDriver\Exception\NoSuchElementException
      * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testChangeCustomFile($params): void
+    public function testChangeCustomFile(array $params): void
     {
-        // Входим на страницу файлами
+        // Scroll to the bottom of the sidebar menu to access the files page
         self::$driver->executeScript('document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);');
         $this->clickSidebarMenuItemByHref("/admin-cabinet/custom-files/index/");
 
-
-        // Находим строчку с файлом по пути из базы данных
+        // Click the modify button on the row with the specified file path
         $this->clickModifyButtonOnRowWithText($params['filePath']);
 
+        // Change the description
         $this->changeTextAreaValue('description', $params['description']);
 
+        // Select the mode
         $this->selectDropdownItem('mode', $params['mode']);
 
+        // Wait for the text area to be present
         self::$driver->wait()->until(
             WebDriverExpectedCondition::presenceOfElementLocated(
                 WebDriverBy::xpath('id("user-edit-config")/textarea')
             )
         );
 
+        // Find and clear the ACE editor content, then enter new content
         $textAreaACEContent = self::$driver->findElement(WebDriverBy::xpath('id("user-edit-config")/textarea'));
         $textAreaACEContent->getLocationOnScreenOnceScrolledIntoView();
         self::$driver->wait(3);
@@ -62,41 +82,47 @@ class CustomFileChangeTest extends MikoPBXTestsBase
         self::$driver->wait(3);
         $textAreaACEContent->sendKeys($params['fileContents']);
 
+        // Submit the form
         $this->submitForm('custom-file-form');
 
+        // Scroll to the bottom of the sidebar menu
         self::$driver->executeScript('document.getElementById("sidebar-menu").scrollTo(0,document.body.scrollHeight);');
 
+        // Navigate back to the custom files page
         $this->clickSidebarMenuItemByHref("/admin-cabinet/custom-files/index/");
 
+        // Find the files list and assert that the description is present
         $filesList = self::$driver->findElement(WebDriverBy::xpath('id("custom-files-table")'));
         $this->assertStringContainsString($params['description'], $filesList->getText());
 
-        // Находим строчку с файлом по пути из базы данных
+        // Click the modify button on the row with the specified file path again
         $this->clickModifyButtonOnRowWithText($params['filePath']);
 
+        // Assert that the description matches
         $this->assertTextAreaValueIsEqual('description', $params['description']);
 
-        // Находим строчку с нужной опцией по значению
+        // Assert that the selected mode matches
         $this->assertMenuItemSelected('mode', $params['mode']);
 
+        // Find the hidden value and assert that it matches the file contents
         $hiddenValue = self::$driver->findElement(WebDriverBy::xpath("//*[@id = 'content']"));
         $this->assertEquals($params['fileContents'], $hiddenValue->getAttribute('value'));
     }
 
     /**
-     * Dataset provider
+     * Dataset provider for custom file change parameters.
      *
      * @return array
      */
     public function additionProvider(): array
     {
-        $params   = [];
-        $params[] = [
+        $params = [];
+        $params['crontabs'] = [
             [
-                'filePath'     => '/var/spool/cron/crontabs/root',
-                'mode'         => 'append',
+                'filePath' => '/var/spool/cron/crontabs/root',
+                'mode' => 'append',
                 'fileContents' => "*/1 * * * * /etc/rc/remount-offload-rw > /dev/null 2> /dev/null",
-                'description'  => 'Подключаем режим записи для Offload диска',
+                'description' => 'Подключаем режим записи для Offload диска',
             ],
         ];
 

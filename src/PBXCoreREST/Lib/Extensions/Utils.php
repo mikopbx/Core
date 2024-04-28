@@ -97,7 +97,7 @@ class Utils extends Injectable
     }
 
     /**
-     * Check the availability of a number in the extensions.js JavaScript script.
+     * Check the availability of a number in the extensionsAPI.js JavaScript script.
      *
      * @param string $number The internal number of the user.
      * @return PBXApiResult Result of the availability check.
@@ -131,4 +131,5 @@ class Utils extends Injectable
         }
         return $res;
     }
+
 }

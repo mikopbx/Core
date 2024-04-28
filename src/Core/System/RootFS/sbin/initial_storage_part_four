@@ -1,0 +1,171 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+# Check whether the script has been run with the "create" argument; if not, exit with status code 6
+action="$1"
+if [ "$action" != "create" ] && [ "$action" != "update" ]; then
+    echo "Invalid argument: $1. Please use 'create' or 'update'."
+    exit 6
+fi
+
+# If the second argument is not given, we'll use the device specified in the file /var/etc/cfdevice
+# Otherwise, we use the device specified as the second argument
+if [ "${2}x" = "x" ];then
+    cf_file='/var/etc/cfdevice';
+    if [ ! -f "$cf_file" ];then
+        exit 5; # If the device file doesn't exist, exit with status code 5
+    fi;
+    # Retrieve the system disk
+    dev=$(/bin/busybox cat "$cf_file");
+    dev="/dev/${dev}";
+else
+    dev=$2;
+fi;
+
+# Check if the device exists and is a block device
+if [ ! -b "${dev}" ];then
+  echo "Device ${dev} doesn't exist or isn't a block device."
+	exit 4; # If the device doesn't exist or isn't a block device, exit with status code 4
+fi;
+
+# Get the total size of the device in MB
+totalMb=$(($(busybox blockdev --getsize64 "${dev}") / 1024 / 1024));
+
+if [ "$totalMb" -le "600" ]; then
+  echo "Device ${dev} size is less than or equal to 600 MB, there's no point in creating a 4th partition."
+  exit 0;
+fi
+
+# Get partition info for the device
+count=$(/sbin/sfdisk -l "${dev}" | /bin/busybox grep "^/dev" | /bin/busybox wc -l);
+if [ "$count" -eq "4" ]; then
+    # The fourth partition already exists, format it and resize
+    partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$dev")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/sort -u);
+    partitionFour="/dev/${partitionName}";
+    echo "Formatting and resizing the existing fourth partition ${partitionFour}..."
+    /sbin/parted --script "${dev}" resizepart 4 100%
+elif [ "$count" -eq "3" ]; then
+    # There are only 3 partitions, add a new one
+    echo "Adding a new partition..."
+    # Use parted to create a new partition on the device.
+    # The new partition is primary, has ext4 filesystem, starts from 600MiB, and occupies the rest of the disk.
+    /sbin/parted --script --align optimal "${dev}" 'mkpart primary ext4 600MiB 100%';
+else
+    # Not the expected number of partitions; exit
+    echo "Unexpected number of partitions. Exiting."
+    exit 0
+fi
+
+# Save the exit status of parted command
+resultParted=$?;
+echo " - parted return ${resultParted}...";
+
+# Get the name of the new fourth partition
+partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$dev")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/sort -u);
+partitionFour="/dev/${partitionName}";
+
+# Retry the creation of the partition up to 25 times
+tryCount=1;
+while [ ! -b "${partitionFour}" ]; do
+  /sbin/blockdev --rereadpt "${dev}" > /dev/null 2>&1;
+  if [ -b "${partitionFour}" ]; then
+    break;
+  fi
+  tryCount=$((tryCount + 1));
+  if [ $tryCount = "25" ]; then
+    echo " - partition 4 on ${dev} waiting fail...";
+    break;
+  fi
+  sleep 1;
+done
+
+# If the partition was successfully created
+if [ "$resultParted" = "0" ];then
+    if [ "$action" == "create" ]; then
+        /sbin/mkfs.ext4 -qF "${partitionFour}"
+        sleep 5;
+        resize2fs ${partitionFour}
+        sleep 5;
+    fi
+
+    tmp_dir='/tmp/test_mnt';
+    # Create a temporary directory for testing
+    mkdir -p "$tmp_dir";
+
+    # Get the filesystem type of the new partition
+    type=$(/sbin/blkid -o full "${partitionFour}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^TYPE" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
+
+     # Try to mount the new partition
+    mount -t "$type" "${partitionFour}" "$tmp_dir" 2> /dev/null > /dev/null;
+    mountResult=$?;
+    if [ "$mountResult" != "0" ]; then
+        echo " - mount ${partitionFour} exit code $mountResult";
+        type='ext4';
+        # If the mount failed, try to create an ext4 filesystem on the new partition
+        /bin/busybox yes |"mkfs.${type}" "${partitionFour}" 2> /dev/null > /dev/null;
+        mkfsResult=$?;
+        if [ "$mkfsResult" != "0" ]; then
+            echo " - ERROR: mkfs on '${partitionFour}' type '${type}' exit code '$mkfsResult'"
+        fi;
+
+        # Get the UUID of the new partition
+	      uuid=$(/sbin/blkid -ofull "${partitionFour}" | /bin/busybox sed -r 's/[[:alnum:]]+=/\n&/g' | /bin/busybox grep "^UUID" | /bin/busybox cut -d '"' -f 2 | /bin/busybox head -n 1);
+
+		     # Try to mount the new partition again using its UUID
+		    mount -t "${type}" -rw UUID="$uuid" "$tmp_dir"
+		    mountResult="$?";
+        if [ "$mountResult" != "0" ]; then
+            echo " - ERROR: can not mount '${partitionFour}' type: '${type}' uuid: '${uuid}' exit code '$?'"
+            sleep 30;
+        else
+            sleep 3;
+
+            # Unmount the new partition
+            umount "$tmp_dir";
+		        mountResult="$?";
+        fi;
+    else
+        # Kill all processes accessing the new partition
+        /sbin/shell_functions.sh killprocesses "$tmp_dir" -TERM 0;
+
+         # Unmount the new partition
+        umount "$tmp_dir";
+		    mountResult="$?";
+    fi;
+
+    if [ "$mountResult" = "0" ]; then
+        # Delete the temporary directory
+        rm -rf /tmp/test_mnt;
+        echo " - check filesystem on ${partitionFour}";
+
+        # Check the filesystem on the new partition
+        "/sbin/fsck.${type}" -a "${partitionFour}" > /dev/null 2>&1;
+        fsckResult="$?";
+        if [ "$fsckResult" != "0" ]; then
+            echo " - ERROR: check fs on '${partitionFour}' type: '${type}' exit code '$?'"
+        else
+            echo " - check completed..."
+        fi;
+    else
+        echo " - ERROR: umount ${partitionFour} exit code $?"
+    fi;
+else
+    echo " - partition №4 on ${dev} not found...";
+    echo " - ${dev} - the disk size is probably less than 600Mb.";
+fi;

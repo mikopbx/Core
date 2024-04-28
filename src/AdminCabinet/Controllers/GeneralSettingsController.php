@@ -81,8 +81,8 @@ class GeneralSettingsController extends BaseController
         // Initialize an array to keep track of passwords that fail the check
         $passwordCheckFail = [];
 
-        $cloudInstanceId = $data['CloudInstanceId'] ?? '';
-        $checkPasswordFields = [PbxSettingsConstants::SSH_PASSWORD, 'WebAdminPassword'];
+        $cloudInstanceId = $data[PbxSettingsConstants::CLOUD_INSTANCE_ID] ?? '';
+        $checkPasswordFields = [PbxSettingsConstants::SSH_PASSWORD, PbxSettingsConstants::WEB_ADMIN_PASSWORD];
 
         // If SSH is disabled, remove the SSH_PASSWORD key
         if ($data[PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD] === 'on') {
@@ -161,29 +161,46 @@ class GeneralSettingsController extends BaseController
 
 
     /**
-     * Create parking extensions.
+     * Create or update parking extensions by ensuring only necessary slots are modified.
+     * This method first fetches the existing parking slots and determines which slots
+     * need to be created or deleted based on the desired range and reserved slot.
+     * It aims to minimize database operations by only deleting slots that are no longer needed
+     * and creating new slots that do not exist yet, preserving all others.
      *
-     * @param int $startSlot
-     * @param int $endSlot
-     * @param int $reservedSlot
+     * @param int $startSlot The starting number of the parking slot range.
+     * @param int $endSlot The ending number of the parking slot range.
+     * @param int $reservedSlot The number of the reserved slot to be included outside the range.
      *
-     * @return array
+     * @return array Returns an array with two elements:
+     *               - bool: true if the operation was successful without any errors, false otherwise.
+     *               - array: an array of messages, primarily errors encountered during operations.
      */
     private function createParkingExtensions(int $startSlot, int $endSlot, int $reservedSlot): array
     {
         $messages = [];
-        // Delete all parking slots
+
+        // Retrieve all current parking slots.
         $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
-        foreach ($currentSlots as $currentSlot) {
-            if (!$currentSlot->delete()) {
-                $messages['error'][] = $currentSlot->getMessages();
+
+        // Create an array of desired numbers.
+        $desiredNumbers = range($startSlot, $endSlot);
+        $desiredNumbers[] = $reservedSlot;
+
+        // Determine slots to delete.
+        $currentNumbers = [];
+        foreach ($currentSlots as $slot) {
+            if (!in_array($slot->number, $desiredNumbers)) {
+                if (!$slot->delete()) {
+                    $messages['error'][] = $slot->getMessages();
+                }
+            } else {
+                $currentNumbers[] = $slot->number;
             }
         }
 
-        // Create an array of new numbers
-        $numbers = range($startSlot, $endSlot);
-        $numbers[] = $reservedSlot;
-        foreach ($numbers as $number) {
+        // Determine slots to create.
+        $numbersToCreate = array_diff($desiredNumbers, $currentNumbers);
+        foreach ($numbersToCreate as $number) {
             $record = new Extensions();
             $record->type = Extensions::TYPE_PARKING;
             $record->number = $number;
@@ -193,7 +210,8 @@ class GeneralSettingsController extends BaseController
             }
         }
 
-        $result = count($messages) === 0;
+        // Determine the overall result.
+        $result = count($messages['error'] ?? []) === 0;
         return [$result, $messages];
     }
 
@@ -236,7 +254,7 @@ class GeneralSettingsController extends BaseController
         if (isset($data[PbxSettingsConstants::SSH_PASSWORD])) {
             if ($data[PbxSettingsConstants::SSH_PASSWORD] === $pbxSettings[PbxSettingsConstants::SSH_PASSWORD]
                 || $data[PbxSettingsConstants::SSH_PASSWORD] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
-                $data[PbxSettingsConstants::SSH_PASSWORD_HASH_STRING] = md5($data['WebAdminPassword']);
+                $data[PbxSettingsConstants::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettingsConstants::WEB_ADMIN_PASSWORD]);
             } else {
                 $data[PbxSettingsConstants::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettingsConstants::SSH_PASSWORD]);
             }
@@ -245,37 +263,38 @@ class GeneralSettingsController extends BaseController
         // Update PBX settings
         foreach ($pbxSettings as $key => $value) {
             switch ($key) {
-                case 'PBXRecordCalls':
-                case 'PBXRecordCallsInner':
-                case 'AJAMEnabled':
-                case 'AMIEnabled':
-                case 'RestartEveryNight':
-                case 'RedirectToHttps':
-                case 'PBXSplitAudioThread':
-                case 'UseWebRTC':
+                case PbxSettingsConstants::PBX_RECORD_CALLS:
+                case PbxSettingsConstants::PBX_RECORD_CALLS_INNER:
+                case PbxSettingsConstants::AJAM_ENABLED:
+                case PbxSettingsConstants::AMI_ENABLED:
+                case PbxSettingsConstants::RESTART_EVERY_NIGHT:
+                case PbxSettingsConstants::REDIRECT_TO_HTTPS:
+                case PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD:
+                case PbxSettingsConstants::USE_WEB_RTC:
                 case PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD:
-                case 'PBXAllowGuestCalls':
+                case PbxSettingsConstants::PBX_ALLOW_GUEST_CALLS:
+                case PbxSettingsConstants::DISABLE_ALL_MODULES:
                 case '***ALL CHECK BOXES ABOVE***':
                     $newValue = ($data[$key] === 'on') ? '1' : '0';
                     break;
                 case PbxSettingsConstants::SSH_PASSWORD:
                     // Set newValue as WebAdminPassword if SSHPassword is the same as the default value
                     if ($data[$key] === $value) {
-                        $newValue = $data['WebAdminPassword'];
+                        $newValue = $data[PbxSettingsConstants::WEB_ADMIN_PASSWORD];
                     } elseif ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $data[$key];
                     } else {
                         continue 2;
                     }
                     break;
-                case 'SendMetrics':
+                case PbxSettingsConstants::SEND_METRICS:
                     $newValue = ($data[$key] === 'on') ? '1' : '0';
-                    $this->session->set('SendMetrics', $newValue);
+                    $this->session->set(PbxSettingsConstants::SEND_METRICS, $newValue);
                     break;
-                case 'PBXFeatureTransferDigitTimeout':
-                    $newValue = ceil((int)$data['PBXFeatureDigitTimeout'] / 1000);
+                case PbxSettingsConstants::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT:
+                    $newValue = ceil((int)$data[PbxSettingsConstants::PBX_FEATURE_DIGIT_TIMEOUT] / 1000);
                     break;
-                case 'WebAdminPassword':
+                case PbxSettingsConstants::WEB_ADMIN_PASSWORD:
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $this->security->hash($data[$key]);
                     } else {

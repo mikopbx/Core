@@ -1,0 +1,187 @@
+#!/bin/sh
+
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+disk="${1}";
+disk_name=$(basename $disk);
+SYSTEM_SIZE_MB=600
+
+# Check if the block device exists
+check_disk() {
+    if [ ! -b "$1" ]; then
+        echo " - ERROR: block device $1 not found";
+        exit 1;
+    fi;
+}
+
+# Check block device and partition
+check_disk "$disk"
+
+
+# Define partition name and number
+determine_partition() {
+    local base_name="$1"
+    # Determine the partition number based on whether it's a system disk or a storage disk
+    mountedStorage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
+
+    # Get the name of the mounted storage and the 4th partition (if it exists)
+    partitionName=$(/bin/lsblk -r -p -o NAME,TYPE | /bin/busybox grep ' part' | /bin/busybox sort -u | cut -d ' ' -f 1 | /bin/busybox grep "$base_name" | /bin/busybox grep "4$")
+    # If the 4th partition is not the same as the mounted storage
+    if [ "$partitionName" == "$mountedStorage" ]; then
+        echo " - Storage on the same disk as the system ..."
+        partitionNumber=4
+    else
+       echo " - Storage on the separate disk from the system one..."
+        partitionName=$(/bin/lsblk -r -p -o NAME,TYPE | /bin/busybox grep ' part' | /bin/busybox sort -u | cut -d ' ' -f 1 | /bin/busybox grep "$base_name" | /bin/busybox grep "1$")
+        partitionNumber=1
+    fi
+}
+
+determine_partition "$disk_name"
+
+# Check block device and partition
+check_disk "$partitionName"
+
+# Function to get disk size in megabytes
+get_disk_size() {
+    local disk_device=$1
+    total_byte=$(busybox blockdev --getsize64 "$disk_device")
+    total=$((total_byte / 1024 / 1024))
+    echo $total
+}
+
+# Function to get partition size in megabytes
+get_partition_size() {
+    local partition=$1
+    disk_size=$(/bin/busybox df -P -m | /bin/busybox grep "$partition" | busybox head -n 1 | /bin/busybox awk '{print $2}')
+    echo $disk_size
+}
+
+
+# Get the total size of the disk in megabytes
+total=$(get_disk_size "$disk")
+# Get the size of the partition in megabytes
+disk_size=$(get_partition_size "$partitionName")
+# Calculate the difference in size (delta) between the total size and partition size
+delta=$((total - disk_size))
+
+# Check the partition number and manage delta accordingly
+calculate_delta() {
+    local delta=$1
+    local partition_number=$2
+    local disk=$3
+    if [[ "$partition_number" == "4" ]]; then
+        if (( delta <= SYSTEM_SIZE_MB )); then
+            delta=0
+        else
+            delta=$((total - disk_size))
+        fi
+    fi
+    echo $delta
+}
+delta=$(calculate_delta "$delta" "$partitionNumber" "$disk")
+
+echo " - Disk: '$disk'"
+echo " - Total size: ${total}Mb"
+echo " - Partition size: ${disk_size}Mb"
+echo " - Delta: ${delta}Mb"
+
+# Calculate the portion as a percentage multiplied by 100
+portion=$((delta * 10000 / total))
+if [[ "$portion" -le 500 ]]; then
+    # The delta is less than or equal to 5 percent, so no resizing will be performed
+    echo " - The delta is less than or equal to 5 percent from the old partition size.";
+    echo " - No resizing will be performed.";
+    sleep 10;
+    exit 3;
+fi;
+
+# Check if the disk is currently mounted
+check_mount_and_free() {
+    local disk=$1
+    local partition_name=$2
+    is_mounted=$(mount | grep "$disk")
+    if [ "${is_mounted}x" != "x" ]; then
+        echo " - Free storage partition $partition_name ..."
+        /sbin/freestorage
+    fi
+}
+
+check_mount_and_free "$disk" "$partitionName"
+
+# Partition operations based on partition number
+partition_operations() {
+    local disk=$1
+    local partition_number=$2
+    local partition_name=$3
+    if [[ "$partition_number" == "4" ]]; then
+        # Clear existing configuration for system disk
+        /sbin/freeupoffload
+        echo " - Delete 4-th partition $partition_name from the system disk ..."
+        fdisk "$disk" > /dev/null 2>&1 << EOF
+d
+$partition_number
+w
+EOF
+        echo " - Create the new 4-th partition on the system disk ..."
+        /sbin/initial_storage_part_four create "$disk"
+        sleep 2
+    else
+        echo " - Delete 1-st partition $partition_name from the storage disk and create new with whole available space ..."
+        start="$(/bin/busybox fdisk -l "$disk" | /bin/busybox grep -v sectors | /bin/busybox grep "$disk" | /bin/busybox awk  '{ print $4 }')"
+        fdisk "$disk" > /dev/null 2>&1 << EOF
+d
+n
+p
+$partition_number
+$start
+
+w
+EOF
+    fi
+}
+
+partition_operations "$disk" "$partitionNumber" "$partitionName"
+
+echo " - Update the partition table on $disk ..."
+/sbin/blockdev --rereadpt "$disk" > /dev/null 2>&1
+sleep 2
+
+# Get the file system type for the partition and perform file system operations
+perform_fs_operations() {
+    local partition_name=$1
+    fs_type=$(/sbin/blkid -ofull "$partition_name")
+    if [ "${fs_type}x" != "x" ]; then
+        echo " - Start e2fsck $partition_name ..."
+        e2fsck -f -p "$partition_name"
+        sleep 2
+        echo " - Start resize2fs $partition_name ..."
+        resize2fs "$partition_name"
+        sleep 2
+    else
+        echo " - Error blkid $?"
+        exit 1
+    fi
+}
+
+perform_fs_operations "$partitionName"
+
+echo " - Resize of the storage disk was successfully done."
+sleep 5
+exit 0

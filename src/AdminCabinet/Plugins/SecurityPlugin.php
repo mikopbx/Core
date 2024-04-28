@@ -28,102 +28,71 @@ use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
-use Phalcon\Text;
 
 /**
- * SecurityPlugin
- *
- * This is the security plugin which controls that users only have access to the modules they're assigned to
+ * Handles access control and authentication for the application.
+ * Ensures that users access only the areas they are permitted to.
  */
 class SecurityPlugin extends Injectable
 {
 
     /**
-     * Runs before dispatching a request.
+     * Executes before every request is dispatched.
+     * Verifies user authentication and authorization for the requested resource.
+     * Unauthenticated users are redirected to the login page or shown a 403 error for AJAX requests.
+     * Unauthorized access attempts lead to a 401 error page.
      *
-     * This method checks if the user is authenticated and authorized to access the requested controller and action. If the
-     * user is not authenticated, the method redirects to the login page or returns a 403 response for AJAX requests. If the
-     * requested controller does not exist, the method redirects to the extensions page. If the user is not authorized, the
-     * method shows a 401 error page.
+     * @param Event $event The current event instance.
+     * @param Dispatcher $dispatcher The dispatcher instance.
      *
-     * @param Event $event The event object.
-     * @param Dispatcher $dispatcher The dispatcher object.
-     *
-     * @return bool `true` if the request should continue, `false` otherwise.
+     * @return bool Returns `true` to continue with the dispatch process, `false` to halt.
      */
     public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher): bool
     {
-        // Check if user is authenticated
+        // Determine if the user is authenticated
         $isAuthenticated = $this->checkUserAuth() || $this->isLocalHostRequest();
 
-        // Get the controller and action names
+        // Identify the requested action and controller
         $action = $dispatcher->getActionName();
 
         /** @scrutinizer ignore-call */
         $controllerClass = $this->dispatcher->getHandlerClass();
 
-        // Controllers allowed without authentication
+        // Define controllers accessible without authentication
         $publicControllers = [
             SessionController::class,
             LanguageController::class,
             ErrorsController::class
         ];
 
-        // Redirect to login page if user is not authenticated and the controller is not "session"
+        // Handle unauthenticated access to non-public controllers
         if (!$isAuthenticated && !in_array($controllerClass, $publicControllers)) {
-            // Return a 403 response for AJAX requests
+            // AJAX requests receive a 403 response
             if ($this->request->isAjax()) {
                 $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
             } else {
-                // Redirect to login page for normal requests
-                $dispatcher->forward([
-                    'controller' => 'session',
-                    'action' => 'index',
-                    'module' => 'admin-cabinet',
-                    'namespace' => 'MikoPBX\AdminCabinet\Controllers'
-                ]);
+                // Standard requests are redirected to the login page
+                $this->forwardToLoginPage($dispatcher);
             }
 
             return false;
         }
 
-        // Check if the authenticated user is allowed to access the requested controller and action
+        // Authenticated users: validate access to the requested resource
         if ($isAuthenticated) {
-            // Check if the desired controller exists or show the extensions page
+            // Redirect to home if the controller is missing or irrelevant
             if (!class_exists($controllerClass)
                 || ($controllerClass === SessionController::class && strtoupper($action) !== 'END')) {
-                // Redirect to home page if controller does not set or user logged in but still on session page
-                $homePath = $this->session->get(SessionController::SESSION_ID)[SessionController::HOME_PAGE];
-                if (empty($homePath)){
-                    $dispatcher->forward([
-                        'module' => 'admin-cabinet',
-                        'controller' => 'errors',
-                        'action' => 'show404',
-                        'namespace' => 'MikoPBX\AdminCabinet\Controllers'
-                    ]);
-                    return true;
-                }
-                $module = explode('/', $homePath)[1];
-                $controller = explode('/', $homePath)[2];
-                $action = explode('/', $homePath)[3];
-                $dispatcher->forward([
-                    'module' => $module,
-                    'controller' => $controller,
-                    'action' => $action
-                ]);
+                $this->redirectToHome($dispatcher);
                 return true;
             }
+
+            // Restrict access to unauthorized resources
             if (!$this->isLocalHostRequest()
                 && !$this->isAllowedAction($controllerClass, $action)
                 && !in_array($controllerClass, $publicControllers)
             ) {
-                // Show a 401 error if not allowed
-                $dispatcher->forward([
-                    'module' => 'admin-cabinet',
-                    'controller' => 'errors',
-                    'action' => 'show401',
-                    'namespace' => 'MikoPBX\AdminCabinet\Controllers'
-                ]);
+                $this->forwardTo401Error($dispatcher);
                 return true;
             }
         }
@@ -131,7 +100,59 @@ class SecurityPlugin extends Injectable
         return true;
     }
 
+    /**
+     * Redirects to the user's home page or a default page if the home page is not set.
+     *
+     * This method determines the user's home page based on the session data. If the home page path is not set in the session,
+     * it defaults to '/admin-cabinet/extensions/index'. The method then parses the home page path to extract the module,
+     * controller, and action, and uses the dispatcher to forward the request to the appropriate route.
+     *
+     * @param Dispatcher $dispatcher The dispatcher object used to forward the request.
+     */
+    private function redirectToHome($dispatcher): void{
+        // Retrieve the home page path from the session, defaulting to a predefined path if not set
+        $homePath = $this->session->get(SessionController::SESSION_ID)[SessionController::HOME_PAGE];
+        if (empty($homePath)){
+            $homePath='/admin-cabinet/extensions/index';
+        }
+        // Extract the module, controller, and action from the home page path
+        $module = explode('/', $homePath)[1];
+        $controller = explode('/', $homePath)[2];
+        $action = explode('/', $homePath)[3];
 
+        // Forward the request to the determined route
+        $dispatcher->forward([
+            'module' => $module,
+            'controller' => $controller,
+            'action' => $action
+        ]);
+    }
+
+    /**
+     * Redirects the user to a 401 error page.
+     * @param $dispatcher Dispatcher instance for handling the redirection.
+     */
+    private function forwardTo401Error($dispatcher): void{
+        $dispatcher->forward([
+            'module' => 'admin-cabinet',
+            'controller' => 'errors',
+            'action' => 'show401',
+            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
+        ]);
+    }
+
+    /**
+     * Redirects the user to the login page.
+     * @param $dispatcher Dispatcher instance for handling the redirection.
+     */
+    private function forwardToLoginPage($dispatcher): void{
+        $dispatcher->forward([
+            'controller' => 'session',
+            'action' => 'index',
+            'module' => 'admin-cabinet',
+            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
+        ]);
+    }
     /**
      * Checks if the current user is authenticated.
      *

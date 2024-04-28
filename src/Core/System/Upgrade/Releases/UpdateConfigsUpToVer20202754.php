@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Config as ConfigAlias;
@@ -104,7 +105,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
                 continue;
             }
             if ( ! $codec->delete()) {
-                Util::sysLogMsg(
+                SystemMessages::sysLogMsg(
                     __CLASS__,
                     'Can not delete codec ' . $codec->name . ' from MikoPBX\Common\Models\Codecs',
                     LOG_ERR
@@ -152,7 +153,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
             $codecData->type        = $type;
             $codecData->description = $desc;
             if ( ! $codecData->save()) {
-                Util::sysLogMsg(
+                SystemMessages::sysLogMsg(
                     __CLASS__,
                     'Can not update codec info ' . $codecData->name . ' from \MikoPBX\Common\Models\Codecs',
                     LOG_ERR
@@ -212,7 +213,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
             try {
                 $db->exec($sql);
             } catch (Throwable $e) {
-                Util::sysLogMsg(__CLASS__, 'Can clean astdb from UserBuddyStatus...' . $e->getMessage(), LOG_ERR);
+                SystemMessages::sysLogMsg(__CLASS__, 'Can clean astdb from UserBuddyStatus...' . $e->getMessage(), LOG_ERR);
                 sleep(2);
             }
             $db->close();
@@ -225,7 +226,8 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
      */
     private function copyMohFilesToStorage(): void
     {
-        Storage::copyMohFilesToStorage();
+        $storage = new Storage();
+        $storage->copyMohFilesToStorage();
     }
 
     /**
@@ -306,6 +308,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
      */
     private function moveReadOnlySoundsToStorage(): void
     {
-        Storage::moveReadOnlySoundsToStorage();
+        $storage = new Storage();
+        $storage->moveReadOnlySoundsToStorage();
     }
 }

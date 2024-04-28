@@ -1,0 +1,93 @@
+#!/bin/sh
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+. /sbin/shell_functions.sh;
+
+systemDir='/system';
+mkdir "$systemDir";
+
+# Function to mount disks smaller than 60MB
+searchNewFirmware() {
+  # Get a list of block devices with their UUIDs.
+  list="$(/bin/lsblk -r -p -o NAME,UUID | /bin/busybox grep '1 ' | /bin/busybox cut -f 1 -d ' ')";
+  # Iterate over the block devices.
+  for disk in $list; do
+    size="$(/bin/lsblk "$disk" -P -b -o SIZE | /bin/busybox cut -f 2 -d '"' | /bin/busybox cut -f 1 -d 'M')";
+    # Skip disks larger than 60MB.
+    if [ "$(printf "%.0f\n" "$((size / 1024 / 1024))")" -gt 60 ]; then
+       continue;
+    fi
+
+    # Mount the disk to the system directory if it less than 60 mb
+    mount "$disk" "$systemDir";
+    MOUNT_RESULT=$?;
+    if [ ! "${MOUNT_RESULT}" = "0" ] ; then
+      continue;
+    fi
+    checkAndUpgrade "$disk";
+
+    # Umount boot disk
+    umount -f "$disk";
+
+  done
+}
+
+# Function to check for and apply updates
+checkAndUpgrade() {
+  local disk="$1"
+  updateFolder="$systemDir/upgrade";
+   # Check if the update folder exists.
+  if [ -d "$updateFolder" ]; then
+     # Start SSH autologin in console session immediately
+    touch /etc/ssh-tty-autologin;
+
+    # Move files to prevent cycle
+    mv "$updateFolder" /tmp
+    cd /tmp/upgrade
+
+    # Inform user and allow interrupting the upgrade process
+    echoToTeletype "Found a new MikoPBX firmware."
+    echoToTeletype "Press 'c' to cancel the upgrade or wait 10 seconds to continue."
+    local counter=10
+    while [ $counter -gt 0 ]; do
+      read -t 1 -n 1 input
+      if [ "$input" = "C" ] || [ "$input" = "c" ]; then
+        echoToTeletype "Upgrade cancelled by user."
+        return 1  # Exit the function early if 'c' is pressed
+      fi
+      echoToTeletype -ne "Continuing in $counter seconds...\033[0K\r"
+      counter=$((counter - 1))
+    done
+    echoToTeletype "Starting upgrade process..."
+
+    # Umount boot disk
+    umount -f "$disk";
+
+    # Start upgrade process
+    /bin/sh firmware_upgrade.sh
+
+    # Set a flag to indicate rebooting.
+    touch /tmp/rebooting;
+    exit 0;
+  fi
+}
+
+# Start the process
+searchNewFirmware;
+
+# If no update script is found, print a message.
+echoToTeletype " - No update script found";

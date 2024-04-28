@@ -3,7 +3,7 @@
 {% endif %}
     {% for record in apps %}
         {% if loop.first %}
-            <table class="ui selectable compact unstackable table" id="custom-applications-table">
+            <table class="ui selectable compact unstackable table" id="dialplan-applications-table">
             <thead>
             <tr>
                 <th>{{ t._('da_ColumnExtension') }}</th>

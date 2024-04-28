@@ -23,6 +23,7 @@ namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCdr;
 use Phalcon\Di;
@@ -88,7 +89,7 @@ class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProvide
             try {
                 $result_data = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
             } catch (\Throwable $e) {
-                Util::sysLogMsg('SELECT_CDR_TUBE', 'Error parse response.');
+                SystemMessages::sysLogMsg('SELECT_CDR_TUBE', 'Error parse response.');
             }
 
             $di = Di::getDefault();

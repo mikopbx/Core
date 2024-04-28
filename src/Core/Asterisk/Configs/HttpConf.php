@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -42,19 +43,19 @@ class HttpConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $enabled = ($this->generalSettings['AJAMEnabled'] === '1') ? 'yes' : 'no';
+        $enabled = ($this->generalSettings[PbxSettingsConstants::AJAM_ENABLED] === '1') ? 'yes' : 'no';
         $conf    = "[general]\n" .
             "enabled={$enabled}\n" .
             "bindaddr=0.0.0.0\n" .
-            "bindport={$this->generalSettings['AJAMPort']}\n" .
+            "bindport={$this->generalSettings[PbxSettingsConstants::AJAM_PORT]}\n" .
             "prefix=asterisk\n" .
             "enablestatic=yes\n\n";
 
-        if ( ! empty($this->generalSettings['AJAMPortTLS'])) {
+        if ( ! empty($this->generalSettings[PbxSettingsConstants::AJAM_PORT_TLS])) {
             $keys_dir = '/etc/asterisk/keys';
             Util::mwMkdir($keys_dir);
-            $WEBHTTPSPublicKey  = $this->generalSettings['WEBHTTPSPublicKey'];
-            $WEBHTTPSPrivateKey = $this->generalSettings['WEBHTTPSPrivateKey'];
+            $WEBHTTPSPublicKey  = $this->generalSettings[PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY];
+            $WEBHTTPSPrivateKey = $this->generalSettings[PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY];
 
             if ( ! empty($WEBHTTPSPublicKey) && ! empty($WEBHTTPSPrivateKey)) {
                 $s_data = "{$WEBHTTPSPublicKey}\n{$WEBHTTPSPrivateKey}";
@@ -64,7 +65,7 @@ class HttpConf extends AsteriskConfigClass
                 $s_data = implode("\n", $data);
             }
             $conf .= "tlsenable=yes\n" .
-                "tlsbindaddr=0.0.0.0:{$this->generalSettings['AJAMPortTLS']}\n" .
+                "tlsbindaddr=0.0.0.0:{$this->generalSettings[PbxSettingsConstants::AJAM_PORT_TLS]}\n" .
                 "tlscertfile={$keys_dir}/ajam.pem\n" .
                 "tlsprivatekey={$keys_dir}/ajam.pem\n";
             Util::fileWriteContent("{$keys_dir}/ajam.pem", $s_data);

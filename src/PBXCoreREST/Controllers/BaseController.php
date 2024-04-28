@@ -25,6 +25,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use Phalcon\Mvc\Controller;
 use Pheanstalk\Pheanstalk;
@@ -37,6 +38,8 @@ use Throwable;
  */
 class BaseController extends Controller
 {
+
+
     /**
      * Send a request to the backend worker.
      *
@@ -59,25 +62,8 @@ class BaseController extends Controller
         int $priority = Pheanstalk::DEFAULT_PRIORITY
     ): void
     {
-        // Old style modules, we can remove it after 2025
-        if ($processor === 'modules'){
-            $processor = PbxExtensionsProcessor::class;
-        }
+        list($debug, $requestMessage) = $this->prepareRequestMessage($processor, $payload, $actionName, $moduleName);
 
-        // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
-        // and set XDEBUG_SESSION Cookie header on REST request to debug it
-        // The set will break the WorkerApiCommands() execution on prepareAnswer method
-        $debug = strpos($this->request->getHeader('Cookie'),'XDEBUG_SESSION')!==false;
-
-        $requestMessage = [
-            'processor' => $processor,
-            'data'      => $payload,
-            'action'    => $actionName,
-            'debug'     => $debug
-        ];
-        if ($processor === PbxExtensionsProcessor::class){
-            $requestMessage['module'] = $moduleName;
-        }
         try {
             $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
             $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
@@ -89,6 +75,10 @@ class BaseController extends Controller
                 $response = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
                 if (array_key_exists(BeanstalkClient::QUEUE_ERROR, $response)){
                     $this->response->setPayloadError($response[BeanstalkClient::QUEUE_ERROR]);
+                } elseif (array_key_exists(BeanstalkClient::RESPONSE_IN_FILE, $response)){
+                    $tempFile = $response[BeanstalkClient::RESPONSE_IN_FILE];
+                    $response = unserialize(file_get_contents($tempFile));
+                    $this->response->setPayloadSuccess($response);
                 } else {
                     $this->response->setPayloadSuccess($response);
                 }
@@ -113,6 +103,46 @@ class BaseController extends Controller
             ->response
             ->setPayloadError($this->response->getHttpCodeDescription($code) . ' ' . $description)
             ->setStatusCode($code);
+    }
+
+    /**
+     * Prepare a request message for sending to backend worker
+     *
+     * @param string $processor
+     * @param $payload
+     * @param string $actionName
+     * @param string $moduleName
+     * @return array
+     */
+    public function prepareRequestMessage(string $processor, $payload, string $actionName, string $moduleName): array
+    {
+        // Old style modules, we can remove it after 2025
+        if ($processor === 'modules') {
+            $processor = PbxExtensionsProcessor::class;
+        }
+
+        // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
+        // and set XDEBUG_SESSION Cookie header on REST request to debug it
+        // The set will break the WorkerApiCommands() execution on prepareAnswer method
+        $debug = strpos($this->request->getHeader('Cookie'), 'XDEBUG_SESSION') !== false;
+
+        $requestMessage = [
+            'processor' => $processor,
+            'data' => $payload,
+            'action' => $actionName,
+            'async'=> false,
+            'asyncChannelId'=> '',
+            'debug' => $debug
+        ];
+        if ($this->request->isAsyncRequest()){
+            $requestMessage['async']= true;
+            $requestMessage['asyncChannelId']= $this->request->getAsyncRequestChannelId();
+        }
+
+        if ($processor === PbxExtensionsProcessor::class) {
+            $requestMessage['module'] = $moduleName;
+        }
+        return array($debug, $requestMessage);
     }
 
 }

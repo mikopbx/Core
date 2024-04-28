@@ -261,8 +261,8 @@ const updatePBX = {
      * @param response
      */
     cbAfterStartUpdate(response) {
-        if (response.length === 0 || response === false) {
-            UserMessage.showMultiString(globalTranslate.upd_UpgradeError);
+        if (response.result !== undefined && response.result===false) {
+            UserMessage.showMultiString(response.messages, globalTranslate.upd_UpgradeError);
             updatePBX.$submitButton.removeClass('loading');
         }
     },

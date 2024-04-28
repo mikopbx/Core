@@ -19,8 +19,9 @@
  <phpunit bootstrap="../../vendor/autoload.php">
     <testsuites>
         <testsuite name="TestMikoPBX">
-            <file>Tests/LoginTest.php</file>
             <file>Tests/ChangeWeakPasswordTest.php</file>
+            <file>Tests/ChangeLicenseKeyTest.php</file>
+            <file>Tests/InstallModulesTest.php</file>
             <file>Tests/FillPBXSettingsTest.php</file>
             <file>Tests/CustomFileChangeTest.php</file>
             <file>Tests/CheckDropdownBeforeCreateAudioFileTest.php</file>
@@ -28,20 +29,20 @@
             <file>Tests/CheckDropdownAfterCreateAudioFileTest.php</file>
             <file>Tests/DeleteAudioFileTest.php</file>
             <file>Tests/CheckDropdownAfterDeleteAudioFileTest.php</file>
-            <file>Tests/CreateSIPProviders.php</file>
-            <file>Tests/CreateIAXProviders.php</file>
+            <file>Tests/CreateSIPProvidersTest.php</file>
+            <file>Tests/CreateIAXProvidersTest.php</file>
             <file>Tests/CreateIncomingCallRules.php</file>
             <file>Tests/CreateDefaultIncomingCallRule.php</file>
-            <file>Tests/CreateOutgoingCallRules.php</file>
+            <file>Tests/CreateOutgoingCallRulesTest.php</file>
             <file>Tests/CreateOutOfWorkPeriodsTest.php</file>
-            <file>Tests/CreateCallQueue.php</file>
+            <file>Tests/CreateCallQueueTest.php</file>
             <file>Tests/CreateIVRMenusTest.php</file>
             <file>Tests/CreateExtensionsTest.php</file>
-            <file>Tests/FillDataTimeSettings.php</file>
+            <file>Tests/FillDataTimeSettingsTest.php</file>
             <file>Tests/CreateMOHAudioFilesTest.php</file>
             <file>Tests/CreateAmiUsersTest.php</file>
-            <file>Tests/CreateFail2BanRules.php</file>
-            <file>Tests/CreateFirewallRules.php</file>
+            <file>Tests/CreateFail2BanRulesTest.php</file>
+            <file>Tests/CreateFirewallRulesTest.php</file>
             <file>Tests/CreateConferenceRoomsTest.php</file>
             <file>Tests/CreateDialPlanApplicationTest.php</file>
             <file>Tests/NetworkInterfacesTest.php</file>
@@ -50,9 +51,8 @@
             <file>Tests/DeleteExtensionTest.php</file>
             <file>Tests/DeleteExtensionFromDropDownTest.php</file>
             <file>Tests/DeleteProviderTest.php</file>
-            <file>Tests/ChangeLicenseKeyTest.php</file>
-            <file>Tests/InstallModulesTest.php</file>
-            <file>Tests/CheckDropdownsOnAddExtensions.php</file>
+            <file>Tests/CheckDropdownsOnAddExtensionsTest.php</file>
+            <file>Tests/CheckDropdownsOnDeleteQueueTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

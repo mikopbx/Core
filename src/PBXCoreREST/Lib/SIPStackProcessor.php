@@ -20,8 +20,10 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 
-use MikoPBX\Common\Models\Sip;
-use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\Sip\GetPeersStatusesAction;
+use MikoPBX\PBXCoreREST\Lib\Sip\GetPeerStatusAction;
+use MikoPBX\PBXCoreREST\Lib\Sip\GetRegistryAction;
+use MikoPBX\PBXCoreREST\Lib\Sip\GetSipSecretAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -49,16 +51,27 @@ class SIPStackProcessor extends Injectable
         $res->processor = __METHOD__;
         switch ($action) {
             case 'getPeersStatuses':
-                $res = self::getPeersStatuses();
+                $res = GetPeersStatusesAction::main();
                 break;
             case 'getSipPeer':
-                $res = self::getPeerStatus($data['peer']);
+                if (!empty($data['peer'])) {
+                    $res = GetPeerStatusAction::main($data['peer']);
+                } else {
+                    $res->messages['error'][] = 'Empty peer value in POST/GET data';
+                }
                 break;
             case 'getRegistry':
-                $res = self::getRegistry();
+                $res = GetRegistryAction::main();
+                break;
+            case 'getSecret':
+                if (!empty($data['number'])) {
+                    $res = GetSipSecretAction::main($data['number']);
+                } else {
+                    $res->messages['error'][] = 'Empty number value in POST/GET data';
+                }
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
                 break;
         }
 
@@ -67,103 +80,4 @@ class SIPStackProcessor extends Injectable
         return $res;
     }
 
-    /**
-     * Retrieves the statuses of SIP peers.
-     *
-     * @return PBXApiResult An object containing the result of the API call.
-     */
-    public static function getPeersStatuses(): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        try {
-            $am = Util::getAstManager('off');
-            $peers = $am->getPjSipPeers();
-            $res->success = true;
-            $res->data = $peers;
-        } catch (\Throwable $e) {
-            $res->success = false;
-            $res->messages[] = $e->getMessage();
-        }
-
-        return $res;
-    }
-
-    /**
-     * Retrieves the status of a SIP peer.
-     *
-     * @param string $peer The peer to retrieve the status for.
-     *
-     * @return PBXApiResult An object containing the result of the API call.
-     */
-    public static function getPeerStatus(string $peer): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        try {
-            $am = Util::getAstManager('off');
-            $peers = $am->getPjSipPeer($peer);
-            $res->success = true;
-            $res->data = $peers;
-        } catch (\Throwable $e) {
-            $res->success = false;
-            $res->messages[] = $e->getMessage();
-        }
-
-        return $res;
-    }
-
-    /**
-     * Retrieves the statuses of SIP providers registration.
-     *
-     * @return PBXApiResult An object containing the result of the API call.
-     */
-    public static function getRegistry(): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-
-        try {
-            $am = Util::getAstManager('off');
-            $peers = $am->getPjSipRegistry();
-            $providers = Sip::find("type = 'friend'");
-            foreach ($providers as $provider) {
-                if ($provider->disabled === '1') {
-                    $peers[] = [
-                        'state' => 'OFF',
-                        'id' => $provider->uniqid,
-                        'username' => $provider->username,
-                        'host' => $provider->host,
-                    ];
-                    continue;
-                }
-                if ($provider->registration_type === Sip::REG_TYPE_INBOUND || $provider->registration_type === Sip::REG_TYPE_NONE) {
-                    $peers_status = $am->getPjSipPeer($provider->uniqid);
-                    $peers[] = [
-                        'state' => ($peers_status['state'] === 'OK' && $provider->registration_type === Sip::REG_TYPE_INBOUND) ? 'REGISTERED' : $peers_status['state'],
-                        'id' => $provider->uniqid,
-                        'username' => $provider->username,
-                        'host' => $provider->host,
-                    ];
-                    continue;
-                }
-                foreach ($peers as &$peer) {
-                    if (!empty($peer['id'])) {
-                        continue;
-                    }
-                    if ($peer['host'] !== $provider->host || $peer['username'] !== $provider->username) {
-                        continue;
-                    }
-                    $peer['id'] = $provider->uniqid;
-                }
-                unset($peer);
-            }
-            $res->data = $peers;
-            $res->success = true;
-        } catch (\Throwable $e) {
-            $res->success = false;
-            $res->messages[] = $e->getMessage();
-        }
-        return $res;
-    }
 }

@@ -19,14 +19,13 @@
 
 namespace MikoPBX\Modules;
 
-
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di;
 use Phalcon\Mvc\Application;
-
 use Phalcon\Mvc\Router;
 use Phalcon\Text;
 use Throwable;
@@ -275,8 +274,9 @@ class PbxExtensionUtils
      * Disables a module based on its file path.
      *
      * @param string $moduleFile The file path of the module.
+     * @param string $exceptionMessage The exception message.
      */
-    public static function disableBadModule(string $moduleFile): void
+    public static function disableBadModule(string $moduleFile, string $exceptionMessage=''): void
     {
         // Check if the module is within the /custom_modules/ directory
         $customModulesPos = strpos($moduleFile, '/custom_modules/');
@@ -287,7 +287,8 @@ class PbxExtensionUtils
             $moduleUniqueId = $moduleNameParts[0];
             if (!empty($moduleUniqueId)) {
                 // Disable the module using its unique ID
-                self::forceDisableModule($moduleUniqueId);
+                self::forceDisableModule($moduleUniqueId, $exceptionMessage);
+                SystemMessages::sysLogMsg(__CLASS__, "The module {$moduleUniqueId} was disabled because an exception occurred in it", LOG_ERR);
             }
         }
     }
@@ -296,22 +297,27 @@ class PbxExtensionUtils
      * Disables a module by its unique ID.
      *
      * @param string $moduleUniqueId The unique ID of the module to be disabled.
+     * @param string $exceptionMessage The exception message.
      */
-    private static function forceDisableModule(string $moduleUniqueId): void
+    private static function forceDisableModule(string $moduleUniqueId, string $exceptionMessage=''): void
     {
+        $reason =  PbxExtensionState::DISABLED_BY_EXCEPTION;
+        $reasonText = $exceptionMessage;
         try {
             // Disable the module using the PbxExtensionState class
             $moduleStateProcessor = new PbxExtensionState($moduleUniqueId);
-            $moduleStateProcessor->disableModule();
+            $moduleStateProcessor->disableModule($reason, $reasonText);
         } catch (Throwable $exception) {
             // Log an error message if module disabling fails
-            Util::sysLogMsg(__CLASS__, "Can not disable module {$moduleUniqueId} Message: {$exception}", LOG_ERR);
+            SystemMessages::sysLogMsg(__CLASS__, "Can not disable module {$moduleUniqueId} Message: {$exception}", LOG_ERR);
         } finally {
             // Update module status to disabled if it was not already disabled
             $currentModule = PbxExtensionModules::findFirstByUniqid($moduleUniqueId);
             if ($currentModule->disabled === '0') {
-                Util::sysLogMsg(__CLASS__, "Force disable module {$moduleUniqueId} on the PbxExtensionModules table", LOG_ERR);
+                SystemMessages::sysLogMsg(__CLASS__, "Force disable module {$moduleUniqueId} on the PbxExtensionModules table", LOG_ERR);
                 $currentModule->disabled = '1';
+                $currentModule->disableReason = $reason;
+                $currentModule->disableReasonText = $reasonText;
                 $currentModule->update();
             }
         }

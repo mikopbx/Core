@@ -1,0 +1,41 @@
+#!/usr/bin/php -f
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace MikoPBX\Core\RootFS\etc\rc;
+use MikoPBX\Core\System\{Processes, Util, SystemLoader};
+
+require_once('Globals.php');
+
+// Sleep if /tmp/ejectcd file exists
+if(file_exists('/tmp/ejectcd')){
+    sleep(15);
+}
+
+// Create an instance of SystemLoader and start the system
+$mikoPBX = new SystemLoader();
+$result = $mikoPBX->startSystem();
+
+// Run /etc/rc/bootup_pbx in background if system start is successful
+if((true === $result)
+    && ! Util::isRecoveryMode()
+    && ! Util::isDocker()
+) {
+    Processes::mwExecBg('/etc/rc/bootup_pbx');
+}

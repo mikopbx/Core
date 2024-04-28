@@ -1,0 +1,59 @@
+/* Align vertically icon in cell for PbxExtensionModules */
+i.vertically-aligned {
+    vertical-align: super;
+}
+
+/* Change cursor to pointer on PbxExtensionModules page */
+tr.new-module-row td.show-details-on-click{
+    cursor: pointer;
+}
+
+div.module-eula,
+div.module-changelog {
+    overflow-y: auto;
+    height: 832px;
+}
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+div.module-eula {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.4em;
+}
+
+div.module-detail-popup{
+    height: 1100px;
+}
+
+/**
+Hide module status toggle by default, it will show from pbx-extension-module-status.js
+ */
+#module-status-toggle-segment {
+    display: none;
+}
+
+
+/* No internet warning on license page */
+div.show-if-no-internet {
+    display: none;
+}
+
+/* No license warning on license page */
+div.show-if-license-fail {
+    display: none;
+}

@@ -28,6 +28,10 @@ use Phalcon\Mvc\Model\Relation;
  */
 class OutWorkTimes extends ModelsBase
 {
+    public const CAL_TYPE_NONE = 'none';
+    public const CAL_TYPE_CALDAV = 'caldav';
+    public const CAL_TYPE_ICAL = 'ical';
+
     /**
      * @Primary
      * @Identity
@@ -112,6 +116,36 @@ class OutWorkTimes extends ModelsBase
      */
     public ?string $allowRestriction = '0';
 
+    /**
+     * Priority level of the routing rule
+     *
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $priority = '0';
+
+    /**
+     * Calendar type
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $calType = '';
+
+    /**
+     * Calendar url
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $calUrl = '';
+
+    /**
+     * Calendar user
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $calUser = '';
+
+    /**
+     * Calendar secret
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $calSecret = '';
 
     /**
      * Initialize the model.

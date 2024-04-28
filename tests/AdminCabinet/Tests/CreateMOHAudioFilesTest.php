@@ -19,23 +19,40 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
+/**
+ * Class to test the creation of MOH (Music on Hold) audio files in the admin cabinet.
+ */
 class CreateMOHAudioFilesTest extends MikoPBXTestsBase
 {
 
     /**
-     * @depends      testLogin
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Create MOH files");
+    }
+
+    /**
+     * Test the creation of MOH audio files.
+     *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params
+     * @param array $params The parameters for creating the MOH audio file.
      *
      * @throws \Facebook\WebDriver\Exception\NoSuchElementException
      * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testCreateMohFile($params):void
+    public function testCreateMohFile(array $params):void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/sound-files/index/');
         $this->changeTabOnCurrentPage('moh');
@@ -44,7 +61,6 @@ class CreateMOHAudioFilesTest extends MikoPBXTestsBase
         $this->clickButtonByHref('/admin-cabinet/sound-files/modify/moh');
 
         $this->changeFileField('sound-file', $params['path']);
-
 
         self::$driver->wait(2);
         self::$driver->wait(30, 500)->until(
@@ -67,26 +83,32 @@ class CreateMOHAudioFilesTest extends MikoPBXTestsBase
         $this->assertInputFieldValueEqual('name', 'moh_'.$params['name']);
     }
 
-
     /**
-     * Dataset provider
+     * Dataset provider for MOH audio file creation parameters.
+     *
      * @return array
      */
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [[
-            'name' => 'The first MOH audio record',
-            'path'    => 'C:\Users\hello\Documents\audio\250Hz_44100Hz_16bit_05sec.wav',
-        ]];
-        $params[] = [[
-            'name' => 'The second MOH audio record',
-            'path'    => 'C:\Users\hello\Documents\audio\blind_willie.mp3',
-        ]];
-        $params[] = [[
-            'name' => 'The third MOH audio record',
-            'path'    => 'C:\Users\hello\Documents\audio\first_noel.mp3',
-        ]];
+        $params['The first MOH audio record 250Hz_44100Hz_16bit_05sec.wav'] = [
+            [
+                'name' => 'The first MOH audio record',
+                'path'    => 'C:\Users\hello\Documents\audio\250Hz_44100Hz_16bit_05sec.wav',
+            ]
+        ];
+        $params['The second MOH audio record blind_willie.mp3'] = [
+            [
+                'name' => 'The second MOH audio record',
+                'path'    => 'C:\Users\hello\Documents\audio\blind_willie.mp3',
+            ]
+        ];
+        $params['The third MOH audio record first_noel.mp3'] = [
+            [
+                'name' => 'The third MOH audio record',
+                'path'    => 'C:\Users\hello\Documents\audio\first_noel.mp3',
+            ]
+        ];
         return $params;
     }
 }

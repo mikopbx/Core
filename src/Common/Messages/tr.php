@@ -1,56 +1,5 @@
 <?php
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English',
     'ex_EnglishUK' => 'English(UK)',
@@ -72,6 +21,9 @@ return [
     'ex_Czech' => 'Čeština',
     'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
+    'ex_Azerbaijan' => 'Azərbaycan',
+    'ex_Romanian' => 'Română',
+    'ex_Thai' => 'ไทย',
     'ex_ValidateForwardingToBeFilled' => 'Yönlendirme ayarlarında, zaman aşımı yönlendirme numarası doldurulmaz',
     'ex_ValidateRingingBeforeForwardOutOfRange' => 'Yönlendirme ayarlarında, aktarımdan önceki süre yanlış belirtilir. {RuleValue} arasında bir değer seçin.',
     'ex_ValidateNumberIsEmpty' => 'Çalışan uzantısı doldurulmadı',
@@ -758,8 +710,8 @@ Kupon bir kez etkinleştirilebilir ve sonrasında kullanılabilir hale gelir.',
     'lic_UnknownLicenseMessage' => 'Lisans sisteminden yanıt yok',
     'lic_MarketplaceHeader' => 'Pazar yeri - bunlar ek fırsatlar',
     'er_Home' => 'Başlangıca git',
-    'rs_RestartPhoneSystem' => 'PBX\'i yeniden yükle',
-    'rs_ShutDownPhoneSystem' => 'PBX\'i kapatın',
+    'rs_RestartPhoneSystem' => 'MikoPBX\'i yeniden başlatın',
+    'rs_ShutDownPhoneSystem' => 'MikoPBX\'i kapatın',
     'rs_Src' => 'kim',
     'dbg_NoDebugInformation' => 'Bilgi yok',
     'f2b_Jail_dropbear' => 'SSH Oturum Yetkilendirme Hataları',
@@ -772,14 +724,14 @@ Kupon bir kez etkinleştirilebilir ve sonrasında kullanılabilir hale gelir.',
     'loc_NoResult' => 'Hiçbir şey bulunamadı',
     'adv_NetworksNotConfigured' => 'İzin verilen alt ağ ayarları yapılandırılmadı - <a href=\'%url%\'>değiştir</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Depolama diskinde boş alan azalıyor (%free% Mb) </a>',
-    'сal_Today' => 'bugün',
-    'сal_Yesterday' => 'dün',
-    'сal_LastWeek' => 'Son 7 gün',
-    'сal_Last30Days' => 'Son 30 gün',
-    'сal_ThisMonth' => 'Geçerli ay',
-    'сal_LastMonth' => 'Geçen ay',
-    'сal_ApplyBtn' => 'Başvurmak',
-    'сal_CancelBtn' => 'iptal',
+    'cal_Today' => 'bugün',
+    'cal_Yesterday' => 'dün',
+    'cal_LastWeek' => 'Son 7 gün',
+    'cal_Last30Days' => 'Son 30 gün',
+    'cal_ThisMonth' => 'Geçerli ay',
+    'cal_LastMonth' => 'Geçen ay',
+    'cal_ApplyBtn' => 'Başvurmak',
+    'cal_CancelBtn' => 'iptal',
     'sntry_ErrorFormEntry' => 'Alanlar doldurulmaz, düzeltin ve tekrar göndermeyi deneyin!',
     'sntry_SuccessMessage' => 'Yardımlarınız için teşekkür ederim!',
     'lic_LicenseKeyMessage' => 'Lisans anahtarı, herhangi bir MIKO ürününden aldığınız tüm lisansları depolamak için kullanılır.<br>
@@ -842,7 +794,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'upd_DownloadUpgradeError' => 'Güncelleme indirilirken hata oluştu, daha sonra tekrar deneyin',
     'upd_UploadError' => 'Güncelleme indirilirken hata oluştu',
     'upd_UpdateTitle' => 'PBX Güncellemesi',
-    'upd_UpdateDescription' => 'Güncellemeyi indirdikten sonra, PBX otomatik olarak yeniden başlayacak, mevcut tüm aramalar kesilecektir. Güncellemeden önce MikoPBX\'inizi yedeklediğinizden emin olun.',
+    'upd_UpdateDescription' => 'Güncelleme indirildikten sonra MikoPBX otomatik olarak yeniden başlatılacak ve mevcut tüm çağrılar kesilecektir. Güncellemeden önce MikoPBX\'i yedeklediğinizden emin olun.',
     'upd_Cancel' => 'iptal',
     'upd_Update' => 'güncelleştirme',
     'upd_UpgradeInProgress' => 'Sistem dosyaları güncelleniyor …',
@@ -858,7 +810,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'ext_ModuleDisabledStatusDisabled' => 'Modül devre dışı',
     'ext_ModuleDisabledStatusEnabled' => 'Modül dahil',
     'ext_ModuleStatusChanging' => 'Modülün durumunu değiştiriyoruz …',
-    'ext_ExternalDescription' => 'Sitedeki açıklama',
+    'ext_ExternalDescription' => 'Ayrıntılı açıklama, belgeler',
     'ext_DeleteDescription' => 'Bir modülü çıkarmadan önce, diğer modüller ve sistem ayarları arasındaki çapraz referansları kontrol edecektir.',
     'ext_KeepModuleSettings' => 'Mevcut modül ayarlarını kaydet',
     'ext_Cancel' => 'iptal',
@@ -892,9 +844,9 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'adv_FirewallDisabled' => 'Sistemde devre dışı bırakılmış güvenlik duvarı - <a href=\'%url%\'> değişiklik </a>',
     'adv_StorageDiskUnMounted' => 'Ayarları ve verileri saklamak için bağlı olmayan sürücü!',
     'adv_ThisCopyHasLicensingTroubles' => 'PBX lisans sorunu: %error% - <a target="_blank" href=\'%url%\'> nasıl düzeltilir </a>',
-    'сal_from' => 'ile',
-    'сal_to' => 'üzerinde',
-    'сal_CustomPeriod' => 'keyfi',
+    'cal_from' => 'ile',
+    'cal_to' => 'üzerinde',
+    'cal_CustomPeriod' => 'keyfi',
     'sntry_Title' => 'Bir şeyler ters gitti!',
     'sntry_Subtitle' => 'Hata bilgisi geliştiriciye gönderildi.',
     'sntry_Subtitle2' => 'Lütfen bu hataya neden olan işlemlerinizi açıklayın.',
@@ -1074,7 +1026,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP ve AJAM bağlantı noktaları farklı olmalıdır',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP ve AJAM bağlantı noktaları farklı olmalıdır',
     'Storage disk was mounted successfully...' => 'Depolama diski başarıyla monte edildi',
-    'gs_NeedRestartPBX' => 'Değiştirirken, PBX yeniden başlatılacaktır (yıldız servisi)',
+    'gs_NeedRestartPBX' => 'Değiştirildiğinde yıldız hizmeti yeniden başlatılacak',
     'ex_BusyLevelInfo' => 'Belirtilen görüşme sayısına ulaşıldığında, çalışanın telefonu meşgul kabul edilecektir.',
     'gs_RTPStunServer' => 'Sunucu STUN adresi (örnek: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'Dahili numara iki veya daha fazla basamaklı olmalıdır',
@@ -1114,14 +1066,14 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'ex_Transport' => 'Aktarım Protokolü',
     'gs_TLS_PORT' => 'SIP TLS bağlantı noktası (şifreli aramalar)',
     'ex_OutboundProxy' => 'Giden proxy (örnek: pbx.yandex.net:5080)',
-    'lic_FailedCheckLicenseNotPbxResponse' => 'ATS, lisansla ilgili bilgi talebine yanıt vermedi. Servis kullanılabilir değil.',
+    'lic_FailedCheckLicenseNotPbxResponse' => 'MikoPBX lisans bilgisi talebine yanıt vermedi. Hizmet kullanılamıyor.',
     'ms_SystemEmailForMissed' => 'Cevapsız bildirimler için e-posta',
     'sip_registration_type' => 'Hesap tipi',
     'sip_REG_TYPE_OUTBOUND' => 'Giden Kayıt',
     'sip_REG_TYPE_INBOUND' => 'Gelen Kayıt',
     'sip_REG_TYPE_NONE' => 'IP adresi ile kimlik doğrulama, şifre yok',
     'pr_RedefinitionFromUser' => '"Kimden" SIP başlığını yeniden tanımlama',
-    'nw_NATInfoMessage1' => 'PBX genel bir adreste mevcut olmalıdır',
+    'nw_NATInfoMessage1' => 'MikoPBX genel bir adreste mevcut olmalıdır',
     'nw_NATInfoMessage2' => 'SIP/RTP bağlantı noktası yönlendirme yönlendiricide yapılandırılmalıdır',
     'ex_dropdownCategory_SYSTEM' => 'Servis numaraları',
     'mo_SystemExten_hangup' => 'Son Arama',
@@ -1135,8 +1087,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'f2b_Jail_asterisk_v2' => 'SIP yetkilendirme hataları',
     'f2b_Jail_asterisk_security_log_v2' => 'SIP yetkilendirme hataları (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'SIP yetkilendirme hataları (hata)',
-    'ex_Azerbaijan' => 'Azərbaycan',
-    'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 basamak',
     'cr_pinCode' => 'Konferans PIN\'i',
     'tf_AllowRestriction' => 'Yalnızca belirli gelen rotalara uygula',
@@ -1178,7 +1128,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'adv_SSHPasswordMismatchStringsHash' => 'SSH şifresi MikoPBX web arayüzü dışında değiştirildi',
     'gs_SetPasswordError' => 'Parola - %password% kullanılamaz, basit parola sözlüğünde bulunur.',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Dikkat! MikoPBX\'inizde bulunan sorunlar!',
-    'adv_SSHPasswordMismatchFilesHash' => 'SSH MikoPBX parolası, yapılandırma dosyasında ayarlanan paroladan farklıdır. Belki de PBX konsolundan manuel olarak değiştirilmiştir.',
+    'adv_SSHPasswordMismatchFilesHash' => 'MikoPBX SSH şifresi, yapılandırma dosyasında ayarlanan şifreden farklıdır. MikoPBX konsolundan manuel olarak değiştirilmiş olabilir.',
     'cf_FileActionsScript' => 'Senaryo',
     'cf_OriginalFileHeader' => 'Sistem tarafından oluşturulan dosyanın orijinal içeriği',
     'cf_UserEditHeader' => 'Değişiklik yapmak için düzenleyici',
@@ -1218,4 +1168,74 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'sd_ToolTipDownload' => 'Günlük dosyasını indir',
     'sd_ToolTipRefresh' => 'En son günlük dosyasını alın',
     'ex_dropdownCategory_PARKING' => 'park yuvaları',
+    'cq_ImpossibleToDeleteCallQueue' => 'Bir çağrı kuyruğunu silmek imkansızdır çünkü aşağıdaki bağlantılar var',
+    'iv_ImpossibleToDeleteIVRMenu' => 'IVR menüsünü silmek imkansızdır, aktif bağlantılar vardır',
+    'da_ImpossibleToDeleteDialplanApplication' => 'Arama planları uygulaması silinemiyor, bağlantıları var',
+    'cr_ImpossibleToDeleteConferenceRoom' => 'Bu konferans odası silinemez',
+    'am_NoAnyServersYet' => 'Burada henüz AMI kullanıcısı yok',
+    'ex_ImpossibleToGetSecret' => 'Kullanıcı şifresi alınamadı',
+    'pr_Note' => 'Sağlayıcı hakkında not veya faydalı bilgiler',
+    'bt_ToolTipCopy' => 'Kopyala',
+    'pr_DeleteDescription_v2' => 'Sağlayıcıyla birlikte ilgili tüm giden yönlendirme kuralları silinecek ve gelen yönlendirme kurallarında tüm bağlantılar “Sağlayıcıyla bağlantı yok, yetki yok” olarak değiştirilecek.',
+    'ir_AnyProvider_v2' => 'Sağlayıcıyla bağlantı yok, yetki yok',
+    'nw_ExternIpHostMessage1' => 'Gerekirse, ana bilgisayar adından veya IP adresinden sonra iki nokta üst üste kullanarak harici SIP bağlantı noktasını belirleyebilirsiniz.',
+    'ir_playback' => 'Medya dosyasını oynat',
+    'ext_ModuleExecutionProblem' => 'Ciddi bir hata oluştu:',
+    'ext_DisableReasonHeader' => 'Modül otomatik olarak devre dışı bırakıldı',
+    'gs_DisableAllModules' => 'Pazar yerini devre dışı bırak',
+    'ext_UpdateAllModules' => 'Kurulu tüm modülleri güncelle',
+    'ext_EmptyRepoAnswer' => 'Modülü yüklemek için mevcut sürüm yok',
+    'ext_ErrDownloadTimeout' => 'Modül güncellemesi indirilemedi. İşlem için zaman aşımı.',
+    'ext_ErrInstallationTimeout' => 'Modül yüklenemedi. İşlem için zaman aşımı.',
+    'ext_ModuleLastRelease' => 'Güncel sürüm',
+    'ext_ModulePublisher' => 'Geliştirici',
+    'ext_ModuleDescriptionTab' => 'Modül açıklaması',
+    'ext_ModuleChangelogTab' => 'Sürüm geçmişi',
+    'ext_UsefulLinks' => 'kullanışlı bağlantılar',
+    'ext_CommercialModule' => 'Ücretli modül',
+    'ext_InstallModuleShort' => 'Düzenlemek',
+    'ext_UpdateModuleShort' => 'Güncelleme',
+    'ext_InstallModuleReleaseTag' => 'Serbest bırakmak',
+    'ext_InstallModuleVersion' => 'Sürümü yükle',
+    'ext_FreeModule' => 'Ücretsiz modül',
+    'ext_ShowModuleRepoDetails' => 'Ayrıntılı modül açıklamasını aç',
+    'ext_GetReleaseInProgress' => 'Depodan veri isteniyor…',
+    'ext_DownloadInProgress' => 'Modül indiriliyor…',
+    'ext_CheckLicenseInProgress' => 'Lisans kontrolü…',
+    'ext_ErrUploadTimeout' => 'Modül dosyası yüklenemedi. İşlem için zaman aşımı.',
+    'ext_ModuleEulaTab' => 'Lisans anlaşması',
+    'tf_calUrl' => 'Takvim URL\'si',
+    'tf_calUser' => 'Kullanıcı adı',
+    'tf_calSecret' => 'Şifre',
+    'tf_calType' => 'Tip',
+    'tf_CAL_TYPE_NONE' => 'Sıradan',
+    'tf_CAL_TYPE_CALDAV' => 'CalDAV',
+    'tf_CAL_TYPE_ICAL' => 'iCal',
+    'tf_ValidateCalUri' => '"Takvim URL\'si" alanı yanlış bir değer içeriyor.',
+    'ext_FromDate' => 'piyasaya sürülmüş',
+    'ext_UpdateAllModulesDescription' => 'Sistem, mevcut ayarları koruyarak kurulu tüm modülleri en son sürümlere güncelleyecektir. Güncelleme işlemi sırasında sistem üzerinde başka bir işlem yapmamanız tavsiye edilir.',
+    'ext_UpdateModuleTitle' => 'Modül güncellemesi',
+    'ext_InstallModuleTitle' => 'Modülün kurulumu',
+    'ext_ModuleInstallDescription' => 'Modülü kurarken sistem lisansı kontrol edecektir. Ücretli modüller için mümkünse deneme sürümü sağlanacaktır. Ücretsiz modüller koşulsuz olarak kurulur. Modül daha önce ayarlar kaydedilirken silinmişse geri yüklenecektir. Modülü kurarken sistem üzerinde başka işlemler yapmamak daha iyidir.',
+    'ext_UpdateAllModulesTitle' => 'Tüm modüllerin güncellenmesi',
+    'ext_ModuleUpdateDescription' => 'Seçilen modül depodaki en son sürüme güncellenecek ve tüm ayarlar kaydedilecektir. Ücretli modüller için öncelikle lisans kontrol edilir. Güncelleme sırasında sistem üzerinde başka işlemler yapmaktan kaçınılması önerilir.',
+    'ext_DowngradeModuleTitle' => 'Bir modül sürümünü geri alma',
+    'ext_ModuleDowngradeDescription' => 'Modül önceki sürüme geri döndürülecek. Ayarlar kaydedilecek ancak ücretli modüller için önce lisans kontrol edilecektir. Geri alma işleminin veri yapısını değiştirebileceğini ve modülün yeniden yapılandırılması gerekebileceğini lütfen unutmayın. Geri alma sırasında sistemde başka işlemler yapmaktan kaçının.',
+    'ext_InstallUpdateAction' => 'Uygulamak',
+    'ext_SystemVersionRequired' => 'MikoPBX\'in minimum uyumlu sürümü',
+    'auth_DefaultCloudPasswordInstructions' => 'Varsayılan şifre, buluttaki sanal makinenin benzersiz tanımlayıcısına eşittir',
+    'lic_HostLookupFailed' => 'Lisans sunucusuyla bağlantı yok, DNS sorunu',
+    'f2b_SettingsTabHeader' => 'Korumayı ayarlama',
+    'f2b_BannedIpTabHeader' => 'Engellenen adresler',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Her yeniden başlatışınızda MikoPBX harici IP adresini güncelleyin',
+    'gs_SSHLogin' => 'SSH konsolu için giriş yapın',
+    'Warning! Selected disk will be formatted!' => 'Dikkat! Seçilen disk biçimlendirilecek ve tüm veriler yok edilecek!',
+    'Installing PBX...' => 'MikoPBX yükleniyor…',
+    ' - Unmounting partitions...' => 'Takılı disk bölümlerinin bağlantısı kesiliyor…',
+    ' - Unpacking img...' => 'Sistem bölümü güncelleniyor…',
+    'Partitioning and formatting storage disk' => 'Cihazda veri depolamak için bir bölüm oluşturun ve diski biçimlendirin',
+    'Update storage partition 4 on disk' => 'Verileri diskte depolamak için dördüncü bölümü güncelleme',
+    'Copying configuration...' => 'Başlangıç yapılandırma ayarları dolduruluyor…',
+    'Formatting storage partition 4 on disk' => 'Verileri diskte depolamak için dördüncü bölümü biçimlendirme',
+    'Save storage disk settings' => 'Depolama için disk ayarlarını kaydetme',
 ];

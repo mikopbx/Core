@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
@@ -105,7 +106,7 @@ class InternalContexts extends AsteriskConfigClass
                  'exten => _X!,1,NoOp()'.PHP_EOL."\t";
 
         // If WebRTC is used, set up SIP and WS contacts. Otherwise, set DST contact.
-        if($this->generalSettings['UseWebRTC'] === '1') {
+        if($this->generalSettings[PbxSettingsConstants::USE_WEB_RTC] === '1') {
             $conf .= 'same => n,Set(SIP_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})'.PHP_EOL."\t".
                      'same => n,Set(WS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-WS)})'.PHP_EOL."\t".
                      'same => n,Set(DST_CONTACT=${SIP_CONTACT}${IF($["${SIP_CONTACT}x" != "x" && "${WS_CONTACTS}x" != "x"]?&)}${WS_CONTACTS})'.PHP_EOL."\t";
@@ -243,7 +244,7 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'exten => _[hit],1,Hangup()' . " \n";
 
         // Handle pickup extension if it exists.
-        $pickupExtension = $this->generalSettings['PBXFeaturePickupExten'];
+        $pickupExtension = $this->generalSettings[PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN];
         if(!empty($pickupExtension)){
             $conf            .= 'exten => _' . $pickupExtension . $this->extensionPattern . ',1,Set(PICKUPEER=' . $this->technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
             $conf            .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";
@@ -273,15 +274,14 @@ class InternalContexts extends AsteriskConfigClass
 
         // Generate additional modules internal context
         $conf .= $this->generateAdditionalModulesInternalContext();
-
         // Handle invalid numbers
-        $conf .= 'exten => i,1,NoOp(-- INVALID NUMBER --)' . "\n\t";
-        $conf .= 'same => n,Set(DIALSTATUS=INVALID_NUMBER)' . "\n\t";
-        $conf .= 'same => n,Playback(privacy-incorrect,noanswer)' . "\n\t";
-        $conf .= 'same => n,Hangup()' . "\n";
+        $conf .= 'exten => i,1,NoOp(-- INVALID NUMBER --)' . PHP_EOL."\t";
+        $conf .= 'same => n,Set(DIALSTATUS=INVALID_NUMBER)' . PHP_EOL."\t";
+        $conf .= 'same => n,Playback(privacy-incorrect,noanswer)' . PHP_EOL."\t";
+        $conf .= 'same => n,Hangup()' . PHP_EOL;
 
         // Handle hangup conditions during transfer
-        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . "\n\n";
+        $conf .= 'exten => h,1,ExecIf($["${ISTRANSFER}x" != "x"]?Goto(transfer_dial_hangup,${EXTEN},1))' . PHP_EOL . PHP_EOL;
 
         // Handle hangup, busy signals and direct inward dialing to user
         $conf .= 'exten => hangup,1,Set(MASTER_CHANNEL(M_DIALSTATUS)=ANSWER)'.PHP_EOL."\t";
@@ -292,11 +292,12 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,Hangup()'.PHP_EOL.PHP_EOL;
 
         // Define internal incoming call context
-        $conf .= "[internal-incoming]\n";
-        $conf .= 'exten => ' . ExtensionsConf::ALL_NUMBER_EXTENSION . ',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . " \n\t";
-        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${CHANNEL})' . " \n\t";
-        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT)=${EMPTY_VAR})' . " \n\t";
-        $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " \n\n";
+        $conf .= "[internal-incoming]".PHP_EOL;
+        $conf .= 'exten => ' . ExtensionsConf::ALL_EXTENSION. ',1,ExecIf($["${MASTER_CHANNEL(M_TIMEOUT)}x" != "x"]?Set(TIMEOUT(absolute)=${MASTER_CHANNEL(M_TIMEOUT)}))' . PHP_EOL."\t";
+        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT_CHANNEL)=${CHANNEL})' . PHP_EOL."\t";
+        $conf .= 'same => n,Set(MASTER_CHANNEL(M_TIMEOUT)=${EMPTY_VAR})' . PHP_EOL."\t";
+        $conf .= 'same => n,Goto(internal,${EXTEN},1)' . PHP_EOL;
+        $conf .= 'exten => _[hit],1,Hangup()' . PHP_EOL . PHP_EOL;
 
         // Return the generated configuration string
         return $conf;
@@ -395,13 +396,17 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,ExecIf($["${TRANSFER_OPTIONS}x" == "x" || "${ISTRANSFER}x" != "x"]?Set(TRANSFER_OPTIONS=Tt))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},${TRANSFER_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" == "x"]?Gosub(dial_end,${EXTEN},1))' . " \n\t";
-        $conf .= 'same => n(fw_start),NoOp(start dial hangup)' . " \n\t";
-
+        $conf .= 'same => n(fw_start),NoOp()' . " \n\t";
+        // Redirection can be disabled for internal with the FW_DISABLE_ATRANSFER / FW_DISABLE_INTERNAL option
+        $conf .= 'same => n,ExecIf($["${ATTENDEDTRANSFER}x" != "x" && "${FW_DISABLE_ATRANSFER}" == "1"]?Set(FW_DISABLE=1))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${ISTRANSFER}x" != "x" && "${FW_DISABLE_TRANSFER}" == "1"]?Set(FW_DISABLE=1))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${FW_DISABLE}" == "1" && "${FW_DISABLE_INTERNAL}" == "1"]?Goto(${EXTEN},fw_end))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${FROM_DID}${TO_CHAN}x" == "x" && "${FW_DISABLE_INTERNAL}" == "1"]?Goto(${EXTEN},fw_end))' . " \n\t";
         // QUEUE_SRC_CHAN - set if the call is a server action to an agent in the queue.
         // Checking if call forwarding is needed.
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${ISTRANSFER}x" != "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DIALSTATUS}" != "ANSWER" && "${QUEUE_SRC_CHAN}x" == "x"]?Goto(internal-fw,${EXTEN},1))' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
+        $conf .= 'same => n(fw_end),ExecIf($["${BLINDTRANSFER}x" != "x"]?AGI(check_redirect.php,${BLINDTRANSFER}))' . " \n\t";
         $conf .= 'same => n,Hangup()' . "\n\n";
 
         // Handle hangup conditions during transfer

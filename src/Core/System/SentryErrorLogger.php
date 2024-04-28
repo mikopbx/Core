@@ -36,7 +36,7 @@ class SentryErrorLogger extends Injectable
      */
     public function __construct(string $libraryName)
     {
-        Util::sysLogMsg('DEPRECATED','The class '.get_called_class().' uses deprecated SentryErrorLogger method', LOG_ALERT);
+        SystemMessages::sysLogMsg('DEPRECATED','The class '.get_called_class().' uses deprecated SentryErrorLogger method', LOG_ALERT);
         $di = Di::getDefault();
         $this->errorHandler = $di->get(SentryErrorHandlerProvider::SERVICE_NAME, [$libraryName]);
     }
@@ -48,7 +48,7 @@ class SentryErrorLogger extends Injectable
      */
     public function init(): bool
     {
-        Util::sysLogMsg('DEPRECATED','The class '.get_called_class().' uses deprecated SentryErrorLogger method', LOG_ALERT);
+        SystemMessages::sysLogMsg('DEPRECATED','The class '.get_called_class().' uses deprecated SentryErrorLogger method', LOG_ALERT);
         return true;
     }
 
@@ -59,7 +59,7 @@ class SentryErrorLogger extends Injectable
      */
     public function captureException(Throwable $e): void
     {
-        Util::sysLogMsg('DEPRECATED','The class '.get_called_class().' uses deprecated SentryErrorLogger method', LOG_ALERT);
+        SystemMessages::sysLogMsg('DEPRECATED','The class '.get_called_class().' uses deprecated SentryErrorLogger method', LOG_ALERT);
         if ($this->errorHandler)
         {
             $this->errorHandler->captureException($e);

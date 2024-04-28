@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
 /**
@@ -81,7 +81,7 @@ class ActionTransferDialHangup
             $row->writeAttribute('endtime', $data['end']);
             $row->writeAttribute('transfer', 0);
             if (!$row->save()) {
-                Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
 
@@ -139,7 +139,7 @@ class ActionTransferDialHangup
             $row->writeAttribute('endtime', $data['end']);
             $row->writeAttribute('transfer', 0);
             if (!$row->save()) {
-                Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
         $filter = [
@@ -168,7 +168,7 @@ class ActionTransferDialHangup
             // Remove the transfer flag from the rows.
             $row->writeAttribute('transfer', 0);
             if (!$row->save()) {
-                Util::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg('Action_transfer_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }

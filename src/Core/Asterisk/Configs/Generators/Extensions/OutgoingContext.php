@@ -237,10 +237,7 @@ class OutgoingContext extends AsteriskConfigClass
 
         // Set ROUTFOUND and PROVIDER_ID variables
         $conf .= 'same => n,Set(ROUTFOUND=1)' . "\n\t";
-        $conf .= "same => n,Set(PROVIDER_ID={$rout['providerid']})" . "\n\t";
-
-        // Execute dial based on ISTRANSFER
-        $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
+        $conf .= "same => n,Set(_PROVIDER_ID={$rout['providerid']})" . "\n\t";
 
         // Set DOPTIONS based on EXTERNALPHONE and src_number
         $conf .= 'same => n,ExecIf($["${EXTERNALPHONE}" == "${src_number}"]?Set(DOPTIONS=tk))' . "\n\t";
@@ -249,7 +246,7 @@ class OutgoingContext extends AsteriskConfigClass
         $dialCommand = $this->getDialCommand($rout);
 
         // Set DIAL_COMMAND variable
-        $conf .= 'same => n,Set(DIAL_COMMAND='.$dialCommand.')' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${DIAL_COMMAND}x" == "x"]?Set(DIAL_COMMAND='.$dialCommand.'))' . "\n\t";
 
         // Customize all-outgoing context
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(all-outgoing-custom,${EXTEN},1)}" == "1"]?all-outgoing-custom,${EXTEN},1)' . "\n\t";
@@ -266,8 +263,11 @@ class OutgoingContext extends AsteriskConfigClass
         if ( !empty($confModules)) {
             $conf .= trim($confModules)."\n\t";
         }
-        $conf .= 'same => n,Dial(${DIAL_COMMAND},600,${DOPTIONS}TKU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1))' . "\n\t";
+        // Execute dial based on ISTRANSFER
+        $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
 
+        $conf .= 'same => n,ExecIf($["${OFF_ANSWER_SUB}" != "1"]?Set(DIAL_OUT_ANSWER_OPTIONS=U(${ISTRANSFER}dial_answer)))' . "\n\t";
+        $conf .= 'same => n,Dial(${DIAL_COMMAND},600,${DOPTIONS}TK${DIAL_OUT_ANSWER_OPTIONS}b(dial_create_chan,s,1))' . "\n\t";
         // Generate outgoing dialplan for additional modules
         $confModules = $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT, [$rout]);
         if ( !empty($confModules)) {

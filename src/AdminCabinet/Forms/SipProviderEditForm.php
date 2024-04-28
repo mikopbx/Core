@@ -162,7 +162,6 @@ class SipProviderEditForm extends BaseForm
         }
         $this->add(new Check('noregister', $cheskarr));
 
-
         // Disablefromuser
         $cheskarr = ['value' => null];
         if ($entity->disablefromuser) {
@@ -178,7 +177,9 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Check('receive_calls_without_auth', $cheskarr));
 
         // Manualattributes
-        $this->addTextArea('manualattributes', $entity->getManualAttributes(), 65);
+        $this->addTextArea('manualattributes', $entity->getManualAttributes()??'', 65);
 
+        // Note
+        $this->addTextArea('note', $options['note']??'', 80, ['class'=>'confidential-field']);
     }
 }

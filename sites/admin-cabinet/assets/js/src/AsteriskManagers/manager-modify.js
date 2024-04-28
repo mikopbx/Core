@@ -36,18 +36,6 @@ const manager = {
     $dropDowns: $('#save-ami-form .ui.dropdown'),
 
     /**
-     * jQuery objects for master checkbox elements.
-     * @type {jQuery}
-     */
-    $masterCheckBoxes: $('#save-ami-form .list .master.checkbox'),
-
-    /**
-     * jQuery objects for child checkbox elements.
-     * @type {jQuery}
-     */
-    $childrenCheckBoxes: $('#save-ami-form .list .child.checkbox'),
-
-    /**
      * jQuery objects for all checkbox elements.
      * @type {jQuery}
      */
@@ -107,56 +95,6 @@ const manager = {
     initialize() {
         // Initialize dropdowns
         manager.$dropDowns.dropdown();
-
-        // Initialize master checkboxes
-        manager.$masterCheckBoxes
-            .checkbox({
-                // Check all children
-                onChecked() {
-                    const
-                        $childCheckbox = $(this).closest('.checkbox').siblings('.list').find('.checkbox');
-                    $childCheckbox.checkbox('check');
-                },
-                // Uncheck all children
-                onUnchecked() {
-                    const
-                        $childCheckbox = $(this).closest('.checkbox').siblings('.list').find('.checkbox');
-                    $childCheckbox.checkbox('uncheck');
-                },
-            });
-
-        // Initialize child checkboxes
-        manager.$childrenCheckBoxes
-            .checkbox({
-                // Fire on load to set parent value
-                fireOnInit: true,
-                // Change parent state on each child checkbox change
-                onChange() {
-                    const $listGroup = $(this).closest('.list');
-                    const $parentCheckbox = $listGroup.closest('.item').children('.checkbox');
-                    const $checkbox = $listGroup.find('.checkbox');
-                    let allChecked = true;
-                    let allUnchecked = true;
-
-                    // Check if all other siblings are checked or unchecked
-                    $checkbox.each(function () {
-                        if ($(this).checkbox('is checked')) {
-                            allUnchecked = false;
-                        } else {
-                            allChecked = false;
-                        }
-                    });
-
-                    // Set parent checkbox state, but don't trigger its onChange callback
-                    if (allChecked) {
-                        $parentCheckbox.checkbox('set checked');
-                    } else if (allUnchecked) {
-                        $parentCheckbox.checkbox('set unchecked');
-                    } else {
-                        $parentCheckbox.checkbox('set indeterminate');
-                    }
-                },
-            });
 
         // Handle uncheck button click
         manager.$unCheckButton.on('click', (e) => {

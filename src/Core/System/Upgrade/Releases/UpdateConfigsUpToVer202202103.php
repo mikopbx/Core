@@ -22,11 +22,13 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\FirewallRules;
+use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
-use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer202202103 extends Injectable implements UpgradeSystemConfigInterface
@@ -55,8 +57,8 @@ class UpdateConfigsUpToVer202202103 extends Injectable implements UpgradeSystemC
      * @return void
      */
     private function updateFirewallRules():void{
-        $colName = 'TLS_PORT';
-        $portTls = PbxSettings::getValueByKey('TLS_PORT');
+        $colName = PbxSettingsConstants::TLS_PORT;
+        $portTls = PbxSettings::getValueByKey(PbxSettingsConstants::TLS_PORT);
 
         /** @var NetworkFilters $net */
         $nets = NetworkFilters::find(['columns' => 'id']);
@@ -143,7 +145,7 @@ class UpdateConfigsUpToVer202202103 extends Injectable implements UpgradeSystemC
             $codecData->disabled    = '1';
             $codecData->description = $desc;
             if ( ! $codecData->save()) {
-                Util::sysLogMsg(
+                SystemMessages::sysLogMsg(
                     __CLASS__,
                     'Can not update codec info ' . $codecData->name . ' from \MikoPBX\Common\Models\Codecs',
                     LOG_ERR
@@ -155,7 +157,7 @@ class UpdateConfigsUpToVer202202103 extends Injectable implements UpgradeSystemC
     private function updateExtensions():void
     {
         $extensions = [
-            'voicemail',
+            IncomingRoutingTable::ACTION_VOICEMAIL,
         ];
         foreach ($extensions as $extension){
             $data                = Extensions::findFirst('number="' . $extension . '"');

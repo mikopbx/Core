@@ -1,39 +1,5 @@
 <?php
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
     'ex_Russian' => 'Русский',
     'ex_English' => 'English',
     'ex_EnglishUK' => 'English(UK)',
@@ -55,6 +21,9 @@ return [
     'ex_Czech' => 'Čeština',
     'ex_Turkish' => 'Türkçe',
     'ex_Georgian' => 'ქართველი',
+    'ex_Azerbaijan' => 'Azərbaycan',
+    'ex_Romanian' => 'Română',
+    'ex_Thai' => 'ไทย',
     'ex_Online' => 'ansluten',
     'am_TableColumnDescription' => 'Anmärkningar',
     'am_Read' => 'läsning',
@@ -72,7 +41,7 @@ return [
     'ext_ModuleDisabledStatusDisabled' => 'Modul inaktiverad',
     'ext_ModuleDisabledStatusEnabled' => 'Modul ingår',
     'ext_ModuleStatusChanging' => 'Vi ändrar modulens tillstånd …',
-    'ext_ExternalDescription' => 'Beskrivning på webbplatsen',
+    'ext_ExternalDescription' => 'Detaljerad beskrivning, dokumentation',
     'ext_DeleteTitle' => 'Ta bort en expansionsmodul',
     'ext_DeleteDescription' => 'Innan du tar bort en modul kommer den att kontrollera för korsreferenser mellan andra moduler och systeminställningar.',
     'ext_KeepModuleSettings' => 'Spara aktuella modulinställningar',
@@ -112,8 +81,8 @@ return [
     'adv_ThisCopyIsNotRegistered' => 'Denna kopia av programmet är inte licensierad - <a href=\'%url%\'> Gratis aktivering </a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Disken för lagring har slut på ledigt utrymme (%free% Mb) </a>',
     'adv_ThisCopyHasLicensingTroubles' => 'PBX-licensproblem: %error% - <a target="_blank" href=\'%url%\'> hur man fixar </a>',
-    'сal_Yesterday' => 'i går',
-    'сal_LastWeek' => 'De sista 7 dagarna',
+    'cal_Yesterday' => 'i går',
+    'cal_LastWeek' => 'De sista 7 dagarna',
     'January' => 'januari',
     'BreadcrumbGeneralSettings' => 'Systeminställningar',
     'BreadcrumbIvrMenumodify' => 'IVR-inställningsmeny',
@@ -130,10 +99,10 @@ return [
     'lic_CouponMessage' => 'Kupongen används för att förnya prenumerationer, testversioner och aktivera licenser för tilläggsmoduler.<br>
 Kupongen kan aktiveras en gång, varefter den löses in.',
     'lic_FailedActivateCoupon2041' => '(2041) Denna kupong har redan aktiverats tidigare',
-    'rs_ShutDownPhoneSystem' => 'Stäng av PBX',
+    'rs_ShutDownPhoneSystem' => 'Stäng av MikoPBX',
     'ext_Version' => 'version',
     'ext_SelectMenuGroup' => 'Välj sidemenyn',
-    'сal_Today' => 'i dag',
+    'cal_Today' => 'i dag',
     'ex_ValidateForwardingToBeFilled' => 'I routningsinställningarna är inte timeout-vidarebefordringsnumret fyllt',
     'ex_ValidateRingingBeforeForwardOutOfRange' => 'I routingsinställningarna indikeras tiden för överföring felaktigt. Välj ett värde mellan {ruleValue}.',
     'ex_Offline' => 'inaktiverad',
@@ -444,7 +413,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'lic_MarketplaceText' => 'Genom att registrera dig på Marketplace får du tillgång till ytterligare moduler och tillägg.<br>Det finns gratismoduler som vi tog bort från kärnfunktionaliteten för att förenkla den initiala installationen, såväl som betalmoduler från oss och andra utvecklare.<br>Om du är en utvecklare kan du kontakta <a href="mailto:developers@mikopbx.com">oss om hur du utvecklar din egen modul</a> för instruktioner för Marketplace.',
     'lic_LastQuestionAnswer' => 'Vanliga frågor om licenser finns på <a href="https://wiki.mikopbx.com/licensing#faq_chavo" target="_blank">link</a>.',
     'er_Home' => 'Gå till början',
-    'rs_RestartPhoneSystem' => 'Ladda om PBX',
+    'rs_RestartPhoneSystem' => 'Starta om MikoPBX',
     'rs_CurrentCalls' => 'Aktiva samtal',
     'rs_DateCall' => 'Startdatum',
     'rs_Src' => 'som',
@@ -481,7 +450,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'upd_DownloadUpgradeError' => 'Fel vid nedladdning av uppdateringen, försök igen senare',
     'upd_UploadError' => 'Fel vid nedladdning av uppdateringen',
     'upd_UpdateTitle' => 'PBX-uppdatering',
-    'upd_UpdateDescription' => 'Efter nedladdning av uppdateringen kommer telefonväxeln att starta om automatiskt, alla aktuella samtal kommer att avbrytas. Se till att säkerhetskopiera din MikoPBX innan du uppdaterar.',
+    'upd_UpdateDescription' => 'Efter nedladdning av uppdateringen kommer MikoPBX att starta om automatiskt och alla aktuella samtal kommer att avbrytas. Se till att säkerhetskopiera MikoPBX innan du uppdaterar.',
     'upd_Cancel' => 'annullering',
     'upd_Update' => 'uppdatering',
     'upd_UploadInProgress' => 'Hämtar uppdateringsfil …',
@@ -491,14 +460,14 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ext_TableColumnVersion' => 'version',
     'ext_UpdateModule' => 'Uppdatera modulen',
     'ext_UpdateModuleError' => 'Fel vid installation av modulen',
-    'сal_Last30Days' => 'Senast 30 dagar',
-    'сal_ThisMonth' => 'Nuvarande månad',
-    'сal_LastMonth' => 'Förra månaden',
-    'сal_ApplyBtn' => 'Att ansöka',
-    'сal_CancelBtn' => 'annullering',
-    'сal_from' => 'med',
-    'сal_to' => 'på',
-    'сal_CustomPeriod' => 'godtycklig',
+    'cal_Last30Days' => 'Senast 30 dagar',
+    'cal_ThisMonth' => 'Nuvarande månad',
+    'cal_LastMonth' => 'Förra månaden',
+    'cal_ApplyBtn' => 'Att ansöka',
+    'cal_CancelBtn' => 'annullering',
+    'cal_from' => 'med',
+    'cal_to' => 'på',
+    'cal_CustomPeriod' => 'godtycklig',
     'sntry_Title' => 'Något gick fel!',
     'sntry_Subtitle' => 'Felinformation skickades till utvecklaren.',
     'sntry_Subtitle2' => 'Beskriv dina åtgärder som ledde till detta fel.',
@@ -604,7 +573,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'BreadcrumbSession' => 'tillstånd',
     'BreadcrumbSessionend' => 'tillstånd',
     'BreadcrumbSystemDiagnostic' => 'Systemdiagnostik',
-    'SubHeaderSystemDiagnostic' => 'Insamling av systemloggar för en detaljerad analys av fel vid drift av PBX',
+    'SubHeaderSystemDiagnostic' => 'Insamling av systemloggar för en detaljerad analys av fel vid drift av MikoPBX',
     'BreadcrumbFail2Ban' => 'Hackningsskydd',
     'SubHeaderFail2Ban' => 'Låser automatiskt lösenordsgissning',
     'BreadcrumbUpdate' => 'Systemuppdatering',
@@ -861,7 +830,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'fw_Description' => 'namn',
     'fw_Permit' => 'subnätverk',
     'fw_AllNetworksRule' => 'Alla tillgängliga nätverk',
-    'fw_LocalNetworksRule' => 'Subnät där PBX finns',
+    'fw_LocalNetworksRule' => 'Subnät där MikoPBX finns',
     'mo_Disabled' => 'off',
     'nw_ValidateExtIppaddrNotRight' => 'Fel vid uppgradering av routerns externa IP-adress',
     'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Du måste fylla i antingen routerns externa IP eller dess DNS-namn',
@@ -1057,7 +1026,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'gs_ValidateWEBPortNotEqualToAjamTLSPort' => 'HTTP- och AJAM-portar måste vara olika',
     'gs_ValidateWEBPortNotEqualToAjamPort' => 'HTTP- och AJAM-portar måste vara olika',
     'Storage disk was mounted successfully...' => 'Lagringsdisk monterad',
-    'gs_NeedRestartPBX' => 'När du byter startar PBX om (asterisk-tjänst)',
+    'gs_NeedRestartPBX' => 'När den ändras kommer asterisktjänsten att starta om',
     'ex_BusyLevelInfo' => 'När det angivna antalet konversationer har uppnåtts kommer anställdens telefon att betraktas som upptagen.',
     'gs_RTPStunServer' => 'Server STUN-adress (exempel: stun.test.net:10000)',
     'cr_ValidateExtensionLen' => 'Anknytningsnumret måste vara två eller fler siffror',
@@ -1097,7 +1066,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ex_Transport' => 'Transportprotokoll',
     'gs_TLS_PORT' => 'SIP TLS-port (krypterade samtal)',
     'ex_OutboundProxy' => 'Utgående proxy (exempel: pbx.yandex.net:5080)',
-    'lic_FailedCheckLicenseNotPbxResponse' => 'ATC svarade inte på en begäran om information om licensen. Tjänsten är inte tillgänglig.',
+    'lic_FailedCheckLicenseNotPbxResponse' => 'MikoPBX svarade inte på en begäran om licensinformation. Tjänsten är inte tillgänglig.',
     'ms_SystemEmailForMissed' => 'E-post för missade aviseringar',
     'sip_registration_type' => 'Kontotyp',
     'sip_REG_TYPE_OUTBOUND' => 'Utgående registrering',
@@ -1105,7 +1074,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'sip_REG_TYPE_NONE' => 'Autentisering med IP-adress, inget lösenord',
     'pr_RedefinitionFromUser' => 'Omdefinierar SIP-huvudet "Från"',
     'nw_NATInfoMessage2' => 'SIP/RTP-portvidarebefordran måste konfigureras på routern',
-    'nw_NATInfoMessage1' => 'Växeln måste vara tillgänglig på en allmän adress',
+    'nw_NATInfoMessage1' => 'MikoPBX måste vara tillgänglig på en allmän adress',
     'ex_dropdownCategory_SYSTEM' => 'Servicenummer',
     'mo_SystemExten_hangup' => 'Avsluta samtal',
     'mo_SystemExten_busy' => 'Spela upptaget-signal',
@@ -1118,8 +1087,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'f2b_Jail_asterisk_security_log_v2' => 'SIP-auktoriseringsfel (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'SIP-auktoriseringsfel (fel)',
     'f2b_Jail_asterisk_public_v2' => 'SIP-auktoriseringsfel (offentliga)',
-    'ex_Azerbaijan' => 'Azərbaycan',
-    'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 siffror',
     'cr_pinCode' => 'Konferens-PIN',
     'tf_AllowRestriction' => 'Gäller endast vissa inkommande rutter',
@@ -1159,7 +1126,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'gs_SetPasswordError' => 'Lösenord - %password% kan inte användas, det finns i den enkla lösenordsordboken.',
     'adv_SSHPasswordWasChangedSubject' => "Uppmärksamhet! SSH-lösenordet har ändrats!",
     'adv_SSHPasswordWasChangedBody' => "SSH-lösenordet för åtkomst till MikoPBX har ändrats!",
-    'adv_SSHPasswordMismatchFilesHash' => 'SSH MikoPBX-lösenordet skiljer sig från det som anges i konfigurationsfilen. Kanske ändrades det manuellt från PBX-konsolen.',
+    'adv_SSHPasswordMismatchFilesHash' => 'MikoPBX SSH-lösenordet skiljer sig från det som anges i konfigurationsfilen. Det kan ha ändrats manuellt från MikoPBX-konsolen.',
     'adv_SSHPasswordWasCompromisedSubject' => 'Uppmärksamhet! SSH-lösenordet har ändrats utan att logga in på MikoPBX-gränssnittet!',
     'adv_SSHPasswordMismatchStringsHash' => 'SSH-lösenordet ändrades utanför MikoPBX webbgränssnitt',
     'cf_FileActionsScript' => 'Manus',
@@ -1201,4 +1168,74 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'sd_ToolTipErase' => 'Rensa filen',
     'sd_ToolTipDownload' => 'Ladda ner loggfil',
     'ex_dropdownCategory_PARKING' => 'parkeringsplatser',
+    'cq_ImpossibleToDeleteCallQueue' => 'Det är omöjligt att ta bort en samtalskö pga det finns följande länkar',
+    'da_ImpossibleToDeleteDialplanApplication' => 'Det går inte att ta bort dialplans-appen, den har länkar',
+    'cr_ImpossibleToDeleteConferenceRoom' => 'Detta konferensrum kan inte raderas',
+    'iv_ImpossibleToDeleteIVRMenu' => 'Det är omöjligt att ta bort IVR-menyn, det finns aktiva länkar till den',
+    'ex_ImpossibleToGetSecret' => 'Det gick inte att få användarlösenord',
+    'am_NoAnyServersYet' => 'Det finns inga AMI-användare här än',
+    'pr_Note' => 'Notera eller användbar information om leverantören',
+    'bt_ToolTipCopy' => 'Kopiera',
+    'pr_DeleteDescription_v2' => 'Tillsammans med leverantören kommer alla associerade regler för utgående routing att raderas, och i de inkommande routingreglerna kommer alla länkar att ersättas med "Ingen anslutning till en leverantör, ingen behörighet"',
+    'ir_AnyProvider_v2' => 'Ingen anslutning till en leverantör, ingen auktorisering',
+    'nw_ExternIpHostMessage1' => 'Om det behövs kan du ange den externa SIP-porten med ett kolon efter värdnamnet eller IP-adressen',
+    'ir_playback' => 'Spela mediafil',
+    'ext_ModuleExecutionProblem' => 'Ett allvarligt fel inträffade:',
+    'ext_DisableReasonHeader' => 'Modulen inaktiverades automatiskt',
+    'gs_DisableAllModules' => 'Inaktivera marknadsplats',
+    'ext_UpdateAllModules' => 'Uppdatera alla installerade moduler',
+    'ext_EmptyRepoAnswer' => 'Det finns inga tillgängliga versioner för att installera modulen',
+    'ext_ErrDownloadTimeout' => 'Det gick inte att ladda ned moduluppdateringen. Timeout för drift.',
+    'ext_ErrInstallationTimeout' => 'Det gick inte att installera modulen. Timeout för drift.',
+    'ext_UpdateModuleShort' => 'Uppdatering',
+    'ext_InstallModuleShort' => 'Installera',
+    'ext_InstallModuleReleaseTag' => 'Släpp',
+    'ext_ModuleLastRelease' => 'Nuvarande release',
+    'ext_ModulePublisher' => 'Utvecklare',
+    'ext_ModuleDescriptionTab' => 'Modulbeskrivning',
+    'ext_ModuleChangelogTab' => 'Versionshistorik',
+    'ext_UsefulLinks' => 'Användbara länkar',
+    'ext_CommercialModule' => 'Betald modul',
+    'ext_InstallModuleVersion' => 'Installera version',
+    'ext_FreeModule' => 'Gratis modul',
+    'ext_GetReleaseInProgress' => 'Begär data från arkivet…',
+    'ext_DownloadInProgress' => 'Laddar ner modulen…',
+    'ext_CheckLicenseInProgress' => 'Licenskontroll…',
+    'ext_ErrUploadTimeout' => 'Det gick inte att ladda upp modulfilen. Timeout för drift.',
+    'ext_ShowModuleRepoDetails' => 'Öppna detaljerad modulbeskrivning',
+    'ext_ModuleEulaTab' => 'Licensavtal',
+    'tf_calUrl' => 'Kalender URL',
+    'tf_calUser' => 'Användarnamn',
+    'tf_calSecret' => 'Lösenord',
+    'tf_calType' => 'Typ',
+    'tf_CAL_TYPE_NONE' => 'Vanlig',
+    'tf_CAL_TYPE_CALDAV' => 'CalDAV',
+    'tf_CAL_TYPE_ICAL' => 'iCal',
+    'tf_ValidateCalUri' => 'Fältet "Kalender URL" innehåller ett felaktigt värde.',
+    'ext_FromDate' => 'släppte',
+    'ext_UpdateAllModulesDescription' => 'Systemet kommer att uppdatera alla installerade moduler till de senaste versionerna och bibehålla de nuvarande inställningarna. Det rekommenderas att du inte utför några andra operationer på systemet under uppdateringsprocessen.',
+    'ext_UpdateModuleTitle' => 'Moduluppdatering',
+    'ext_DowngradeModuleTitle' => 'Återställer en modulversion',
+    'ext_InstallModuleTitle' => 'Installation av modulen',
+    'ext_ModuleInstallDescription' => 'När modulen installeras kommer systemet att kontrollera licensen. För betalmoduler, om möjligt, kommer en testversion att tillhandahållas. Gratis moduler installeras utan villkor. Om modulen tidigare raderades när inställningarna sparades kommer de att återställas. När du installerar modulen är det bättre att inte utföra andra åtgärder på systemet.',
+    'ext_UpdateAllModulesTitle' => 'Uppdaterar alla moduler',
+    'ext_ModuleUpdateDescription' => 'Den valda modulen kommer att uppdateras till den senaste versionen från förvaret, och alla inställningar kommer att sparas. För betalmoduler kontrolleras först licensen. Under uppdateringen rekommenderas det att avstå från att utföra andra åtgärder på systemet.',
+    'ext_ModuleDowngradeDescription' => 'Modulen kommer att återställas till den tidigare versionen. Inställningarna kommer att sparas, men för betalmoduler kontrolleras licensen först. Observera att en återställning kan ändra datastrukturen och modulen kan behöva konfigureras om. Undvik att utföra andra operationer på systemet under återställningen.',
+    'ext_InstallUpdateAction' => 'Kör',
+    'ext_SystemVersionRequired' => 'Minsta kompatibel version av MikoPBX',
+    'auth_DefaultCloudPasswordInstructions' => 'Standardlösenordet är lika med den unika identifieraren för den virtuella maskinen i molnet',
+    'lic_HostLookupFailed' => 'Ingen anslutning till licensservern, DNS-problem',
+    'f2b_SettingsTabHeader' => 'Sätta upp skydd',
+    'f2b_BannedIpTabHeader' => 'Blockerade adresser',
+    'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Uppdatera MikoPBX extern IP-adress varje gång du startar om',
+    'gs_SSHLogin' => 'Logga in för SSH-konsolen',
+    'Warning! Selected disk will be formatted!' => 'Uppmärksamhet! Den valda disken kommer att formateras och all data kommer att förstöras!',
+    'Installing PBX...' => 'Installerar MikoPBX…',
+    ' - Unmounting partitions...' => 'Demonterar monterade diskpartitioner…',
+    ' - Unpacking img...' => 'Uppdaterar systempartitionen…',
+    'Partitioning and formatting storage disk' => 'Skapa en partition och formatera en disk för att lagra data på enheten',
+    'Update storage partition 4 on disk' => 'Uppdaterar den fjärde partitionen för att lagra data på disk',
+    'Copying configuration...' => 'Fyller i initiala konfigurationsinställningar…',
+    'Formatting storage partition 4 on disk' => 'Formatera den fjärde partitionen för att lagra data på disken',
+    'Save storage disk settings' => 'Sparar diskinställningar för lagring',
 ];

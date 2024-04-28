@@ -19,6 +19,9 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
@@ -46,7 +49,6 @@ use Phalcon\Di;
  * @package MikoPBX\Core\System
  * @property \Phalcon\Config config
  */
-
 class SystemLoader extends Di\Injectable
 {
     /**
@@ -57,26 +59,50 @@ class SystemLoader extends Di\Injectable
     private string $stageMessage = '';
 
     /**
+     * Check if the system is running in Docker
+     *
+     * @var bool
+     */
+    private bool $isDocker = false;
+
+
+    /**
+     * Check if the system is running from live cd
+     *
+     * @var bool
+     */
+    private bool $isRecoveryMode = false;
+
+
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->isDocker = Util::isDocker();
+        $this->isRecoveryMode = Util::isRecoveryMode();
+    }
+
+
+    /**
      * Echoes the starting message for a stage.
      *
      * @param string $message The message to echo.
      */
-    private function echoStartMsg(string $message):void
+    private function echoStartMsg(string $message): void
     {
+        SystemMessages::echoStartMsg($message);
         $this->stageMessage = $message;
-        Util::teletypeEcho($message);
-        Util::echoWithSyslog($this->stageMessage);
     }
 
     /**
      * Echoes the result message for a stage.
      *
-     * @param bool $result The result of the stage.
+     * @param string $result The result of the stage.
      */
-    private function echoResultMsg(bool $result = true):void
+    private function echoResultMsg(string $result = SystemMessages::RESULT_DONE): void
     {
-        Util::echoResult($this->stageMessage, $result);
-        Util::teletypeEchoDone($this->stageMessage, $result);
+        SystemMessages::echoResultMsg($this->stageMessage, $result);
         $this->stageMessage = '';
     }
 
@@ -90,7 +116,7 @@ class SystemLoader extends Di\Injectable
         $system = new System();
         // Is the configuration default?
         // Try restore config...
-        if($system->isDefaultConf() && !file_exists('/offload/livecd')){
+        if ($system->isDefaultConf() && !$this->isRecoveryMode) {
             $this->echoStartMsg(' - Try restore backup of settings... ');
             $system->tryRestoreConf();
             $this->echoResultMsg();
@@ -98,9 +124,6 @@ class SystemLoader extends Di\Injectable
 
         // Check if the system is running on T2SDELinux
         $itIsT2SDELinux = Util::isT2SdeLinux();
-
-        // Check if the system is running in Docker
-        $itIsDocker = Util::isDocker();
 
         // Mark the registry as booting
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = true;
@@ -126,29 +149,37 @@ class SystemLoader extends Di\Injectable
 
         // Configure Sentry error logger
         $this->echoStartMsg(' - Configuring sentry error logger ...');
-        $sentryConf = new SentryConf();
-        $sentryConf->configure();
-        $this->echoResultMsg();
+        if (!$this->isRecoveryMode) {
+            $sentryConf = new SentryConf();
+            $sentryConf->configure();
+            $this->echoResultMsg();
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
 
         // Configure the system timezone
         $this->echoStartMsg(' - Configuring timezone...');
-        $system::timezoneConfigure();
-        $this->echoResultMsg();
+        if (!$this->isRecoveryMode) {
+            System::timezoneConfigure();
+            $this->echoResultMsg();
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
 
         // Mount the storage disk
-        $storage       = new Storage();
-        $this->echoStartMsg(' - Mount storage disk...');
-        if($itIsT2SDELinux){
+        $storage = new Storage();
+        if ($itIsT2SDELinux) {
             // Do not need to set on Docker or Debian linux
             $storage->saveFstab();
         }
         $storage->configure();
+        $this->echoStartMsg(' - Mount storage disk...');
         $this->echoResultMsg();
 
         // Additional tasks for T2SDELinux
-        if($itIsT2SDELinux) {
+        if ($itIsT2SDELinux) {
             $this->echoStartMsg(' - Connect swap...');
-            Processes::mwExecBg('/etc/rc/connect-swap');
+            Processes::mwExecBg('/etc/rc/connect_swap');
             $this->echoResultMsg();
         }
 
@@ -168,22 +199,21 @@ class SystemLoader extends Di\Injectable
         $this->echoResultMsg();
 
         // Update the system configuration and applications
-        $this->echoStartMsg(' - Update configs and applications...'."\n");
+        $this->echoStartMsg(' - Update configs and applications...' . PHP_EOL);
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
         $this->echoStartMsg(' - Update configs...');
         $this->echoResultMsg();
 
-        // Load kernel modules
-        $this->echoStartMsg(' - Load kernel modules...');
-        $resKernelModules = $system->loadKernelModules();
-        $this->echoResultMsg($resKernelModules);
-
         // Configure VM tools
         $this->echoStartMsg(' - Configuring VM tools...');
-        $vmwareTools    = new VmToolsConf();
-        $resultVMTools  = $vmwareTools->configure();
-        $this->echoResultMsg($resultVMTools);
+        if (!$this->isRecoveryMode) {
+            $vmwareTools = new VmToolsConf();
+            $resultVMTools = $vmwareTools->configure();
+            $this->echoResultMsg((string)$resultVMTools);
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
 
         // Configure the system hostname
         $this->echoStartMsg(' - Configuring hostname...');
@@ -198,7 +228,7 @@ class SystemLoader extends Di\Injectable
 
         // Configure LAN interface
         $this->echoStartMsg(' - Configuring LAN interface...');
-        if ($itIsDocker){
+        if ($this->isDocker) {
             $network->configureLanInDocker();
         } else {
             $network->lanConfigure();
@@ -218,17 +248,47 @@ class SystemLoader extends Di\Injectable
 
         // Configure NTP
         $this->echoStartMsg(' - Configuring ntpd...');
-        NTPConf::configure();
-        $this->echoResultMsg();
-
-        // Do not need to set Debian SSH service
-        if(!Util::isSystemctl()){
-            $this->echoStartMsg(' - Configuring SSH console...');
-            $sshConf = new SSHConf();
-            $resSsh  = $sshConf->configure();
-            $this->echoResultMsg($resSsh);
+        if (!$this->isRecoveryMode) {
+            NTPConf::configure();
+            $this->echoResultMsg();
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
+        // Do not need to set Debian SSH service
+        if (!Util::isSystemctl()) {
+            $this->echoStartMsg(' - Configuring SSH console...');
+            $sshConf = new SSHConf();
+            $resSsh = $sshConf->configure();
+            $this->echoResultMsg((string)$resSsh);
+        }
+
+        // Start cloud provisioning
+        if (!$this->isDocker && !$this->isRecoveryMode) {
+            $this->echoStartMsg(' - Attempt to cloud provisioning...' . PHP_EOL);
+            CloudProvisioning::start();
+        } else {
+            $this->echoStartMsg(' - Attempt to cloud provisioning...');
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
+
+        // Connect storage in a cloud if needed
+        $this->echoStartMsg(' - Auto connect storage for a cloud ...');
+        if (!$this->isDocker && !$this->isRecoveryMode) {
+            $connectResult = Storage::connectStorageInCloud();
+            $this->echoResultMsg($connectResult);
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
+
+        // Update external IP if needed
+        if (!$this->isRecoveryMode) {
+            $this->echoStartMsg(' - Update external IP...');
+            $network->updateExternalIp();
+            $this->echoResultMsg();
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
 
         return true;
@@ -255,7 +315,7 @@ class SystemLoader extends Di\Injectable
         $this->echoResultMsg();
 
         // Configure Asterisk and start it
-        $this->echoStartMsg(' - Configuring Asterisk...'.PHP_EOL);
+        $this->echoStartMsg(' - Configuring Asterisk...' . PHP_EOL);
         $pbx = new PBX();
         $pbx->configure();
 
@@ -266,8 +326,8 @@ class SystemLoader extends Di\Injectable
         // Wait for Asterisk to fully boot and reload SIP settings
         $this->echoStartMsg(' - Wait asterisk fully booted...');
         $asteriskResult = PBX::waitFullyBooted();
-        $this->echoResultMsg($asteriskResult);
-        if($asteriskResult){
+        $this->echoResultMsg((string)$asteriskResult);
+        if ($asteriskResult) {
             $this->echoStartMsg(' - Reload SIP settings in AstDB...');
             $sip = new SIPConf();
             $sip->updateAsteriskDatabase();
@@ -287,16 +347,21 @@ class SystemLoader extends Di\Injectable
         $nginx->reStart();
         $this->echoResultMsg();
 
-        // Log that all services are fully loaded if Asterisk is fully booted
-        if($asteriskResult){
-            $this->echoStartMsg(' - All services are fully loaded');
-        }
+        $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
 
         // Display network information
-        $this->echoStartMsg(Network::getInfoMessage());
+        $headerMessage = "All services are fully loaded welcome";
+        $welcomeMessage = SystemMessages::getInfoMessage($headerMessage,true);
+        $this->echoStartMsg($welcomeMessage);
 
-        $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
+         if (!$this->isDocker){
+            // Display the console menu info
+            $message =  PHP_EOL. PHP_EOL.'Run /etc/rc/console_menu if you want to start the console menu...' . PHP_EOL;
+            SystemMessages::echoToTeletype($message);
+        }
 
         return true;
     }
+
+
 }

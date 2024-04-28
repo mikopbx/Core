@@ -24,9 +24,11 @@ require_once 'Globals.php';
 
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
 use Throwable;
+use ZipArchive;
 
 /**
  * The WorkerModuleInstaller class is responsible for handling the installation of a module from a file
@@ -51,10 +53,11 @@ class WorkerModuleInstaller extends WorkerBase
 
         // Check if the settings file exists
         if ( ! file_exists($settings_file)) {
-            Util::sysLogMsg(__CLASS__, 'File with settings did not found', LOG_ERR);
+            SystemMessages::sysLogMsg(__CLASS__, 'File with settings did not found', LOG_ERR);
             return;
         }
         $settings = json_decode(file_get_contents($settings_file), true);
+        cli_set_process_title(__CLASS__.'-'.$settings['uniqid']);
         $temp_dir            = dirname($settings['filePath']);
         $this->progress_file = $temp_dir . '/installation_progress';
         $this->error_file    = $temp_dir . '/installation_error';
@@ -84,9 +87,14 @@ class WorkerModuleInstaller extends WorkerBase
 
         file_put_contents( $this->progress_file, '25');
         // Unzip module folder
-        $semZaPath = Util::which('7za');
-        $exitCode = Processes::mwExec("{$semZaPath} e -spf -aoa -o{$currentModuleDir} {$filePath}");
-        if ($exitCode !== 0) {
+        $zip = new ZipArchive();
+        if($zip->open($filePath)){
+            $result = $zip->extractTo($currentModuleDir);
+            $zip->close();
+        }else{
+            $result = false;
+        }
+        if ($result === false) {
             file_put_contents($this->error_file, 'Error occurred during module extraction.', FILE_APPEND);
             return;
         }
@@ -113,5 +121,5 @@ class WorkerModuleInstaller extends WorkerBase
     }
 }
 
-// Start worker process
+// Start a worker process
 WorkerModuleInstaller::startWorker($argv??[]);

@@ -20,6 +20,7 @@
 namespace MikoPBX\Tests\Modules\ModuleSmartIVR\Lib;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use Modules\ModuleSmartIVR\Lib\WebService1C;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 use Modules\ModuleSmartIVR\Models\ModuleSmartIVR;
@@ -35,7 +36,7 @@ class WebService1CTest extends AbstractUnitTest
         $this->module_extension   = $settings->extension;
         $this->timeout_extension  = $settings->timeout_extension;
         $this->failover_extension = $settings->failover_extension;
-        $this->internalExtLength  = PbxSettings::getValueByKey('PBXInternalExtensionLength');
+        $this->internalExtLength  = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH);
         // Количество повторов меню перед переводом на резервный номер
         $this->count_of_repeat_ivr = 3;
         if (isset($settings->number_of_repeat)

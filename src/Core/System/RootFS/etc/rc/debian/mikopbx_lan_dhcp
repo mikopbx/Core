@@ -1,0 +1,16 @@
+
+# printenv > /tmp/123;
+
+# Handle different DHCP lease events
+case "${reason}" in BOUND|RENEW|REBIND|REBOOT)
+    # When DHCP lease is acquired, renewed, rebound, or after a reboot
+
+    # Function to make changes to resolv.conf file
+    make_resolv_conf () {
+        true
+    }
+
+    # Execute PHP script with specific configuration based on the lease event
+    /usr/bin/php -f /etc/rc/udhcpc_configure "${reason}"
+;;
+esac

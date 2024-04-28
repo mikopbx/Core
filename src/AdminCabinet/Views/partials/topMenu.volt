@@ -28,7 +28,7 @@
         <div class="text"></div>
         <i class="dropdown icon"></i>
     </div>
-    <a class="item hide-on-mobile" id="show-advices-button"><i class="grey icon bell"></i></a>
+    <a class="item hide-on-mobile" id="show-advice-button"><i class="grey icon bell"></i></a>
     <a class="item" href="{{ url.get('session') }}/end"><i class="icon sign out"></i> {{ t._("mm_Logout") }}</a>
 </div>
 <!--/ TOP MENU-->

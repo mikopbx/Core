@@ -158,7 +158,7 @@ class Extensions extends ModelsBase
             $started = 200;
         }
 
-        $extensionsLength = PbxSettings::getValueByKey('PBXInternalExtensionLength');
+        $extensionsLength = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH);
         $maxExtension = (10 ** $extensionsLength) - 1;
 
         $occupied = Extensions::find(['columns' => 'number'])->toArray();

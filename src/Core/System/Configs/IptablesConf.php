@@ -19,8 +19,9 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-use MikoPBX\Common\Models\{FirewallRules, NetworkFilters, PbxSettings, Sip};
+use MikoPBX\Common\Models\{FirewallRules, NetworkFilters, PbxSettings, PbxSettingsConstants, Sip};
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
 use Phalcon\Di\Injectable;
@@ -56,14 +57,14 @@ class IptablesConf extends Injectable
     public function __construct()
     {
         // Check if the firewall is enabled.
-        $firewall_enable       = PbxSettings::getValueByKey('PBXFirewallEnabled');
+        $firewall_enable       = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED);
         $this->firewall_enable = ($firewall_enable === '1');
 
         // Get the SIP, TLS, and RTP port settings.
-        $this->sipPort  = PbxSettings::getValueByKey('SIPPort');
-        $this->tlsPort  = PbxSettings::getValueByKey('TLS_PORT');
-        $defaultRTPFrom = PbxSettings::getValueByKey('RTPPortFrom');
-        $defaultRTPTo   = PbxSettings::getValueByKey('RTPPortTo');
+        $this->sipPort  = PbxSettings::getValueByKey(PbxSettingsConstants::SIP_PORT);
+        $this->tlsPort  = PbxSettings::getValueByKey(PbxSettingsConstants::TLS_PORT);
+        $defaultRTPFrom = PbxSettings::getValueByKey(PbxSettingsConstants::RTP_PORT_FROM);
+        $defaultRTPTo   = PbxSettings::getValueByKey(PbxSettingsConstants::RTP_PORT_TO);
         $this->rtpPorts = "$defaultRTPFrom:$defaultRTPTo";
 
         // Initialize the Fail2Ban configuration.
@@ -121,12 +122,11 @@ class IptablesConf extends Injectable
             $out                 = [];
             Util::fileWriteContent('/etc/firewall_additional', '');
 
-            $catPath     = Util::which('cat');
-            $grepPath    = Util::which('grep');
-            $busyboxPath = Util::which('busybox');
-            $awkPath     = Util::which('awk');
+            $cat     = Util::which('cat');
+            $grep    = Util::which('grep');
+            $awk     = Util::which('awk');
             Processes::mwExec(
-                "$catPath /etc/firewall_additional | $grepPath -v '|' | $grepPath -v '&'| $grepPath '^iptables' | $busyboxPath $awkPath -F ';' '{print $1}'",
+                "$cat /etc/firewall_additional | $grep -v '|' | $grep -v '&'| $grep '^iptables' | $awk -F ';' '{print $1}'",
                 $arr_commands_custom
             );
 
@@ -251,7 +251,7 @@ class IptablesConf extends Injectable
             /** @var NetworkFilters $network_filter */
             $network_filter = NetworkFilters::findFirst($rule->networkfilterid);
             if ($network_filter === null) {
-                Util::sysLogMsg('Firewall', "network_filter_id not found $rule->networkfilterid", LOG_WARNING);
+                SystemMessages::sysLogMsg('Firewall', "network_filter_id not found $rule->networkfilterid", LOG_WARNING);
                 continue;
             }
             if ('0.0.0.0/0' === $network_filter->permit && $rule->action !== 'allow') {

@@ -20,6 +20,7 @@
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -45,7 +46,7 @@ class AmiConnectionListener  implements ServiceProviderInterface{
         $di->setShared(
             self::SERVICE_NAME,
             function () {
-                $port   = PbxSettings::getValueByKey('AMIPort');
+                $port   = PbxSettings::getValueByKey(PbxSettingsConstants::AMI_PORT);
                 $am     = new AsteriskManager();
                 $am->connect("127.0.0.1:{$port}", null, null, 'on');
                 return $am;

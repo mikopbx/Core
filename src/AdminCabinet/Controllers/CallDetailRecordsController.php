@@ -22,7 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use DateTime;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\CDRConfigInterface;
-use MikoPBX\Common\Models\{PbxSettings};
+use MikoPBX\Common\Models\{PbxSettings, PbxSettingsConstants};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 
 class CallDetailRecordsController extends BaseController
@@ -89,7 +89,7 @@ class CallDetailRecordsController extends BaseController
                 'bind' => [
                     'ids' => $arrIDS[0],
                 ],
-                'order' => ['linkedid desc', 'start asc'],
+                'order' => ['linkedid desc', 'start asc', 'id asc'],
             ];
         } else {
             $parameters = [
@@ -98,7 +98,7 @@ class CallDetailRecordsController extends BaseController
                 'bind' => [
                     'ids' => $arrIDS,
                 ],
-                'order' => ['linkedid desc', 'start asc'],
+                'order' => ['linkedid desc', 'start asc', 'id asc'],
             ];
         }
 
@@ -139,7 +139,8 @@ class CallDetailRecordsController extends BaseController
                 $linkedRecord->dst_num = $linkedRecord->dst_num === '' ? $record->dst_num : $linkedRecord->dst_num;
             }
             $linkedRecord->billsec += (int)$record->billsec;
-            if ($disposition === 'ANSWERED') {
+            $isAppWithRecord = ($record->is_app === '1' && file_exists($record->recordingfile));
+            if ($disposition === 'ANSWERED' || $isAppWithRecord) {
                 $linkedRecord->answered[] = [
                     'id' => $record->id,
                     'src_num' => $record->src_num,
@@ -155,6 +156,7 @@ class CallDetailRecordsController extends BaseController
         $output = [];
         foreach ($arrCdr as $cdr) {
             $timing = gmdate($cdr->billsec < 3600 ? 'i:s' : 'G:i:s', $cdr->billsec);
+            $additionalClass = (empty($cdr->answered))?'ui':'detailed';
             $output[] = [
                 date('d-m-Y H:i:s', strtotime($cdr->start)),
                 $cdr->src_num,
@@ -163,7 +165,7 @@ class CallDetailRecordsController extends BaseController
                 $cdr->answered,
                 $cdr->disposition,
                 'DT_RowId' => $cdr->linkedid,
-                'DT_RowClass' => 'NOANSWER' === $cdr->disposition ? 'ui negative' : 'detailed',
+                'DT_RowClass' => trim($additionalClass.' '.('NOANSWER' === $cdr->disposition ? 'negative' : '')),
                 'ids' => rawurlencode(implode('&', array_unique($cdr->ids))),
             ];
         }
@@ -221,7 +223,7 @@ class CallDetailRecordsController extends BaseController
 
         if (preg_match_all("/\d+/", $searchPhrase, $matches)) {
             $needCloseAnd = false;
-            $extensionsLength = PbxSettings::getValueByKey('PBXInternalExtensionLength');
+            $extensionsLength = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH);
             if ($parameters['conditions'] !== '') {
                 $parameters['conditions'] .= ' AND (';
                 $needCloseAnd = true;

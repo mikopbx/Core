@@ -45,29 +45,29 @@ class GeneralSettingsEditForm extends BaseForm
 
         foreach ($options as $key => $value) {
             switch ($key) {
-                case 'PBXRecordSavePeriod':
+                case PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD:
                 case '***ALL HIDDEN ABOVE***':
                     $this->add(new Hidden($key, ['value' => $value]));
                     break;
-                case 'SIPPort':
-                case 'TLS_PORT':
-                case 'SIPDefaultExpiry':
-                case 'SIPMinExpiry':
-                case 'SIPMaxExpiry':
-                case 'RTPPortFrom':
-                case 'RTPPortTo':
-                case 'IAXPort':
-                case 'AMIPort':
-                case 'AJAMPort':
-                case 'AJAMPortTLS':
+                case PbxSettingsConstants::SIP_PORT:
+                case PbxSettingsConstants::TLS_PORT:
+                case PbxSettingsConstants::SIP_DEFAULT_EXPIRY:
+                case PbxSettingsConstants::SIP_MIN_EXPIRY:
+                case PbxSettingsConstants::SIP_MAX_EXPIRY:
+                case PbxSettingsConstants::RTP_PORT_FROM:
+                case PbxSettingsConstants::RTP_PORT_TO:
+                case PbxSettingsConstants::IAX_PORT:
+                case PbxSettingsConstants::AMI_PORT:
+                case PbxSettingsConstants::AJAM_PORT:
+                case PbxSettingsConstants::AJAM_PORT_TLS:
                 case PbxSettingsConstants::SSH_PORT:
-                case 'WEBPort':
-                case 'WEBHTTPSPort':
+                case PbxSettingsConstants::WEB_PORT:
+                case PbxSettingsConstants::WEB_HTTPS_PORT:
                 case PbxSettingsConstants::PBX_CALL_PARKING_EXT:
                 case PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT:
                 case PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT:
-                case 'PBXFeatureDigitTimeout':
-                case 'PBXFeatureAtxferNoAnswerTimeout':
+                case PbxSettingsConstants::PBX_FEATURE_DIGIT_TIMEOUT:
+                case PbxSettingsConstants::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT:
                 case '***ALL NUMBERIC ABOVE***':
                     $this->add(new Numeric($key, ['value' => $value, 'style'=>'width:130px;']));
                     break;
@@ -80,7 +80,7 @@ class GeneralSettingsEditForm extends BaseForm
                         )
                     );
                     break;
-                case 'WebAdminPassword':
+                case PbxSettingsConstants::WEB_ADMIN_PASSWORD:
                     $this->add(new Password($key, ['value' => self::HIDDEN_PASSWORD]));
                     $this->add(
                         new Password(
@@ -89,17 +89,17 @@ class GeneralSettingsEditForm extends BaseForm
                         )
                     );
                     break;
-                case 'Description':
+                case PbxSettingsConstants::PBX_DESCRIPTION:
                 case PbxSettingsConstants::SSH_AUTHORIZED_KEYS:
-                case 'SSHecdsaKey':
-                case 'SSHRsaKey':
-                case 'SSHDssKey':
-                case 'WEBHTTPSPublicKey':
-                case 'WEBHTTPSPrivateKey':
+                case PbxSettingsConstants::SSH_ECDSA_KEY:
+                case PbxSettingsConstants::SSH_RSA_KEY:
+                case PbxSettingsConstants::SSH_DSS_KEY:
+                case PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY:
+                case PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY:
                 case '***ALL TEXTAREA ABOVE***':
                     $this->addTextArea($key, $value??'', 65);
                     break;
-                case 'PBXLanguage':
+                case PbxSettingsConstants::PBX_LANGUAGE:
                     $language = new Select(
                         $key,
                         [
@@ -132,7 +132,7 @@ class GeneralSettingsEditForm extends BaseForm
                     );
                     $this->add($language);
                     break;
-                case 'PBXInternalExtensionLength':
+                case PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH:
                     $extLength = new Select(
                         $key,
                         [
@@ -156,8 +156,8 @@ class GeneralSettingsEditForm extends BaseForm
                     );
                     $this->add($extLength);
                     break;
-                case 'PBXRecordAnnouncementIn':
-                case 'PBXRecordAnnouncementOut':
+                case PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_IN :
+                case PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_OUT:
                     $currentSoundFile = SoundFiles::findFirstById($value);
                     $selectArray = [];
                     if ($currentSoundFile !== null) {
@@ -178,16 +178,17 @@ class GeneralSettingsEditForm extends BaseForm
                     );
                     $this->add($audioMessage);
                     break;
-                case 'PBXRecordCalls':
-                case 'PBXRecordCallsInner':
-                case 'UseWebRTC':
-                case 'AJAMEnabled':
-                case 'AMIEnabled':
-                case 'RestartEveryNight':
-                case 'SendMetrics':
-                case 'RedirectToHttps':
-                case 'PBXSplitAudioThread':
-                case 'PBXAllowGuestCalls':
+                case PbxSettingsConstants::PBX_RECORD_CALLS:
+                case PbxSettingsConstants::PBX_RECORD_CALLS_INNER:
+                case PbxSettingsConstants::USE_WEB_RTC:
+                case PbxSettingsConstants::AJAM_ENABLED:
+                case PbxSettingsConstants::AMI_ENABLED:
+                case PbxSettingsConstants::RESTART_EVERY_NIGHT:
+                case PbxSettingsConstants::SEND_METRICS:
+                case PbxSettingsConstants::REDIRECT_TO_HTTPS:
+                case PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD:
+                case PbxSettingsConstants::PBX_ALLOW_GUEST_CALLS:
+                case PbxSettingsConstants::DISABLE_ALL_MODULES:
                 case PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD:
                 case '***ALL CHECK BOXES ABOVE***':
                     $cheskarr = ['value' => null];

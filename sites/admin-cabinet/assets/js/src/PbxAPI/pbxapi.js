@@ -24,8 +24,8 @@
  */
 const PbxApi = {
 
-    // AdvicesProcessor
-    advicesGetList: `${Config.pbxUrl}/pbxcore/api/advices/getList`, // Generates a list of notifications about the system, firewall, passwords, and wrong settings.
+    // AdviceProcessor
+    adviceGetList: `${Config.pbxUrl}/pbxcore/api/advice/getList`, // Generates a list of notifications about the system, firewall, passwords, and wrong settings.
 
     // CdrDBProcessor
     pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`,  //  Get active channels. These are the unfinished calls (endtime IS NULL).
@@ -45,13 +45,17 @@ const PbxApi = {
     // ModulesManagementProcessor
     modulesModuleStartDownload: `${Config.pbxUrl}/pbxcore/api/modules/core/moduleStartDownload`, // Starts the module download in a separate background process
     modulesModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/modules/core/moduleDownloadStatus`, // Returns the download status of a module.
-    modulesInstallModule: `${Config.pbxUrl}/pbxcore/api/modules/core/installNewModule`, // Installs a new additional extension module from an early uploaded zip archive.
+    modulesInstallFromPackage: `${Config.pbxUrl}/pbxcore/api/modules/core/installFromPackage`, // Installs a new additional extension module from an early uploaded zip archive.
+    modulesInstallFromRepo: `${Config.pbxUrl}/pbxcore/api/modules/core/installFromRepo`, // Installs a new additional extension module from a repository.
     modulesGetModuleInstallationStatus: `${Config.pbxUrl}/pbxcore/api/modules/core/statusOfModuleInstallation`, // Checks the status of a module installation by the provided zip file path.
     modulesEnableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/enableModule`, // Enables extension module.
     modulesDisableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/disableModule`, // Disables extension module.
     modulesUnInstallModule: `${Config.pbxUrl}/pbxcore/api/modules/core/uninstallModule`, // Uninstall extension module.
     modulesGetAvailable: `${Config.pbxUrl}/pbxcore/api/modules/core/getAvailableModules`, // Retrieves available modules on MIKO repository.
     modulesGetLink: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleLink`, // Retrieves the installation link for a module.
+    modulesUpdateAll: `${Config.pbxUrl}/pbxcore/api/modules/core/updateAll`, // Update all installed modules.
+    modulesGetMetadataFromModulePackage: `${Config.pbxUrl}/pbxcore/api/modules/core/getMetadataFromModulePackage`, // Retrieves the module.json information from uploaded zip archive.
+    modulesGetModuleInfo: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleInfo`, // Retrieves the module description from the repository.
 
     // FirewallManagementProcessor
     firewallGetBannedIp: `${Config.pbxUrl}/pbxcore/api/firewall/getBannedIp`, // Retrieve a list of banned IP addresses or get data for a specific IP address.
@@ -61,6 +65,7 @@ const PbxApi = {
     sipGetRegistry: `${Config.pbxUrl}/pbxcore/api/sip/getRegistry`, //  Retrieves the statuses of SIP providers registration.
     sipGetPeersStatus: `${Config.pbxUrl}/pbxcore/api/sip/getPeersStatuses`, // Retrieves the statuses of SIP peers.
     sipGetPeerStatus: `${Config.pbxUrl}/pbxcore/api/sip/getSipPeer`, //  Retrieves the status of provided SIP peer.
+    sipGetSecret: `${Config.pbxUrl}/pbxcore/api/sip/getSecret?number={number}`, // Get extension sip secret.
 
     // IAXStackProcessor
     iaxGetRegistry: `${Config.pbxUrl}/pbxcore/api/iax/getRegistry`, // Retrieves the statuses of IAX providers registration.
@@ -108,6 +113,19 @@ const PbxApi = {
 
     // Users
     usersAvailable: `${Config.pbxUrl}/pbxcore/api/users/available?email={email}`, // Checks the email uniqueness.
+
+    // Call queues
+    callQueuesDeleteRecord: `${Config.pbxUrl}/pbxcore/api/call-queues/deleteRecord`, // Deletes the call queue record with its dependent tables.
+
+    // Conference rooms
+    conferenceRoomsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/conference-rooms/deleteRecord`, // Deletes the conference room record with its dependent tables.
+
+    // IVR menu
+    ivrMenuDeleteRecord: `${Config.pbxUrl}/pbxcore/api/ivr-menu/deleteRecord`, // Deletes the ivr menu record with its dependent tables.
+
+    // Dialplan applications
+    dialplanApplicationsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/dialplan-applications/deleteRecord`, // Deletes the call-queues record with its dependent tables.
+
 
 
     /**
@@ -758,8 +776,8 @@ const PbxApi = {
             method: 'POST',
             data: {temp_filename: filePath},
             successTest: PbxApi.successTest,
-            onSuccess() {
-                callback(true);
+            onSuccess(response) {
+                callback(response);
             },
             onFailure(response) {
                 callback(response);
@@ -826,18 +844,64 @@ const PbxApi = {
     /**
      * Installs a new additional extension module from an early uploaded zip archive.
      *
-     * @param {string} filePath - The file path of the module to be installed.
+     * @param {Object} params - The parameters required for uploading the module.
+     * @param {string} params.filePath - The uploaded file path.
+     * @param {string} params.fileId - The unique ID of uploaded module file.
+     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
      * @param {function} callback - The callback function to be called after attempting to install the module.
      *                              It will receive the response object.
      * @returns {void}
      */
-    ModulesInstallModule(filePath, callback) {
+    ModulesInstallFromPackage(params, callback) {
         $.api({
-            url: PbxApi.modulesInstallModule,
+            url: PbxApi.modulesInstallFromPackage,
             on: 'now',
             method: 'POST',
             data: {
-                filePath
+                filePath: params.filePath,
+                fileId: params.fileId,
+            },
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
+            },
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError(response) {
+                callback(response);
+            },
+        });
+    },
+
+
+    /**
+     * Installs a new additional extension module from mikopbx repository.
+     *
+     * @param {Object} params - The parameters required for uploading the module.
+     * @param {string} params.uniqid - The unique ID of the module.
+     * @param {string} params.releaseId - The unique ID of the release or 0 if we want the last one.
+     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
+     * @param {function} callback - The callback function to be called after attempting to install the module.
+     *                              It will receive the response object.
+     * @returns {void}
+     */
+    ModulesInstallFromRepo(params, callback) {
+        $.api({
+            url: PbxApi.modulesInstallFromRepo,
+            on: 'now',
+            method: 'POST',
+            data: {
+                uniqid: params.uniqid,
+                releaseId: params.releaseId,
+            },
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
             },
             successTest: PbxApi.successTest,
             onSuccess(response) {
@@ -990,7 +1054,7 @@ const PbxApi = {
             url: PbxApi.modulesDisableModule,
             on: 'now',
             method: 'POST',
-            data: {uniqid: moduleUniqueID},
+            data: {uniqid: moduleUniqueID, reason: 'DisabledByUser'},
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response, true);
@@ -1084,6 +1148,92 @@ const PbxApi = {
         });
     },
 
+    /**
+     * Retrieves the module.json information from uploaded zip archive.
+     *
+     * @param {string} filePath - The file path of the module.
+     * @param {function} callback - The callback function to process response.
+     * @returns {void}
+     */
+    ModulesGetMetadataFromModulePackage(filePath, callback) {
+        $.api({
+            url: PbxApi.modulesGetMetadataFromModulePackage,
+            on: 'now',
+            method: 'POST',
+            data: {filePath: filePath},
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(true, response);
+            },
+            onFailure(response) {
+                callback(false, response);
+            },
+            onError(response) {
+                callback(false, response);
+            },
+        });
+    },
+
+    /**
+     * Retrieves the module detail information from the repository.
+     *
+     * @param params
+     * @param {string} params.uniqid - The unique ID of the module.
+     * @param {function} callback - The callback function to process response.
+     * @returns {void}
+     */
+    ModulesGetModuleInfo(params, callback) {
+        $.api({
+            url: PbxApi.modulesGetModuleInfo,
+            on: 'now',
+            method: 'POST',
+            data: {uniqid: params.uniqid},
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(true, response);
+            },
+            onFailure(response) {
+                callback(false, response);
+            },
+            onError(response) {
+                callback(false, response);
+            },
+        });
+    },
+
+    /**
+     * Updates all installed modules.
+     *
+     * @param params
+     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
+     * @param {array} params.modulesForUpdate - The list of module unique ID for update.
+     * @param {function} callback - The callback function to process response.
+     * @returns {void} Returns true.
+     */
+    ModulesUpdateAll(params, callback) {
+        $.api({
+            url: PbxApi.modulesUpdateAll,
+            on: 'now',
+            method: 'POST',
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
+            },
+            data: {
+                modulesForUpdate:params.modulesForUpdate
+            },
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError(response) {
+                callback(response);
+            },
+        });
+    },
 
     /**
      * Downloads new firmware from the provided URL.
@@ -1325,9 +1475,9 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called with the response data or `false` in case of failure.
      * @returns {void}
      */
-    AdvicesGetList(callback) {
+    AdviceGetList(callback) {
         $.api({
-            url: PbxApi.advicesGetList,
+            url: PbxApi.adviceGetList,
             on: 'now',
             successTest: PbxApi.successTest,
             onSuccess(response) {
@@ -1556,7 +1706,7 @@ const PbxApi = {
             },
         });
     },
-
+    
 };
 
 // requirejs(["pbx/PbxAPI/extensionsAPI"]);

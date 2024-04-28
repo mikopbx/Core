@@ -1,0 +1,16 @@
+name: Mirror GitHub To GitVerse
+
+on: [push]
+
+jobs:
+  mirror_to_gitverse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: jorikfon/mirror-action@master
+        with:
+          REMOTE: ssh://git@gitverse.ru:2222/mikopbx/Core.git
+          GIT_SSH_PRIVATE_KEY: ${{ secrets.GITVERSE_SSH_PRIVATE_KEY }}
+          GIT_SSH_NO_VERIFY_HOST: "true"

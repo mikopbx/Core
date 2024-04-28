@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
@@ -35,6 +36,8 @@ use Phalcon\Di\Injectable;
  */
 class NatsConf extends Injectable
 {
+    public const PROC_NAME = 'gnatsd';
+
     private MikoPBXConfig $mikoPBXConfig;
 
     /**
@@ -52,14 +55,14 @@ class NatsConf extends Injectable
      */
     public function reStart(): void
     {
-        $confdir = '/etc/nats';
-        Util::mwMkdir($confdir);
+        $confDir = '/etc/nats';
+        Util::mwMkdir($confDir);
 
-        $logdir = System::getLogDir() . '/nats';
-        Util::mwMkdir($logdir);
+        $logDir = System::getLogDir() . '/nats';
+        Util::mwMkdir($logDir);
 
         $tempDir = $this->di->getShared('config')->path('core.tempDir');
-        $sessionsDir = "{$tempDir}/nats_cache";
+        $sessionsDir = "$tempDir/nats_cache";
         Util::mwMkdir($sessionsDir);
 
         $pid_file = '/var/run/gnatsd.pid';
@@ -75,25 +78,31 @@ class NatsConf extends Injectable
             'max_control_line' => '512',
             'sessions_path'    => $sessionsDir,
             'log_size_limit'   => 10485760, //10Mb
-            'log_file'         => "{$logdir}/gnatsd.log",
+            'log_file'         => "$logDir/gnatsd.log",
         ];
         $config   = '';
         foreach ($settings as $key => $val) {
-            $config .= "{$key}: {$val} \n";
+            $config .= "$key: $val\n";
         }
-        $conf_file = "{$confdir}/natsd.conf";
+        $conf_file = "$confDir/natsd.conf";
         Util::fileWriteContent($conf_file, $config);
 
-        $lic = $this->mikoPBXConfig->getGeneralSettings('PBXLicense');
-        file_put_contents("{$sessionsDir}/license.key", $lic);
+        $lic = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::PBX_LICENSE);
+        file_put_contents("$sessionsDir/license.key", $lic);
 
         if (file_exists($pid_file)) {
+            $killAllPath = Util::which('killall');
             $killPath = Util::which('kill');
-            $catPath = Util::which('kill');
-            Processes::mwExec("{$killPath} $({$catPath} {$pid_file})");
+            $catPath = Util::which('cat');
+            Processes::mwExec("$killAllPath safe-".self::PROC_NAME);
+            Processes::mwExec("$killPath $($catPath $pid_file)");
         }
-
-        $gnatsdPath = Util::which('gnatsd');
-        Processes::mwExecBg("{$gnatsdPath} --config {$conf_file}", "{$logdir}/gnats_process.log");
+        $outFile = "$logDir/gnats_process.log";
+        $args = "--config $conf_file";
+        $result = Processes::safeStartDaemon(self::PROC_NAME, $args, 20, 1000000, $outFile);
+        if(!$result){
+            sleep(10);
+            Processes::safeStartDaemon(self::PROC_NAME, $args, 20, 1000000, $outFile);
+        }
     }
 }

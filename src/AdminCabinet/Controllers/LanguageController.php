@@ -20,6 +20,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Di;
 
@@ -31,8 +32,6 @@ use Phalcon\Di;
 class LanguageController extends BaseController
 {
 
-    public const WEB_ADMIN_LANGUAGE = 'WebAdminLanguage';
-
     /**
      * Updates system settings for language
      *
@@ -42,11 +41,11 @@ class LanguageController extends BaseController
         if (!isset($newLanguage)) {
             return;
         }
-        $languageSettings = PbxSettings::findFirstByKey('WebAdminLanguage');
+        $languageSettings = PbxSettings::findFirstByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
         if ($languageSettings === null) {
             $languageSettings = new PbxSettings();
-            $languageSettings->key = 'WebAdminLanguage';
-            $languageSettings->value = PbxSettings::getDefaultArrayValues()['WebAdminLanguage'];
+            $languageSettings->key = PbxSettingsConstants::WEB_ADMIN_LANGUAGE;
+            $languageSettings->value = PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::WEB_ADMIN_LANGUAGE];
         }
         if ($newLanguage !== $languageSettings->value) {
             $languageSettings->value = $newLanguage;
@@ -61,7 +60,7 @@ class LanguageController extends BaseController
     {
         $newLanguage = $this->request->getPost('newLanguage', 'string');
         if (array_key_exists($newLanguage, self::getAvailableWebAdminLanguages())) {
-            $this->session->set(LanguageController::WEB_ADMIN_LANGUAGE, $newLanguage);
+            $this->session->set(PbxSettingsConstants::WEB_ADMIN_LANGUAGE, $newLanguage);
             if ($this->session->has(SessionController::SESSION_ID)) {
                 self::updateSystemLanguage($newLanguage);
             }
@@ -102,6 +101,7 @@ class LanguageController extends BaseController
             'vi' => ['name' => $translation->_('ex_Vietnamese'), 'flag' => 'vietnam'],
             'az' => ['name' => $translation->_('ex_Azerbaijan'), 'flag' => 'azerbaijan'],
             'ro' => ['name' => $translation->_('ex_Romanian'), 'flag' => 'romania'],
+            'th' => ['name' => $translation->_('ex_Thai'), 'flag' => 'thailand'],
             'zh_Hans' => ['name' => $translation->_('ex_Chinese'), 'flag' => 'china'],
         ];
     }

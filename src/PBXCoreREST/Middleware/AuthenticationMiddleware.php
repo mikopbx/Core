@@ -53,11 +53,12 @@ class AuthenticationMiddleware implements MiddlewareInterface
         /** @var Response $response */
         $response = $api->getService(ResponseProvider::SERVICE_NAME);
 
+        $isNoAuthApi = $request->thisIsModuleNoAuthRequest($api);
         if (
             true !== $request->isLocalHostRequest()
             && true !== $request->isDebugModeEnabled()
             && true !== $request->isAuthorizedSessionRequest()
-            && true !== $request->thisIsModuleNoAuthRequest($api)
+            && true !== $isNoAuthApi
         ) {
             $loggerAuth = $api->getService(LoggerAuthProvider::SERVICE_NAME);
             $loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: Wrong password");
@@ -69,7 +70,8 @@ class AuthenticationMiddleware implements MiddlewareInterface
             return false;
         }
 
-        if (true !== $request->isLocalHostRequest()
+        if (true !== $isNoAuthApi
+         && true !== $request->isLocalHostRequest()
          && true !== $request->isAllowedAction($api)) {
              $this->halt(
                 $api,

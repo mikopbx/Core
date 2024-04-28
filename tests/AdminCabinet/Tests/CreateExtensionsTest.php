@@ -21,91 +21,117 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class CreateExtensionsTest extends MikoPBXTestsBase
 {
+
     /**
-     * @depends      testLogin
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Creating extensions");
+    }
+
+    /**
+     * Test the creation of extensions.
+     *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param $params
+     * @param array $params The parameters for creating the extension.
      *
      * @throws \Facebook\WebDriver\Exception\NoSuchElementException
      * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
-    public function testCreateExtensions($params): void
+    public function testCreateExtensions(array $params): void
     {
-            $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Navigate to the extensions page
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
-            $this->clickDeleteButtonOnRowWithText($params['username']);
+        // Fill search field
+        $this->fillDataTableSearchInput('global-search', $params['username']);
 
-            $this->clickButtonByHref('/admin-cabinet/extensions/modify');
+        // Delete any existing extension with the same username
+        $this->clickDeleteButtonOnRowWithText($params['username']);
 
+        // Click the button to modify the extensions
+        $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
-//            // Fix uniqid to compare reference data in /etc folder for every build
-//            self::$driver->executeScript(
-//            "$('#extensions-form').form('set value','uniqid','{$params['uniqid']}');"
-//            );
-            $this->changeInputField('user_username', $params['username']);
-            $this->changeInputField('number', $params['number']);
-            $this->changeInputField('mobile_number', $params['mobile']);
-            self::$driver->executeScript('$("#mobile_number").trigger("change")');
-            $this->changeInputField('user_email', $params['email']);
-            $this->changeInputField('sip_secret', $params['secret']);
+        // Set input field values for the extension
+        $this->changeInputField('user_username', $params['username']);
+        $this->changeInputField('number', $params['number']);
+        $this->changeInputField('mobile_number', $params['mobile']);
+        self::$driver->executeScript('$("#mobile_number").trigger("change")');
+        $this->changeInputField('user_email', $params['email']);
+        $this->changeInputField('sip_secret', $params['secret']);
 
-            // Раскрываем расширенные опции
-            $this->openAccordionOnThePage();
+        // Expand advanced options
+        $this->openAccordionOnThePage();
 
-            $this->changeCheckBoxState('sip_enableRecording', $params['sip_enableRecording']);
-            $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
-            $this->selectDropdownItem('sip_transport', $params['sip_transport']);
+        // Set advanced options
+        $this->changeCheckBoxState('sip_enableRecording', $params['sip_enableRecording']);
+        $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
+        $this->selectDropdownItem('sip_transport', $params['sip_transport']);
+        $this->changeTextAreaValue('sip_manualattributes', $params['sip_manualattributes']);
 
-            $this->changeTextAreaValue('sip_manualattributes', $params['sip_manualattributes']);
+        // Upload a file
+        $filePath = 'C:\Users\hello\Documents\images\person.jpg';
+        $this->changeFileField('file-select', $filePath);
 
-            //$filePath           =  __DIR__."/../assets/{$params['number']}.png";
-            $filePath = 'C:\Users\hello\Documents\images\person.jpg';
-            $this->changeFileField('file-select', $filePath);
+        // Submit the form
+        $this->submitForm('extensions-form');
 
-           $this->submitForm('extensions-form');
+        // Wait for extension creation
+        self::$driver->wait(10, 500)->until(
+            function () {
+                $xpath = "//input[@name = 'id']";
+                $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
+                return $input_ExtensionUniqueID->getAttribute('value') !== '';
+            }
+        );
 
-            self::$driver->wait(10, 500)->until(
-                function () {
-                    $xpath         = "//input[@name = 'id']";
-                    $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
-                    return $input_ExtensionUniqueID->getAttribute('value')!=='';
-                }
-            );
+        // Assert extension creation
+        $xpath = "//input[@name = 'id']";
+        $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
 
-            // TESTS
-            $xpath                   = "//input[@name = 'id']";
-            $input_ExtensionUniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $this->assertNotEmpty($input_ExtensionUniqueID->getAttribute('value'));
+        // Navigate back to the extensions page
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->clickModifyButtonOnRowWithText($params['username']);
 
-            $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
-            $this->clickModifyButtonOnRowWithText($params['username']);
+        // Assert input field values
+        $this->assertInputFieldValueEqual('user_username', $params['username']);
+        $this->assertInputFieldValueEqual('number', $params['number']);
+        $this->assertInputFieldValueEqual('user_email', $params['email']);
 
-            $this->assertInputFieldValueEqual('user_username',  $params['username']);
-            $this->assertInputFieldValueEqual('number',  $params['number']);
-            $this->assertInputFieldValueEqual('user_email',  $params['email']);
-            // $this->assertInputFieldValueEqual('mobile_number',  $params['mobile']);
+        // Switch to the 'routing' tab and assert values
+        $this->changeTabOnCurrentPage('routing');
+        $this->assertInputFieldValueEqual('fwd_ringlength', '45');
+        $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['mobile']);
+        $this->assertMenuItemSelected('fwd_forwarding', $params['mobile']);
+        $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['mobile']);
 
-            $this->changeTabOnCurrentPage('routing');
-            $this->assertInputFieldValueEqual('fwd_ringlength', '45');
-            $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['mobile']);
-            $this->assertMenuItemSelected('fwd_forwarding', $params['mobile']);
-            $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['mobile']);
+        // Switch to the 'general' tab and assert values
+        $this->changeTabOnCurrentPage('general');
+        $this->assertInputFieldValueEqual('sip_secret', $params['secret']);
 
-            $this->changeTabOnCurrentPage('general');
-            $this->assertInputFieldValueEqual('sip_secret',  $params['secret']);
-
-            // Раскрываем расширенные опции
-            $this->openAccordionOnThePage();
-            $this->assertInputFieldValueEqual('mobile_dialstring',  $params['mobile']);
-            $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
-            $this->assertMenuItemSelected('sip_transport', $params['sip_transport']);
-            $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['sip_manualattributes']);
+        // Expand advanced options and assert values
+        $this->openAccordionOnThePage();
+        $this->assertInputFieldValueEqual('mobile_dialstring', $params['mobile']);
+        $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
+        $this->assertMenuItemSelected('sip_transport', $params['sip_transport']);
+        $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['sip_manualattributes']);
     }
+
 
     /**
      * Dataset provider
@@ -114,7 +140,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [
+        $params['Eugeniy Makrchev <235>'] = [
             [
                 'number'   => 235,
                 'email'    => 'emar@miko.ru',
@@ -129,7 +155,7 @@ class CreateExtensionsTest extends MikoPBXTestsBase
 callerid=2546456<240>',
 
             ]];
-        $params[] = [
+        $params['Nikolay Beketov <229>'] = [
             [
                 'number'   => 229,
                 'email'    => 'nuberk@miko.ru',
@@ -143,7 +169,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'',
                ]];
 
-        $params[] = [
+        $params['Svetlana Vlasova <223>'] = [
             [
                 'number'   => 223,
                 'email'    => 'svlassvlas@miko.ru',
@@ -156,7 +182,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'tcp',
                 'sip_manualattributes'=>'',
               ]];
-        $params[] = [
+        $params['Natalia Beketova <217>'] = [
             [
                 'number'   => 217,
                 'email'    => 'nanabek@miko.ru',
@@ -170,7 +196,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'',
 
                 ]];
-        $params[] = [
+        $params['Julia Efimova <206>'] = [
             [
                 'number'   => 206,
                 'email'    => 'bubuh@miko.ru',
@@ -183,7 +209,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Alisher Usmanov <231>'] = [
             [
                 'number'   => 231,
                 'email'    => 'alish@miko.ru',
@@ -196,7 +222,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'tls',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Ivan Maltsev <236>'] = [
             [
                 'number'   => 236,
                 'email'    => 'imalll@miko.ru',
@@ -210,7 +236,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'',
             ]];
 
-        $params[] = [
+        $params['Alexandr Medvedev <214>'] = [
             [
                 'number'   => 214,
                 'email'    => 'alex@miko.ru',
@@ -223,7 +249,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Anna Mzhelskaya <212>'] = [
             [
                 'number'   => 212,
                 'email'    => 'amzh@miko.ru',
@@ -236,7 +262,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Viktor Mitin <210>'] = [
             [
                 'number'   => 210,
                 'email'    => 'vmit@miko.ru',
@@ -249,7 +275,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Anton Pasutin <228>'] = [
             [
                 'number'   => 228,
                 'email'    => 'apas@miko.ru',
@@ -262,7 +288,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Kristina Perfileva <213>'] = [
             [
                 'number'   => 213,
                 'email'    => 'kper@miko.ru',
@@ -275,7 +301,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Alexey Portnov <204>'] = [
             [
                 'number'   => 204,
                 'email'    => 'apore@miko.ru',
@@ -288,7 +314,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Tatiana Portnova <233>'] = [
             [
                 'number'   => 233,
                 'email'    => 'tpora@miko.ru',
@@ -302,7 +328,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'',
 
             ]];
-        $params[] = [
+        $params['Alexandra Pushina <254>'] = [
             [
                 'number'   => 254,
                 'email'    => 'apushh@miko.ru',
@@ -315,7 +341,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'udp',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Dmitri Fomichev <253>'] = [
             [
                 'number'   => 253,
                 'email'    => 'dfom@miko.ru',
@@ -329,7 +355,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'',
 
             ]];
-        $params[] = [
+        $params['Daria Holodova <230>'] = [
             [
                 'number'   => 230,
                 'email'    => 'dhol@miko.ru',
@@ -342,7 +368,7 @@ callerid=2546456<240>',
                 'sip_transport'=>'tls',
                 'sip_manualattributes'=>'',
             ]];
-        $params[] = [
+        $params['Ilia Tsvetkov <219>'] = [
             [
                 'number'   => 219,
                 'email'    => 'icvetf@miko.ru',
@@ -356,7 +382,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'[endpoint]
 callerid=2546456<240>',
             ]];
-        $params[] = [
+        $params['Maxim Tsvetkov <240>'] = [
             [
                 'number'   => 240,
                 'email'    => 'mcvetfd@miko.ru',
@@ -370,7 +396,7 @@ callerid=2546456<240>',
                 'sip_manualattributes'=>'[endpoint]
 callerid=2546456<240>',
             ]];
-        $params[] = [
+        $params['Viktor Chentcov <251>'] = [
             [
                 'number'   => 251,
                 'email'    => 'vchen@miko.ru',
@@ -385,7 +411,7 @@ callerid=2546456<240>',
 callerid=2546456<251>',
 
             ]];
-        $params[] = [
+        $params['Evgenia Chulkova <234>'] = [
             [
                 'number'   => 234,
                 'email'    => 'esam@miko.ru',

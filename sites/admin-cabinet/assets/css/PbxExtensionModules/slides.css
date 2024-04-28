@@ -1,0 +1,91 @@
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+.slides {
+    background: white;
+    /* must have height set */
+    height: 49rem;
+    width: 100%;
+    overflow: hidden;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    .angle {
+        color: lightblue;
+        cursor: pointer;
+        position: relative;
+        top: calc(50% - 20px);
+        transform: scale(1);
+        transition: all .2s ease-in-out;
+        z-index: 10;
+        &:hover {
+            transform: scale(1.7);
+        }
+        &.right {
+            float: right;
+            margin-right: 1rem;
+        }
+        &.left {
+            float: left;
+            margin-left: 1rem;
+        }
+    }
+    .slide {
+        height: 100%;
+        padding: 2rem 5rem;
+        transition: all .2s ease-in-out;
+        &:not(.active) {
+            display: none;
+        }
+        &.inverted {
+            color: white;
+        }
+        &.shadow {
+            text-shadow: 1px 1px 2px black;
+        }
+        &.image {
+            background: url('https://c1.staticflickr.com/8/7371/12387240074_536af0b877.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        &.salmon {
+            background: salmon;
+        }
+    }
+}
+
+/* add .faded to .slide for fade-in */
+.faded {
+   animation: fade .5s;
+}
+
+.blurred {
+    animation: blur .4s;
+}
+
+@keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes blur {
+    from { filter: blur(5px); }
+    to { filter: blur(0); }
+}

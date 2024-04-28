@@ -1,0 +1,161 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+# Source shell functions for use later in the script
+. /sbin/shell_functions.sh;
+
+# Assign input arguments to variables
+img_file="$1";
+systemDevice="$2"
+
+# Redirect standard input, output and error to /dev/console
+exec </dev/console >/dev/console 2>/dev/console;
+
+# Inform the user of the firmware upgrade process
+echoToTeletype;
+echoToTeletype " - Firmware upgrade in progress...";
+echoToTeletype " - Backing up configuration...";
+
+# Create a temporary directory to backup configuration
+mkdir -p /tmp/configbak;
+
+# Verify the MD5 hash of the compressed image file
+md5Hash="$(/bin/gunzip -N -l < "${img_file}" | /bin/busybox grep -v uncompressed_name | /bin/busybox awk  '{ print $4}')";
+if [ "$md5Hash" != "$(/bin/gunzip -c "${img_file}" |/bin/busybox md5sum | /bin/busybox cut -f 1 -d ' ')" ] ; then
+    # Inform the user of the checksum mismatch and abort the update
+    echoToTeletype " - The checksum of the system image does not match.";
+    echoToTeletype " - Update was aborted...";
+    rm -rf "$img_file";
+    # Set a flag to indicate rebooting.
+    touch /tmp/rebooting;
+    exit 0;
+else
+    # Inform the user of successful checksum verification
+    echoToTeletype " - Successful checksum verification! Start the system upgrade ...";
+fi
+
+# Check if the livecd file exists, and proceed with different operations depending on its existence
+if [ -f /offload/livecd ]; then
+  # Copy the configuration to the backup directory and unmount /conf.recover
+  /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak;
+  echoToTeletype " - Unmounting /conf.recover partition...";
+  /bin/umount -f /conf.recover;
+else
+
+  if [ -f /offload/version.buildtime ]; then
+    # Offload is mounted
+    # Backup of settings to a disk for data storage
+    /sbin/dump-conf-db
+  fi;
+  # Copy the configuration to the tmp (RAM) directory
+  echoToTeletype " - Backup the system settings to temporary directory...";
+  /bin/busybox cp -R /cf/conf/* /tmp/configbak;
+
+  mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
+
+  # Get the name of the mounted storage and the 4th partition (if it exists)
+  partition4Name=$(/bin/lsblk -r | /bin/busybox grep "${systemDevice}" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/busybox sort -u)
+
+  # If the 4th partition is not the same as the mounted storage
+  if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
+    # Storage is on a separate disk. Proceed with the freeup, backup and update procedures
+    echoToTeletype " - Umount storage partition ...";
+    /sbin/freestorage "doNotUnMount";
+
+    # Define the backup directory and image path
+    backupDir="$(cat /var/etc/storage_device)/mikopbx/backup/last-update-firmware"
+    backupImg="$backupDir/system.img";
+    rm -rf "$backupDir"; mkdir -p "$backupDir";
+
+    # Copy the configuration to the storage and backup the system image
+    echoToTeletype " - Backup system partition to storage ...";
+    /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=512 >/dev/null 2>&1;
+  else
+    # Storage is on the main disk which needs to be unmounted, so move the image to RAM
+    echoToTeletype " - Moving the update img to RAM before storage will be unmounted ..."
+    tmp_img=$(/bin/busybox basename "$1");
+    img_file="/tmp/${tmp_img}";
+
+    # Move the img file to /tmp because storage will be unmounted
+    src_file=$(/bin/readlink -f "$1")
+    if [ "${src_file}" != "${img_file}" ]; then
+      mv "${src_file}" "${img_file}";
+    fi
+
+     # Free up the storage
+    echoToTeletype " - Umount storage partition ...";
+    /sbin/freestorage;
+  fi
+
+  # Unmount the main disk
+  /sbin/freeupoffload;
+fi
+
+# Inform the user of the installation process
+if [ -r "${img_file}" ]; then
+  echoToTeletype " - Installing new image on /dev/${systemDevice}"
+  # Use pv to monitor the progress of the data being piped to the dd command
+  /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=512 >/dev/null 2>&1;
+  resultPv="$?";
+
+   # If the pv command fails or there aren't three primary partitions, restore the system image from the backup
+  if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "/dev/${systemDevice}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
+    if [ -f "$backupImg" ]; then
+      echoToTeletype " - There are some errors in the new image, restoring system from backup to /dev/${systemDevice}"
+      /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=512 >/dev/null 2>&1;
+    fi;
+  fi;
+  rm -rf "$backupImg";
+  echoToTeletype " - The execution of the dd command was finished...";
+
+  # Update the partition table
+  /sbin/initial_storage_part_four update "/dev/${systemDevice}";
+  echoToTeletype " - Check if it necessary to update 4-th storage partition. The result is ${?}...";
+fi
+
+# Reread the partition table of the system device
+/sbin/blockdev --rereadpt "/dev/${systemDevice}" > /dev/null 2>&1
+sleep 3;
+
+# Get the name of the 3rd partition
+partition3Name=$(/bin/lsblk -r -p | /bin/busybox grep "${systemDevice}" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "3$" | /bin/busybox sort -u)
+
+# If the livecd file exists, re-mount /conf.recover, restore configuration, and reboot the system
+if [ -f /offload/livecd ]; then
+  echoToTeletype " - Re-mounting /conf.recover partition with read/write mode..."
+  /bin/mount -w -o noatime "${partition3Name}" /conf.recover
+  rm -f /conf.recover/conf/*
+  echoToTeletype " - Restoring the MikoPBX default configuration ..."
+  /bin/busybox cp -p /tmp/configbak/* /conf.recover/conf/
+  touch /tmp/ejectcd
+else
+  # Format the 3rd partition and mount it as /cf/. Then, copy the configuration back and remove the image file
+  echoToTeletype " - Format the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
+  /bin/busybox yes |/sbin/mkfs.ext4 "${partition3Name}" > /dev/null 2> /dev/null;
+  /bin/mount -w -o noatime "${partition3Name}" /cf/
+  mkdir -p /cf/conf/;
+  echoToTeletype " - Restoring the MikoPBX configuration settings...";
+  /bin/busybox cp /tmp/configbak/* /cf/conf/;
+  rm -rf "${img_file}";
+fi
+
+echoToTeletype " - Rebooting the system..."
+ # Set a flag to indicate rebooting.
+touch /tmp/rebooting;
+exit 0;

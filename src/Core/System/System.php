@@ -21,15 +21,12 @@ namespace MikoPBX\Core\System;
 
 use DateTime;
 use DateTimeZone;
-use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\Asterisk\Configs\H323Conf;
-use MikoPBX\Core\Asterisk\Configs\HepConf;
-use MikoPBX\Core\System\Configs\CronConf;
-use MikoPBX\Core\System\Configs\IptablesConf;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\PHPConf;
-use MikoPBX\Core\System\Configs\NTPConf;
-use MikoPBX\Core\Asterisk\Configs\QueueConf;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Di;
 
 
@@ -65,9 +62,9 @@ class System extends Di\Injectable
         }
         $sqlite3 = Util::which('sqlite3');
         $md5sum = Util::which('md5sum');
-        $busybox = Util::which('busybox');
-        $md5_1 = shell_exec("$sqlite3 ".$di->getConfig()->path('database.dbfile')." .dump | $md5sum | $busybox cut -f 1 -d ' '");
-        $md5_2 = shell_exec("$sqlite3 /conf.default/mikopbx.db .dump | $md5sum | $busybox cut -f 1 -d ' '");
+        $cut = Util::which('cut');
+        $md5_1 = shell_exec("$sqlite3 ".$di->getConfig()->path('database.dbfile')." .dump | $md5sum | $cut -f 1 -d ' '");
+        $md5_2 = shell_exec("$sqlite3 /conf.default/mikopbx.db .dump | $md5sum | $cut -f 1 -d ' '");
         return $md5_1 === $md5_2;
     }
 
@@ -84,55 +81,54 @@ class System extends Di\Injectable
         $storage = new Storage();
         $storages = $storage->getStorageCandidate();
         $tmpMountDir = '/tmp/mnt';
-        $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'],['',''],$di->getConfig()->path('core.confBackupDir'));
+        $confBackupDir = Directories::getDir(Directories::CORE_CONF_BACKUP_DIR);
+        $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'],['',''],$confBackupDir);
         $confFile    = $di->getConfig()->path('database.dbfile');
         foreach ($storages as $dev => $fs){
-            Util::teletypeEcho("    - mount $dev ..."."\n");
+            SystemMessages::echoToTeletype("    - mount $dev ..."."\n");
             Util::mwMkdir($tmpMountDir."/$dev");
             $res = Storage::mountDisk($dev, $fs, $tmpMountDir."/$dev");
             if(!$res){
-                Util::teletypeEcho("    - fail mount $dev ..."."\n");
+                SystemMessages::echoToTeletype("    - fail mount $dev ..."."\n");
             }
         }
-        $pathBusybox = Util::which('busybox');
-        $pathFind    = Util::which('find');
-        $pathMount   = Util::which('umount');
-        $pathRm    = Util::which('rm');
-        $pathGzip    = Util::which('gzip');
-        $pathSqlite3    = Util::which('sqlite3');
-        $lastBackUp  = trim(shell_exec("$pathFind $tmpMountDir/dev/*$backupDir -type f -printf '%T@ %p\\n' | $pathBusybox sort -n | $pathBusybox tail -1 | $pathBusybox cut -f2- -d' '"));
+
+        $tail    = Util::which('tail');
+        $sort    = Util::which('sort');
+        $find    = Util::which('find');
+        $mount   = Util::which('umount');
+        $rm    = Util::which('rm');
+        $cut    = Util::which('cut');
+        $gzip    = Util::which('gzip');
+        $sqlite3    = Util::which('sqlite3');
+        $lastBackUp  = trim(shell_exec("$find $tmpMountDir/dev/*$backupDir -type f -printf '%T@ %p\\n' | $sort -n | $tail -1 | $cut -f2- -d' '"));
         if(empty($lastBackUp)){
             return;
         }
-        Util::teletypeEcho("    - Restore $lastBackUp ..."."\n");
-        shell_exec("$pathRm -rf {$confFile}*");
-        shell_exec("$pathGzip -c -d $lastBackUp | sqlite3 $confFile");
-        Processes::mwExec("$pathSqlite3 $confFile 'select * from m_Storage'", $out, $ret);
+        SystemMessages::echoToTeletype("    - Restore $lastBackUp ..."."\n");
+        shell_exec("$rm -rf {$confFile}*");
+        shell_exec("$gzip -c -d $lastBackUp | sqlite3 $confFile");
+        Processes::mwExec("$sqlite3 $confFile 'select * from m_Storage'", $out, $ret);
         if($ret !== 0){
-            Util::teletypeEcho("    - fail restore $lastBackUp ..."."\n");
+            SystemMessages::echoToTeletype("    - fail restore $lastBackUp ..."."\n");
             copy('/conf.default/mikopbx.db', $confFile);
         }elseif(!$this->isDefaultConf()){
-            self::rebootSync();
+            self::reboot();
         }
         foreach ($storages as $dev => $fs){
-            shell_exec("$pathMount $dev");
+            shell_exec("$mount $dev");
         }
     }
 
     /**
      * Returns the directory where logs are stored.
+     * @deprecated use Directories::getDir(Directories::CORE_LOGS_DIR);
      *
      * @return string - Directory path where logs are stored.
      */
     public static function getLogDir(): string
     {
-        $di = Di::getDefault();
-        if ($di !== null) {
-            return $di->getConfig()->path('core.logsDir');
-        }
-
-        // Default logs directory
-        return '/var/log';
+        return Directories::getDir(Directories::CORE_LOGS_DIR);
     }
 
     /**
@@ -149,90 +145,12 @@ class System extends Di\Injectable
         $network->loConfigure();
         $network->lanConfigure();
         $network->configureLanInDocker();
-    }
-
-    /**
-     * Updates custom changes in config files
-     *
-     * @return void
-     */
-    public static function updateCustomFiles():void
-    {
-        $actions = [];
-
-        // Find all custom files marked as changed
-        /** @var CustomFiles $res_data */
-        $res_data = CustomFiles::find("changed = '1'");
-
-        // Process each changed file
-        foreach ($res_data as $file_data) {
-            // Always restart asterisk after any custom file change
-            $actions['asterisk_core_reload'] = 100;
-            $filename                        = basename($file_data->filepath);
-
-            // Process based on file name
-            switch ($filename) {
-                // Set actions based on the name of the changed file
-                case 'manager.conf':
-                    $actions['manager'] = 10;
-                    break;
-                case 'musiconhold.conf':
-                    $actions['musiconhold'] = 100;
-                    break;
-                case 'modules.conf':
-                    $actions['modules'] = 10;
-                    break;
-                case 'http.conf':
-                    $actions['manager'] = 10; //
-                    break;
-                case 'hep.conf':
-                    $actions['hep'] = 10; //
-                    break;
-                case 'root': // crontabs
-                    $actions['cron'] = 10;
-                    break;
-                case 'queues.conf':
-                    $actions['queues'] = 10;
-                    break;
-                case 'features.conf':
-                    $actions['features'] = 10;
-                    break;
-                case 'ntp.conf':
-                    $actions['ntp'] = 100;
-                    break;
-                case 'ooh323.conf':
-                    $actions['h323'] = 100;
-                    break;
-                case 'rtp.conf':
-                    $actions['rtp'] = 10;
-                    break;
-                case 'static-routes':
-                case 'openvpn.ovpn':
-                    $actions['network'] = 100;
-                    break;
-                case 'firewall_additional':
-                case 'jail.local':
-                    $actions['firewall'] = 100;
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        // Sort actions and invoke them
-        asort($actions);
-        self::invokeActions($actions);
-
-        // After actions are invoked, reset the changed status and save the file data
-        foreach ($res_data as $file_data) {
-            /** @var CustomFiles $file_data */
-            $file_data->writeAttribute("changed", '0');
-            $file_data->save();
-        }
+        $network->updateExternalIp();
     }
 
     /**
      * Restart modules or services based on the provided actions.
+     * @deprecated use WorkerModelsEvents::invokeAction($actionClassNames);
      *
      * @param array $actions - The actions to be performed.
      *
@@ -240,53 +158,15 @@ class System extends Di\Injectable
      */
     public static function invokeActions(array $actions): void
     {
-
         // Process each action
         foreach ($actions as $action => $value) {
             // Restart modules or services based on action
             switch ($action) {
                 case 'manager':
-                    PBX::managerReload();
-                    break;
-                case 'musiconhold':
-                    PBX::musicOnHoldReload();
-                    break;
-                case 'rtp':
-                    PBX::rtpReload();
-                    break;
-                case 'modules':
-                    PBX::modulesReload();
+                    WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
                     break;
                 case 'cron':
-                    $cron = new CronConf();
-                    $cron->reStart();
-                    break;
-                case 'queues':
-                    QueueConf::queueReload();
-                    break;
-                case 'features':
-                    PBX::managerReload(); //
-                    break;
-                case 'ntp':
-                    NTPConf::configure();
-                    break;
-                case 'firewall':
-                    IptablesConf::reloadFirewall();
-                    break;
-                case 'hep':
-                    HepConf::reload();
-                    break;
-                case 'h323':
-                    H323Conf::reload();
-                    break;
-                case 'network':
-                    self::networkReload();
-                    break;
-                case 'asterisk_core_reload':
-                    PBX::sipReload();
-                    PBX::iaxReload();
-                    PBX::dialplanReload();
-                    PBX::coreReload();
+                    WorkerModelsEvents::invokeAction(ReloadCrondAction::class);
                     break;
                 default:
             }
@@ -307,7 +187,7 @@ class System extends Di\Injectable
         $datePath = Util::which('date');
 
         // Fetch timezone from database
-        $db_tz = PbxSettings::getValueByKey('PBXTimezone');
+        $db_tz = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
         $origin_tz = '';
 
         // Read existing timezone from file if it exists
@@ -340,20 +220,22 @@ class System extends Di\Injectable
      *
      * @return void
      */
-    public static function rebootSync(): void
+    public static function reboot(): void
     {
-        $pbx_rebootPath = Util::which('pbx_reboot');
-        Processes::mwExec("{$pbx_rebootPath} > /dev/null 2>&1");
+        $pbx_reboot = Util::which('pbx_reboot');
+        Processes::mwExec("{$pbx_reboot} > /dev/null 2>&1");
     }
 
     /**
      * Reboots the system after calling system_reboot_cleanup()
+     * @deprecated Use System::reboot() instead.
+     * @return void
      */
-    public static function rebootSyncBg(): void
+    public static function rebootSync(): void
     {
-        $pbx_rebootPath = Util::which('pbx_reboot');
-        Processes::mwExecBg("{$pbx_rebootPath} > /dev/null 2>&1");
+        System::reboot();
     }
+
 
     /**
      * Shutdown the system.
@@ -373,7 +255,7 @@ class System extends Di\Injectable
     {
 
         // Get the timezone setting from the database
-        $timezone = PbxSettings::getValueByKey('PBXTimezone');
+        $timezone = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
 
         // If /etc/TZ or /etc/localtime exist, delete them
         if (file_exists('/etc/TZ')) {
@@ -405,32 +287,6 @@ class System extends Di\Injectable
             PHPConf::phpTimeZoneConfigure();
         }
 
-    }
-
-    /**
-     * Loads additional kernel modules.
-     *
-     * @return bool - Returns true if modules are loaded successfully.
-     */
-    public function loadKernelModules(): bool
-    {
-        // If the system is running in Docker, no need to load kernel modules
-        if(Util::isDocker()){
-            return true;
-        }
-
-        // Paths to system commands
-        $modprobePath = Util::which('modprobe');
-        $ulimitPath   = Util::which('ulimit');
-
-        // Load dahdi and dahdi_transcode modules and set ulimit values
-        $res1 = Processes::mwExec("{$modprobePath} -q dahdi");
-        $res2 = Processes::mwExec("{$modprobePath} -q dahdi_transcode");
-        Processes::mwExec("{$ulimitPath} -n 4096");
-        Processes::mwExec("{$ulimitPath} -p 4096");
-
-        // Return true if both modules loaded successfully
-        return ($res1 === 0 && $res2 === 0);
     }
 
     /**

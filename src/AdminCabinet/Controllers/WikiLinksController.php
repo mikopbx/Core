@@ -21,6 +21,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use Phalcon\Cache\Adapter\Redis;
 use Exception;
@@ -73,7 +74,7 @@ class WikiLinksController extends BaseController
                 $res = null;
                 $ttl = 3600;
                 if ($e->getCode() !== 404) {
-                    Util::sysLogMsg('WikiLinksController', 'Error access to raw.githubusercontent.com');
+                    SystemMessages::sysLogMsg('WikiLinksController', 'Error access to raw.githubusercontent.com');
                 }
             }
             if ($res && $res->getStatusCode() === 200) {

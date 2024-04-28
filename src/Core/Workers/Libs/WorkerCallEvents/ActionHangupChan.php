@@ -22,6 +22,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
@@ -42,7 +43,7 @@ class ActionHangupChan
      *
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         // Remove the agi_channel from the active channels in the worker.
         $worker->removeActiveChan($data['agi_channel']);
@@ -139,7 +140,7 @@ class ActionHangupChan
             }
             $res = $row->update();
             if (!$res) {
-                Util::sysLogMsg('Action_hangup_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg('Action_hangup_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
 
             if ($row->src_chan !== $data['agi_channel']) {
@@ -211,7 +212,7 @@ class ActionHangupChan
      *
      * @return void
      */
-    private static function hangupChanCheckSipTrtansfer(WorkerCallEvents $worker, $data, $channels): void
+    public static function hangupChanCheckSipTrtansfer(WorkerCallEvents $worker, $data, $channels): void
     {
         $not_local = (stripos($data['agi_channel'], 'local/') === false);
         if ($not_local === false || $data['OLD_LINKEDID'] !== $data['linkedid']) {

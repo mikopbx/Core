@@ -19,20 +19,38 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
+/**
+ * Class to test the creation and modification of IVR menus in the admin cabinet.
+ */
 class CreateIVRMenusTest extends MikoPBXTestsBase
 {
 
     /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Create IVR menu");
+    }
+
+
+    /**
+     * Test the creation and modification of IVR menus.
+     *
      * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params
+     * @param array $params The parameters for creating the IVR menu.
      */
-    public function teatCreateIVRMenu($params):void {
+    public function teatCreateIVRMenu(array $params):void {
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/ivr-menu/index/');
         $this->clickDeleteButtonOnRowWithText($params['name']);
@@ -54,7 +72,7 @@ class CreateIVRMenusTest extends MikoPBXTestsBase
             }
             $currentMenuItem++;
             $this->changeInputField('digits-' . $currentMenuItem, $key);
-		    $this->selectDropdownItem('extension-' . $currentMenuItem, $value);
+            $this->selectDropdownItem('extension-' . $currentMenuItem, $value);
         }
 
         // Раскрываем расширенные опции
@@ -91,47 +109,50 @@ class CreateIVRMenusTest extends MikoPBXTestsBase
     }
 
     /**
-     * Dataset provider
+     * Dataset provider for IVR menu creation parameters.
+     *
      * @return array
      */
-     public function additionProvider(): array
-     {
-         $params = [];
-         $params[] = [[
-             'description' => 'Second level IVR menu, with extra menu items',
-             'name'        => 'Second IVR menu',
-             'audio_message_id' => '2',
-             'menuItems' => [
-                 '1'=>'10003246',
-                 '2'=>'000063',
-                 '3'=>'000064',
-             ],
-             'number_of_repeat'=> 2,
-             'timeout'=> 15,
-             'timeout_extension'=>'202',
-             'allow_enter_any_internal_extension'=>true,
-             'extension'   => 20021
-         ]];
+    public function additionProvider(): array
+    {
+        $params = [];
+        $params['Second IVR menu 20021'] = [
+            [
+                'description' => 'Second level IVR menu, with extra menu items',
+                'name'        => 'Second IVR menu',
+                'audio_message_id' => '2',
+                'menuItems' => [
+                    '1'=>'10003246',
+                    '2'=>'000063',
+                    '3'=>'000064',
+                ],
+                'number_of_repeat'=> 2,
+                'timeout'=> 15,
+                'timeout_extension'=>'202',
+                'allow_enter_any_internal_extension'=>true,
+                'extension'   => 20021
+            ]
+        ];
 
-         $params[] = [[
-             'description' => 'First level IVR menu, with agents numbers and another IVR menu included',
-             'name'        => 'Main IVR menu',
-             'audio_message_id' => '1',
-             'menuItems' => [
-                 '1'=>'20021',
-                 '2'=>'202',
-                 '3'=>'203',
-             ],
-             'number_of_repeat'=>3,
-             'timeout'=>20,
-             'timeout_extension'=>'201',
-             'allow_enter_any_internal_extension'=>false,
-             'extension'   => 20020
-         ]];
+        $params['Main IVR menu 20020'] = [
+            [
+                'description' => 'First level IVR menu, with agents numbers and another IVR menu included',
+                'name'        => 'Main IVR menu',
+                'audio_message_id' => '1',
+                'menuItems' => [
+                    '1'=>'20021',
+                    '2'=>'202',
+                    '3'=>'203',
+                ],
+                'number_of_repeat'=>3,
+                'timeout'=>20,
+                'timeout_extension'=>'201',
+                'allow_enter_any_internal_extension'=>false,
+                'extension'   => 20020
+            ]
+        ];
 
-
-
-         return $params;
-     }
+        return $params;
+    }
 
 }

@@ -21,53 +21,64 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class ChangeLicenseKeyTest extends MikoPBXTestsBase
 {
+
     /**
-     * @depends testLogin
-     * @dataProvider additionProvider
+     * Set up before each test
      *
-     * @param string $licenseKey;
+     * @throws GuzzleException
+     * @throws \Exception
      */
-    public function testFillLicenseKey($licenseKey):void
+    public function setUp(): void
     {
-//        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
-//        $this->changeTabOnCurrentPage('licensing');
-
-//        // Сбрасываем привязку к ключу
-//        $xpath = "id('reset-license-button')";
-//        $resetButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
-//        $resetButton->click();
-//        $this->waitForAjax();
-
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
-        $this->changeTabOnCurrentPage('licensing');
-        $licKey = str_ireplace('MIKO-','', $licenseKey);
-        $this->changeInputField('licKey', $licKey);
-
-        // Save license key
-        $xpath = "id('save-license-key-button')";
-        $saveButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
-        $saveButton->click();
-        $this->waitForAjax();
-
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
-        $this->changeTabOnCurrentPage('licensing');
-        $this->assertInputFieldValueEqual('licKey', $licenseKey);
-
+        parent::setUp();
+        $this->setSessionName("Test: Change license key");
     }
 
     /**
-     * Dataset provider
+     * Test filling and verifying the license key.
+     *
+     * @depends testLogin
+     * @dataProvider licenseKeyProvider
+     *
+     * @param string $licenseKey The license key to test.
+     */
+    public function testFillLicenseKey(string $licenseKey): void
+    {
+        // Navigate to the PBX extension modules section
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
+        $this->changeTabOnCurrentPage('licensing');
+
+        // Remove "MIKO-" prefix from the license key
+        $licKey = str_ireplace('MIKO-', '', $licenseKey);
+
+        // Fill the license key input field
+        $this->changeInputField('licKey', $licKey);
+
+        // Save the license key
+        $saveButton = self::$driver->findElement(WebDriverBy::id('save-license-key-button'));
+        $saveButton->click();
+        $this->waitForAjax();
+
+        // Verify that the saved license key matches the original
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/pbx-extension-modules/index/');
+        $this->changeTabOnCurrentPage('licensing');
+        $this->assertInputFieldValueEqual('licKey', $licenseKey);
+    }
+
+    /**
+     * Provides test data for the license key test.
+     *
      * @return array
      */
-    public function additionProvider(): array
+    public function licenseKeyProvider(): array
     {
         return [
             [$GLOBALS['MIKO_LICENSE_KEY']]
         ];
     }
-
 }

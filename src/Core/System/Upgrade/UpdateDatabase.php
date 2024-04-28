@@ -24,6 +24,7 @@ use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\ModelsAnnotationsProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use Phalcon\Db\Column;
 use Phalcon\Db\Index;
@@ -56,7 +57,7 @@ class UpdateDatabase extends Di\Injectable
             $this->updateDbStructureByModelsAnnotations();
             MainDatabaseProvider::recreateDBConnections(); // if we change anything in structure
         } catch (Throwable $e) {
-            Util::echoWithSyslog('Errors within database upgrade process '.$e->getMessage());
+            SystemMessages::echoWithSyslog('Errors within database upgrade process '.$e->getMessage());
         }
     }
 
@@ -77,7 +78,7 @@ class UpdateDatabase extends Di\Injectable
                 $this->createUpdateDbTableByAnnotations($moduleModelClass);
             } catch (Throwable $exception){
                 // Log errors encountered during table update
-                Util::echoWithSyslog('Errors within update table '.$className.' '.$exception->getMessage());
+                SystemMessages::echoWithSyslog('Errors within update table '.$className.' '.$exception->getMessage());
             }
         }
 
@@ -289,16 +290,16 @@ class UpdateDatabase extends Di\Injectable
 
         if ( ! $connectionService->tableExists($tableName)) {
             $msg = ' - UpdateDatabase: Create new table: ' . $tableName . ' ';
-            Util::echoWithSyslog($msg);
+            SystemMessages::echoWithSyslog($msg);
             $result = $connectionService->createTable($tableName, '', $columnsNew);
-            Util::echoResult($msg);
+            SystemMessages::echoResult($msg);
         } else {
             // Table exists, we have to check/upgrade its structure
             $currentColumnsArr = $connectionService->describeColumns($tableName, '');
 
             if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
                 $msg = ' - UpdateDatabase: Upgrade table: ' . $tableName . ' ';
-                Util::echoWithSyslog($msg);
+                SystemMessages::echoWithSyslog($msg);
                 // Create new table and copy all data
                 $currentStateColumnList = [];
                 $oldColNames            = []; // Old columns names
@@ -328,7 +329,7 @@ DROP TABLE  {$tableName}";
 
                 // Drop temporary table
                 $result = $result && $connectionService->execute("DROP TABLE {$tableName}_backup;");
-                Util::echoResult($msg);
+                SystemMessages::echoResult($msg);
             }
         }
 
@@ -340,7 +341,7 @@ DROP TABLE  {$tableName}";
         if ($result) {
             $result = $connectionService->commit();
         } else {
-            Util::sysLogMsg('createUpdateDbTableByAnnotations', "Error: Failed on create/update table {$tableName}", LOG_ERR);
+            SystemMessages::sysLogMsg('createUpdateDbTableByAnnotations', "Error: Failed on create/update table {$tableName}", LOG_ERR);
             $connectionService->rollback();
         }
 
@@ -430,9 +431,9 @@ DROP TABLE  {$tableName}";
                 && ! array_key_exists($indexName, $indexes)
             ) {
                 $msg = " - UpdateDatabase: Delete index: {$indexName} ";
-                Util::echoWithSyslog($msg);
+                SystemMessages::echoWithSyslog($msg);
                 $result += $connectionService->dropIndex($tableName, '', $indexName);
-                Util::echoResult($msg);
+                SystemMessages::echoResult($msg);
             }
         }
 
@@ -442,16 +443,16 @@ DROP TABLE  {$tableName}";
                 $currentIndex = $currentIndexes[$indexName];
                 if ($describedIndex->getColumns() !== $currentIndex->getColumns()) {
                     $msg = " - UpdateDatabase: Update index: {$indexName} ";
-                    Util::echoWithSyslog($msg);
+                    SystemMessages::echoWithSyslog($msg);
                     $result += $connectionService->dropIndex($tableName, '', $indexName);
                     $result += $connectionService->addIndex($tableName, '', $describedIndex);
-                    Util::echoResult($msg);
+                    SystemMessages::echoResult($msg);
                 }
             } else {
                 $msg = " - UpdateDatabase: Add new index: {$indexName} ";
-                Util::echoWithSyslog($msg);
+                SystemMessages::echoWithSyslog($msg);
                 $result += $connectionService->addIndex($tableName, '', $describedIndex);
-                Util::echoResult($msg);
+                SystemMessages::echoResult($msg);
             }
         }
 

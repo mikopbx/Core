@@ -22,7 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use DateTime;
 use DateTimeZone;
 use MikoPBX\AdminCabinet\Forms\TimeSettingsEditForm;
-use MikoPBX\Common\Models\{PbxSettings};
+use MikoPBX\Common\Models\{PbxSettings, PbxSettingsConstants};
 
 class TimeSettingsController extends BaseController
 {
@@ -52,9 +52,9 @@ class TimeSettingsController extends BaseController
     private function getTimeSettingsArray(): array
     {
         return [
-            'PBXTimezone',
-            'NTPServer',
-            'PBXManualTimeSettings',
+            PbxSettingsConstants::PBX_TIMEZONE,
+            PbxSettingsConstants::NTP_SERVER,
+            PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS,
         ];
     }
 
@@ -127,11 +127,11 @@ class TimeSettingsController extends BaseController
             }
 
             switch ($key) {
-                case "PBXManualTimeSettings":
+                case PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS:
                 case "***ALL CHECK BOXES ABOVE***":
                     $record->value = ($data[$key] === 'on') ? '1' : '0';
                     break;
-                case "NTPServer":
+                case PbxSettingsConstants::NTP_SERVER:
                     $ntp_servers   = preg_split('/\r\n|\r|\n| |,/', $data[$key]);
                     if (is_array($ntp_servers)){
                         $record->value = implode(PHP_EOL, $ntp_servers);

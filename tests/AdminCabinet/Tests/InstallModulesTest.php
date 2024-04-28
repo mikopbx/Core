@@ -19,42 +19,47 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-
 use Exception;
 use Facebook\WebDriver\Exception\NoSuchElementException;
+use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\Interactions\WebDriverActions;
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverExpectedCondition;
+use Facebook\WebDriver\WebDriverWait;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase as MikoPBXTestsBaseAlias;
 
+/**
+ * Class to test the installation of modules in the admin cabinet.
+ */
 class InstallModulesTest extends MikoPBXTestsBaseAlias
 {
     /**
-     * @depends      testLogin
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Install new module");
+    }
+
+    /**
+     * Test to install a module.
+     * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params
+     * @param array $params The parameters for the test.
      */
     public function testInstallModule(array $params): void
     {
         $this->clickSidebarMenuItemByHref("/admin-cabinet/pbx-extension-modules/index/");
-        $this->changeTabOnCurrentPage('installed');
-        // Delete old module
-        $xpath = '//tr[@id="' . $params['moduleId'] . '"]//a[contains(@href,"delete")]';
-        try {
-            $tableButtonModify = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $tableButtonModify->click();
-            sleep(2);
-            $tableButtonModify->click();
 
-        } catch (NoSuchElementException $e) {
-            echo('Not found row with module =' . $params['moduleId'] . ' on this page' . PHP_EOL);
-        } catch (Exception $e) {
-            echo('Unknown error ' . $e->getMessage() . PHP_EOL);
-        }
-
-        // Install new one
+        // Install new module
         $this->changeTabOnCurrentPage('marketplace');
-        $xpath = '//a[contains(@data-uniqid,"' . $params['moduleId'] . '")]';
+        $xpath = $this->getInstallButtonXpath($params['moduleId'] );
         try {
             $tableButtonInstall = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $tableButtonInstall->click();
@@ -65,29 +70,50 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
             echo('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
 
-        // Wait the installation and test it
-        $this->changeTabOnCurrentPage('installed');
-        $maximumWaitTime = 120;
-        $waitTime = 0;
-        $xpath = '//tr[@id="' . $params['moduleId'] . '"]//a[contains(@href,"delete")]';
-        $found = false;
-        while ($waitTime < $maximumWaitTime) {
-            $els = self::$driver->findElements((WebDriverBy::xpath($xpath)));
-            if (count($els) > 0) {
-                $found = true;
-                break;
-            }
-            sleep(5);
-            $waitTime += 5;
-        }
-        if (!$found) {
-            $this->fail("Not found element by " . $xpath . PHP_EOL);
-        } else {
-            // increment assertion counter
-            $this->assertTrue(true);
+        // Wait for the modal form button and push it
+        $xpath = $this->getModalApproveButtonXpath();
+        try {
+            sleep(2);
+            // Wait for the approval button to be clickable
+            $wait = new WebDriverWait(self::$driver, 10); // Wait up to 10 seconds
+            $buttonApprove = $wait->until(WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath($xpath)));
+            $buttonApprove->click();
+            $this->waitForAjax();
+        } catch (TimeoutException $e) {
+            echo('Timeout waiting for approve button to be clickable'. PHP_EOL);
+            $this->fail('Timeout error ' . $e->getMessage() . PHP_EOL);
+        } catch (Exception $e) {
+            echo('Not found approve button to start install the module'. PHP_EOL);
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
         }
 
-        // Enable installed module
+        // Wait for the installation and test it
+
+        try {
+            // Initialize WebDriverWait with a timeout of 120 seconds
+            $wait = new WebDriverWait(self::$driver, 120);
+
+            // Define the XPath for the Delete button of the installed module
+            $deleteButtonXpath = $this->getDeleteButtonXpath($params['moduleId']);
+
+            // Use WebDriverWait to wait until the Delete button is present and visible
+            // This ensures that the module has been installed
+            $wait->until(WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::xpath($deleteButtonXpath)));
+
+            // If the Delete button is found, the module is installed successfully
+            $this->assertTrue(true);
+        } catch (NoSuchElementException $e) {
+            // Handle the case where the Delete button is not found
+            $this->fail('Not found the Delete button on this page in changeTabOnCurrentPage' . PHP_EOL);
+        } catch (TimeOutException $e) {
+            // Handle the case where the Delete button does not become visible within the expected time
+            $this->fail('Timed out waiting for the Delete button to become visible for module' . PHP_EOL);
+        } catch (Exception $e) {
+            // Handle any other exceptions
+            $this->fail('Unknown error ' . $e->getMessage() . PHP_EOL);
+        }
+
+        // Enable the installed module
         $this->changeModuleState($params['moduleId']);
 
         sleep(10);
@@ -97,90 +123,132 @@ class InstallModulesTest extends MikoPBXTestsBaseAlias
     }
 
     /**
-     * Changes the state of a module.
+     * Changes the state of a module (enable or disable).
      *
      * @param string $moduleId The ID of the module.
      * @param bool $enable (Optional) Whether to enable or disable the module. Defaults to true.
      *
      * @return void
      */
-    private function changeModuleState(string $moduleId, bool $enable = true):void
+    private function changeModuleState(string $moduleId, bool $enable = true): void
     {
-        $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]';
+        $xpath = $this->getToggleCheckboxXpath($moduleId);
         $checkBoxItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($checkBoxItems as $checkBoxItem) {
             if (($enable && !$checkBoxItem->isSelected()) || (!$enable && $checkBoxItem->isSelected())) {
                 // Find the checkbox item's parent div and perform necessary actions
-                $xpath = '//tr[@id="' . $moduleId . '"]//input[@type="checkbox"]/parent::div';
+                $xpath = '//tr[contains(@class,"module-row") and @data-id="' . $moduleId . '"]//input[@type="checkbox"]/parent::div';
                 $checkBoxItem = self::$driver->findElement(WebDriverBy::xpath($xpath));
                 $actions = new WebDriverActions(self::$driver);
                 $actions->moveToElement($checkBoxItem);
                 $actions->perform();
                 $checkBoxItem->click();
+                $this->waitForAjax();
             }
         }
 
-
-        // Assert result of clicking
-        foreach ($checkBoxItems as $checkBoxItem) {
-            $changed = false;
-            // Check if module is enabled or disabled
-            $maximumWaitTime = 45;
-            $waitTime = 0;
-            while ($waitTime < $maximumWaitTime) {
-                if (($enable && $checkBoxItem->isSelected()) || (!$enable && !$checkBoxItem->isSelected())) {
-                    $changed = true;
-                    break;
-                }
-                sleep(5);
-                $waitTime += 5;
+        // Assert the result of clicking
+        $changed = false;
+        // Check if the module is enabled or disabled
+        $maximumWaitTime = 45;
+        $waitTime = 0;
+        while ($waitTime < $maximumWaitTime) {
+            sleep(5);
+            $xpath = $this->getToggleCheckboxXpath($moduleId);
+            $checkBoxItemNew = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            if (($enable && $checkBoxItemNew->isSelected()) || (!$enable && !$checkBoxItemNew->isSelected())) {
+                $changed = true;
+                break;
             }
-
-            if (!$changed) {
-                $this->fail("Module {$moduleId} state was not changed during {$maximumWaitTime} seconds" . PHP_EOL);
-            } else {
-                // Increment assertion counter
-                $this->assertTrue(true);
-            }
+            $waitTime += 5;
         }
+
+        if (!$changed) {
+            $this->fail("Module {$moduleId} state was not changed during {$maximumWaitTime} seconds" . PHP_EOL);
+        } else {
+            // Increment assertion counter
+            $this->assertTrue(true);
+        }
+
     }
 
+    /**
+     * Provides data for the test.
+     *
+     * @return array
+     */
     public function additionProvider(): array
     {
         $params = [];
-        $params[] = [[
-            'moduleId' => 'ModuleAutoprovision',
-            'enable' => true,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleBackup',
-            'enable' => true,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleCTIClient',
-            'enable' => false,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleDocker',
-            'enable' => false,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModulePhoneBook',
-            'enable' => true,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleSmartIVR',
-            'enable' => true,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleTelegramNotify',
-            'enable' => false,
-        ]];
-        $params[] = [[
-            'moduleId' => 'ModuleUsersGroups',
-            'enable' => true,
-        ]];
+        $params['ModuleAutoprovision'] = [
+            [
+                'moduleId' => 'ModuleAutoprovision',
+                'enable' => true,
+            ],
+        ];
+        $params['ModuleBackup'] = [
+            [
+                'moduleId' => 'ModuleBackup',
+                'enable' => true,
+            ],
+        ];
+        $params['ModuleCTIClient'] = [
+            [
+                'moduleId' => 'ModuleCTIClient',
+                'enable' => false,
+            ],
+        ];
+        $params['ModuleDocker'] = [
+            [
+                'moduleId' => 'ModuleDocker',
+                'enable' => false,
+            ],
+        ];
+        $params['ModulePhoneBook'] = [
+            [
+                'moduleId' => 'ModulePhoneBook',
+                'enable' => true,
+            ],
+        ];
+        $params['ModuleSmartIVR'] = [
+            [
+                'moduleId' => 'ModuleSmartIVR',
+                'enable' => true,
+            ],
+        ];
+        $params['ModuleTelegramNotify'] = [
+            [
+                'moduleId' => 'ModuleTelegramNotify',
+                'enable' => false,
+            ],
+        ];
+        $params['ModuleUsersGroups'] = [
+            [
+                'moduleId' => 'ModuleUsersGroups',
+                'enable' => true,
+            ],
+        ];
 
         return $params;
+    }
+
+    private function getDeleteButtonXpath(string $moduleUniqueId):string
+    {
+        return '//tr[contains(@class,"module-row") and @data-id="' . $moduleUniqueId . '"]//a[contains(@class,"delete")]';
+    }
+
+    private function getInstallButtonXpath(string $moduleUniqueId):string
+    {
+        return '//tr[contains(@class,"new-module-row") and @data-id="' . $moduleUniqueId . '"]//a[contains(@class,"download")]';
+    }
+
+    private function getToggleCheckboxXpath(string $moduleUniqueId):string
+    {
+        return '//tr[contains(@class,"module-row") and @data-id="' . $moduleUniqueId . '"]//input[@type="checkbox"]';
+    }
+
+    private function getModalApproveButtonXpath():string
+    {
+        return '//div[@id="install-modal-form" and contains(@class,"visible")]//div[contains(@class,"approve button")]';
     }
 }

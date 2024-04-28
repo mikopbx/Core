@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -45,6 +46,7 @@ class ExtensionsInterception extends AsteriskConfigClass
                 'exten => _[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!,1,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Wait(0.2))' . PHP_EOL."\t".
                 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?ChannelRedirect(${ORIGINATE_SRC_CHANNEL},${CONTEXT},${ORIGINATE_DST_EXTEN},1))' . PHP_EOL."\t".
                 'same => n,ExecIf($[ "${ORIGINATE_SRC_CHANNEL}x" != "x" ]?Hangup())' . PHP_EOL."\t".
+                'same => n,ExecIf($[ "${CHANNEL_EXISTS(${INTECEPTION_CNANNEL})}" != "1" ]?Hangup())' . PHP_EOL."\t".
                 // Need to check the value of M_DIALSTATUS in the INTECEPTION_CNANNEL channel
                 // If the call is answered, interception should not be performed.
                 'same => n,Set(M_DIALSTATUS=${IMPORT(${INTECEPTION_CNANNEL},M_DIALSTATUS)})'.PHP_EOL."\t".
@@ -83,7 +85,7 @@ class ExtensionsInterception extends AsteriskConfigClass
             }
         }
         if(empty($interceptionChannel)){
-            Util::sysLogMsg('Interception', "Chan for $providerId not found...");
+            SystemMessages::sysLogMsg('Interception', "Chan for $providerId not found...");
             return;
         }
         $variable    = "pt1c_cid={$dest_number},ALLOW_MULTY_ANSWER=1,_INTECEPTION_CNANNEL={$interceptionChannel},_OLD_LINKEDID={$interceptionLinkedId}";

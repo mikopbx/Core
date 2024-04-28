@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
 /**
@@ -42,7 +42,7 @@ class ActionTransferDialCreateChan
     {
         $chan = $data['dst_chan'] ?? '';
         if (!empty($chan)) {
-            $worker->addActiveChan($chan);
+            $worker->addActiveChan($chan, $data['linkedid']);
         }
         $filter = [
             'UNIQUEID=:UNIQUEID: AND endtime = "" AND answer = ""',
@@ -83,7 +83,7 @@ class ActionTransferDialCreateChan
             }
             $res = $row->save();
             if (!$res) {
-                Util::sysLogMsg('Action_transfer_dial_create_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg('Action_transfer_dial_create_chan', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }

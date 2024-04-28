@@ -1,28 +1,17 @@
-{{ form('fail2-ban/save', 'role': 'form', 'class': 'ui form large grey segment', 'id':'fail2ban-settings-form') }}
-        {{ form.render('id') }}
-<div class="three fields disability">
-    <div class="field ">
-        <label>{{ t._('f2b_MaxRetry') }}</label>
-        {{ form.render('maxretry') }}
-    </div>
-    <div class="field">
-        <label>{{ t._('f2b_FindTime') }}</label>
-        {{ form.render('findtime') }}
-    </div>
-    <div class="field">
-        <label>{{ t._('f2b_BanTime') }}</label>
-        {{ form.render('bantime') }}
-    </div>
+<div class="ui top attached tabular menu" id="fail2ban-tab-menu">
+    <a class="item active" data-tab="settings">{{ t._('f2b_SettingsTabHeader')}}</a>
+    <a class="item" data-tab="banned">{{ t._('f2b_BannedIpTabHeader')}}</a>
+    {{ partial("PbxExtensionModules/hookVoltBlock",
+        ['arrayOfPartials':hookVoltBlock('TabularMenu')])
+    }}
 </div>
-<div class="field disability">
-    <label>{{ t._('f2b_WhiteList') }}</label>
-    {{ form.render('whitelist') }}
+
+<div class="ui bottom attached tab segment active" data-tab="settings">
+    {{ partial("Fail2Ban/IndexTabs/tabSettings") }}
 </div>
-{{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
-
-{{ partial("partials/submitbutton") }}
-<div class="ui clearing hidden divider"></div>
-{{ end_form() }}
-
-
-<div id="banned-ip-list"></div>
+<div class="ui bottom attached tab segment" data-tab="banned">
+    {{ partial("Fail2Ban/IndexTabs/tabBanned") }}
+</div>
+{{ partial("PbxExtensionModules/hookVoltBlock",
+    ['arrayOfPartials':hookVoltBlock('AdditionalTab')])
+}}

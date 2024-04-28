@@ -21,8 +21,6 @@ namespace MikoPBX\Modules\Config;
 
 
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Events\Event;
-use Phalcon\Mvc\Controller;
 use Phalcon\Mvc\Micro;
 
 /**

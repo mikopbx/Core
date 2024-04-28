@@ -392,41 +392,4 @@ class CallQueuesController extends BaseController
         return true;
     }
 
-    /**
-     * Delete a queue by its ID.
-     *
-     * @param string $uniqid The ID of the queue to be deleted.
-     */
-    public function deleteAction(string $uniqid = ''): void
-    {
-        if ($uniqid === '') {
-            return;
-        }
-
-        // Find the queue by ID
-        $queue = CallQueues::findFirstByUniqid($uniqid);
-        if ($queue === null) {
-            return;
-        }
-        $errors = false;
-
-        // Begin a database transaction
-        $this->db->begin();
-
-        // Delete associated extensions
-        $extension = $queue->Extensions;
-        if ( ! $extension->delete()) {
-            $errors = $extension->getMessages();
-        }
-        if ($errors) {
-            // Rollback the transaction and display error messages
-            $this->flash->warning(implode('<br>', $errors));
-            $this->db->rollback();
-        } else {
-            // Commit the transaction
-            $this->db->commit();
-        }
-        // Forward to the index action of call-queues
-        $this->forward('call-queues/index');
-    }
 }

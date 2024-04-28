@@ -8,7 +8,6 @@
     <label>{{ t._('gs_PBXCallParkingSlotRange') }}</label>
 </div>
 
-
 <div class="inline field">
     {{ form.render('PBXFeatureAttendedTransfer') }}
     <label>{{ t._('gs_PBXFeatureAttendedTransfer') }}</label>
@@ -24,4 +23,8 @@
 <div class="inline field">
     {{ form.render('PBXFeatureAtxferNoAnswerTimeout') }}
     <label>{{ t._('gs_PBXFeatureAtxferNoAnswerTimeout') }}</label>
+</div>
+<div class="inline field">
+    {{ form.render('PBXFeatureDigitTimeout') }}
+    <label>{{ t._('gs_PBXFeatureDigitTimeout') }}</label>
 </div>

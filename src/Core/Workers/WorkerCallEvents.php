@@ -20,18 +20,21 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{BeanstalkClient, Storage, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Directories, SystemMessages, Util};
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\Asterisk\Configs\CelConf;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
+use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
 use Phalcon\Exception;
 use Phalcon\Text;
 use Throwable;
-
+use DateTime;
 
 /**
  * Class WorkerCallEvents
@@ -54,6 +57,8 @@ class WorkerCallEvents extends WorkerBase
     private array $exceptionsNumbers = [];
     private bool $notRecInner = false;
 
+    private int $deleteCdrTimer = 61;
+
     /**
      * Adds a new active channel to the cache.
      *
@@ -61,13 +66,13 @@ class WorkerCallEvents extends WorkerBase
      *
      * @return void
      */
-    public function addActiveChan(string $channel): void
+    public function addActiveChan(string $channel, string $id = ''): void
     {
         // Exclude local channels
         if (stripos($channel, 'local') === 0) {
             return;
         }
-        $this->activeChannels[$channel] = true;
+        $this->activeChannels[$channel] = $id;
     }
 
     /**
@@ -92,6 +97,18 @@ class WorkerCallEvents extends WorkerBase
     public function existsActiveChan(string $channel): bool
     {
         return isset($this->activeChannels[$channel]);
+    }
+
+    /**
+     * Get chan linked ID.
+     *
+     * @param string $channel The name of the channel to check.
+     *
+     * @return string channel ID
+     */
+    public function getActiveChanId(string $channel): string
+    {
+        return $this->activeChannels[$channel]??'';
     }
 
     /**
@@ -162,8 +179,9 @@ class WorkerCallEvents extends WorkerBase
      */
     public function setMonitorFilenameOptions(string $full_name, string $sub_dir, string $file_name): array
     {
+        $full_name = Util::trimExtensionForFile($full_name).'.wav';
         if (!file_exists($full_name)) {
-            $monitor_dir = Storage::getMonitorDir();
+            $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
             if (empty($sub_dir)) {
                 $sub_dir = date('Y/m/d/H/');
             }
@@ -172,7 +190,7 @@ class WorkerCallEvents extends WorkerBase
             $f = Util::trimExtensionForFile($full_name);
         }
         if ($this->split_audio_thread) {
-            $options = "abSr({$f}_in.wav)t({$f}_out.wav)";
+            $options = "abr({$f}_in.wav)t({$f}_out.wav)";
         } else {
             $options = 'ab';
         }
@@ -212,6 +230,7 @@ class WorkerCallEvents extends WorkerBase
     {
         // Update the recording options for the worker
         $this->updateRecordingOptions();
+        $this->deleteOldRecords();
 
         // Initialize the mixMonitorChannels and checkChanHangupTransfer arrays
         $this->mixMonitorChannels = [];
@@ -224,7 +243,7 @@ class WorkerCallEvents extends WorkerBase
         $client = new BeanstalkClient(self::class);
         if ($client->isConnected() === false) {
             // Log the failed connection and pause for 2 seconds before returning
-            Util::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
+            SystemMessages::sysLogMsg(self::class, 'Fail connect to beanstalkd...');
             sleep(2);
             return;
         }
@@ -314,9 +333,9 @@ class WorkerCallEvents extends WorkerBase
         }
 
         // Set some class properties based on the PbxSettings values
-        $this->notRecInner = PbxSettings::getValueByKey('PBXRecordCallsInner') === '0';
-        $this->record_calls = PbxSettings::getValueByKey('PBXRecordCalls') === '1';
-        $this->split_audio_thread = PbxSettings::getValueByKey('PBXSplitAudioThread') === '1';
+        $this->notRecInner = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_CALLS_INNER) === '0';
+        $this->record_calls = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_CALLS) === '1';
+        $this->split_audio_thread = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD) === '1';
     }
 
     /**
@@ -328,12 +347,13 @@ class WorkerCallEvents extends WorkerBase
     {
         parent::pingCallBack($message);
         $this->updateRecordingOptions();
+        $this->deleteOldRecords();
     }
 
     /**
      * Calls the events worker.
      *
-     * @param  $tube The tube object.
+     * @param  $tube object.
      *
      * @return void
      */
@@ -348,9 +368,12 @@ class WorkerCallEvents extends WorkerBase
         // If event is 'ANSWER', call ActionCelAnswer::execute and return
         if ('ANSWER' === $event) {
             ActionCelAnswer::execute($this, $data);
-            return;
-        } // If event is not 'USER_DEFINED', return
-        elseif ('USER_DEFINED' !== $event) {
+        }
+        if('ATTENDEDTRANSFER' === $event){
+            ActionCelAttendedTransfer::execute($this, $data);
+        }
+        // If event is not 'USER_DEFINED', return
+        if ('USER_DEFINED' !== $event) {
             return;
         }
 
@@ -452,7 +475,28 @@ class WorkerCallEvents extends WorkerBase
      */
     public function errorHandler($m): void
     {
-        Util::sysLogMsg(self::class . '_ERROR', $m, LOG_ERR);
+        SystemMessages::sysLogMsg(self::class . '_ERROR', $m, LOG_ERR);
+    }
+
+    /**
+     * Clearing old cdr records
+     * @return void
+     */
+    public function deleteOldRecords(): void
+    {
+        // Cleaning will be performed every ping
+        $this->deleteCdrTimer++;
+        if($this->deleteCdrTimer <= 61){
+            return;
+        }
+        $this->deleteCdrTimer = 0;
+        $savePeriod = (int)PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD);
+        if($savePeriod < 30){
+            return;
+        }
+        $limitData  = (new DateTime())->modify("-$savePeriod days")->format('Y-m-d');
+        $connection = $this->di->get(CDRDatabaseProvider::SERVICE_NAME);
+        $connection->execute("DELETE FROM cdr_general WHERE start < '$limitData'");
     }
 }
 

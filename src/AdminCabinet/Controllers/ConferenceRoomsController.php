@@ -159,35 +159,4 @@ class ConferenceRoomsController extends BaseController
         return true;
     }
 
-    /**
-     * Delete a conference room.
-     *
-     * @param string $uniqid The unique identifier of the conference room.
-     */
-    public function deleteAction(string $uniqid = '')
-    {
-        if ($uniqid === '') {
-            return;
-        }
-
-        $conference = ConferenceRooms::findFirstByUniqid($uniqid);
-        if ($conference === null) {
-            return;
-        }
-        $this->db->begin();
-        $errors = false;
-        $extension = $conference->Extensions;
-        if (!$extension->delete()) {
-            $errors = $extension->getMessages();
-        }
-
-        if ($errors) {
-            $this->flash->warning(implode('<br>', $errors));
-            $this->db->rollback();
-        } else {
-            $this->db->commit();
-        }
-
-        $this->forward('conference-rooms/index');
-    }
 }

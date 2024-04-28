@@ -20,12 +20,15 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Core\System\Notifications;
-use MikoPBX\PBXCoreREST\Lib\AdvicesProcessor;
+use Phalcon\Di;
+use Throwable;
 
 /**
- * WorkerNotifyError is a worker class responsible for checking the significant advices messages and sent it to system administrator.
+ * WorkerNotifyError is a worker class responsible for checking the significant advice messages and sent it to system administrator.
  *
  * @package MikoPBX\Core\Workers
  */
@@ -45,19 +48,27 @@ class WorkerNotifyError extends WorkerBase
         // Retrieve the last error check timestamp from the cache
         $lastErrorsCheck = $managedCache->get($cacheKey);
         if ($lastErrorsCheck === null) {
-            $restResponse = AdvicesProcessor::callBack(['action' => 'getList']);
-            $errorMessages = $restResponse->data['advices']['error']??[];
-            if ($restResponse->success and $errorMessages!==[]) {
-                Notifications::sendAdminNotification('adv_ThereIsSomeTroublesWithMikoPBX', $errorMessages);
+            try {
+                // Get user data from the API
+                $di = Di::getDefault();
+                $restResponse = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+                    '/pbxcore/api/advice/getList',
+                    PBXCoreRESTClientProvider::HTTP_METHOD_GET
+                ]);
+                $errorMessages = $restResponse->data['advice']['error'] ?? [];
+                if ($restResponse->success and $errorMessages !== []) {
+                    Notifications::sendAdminNotification('adv_ThereIsSomeTroublesWithMikoPBX', $errorMessages);
+                }
+                // Store the current timestamp in the cache to track the last error check
+                $managedCache->set($cacheKey, time(), 3600); // Check every hour
+            } catch (Throwable $exception) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($exception);
             }
-
-            // Store the current timestamp in the cache to track the last error check
-            $managedCache->set($cacheKey, time(), 3600); // Check every hour
         }
 
     }
 
 }
 
-// Start worker process
+// Start a worker process
 WorkerNotifyError::startWorker($argv ?? []);

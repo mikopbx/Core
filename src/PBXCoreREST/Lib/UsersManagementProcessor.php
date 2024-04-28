@@ -19,7 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\Common\Models\Users;
+use MikoPBX\PBXCoreREST\Lib\Users\AvailableAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -39,27 +39,14 @@ class UsersManagementProcessor extends Injectable
      */
     public static function callBack(array $request): PBXApiResult
     {
-        $res = new PBXApiResult();
+        $action         = $request['action'];
+        $data           = $request['data'];
+        $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-
-        $action = $request['action'];
-        $data = $request['data'];
         switch ($action) {
             case 'available':
-                if (!empty($data['email'])) {
-                    $record = Users::findFirstByEmail($data['email']);
-                    if ($record) {
-                        $res->data['userId'] = $record->id;
-                        $res->data['represent'] = $record->getRepresent();
-                        $res->data['available'] = false;
-                    } else {
-                        $res->data['available'] = true;
-                    }
-                    $res->success = true;
-                } else {
-                    $res->messages['error'][] = 'Empty email value in POST/GET data';
-                }
-                break;
+               $res = AvailableAction::main($data);
+               break;
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }
@@ -68,6 +55,4 @@ class UsersManagementProcessor extends Injectable
 
         return $res;
     }
-
-
 }

@@ -20,7 +20,7 @@
 namespace MikoPBX\Common\Models;
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 
@@ -104,11 +104,31 @@ class PbxExtensionModules extends ModelsBase
     public ?string $disabled = '1';
 
     /**
-     * Prepares array of enabled modules params for reading
+     * Store the reason why the module was disabled as a flag
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $disableReason = '';
+
+    /**
+     * Store the reason why the module was disabled in text mode, some logs
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $disableReasonText = '';
+
+    /**
+     * Prepares an array of enabled modules params for reading
      * @return array
      */
     public static function getEnabledModulesArray(): array
     {
+        // Check if it globally disabled
+        if (PbxSettings::getValueByKey(PbxSettingsConstants::DISABLE_ALL_MODULES)==='1'){
+            return [];
+        }
+
+        // Get the list of disabled modules
         $parameters = [
             'conditions' => 'disabled="0"',
             'columns' => 'uniqid',
@@ -121,7 +141,7 @@ class PbxExtensionModules extends ModelsBase
     }
 
     /**
-     * Prepares array of modules params for reading
+     * Prepares an array of modules params for reading
      * @return array
      */
     public static function getModulesArray(): array
@@ -170,7 +190,6 @@ class PbxExtensionModules extends ModelsBase
      */
     public function afterSave(): void
     {
-        Util::sysLogMsg(__METHOD__, "After save ", LOG_DEBUG);
         PBXConfModulesProvider::recreateModulesProvider();
     }
 
@@ -179,7 +198,6 @@ class PbxExtensionModules extends ModelsBase
      */
     public function afterDelete(): void
     {
-        Util::sysLogMsg(__METHOD__, "After delete ", LOG_DEBUG);
         PBXConfModulesProvider::recreateModulesProvider();
     }
 }

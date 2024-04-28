@@ -46,6 +46,11 @@
         {{ form.render('dtmfmode') }}
     </div>
 </div>
+
+<div class="field max-width-800">
+    <label for="note">{{ t._('pr_Note') }}</label>
+    {{ form.render('note') }}
+</div>
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 <div class="ui accordion field">

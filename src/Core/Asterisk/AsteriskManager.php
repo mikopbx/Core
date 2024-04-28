@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk;
 
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use Throwable;
 
@@ -472,9 +473,13 @@ class AsteriskManager
                 }
                 if($parameters['ActionID'] === $m['ActionID']){
                     // This is the event for the last request of the current worker
-                    $parameters['data'][$m['Event']][] = $m;
+                    if (array_key_exists('Event', $m)){
+                        $parameters['data'][$m['Event']][] = $m;
+                    } else {
+                        SystemMessages::sysLogMsg(__METHOD__, "No key Event on AMI Answer:" . implode(' ',$m), LOG_DEBUG);
+                    }
                     $m = [];
-                }elseif(isset($m['Event'])){
+                } elseif(isset($m['Event'])){
                     // These are other events not related to the last request
                     $this->processEvent($parameters);
                 }
@@ -612,7 +617,7 @@ class AsteriskManager
 
         $this->socket = @fsockopen($this->server, $this->port, $errno, $errstr, $timeout);
         if ($this->socket == false) {
-            Util::sysLogMsg('asmanager', "Unable to connect to manager {$this->server}:{$this->port} ($errno): $errstr", LOG_ERR);
+            SystemMessages::sysLogMsg('asmanager', "Unable to connect to manager {$this->server}:{$this->port} ($errno): $errstr", LOG_ERR);
             return false;
         }
         // PT1C;

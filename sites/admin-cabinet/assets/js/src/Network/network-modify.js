@@ -193,7 +193,11 @@ const networks = {
         if (response === false) {
             networks.$getMyIpButton.removeClass('loading disabled');
         } else {
-            networks.$formObj.form('set value', 'extipaddr', response.ip);
+            const currentExtIpAddr = networks.$formObj.form('get value', 'extipaddr');
+            const portMatch = currentExtIpAddr.match(/:(\d+)$/);
+            const port = portMatch ? ':' + portMatch[1] : '';
+            const newExtIpAddr = response.ip + port;
+            networks.$formObj.form('set value', 'extipaddr', newExtIpAddr);
             networks.$extipaddr.trigger('change');
             networks.$getMyIpButton.removeClass('loading disabled');
         }

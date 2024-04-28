@@ -19,41 +19,62 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
-
+/**
+ * Class to test the deletion of an extension from a dropdown menu in the admin cabinet.
+ */
 class DeleteExtensionFromDropDownTest extends MikoPBXTestsBase
 {
+
     /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Check dropdowns after delete extensions");
+    }
+
+    /**
+     * Test if the extension is present in the dropdown menu after deletion.
+     *
      * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params;
+     * @param array $params The parameters for the test.
      */
-    public function testDropdownOnDeletedExtensions($params):void
+    public function testDropdownOnDeletedExtensions(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
 
         $this->selectDropdownItem('action', 'extension');
 
         $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $params['username']);
-        //Asserts
-        if (!$elementFound && !$params['possibleToDelete']){
-            $this->fail('Not found menuitem ' . $params['username'] . PHP_EOL);
-        } elseif ($elementFound && $params['possibleToDelete']){
-            $this->fail('Found menuitem ' . $params['username'] . PHP_EOL);
+
+        // Asserts
+        if (!$elementFound && !$params['possibleToDelete']) {
+            $this->fail('Not found menu item ' . $params['username'] . PHP_EOL);
+        } elseif ($elementFound && $params['possibleToDelete']) {
+            $this->fail('Found menu item ' . $params['username'] . PHP_EOL);
         } else {
-            // increment assertion counter
+            // Increment assertion counter
             $this->assertTrue(true);
         }
     }
 
     /**
-     * Dataset provider
+     * Dataset provider for extension deletion parameters.
+     *
      * @return array
      */
     public function additionProvider(): array
     {
+        // You can replace this with a proper dataset when needed.
         $deleteExt = new DeleteExtensionTest();
         return $deleteExt->additionProvider();
     }

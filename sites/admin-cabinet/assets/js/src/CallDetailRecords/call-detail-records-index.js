@@ -74,18 +74,18 @@ const callDetailRecords = {
             },
             serverSide: true,
             processing: true,
+            columnDefs: [
+                { defaultContent: "-",  targets: "_all"},
+            ],
             ajax: {
                 url: `${globalRootUrl}call-detail-records/getNewRecords`,
                 type: 'POST',
             },
             paging: true,
-            scrollY: $(window).height() - callDetailRecords.$cdrTable.offset().top-150,
-            // stateSave: true,
+            //scrollY: $(window).height() - callDetailRecords.$cdrTable.offset().top-150,
             sDom: 'rtip',
             deferRender: true,
-            pageLength: 17,
-            // scrollCollapse: true,
-            // scroller: true,
+            pageLength: callDetailRecords.calculatePageLength(),
 
             /**
              * Constructs the CDR row.
@@ -93,7 +93,7 @@ const callDetailRecords = {
              * @param {Array} data - The row data.
              */
             createdRow(row, data) {
-                if (data.DT_RowClass === 'detailed') {
+                if (data.DT_RowClass.indexOf("detailed") >= 0) {
                     $('td', row).eq(0).html('<i class="icon caret down"></i>');
                 } else {
                     $('td', row).eq(0).html('');
@@ -227,7 +227,17 @@ const callDetailRecords = {
         return htmlPlayer;
     },
 
+    calculatePageLength() {
+        // Calculate row height
+        let rowHeight = callDetailRecords.$cdrTable.find('tbody > tr').first().outerHeight();
 
+        // Calculate window height and available space for table
+        const windowHeight = window.innerHeight;
+        const headerFooterHeight = 400; // Estimate height for header, footer, and other elements
+
+        // Calculate new page length
+        return Math.max(Math.floor((windowHeight - headerFooterHeight) / rowHeight), 5);
+    },
     /**
      * Initializes the date range selector.
      */
@@ -235,12 +245,12 @@ const callDetailRecords = {
         const options = {};
 
         options.ranges = {
-            [globalTranslate.сal_Today]: [moment(), moment()],
-            [globalTranslate.сal_Yesterday]: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-            [globalTranslate.сal_LastWeek]: [moment().subtract(6, 'days'), moment()],
-            [globalTranslate.сal_Last30Days]: [moment().subtract(29, 'days'), moment()],
-            [globalTranslate.сal_ThisMonth]: [moment().startOf('month'), moment().endOf('month')],
-            [globalTranslate.сal_LastMonth]: [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            [globalTranslate.cal_Today]: [moment(), moment()],
+            [globalTranslate.cal_Yesterday]: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+            [globalTranslate.cal_LastWeek]: [moment().subtract(6, 'days'), moment()],
+            [globalTranslate.cal_Last30Days]: [moment().subtract(29, 'days'), moment()],
+            [globalTranslate.cal_ThisMonth]: [moment().startOf('month'), moment().endOf('month')],
+            [globalTranslate.cal_LastMonth]: [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
         };
         options.alwaysShowCalendars = true;
         options.autoUpdateInput = true;
@@ -249,11 +259,11 @@ const callDetailRecords = {
         options.locale = {
             format: 'DD/MM/YYYY',
             separator: ' - ',
-            applyLabel: globalTranslate.сal_ApplyBtn,
-            cancelLabel: globalTranslate.сal_CancelBtn,
-            fromLabel: globalTranslate.сal_from,
-            toLabel: globalTranslate.сal_to,
-            customRangeLabel: globalTranslate.сal_CustomPeriod,
+            applyLabel: globalTranslate.cal_ApplyBtn,
+            cancelLabel: globalTranslate.cal_CancelBtn,
+            fromLabel: globalTranslate.cal_from,
+            toLabel: globalTranslate.cal_to,
+            customRangeLabel: globalTranslate.cal_CustomPeriod,
             daysOfWeek: SemanticLocalization.calendarText.days,
             monthNames: SemanticLocalization.calendarText.months,
             firstDay: 1,

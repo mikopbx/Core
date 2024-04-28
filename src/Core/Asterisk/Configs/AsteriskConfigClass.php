@@ -26,7 +26,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Config;
 use Phalcon\Di\Injectable;
 
@@ -186,7 +186,8 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     {
         if ($this->booting === true && !empty($this->description)) {
             $this->stageMessage = "   |- generate config {$this->description}...";
-            Util::echoWithSyslog($this->stageMessage);  // Output the message and log it in syslog
+            SystemMessages::echoWithSyslog($this->stageMessage);  // Output the message and log it in syslog
+            SystemMessages::echoToTeletype($this->stageMessage); // Output to TTY
         }
     }
 
@@ -213,7 +214,9 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     protected function echoDone(): void
     {
         if ($this->booting === true && !empty($this->description)) {
-            Util::echoResult($this->stageMessage); // Output the completion message
+            // Output the completion message
+            SystemMessages::echoResult($this->stageMessage);
+            SystemMessages::teletypeEchoResult($this->stageMessage);
             $this->stageMessage = '';
         }
     }

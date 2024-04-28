@@ -1,0 +1,149 @@
+#!/usr/bin/php -f
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace MikoPBX\Core\RootFS\etc\rc;
+use Phalcon\Di;
+use MikoPBX\Core\System\{Directories, Processes, Util, Storage};
+
+require_once('Globals.php');
+
+/**
+ * Error message displayed when the configuration file is not found.
+ */
+$NoCfDevice = <<<EOD
+
+*******************************************************************************
+* FATAL ERROR                                                                 *
+* The device that contains the configuration file (mikopbx.db) could not be   *
+* found. MikoPBX can not continue booting.                                     *
+*******************************************************************************
+
+EOD;
+
+/**
+ * Retrieves the Phalcon configuration and sets the necessary paths.
+ */
+$phalconConfig  = Di::getDefault()->get('config');
+$cfDir          = Directories::getDir(Directories::CORE_CF_DIR);
+$varEtcDir      = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
+$dbFile         = $phalconConfig->path('database.dbfile');
+$mount      = Util::which('mount');
+$umount    = Util::which('umount');
+$sqlite3    = Util::which('sqlite3');
+$rm         = Util::which('rm');
+$mv         = Util::which('mv');
+
+/**
+ * The device containing the configuration file.
+ * Empty if no device is found.
+ *
+ * @var string
+ */
+$cfgdevice = '';
+/* check if there's already an fstab (NFS booting?) */
+if (file_exists('/etc/fstab')) {
+    return; // No further processing required.
+}
+
+if (file_exists('/offload/livecd')) {
+    $d_path_info = pathinfo($dbFile);
+    // Copy the configuration database file.
+    copy('/offload/conf/mikopbx.db', $dbFile);
+    Util::addRegularWWWRights($d_path_info);
+    Util::addRegularWWWRights($dbFile);
+    return; // No further processing required.
+}
+
+$storage = new Storage();
+/* Iterate through the disks fdisk finds until one contains a mikopbx.db */
+$attempts = 2;
+while ($attempts--) {
+    $disks = $storage->diskGetDevices(true);
+    foreach ($disks as $disk => $diskInfo) {
+        // RAID contains a nested "children" array.
+        if(isset($diskInfo['children'][0]['children'])){
+            $diskInfo = $diskInfo['children'][0];
+            // Adjust the disk name for RAID.
+            $disk     = $diskInfo['name'];
+        }
+        $children = $diskInfo['children'];
+        if(count($children)<3){
+            // Disk is only of interest if it contains 3 or more partitions.
+            continue;
+        }
+        echo "\n - Found disk: {$disk}\n";
+        echo " - Looking for configuration on: $disk\n";
+        $partName   = $children[2]['name']??'';
+        $fsType     = $children[2]['fstype']??'';
+        $uuid       = $children[2]['uuid']??'';
+        if(empty($uuid) || empty($fsType)){
+            continue;
+        }
+        // Run partition check on the disk.
+        $fsckPath = Util::which("fsck.{$fsType}");
+        // Check disk for errors.
+        Processes::mwExec("if [ -b /dev/{$partName} ]; then {$fsckPath} -f -p /dev/{$partName}; fi;");
+        // Mount the disk.
+        $resultMount = Processes::mwExec("{$mount} -t {$fsType} -rw UUID=\"{$uuid}\" {$cfDir}");
+        if ($resultMount !== 0) {
+            // Mounting error.
+            continue;
+        }
+
+        if (file_exists($dbFile) && filesize($dbFile) > 0) {
+            $cfgdevice    = $disk;
+            echo " - Found configuration DB on $partName.\n";
+            $old_db_name = '/cf/conf/mikozia.db';
+            if (file_exists($old_db_name)) {
+                @unlink($dbFile);
+                @rename($old_db_name, $dbFile);
+            }
+            if (Processes::mwExec("{$sqlite3} {$dbFile} 'VACUUM'") !== 0) {
+                $tmp_name = '/tmp/' . time() . '.db.dmp';
+                Processes::mwExec("{$sqlite3} {$dbFile} .dump | {$sqlite3} {$tmp_name}");
+                Processes::mwExec("{$rm} {$dbFile}*");
+                Processes::mwExec("{$mv} {$tmp_name} {$dbFile}");
+            }
+            // Disk found and mounted, exit the loop.
+            break;
+        }
+        Processes::mwExec("{$umount} -f /dev/{$partName}");
+    }
+
+    if ($cfgdevice) {
+        break;
+    }
+    if ($attempts) {
+        echo " - Configuration not found.\n";
+        echo " - Waiting for devices to settle and attempting again.\n";
+        sleep(3);
+    }
+}
+
+if ( ! $cfgdevice) {
+    /* No device found, print an error and halt */
+    echo $NoCfDevice;
+    sleep(5);
+    $haltPath = Util::which('halt');
+    Processes::mwExec($haltPath);
+} else {
+    // Write the connected device name to a file.
+    file_put_contents("{$varEtcDir}/cfdevice", $cfgdevice);
+}

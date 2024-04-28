@@ -21,9 +21,7 @@ namespace MikoPBX\Modules\Config;
 
 use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Assets\Manager;
-use Phalcon\Events\Event;
 use Phalcon\Forms\Form;
-use Phalcon\Mvc\Controller;
 use Phalcon\Mvc\Dispatcher;
 use Phalcon\Mvc\Router;
 use Phalcon\Mvc\View;

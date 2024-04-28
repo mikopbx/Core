@@ -21,19 +21,43 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
+/**
+ * Class ChangeExtensionsSettingsTest
+ * This class contains test cases related to changing extension settings.
+ *
+ * @package MikoPBX\Tests\AdminCabinet\Lib
+ */
 class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 {
+
     /**
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Change extension settings");
+    }
+
+    /**
+     * Test changing extension settings.
+     *
      * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params;
+     * @param array $params The parameters for the test case.
      */
-    public function testChangeExtension($params):void
+    public function testChangeExtension(array $params):void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->fillDataTableSearchInput('global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('number', $params['number']);
@@ -54,15 +78,19 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
 
     /**
-     * @depends testLogin
+     * Test changing mobile settings for an extension.
+     *
+     * @depends testChangeExtension
      * @dataProvider additionProvider
      *
-     * @param array $params;
+     * @param array $params The parameters for the test case.
      */
-    public function testChangeMobile($params):void
+    public function testChangeMobile(array $params):void
     {
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->fillDataTableSearchInput('global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('mobile_number', $params['mobile']);
@@ -92,14 +120,18 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     }
 
     /**
-     * @depends testLogin
+     * Test clearing mobile settings for an extension.
+     *
+     * @depends testChangeMobile
      * @dataProvider additionProvider
      *
-     * @param array $params;
+     * @param array $params The parameters for the test case.
      */
-    public function testClearMobile($params):void
+    public function testClearMobile(array $params):void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->fillDataTableSearchInput('global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('mobile_number', '');
@@ -129,14 +161,18 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     }
 
     /**
-     * @depends testLogin
+     * Test changing email settings for an extension.
+     *
+     * @depends testClearMobile
      * @dataProvider additionProvider
      *
-     * @param array $params;
+     * @param array $params The parameters for the test case.
      */
-    public function testChangeEmail($params):void
+    public function testChangeEmail(array $params):void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->fillDataTableSearchInput('global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
@@ -156,14 +192,18 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     }
 
     /**
-     * @depends testLogin
+     * Test clearing email settings for an extension.
+     *
+     * @depends testChangeEmail
      * @dataProvider additionProvider
      *
-     * @param array $params;
+     * @param array $params The parameters for the test case.
      */
-    public function testClearEmail($params):void
+    public function testClearEmail(array $params):void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->fillDataTableSearchInput('global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
@@ -182,14 +222,18 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     }
 
     /**
-     * @depends testLogin
+     * Test changing forwarding settings for an extension.
+     *
+     * @depends testClearEmail
      * @dataProvider additionProvider
      *
-     * @param array $params;
+     * @param array $params The parameters for the test case.
      */
-    public function testChangeForwarding($params):void
+    public function testChangeForwarding(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->fillDataTableSearchInput('global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
@@ -218,15 +262,18 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
 
     /**
-     * @depends      testLogin
+     * Test changing various extension settings.
+     *
+     * @depends testChangeForwarding
      * @dataProvider additionProvider
      *
-     * @param $params
-     *
+     * @param array $params The parameters for the test case.
      */
-    public function testChangeExtensions($params): void
+    public function testChangeExtensions(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        // Fill search field
+        $this->fillDataTableSearchInput('global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
@@ -280,7 +327,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertInputFieldValueEqual('sip_secret',  $params['secret']);
 
 
-        // Раскрываем расширенные опции
+        // Expand advanced options
         $this->openAccordionOnThePage();
         $this->assertInputFieldValueEqual('mobile_dialstring',  $params['mobile']);
         $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
@@ -298,7 +345,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     {
 
         $params = [];
-        $params[] = [
+        $params['Alexandra Pushina <289>'] = [
             [
                 'number'   => 289,
                 'email'    => 'mask@miko.ru',

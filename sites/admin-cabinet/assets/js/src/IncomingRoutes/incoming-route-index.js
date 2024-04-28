@@ -74,6 +74,8 @@ const incomingRoutes = {
 
         // Setup the dropdown for forwarding select with options
         $('.forwarding-select').dropdown(Extensions.getDropdownSettingsForRouting());
+        // Initialize audio message dropdowns
+        $('.audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
 
         // Add double click listener to table cells
         $('.rule-row td').on('dblclick', (e) => {
@@ -112,11 +114,20 @@ const incomingRoutes = {
      * Toggle class for disabled field based on dropdown selection
      */
     toggleDisabledFieldClass() {
-        if (incomingRoutes.$formObj.form('get value', 'action') === 'extension') {
+        let $action = incomingRoutes.$formObj.form('get value', 'action');
+        if ($action === 'extension') {
             $('#extension-group').show();
+            $('#audio-group').hide();
+            $('#audio_message_id').dropdown('clear');
+        } else if($action === 'playback'){
+            $('#extension-group').hide();
+            $('#audio-group').show();
+            $('#extension').dropdown('clear');
         } else {
+            $('#audio-group').hide();
             $('#extension-group').hide();
             $('#extension').dropdown('clear');
+            $('#audio_message_id').dropdown('clear');
         }
     },
 

@@ -20,7 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Controllers\Files;
 
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
@@ -153,7 +153,7 @@ class PostController extends BaseController
                 if ($file->getError()) {
                     $data['data'] = 'error ' . $file->getError() . ' in file ' . $file->getTempName();
                     $this->sendError(Response::BAD_REQUEST, $data['data']);
-                    Util::sysLogMsg('UploadFile', 'error ' . $file->getError() . ' in file ' . $file->getTempName(), LOG_ERR);
+                    SystemMessages::sysLogMsg('UploadFile', 'error ' . $file->getError() . ' in file ' . $file->getTempName(), LOG_ERR);
                     return;
                 }
             }

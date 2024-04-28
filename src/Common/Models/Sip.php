@@ -221,6 +221,14 @@ class Sip extends ModelsBase
      */
     public ?string $enableRecording = '1';
 
+
+    /**
+     * Status of the peer secret check by weak dictionary (0 = not checked, 1 = ok, 2 = weak).
+     *
+     * @Column(type="integer", nullable=true, default="0")
+     */
+    public ?string $weakSecret= '0';
+
     /**
      * Initialize the model.
      */

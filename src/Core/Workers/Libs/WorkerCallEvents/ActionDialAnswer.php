@@ -22,6 +22,8 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
@@ -48,7 +50,7 @@ class ActionDialAnswer
     public static function execute(WorkerCallEvents $worker, $data): void
     {
         // Retrieve the pickup extension number from the PBX settings.
-        $pickupexten = PbxSettings::getValueByKey('PBXFeaturePickupExten');
+        $pickupexten = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN);
 
         // Check if the dialed number (dnid) matches the pickup extension.
         if (trim($data['dnid']) === $pickupexten) {
@@ -185,7 +187,7 @@ class ActionDialAnswer
             // Try to save the changes. If saving failed, log the error messages.
             $res = $row->save();
             if (!$res) {
-                Util::sysLogMsg('ENDCALLONANSWER', implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg('ENDCALLONANSWER', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }
@@ -295,7 +297,7 @@ class ActionDialAnswer
         }
         $res = $row->save();
         if (!$res) {
-            Util::sysLogMsg('Action_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
+            SystemMessages::sysLogMsg('Action_dial_answer', implode(' ', $row->getMessages()), LOG_DEBUG);
         }
         return self::NORM_EXIT;
     }

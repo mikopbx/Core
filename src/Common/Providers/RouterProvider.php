@@ -51,7 +51,7 @@ class RouterProvider implements ServiceProviderInterface
 
                 $router->setDefaultModule("admin-cabinet");
                 $router->setDefaultNamespace('MikoPBX\AdminCabinet\Controllers');
-                $router->setDefaultController('extensions');
+                $router->setDefaultController('session');
                 $router->setDefaultAction('index');
 
                 $router->add('/admin-cabinet/((?!module)[a-zA-Z0-9_-]+)/:action/:params', [

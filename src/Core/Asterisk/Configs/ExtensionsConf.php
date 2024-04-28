@@ -21,7 +21,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
-use MikoPBX\Core\System\{Storage, Util};
+use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Core\System\{Directories, Util};
 
 /**
  * Represents the Asterisk configuration class for handling extensions.conf and 99-extensions-override.lua
@@ -64,17 +65,18 @@ class ExtensionsConf extends AsteriskConfigClass
         /** @scrutinizer ignore-call */
         $conf              = "[globals]" .PHP_EOL.
             "TRANSFER_CONTEXT=internal-transfer;".PHP_EOL;
-        if ($this->generalSettings['PBXRecordCalls'] === '1') {
-            $conf .= "MONITOR_DIR=" . Storage::getMonitorDir() .PHP_EOL;
-            $conf .= "MONITOR_STEREO=" . $this->generalSettings['PBXSplitAudioThread'] .PHP_EOL;
+        if ($this->generalSettings[PbxSettingsConstants::PBX_RECORD_CALLS] === '1') {
+            $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
+            $conf .= "MONITOR_DIR=" . $monitorDir .PHP_EOL;
+            $conf .= "MONITOR_STEREO=" . $this->generalSettings[PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD] .PHP_EOL;
         }
-        if ($this->generalSettings['PBXRecordCallsInner'] === '0') {
+        if ($this->generalSettings[PbxSettingsConstants::PBX_RECORD_CALLS_INNER] === '0') {
             $conf .= "MONITOR_INNER=0".PHP_EOL;
         }else{
             $conf .= "MONITOR_INNER=1".PHP_EOL;
         }
-        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementIn']).PHP_EOL;
-        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings['PBXRecordAnnouncementOut']).PHP_EOL;
+        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings[PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_IN]).PHP_EOL;
+        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings[PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_OUT]).PHP_EOL;
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GLOBALS);
         $conf .= PHP_EOL.PHP_EOL;
         $conf .= "[general]".PHP_EOL;
@@ -144,15 +146,24 @@ class ExtensionsConf extends AsteriskConfigClass
             'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1" && "${ALLOW_MULTY_ANSWER}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},TtekKHhb(originate-create-channel,${EXTEN},1)U(originate-answer-channel),s,1)))' . PHP_EOL.
-            'exten => _[hit],1,Gosub(interception_bridge_result,${EXTEN},1)' . "\n\t".
-            'same => n,Hangup' . "\n\n".
+            'exten => _[hit],1,Gosub(interception_bridge_result,${EXTEN},1)' . PHP_EOL."\t".
+            'same => n,Hangup' . PHP_EOL.PHP_EOL.
+
+            '[set-auto-answer-header]' . PHP_EOL .
+            'exten => _[hit],1,Hangup' . PHP_EOL.
+            'exten => '.self::ALL_EXTENSION.',1,ExecIf($["${PT1C_SIP_HEADER}x" != "x"]?return)' . PHP_EOL . "\t" .
+            'same => n,Set(DST_USER_AGENT=${TOUPPER(${PJSIP_CONTACT(${PJSIP_AOR(${EXTEN},contact)},user_agent)})})' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${STRREPLACE(DST_USER_AGENT,TELEPHONE)}" != "${DST_USER_AGENT}"]?Set(_PT1C_SIP_HEADER=Call-Info:\;answer-after=0))' . PHP_EOL . "\t" .
+            'same => n,ExecIf($["${STRREPLACE(DST_USER_AGENT,MICROSIP)}" != "${DST_USER_AGENT}"]?Set(_PT1C_SIP_HEADER=Call-Info:\;answer-after=0))' . PHP_EOL . "\t" .
+            'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
+            'same => n,return' . PHP_EOL.PHP_EOL.
 
             // internal-originate-queue context for AMI originate with queue support
             '[internal-originate-queue]' . PHP_EOL .
             'exten => '.self::ALL_EXTENSION.',1,Set(_NOCDR=1)' . PHP_EOL . "\t" .
             'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${SRC_QUEUE}x" != "x"]?Queue(${SRC_QUEUE},kT,,,300,,,originate-answer-channel))' . PHP_EOL . PHP_EOL .
-            'exten => _[hit],1,Hangup' . "\n\n".
+            'exten => _[hit],1,Hangup' . PHP_EOL.PHP_EOL.
 
             // Additional contexts
             '[originate-create-channel] ' . PHP_EOL .
@@ -177,7 +188,7 @@ class ExtensionsConf extends AsteriskConfigClass
         $conf .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . " \n\t";
         $conf .= 'same => n,ExecIf($[${DIALPLAN_EXISTS(${CONTEXT}-custom,s,1)}]?Gosub(${CONTEXT}-custom,s,1))' . " \n\t";
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSIONS_GEN_CREATE_CHANNEL_DIALPLAN);
-        $conf .= 'same => n,return' . " \n\n";
+        $conf .= 'same => n,return' . PHP_EOL.PHP_EOL;
 
         $conf .= '[hangup_handler]' . "\n";
         $conf .= 'exten => s,1,NoOp(--- hangup - ${CHANNEL} ---)' . "\n\t";

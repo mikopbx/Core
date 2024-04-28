@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,$ */
+/* global globalRootUrl, DataTable, $ */
 
 /**
  * Object for managing the Out-of-Work Times table.
@@ -24,6 +24,12 @@
  * @module OutOfWorkTimesTable
  */
 const OutOfWorkTimesTable = {
+
+    /**
+     * jQuery object for the table with time frame records.
+     * @type {jQuery}
+     */
+    $timeFramesTable: $('#time-frames-table'),
 
     /**
      * Initializes the Out-of-Work Times table.
@@ -37,18 +43,18 @@ const OutOfWorkTimesTable = {
         });
 
         // Initialize DataTable
-        $('#time-frames-table').DataTable({
+        OutOfWorkTimesTable.$timeFramesTable.DataTable({
             lengthChange: false,
             paging: false,
             columns: [
-                null,
+                {orderable: false},
+                {orderable: false},
                 {orderable: false},
                 null,
                 null,
                 {orderable: false},
             ],
             autoWidth: false,
-            order: [1, 'asc'],
             language: SemanticLocalization.dataTableLocalisation,
             "drawCallback": function (settings) {
                 $("[data-content!=''][data-content]").popup();
@@ -63,7 +69,40 @@ const OutOfWorkTimesTable = {
             const id = $(e.target).closest('tr').attr('id');
             OutOfWorkTimesTable.deleteRule(id);
         });
+
+        // Initialize table drag-and-drop with the appropriate callbacks
+        OutOfWorkTimesTable.$timeFramesTable.tableDnD({
+            onDrop: OutOfWorkTimesTable.cbOnDrop, // Callback on dropping an item
+            onDragClass: 'hoveringRow', // CSS class while dragging
+            dragHandle: '.dragHandle',  // Handle for dragging
+        });
     },
+
+    /**
+     * Callback to execute after dropping an element
+     */
+    cbOnDrop() {
+        let priorityWasChanged = false;
+        const priorityData = {};
+        $('.frame-row').each((index, obj) => {
+            const ruleId = $(obj).attr('id');
+            const oldPriority = parseInt($(obj).attr('data-value'), 10);
+            const newPriority = obj.rowIndex;
+            if (oldPriority !== newPriority) {
+                priorityWasChanged = true;
+                priorityData[ruleId] = newPriority;
+            }
+        });
+        if (priorityWasChanged) {
+            $.api({
+                on: 'now',
+                url: `${globalRootUrl}out-off-work-time/changePriority`,
+                method: 'POST',
+                data: priorityData,
+            });
+        }
+    },
+
     /**
      * Deletes an extension with the given ID.
      * @param {string} id - The ID of the rule to delete.
@@ -80,7 +119,7 @@ const OutOfWorkTimesTable = {
             },
             onSuccess(response) {
                 if (response.success === true) {
-                    $('#time-frames-table').find(`tr[id=${id}]`).remove();
+                    OutOfWorkTimesTable.$timeFramesTable.find(`tr[id=${id}]`).remove();
                 } else {
                     UserMessage.showError(response.message.error, globalTranslate.ex_ImpossibleToDeleteExtension);
                 }

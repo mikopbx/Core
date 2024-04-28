@@ -20,7 +20,7 @@
 namespace MikoPBX\Common\Models;
 
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use Throwable;
 
 /**
@@ -53,12 +53,25 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
         $this->setConnectionService('dbCDR');
     }
 
+     public function beforeSave()
+     {
+         if(empty($this->linkedid)){
+             $trace = debug_backtrace();
+             $error =  "Call trace:\n";
+             foreach ($trace as $index => $item) {
+                 if ($index > 0) {
+                     $error.= "{$index}. {$item['file']} (line {$item['line']})\n";
+                 }
+             }
+             SystemMessages::sysLogMsg('ERROR_CDR '.getmypid(), $error);
+         }
+     }
+
     /**
      * Perform necessary actions after saving the record.
      */
     public function afterSave(): void
     {
-
         $moveToGeneral = true;
         // Check if the call was answered and either an interception or originate.
         // In such cases, forcefully logging the call is not required.
@@ -108,7 +121,7 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
                 $managedCache->delete('Workers:Cdr:' . $rowData['UNIQUEID']);
             }
         } catch (Throwable $e) {
-            Util::sysLogMsg(self::class, $e->getMessage());
+            SystemMessages::sysLogMsg(self::class, $e->getMessage());
             return;
         }
     }

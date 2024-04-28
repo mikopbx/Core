@@ -21,24 +21,51 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
+/**
+ * Class ChangeCallQueueTest
+ * This class contains test cases related to changing call queue settings.
+ *
+ * @package MikoPBX\Tests\AdminCabinet\Lib
+ */
 class ChangeCallQueueTest extends MikoPBXTestsBase
 {
     /**
-     * @depends      testLogin
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Change parameters of the existing call queue");
+    }
+
+    /**
+     * Test changing call queue extension settings.
+     *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params ;
+     * @param array $params The parameters for the test case.
      */
-    public function testChangeCallQueueExtension($params): void
+    public function testChangeCallQueueExtension(array $params): void
     {
+
+        // Click on the call queue menu item in the sidebar
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
+
+        // Click the modify button for the call queue with the specified extension
         $this->clickModifyButtonOnRowWithText($params['OldExtension']);
+
+        // Change the description and name of the call queue
         $this->changeTextAreaValue('description', $params['description']);
         $this->changeInputField('name', $params['name']);
 
-        // Удаляем старых агентов
+        // Delete existing agents from the call queue
         $xpath         = ('//tr[@class="member-row"]//div[contains(@class,"delete-row-button")]');
         $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
         foreach ($deleteButtons as $deleteButton) {
@@ -46,17 +73,18 @@ class ChangeCallQueueTest extends MikoPBXTestsBase
             sleep(2);
         }
 
-        // Добавляем агентов очереди
+        // Add new agents to the call queue
         foreach ($params['agents'] as $agent) {
             $this->selectDropdownItem('extensionselect', $agent);
         }
 
+        // Select the call queue strategy
         $this->selectDropdownItem('strategy', $params['strategy']);
 
-        // Раскрываем расширенные опции
+        // Expand advanced options
         $this->openAccordionOnThePage();
 
-        // Заполняем поля из базы данных с исходными данными
+        // Set various call queue settings
         $this->changeInputField('extension', $params['extension']);
         $this->changeInputField('seconds_to_ring_each_member', $params['seconds_to_ring_each_member']);
         $this->changeInputField('seconds_for_wrapup', $params['seconds_for_wrapup']);
@@ -74,15 +102,19 @@ class ChangeCallQueueTest extends MikoPBXTestsBase
         $this->selectDropdownItem('timeout_extension', $params['timeout_extension']);
         $this->selectDropdownItem('redirect_to_extension_if_empty', $params['redirect_to_extension_if_empty']);
 
+        // Submit the form
         $this->submitForm('queue-form');
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
 
+        // Click the modify button for the updated call queue
         $this->clickModifyButtonOnRowWithText($params['name']);
+
+        // Assert that the settings were saved correctly
         $this->assertInputFieldValueEqual('name', $params['name']);
         $this->assertInputFieldValueEqual('extension', $params['extension']);
         $this->assertTextAreaValueIsEqual('description', $params['description']);
 
-        // Обойдем всех членов очереди, проверим что они есть
+        // Check if all agents are in the queue
         foreach ($params['agents'] as $agent) {
             $xpath   = '//table[@id="extensionsTable"]//td[contains(text(), "' . $agent . '")]';
             $members = self::$driver->findElements(WebDriverBy::xpath($xpath));
@@ -92,9 +124,11 @@ class ChangeCallQueueTest extends MikoPBXTestsBase
         }
         $this->assertMenuItemSelected('strategy', $params['strategy']);
 
-        // Раскрываем расширенные опции
+        // Expand advanced options again
         $this->openAccordionOnThePage();
 
+
+        // Check advanced settings
         $this->assertInputFieldValueEqual('seconds_to_ring_each_member', $params['seconds_to_ring_each_member']);
         $this->assertInputFieldValueEqual('seconds_for_wrapup', $params['seconds_for_wrapup']);
         $this->assertCheckBoxStageIsEqual('recive_calls_while_on_a_call', $params['recive_calls_while_on_a_call']);
@@ -116,14 +150,14 @@ class ChangeCallQueueTest extends MikoPBXTestsBase
     }
 
     /**
-     * Dataset provider
+     * Dataset provider for the test case.
      *
      * @return array
      */
     public function additionProvider(): array
     {
         $params   = [];
-        $params[] = [
+        $params['Sales department2 <20025>'] = [
             [
                 'description'                      => 'Sales department queue, the first line of agents2',
                 'name'                             => 'Sales department2',

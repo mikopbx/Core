@@ -31,6 +31,9 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class LanInterfaces extends ModelsBase
 {
+    const TOPOLOGY_PUBLIC = 'public';
+    const TOPOLOGY_PRIVATE = 'private';
+
     /**
      * @Primary
      * @Identity
@@ -149,6 +152,13 @@ class LanInterfaces extends ModelsBase
      * @Column(type="string", length=1, nullable=false)
      */
     public ?string $disabled = '0';
+
+    /**
+     * If true, the external IP will update on each reboot
+     *
+     * @Column(type="string", length=1, nullable=true)
+     */
+    public ?string $autoUpdateExtIp = '0';
 
     /**
      * Initialize the model.

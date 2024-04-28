@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -51,7 +52,7 @@ class VMWareToolsConf
     public function configure(): bool
     {
         Processes::killByName("vmtoolsd");
-        $virtualHW = $this->mikoPBXConfig->getGeneralSettings('VirtualHardwareType');
+        $virtualHW = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE);
         $result = 0;
         if ('VMWARE' === $virtualHW) {
             $conf = "[logging]\n"

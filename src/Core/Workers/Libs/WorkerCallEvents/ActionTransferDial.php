@@ -43,7 +43,7 @@ class ActionTransferDial
     {
         $chan = $data['src_chan'] ?? '';
         if (!empty($chan)) {
-            $worker->addActiveChan($chan);
+            $worker->addActiveChan($chan, $data['linkedid']);
         }
         if ($data['is_queue'] !== '1') {
             // End the previous unsuccessful Dial if the destination channel was not created.

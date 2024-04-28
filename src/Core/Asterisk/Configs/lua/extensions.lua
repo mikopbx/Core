@@ -339,7 +339,7 @@ function event_dial(without_event)
     data['action'] = "dial";
     if(IS_ORGNT ~= '')then
         -- Adjust channel and destination for originate calls
-        agi_channel = get_variable('MASTER_CHANNEL(CHANNEL)')
+        agi_channel         = get_variable('MASTER_CHANNEL(CHANNEL)')
         dst_num  	        = get_variable("CALLERID(num)")
         src_num  	        = get_variable("EXTEN")
         data['dialstatus']  = 'ORIGINATE';
@@ -383,7 +383,12 @@ function event_dial(without_event)
     data['IS_ORGNT']     = (IS_ORGNT ~= '');
 
     set_variable("__pt1c_UNIQUEID", id);
-
+    local chanExists = get_variable('CHANNEL_EXISTS('..data['src_chan']..')');
+    if(chanExists ~= '1')then
+        app["NoOp"]('The channel '..data['src_chan']..' no longer exists ('..chanExists..'). We are completing the call.');
+        app["Hangup"]();
+        return {};
+    end
     if(without_event == false)then
         userevent_return(data)
     end
@@ -715,6 +720,11 @@ function event_dial_create_chan()
     data['dst_chan']	= get_variable("CHANNEL");
     data['linkedid']    = get_variable("CHANNEL(linkedid)");
 
+    if(get_variable('PROVIDER_ID') ~= '')then
+        -- outgoing call
+        app["NoOp"]('__TO_CHAN set to '..data['dst_chan']);
+        set_variable("MASTER_CHANNEL(__TO_CHAN)", data['dst_chan']);
+    end
     -- Check if the destination channel is local and retrieve the account name if it is not
     local is_local = string.lower(data['dst_chan']):find("local/") ~= nil
     if(is_local ~= true)then
@@ -828,11 +838,10 @@ function event_dial_answer()
             local stereoMode = get_variable("MONITOR_STEREO");
             local mixOptions = '';
             if('1' == stereoMode )then
-            mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+                mixOptions = "ar("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
             else
-            mixOptions = 'ab';
+                mixOptions = 'a';
             end
-
             app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
             app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
             data['recordingfile']  	= mixFileName .. ".mp3";
@@ -910,20 +919,22 @@ function event_dial_answer()
         set_variable("MASTER_CHANNEL(M_DIALSTATUS)", 'ANSWER');
         set_variable("MASTER_CHANNEL(M_TIMEOUT_CHANNEL)", '');
 
+        local disableAnnonceIn  = get_variable('MASTER_CHANNEL(DISABLE_ANNONCE)');
         local needAnnonceIn  = get_variable('MASTER_CHANNEL(IN_NEED_ANNONCE)');
         local fileAnnonceIn  = get_variable('PBX_REC_ANNONCE_IN');
-        app["NoOp"]('needAnnonceIn: '.. needAnnonceIn .. '. fileAnnonceIn: ' .. fileAnnonceIn);
-        if( needAnnonceIn == '1' and fileAnnonceIn ~= '' )then
+        app["NoOp"]('needAnnonceIn: '.. needAnnonceIn .. '. fileAnnonceIn: ' .. fileAnnonceIn.. '. disableAnnonceIn: ' .. disableAnnonceIn);
+        if( needAnnonceIn == '1' and fileAnnonceIn ~= '' and disableAnnonceIn ~= '1' )then
             local posSlash = masterChannel:find('/') + 1;
             local dst_chan = masterChannel:sub(posSlash);
             app["Originate"]('Local/'..dst_chan..'@annonce-spy,exten,annonce-playback-in,annonce,1,2,a');
             set_variable("MASTER_CHANNEL(IN_NEED_ANNONCE)", '0');
         end
 
-        local needAnnonceOut = get_variable('OUT_NEED_ANNONCE');
-        local fileAnnonceOut = get_variable('PBX_REC_ANNONCE_OUT');
-        app["NoOp"]('needAnnonceOut: '.. needAnnonceOut .. '. fileAnnonceOut: ' .. fileAnnonceOut);
-        if( needAnnonceOut == '1' and fileAnnonceOut ~= '' )then
+        local disableAnnonceOut  = get_variable('DISABLE_ANNONCE');
+        local needAnnonceOut     = get_variable('OUT_NEED_ANNONCE');
+        local fileAnnonceOut     = get_variable('PBX_REC_ANNONCE_OUT');
+        app["NoOp"]('needAnnonceOut: '.. needAnnonceOut .. '. fileAnnonceOut: ' .. fileAnnonceOut.. '. disableAnnonceOut: ' .. disableAnnonceOut);
+        if( needAnnonceOut == '1' and fileAnnonceOut ~= '' and disableAnnonceOut ~= '1' )then
             local posSlash = masterChannel:find('/') + 1;
             local dst_chan = masterChannel:sub(posSlash);
             app["Originate"]('Local/'..dst_chan..'@annonce-spy,exten,annonce-playback-out,annonce,1,2,a');
@@ -1022,7 +1033,12 @@ function event_transfer_dial()
     data['dst_num']  	= get_variable("EXTEN");
 
     set_variable("__transfer_UNIQUEID", id);
-
+    local chanExists = get_variable('CHANNEL_EXISTS('..data['src_chan']..')');
+    if(chanExists ~= '1')then
+        app["NoOp"]('The channel '..data['src_chan']..' no longer exists ('..chanExists..'). We are completing the call.');
+        app["Hangup"]();
+        return {};
+    end
     -- Send the data as a user event
     userevent_return(data)
 
@@ -1121,7 +1137,7 @@ function event_transfer_dial_answer()
             local stereoMode = get_variable("MONITOR_STEREO");
             local mixOptions = '';
             if('1' == stereoMode )then
-                mixOptions = "abSr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+                mixOptions = "abr("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
             else
                 mixOptions = 'ab';
             end
@@ -1465,6 +1481,23 @@ function event_dial_app()
 
     -- Call the event_dial() function to handle the common dial logic
     data = event_dial(true);
+
+    local monDir = get_variable("MONITOR_DIR");
+    if(monDir ~= '' and get_variable('NEED_MONITOR')=='1' and  monitorEnable(get_variable("CONNECTEDLINE(num)"), get_variable("CALLERID(num)"))) then
+        app["NoOp"]("Monitor ... "..get_variable("CONNECTEDLINE(num)").." -> "..get_variable("CALLERID(num)"));
+        local mixFileName = ''..monDir..'/'.. os.date("%Y/%m/%d/%H")..'/'..id;
+        local stereoMode = get_variable("MONITOR_STEREO");
+        local mixOptions = '';
+        if('1' == stereoMode )then
+            mixOptions = "ar("..mixFileName.."_in.wav)t("..mixFileName.."_out.wav)";
+        else
+            mixOptions = 'a';
+        end
+        app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
+        app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
+        data['recordingfile']  	= mixFileName .. ".mp3";
+        app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..CHANNEL);
+    end
 
     -- Set the destination channel, number, and is_app flag
     data['dst_chan'] = 'App:'..extension;

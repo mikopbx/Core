@@ -129,6 +129,7 @@
             </div>
         </div>
         <label>{{ t._('nw_PublicAddress') }}</label>
+        <div class="ui info message">{{ t._('nw_ExternIpHostMessage1') }} </div>
         <div class="inline fields">
             <div class="field max-width-400">
                 {{ form.render('extipaddr') }}
@@ -137,6 +138,12 @@
                 <button class="ui icon black button" id="getmyip"><i
                             class="ui icon globe"></i>{{ t._('nw_LookUpExternalIp') }}
                 </button>
+            </div>
+        </div>
+        <div class="field">
+            <div class="ui toggle checkbox">
+                {{ form.render('autoUpdateExtIp') }}
+                <label>{{ t._('nw_UpdateExternalIPAutomaticallyOnReboot') }}</label>
             </div>
         </div>
     </div>

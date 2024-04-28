@@ -64,6 +64,7 @@
                 [
                     'id': rule['id'],
                     'edit' : 'incoming-routes/modify/',
+                    'copy' : 'incoming-routes/modify?copy-source=',
                     'delete': 'incoming-routes/delete/'
                 ]) }}
         </tr>
@@ -78,6 +79,8 @@
 {{ form('incoming-routes/save', 'role': 'form', 'class': 'ui grey segment form', 'id':'default-rule-form') }}
     {% for element in form %}
         {% if element.getName() =='action' %}
+
+        {% elseif element.getName() =='audio_message_id' %}
 
         {% elseif element.getName() =='extension' %}
 
@@ -96,6 +99,10 @@
     <div class="inline field" id="extension-group">
         <label>{{ t._('ir_ExtensionSelect') }}</label>
         {{ form.render('extension') }}
+    </div>
+    <div class="inline field" id='audio-group'>
+        {{ form.render('audio_message_id') }}
+        <div class="ui icon basic button action-playback-button" data-value="audio_message_id"><i class="play icon"></i></div>
     </div>
 </div>
 

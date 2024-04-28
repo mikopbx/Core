@@ -24,8 +24,8 @@ use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\IvrMenuActions;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SipHosts;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
-use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 use MikoPBX\Core\System\MikoPBXConfig;
 use Phalcon\Config as ConfigAlias;
@@ -78,7 +78,7 @@ class UpdateConfigsUpToVer2020362 extends Injectable implements UpgradeSystemCon
             $hostData->provider_id = $data->uniqid;
             $hostData->address = $data->host;
             if(!$hostData->save()){
-                Util::sysLogMsg(self::class, 'Error save SipHosts', LOG_ERR);
+                SystemMessages::sysLogMsg(self::class, 'Error save SipHosts', LOG_ERR);
             }
         }
     }

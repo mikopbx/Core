@@ -11,9 +11,9 @@
             <div id="debug-info"></div>
 
             <div class="ui container" id="main-content-container">
-                <!--ADVICES-->
-                <div class="ui flowing popup bottom left transition hidden" id="advices"></div>
-                <!--/ ADVICES-->
+                <!--ADVICE-->
+                <div class="ui flowing popup bottom left transition hidden" id="advice"></div>
+                <!--/ ADVICE-->
 
                 <!--HEADER-->
                 {% if (isExternalModuleController) %}

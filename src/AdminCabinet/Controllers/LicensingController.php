@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use Phalcon\Http\Response;
 
 class LicensingController extends BaseController
@@ -46,6 +47,6 @@ class LicensingController extends BaseController
      */
     public function saveAction()
     {
-        $this->session->remove('PBXLicense');
+        $this->session->remove(PbxSettingsConstants::PBX_LICENSE);
     }
 }

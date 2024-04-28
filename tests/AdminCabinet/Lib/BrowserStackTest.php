@@ -21,21 +21,42 @@ namespace MikoPBX\Tests\AdminCabinet\Lib;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use GuzzleHttp\Exception\GuzzleException;
+use MikoPBX\Tests\AdminCabinet\Tests\LoginTest;
 use PHPUnit\Framework\TestCase;
 use BrowserStack\Local as BrowserStackLocal;
 use GuzzleHttp\Client as GuzzleHttpClient;
 
 require_once 'globals.php';
 
+/**
+ * Class BrowserStackTest
+ * @package MikoPBX\Tests\AdminCabinet\Lib
+ */
 class BrowserStackTest extends TestCase
 {
+    /**
+     * @var RemoteWebDriver
+     */
     protected static RemoteWebDriver $driver;
+
+    /**
+     * @var BrowserStackLocal
+     */
     protected static BrowserStackLocal $bs_local;
+
+    /**
+     * @var bool
+     */
     protected static bool $testResult;
+
+    /**
+     * @var array
+     */
     protected static array $failureConditions;
 
     /**
-     * Before all tests
+     * Set up before all tests
+     *
      * @throws \BrowserStack\LocalException
      */
     public static function setUpBeforeClass(): void
@@ -76,7 +97,7 @@ class BrowserStackTest extends TestCase
         // Set the URL for the BrowserStack WebDriver endpoint
         $url  = "https://" . $GLOBALS['BROWSERSTACK_USERNAME'] . ":" . $GLOBALS['BROWSERSTACK_ACCESS_KEY'] . "@" . $CONFIG['server'] . "/wd/hub";
 
-        // Set the  build capabilities
+        // Set the build capabilities
         $caps['build'] = $GLOBALS['BUILD_NUMBER'];
 
         // Create a new WebDriver instance with the specified URL and capabilities
@@ -89,14 +110,16 @@ class BrowserStackTest extends TestCase
 
 
     /**
-     * Before execute test we set it name to RemoteWebdriver
+     * Set up before each test
+     *
      * @throws GuzzleException
+     * @throws \Exception
      */
     public function setUp(): void
     {
         parent::setUp();
         $sessionID = self::$driver->getSessionID();
-        $name = $this->getName(false);
+        $name = $this->getName(true);
 
         $client = new GuzzleHttpClient();
         $client->request('PUT', "https://api.browserstack.com/automate/sessions/{$sessionID}.json", [
@@ -106,22 +129,25 @@ class BrowserStackTest extends TestCase
 
         // Maximize Browser size
         self::$driver->manage()->window()->maximize();
+
+        // Go to the index page
+        self::$driver->get($GLOBALS['SERVER_PBX']);
     }
 
     /**
-     * After execute test we will update his status
+     * Tear down after each test
      */
     public function tearDown(): void
     {
         parent::tearDown();
         if ($this->getStatus()!==0){
             self::$testResult = false;
-            self::$failureConditions[] = 'Test: '.$this->getName().' Message:'. $this->getStatusMessage();
+            self::$failureConditions[] = 'Test: '.$this->getName(true).' Message:'. $this->getStatusMessage();
         }
     }
 
     /**
-     * After all tests
+     * Tear down after all tests
      */
     public static function tearDownAfterClass(): void
     {
@@ -136,7 +162,6 @@ class BrowserStackTest extends TestCase
                 'reason' => $statusMessage,
             ]
         ]);
-
 
         self::$driver->quit();
         if (isset(self::$bs_local) && self::$bs_local) {

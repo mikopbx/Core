@@ -19,10 +19,10 @@
 
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Common\Models\{LanInterfaces, PbxSettings};
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Core\Utilities\SubnetCalculator;
+use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetExternalIpInfoAction;
 use Phalcon\Di\Injectable;
-use Symfony\Component\Process\Process;
 use Throwable;
 
 /**
@@ -84,415 +84,56 @@ class Network extends Injectable
     }
 
     /**
-     * Retrieves the information message containing available web interface addresses.
+     * Configures the LAN settings inside the Docker container.
      *
-     * @return string The information message.
-     */
-    public static function getInfoMessage(): string
-    {
-        $addresses = [
-            'local' => [],
-            'external' => []
-        ];
-        /** @var LanInterfaces $interface */
-        $interfaces = LanInterfaces::find("disabled='0'");
-        foreach ($interfaces as $interface) {
-            if (!empty($interface->ipaddr)) {
-                $addresses['local'][] = $interface->ipaddr;
-            }
-            if (!empty($interface->exthostname) && !in_array($interface->exthostname, $addresses['local'], true)) {
-                $addresses['external'][] = explode(':', $interface->exthostname)[0] ?? '';
-            }
-            if (!empty($interface->extipaddr) && !in_array($interface->extipaddr, $addresses['local'], true)) {
-                $addresses['external'][] = explode(':', $interface->extipaddr)[0] ?? '';
-            }
-        }
-        unset($interfaces);
-        $port = PbxSettings::getValueByKey('WEBHTTPSPort');
-        $info = PHP_EOL . "   The web interface is available at the addresses:" . PHP_EOL . PHP_EOL;
-        foreach ($addresses['local'] as $address) {
-            if (empty($address)) {
-                continue;
-            }
-            $info .= "    - https://$address:$port" . PHP_EOL;
-        }
-        $info .= PHP_EOL;
-        $info .= "   The web interface is available at the external addresses:" . PHP_EOL . PHP_EOL;
-        foreach ($addresses['external'] as $address) {
-            if (empty($address)) {
-                continue;
-            }
-            $info .= "    - https://$address:$port" . PHP_EOL;
-        }
-        $info .= PHP_EOL;
-
-        return $info;
-    }
-
-    /**
-     * Configures the loopback interface (lo) with the IP address 127.0.0.1.
+     * If the environment is not Docker, this method does nothing.
      *
      * @return void
      */
-    public function loConfigure(): void
+    public function configureLanInDocker(): void
     {
-        $busyboxPath = Util::which('busybox');
-        $ifconfigPath = Util::which('ifconfig');
-        Processes::mwExec("{$busyboxPath} {$ifconfigPath} lo 127.0.0.1");
-    }
-
-    /**
-     * Generates the resolv.conf file based on system configuration.
-     */
-    public function resolvConfGenerate(): void
-    {
-        if (Util::isDocker()) {
+        // Check if the environment is Docker
+        if (!Util::isDocker()) {
             return;
         }
 
-        // Initialize resolv.conf content
-        $resolv_conf = '';
-
-        // Get hostname information
-        $data_hostname = self::getHostName();
-
-        // Append domain to resolv.conf if it is not empty
-        if (trim($data_hostname['domain']) !== '') {
-            $resolv_conf .= "domain {$data_hostname['domain']}\n";
-        }
-
-        // Append local nameserver to resolv.conf
-        $resolv_conf .= "nameserver 127.0.0.1\n";
-
-        // Initialize an array to store named DNS servers
-        $named_dns = [];
-
-        // Retrieve host DNS settings
-        $dns = $this->getHostDNS();
-
-        // Iterate over each DNS server
-        foreach ($dns as $ns) {
-            // Skip empty DNS servers
-            if (trim($ns) === '') {
-                continue;
-            }
-            // Add the DNS server to the named_dns array
-            $named_dns[] = $ns;
-
-            // Append the DNS server to resolv.conf
-            $resolv_conf .= "nameserver {$ns}\n";
-        }
-
-        // If no DNS servers were found, use default ones and add them to named_dns
-        if (count($dns) === 0) {
-            $resolv_conf .= "nameserver 4.4.4.4\n";
-            $named_dns[] .= "8.8.8.8";
-        }
-
-        // Check if systemctl is available
-        if (Util::isSystemctl()) {
-
-            // Generate resolved.conf content for systemd-resolved
-            $s_resolv_conf = "[Resolve]\n"
-                . "DNS=127.0.0.1\n";
-
-            // Append domain to resolved.conf if it is not empty
-            if (trim($data_hostname['domain']) !== '') {
-                $s_resolv_conf .= "Domains={$data_hostname['domain']}\n";
-            }
-
-            // Write resolved.conf content to the file
-            file_put_contents('/etc/systemd/resolved.conf', $s_resolv_conf);
-
-            // Restart systemd-resolved service
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemctlPath} restart systemd-resolved");
-        } else {
-            // Write resolv.conf content to the file
-            file_put_contents('/etc/resolv.conf', $resolv_conf);
-        }
-
-        // Generate pdnsd configuration using named_dns
-        $this->generatePdnsdConfig($named_dns);
-    }
-
-    /**
-     * Retrieves the hostname and domain information.
-     *
-     * @return array An array containing the hostname and domain.
-     */
-    public static function getHostName(): array
-    {
-        // Initialize default hostname and domain
-        $data = [
-            'hostname' => 'mikopbx',
-            'domain' => '',
-        ];
-
-        // Find the first LanInterfaces record with internet set to '1'
-        /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("internet = '1'");
-
-        // If a matching record is found, update the hostname and domain
-        if (null !== $res) {
-            $data['hostname'] = $res->hostname;
-            $data['domain'] = $res->domain;
-        }
-
-        // If the hostname is empty, set it to the default value 'mikopbx'
-        $data['hostname'] = (empty($data['hostname'])) ? 'mikopbx' : $data['hostname'];
-
-        return $data;
-    }
-
-    /**
-     * Retrieves the DNS servers configured for the host.
-     *
-     * @return array An array containing the DNS servers.
-     */
-    public function getHostDNS(): array
-    {
-        $dns = [];
-
-        // Find the first LanInterfaces record with internet set to '1'
-        /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("internet = '1'");
-
-        // If a matching record is found, check and add primary and secondary DNS servers
-        if (null !== $res) {
-            // Check and add primary DNS server if not empty and not '127.0.0.1'
-            if (!empty($res->primarydns) && '127.0.0.1' !== $res->primarydns) {
-                $dns[] = $res->primarydns;
-            }
-            // Check and add secondary DNS server if not empty and not '127.0.0.1'
-            if (!empty($res->secondarydns) && '127.0.0.1' !== $res->secondarydns) {
-                $dns[] = $res->secondarydns;
-            }
-        }
-
-        return $dns;
-    }
-
-    /**
-     * Generates the pdnsd configuration file and restarts the pdnsd service if necessary.
-     *
-     * @param array $named_dns An array of named DNS servers.
-     */
-    public function generatePdnsdConfig($named_dns): void
-    {
-        $tempDir = $this->di->getShared('config')->path('core.tempDir');
-        $cache_dir = $tempDir . '/pdnsd/cache';
-        Util::mwMkdir($cache_dir);
-
-        $conf = 'global {' . "\n" .
-            '	perm_cache=10240;' . "\n" .
-            '	cache_dir="' . $cache_dir . '";' . "\n" .
-            '	pid_file = /var/run/pdnsd.pid;' . "\n" .
-            '	run_as="nobody";' . "\n" .
-            '	server_ip = 127.0.0.1;' . "\n" .
-            '	status_ctl = on;' . "\n" .
-            '	query_method=udp_tcp;' . "\n" .
-            '	min_ttl=15m;' . "\n" .
-            '	max_ttl=1w;' . "\n" .
-            '	timeout=10;' . "\n" .
-            '	neg_domain_pol=on;' . "\n" .
-            '	run_as=root;' . "\n" .
-            '	daemon=on;' . "\n" .
-            '}' . "\n" .
-            'server {' . "\n" .
-            '	label = "main";' . "\n" .
-            '	ip = ' . implode(', ', $named_dns) . ';' . "\n" .
-            '	interface=lo;' . "\n" .
-            '	uptest=if;' . "\n" .
-            '	interval=10m;' . "\n" .
-            '	purge_cache=off;' . "\n" .
-            '}';
-
-        $pdnsdConfFile = '/etc/pdnsd.conf';
-
-        // Update the pdnsd.conf file if it has changed
-        $savedConf = '';
-        if (file_exists($pdnsdConfFile)) {
-            $savedConf = file_get_contents($pdnsdConfFile);
-        }
-        if ($savedConf !== $conf) {
-            file_put_contents($pdnsdConfFile, $conf);
-        }
-        $pdnsdPath = Util::which('pdnsd');
-        $pid = Processes::getPidOfProcess($pdnsdPath);
-
-        // Check if pdnsd process is running and the configuration has not changed
-        if (!empty($pid) && $savedConf === $conf) {
-
-            // Perform additional check if the DNS server is working
-            $resultResolve = gethostbynamel('lic.miko.ru');
-            if ($resultResolve !== false) {
-                // Configuration has not changed and the DNS server is working,
-                // no need to restart or reload the service
-                return;
-            }
-            // Perform a reload of the DNS server
-        }
-
-        // If pdnsd process is running, terminate the process
-        if (!empty($pid)) {
-            $busyboxPath = Util::which('busybox');
-            $killPath = Util::which('kill');
-            Processes::mwExec("{$busyboxPath} {$killPath} '$pid'");
-        }
-
-        // Start the pdnsd service with the updated configuration
-        Processes::mwExec("{$pdnsdPath} -c /etc/pdnsd.conf -4");
-    }
-
-    /**
-     * Configures the LAN interfaces and performs related network operations.
-     *
-     * @return int The result of the configuration process.
-     */
-    public function lanConfigure(): int
-    {
-        if (Util::isDocker()) {
-            return 0;
-        }
+        // Find the path to the busybox binary
+        $ifconfig = Util::which('ifconfig');
+        $route = Util::which('route');
+        $awk = Util::which('awk');
+        $hostname = Util::which('hostname');
 
         // Retrieve the network settings
         $networks = $this->getGeneralNetSettings();
 
-        // Retrieve the paths of required commands
-        $busyboxPath = Util::which('busybox');
-        $vconfigPath = Util::which('vconfig');
-        $killallPath = Util::which('killall');
-
-        $arr_commands = [];
-        $arr_commands[] = "{$killallPath} udhcpc";
-        $eth_mtu = [];
         foreach ($networks as $if_data) {
-            if ($if_data['disabled'] === '1') {
-                continue;
-            }
 
             $if_name = $if_data['interface'];
             $if_name = escapeshellcmd(trim($if_name));
-            if (empty($if_name)) {
-                continue;
+
+            $commands = [
+                'subnet' => $ifconfig . ' eth0 | '.$awk.' \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
+                'ipaddr' => $ifconfig . ' eth0 | '.$awk.' \'/inet / {sub("addr:", "", $2); print $2}\'',
+                'gateway' => $route . ' -n | '.$awk.' \'/^0.0.0.0/ {print $2}\'',
+                'hostname' => $hostname,
+            ];
+            $data = [];
+            foreach ($commands as $key => $command) {
+                $output = [];
+                if (Processes::MWExec($command, $output) === 0) {
+                    $value = implode("", $output);
+                    if ($key === 'subnet') {
+                        $data[$key] = $this->netMaskToCidr($value);
+                    } else {
+                        $data[$key] = $value;
+                    }
+                }
             }
 
-            $data_hostname = self::getHostName();
-            $hostname = $data_hostname['hostname'];
-
-            if ($if_data['vlanid'] > 0) {
-                // Override the interface name for VLAN interfaces
-                $arr_commands[] = "{$vconfigPath} set_name_type VLAN_PLUS_VID_NO_PAD";
-                // Add the new VLAN interface
-                $arr_commands[] = "{$vconfigPath} add {$if_data['interface_orign']} {$if_data['vlanid']}";
-            }
-            // Disable and reset the interface
-            $arr_commands[] = "{$busyboxPath} ifconfig $if_name down";
-            $arr_commands[] = "{$busyboxPath} ifconfig $if_name 0.0.0.0";
-
-            $gw_param = '';
-            if (trim($if_data['dhcp']) === '1') {
-                // DHCP configuration
-                /*
-                 * -t - number of attempts.
-                 * -T - timeout for each attempt.
-                 * -v - enable debugging.
-                 * -S - log messages to syslog.
-                 * -q - exit after obtaining lease.
-                 * -n - exit if lease is not obtained.
-                 */
-                $pid_file = "/var/run/udhcpc_{$if_name}";
-                $pid_pcc = Processes::getPidOfProcess($pid_file);
-                if (!empty($pid_pcc) && file_exists($pid_file)) {
-                    // Terminate the old udhcpc process
-                    $killPath = Util::which('kill');
-                    $catPath = Util::which('cat');
-                    system("{$killPath} `{$catPath} {$pid_file}` {$pid_pcc}");
-                }
-                $udhcpcPath = Util::which('udhcpc');
-                $nohupPath = Util::which('nohup');
-
-                // Obtain IP and wait for the process to finish
-                $workerPath = '/etc/rc/udhcpc.configure';
-                $options = '-t 6 -T 5 -q -n';
-                $arr_commands[] = "{$udhcpcPath} {$options} -i {$if_name} -x hostname:{$hostname} -s {$workerPath}";
-                // Start a new udhcpc process in the background
-                $options = '-t 6 -T 5 -S -b -n';
-                $arr_commands[] = "{$nohupPath} {$udhcpcPath} {$options} -p {$pid_file} -i {$if_name} -x hostname:{$hostname} -s {$workerPath} 2>&1 &";
-                /*
-                   udhcpc - utility for configuring the interface
-                               - configures /etc/resolv.conf
-                    Further route configuration will be performed in udhcpcConfigureRenewBound();
-                    and udhcpcConfigureDeconfig(). These methods will be called by the script WorkerUdhcpcConfigure.php.
-                    // man udhcp
-                    // http://pwet.fr/man/linux/administration_systeme/udhcpc/
-
-                */
-            } else {
-                // Static IP configuration
-                $ipaddr = trim($if_data['ipaddr']);
-                $subnet = trim($if_data['subnet']);
-                $gateway = trim($if_data['gateway']);
-                if (empty($ipaddr)) {
-                    continue;
-                }
-                try {
-                    // Calculate the short subnet mask
-                    $calc_subnet = new SubnetCalculator($ipaddr, $subnet);
-                    $subnet = $calc_subnet->getSubnetMask();
-                } catch (Throwable $e) {
-                    echo "Caught exception: $ipaddr $subnet", $e->getMessage(), "\n";
-                    continue;
-                }
-
-                $ifconfigPath = Util::which('ifconfig');
-                $arr_commands[] = "{$busyboxPath} {$ifconfigPath} $if_name $ipaddr netmask $subnet";
-
-                if ("" !== trim($gateway)) {
-                    $gw_param = "gw $gateway";
-                }
-
-                $routePath = Util::which('route');
-                $arr_commands[] = "{$busyboxPath} {$routePath} del default $if_name";
-
-                /** @var LanInterfaces $if_data */
-                $if_data = LanInterfaces::findFirst("id = '{$if_data['id']}'");
-                $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
-
-                if ($is_inet === '1') {
-                    // Create default route only if the interface is for internet
-                    $arr_commands[] = "{$busyboxPath} {$routePath} add default $gw_param dev $if_name";
-                }
-                // Bring up the interface
-                $arr_commands[] = "{$busyboxPath} {$ifconfigPath} $if_name up";
-
-                $eth_mtu[] = $if_name;
-            }
-        }
-        $out = null;
-        Processes::mwExecCommands($arr_commands, $out, 'net');
-        $this->hostsGenerate();
-
-        foreach ($eth_mtu as $eth) {
-            Processes::mwExecBg("/etc/rc/networking.set.mtu '{$eth}'");
+            // Save information to the database.
+            $this->updateIfSettings($data, $if_name);
         }
 
-        // Additional "manual" routes
-        Util::fileWriteContent('/etc/static-routes', '');
-        $arr_commands = [];
-        $out = [];
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
-        $catPath = Util::which('cat');
-        Processes::mwExec(
-            "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}'",
-            $arr_commands
-        );
-        Processes::mwExecCommands($arr_commands, $out, 'rout');
-
-        $this->openVpnConfigure();
-        return 0;
     }
 
     /**
@@ -639,13 +280,572 @@ class Network extends Injectable
         $data->internet = ($general === true) ? '1' : '0';
         $data->disabled = '0';
         $data->vlanid = '0';
-        $data->hostname = 'mikopbx';
+        $data->hostname = 'MikoPBX';
         $data->domain = '';
-        $data->topology = 'private';
+        $data->topology = LanInterfaces::TOPOLOGY_PRIVATE;
+        $data->autoUpdateExtIp = ($general === true) ? '1' : '0';;
         $data->primarydns = '';
         $data->save();
 
         return $data->toArray();
+    }
+
+    /**
+     * Updates the interface settings with the provided data.
+     *
+     * @param array $data The data to update the interface settings with.
+     * @param string $name The name of the interface.
+     *
+     * @return void;
+     */
+    public function updateIfSettings(array $data, string $name): void
+    {
+        /** @var LanInterfaces $res */
+        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
+            return;
+        }
+        foreach ($data as $key => $value) {
+            $res->writeAttribute($key, $value);
+        }
+        $res->save();
+    }
+
+    /**
+     * Checks if the network settings have changed.
+     *
+     * @param array $data The new network settings.
+     * @param array $dbData The existing network settings from the database.
+     *
+     * @return bool  Returns true if the settings have changed, false otherwise.
+     */
+    public function settingsIsChange(array $data, array $dbData): bool
+    {
+        $isChange = false;
+        foreach ($dbData as $key => $value) {
+            if (!isset($data[$key]) || (string)$value === (string)$data[$key]) {
+                continue;
+            }
+            SystemMessages::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
+            $isChange = true;
+        }
+        return $isChange;
+    }
+
+    /**
+     * Updates the DNS settings with the provided data.
+     *
+     * @param array $data The data to update the DNS settings with.
+     * @param string $name The name of the interface.
+     *
+     * @return void
+     */
+    public function updateDnsSettings(array $data, string $name): void
+    {
+        /** @var LanInterfaces $res */
+        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
+            return;
+        }
+        foreach ($data as $key => $value) {
+            $res->writeAttribute($key, $value);
+        }
+        if (empty($res->primarydns) && !empty($res->secondarydns)) {
+            // Swap primary and secondary DNS if primary is empty
+            $res->primarydns = $res->secondarydns;
+            $res->secondarydns = '';
+        }
+        $res->save();
+    }
+
+    /**
+     * Retrieves the interface name by its ID.
+     *
+     * @param string $id_net The ID of the network interface.
+     *
+     * @return string  The interface name.
+     */
+    public function getInterfaceNameById(string $id_net): string
+    {
+        $res = LanInterfaces::findFirstById($id_net);
+        if ($res !== null && $res->interface !== null) {
+            return $res->interface;
+        }
+
+        return '';
+    }
+
+    /**
+     * Retrieves the enabled LAN interfaces.
+     *
+     * @return array  An array of enabled LAN interfaces.
+     */
+    public function getEnabledLanInterfaces(): array
+    {
+        /** @var LanInterfaces $res */
+        $res = LanInterfaces::find('disabled=0');
+
+        return $res->toArray();
+    }
+
+    /**
+     * Updates the network settings with the provided data.
+     * @param array $data The network settings data to update.
+     */
+    public function updateNetSettings(array $data): void
+    {
+        $res = LanInterfaces::findFirst("internet = '1'");
+        $update_inet = false;
+        if ($res === null) {
+            // If no interface with internet connection is found, get the first interface.
+            $res = LanInterfaces::findFirst();
+            $update_inet = true;
+        }
+
+        if ($res !== null) {
+            foreach ($data as $key => $value) {
+                $res->$key = $value;
+            }
+            if ($update_inet === true) {
+                $res->internet = 1;
+            }
+            $res->save();
+        }
+    }
+
+    /**
+     * Update external IP address
+     */
+    public function updateExternalIp(): void
+    {
+        $ipInfoResult = GetExternalIpInfoAction::main();
+        if ($ipInfoResult->success && isset($ipInfoResult->data['ip'])) {
+            $currentIP = $ipInfoResult->data['ip'];
+            $lanData = LanInterfaces::find('autoUpdateExtIp=1');
+            foreach ($lanData as $lan) {
+                $oldExtIp = $lan->extipaddr;
+                $parts = explode(':', $oldExtIp);
+                $oldIP = $parts[0]; // Only IP part of the address
+                $port = isset($parts[1]) ? ':' . $parts[1] : '';
+                if ($oldIP !== $currentIP) {
+                    $newExtIp = $currentIP . $port;
+                    $lan->extipaddr = $newExtIp;
+                    if ($lan->save()) {
+                        SystemMessages::sysLogMsg(__METHOD__, "External IP address updated for interface {$lan->interface}");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Execute cli command to set up network
+     * @param string $action Action to perform (start or stop)
+     * @return void
+     */
+    public function cliAction(string $action): void
+    {
+        /**
+         * If running inside a Docker container, exit the script.
+         */
+        if (Util::isDocker()) {
+            return;
+        }
+
+        if ('start' === $action) {
+
+            /**
+             * Generate the resolv.conf file for DNS configuration.
+             */
+            $this->resolvConfGenerate();
+            if (Util::isT2SdeLinux()) {
+                /**
+                 * Configure the loopback interface for T2SDE Linux.
+                 */
+                $this->loConfigure();
+            }
+            /**
+             * Configure the LAN interfaces.
+             */
+            $this->lanConfigure();
+        } elseif ('stop' === $action) {
+            if (Util::isSystemctl()) {
+                /**
+                 * Stop networking using systemctl (systemd-based systems).
+                 */
+                $systemctlPath = Util::which('systemctl');
+                Processes::mwExec("{$systemctlPath} stop networking");
+            } else {
+                /**
+                 * Stop networking on T2SDE (non-systemd) systems.
+                 */
+                $if_list = $this->getInterfaces();
+                $arr_commands = [];
+                $ifconfigPath = Util::which('ifconfig');
+                foreach ($if_list as $if_name => $data) {
+                    $arr_commands[] = "{$ifconfigPath} $if_name down";
+                }
+
+                /**
+                 * Execute the stop commands for each interface.
+                 */
+                Processes::mwExecCommands($arr_commands, $out, 'net_stop');
+            }
+        }
+    }
+
+    /**
+     * Generates the resolv.conf file based on system configuration.
+     */
+    public function resolvConfGenerate(): void
+    {
+        if (Util::isDocker()) {
+            return;
+        }
+
+        // Initialize resolv.conf content
+        $resolv_conf = '';
+
+        // Get hostname information
+        $data_hostname = self::getHostName();
+
+        // Append domain to resolv.conf if it is not empty
+        if (trim($data_hostname['domain']) !== '') {
+            $resolv_conf .= "domain {$data_hostname['domain']}\n";
+        }
+
+        // Append local nameserver to resolv.conf
+        $resolv_conf .= "nameserver 127.0.0.1\n";
+
+        // Initialize an array to store named DNS servers
+        $named_dns = [];
+
+        // Retrieve host DNS settings
+        $dns = $this->getHostDNS();
+
+        // Iterate over each DNS server
+        foreach ($dns as $ns) {
+            // Skip empty DNS servers
+            if (trim($ns) === '') {
+                continue;
+            }
+            // Add the DNS server to the named_dns array
+            $named_dns[] = $ns;
+
+            // Append the DNS server to resolv.conf
+            $resolv_conf .= "nameserver {$ns}\n";
+        }
+
+        // If no DNS servers were found, use default ones and add them to named_dns
+        if (count($dns) === 0) {
+            $resolv_conf .= "nameserver 4.4.4.4\n";
+            $named_dns[] .= "8.8.8.8";
+        }
+
+        // Check if systemctl is available
+        if (Util::isSystemctl()) {
+
+            // Generate resolved.conf content for systemd-resolved
+            $s_resolv_conf = "[Resolve]\n"
+                . "DNS=127.0.0.1\n";
+
+            // Append domain to resolved.conf if it is not empty
+            if (trim($data_hostname['domain']) !== '') {
+                $s_resolv_conf .= "Domains={$data_hostname['domain']}\n";
+            }
+
+            // Write resolved.conf content to the file
+            file_put_contents('/etc/systemd/resolved.conf', $s_resolv_conf);
+
+            // Restart systemd-resolved service
+            $systemctlPath = Util::which('systemctl');
+            Processes::mwExec("{$systemctlPath} restart systemd-resolved");
+        } else {
+            // Write resolv.conf content to the file
+            file_put_contents('/etc/resolv.conf', $resolv_conf);
+        }
+
+        // Generate pdnsd configuration using named_dns
+        $this->generatePdnsdConfig($named_dns);
+    }
+
+    /**
+     * Retrieves the hostname and domain information.
+     *
+     * @return array An array containing the hostname and domain.
+     */
+    public static function getHostName(): array
+    {
+        // Initialize default hostname and domain
+        $data = [
+            'hostname' => 'mikopbx',
+            'domain' => '',
+        ];
+
+        // Find the first LanInterfaces record with internet set to '1'
+        /** @var LanInterfaces $res */
+        $res = LanInterfaces::findFirst("internet = '1'");
+
+        // If a matching record is found, update the hostname and domain
+        if (null !== $res) {
+            $data['hostname'] = $res->hostname;
+            $data['domain'] = $res->domain;
+        }
+
+        // If the hostname is empty, set it to the default value 'mikopbx'
+        $data['hostname'] = (empty($data['hostname'])) ? 'mikopbx' : $data['hostname'];
+
+        return $data;
+    }
+
+    /**
+     * Retrieves the DNS servers configured for the host.
+     *
+     * @return array An array containing the DNS servers.
+     */
+    public function getHostDNS(): array
+    {
+        $dns = [];
+
+        // Find the first LanInterfaces record with internet set to '1'
+        /** @var LanInterfaces $res */
+        $res = LanInterfaces::findFirst("internet = '1'");
+
+        // If a matching record is found, check and add primary and secondary DNS servers
+        if (null !== $res) {
+            // Check and add primary DNS server if not empty and not '127.0.0.1'
+            if (!empty($res->primarydns) && '127.0.0.1' !== $res->primarydns) {
+                $dns[] = $res->primarydns;
+            }
+            // Check and add secondary DNS server if not empty and not '127.0.0.1'
+            if (!empty($res->secondarydns) && '127.0.0.1' !== $res->secondarydns) {
+                $dns[] = $res->secondarydns;
+            }
+        }
+
+        return $dns;
+    }
+
+    /**
+     * Generates the pdnsd configuration file and restarts the pdnsd service if necessary.
+     *
+     * @param array $named_dns An array of named DNS servers.
+     */
+    public function generatePdnsdConfig(array $named_dns): void
+    {
+        $tempDir = $this->di->getShared('config')->path('core.tempDir');
+        $cache_dir = $tempDir . '/pdnsd/cache';
+        Util::mwMkdir($cache_dir);
+
+        $conf = 'global {' . "\n" .
+            '	perm_cache=10240;' . "\n" .
+            '	cache_dir="' . $cache_dir . '";' . "\n" .
+            '	pid_file = /var/run/pdnsd.pid;' . "\n" .
+            '	run_as="nobody";' . "\n" .
+            '	server_ip = 127.0.0.1;' . "\n" .
+            '	status_ctl = on;' . "\n" .
+            '	query_method=udp_tcp;' . "\n" .
+            '	min_ttl=15m;' . "\n" .
+            '	max_ttl=1w;' . "\n" .
+            '	timeout=10;' . "\n" .
+            '	neg_domain_pol=on;' . "\n" .
+            '	run_as=root;' . "\n" .
+            '	daemon=on;' . "\n" .
+            '}' . "\n" .
+            'server {' . "\n" .
+            '	label = "main";' . "\n" .
+            '	ip = ' . implode(', ', $named_dns) . ';' . "\n" .
+            '	interface=lo;' . "\n" .
+            '	uptest=if;' . "\n" .
+            '	interval=10m;' . "\n" .
+            '	purge_cache=off;' . "\n" .
+            '}';
+
+        $pdnsdConfFile = '/etc/pdnsd.conf';
+
+        // Update the pdnsd.conf file if it has changed
+        $savedConf = '';
+        if (file_exists($pdnsdConfFile)) {
+            $savedConf = file_get_contents($pdnsdConfFile);
+        }
+        if ($savedConf !== $conf) {
+            file_put_contents($pdnsdConfFile, $conf);
+        }
+        $pdnsdPath = Util::which('pdnsd');
+        $pid = Processes::getPidOfProcess($pdnsdPath);
+
+        // Check if pdnsd process is running and the configuration has not changed
+        if (!empty($pid) && $savedConf === $conf) {
+
+            // Perform additional check if the DNS server is working
+            $resultResolve = gethostbynamel('lic.miko.ru');
+            if ($resultResolve !== false) {
+                // Configuration has not changed and the DNS server is working,
+                // no need to restart or reload the service
+                return;
+            }
+            // Perform a reload of the DNS server
+        }
+
+        // If pdnsd process is running, terminate the process
+        if (!empty($pid)) {
+            $kill = Util::which('kill');
+            Processes::mwExec("$kill '$pid'");
+        }
+
+        // Start the pdnsd service with the updated configuration
+        Processes::mwExec("{$pdnsdPath} -c /etc/pdnsd.conf -4");
+    }
+
+    /**
+     * Configures the loopback interface (lo) with the IP address 127.0.0.1.
+     *
+     * @return void
+     */
+    public function loConfigure(): void
+    {
+        $ifconfig = Util::which('ifconfig');
+        Processes::mwExec("$ifconfig lo 127.0.0.1");
+    }
+
+    /**
+     * Configures the LAN interfaces and performs related network operations.
+     *
+     * @return int The result of the configuration process.
+     */
+    public function lanConfigure(): int
+    {
+        if (Util::isDocker()) {
+            return 0;
+        }
+
+        // Retrieve the network settings
+        $networks = $this->getGeneralNetSettings();
+
+        // Retrieve the paths of required commands
+        $vconfig = Util::which('vconfig');
+        $killall = Util::which('killall');
+        $ifconfig = Util::which('ifconfig');
+
+
+        $arr_commands = [];
+        $arr_commands[] = "$killall udhcpc";
+        $eth_mtu = [];
+        foreach ($networks as $if_data) {
+            if ($if_data['disabled'] === '1') {
+                continue;
+            }
+
+            $if_name = $if_data['interface'];
+            $if_name = escapeshellcmd(trim($if_name));
+            if (empty($if_name)) {
+                continue;
+            }
+
+            $data_hostname = self::getHostName();
+            $hostname = $data_hostname['hostname'];
+
+            if ($if_data['vlanid'] > 0) {
+                // Override the interface name for VLAN interfaces
+                $arr_commands[] = "$vconfig set_name_type VLAN_PLUS_VID_NO_PAD";
+                // Add the new VLAN interface
+                $arr_commands[] = "$vconfig add {$if_data['interface_orign']} {$if_data['vlanid']}";
+            }
+            // Disable and reset the interface
+            $arr_commands[] = "$ifconfig $if_name down";
+            $arr_commands[] = "$ifconfig $if_name 0.0.0.0";
+
+            $gw_param = '';
+            if (trim($if_data['dhcp']) === '1') {
+                // DHCP configuration
+                /*
+                 * -t - number of attempts.
+                 * -T - timeout for each attempt.
+                 * -v - enable debugging.
+                 * -S - log messages to syslog.
+                 * -q - exit after obtaining lease.
+                 * -n - exit if lease is not obtained.
+                 */
+                $pid_file = "/var/run/udhcpc_{$if_name}";
+                $pid_pcc = Processes::getPidOfProcess($pid_file);
+                if (!empty($pid_pcc) && file_exists($pid_file)) {
+                    // Terminate the old udhcpc process
+                    $kill = Util::which('kill');
+                    $cat = Util::which('cat');
+                    system("$kill `$cat {$pid_file}` {$pid_pcc}");
+                }
+                $udhcpc = Util::which('udhcpc');
+                $nohup = Util::which('nohup');
+
+                // Obtain IP and wait for the process to finish
+                $workerPath = '/etc/rc/udhcpc_configure';
+                $options = '-t 6 -T 5 -q -n';
+                $arr_commands[] = "$udhcpc $options -i $if_name -x hostname:$hostname -s $workerPath";
+                // Start a new udhcpc process in the background
+                $options = '-t 6 -T 5 -S -b -n';
+                $arr_commands[] = "$nohup $udhcpc $options -p {$pid_file} -i $if_name -x hostname:$hostname -s $workerPath 2>&1 &";
+                /*
+                   udhcpc - utility for configuring the interface
+                               - configures /etc/resolv.conf
+                    Further route configuration will be performed in udhcpcConfigureRenewBound();
+                    and udhcpcConfigureDeconfig(). These methods will be called by the script WorkerUdhcpcConfigure.php.
+                    // man udhcp
+                    // http://pwet.fr/man/linux/administration_systeme/udhcpc/
+
+                */
+            } else {
+                // Static IP configuration
+                $ipaddr = trim($if_data['ipaddr']);
+                $subnet = trim($if_data['subnet']);
+                $gateway = trim($if_data['gateway']);
+                if (empty($ipaddr)) {
+                    continue;
+                }
+                try {
+                    // Calculate the short subnet mask
+                    $calc_subnet = new SubnetCalculator($ipaddr, $subnet);
+                    $subnet = $calc_subnet->getSubnetMask();
+                } catch (Throwable $e) {
+                    echo "Caught exception: $ipaddr $subnet", $e->getMessage(), "\n";
+                    continue;
+                }
+
+                $ifconfig = Util::which('ifconfig');
+                $arr_commands[] = "$ifconfig $if_name $ipaddr netmask $subnet";
+
+                if ("" !== trim($gateway)) {
+                    $gw_param = "gw $gateway";
+                }
+
+                $route = Util::which('route');
+                $arr_commands[] = "$route del default $if_name";
+
+                /** @var LanInterfaces $if_data */
+                $if_data = LanInterfaces::findFirst("id = '{$if_data['id']}'");
+                $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
+
+                if ($is_inet === '1') {
+                    // Create default route only if the interface is for internet
+                    $arr_commands[] = "$route add default $gw_param dev $if_name";
+                }
+                // Bring up the interface
+                $arr_commands[] = "$ifconfig $if_name up";
+
+                $eth_mtu[] = $if_name;
+            }
+        }
+        $out = null;
+        Processes::mwExecCommands($arr_commands, $out, 'net');
+        $this->hostsGenerate();
+
+        foreach ($eth_mtu as $eth) {
+            Processes::mwExecBg("/etc/rc/networking_set_mtu '{$eth}'");
+        }
+
+        // Additional "manual" routes
+        $this->addCustomStaticRoutes();
+        $this->openVpnConfigure();
+        return 0;
     }
 
     /**
@@ -681,6 +881,29 @@ class Network extends Injectable
     }
 
     /**
+     * Add custom static routes based on the `/etc/static-routes` file.
+     *
+     * @param string $interface The network interface to add routes to, e.g., eth0 (optional)
+     * @return void
+     */
+    protected function addCustomStaticRoutes(string $interface = ''): void
+    {
+        Util::fileWriteContent('/etc/static-routes', '');
+
+        $grep = Util::which('grep');
+        $awk = Util::which('awk');
+        $cat = Util::which('cat');
+        if (empty($interface)) {
+            $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}'";
+        } else {
+            $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}' | $grep '{$interface}'";
+        }
+        $arr_commands = [];
+        Processes::mwExec($command, $arr_commands);
+        Processes::mwExecCommands($arr_commands, $out, 'rout');
+    }
+
+    /**
      * Configuring OpenVPN. If a custom configuration file is specified in the system file customization, the network will be brought up.
      */
     public function openVpnConfigure(): void
@@ -693,378 +916,12 @@ class Network extends Injectable
         $pid = Processes::getPidOfProcess('openvpn');
         if (!empty($pid)) {
             // Terminate the process.
-            $busyboxPath = Util::which('busybox');
-            Processes::mwExec("{$busyboxPath} kill '$pid'");
+            $kill = Util::which('kill');
+            Processes::mwExec("$kill '$pid'");
         }
         if (!empty($data)) {
-            $openvpnPath = Util::which('openvpn');
-            Processes::mwExecBg("{$openvpnPath} --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
-        }
-    }
-
-    /**
-     * Configures the LAN settings inside the Docker container.
-     *
-     * If the environment is not Docker, this method does nothing.
-     *
-     * @return void
-     */
-    public function configureLanInDocker(): void
-    {
-        // Check if the environment is Docker
-        if (!Util::isDocker()) {
-            return;
-        }
-
-        // Find the path to the busybox binary
-        $busyboxPath = Util::which('busybox');
-
-        // Retrieve the network settings
-        $networks = $this->getGeneralNetSettings();
-
-        foreach ($networks as $if_data) {
-
-            $if_name = $if_data['interface'];
-            $if_name = escapeshellcmd(trim($if_name));
-
-            $commands = [
-                'subnet' => $busyboxPath . ' ifconfig eth0 | awk \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
-                'ipaddr' => $busyboxPath . ' ifconfig eth0 | awk \'/inet / {sub("addr:", "", $2); print $2}\'',
-                'gateway' => $busyboxPath . ' route -n | awk \'/^0.0.0.0/ {print $2}\'',
-                'hostname'=> $busyboxPath . ' hostname',
-            ];
-            $data = [];
-            foreach ($commands as $key => $command) {
-                $output = [];
-                if (Processes::MWExec($command, $output) === 0) {
-                    $value = implode("", $output);
-                    if ($key === 'subnet') {
-                        $data[$key] = $this->netMaskToCidr($value);
-                    } else {
-                        $data[$key] = $value;
-                    }
-                }
-            }
-
-            // Save information to the database.
-            $this->updateIfSettings($data, $if_name);
-        }
-
-    }
-
-    /**
-     * Updates the interface settings with the provided data.
-     *
-     * @param array $data The data to update the interface settings with.
-     * @param string $name The name of the interface.
-     *
-     * @return void;
-     */
-    public function updateIfSettings(array $data, string $name): void
-    {
-        /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
-        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
-            return;
-        }
-        foreach ($data as $key => $value) {
-            $res->writeAttribute($key, $value);
-        }
-        $res->save();
-    }
-
-    /**
-     * Checks if the network settings have changed.
-     *
-     * @param array $data The new network settings.
-     * @param array $dbData The existing network settings from the database.
-     *
-     * @return bool  Returns true if the settings have changed, false otherwise.
-     */
-    private function settingsIsChange(array $data, array $dbData): bool
-    {
-        $isChange = false;
-        foreach ($dbData as $key => $value) {
-            if (!isset($data[$key]) || (string)$value === (string)$data[$key]) {
-                continue;
-            }
-            Util::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
-            $isChange = true;
-        }
-        return $isChange;
-    }
-
-    /**
-     * Renews and configures the network settings after successful DHCP negotiation.
-     *
-     * @return void
-     */
-    public function udhcpcConfigureRenewBound(): void
-    {
-        // Initialize the environment variables array.
-        $env_vars = [
-            'broadcast' => '',
-            'interface' => '',
-            'ip' => '',
-            'router' => '',
-            'timesvr' => '',
-            'namesvr' => '',
-            'dns' => '',
-            'hostname' => '',
-            'subnet' => '',
-            'serverid' => '',
-            'ipttl' => '',
-            'lease' => '',
-            'domain' => '',
-        ];
-
-        $debugMode = $this->di->getShared('config')->path('core.debugMode');
-        // Get the values of environment variables.
-        foreach ($env_vars as $key => $value) {
-            $env_vars[$key] = trim(getenv($key));
-        }
-        $BROADCAST = ($env_vars['broadcast'] === '') ? "" : "broadcast {$env_vars['broadcast']}";
-        if ($env_vars['subnet'] === '255.255.255.255' || $env_vars['subnet'] === '') {
-            // support /32 address assignment
-            // https://forummikrotik.ru/viewtopic.php?f=3&t=6246&start=40
-            $NET_MASK = '';
-        } else {
-            $NET_MASK = "netmask {$env_vars['subnet']}";
-        }
-
-        // Configure the interface.
-        $busyboxPath = Util::which('busybox');
-        Processes::mwExec("{$busyboxPath} ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
-
-        // Remove old default routes.
-        while (true) {
-            $out = [];
-            Processes::mwExec("route del default gw 0.0.0.0 dev {$env_vars['interface']}", $out);
-            if (trim(implode('', $out)) !== '') {
-                // An error occurred, indicating that all routes have been cleared.
-                break;
-            }
-            if ($debugMode) {
-                break;
-            } // Otherwise, it will be an infinite loop.
-        }
-
-        // Add default routes.
-        /** @var LanInterfaces $if_data */
-        $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
-        $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
-        if ('' !== $env_vars['router'] && $is_inet === 1) {
-            // Only add default route if this interface is for internet.
-            $routers = explode(' ', $env_vars['router']);
-            foreach ($routers as $router) {
-                Processes::mwExec("route add default gw {$router} dev {$env_vars['interface']}");
-            }
-        }
-        // Add custom routes.
-        if (file_exists('/etc/static-routes')) {
-            $busyboxPath = Util::which('busybox');
-            $grepPath = Util::which('grep');
-            $awkPath = Util::which('awk');
-            $catPath = Util::which('cat');
-            $shPath = Util::which('sh');
-            Processes::mwExec(
-                "{$catPath} /etc/static-routes | {$grepPath} '^rout' | {$busyboxPath} {$awkPath} -F ';' '{print $1}' | {$grepPath} '{$env_vars['interface']}' | {$shPath}"
-            );
-        }
-        $named_dns = [];
-        if ('' !== $env_vars['dns']) {
-            $named_dns = explode(' ', $env_vars['dns']);
-        }
-        if ($is_inet === 1) {
-            // Only generate pdnsd config if this interface is for internet.
-            $this->generatePdnsdConfig($named_dns);
-        }
-
-        // Save information to the database.
-        $data = [
-            'subnet' => $env_vars['subnet'],
-            'ipaddr' => $env_vars['ip'],
-            'gateway' => $env_vars['router'],
-        ];
-        if (Verify::isIpAddress($env_vars['ip'])) {
-            $data['subnet'] = $this->netMaskToCidr($env_vars['subnet']);
-        } else {
-            $data['subnet'] = '';
-        }
-        $this->updateIfSettings($data, $env_vars['interface']);
-
-        $data = [
-            'primarydns' => $named_dns[0] ?? '',
-            'secondarydns' => $named_dns[1] ?? '',
-        ];
-        $this->updateDnsSettings($data, $env_vars['interface']);
-
-        Processes::mwExecBg("/etc/rc/networking.set.mtu '{$env_vars['interface']}'");
-    }
-
-    /**
-     * Updates the DNS settings with the provided data.
-     *
-     * @param array $data The data to update the DNS settings with.
-     * @param string $name The name of the interface.
-     *
-     * @return void
-     */
-    public function updateDnsSettings($data, $name): void
-    {
-        /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
-        if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
-            return;
-        }
-        foreach ($data as $key => $value) {
-            $res->writeAttribute($key, $value);
-        }
-        if (empty($res->primarydns) && !empty($res->secondarydns)) {
-            // Swap primary and secondary DNS if primary is empty
-            $res->primarydns = $res->secondarydns;
-            $res->secondarydns = '';
-        }
-        $res->save();
-    }
-
-    /**
-     * Renews and configures the network settings after successful DHCP negotiation using systemd environment variables.
-     * For OS systemctl (Debian).
-     *  Configures LAN interface FROM dhcpc (renew_bound).
-     * @return void
-     */
-    public function udhcpcConfigureRenewBoundSystemCtl(): void
-    {
-        $prefix = "new_";
-
-        // Initialize the environment variables array.
-        $env_vars = [
-            'broadcast' => 'broadcast_address',
-            'interface' => 'interface',
-            'ip' => 'ip_address',
-            'router' => 'routers',
-            'timesvr' => '',
-            'namesvr' => 'netbios_name_servers',
-            'dns' => 'domain_name_servers',
-            'hostname' => 'host_name',
-            'subnet' => 'subnet_mask',
-            'serverid' => '',
-            'ipttl' => '',
-            'lease' => 'new_dhcp_lease_time',
-            'domain' => 'domain_name',
-        ];
-
-        // Get the values of environment variables.
-        foreach ($env_vars as $key => $value) {
-            $var_name = "{$prefix}{$value}";
-            if (empty($var_name)) {
-                continue;
-            }
-            $env_vars[$key] = trim(getenv("{$prefix}{$value}"));
-        }
-
-        /** @var LanInterfaces $if_data */
-        $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
-        $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
-
-        $named_dns = [];
-        if ('' !== $env_vars['dns']) {
-            $named_dns = explode(' ', $env_vars['dns']);
-        }
-        if ($is_inet === '1') {
-            // Only generate pdnsd config if this interface is for internet.
-            $this->generatePdnsdConfig($named_dns);
-        }
-
-        // Save information to the database.
-        $data = [
-            'subnet' => $env_vars['subnet'],
-            'ipaddr' => $env_vars['ip'],
-            'gateway' => $env_vars['router'],
-        ];
-        if (Verify::isIpAddress($env_vars['ip'])) {
-            $data['subnet'] = $this->netMaskToCidr($env_vars['subnet']);
-        } else {
-            $data['subnet'] = '';
-        }
-        $this->updateIfSettings($data, $env_vars['interface']);
-        $data = [
-            'primarydns' => $named_dns[0] ?? '',
-            'secondarydns' => $named_dns[1] ?? '',
-        ];
-        $this->updateDnsSettings($data, $env_vars['interface']);
-    }
-
-    /**
-     * Retrieves the interface name by its ID.
-     *
-     * @param string $id_net The ID of the network interface.
-     *
-     * @return string  The interface name.
-     */
-    public function getInterfaceNameById(string $id_net): string
-    {
-        $res = LanInterfaces::findFirstById($id_net);
-        if ($res !== null && $res->interface !== null) {
-            return $res->interface;
-        }
-
-        return '';
-    }
-
-    /**
-     * Retrieves the enabled LAN interfaces.
-     *
-     * @return array  An array of enabled LAN interfaces.
-     */
-    public function getEnabledLanInterfaces(): array
-    {
-        /** @var LanInterfaces $res */
-        $res = LanInterfaces::find('disabled=0');
-
-        return $res->toArray();
-    }
-
-    /**
-     * Performs deconfiguration of the udhcpc configuration.
-     */
-    public function udhcpcConfigureDeconfig(): void
-    {
-        $interface = trim(getenv('interface'));
-
-        // For MIKO LFS Edition.
-        $busyboxPath = Util::which('busybox');
-
-        // Bring the interface up.
-        Processes::mwExec("{$busyboxPath} ifconfig {$interface} up");
-
-        // Set a default IP configuration for the interface.
-        Processes::mwExec("{$busyboxPath} ifconfig {$interface} 192.168.2.1 netmask 255.255.255.0");
-    }
-
-    /**
-     * Updates the network settings with the provided data.
-     * @param array $data The network settings data to update.
-     */
-    public function updateNetSettings(array $data): void
-    {
-        $res = LanInterfaces::findFirst("internet = '1'");
-        $update_inet = false;
-        if ($res === null) {
-            // If no interface with internet connection is found, get the first interface.
-            $res = LanInterfaces::findFirst();
-            $update_inet = true;
-        }
-
-        if ($res !== null) {
-            foreach ($data as $key => $value) {
-                $res->$key = $value;
-            }
-            if ($update_inet === true) {
-                $res->internet = 1;
-            }
-            $res->save();
+            $openvpn = Util::which('openvpn');
+            Processes::mwExecBg("$openvpn --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
         }
     }
 
@@ -1094,8 +951,8 @@ class Network extends Injectable
         $interface = [];
 
         // Get ifconfig's output for the specified interface.
-        $busyboxPath = Util::which('busybox');
-        Processes::mwExec("{$busyboxPath} ifconfig $name 2>/dev/null", $output);
+        $ifconfig = Util::which('ifconfig');
+        Processes::mwExec("$ifconfig $name 2>/dev/null", $output);
         $output = implode(" ", $output);
 
         // Parse MAC address.
@@ -1119,15 +976,14 @@ class Network extends Injectable
         } else {
             $interface['up'] = false;
         }
-        $busyboxPath = Util::which('busybox');
 
         // Get the default gateway.
-        $grepPath = Util::which('grep');
-        $cutPath = Util::which('cut');
-        $routePath = Util::which('route');
+        $grep = Util::which('grep');
+        $cut = Util::which('cut');
+        $route = Util::which('route');
 
         Processes::mwExec(
-            "{$busyboxPath} {$routePath} -n | {$grepPath} {$name} | {$grepPath} \"^0.0.0.0\" | {$cutPath} -d ' ' -f 10",
+            "$route -n | $grep $name | $grep \"^0.0.0.0\" | $cut -d ' ' -f 10",
             $matches
         );
         $gw = (count($matches) > 0) ? $matches[0] : '';
@@ -1136,8 +992,8 @@ class Network extends Injectable
         }
 
         // Get DNS servers.
-        $catPath = Util::which('cat');
-        Processes::mwExec("{$catPath} /etc/resolv.conf | {$grepPath} nameserver | {$cutPath} -d ' ' -f 2", $dnsout);
+        $cat = Util::which('cat');
+        Processes::mwExec("$cat /etc/resolv.conf | $grep nameserver | $cut -d ' ' -f 2", $dnsout);
 
         $dnsSrv = [];
         foreach ($dnsout as $line) {

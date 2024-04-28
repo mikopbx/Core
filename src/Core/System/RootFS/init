@@ -1,0 +1,72 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+#
+# This script is designed to initialize the system environment for MikoPBX,
+# including mounting filesystems and preparing for a switch to a new root directory.
+# It also conditions the initiation of TTY sessions based on the presence of a specific file.
+#
+# Ensure the environment variables HOME and PATH are set for the script.
+HOME=/;
+PATH=/sbin:/bin:/usr/sbin:/usr/bin;
+export HOME PATH;
+
+# Create a symbolic link for /sbin/init to /bin/busybox, allowing for basic commands to be available.
+ln -s /bin/busybox /sbin/init;
+
+# Mount necessary filesystems for the initial environment.
+mount -t devtmpfs  -o mode=0755,nosuid devtmpfs /dev
+mount -t proc      -o nosuid,noexec,nodev proc  /proc;
+mount -t sysfs     -o nosuid,noexec,nodev sysfs /sys;
+mount -t tmpfs     -o size=90% tmpfs            /mnt;
+
+# Switch root.
+# Create an archive of the current root directory and extract it to /mnt.
+# If successful, continue with the switch root process.
+if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar -C /mnt/ -xf - ; then
+	resFileInitTab='/mnt/etc/inittab';
+	mv /mnt/etc/inittab_base "$resFileInitTab";
+
+   # Scan for serial devices and configure them in inittab for automatic respawning of getty processes.
+  devises="$(/bin/ls /dev/ttyS* 2> /dev/null)";
+  for dev in $devises; do
+    serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
+    if [ "${serialInfo}x" = 'x' ]; then
+      continue;
+    fi;
+    echo "$serialInfo" | /bin/busybox grep unknown > /dev/null 2> /dev/null;
+    resultSetSerial="$?";
+
+    if [ ! "$resultSetSerial" = '0' ]; then
+       # If the device is recognized and not marked as 'unknown', add it to inittab.
+       devName="$(/bin/busybox basename "$dev")";
+
+       echo " - Configuring $devName for conditional autologin.";
+       # Adding an entry to inittab that loops and checks for /etc/ssh-autologin at intervals.
+       # This allows breaking the loop and starting the agetty process as soon as the file is created.
+       echo >> "$resFileInitTab";
+       echo "::respawn:/bin/sh -c 'for i in \$(seq 1 20); do if [ -f /etc/ssh-tty-autologin ]; then break; fi; sleep 1; done; exec /sbin/agetty -a root -h -t 60 $devName 115200 vt102'" >> "$resFileInitTab"
+    fi;
+  done
+
+  sleep 5;
+
+  # Finalize the switch root process by invoking the switch_root command with /mnt as the new root directory.
+	exec /sbin/switch_root /mnt /sbin/init "$@";
+fi

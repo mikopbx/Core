@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
@@ -148,7 +149,6 @@ class PBX extends Injectable
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'module reload features'", $arr_out);
-        Processes::mwExec("{$asteriskPath} -rx 'module reload res_parking'", $arr_out);
     }
 
     /**
@@ -205,6 +205,7 @@ class PBX extends Injectable
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'moh reload'");
     }
+
 
     /**
      * Reloads the Asterisk voicemail module.
@@ -277,7 +278,7 @@ class PBX extends Injectable
             Processes::mwExec("{$asteriskPath} -rx 'module reload acl'");
             Processes::mwExec("{$asteriskPath} -rx 'core reload'");
         } else {
-            Util::sysLogMsg('SIP RELOAD', 'Need reload asterisk',LOG_INFO);
+            SystemMessages::sysLogMsg('SIP RELOAD', 'Need reload asterisk',LOG_INFO);
             // Terminate channels.
             Processes::mwExec("{$asteriskPath} -rx 'channel request hangup all'");
             usleep(500000);
@@ -307,17 +308,6 @@ class PBX extends Injectable
         Processes::mwExec("{$asteriskPath} -rx 'iax2 reload'");
     }
 
-    /**
-     * Reloads the music on hold module.
-     */
-    public static function mohReload(): void
-    {
-        $m = new MusicOnHoldConf();
-        $m->generateConfig();
-
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'moh reload'");
-    }
 
     /**
      * Waits for Asterisk to fully boot.
@@ -344,7 +334,7 @@ class PBX extends Injectable
             sleep(1);
             $time = microtime(true) - $time_start;
             if ($time > 60) {
-                Util::sysLogMsg(__CLASS__, 'Error: Asterisk has not booted');
+                SystemMessages::sysLogMsg(__CLASS__, 'Error: Asterisk has not booted');
                 break;
             }
         }
@@ -358,10 +348,6 @@ class PBX extends Injectable
      */
     public function configure(): array
     {
-        $result = [
-            'result' => 'ERROR',
-        ];
-
         if ( ! $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting) {
             $this->stop();
         }
@@ -374,7 +360,11 @@ class PBX extends Injectable
 
         self::dialplanReload();
         if ($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting) {
-            Util::echoResult('   |- dialplan reload');
+            $message = '   |- dialplan reload';
+            SystemMessages::echoToTeletype($message);
+            SystemMessages::echoWithSyslog($message);
+            SystemMessages::echoResult($message);
+            SystemMessages::teletypeEchoResult($message);
         }
         // Create the call history database.
         /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
@@ -384,7 +374,7 @@ class PBX extends Injectable
         } else {
             CdrDb::checkDb();
         }
-
+        $result=[];
         $result['result'] = 'Success';
 
         return $result;
@@ -399,9 +389,9 @@ class PBX extends Injectable
         if ($di === null) {
             return;
         }
-        $extensions = new ExtensionsConf();
-        $extensions->generateConfig();
         if ($di->getShared(RegistryProvider::SERVICE_NAME)->booting !== true) {
+            $extensions = new ExtensionsConf();
+            $extensions->generateConfig();
             $path_asterisk = Util::which('asterisk');
             Processes::mwExec("{$path_asterisk} -rx 'dialplan reload'");
             Processes::mwExec("{$path_asterisk} -rx 'module reload pbx_lua.so'");
@@ -415,7 +405,7 @@ class PBX extends Injectable
      */
     public static function updateSavePeriod(string $value = ''):void{
         if(empty($value)){
-            $value = PbxSettings::getValueByKey('PBXRecordSavePeriod');
+            $value = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD);
         }
         $filename   = '/var/etc/record-save-period';
         file_put_contents($filename, $value);

@@ -48,6 +48,7 @@ class MessagesProvider implements ServiceProviderInterface
             function () use ($di, $coreConfig) {
                 $cacheKey = false;
                 $language = $di->get(LanguageProvider::SERVICE_NAME);
+                file_put_contents('/tmp/language',$language,FILE_APPEND);
                 if (php_sapi_name() !== 'cli') {
                     $version = PBXConfModulesProvider::getVersionsHash();
                     $cacheKey = 'LocalisationArray:' . $version . ':' . $language;
@@ -57,15 +58,16 @@ class MessagesProvider implements ServiceProviderInterface
                 if ($cacheKey) {
                     $translates = $di->get(ManagedCacheProvider::SERVICE_NAME)->get($cacheKey, 3600);
                     if (is_array($translates)) {
+                        file_put_contents('/tmp/language.fromCache',$language,FILE_APPEND);
                         return $translates;
                     }
                 }
-
+                file_put_contents('/tmp/language.NotfromCache',$language,FILE_APPEND);
                 // Load English translations
                 $translates = self::includeLanguageFile(appPath('/src/Common/Messages/en.php'));
 
                 if ($language !== 'en') {
-                    // Check if translation file exists for the selected language
+                    // Check if the translation file exists for the selected language
                     $langFile = appPath("/src/Common/Messages/{$language}.php");
                     if (file_exists($langFile)) {
                         $langArr = self::includeLanguageFile($langFile);

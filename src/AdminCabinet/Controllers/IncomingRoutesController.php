@@ -21,7 +21,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\DefaultIncomingRouteForm;
 use MikoPBX\AdminCabinet\Forms\IncomingRouteEditForm;
-use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, OutWorkTimesRouts, Sip};
+use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, OutWorkTimesRouts, Sip, SoundFiles};
 
 
 class IncomingRoutesController extends BaseController
@@ -87,7 +87,19 @@ class IncomingRoutesController extends BaseController
             $forwardingExtensions[$record->number] = $record ? $record->getRepresent() : '';
         }
 
-        $form                     = new DefaultIncomingRouteForm($defaultRule, ['extensions' => $forwardingExtensions]);
+        $soundFilesList = [];
+        // Retrieve custom sound files for default route
+        $soundFiles = SoundFiles::find('category="custom"');
+        foreach ($soundFiles as $soundFile) {
+            $soundFilesList[$soundFile->id] = $soundFile->name;
+        }
+        unset($soundFiles);
+
+        $form = new DefaultIncomingRouteForm(
+            $defaultRule, [
+            'extensions' => $forwardingExtensions,
+            'soundfiles' => $soundFilesList,
+        ]);
         $this->view->form         = $form;
         $this->view->routingTable = $routingTable;
         $this->view->submitMode   = null;
@@ -103,23 +115,42 @@ class IncomingRoutesController extends BaseController
     {
         if ((int)$ruleId === 1) {
             $this->forward('incoming-routes/index');
+            return;
         } // First row is the default route, don't modify it.
 
+        $idIsEmpty = false;
+        if(empty($ruleId)){
+            $idIsEmpty = true;
+            $ruleId = (string)($_GET['copy-source']??'');
+        }
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
         if ($rule === null) {
-            $parameters = [
-                'column' => 'priority',
-                'conditions'=>'id!=1'
-            ];
             $rule = new IncomingRoutingTable();
-            $rule->priority = (int)IncomingRoutingTable::maximum($parameters)+1;
+            $rule->priority = IncomingRoutingTable::getMaxNewPriority();
+        }elseif($idIsEmpty) {
+            $oldRule = $rule;
+            $rule     = new IncomingRoutingTable();
+            foreach ($oldRule->toArray() as $key => $value){
+                $rule->writeAttribute($key, $value);
+            }
+            $rule->id   = '';
+            $rule->note = "";
+            $rule->priority = IncomingRoutingTable::getMaxNewPriority();
         }
 
         if (empty($rule->provider)){
             $rule->provider = 'none';
         }
 
-        $this->view->form      = new IncomingRouteEditForm($rule);
+        $soundFilesList = [];
+        // Retrieve custom sound files for IVR
+        $soundFilesList['none'] = '';
+        $soundFiles = SoundFiles::find('category="custom"');
+        foreach ($soundFiles as $soundFile) {
+            $soundFilesList[$soundFile->id] = $soundFile->name;
+        }
+        unset($soundFiles);
+        $this->view->form      = new IncomingRouteEditForm($rule, ['soundfiles' => $soundFilesList]);
         $this->view->represent = $rule->getRepresent();
     }
 
@@ -145,6 +176,7 @@ class IncomingRoutesController extends BaseController
 
         foreach ($rule as $name => $value) {
             switch ($name) {
+                case 'audio_message_id':
                 case 'provider':
                     if ($data[$name] === 'none') {
                         $rule->$name = null;

@@ -15,13 +15,15 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global globalRootUrl */
+/* global globalRootUrl, ConferenceRoomsAPI, Extensions, globalTranslate, UserMessage */
 
 /**
  * Module handling interactions with the conference room table.
  * @module conferenceTable
  */
 const conferenceTable = {
+
+    $conferencesTable: $('#conference-rooms-table'),
 
     /**
      * Initializes module functionality.
@@ -35,6 +37,37 @@ const conferenceTable = {
             const id = $(e.target).closest('tr').attr('id');
             window.location = `${globalRootUrl}conference-rooms/modify/${id}`;
         });
+
+        // Set up delete functionality on delete button click.
+        $('body').on('click', 'a.delete', (e) => {
+            e.preventDefault();
+            $(e.target).addClass('disabled');
+            // Get the conference room  ID from the closest table row.
+            const rowId = $(e.target).closest('tr').attr('id');
+
+            // Remove any previous AJAX messages.
+            $('.message.ajax').remove();
+
+            // Call the PbxApi method to delete the conference room record.
+            ConferenceRoomsAPI.deleteRecord(rowId, conferenceTable.cbAfterDeleteRecord);
+        });
+    },
+
+    /**
+     * Callback function executed after deleting a record.
+     * @param {Object} response - The response object from the API.
+     */
+    cbAfterDeleteRecord(response){
+        if (response.result === true) {
+            // Remove the deleted record's table row.
+            conferenceTable.$conferencesTable.find(`tr[id=${response.data.id}]`).remove();
+            // Call the callback function for data change.
+            Extensions.cbOnDataChanged();
+        } else {
+            // Show an error message if deletion was not successful.
+            UserMessage.showError(response.messages.error, globalTranslate.cr_ImpossibleToDeleteConferenceRoom);
+        }
+        $('a.delete').removeClass('disabled');
     },
 };
 

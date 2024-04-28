@@ -24,9 +24,9 @@ use MikoPBX\Common\Models\{Extensions,
     IncomingRoutingTable,
     OutWorkTimes,
     OutWorkTimesRouts,
-    PbxSettings,
     Sip,
     SoundFiles};
+use MikoPBX\Core\Asterisk\Configs\SIPConf;
 
 class OutOffWorkTimeController extends BaseController
 {
@@ -39,7 +39,7 @@ class OutOffWorkTimeController extends BaseController
     {
         // Define query parameters for retrieving OutWorkTimes data from the database.
         $parameters = [
-            'order' => 'date_from, weekday_from, time_from',
+            'order' => 'priority, date_from, weekday_from, time_from',
         ];
 
         // Initialize an empty array to hold the retrieved OutWorkTimes data.
@@ -47,6 +47,12 @@ class OutOffWorkTimeController extends BaseController
 
         // Retrieve OutWorkTimes data from the database using the query parameters defined earlier.
         $timeFrames = OutWorkTimes::find($parameters);
+
+        $calTypeArray = [
+            OutWorkTimes::CAL_TYPE_NONE     => '',
+            OutWorkTimes::CAL_TYPE_CALDAV   => $this->translation->_('tf_CAL_TYPE_CALDAV'),
+            OutWorkTimes::CAL_TYPE_ICAL     => $this->translation->_('tf_CAL_TYPE_ICAL'),
+        ];
 
         // Iterate over each OutWorkTimes record and format it into an array for displaying on the index page.
         foreach ($timeFrames as $timeFrame) {
@@ -60,6 +66,7 @@ class OutOffWorkTimeController extends BaseController
             // Add the formatted OutWorkTimes record to the array of records to be displayed on the index page.
             $timeframesTable[] = [
                 'id'               => $timeFrame->id,
+                'calType'          => $calTypeArray[$timeFrame->calType],
                 'date_from'        => ( ! empty($timeFrame->date_from)) > 0 ? date("d.m.Y", $timeFrame->date_from) : '',
                 'date_to'          => ( ! empty($timeFrame->date_to)) > 0 ? date("d.m.Y", $timeFrame->date_to) : '',
                 'weekday_from'     => ( ! empty($timeFrame->weekday_from)) ? $this->translation->_(date('D',strtotime("Sunday +{$timeFrame->weekday_from} days"))) : '',
@@ -79,6 +86,24 @@ class OutOffWorkTimeController extends BaseController
         $this->view->indexTable = $timeframesTable;
     }
 
+    public function changePriorityAction(): void
+    {
+        $this->view->disable();
+        $result = true;
+
+        if ( ! $this->request->isPost()) {
+            return;
+        }
+        $priorityTable = $this->request->getPost();
+        $rules = OutWorkTimes::find();
+        foreach ($rules as $rule){
+            if (array_key_exists ( $rule->id, $priorityTable)){
+                $rule->priority = $priorityTable[$rule->id];
+                $result         .= $rule->update();
+            }
+        }
+        echo json_encode($result);
+    }
 
     /**
      * This function modifies the OutWorkTimes data based on the provided ID.
@@ -160,6 +185,22 @@ class OutOffWorkTimeController extends BaseController
         $allowedRules    = OutWorkTimesRouts::find($parameters)->toArray();
         $allowedRulesIds = array_column($allowedRules, 'rule_id');
 
+
+        $filter = [
+            'conditions' => 'type="friend"',
+            'columns' => 'host,port,uniqid,registration_type',
+        ];
+        $data = Sip::find($filter)->toArray();
+        $providersId = [];
+        foreach ($data as $providerData){
+            if($providerData['registration_type'] === Sip::REG_TYPE_INBOUND || empty($providerData['host'])){
+                $providersId[$providerData['uniqid']] = $providerData['uniqid'];
+            }else{
+                $providersId[$providerData['uniqid']] = SIPConf::getContextId($providerData['host'] . $providerData['port']);
+            }
+        }
+        unset($data);
+
         // Get the list of allowed routing rules
         $rules        = IncomingRoutingTable::find(['order' => 'priority', 'conditions' => 'id>1']);
         $routingTable = [];
@@ -180,6 +221,7 @@ class OutOffWorkTimeController extends BaseController
                 'timeout'   => $rule->timeout,
                 'provider'  => $rule->Providers ? $rule->Providers->getRepresent() : '',
                 'provider-uniqid'  => $rule->Providers ? $rule->Providers->uniqid : 'none',
+                'context-id'  => $rule->Providers ? $providersId[$rule->Providers->uniqid] : 'none',
                 'disabled'  => $provByType->disabled,
                 'extension' => $rule->extension,
                 'callerid'  => $extension ? $extension->getRepresent() : '',
@@ -236,6 +278,9 @@ class OutOffWorkTimeController extends BaseController
                     }else{
                         $timeFrame->$name = '0';
                     }
+                    break;
+                case 'calType':
+                    $timeFrame->$name = ($data[$name] === 'none') ? '' : $data[$name];
                     break;
                 case 'date_from':
                 case 'date_to':

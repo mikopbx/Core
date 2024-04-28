@@ -23,8 +23,7 @@ namespace MikoPBX\Common\Handlers;
 
 use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
 use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
-use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\PbxExtensionUtils;
+use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Di;
 use Throwable;
 /**
@@ -50,7 +49,7 @@ class CriticalErrorsHandler
 
         // Whoops
         $message = WhoopsErrorHandlerProvider::makePrettyErrorDescription($exception, false);
-        Util::sysLogMsg("EXCEPTION", $message, LOG_ERR);
+        SystemMessages::sysLogMsg(__METHOD__, $message, LOG_ERR);
         return $message;
     }
 
@@ -61,10 +60,6 @@ class CriticalErrorsHandler
      */
     public static function handleException(Throwable $exception): void
     {
-        // Check if the problem in external module - disable it
-        $exceptionFile = $exception->getFile();
-        PbxExtensionUtils::disableBadModule($exceptionFile);
-
         // Sentry
         $di = Di::getDefault();
         $sentryErrorHandler = $di->get(SentryErrorHandlerProvider::SERVICE_NAME);

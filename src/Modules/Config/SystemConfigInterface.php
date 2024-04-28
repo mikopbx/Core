@@ -95,11 +95,11 @@ interface SystemConfigInterface
      * This method is called in the WorkerModelsEvents after the models changing process is finished.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modelseventneedreload
      *
-     * @param array $modified_tables The list of modified models.
+     * @param array $plannedReloadActions Array of planned reload actions that need to be started
      *
      * @return void
      */
-    public function modelsEventNeedReload(array $modified_tables): void;
+    public function modelsEventNeedReload(array $plannedReloadActions): void;
 
     /**
      * Returns an array of worker classes for WorkerSafeScripts.

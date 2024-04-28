@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Tests\PBXCoreREST\Lib\Extensions;
 
-use MikoPBX\PBXCoreREST\Lib\Extensions\SaveRecord;
+use MikoPBX\PBXCoreREST\Lib\Extensions\SaveRecordAction;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class SaveRecordTest extends AbstractUnitTest
@@ -56,7 +56,7 @@ class SaveRecordTest extends AbstractUnitTest
             'dirrty' => '',
             'submitMode' => 'SaveSettings'
         ];
-        $res = SaveRecord::main($data);
+        $res = SaveRecordAction::main($data);
         $this->assertTrue($res->success);
     }
 }

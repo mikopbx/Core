@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Tests\PBXCoreREST\Lib\Extensions;
 
-use MikoPBX\PBXCoreREST\Lib\Extensions\Dropdowns;
+use MikoPBX\PBXCoreREST\Lib\Extensions\DropdownsAction;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class DropdownsTest extends AbstractUnitTest
@@ -27,7 +27,7 @@ class DropdownsTest extends AbstractUnitTest
 
     public function testGetForSelect()
     {
-        $res = Dropdowns::getForSelect('all');
+        $res = DropdownsAction::getForSelect('all');
         $this->assertTrue($res->success);
     }
 }

@@ -19,57 +19,90 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
+/**
+ * Class CreateDefaultIncomingCallRule
+ *
+ * This class contains tests for changing the default incoming call rule.
+ */
 class CreateDefaultIncomingCallRule extends MikoPBXTestsBase
 {
 
     /**
-     * @depends testLogin
-     * @dataProvider additionProvider
+     * Set up before each test
      *
-     * @param array $params
+     * @throws GuzzleException
+     * @throws \Exception
      */
-    public function testChangeDefaultRule($params):void
+    public function setUp(): void
     {
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
-
-        $this->selectDropdownItem('action', $params['action']);
-        if ($params['action'] === 'extension'){
-            $this->selectDropdownItem('extension', $params['extension']);
-        }
-
-        $this->submitForm('default-rule-form');
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
-
-        //Asserts
-        $this->assertMenuItemSelected('action', $params['action']);
-        if ($params['action'] === 'extension'){
-            $this->assertMenuItemSelected('extension', $params['extension']);
-        }
-
+        parent::setUp();
+        $this->setSessionName("Test: Changing incoming routes rule (by default)");
     }
 
     /**
-     * Dataset provider
+     * Test changing the default incoming call rule.
+     * @depends testLogin
+     * @dataProvider additionProvider
+     *
+     * @param array $params The parameters for the default rule.
+     */
+    public function testChangeDefaultRule(array $params): void
+    {
+        // Navigate to the incoming routes page
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
+
+        // Select the specified action from the dropdown
+        $this->selectDropdownItem('action', $params['action']);
+
+        // If the action is 'extension', select the extension from the dropdown
+        if ($params['action'] === 'extension') {
+            $this->selectDropdownItem('extension', $params['extension']);
+        }
+
+        // Submit the form to change the default rule
+        $this->submitForm('default-rule-form');
+
+        // Navigate back to the incoming routes page
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
+
+        // Assert that the selected action matches the expected action
+        $this->assertMenuItemSelected('action', $params['action']);
+
+        // If the action is 'extension', assert that the selected extension matches the expected extension
+        if ($params['action'] === 'extension') {
+            $this->assertMenuItemSelected('extension', $params['extension']);
+        }
+    }
+
+    /**
+     * Dataset provider for default rule parameters.
+     *
      * @return array
      */
-    public function additionProvider() :array
+    public function additionProvider(): array
     {
         $params = [];
-        $params[] = [[
-            'action' => 'busy'
-        ]];
+        $params[] = [
+            [
+                'action' => 'busy',
+            ]
+        ];
 
-        $params[] = [[
-            'action' => 'hangup'
-        ]];
+        $params[] = [
+            [
+                'action' => 'hangup',
+            ]
+        ];
 
-        $params[] = [[
-            'action' => 'extension',
-            'extension'   => 202
-        ]];
+        $params[] = [
+            [
+                'action' => 'extension',
+                'extension' => 202,
+            ]
+        ];
 
         return $params;
     }

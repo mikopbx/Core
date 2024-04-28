@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecords;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 
 /**
@@ -42,7 +42,7 @@ class ActionInsertCdr
     {
         foreach ($cdr['rows'] as $data) {
             if (empty($data['UNIQUEID'])) {
-                Util::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data), LOG_DEBUG);
+                SystemMessages::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data), LOG_DEBUG);
                 return;
             }
             $m_data = CallDetailRecords::findFirst(
@@ -65,7 +65,7 @@ class ActionInsertCdr
                 $m_data->writeAttribute($attribute, $value);
             }
             if (!$m_data->save()) {
-                Util::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
+                SystemMessages::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
             }
         }
     }

@@ -38,6 +38,24 @@ use Phalcon\Mvc\Micro;
 class Request extends PhRequest
 {
     /**
+     * Check the header of request to understand if it needs async response or not
+     * @return bool
+     */
+    public function isAsyncRequest(): bool
+    {
+        return !empty($this->getHeader('X-Async-Response-Channel-Id'));
+    }
+
+    /**
+     * Channel to push request
+     * @return string
+     */
+    public function getAsyncRequestChannelId(): string
+    {
+        return $this->getHeader('X-Async-Response-Channel-Id')??'';
+    }
+
+    /**
      * Check if the request is coming from localhost.
      *
      * @return bool
@@ -110,9 +128,13 @@ class Request extends PhRequest
         foreach ($additionalRoutes as $additionalRoutesFromModule){
             foreach ($additionalRoutesFromModule as $additionalRoute) {
                 $noAuth = $additionalRoute[5] ?? false;
-                if ($noAuth === true
-                    && stripos($pattern, $additionalRoute[2]) === 0) {
-                    return true; // Allow request without authentication
+                // Let's prepare a regular expression to check the URI
+                $resultPattern = '/^'.str_replace('/', '\/', $additionalRoute[2]).'/';
+                $resultPattern = preg_replace('/\{[^\/]+\}/', '[^\/]+', $resultPattern);
+                // Let's check the URI
+                if ($noAuth === true && preg_match($resultPattern, $pattern)) {
+                    // Allow request without authentication
+                    return true;
                 }
             }
         }

@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\ExternalPhones;
+use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\Sip;
 
 class DataStructure
@@ -51,7 +52,7 @@ class DataStructure
     public int $sip_qualifyfreq = 60;
     public string $sip_enableRecording = '1';
     public string $sip_dtmfmode = 'auto';
-    public string $sip_transport = ' ';
+    public string $sip_transport = '';
     public string $sip_networkfilterid = 'none';
     public string $sip_manualattributes = '';
     public int $fwd_ringlength = 45;
@@ -128,17 +129,12 @@ class DataStructure
         if (empty($this->mobile_dialstring)) {
             $this->mobile_dialstring = $this->mobile_number;
         }
-
-        if (!empty($this->fwd_forwarding)){
-            $this->fwd_forwarding = preg_replace('/\D/', '', $this->fwd_forwarding);
+        $properties = ['fwd_forwarding', 'fwd_forwardingonunavailable', 'fwd_forwardingonbusy'];
+        foreach ($properties as $property) {
+            if (!empty($this->{$property}) && !in_array($this->{$property}, [IncomingRoutingTable::ACTION_VOICEMAIL, IncomingRoutingTable::ACTION_BUSY, IncomingRoutingTable::ACTION_HANGUP], true)) {
+                $this->{$property} = preg_replace('/\D/', '', $this->{$property});
+            }
         }
-        if (!empty($this->fwd_forwardingonunavailable)){
-            $this->fwd_forwardingonunavailable = preg_replace('/\D/', '', $this->fwd_forwardingonunavailable);
-        }
-        if (!empty($this->fwd_forwardingonbusy)){
-            $this->fwd_forwardingonbusy = preg_replace('/\D/', '', $this->fwd_forwardingonbusy);
-        }
-
     }
 
     /**

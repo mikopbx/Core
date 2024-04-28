@@ -20,18 +20,35 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
+/**
+ * Class to test the filling of PBX settings in the admin cabinet.
+ */
 class FillPBXSettingsTest extends MikoPBXTestsBase
 {
     /**
-     * @depends      testLogin
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Fill general settings");
+    }
+
+    /**
+     * Test to fill PBX settings.
+     * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $dataSet
+     * @param array $dataSet The parameters for the test.
      */
-    public function testFillPBXSettings($dataSet): void
+    public function testFillPBXSettings(array $dataSet): void
     {
         $this->clickSidebarMenuItemByHref("/admin-cabinet/general-settings/modify/");
 
@@ -48,7 +65,12 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         }
     }
 
-
+    /**
+     * Find an element on the page and fill its value.
+     *
+     * @param string $key The name of the element.
+     * @param mixed $value The value to fill.
+     */
     private function findElementOnPageAndFillValue(string $key, $value): void
     {
         $xpath = '//input[@name="' . $key . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"tab")]';
@@ -57,7 +79,6 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
 
         foreach ($inputItemPages as $inputItemPage) {
             $elementPage = $inputItemPage->getAttribute('data-tab');
-            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
             $this->clickOnLeftTabByDataTab($elementPage);
             $this->changeInputField($key, $value, true);
             $this->changeCheckBoxState($key, $value, true);
@@ -68,28 +89,33 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
 
         foreach ($textAreaItemPages as $textAreaItemPage) {
             $elementPage = $textAreaItemPage->getAttribute('data-tab');
-            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
             $this->clickOnLeftTabByDataTab($elementPage);
             $this->changeTextAreaValue($key, $value, true);
         }
 
         $xpath           = '//select[@name="' . $key . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"tab")]';
         $selectItemPages = self::$driver->findElements(WebDriverBy::xpath($xpath));
+
         foreach ($selectItemPages as $selectItemPage) {
             $elementPage = $selectItemPage->getAttribute('data-tab');
-            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
             $this->clickOnLeftTabByDataTab($elementPage);
             $this->selectDropdownItem($key, $value);
         }
     }
 
+    /**
+     * Find an element on the page and check its value.
+     *
+     * @param string $key The name of the element.
+     * @param mixed $value The expected value.
+     */
     private function findElementOnPageAndCheckValue(string $key, $value): void
     {
         $xpath          = '//input[@name="' . $key . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"tab")]';
         $inputItemPages = self::$driver->findElements(WebDriverBy::xpath($xpath));
+
         foreach ($inputItemPages as $inputItemPage) {
             $elementPage = $inputItemPage->getAttribute('data-tab');
-            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
             $this->clickOnLeftTabByDataTab($elementPage);
             $this->assertInputFieldValueEqual($key, $value, true);
             $this->assertCheckBoxStageIsEqual($key, $value, true);
@@ -97,30 +123,29 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
 
         $xpath             = '//textarea[@name="' . $key . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"tab")]';
         $textAreaItemPages = self::$driver->findElements(WebDriverBy::xpath($xpath));
+
         foreach ($textAreaItemPages as $textAreaItemPage) {
             $elementPage = $textAreaItemPage->getAttribute('data-tab');
-            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
             $this->clickOnLeftTabByDataTab($elementPage);
             $this->assertTextAreaValueIsEqual($key, $value);
         }
 
         $xpath           = '//select[@name="' . $key . '"]/ancestor::div[contains(@class, "ui") and contains(@class ,"tab")]';
         $selectItemPages = self::$driver->findElements(WebDriverBy::xpath($xpath));
+
         foreach ($selectItemPages as $selectItemPage) {
             $elementPage = $selectItemPage->getAttribute('data-tab');
-            //self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$elementPage}");
             $this->clickOnLeftTabByDataTab($elementPage);
             $this->assertMenuItemSelected($key, $value);
         }
     }
 
     /**
-     * Change page
-     * @param string $identifier
+     * Change the page by clicking on a left tab.
      *
-     * @return void
+     * @param string $identifier The data-tab attribute of the tab.
      */
-    private function clickOnLeftTabByDataTab(string $identifier):void
+    private function clickOnLeftTabByDataTab(string $identifier): void
     {
         $xpath = "//div[@id='general-settings-menu']//ancestor::a[@data-tab='{$identifier}']";
         $tab = self::$driver->findElement(WebDriverBy::xpath($xpath));
@@ -128,7 +153,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
     }
 
     /**
-     * Dataset provider
+     * Dataset provider for PBX settings.
      *
      * @return array
      */
@@ -140,11 +165,11 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
 
         $params[] = [
             [
-                'Name'                   => 'Тестовая 72',
-                'Description'            => 'log: admin  pass: 123456789MikoPBX#1 last test:' . date("Y-m-d H:i:s"),
-                'PBXLanguage'            => 'en-en',
-                'PBXRecordCalls'         => true,
-                'SendMetrics'            => false,
+                PbxSettingsConstants::PBX_NAME                 => 'Тестовая 72',
+                PbxSettingsConstants::PBX_DESCRIPTION            => 'log: admin  pass: 123456789MikoPBX#1 last test:' . date("Y-m-d H:i:s"),
+                PbxSettingsConstants::PBX_LANGUAGE            => 'en-en',
+                PbxSettingsConstants::PBX_RECORD_CALLS         => true,
+                PbxSettingsConstants::SEND_METRICS            => false,
                 PbxSettingsConstants::SSH_AUTHORIZED_KEYS      => $SSHAuthorizedKeys,
                 'codec_alaw'             => true,
                 'codec_ulaw'             => false,
@@ -157,14 +182,10 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
                 'codec_h264'             => true,
                 'codec_h263'             => false,
                 'codec_h263p'            => true,
-                'PBXRecordSavePeriod'    => '90'
+                PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD    => '90'
             ],
         ];
 
         return $params;
     }
 }
-
-
-
-

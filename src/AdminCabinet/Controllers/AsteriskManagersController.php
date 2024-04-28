@@ -46,6 +46,7 @@ class AsteriskManagersController extends BaseController
             'system',
             'user',
             'verbose',
+            'command'
         ];
         parent::initialize();
     }
@@ -65,8 +66,8 @@ class AsteriskManagersController extends BaseController
         foreach ($networkFilters as $filter) {
             $arrNetworkFilters[$filter->id] = $filter->getRepresent();
         }
-        $this->view->networkFilters = $arrNetworkFilters;
-        $this->view->amiUsers       = $amiUsers;
+        $this->view->setVar('networkFilters', $arrNetworkFilters);
+        $this->view->setVar('amiUsers', $amiUsers);
     }
 
 
@@ -80,6 +81,7 @@ class AsteriskManagersController extends BaseController
         $manager = AsteriskManagerUsers::findFirstById($id);
         if ($manager === null) {
             $manager = new AsteriskManagerUsers();
+            $manager->secret = AsteriskManagerUsers::generateAMIPassword();
         }
 
         $arrNetworkFilters = [];
@@ -89,8 +91,7 @@ class AsteriskManagersController extends BaseController
                 'AMI',
             ]
         );
-        $arrNetworkFilters['none']
-                           = $this->translation->_('ex_NoNetworkFilter');
+        $arrNetworkFilters['none'] = $this->translation->_('ex_NoNetworkFilter');
         foreach ($networkFilters as $filter) {
             $arrNetworkFilters[$filter->id] = $filter->getRepresent();
         }
@@ -104,8 +105,8 @@ class AsteriskManagersController extends BaseController
             ]
         );
 
-        $this->view->arrCheckBoxes = $this->arrCheckBoxes;
-        $this->view->represent     = $manager->getRepresent();
+        $this->view->setVar('arrCheckBoxes', $this->arrCheckBoxes);
+        $this->view->setVar('represent', $manager->getRepresent());
     }
 
 
@@ -114,10 +115,9 @@ class AsteriskManagersController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (!$this->request->isPost()) {
             return;
         }
-
         $data    = $this->request->getPost();
         $manager = null;
         if (isset($data['id'])) {
@@ -127,32 +127,20 @@ class AsteriskManagersController extends BaseController
             $manager = new AsteriskManagerUsers();
         }
 
+        $manager->weakSecret = '0';
+
         foreach ($manager as $name => $value) {
             if (in_array($name, $this->arrCheckBoxes, true)) {
-                $manager->$name = '';
-                $manager->$name .= ($data[$name . '_read'] === 'on') ? 'read' : '';
-                $manager->$name .= ($data[$name . '_write'] === 'on') ? 'write' : '';
+                $manager->$name = ($data[$name . '_read'] === 'on') ? 'read' : '';
+                $manager->$name.= ($data[$name . '_write'] === 'on') ? 'write' : '';
                 continue;
             }
-
             if ( ! array_key_exists($name, $data)) {
                 continue;
             }
             $manager->$name = $data[$name];
         }
-        $errors = false;
-        if ( ! $manager->save()) {
-            $errors = $manager->getMessages();
-        }
-
-        if ($errors) {
-            $this->flash->error(implode('<br>', $errors));
-            $this->view->success = false;
-        } else {
-            $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-            $this->view->success = true;
-            $this->view->reload  = "asterisk-managers/modify/{$manager->id}";
-        }
+        $this->saveEntity($manager, "asterisk-managers/modify/{$manager->id}");
     }
 
     /**
@@ -190,7 +178,7 @@ class AsteriskManagersController extends BaseController
             $result             = false;
             $this->view->userId = $amiUser->id;
         }
-        $this->view->nameAvailable = $result;
-        $this->view->success = true;
+        $this->view->setVar('nameAvailable', $result);
+        $this->view->setVar('success', true);
     }
 }

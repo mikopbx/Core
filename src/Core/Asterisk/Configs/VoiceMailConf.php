@@ -19,9 +19,10 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Sip;
@@ -105,13 +106,13 @@ class VoiceMailConf extends AsteriskConfigClass
         }
 
         // Get the sender address from generalSettings or fallback to MailSMTPUsername
-        $from = $this->generalSettings['MailSMTPSenderAddress'];
+        $from = $this->generalSettings[PbxSettingsConstants::MAIL_SMTP_SENDER_ADDRESS];
         if (empty($from)) {
-            $from =  $this->generalSettings['MailSMTPUsername'];
+            $from =  $this->generalSettings[PbxSettingsConstants::MAIL_SMTP_USERNAME];
         }
 
         // Get the PBX timezone and voicemail-sender path
-        $timezone = $this->generalSettings['PBXTimezone'];
+        $timezone = $this->generalSettings[PbxSettingsConstants::PBX_TIMEZONE];
         $msmtpPath = Util::which('voicemail-sender');
 
         // Create the voicemail configuration string
@@ -139,7 +140,7 @@ class VoiceMailConf extends AsteriskConfigClass
 
         // Append voicemail context and mail_box to the configuration string
         $conf .= "[voicemailcontext]\n";
-        $mail_box = $this->generalSettings['VoicemailNotificationsEmail'];
+        $mail_box = $this->generalSettings[PbxSettingsConstants::VOICEMAIL_NOTIFICATIONS_EMAIL];
         $conf .= "admin => admin," . Util::translate("user") . ",{$mail_box},,attach=yes|tz=local|delete=yes\n";
 
         // Write the configuration string to voicemail.conf file
@@ -161,7 +162,7 @@ class VoiceMailConf extends AsteriskConfigClass
         $recordingFile = '';
 
         // Define the directory path for storing the recording file
-        $monitor_dir = Storage::getMonitorDir();
+        $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
         $sub_dir     = date('Y/m/d', $time);
         $dirName = "$monitor_dir/$sub_dir/INBOX/";
 

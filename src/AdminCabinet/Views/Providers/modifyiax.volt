@@ -27,6 +27,10 @@
     <label for="secret">{{ t._('pr_ProviderPassword') }}</label>
     {{ form.render('secret') }}
 </div>
+<div class="field max-width-800">
+    <label for="note">{{ t._('pr_Note') }}</label>
+    {{ form.render('note') }}
+</div>
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 <div class="ui accordion field">

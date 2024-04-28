@@ -22,9 +22,11 @@ namespace MikoPBX\Core\System;
 use DateTime;
 use Exception;
 use MikoPBX\Common\Models\{CustomFiles};
+use malkusch\lock\mutex\PHPRedisMutex;
 use MikoPBX\Common\Providers\AmiConnectionCommand;
 use MikoPBX\Common\Providers\AmiConnectionListener;
-use MikoPBX\Common\Providers\LoggerProvider;
+use MikoPBX\Common\Providers\LanguageProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use Phalcon\Di;
@@ -306,22 +308,6 @@ class Util
     }
 
     /**
-     * Adds messages to Syslog.
-     *
-     * @param string $ident The category, class, or method identification.
-     * @param string $message The log message.
-     * @param int $level The log level (default: LOG_WARNING).
-     *
-     * @return void
-     */
-    public static function sysLogMsg(string $ident, string $message, $level = LOG_WARNING): void
-    {
-        /** @var \Phalcon\Logger $logger */
-        $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
-        $logger->log($level, "{$message} on {$ident}");
-    }
-
-    /**
      * Returns the current date as a string with millisecond precision.
      *
      * @return string|null The current date string, or null on error.
@@ -405,36 +391,48 @@ class Util
     public static function which(string $cmd): string
     {
         global $_ENV;
-        if (array_key_exists('PATH', $_ENV)) {
-            $binaryFolders = $_ENV['PATH'];
-
-            // Search for the command in each binary folder
-            foreach (explode(':', $binaryFolders) as $path) {
-                if (is_executable("{$path}/{$cmd}")) {
-                    return "{$path}/{$cmd}";
-                }
-            }
-        }
 
         // Default binary folders to search if PATH is not set or command is not found
-        $binaryFolders =
-            [
-                '/sbin',
-                '/bin',
-                '/usr/sbin',
-                '/usr/bin',
-                '/usr/local/bin',
-                '/usr/local/sbin',
-            ];
+        $binaryFolders = $_ENV['PATH'] ?? '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin:/usr/local/sbin';
 
-        // Search for the command in the default binary folders
-        foreach ($binaryFolders as $path) {
+        // Search for the command in each binary folder
+        foreach (explode(':', $binaryFolders) as $path) {
             if (is_executable("{$path}/{$cmd}")) {
                 return "{$path}/{$cmd}";
             }
         }
 
+        // Get BusyBox applets list from cache or generate it
+        $busyBoxApplets = self::getBusyBoxCommands();
+
+        // Check if the command is a BusyBox applet
+        if (in_array($cmd, $busyBoxApplets)) {
+            return "/bin/busybox $cmd"; // Prefix with 'busybox' if it is a BusyBox command
+        }
+
+        // Return the command as it is if not found and not a BusyBox applet
         return $cmd;
+    }
+
+    /**
+     * Fetches or generates the list of BusyBox commands.
+     *
+     * @return array List of BusyBox commands.
+     */
+    public static function getBusyBoxCommands(): array
+    {
+        $filename = '/etc/busybox-commands';
+        if (!file_exists($filename)) {
+            // Get the list of BusyBox commands by executing busybox --list
+            Processes::mwExec('busybox --list', $output);
+            // Save the output to a file
+            file_put_contents($filename, implode("\n", $output));
+            return $output;
+        } else {
+            // Read the list from the file
+            $commands = file($filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            return $commands;
+        }
     }
 
     /**
@@ -475,11 +473,11 @@ class Util
         $di = Di::getDefault();
         if ($di !== null) {
             if (!$cliLang) {
-                $di->setShared('PREFERRED_LANG_WEB', true);
+                $di->setShared(LanguageProvider::PREFERRED_LANG_WEB, true);
             }
             $text = $di->getShared(TranslationProvider::SERVICE_NAME)->_($text);
             if (!$cliLang) {
-                $di->remove('PREFERRED_LANG_WEB');
+                $di->remove(LanguageProvider::PREFERRED_LANG_WEB);
             }
         }
         return $text;
@@ -600,104 +598,6 @@ class Util
     }
 
     /**
-     * Outputs a message to the main teletype.
-     *
-     * @param string $message The message to output.
-     * @param string $ttyPath The path to the teletype device (default: '/dev/ttyS0').
-     *
-     * @return void
-     */
-    public static function teletypeEcho(string $message, string $ttyPath = '/dev/ttyS0'): void
-    {
-        $pathBusyBox = self::which('busybox');
-        $ttyTittle = trim(shell_exec("$pathBusyBox setserial -g $ttyPath 2> /dev/null"));
-        if (strpos($ttyTittle, $ttyPath) !== false && strpos($ttyTittle, 'unknown') === false) {
-            /** @scrutinizer ignore-unhandled */ @file_put_contents($ttyPath, $message, FILE_APPEND);
-        }
-    }
-
-    /**
-     * Echoes a teletype message with "DONE" or "FAIL" status.
-     *
-     * @param string $message The main message to display.
-     * @param mixed $result The result status.
-     *
-     * @return void
-     */
-    public static function teletypeEchoDone(string $message, $result): void
-    {
-        $len = max(0, 80 - strlen($message) - 9);
-        $spaces = str_repeat('.', $len);
-        if ($result === false) {
-            $message = " \033[31;1mFAIL\033[0m \n";
-        } else {
-            $message = " \033[32;1mDONE\033[0m \n";
-        }
-        self::teletypeEcho($spaces . $message);
-    }
-
-    /**
-     * Echoes a "DONE" or "FAIL" message based on the result status.
-     *
-     * @param bool $result The result status (true by default).
-     *
-     * @return void
-     */
-    public static function echoDone(bool $result = true): void
-    {
-        if ($result === false) {
-            echo "\033[31;1mFAIL\033[0m \n";
-        } else {
-            echo "\033[32;1mDONE\033[0m \n";
-        }
-    }
-
-    /**
-     * Echoes a result message with progress dots.
-     *
-     * @param string $message The result message to echo.
-     * @param bool $result The result status (true by default).
-     *
-     * @return void
-     */
-    public static function echoResult(string $message, bool $result = true): void
-    {
-        $cols = self::getCountCols();
-        if (!is_numeric($cols)) {
-            // Failed to retrieve the screen width.
-            return;
-        }
-        $len = $cols - strlen($message) - 8;
-        if ($len < 2) {
-            // Incorrect screen width.
-            return;
-        }
-
-        $spaces = str_repeat('.', $len);
-        echo "\r" . $message . $spaces;
-        self::echoDone($result);
-    }
-
-    /**
-     * Gets the count of columns in the terminal window.
-     *
-     * @return string The count of columns.
-     */
-    public static function getCountCols(): string
-    {
-        $len = 1 * trim(shell_exec('tput cols'));
-
-        // If the count of columns is zero, set it to a default value of 80
-        if ($len === 0) {
-            $len = 80;
-        } else {
-            // Limit the count of columns to a maximum of 80
-            $len = min($len, 80);
-        }
-        return $len;
-    }
-
-    /**
      * Creates or updates a symlink to a target path.
      *
      * @param string $target The target path.
@@ -711,12 +611,12 @@ class Util
         $need_create_link = true;
         if (is_link($link)) {
             $old_target = readlink($link);
-            $need_create_link = ($old_target != $target);
+            $need_create_link = ($old_target !== $target);
 
             // If needed, remove the old symlink.
             if ($need_create_link) {
                 $cpPath = self::which('cp');
-                Processes::mwExec("{$cpPath} {$old_target}/* {$target}");
+                Processes::mwExec("$cpPath $old_target/* $target");
                 unlink($link);
             }
         } elseif (is_dir($link)) {
@@ -734,7 +634,7 @@ class Util
 
         if ($need_create_link) {
             $lnPath = self::which('ln');
-            Processes::mwExec("{$lnPath} -s {$target}  {$link}");
+            Processes::mwExec("$lnPath -s $target $link");
         }
 
         return $need_create_link;
@@ -762,7 +662,7 @@ class Util
                         && !mkdir($path, 0755, true)
                         && !is_dir($path)) {
                         $result = false;
-                        self::sysLogMsg('Util', 'Error on create folder ' . $path, LOG_ERR);
+                        SystemMessages::sysLogMsg(__METHOD__, 'Error on create folder ' . $path, LOG_ERR);
                     }
                     if ($addWWWRights) {
                         self::addRegularWWWRights($path);
@@ -789,20 +689,6 @@ class Util
             Processes::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 644 {} \;");
             Processes::mwExec("{$chownPath} -R www:www {$folder}");
         }
-    }
-
-    /**
-     * Echoes a message and logs it to the system log.
-     *
-     * @param string $message The message to echo and log.
-     *
-     * @return void
-     */
-    public static function echoWithSyslog(string $message): void
-    {
-        echo $message;
-        // Log the message to the system log with LOG_INFO level
-        self::sysLogMsg(static::class, $message, LOG_INFO);
     }
 
     /**
@@ -923,10 +809,68 @@ class Util
             $reflection = new ReflectionClass($className);
             $filename = $reflection->getFileName();
         } catch (ReflectionException $exception) {
-            self::sysLogMsg(__METHOD__, 'ReflectionException ' . $exception->getMessage(), LOG_ERR);
+            SystemMessages::sysLogMsg(__METHOD__, 'ReflectionException ' . $exception->getMessage(), LOG_ERR);
         }
 
         return $filename;
     }
+
+
+    /**
+     * Creates a mutex to ensure synchronized module installation.
+     *
+     * @param string $namespace Namespace for the mutex, used to differentiate mutexes.
+     * @param string $uniqueId Unique identifier for the mutex, usually the module ID.
+     * @param int $timeout Timeout in seconds for the mutex.
+     *
+     * @return PHPRedisMutex Returns an instance of PHPRedisMutex.
+     */
+    public static function createMutex(string $namespace, string $uniqueId, int $timeout = 5): PHPRedisMutex
+    {
+        $di = Di::getDefault();
+        $redisAdapter = $di->get(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+        $mutexKey = "Mutex:$namespace-" . md5($uniqueId);
+        return new PHPRedisMutex([$redisAdapter], $mutexKey, $timeout);
+    }
+
+    /**
+     * Adds messages to Syslog.
+     * @deprecated Use SystemMessages::sysLogMsg instead
+     *
+     * @param string $ident The category, class, or method identification.
+     * @param string $message The log message.
+     * @param int $level The log level (default: LOG_WARNING).
+     *
+     * @return void
+     */
+    public static function sysLogMsg(string $ident, string $message, int $level = LOG_WARNING): void
+    {
+        SystemMessages::sysLogMsg($ident, $message, $level);
+    }
+
+
+    /**
+     * Echoes a message and logs it to the system log.
+     * @deprecated Use SystemMessages::echoWithSyslog instead
+     *
+     * @param string $message The message to echo and log.
+     *
+     * @return void
+     */
+    public static function echoWithSyslog(string $message): void
+    {
+        SystemMessages::echoWithSyslog($message);
+    }
+
+    /**
+     * Is recovery mode
+     *
+     * @return bool
+     */
+    public static function isRecoveryMode(): bool
+    {
+        return file_exists('/offload/livecd');
+    }
+
 
 }

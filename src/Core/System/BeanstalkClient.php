@@ -39,6 +39,8 @@ class BeanstalkClient extends Injectable
 
     public const QUEUE_ERROR = 'queue_error';
 
+    public const RESPONSE_IN_FILE = 'response-in-file';
+
     /** @var Pheanstalk */
     private Pheanstalk $queue;
     private bool $connected = false;
@@ -143,7 +145,7 @@ class BeanstalkClient extends Injectable
                 $this->queue->delete($job);
             }
         } catch (Throwable $exception) {
-            Util::sysLogMsg(__METHOD__, $exception->getMessage(), LOG_ERR);
+            SystemMessages::sysLogMsg(__METHOD__, $exception->getMessage(), LOG_ERR);
             if(isset($job)){
                 $this->buryJob($job);
             }
@@ -254,7 +256,7 @@ class BeanstalkClient extends Injectable
                         break;
                     }
                     $id = $job->getId();
-                    Util::sysLogMsg(
+                    SystemMessages::sysLogMsg(
                         __METHOD__,
                         "Deleted buried job with ID {$id} from {$tube} with message {$job->getData()}",
                         LOG_DEBUG
@@ -275,7 +277,7 @@ class BeanstalkClient extends Injectable
                     $age                   = (int)$jobStats['age'];
                     $expectedTimeToExecute = (int)$jobStats['ttr'] * 2;
                     if ($age > $expectedTimeToExecute) {
-                        Util::sysLogMsg(
+                        SystemMessages::sysLogMsg(
                             __METHOD__,
                             "Deleted outdated job with ID {$id} from {$tube} with message {$job->getData()}",
                             LOG_DEBUG
@@ -289,7 +291,7 @@ class BeanstalkClient extends Injectable
             }
         }
         if (count($deletedJobInfo) > 0) {
-            Util::sysLogMsg(__METHOD__, "Delete outdated jobs" . implode(PHP_EOL, $deletedJobInfo), LOG_WARNING);
+            SystemMessages::sysLogMsg(__METHOD__, "Delete outdated jobs" . implode(PHP_EOL, $deletedJobInfo), LOG_WARNING);
         }
     }
 
@@ -349,7 +351,7 @@ class BeanstalkClient extends Injectable
             $errorMessage = 'This job has attempted to execute more than 3 times without success.'.PHP_EOL;
             $errorMessage .= 'Job stats: '.json_encode($stats).PHP_EOL;
             $errorMessage .= 'Message: '.json_encode($this->message);
-            Util::sysLogMsg(__METHOD__,$errorMessage,LOG_ALERT);
+            SystemMessages::sysLogMsg(__METHOD__,$errorMessage,LOG_ALERT);
             $this->buryJob($job);
         }
 

@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Tests\PBXCoreREST\Lib\Extensions;
 
-use MikoPBX\PBXCoreREST\Lib\Extensions\DeleteRecord;
+use MikoPBX\PBXCoreREST\Lib\Extensions\DeleteRecordAction;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class DeleteRecordTest extends AbstractUnitTest
@@ -27,7 +27,7 @@ class DeleteRecordTest extends AbstractUnitTest
 
     public function testMain()
     {
-        $res = DeleteRecord::main('431');
+        $res = DeleteRecordAction::main('431');
         $this->assertTrue($res->success);
     }
 }

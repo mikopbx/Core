@@ -19,8 +19,6 @@
 
 namespace MikoPBX\Modules\Config;
 
-use MikoPBX\Common\Providers\ConfigProvider;
-use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigClass;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\System\MikoPBXConfig;
@@ -28,9 +26,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Assets\Manager;
 use Phalcon\Config;
-use Phalcon\Events\Event;
 use Phalcon\Forms\Form;
-use Phalcon\Mvc\Controller;
 use Phalcon\Mvc\Dispatcher;
 use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Router;
@@ -208,11 +204,11 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * This method is called in the WorkerModelsEvents after the models changing process is finished.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#modelseventneedreload
      *
-     * @param array $modified_tables The list of modified models.
+     * @param array $plannedReloadActions Array of planned reload actions that need to be started
      *
      * @return void
      */
-    public function modelsEventNeedReload(array $modified_tables): void
+    public function modelsEventNeedReload(array $plannedReloadActions): void
     {
     }
 

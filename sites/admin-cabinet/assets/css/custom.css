@@ -38,15 +38,8 @@ body {
 .prevent-word-wrap {
     white-space: nowrap;
 }
-
-/* No internet warning on license page */
-div.show-if-no-internet {
-    display: none;
-}
-
-/* No license warning on license page */
-div.show-if-license-fail {
-    display: none;
+.ui.placeholder.segment .button.prevent-word-wrap{
+    max-width: 25rem;
 }
 
 /* Sidebar menu button */
@@ -132,7 +125,7 @@ div.show-if-license-fail {
     padding-top: 2em;
 }
 
-/* Drag and prop tables point view BEGIN*/
+/* Drag and prop tables point view BEGIN */
 .dragHandle {
     cursor: move;
 }
@@ -171,20 +164,6 @@ div.show-if-license-fail {
 /* Users avatars */
 td.disabled img {
     filter: opacity(50%);
-}
-
-/* Save configuration button */
-#apply-configuration-button {
-    display: none;
-}
-
-/* Table with vertical text on header line */
-.verticalTableHeader {
-    text-align: center;
-    white-space: nowrap;
-    transform-origin: 50% 50%;
-    transform: rotate(90deg);
-
 }
 
 /* Code editor */
@@ -260,7 +239,6 @@ th.sorting:after {
     content: '\f0dc';
 }
 
-
 tr {
     cursor: pointer;
 }
@@ -335,7 +313,6 @@ div#pbx-version {
 #cdr-table {
     font-size: 12px;
 }
-
 
 /* CDR player */
 .cdr-player .ui.range {
@@ -441,14 +418,6 @@ th.firewall-category > div > span {
     border-bottom: 1px solid rgba(34, 36, 38, .15);
 }
 
-
-/**
-Plugins extensions
- */
-a.ui.button.pbx-extensions-settings {
-    margin-top: -7px;
-}
-
 /**
 Sound player slider
  */
@@ -481,9 +450,9 @@ Blur passwords, secrets
 }
 
 /**
-Sets minimum width for advices bell on main menu header
+Sets minimum width for advice bell on main menu header
  */
-#show-advices-button {
+#show-advice-button {
     min-width: 50px;
 }
 
@@ -495,13 +464,6 @@ Sets padding to correct show slider labels inside segment block
     padding-left: 35px;
     padding-right: 35px;
     margin-top: 5px;
-}
-
-/**
-Hide module status toggle by default, it will show from pbx-extension-module-status.js
- */
-#module-status-toggle-segment {
-    display: none;
 }
 
 /*
@@ -604,4 +566,11 @@ Limit fields width
     .ui.inverted.menu .item.hide-on-tablet{
         display: none;
     }
+}
+
+/**
+Plugins extensions settings button
+ */
+a.ui.button.pbx-extensions-settings {
+    margin-top: -7px;
 }

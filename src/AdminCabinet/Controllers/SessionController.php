@@ -19,9 +19,11 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use ErrorException;
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
@@ -29,7 +31,7 @@ use MikoPBX\Modules\Config\WebUIConfigInterface;
 /**
  * SessionController
  *
- * Allows to authenticate users
+ * Allows authenticating users
  */
 class SessionController extends BaseController
 {
@@ -39,17 +41,21 @@ class SessionController extends BaseController
 
     public const HOME_PAGE = 'homePage';
 
+    public const USER_NAME = 'userName';
+
 
     /**
      * Renders the login page with form and settings values.
      */
     public function indexAction(): void
     {
-        $this->view->NameFromSettings
-            = PbxSettings::getValueByKey('Name');
-        $this->view->DescriptionFromSettings
-            = PbxSettings::getValueByKey('Description');
-        $this->view->form = new LoginForm();
+        $this->view->setVar('NameFromSettings', PbxSettings::getValueByKey(PbxSettingsConstants::PBX_NAME));
+        $description = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_DESCRIPTION);
+        if ($description===PbxSettingsConstants::DEFAULT_CLOUD_PASSWORD_DESCRIPTION){
+            $description=$this->translation->_($description);
+        }
+        $this->view->setVar('DescriptionFromSettings', $description);
+        $this->view->setVar('form', new LoginForm());
     }
 
     /**
@@ -60,22 +66,18 @@ class SessionController extends BaseController
         if (!$this->request->isPost()) {
             $this->forward('session/index');
         }
-        $loginFromUser = $this->request->getPost('login');
-        $passFromUser = $this->request->getPost('password');
+        $loginFromUser = (string)$this->request->getPost('login', null, 'guest');
+        $passFromUser = (string)$this->request->getPost('password', null, 'guest');
         $this->flash->clear();
-        $login = PbxSettings::getValueByKey('WebAdminLogin');
-        $passwordHash = PbxSettings::getValueByKey('WebAdminPassword');
-
         $userLoggedIn = false;
         $sessionParams = [];
-
         // Check if the provided login and password match the stored values
-        if ($login === $loginFromUser
-            && ($this->security->checkHash($passFromUser, $passwordHash) || $passwordHash === $passFromUser))
+        if ($this->checkCredentials($loginFromUser, $passFromUser))
             {
             $sessionParams = [
                 SessionController::ROLE => AclProvider::ROLE_ADMINS,
-                SessionController::HOME_PAGE => $this->url->get('extensions/index')
+                SessionController::HOME_PAGE => $this->url->get('extensions/index'),
+                SessionController::USER_NAME => $loginFromUser
             ];
             $userLoggedIn = true;
         } else {
@@ -96,8 +98,8 @@ class SessionController extends BaseController
         if ($userLoggedIn) {
             // Register the session with the specified parameters
             $this->_registerSession($sessionParams);
-            if ($this->session->has(LanguageController::WEB_ADMIN_LANGUAGE)){
-                LanguageController::updateSystemLanguage($this->session->get(LanguageController::WEB_ADMIN_LANGUAGE));
+            if ($this->session->has(PbxSettingsConstants::WEB_ADMIN_LANGUAGE)){
+                LanguageController::updateSystemLanguage($this->session->get(PbxSettingsConstants::WEB_ADMIN_LANGUAGE));
             }
             $this->view->success = true;
             $backUri = $this->request->getPost('backUri');
@@ -194,5 +196,40 @@ class SessionController extends BaseController
         $this->session->remove(self::SESSION_ID);
         $this->session->destroy();
         $this->clearAuthCookies();
+    }
+
+    /**
+     * Checks if the provided login and password match the stored values
+     * @param string $login Login name from user input.
+     * @param string $password Password from user input.
+     * @return bool
+     * @throws ErrorException
+     */
+    private function checkCredentials(string $login, string $password):bool
+    {
+        // Check admin login name
+        $storedLogin = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
+        if ($storedLogin !== $login) {
+            return false;
+        }
+
+        // Old password check method
+        $passwordHash = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
+        if ($passwordHash === $password) {
+            return true;
+        }
+
+        // New password check method
+        set_error_handler(function($severity, $message, $file, $line) {
+            throw new ErrorException($message, 0, $severity, $file, $line);
+        });
+
+        try {
+            $result = $this->security->checkHash($password, $passwordHash);
+        } catch (ErrorException $e) {
+            $result = false;
+        }
+        restore_error_handler();
+        return $result;
     }
 }

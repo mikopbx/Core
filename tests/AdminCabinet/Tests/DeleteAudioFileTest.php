@@ -19,58 +19,79 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-
 use Facebook\WebDriver\WebDriverBy;
+use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
+/**
+ * Class to test the deletion of audio files in the admin cabinet.
+ */
 class DeleteAudioFileTest extends MikoPBXTestsBase
 {
+
     /**
-     * @depends      testLogin
+     * Set up before each test
+     *
+     * @throws GuzzleException
+     * @throws \Exception
+     */
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->setSessionName("Test: Delete audio files");
+    }
+
+    /**
+     * Test to delete an audio file.
+     *
+     * @depends testLogin
      * @dataProvider additionProvider
      *
-     * @param array $params
-     *
+     * @param array $params The parameters for deleting the audio file.
      */
     public function testDeleteAudioFile(array $params): void
     {
-        if ( ! $params['for_delete']) {
+        if (!$params['for_delete']) {
             $this->assertTrue(true);
             return;
         }
 
+        // Click on the sound files in the sidebar menu
         $this->clickSidebarMenuItemByHref('/admin-cabinet/sound-files/index/');
         $this->clickModifyButtonOnRowWithText($params['name']);
-        // TESTS
-        $xpath           = "//input[@name = 'id']";
+
+        // Get the element ID of the audio file
+        $xpath = "//input[@name = 'id']";
         $input_elementID = self::$driver->findElement(WebDriverBy::xpath($xpath));
-        $elementID       = $input_elementID->getAttribute('value');
+        $elementID = $input_elementID->getAttribute('value');
+
+        // Go back to the sound files page
         $this->clickSidebarMenuItemByHref('/admin-cabinet/sound-files/index/');
 
+        // Click the delete button on the row with the audio file's name
         $this->clickDeleteButtonOnRowWithText($params['name']);
         $this->waitForAjax();
 
-        // Try to find element with ID on page
-
+        // Try to find the element with the ID on the page
         $xpath = "//table[@id='custom-sound-files-table']//tr[@id='{$elementID}']";
-        $els   = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        $els = self::$driver->findElements(WebDriverBy::xpath($xpath));
 
         if (count($els) > 0) {
-            $this->fail("Unexpectedly element was found by " . $xpath . PHP_EOL);
+            $this->fail("Unexpectedly, the element was found by " . $xpath . PHP_EOL);
         } else {
-            // increment assertion counter
+            // Increment the assertion counter
             $this->assertTrue(true);
         }
     }
 
-
     /**
-     * Dataset provider
+     * Dataset provider for audio file deletion parameters.
      *
      * @return array
      */
     public function additionProvider(): array
     {
+        // You can replace this with a proper dataset when needed.
         $audioFiles = new CreateAudioFilesTest();
         return $audioFiles->additionProvider();
     }

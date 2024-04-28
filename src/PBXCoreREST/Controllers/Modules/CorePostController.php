@@ -41,9 +41,6 @@ class CorePostController extends BaseController
      * Returns the download status of a module.
      * @Post("/moduleDownloadStatus")
      *
-     * Installs a new additional extension module from an early uploaded zip archive.
-     * @Post("/installNewModule")
-     *
      * Checks the status of a module installation by the provided zip file path.
      * @Post("/statusOfModuleInstallation")
      *
@@ -53,17 +50,41 @@ class CorePostController extends BaseController
      * Disables an extension module.
      * @Post("/disableModule")
      *
+     * Installs a new additional extension module from zip archive.
+     * @Post("/installFromPackage")
+     *
+     * Installs a new additional extension module from the repository.
+     * @Post("/installFromRepo")
+     *
      * Uninstall an extension module.
      * @Post("/uninstallModule")
      *
      * Retrieves the installation link for a module.
      * @Post("/getModuleLink")
      *
+     * Updates all installed modules.
+     * @Post("/updateAll")
+     *
+     * Retrieves the module.json information from uploaded zip archive.
+     * @Post("/getMetadataFromModulePackage")
+     *
+     * Retrieves the module description from the repository.
+     * @Post("/getModuleInfo")
+     *
      * @return void
      */
     public function callAction(string $actionName): void
     {
         $data = $this->request->getPost();
-        $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data);
+        switch ($actionName){
+            case 'installFromRepo':
+            case 'updateAll':
+                // Extended timeout for long async operation
+                $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data,'',600);
+                break;
+            default:
+                $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data);
+        }
+
     }
 }

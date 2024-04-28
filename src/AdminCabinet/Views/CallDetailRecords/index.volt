@@ -27,4 +27,8 @@
     </tr>
     </thead>
     <tbody>
+    <tr>
+        <td colspan="5" class="dataTables_empty">{{ t._('dt_TableIsEmpty') }}</td>
+    </tr>
+    </tbody>
 </table>

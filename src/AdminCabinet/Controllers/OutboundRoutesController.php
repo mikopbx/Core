@@ -26,7 +26,6 @@ use MikoPBX\Common\Models\{OutgoingRoutingTable, Providers};
 class OutboundRoutesController extends BaseController
 {
 
-
     /**
      * Builds the list outgoing routes
      */
@@ -76,12 +75,27 @@ class OutboundRoutesController extends BaseController
      *
      * @param string $id
      */
-    public function modifyAction($id = ''): void
+    public function modifyAction(string $id = ''): void
     {
+        $idIsEmpty = false;
+        if(empty($id)){
+            $idIsEmpty = true;
+            $id = (string)($_GET['copy-source']??'');
+        }
+
         $rule = OutgoingRoutingTable::findFirstByid($id);
         if ($rule === null) {
             $rule = new OutgoingRoutingTable();
             $rule->priority = (int)OutgoingRoutingTable::maximum(['column' => 'priority'])+1;
+        }elseif($idIsEmpty){
+            $oldRule = $rule;
+            $rule = new OutgoingRoutingTable();
+            $rule->priority = (int)OutgoingRoutingTable::maximum(['column' => 'priority'])+1;
+            foreach ($oldRule->toArray() as $key => $value){
+                $rule->writeAttribute($key, $value);
+            }
+            $rule->rulename = '';
+            $rule->id = '';
         }
 
         $providers     = Providers::find();

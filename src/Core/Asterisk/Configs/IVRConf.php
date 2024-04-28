@@ -71,10 +71,12 @@ class IVRConf extends AsteriskConfigClass
             // Configure IVR extension context.
             $conf          .= "[ivr-{$ivr['extension']}] \n";
             $conf          .= 'exten => s,1,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";
+            $conf          .= "same => n,Set(NEED_MONITOR=1)\n\t";
             $conf          .= "same => n,Set(APPEXTEN={$ivr['extension']})\n\t";
             $conf          .= 'same => n,Gosub(dial_app,${EXTEN},1)' . "\n\t";
             $conf          .= 'same => n,Answer()' . "\n\t";
             $conf          .= 'same => n,Set(try_count=0);' . "\n\t";
+            $conf          .= 'same => n(ivr_start),ExecIf($[${try_count} > ' . $ivr['number_of_repeat'] . ']?StopMixMonitor())' . "\n\t";
             $conf          .= 'same => n,GotoIf($[${try_count} > ' . $ivr['number_of_repeat'] . ']?internal,' . $ivr['timeout_extension'] . ',1)' . "\n\t";
             $conf          .= 'same => n,Set(try_count=$[${try_count} + 1])' . "\n\t";
             $conf          .= "same => n,Set(TIMEOUT(digit)=2) \n\t";
@@ -88,12 +90,13 @@ class IVRConf extends AsteriskConfigClass
             // Fetch IVR menu actions from the database
             $res = IvrMenuActions::find("ivr_menu_id = '{$ivr['uniqid']}'");
             foreach ($res as $ext) {
-                $conf .= "exten => {$ext->digits},1,Goto(internal,{$ext->extension},1)\n";
+                $conf .= "exten => {$ext->digits},1,StopMixMonitor()\n";
+                $conf .= "\tsame => n,Goto(internal,{$ext->extension},1)\n";
             }
 
             // Handle invalid and timeout extensions.
-            $conf .= "exten => i,1,Goto(s,6)\n";
-            $conf .= "exten => t,1,Goto(s,6)\n";
+            $conf .= "exten => i,1,Goto(s,ivr_start)\n";
+            $conf .= "exten => t,1,Goto(s,ivr_start)\n";
 
             // Add support for entering any internal extension.
             if ($ivr['allow_enter_any_internal_extension'] === '1') {
@@ -101,6 +104,7 @@ class IVRConf extends AsteriskConfigClass
                     $extension = Util::getExtensionX($len);
                     $conf      .= 'exten => _' . $extension . ',1,ExecIf($["${DIALPLAN_EXISTS(internal,${EXTEN},1)}" == "0"]?Goto(i,1))' . "\n\t";
                     $conf      .= 'same => n,ExecIf($["${PJSIP_ENDPOINT(${EXTEN},auth)}x" == "x"]?Goto(i,1))' . "\n\t";
+                    $conf      .= 'same => n,StopMixMonitor()' . "\n\t";
                     $conf      .= 'same => n,Goto(internal,${EXTEN},1)' . "\n";
                 }
             }

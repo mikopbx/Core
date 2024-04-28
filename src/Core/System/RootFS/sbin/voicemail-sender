@@ -1,0 +1,92 @@
+#!/usr/bin/php
+<?php
+
+use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
+use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\System\Notifications;
+use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Workers\WorkerCallEvents;
+use MikoPBX\Common\Models\PbxSettings;
+
+require_once('Globals.php');
+
+/**
+ * Replaces placeholders in a string with corresponding values from an array.
+ *
+ * @param string $src
+ * @param array $params
+ */
+function replaceParams(string &$src, array $params):void
+{
+    foreach ($params as $key => $value){
+        $src =   str_replace($key, $value, $src);
+    }
+}
+
+
+$linkedId = $argv[1]??'';
+if(empty($linkedId)){
+    exit(1);
+}
+$endTime  = Util::getNowDate();
+$toMails  = VoiceMailConf::getToMail($linkedId);
+
+try {
+    $parser = new PhpMimeMailParser\Parser();
+    $parser->setStream(fopen("php://stdin", 'rb'));
+
+    $d      = DateTime::createFromFormat('D, d M Y H:i:s O', $parser->getHeader('date'));
+    $file   = implode('', $parser->saveAttachments('/tmp/'));
+    $recordingFile = VoiceMailConf::getCopyFilename($file, $linkedId, $d->getTimestamp(), true);
+    $recordingFile = Util::trimExtensionForFile($recordingFile) . '.wav';
+    unlink($file);
+
+    $addresses      = mailparse_rfc822_parse_addresses($parser->getHeader('to'));
+    $rawHeaderTo    = $addresses[0]['address']??'';
+    if(!empty($rawHeaderTo)){
+        $toMails[] = $rawHeaderTo;
+    }
+
+    $settings = PbxSettings::getAllPbxSettings();
+    $subject    = str_replace([PHP_EOL, "\t"], '',   $settings['MailTplVoicemailSubject']);
+    $body       = str_replace([PHP_EOL, "\t"], ['<br>', ''], $settings['MailTplVoicemailBody']);
+    $footer     = str_replace([PHP_EOL, "\t"], ['<br>', ''], $settings['MailTplVoicemailFooter']);
+    $emailBody  = str_replace(['"', '%|%'], ["'",'"'], $parser->getMessageBody());
+
+    $params     = json_decode($emailBody, true, 512, JSON_THROW_ON_ERROR);
+    foreach ($params as $key => $value){
+        if($key === 'VM_DATE'){
+            $params[$key] = $d->format("Y-m-d H:i:s");
+        }elseif($key === 'VM_CALLERID'){
+            $value = str_replace("'", '"', $value);
+            $data = mailparse_rfc822_parse_addresses($value);
+            $params['VM_CALLER_NAME'] = $data[0]['display']??'';
+            $params['VM_CALLER_NUM']  = $data[0]['address']??'';
+            unset($data);
+        }
+    }
+
+    $message    = "$body $footer";
+    replaceParams($subject, $params);
+    replaceParams($message, $params);
+    $notify = new Notifications();
+    $result = $notify->sendMail(implode(',', array_unique($toMails)), $subject, $message, $recordingFile);
+}catch (Throwable $e){
+    $recordingFile = '';
+    SystemMessages::sysLogMsg('Voicemail-Sender', $e->getMessage());
+}
+
+$data = [
+    'action'           => 'voicemail_end',
+    'linkedid'         => $linkedId,
+    'vm-recordingfile' => $recordingFile,
+    'endtime'          => $endTime
+];
+
+$client = new BeanstalkClient(WorkerCallEvents::class);
+$result_send = $client->publish(json_encode($data, JSON_THROW_ON_ERROR));
+
+$manager = Util::getAstManager();
+unset($data['action']);
+$manager->UserEvent('voicemail_end', $data);

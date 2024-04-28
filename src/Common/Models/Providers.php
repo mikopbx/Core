@@ -72,6 +72,12 @@ class Providers extends ModelsBase
      */
     public ?string $iaxuid = '';
 
+    /**
+     *  Note for current provider
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $note = '';
 
     /**
      * Initialize the model.

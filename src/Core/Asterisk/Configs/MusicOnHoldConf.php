@@ -21,8 +21,9 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
 
 /**
  * Class MusicOnHoldConf
@@ -85,7 +86,7 @@ class MusicOnHoldConf extends AsteriskConfigClass
         }
 
         // If no MP3 files are found in the specified path, attempt to restore from the default location
-        Util::sysLogMsg(static::class, 'Attempt to restore MOH from default...');
+        SystemMessages::sysLogMsg(static::class, 'Attempt to restore MOH from default...');
 
         // Get the list of MP3 files from the default location
         $filesList = glob("/offload/asterisk/sounds/moh{$mask}");
@@ -98,9 +99,9 @@ class MusicOnHoldConf extends AsteriskConfigClass
             Processes::mwExec("{$cpPath} $srcFile {$resultMp3}");
 
             // Convert the MP3 file to WAV format
-            SystemManagementProcessor::convertAudioFile($resultMp3);
+            ConvertAudioFileAction::main($resultMp3);
             if ( ! file_exists($resultWav)) {
-                Util::sysLogMsg(static::class, "Failed to convert file {$resultWav}...");
+                SystemMessages::sysLogMsg(static::class, "Failed to convert file {$resultWav}...");
             }
 
             // Add the MP3 file to the database
@@ -123,7 +124,7 @@ class MusicOnHoldConf extends AsteriskConfigClass
             $sf->name     = basename($resultMp3);
             $sf->path     = $resultMp3;
             if ( ! $sf->save()) {
-                Util::sysLogMsg(static::class, "Error save SoundFiles record {$sf->name}...");
+                SystemMessages::sysLogMsg(static::class, "Error save SoundFiles record {$sf->name}...");
             }
         }
     }

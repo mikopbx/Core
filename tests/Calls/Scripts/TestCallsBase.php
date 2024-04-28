@@ -22,7 +22,9 @@ use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
 
 require_once 'Globals.php';
@@ -184,6 +186,28 @@ class TestCallsBase {
     }
 
     /**
+     * Originate на тестовой станции.
+     * @param string $src
+     * @param string $dst
+     */
+    private function actionOriginateGeneral(string $src, string $dst){
+        self::printInfo("Start originate (general)... $src to $dst");
+        $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
+        $outgoingDir = dirname($monitorDir) . "/outgoing";
+        $conf = "Channel: Local/$src@internal-originate".PHP_EOL.
+            "Context: all_peers".PHP_EOL.
+            "Extension: $dst".PHP_EOL.
+            "Priority: 1".PHP_EOL.
+            "Callerid: $src".PHP_EOL.
+            "Setvar: __pt1c_cid=$dst".PHP_EOL;
+
+        $tmpFile     = tempnam('/tmp', 'call');
+        file_put_contents($tmpFile,$conf);
+        Processes::mwExec("mv $tmpFile $outgoingDir/test.call");
+        usleep(500000);
+    }
+
+    /**
      * Старт работы теста.
      * @param string $testName
      * @param array  $sampleCDR
@@ -267,9 +291,7 @@ class TestCallsBase {
         if(property_exists(self::class, $dst)){
             $dst = $this->$dst;
         }
-        self::printInfo("Start originate... $src to $dst");
-        $result = Util::amiOriginate($src, '', $dst);
-        self::printInfo('Result originate: '.$result['Response']??'none');
+        $this->actionOriginateGeneral($src, $dst);
     }
 
     private function invokeWait($rule):void{
@@ -300,7 +322,7 @@ class TestCallsBase {
      */
     protected function checkCdr(): void
     {
-        sleep(6);
+        sleep(15);
         // Проверяем результат.
         $filter = [
             'work_completed=1',
