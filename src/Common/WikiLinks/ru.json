@@ -9,5 +9,14 @@
   "https://wiki.mikopbx.com/providers": "https://docs.mikopbx.com/mikopbx/manual/routing/providers",
   "https://wiki.mikopbx.com/incoming-routes":"https://docs.mikopbx.com/mikopbx/manual/routing/incoming-routes",
   "https://wiki.mikopbx.com/outbound-routes":"https://docs.mikopbx.com/mikopbx/manual/routing/outbound-routes",
-  "https://wiki.mikopbx.com/pbx-extension-modules":"https://docs.mikopbx.com/mikopbx/manual/modules/pbx-extension-modules"
+  "https://wiki.mikopbx.com/pbx-extension-modules":"https://docs.mikopbx.com/mikopbx/manual/modules/pbx-extension-modules",
+  "https://wiki.mikopbx.com/out-off-work-time":"https://docs.mikopbx.com/mikopbx/manual/routing/out-off-work-time",
+  "https://wiki.mikopbx.com/dialplan-applications":"https://docs.mikopbx.com/mikopbx/manual/modules/dialplan-applications",
+  "https://wiki.mikopbx.com/system-diagnostic":"https://docs.mikopbx.com/mikopbx/manual/maintenance/system-diagnostic",
+  "https://wiki.mikopbx.com/network": "https://docs.mikopbx.com/mikopbx/manual/connectivity/network",
+  "https://wiki.mikopbx.com/firewall": "https://docs.mikopbx.com/mikopbx/manual/connectivity/firewall",
+  "https://wiki.mikopbx.com/fail2-ban":"https://docs.mikopbx.com/mikopbx/manual/connectivity/fail2-ban",
+  "https://wiki.mikopbx.com/time-settings":"https://docs.mikopbx.com/mikopbx/manual/system/time-settings",
+  "https://wiki.mikopbx.com/mail-settings":"https://docs.mikopbx.com/mikopbx/manual/system/mail-settings",
+  "https://wiki.mikopbx.com/asterisk-managers":"https://docs.mikopbx.com/mikopbx/manual/system/asterisk-managers"
 }
