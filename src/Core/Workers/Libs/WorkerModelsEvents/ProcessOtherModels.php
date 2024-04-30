@@ -27,7 +27,6 @@ use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SipHosts;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\Users;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
@@ -37,6 +36,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNetworkAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordingSettingsAction;
 use Phalcon\Di\Injectable;
 
 class ProcessOtherModels extends Injectable
@@ -50,7 +50,6 @@ class ProcessOtherModels extends Injectable
             ],
             'actions' => [
                 ReloadManagerAction::class,
-                ReloadAdviceAction::class,
             ],
         ];
 
@@ -98,7 +97,6 @@ class ProcessOtherModels extends Injectable
                 ReloadPJSIPAction::class,
                 ReloadDialplanAction::class,
                 ReloadFirewallAction::class,
-                ReloadAdviceAction::class,
             ],
         ];
 
@@ -161,7 +159,6 @@ class ProcessOtherModels extends Injectable
                 ReloadNetworkAction::class,
                 ReloadIAXAction::class,
                 ReloadPJSIPAction::class,
-                ReloadAdviceAction::class,
             ],
         ];
 
@@ -183,7 +180,6 @@ class ProcessOtherModels extends Injectable
                 ReloadFirewallAction::class,
                 ReloadPJSIPAction::class,
                 ReloadManagerAction::class,
-                ReloadAdviceAction::class,
             ],
         ];
 
@@ -196,6 +192,16 @@ class ProcessOtherModels extends Injectable
             ],
         ];
 
+        // Recording settings for WorkerCallEvents
+        $tables[] = [
+            'modelClasses' => [
+                Sip::class,
+                Extensions::class,
+            ],
+            'actions' => [
+                ReloadRecordingSettingsAction::class,
+            ],
+        ];
 
         return $tables;
     }

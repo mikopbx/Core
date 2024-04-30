@@ -26,11 +26,13 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\Asterisk\Configs\CelConf;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
+use Phalcon\Di;
 use Phalcon\Exception;
 use Phalcon\Text;
 use Throwable;
@@ -47,7 +49,7 @@ use DateTime;
  */
 class WorkerCallEvents extends WorkerBase
 {
-    public const REC_DISABLE = 'Conversation recording is disabled';
+    public const CACHE_KEY_RECORDINGS = 'Workers:WorkerCallEvents:RecordingsSettingsSynced';
     public array $mixMonitorChannels = [];
     public array $checkChanHangupTransfer = [];
     protected bool $record_calls = true;
@@ -273,6 +275,16 @@ class WorkerCallEvents extends WorkerBase
      */
     private function updateRecordingOptions(): void
     {
+        $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
+        $synced = $managedCache->get(self::CACHE_KEY_RECORDINGS);
+        if ($synced !== null) {
+            return;
+        }
+
+        // Reset variables to prevent memory leak
+        $this->innerNumbers = [];
+        $this->exceptionsNumbers = [];
+
         // Initialize an array to store users' numbers
         $usersNumbers = [];
 
@@ -286,7 +298,6 @@ class WorkerCallEvents extends WorkerBase
             'order' => 'type DESC'
         ];
         $extensionsData = Extensions::find($filter);
-
         // Loop through each extension
         /** @var Extensions $extension */
         foreach ($extensionsData as $extension) {
@@ -302,7 +313,6 @@ class WorkerCallEvents extends WorkerBase
                 }
             }
         }
-
         // Clear the users and extensionsData arrays for memory efficiency
         unset($users, $extensionsData);
 
@@ -314,6 +324,7 @@ class WorkerCallEvents extends WorkerBase
 
         $peers = Sip::find($filter);
 
+        error_log('Memory usage at point x2: ' . memory_get_usage().' count($this->innerNumbers)='.count($this->innerNumbers).' count($this->exceptionsNumbers)='.count($this->exceptionsNumbers));
         // Loop through each peer
         foreach ($peers as $peer) {
             // Get the numbers associated with this peer
@@ -331,11 +342,26 @@ class WorkerCallEvents extends WorkerBase
                 }
             }
         }
+        error_log('Memory usage at point X3: ' . memory_get_usage().' count($this->innerNumbers)='.count($this->innerNumbers).' count($this->exceptionsNumbers)='.count($this->exceptionsNumbers));
 
         // Set some class properties based on the PbxSettings values
         $this->notRecInner = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_CALLS_INNER) === '0';
         $this->record_calls = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_CALLS) === '1';
         $this->split_audio_thread = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD) === '1';
+
+        // Store the current timestamp in the cache to track the last execution
+        $managedCache->set(self::CACHE_KEY_RECORDINGS, time(), 86400); // Repeat every day
+    }
+
+    /**
+     * Reset a cache key to rebuild recording settings
+     * @return void
+     */
+    public static function afterChangeRecordingsSettings(): void
+    {
+        $di = Di::getDefault();
+        $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $managedCache->delete(self::CACHE_KEY_RECORDINGS);
     }
 
     /**
