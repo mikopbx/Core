@@ -324,8 +324,7 @@ class WorkerCallEvents extends WorkerBase
 
         $peers = Sip::find($filter);
 
-        error_log('Memory usage at point x2: ' . memory_get_usage().' count($this->innerNumbers)='.count($this->innerNumbers).' count($this->exceptionsNumbers)='.count($this->exceptionsNumbers));
-        // Loop through each peer
+         // Loop through each peer
         foreach ($peers as $peer) {
             // Get the numbers associated with this peer
             $numbers = $usersNumbers[$peer->extension] ?? [];
@@ -342,7 +341,6 @@ class WorkerCallEvents extends WorkerBase
                 }
             }
         }
-        error_log('Memory usage at point X3: ' . memory_get_usage().' count($this->innerNumbers)='.count($this->innerNumbers).' count($this->exceptionsNumbers)='.count($this->exceptionsNumbers));
 
         // Set some class properties based on the PbxSettings values
         $this->notRecInner = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_CALLS_INNER) === '0';
@@ -422,7 +420,7 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Handles other events.
      *
-     * @param $tube The tube object.
+     * @param mixed $tube The tube object.
      * @param array $data The data array (optional).
      *
      * @return void
@@ -454,7 +452,7 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Updates the CDR worker.
      *
-     * @param $tube The tube object.
+     * @param mixed $tube The tube object.
      *
      * @return void
      */
@@ -476,7 +474,7 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Selects the CDR worker.
      *
-     * @param $tube The tube object.
+     * @param mixed $tube The tube object.
      *
      * @return void
      */
