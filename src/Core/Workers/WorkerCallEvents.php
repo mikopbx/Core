@@ -377,11 +377,11 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Calls the events worker.
      *
-     * @param  $tube object.
+     * @param  BeanstalkClient $tube object.
      *
      * @return void
      */
-    public function callEventsWorker($tube): void
+    public function callEventsWorker(BeanstalkClient $tube): void
     {
         // Decode the body of the tube object
         $data = json_decode($tube->getBody(), true);
@@ -420,12 +420,12 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Handles other events.
      *
-     * @param mixed $tube The tube object.
+     * @param BeanstalkClient $tube The tube object.
      * @param array $data The data array (optional).
      *
      * @return void
      */
-    public function otherEvents($tube, array $data = []): void
+    public function otherEvents(BeanstalkClient $tube, array $data = []): void
     {
         // If data array is empty, decode the body of the tube object
         if (empty($data)) {
@@ -452,11 +452,11 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Updates the CDR worker.
      *
-     * @param mixed $tube The tube object.
+     * @param BeanstalkClient $tube The tube object.
      *
      * @return void
      */
-    public function updateCDRWorker($tube): void
+    public function updateCDRWorker(BeanstalkClient $tube): void
     {
         // Get the task from the tube's body
         $task = $tube->getBody();
@@ -474,11 +474,11 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Selects the CDR worker.
      *
-     * @param mixed $tube The tube object.
+     * @param BeanstalkClient $tube The tube object.
      *
      * @return void
      */
-    public function selectCDRWorker($tube): void
+    public function selectCDRWorker(BeanstalkClient $tube): void
     {
         // Decode the filter from the tube's body
         $filter = json_decode($tube->getBody(), true);
