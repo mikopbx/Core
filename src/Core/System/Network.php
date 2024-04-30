@@ -112,11 +112,12 @@ class Network extends Injectable
             $if_name = escapeshellcmd(trim($if_name));
 
             $commands = [
-                'subnet' => $ifconfig . ' eth0 | '.$awk.' \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
-                'ipaddr' => $ifconfig . ' eth0 | '.$awk.' \'/inet / {sub("addr:", "", $2); print $2}\'',
+                'subnet' => $ifconfig . ' '.$if_name.' | '.$awk.' \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
+                'ipaddr' => $ifconfig . ' '.$if_name.' | '.$awk.' \'/inet / {sub("addr:", "", $2); print $2}\'',
                 'gateway' => $route . ' -n | '.$awk.' \'/^0.0.0.0/ {print $2}\'',
                 'hostname' => $hostname,
             ];
+
             $data = [];
             foreach ($commands as $key => $command) {
                 $output = [];

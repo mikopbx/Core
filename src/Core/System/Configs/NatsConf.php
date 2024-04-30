@@ -21,8 +21,8 @@ namespace MikoPBX\Core\System\Configs;
 
 
 use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\MikoPBXConfig;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
 use Phalcon\Di\Injectable;
@@ -55,20 +55,22 @@ class NatsConf extends Injectable
      */
     public function reStart(): void
     {
+        $config = $this->getDI()->get('config')->gnats;
+
         $confDir = '/etc/nats';
         Util::mwMkdir($confDir);
 
-        $logDir = System::getLogDir() . '/nats';
+        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nats';
         Util::mwMkdir($logDir);
 
-        $tempDir = $this->di->getShared('config')->path('core.tempDir');
+        $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR) . '/nats';
         $sessionsDir = "$tempDir/nats_cache";
         Util::mwMkdir($sessionsDir);
 
         $pid_file = '/var/run/gnatsd.pid';
         $settings = [
-            'port'             => '4223',
-            'http_port'        => '8223',
+            'port'             => $config->port,
+            'http_port'        => $config->httpPort,
             'debug'            => 'false',
             'trace'            => 'false',
             'logtime'          => 'true',
