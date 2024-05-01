@@ -1271,4 +1271,5 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'Copying configuration...' => 'Initiële configuratie-instellingen invullen…',
     'Formatting storage partition 4 on disk' => 'De vierde partitie formatteren om gegevens op de schijf op te slaan',
     'Save storage disk settings' => 'Schijfinstellingen opslaan voor opslag',
+    'auth_TooManyLoginAttempts' => 'Te veel inlogpogingen. Uw IP-adres wordt gedurende %interval% seconden geblokkeerd.',
 ];

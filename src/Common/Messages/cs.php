@@ -1272,4 +1272,5 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'Update storage partition 4 on disk' => 'Aktualizace čtvrtého oddílu pro ukládání dat na disk',
     'Copying configuration...' => 'Vyplňování počátečních konfiguračních nastavení…',
     'Save storage disk settings' => 'Ukládání nastavení disku pro úložiště',
+    'auth_TooManyLoginAttempts' => 'Příliš mnoho pokusů o přihlášení. Vaše IP adresa je zablokována na %interval% sekund.',
 ];

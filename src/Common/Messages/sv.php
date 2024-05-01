@@ -1238,4 +1238,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'Copying configuration...' => 'Fyller i initiala konfigurationsinställningar…',
     'Formatting storage partition 4 on disk' => 'Formatera den fjärde partitionen för att lagra data på disken',
     'Save storage disk settings' => 'Sparar diskinställningar för lagring',
+    'auth_TooManyLoginAttempts' => 'För många inloggningsförsök. Din IP-adress är blockerad i %interval% sekunder.',
 ];

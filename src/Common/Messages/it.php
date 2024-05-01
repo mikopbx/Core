@@ -1272,4 +1272,5 @@ Il coupon può essere attivato una volta, dopodiché viene riscattato.',
     'Copying configuration...' => 'Compilazione delle impostazioni di configurazione iniziali…',
     'Formatting storage partition 4 on disk' => 'Formattazione della quarta partizione per archiviare i dati sul disco',
     'Save storage disk settings' => 'Salvataggio delle impostazioni del disco per l\'archiviazione',
+    'auth_TooManyLoginAttempts' => 'Troppi tentativi di accesso. Il tuo indirizzo IP è bloccato per %interval% secondi.',
 ];

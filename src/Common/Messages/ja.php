@@ -1272,4 +1272,5 @@ return [
     'Copying configuration...' => '初期構成設定を入力しています…',
     'Formatting storage partition 4 on disk' => 'ディスクにデータを保存するために 4 番目のパーティションをフォーマットする',
     'Save storage disk settings' => 'ストレージ用のディスク設定の保存',
+    'auth_TooManyLoginAttempts' => 'ログイン試行が多すぎます。あなたの IP アドレスは %interval% 秒間ブロックされます。',
 ];

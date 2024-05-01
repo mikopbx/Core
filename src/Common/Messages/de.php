@@ -1275,4 +1275,5 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'Copying configuration...' => 'Erstkonfigurationseinstellungen werden ausgefüllt…',
     'Formatting storage partition 4 on disk' => 'Formatieren der vierten Partition zum Speichern von Daten auf der Festplatte',
     'Save storage disk settings' => 'Speichern der Festplatteneinstellungen zur Speicherung',
+    'auth_TooManyLoginAttempts' => 'Zu viele Anmeldeversuche. Ihre IP-Adresse wird für %interval% Sekunden blockiert.',
 ];

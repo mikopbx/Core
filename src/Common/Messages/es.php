@@ -1272,4 +1272,5 @@ El cupón se puede activar una vez y luego se canjea.',
     'Copying configuration...' => 'Completando los ajustes de configuración inicial…',
     'Formatting storage partition 4 on disk' => 'Formatear la cuarta partición para almacenar datos en el disco',
     'Save storage disk settings' => 'Guardar la configuración del disco para almacenamiento',
+    'auth_TooManyLoginAttempts' => 'Demasiados intentos de inicio de sesión. Su dirección IP está bloqueada durante %interval% segundos.',
 ];

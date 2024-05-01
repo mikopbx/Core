@@ -1275,4 +1275,5 @@ The coupon can be activated once, after which it becomes redeemed.',
     'Update storage partition 4 on disk' => 'Updating the fourth partition to store data on disk',
     'Copying configuration...' => 'Filling out initial configuration settings…',
     'Save storage disk settings' => 'Saving disk settings for storage',
+    'auth_TooManyLoginAttempts' => 'Too many login attempts. Your IP address is blocked for %interval% seconds.',
 ];

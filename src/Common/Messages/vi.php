@@ -819,7 +819,7 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'auth_ValidatePasswordNotEmpty' => 'Nhập mật khẩu',
     'auth_ValidateLoginNotEmpty' => 'Nhập đăng nhập',
     'auth_SubmitButton' => 'Đăng nhập',
-    'auth_WrongLoginPassword' => 'Lỗi ủy quyền',
+    'auth_WrongLoginPassword' => 'Việc ủy quyền không thành công, bạn còn %attempts% lần thử',
     'log_CaptureMessage' => 'Bắt đầu thu thập các gói mạng và thực hiện cuộc gọi hoặc hành động khác gây ra lỗi.
 <br>Hệ thống sẽ lưu tất cả các gói đi vào thời điểm này thông qua card mạng để phân tích thêm.',
     'dbg_NoDebugInformation' => 'Không có thông tin',
@@ -1238,4 +1238,5 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'Update storage partition 4 on disk' => 'Cập nhật phân vùng thứ tư để lưu trữ dữ liệu trên đĩa',
     'Copying configuration...' => 'Đang điền các cài đặt cấu hình ban đầu…',
     'Save storage disk settings' => 'Lưu cài đặt đĩa để lưu trữ',
+    'auth_TooManyLoginAttempts' => 'Quá nhiều lần thử đăng nhập. Địa chỉ IP của bạn bị chặn trong %interval% giây.',
 ];

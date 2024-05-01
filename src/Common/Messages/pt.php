@@ -1272,4 +1272,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'Copying configuration...' => 'Preenchendo as configurações iniciais…',
     'Formatting storage partition 4 on disk' => 'Formatando a quarta partição para armazenar dados no disco',
     'Save storage disk settings' => 'Salvando configurações de disco para armazenamento',
+    'auth_TooManyLoginAttempts' => 'Muitas tentativas de login. Seu endereço IP está bloqueado por %interval% segundos.',
 ];

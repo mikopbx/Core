@@ -1272,4 +1272,5 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'Update storage partition 4 on disk' => 'Aktualizowanie czwartej partycji w celu przechowywania danych na dysku',
     'Formatting storage partition 4 on disk' => 'Formatowanie czwartej partycji w celu przechowywania danych na dysku',
     'Save storage disk settings' => 'Zapisywanie ustawień dysku do przechowywania',
+    'auth_TooManyLoginAttempts' => 'Zbyt wiele prób logowania. Twój adres IP jest zablokowany na %interval% sekund.',
 ];

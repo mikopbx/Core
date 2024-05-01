@@ -1238,4 +1238,5 @@ return [
     'Update storage partition 4 on disk' => '更新第四个分区以在磁盘上存储数据',
     'Copying configuration...' => '正在填写初始配置设置…',
     'Save storage disk settings' => '保存磁盘设置以进行存储',
+    'auth_TooManyLoginAttempts' => '登录尝试次数过多。您的 IP 地址被屏蔽 %interval% 秒。',
 ];

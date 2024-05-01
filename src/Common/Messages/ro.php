@@ -1254,4 +1254,5 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'Copying configuration...' => 'Se completează setările de configurare inițială…',
     'Formatting storage partition 4 on disk' => 'Formatarea celei de-a patra partiții pentru a stoca date pe disc',
     'Save storage disk settings' => 'Se salvează setările discului pentru stocare',
+    'auth_TooManyLoginAttempts' => 'Prea multe încercări de conectare. Adresa dvs. IP este blocată pentru %interval% secunde.',
 ];

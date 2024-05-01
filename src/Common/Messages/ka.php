@@ -1272,4 +1272,5 @@ return [
     'Copying configuration...' => 'პირველადი კონფიგურაციის პარამეტრების შევსება…',
     'Formatting storage partition 4 on disk' => 'მეოთხე დანაყოფის ფორმატირება დისკზე მონაცემების შესანახად',
     'Save storage disk settings' => 'დისკის პარამეტრების შენახვა შესანახად',
+    'auth_TooManyLoginAttempts' => 'ძალიან ბევრი შესვლის მცდელობა. თქვენი IP მისამართი დაბლოკილია %interval% წამით.',
 ];

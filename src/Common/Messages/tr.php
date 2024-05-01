@@ -1238,4 +1238,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'Copying configuration...' => 'Başlangıç yapılandırma ayarları dolduruluyor…',
     'Formatting storage partition 4 on disk' => 'Verileri diskte depolamak için dördüncü bölümü biçimlendirme',
     'Save storage disk settings' => 'Depolama için disk ayarlarını kaydetme',
+    'auth_TooManyLoginAttempts' => 'Çok fazla oturum açma denemesi. IP adresiniz %interval% saniye süreyle engellendi.',
 ];

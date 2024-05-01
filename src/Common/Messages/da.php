@@ -1272,4 +1272,5 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'Copying configuration...' => 'Udfylder indledende konfigurationsindstillinger…',
     'Formatting storage partition 4 on disk' => 'Formatering af den fjerde partition for at gemme data på disken',
     'Save storage disk settings' => 'Gemmer diskindstillinger til opbevaring',
+    'auth_TooManyLoginAttempts' => 'For mange loginforsøg. Din IP-adresse er blokeret i %interval% sekunder.',
 ];

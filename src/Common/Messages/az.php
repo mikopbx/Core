@@ -1271,4 +1271,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'Copying configuration...' => 'İlkin konfiqurasiya parametrləri doldurulur…',
     'Formatting storage partition 4 on disk' => 'Diskdə məlumat saxlamaq üçün dördüncü bölmənin formatlanması',
     'Save storage disk settings' => 'Saxlama üçün disk parametrləri saxlanılır',
+    'auth_TooManyLoginAttempts' => 'Həddindən artıq giriş cəhdləri. IP ünvanınız %interval% saniyəyə bloklanıb.',
 ];

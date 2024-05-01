@@ -1272,4 +1272,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'Copying configuration...' => 'Remplir les paramètres de configuration initiaux…',
     'Formatting storage partition 4 on disk' => 'Formatage de la quatrième partition pour stocker les données sur le disque',
     'Save storage disk settings' => 'Enregistrement des paramètres de disque pour le stockage',
+    'auth_TooManyLoginAttempts' => 'Trop de tentatives de connexion. Votre adresse IP est bloquée pendant %interval% secondes.',
 ];

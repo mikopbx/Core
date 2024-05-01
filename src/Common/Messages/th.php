@@ -1236,4 +1236,5 @@ return [
     'Copying configuration...' => 'กำลังกรอกการตั้งค่าเริ่มต้น…',
     'Formatting storage partition 4 on disk' => 'การฟอร์แมตพาร์ติชันที่สี่เพื่อจัดเก็บข้อมูลบนดิสก์',
     'Save storage disk settings' => 'กำลังบันทึกการตั้งค่าดิสก์สำหรับจัดเก็บข้อมูล',
+    'auth_TooManyLoginAttempts' => 'พยายามเข้าสู่ระบบหลายครั้งเกินไป ที่อยู่ IP ของคุณถูกบล็อกเป็นเวลา %interval% วินาที',
 ];

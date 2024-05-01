@@ -789,7 +789,7 @@ return [
     'auth_ValidatePasswordNotEmpty' => 'Введіть пароль',
     'auth_ValidateLoginNotEmpty' => 'Введіть логін',
     'auth_SubmitButton' => 'Авторизуватись',
-    'auth_WrongLoginPassword' => 'Помилка авторизації',
+    'auth_WrongLoginPassword' => 'Помилка авторизації, у вас залишилося %attempts% спроб',
     'log_CaptureMessage' => 'Запустіть збір мережних пакетів і здійсніть дзвінок або іншу дію, що призводить до збою.
 <br>Система збереже всі пакети, які проходять в цей момент через мережну карту для подальшого аналізу.',
     'dbg_NoDebugInformation' => 'Немає інформації',
@@ -968,7 +968,7 @@ return [
     'VLAN IP address assigned via' => 'VLAN IP: працює через',
     'LAN IP address' => 'LAN IP встановлений вручну',
     'LAN IP address assigned via DHCP' => 'LAN IP призначений через DHCP сервер',
-    'PBX is running in Live or Recovery mode' => 'Система завантажена в режимі відновлення',
+    'PBX is running in Live or Recovery mode' => 'Система завантажена в режимі відновлення (Live CD)',
     'MIKO_PBX' => 'МИКО PBX',
     'Enter a number' => 'Введіть номер команди',
     'Reset admin password' => 'Скинути пароль до web інтерфейсу',
@@ -1272,4 +1272,5 @@ return [
     'Copying configuration...' => 'Заповнення початкових налаштувань конфігурації.',
     'Formatting storage partition 4 on disk' => 'Форматування четвертого розділу для зберігання даних на диску',
     'Save storage disk settings' => 'Збереження налаштувань диска для зберігання',
+    'auth_TooManyLoginAttempts' => 'Занадто багато спроб авторизації. Ваша IP-адреса заблокована на %interval% секунд.',
 ];
