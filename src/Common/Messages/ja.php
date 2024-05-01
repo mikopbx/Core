@@ -779,7 +779,7 @@ return [
     'auth_ValidatePasswordNotEmpty' => 'パスワードを入力してください',
     'auth_ValidateLoginNotEmpty' => 'ログインを入力してください',
     'auth_SubmitButton' => 'ログイン',
-    'auth_WrongLoginPassword' => '認可エラー',
+    'auth_WrongLoginPassword' => '認証に失敗しました。残り %attempts% 回の試行が残っています',
     'log_CaptureMessage' => 'ネットワーク パケットの収集を開始し、失敗の原因となる通話またはその他のアクションを実行します。
 <br>システムは、さらなる分析のために、現時点でネットワーク カードを通過するすべてのパケットを保存します。',
     'dbg_NoDebugInformation' => '情報なし',
@@ -975,7 +975,7 @@ return [
     'VLAN IP address assigned via' => 'VLAN IP：',
     'LAN IP address' => 'LANIPを手動で設定',
     'LAN IP address assigned via DHCP' => 'DHCPサーバーを介して割り当てられたLANIP',
-    'PBX is running in Live or Recovery mode' => 'リカバリモードで起動したシステム',
+    'PBX is running in Live or Recovery mode' => 'システムがリカバリモードで起動されました (Live CD)',
     'MIKO_PBX' => 'MIKO PBX',
     'sd_CapturePcap' => 'ネットワークパケットのキャプチャ',
     'cr_ValidateExtensionNumber' => '内線番号には番号のみを含める必要があります',

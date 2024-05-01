@@ -942,7 +942,7 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'VLAN IP address assigned via' => 'VLAN IP: hoạt động thông qua',
     'LAN IP address' => 'LAN IP được đặt thủ công',
     'LAN IP address assigned via DHCP' => 'IP LAN được chỉ định qua máy chủ DHCP',
-    'PBX is running in Live or Recovery mode' => 'Hệ thống khởi động ở chế độ khôi phục',
+    'PBX is running in Live or Recovery mode' => 'Hệ thống khởi động ở chế độ khôi phục (Live CD)',
     'MIKO_PBX' => 'Tổng đài MIKO',
     'sd_DownloadPcapFileError' => 'Lỗi khi tạo bản lưu trữ nhật ký',
     'sd_CapturePcap' => 'Chụp các gói mạng',
@@ -1238,5 +1238,5 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'Update storage partition 4 on disk' => 'Cập nhật phân vùng thứ tư để lưu trữ dữ liệu trên đĩa',
     'Copying configuration...' => 'Đang điền các cài đặt cấu hình ban đầu…',
     'Save storage disk settings' => 'Lưu cài đặt đĩa để lưu trữ',
-    'auth_TooManyLoginAttempts' => 'Quá nhiều lần thử đăng nhập. Địa chỉ IP của bạn bị chặn trong %interval% giây.',
+    'auth_TooManyLoginAttempts' => 'Quá nhiều lần đăng nhập. Địa chỉ IP của bạn bị chặn trong %interval% giây.',
 ];

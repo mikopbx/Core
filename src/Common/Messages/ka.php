@@ -847,7 +847,7 @@ return [
     'auth_ValidatePasswordNotEmpty' => 'შეიყვანეთ პაროლი',
     'auth_ValidateLoginNotEmpty' => 'შეიყვანეთ სისტემაში',
     'auth_SubmitButton' => 'Შესვლა',
-    'auth_WrongLoginPassword' => 'ავტორიზაციის შეცდომა',
+    'auth_WrongLoginPassword' => 'ავტორიზაცია ვერ მოხერხდა, დაგრჩათ %attempts% მცდელობა',
     'auth_RememberMe' => 'Დამიმახსოვრე',
     'log_CaptureMessage' => 'დაიწყეთ ქსელის პაკეტების შეგროვება და განახორციელეთ ზარი ან სხვა მოქმედება, რომელიც იწვევს მარცხს.
 <br>სისტემა შეინახავს ყველა პაკეტს, რომელიც ამ მომენტში გადის ქსელის ბარათზე შემდგომი ანალიზისთვის.',
@@ -962,7 +962,7 @@ return [
     'topMenu_Support' => 'მხარდაჭერა',
     'topMenu_SearchPlaceholder' => 'შეიყვანეთ თქვენი საძიებო სიტყვა',
     'MIKO_PBX' => 'MIKO PBX',
-    'PBX is running in Live or Recovery mode' => 'სისტემის ჩატვირთვა აღდგენის რეჟიმში',
+    'PBX is running in Live or Recovery mode' => 'სისტემა ჩაიტვირთა აღდგენის რეჟიმში (Live CD)',
     'LAN IP address assigned via DHCP' => 'LAN IP მინიჭებულია DHCP სერვერის საშუალებით',
     'LAN IP address' => 'LAN IP მითითებულია ხელით',
     'VLAN IP address assigned via' => 'VLAN IP: მუშაობს მეშვეობით',
