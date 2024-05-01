@@ -308,13 +308,16 @@ class SessionController extends BaseController
     /**
      * Checks and manages login attempts, implementing throttling to prevent brute-force attacks.
      *
-     * @param string $remoteAddress The IP address of the client making the request.
+     * @param mixed $remoteAddress The IP address of the client making the request.
      * @param int $interval The interval for resetting the count of login attempts.
      * @param int $maxCount The maximum allowed login attempts within the given interval.
      * @return int The remaining number of attempts within the interval.
      */
-    private function countRemainAttempts(string $remoteAddress, bool $increment = true,int $interval=300, int $maxCount=10): int
+    private function countRemainAttempts($remoteAddress, bool $increment = true, int $interval=300, int $maxCount=10): int
     {
+        if (!is_string($remoteAddress)){
+            return $maxCount;
+        }
         $redisAdapter = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
         $zKey = self::getSessionsKeepAliveKey($interval);
         if ($increment){
