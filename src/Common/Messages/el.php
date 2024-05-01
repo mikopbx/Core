@@ -235,7 +235,7 @@ return [
     'log_StartCapturePCAP' => 'Αρχή',
     'log_CaptureMessage' => 'Ξεκινήστε να συλλέγετε πακέτα δικτύου και πραγματοποιήστε μια κλήση ή άλλη ενέργεια που προκαλεί την αποτυχία.
 <br>Το σύστημα θα αποθηκεύσει όλα τα πακέτα που περνούν αυτή τη στιγμή μέσω της κάρτας δικτύου για περαιτέρω ανάλυση.',
-    'auth_WrongLoginPassword' => 'Σφάλμα εξουσιοδότησης',
+    'auth_WrongLoginPassword' => 'Η εξουσιοδότηση απέτυχε, απομένουν %attempts% προσπάθειες',
     'auth_SubmitButton' => 'Σύνδεση',
     'auth_ValidateLoginNotEmpty' => 'Εισαγάγετε τη σύνδεση',
     'auth_ValidatePasswordNotEmpty' => 'εισάγετε τον κωδικό πρόσβασης',
@@ -462,7 +462,7 @@ return [
     'VLAN IP address assigned via' => 'VLAN IP: λειτουργεί πλήρως',
     'LAN IP address' => 'Ρύθμιση IP LAN χειροκίνητα',
     'LAN IP address assigned via DHCP' => 'Εκχωρήθηκε IP LAN μέσω διακομιστή DHCP',
-    'PBX is running in Live or Recovery mode' => 'Το σύστημα εκκινήθηκε σε λειτουργία ανάκτησης',
+    'PBX is running in Live or Recovery mode' => 'Το σύστημα εκκινήθηκε σε λειτουργία ανάκτησης (Live CD)',
     'MIKO_PBX' => 'PBX MIKO',
     'topMenu_SearchPlaceholder' => 'Εισαγάγετε έναν όρο αναζήτησης',
     'topMenu_Support' => 'Υποστήριξη',
@@ -1272,4 +1272,5 @@ return [
     'Partitioning and formatting storage disk' => 'Δημιουργήστε ένα διαμέρισμα και μορφοποιήστε έναν δίσκο για αποθήκευση δεδομένων στη συσκευή',
     'Copying configuration...' => 'Συμπλήρωση αρχικών ρυθμίσεων διαμόρφωσης…',
     'Save storage disk settings' => 'Αποθήκευση ρυθμίσεων δίσκου για αποθήκευση',
+    'auth_TooManyLoginAttempts' => 'Πάρα πολλές προσπάθειες σύνδεσης. Η διεύθυνση IP σας έχει αποκλειστεί για %interval% δευτερόλεπτα.',
 ];

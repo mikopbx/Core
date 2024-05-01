@@ -743,7 +743,7 @@ return [
     'auth_ValidatePasswordNotEmpty' => '输入密码',
     'auth_ValidateLoginNotEmpty' => '输入登录名',
     'auth_SubmitButton' => '登入',
-    'auth_WrongLoginPassword' => '授权错误',
+    'auth_WrongLoginPassword' => '授权失败，您还有 %attempts% 次尝试机会',
     'log_CaptureMessage' => '开始收集网络数据包并进行呼叫或其他导致失败的操作。
 <br>系统会保存此时通过网卡的所有数据包，以供进一步分析。',
     'dbg_NoDebugInformation' => '暂无信息',
@@ -868,7 +868,7 @@ return [
     'ex_dropdownCategory_OUTWORKTIMES' => '非工作时间',
     'ex_dropdownCategory_PBXEXTENSIONMODULES' => '附加模块',
     'MIKO_PBX' => 'MIKO PBX',
-    'PBX is running in Live or Recovery mode' => '系统以恢复模式启动',
+    'PBX is running in Live or Recovery mode' => '系统启动进入恢复模式（Live CD）',
     'LAN IP address assigned via DHCP' => '通过DHCP服务器分配的LAN IP',
     'LAN IP address' => '手动设置的局域网IP',
     'VLAN IP address assigned via' => 'VLAN IP：通过',
@@ -1238,4 +1238,5 @@ return [
     'Update storage partition 4 on disk' => '更新第四个分区以在磁盘上存储数据',
     'Copying configuration...' => '正在填写初始配置设置…',
     'Save storage disk settings' => '保存磁盘设置以进行存储',
+    'auth_TooManyLoginAttempts' => '登录尝试次数过多。您的 IP 地址被屏蔽 %interval% 秒。',
 ];

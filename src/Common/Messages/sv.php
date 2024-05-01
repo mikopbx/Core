@@ -424,7 +424,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'auth_ValidatePasswordNotEmpty' => 'Ange lösenord',
     'auth_ValidateLoginNotEmpty' => 'Ange inloggning',
     'auth_SubmitButton' => 'Logga in',
-    'auth_WrongLoginPassword' => 'Autoriseringsfel',
+    'auth_WrongLoginPassword' => 'Auktoriseringen misslyckades, du har %attempts% försök kvar',
     'log_CaptureMessage' => 'Börja samla in nätverkspaket och ring ett samtal eller annan åtgärd som orsakar felet.
 <br>Systemet kommer att spara alla paket som passerar för närvarande genom nätverkskortet för vidare analys.',
     'dbg_NoDebugInformation' => 'Ingen information',
@@ -875,7 +875,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'VLAN IP address assigned via' => 'VLAN IP: fungerar igenom',
     'LAN IP address' => 'LAN IP ställs in manuellt',
     'LAN IP address assigned via DHCP' => 'LAN IP tilldelas via DHCP-server',
-    'PBX is running in Live or Recovery mode' => 'System startat i återställningsläge',
+    'PBX is running in Live or Recovery mode' => 'System startat i återställningsläge (Live CD)',
     'MIKO_PBX' => 'MIKO PBX',
     'Firewall is now' => 'Brandvägg nu',
     'Check storage' => 'Kontrollera om det finns fel på disken',
@@ -1238,4 +1238,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'Copying configuration...' => 'Fyller i initiala konfigurationsinställningar…',
     'Formatting storage partition 4 on disk' => 'Formatera den fjärde partitionen för att lagra data på disken',
     'Save storage disk settings' => 'Sparar diskinställningar för lagring',
+    'auth_TooManyLoginAttempts' => 'För många inloggningsförsök. Din IP-adress är blockerad i %interval% sekunder.',
 ];

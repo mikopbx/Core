@@ -488,7 +488,7 @@ return [
     'dbg_NoDebugInformation' => 'Aucune information',
     'log_CaptureMessage' => 'Commencez à collecter les paquets réseau et effectuez un appel ou une autre action qui provoque l\'échec.
 <br>Le système enregistrera tous les paquets passant à ce moment par la carte réseau pour une analyse plus approfondie.',
-    'auth_WrongLoginPassword' => 'Erreur d\'autorisation',
+    'auth_WrongLoginPassword' => 'L\'autorisation a échoué, il vous reste %attempts% tentatives',
     'auth_SubmitButton' => 'Connectez-vous',
     'auth_ValidateLoginNotEmpty' => 'Entrez login',
     'auth_ValidatePasswordNotEmpty' => 'Entrez le mot de passe',
@@ -905,7 +905,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'sf_MusicOnHold' => 'Musique en attente',
     'LAN IP address' => 'IP LAN définie manuellement',
     'LAN IP address assigned via DHCP' => 'IP LAN attribuée via le serveur DHCP',
-    'PBX is running in Live or Recovery mode' => 'Système démarré en mode de récupération',
+    'PBX is running in Live or Recovery mode' => 'Système démarré en mode de récupération (Live CD)',
     'Change language' => 'Changer de langue',
     'this cannot be undone!' => 'l\'opération est irréversible !',
     'everything on this device will be erased!' => 'toutes les données de l\'appareil seront supprimées !',
@@ -1272,4 +1272,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'Copying configuration...' => 'Remplir les paramètres de configuration initiaux…',
     'Formatting storage partition 4 on disk' => 'Formatage de la quatrième partition pour stocker les données sur le disque',
     'Save storage disk settings' => 'Enregistrement des paramètres de disque pour le stockage',
+    'auth_TooManyLoginAttempts' => 'Trop de tentatives de connexion. Votre adresse IP est bloquée pendant %interval% secondes.',
 ];
