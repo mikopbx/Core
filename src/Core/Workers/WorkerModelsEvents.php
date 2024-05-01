@@ -28,7 +28,6 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\{BeanstalkClient, SystemMessages};
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudParametersAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
@@ -53,6 +52,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPBXCoreAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPHPFPMAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordingSettingsAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordSavePeriodAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRestAPIWorkerAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRTPAction;
@@ -204,8 +204,8 @@ class WorkerModelsEvents extends WorkerBase
             ReloadVoicemailAction::class,
             ReloadMOHAction::class,
             ReloadWorkerCallEventsAction::class,
+            ReloadRecordingSettingsAction::class,
             ReloadRecordSavePeriodAction::class,
-            ReloadAdviceAction::class,
             ReloadCloudDescriptionAction::class,
             ReloadCloudParametersAction::class
         ];
@@ -265,8 +265,7 @@ class WorkerModelsEvents extends WorkerBase
         }
 
         // Check if enough time has passed since the last change
-        $delta = time() - $this->last_change;
-        if ($delta < $this->timeout) {
+        if ((time() - $this->last_change)<$this->timeout) {
             SystemMessages::sysLogMsg(__METHOD__, "Wait more time before starting the reload.", LOG_DEBUG);
             return;
         }
@@ -322,9 +321,11 @@ class WorkerModelsEvents extends WorkerBase
                 $this->planReloadAction($receivedMessage['action'], $receivedMessage['parameters']);
 
             } elseif ($receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED) {
-
                 // Fill the modified tables array with the changes from the received message
                 $this->fillModifiedTables($receivedMessage);
+
+                // Check the model events to renew advice cache
+                WorkerPrepareAdvice::afterModelEvents($receivedMessage);
             }
 
             // Start the reload process if there are modified tables
@@ -401,7 +402,7 @@ class WorkerModelsEvents extends WorkerBase
     /**
      * Fills the modified tables array based on the models dependency table and the called class.
      *
-     * @param string $called_class The called model class.
+     * @param string $modifiedModel The called model class.
      * @param array $modelData Data received during model change.
      * @return void
      */

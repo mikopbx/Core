@@ -83,7 +83,7 @@ class PbxSettings extends ModelsBase
     {
         return [
             PbxSettingsConstants::PBX_NAME => 'PBX system',
-            PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE => 'REAL',// VMWARE,HYPER-V,AWS,AZURE,DOCKER
+            PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE => 'BARE METAL',
             PbxSettingsConstants::PBX_DESCRIPTION => '',
             PbxSettingsConstants::RESTART_EVERY_NIGHT => '0',
             PbxSettingsConstants::SIP_PORT => '5060',
@@ -237,7 +237,7 @@ class PbxSettings extends ModelsBase
     }
 
     /**
-     * Set value for key
+     * Set value for a key
      * @param $key string settings key
      * @param $value string value
      * @return bool Whether the save was successful or not.

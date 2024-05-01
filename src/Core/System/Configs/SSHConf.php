@@ -190,11 +190,9 @@ class SSHConf extends Injectable
 
         // Security hash check and notification
         $currentHash = md5_file('/etc/shadow');
-        $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE, $currentHash);
+        PbxSettings::setValue(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE, $currentHash);
         if ($hashString !== md5($password)) {
-            $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING, md5($password));
-            Notifications::sendAdminNotification('adv_SSHPasswordWasChangedSubject', ['adv_SSHPasswordWasChangedBody'], true);
-            WorkerPrepareAdvice::afterChangeSSHConf();
+            PbxSettings::setValue(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING, md5($password));
         }
     }
 

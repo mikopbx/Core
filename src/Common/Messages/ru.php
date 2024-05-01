@@ -945,7 +945,8 @@ return [
     'auth_ValidatePasswordNotEmpty' => 'Введите пароль',
     'auth_ValidateLoginNotEmpty' => 'Введите логин',
     'auth_SubmitButton' => 'Авторизоваться',
-    'auth_WrongLoginPassword' => 'Ошибка авторизации',
+    'auth_WrongLoginPassword' => 'Ошибка авторизации, у вас осталось %attempts% попыток',
+    'auth_TooManyLoginAttempts'=>'Слишком много попыток авторизации. Ваш IP адрес заблокирован на %interval% секунд.',
     'auth_RememberMe' => 'Запомнить меня',
     'auth_DefaultCloudPasswordInstructions' => 'Пароль по-умолчанию равен уникальному идентификатору виртуальной машины в облаке',
     'log_CaptureMessage' => 'Запустите сбор сетевых пакетов и выполните звонок или другое действие, приводящее к сбою. 

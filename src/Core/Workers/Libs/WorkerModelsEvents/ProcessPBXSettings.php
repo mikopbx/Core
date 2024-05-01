@@ -19,7 +19,6 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
 use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
@@ -33,6 +32,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNTPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadParkingAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPHPFPMAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordingSettingsAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordSavePeriodAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRestAPIWorkerAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRTPAction;
@@ -321,18 +321,6 @@ class ProcessPBXSettings extends Injectable
             ],
         ];
 
-        // Advice
-        $tables[] = [
-            'keys' => [
-                PbxSettingsConstants::WEB_ADMIN_PASSWORD,
-                PbxSettingsConstants::SSH_PASSWORD,
-                PbxSettingsConstants::PBX_FIREWALL_ENABLED,
-            ],
-            'actions' => [
-                ReloadAdviceAction::class,
-            ],
-        ];
-
         // Sentry
         $tables[] = [
             'keys' => [
@@ -350,6 +338,18 @@ class ProcessPBXSettings extends Injectable
             ],
             'actions' => [
                 ReloadCloudDescriptionAction::class,
+            ],
+        ];
+
+        // Recording settings for WorkerCallEvents
+        $tables[] = [
+            'keys' => [
+                PbxSettingsConstants::PBX_RECORD_CALLS_INNER,
+                PbxSettingsConstants::PBX_RECORD_CALLS,
+                PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD,
+            ],
+            'actions' => [
+                ReloadRecordingSettingsAction::class,
             ],
         ];
 

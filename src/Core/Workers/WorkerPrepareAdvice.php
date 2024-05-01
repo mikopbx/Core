@@ -21,17 +21,23 @@ namespace MikoPBX\Core\Workers;
 
 use Generator;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\AsteriskManagerUsers;
+use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAmiPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckConnection;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckCorruptedFiles;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckFirewalls;
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckPasswords;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSIPPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHConfig;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckStorage;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckUpdates;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckWebPasswords;
 use Phalcon\Di;
 use Recoil\React\ReactKernel;
 use Throwable;
@@ -49,8 +55,11 @@ class WorkerPrepareAdvice extends WorkerBase
     public const ARR_ADVICE_TYPES = [
         ['type' => CheckConnection::class, 'cacheTime' => 120],
         ['type' => CheckCorruptedFiles::class, 'cacheTime' => 3600],
-        ['type' => CheckPasswords::class, 'cacheTime' => 86400, 'dependent'=>PbxSettings::class],
-        ['type' => CheckFirewalls::class, 'cacheTime' => 86400, 'dependent'=>PbxSettings::class],
+        ['type' => CheckWebPasswords::class, 'cacheTime' => 864000],
+        ['type' => CheckSSHPasswords::class, 'cacheTime' => 864000],
+        ['type' => CheckFirewalls::class, 'cacheTime' => 864000],
+        ['type' => CheckSIPPasswords::class, 'cacheTime' => 864000],
+        ['type' => CheckAmiPasswords::class, 'cacheTime' => 864000],
         ['type' => CheckStorage::class, 'cacheTime' => 3600],
         ['type' => CheckUpdates::class, 'cacheTime' => 86400],
         ['type' => CheckSSHConfig::class, 'cacheTime' => 3600],
@@ -58,6 +67,52 @@ class WorkerPrepareAdvice extends WorkerBase
 
     // Array of generated advice
     public array $messages;
+
+    /**
+     * Cleanup cache for advice after changing any models
+     * @param array $record parameters of the event
+     * @return void
+     */
+    public static function afterModelEvents(array $record): void
+    {
+        SystemMessages::sysLogMsg(__METHOD__, "After models changes:" . PHP_EOL . json_encode($record, JSON_PRETTY_PRINT), LOG_DEBUG);
+        $di = Di::getDefault();
+        $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $cacheKeys = [];
+        switch ($record['model']) {
+            case PbxSettings::class:
+                switch ($record['recordId']) {
+                    case PbxSettingsConstants::SSH_PASSWORD_HASH_STRING:
+                    case PbxSettingsConstants::SSH_PASSWORD:
+                    case PbxSettingsConstants::SSH_PASSWORD_HASH_FILE:
+                        $cacheKeys[self::getCacheKey(CheckSSHPasswords::class)] = true;
+                        $cacheKeys[self::getCacheKey(CheckSSHConfig::class)] = true;
+                        break;
+                    case PbxSettingsConstants::WEB_ADMIN_PASSWORD:
+                        $cacheKeys[self::getCacheKey(CheckWebPasswords::class)] = true;
+                        break;
+                    case PbxSettingsConstants::PBX_FIREWALL_ENABLED:
+                        $cacheKeys[self::getCacheKey(CheckFirewalls::class)] = true;
+                        break;
+                    default:
+                }
+                break;
+            case AsteriskManagerUsers::class:
+                $cacheKeys[self::getCacheKey(CheckAmiPasswords::class)] = true;
+                break;
+            case Sip::class:
+                $cacheKeys[self::getCacheKey(CheckSIPPasswords::class)] = true;
+                break;
+            case NetworkFilters::class:
+                $cacheKeys[self::getCacheKey(CheckFirewalls::class)] = true;
+                break;
+            default:
+        }
+        SystemMessages::sysLogMsg(__METHOD__, "Cleanup the next caches:" . PHP_EOL . json_encode($cacheKeys, JSON_PRETTY_PRINT), LOG_DEBUG);
+        foreach ($cacheKeys as $cacheKey => $value) {
+            $managedCache->delete($cacheKey);
+        }
+    }
 
     /**
      * Starts processing advice types.
@@ -116,7 +171,7 @@ class WorkerPrepareAdvice extends WorkerBase
     }
 
     /**
-     * Prepares redis cache key for advice type
+     * Prepares a redis cache key for an advice type
      * @param string $currentAdviceType current advice type
      * @return string cache key
      */
@@ -124,37 +179,7 @@ class WorkerPrepareAdvice extends WorkerBase
     {
         return 'WorkerPrepareAdvice:' . $currentAdviceType;
     }
-
-    /**
-     * Cleanup cache for all advice types after change dependent models and PBX settings
-     * on the WorkerModelsEvents worker.
-     * @return void
-     */
-    public static function afterChangePBXSettings(): void
-    {
-        $di = Di::getDefault();
-        $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        foreach (self::ARR_ADVICE_TYPES as $adviceType) {
-            if (array_key_exists('dependent', $adviceType) and $adviceType['dependent'] === PbxSettings::class) {
-                $cacheKey = self::getCacheKey($adviceType['type']);
-                $managedCache->delete($cacheKey);
-            }
-        }
-        Processes::processPHPWorker(WorkerPrepareAdvice::class);
-    }
-
-    /**
-     * Cleanup cache for all advice types after change SSH external configuration
-     * @return void
-     */
-    public static function afterChangeSSHConf(): void
-    {
-        $di = Di::getDefault();
-        $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $cacheKey = self::getCacheKey(CheckSSHConfig::class);
-        $managedCache->delete($cacheKey);
-    }
 }
 
-// Start worker process
+// Start a worker process
 WorkerPrepareAdvice::startWorker($argv ?? []);

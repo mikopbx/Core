@@ -917,7 +917,7 @@ return [
     'auth_ValidatePasswordNotEmpty' => 'ใส่รหัสผ่าน',
     'auth_ValidateLoginNotEmpty' => 'เข้าสู่ระบบ',
     'auth_SubmitButton' => 'เข้าสู่ระบบ',
-    'auth_WrongLoginPassword' => 'ข้อผิดพลาดในการอนุญาต',
+    'auth_WrongLoginPassword' => 'การอนุมัติล้มเหลว คุณพยายามได้อีก %attempts% ครั้ง',
     'auth_RememberMe' => 'จดจำฉัน',
     'log_CaptureMessage' => 'เริ่มรวบรวมแพ็กเก็ตเครือข่ายและโทรออกหรือดำเนินการอื่นที่ทำให้เกิดความล้มเหลว
 <br>ระบบจะบันทึกแพ็กเก็ตทั้งหมดที่ส่งผ่านการ์ดเครือข่ายในขณะนี้เพื่อการวิเคราะห์เพิ่มเติม',
@@ -1084,7 +1084,7 @@ return [
     'topMenu_SearchPlaceholder' => 'ป้อนคำค้นหาของคุณ',
     'topMenu_SidebarButton' => 'เมนู',
     'MIKO_PBX' => 'มิโกะ PBX',
-    'PBX is running in Live or Recovery mode' => 'ระบบบูตเข้าสู่โหมดการกู้คืน',
+    'PBX is running in Live or Recovery mode' => 'ระบบบูตเข้าสู่โหมดการกู้คืน (Live CD)',
     'LAN IP address assigned via DHCP' => 'LAN IP ที่กำหนดผ่านเซิร์ฟเวอร์ DHCP',
     'LAN IP address' => 'LAN IP ตั้งค่าด้วยตนเอง',
     'VLAN IP address assigned via' => 'VLAN IP: ทำงานผ่าน',
@@ -1236,4 +1236,5 @@ return [
     'Copying configuration...' => 'กำลังกรอกการตั้งค่าเริ่มต้น…',
     'Formatting storage partition 4 on disk' => 'การฟอร์แมตพาร์ติชันที่สี่เพื่อจัดเก็บข้อมูลบนดิสก์',
     'Save storage disk settings' => 'กำลังบันทึกการตั้งค่าดิสก์สำหรับจัดเก็บข้อมูล',
+    'auth_TooManyLoginAttempts' => 'พยายามเข้าสู่ระบบมากเกินไป ที่อยู่ IP ของคุณถูกบล็อกเป็นเวลา %interval% วินาที',
 ];

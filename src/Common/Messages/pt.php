@@ -147,7 +147,7 @@ return [
     'dbg_NoDebugInformation' => 'Nenhuma informação',
     'log_CaptureMessage' => 'Comece a coletar pacotes de rede e faça uma chamada ou outra ação que cause a falha.
 <br>O sistema salvará todos os pacotes que passarem neste momento pela placa de rede para posterior análise.',
-    'auth_WrongLoginPassword' => 'Erro de autorização',
+    'auth_WrongLoginPassword' => 'Falha na autorização, você tem %attempts% tentativas restantes',
     'auth_SubmitButton' => 'Entrar',
     'auth_ValidateLoginNotEmpty' => 'Digite o login',
     'auth_ValidatePasswordNotEmpty' => 'Digite a senha',
@@ -906,7 +906,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'VLAN IP address assigned via' => 'IP VLAN: funciona por meio de',
     'LAN IP address' => 'IP LAN definido manualmente',
     'LAN IP address assigned via DHCP' => 'IP LAN atribuído via servidor DHCP',
-    'PBX is running in Live or Recovery mode' => 'Sistema inicializado em modo de recuperação',
+    'PBX is running in Live or Recovery mode' => 'Sistema inicializado em modo de recuperação (Live CD)',
     'MIKO_PBX' => 'MIKO PBX',
     'Firewall' => 'Habilitar / Desabilitar Firewall',
     'Ping host' => 'Endereços de ping',
@@ -1272,4 +1272,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'Copying configuration...' => 'Preenchendo as configurações iniciais…',
     'Formatting storage partition 4 on disk' => 'Formatando a quarta partição para armazenar dados no disco',
     'Save storage disk settings' => 'Salvando configurações de disco para armazenamento',
+    'auth_TooManyLoginAttempts' => 'Muitas tentativas de login. Seu endereço IP está bloqueado por %interval% segundos.',
 ];

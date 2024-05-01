@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,27 +25,55 @@ use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\AclProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 
 /**
- * SessionController
+ * Class SessionController
  *
- * Allows authenticating users
+ * Manages user sessions for the admin cabinet, handling user authentication,
+ * session initiation, and logout functionalities.
+ *
+ * @package MikoPBX\AdminCabinet\Controllers
  */
 class SessionController extends BaseController
 {
+    /**
+     * Constant for session ID used within the admin cabinet.
+     */
     public const SESSION_ID = 'authAdminCabinet';
 
+    /**
+     * Constant for user role within the session.
+     */
     public const ROLE = 'role';
 
+    /**
+     * Constant for the default home page after login.
+     */
     public const HOME_PAGE = 'homePage';
 
+    /**
+     * Constant for the user's name within the session.
+     */
     public const USER_NAME = 'userName';
 
+    /**
+     * Constant for maximum login attempts within the interval.
+     */
+    private const LOGIN_ATTEMPTS=10;
 
     /**
-     * Renders the login page with form and settings values.
+     * Constant for the interval to reset login attempts (in seconds).
+     */
+    private const LOGIN_ATTEMPTS_INTERVAL=300;
+
+    /**
+     * Renders the login page.
+     *
+     * This method prepares and displays the login form along with system settings
+     * such as PBX name and description.
      */
     public function indexAction(): void
     {
@@ -56,16 +84,37 @@ class SessionController extends BaseController
         }
         $this->view->setVar('DescriptionFromSettings', $description);
         $this->view->setVar('form', new LoginForm());
+
+        $remoteAddress = $this->request->getClientAddress(true);
+        $remainAttempts = $this->countRemainAttempts($remoteAddress,false,self::LOGIN_ATTEMPTS_INTERVAL,self::LOGIN_ATTEMPTS);
+        $this->view->remainAttempts = $remainAttempts;
+        $this->view->loginAttemptsInterval = self::LOGIN_ATTEMPTS_INTERVAL;
     }
 
     /**
-     * Handles the login form submission and authentication.
+     * Processes the login form submission.
+     *
+     * Validates user credentials and initializes a user session on success.
+     * Implements login throttling by tracking login attempts and blocking further attempts if necessary.
+     *
+     * @throws ErrorException Throws an exception if there is an error during the process.
      */
     public function startAction(): void
     {
         if (!$this->request->isPost()) {
             $this->forward('session/index');
         }
+        $remoteAddress = $this->request->getClientAddress(true);
+        $remainAttempts = $this->countRemainAttempts($remoteAddress,true,self::LOGIN_ATTEMPTS_INTERVAL,self::LOGIN_ATTEMPTS);
+        if ($remainAttempts === 0) {
+            $userAgent = $this->request->getUserAgent();
+            $this->loggerAuth->warning("From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
+            $this->flash->error($this->translation->_('auth_TooManyLoginAttempts',['interval'=>self::LOGIN_ATTEMPTS_INTERVAL]));
+            $this->view->success = true;
+            $this->view->reload = $this->url->get('session/index');
+            return;
+        }
+
         $loginFromUser = (string)$this->request->getPost('login', null, 'guest');
         $passFromUser = (string)$this->request->getPost('password', null, 'guest');
         $this->flash->clear();
@@ -111,18 +160,18 @@ class SessionController extends BaseController
         } else {
             // Authentication failed
             $this->view->success = false;
-            $this->flash->error($this->translation->_('auth_WrongLoginPassword'));
-            $remoteAddress = $this->request->getClientAddress(true);
-            $userAgent = $this->request->getUserAgent();
-            $this->loggerAuth->warning("From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
+            $this->flash->error($this->translation->_('auth_WrongLoginPassword',['attempts'=>$remainAttempts]));
             $this->clearAuthCookies();
         }
 
     }
 
     /**
-     * Register an authenticated user into session data
+     * Registers a user session with specific parameters.
      *
+     * This method sets session variables and optionally sets a cookie for remembering the session.
+     *
+     * @param array $sessionParams Parameters to store in the session.
      */
     private function _registerSession(array $sessionParams): void
     {
@@ -136,9 +185,11 @@ class SessionController extends BaseController
     }
 
     /**
-     * Setups random password and selector to browser cookie storage to remember me facility
+     * Sets up a cookie in the user's browser to remember the session.
      *
-     * @param array $sessionParams
+     * This method is called if the user selects the 'remember me' option on the login form.
+     *
+     * @param array $sessionParams Parameters associated with the session.
      */
     private function updateRememberMeCookies(array $sessionParams): void
     {
@@ -170,7 +221,9 @@ class SessionController extends BaseController
     }
 
     /**
-     * Clears remember me cookies
+     * Clears authentication cookies.
+     *
+     * This method is typically called during logout to ensure that session cookies are properly cleaned up.
      */
     private function clearAuthCookies(): void
     {
@@ -188,8 +241,9 @@ class SessionController extends BaseController
     }
 
     /**
-     * Finishes the active session redirecting to the index
+     * Ends the user's session and redirects to the login page.
      *
+     * This method is used to log out the user, clearing all session data and authentication cookies.
      */
     public function endAction(): void
     {
@@ -199,11 +253,15 @@ class SessionController extends BaseController
     }
 
     /**
-     * Checks if the provided login and password match the stored values
+     * Verifies if provided credentials match stored values.
+     *
+     * This method checks user-provided login and password against stored credentials,
+     * using secure methods to compare hashed passwords.
+     *
      * @param string $login Login name from user input.
      * @param string $password Password from user input.
-     * @return bool
-     * @throws ErrorException
+     * @return bool True if credentials are correct, otherwise false.
+     * @throws ErrorException Throws an exception if there is an error during the process.
      */
     private function checkCredentials(string $login, string $password):bool
     {
@@ -231,5 +289,45 @@ class SessionController extends BaseController
         }
         restore_error_handler();
         return $result;
+    }
+
+    /**
+     *
+     * @param int $interval
+     * @return string
+     */
+    private static function getSessionsKeepAliveKey(int $interval): string
+    {
+        // Anti FLOOD
+        $timestamp = time();
+        // Calculate the start of the 5-minute interval
+        $interval_start = floor($timestamp / $interval) * $interval;
+        return "SessionController:LoginAttempts:$interval_start";
+    }
+
+    /**
+     * Checks and manages login attempts, implementing throttling to prevent brute-force attacks.
+     *
+     * @param mixed $remoteAddress The IP address of the client making the request.
+     * @param int $interval The interval for resetting the count of login attempts.
+     * @param int $maxCount The maximum allowed login attempts within the given interval.
+     * @return int The remaining number of attempts within the interval.
+     */
+    private function countRemainAttempts($remoteAddress, bool $increment = true, int $interval=300, int $maxCount=10): int
+    {
+        if (!is_string($remoteAddress)){
+            return $maxCount;
+        }
+        $redisAdapter = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+        $zKey = self::getSessionsKeepAliveKey($interval);
+        if ($increment){
+            $redisAdapter->zIncrBy($zKey, 1, $remoteAddress);
+        } else {
+            $redisAdapter->zIncrBy($zKey, 0, $remoteAddress);
+        }
+        $redisAdapter->expire($zKey, $interval);
+
+        $count = $redisAdapter->zScore($zKey, $remoteAddress);
+        return Max($maxCount-$count,0);
     }
 }

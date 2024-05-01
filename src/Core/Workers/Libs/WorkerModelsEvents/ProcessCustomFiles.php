@@ -19,7 +19,6 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
 
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadH323Action;
@@ -48,7 +47,6 @@ class ProcessCustomFiles extends Injectable
             'filePath' => '*',
             'actions' => [
                 ReloadPBXCoreAction::class,
-                ReloadAdviceAction::class,
             ],
         ];
 

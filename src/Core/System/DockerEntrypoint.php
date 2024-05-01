@@ -26,19 +26,23 @@ use Phalcon\Di;
 use ReflectionClass;
 
 require_once 'Globals.php';
+
 /**
- * The entry point class for MikoPBX.
+ * Defines the entry point for the MikoPBX system when deployed in a Docker environment.
+ * This class is responsible for initializing the system, configuring environment settings,
+ * preparing databases, and handling system startup and shutdown behaviors.
  */
 class DockerEntrypoint extends Di\Injectable
 {
-    public const  PATH_DB = '/cf/conf/mikopbx.db';
+    private const  PATH_DB = '/cf/conf/mikopbx.db';
     private const  pathInc = '/etc/inc/mikopbx-settings.json';
     public float $workerStartTime;
-    private array $incSettings;
+    private array $jsonSettings;
     private array $settings;
 
     /**
-     * Constructs the Entrypoint class.
+     * Constructor for the DockerEntrypoint class.
+     * Registers the shutdown handler and enables asynchronous signal handling.
      */
     public function __construct()
     {
@@ -48,7 +52,8 @@ class DockerEntrypoint extends Di\Injectable
     }
 
     /**
-     * Handles the shutdown event.
+     * Handles the shutdown event for the Docker container.
+     * Logs the time taken since the worker start and any last-minute errors.
      */
     public function shutdownHandler(): void
     {
@@ -63,7 +68,9 @@ class DockerEntrypoint extends Di\Injectable
     }
 
     /**
-     * Starts the MikoPBX system.
+     * Initiates the startup sequence for the MikoPBX system.
+     * Processes include system log initialization, database preparation, settings retrieval and application,
+     * and triggering system startup routines.
      */
     public function start(): void
     {
@@ -72,7 +79,89 @@ class DockerEntrypoint extends Di\Injectable
         // Start the system log.
         Processes::mwExecBg($syslogd . ' -S -C512');
 
+        // Update WWW user id and group id.
+        $this->changeWwwUserID();
+
         // Prepare database
+        $this->prepareDatabase();
+
+        // Get default settings
+        $this->getDefaultSettings();
+
+        // Update DB values
+        $this->applyEnvironmentSettings();
+
+        // Start the MikoPBX system.
+        $this->startTheMikoPBXSystem();
+    }
+
+    /**
+     * Updates the system user 'www' with new user and group IDs if they are provided through environment variables
+     * or from existing configuration files.
+     */
+    private function changeWwwUserID(): void
+    {
+        $newUserId = getenv('ID_WWW_USER');
+        $newGroupId = getenv('ID_WWW_GROUP');
+        SystemMessages::sysLogMsg(__METHOD__, ' - Check user id and group id for www', LOG_INFO);
+        $pidIdPath = '/cf/conf/user.id';
+        $pidGrPath = '/cf/conf/group.id';
+
+        if (empty($newUserId) && file_exists($pidIdPath)) {
+            $newUserId = file_get_contents($pidIdPath);
+        }
+        if (empty($newGroupId) && file_exists($pidGrPath)) {
+            $newGroupId = file_get_contents($pidGrPath);
+        }
+
+        $commands = [];
+        $userID = 'www';
+        $grep = Util::which('grep');
+        $find = Util::which('find');
+        $sed = Util::which('sed');
+        $cut = Util::which('cut');
+        $chown = Util::which('chown');
+        $chgrp = Util::which('chgrp');
+        $currentUserId = trim(shell_exec("$grep '^$userID:' < /etc/shadow | $cut -d ':' -f 3"));
+        if ($currentUserId!=='' && !empty($newUserId) && $currentUserId !== $newUserId) {
+            SystemMessages::sysLogMsg(__METHOD__, " - Old $userID user id: $currentUserId; New $userID user id: $newUserId", LOG_DEBUG);
+            $commands[] = "$sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
+            $id = '';
+            if (file_exists($pidIdPath)) {
+                $id = file_get_contents($pidIdPath);
+            }
+            if ($id !== $newUserId) {
+                $commands[] = "$find / -not -path '/proc/*' -user $currentUserId -exec $chown -h $userID {} \;";
+                file_put_contents($pidIdPath, $newUserId);
+            }
+        }
+
+        $currentGroupId = trim(shell_exec("$grep '^$userID:' < /etc/shadow | $cut -d ':' -f 4"));
+        if ($currentGroupId!=='' && !empty($newGroupId) && $currentGroupId !== $newGroupId) {
+            SystemMessages::sysLogMsg(__METHOD__, " - Old $userID group id: $currentGroupId; New $userID group id: $newGroupId", LOG_DEBUG);
+            $commands[] = "$sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
+            $commands[] = "$sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/shadow";
+
+            $id = '';
+            if (file_exists($pidGrPath)) {
+                $id = file_get_contents($pidGrPath);
+            }
+            if ($id !== $newGroupId) {
+                $commands[] = "$find / -not -path '/proc/*' -group $currentGroupId -exec $chgrp -h $newGroupId {} \;";
+                file_put_contents($pidGrPath, $newGroupId);
+            }
+        }
+        if (!empty($commands)) {
+            passthru(implode('; ', $commands));
+        }
+    }
+
+    /**
+     * Prepares the SQLite database for use, checking for table existence and restoring from defaults if necessary.
+     * @return array An array containing the results of the database check commands.
+     */
+    public function prepareDatabase(): array
+    {
         $sqlite3 = Util::which('sqlite3');
         $rm = Util::which('rm');
         $cp = Util::which('cp');
@@ -83,34 +172,21 @@ class DockerEntrypoint extends Di\Injectable
             Processes::mwExec("$rm -rf " . self::PATH_DB . "; $cp /conf.default/mikopbx.db " . self::PATH_DB);
             Util::addRegularWWWRights(self::PATH_DB);
         }
-        // Get default settings
-        $this->initSettings();
-
-        // Update DB values
-        $this->applyEnvironmentSettings();
-
-        // Update WWW user id and group id.
-        $this->changeWwwUserID();
-
-        // Start the MikoPBX system.
-        shell_exec("$rm -rf /tmp/*");
-        $commands = 'exec </dev/console >/dev/console 2>/dev/console;' .
-            '/etc/rc/bootup 2>/dev/null && ' .
-            '/etc/rc/bootup_pbx 2>/dev/null';
-        passthru($commands);
+        return array($rm, $out);
     }
 
     /**
-     * Initializes the settings. Required for checking and updating port settings.
+     * Retrieves default settings from JSON configuration and the database,
+     * setting up initial configuration states required for system operations.
      */
-    private function initSettings(): void
+    private function getDefaultSettings(): void
     {
         // Get settings from mikopbx-settings.json
         $jsonString = file_get_contents(self::pathInc);
         try {
-            $this->incSettings = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
+            $this->jsonSettings = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            $this->incSettings = [];
+            $this->jsonSettings = [];
             throw new Error(self::pathInc . " has broken format");
         }
 
@@ -131,112 +207,81 @@ class DockerEntrypoint extends Di\Injectable
     }
 
     /**
-     * Updates a setting on DB or in mikopbx-settings.json with a new value.
-     *
-     * @param string $dataPath
-     * @param string $newValue
-     */
-    private function updateSetting(string $dataPath, string $newValue): void
-    {
-        $result = true;
-        if (!empty($this->incSettings[$dataPath]['port'])) {
-            $this->incSettings[$dataPath]['port'] = $newValue;
-            $newData = json_encode($this->incSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-            $res = file_put_contents(self::pathInc, $newData);
-            $result = (false !== $res);
-            SystemMessages::sysLogMsg(__METHOD__, " - Update $dataPath to '$newValue' in ini file", LOG_INFO);
-        } elseif (array_key_exists($dataPath, $this->settings) && $this->settings[$dataPath]!==$newValue){
-            $sqlite3 = Util::which('sqlite3');
-            $res = Processes::mwExec("$sqlite3 " . self::PATH_DB . " 'UPDATE m_PbxSettings SET value=\"$newValue\" WHERE key=\"$dataPath\"'");
-            $result = ($res === 0);
-            SystemMessages::sysLogMsg(__METHOD__, " - Update $dataPath to '$newValue' in DB", LOG_INFO);
-        }
-        if (!$result){
-            SystemMessages::sysLogMsg(__METHOD__, " - Update $dataPath failed", LOG_ERR);
-        }
-    }
-
-    /**
-     * Changes the ID of the WWW user.
-     *
-     */
-    private function changeWwwUserID(): void
-    {
-        $newUserId = getenv('ID_WWW_USER');
-        $newGroupId = getenv('ID_WWW_GROUP');
-        SystemMessages::sysLogMsg(__METHOD__,  ' - Check user id and group id for www',LOG_INFO);
-        $pidIdPath = '/cf/conf/user.id';
-        $pidGrPath = '/cf/conf/group.id';
-
-        if (empty($newUserId) && file_exists($pidIdPath)) {
-            $newUserId = file_get_contents($pidIdPath);
-        }
-        if (empty($newGroupId) && file_exists($pidGrPath)) {
-            $newGroupId = file_get_contents($pidGrPath);
-        }
-
-        $commands = [];
-        $userID = 'www';
-        $grep = Util::which('grep');
-        $find = Util::which('find');
-        $sed = Util::which('sed');
-        $cut = Util::which('cut');
-        $chown = Util::which('chown');
-        $chgrp = Util::which('chgrp');
-        $currentUserId = trim(shell_exec("$grep '^$userID:' < /etc/shadow | $cut -d ':' -f 3"));
-        $currentGroupId = trim(shell_exec("$grep '^$userID:' < /etc/shadow | $cut -d ':' -f 4"));
-
-        SystemMessages::sysLogMsg(__METHOD__," - Old $userID user id: $currentUserId; New $userID user id: $newUserId" , LOG_DEBUG);
-        SystemMessages::sysLogMsg(__METHOD__," - Old $userID group id: $currentGroupId; New $userID user id: $newGroupId", LOG_DEBUG);
-        if (!empty($currentUserId) && !empty($newUserId) && $currentUserId !== $newUserId) {
-            $commands[] = "$sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
-            $id = '';
-            if (file_exists($pidIdPath)) {
-                $id = file_get_contents($pidIdPath);
-            }
-            if ($id !== $newUserId) {
-                $commands[] = "$find / -not -path '/proc/*' -user $currentUserId -exec $chown -h $userID {} \;";
-                file_put_contents($pidIdPath, $newUserId);
-            }
-        }
-        if (!empty($currentGroupId) && !empty($newGroupId) && $currentGroupId !== $newGroupId) {
-            $commands[] = "$sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
-            $commands[] = "$sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/shadow";
-
-            $id = '';
-            if (file_exists($pidGrPath)) {
-                $id = file_get_contents($pidGrPath);
-            }
-            if ($id !== $newGroupId) {
-                $commands[] = "$find / -not -path '/proc/*' -group $currentGroupId -exec $chgrp -h $newGroupId {} \;";
-                file_put_contents($pidGrPath, $newGroupId);
-            }
-        }
-        if (!empty($commands)) {
-            passthru(implode('; ', $commands));
-        }
-    }
-
-    /**
-     * Applies settings from environment variables to system constants.
+     * Applies configuration settings from environment variables to the system,
+     * updating both database and JSON stored settings as necessary.
      */
     private function applyEnvironmentSettings(): void
     {
-        $extraConstants = [
-            'BEANSTALK_PORT' => 'beanstalk',
-            'REDIS_PORT' => 'redis',
-            'GNATS_PORT' => 'gnats',
-        ];
-
         $reflection = new ReflectionClass(PbxSettingsConstants::class);
-        $constants = array_merge($reflection->getConstants(), $extraConstants);
+        $constants = $reflection->getConstants();
 
         foreach ($constants as $name => $dbKey) {
             $envValue = getenv($name);
             if ($envValue !== false) {
-                $this->updateSetting($dbKey, $envValue);
+                switch ($dbKey) {
+                    case PbxSettingsConstants::BEANSTALK_PORT:
+                    case PbxSettingsConstants::REDIS_PORT:
+                    case PbxSettingsConstants::GNATS_PORT:
+                        $this->updateJsonSettings($dbKey, 'port', intval($envValue));
+                        break;
+                    case PbxSettingsConstants::GNATS_HTTP_PORT:
+                        $this->updateJsonSettings('gnats', 'httpPort', intval($envValue));
+                        break;
+                    default:
+                        $this->updateDBSetting($dbKey, $envValue);
+                        break;
+                }
             }
         }
+    }
+
+    /**
+     * Updates the specified setting in the JSON configuration file.
+     * @param string $path The JSON path where the setting is stored.
+     * @param string $key The setting key to update.
+     * @param mixed $newValue The new value to set.
+     */
+    private function updateJsonSettings(string $path, string $key, $newValue): void
+    {
+        if ($this->jsonSettings[$path][$key] ?? null !== $newValue)
+            $this->jsonSettings[$path][$key] = $newValue;
+        $newData = json_encode($this->jsonSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        file_put_contents(self::pathInc, $newData);
+        SystemMessages::sysLogMsg(__METHOD__, " - Update $path:$key to '$newValue' in /etc/inc/mikopbx-settings.json", LOG_INFO);
+    }
+
+    /**
+     * Updates a specified setting directly in the database.
+     * @param string $key The key of the setting to update.
+     * @param string $newValue The new value for the setting.
+     */
+    private function updateDBSetting(string $key, string $newValue): void
+    {
+        if (array_key_exists($key, $this->settings) && $this->settings[$key] !== $newValue) {
+            $sqlite3 = Util::which('sqlite3');
+            $dbPath =  self::PATH_DB;
+            $out = [];
+            $command = "$sqlite3 $dbPath \"UPDATE m_PbxSettings SET value='$newValue' WHERE key='$key'\"";
+            $res = Processes::mwExec($command, $out);
+            if ($res === 0) {
+                SystemMessages::sysLogMsg(__METHOD__, " - Update $key to '$newValue' in DB", LOG_INFO);
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, " - Update $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
+            }
+        }
+    }
+
+    /**
+     * Executes the final commands to start the MikoPBX system, clearing temporary files and running system scripts.
+     */
+    public function startTheMikoPBXSystem(): void
+    {
+        $rm = Util::which('rm');
+        shell_exec("$rm -rf /tmp/*");
+        $commands = 'exec </dev/console >/dev/console 2>/dev/console;' .
+            '/etc/rc/bootup 2>/dev/null && ' .
+            '/etc/rc/bootup_pbx 2>/dev/null';
+        passthru($commands);
     }
 }
 

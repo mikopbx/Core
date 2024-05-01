@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Tests\Core\Workers\Libs\WorkerPrepareAdvice;
 
-use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckPasswords;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHPasswords;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class CheckPasswordsTest extends AbstractUnitTest
@@ -27,7 +27,7 @@ class CheckPasswordsTest extends AbstractUnitTest
 
     public function testProcess()
     {
-            $class = new CheckPasswords();
+            $class = new CheckSSHPasswords();
             $class->process();
             $this->assertTrue(true);
     }
