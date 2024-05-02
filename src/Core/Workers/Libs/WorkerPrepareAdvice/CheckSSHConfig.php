@@ -53,7 +53,9 @@ class CheckSSHConfig extends Injectable
             // The system password does not match what is set in the configuration file.
             $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchFilesHash'];
         }
-        Notifications::sendAdminNotification('adv_SSHPasswordWasChangedSubject', ['adv_SSHPasswordWasChangedBody'], true);
+        if(isset($messages['error'])){
+            Notifications::sendAdminNotification('adv_SSHPasswordWasChangedSubject', ['adv_SSHPasswordWasChangedBody'], true);
+        }
         return $messages;
     }
 
