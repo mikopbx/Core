@@ -290,6 +290,26 @@ class System extends Di\Injectable
     }
 
     /**
+     * Setup locales
+     * @return void
+     */
+    public static function setupLocales(): void
+    {
+        $mountPath = Util::which('mount');
+        shell_exec("$mountPath -o remount,rw /offload 2> /dev/null");
+        $locales = ['en_US', 'en_GB', 'ru_RU'];
+        $localeDefPath = Util::which('localedef');
+        $localePath = Util::which('locale');
+        foreach ($locales as $locale){
+            if(Processes::mwExec("$localePath -a | grep $locale") === 0){
+                continue;
+            }
+            shell_exec("$localeDefPath -i $locale -f UTF-8 $locale.UTF-8");
+        }
+        shell_exec("$mountPath -o remount,ro /offload 2> /dev/null");
+    }
+
+    /**
      * Calculate the hash of SSL certificates and extract them from ca-certificates.crt.
      *
      * @return void
