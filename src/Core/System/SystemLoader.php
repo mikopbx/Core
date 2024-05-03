@@ -166,6 +166,11 @@ class SystemLoader extends Di\Injectable
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
+        // Configure locales UTF-8
+        $this->echoStartMsg(' - Start update locales...');
+        System::setupLocales();
+        $this->echoResultMsg();
+
         // Mount the storage disk
         $storage = new Storage();
         if ($itIsT2SDELinux) {
