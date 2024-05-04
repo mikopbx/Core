@@ -94,14 +94,14 @@ mountoffload() {
   umount -f /offload 2>/dev/null
 
   # Check the size of the disk.
-  size="$(/bin/lsblk "$disk" -P -o SIZE | cut -f 2 -d '"' | cut -f 1 -d 'M')"
+  size_bytes="$(/bin/lsblk "$disk" -P -b -o SIZE | cut -f 2 -d '"')"
 
   # If the size of the disk is less than or equal to 600MB, it will perform a filesystem check
-  if [ "$size" -le 600 ]; then
-    echo " - Start check: $disk"
+  if [ "$size_bytes" -le 629145600 ]; then
+    echoToTeletype " - Start check: $disk"
     "/sbin/fsck.${type}" -f -p "$disk" >/dev/null 2>/dev/null
   else
-    MOUNT_RESULT='cannot be offload partition, the disk size is larger than 600MB'
+    MOUNT_RESULT='Disk size exceeds 600MB, cannot offload partition'
     return
   fi
 
@@ -195,10 +195,10 @@ mountConfRecover() {
 rm -rf /tmp/freeoffload
 
 ################################################################################
-# LIVE CD-ROM / LIVE USB
+# LIVE CD-ROM
 ################################################################################
 
-# Start of the block for LIVE CD-ROM / LIVE USB
+# Start of the block for LIVE CD-ROM
 echoToTeletype " - Waiting for device ready..."
 busybox sleep 4
 
@@ -239,9 +239,9 @@ for disk in $disks; do
   fi
 
   # Attempt to mount the disk or partition as an offload disk
+  echoToTeletype " - Mounting $diskPath..."
   mountoffload "$diskPath"
-
-  echoToTeletype " - Mounting ${$diskPath}... The result: $MOUNT_RESULT"
+  echoToTeletype " - Mount result: $MOUNT_RESULT"
 
   # Check for the presence of a "livecd" flag file in the root of the offload disk.
   if [ -f /offload/livecd ]; then
@@ -279,8 +279,9 @@ for disk in $disks; do
   fi
 
   # Attempt to mount the partition as an offload disk
+  echoToTeletype " - Mounting $diskPath..."
   mountoffload "$diskPath"
-  echoToTeletype " - Mounting ${$diskPath}... The result: $MOUNT_RESULT"
+  echoToTeletype " - Mount result: $MOUNT_RESULT"
 
    # Check for the presence of a "rootfs" directory in the root of the offload disk
   if [ -d /offload/rootfs ]; then
@@ -318,8 +319,9 @@ for disk in $disks; do
   fi
 
    # Attempt to mount the partition as an offload disk
+  echoToTeletype " - Mounting $diskPath..."
   mountoffload "$diskPath"
-  echoToTeletype " - Mounting ${$diskPath}... The result: $MOUNT_RESULT"
+  echoToTeletype " - Mount result: $MOUNT_RESULT"
 
   # Check if a directory named "rootfs" exists in the root of the offload disk
   if [ -d /offload/rootfs ]; then
@@ -362,8 +364,9 @@ for disk in $disks; do
   fi
 
   # Attempt to mount the partition as an offload disk
+  echoToTeletype " - Mounting $diskPath..."
   mountoffload "$diskPath"
-  echoToTeletype " - Mounting ${$diskPath}... The result: $MOUNT_RESULT"
+  echoToTeletype " - Mount result: $MOUNT_RESULT"
 
   # Check if a file named "livecd" exists in the root of the offload disk
   if [ -f /offload/livecd ]; then
@@ -392,9 +395,9 @@ for disk in $disks; do
   fi
 
   # Attempt to mount the partition as an offload disk
+  echoToTeletype " - Mounting $diskPath..."
   mountoffload "$diskPath"
-
-    echoToTeletype " - Mounting ${$diskPath}... The result: $MOUNT_RESULT"
+  echoToTeletype " - Mount result: $MOUNT_RESULT"
 
   # Check if a directory named "rootfs" exists in the root of the offload disk
   if [ -d /offload/rootfs ]; then

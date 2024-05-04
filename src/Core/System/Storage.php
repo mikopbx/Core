@@ -1399,7 +1399,7 @@ class Storage extends Di\Injectable
             return;
         }
         $bs = 1024;
-        $countBlock = $swapSize * $bs;
+        $countBlock = $swapSize * (1024 * 1024) / $bs;
         $ddCmd = Util::which('dd');
 
         SystemMessages::sysLogMsg('Swap', 'make swap ' . $swapFile, LOG_INFO);

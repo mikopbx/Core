@@ -65,7 +65,7 @@ else
   fi;
   # Copy the configuration to the tmp (RAM) directory
   echoToTeletype " - Backup the system settings to temporary directory...";
-  /bin/busybox cp -R /cf/conf/* /tmp/configbak;
+  /bin/busybox cp -Rv /cf/conf/* /tmp/configbak;
 
   mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
 
@@ -85,7 +85,11 @@ else
 
     # Copy the configuration to the storage and backup the system image
     echoToTeletype " - Backup system partition to storage ...";
-    /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=512 >/dev/null 2>&1;
+    if test -w /dev/ttyS0; then
+        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | tee /dev/ttyS0 >/dev/null
+    else
+        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M >/dev/null 2>&1
+    fi
   else
     # Storage is on the main disk which needs to be unmounted, so move the image to RAM
     echoToTeletype " - Moving the update img to RAM before storage will be unmounted ..."
@@ -111,14 +115,23 @@ fi
 if [ -r "${img_file}" ]; then
   echoToTeletype " - Installing new image on /dev/${systemDevice}"
   # Use pv to monitor the progress of the data being piped to the dd command
-  /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=512 >/dev/null 2>&1;
+  if test -w /dev/ttyS0; then
+     /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | tee /dev/ttyS0 >/dev/null
+  else
+     /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M >/dev/null 2>&1;
+  fi
+
   resultPv="$?";
 
    # If the pv command fails or there aren't three primary partitions, restore the system image from the backup
   if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "/dev/${systemDevice}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
     if [ -f "$backupImg" ]; then
       echoToTeletype " - There are some errors in the new image, restoring system from backup to /dev/${systemDevice}"
-      /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=512 >/dev/null 2>&1;
+      if test -w /dev/ttyS0; then
+        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | tee /dev/ttyS0 >/dev/null
+      else
+        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M >/dev/null 2>&1;
+      fi
     fi;
   fi;
   rm -rf "$backupImg";
@@ -142,7 +155,7 @@ if [ -f /offload/livecd ]; then
   /bin/mount -w -o noatime "${partition3Name}" /conf.recover
   rm -f /conf.recover/conf/*
   echoToTeletype " - Restoring the MikoPBX default configuration ..."
-  /bin/busybox cp -p /tmp/configbak/* /conf.recover/conf/
+  /bin/busybox cp -pv /tmp/configbak/* /conf.recover/conf/
   touch /tmp/ejectcd
 else
   # Format the 3rd partition and mount it as /cf/. Then, copy the configuration back and remove the image file
@@ -151,7 +164,7 @@ else
   /bin/mount -w -o noatime "${partition3Name}" /cf/
   mkdir -p /cf/conf/;
   echoToTeletype " - Restoring the MikoPBX configuration settings...";
-  /bin/busybox cp /tmp/configbak/* /cf/conf/;
+  /bin/busybox cp -Rv /tmp/configbak/* /cf/conf/;
   rm -rf "${img_file}";
 fi
 

@@ -28,9 +28,10 @@
 #   $1: Message to be printed.
 echoToTeletype()
 {
-  echo "$1";
-  dev='/dev/ttyS0';
-  serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
+  local message="$1"
+  echo "$message";
+  local dev='/dev/ttyS0';
+  local serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
   if [ "${serialInfo}x" = 'x' ]; then
     return;
   fi;
