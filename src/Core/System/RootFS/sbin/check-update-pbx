@@ -81,6 +81,7 @@ checkAndUpgrade() {
     /bin/sh firmware_upgrade.sh
 
     # Set a flag to indicate rebooting.
+    echoToTeletype " - Rebooting the system..."
     touch /tmp/rebooting;
     exit 0;
   fi

@@ -53,7 +53,7 @@ fi
 # Check if the livecd file exists, and proceed with different operations depending on its existence
 if [ -f /offload/livecd ]; then
   # Copy the configuration to the backup directory and unmount /conf.recover
-  /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak;
+  /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak
   echoToTeletype " - Unmounting /conf.recover partition...";
   /bin/umount -f /conf.recover;
 else
@@ -65,7 +65,7 @@ else
   fi;
   # Copy the configuration to the tmp (RAM) directory
   echoToTeletype " - Backup the system settings to temporary directory...";
-  /bin/busybox cp -Rv /cf/conf/* /tmp/configbak;
+  /bin/busybox cp -Rv /cf/conf/* /tmp/configbak
 
   mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
 
@@ -75,7 +75,6 @@ else
   # If the 4th partition is not the same as the mounted storage
   if [ "/dev/${partition4Name}" != "${mounted_storage}" ]; then
     # Storage is on a separate disk. Proceed with the freeup, backup and update procedures
-    echoToTeletype " - Umount storage partition ...";
     /sbin/freestorage "doNotUnMount";
 
     # Define the backup directory and image path
@@ -158,17 +157,17 @@ if [ -f /offload/livecd ]; then
   /bin/busybox cp -pv /tmp/configbak/* /conf.recover/conf/
   touch /tmp/ejectcd
 else
-  # Format the 3rd partition and mount it as /cf/. Then, copy the configuration back and remove the image file
+  # Format the 3rd partition and mount it as /cf. Then, copy the configuration back and remove the image file
   echoToTeletype " - Format the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
-  /bin/busybox yes |/sbin/mkfs.ext4 "${partition3Name}" > /dev/null 2> /dev/null;
-  /bin/mount -w -o noatime "${partition3Name}" /cf/
-  mkdir -p /cf/conf/;
+  /sbin/mkfs.ext4 -qF "${partition3Name}";
+  sleep 3;
+  /bin/mount -w -o noatime "${partition3Name}" /cf
+  mkdir -p /cf/conf
   echoToTeletype " - Restoring the MikoPBX configuration settings...";
-  /bin/busybox cp -Rv /tmp/configbak/* /cf/conf/;
+  /bin/busybox cp -Rv /tmp/configbak/* /cf/conf/
+
+  echoToTeletype " - Delete firmware image...";
   rm -rf "${img_file}";
 fi
 
-echoToTeletype " - Rebooting the system..."
- # Set a flag to indicate rebooting.
-touch /tmp/rebooting;
 exit 0;

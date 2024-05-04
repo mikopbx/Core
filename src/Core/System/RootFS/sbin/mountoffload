@@ -239,6 +239,7 @@ for disk in $disks; do
   fi
 
   # Attempt to mount the disk or partition as an offload disk
+  echoToTeletype
   echoToTeletype " - Mounting $diskPath..."
   mountoffload "$diskPath"
   echoToTeletype " - Mount result: $MOUNT_RESULT"
@@ -279,6 +280,7 @@ for disk in $disks; do
   fi
 
   # Attempt to mount the partition as an offload disk
+  echoToTeletype
   echoToTeletype " - Mounting $diskPath..."
   mountoffload "$diskPath"
   echoToTeletype " - Mount result: $MOUNT_RESULT"
@@ -319,6 +321,7 @@ for disk in $disks; do
   fi
 
    # Attempt to mount the partition as an offload disk
+  echoToTeletype
   echoToTeletype " - Mounting $diskPath..."
   mountoffload "$diskPath"
   echoToTeletype " - Mount result: $MOUNT_RESULT"
@@ -364,6 +367,7 @@ for disk in $disks; do
   fi
 
   # Attempt to mount the partition as an offload disk
+  echoToTeletype
   echoToTeletype " - Mounting $diskPath..."
   mountoffload "$diskPath"
   echoToTeletype " - Mount result: $MOUNT_RESULT"
@@ -395,6 +399,7 @@ for disk in $disks; do
   fi
 
   # Attempt to mount the partition as an offload disk
+  echoToTeletype
   echoToTeletype " - Mounting $diskPath..."
   mountoffload "$diskPath"
   echoToTeletype " - Mount result: $MOUNT_RESULT"
