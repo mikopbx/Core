@@ -33,12 +33,6 @@ if [ -f "$ENV_FILE" ]; then
     export $(cat "$ENV_FILE" | grep -v '^#' | xargs)
 fi
 
-if test -w /dev/ttyS0; then
-  exec </dev/console > >(/bin/busybox tee /dev/ttyS0 /dev/console) 2>&1
-else
-  exec </dev/console >/dev/console 2>/dev/console;
-fi
-
 # mountDiskPart: Mounts a disk partition by UUID.
 # Args:
 #   $1: UUID of the disk partition.

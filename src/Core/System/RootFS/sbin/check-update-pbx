@@ -17,13 +17,6 @@
 #
 . /sbin/shell_functions.sh;
 
-# Redirect standard input, output and error to /dev/console
-if test -w /dev/ttyS0; then
-  exec </dev/console > >(/bin/busybox tee /dev/ttyS0 /dev/console) 2>&1
-else
-  exec </dev/console >/dev/console 2>/dev/console;
-fi
-
 systemDir='/system';
 mkdir "$systemDir";
 
