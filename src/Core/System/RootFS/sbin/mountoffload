@@ -101,7 +101,7 @@ mountoffload() {
     echo " - Start check: $disk"
     "/sbin/fsck.${type}" -f -p "$disk" >/dev/null 2>/dev/null
   else
-    MOUNT_RESULT='Disk size exceeds 600MB, cannot offload partition'
+    MOUNT_RESULT='Disk size exceeds 600MB, cannot be offload partition'
     return
   fi
 
