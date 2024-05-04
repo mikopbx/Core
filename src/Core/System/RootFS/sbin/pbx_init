@@ -55,6 +55,7 @@ while : ; do
             if [ ! -f /tmp/rebooting ]; then
                 # Flag file was deleted
                 echoToTeletype "System reboot was cancelled"
+                touch /tmp/start_sh
                 exit 0
             fi
             sleep 1

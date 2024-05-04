@@ -86,7 +86,7 @@ else
     # Copy the configuration to the storage and backup the system image
     echoToTeletype " - Backup system partition to storage ...";
     if test -w /dev/ttyS0; then
-        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | tee /dev/ttyS0 >/dev/null
+        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
     else
         /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M >/dev/null 2>&1
     fi
@@ -116,7 +116,7 @@ if [ -r "${img_file}" ]; then
   echoToTeletype " - Installing new image on /dev/${systemDevice}"
   # Use pv to monitor the progress of the data being piped to the dd command
   if test -w /dev/ttyS0; then
-     /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | tee /dev/ttyS0 >/dev/null
+     /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
   else
      /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M >/dev/null 2>&1;
   fi
@@ -128,7 +128,7 @@ if [ -r "${img_file}" ]; then
     if [ -f "$backupImg" ]; then
       echoToTeletype " - There are some errors in the new image, restoring system from backup to /dev/${systemDevice}"
       if test -w /dev/ttyS0; then
-        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | tee /dev/ttyS0 >/dev/null
+        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
       else
         /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M >/dev/null 2>&1;
       fi
