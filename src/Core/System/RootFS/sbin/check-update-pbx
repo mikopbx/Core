@@ -17,6 +17,13 @@
 #
 . /sbin/shell_functions.sh;
 
+# Redirect standard input, output and error to /dev/console
+ if test -w /dev/ttyS0; then
+    exec </dev/console > >(/bin/busybox tee /dev/ttyS0 /dev/console) 2>&1
+ else
+    exec </dev/console >/dev/console 2>/dev/console;
+ fi
+
 systemDir='/system';
 mkdir "$systemDir";
 
@@ -60,19 +67,19 @@ checkAndUpgrade() {
     cd /tmp/upgrade
 
     # Inform user and allow interrupting the upgrade process
-    echoToTeletype "Found a new MikoPBX firmware."
-    echoToTeletype "Press 'c' to cancel the upgrade or wait 10 seconds to continue."
+    echo "Found a new MikoPBX firmware."
+    echo "Press 'c' to cancel the upgrade or wait 10 seconds to continue."
     local counter=10
     while [ $counter -gt 0 ]; do
       read -t 1 -n 1 input
       if [ "$input" = "C" ] || [ "$input" = "c" ]; then
-        echoToTeletype "Upgrade cancelled by user."
+        echo "Upgrade cancelled by user."
         return 1  # Exit the function early if 'c' is pressed
       fi
-      echoToTeletype -ne "Continuing in $counter seconds...\033[0K\r"
+      echo -ne "Continuing in $counter seconds...\033[0K\r"
       counter=$((counter - 1))
     done
-    echoToTeletype "Starting upgrade process..."
+    echo "Starting upgrade process..."
 
     # Umount boot disk
     umount -f "$disk";
@@ -81,7 +88,7 @@ checkAndUpgrade() {
     /bin/sh firmware_upgrade.sh
 
     # Set a flag to indicate rebooting.
-    echoToTeletype " - Rebooting the system..."
+    echo " - Rebooting the system..."
     touch /tmp/rebooting;
     exit 0;
   fi
@@ -91,4 +98,4 @@ checkAndUpgrade() {
 searchNewFirmware;
 
 # If no update script is found, print a message.
-echoToTeletype " - No any updates found";
+echo " - No any updates found";
