@@ -33,6 +33,12 @@ if [ -f "$ENV_FILE" ]; then
     export $(cat "$ENV_FILE" | grep -v '^#' | xargs)
 fi
 
+if test -w /dev/ttyS0; then
+  exec </dev/console > >(/bin/busybox tee /dev/ttyS0 /dev/console) 2>&1
+else
+  exec </dev/console >/dev/console 2>/dev/console;
+fi
+
 # mountDiskPart: Mounts a disk partition by UUID.
 # Args:
 #   $1: UUID of the disk partition.
@@ -42,7 +48,7 @@ mountDiskPart()
   uuid="$1";
   mountpoint="$2";
   if [ '1' = "$(/sbin/blkid | /bin/busybox grep "$uuid" > /dev/null)" ]; then
-    echoToTeletype " - Storage disk with UUID=${uuid} not found..."
+    echo " - Storage disk with UUID=${uuid} not found..."
     exit 1;
   fi
 
@@ -50,28 +56,9 @@ mountDiskPart()
   mount -rw UUID="$uuid" "$mountpoint" 2> /dev/null;
   MOUNT_RESULT=$?;
   if [ ! "${MOUNT_RESULT}" = "0" ] ; then
-    echoToTeletype " - Fail mount storage with UUID=${uuid} to ${mountpoint} ..."
+    echo " - Fail mount storage with UUID=${uuid} to ${mountpoint} ..."
     exit 1;
   fi
-}
-
-# echoToTeletype: Prints a message to the console and the serial port if available.
-# Args:
-#   $1: Message to be printed.
-echoToTeletype()
-{
-  echo "$1";
-  dev='/dev/ttyS0';
-  serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
-  if [ "${serialInfo}x" = 'x' ]; then
-    return;
-  fi;
-  echo "$serialInfo" | /bin/grep unknown > /dev/null 2> /dev/null;
-  resultSetSerial="$?";
-  if [ ! "$resultSetSerial" = '0' ]; then
-     # Device ttys found
-     echo "$1" >> "$dev"
-  fi;
 }
 
 # Mounts storage and configuration partitions
@@ -90,7 +77,7 @@ executeFirmwareUpdate() {
       echo "$systemDevice" > /var/etc/cfdevice
       /bin/sh pbx_firmware "$UPDATE_IMG_FILE" "$systemDevice"
     else
-      echoToTeletype ' - System disk not found...'
+      echo ' - System disk not found...'
       return 1
     fi
 }
@@ -100,9 +87,9 @@ startUpgrade() {
     local updateVersion="version"
     if [ -f "$updateVersion" ]; then
       local versionNumber=$(cat "$updateVersion")
-      echoToTeletype " - Start update script from the version: $versionNumber..."
+      echo " - Start update script from the version: $versionNumber..."
     else
-      echoToTeletype " - Start update script"
+      echo " - Start update script"
     fi
 
     mountPartitions && executeFirmwareUpdate

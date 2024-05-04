@@ -16,8 +16,13 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 #
+if test -w /dev/ttyS0; then
+  exec </dev/console > >(/bin/busybox tee /dev/ttyS0 /dev/console) 2>&1
+else
+  exec </dev/console >/dev/console 2>/dev/console;
+fi
 
-echoToTeletype " - Start ${0}";
+echo " - Start ${0}";
 # Starting the syslog daemon with specific options
 /sbin/syslogd -S -C512
 
@@ -26,7 +31,7 @@ HOME=/
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 export HOME PATH
-echoToTeletype ' - Create system dirs'
+echo ' - Create system dirs'
 
 # Creating necessary directories and symbolic links for the system
 mkdir -p /dev/pts \
@@ -80,7 +85,7 @@ if [ -n "$mdadmPath" ]; then
   "$mdadmPath" --assemble --scan
   mkdir -p /etc/mdadm
   # Config generation
-  echoToTeletype "DEVICE partitions" >/etc/mdadm/mdadm.conf
+  echo "DEVICE partitions" >/etc/mdadm/mdadm.conf
   arrList=$("$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2)
   for mdName in $arrList; do
     # Getting array index
@@ -101,8 +106,8 @@ fi
 . /sbin/shell_functions.sh
 
 # Running a system check for updates
-echoToTeletype
-echoToTeletype " - Start /sbin/check-update-pbx script ..."
+echo
+echo " - Start /sbin/check-update-pbx script ..."
 /sbin/check-update-pbx
 
 # If the system is rebooting, terminate the script
@@ -111,22 +116,22 @@ if [ -f /tmp/rebooting ]; then
 fi
 
 # Mounting offload and configuration directories
-echoToTeletype
-echoToTeletype " - Start /sbin/mountoffload script..."
+echo
+echo " - Start /sbin/mountoffload script..."
 if /sbin/mountoffload; then
-    echoToTeletype " - Continuing boot process."
-    echoToTeletype " - Start /etc/rc/mountconfdir script..."
+    echo " - Continuing boot process."
+    echo " - Start /etc/rc/mountconfdir script..."
     if /etc/rc/mountconfdir; then
-      echoToTeletype " - Continuing boot process."
+      echo " - Continuing boot process."
       # Booting up the system
       /etc/rc/bootup 2>/dev/null
     else
-      echoToTeletype " - Failed to mount conf, halting boot process."
+      echo " - Failed to mount conf, halting boot process."
       sleep 15;
       exit 1
     fi
 else
-    echoToTeletype " - Failed to mount offload, halting boot process."
+    echo " - Failed to mount offload, halting boot process."
     sleep 15;
     exit 1
 fi
