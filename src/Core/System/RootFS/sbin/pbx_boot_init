@@ -122,9 +122,11 @@ if /sbin/mountoffload; then
       /etc/rc/bootup 2>/dev/null
     else
       echoToTeletype " - Failed to mount conf, halting boot process."
+      sleep 15;
       exit 1
     fi
 else
     echoToTeletype " - Failed to mount offload, halting boot process."
+    sleep 15;
     exit 1
 fi

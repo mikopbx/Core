@@ -24,6 +24,12 @@ MD5_BUILD_INFO=$(/bin/busybox md5sum /etc/version.buildtime 2>/dev/null | /bin/b
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
 
+ if test -w /dev/ttyS0; then
+    exec </dev/console > >(/bin/busybox tee /dev/ttyS0 /dev/console) 2>&1
+ else
+    exec </dev/console >/dev/console 2>/dev/console;
+ fi
+
 # Import shell functions
 . /sbin/shell_functions.sh
 
