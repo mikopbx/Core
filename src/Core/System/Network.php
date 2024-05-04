@@ -1006,4 +1006,21 @@ class Network extends Injectable
 
         return $interface;
     }
+
+    /**
+     * Refreshes networks configs and restarts network daemon.
+     *
+     * @return void
+     */
+    public static function networkReload(): void
+    {
+        // Create Network object and configure settings
+        $network = new Network();
+        $network->hostnameConfigure();
+        $network->resolvConfGenerate();
+        $network->loConfigure();
+        $network->lanConfigure();
+        $network->configureLanInDocker();
+        $network->updateExternalIp();
+    }
 }

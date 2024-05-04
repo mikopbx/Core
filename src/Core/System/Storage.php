@@ -872,7 +872,7 @@ class Storage extends Di\Injectable
     {
         // Update config variable
         ConfigProvider::recreateConfigProvider();
-        $this->config = $this->di->get('config');
+        $this->config = $this->di->getShared(ConfigProvider::SERVICE_NAME);
 
         // Reload cached values
         Directories::reset();

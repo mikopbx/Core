@@ -113,12 +113,12 @@ class SystemLoader extends Di\Injectable
      */
     public function startSystem(): bool
     {
-        $system = new System();
         // Is the configuration default?
         // Try restore config...
-        if ($system->isDefaultConf() && !$this->isRecoveryMode) {
+        $systemConfiguration = new SystemConfiguration();
+        if ($systemConfiguration->isDefaultConf() && !$this->isRecoveryMode) {
             $this->echoStartMsg(' - Try restore backup of settings... ');
-            $system->tryRestoreConf();
+            $systemConfiguration->tryRestoreConf();
             $this->echoResultMsg();
         }
 

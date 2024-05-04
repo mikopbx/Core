@@ -17,6 +17,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
+echoToTeletype " - Start ${0}";
 # Starting the syslog daemon with specific options
 /sbin/syslogd -S -C512
 
@@ -25,7 +26,7 @@ HOME=/
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 export HOME PATH
-echo ' - Create system dirs'
+echoToTeletype ' - Create system dirs'
 
 # Creating necessary directories and symbolic links for the system
 mkdir -p /dev/pts \
@@ -79,7 +80,7 @@ if [ -n "$mdadmPath" ]; then
   "$mdadmPath" --assemble --scan
   mkdir -p /etc/mdadm
   # Config generation
-  echo "DEVICE partitions" >/etc/mdadm/mdadm.conf
+  echoToTeletype "DEVICE partitions" >/etc/mdadm/mdadm.conf
   arrList=$("$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2)
   for mdName in $arrList; do
     # Getting array index
@@ -112,9 +113,18 @@ fi
 # Mounting offload and configuration directories
 echoToTeletype
 echoToTeletype " - Start /sbin/mountoffload script..."
-/sbin/mountoffload
-echoToTeletype " - Start /etc/rc/mountconfdir script..."
-/etc/rc/mountconfdir
-
-# Booting up the system
-/etc/rc/bootup 2>/dev/null
+if /sbin/mountoffload; then
+    echoToTeletype " - Continuing boot process."
+    echoToTeletype " - Start /etc/rc/mountconfdir script..."
+    if /etc/rc/mountconfdir; then
+      echoToTeletype " - Continuing boot process."
+      # Booting up the system
+      /etc/rc/bootup 2>/dev/null
+    else
+      echoToTeletype " - Failed to mount conf, halting boot process."
+      exit 1
+    fi
+else
+    echoToTeletype " - Failed to mount offload, halting boot process."
+    exit 1
+fi

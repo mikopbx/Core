@@ -101,8 +101,7 @@ mountoffload() {
     echo " - Start check: $disk"
     "/sbin/fsck.${type}" -f -p "$disk" >/dev/null 2>/dev/null
   else
-    # If the disk size is larger than 600MB, return with the message "cannot be offload, large size"
-    MOUNT_RESULT='cannot be offload, large size'
+    MOUNT_RESULT='cannot be offload partition, the disk size is larger than 600MB'
     return
   fi
 
@@ -157,7 +156,7 @@ mountConfRecover() {
 
      # Skip if the disk is already mounted
     if [ "${diskr}" = "${offloaddisk}" ]; then
-      echoToTeletype " - Skip ${diskr}, already mount..."
+      echoToTeletype " - Skip ${diskr}, already mounted..."
       continue
     fi
 
@@ -200,7 +199,7 @@ rm -rf /tmp/freeoffload
 ################################################################################
 
 # Start of the block for LIVE CD-ROM / LIVE USB
-echoToTeletype " - Waiting for connect device....."
+echoToTeletype " - Waiting for device ready..."
 busybox sleep 4
 
 # Attempt to identify CD-ROM drives
@@ -215,7 +214,7 @@ blkResult="$?"
 if [ "$blkResult" -eq 0 ]; then
   length=${#cddev}
 fi
-echoToTeletype " - Attempting to mount /boot partition..."
+echoToTeletype " - Searching for RootFS on LiveCD..."
 
 # If the length of the identifier is more than 2, it means we have identified a CD-ROM drive,
 # and we should use this for subsequent operations. Otherwise, try to identify regular disks.
@@ -242,11 +241,11 @@ for disk in $disks; do
   # Attempt to mount the disk or partition as an offload disk
   mountoffload "$diskPath"
 
-  echoToTeletype " - Trying ${disk} mount returned: $MOUNT_RESULT"
+  echoToTeletype " - Mounting ${$diskPath}... The result: $MOUNT_RESULT"
 
   # Check for the presence of a "livecd" flag file in the root of the offload disk.
   if [ -f /offload/livecd ]; then
-    echoToTeletype " - Found LIVECD flag file..."
+    echoToTeletype " - Found LiveCD flag..."
 
     # Call function to create boot configuration files and recover configuration from the offload disk
     createBootConfFiles
@@ -264,7 +263,7 @@ done
 ################################################################################
 
 echoToTeletype
-echoToTeletype " - Attempting to mount /offload partition..."
+echoToTeletype " - Searching for RootFS on RAID devices..."
 
 # Identify RAID drives
 disks=$(/bin/lsblk -b -r -o NAME,TYPE -n | /bin/busybox grep "raid" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox sort -u)
@@ -281,17 +280,17 @@ for disk in $disks; do
 
   # Attempt to mount the partition as an offload disk
   mountoffload "$diskPath"
-  echoToTeletype " - Trying ${disk} mount returned: $MOUNT_RESULT"
+  echoToTeletype " - Mounting ${$diskPath}... The result: $MOUNT_RESULT"
 
    # Check for the presence of a "rootfs" directory in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echoToTeletype " - Found rootfs!"
+    echoToTeletype " - RootFS founded on $diskPath!"
     exit 0
   fi
 
    # If the "rootfs" directory was not found, unmount the offload disk and continue with the next one
   umount -f /offload >/dev/null
-  echoToTeletype " - Failed to find rootfs!"
+  echoToTeletype " - Failed to find RootFS on $diskPath!"
 done
 
 ################################################################################
@@ -299,7 +298,7 @@ done
 ################################################################################
 
 echoToTeletype
-echoToTeletype " - Attempting to mount /offload partition..."
+echoToTeletype " - Searching for RootFS on block devices..."
 
 # Identify HDDs
 disks=$(/bin/lsblk -b -d -r -o NAME,TYPE -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox uniq)
@@ -320,17 +319,17 @@ for disk in $disks; do
 
    # Attempt to mount the partition as an offload disk
   mountoffload "$diskPath"
-  echoToTeletype " - Trying ${disk} mount returned: $MOUNT_RESULT"
+  echoToTeletype " - Mounting ${$diskPath}... The result: $MOUNT_RESULT"
 
   # Check if a directory named "rootfs" exists in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echoToTeletype " - Found rootfs!"
+    echoToTeletype " - RootFS founded on $diskPath!"
     exit 0
   fi
 
    # If the "rootfs" directory was not found, unmount the offload disk and log failure to find "rootfs"
   umount -f /offload >/dev/null
-  echoToTeletype " - Failed to find rootfs!"
+  echoToTeletype " - Failed to find RootFS on $diskPath!"
 done
 
 ################################################################################
@@ -338,13 +337,12 @@ done
 ################################################################################
 
 echoToTeletype
-echoToTeletype " - Waiting for disks to settle and trying again..."
+echoToTeletype " - Waiting for disks USB ready and trying again..."
 
 # Sleep for 10 seconds to give disks time to settle
 /bin/busybox sleep 10
 
-echoToTeletype " - checking for liveusb..."
-echoToTeletype " - attempting to mount /boot partition..."
+echoToTeletype " - Searching for RootFS on USB devices..."
 
 # Identify USB devices
 disks=$(/bin/lsblk -b -d -r -o NAME,TYPE -n | /bin/busybox grep "disk$" | /bin/busybox cut -d ' ' -f 1 | /bin/busybox uniq)
@@ -365,11 +363,11 @@ for disk in $disks; do
 
   # Attempt to mount the partition as an offload disk
   mountoffload "$diskPath"
-  echoToTeletype " - trying ${disk} mount returned: $MOUNT_RESULT"
+  echoToTeletype " - Mounting ${$diskPath}... The result: $MOUNT_RESULT"
 
   # Check if a file named "livecd" exists in the root of the offload disk
   if [ -f /offload/livecd ]; then
-    echoToTeletype " - found LIVE USB flag file..."
+    echoToTeletype " - Found LiveUSB flag..."
     mountConfRecover "$disk"
     exit 0
   fi
@@ -396,26 +394,23 @@ for disk in $disks; do
   # Attempt to mount the partition as an offload disk
   mountoffload "$diskPath"
 
-  echoToTeletype " - trying ${disk} mount returned: $MOUNT_RESULT"
+    echoToTeletype " - Mounting ${$diskPath}... The result: $MOUNT_RESULT"
 
   # Check if a directory named "rootfs" exists in the root of the offload disk
   if [ -d /offload/rootfs ]; then
-    echoToTeletype " - found rootfs!"
+    echoToTeletype " - RootFS founded on $diskPath!"
     exit 0
   fi
-  echoToTeletype " - failed to find rootfs!"
+  echoToTeletype " - Failed to find RootFS on $diskPath!"
 done
 
 
 # Log message indicating failure to find the /offload partition
-echoToTeletype
 echoToTeletype "The system was unable to find the /offload partition!"
 echoToTeletype
-echoToTeletype "Send in the output of (ls /dev) and (fdisk -l) to the"
-echoToTeletype "development team to get this fixed."
-echoToTeletype "Thanks...and sorry this is not already working better!"
+echoToTeletype "Please send the output of 'ls /dev' and 'fdisk -l' to the"
+echoToTeletype "development team for assistance."
+echoToTeletype "Apologies for the inconvenience, and thank you for your patience as we resolve this issue."
 echoToTeletype
-echoToTeletype "Here's a prompt, see what you can see..."
-exec /bin/sh
 
 exit 1

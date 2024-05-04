@@ -20,7 +20,7 @@
 
 namespace MikoPBX\Core\RootFS\etc\rc;
 use Phalcon\Di;
-use MikoPBX\Core\System\{Directories, Processes, Util, Storage};
+use MikoPBX\Core\System\{Directories, Processes, SystemMessages, Util, Storage};
 
 require_once('Globals.php');
 
@@ -31,9 +31,10 @@ $NoCfDevice = <<<EOD
 
 *******************************************************************************
 * FATAL ERROR                                                                 *
-* The device that contains the configuration file (mikopbx.db) could not be   *
-* found. MikoPBX can not continue booting.                                     *
+* The device containing the configuration file (mikopbx.db) could not be      *
+* found. MikoPBX cannot continue booting.                                     *
 *******************************************************************************
+
 
 EOD;
 
@@ -88,8 +89,7 @@ while ($attempts--) {
             // Disk is only of interest if it contains 3 or more partitions.
             continue;
         }
-        echo "\n - Found disk: {$disk}\n";
-        echo " - Looking for configuration on: $disk\n";
+        SystemMessages::echoToTeletype( " - Analyzing the disk: $disk\n", true);
         $partName   = $children[2]['name']??'';
         $fsType     = $children[2]['fstype']??'';
         $uuid       = $children[2]['uuid']??'';
@@ -97,9 +97,9 @@ while ($attempts--) {
             continue;
         }
         // Run partition check on the disk.
-        $fsckPath = Util::which("fsck.{$fsType}");
+        $fsck = Util::which("fsck.{$fsType}");
         // Check disk for errors.
-        Processes::mwExec("if [ -b /dev/{$partName} ]; then {$fsckPath} -f -p /dev/{$partName}; fi;");
+        Processes::mwExec("if [ -b /dev/{$partName} ]; then {$fsck} -f -p /dev/{$partName}; fi;");
         // Mount the disk.
         $resultMount = Processes::mwExec("{$mount} -t {$fsType} -rw UUID=\"{$uuid}\" {$cfDir}");
         if ($resultMount !== 0) {
@@ -109,7 +109,7 @@ while ($attempts--) {
 
         if (file_exists($dbFile) && filesize($dbFile) > 0) {
             $cfgdevice    = $disk;
-            echo " - Found configuration DB on $partName.\n";
+            SystemMessages::echoToTeletype( " - Configuration database found on partition: $partName.\n", true);
             $old_db_name = '/cf/conf/mikozia.db';
             if (file_exists($old_db_name)) {
                 @unlink($dbFile);
@@ -131,18 +131,16 @@ while ($attempts--) {
         break;
     }
     if ($attempts) {
-        echo " - Configuration not found.\n";
-        echo " - Waiting for devices to settle and attempting again.\n";
+        SystemMessages::echoToTeletype( " - Configuration database not found.\n", true);
+        SystemMessages::echoToTeletype( " - Waiting for devices to stabilize before attempting again...\n", true);
         sleep(3);
     }
 }
 
 if ( ! $cfgdevice) {
     /* No device found, print an error and halt */
-    echo $NoCfDevice;
-    sleep(5);
-    $haltPath = Util::which('halt');
-    Processes::mwExec($haltPath);
+    SystemMessages::echoToTeletype($NoCfDevice, true);
+    exit (1);
 } else {
     // Write the connected device name to a file.
     file_put_contents("{$varEtcDir}/cfdevice", $cfgdevice);

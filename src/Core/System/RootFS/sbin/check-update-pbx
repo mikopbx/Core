@@ -90,4 +90,4 @@ checkAndUpgrade() {
 searchNewFirmware;
 
 # If no update script is found, print a message.
-echoToTeletype " - No update script found";
+echoToTeletype " - No any updates found";

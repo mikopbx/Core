@@ -40,85 +40,6 @@ use Phalcon\Di;
  */
 class System extends Di\Injectable
 {
-    private MikoPBXConfig $mikoPBXConfig;
-
-    /**
-     * System constructor - Instantiates MikoPBXConfig.
-     */
-    public function __construct()
-    {
-        $this->mikoPBXConfig = new MikoPBXConfig();
-    }
-
-    /**
-     * Is the configuration default?
-     * @return bool
-     */
-    public function isDefaultConf():bool
-    {
-        $di = Di::getDefault();
-        if ($di === null) {
-            return false;
-        }
-        $sqlite3 = Util::which('sqlite3');
-        $md5sum = Util::which('md5sum');
-        $cut = Util::which('cut');
-        $md5_1 = shell_exec("$sqlite3 ".$di->getConfig()->path('database.dbfile')." .dump | $md5sum | $cut -f 1 -d ' '");
-        $md5_2 = shell_exec("$sqlite3 /conf.default/mikopbx.db .dump | $md5sum | $cut -f 1 -d ' '");
-        return $md5_1 === $md5_2;
-    }
-
-    /**
-     * Trying to restore the backup
-     * @return void
-     */
-    public function tryRestoreConf():void
-    {
-        $di = Di::getDefault();
-        if ($di === null) {
-            return;
-        }
-        $storage = new Storage();
-        $storages = $storage->getStorageCandidate();
-        $tmpMountDir = '/tmp/mnt';
-        $confBackupDir = Directories::getDir(Directories::CORE_CONF_BACKUP_DIR);
-        $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'],['',''],$confBackupDir);
-        $confFile    = $di->getConfig()->path('database.dbfile');
-        foreach ($storages as $dev => $fs){
-            SystemMessages::echoToTeletype("    - mount $dev ..."."\n");
-            Util::mwMkdir($tmpMountDir."/$dev");
-            $res = Storage::mountDisk($dev, $fs, $tmpMountDir."/$dev");
-            if(!$res){
-                SystemMessages::echoToTeletype("    - fail mount $dev ..."."\n");
-            }
-        }
-
-        $tail    = Util::which('tail');
-        $sort    = Util::which('sort');
-        $find    = Util::which('find');
-        $mount   = Util::which('umount');
-        $rm    = Util::which('rm');
-        $cut    = Util::which('cut');
-        $gzip    = Util::which('gzip');
-        $sqlite3    = Util::which('sqlite3');
-        $lastBackUp  = trim(shell_exec("$find $tmpMountDir/dev/*$backupDir -type f -printf '%T@ %p\\n' | $sort -n | $tail -1 | $cut -f2- -d' '"));
-        if(empty($lastBackUp)){
-            return;
-        }
-        SystemMessages::echoToTeletype("    - Restore $lastBackUp ..."."\n");
-        shell_exec("$rm -rf {$confFile}*");
-        shell_exec("$gzip -c -d $lastBackUp | sqlite3 $confFile");
-        Processes::mwExec("$sqlite3 $confFile 'select * from m_Storage'", $out, $ret);
-        if($ret !== 0){
-            SystemMessages::echoToTeletype("    - fail restore $lastBackUp ..."."\n");
-            copy('/conf.default/mikopbx.db', $confFile);
-        }elseif(!$this->isDefaultConf()){
-            self::reboot();
-        }
-        foreach ($storages as $dev => $fs){
-            shell_exec("$mount $dev");
-        }
-    }
 
     /**
      * Returns the directory where logs are stored.
@@ -129,23 +50,6 @@ class System extends Di\Injectable
     public static function getLogDir(): string
     {
         return Directories::getDir(Directories::CORE_LOGS_DIR);
-    }
-
-    /**
-     * Refreshes networks configs and restarts network daemon.
-     *
-     * @return void
-     */
-    public static function networkReload(): void
-    {
-        // Create Network object and configure settings
-        $network = new Network();
-        $network->hostnameConfigure();
-        $network->resolvConfGenerate();
-        $network->loConfigure();
-        $network->lanConfigure();
-        $network->configureLanInDocker();
-        $network->updateExternalIp();
     }
 
     /**
@@ -236,7 +140,6 @@ class System extends Di\Injectable
         System::reboot();
     }
 
-
     /**
      * Shutdown the system.
      */
@@ -253,7 +156,6 @@ class System extends Di\Injectable
      */
     public static function timezoneConfigure(): void
     {
-
         // Get the timezone setting from the database
         $timezone = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
 
