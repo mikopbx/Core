@@ -81,11 +81,11 @@ else
 
     # Copy the configuration to the storage and backup the system image
     echo " - Backup system partition to storage ...";
-    if test -w /dev/ttyS0; then
-        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | (/bin/busybox tee /dev/ttyS0 /dev/console) >/dev/null
-    else
+#    if test -w /dev/ttyS0; then
+#        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | (/bin/busybox tee /dev/ttyS0 /dev/console) >/dev/null
+#    else
         /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M >/dev/null 2>&1
-    fi
+#    fi
   else
     # Storage is on the main disk which needs to be unmounted, so move the image to RAM
     echo " - Moving the update img to RAM before storage will be unmounted ..."
@@ -111,11 +111,12 @@ fi
 if [ -r "${img_file}" ]; then
   echo " - Installing new image on /dev/${systemDevice}"
   # Use pv to monitor the progress of the data being piped to the dd command
-   if test -w /dev/ttyS0; then
-      /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | (/bin/busybox tee /dev/ttyS0 /dev/console) >/dev/null;
-   else
+#   if test -w /dev/ttyS0; then
+#      /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | (/bin/busybox tee /dev/ttyS0 /dev/console) >/dev/null
+#   else
+      exec </dev/console >/dev/console 2>/dev/console;
       /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M >/dev/null 2>&1;
-   fi
+#   fi
   resultPv="$?";
 
    # If the pv command fails or there aren't three primary partitions, restore the system image from the backup
