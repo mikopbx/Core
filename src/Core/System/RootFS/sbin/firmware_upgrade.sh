@@ -75,7 +75,7 @@ executeFirmwareUpdate() {
       mkdir -p /var/etc
       echo '/storage/usbdisk1' > /var/etc/storage_device
       echo "$systemDevice" > /var/etc/cfdevice
-      /bin/sh pbx_firmware "$UPDATE_IMG_FILE" "$systemDevice"
+      /bin/bash pbx_firmware "$UPDATE_IMG_FILE" "$systemDevice"
     else
       echo ' - System disk not found...'
       return 1
@@ -87,9 +87,9 @@ startUpgrade() {
     local updateVersion="version"
     if [ -f "$updateVersion" ]; then
       local versionNumber=$(cat "$updateVersion")
-      echo " - Start update script from the version: $versionNumber..."
+      echo " - Starting upgrade to the version: $versionNumber..."
     else
-      echo " - Start update script"
+      echo " - Starting upgrade..."
     fi
 
     mountPartitions && executeFirmwareUpdate

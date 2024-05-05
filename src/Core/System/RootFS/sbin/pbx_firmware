@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # MikoPBX - free phone system for small business
 # Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -50,7 +50,7 @@ fi
 # Check if the livecd file exists, and proceed with different operations depending on its existence
 if [ -f /offload/livecd ]; then
   # Copy the configuration to the backup directory and unmount /conf.recover
-  /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak
+  /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak | awk '{print "\t" $0}'
   echo " - Unmounting /conf.recover partition...";
   /bin/umount -f /conf.recover;
 else
@@ -62,7 +62,7 @@ else
   fi;
   # Copy the configuration to the tmp (RAM) directory
   echo " - Backup the system settings to temporary directory...";
-  /bin/busybox cp -Rv /cf/conf/* /tmp/configbak
+  /bin/busybox cp -Rv /cf/conf/* /tmp/configbak | awk '{print "\t" $0}'
 
   mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
 
@@ -111,12 +111,7 @@ fi
 if [ -r "${img_file}" ]; then
   echo " - Installing new image on /dev/${systemDevice}"
   # Use pv to monitor the progress of the data being piped to the dd command
-  if test -w /dev/ttyS0; then
-     /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
-  else
-     /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M >/dev/null 2>&1;
-  fi
-
+  /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M >/dev/null 2>&1;
   resultPv="$?";
 
    # If the pv command fails or there aren't three primary partitions, restore the system image from the backup
@@ -148,20 +143,20 @@ partition3Name=$(/bin/lsblk -r -p | /bin/busybox grep "${systemDevice}" | /bin/b
 # If the livecd file exists, re-mount /conf.recover, restore configuration, and reboot the system
 if [ -f /offload/livecd ]; then
   echo " - Re-mounting /conf.recover partition with read/write mode..."
-  /bin/mount -w -o noatime "${partition3Name}" /conf.recover
+  /bin/mount -w -o noatime "${partition3Name}" /conf.recover | awk '{print "\t" $0}'
   rm -f /conf.recover/conf/*
   echo " - Restoring the MikoPBX default configuration ..."
-  /bin/busybox cp -pv /tmp/configbak/* /conf.recover/conf/
+  /bin/busybox cp -pv /tmp/configbak/* /conf.recover/conf/ | awk '{print "\t" $0}'
   touch /tmp/ejectcd
 else
   # Format the 3rd partition and mount it as /cf. Then, copy the configuration back and remove the image file
   echo " - Format the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
-  /sbin/mkfs.ext4 -qF "${partition3Name}";
+  /sbin/mkfs.ext4 -qF "${partition3Name}"; | awk '{print "\t" $0}'
   sleep 3;
-  /bin/mount -w -o noatime "${partition3Name}" /cf
+  /bin/mount -w -o noatime "${partition3Name}" /cf | awk '{print "\t" $0}'
   mkdir -p /cf/conf
   echo " - Restoring the MikoPBX configuration settings...";
-  /bin/busybox cp -Rv /tmp/configbak/* /cf/conf/
+  /bin/busybox cp -Rv /tmp/configbak/* /cf/conf/ | awk '{print "\t" $0}'
 
   echo " - Delete firmware image...";
   rm -rf "${img_file}";
