@@ -22,7 +22,7 @@
 cleanup()
 {
   # Notify of the restart signal received
-  echoToTeletype "Receive signal to restart "...;
+  echo "Receive signal to restart "...;
 
   # Execute cleanup procedures
   /sbin/freestorage 'doNotUnMount';
@@ -38,9 +38,7 @@ cleanup()
 
 # Redirect input, output and error streams to the console
 exec </dev/console >/dev/console 2>/dev/console;
-
-# Execute the echoToTeletype function (assumed to be defined in shell_functions.sh)
-echoToTeletype;
+echo;
 
 
 # Set the trap for specific signals to call the cleanup function

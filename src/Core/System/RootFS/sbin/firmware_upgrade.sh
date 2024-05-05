@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # MikoPBX - free phone system for small business
 # Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -27,6 +27,12 @@
 # Он не должен зависеть от внешних зависимостей и других скриптов,
 # которых может не быть в исходной системе.
 
+if test -w /dev/ttyS0; then
+  exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>/dev/console
+else
+  exec </dev/console >/dev/console 2>/dev/console;
+fi
+
 # Global variables
 ENV_FILE=".env"
 if [ -f "$ENV_FILE" ]; then
@@ -42,7 +48,7 @@ mountDiskPart()
   uuid="$1";
   mountpoint="$2";
   if [ '1' = "$(/sbin/blkid | /bin/busybox grep "$uuid" > /dev/null)" ]; then
-    echoToTeletype " - Storage disk with UUID=${uuid} not found..."
+    echo " - Storage disk with UUID=${uuid} not found..."
     exit 1;
   fi
 
@@ -50,28 +56,9 @@ mountDiskPart()
   mount -rw UUID="$uuid" "$mountpoint" 2> /dev/null;
   MOUNT_RESULT=$?;
   if [ ! "${MOUNT_RESULT}" = "0" ] ; then
-    echoToTeletype " - Fail mount storage with UUID=${uuid} to ${mountpoint} ..."
+    echo " - Fail mount storage with UUID=${uuid} to ${mountpoint} ..."
     exit 1;
   fi
-}
-
-# echoToTeletype: Prints a message to the console and the serial port if available.
-# Args:
-#   $1: Message to be printed.
-echoToTeletype()
-{
-  echo "$1";
-  dev='/dev/ttyS0';
-  serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
-  if [ "${serialInfo}x" = 'x' ]; then
-    return;
-  fi;
-  echo "$serialInfo" | /bin/grep unknown > /dev/null 2> /dev/null;
-  resultSetSerial="$?";
-  if [ ! "$resultSetSerial" = '0' ]; then
-     # Device ttys found
-     echo "$1" >> "$dev"
-  fi;
 }
 
 # Mounts storage and configuration partitions
@@ -88,9 +75,9 @@ executeFirmwareUpdate() {
       mkdir -p /var/etc
       echo '/storage/usbdisk1' > /var/etc/storage_device
       echo "$systemDevice" > /var/etc/cfdevice
-      /bin/sh pbx_firmware "$UPDATE_IMG_FILE" "$systemDevice"
+      /bin/bash pbx_firmware "$UPDATE_IMG_FILE" "$systemDevice"
     else
-      echoToTeletype ' - System disk not found...'
+      echo ' - System disk not found...'
       return 1
     fi
 }
@@ -100,9 +87,9 @@ startUpgrade() {
     local updateVersion="version"
     if [ -f "$updateVersion" ]; then
       local versionNumber=$(cat "$updateVersion")
-      echoToTeletype " - Start update script from the version: $versionNumber..."
+      echo " - Starting upgrade to the version: $versionNumber..."
     else
-      echoToTeletype " - Start update script"
+      echo " - Starting upgrade..."
     fi
 
     mountPartitions && executeFirmwareUpdate

@@ -21,6 +21,8 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\NetworkEditForm;
 use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 
 class NetworkController extends BaseController
@@ -60,11 +62,20 @@ class NetworkController extends BaseController
             }
         }
         $form = new NetworkEditForm($internetInterface, ['eths' => $arrEth]);
-        $this->view->form = $form;
-        $this->view->eths = $arrEth;
-        $this->view->deletableEths = $deletableInterfaces;
-        $this->view->isDocker = Util::isDocker();
-        $this->view->submitMode = null;
+
+        $this->view->setVars(
+            [
+                'SIP_PORT'=>PbxSettings::getValueByKey(PbxSettingsConstants::SIP_PORT),
+                'TLS_PORT'=>PbxSettings::getValueByKey(PbxSettingsConstants::TLS_PORT),
+                'RTP_PORT_FROM'=>PbxSettings::getValueByKey(PbxSettingsConstants::RTP_PORT_FROM),
+                'RTP_PORT_TO'=>PbxSettings::getValueByKey(PbxSettingsConstants::RTP_PORT_TO),
+                'form'=> $form,
+                'eths'=>$arrEth,
+                'deletableEths'=>$deletableInterfaces,
+                'isDocker'=>Util::isDocker(),
+                'submitMode'=>null,
+            ]
+        );
     }
 
     /**

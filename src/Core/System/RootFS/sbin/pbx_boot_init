@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # MikoPBX - free phone system for small business
 # Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -16,7 +16,13 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 #
+if test -w /dev/ttyS0; then
+  exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>&1
+else
+  exec </dev/console >/dev/console 2>/dev/console;
+fi
 
+echo " - Start ${0}";
 # Starting the syslog daemon with specific options
 /sbin/syslogd -S -C512
 
@@ -100,8 +106,8 @@ fi
 . /sbin/shell_functions.sh
 
 # Running a system check for updates
-echoToTeletype
-echoToTeletype " - Start /sbin/check-update-pbx script ..."
+echo
+echo " - Start /sbin/check-update-pbx script ..."
 /sbin/check-update-pbx
 
 # If the system is rebooting, terminate the script
@@ -110,11 +116,22 @@ if [ -f /tmp/rebooting ]; then
 fi
 
 # Mounting offload and configuration directories
-echoToTeletype
-echoToTeletype " - Start /sbin/mountoffload script..."
-/sbin/mountoffload
-echoToTeletype " - Start /etc/rc/mountconfdir script..."
-/etc/rc/mountconfdir
-
-# Booting up the system
-/etc/rc/bootup 2>/dev/null
+echo
+echo " - Start /sbin/mountoffload script..."
+if /sbin/mountoffload; then
+    echo " - Continuing boot process."
+    echo " - Start /etc/rc/mountconfdir script..."
+    if /etc/rc/mountconfdir; then
+      echo " - Continuing boot process."
+      # Booting up the system
+      /etc/rc/bootup 2>/dev/null
+    else
+      echo " - Failed to mount conf, halting boot process."
+      sleep 15;
+      exit 1
+    fi
+else
+    echo " - Failed to mount offload, halting boot process."
+    sleep 15;
+    exit 1
+fi

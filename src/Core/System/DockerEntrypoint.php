@@ -136,7 +136,7 @@ class DockerEntrypoint extends Di\Injectable
             }
         }
 
-        $currentGroupId = trim(shell_exec("$grep '^$userID:' < /etc/shadow | $cut -d ':' -f 4"));
+        $currentGroupId = trim(shell_exec("$grep '^$userID:' < /etc/group | $cut -d ':' -f 3"));
         if ($currentGroupId!=='' && !empty($newGroupId) && $currentGroupId !== $newGroupId) {
             SystemMessages::sysLogMsg(__METHOD__, " - Old $userID group id: $currentGroupId; New $userID group id: $newGroupId", LOG_DEBUG);
             $commands[] = "$sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";

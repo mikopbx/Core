@@ -66,8 +66,11 @@ class SystemMessages extends Di\Injectable
      *
      * @return void
      */
-    public static function echoToTeletype(string $message): void
+    public static function echoToTeletype(string $message, $echoToConsole=false): void
     {
+        if ($echoToConsole){
+            echo $message;
+        }
         // Log to serial tty
         for ($i = 0; $i <= 5; $i++) {
             $device = "/dev/ttyS$i";

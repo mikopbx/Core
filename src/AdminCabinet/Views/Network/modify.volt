@@ -124,12 +124,20 @@
             </div>
             <br>
             <div class="ui bulleted list">
-                <div class="item">{{ t._('nw_NATInfoMessage1') }} </div>
-                <div class="item">{{ t._('nw_NATInfoMessage2') }} </div>
+                <div class="item">{{ t._('nw_NATInfoInstruction1') }} </div>
+                <br>
+                <div class="item">{{ t._('nw_NATInfoInstruction2') }} </div>
+                <br>
+                <div class="item"><b>SIP:</b> {{ t._('nw_NATInfoInstruction3', ['SIP_PORT':SIP_PORT,'TLS_PORT':TLS_PORT]) }} </div>
+                <div class="item"><b>RTP:</b> {{ t._('nw_NATInfoInstruction4',['RTP_PORT_FROM':RTP_PORT_FROM,'RTP_PORT_TO':RTP_PORT_TO]) }} </div>
             </div>
         </div>
         <label>{{ t._('nw_PublicAddress') }}</label>
-        <div class="ui info message">{{ t._('nw_ExternIpHostMessage1') }} </div>
+        <div class="ui info message">
+            {{ t._('nw_ExternIpHostInstruction1', ['SIP_PORT':SIP_PORT]) }}
+            <br>
+            {{ t._('nw_ExternIpHostInstruction2') }}
+        </div>
         <div class="inline fields">
             <div class="field max-width-400">
                 {{ form.render('extipaddr') }}

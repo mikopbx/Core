@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # MikoPBX - free phone system for small business
 # Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -46,9 +46,7 @@ while : ; do
     fi
 
     if [ -f /tmp/rebooting ]; then
-        echo "Reboot pending (${0}). Cancel with rm /tmp/rebooting";
-        echoToTeletype "Reboot pending (${0}). Cancel with rm /tmp/rebooting"
-
+        echo "Reboot pending (${0}). Cancel with rm /tmp/rebooting"
         # Waiting timeout
         WAIT_TIME=10
         counter=0
@@ -57,7 +55,7 @@ while : ; do
             if [ ! -f /tmp/rebooting ]; then
                 # Flag file was deleted
                 echo "System reboot was cancelled"
-                echoToTeletype "System reboot was cancelled"
+                touch /tmp/start_sh
                 exit 0
             fi
             sleep 1

@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di\Injectable;
 use Pheanstalk\Contract\PheanstalkInterface;
 use Pheanstalk\Job;
@@ -71,7 +72,7 @@ class BeanstalkClient extends Injectable
      */
     public function reconnect(): void
     {
-        $config = $this->di->get('config')->beanstalk;
+        $config = $this->di->getShared(ConfigProvider::SERVICE_NAME)->beanstalk;
         $tmpPort   = $config->port;
         if ( ! empty($this->port) && is_numeric($this->port)) {
             $tmpPort = $this->port;
