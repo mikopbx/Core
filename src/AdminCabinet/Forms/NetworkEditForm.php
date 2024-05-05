@@ -44,8 +44,8 @@ class NetworkEditForm extends BaseForm
         $this->add(new Text('gateway', ['class' => 'ipaddress']));
         $this->add(new Text('primarydns', ['class' => 'ipaddress']));
         $this->add(new Text('secondarydns', ['class' => 'ipaddress']));
-        $this->add(new Text('extipaddr'));
-        $this->add(new Text('exthostname'));
+        $this->add(new Text('extipaddr', ['placeholder'=>'123.111.123.111:5060']));
+        $this->add(new Text('exthostname', ['placeholder'=>'mikopbx.company.com:5060']));
 
 
         // topology
