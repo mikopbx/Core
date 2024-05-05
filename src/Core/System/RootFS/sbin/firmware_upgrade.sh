@@ -27,6 +27,12 @@
 # Он не должен зависеть от внешних зависимостей и других скриптов,
 # которых может не быть в исходной системе.
 
+if test -w /dev/ttyS0; then
+  exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>&1
+else
+  exec </dev/console >/dev/console 2>/dev/console;
+fi
+
 # Global variables
 ENV_FILE=".env"
 if [ -f "$ENV_FILE" ]; then
