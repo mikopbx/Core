@@ -28,7 +28,7 @@
 # которых может не быть в исходной системе.
 
 if test -w /dev/ttyS0; then
-  exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>&1
+  exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>/dev/console
 else
   exec </dev/console >/dev/console 2>/dev/console;
 fi

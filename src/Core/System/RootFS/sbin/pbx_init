@@ -16,7 +16,10 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 #
-
+if [ -f /tmp/rebooting ];
+  sleep 30;
+  exit 0;
+fi
 echo " - Start ${0}";
 delta=1; i=0;
 freeOffloadFile='/tmp/freeoffload';
