@@ -1270,4 +1270,10 @@ return [
     'Formatting storage partition 4 on disk' => 'მეოთხე დანაყოფის ფორმატირება დისკზე მონაცემების შესანახად',
     'Save storage disk settings' => 'დისკის პარამეტრების შენახვა შესანახად',
     'auth_TooManyLoginAttempts' => 'ძალიან ბევრი შესვლის მცდელობა. თქვენი IP მისამართი დაბლოკილია %interval% წამით.',
+    'nw_NATInfoInstruction3' => '%SIP_PORT% TCP/UDP და %TLS_PORT% TCP',
+    'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
+    'nw_ExternIpHostInstruction1' => 'თუ SIP პორტი როუტერზე არ არის %SIP_PORT%, შეიყვანეთ იგი IP მისამართის ან გარე ჰოსტის შემდეგ, გამოყოფილი ორწერტილით.',
+    'nw_NATInfoInstruction2' => 'თუ 1:1 NAT არ არის გამოყენებული, გადაიტანეთ ქვემოთ მოცემული პორტები საჯარო IP-დან MikoPBX შიდა IP მისამართზე.',
+    'nw_ExternIpHostInstruction2' => 'თუ მითითებულია გარე ჰოსტის სახელი, ის გამოყენებული იქნება უპირატესად გარე IP მისამართის ნაცვლად.',
+    'nw_NATInfoInstruction1' => 'თუ თქვენი ქსელი კონფიგურირებულია 1:1 NAT-ის მხარდასაჭერად (ეს ჩვეულებრივ ღრუბლებში ნაგულისხმევი წესია), დამატებითი პარამეტრების გაკეთება არ გჭირდებათ.',
 ];

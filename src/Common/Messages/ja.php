@@ -1270,4 +1270,10 @@ return [
     'Formatting storage partition 4 on disk' => 'ディスクにデータを保存するために 4 番目のパーティションをフォーマットする',
     'Save storage disk settings' => 'ストレージ用のディスク設定の保存',
     'auth_TooManyLoginAttempts' => 'ログイン試行が多すぎます。あなたの IP アドレスは %interval% 秒間ブロックされます。',
+    'nw_NATInfoInstruction2' => '1:1 NAT を使用しない場合は、以下のポートをパブリック IP から MikoPBX 内部 IP アドレスに転送します。',
+    'nw_ExternIpHostInstruction1' => 'ルーターの SIP ポートが %SIP_PORT% でない場合は、IP アドレスまたは外部ホストの後にコロンで区切って入力します。',
+    'nw_ExternIpHostInstruction2' => '外部ホスト名が指定されている場合は、外部 IP アドレスよりも優先して使用されます。',
+    'nw_NATInfoInstruction1' => 'ネットワークが 1:1 NAT をサポートするように構成されている場合 (これは通常、クラウドのデフォルト ルールです)、追加の設定を行う必要はありません。',
+    'nw_NATInfoInstruction3' => '%SIP_PORT% TCP/UDP および %TLS_PORT% TCP',
+    'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
 ];

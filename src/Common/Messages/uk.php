@@ -1270,4 +1270,10 @@ return [
     'Formatting storage partition 4 on disk' => 'Форматування четвертого розділу для зберігання даних на диску',
     'Save storage disk settings' => 'Збереження налаштувань диска для зберігання',
     'auth_TooManyLoginAttempts' => 'Занадто багато спроб авторизації. Ваша IP-адреса заблокована на %interval% секунд.',
+    'nw_NATInfoInstruction1' => 'Якщо мережа налаштована на підтримку NAT 1:1 (зазвичай це правило використовується в хмарах за замовчуванням), вам не потрібно виконувати додаткові настройки.',
+    'nw_NATInfoInstruction2' => 'Якщо NAT 1:1 не використовується, перенаправте наведені нижче порти з публічного IP на внутрішній IP адресу MikoPBX.',
+    'nw_NATInfoInstruction3' => '%SIP_PORT% TCP/UDP та %TLS_PORT% TCP',
+    'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
+    'nw_ExternIpHostInstruction1' => 'Якщо порт SIP на маршрутизаторі не %SIP_PORT%, вкажіть його після IP адреси або зовнішнього хоста, розділивши двокрапкою.',
+    'nw_ExternIpHostInstruction2' => 'Якщо вказано зовнішнє ім\'я хоста, воно буде використовуватись у пріоритеті замість зовнішньої IP-адреси.',
 ];
