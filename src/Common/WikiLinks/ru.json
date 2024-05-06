@@ -18,5 +18,6 @@
   "https://wiki.mikopbx.com/fail2-ban":"https://docs.mikopbx.com/mikopbx/manual/connectivity/fail2-ban",
   "https://wiki.mikopbx.com/time-settings":"https://docs.mikopbx.com/mikopbx/manual/system/time-settings",
   "https://wiki.mikopbx.com/mail-settings":"https://docs.mikopbx.com/mikopbx/manual/system/mail-settings",
-  "https://wiki.mikopbx.com/asterisk-managers":"https://docs.mikopbx.com/mikopbx/manual/system/asterisk-managers"
+  "https://wiki.mikopbx.com/asterisk-managers":"https://docs.mikopbx.com/mikopbx/manual/system/asterisk-managers",
+  "https://wiki.mikopbx.com/update": "https://docs.mikopbx.com/mikopbx/manual/maintenance/update"
 }
