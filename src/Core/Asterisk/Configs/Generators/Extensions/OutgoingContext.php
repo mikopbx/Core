@@ -246,7 +246,8 @@ class OutgoingContext extends AsteriskConfigClass
         $dialCommand = $this->getDialCommand($rout);
 
         // Set DIAL_COMMAND variable
-        $conf .= 'same => n,ExecIf($["${DIAL_COMMAND}x" == "x"]?Set(DIAL_COMMAND='.$dialCommand.'))' . "\n\t";
+        $conf .= 'same => n,Set(DIAL_COMMAND='.$dialCommand.')' . "\n\t";
+        $conf .= 'same => n,ExecIf($["${DEF_DIAL_COMMAND}x" != "x"]?Set(DIAL_COMMAND=${DEF_DIAL_COMMAND}))' . "\n\t";
 
         // Customize all-outgoing context
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(all-outgoing-custom,${EXTEN},1)}" == "1"]?all-outgoing-custom,${EXTEN},1)' . "\n\t";
