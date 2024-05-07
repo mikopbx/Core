@@ -27,7 +27,7 @@
 # Он не должен зависеть от внешних зависимостей и других скриптов,
 # которых может не быть в исходной системе.
 
-if test -w /dev/ttyS0; then
+if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
   exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>/dev/console
 else
   exec </dev/console >/dev/console 2>/dev/console;

@@ -81,7 +81,7 @@ else
 
     # Copy the configuration to the storage and backup the system image
     echo " - Backup system partition to storage ...";
-    if test -w /dev/ttyS0; then
+    if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
         /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
     else
         /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M >/dev/null 2>&1
@@ -111,7 +111,7 @@ fi
 if [ -r "${img_file}" ]; then
   echo " - Installing new image on /dev/${systemDevice}"
   # Use pv to monitor the progress of the data being piped to the dd command
-   if test -w /dev/ttyS0; then
+   if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
       /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
    else
       /bin/pv -p "${img_file}" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M >/dev/null 2>&1;
@@ -122,7 +122,7 @@ if [ -r "${img_file}" ]; then
   if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "/dev/${systemDevice}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
     if [ -f "$backupImg" ]; then
       echo " - There are some errors in the new image, restoring system from backup to /dev/${systemDevice}"
-      if test -w /dev/ttyS0; then
+      if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
         /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
       else
         /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M >/dev/null 2>&1;

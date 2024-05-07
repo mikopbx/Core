@@ -52,6 +52,8 @@ abstract class PbxSettingsConstants
     // SIP and RTP settings
     const SIP_PORT = 'SIPPort';
     const TLS_PORT = 'TLS_PORT';
+    const EXTERNAL_SIP_PORT='externalSIPPort';
+    const EXTERNAL_TLS_PORT='externalTLSPort';
     const SIP_DEFAULT_EXPIRY = 'SIPDefaultExpiry';
     const SIP_MIN_EXPIRY = 'SIPMinExpiry';
     const SIP_MAX_EXPIRY = 'SIPMaxExpiry';
@@ -130,10 +132,16 @@ abstract class PbxSettingsConstants
     const NTP_SERVER = 'NTPServer';
     const WWW_ENCRYPTION_KEY = 'WWWEncryptionKey';
 
+    const AUTO_UPDATE_EXTERNAL_IP = 'autoUpdateExternalIp';
+
 
     // Service PORTS settings from /etc/inc/mikopbx-settings.json (For Docker containers)
     const BEANSTALK_PORT = 'beanstalk';
     const REDIS_PORT = 'redis';
     const GNATS_PORT = 'gnats';
     const GNATS_HTTP_PORT = 'gnats-http';
+
+    // Service constants for Docker containers
+    const ENABLE_USE_NAT='enableUseNat';
+
 }

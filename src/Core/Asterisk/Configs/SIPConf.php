@@ -22,6 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\{Codecs,
     ExtensionForwardingRights,
     Extensions,
+    LanInterfaces,
     NetworkFilters,
     OutgoingRoutingTable,
     PbxSettings,
@@ -154,7 +155,7 @@ class SIPConf extends AsteriskConfigClass
     {
         $network = new Network();
 
-        $topology    = 'public';
+        $topology    = LanInterfaces::TOPOLOGY_PUBLIC;
         $extipaddr   = '';
         $exthostname = '';
         $networks    = $network->getEnabledLanInterfaces();
@@ -171,7 +172,7 @@ class SIPConf extends AsteriskConfigClass
                 continue;
             }
             $net = $sub->getNetworkPortion() . '/' . $lan_config['subnet'];
-            if ($if_data['topology'] === 'private' && in_array($net, $subnets, true) === false) {
+            if ($if_data['topology'] === LanInterfaces::TOPOLOGY_PRIVATE && in_array($net, $subnets, true) === false) {
                 $subnets[] = $net;
             }
             if (trim($if_data['internet']) === '1') {
@@ -621,6 +622,8 @@ class SIPConf extends AsteriskConfigClass
         $pbxVersion = $this->generalSettings['PBXVersion'];
         $sipPort    = $this->generalSettings[PbxSettingsConstants::SIP_PORT];
         $tlsPort    = $this->generalSettings[PbxSettingsConstants::TLS_PORT];
+        $externalSipPort    = $this->generalSettings[PbxSettingsConstants::EXTERNAL_SIP_PORT];
+        $externalTlsPort    = $this->generalSettings[PbxSettingsConstants::EXTERNAL_TLS_PORT];
         $natConf    = '';
         $tlsNatConf = '';
 
@@ -632,24 +635,26 @@ class SIPConf extends AsteriskConfigClass
         }
 
         // Configure NAT settings for private topology
-        if ($topology === 'private') {
+        if ($topology === LanInterfaces::TOPOLOGY_PRIVATE) {
             foreach ($subnets as $net) {
                 $natConf .= "local_net=$net\n";
             }
             if ( !empty($externalHostName) && $resolveOk ) {
                 // If external hostname is provided and resolved, use it for signaling
                 $parts   = explode(':', $externalHostName);
-                $natConf .= 'external_media_address=' . $parts[0] . "\n";
-                $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
-                $tlsNatConf = "{$natConf}external_signaling_port=$tlsPort";
-                $natConf .= 'external_signaling_port=' . ($parts[1] ?? $sipPort);
+                $externalHostNameWithoutPort = $parts[0];
+                $natConf .= 'external_media_address=' . $externalHostNameWithoutPort . "\n";
+                $natConf .= 'external_signaling_address=' . $externalHostNameWithoutPort . "\n";
+                $tlsNatConf = "{$natConf}external_signaling_port=$externalTlsPort";
+                $natConf .= 'external_signaling_port=' . $externalSipPort;
             } elseif ( ! empty($extIpAddress)) {
                 // If external IP address is provided, use it for signaling
                 $parts   = explode(':', $extIpAddress);
-                $natConf .= 'external_media_address=' . $parts[0] . "\n";
-                $natConf .= 'external_signaling_address=' . $parts[0] . "\n";
-                $tlsNatConf = "{$natConf}external_signaling_port=$tlsPort";
-                $natConf .= 'external_signaling_port=' . ($parts[1] ?? $sipPort);
+                $externalIPWithoutPort = $parts[0];
+                $natConf .= 'external_media_address=' . $externalIPWithoutPort . "\n";
+                $natConf .= 'external_signaling_address=' . $externalIPWithoutPort . "\n";
+                $tlsNatConf = "{$natConf}external_signaling_port=$externalTlsPort";
+                $natConf .= 'external_signaling_port=' . $externalSipPort;
             }
         }
 
@@ -663,13 +668,13 @@ class SIPConf extends AsteriskConfigClass
             "[transport-udp]\n" .
             "$typeTransport\n" .
             "protocol = udp\n" .
-            "bind=0.0.0.0:{$this->generalSettings[PbxSettingsConstants::SIP_PORT]}\n" .
+            "bind=0.0.0.0:{$sipPort}\n" .
             "$natConf\n\n" .
 
             "[transport-tcp]\n" .
             "$typeTransport\n" .
             "protocol = tcp\n" .
-            "bind=0.0.0.0:{$this->generalSettings[PbxSettingsConstants::SIP_PORT]}\n" .
+            "bind=0.0.0.0:{$sipPort}\n" .
             "$natConf\n\n" .
 
             "[transport-tls]\n" .
@@ -686,7 +691,7 @@ class SIPConf extends AsteriskConfigClass
             "[transport-wss]\n" .
             "$typeTransport\n" .
             "protocol = wss\n" .
-            "bind=0.0.0.0:{$this->generalSettings[PbxSettingsConstants::SIP_PORT]}\n" .
+            "bind=0.0.0.0:{$sipPort}\n" .
             "$natConf\n\n";
 
         $allowGuestCalls = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_ALLOW_GUEST_CALLS);
@@ -701,7 +706,7 @@ class SIPConf extends AsteriskConfigClass
         }
 
         $varEtcDir = $this->config->path('core.varEtcDir');
-        $hash = md5($topology . $externalHostName . $extIpAddress . $this->generalSettings[PbxSettingsConstants::SIP_PORT]. $this->generalSettings[PbxSettingsConstants::TLS_PORT] . implode('',$subnets));
+        $hash = md5($topology . $externalHostName . $extIpAddress . $sipPort.$externalSipPort. $tlsPort .$externalTlsPort. implode('',$subnets));
 
         // Write the configuration content to the file
         file_put_contents($varEtcDir.self::TOPOLOGY_HASH_FILE, $hash);

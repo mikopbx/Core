@@ -87,7 +87,9 @@ class PbxSettings extends ModelsBase
             PbxSettingsConstants::PBX_DESCRIPTION => '',
             PbxSettingsConstants::RESTART_EVERY_NIGHT => '0',
             PbxSettingsConstants::SIP_PORT => '5060',
+            PbxSettingsConstants::EXTERNAL_SIP_PORT => '5060',
             PbxSettingsConstants::TLS_PORT => '5061',
+            PbxSettingsConstants::EXTERNAL_TLS_PORT => '5061',
             PbxSettingsConstants::SIP_DEFAULT_EXPIRY => '120',
             PbxSettingsConstants::SIP_MIN_EXPIRY => '60',
             PbxSettingsConstants::SIP_MAX_EXPIRY => '3600',
@@ -167,6 +169,8 @@ class PbxSettings extends ModelsBase
             PbxSettingsConstants::CLOUD_INSTANCE_ID => '',
             PbxSettingsConstants::DISABLE_ALL_MODULES=> '0',
             PbxSettingsConstants::PBX_LICENSE=>'',
+            PbxSettingsConstants::ENABLE_USE_NAT=> '0',
+            PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP=> '0',
         ];
     }
 

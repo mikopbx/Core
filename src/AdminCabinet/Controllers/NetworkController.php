@@ -66,7 +66,9 @@ class NetworkController extends BaseController
         $this->view->setVars(
             [
                 'SIP_PORT'=>PbxSettings::getValueByKey(PbxSettingsConstants::SIP_PORT),
+                'EXTERNAL_SIP_PORT'=>PbxSettings::getValueByKey(PbxSettingsConstants::EXTERNAL_SIP_PORT),
                 'TLS_PORT'=>PbxSettings::getValueByKey(PbxSettingsConstants::TLS_PORT),
+                'EXTERNAL_TLS_PORT'=>PbxSettings::getValueByKey(PbxSettingsConstants::EXTERNAL_TLS_PORT),
                 'RTP_PORT_FROM'=>PbxSettings::getValueByKey(PbxSettingsConstants::RTP_PORT_FROM),
                 'RTP_PORT_TO'=>PbxSettings::getValueByKey(PbxSettingsConstants::RTP_PORT_TO),
                 'form'=> $form,
@@ -91,36 +93,20 @@ class NetworkController extends BaseController
         $this->db->begin();
 
 
-        $networkInterfaces = LanInterfaces::find();
-
-        // Update interface settings
-        foreach ($networkInterfaces as $eth) {
-            $this->fillEthStructure($eth, $data);
-            if ($eth->save() === false) {
-                $errors = $eth->getMessages();
-                $this->flash->warning(implode('<br>', $errors));
-                $this->view->success = false;
-                $this->db->rollback();
-
-                return;
-            }
+        list($result, $messages)=$this->saveLanInterfaces($data);
+        if (!$result) {
+            $this->flash->warning(implode('<br>', $messages));
+            $this->view->success = false;
+            $this->db->rollback();
+            return;
         }
 
-        // Save additional interface settings if it exists
-        if ($data['interface_0'] !== '') {
-            $eth = new LanInterfaces();
-            $eth->id = 0;
-            $this->fillEthStructure($eth, $data);
-            $eth->id = null;
-            $eth->disabled = '0';
-            if ($eth->create() === false) {
-                $errors = $eth->getMessages();
-                $this->flash->warning(implode('<br>', $errors));
-                $this->view->success = false;
-                $this->db->rollback();
-
-                return;
-            }
+        list($result, $messages)=$this->saveNatSettings($data);
+        if (!$result) {
+            $this->flash->warning(implode('<br>', $messages));
+            $this->view->success = false;
+            $this->db->rollback();
+            return;
         }
 
         $this->view->reload = 'network/modify';
@@ -143,7 +129,7 @@ class NetworkController extends BaseController
             switch ($name) {
                 case 'topology':
                     if ($itIsInternetInterfce) {
-                        $eth->$name = ($data['usenat'] === 'on') ? 'private' : 'public';
+                        $eth->$name = ($data['usenat'] === 'on') ? LanInterfaces::TOPOLOGY_PRIVATE : LanInterfaces::TOPOLOGY_PUBLIC;
                     } else {
                         $eth->$name = '';
                     }
@@ -194,9 +180,6 @@ class NetworkController extends BaseController
                         $eth->$name = LanInterfaces::findFirstById($data[$name . '_' . $eth->id])->interface;
                     }
                     break;
-                case 'autoUpdateExtIp':
-                    $eth->$name = ($data[$name] === 'on') ? '1' : '0';
-                    break;
                 case 'domain':
                 case 'hostname':
                 case 'gateway':
@@ -214,6 +197,77 @@ class NetworkController extends BaseController
                     }
             }
         }
+    }
+
+    /**
+     * Saves the LAN interface configurations.
+     *
+     * This method iterates through each existing LAN interface, updates its configuration based on the provided data,
+     * and saves the changes. If a new interface needs to be added (specified by 'interface_0'), it creates and saves this
+     * new interface as well. If any save operation fails, the method returns an array containing `false` and the error messages.
+     *
+     * @param array $data Array containing the interface configurations.
+     *                    Expected to contain interface settings such as IP, mask, etc., and a special key 'interface_0' for new interfaces.
+     * @return array Returns an array with a boolean success flag and an array of error messages if applicable.
+     */
+    private function saveLanInterfaces(array $data): array
+    {
+        $networkInterfaces = LanInterfaces::find();
+
+        // Update interface settings
+        foreach ($networkInterfaces as $eth) {
+            $this->fillEthStructure($eth, $data);
+            if ($eth->save() === false) {
+                $errors = $eth->getMessages();
+                return [false, $errors];
+            }
+        }
+
+        // Save additional interface settings if it exists
+        if ($data['interface_0'] !== '') {
+            $eth = new LanInterfaces();
+            $eth->id = 0;
+            $this->fillEthStructure($eth, $data);
+            $eth->id = null;
+            $eth->disabled = '0';
+            if ($eth->create() === false) {
+                $errors = $eth->getMessages();
+                return [false, $errors];
+            }
+        }
+
+        return [true, []];
+    }
+
+    /**
+     * Saves the NAT-related settings for external access.
+     *
+     * Iterates through a list of predefined setting keys related to NAT configuration (like external SIP and TLS ports),
+     * and updates these settings with new values from the provided data. If a setting fails to save, the method returns
+     * immediately with an error.
+     *
+     * @param array $data Associative array where keys are setting names and values are the new settings to be saved.
+     * @return array Returns an array with a boolean success flag and, if unsuccessful, an array of error messages.
+     */
+    private function saveNatSettings(array $data): array
+    {
+        foreach ($data as $key=>$value) {
+            switch ($key) {
+                case PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP:
+                    if (!PbxSettings::setValue($key, $value === 'on' ? '1' : '0')){
+                            return [false, ['Error on save '.$key]];
+                    }
+                    break;
+                case PbxSettingsConstants::EXTERNAL_SIP_PORT:
+                case PbxSettingsConstants::EXTERNAL_TLS_PORT:
+                    if (!PbxSettings::setValue($key, trim($value))) {
+                        return [false, ['Error on save '.$key]];
+                    }
+                break;
+            default:
+            }
+        }
+        return [true, []];
     }
 
     /**

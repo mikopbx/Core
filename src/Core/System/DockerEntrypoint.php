@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System;
 
 use Error;
 use JsonException;
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use Phalcon\Di;
 use ReflectionClass;
@@ -227,6 +228,11 @@ class DockerEntrypoint extends Di\Injectable
                     case PbxSettingsConstants::GNATS_HTTP_PORT:
                         $this->updateJsonSettings('gnats', 'httpPort', intval($envValue));
                         break;
+                    case PbxSettingsConstants::ENABLE_USE_NAT:
+                        if ($envValue==='1'){
+                            $this->enableNat();
+                        }
+                        break;
                     default:
                         $this->updateDBSetting($dbKey, $envValue);
                         break;
@@ -235,6 +241,29 @@ class DockerEntrypoint extends Di\Injectable
         }
     }
 
+    /**
+     * Updates the topology of LAN interfaces designated as public (internet-facing) to private
+     * by executing an SQLite update command directly via the shell.
+     *
+     * This method finds the path of the SQLite3 executable and constructs a command to update
+     * the `topology` field of all entries in the `m_LanInterfaces` table where `internet` is '1'.
+     * The new topology value is set from the `LanInterfaces::TOPOLOGY_PRIVATE` constant.
+     *
+     */
+    private function enableNat(): void
+    {
+        $sqlite3 = Util::which('sqlite3');
+        $dbPath =  self::PATH_DB;
+        $out = [];
+        $private = LanInterfaces::TOPOLOGY_PRIVATE;
+        $command = "$sqlite3 $dbPath \"UPDATE m_LanInterfaces SET topology='$private' WHERE internet='1'\"";
+        $res = Processes::mwExec($command, $out);
+        if ($res === 0) {
+            SystemMessages::sysLogMsg(__METHOD__, " - Update topology to '$private' in m_LanInterfaces", LOG_INFO);
+        } else {
+            SystemMessages::sysLogMsg(__METHOD__, " - Update topology failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
+        }
+    }
     /**
      * Updates the specified setting in the JSON configuration file.
      * @param string $path The JSON path where the setting is stored.
@@ -264,7 +293,7 @@ class DockerEntrypoint extends Di\Injectable
             $command = "$sqlite3 $dbPath \"UPDATE m_PbxSettings SET value='$newValue' WHERE key='$key'\"";
             $res = Processes::mwExec($command, $out);
             if ($res === 0) {
-                SystemMessages::sysLogMsg(__METHOD__, " - Update $key to '$newValue' in DB", LOG_INFO);
+                SystemMessages::sysLogMsg(__METHOD__, " - Update $key to '$newValue' in m_PbxSettings", LOG_INFO);
             } else {
                 SystemMessages::sysLogMsg(__METHOD__, " - Update $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
             }

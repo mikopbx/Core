@@ -63,8 +63,7 @@ class NatsConf extends Injectable
         $logDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nats';
         Util::mwMkdir($logDir);
 
-        $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR) . '/nats';
-        $sessionsDir = "$tempDir/nats_cache";
+        $sessionsDir = Directories::getDir(Directories::CORE_TEMP_DIR) . '/nats_cache';
         Util::mwMkdir($sessionsDir);
 
         $pid_file = '/var/run/gnatsd.pid';
