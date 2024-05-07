@@ -1236,12 +1236,6 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'Copying configuration...' => 'Đang điền các cài đặt cấu hình ban đầu…',
     'Save storage disk settings' => 'Lưu cài đặt đĩa để lưu trữ',
     'auth_TooManyLoginAttempts' => 'Quá nhiều lần đăng nhập. Địa chỉ IP của bạn bị chặn trong %interval% giây.',
-    'nw_NATInfoInstruction1' => 'Nếu mạng của bạn được định cấu hình để hỗ trợ NAT 1:1 (đây thường là quy tắc mặc định trên đám mây), bạn không cần thực hiện bất kỳ cài đặt bổ sung nào.',
-    'nw_NATInfoInstruction2' => 'Nếu 1:1 NAT không được sử dụng, hãy chuyển hướng các cổng bên dưới từ IP công cộng sang địa chỉ IP nội bộ MikoPBX.',
-    'nw_NATInfoInstruction3' => '%SIP_PORT% TCP/UDP và %TLS_PORT% TCP',
-    'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
-    'nw_ExternIpHostInstruction1' => 'Nếu cổng SIP trên bộ định tuyến không phải là %SIP_PORT%, hãy nhập cổng đó sau địa chỉ IP hoặc máy chủ bên ngoài, phân tách bằng dấu hai chấm.',
-    'nw_ExternIpHostInstruction2' => 'Nếu tên máy chủ bên ngoài được chỉ định, nó sẽ được sử dụng ưu tiên hơn địa chỉ IP bên ngoài.',
     'upd_UpdateDockerHeader' => 'Quy tắc cập nhật vùng chứa',
     'upd_UpdateDockerText' => 'Dừng vùng chứa, xóa nó, tải xuống phiên bản mới nhất và bắt đầu lại, giữ nguyên cài đặt gắn bộ lưu trữ và các biến môi trường. Quá trình này được mô tả chi tiết hơn trong tài liệu.',
 ];

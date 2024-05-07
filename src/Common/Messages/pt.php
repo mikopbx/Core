@@ -1270,12 +1270,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'Formatting storage partition 4 on disk' => 'Formatando a quarta partição para armazenar dados no disco',
     'Save storage disk settings' => 'Salvando configurações de disco para armazenamento',
     'auth_TooManyLoginAttempts' => 'Muitas tentativas de login. Seu endereço IP está bloqueado por %interval% segundos.',
-    'nw_NATInfoInstruction2' => 'Se o NAT 1:1 não for usado, redirecione as portas abaixo do IP público para o endereço IP interno do MikoPBX.',
-    'nw_NATInfoInstruction3' => '%SIP_PORT% TCP/UDP e %TLS_PORT% TCP',
-    'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
-    'nw_NATInfoInstruction1' => 'Se a sua rede estiver configurada para suportar NAT 1:1 (esta é geralmente a regra padrão em nuvens), você não precisará fazer nenhuma configuração adicional.',
-    'nw_ExternIpHostInstruction1' => 'Se a porta SIP no roteador não for %SIP_PORT%, insira-a após o endereço IP ou host externo, separados por dois pontos.',
-    'nw_ExternIpHostInstruction2' => 'Se um nome de host externo for especificado, ele será usado preferencialmente ao endereço IP externo.',
     'upd_UpdateDockerHeader' => 'Regras de atualização de contêiner',
     'upd_UpdateDockerText' => 'Pare o contêiner, exclua-o, baixe a versão mais recente e comece novamente, preservando as configurações de montagem de armazenamento e as variáveis de ambiente. O processo é descrito com mais detalhes na documentação.',
 ];

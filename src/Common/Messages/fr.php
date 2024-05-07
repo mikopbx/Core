@@ -1270,12 +1270,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'Formatting storage partition 4 on disk' => 'Formatage de la quatrième partition pour stocker les données sur le disque',
     'Save storage disk settings' => 'Enregistrement des paramètres de disque pour le stockage',
     'auth_TooManyLoginAttempts' => 'Trop de tentatives de connexion. Votre adresse IP est bloquée pendant %interval% secondes.',
-    'nw_NATInfoInstruction3' => '%SIP_PORT% TCP/UDP et %TLS_PORT% TCP',
-    'nw_NATInfoInstruction1' => 'Si votre réseau est configuré pour prendre en charge le NAT 1:1 (il s\'agit généralement de la règle par défaut dans les cloud), vous n\'avez pas besoin de définir de paramètres supplémentaires.',
-    'nw_NATInfoInstruction2' => 'Si le NAT 1:1 n\'est pas utilisé, redirigez les ports ci-dessous de l\'adresse IP publique vers l\'adresse IP interne du MikoPBX.',
-    'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO%UDP',
-    'nw_ExternIpHostInstruction1' => 'Si le port SIP du routeur n\'est pas %SIP_PORT%, saisissez-le après l\'adresse IP ou l\'hôte externe, séparés par deux points.',
-    'nw_ExternIpHostInstruction2' => 'Si un nom d\'hôte externe est spécifié, il sera utilisé de préférence à l\'adresse IP externe.',
     'upd_UpdateDockerHeader' => 'Règles de mise à jour du conteneur',
     'upd_UpdateDockerText' => 'Arrêtez le conteneur, supprimez-le, téléchargez la dernière version et recommencez, en préservant les paramètres de montage de stockage et les variables d\'environnement. Le processus est décrit plus en détail dans la documentation.',
 ];
