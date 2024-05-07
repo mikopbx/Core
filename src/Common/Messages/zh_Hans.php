@@ -1236,4 +1236,12 @@ return [
     'Copying configuration...' => '正在填写初始配置设置…',
     'Save storage disk settings' => '保存磁盘设置以进行存储',
     'auth_TooManyLoginAttempts' => '登录尝试次数过多。您的 IP 地址被屏蔽 %interval% 秒。',
+    'nw_NATInfoInstruction1' => '如果您的网络配置为支持 1:1 NAT（这通常是云中的默认规则），则无需进行任何其他设置。',
+    'nw_NATInfoInstruction2' => '如果不使用 1:1 NAT，请将以下端口从公共 IP 重定向到 MikoPBX 内部 IP 地址。',
+    'nw_NATInfoInstruction3' => '%SIP_PORT% TCP/UDP 和 %TLS_PORT% TCP',
+    'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
+    'nw_ExternIpHostInstruction1' => '如果路由器上的 SIP 端口不是 %SIP_PORT%，请在 IP 地址或外部主机后面输入，并用冒号分隔。',
+    'nw_ExternIpHostInstruction2' => '如果指定了外部主机名，则将优先使用外部主机名而不是外部 IP 地址。',
+    'upd_UpdateDockerHeader' => '容器更新规则',
+    'upd_UpdateDockerText' => '停止容器，删除它，下载最新版本并重新启动，保留存储挂载设置和环境变量。文档中更详细地描述了该过程。',
 ];

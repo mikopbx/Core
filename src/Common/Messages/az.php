@@ -1269,4 +1269,12 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'Formatting storage partition 4 on disk' => 'Diskdə məlumat saxlamaq üçün dördüncü bölmənin formatlanması',
     'Save storage disk settings' => 'Saxlama üçün disk parametrləri saxlanılır',
     'auth_TooManyLoginAttempts' => 'Həddindən artıq giriş cəhdləri. IP ünvanınız %interval% saniyəyə bloklanıb.',
+    'nw_NATInfoInstruction1' => 'Şəbəkəniz 1:1 NAT-ı dəstəkləmək üçün konfiqurasiya edilibsə (bu, adətən buludlarda standart qaydadır), heç bir əlavə parametrlər etməyə ehtiyac yoxdur.',
+    'nw_NATInfoInstruction2' => '1:1 NAT istifadə edilmirsə, aşağıdakı portları ictimai IP-dən MikoPBX daxili IP ünvanına yönləndirin.',
+    'nw_NATInfoInstruction3' => '%SIP_PORT% TCP/UDP və %TLS_PORT% TCP',
+    'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
+    'nw_ExternIpHostInstruction1' => 'Routerdəki SIP portu %SIP_PORT% deyilsə, onu iki nöqtə ilə ayrılmış IP ünvanından və ya xarici hostdan sonra daxil edin.',
+    'nw_ExternIpHostInstruction2' => 'Xarici host adı göstərilibsə, o, xarici IP ünvanına üstünlük veriləcək.',
+    'upd_UpdateDockerHeader' => 'Konteyner yeniləmə qaydaları',
+    'upd_UpdateDockerText' => 'Konteyneri dayandırın, silin, ən son versiyanı endirin və yaddaş qurğusunun parametrlərini və mühit dəyişənlərini qoruyaraq yenidən başlayın. Proses sənədlərdə daha ətraflı təsvir edilmişdir.',
 ];

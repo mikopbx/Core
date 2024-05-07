@@ -1236,4 +1236,12 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'Formatting storage partition 4 on disk' => 'Formatera den fjärde partitionen för att lagra data på disken',
     'Save storage disk settings' => 'Sparar diskinställningar för lagring',
     'auth_TooManyLoginAttempts' => 'För många inloggningsförsök. Din IP-adress är blockerad i %interval% sekunder.',
+    'nw_NATInfoInstruction2' => 'Om 1:1 NAT inte används, vidarebefordra portarna nedan från den offentliga IP-adressen till MikoPBX interna IP-adress.',
+    'nw_NATInfoInstruction1' => 'Om ditt nätverk är konfigurerat för att stödja 1:1 NAT (detta är vanligtvis standardregeln i moln) behöver du inte göra några ytterligare inställningar.',
+    'nw_NATInfoInstruction3' => '%SIP_PORT% TCP/UDP och %TLS_PORT% TCP',
+    'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
+    'nw_ExternIpHostInstruction1' => 'Om SIP-porten på routern inte är %SIP_PORT%, ange den efter IP-adressen eller extern värd, separerad med ett kolon.',
+    'nw_ExternIpHostInstruction2' => 'Om ett externt värdnamn anges kommer det att användas framför den externa IP-adressen.',
+    'upd_UpdateDockerHeader' => 'Behållaruppdateringsregler',
+    'upd_UpdateDockerText' => 'Stoppa behållaren, ta bort den, ladda ner den senaste versionen och börja om, bevara lagringsmonteringsinställningarna och miljövariablerna. Processen beskrivs mer i detalj i dokumentationen.',
 ];

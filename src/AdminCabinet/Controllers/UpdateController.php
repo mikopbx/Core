@@ -19,6 +19,8 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use MikoPBX\Core\System\Util;
+
 class UpdateController extends BaseController
 {
 
@@ -28,6 +30,11 @@ class UpdateController extends BaseController
      */
     public function indexAction(): void
     {
-        $this->view->submitMode = null;
+        $this->view->setVars(
+            [
+                'isDocker'=>Util::isDocker(),
+                'submitMode'=>null,
+            ]
+        );
     }
 }

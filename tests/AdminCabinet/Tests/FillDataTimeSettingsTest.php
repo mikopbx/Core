@@ -52,7 +52,7 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/time-settings/modify/');
         $this->selectDropdownItem(PbxSettingsConstants::PBX_TIMEZONE, $params[PbxSettingsConstants::PBX_TIMEZONE]);
         $this->changeCheckBoxState(PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS, $params[PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS]);
-
+        sleep(2);
         if ($params[PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS]) {
             $this->changeInputField('ManualDateTime', $params['ManualDateTime']);
         } else {
@@ -61,6 +61,10 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
 
         // Save the settings
         $this->submitForm('time-settings-form');
+
+        // Wait for Nginx restarted
+        sleep(10);
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/time-settings/modify/');
 
         $this->assertMenuItemSelected(PbxSettingsConstants::PBX_TIMEZONE, $params['PBXTimezone']);
