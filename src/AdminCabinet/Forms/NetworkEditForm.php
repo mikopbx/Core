@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\TranslationProvider;
@@ -63,7 +64,7 @@ class NetworkEditForm extends BaseForm
 
         // topology
         $cheskArr = ['value' => null];
-        if ($entity->topology == 'private') {
+        if ($entity->topology == LanInterfaces::TOPOLOGY_PRIVATE) {
             $cheskArr = ['checked' => 'checked', 'value' => null];
         }
         $this->add(new Check('usenat', $cheskArr));

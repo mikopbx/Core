@@ -20,6 +20,8 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetExternalIpInfoAction;
 use Phalcon\Di\Injectable;
@@ -200,7 +202,10 @@ class Network extends Injectable
             /** @var LanInterfaces $eth_settings */
             $eth_settings = LanInterfaces::findFirst("disabled='0'");
             if ($eth_settings !== null) {
-                $eth_settings->internet = 1;
+                $eth_settings->internet = '1';
+                if (PbxSettings::getValueByKey(PbxSettingsConstants::ENABLE_USE_NAT)==='1'){
+                    $eth_settings->topology=LanInterfaces::TOPOLOGY_PRIVATE;
+                }
                 $eth_settings->save();
             }
         }
