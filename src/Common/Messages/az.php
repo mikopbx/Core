@@ -1275,4 +1275,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction1' => 'Routerdəki SIP portu %SIP_PORT% deyilsə, onu iki nöqtə ilə ayrılmış IP ünvanından və ya xarici hostdan sonra daxil edin.',
     'nw_ExternIpHostInstruction2' => 'Xarici host adı göstərilibsə, o, xarici IP ünvanına üstünlük veriləcək.',
+    'upd_UpdateDockerHeader' => 'Konteyner yeniləmə qaydaları',
+    'upd_UpdateDockerText' => 'Konteyneri dayandırın, silin, ən son versiyanı endirin və yaddaş qurğusunun parametrlərini və mühit dəyişənlərini qoruyaraq yenidən başlayın. Proses sənədlərdə daha ətraflı təsvir edilmişdir.',
 ];

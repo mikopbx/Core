@@ -1275,4 +1275,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction1' => 'Se a porta SIP no roteador não for %SIP_PORT%, insira-a após o endereço IP ou host externo, separados por dois pontos.',
     'nw_ExternIpHostInstruction2' => 'Se um nome de host externo for especificado, ele será usado preferencialmente ao endereço IP externo.',
+    'upd_UpdateDockerHeader' => 'Regras de atualização de contêiner',
+    'upd_UpdateDockerText' => 'Pare o contêiner, exclua-o, baixe a versão mais recente e comece novamente, preservando as configurações de montagem de armazenamento e as variáveis de ambiente. O processo é descrito com mais detalhes na documentação.',
 ];

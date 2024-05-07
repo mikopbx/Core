@@ -1258,4 +1258,6 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction1' => 'Dacă portul SIP de pe router nu este %SIP_PORT%, introduceți-l după adresa IP sau gazda externă, separate prin două puncte.',
     'nw_ExternIpHostInstruction2' => 'Dacă este specificat un nume de gazdă extern, acesta va fi folosit de preferință față de adresa IP externă.',
+    'upd_UpdateDockerHeader' => 'Reguli de actualizare a containerelor',
+    'upd_UpdateDockerText' => 'Opriți containerul, ștergeți-l, descărcați cea mai recentă versiune și începeți din nou, păstrând setările de montare pentru stocare și variabilele de mediu. Procesul este descris mai detaliat în documentație.',
 ];

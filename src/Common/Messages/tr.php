@@ -1242,4 +1242,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction2' => 'Harici bir ana bilgisayar adı belirtilirse, harici IP adresi yerine bu ad kullanılacaktır.',
     'nw_ExternIpHostInstruction1' => 'Yönlendiricideki SIP bağlantı noktası %SIP_PORT% değilse, bunu IP adresinden veya harici ana bilgisayardan sonra iki nokta üst üste işaretiyle ayırarak girin.',
+    'upd_UpdateDockerHeader' => 'Kapsayıcı güncelleme kuralları',
+    'upd_UpdateDockerText' => 'Kapsayıcıyı durdurun, silin, en son sürümü indirin ve depolama bağlama ayarlarını ve ortam değişkenlerini koruyarak yeniden başlayın. İşlem belgelerde daha ayrıntılı olarak açıklanmaktadır.',
 ];

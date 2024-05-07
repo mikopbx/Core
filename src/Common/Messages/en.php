@@ -1279,4 +1279,6 @@ The coupon can be activated once, after which it becomes redeemed.',
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction1' => 'If the SIP port on the router is not %SIP_PORT%, enter it after the IP address or external host, separated by a colon.',
     'nw_ExternIpHostInstruction2' => 'If an external hostname is specified, it will be used in preference to the external IP address.',
+    'upd_UpdateDockerHeader' => 'Container update rules',
+    'upd_UpdateDockerText' => 'Stop the container, delete it, download the latest version and start again, preserving the storage mount settings and environment variables. The process is described in more detail in the documentation.',
 ];

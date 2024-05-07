@@ -1276,4 +1276,6 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction2' => 'Hvis et eksternt værtsnavn er angivet, vil det blive brugt frem for den eksterne IP-adresse.',
     'nw_ExternIpHostInstruction1' => 'Hvis SIP-porten på routeren ikke er %SIP_PORT%, skal du indtaste den efter IP-adressen eller den eksterne vært, adskilt af et kolon.',
+    'upd_UpdateDockerHeader' => 'Regler for containeropdatering',
+    'upd_UpdateDockerText' => 'Stop containeren, slet den, download den seneste version og start igen, mens lagermonteringsindstillingerne og miljøvariablerne bevares. Processen er nærmere beskrevet i dokumentationen.',
 ];

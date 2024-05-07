@@ -1242,4 +1242,6 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction1' => 'Nếu cổng SIP trên bộ định tuyến không phải là %SIP_PORT%, hãy nhập cổng đó sau địa chỉ IP hoặc máy chủ bên ngoài, phân tách bằng dấu hai chấm.',
     'nw_ExternIpHostInstruction2' => 'Nếu tên máy chủ bên ngoài được chỉ định, nó sẽ được sử dụng ưu tiên hơn địa chỉ IP bên ngoài.',
+    'upd_UpdateDockerHeader' => 'Quy tắc cập nhật vùng chứa',
+    'upd_UpdateDockerText' => 'Dừng vùng chứa, xóa nó, tải xuống phiên bản mới nhất và bắt đầu lại, giữ nguyên cài đặt gắn bộ lưu trữ và các biến môi trường. Quá trình này được mô tả chi tiết hơn trong tài liệu.',
 ];

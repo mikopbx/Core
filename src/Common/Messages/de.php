@@ -1279,4 +1279,6 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction1' => 'Wenn der SIP-Port am Router nicht %SIP_PORT% ist, geben Sie ihn nach der IP-Adresse oder dem externen Host ein, getrennt durch einen Doppelpunkt.',
     'nw_ExternIpHostInstruction2' => 'Wenn ein externer Hostname angegeben wird, wird dieser vorrangig vor der externen IP-Adresse verwendet.',
+    'upd_UpdateDockerHeader' => 'Regeln für die Containeraktualisierung',
+    'upd_UpdateDockerText' => 'Stoppen Sie den Container, löschen Sie ihn, laden Sie die neueste Version herunter und starten Sie erneut, wobei die Speicher-Mount-Einstellungen und Umgebungsvariablen erhalten bleiben. Der Vorgang wird in der Dokumentation genauer beschrieben.',
 ];

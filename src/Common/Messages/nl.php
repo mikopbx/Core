@@ -1275,4 +1275,6 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction1' => 'Als de SIP-poort op de router niet %SIP_PORT% is, voer deze dan in na het IP-adres of de externe host, gescheiden door een dubbele punt.',
     'nw_ExternIpHostInstruction2' => 'Als er een externe hostnaam is opgegeven, wordt deze bij voorkeur gebruikt boven het externe IP-adres.',
+    'upd_UpdateDockerHeader' => 'Regels voor containerupdates',
+    'upd_UpdateDockerText' => 'Stop de container, verwijder deze, download de nieuwste versie en begin opnieuw, waarbij u de opslagmontage-instellingen en omgevingsvariabelen behoudt. Het proces wordt gedetailleerder beschreven in de documentatie.',
 ];

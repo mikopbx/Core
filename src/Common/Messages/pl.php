@@ -1276,4 +1276,6 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction1' => 'Jeśli port SIP na routerze to inny niż %SIP_PORT%, wpisz go po adresie IP lub zewnętrznym hoście, oddzielone dwukropkiem.',
     'nw_ExternIpHostInstruction2' => 'Jeśli określono zewnętrzną nazwę hosta, będzie ona używana zamiast zewnętrznego adresu IP.',
+    'upd_UpdateDockerHeader' => 'Reguły aktualizacji kontenera',
+    'upd_UpdateDockerText' => 'Zatrzymaj kontener, usuń go, pobierz najnowszą wersję i zacznij od nowa, zachowując ustawienia montowania pamięci i zmienne środowiskowe. Proces opisano bardziej szczegółowo w dokumentacji.',
 ];

@@ -1276,4 +1276,6 @@ return [
     'nw_NATInfoInstruction1' => 'ネットワークが 1:1 NAT をサポートするように構成されている場合 (これは通常、クラウドのデフォルト ルールです)、追加の設定を行う必要はありません。',
     'nw_NATInfoInstruction3' => '%SIP_PORT% TCP/UDP および %TLS_PORT% TCP',
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
+    'upd_UpdateDockerHeader' => 'コンテナ更新ルール',
+    'upd_UpdateDockerText' => 'コンテナを停止して削除し、最新バージョンをダウンロードして再起動し、ストレージのマウント設定と環境変数を保持します。このプロセスについては、ドキュメントで詳しく説明されています。',
 ];

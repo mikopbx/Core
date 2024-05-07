@@ -1276,4 +1276,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO%UDP',
     'nw_ExternIpHostInstruction1' => 'Si le port SIP du routeur n\'est pas %SIP_PORT%, saisissez-le après l\'adresse IP ou l\'hôte externe, séparés par deux points.',
     'nw_ExternIpHostInstruction2' => 'Si un nom d\'hôte externe est spécifié, il sera utilisé de préférence à l\'adresse IP externe.',
+    'upd_UpdateDockerHeader' => 'Règles de mise à jour du conteneur',
+    'upd_UpdateDockerText' => 'Arrêtez le conteneur, supprimez-le, téléchargez la dernière version et recommencez, en préservant les paramètres de montage de stockage et les variables d\'environnement. Le processus est décrit plus en détail dans la documentation.',
 ];

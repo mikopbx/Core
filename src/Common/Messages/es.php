@@ -1276,4 +1276,6 @@ El cupón se puede activar una vez y luego se canjea.',
     'nw_ExternIpHostInstruction1' => 'Si el puerto SIP del enrutador no es %SIP_PORT%, ingréselo después de la dirección IP o del host externo, separados por dos puntos.',
     'nw_ExternIpHostInstruction2' => 'Si se especifica un nombre de host externo, se utilizará con preferencia a la dirección IP externa.',
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO%UDP',
+    'upd_UpdateDockerHeader' => 'Reglas de actualización de contenedores',
+    'upd_UpdateDockerText' => 'Detenga el contenedor, elimínelo, descargue la última versión y comience de nuevo, conservando la configuración de montaje de almacenamiento y las variables de entorno. El proceso se describe con más detalle en la documentación.',
 ];

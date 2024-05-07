@@ -1242,4 +1242,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction1' => 'Om SIP-porten på routern inte är %SIP_PORT%, ange den efter IP-adressen eller extern värd, separerad med ett kolon.',
     'nw_ExternIpHostInstruction2' => 'Om ett externt värdnamn anges kommer det att användas framför den externa IP-adressen.',
+    'upd_UpdateDockerHeader' => 'Behållaruppdateringsregler',
+    'upd_UpdateDockerText' => 'Stoppa behållaren, ta bort den, ladda ner den senaste versionen och börja om, bevara lagringsmonteringsinställningarna och miljövariablerna. Processen beskrivs mer i detalj i dokumentationen.',
 ];

@@ -1276,4 +1276,6 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'nw_NATInfoInstruction4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_ExternIpHostInstruction1' => 'Pokud SIP port na routeru není %SIP_PORT%, zadejte jej za IP adresu nebo externího hostitele, oddělené dvojtečkou.',
     'nw_ExternIpHostInstruction2' => 'Pokud je zadán externí název hostitele, bude použit přednostně před externí IP adresou.',
+    'upd_UpdateDockerHeader' => 'Pravidla aktualizace kontejneru',
+    'upd_UpdateDockerText' => 'Zastavte kontejner, odstraňte jej, stáhněte si nejnovější verzi a začněte znovu, přičemž zachováte nastavení připojení úložiště a proměnné prostředí. Proces je podrobněji popsán v dokumentaci.',
 ];
