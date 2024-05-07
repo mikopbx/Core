@@ -60,6 +60,7 @@ fi
 alias ls='ls --color=auto';
 alias myip="curl http://ipecho.net/plain; echo";
 alias remount-offload="_remountOffload";
+alias check-file-connection="_checkFileConnection";
 alias ps='ps -A -f';
 alias sqlite3='sqlite3 -table';
 alias sngrep='sngrep -r';
@@ -73,6 +74,12 @@ PS2='>'
 
 # Set language
 export LANG=en_US.utf8
+
+_checkFileConnection()
+{
+  lsof "$1" | awk 'NR>1 {print $2}' | xargs -I {} sh -c 'ps | grep {} | grep -v grep'
+}
+
 
 # Function to remount offload device
 _remountOffload()
