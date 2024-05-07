@@ -284,7 +284,6 @@ class Network extends Injectable
         $data->hostname = 'MikoPBX';
         $data->domain = '';
         $data->topology = LanInterfaces::TOPOLOGY_PRIVATE;
-        $data->autoUpdateExtIp = ($general === true) ? '1' : '0';;
         $data->primarydns = '';
         $data->save();
 
@@ -422,15 +421,11 @@ class Network extends Injectable
         $ipInfoResult = GetExternalIpInfoAction::main();
         if ($ipInfoResult->success && isset($ipInfoResult->data['ip'])) {
             $currentIP = $ipInfoResult->data['ip'];
-            $lanData = LanInterfaces::find('autoUpdateExtIp=1');
+            $lanData = LanInterfaces::find('internet=1');
             foreach ($lanData as $lan) {
                 $oldExtIp = $lan->extipaddr;
-                $parts = explode(':', $oldExtIp);
-                $oldIP = $parts[0]; // Only IP part of the address
-                $port = isset($parts[1]) ? ':' . $parts[1] : '';
-                if ($oldIP !== $currentIP) {
-                    $newExtIp = $currentIP . $port;
-                    $lan->extipaddr = $newExtIp;
+                if ($oldExtIp !== $currentIP) {
+                    $lan->extipaddr = $currentIP;
                     if ($lan->save()) {
                         SystemMessages::sysLogMsg(__METHOD__, "External IP address updated for interface {$lan->interface}");
                     }

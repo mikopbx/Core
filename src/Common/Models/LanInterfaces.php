@@ -154,13 +154,6 @@ class LanInterfaces extends ModelsBase
     public ?string $disabled = '0';
 
     /**
-     * If true, the external IP will update on each reboot
-     *
-     * @Column(type="string", length=1, nullable=true)
-     */
-    public ?string $autoUpdateExtIp = '0';
-
-    /**
      * Initialize the model.
      */
     public function initialize(): void
