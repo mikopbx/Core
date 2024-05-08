@@ -1,26 +1,50 @@
 {
-  "server": "hub-cloud.browserstack.com",
-  "capabilities": {
-    "project": "MikoPBX",
-    "build": "MikoPBXTest",
-    "name": "local_test",
-    "os" : "Windows",
-    "resolution" : "1680x1050",
-    "acceptSslCerts": true,
-    "acceptInsecureCerts": true,
-    "fixSessionCapabilities": true,
-    "remoteFiles": true,
-    "seleniumVersion": "4.0.0",
-    "browserName": "Chrome",
-    "browserstack.local": false,
-    "browserstack.debug": true,
-    "browserstack.console": verbose,
-    "browserstack.networkLogs": true,
-    "browserstack.networkLogsOptions.captureContent": true
-  },
-	"MIKO_LICENSE_KEY": "",
-  "environments": [{
-    "browser": "chrome",
-    "browserVersion": "latest"
-  }]
+    "server": "hub-cloud.browserstack.com",
+    "capabilities": {
+        "project": "MikoPBX",
+        "build": "MikoPBXTest",
+        "name": "local_test",
+        "os": "Windows",
+        "resolution": "1680x1050",
+        "acceptSslCerts": true,
+        "acceptInsecureCerts": true,
+        "fixSessionCapabilities": true,
+        "remoteFiles": true,
+        "seleniumVersion": "4.0.0",
+        "browserName": "Chrome",
+        "browserstack": {
+            "networkLogs": true,
+            "networkLogsOptions": {
+                "captureContent": true
+            },
+            "console": "verbose",
+            "local": false,
+            "debug": true
+        },
+        "browserstack.chrome": {
+            "extends": "browserstack",
+            "desiredCapabilities": {
+                "browserName": "chrome",
+                "goog:chromeOptions": {
+                    "w3c": true
+                }
+            }
+        }
+    },
+    "MIKO_LICENSE_KEY": "",
+    "environments": [
+        {
+            "browser": "chrome",
+            "browserVersion": "latest",
+            "chromeOptions": {
+                "args": [
+                    "incognito",
+                    "--start-maximized"
+                ],
+                "perfLoggingPrefs": {
+                    "enableNetwork": false
+                }
+            }
+        }
+    ]
 }
