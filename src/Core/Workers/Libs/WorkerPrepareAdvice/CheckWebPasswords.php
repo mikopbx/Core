@@ -44,10 +44,6 @@ class CheckWebPasswords extends Injectable
 
         $passwords = $this->getPasswordCollection();
 
-        if ($passwords->web === $passwords->cloudInstanceId) {
-            return[]; // It is OK
-        }
-
         $messageParams = [
             'name' => 'WEB password',
             'url' => $this->url->get('general-settings/modify/#/passwords')

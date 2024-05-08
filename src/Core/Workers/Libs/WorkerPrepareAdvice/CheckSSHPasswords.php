@@ -55,8 +55,6 @@ class CheckSSHPasswords extends Injectable
                 'messageParams' => $messageParams
             ];
             $messages['needUpdate'][] = PbxSettingsConstants::SSH_PASSWORD;
-        } elseif ($passwords->ssh === $passwords->cloudInstanceId) {
-            // It Is ok
         } elseif (Util::isSimplePassword($passwords->ssh)) {
             // Check for weak password
             $messages['warning'][] = [
