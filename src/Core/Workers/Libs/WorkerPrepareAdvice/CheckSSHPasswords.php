@@ -48,7 +48,9 @@ class CheckSSHPasswords extends Injectable
             'url' => $this->url->get('general-settings/modify/#/ssh')
         ];
 
-        if ($passwords->sshByDefault === $passwords->ssh) {
+        if ($passwords->sshByDefault === $passwords->ssh
+            || $passwords->ssh === $passwords->cloudInstanceId
+        ) {
             // Check for default password
             $messages['error'][] = [
                 'messageTpl' => 'adv_YouUseDefaultSSHPassword',

@@ -49,7 +49,8 @@ class CheckWebPasswords extends Injectable
             'url' => $this->url->get('general-settings/modify/#/passwords')
         ];
 
-        if ($passwords->webByDefault === $passwords->web) {
+        if ($passwords->webByDefault === $passwords->web
+            || $passwords->web === $passwords->cloudInstanceId) {
             // Check for default password
             $messages['error'][] = [
                 'messageTpl' => 'adv_YouUseDefaultWebPassword',
