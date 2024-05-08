@@ -49,12 +49,13 @@ class YandexCloud extends CloudProvider
 
         SystemMessages::echoToTeletype(PHP_EOL);
 
-        // Extract username from user-data
-        $userData = $data['attributes']['user-data'] ?? '';
-        $username = $this->extractUserNameFromUserData($userData);
+        $sshKeys = $metadata['attributes']['ssh-keys']??'';
+
+        // Extract username
+        $username = $this->extractUserNameFromSshKeys($sshKeys);
 
         // Update SSH keys, if available
-        $this->updateSSHKeys($metadata['attributes']['ssh-keys'] ?? '');
+        $this->updateSSHKeys($sshKeys);
 
         // Update machine name
         $hostname = $metadata['name'] ?? '';
@@ -105,13 +106,15 @@ class YandexCloud extends CloudProvider
     /**
      * Extracts the username from user-data script.
      *
-     * @param string $userData Cloud-init user data string.
+     * @param string $sshKeys SSH keys sting.
      * @return string|null Extracted username or null if not found.
      */
-    private function extractUserNameFromUserData(string $userData): ?string
+    private function extractUserNameFromSshKeys(string $sshKeys): ?string
     {
-        if (preg_match('/^\s*-\s*name:\s*(\w+)/m', $userData, $matches)) {
-            return $matches[1]; // Returns the first username found
+        $parts = explode(':', $sshKeys);
+        $username = $parts[0];
+        if (strlen($username) >= 3) {
+            return $username;
         }
         return null; // Return null if no username found
     }
