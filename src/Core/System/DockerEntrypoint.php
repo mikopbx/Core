@@ -230,8 +230,14 @@ class DockerEntrypoint extends Di\Injectable
                         break;
                     case PbxSettingsConstants::ENABLE_USE_NAT:
                         if ($envValue==='1'){
-                            $this->enableNat();
+                            $this->reconfigureNetwork("topology", LanInterfaces::TOPOLOGY_PRIVATE);
                         }
+                        break;
+                    case PbxSettingsConstants::EXTERNAL_SIP_HOST_NAME:
+                        $this->reconfigureNetwork("exthostname", $envValue);
+                        break;
+                    case PbxSettingsConstants::EXTERNAL_SIP_IP_ADDR:
+                        $this->reconfigureNetwork("extipaddr", $envValue);
                         break;
                     default:
                         $this->updateDBSetting($dbKey, $envValue);
@@ -242,26 +248,28 @@ class DockerEntrypoint extends Di\Injectable
     }
 
     /**
-     * Updates the topology of LAN interfaces designated as public (internet-facing) to private
-     * by executing an SQLite update command directly via the shell.
+     * Reconfigures a network setting in the database.
      *
-     * This method finds the path of the SQLite3 executable and constructs a command to update
-     * the `topology` field of all entries in the `m_LanInterfaces` table where `internet` is '1'.
-     * The new topology value is set from the `LanInterfaces::TOPOLOGY_PRIVATE` constant.
+     * This method updates the value of a specified setting for network interfaces
+     * that are marked as connected to the internet in the database. It logs the outcome
+     * of the operation, detailing success or failure along with the executed command
+     * if an error occurs.
      *
+     * @param string $key The database column key representing the setting to update.
+     * @param string $newValue The new value to assign to the specified setting.
+     * @return void
      */
-    private function enableNat(): void
+    private function reconfigureNetwork(string $key, string $newValue): void
     {
         $sqlite3 = Util::which('sqlite3');
         $dbPath =  self::PATH_DB;
         $out = [];
-        $private = LanInterfaces::TOPOLOGY_PRIVATE;
-        $command = "$sqlite3 $dbPath \"UPDATE m_LanInterfaces SET topology='$private' WHERE internet='1'\"";
+        $command = "$sqlite3 $dbPath \"UPDATE m_LanInterfaces SET $key='$newValue' WHERE internet='1'\"";
         $res = Processes::mwExec($command, $out);
         if ($res === 0) {
-            SystemMessages::sysLogMsg(__METHOD__, " - Update topology to '$private' in m_LanInterfaces", LOG_INFO);
+            SystemMessages::sysLogMsg(__METHOD__, " - Update m_LanInterfaces.$key to '$newValue'", LOG_INFO);
         } else {
-            SystemMessages::sysLogMsg(__METHOD__, " - Update topology failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
+            SystemMessages::sysLogMsg(__METHOD__, " - Update m_LanInterfaces.$key to '$newValue' failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
         }
     }
     /**
@@ -297,6 +305,8 @@ class DockerEntrypoint extends Di\Injectable
             } else {
                 SystemMessages::sysLogMsg(__METHOD__, " - Update $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
             }
+        } elseif(!array_key_exists($key, $this->settings)) {
+            SystemMessages::sysLogMsg(__METHOD__, " - Unknown environment settings key:  $key", LOG_ERR);
         }
     }
 

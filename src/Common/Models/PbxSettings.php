@@ -171,6 +171,8 @@ class PbxSettings extends ModelsBase
             PbxSettingsConstants::PBX_LICENSE=>'',
             PbxSettingsConstants::ENABLE_USE_NAT=> '0',
             PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP=> '0',
+            PbxSettingsConstants::EXTERNAL_SIP_HOST_NAME=>'',
+            PbxSettingsConstants::EXTERNAL_SIP_IP_ADDR=>'',
         ];
     }
 

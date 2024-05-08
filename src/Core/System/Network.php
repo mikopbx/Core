@@ -423,6 +423,9 @@ class Network extends Injectable
      */
     public function updateExternalIp(): void
     {
+        if (PbxSettings::getValueByKey(PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP)!=='1'){
+            return;
+        }
         $ipInfoResult = GetExternalIpInfoAction::main();
         if ($ipInfoResult->success && isset($ipInfoResult->data['ip'])) {
             $currentIP = $ipInfoResult->data['ip'];
