@@ -110,10 +110,10 @@ class YandexCloud extends CloudProvider
      */
     private function extractUserNameFromUserData(string $userData): ?string
     {
-        if (preg_match('/^users:\s*-\s*name:\s*(\w+)/m', $userData, $matches)) {
+        if (preg_match('/^\s*-\s*name:\s*(\w+)/m', $userData, $matches)) {
             return $matches[1]; // Returns the first username found
         }
-        return 'null'; // Return null if no username found
+        return null; // Return null if no username found
     }
 
     /**
