@@ -19,7 +19,15 @@
             },
             "console": "verbose",
             "local": false,
-            "debug": true
+            "debug": true,
+            "webdriver": {
+                    "timeout_options": {
+                      "timeout": 15000,
+                       "retry_attempts": 3
+                    },
+                    "keep_alive": true,
+                    "start_process": false
+                  }
         },
         "browserstack.chrome": {
             "extends": "browserstack",
@@ -39,7 +47,8 @@
             "chromeOptions": {
                 "args": [
                     "incognito",
-                    "--start-maximized"
+                    "--start-maximized",
+                    "--no-sandbox"
                 ],
                 "perfLoggingPrefs": {
                     "enableNetwork": false
