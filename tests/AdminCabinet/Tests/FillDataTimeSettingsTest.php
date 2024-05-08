@@ -62,9 +62,6 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         // Save the settings
         $this->submitForm('time-settings-form');
 
-        // Wait for Nginx restarted
-        sleep(10);
-
         $this->clickSidebarMenuItemByHref('/admin-cabinet/time-settings/modify/');
 
         $this->assertMenuItemSelected(PbxSettingsConstants::PBX_TIMEZONE, $params['PBXTimezone']);
@@ -88,7 +85,7 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
             [
                 PbxSettingsConstants::PBX_TIMEZONE => 'Europe/Riga',
                 PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS => true,
-                'ManualDateTime' => '01/01/2020, 1:01:01 PM',
+                'ManualDateTime' => date('d/m/Y, h:i:s A', strtotime('+2 hours')),
                 PbxSettingsConstants::NTP_SERVER => '',
             ],
         ];

@@ -7,15 +7,20 @@
     "os" : "Windows",
     "resolution" : "1680x1050",
     "acceptSslCerts": true,
+    "acceptInsecureCerts": true,
     "fixSessionCapabilities": true,
     "remoteFiles": true,
-    "browserstack.networkLogs": true,
     "seleniumVersion": "4.0.0",
     "browserName": "Chrome",
-    "browserstack.local": false
+    "browserstack.local": false,
+    "browserstack.debug": true,
+    "browserstack.console": verbose,
+    "browserstack.networkLogs": true,
+    "browserstack.networkLogsOptions.captureContent": true
   },
 	"MIKO_LICENSE_KEY": "",
   "environments": [{
-    "browser": "chrome"
+    "browser": "chrome",
+    "browserVersion": "latest"
   }]
 }

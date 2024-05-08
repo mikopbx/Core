@@ -21,7 +21,6 @@ namespace MikoPBX\Tests\AdminCabinet\Lib;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use GuzzleHttp\Exception\GuzzleException;
-use MikoPBX\Tests\AdminCabinet\Tests\LoginTest;
 use PHPUnit\Framework\TestCase;
 use BrowserStack\Local as BrowserStackLocal;
 use GuzzleHttp\Client as GuzzleHttpClient;
@@ -101,7 +100,7 @@ class BrowserStackTest extends TestCase
         $caps['build'] = $GLOBALS['BUILD_NUMBER'];
 
         // Create a new WebDriver instance with the specified URL and capabilities
-        self::$driver = RemoteWebDriver::create($url, $caps);
+        self::$driver = RemoteWebDriver::create($url, $caps, 120000, 120000);
 
         // Set the initial test result and failure conditions variables
         self::$testResult = true;
