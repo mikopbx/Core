@@ -83,7 +83,7 @@ class RedisConf extends Injectable
         $conf   = "bind {$config->host}" . PHP_EOL;
         $conf  .= "port {$config->port}" . PHP_EOL;
         $conf  .= "dir /var/tmp" . PHP_EOL;
-        $conf  .= "loglevel notice" . PHP_EOL;
+        $conf  .= "loglevel warning" . PHP_EOL;
         $conf  .= "syslog-enabled yes" . PHP_EOL;
         $conf  .= "syslog-ident redis" . PHP_EOL;
         file_put_contents(self::CONF_FILE, $conf);
