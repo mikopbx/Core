@@ -247,7 +247,7 @@ class GeneralSettingsController extends BaseController
      */
     private function updatePBXSettings(array $data):array
     {
-        $messages = [];
+        $messages['error'] = [];
         $pbxSettings = PbxSettings::getDefaultArrayValues();
 
         // Process SSHPassword and set SSHPasswordHash accordingly
@@ -306,22 +306,14 @@ class GeneralSettingsController extends BaseController
             }
 
             if (array_key_exists($key, $data)) {
-                $record = PbxSettings::findFirstByKey($key);
-                if ($record === null) {
-                    $record = new PbxSettings();
-                    $record->key = $key;
-                } elseif ($record->key === $key
-                    && $record->value === $newValue) {
-                    continue;
-                }
-                $record->value = $newValue;
-
-                if ($record->save() === false) {
-                    $messages['error'][] = $record->getMessages();
-                }
+                PbxSettings::setValue($key, $newValue, $messages['error']);
             }
         }
-        $result = count($messages) === 0;
+
+        // Reset cloud provision flag
+        PbxSettings::setValue(PbxSettingsConstants::CLOUD_PROVISIONING, '1', $messages['error']);
+
+        $result = count($messages['error']) === 0;
         return [$result, $messages];
     }
 

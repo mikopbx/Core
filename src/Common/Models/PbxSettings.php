@@ -246,16 +246,24 @@ class PbxSettings extends ModelsBase
      * Set value for a key
      * @param $key string settings key
      * @param $value string value
+     * @param $messages array error messages
      * @return bool Whether the save was successful or not.
      */
-    public static function setValue(string $key, string $value): bool
+    public static function setValue(string $key, string $value, array &$messages=[]): bool
     {
         $record = self::findFirstByKey($key);
         if ($record === null) {
             $record = new self();
             $record->key = $key;
         }
+        if (isset($record->value) && $record->value === $value) {
+            return true;
+        }
         $record->value = $value;
-        return $record->save();
+        $result=$record->save();
+        if (!$result) {
+            $messages[] = $record->getMessages();
+        }
+        return $result;
     }
 }
