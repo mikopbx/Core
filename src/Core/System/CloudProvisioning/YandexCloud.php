@@ -113,7 +113,7 @@ class YandexCloud extends CloudProvider
     {
         $parts = explode(':', $sshKeys);
         $username = $parts[0];
-        if (strlen($username) >= 3) {
+        if (strlen($username) >= 3 && strlen($username) < 25) {
             return $username;
         }
         return null; // Return null if no username found
