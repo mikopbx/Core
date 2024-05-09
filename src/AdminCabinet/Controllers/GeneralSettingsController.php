@@ -247,7 +247,7 @@ class GeneralSettingsController extends BaseController
      */
     private function updatePBXSettings(array $data):array
     {
-        $messages['error'] = [];
+        $messages = ['error'=>[]];
         $pbxSettings = PbxSettings::getDefaultArrayValues();
 
         // Process SSHPassword and set SSHPasswordHash accordingly
@@ -310,7 +310,7 @@ class GeneralSettingsController extends BaseController
             }
         }
 
-        // Reset cloud provision flag
+        // Reset a cloud provision flag
         PbxSettings::setValue(PbxSettingsConstants::CLOUD_PROVISIONING, '1', $messages['error']);
 
         $result = count($messages['error']) === 0;

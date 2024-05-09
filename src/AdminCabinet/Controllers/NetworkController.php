@@ -251,29 +251,29 @@ class NetworkController extends BaseController
      */
     private function saveNatSettings(array $data): array
     {
-        $messages['error'] = [];
+        $messages = [];
         foreach ($data as $key => $value) {
             switch ($key) {
                 case PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP:
-                    PbxSettings::setValue($key, $value === 'on' ? '1' : '0', $messages['error']);
+                    PbxSettings::setValue($key, $value === 'on' ? '1' : '0', $messages);
                     break;
                 case PbxSettingsConstants::EXTERNAL_SIP_PORT:
                     if (empty($value)) {
                         $value = PbxSettings::getValueByKey(PbxSettingsConstants::SIP_PORT);
                     }
-                    PbxSettings::setValue($key, trim($value), $messages['error']);
+                    PbxSettings::setValue($key, trim($value), $messages);
                     break;
                 case PbxSettingsConstants::EXTERNAL_TLS_PORT:
                     if (empty($value)) {
                         $value = PbxSettings::getValueByKey(PbxSettingsConstants::TLS_PORT);
                     }
-                    PbxSettings::setValue($key, trim($value), $messages['error']);
+                    PbxSettings::setValue($key, trim($value), $messages);
                     break;
                 default:
             }
         }
-        $result = count($messages['error']) === 0;
-        return [$result, $messages];
+        $result = count($messages) === 0;
+        return [$result, ['error'=>$messages]];
     }
 
     /**
