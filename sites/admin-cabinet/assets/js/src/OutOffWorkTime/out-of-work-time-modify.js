@@ -41,6 +41,17 @@ const outOfWorkTimeRecord = {
     $time_to: $('#time_to'),
     $forwardingSelectDropdown: $('#save-outoffwork-form .forwarding-select'),
 
+
+    /**
+     * Additional condition for the time interval
+     * @type {array}
+     */
+    additionalTimeIntervalRules: [{
+        type: 'regExp',
+        value: /^(2[0-3]|1?[0-9]):([0-5]?[0-9])$/,
+        prompt: globalTranslate.tf_ValidateCheckTimeInterval,
+    }],
+
     /**
      * Validation rules for the form fields before submission.
      *
@@ -387,7 +398,8 @@ const outOfWorkTimeRecord = {
         }
 
         // Check all fields
-        if (result.data.time_from === ''
+        if ($('#calType').parent().dropdown('get value') !== 'caldav'
+            && result.data.time_from === ''
             && result.data.time_to === ''
             && result.data.weekday_from === '-1'
             && result.data.weekday_to === '-1'
@@ -414,6 +426,15 @@ const outOfWorkTimeRecord = {
         const currentOffset = new Date().getTimezoneOffset();
         const serverOffset = parseInt(outOfWorkTimeRecord.$formObj.form('get value', 'serverOffset'));
         const offsetDiff = serverOffset + currentOffset;
+
+        if($('#calType').parent().dropdown('get value') === 'caldav'){
+            Form.validateRules.timefrom.rules = [];
+            Form.validateRules.timeto.rules = [];
+        } else {
+            Form.validateRules.timefrom.rules = outOfWorkTimeRecord.additionalTimeIntervalRules;
+            Form.validateRules.timeto.rules = outOfWorkTimeRecord.additionalTimeIntervalRules;
+        }
+
         if (dateFrom) {
             dateFrom.setHours(0, 0, 0, 0);
             result.data.date_from = Math.floor(dateFrom.getTime()/1000) - offsetDiff * 60;
