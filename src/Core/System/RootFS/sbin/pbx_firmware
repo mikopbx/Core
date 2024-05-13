@@ -152,6 +152,8 @@ if [ -f /offload/livecd ]; then
   echo " - Restoring the MikoPBX default configuration ..."
   /bin/busybox cp -pv /tmp/configbak/* /conf.recover/conf/ | /bin/busybox awk '{print "\t" $0}'
   touch /tmp/ejectcd
+  echoToTeletype " - rebooting system..."
+  /sbin/pbx_reboot;
 else
   # Format the 3rd partition and mount it as /cf. Then, copy the configuration back and remove the image file
   echo " - Format the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
