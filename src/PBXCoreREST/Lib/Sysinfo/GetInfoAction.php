@@ -68,6 +68,7 @@ class GetInfoAction extends \Phalcon\Di\Injectable
     public static function prepareSysyinfoContent(): string
     {
         $content = self::getPBXVersion();
+        $content .= self::getEnvironment();
         $content .= self::getDate();
         $content .= self::getUpTime();
         $content .= self::getCpu();
@@ -113,13 +114,9 @@ class GetInfoAction extends \Phalcon\Di\Injectable
     private static function getPBXVersion(): string
     {
         $version = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
-        $installationType = PbxSettings::getValueByKey(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE);
         $content = '─────────────────────────────────────── PBXVersion ───────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
         $content .= $version . PHP_EOL;
-        if ($installationType){
-            $content .= 'Machine environment: '.$installationType . PHP_EOL;
-        }
         $content .= PHP_EOL . PHP_EOL;
         return $content;
     }
@@ -409,6 +406,30 @@ class GetInfoAction extends \Phalcon\Di\Injectable
         $files   = Main::checkForCorruptedFiles();
         foreach ($files as $file) {
             $content .= $file . PHP_EOL;
+        }
+        $content .= PHP_EOL . PHP_EOL;
+        return $content;
+    }
+
+    /**
+     * Prepare system environment information
+     * @return string
+     */
+    private static function getEnvironment(): string
+    {
+        $content    = '───────────────────────────────────────── Environment ─────────────────────────────────────────';
+        $content    .= PHP_EOL . PHP_EOL;
+        $installationType = PbxSettings::getValueByKey(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE);
+        if ($installationType){
+            $content .= 'Machine hardware: '.$installationType . PHP_EOL;
+        }
+        $hyperVisor = GetHypervisorInfoAction::main();
+        if ($hyperVisor->success) {
+            $content .= "Hypervisor: {$hyperVisor->data['Hypervisor']}" . PHP_EOL;
+        }
+        $dmi = GetDMIInfoAction::main();
+        if ($dmi->success) {
+            $content .= "DMI: {$dmi->data['DMI']}" . PHP_EOL;
         }
         $content .= PHP_EOL . PHP_EOL;
         return $content;

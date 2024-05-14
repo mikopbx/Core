@@ -19,7 +19,9 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
+use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetDMIInfoAction;
 use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetExternalIpInfoAction;
+use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetHypervisorInfoAction;
 use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetInfoAction;
 use Phalcon\Di\Injectable;
 
@@ -49,6 +51,12 @@ class SysinfoManagementProcessor extends Injectable
                 break;
             case 'getExternalIpInfo':
                 $res = GetExternalIpInfoAction::main();
+                break;
+            case 'getHypervisorInfo':
+                $res = GetHypervisorInfoAction::main();
+                break;
+            case 'getDMIInfo':
+                $res = GetDMIInfoAction::main();
                 break;
             default:
                 $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;

@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
+use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di;
 
@@ -79,6 +80,24 @@ class SendMetricsAction extends \Phalcon\Di\Injectable
 
             // Virtual Hardware Type
             $dataMetrics['VirtualHardwareType'] = PbxSettings::getValueByKey(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE);
+
+            // Hypervisor
+            $restAnswer = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+                '/pbxcore/api/sysinfo/getHypervisorInfo',
+                PBXCoreRESTClientProvider::HTTP_METHOD_GET
+            ]);
+            if ($restAnswer->success){
+                $dataMetrics['Hypervisor'] = $restAnswer->data['Hypervisor'];
+            }
+
+            // DMI
+            $restAnswer = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+                '/pbxcore/api/sysinfo/getDMIInfo',
+                PBXCoreRESTClientProvider::HTTP_METHOD_GET
+            ]);
+            if ($restAnswer->success){
+                $dataMetrics['DMI'] = $restAnswer->data['DMI'];
+            }
 
             $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
             $license->sendLicenseMetrics($licenseKey, $dataMetrics);
