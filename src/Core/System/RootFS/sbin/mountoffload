@@ -267,7 +267,6 @@ for disk in $disks; do
        # Exit after successfully mounting the offload disk
        exit 0
     else
-        echo " - No user input detected. Booting from hard drive."
         liveCDDisk=$disk
         liveCDPartition=$diskPath
     fi
