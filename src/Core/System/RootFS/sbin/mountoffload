@@ -257,7 +257,7 @@ for disk in $disks; do
   # Check for the presence of a "livecd" flag file in the root of the offload disk.
   if [ -f /offload/livecd ]; then
     echo " - Found LiveCD image!"
-    echo "\t Press any key within 30 seconds to boot from LiveCD..."
+    echo "  Press any key within 30 seconds to boot from LiveCD..."
     read -t 30 -n 1 input
     if [ $? = 0 ]; then
        echo " - User selected to boot from LiveCD."
@@ -267,7 +267,6 @@ for disk in $disks; do
        # Exit after successfully mounting the offload disk
        exit 0
     else
-        echo " - No user input detected. Booting from hard drive."
         liveCDDisk=$disk
         liveCDPartition=$diskPath
     fi
