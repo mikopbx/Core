@@ -121,7 +121,7 @@ if [ -r "${img_file}" ]; then
    # If the pv command fails or there aren't three primary partitions, restore the system image from the backup
   if [ ! "$resultPv" = '0' ] || [ ! "$(/sbin/parted --script --align optimal "/dev/${systemDevice}" "print" | grep primary | /bin/busybox wc -l)" = '3' ]; then
     if [ -f "$backupImg" ]; then
-      echo " - There are some errors in the new image, restoring system from backup to /dev/${systemDevice}"
+      echo " - There are some errors, restoring system from backup to /dev/${systemDevice}"
       if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
         /bin/pv -p "$backupImg" | /bin/gunzip | dd of="/dev/${systemDevice}" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
       else
@@ -152,11 +152,9 @@ if [ -f /offload/livecd ]; then
   echo " - Restoring the MikoPBX default configuration ..."
   /bin/busybox cp -pv /tmp/configbak/* /conf.recover/conf/ | /bin/busybox awk '{print "\t" $0}'
   touch /tmp/ejectcd
-  echoToTeletype " - rebooting system..."
-  /sbin/pbx_reboot;
 else
   # Format the 3rd partition and mount it as /cf. Then, copy the configuration back and remove the image file
-  echo " - Format the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
+  echo " - Formating the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
   /sbin/mkfs.ext4 -qF "${partition3Name}" | /bin/busybox awk '{print "\t" $0}'
   sleep 3;
   /bin/mount -w -o noatime "${partition3Name}" /cf | /bin/busybox awk '{print "\t" $0}'
@@ -164,8 +162,25 @@ else
   echo " - Restoring the MikoPBX configuration settings...";
   /bin/busybox cp -Rv /tmp/configbak/* /cf/conf/ | /bin/busybox awk '{print "\t" $0}'
 
-  echo " - Delete firmware image...";
+  echo " - Deleting firmware image...";
   rm -rf "${img_file}";
 fi
+
+echo " - Reboot pending. Cancel with rm /tmp/rebooting ..."
+# Waiting timeout
+WAIT_TIME=10
+counter=0
+while [ $counter -lt $WAIT_TIME ]; do
+    if [ ! -f /tmp/rebooting ]; then
+        # Flag file was deleted
+        echo "System reboot was cancelled"
+        exit 0
+    fi
+    sleep 1
+    counter=$((counter+1))
+done
+
+echo "Rebooting the system..."
+/sbin/pbx_reboot;
 
 exit 0;
