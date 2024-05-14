@@ -256,18 +256,18 @@ for disk in $disks; do
 
   # Check for the presence of a "livecd" flag file in the root of the offload disk.
   if [ -f /offload/livecd ]; then
-    echo " - Found LiveCD flag..."
-    echo "Press any key within 30 seconds to boot from LiveCD..."
+    echo " - Found LiveCD image!"
+    echo "\t Press any key within 30 seconds to boot from LiveCD..."
     read -t 30 -n 1 input
     if [ $? = 0 ]; then
-       echo "User selected to boot from LiveCD."
+       echo " - User selected to boot from LiveCD."
        # Call function to create boot configuration files and recover configuration from the offload disk
        createBootConfFiles
        mountConfRecover "$disk"
        # Exit after successfully mounting the offload disk
        exit 0
     else
-        echo "No user input detected. Booting from hard drive."
+        echo " - No user input detected. Booting from hard drive."
         liveCDDisk=$disk
         liveCDPartition=$diskPath
     fi
@@ -392,7 +392,7 @@ for disk in $disks; do
 
   # Check if a file named "livecd" exists in the root of the offload disk
   if [ -f /offload/livecd ]; then
-    echo " - Found LiveUSB flag..."
+    echo " - Found LiveUSB image..."
     mountConfRecover "$disk"
     exit 0
   fi
@@ -436,7 +436,7 @@ if [ -n "$liveCDPartition" ]; then
     createBootConfFiles
     mountConfRecover "$liveCDDisk"
     exit 0
-done
+fi
 
 # Log message indicating failure to find the /offload partition
 echo "The system was unable to find the /offload partition!"
