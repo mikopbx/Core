@@ -17,6 +17,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
+# Redirect output to the appropriate device based on serial port status
 if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
   exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>&1
 else
@@ -29,6 +30,9 @@ MD5_BUILD_INFO=$(/bin/busybox md5sum /etc/version.buildtime 2>/dev/null | /bin/b
 # Define the system PATH variable
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
+
+liveCDDisk=""
+liveCDPartition=""
 
 # Import shell functions
 . /sbin/shell_functions.sh
@@ -253,12 +257,20 @@ for disk in $disks; do
   # Check for the presence of a "livecd" flag file in the root of the offload disk.
   if [ -f /offload/livecd ]; then
     echo " - Found LiveCD flag..."
-
-    # Call function to create boot configuration files and recover configuration from the offload disk
-    createBootConfFiles
-    mountConfRecover "$disk"
-    # Exit after successfully mounting the offload disk
-    exit 0
+    echo "Press any key within 30 seconds to boot from LiveCD..."
+    read -t 30 -n 1 input
+    if [ $? = 0 ]; then
+       echo "User selected to boot from LiveCD."
+       # Call function to create boot configuration files and recover configuration from the offload disk
+       createBootConfFiles
+       mountConfRecover "$disk"
+       # Exit after successfully mounting the offload disk
+       exit 0
+    else
+        echo "No user input detected. Booting from hard drive."
+        liveCDDisk=$disk
+        liveCDPartition=$diskPath
+    fi
   fi
 
   # If the "livecd" flag file was not found, unmount the offload disk and continue with the next one
@@ -418,6 +430,13 @@ for disk in $disks; do
   echo " - Failed to find RootFS on $diskPath!"
 done
 
+# Default action - boot from LiveCD if it was found
+if [ -n "$liveCDPartition" ]; then
+    mountoffload "$liveCDPartition"
+    createBootConfFiles
+    mountConfRecover "$liveCDDisk"
+    exit 0
+done
 
 # Log message indicating failure to find the /offload partition
 echo "The system was unable to find the /offload partition!"
