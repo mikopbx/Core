@@ -52,7 +52,7 @@ Or follow our wiki for [additional instructions](https://wiki.mikopbx.com/en:set
 * Easy to install and easy to setup.
 * Multilingual interface with community-supported translation service.
 * Wiki documentation with context helpers on the web interface.
-* Latest PJSIP stack and Asterisk LTS 16 release installed.
+* Latest PJSIP stack and Asterisk LTS 20 release installed.
 * Fail2Ban and iptables already included.
 * Modular architecture.
 * Plugins marketplace.
