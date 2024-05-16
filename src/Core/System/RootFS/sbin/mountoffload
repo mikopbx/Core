@@ -257,6 +257,7 @@ for disk in $disks; do
   # Check for the presence of a "livecd" flag file in the root of the offload disk.
   if [ -f /offload/livecd ]; then
     echo " - Found LiveCD image!"
+    echo
     echo "  Press any key within 30 seconds to boot from LiveCD..."
     read -t 30 -n 1 input
     if [ $? = 0 ]; then
