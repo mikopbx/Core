@@ -107,7 +107,7 @@ Become a sponsor and get your logo on our README on Github with a link to your s
 
 ## License
 MikoPBX© - free phone system for small business
-Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
+Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
