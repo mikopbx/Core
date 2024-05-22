@@ -978,6 +978,7 @@ class Storage extends Di\Injectable
         $timeout = Util::which('timeout');
         $find = Util::which('find');
         $mv = Util::which('mv');
+        $rm = Util::which('rm');
         $nice = Util::which('nice');
         $tmpDir = $this->config->path('core.tempDir');
         if (!file_exists($tmpDir)) {
@@ -995,7 +996,7 @@ class Storage extends Di\Injectable
                 shell_exec("$mv '$resDirForRm/swapfile' '$tmpDir/swapfile'");
             }
             // Let's start deleting temporary files
-            Processes::mwExecBg("$nice -n 19 $mv -rf $resDirForRm");
+            Processes::mwExecBg("$nice -n 19 $rm -rf $resDirForRm");
         }
         Util::mwMkdir($tmpDir, true);
     }
