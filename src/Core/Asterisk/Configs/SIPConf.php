@@ -130,11 +130,15 @@ class SIPConf extends AsteriskConfigClass
         if ($di === null) {
             return false;
         }
-        $mikoPBXConfig = new MikoPBXConfig();
         [$topology, $extIpAddress, $externalHostName, $subnets] = $this->getTopologyData();
 
-        $generalSettings = $mikoPBXConfig->getGeneralSettings();
-        $now_hash        = md5($topology . $externalHostName . $extIpAddress . $generalSettings[PbxSettingsConstants::SIP_PORT]. $generalSettings[PbxSettingsConstants::TLS_PORT] . implode('',$subnets));
+        $externalSipPort    = $this->generalSettings[PbxSettingsConstants::EXTERNAL_SIP_PORT];
+        $externalTlsPort    = $this->generalSettings[PbxSettingsConstants::EXTERNAL_TLS_PORT];
+        $sipPort            = $this->generalSettings[PbxSettingsConstants::SIP_PORT];
+        $tlsPort            = $this->generalSettings[PbxSettingsConstants::TLS_PORT];
+
+        $now_hash           = md5($topology . $externalHostName . $extIpAddress . $sipPort.$externalSipPort. $tlsPort .$externalTlsPort. implode('',$subnets));
+
         $old_hash        = '';
         $varEtcDir       = $di->getShared('config')->path('core.varEtcDir');
         if (file_exists($varEtcDir . self::TOPOLOGY_HASH_FILE)) {
