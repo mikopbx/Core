@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk;
 
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use Throwable;
@@ -612,30 +613,41 @@ class AsteriskManager
         }
 
         // connect the socket
-        $errno   = $errstr = null;
+        $errno   = $errStr = null;
         $timeout = 2;
 
-        $this->socket = @fsockopen($this->server, $this->port, $errno, $errstr, $timeout);
-        if ($this->socket == false) {
-            SystemMessages::sysLogMsg('asmanager', "Unable to connect to manager {$this->server}:{$this->port} ($errno): $errstr", LOG_ERR);
+        $netStatPath = Util::which('netstat');
+        $busyBoxPath = Util::which('busybox');
+        $chkCommand = "$netStatPath -ntap | $busyBoxPath grep '$server ' | $busyBoxPath grep ESTABLISHED | $busyBoxPath grep asterisk";
+        if(Processes::mwExec($chkCommand) === 1){
+            SystemMessages::sysLogMsg('AMI', "Exceptions, Unable to connect to $server: the asterisk process is not running", LOG_ERR);
             return false;
         }
-        // PT1C;
+        try {
+            $this->socket = fsockopen($this->server, $this->port, $errno, $errStr, $timeout);
+        }catch (Throwable $e){
+            SystemMessages::sysLogMsg('AMI', "Exceptions, Unable to connect to manager $server ($errno): $errStr", LOG_ERR);
+            return false;
+        }
+        if ($this->socket === false) {
+            SystemMessages::sysLogMsg('AMI', "Unable to connect to manager $server ($errno): $errStr", LOG_ERR);
+            return false;
+        }
         stream_set_timeout($this->socket, 1, 0);
 
         // read the header
         $str = $this->getStringDataFromSocket();
         if ($str === '') {
             // a problem.
-            Util::sysLogMsg('asmanager', "Asterisk Manager header not received.", LOG_ERR);
+            SystemMessages::sysLogMsg('AMI', "Asterisk Manager header not received.", LOG_ERR);
             return false;
         }
 
         // login
         $res = $this->sendRequest('login', ['Username' => $username, 'Secret' => $secret, 'Events' => $events]);
-        if ($res['Response'] != 'Success') {
+        if ($res['Response'] !== 'Success') {
             $this->_loggedIn = false;
-            Util::sysLogMsg('asmanager', "Failed to login.", LOG_ERR);
+            SystemMessages::sysLogMsg('AMI', "Failed to login.", LOG_ERR);
             $this->disconnect();
             return false;
         }
