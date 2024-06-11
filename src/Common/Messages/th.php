@@ -605,7 +605,7 @@ return [
     'gs_PBXFeatureAttendedTransfer' => 'การผสมผสานการแปลเชิงปรึกษา',
     'gs_PBXFeatureBlindTransfer' => 'การรวมกันเพื่อการโอนแบบไม่มีเงื่อนไข',
     'gs_PBXFeatureDigitTimeout' => 'การหมดเวลาระหว่างหลักสูงสุดเมื่อป้อนหมายเลขส่วนขยาย (เป็นมิลลิวินาที)',
-    'gs_PBXFeaturePickupExten' => 'ชุดค่าผสมสำหรับดักสายเรียกเข้า',
+    'gs_PBXFeaturePickupExten' => 'Code ดึงสายโทรเข้า จากเครื่องอื่น',
     'gs_PBXSplitAudioThread' => 'บันทึกการบันทึกในโหมดสเตอริโอ',
     'gs_PBXAllowGuestCalls' => 'อนุญาตสายเรียกเข้าจากเซิร์ฟเวอร์ใด ๆ',
     'gs_SIPPort' => 'พอร์ต SIP สำหรับลงทะเบียนโทรศัพท์ที่สถานีนี้',
