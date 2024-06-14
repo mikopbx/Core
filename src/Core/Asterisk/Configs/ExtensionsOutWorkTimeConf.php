@@ -202,7 +202,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
                 }elseif ($provByType->registration_type === Sip::REG_TYPE_INBOUND){
                     $context_id = "{$provider->uniqid}-incoming";
                 } else {
-                    $context_id = SIPConf::getContextId($provByType->host . $provByType->port);
+                    $context_id = SIPConf::getContextId($provByType->host , $provByType->port);
                 }
             } else {
                 $context_id = 'none-incoming';

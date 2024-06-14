@@ -392,7 +392,7 @@ class SIPConf extends AsteriskConfigClass
             $arr_data['transport'] = trim($arr_data['transport']);
             // Retrieve used codecs.
             $arr_data['codecs'] = $this->getCodecs();
-            $context_id = self::getContextId($sip_peer->host.$sip_peer->port);
+            $context_id = self::getContextId($sip_peer->host, $sip_peer->port);
             if ( ! isset($this->contexts_data[$context_id])) {
                 $this->contexts_data[$context_id] = [];
             }
@@ -1088,7 +1088,7 @@ class SIPConf extends AsteriskConfigClass
 
         // Add configuration section header
         $conf    .= "[{$provider['uniqid']}]".PHP_EOL;
-        $conf    .= 'set_var=contextID='.$context.PHP_EOL;
+        $conf    .= 'set_var=contextID='.$provider['context_id'].PHP_EOL;
 
         // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
@@ -1102,11 +1102,12 @@ class SIPConf extends AsteriskConfigClass
      * This method generates the context ID for a given name by removing non-alphanumeric characters and appending "-incoming".
      *
      * @param string $name The name to generate the context ID from.
+     * @param string $port The port to generate the context ID from.
      * @return string The generated context ID.
      */
-    public static function getContextId(string $name = ''):string
+    public static function getContextId(string $name, string $port):string
     {
-        return preg_replace("/[^a-z\d]/iu", '', $name).'-incoming';
+        return preg_replace("/[^a-z\d]/iu", '', $name.$port).'-incoming';
     }
 
     /**
