@@ -572,7 +572,7 @@ class Storage extends Di\Injectable
             passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four update {$dev_disk}");
         }
         $partitionName = self::getDevPartName($target_disk_storage, $part);
-        $uuid = $storage->getUuid($partitionName);
+        $uuid = self::getUuid($partitionName);
         // Create an array of disk data
         $data = [
             'device' => $dev_disk,
@@ -580,7 +580,7 @@ class Storage extends Di\Injectable
             'filesystemtype' => 'ext4',
             'name' => 'Storage №1'
         ];
-
+        echo PHP_EOL ."Disk part: $dev_disk, uid: $uuid";
         // Save the disk settings
         $storage->saveDiskSettings($data);
         if (file_exists('/offload/livecd')) {
@@ -978,6 +978,7 @@ class Storage extends Di\Injectable
         $timeout = Util::which('timeout');
         $find = Util::which('find');
         $mv = Util::which('mv');
+        $rm = Util::which('rm');
         $nice = Util::which('nice');
         $tmpDir = $this->config->path('core.tempDir');
         if (!file_exists($tmpDir)) {
@@ -995,7 +996,7 @@ class Storage extends Di\Injectable
                 shell_exec("$mv '$resDirForRm/swapfile' '$tmpDir/swapfile'");
             }
             // Let's start deleting temporary files
-            Processes::mwExecBg("$nice -n 19 $mv -rf $resDirForRm");
+            Processes::mwExecBg("$nice -n 19 $rm -rf $resDirForRm");
         }
         Util::mwMkdir($tmpDir, true);
     }
@@ -1878,8 +1879,7 @@ class Storage extends Di\Injectable
             Processes::mwExec("{$mountNtfs3gPath} /dev/{$dev} {$dir}", $out);
         } else {
             // Mount disk using specified file system format and UUID
-            $storage = new self();
-            $uid_part = 'UUID=' . $storage->getUuid("/dev/{$dev}") . '';
+            $uid_part = 'UUID=' . self::getUuid("/dev/{$dev}");
             $mountPath = Util::which('mount');
             Processes::mwExec("{$mountPath} -t {$format} {$uid_part} {$dir}", $out);
         }

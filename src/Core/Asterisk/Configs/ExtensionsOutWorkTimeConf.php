@@ -89,6 +89,22 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         return $this->conf;
     }
 
+
+    /**
+     *
+     * @return string Set global vars.
+     */
+    public function extensionGlobals(): string
+    {
+        $configs = '';
+        $dbData = Sip::find("type = 'friend' AND ( disabled <> '1')");
+        foreach ($dbData as $sipPeer) {
+            $context_id = SIPConf::getContextId($sipPeer->host, $sipPeer->port);
+            $configs .= "CONTEXT_ID_$sipPeer->uniqid=$context_id".PHP_EOL;
+        }
+        return $configs;
+    }
+
     /**
      * Generates the customized incoming context for a specific route before dialing system.
      *
@@ -101,6 +117,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         // Check the schedule for incoming external calls.
         return  'same => n,NoOp(contextID: ${contextID})' . PHP_EOL . "\t" .
                 'same => n,ExecIf($["${CONTEXT}" == "public-direct-dial"]?Set(contextID=none-incoming))' . PHP_EOL . "\t" .
+                'same => n,ExecIf($["${contextID}x" == "x"]?Set(contextID=${CONTEXT_ID_${providerID}}))' . PHP_EOL . "\t" .
                 'same => n,ExecIf($["${contextID}x" == "x"]?Set(contextID=${CONTEXT}))' . PHP_EOL . "\t" .
                 'same => n,GosubIf($["${IGNORE_TIME}" != "1"]?' . self::OUT_WORK_TIME_CONTEXT . ',${EXTEN},1)' . PHP_EOL . "\t";
     }
@@ -202,7 +219,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
                 }elseif ($provByType->registration_type === Sip::REG_TYPE_INBOUND){
                     $context_id = "{$provider->uniqid}-incoming";
                 } else {
-                    $context_id = SIPConf::getContextId($provByType->host . $provByType->port);
+                    $context_id = SIPConf::getContextId($provByType->host , $provByType->port);
                 }
             } else {
                 $context_id = 'none-incoming';

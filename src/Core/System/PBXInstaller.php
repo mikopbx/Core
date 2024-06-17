@@ -208,9 +208,6 @@ class PBXInstaller extends Di\Injectable
         $this->unpackImage();
         $this->mountStorage();
         $this->copyConfiguration();
-        $umount = Util::which('umount');
-        Processes::mwExec("$umount /mnttmp");
-        echo "done\n";
 
         // Reboot
         file_put_contents('/tmp/ejectcd', '');
@@ -266,17 +263,17 @@ class PBXInstaller extends Di\Injectable
     /**
      * Copy the configuration to the target disk.
      */
-    private function copyConfiguration()
+    private function copyConfiguration():void
     {
         // Back up the table with disk information.
-        echo Util::translate("Copying configuration...");
+        echo Util::translate("Copying configuration...").PHP_EOL;
         Util::mwMkdir('/mnttmp');
 
-        $confPartitionName = Storage::getDevPartName("/dev/{$this->target_disk}", '3');
+        $confPartitionName = Storage::getDevPartName("/dev/$this->target_disk", '3');
 
         // Mount the disk with settings.
         $mount = Util::which('mount');
-        Processes::mwExec("{$mount} -w -o noatime {$confPartitionName} /mnttmp");
+        Processes::mwExec("$mount -w -o noatime $confPartitionName /mnttmp");
 
         $filename = $this->config->path('database.dbfile');
         $result_db_file = '/mnttmp/conf/mikopbx.db';
@@ -285,7 +282,6 @@ class PBXInstaller extends Di\Injectable
         $cp = Util::which('cp');
         $sqlite3 = Util::which('sqlite3');
         $dmpDbFile = tempnam('/tmp', 'storage');
-
         // Save dump of settings.
         $tables = ['m_Storage', 'm_LanInterfaces'];
         file_put_contents($dmpDbFile, '');
@@ -295,18 +291,20 @@ class PBXInstaller extends Di\Injectable
         }
         // If another language is selected - use another settings file.
         $lang = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LANGUAGE);
-        $filename_lang = "/offload/conf/mikopbx-{$lang}.db";
+        $filename_lang = "/offload/conf/mikopbx-$lang.db";
         if ($lang !== 'en' && file_exists($filename_lang)) {
             $filename = $filename_lang;
         }
-
         // Replace the settings file.
-        Processes::mwExec("{$cp} {$filename} {$result_db_file}");
-        system("{$sqlite3} {$result_db_file} 'DROP TABLE IF EXISTS m_Storage'");
-        system("{$sqlite3} {$result_db_file} 'DROP TABLE IF EXISTS m_LanInterfaces'");
-
+        Processes::mwExec("$cp $filename $result_db_file");
+        foreach ($tables as $table) {
+            system("$sqlite3 $result_db_file 'DROP TABLE IF EXISTS $table'");
+        }
         // Restore settings from backup file.
-        system("{$sqlite3} {$result_db_file} < {$dmpDbFile}");
+        system("$sqlite3 $result_db_file < $dmpDbFile");
         unlink($dmpDbFile);
+
+        $umount = Util::which('umount');
+        Processes::mwExec("$umount /mnttmp");
     }
 }
