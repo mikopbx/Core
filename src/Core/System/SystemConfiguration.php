@@ -54,7 +54,7 @@ class SystemConfiguration extends Di\Injectable
         $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'], ['',''], $confBackupDir);
         $confFile    = $this->configDBPath;
         foreach ($storages as $dev => $fs){
-            SystemMessages::echoToTeletype("    - mount $dev ...".PHP_EOL, true);
+            SystemMessages::echoToTeletype(PHP_EOL."    - mount $dev ...".PHP_EOL, true);
             Util::mwMkdir($tmpMountDir."/$dev");
             $res = Storage::mountDisk($dev, $fs, $tmpMountDir."/$dev");
             if(!$res){
