@@ -270,11 +270,13 @@ class PBXInstaller extends Di\Injectable
         Util::mwMkdir('/mnttmp');
 
         $confPartitionName = Storage::getDevPartName("/dev/$this->target_disk", '3');
-
         // Mount the disk with settings.
         $mount = Util::which('mount');
-        Processes::mwExec("$mount -w -o noatime $confPartitionName /mnttmp");
-
+        $umount = Util::which('umount');
+        $resUMount = Processes::mwExec("$umount $confPartitionName");
+        echo "Umount $confPartitionName: $resUMount ...".PHP_EOL;
+        $resMount = Processes::mwExec("$mount -w -o noatime $confPartitionName /mnttmp");
+        echo "Mount $confPartitionName to /mnttmp: $resMount ...".PHP_EOL;
         $filename = $this->config->path('database.dbfile');
         $result_db_file = '/mnttmp/conf/mikopbx.db';
 
@@ -286,8 +288,10 @@ class PBXInstaller extends Di\Injectable
         $tables = ['m_Storage', 'm_LanInterfaces'];
         file_put_contents($dmpDbFile, '');
         foreach ($tables as $table) {
-            shell_exec("sqlite3 /cf/conf/mikopbx.db '.schema $table' >> $dmpDbFile");
-            shell_exec("sqlite3 /cf/conf/mikopbx.db '.dump $table' >> $dmpDbFile");
+            echo "DUMP $table from /cf/conf/mikopbx.db ...".PHP_EOL;
+            $res = shell_exec("sqlite3 /cf/conf/mikopbx.db '.schema $table' >> $dmpDbFile");
+            $res .= shell_exec("sqlite3 /cf/conf/mikopbx.db '.dump $table' >> $dmpDbFile");
+            echo "$res ...".PHP_EOL;
         }
         // If another language is selected - use another settings file.
         $lang = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LANGUAGE);
@@ -296,15 +300,17 @@ class PBXInstaller extends Di\Injectable
             $filename = $filename_lang;
         }
         // Replace the settings file.
-        Processes::mwExec("$cp $filename $result_db_file");
+        $resCopy = Processes::mwExec("$cp $filename $result_db_file");
+        echo "Copy $filename to $result_db_file: $resCopy ...".PHP_EOL;
         foreach ($tables as $table) {
-            system("$sqlite3 $result_db_file 'DROP TABLE IF EXISTS $table'");
+            echo "DROP $table IF EXISTS in $result_db_file ...".PHP_EOL;
+            $res = shell_exec("$sqlite3 $result_db_file 'DROP TABLE IF EXISTS $table'");
+            echo "$res ...".PHP_EOL;
         }
         // Restore settings from backup file.
-        system("$sqlite3 $result_db_file < $dmpDbFile");
+        $resSaveSettings = Processes::mwExec("$sqlite3 $result_db_file < $dmpDbFile");
+        echo "Save settings to $result_db_file. Result: $resSaveSettings ...".PHP_EOL;
         unlink($dmpDbFile);
-
-        $umount = Util::which('umount');
         Processes::mwExec("$umount /mnttmp");
     }
 }
