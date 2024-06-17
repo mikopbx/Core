@@ -580,7 +580,7 @@ class Storage extends Di\Injectable
             'filesystemtype' => 'ext4',
             'name' => 'Storage №1'
         ];
-        echo PHP_EOL ."Disk part: $dev_disk, uid: $uuid";
+        echo PHP_EOL ."Disk part: $dev_disk, uid: $uuid".PHP_EOL;
         // Save the disk settings
         $storage->saveDiskSettings($data);
         if (file_exists('/offload/livecd')) {
@@ -729,7 +729,9 @@ class Storage extends Di\Injectable
         foreach ($data as $key => $value) {
             $storage_settings->writeAttribute($key, $value);
         }
-        $storage_settings->save();
+        if(!$storage_settings->save()){
+            echo PHP_EOL ."Fail save new storage ID in database...".PHP_EOL;
+        }
     }
 
     /**
