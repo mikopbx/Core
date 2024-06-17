@@ -1088,7 +1088,7 @@ class SIPConf extends AsteriskConfigClass
 
         // Add configuration section header
         $conf    .= "[{$provider['uniqid']}]".PHP_EOL;
-        $conf    .= 'set_var=contextID='.$provider['context_id'].PHP_EOL;
+        $conf    .= 'set_var=providerID='.$provider['uniqid'].PHP_EOL;
 
         // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
@@ -1107,7 +1107,12 @@ class SIPConf extends AsteriskConfigClass
      */
     public static function getContextId(string $name, string $port):string
     {
-        return preg_replace("/[^a-z\d]/iu", '', $name.$port).'-incoming';
+        if (filter_var($name, FILTER_VALIDATE_IP)) {
+            $nameNew = $name;
+        }else{
+            $nameNew = gethostbyname($name);
+        }
+        return preg_replace("/[^a-z\d]/iu", '', $nameNew.$port).'-incoming';
     }
 
     /**
