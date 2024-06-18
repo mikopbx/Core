@@ -269,9 +269,10 @@ class PBXInstaller extends Di\Injectable
         echo Util::translate("Copying configuration...").PHP_EOL;
         Util::mwMkdir('/mnttmp');
 
-        $confPartitionName = Storage::getDevPartName("/dev/$this->target_disk", '3');
+        echo "Target disk: $this->target_disk ...".PHP_EOL;
+        $confPartitionName = Storage::getDevPartName($this->target_disk, '3');
         // Mount the disk with settings.
-        $mount = Util::which('mount');
+        $mount  = Util::which('mount');
         $umount = Util::which('umount');
         $resUMount = Processes::mwExec("$umount $confPartitionName");
         echo "Umount $confPartitionName: $resUMount ...".PHP_EOL;
