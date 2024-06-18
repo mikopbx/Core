@@ -270,7 +270,14 @@ class PBXInstaller extends Di\Injectable
         Util::mwMkdir('/mnttmp');
 
         echo "Target disk: $this->target_disk ...".PHP_EOL;
-        $confPartitionName = Storage::getDevPartName($this->target_disk, '3');
+        // Touch the disk to update disk tables
+        $partProbePath = Util::which('partprobe');
+        shell_exec($partProbePath." '/dev/$this->target_disk'");
+        $confPartitionName = Storage::getDevPartName($this->target_disk, '3', true);
+        if(empty($confPartitionName)){
+            echo "Target partition not found: $this->target_disk (part 3) ...".PHP_EOL;
+            return;
+        }
         // Mount the disk with settings.
         $mount  = Util::which('mount');
         $umount = Util::which('umount');

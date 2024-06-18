@@ -383,21 +383,21 @@ class Storage extends Di\Injectable
 
         // First, remove existing partitions and then create a new msdos partition table and ext4 partition
         // This command deletes all existing partitions and creates a new primary partition using the full disk
-        $command = "{$parted} --script --align optimal '{$device}' 'mklabel msdos'";
+        $command = "$parted --script --align optimal '$device' 'mklabel msdos'";
         Processes::mwExec($command);  // Apply the command to clear the partition table
 
         // Now create a new partition that spans the entire disk
-        $createPartCommand = "{$parted} --script --align optimal '{$device}' 'mkpart primary ext4 0% 100%'";
+        $createPartCommand = "$parted --script --align optimal '$device' 'mkpart primary ext4 0% 100%'";
         $retVal = Processes::mwExec($createPartCommand);
 
         // Log the result of the create partition command
-        SystemMessages::sysLogMsg(__CLASS__, "{$createPartCommand} returned {$retVal}", LOG_INFO);
+        SystemMessages::sysLogMsg(__CLASS__, "$createPartCommand returned $retVal", LOG_INFO);
 
         sleep(2); // Wait for the system to recognize changes to the partition table
 
         // Touch the disk to update disk tables
-        $partprobe = Util::which('partprobe');
-        Processes::mwExec("{$partprobe} '{$device}'");
+        $partProbePath = Util::which('partprobe');
+        Processes::mwExec("$partProbePath '$device'");
 
         // Get the newly created partition name, assuming it's always the first partition after a fresh format
         $partition = self::getDevPartName($device, '1');
@@ -645,19 +645,28 @@ class Storage extends Di\Injectable
      *
      * @param string $dev The device name
      * @param string $part The partition number
+     * @param bool $verbose print verbose messages
      * @return string The partition name
      */
-    public static function getDevPartName(string $dev, string $part): string
+    public static function getDevPartName(string $dev, string $part, bool $verbose = false): string
     {
         $lsBlkPath = Util::which('lsblk');
-        $cutPath = Util::which('cut');
-        $grepPath = Util::which('grep');
-        $sortPath = Util::which('sort');
+        $cutPath   = Util::which('cut');
+        $grepPath  = Util::which('grep');
+        $sortPath  = Util::which('sort');
 
+        // Touch the disk to update disk tables
         $command = "$lsBlkPath -r -p | $grepPath ' part' | $sortPath -u | $cutPath -d ' ' -f 1 | $grepPath '" . basename($dev) . "' | $grepPath \"$part\$\"";
-        Processes::mwExec($command, $out);
-        $devName = trim(implode('', $out));
-        return trim($devName);
+        $devName = trim(shell_exec($command));
+        if(empty($devName) && $verbose ){
+            $verboseMsg = trim(shell_exec("$lsBlkPath -r -p"));
+            echo "---   filtered command   ---".PHP_EOL;
+            echo $command.PHP_EOL;
+            echo "---   result 'lsblk -r -p'   ---".PHP_EOL;
+            echo $verboseMsg.PHP_EOL;
+            echo "---   ---   ---".PHP_EOL;
+        }
+        return $devName;
     }
 
     /**
