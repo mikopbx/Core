@@ -395,10 +395,6 @@ class Storage extends Di\Injectable
 
         sleep(2); // Wait for the system to recognize changes to the partition table
 
-        // Touch the disk to update disk tables
-        $partProbePath = Util::which('partprobe');
-        Processes::mwExec("$partProbePath '$device'");
-
         // Get the newly created partition name, assuming it's always the first partition after a fresh format
         $partition = self::getDevPartName($device, '1');
 
@@ -655,8 +651,18 @@ class Storage extends Di\Injectable
         $grepPath  = Util::which('grep');
         $sortPath  = Util::which('sort');
 
+        $basenameDisk = basename($dev);
+        $pathToDisk = trim(shell_exec("$lsBlkPath -n -p -a -r -o NAME,TYPE | $grepPath disk | $grepPath '$basenameDisk' | $cutPath -d ' ' -f 1"));
+        if($verbose) {
+            echo "Get dev full path...".PHP_EOL;
+            echo "Source dev: $dev, result full path: $pathToDisk".PHP_EOL;
+        }
+            // Touch the disk to update disk tables
+        $partProbePath = Util::which('partprobe');
+        shell_exec($partProbePath." '$pathToDisk'");
+
         // Touch the disk to update disk tables
-        $command = "$lsBlkPath -r -p | $grepPath ' part' | $sortPath -u | $cutPath -d ' ' -f 1 | $grepPath '" . basename($dev) . "' | $grepPath \"$part\$\"";
+        $command = "$lsBlkPath -r -p | $grepPath ' part' | $sortPath -u | $cutPath -d ' ' -f 1 | $grepPath '" . $pathToDisk . "' | $grepPath \"$part\$\"";
         $devName = trim(shell_exec($command));
         if(empty($devName) && $verbose ){
             $verboseMsg = trim(shell_exec("$lsBlkPath -r -p"));
