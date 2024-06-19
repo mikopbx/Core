@@ -619,8 +619,7 @@ class AsteriskManager
         $netStatPath = Util::which('netstat');
         $busyBoxPath = Util::which('busybox');
 
-        $address = str_replace('127.0.0.1:', '0.0.0.0:', $server);
-        $chkCommand = "$netStatPath -ntap | $busyBoxPath grep '$address ' | $busyBoxPath grep LISTEN | $busyBoxPath grep asterisk";
+        $chkCommand = "$netStatPath -ntap | $busyBoxPath grep '0.0.0.0:$this->port ' | $busyBoxPath grep LISTEN | $busyBoxPath grep asterisk";
         if(Processes::mwExec($chkCommand) === 1){
             SystemMessages::sysLogMsg('AMI', "Exceptions, Unable to connect to $server: the asterisk process is not running", LOG_ERR);
             return false;

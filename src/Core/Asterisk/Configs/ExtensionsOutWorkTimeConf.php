@@ -28,6 +28,7 @@ use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
+use DateTime;
 
 /**
  * Class ExtensionsOutWorkTimeConf
@@ -152,13 +153,8 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         foreach ($data as $ruleData) {
             $contextId = 'check-out-work-time-'.$ruleData['id'];
             $this->conf .= 'same => n,Gosub('.$contextId.',${EXTEN},1)'.PHP_EOL."\t";
-            [, $years] = $this->getOutWorkIntervals($ruleData['date_from'], $ruleData['date_to']);
             $additionalContexts.= '['.$contextId.']'.PHP_EOL;
             $additionalContexts.= 'exten => _[0-9*#+a-zA-Z]!,1,NoOp()'.PHP_EOL."\t";
-            if(!empty($years)){
-                $additionalContexts.= 'same => n,Set(TMP_YEARS='.implode('-',$years).'-)'.PHP_EOL."\t";
-                $additionalContexts.= 'same => n,ExecIf($["STRREPLACE(TMP_YEARS,currentYear)" == "${TMP_YEARS}"]?return)'.PHP_EOL."\t";
-            }
             // Restrictions for the route are not allowed for this rule.
             if ($ruleData['allowRestriction'] === '1') {
                 $additionalContexts.= 'same => n,ExecIf($["${DIALPLAN_EXISTS('.$contextId.'-${contextID},${EXTEN},1)}" == "0"]?return)'.PHP_EOL."\t";
@@ -232,75 +228,75 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
     }
 
     /**
-     * Get the out-of-work intervals based on the provided date range.
-     *
-     * @param int $date_from The starting date.
-     * @param int $date_to The ending date.
-     *
-     * @return array An array of intervals.
-     */
-    private function getOutWorkIntervals($date_from, $date_to): array
-    {
-        $years = [];
-        $year_from = 1 * date('Y', (int)$date_from);
-        $year_to   = 1 * date('Y', (int)$date_to);
-
-        $intervals = [];
-        $Year = $year_from;
-        if ($year_to === $year_from) {
-            if(!empty($date_from)){
-                $years[] = $Year;
-            }
-            $intervals[] = [
-                'date_from' => $date_from,
-                'date_to' => $date_to
-            ];
-            return [$intervals, $years];
-        }
-        while ($Year <= $year_to) {
-
-            $years[] = $Year;
-            if ($Year === $year_from) {
-                $intervals[] = [
-                    'date_from' => $date_from,
-                    'date_to' => (string)strtotime('31-12-' . $Year)
-                ];
-            } elseif ($Year === $year_to) {
-                $intervals[] = [
-                    'date_from' => (string)strtotime('01-01-' . $Year),
-                    'date_to' => $date_to
-                ];
-            } else {
-                $intervals[] = [
-                    'date_from' => (string)strtotime('01-01-' . $Year),
-                    'date_to' => (string)strtotime('31-12-' . $Year)
-                ];
-            }
-            $Year++;
-        }
-        return [$intervals, $years];
-    }
-
-    /**
      * Generate the out-of-work rule based on the provided data.
      *
-     * @param array $out_data The data for the out-of-work rule.
+     * @param array    $srcOutData The data for the out-of-work rule.
      * @param string  &$conf_out_set_var The output string for the SET variables.
      * @param string  &$conf The output string for the configuration.
      *
      * @return void
      */
-    private function generateOutWorkRule(array $out_data, string &$conf_out_set_var, string &$conf): void
+    private function generateOutWorkRule(array $srcOutData, string &$conf_out_set_var, string &$conf): void
     {
-        $timesArray = $this->getTimesInterval($out_data);
-        $weekdays   = $this->getWeekDayInterval($out_data);
+        $intervals = $this->splitIntoMonthlyIntervals($srcOutData['date_from'], $srcOutData['date_to']);
+        if(empty($intervals)){
+            $timesArray = $this->getTimesInterval($srcOutData);
+            $weekdays   = $this->getWeekDayInterval($srcOutData);
+            [$mDays, $months] = $this->initDaysMonthsInterval($srcOutData);
+            $appdata = $this->initRuleAppData($srcOutData, $conf_out_set_var);
+            foreach ($timesArray as $times) {
+                $conf .= "same => n,GotoIfTime($times,$weekdays,$mDays,$months?{$appdata})\n\t";
+            }
+        }else{
+            foreach ($intervals as $interval){
+                [$srcOutData['date_from'],$srcOutData['date_to']] = $interval;
 
-        [$mDays, $months] = $this->initDaysMonthsInterval($out_data);
-        $appdata = $this->initRuleAppData($out_data, $conf_out_set_var);
+                $timesArray = $this->getTimesInterval($srcOutData);
+                $weekdays   = $this->getWeekDayInterval($srcOutData);
 
-        foreach ($timesArray as $times) {
-            $conf .= "same => n,GotoIfTime($times,$weekdays,$mDays,$months?{$appdata})\n\t";
+                [$mDays, $months] = $this->initDaysMonthsInterval($srcOutData);
+                $appdata = $this->initRuleAppData($srcOutData, $conf_out_set_var);
+
+                $year = 1 * date('Y', $srcOutData['date_from']);
+                foreach ($timesArray as $times) {
+                    $timeAppData = "GotoIfTime($times,$weekdays,$mDays,$months?{$appdata})";
+                    $conf .= 'same => n,ExecIf($["${currentYear}" == "'.$year.'"]?'.$timeAppData.')'."\n\t";
+                }
+            }
         }
+    }
+
+    /**
+     * Get intervals from timestamp
+     * @param $date_from
+     * @param $date_to
+     * @return array
+     */
+    private function splitIntoMonthlyIntervals($date_from, $date_to):array
+    {
+        if(empty($date_from) || empty($date_to)){
+            return [];
+        }
+        $intervals = [];
+        $start = new DateTime();
+        $start->setTimestamp($date_from);
+        $end = new DateTime();
+        $end->setTimestamp($date_to);
+        while ($start < $end) {
+            $interval_start = clone $start;
+            $interval_end = clone $start;
+            $interval_end->modify('last day of this month 23:59:59');
+            if ($interval_end > $end) {
+                $interval_end = $end;
+            }
+            $intervals[] = [
+                $interval_start->getTimestamp(),
+                $interval_end->getTimestamp()
+            ];
+            $start->modify('first day of next month 00:00:00');
+        }
+
+        return $intervals;
     }
 
     /**
