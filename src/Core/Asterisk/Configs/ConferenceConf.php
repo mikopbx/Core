@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\ConferenceRooms;
+use MikoPBX\Core\System\Util;
 
 /**
  * Generates the configuration content for confbridge.conf.
@@ -39,9 +40,8 @@ class ConferenceConf extends AsteriskConfigClass
     protected function generateConfigProtected(): void
     {
         $conf = "";
-
         // Write the configuration content to the file
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/confbridge.conf', $conf);
+        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/confbridge.conf', $conf);
     }
 
     /**

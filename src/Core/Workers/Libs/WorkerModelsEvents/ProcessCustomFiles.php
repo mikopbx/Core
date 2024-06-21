@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
 
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadConferenceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadH323Action;
@@ -61,6 +62,13 @@ class ProcessCustomFiles extends Injectable
             'filePath' => '/etc/asterisk/musiconhold.conf',
             'actions' => [
                 ReloadMOHAction::class
+            ],
+        ];
+
+        $tables[] = [
+            'filePath' => '/etc/asterisk/confbridge.conf',
+            'actions' => [
+                ReloadConferenceAction::class
             ],
         ];
 
