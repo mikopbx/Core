@@ -56,6 +56,10 @@ class SyslogConf extends Injectable
             }
             Processes::killByName('syslogd');
         }
+
+        RedisConf::generateSyslogConf();
+        CronConf::generateSyslogConf();
+
         Processes::safeStartDaemon(self::PROC_NAME, '-n');
     }
 
