@@ -383,7 +383,7 @@ class Storage extends Di\Injectable
 
         // First, remove existing partitions and then create a new msdos partition table and ext4 partition
         // This command deletes all existing partitions and creates a new primary partition using the full disk
-        $command = "$parted --script --align optimal '$device' 'mklabel msdos'";
+        $command = "$parted --script --align optimal '$device' 'mklabel gpt'";
         Processes::mwExec($command);  // Apply the command to clear the partition table
 
         // Now create a new partition that spans the entire disk
