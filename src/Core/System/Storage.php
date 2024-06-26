@@ -383,7 +383,7 @@ class Storage extends Di\Injectable
 
         // First, remove existing partitions and then create a new msdos partition table and ext4 partition
         // This command deletes all existing partitions and creates a new primary partition using the full disk
-        $command = "$parted --script --align optimal '$device' 'mklabel gpt'";
+        $command = "$parted --script --align optimal '$device' 'mklabel msdos'";
         Processes::mwExec($command);  // Apply the command to clear the partition table
 
         // Now create a new partition that spans the entire disk
@@ -519,7 +519,7 @@ class Storage extends Di\Injectable
         // Check if the disk selection should be automatic
         if ($automatic) {
             $target_disk_storage = $selected_disk['id'];
-            SystemMessages::echoToTeletype(PHP_EOL.'   |- '."Automatically selected storage disk is $target_disk_storage");
+            SystemMessages::echoToTeletype(PHP_EOL.'   - '."Automatically selected storage disk is $target_disk_storage");
         } else {
             echo PHP_EOL." " . Util::translate('Select the drive to store the data.');
             echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
