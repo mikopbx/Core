@@ -30,6 +30,7 @@ use MikoPBX\Core\Asterisk\Configs\{AclConf,
     AsteriskConf,
     AsteriskConfigClass,
     AsteriskConfigInterface,
+    ConferenceConf,
     ExtensionsConf,
     FeaturesConf,
     HttpConf,
@@ -204,6 +205,17 @@ class PBX extends Injectable
         $o->generateConfig();
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'moh reload'");
+    }
+
+    /**
+     * Reloads the Asterisk music on hold module.
+     */
+    public static function confBridgeReload(): void
+    {
+        $o = new ConferenceConf();
+        $o->generateConfig();
+        $asteriskPath = Util::which('asterisk');
+        Processes::mwExec("$asteriskPath -rx 'module reload app_confbridge'");
     }
 
 

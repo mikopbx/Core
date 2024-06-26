@@ -87,7 +87,14 @@ class RedisConf extends Injectable
         $conf  .= "syslog-enabled yes" . PHP_EOL;
         $conf  .= "syslog-ident redis" . PHP_EOL;
         file_put_contents(self::CONF_FILE, $conf);
+    }
 
+    /**
+     * Generate additional syslog rules.
+     * @return void
+     */
+    public static function generateSyslogConf():void
+    {
         Util::mwMkdir('/etc/rsyslog.d');
         $log_fileRedis       = SyslogConf::getSyslogFile('redis');
         $pathScriptRedis     = SyslogConf::createRotateScript('redis');
