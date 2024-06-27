@@ -19,17 +19,18 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\CdrDB;
 
-use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Exception;
+use Phalcon\Di\Injectable;
 
 /**
  * Get active channels. These are the unfinished calls (endtime IS NULL).
  *
  * @package MikoPBX\PBXCoreREST\Lib\CdrDB
  */
-class GetActiveChannelsAction extends \Phalcon\Di\Injectable
+class GetActiveChannelsAction extends Injectable
 {
     /**
      * Get active channels. These are the unfinished calls (endtime IS NULL).
@@ -40,52 +41,41 @@ class GetActiveChannelsAction extends \Phalcon\Di\Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+        $res->success = true;
 
         try {
-            $res->success = true;
-
-            $filter = [
-                'endtime=""',
-                'order' => 'id',
-                'columns' => 'start,answer,src_chan,dst_chan,src_num,dst_num,did,linkedid',
-                'miko_tmp_db' => true,
-                'miko_result_in_file' => true,
-            ];
-            $client = new BeanstalkClient(WorkerCdr::SELECT_CDR_TUBE);
-            list($result, $message) = $client->sendRequest(json_encode($filter), 2);
-            if ($result === false) {
-                $res->data = [];
-            } else {
-                $am = Util::getAstManager('off');
-                $active_chans = $am->GetChannels(true);
-                $result_data = [];
-
-                $result = json_decode($message);
-                if (file_exists($result)) {
-                    $data = json_decode(file_get_contents($result), true);
-                    unlink($result);
-                    foreach ($data as $row) {
-                        if (!isset($active_chans[$row['linkedid']])) {
-                            // The call no longer exists.
-                            continue;
-                        }
-                        if (empty($row['dst_chan']) && empty($row['src_chan'])) {
-                            // This is an erroneous situation. Ignore such a call.
-                            continue;
-                        }
-                        $channels = $active_chans[$row['linkedid']];
-                        if ((empty($row['src_chan']) || in_array($row['src_chan'], $channels))
-                            && (empty($row['dst_chan']) || in_array($row['dst_chan'], $channels))) {
-                            $result_data[] = $row;
-                        }
-                    }
-                }
-                $res->data = $result_data;
-            }
-        } catch (\Throwable $e) {
+            $activeChannels = Util::getAstManager('off')->GetChannels();
+        }catch (Exception $e){
             $res->success = false;
             $res->messages[] = $e->getMessage();
+            return $res;
         }
+
+        $filter = [
+            'endtime=""',
+            'order' => 'id',
+            'columns' => 'start,answer,src_chan,dst_chan,src_num,dst_num,did,linkedid',
+            'miko_tmp_db' => true,
+        ];
+        $cdrData = CDRDatabaseProvider::getCdr($filter);
+
+        $result_data = [];
+        foreach ($cdrData as $row) {
+            if (!isset($activeChannels[$row['linkedid']])) {
+                // The call no longer exists.
+                continue;
+            }
+            if (empty($row['dst_chan']) && empty($row['src_chan'])) {
+                // This is an erroneous situation. Ignore such a call.
+                continue;
+            }
+            $channels = $activeChannels[$row['linkedid']];
+            if ((empty($row['src_chan']) || in_array($row['src_chan'], $channels, true))
+                && (empty($row['dst_chan']) || in_array($row['dst_chan'], $channels, true))) {
+                $result_data[] = $row;
+            }
+        }
+        $res->data = $result_data;
         return $res;
     }
 }
