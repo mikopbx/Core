@@ -418,12 +418,47 @@ const generalSettingsModify = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
+        $("#error-messages").remove();
         if (!response.success) {
             Form.$submitButton.removeClass('disabled');
+            generalSettingsModify.generateErrorMessageHtml(response);
         } else {
             $('.password-validate').remove();
         }
         generalSettingsModify.checkDeleteAllConditions();
+    },
+
+    /**
+     * The function collects an information message about a data saving error
+     * @param response
+     * @returns {string}
+     */
+    generateErrorMessageHtml(response) {
+        if (response.messages && response.messages.error) {
+            const $div = $('<div>', { class: 'ui negative message', id: 'error-messages' });
+            const $header = $('<div>', { class: 'header' }).text(globalTranslate.gs_ErrorSaveSettings);
+            $div.append($header);
+            const $ul = $('<ul>', { class: 'list' });
+            const messagesSet = new Set();
+            response.messages.error.forEach(errorArray => {
+                errorArray.forEach(error => {
+                    let textContent ='';
+                    if(globalTranslate[error.message] === undefined){
+                        textContent = error.message;
+                    }else{
+                        textContent = globalTranslate[error.message];
+                    }
+                    if (messagesSet.has(textContent)) {
+                        return;
+                    }
+                    messagesSet.add(error.message);
+                    $ul.append($('<li>').text(textContent));
+                });
+            });
+            $div.append($ul);
+            $('#submitbutton').before($div);
+            return $div;
+        }
     },
 
     /**

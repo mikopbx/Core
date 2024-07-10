@@ -246,6 +246,8 @@ return [
     'gs_PBXRecordSavePeriodLabel' => 'Период хранения записей разговоров',
     'gs_StoreAllPossibleRecords' => '∞',
     'gs_DisableAllModules' => 'Отключить маркетплейс',
+    'gs_ErrorSaveSettings' => 'Ошибка сохранения настроек',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Указанный внутренний номер уже используется',
     'pr_AddSIPProvider' => 'Подключить SIP',
     'pr_AddIAXProvider' => 'Подключить IAX',
     'pr_QualifyInstructionsIAX' => 'При включение этой опции Asterisk будет отправлять SIP Options пакеты. Это необходимо для поддержки NAT туннелирования на вашем маршрутизаторе.',
