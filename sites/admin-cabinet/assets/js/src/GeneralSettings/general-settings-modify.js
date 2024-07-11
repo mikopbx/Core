@@ -431,7 +431,6 @@ const generalSettingsModify = {
     /**
      * The function collects an information message about a data saving error
      * @param response
-     * @returns {string}
      */
     generateErrorMessageHtml(response) {
         if (response.messages && response.messages.error) {
@@ -457,7 +456,6 @@ const generalSettingsModify = {
             });
             $div.append($ul);
             $('#submitbutton').before($div);
-            return $div;
         }
     },
 
