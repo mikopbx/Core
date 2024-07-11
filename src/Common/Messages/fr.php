@@ -1280,4 +1280,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'nw_NATInfo2' => 'Si le NAT 1:1 n\'est pas utilisé, redirigez les ports suivants de l\'adresse IP publique vers l\'adresse IP interne du PBX dans les paramètres de votre routeur.',
     'nw_NATInfo3' => '%SIP_PORT% TCP/UDP et %TLS_PORT% TCP',
     'nw_NATInfo4' => '%RTP_PORT_FROM%-%RTP_PORT_TO%UDP',
+    'gs_ErrorSaveSettings' => 'Erreur lors de l\'enregistrement des paramètres',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Le numéro de poste spécifié est déjà utilisé',
 ];

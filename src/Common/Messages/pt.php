@@ -1280,4 +1280,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'nw_NATInfo6OR' => 'OU',
     'nw_PublicSIPPort' => 'Número da porta SIP encaminhado para PBX interno %SIP_PORT%',
     'nw_PublicTLSPort' => 'Número da porta SIP TLS encaminhado para PBX interno %TLS_PORT%',
+    'gs_ErrorSaveSettings' => 'Erro ao salvar as configurações',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'O número de ramal especificado já está em uso',
 ];

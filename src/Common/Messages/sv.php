@@ -1246,4 +1246,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'nw_NATInfo6OR' => 'ELLER',
     'nw_PublicSIPPort' => 'SIP-portnummer vidarebefordrat till intern %SIP_PORT% PBX',
     'nw_PublicTLSPort' => 'SIP TLS-portnummer vidarebefordrat till intern %TLS_PORT% PBX',
+    'gs_ErrorSaveSettings' => 'Det gick inte att spara inställningar',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Det angivna anknytningsnumret används redan',
 ];

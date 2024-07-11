@@ -1280,4 +1280,6 @@ return [
     'nw_NATInfo2' => '1:1 NAT が使用されていない場合は、ルーター設定で次のポートをパブリック IP から PBX の内部 IP アドレスにリダイレクトします。',
     'nw_NATInfo3' => '%SIP_PORT% TCP/UDP および %TLS_PORT% TCP',
     'nw_PublicTLSPort' => '内部 %TLS_PORT% PBX に転送される SIP TLS ポート番号',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => '指定された内線番号はすでに使用されています',
+    'gs_ErrorSaveSettings' => '設定の保存中にエラーが発生しました',
 ];

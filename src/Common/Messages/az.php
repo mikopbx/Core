@@ -1279,4 +1279,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'nw_NATInfo6OR' => 'YA',
     'nw_NATInfo2' => '1:1 NAT istifadə edilmirsə, marşrutlaşdırıcının parametrlərində aşağıdakı portları ictimai IP-dən PBX-in daxili IP ünvanına yönləndirin.',
     'nw_PublicSIPPort' => 'SIP port nömrəsi daxili %SIP_PORT% PBX-ə yönləndirildi',
+    'gs_ErrorSaveSettings' => 'Parametrləri yadda saxlama xətası',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Göstərilən artırma nömrəsi artıq istifadə olunur',
 ];
