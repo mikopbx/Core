@@ -123,11 +123,12 @@ class Storage extends Di\Injectable
         $grep = Util::which('grep');
         $mount = Util::which('mount');
         $awk = Util::which('awk');
+        $head = Util::which('head');
 
         $filter = escapeshellarg($filter);
 
         // Execute the command to filter the mount points based on the filter
-        $out = shell_exec("$mount | $grep $filter | $awk '{print $3}'");
+        $out = shell_exec("$mount | $grep $filter | $awk '{print $3}' | $head -n 1");
         $mount_dir = trim($out);
         return ($mount_dir !== '');
     }
@@ -1489,9 +1490,10 @@ class Storage extends Di\Injectable
         $out = [];
         $grepPath = Util::which('grep');
         $mountPath = Util::which('mount');
+        $headPath = Util::which('head');
 
         // Execute mount command and grep the output for the disk name
-        Processes::mwExec("$mountPath | $grepPath '$filter$disk'", $out);
+        Processes::mwExec("$mountPath | $grepPath '$filter${disk}' | $headPath -n 1", $out);
         if (count($out) > 0) {
             $res_out = end($out);
         } else {
@@ -1541,9 +1543,10 @@ class Storage extends Di\Injectable
         $grep = Util::which('grep');
         $awk = Util::which('awk');
         $df = Util::which('df');
+        $head = Util::which('head');
 
         // Execute df command to get the free space for the HDD
-        Processes::mwExec("$df -m | $grep $hdd | $awk '{print $4}'", $out);
+        Processes::mwExec("$df -m | $grep $hdd | $grep -v custom_modules | $head -n 1 | $awk '{print $4}'", $out);
         $result = 0;
 
         // Sum up the free space values
