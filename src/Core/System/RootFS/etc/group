@@ -11,3 +11,4 @@ dialout:x:1008:
 kmem:x:1009:
 uucp:x:1010:
 www:x:1011:
+kvm:x:61:
