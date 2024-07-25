@@ -86,6 +86,9 @@ class Notifications
     {
         // Prevent sending the same message twice.
         $di = Di::getDefault();
+        if(!$di){
+            return;
+        }
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
         $cacheKey = 'sendAdminNotification:' . md5($subject . implode('', $messages));
         $cacheTime = 3600 * 24; // 1 day
@@ -96,7 +99,7 @@ class Notifications
         }
 
         // Check if the notification system is available (e.g., PHP Mailer is configured and working).
-        if (!Notifications::checkConnection(Notifications::TYPE_PHP_MAILER)) {
+        if (!self::checkConnection(self::TYPE_PHP_MAILER)) {
             return;
         }
 
@@ -106,7 +109,8 @@ class Notifications
         foreach ($messages as $message) {
             $text .= '<br>' . Util::translate($message, false);
         }
-        $text = $text . '<br><br>' . SystemMessages::getInfoMessage("The MikoPBX connection information");
+        $text .= '<br><br>' . SystemMessages::getInfoMessage("The MikoPBX connection information");
+        $text = str_replace(PHP_EOL, '<br>', $text);
 
         // Get the admin email address from PbxSettings.
         $adminMail = PbxSettings::getValueByKey(PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL);

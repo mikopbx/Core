@@ -123,11 +123,12 @@ class Storage extends Di\Injectable
         $grep = Util::which('grep');
         $mount = Util::which('mount');
         $awk = Util::which('awk');
+        $head = Util::which('head');
 
         $filter = escapeshellarg($filter);
 
         // Execute the command to filter the mount points based on the filter
-        $out = shell_exec("$mount | $grep $filter | $awk '{print $3}'");
+        $out = shell_exec("$mount | $grep $filter | $awk '{print $3}' | $head -n 1");
         $mount_dir = trim($out);
         return ($mount_dir !== '');
     }
@@ -170,147 +171,6 @@ class Storage extends Di\Injectable
                 $sound_file->save();
             }
         }
-    }
-
-    /**
-     * Mount an SFTP disk.
-     *
-     * @param string $host The SFTP server host.
-     * @param string $port The SFTP server port.
-     * @param string $user The SFTP server username.
-     * @param string $pass The SFTP server password.
-     * @param string $remote_dir The remote directory on the SFTP server.
-     * @param string $local_dir The local directory to mount the SFTP disk.
-     * @return bool Returns true if the SFTP disk is successfully mounted, false otherwise.
-     */
-    public static function mountSftpDisk(string $host, string $port, string $user, string $pass, string $remote_dir, string $local_dir): bool
-    {
-
-        // Create the local directory if it doesn't exist
-        Util::mwMkdir($local_dir);
-
-        $out = [];
-        $timeoutPath = Util::which('timeout');
-        $sshfsPath = Util::which('sshfs');
-
-        // Build the command to mount the SFTP disk
-        $command = "$timeoutPath 3 $sshfsPath -p $port -o nonempty -o password_stdin -o 'StrictHostKeyChecking=no' " . "$user@$host:$remote_dir $local_dir << EOF\n" . "$pass\n" . "EOF\n";
-
-        // Execute the command to mount the SFTP disk
-        Processes::mwExec($command, $out);
-        $response = trim(implode('', $out));
-
-        if ('Terminated' === $response) {
-            // The remote server did not respond or an incorrect password was provided.
-            unset($response);
-        }
-
-        return self::isStorageDiskMounted("$local_dir ");
-    }
-
-    /**
-     * Mount an FTP disk.
-     *
-     * @param string $host The FTP server host.
-     * @param string $port The FTP server port.
-     * @param string $user The FTP server username.
-     * @param string $pass The FTP server password.
-     * @param string $remote_dir The remote directory on the FTP server.
-     * @param string $local_dir The local directory to mount the FTP disk.
-     * @return bool Returns true if the FTP disk is successfully mounted, false otherwise.
-     */
-    public static function mountFtp(string $host, string $port, string $user, string $pass, string $remote_dir, string $local_dir): bool
-    {
-
-        // Create the local directory if it doesn't exist
-        Util::mwMkdir($local_dir);
-        $out = [];
-
-        // Build the authentication line for the FTP connection
-        $auth_line = '';
-        if (!empty($user)) {
-            $auth_line .= 'user="' . $user;
-            if (!empty($pass)) {
-                $auth_line .= ":$pass";
-            }
-            $auth_line .= '",';
-        }
-
-        // Build the connect line for the FTP connection
-        $connect_line = 'ftp://' . $host;
-        if (!empty($port)) {
-            $connect_line .= ":$port";
-        }
-        if (!empty($remote_dir)) {
-            $connect_line .= $remote_dir;
-        }
-
-        $timeoutPath = Util::which('timeout');
-        $curlftpfsPath = Util::which('curlftpfs');
-
-        // Build the command to mount the FTP disk
-        $command = "$timeoutPath 3 $curlftpfsPath  -o allow_other -o {$auth_line}fsname=$host $connect_line $local_dir";
-
-        // Execute the command to mount the FTP disk
-        Processes::mwExec($command, $out);
-        $response = trim(implode('', $out));
-        if ('Terminated' === $response) {
-            // The remote server did not respond or an incorrect password was provided.
-            unset($response);
-        }
-
-        return self::isStorageDiskMounted("$local_dir ");
-    }
-
-    /**
-     * Mount a WebDAV disk.
-     *
-     * @param string $host The WebDAV server host.
-     * @param string $user The WebDAV server username.
-     * @param string $pass The WebDAV server password.
-     * @param string $dstDir The destination directory on the WebDAV server.
-     * @param string $local_dir The local directory to mount the WebDAV disk.
-     * @return bool Returns true if the WebDAV disk is successfully mounted, false otherwise.
-     */
-    public static function mountWebDav(string $host, string $user, string $pass, string $dstDir, string $local_dir): bool
-    {
-        $host = trim($host);
-        $dstDir = trim($dstDir);
-
-        // Remove trailing slash from host if present
-        if (substr($host, -1) === '/') {
-            $host = substr($host, 0, -1);
-        }
-
-        // Remove leading slash from destination directory if present
-        if ($dstDir[0] === '/') {
-            $dstDir = substr($dstDir, 1);
-        }
-
-        // Create the local directory if it doesn't exist
-        Util::mwMkdir($local_dir);
-        $out = [];
-        $conf = 'dav_user www' . PHP_EOL .
-            'dav_group www' . PHP_EOL;
-
-
-        // Write WebDAV credentials to secrets file
-        file_put_contents('/etc/davfs2/secrets', "$host$dstDir $user $pass");
-        file_put_contents('/etc/davfs2/davfs2.conf', $conf);
-        $timeoutPath = Util::which('timeout');
-        $mount = Util::which('mount.davfs');
-
-        // Build the command to mount the WebDAV disk
-        $command = "$timeoutPath 3 yes | $mount $host$dstDir $local_dir";
-
-        // Execute the command to mount the WebDAV disk
-        Processes::mwExec($command, $out);
-        $response = trim(implode('', $out));
-        if ('Terminated' === $response) {
-            // The remote server did not respond or an incorrect password was provided.
-            unset($response);
-        }
-        return self::isStorageDiskMounted("$local_dir ");
     }
 
     /**
@@ -383,7 +243,7 @@ class Storage extends Di\Injectable
 
         // First, remove existing partitions and then create a new msdos partition table and ext4 partition
         // This command deletes all existing partitions and creates a new primary partition using the full disk
-        $command = "$parted --script --align optimal '$device' 'mklabel gpt'";
+        $command = "$parted --script --align optimal '$device' 'mklabel msdos'";
         Processes::mwExec($command);  // Apply the command to clear the partition table
 
         // Now create a new partition that spans the entire disk
@@ -519,7 +379,7 @@ class Storage extends Di\Injectable
         // Check if the disk selection should be automatic
         if ($automatic) {
             $target_disk_storage = $selected_disk['id'];
-            SystemMessages::echoToTeletype(PHP_EOL.'   |- '."Automatically selected storage disk is $target_disk_storage");
+            SystemMessages::echoToTeletype(PHP_EOL.'   - '."Automatically selected storage disk is $target_disk_storage");
         } else {
             echo PHP_EOL." " . Util::translate('Select the drive to store the data.');
             echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
@@ -1630,9 +1490,10 @@ class Storage extends Di\Injectable
         $out = [];
         $grepPath = Util::which('grep');
         $mountPath = Util::which('mount');
+        $headPath = Util::which('head');
 
         // Execute mount command and grep the output for the disk name
-        Processes::mwExec("$mountPath | $grepPath '$filter$disk'", $out);
+        Processes::mwExec("$mountPath | $grepPath '$filter${disk}' | $headPath -n 1", $out);
         if (count($out) > 0) {
             $res_out = end($out);
         } else {
@@ -1682,9 +1543,10 @@ class Storage extends Di\Injectable
         $grep = Util::which('grep');
         $awk = Util::which('awk');
         $df = Util::which('df');
+        $head = Util::which('head');
 
         // Execute df command to get the free space for the HDD
-        Processes::mwExec("$df -m | $grep $hdd | $awk '{print $4}'", $out);
+        Processes::mwExec("$df -m | $grep $hdd | $grep -v custom_modules | $head -n 1 | $awk '{print $4}'", $out);
         $result = 0;
 
         // Sum up the free space values

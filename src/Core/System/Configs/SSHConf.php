@@ -60,8 +60,8 @@ class SSHConf extends Injectable
             file_put_contents($lofFile, '');
         }
         $this->generateDropbearKeys();
-        $sshLogin = $this->getSSHLogin();
-        $sshPort = escapeshellcmd(PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PORT));
+        $sshLogin = $this->getCreateSshUser();
+        $sshPort  = escapeshellcmd(PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PORT));
 
         // Update root password and restart SSH server
         $this->updateShellPassword($sshLogin);
@@ -118,38 +118,42 @@ class SSHConf extends Injectable
      *
      * @return string SSH login username.
      */
-    private function getSSHLogin(): string
+    private function getCreateSshUser(): string
     {
         $sshLogin = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LOGIN);
         $homeDir = $this->getUserHomeDir($sshLogin);
-        $passwdPath = '/etc/passwd';
-        $newEntry = "$sshLogin:x:0:0:MikoPBX Admin:$homeDir:/bin/bash\n";
-
-        if ($sshLogin !== 'root') {
-            // Read the current contents of the passwd file
-            $passwdContent = file_get_contents($passwdPath);
-            $lines = explode("\n", $passwdContent);
-            $updated = false;
-
-            // Check each line and update the entry if it exists
-            foreach ($lines as &$line) {
-                if (strpos($line, "$sshLogin:") === 0) {
-                    $line = $newEntry;
-                    $updated = true;
-                    break;
-                }
+        // System users, you can't touch them
+        $mainUsers = ['root', 'www'];
+        $bbPath = Util::which('busybox');
+        // We clean all non-system users
+        exec("$bbPath cut -f 1 -d ':' < /etc/passwd", $systemUsers);
+        foreach ($systemUsers as $user){
+            if($sshLogin === $user || in_array($user, $mainUsers, true)){
+                continue;
             }
-            unset($line); // break the reference with the last element
-
-            // If the entry was updated, rewrite the file
-            if ($updated) {
-                file_put_contents($passwdPath, implode("\n", $lines));
-            } else {
-                // Append the new entry if it wasn't found
-                file_put_contents($passwdPath, $newEntry, FILE_APPEND);
-            }
+            // Deleting the user
+            shell_exec("$bbPath deluser $user");
+            // Deleting the group
+            shell_exec("$bbPath delgroup $user");
         }
+        if ($sshLogin !== 'root') {
+            // Adding a group '$sshLogin'
+            shell_exec("$bbPath addgroup $sshLogin");
+            // Adding user '$sshLogin'
+            shell_exec("$bbPath adduser -h $homeDir -g 'MikoPBX SSH Admin' -s /bin/bash -G root -D '$sshLogin'");
+            // Adding a user to the group '$sshLogin'
+            shell_exec("$bbPath addgroup -S '$sshLogin' $sshLogin");
+            // Adding a user to the group 'root'
+            shell_exec("$bbPath addgroup -S '$sshLogin' root");
 
+            $cat = Util::which('cat');
+            $cut = Util::which('cut');
+            $sed = Util::which('sed');
+            $chown = Util::which('chown');
+            $currentGroupId = trim(shell_exec("$cat /etc/passwd | grep '^$sshLogin:' | $cut -f 3 -d ':'"));
+            shell_exec("$sed -i 's/$sshLogin:x:$currentGroupId:/$sshLogin:x:0:/g' /etc/passwd");
+            shell_exec("$chown -R $sshLogin:$sshLogin $homeDir");
+        }
         return $sshLogin;
     }
 
@@ -174,17 +178,21 @@ class SSHConf extends Injectable
      */
     private function updateShellPassword(string $sshLogin = 'root'): void
     {
-        $password = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
-        $hashString = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING);
-        $disablePassLogin = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD);
+        $password           = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
+        $hashString         = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING);
+        $disablePassLogin   = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD);
 
-        $echo = Util::which('echo');
+        $echo     = Util::which('echo');
         $chpasswd = Util::which('chpasswd');
-        $passwd = Util::which('passwd');
-        Processes::mwExec("{$passwd} -l www");
+        $passwd   = Util::which('passwd');
+        Processes::mwExec("$passwd -l www");
         if ($disablePassLogin === '1') {
             Processes::mwExec("$passwd -l $sshLogin");
+            Processes::mwExec("$passwd -l root");
+        } elseif($sshLogin === 'root') {
+            Processes::mwExec("$echo '$sshLogin:$password' | $chpasswd");
         } else {
+            Processes::mwExec("$passwd -l root");
             Processes::mwExec("$echo '$sshLogin:$password' | $chpasswd");
         }
 
@@ -209,7 +217,7 @@ class SSHConf extends Injectable
         Util::mwMkdir($sshDir);
 
         $authorizedKeys = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_AUTHORIZED_KEYS);
-        file_put_contents("{$sshDir}/authorized_keys", $authorizedKeys);
+        file_put_contents("$sshDir/authorized_keys", $authorizedKeys);
     }
 
     /**

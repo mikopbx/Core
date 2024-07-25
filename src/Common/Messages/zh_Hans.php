@@ -1246,4 +1246,6 @@ return [
     'nw_NATInfo4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_NATInfo5' => '如果指定了外部主机名，则将优先使用外部主机名而不是外部 IP 地址。',
     'nw_PublicTLSPort' => '转发到内部 %TLS_PORT% PBX 的 SIP TLS 端口号',
+    'gs_ErrorSaveSettings' => '保存设置时出错',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => '指定的分机号码已被使用',
 ];

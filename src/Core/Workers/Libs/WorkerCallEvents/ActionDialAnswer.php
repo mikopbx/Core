@@ -118,16 +118,15 @@ class ActionDialAnswer
             $new_data = $m_row_data->toArray();
 
             // Update certain fields in the new data.
-            $new_data['start'] = $data['answer'];
-            $new_data['answer'] = $data['answer'];
-            $new_data['endtime'] = '';
+            $new_data['start']    = $data['answer'];
+            $new_data['answer']   = $data['answer'];
+            $new_data['endtime']  = '';
             $new_data['dst_chan'] = $data['agi_channel'];
-            $new_data['dst_num'] = $data['dst_num'];
+            $new_data['dst_num']  = $data['dst_num'];
             $new_data['UNIQUEID'] = $data['id'];
 
             // Check if call recording is enabled for this source and destination numbers.
             if ($worker->enableMonitor($new_data['src_num'] ?? '', $new_data['dst_num'] ?? '')) {
-
                 // If it is, start recording the call.
                 $new_data['recordingfile'] = $worker->MixMonitor($new_data['dst_chan'], 'pickup_' . $new_data['UNIQUEID'], '', '', 'fillPickUpCdr');
             }

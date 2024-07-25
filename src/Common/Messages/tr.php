@@ -1246,4 +1246,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'nw_NATInfo4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_NATInfo5' => 'Harici bir ana bilgisayar adı belirtilirse, harici IP adresi yerine bu ad kullanılacaktır.',
     'nw_PublicSIPPort' => 'Dahili %SIP_PORT% PBX\'e iletilen SIP bağlantı noktası numarası',
+    'gs_ErrorSaveSettings' => 'Ayarlar kaydedilirken hata oluştu',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Belirtilen dahili numara zaten kullanımda',
 ];

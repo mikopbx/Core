@@ -1262,4 +1262,6 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'nw_NATInfo6OR' => 'SAU',
     'nw_PublicSIPPort' => 'Numărul portului SIP redirecționat către PBX intern %SIP_PORT%.',
     'nw_PublicTLSPort' => 'Numărul portului SIP TLS redirecționat către centrala internă %TLS_PORT%.',
+    'gs_ErrorSaveSettings' => 'Eroare la salvarea setărilor',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Numărul de extensie specificat este deja în uz',
 ];

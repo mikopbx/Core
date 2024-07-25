@@ -1280,4 +1280,6 @@ return [
     'nw_NATInfo5' => 'Якщо вказано зовнішнє ім\'я хоста, воно буде використовуватись у пріоритеті замість зовнішньої IP-адреси.',
     'nw_PublicSIPPort' => 'Номер порту SIP перенаправленого на внутрішній %SIP_PORT% PBX',
     'nw_PublicTLSPort' => 'Номер порту SIP TLS перенаправленого на внутрішній %TLS_PORT% PBX',
+    'gs_ErrorSaveSettings' => 'Помилка збереження налаштувань',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Вказаний внутрішній номер вже використовується',
 ];
