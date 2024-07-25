@@ -145,6 +145,14 @@ class SSHConf extends Injectable
             shell_exec("$bbPath addgroup -S '$sshLogin' $sshLogin");
             // Adding a user to the group 'root'
             shell_exec("$bbPath addgroup -S '$sshLogin' root");
+
+            $cat = Util::which('cat');
+            $cut = Util::which('cut');
+            $sed = Util::which('sed');
+            $chown = Util::which('chown');
+            $currentGroupId = trim(shell_exec("$cat /etc/passwd | grep '^$sshLogin:' | $cut -f 3 -d ':'"));
+            shell_exec("$sed -i 's/$sshLogin:x:$currentGroupId:/$sshLogin:x:0:/g' /etc/passwd");
+            shell_exec("$chown -R $sshLogin:$sshLogin $homeDir");
         }
         return $sshLogin;
     }
