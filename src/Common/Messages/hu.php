@@ -342,7 +342,7 @@ return [
     'ex_Japanese' => '日本語',
     'ex_Deutsch' => 'Deutsch',
     'ex_Spanish' => 'Espanol',
-    'ex_French' => 'Le français',
+    'ex_French' => 'Francia',
     'ex_Dutch' => 'Hollandia',
     'ex_Georgian' => 'ქართველი',
     'January' => 'január',
