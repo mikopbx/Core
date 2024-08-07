@@ -58,7 +58,7 @@ fi
 
 # Set aliases
 alias ls='ls --color=auto';
-alias myip="curl http://ipecho.net/plain; echo";
+alias myip="/usr/bin/curl https://checkip.amazonaws.com";
 alias remount-offload="_remountOffload";
 alias check-file-connection="_checkFileConnection";
 alias ps='ps -A -f';

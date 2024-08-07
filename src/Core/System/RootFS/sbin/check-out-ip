@@ -24,7 +24,7 @@ if [ "$needCheckOutAddress" != '1' ]; then
     exit 0;
 fi;
 
-outIp="$(/usr/bin/curl https://ipecho.net/plain 2> /dev/null)";
+outIp="$(/usr/bin/curl https://checkip.amazonaws.com 2> /dev/null)";
 result="$?";
 if [ "$result" != '0' ]; then
   echo 'Error getting an IP address';
