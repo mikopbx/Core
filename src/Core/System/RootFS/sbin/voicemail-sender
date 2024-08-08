@@ -1,6 +1,7 @@
 #!/usr/bin/php
 <?php
 
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Notifications;
@@ -75,6 +76,10 @@ try {
             $params['VM_CALLER_NUM']  = $data[0]['address']??'';
             unset($data);
         }
+    }
+    $cidName = $params['VM_CALLER_NAME']??'';
+    if(empty($cidName)){
+        $params['VM_CALLER_NAME'] = Extensions::getCidByPhoneNumber($params['VM_CALLER_NUM']);
     }
     $message    = "$body $footer";
     replaceParams($subject, $params);

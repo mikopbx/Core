@@ -20,7 +20,9 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
+use AWS\CRT\Internal\Extension;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, SystemMessages, Util};
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 
 /**
@@ -60,8 +62,9 @@ class WorkerNotifyByEmail extends WorkerBase
      */
     public function workerNotifyByEmail($message): void
     {
+        $phonesCid = [];
         $notifier = new Notifications();
-        $config = new MikoPBXConfig();
+        $config   = new MikoPBXConfig();
         $settings = $config->getGeneralSettings();
 
         /** @var BeanstalkClient $message */
@@ -80,10 +83,15 @@ class WorkerNotifyByEmail extends WorkerBase
         $tmpArray = [];
         foreach ($data as $call) {
             $keyHash = $call['email'] . $call['start'] . $call['from_number'] . $call['to_number'];
-
             // Skip duplicate emails
             if (in_array($keyHash, $tmpArray, true)) {
                 continue;
+            }
+            if(isset($phonesCid[$call['to_number']])){
+                $call['to_name'] = $phonesCid[$call['to_number']];
+            }else{
+                $call['to_name'] = Extensions::getCidByPhoneNumber($call['to_number']);
+                $phonesCid[$call['to_number']] = $call['to_name'];
             }
             $tmpArray[] = $keyHash;
             if (!isset($emails[$call['email']])) {
@@ -98,7 +106,6 @@ class WorkerNotifyByEmail extends WorkerBase
                 $emails[$call['email']]['body'] .= "$email <br><hr><br>";
             }
         }
-
         foreach ($emails as $to => $email) {
             $subject = $email['subject'];
             $body = "{$email['body']}<br>{$email['footer']}";
@@ -122,6 +129,7 @@ class WorkerNotifyByEmail extends WorkerBase
                 "NOTIFICATION_MISSEDCAUSE",
                 "NOTIFICATION_CALLERID",
                 "NOTIFICATION_TO",
+                "NOTIFICATION_NAME_TO",
                 "NOTIFICATION_DURATION",
                 "NOTIFICATION_DATE"
             ],
@@ -130,6 +138,7 @@ class WorkerNotifyByEmail extends WorkerBase
                 'NOANSWER',
                 $params['from_number'],
                 $params['to_number'],
+                $params['to_name'],
                 $params['duration'],
                 explode('.', $params['start'])[0]
             ],

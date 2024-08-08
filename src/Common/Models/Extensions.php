@@ -138,6 +138,42 @@ class Extensions extends ModelsBase
     }
 
     /**
+     * Returns Caller ID by phone number.
+     * @param string $number
+     * @return string
+     */
+    public static function getCidByPhoneNumber(string $number):string
+    {
+        if(empty($number)){
+            return $number;
+        }
+        $number = preg_replace('/\D+/', '', $number);
+        $extensionLength = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH);
+        if(strlen($number) > $extensionLength){
+            $query = 'number LIKE :phone:';
+            $phone = '%'.substr($number, -9);
+        }else{
+            $query = 'number = :phone:';
+            $phone = $number;
+        }
+        $filter = [
+            $query,
+            'columns' => 'callerid',
+            'bind' => [
+                'phone' => $phone
+            ]
+        ];
+        $data = self::findFirst($filter);
+        if($data){
+            $cid = $data->callerid;
+        }else{
+            $cid = $number;
+        }
+
+        return $cid;
+    }
+
+    /**
      * Get the next available internal extension number.
      *
      * This function retrieves the minimum existing internal extension number from the database.
