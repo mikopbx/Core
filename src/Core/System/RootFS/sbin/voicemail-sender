@@ -8,6 +8,7 @@ use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
 
 require_once('Globals.php');
 
@@ -40,14 +41,23 @@ try {
     $file   = implode('', $parser->saveAttachments('/tmp/'));
     $recordingFile = VoiceMailConf::getCopyFilename($file, $linkedId, $d->getTimestamp(), true);
     $recordingFile = Util::trimExtensionForFile($recordingFile) . '.wav';
+
+    /** Convert tmp file to mp3 */
+    $converter  = Util::which('wav2mp3.sh');
+    $baseNameTmp= Util::trimExtensionForFile($file);
+    $mp3File   = "$baseNameTmp.mp3";
+    Processes::mwExec("$converter $baseNameTmp");
+    if(file_exists($mp3File)){
+        $recordingFile = $mp3File;
+    }
     unlink($file);
 
+    /** create mail message */
     $addresses      = mailparse_rfc822_parse_addresses($parser->getHeader('to'));
     $rawHeaderTo    = $addresses[0]['address']??'';
     if(!empty($rawHeaderTo)){
         $toMails[] = $rawHeaderTo;
     }
-
     $settings = PbxSettings::getAllPbxSettings();
     $subject    = str_replace([PHP_EOL, "\t"], '',   $settings['MailTplVoicemailSubject']);
     $body       = str_replace([PHP_EOL, "\t"], ['<br>', ''], $settings['MailTplVoicemailBody']);
@@ -66,12 +76,15 @@ try {
             unset($data);
         }
     }
-
     $message    = "$body $footer";
     replaceParams($subject, $params);
     replaceParams($message, $params);
     $notify = new Notifications();
     $result = $notify->sendMail(implode(',', array_unique($toMails)), $subject, $message, $recordingFile);
+
+    if(file_exists($mp3File)){
+        unlink($mp3File);
+    }
 }catch (Throwable $e){
     $recordingFile = '';
     SystemMessages::sysLogMsg('Voicemail-Sender', $e->getMessage());
