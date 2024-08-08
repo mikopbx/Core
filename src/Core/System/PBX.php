@@ -35,6 +35,7 @@ use MikoPBX\Core\Asterisk\Configs\{AclConf,
     FeaturesConf,
     HttpConf,
     IAXConf,
+    IndicationConf,
     ManagerConf,
     ModulesConf,
     MusicOnHoldConf,
@@ -163,6 +164,9 @@ class PBX extends Injectable
         $asteriskConf = new AsteriskConf();
         $asteriskConf->generateConfig();
 
+        $indicationConf = new IndicationConf();
+        $indicationConf->generateConfig();
+
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'core reload'", $arr_out);
@@ -175,6 +179,10 @@ class PBX extends Injectable
     {
         $asteriskConf = new AsteriskConf();
         $asteriskConf->generateConfig();
+
+        $indicationConf = new IndicationConf();
+        $indicationConf->generateConfig();
+
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'core restart now'");
     }
