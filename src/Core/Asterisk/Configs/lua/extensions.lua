@@ -330,6 +330,11 @@ function event_dial(without_event)
         channel = orign_chan;
     end
 
+    if(channel == '')then
+        channel = get_variable('MASTER_CHANNEL(CHANNEL)');
+        app["NoOp"]('The channel could not be determined. Use Master: ('..channel..')');
+    end
+
     local from_account  = get_variable("FROM_PEER")
     if ( from_account=='' and string.lower(agi_channel):find("local/") == nil )then
         from_account = getAccountName(agi_channel);
