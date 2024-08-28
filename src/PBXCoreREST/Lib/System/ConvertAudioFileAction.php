@@ -80,17 +80,6 @@ class ConvertAudioFileAction extends Injectable
         Processes::mwExec("$lamePath -b 16 --silent '$n_filename' '$n_filename_mp3'", $out);
         $result_mp3 = implode('', $out);
 
-        // Convert the file to various codecs using Asterisk
-        $codecs = ['alaw', 'ulaw', 'gsm', 'g722', 'wav'];
-        $rmPath       = Util::which('rm');
-        $asteriskPath = Util::which('asterisk');
-        foreach ($codecs as $codec){
-            $result = shell_exec("$asteriskPath -rx 'file convert $tmp_filename $trimmedFileName.$codec'");
-            if(strpos($result, 'Converted') !== 0){
-                shell_exec("$rmPath -rf $trimmedFileName.$codec");
-            }
-        }
-
         // Remove temporary file
         unlink($tmp_filename);
         if ($result_str !== '' && $result_mp3 !== '') {
