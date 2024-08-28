@@ -136,6 +136,7 @@ class QueueConf extends AsteriskConfigClass
             }
             $ringLength = trim($queue['timeout_to_redirect_to_extension']);
             $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT$options,,,$ringLength,,,queue_agent_answer) \n\t";
+            $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${EMPTY})' . "\n\t";
             // Notify about the end of the queue.
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
             $timeoutExtension = trim($queue['timeout_extension']);
