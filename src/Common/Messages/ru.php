@@ -543,6 +543,7 @@ return [
     'fw_Permit' => 'Подсеть',
     'fw_Rules' => 'Доступные сервисы',
     'fw_sipDescription' => 'SIP & RTP - регистрация телефонов и голосовой трафик',
+    'fw_iaxDescription' => 'IAX - регистрация телефонов и голосовой трафик',
     'fw_webDescription' => 'WEB - доступ к административному интерфейсу',
     'fw_amiDescription' => 'AMI - доступ к asterisk manager api через telnet',
     'fw_ctiDescription' => 'CTI - подключение панели телефонии',

@@ -146,6 +146,19 @@ class FirewallRules extends ModelsBase
                 'action' => 'allow',
                 'shortName' => 'SIP & RTP',
             ],
+            'IAX' => [
+                'rules' => [
+                    [
+                        'portfrom' => $protectedPortSet[PbxSettingsConstants::IAX_PORT],
+                        'portto' => $protectedPortSet[PbxSettingsConstants::IAX_PORT],
+                        'protocol' => 'udp',
+                        'portFromKey' => PbxSettingsConstants::IAX_PORT,
+                        'portToKey' => PbxSettingsConstants::IAX_PORT,
+                    ]
+                ],
+                'action' => 'allow',
+                'shortName' => 'IAX',
+            ],
             'WEB' => [
                 'rules' => [
                     [
@@ -255,6 +268,7 @@ class FirewallRules extends ModelsBase
             PbxSettingsConstants::WEB_PORT,
             PbxSettingsConstants::WEB_HTTPS_PORT,
             PbxSettingsConstants::SSH_PORT,
+            PbxSettingsConstants::IAX_PORT,
         ];
         $result = [];
         foreach ($portSet as $portName) {
