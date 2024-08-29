@@ -1248,4 +1248,5 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'nw_NATInfo6OR' => 'HOẶC',
     'gs_ErrorSaveSettings' => 'Lỗi lưu cài đặt',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Số máy nhánh được chỉ định đã được sử dụng',
+    'fw_iaxDescription' => 'IAX - đăng ký điện thoại và lưu lượng thoại',
 ];

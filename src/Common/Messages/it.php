@@ -1282,4 +1282,5 @@ Il coupon può essere attivato una volta, dopodiché viene riscattato.',
     'nw_PublicTLSPort' => 'Numero di porta SIP TLS inoltrato al PBX interno %TLS_PORT%.',
     'gs_ErrorSaveSettings' => 'Errore durante il salvataggio delle impostazioni',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Il numero di interno specificato è già in uso',
+    'fw_iaxDescription' => 'IAX - registrazione telefonica e traffico vocale',
 ];

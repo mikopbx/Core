@@ -1282,4 +1282,5 @@ return [
     'nw_PublicSIPPort' => 'SIP პორტის ნომერი გადაგზავნილია შიდა %SIP_PORT% PBX-ში',
     'gs_ErrorSaveSettings' => 'შეცდომა პარამეტრების შენახვისას',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'მითითებული გაფართოების ნომერი უკვე გამოიყენება',
+    'fw_iaxDescription' => 'IAX - ტელეფონის რეგისტრაცია და ხმოვანი ტრაფიკი',
 ];

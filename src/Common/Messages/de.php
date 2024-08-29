@@ -1285,4 +1285,5 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'nw_PublicSIPPort' => 'SIP-Portnummer, die an die interne %SIP_PORT%-PBX weitergeleitet wird',
     'gs_ErrorSaveSettings' => 'Fehler beim Speichern der Einstellungen',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Die angegebene Nebenstellennummer wird bereits verwendet',
+    'fw_iaxDescription' => 'IAX – Telefonregistrierung und Sprachverkehr',
 ];

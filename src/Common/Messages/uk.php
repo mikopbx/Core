@@ -1282,4 +1282,5 @@ return [
     'nw_PublicTLSPort' => 'Номер порту SIP TLS перенаправленого на внутрішній %TLS_PORT% PBX',
     'gs_ErrorSaveSettings' => 'Помилка збереження налаштувань',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Вказаний внутрішній номер вже використовується',
+    'fw_iaxDescription' => 'IAX - реєстрація телефонів та голосовий трафік',
 ];

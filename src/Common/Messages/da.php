@@ -1282,4 +1282,5 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'nw_NATInfo5' => 'Hvis et eksternt værtsnavn er angivet, vil det blive brugt frem for den eksterne IP-adresse.',
     'gs_ErrorSaveSettings' => 'Fejl under lagring af indstillinger',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Det angivne lokalnummer er allerede i brug',
+    'fw_iaxDescription' => 'IAX - telefonregistrering og taletrafik',
 ];

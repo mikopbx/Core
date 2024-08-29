@@ -1282,4 +1282,5 @@ El cupón se puede activar una vez y luego se canjea.',
     'nw_PublicTLSPort' => 'Número de puerto SIP TLS reenviado al PBX interno %TLS_PORT%',
     'gs_ErrorSaveSettings' => 'Error al guardar la configuración',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'El número de extensión especificado ya está en uso',
+    'fw_iaxDescription' => 'IAX: registro telefónico y tráfico de voz',
 ];

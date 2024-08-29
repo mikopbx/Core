@@ -1264,4 +1264,5 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'nw_PublicTLSPort' => 'Numărul portului SIP TLS redirecționat către centrala internă %TLS_PORT%.',
     'gs_ErrorSaveSettings' => 'Eroare la salvarea setărilor',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Numărul de extensie specificat este deja în uz',
+    'fw_iaxDescription' => 'IAX - înregistrare telefonică și trafic vocal',
 ];

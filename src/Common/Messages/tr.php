@@ -1248,4 +1248,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'nw_PublicSIPPort' => 'Dahili %SIP_PORT% PBX\'e iletilen SIP bağlantı noktası numarası',
     'gs_ErrorSaveSettings' => 'Ayarlar kaydedilirken hata oluştu',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Belirtilen dahili numara zaten kullanımda',
+    'fw_iaxDescription' => 'IAX - telefon kaydı ve ses trafiği',
 ];

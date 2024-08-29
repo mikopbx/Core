@@ -1282,4 +1282,5 @@ return [
     'nw_PublicTLSPort' => '内部 %TLS_PORT% PBX に転送される SIP TLS ポート番号',
     'mo_ThisNumberNotUniqueForExtensionsModels' => '指定された内線番号はすでに使用されています',
     'gs_ErrorSaveSettings' => '設定の保存中にエラーが発生しました',
+    'fw_iaxDescription' => 'IAX - 電話の登録と音声トラフィック',
 ];

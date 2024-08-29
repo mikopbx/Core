@@ -1281,4 +1281,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'nw_PublicSIPPort' => 'SIP port nömrəsi daxili %SIP_PORT% PBX-ə yönləndirildi',
     'gs_ErrorSaveSettings' => 'Parametrləri yadda saxlama xətası',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Göstərilən artırma nömrəsi artıq istifadə olunur',
+    'fw_iaxDescription' => 'IAX - telefon qeydiyyatı və səs trafiki',
 ];

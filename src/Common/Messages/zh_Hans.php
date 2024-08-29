@@ -1248,4 +1248,5 @@ return [
     'nw_PublicTLSPort' => '转发到内部 %TLS_PORT% PBX 的 SIP TLS 端口号',
     'gs_ErrorSaveSettings' => '保存设置时出错',
     'mo_ThisNumberNotUniqueForExtensionsModels' => '指定的分机号码已被使用',
+    'fw_iaxDescription' => 'IAX-电话注册和语音流量',
 ];

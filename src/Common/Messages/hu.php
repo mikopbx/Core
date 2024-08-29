@@ -1233,4 +1233,5 @@ A kupon egyszer aktiválható, ezután válik beválthatóvá.',
     'adv_SSHPasswordMismatchFilesHash' => 'A MikoPBX SSH jelszó eltér a konfigurációs fájlban beállítotttól. Lehetséges, hogy manuálisan módosították a MikoPBX konzolról.',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Figyelem! Problémákat észleltünk a MikoPBX-ben!',
     'lic_MarketplaceText' => 'A Marketplace-en történő regisztrációval további modulokhoz és bővítményekhez férhet hozzá.<br>Vannak ingyenes modulok, amelyeket eltávolítottunk az alapfunkciók közül a kezdeti beállítás egyszerűsítése érdekében, valamint fizetős modulok tőlünk és más fejlesztőktől.<br>Ha Ön Ha Ön fejlesztő, akkor <a href="mailto:developers@mikopbx.com">vegye fel velünk a kapcsolatot</a>, ha útmutatást szeretne kapni saját modulja fejlesztésével és a piactérhez való hozzáadásával kapcsolatban.',
+    'fw_iaxDescription' => 'IAX - telefon regisztráció és hangforgalom',
 ];
