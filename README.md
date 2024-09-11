@@ -41,7 +41,7 @@ The system has an easy and convenient web interface, call recording, conference 
 ## Getting Started
 1. Download [latest released](https://github.com/mikopbx/Core/releases/latest) ISO file in assets section
 2. Create a new virtual machine (e.g. VMware Player)
-3. Select **Other Linux 4.x kernel 64-bit** on the virtual machine settings
+3. Select **Other Linux 6.6.1 kernel 64-bit** on the virtual machine settings
 4. Boot from ISO firmware and install MikoPBX on storage according to internal instructions.
 5. Continue set up your PBX system over a web interface with default credentials. Username: *admin*  password: *admin*
 
@@ -52,7 +52,7 @@ Or follow our wiki for [additional instructions](https://wiki.mikopbx.com/en:set
 * Easy to install and easy to setup.
 * Multilingual interface with community-supported translation service.
 * Wiki documentation with context helpers on the web interface.
-* Latest PJSIP stack and Asterisk LTS 16 release installed.
+* Latest PJSIP stack and Asterisk LTS 20 release installed.
 * Fail2Ban and iptables already included.
 * Modular architecture.
 * Plugins marketplace.
@@ -107,7 +107,7 @@ Become a sponsor and get your logo on our README on Github with a link to your s
 
 ## License
 MikoPBX© - free phone system for small business
-Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
+Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

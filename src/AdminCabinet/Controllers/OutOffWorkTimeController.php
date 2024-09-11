@@ -196,7 +196,7 @@ class OutOffWorkTimeController extends BaseController
             if($providerData['registration_type'] === Sip::REG_TYPE_INBOUND || empty($providerData['host'])){
                 $providersId[$providerData['uniqid']] = $providerData['uniqid'];
             }else{
-                $providersId[$providerData['uniqid']] = SIPConf::getContextId($providerData['host'] . $providerData['port']);
+                $providersId[$providerData['uniqid']] = SIPConf::getContextId($providerData['host'] , $providerData['port']);
             }
         }
         unset($data);

@@ -1246,4 +1246,7 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'nw_NATInfo3' => '%SIP_PORT% TCP/UDP và %TLS_PORT% TCP',
     'nw_NATInfo4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_NATInfo6OR' => 'HOẶC',
+    'gs_ErrorSaveSettings' => 'Lỗi lưu cài đặt',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Số máy nhánh được chỉ định đã được sử dụng',
+    'fw_iaxDescription' => 'IAX - đăng ký điện thoại và lưu lượng thoại',
 ];

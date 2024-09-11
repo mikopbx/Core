@@ -398,7 +398,7 @@ const outOfWorkTimeRecord = {
         }
 
         // Check all fields
-        if ($('#calType').parent().dropdown('get value') !== 'caldav'
+        if ($('#calType').parent().dropdown('get value') === 'none'
             && result.data.time_from === ''
             && result.data.time_to === ''
             && result.data.weekday_from === '-1'
@@ -427,12 +427,12 @@ const outOfWorkTimeRecord = {
         const serverOffset = parseInt(outOfWorkTimeRecord.$formObj.form('get value', 'serverOffset'));
         const offsetDiff = serverOffset + currentOffset;
 
-        if($('#calType').parent().dropdown('get value') === 'caldav'){
-            Form.validateRules.timefrom.rules = [];
-            Form.validateRules.timeto.rules = [];
-        } else {
+        if($('#calType').parent().dropdown('get value') === 'none'){
             Form.validateRules.timefrom.rules = outOfWorkTimeRecord.additionalTimeIntervalRules;
             Form.validateRules.timeto.rules = outOfWorkTimeRecord.additionalTimeIntervalRules;
+        } else {
+            Form.validateRules.timefrom.rules = [];
+            Form.validateRules.timeto.rules = [];
         }
 
         if (dateFrom) {

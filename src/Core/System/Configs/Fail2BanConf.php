@@ -24,8 +24,8 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use MikoPBX\Modules\Config\SystemConfigInterface;
@@ -138,14 +138,14 @@ class Fail2BanConf extends Injectable
      */
     private function generateConf():void
     {
-        $log_dir = System::getLogDir() . '/fail2ban';
+        $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/fail2ban';
         $lofFileName = "$log_dir/fail2ban.log";
         Util::mwMkdir($log_dir);
         $conf = '['.'Definition'.']'.PHP_EOL.
                 'allowipv6 = auto'.PHP_EOL.
                 'loglevel = INFO'.PHP_EOL.
-                'logtarget = FILE'.PHP_EOL.
-                "syslogsocket = $lofFileName".PHP_EOL.
+                "logtarget = $lofFileName".PHP_EOL.
+                'syslogsocket = auto'.PHP_EOL.
                 'socket = /var/run/fail2ban/fail2ban.sock'.PHP_EOL.
                 'pidfile = /var/run/fail2ban/fail2ban.pid'.PHP_EOL.
                 'dbfile = /var/lib/fail2ban/fail2ban.sqlite3'.PHP_EOL.
@@ -168,7 +168,7 @@ class Fail2BanConf extends Injectable
             return;
         }
         $max_size    = 10;
-        $log_dir     = System::getLogDir() . '/fail2ban/';
+        $log_dir     = Directories::getDir(Directories::CORE_LOGS_DIR) . '/fail2ban/';
         $text_config = $log_dir."fail2ban.log {
     nocreate
     nocopytruncate
@@ -331,7 +331,7 @@ class Fail2BanConf extends Injectable
                 "logpath = $syslog_file\n" .
                 "action = $action\n\n";
         }
-        $log_dir = System::getLogDir() . '/asterisk/';
+        $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
         $jails = [
             'asterisk_security_log' => ['security_log', '', $asteriskPorts],
             'asterisk_error'        => ['error', '_ERROR', $asteriskPorts],
@@ -343,7 +343,7 @@ class Fail2BanConf extends Injectable
                 $commonParams.
                 "filter = asterisk-main" . PHP_EOL.
                 'action = miko-iptables-multiport-all[name=ASTERISK'.$actionNamePrefix.', port="'.implode(',', $ports).'"]'. PHP_EOL.
-                "logpath = {$log_dir}$logPrefix". PHP_EOL. PHP_EOL;
+                "logpath = $log_dir$logPrefix". PHP_EOL. PHP_EOL;
         }
         // Write the Fail2Ban configuration to the jail.local file
         Util::fileWriteContent('/etc/fail2ban/jail.local', $config);

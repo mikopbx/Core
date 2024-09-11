@@ -30,10 +30,12 @@ use MikoPBX\Core\Asterisk\Configs\{AclConf,
     AsteriskConf,
     AsteriskConfigClass,
     AsteriskConfigInterface,
+    ConferenceConf,
     ExtensionsConf,
     FeaturesConf,
     HttpConf,
     IAXConf,
+    IndicationConf,
     ManagerConf,
     ModulesConf,
     MusicOnHoldConf,
@@ -162,6 +164,9 @@ class PBX extends Injectable
         $asteriskConf = new AsteriskConf();
         $asteriskConf->generateConfig();
 
+        $indicationConf = new IndicationConf();
+        $indicationConf->generateConfig();
+
         $arr_out      = [];
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'core reload'", $arr_out);
@@ -174,6 +179,10 @@ class PBX extends Injectable
     {
         $asteriskConf = new AsteriskConf();
         $asteriskConf->generateConfig();
+
+        $indicationConf = new IndicationConf();
+        $indicationConf->generateConfig();
+
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'core restart now'");
     }
@@ -204,6 +213,17 @@ class PBX extends Injectable
         $o->generateConfig();
         $asteriskPath = Util::which('asterisk');
         Processes::mwExec("{$asteriskPath} -rx 'moh reload'");
+    }
+
+    /**
+     * Reloads the Asterisk music on hold module.
+     */
+    public static function confBridgeReload(): void
+    {
+        $o = new ConferenceConf();
+        $o->generateConfig();
+        $asteriskPath = Util::which('asterisk');
+        Processes::mwExec("$asteriskPath -rx 'module reload app_confbridge'");
     }
 
 

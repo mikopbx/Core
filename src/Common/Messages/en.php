@@ -1283,4 +1283,7 @@ The coupon can be activated once, after which it becomes redeemed.',
     'nw_NATInfo6OR' => 'OR',
     'nw_PublicSIPPort' => 'SIP port number forwarded to internal %SIP_PORT% PBX',
     'nw_PublicTLSPort' => 'SIP TLS port number forwarded to internal %TLS_PORT% PBX',
+    'gs_ErrorSaveSettings' => 'Error saving settings',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'The specified extension number is already in use',
+    'fw_iaxDescription' => 'IAX - Phone Registration and Voice Traffic',
 ];

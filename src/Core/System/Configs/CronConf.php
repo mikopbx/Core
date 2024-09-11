@@ -29,8 +29,6 @@ use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Injectable;
 
-use function MikoPBX\Common\Config\appPath;
-
 /**
  * Class CronConf
  *
@@ -63,14 +61,13 @@ class CronConf extends Injectable
         $this->generateConfig($booting);
         if (Util::isSystemctl()) {
             $systemctl = Util::which('systemctl');
-            Processes::mwExec("{$systemctl} restart ".self::PROC_NAME);
+            Processes::mwExec("$systemctl restart ".self::PROC_NAME);
         } else {
             // T2SDE or Docker
-            $crond = Util::which(self::PROC_NAME);
+            $cronPath = Util::which(self::PROC_NAME);
             Processes::killByName(self::PROC_NAME);
-            Processes::mwExec("$crond -L /dev/null -l 8");
+            Processes::mwExec("$cronPath -S -l 0");
         }
-
         return 0;
     }
 
@@ -86,7 +83,7 @@ class CronConf extends Injectable
 
         $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
         $phpPath               = Util::which('php');
-        $WorkerSafeScripts     = "$phpPath -f {$workerSafeScriptsPath} start > /dev/null 2> /dev/null";
+        $WorkerSafeScripts     = "$phpPath -f $workerSafeScriptsPath start > /dev/null 2> /dev/null";
 
         $restart_night = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::RESTART_EVERY_NIGHT);
         $asterisk  = Util::which('asterisk');
@@ -129,5 +126,20 @@ class CronConf extends Injectable
 
         // Write the generated config to the cron file
         Util::fileWriteContent($cron_filename, $conf);
+    }
+
+    /**
+     * Generate additional syslog rules.
+     * @return void
+     */
+    public static function generateSyslogConf():void
+    {
+        Util::mwMkdir('/etc/rsyslog.d');
+        $log_fileRedis       = SyslogConf::getSyslogFile(self::PROC_NAME);
+        $pathScriptRedis     = SyslogConf::createRotateScript(self::PROC_NAME);
+        $confSyslogD = '$outchannel log_'.self::PROC_NAME.','.$log_fileRedis.',10485760,'.$pathScriptRedis.PHP_EOL.
+            'if $programname == "'.self::PROC_NAME.'" then :omfile:$log_'.self::PROC_NAME.PHP_EOL.
+            'if $programname == "'.self::PROC_NAME.'" then stop'.PHP_EOL;
+        file_put_contents('/etc/rsyslog.d/'.self::PROC_NAME.'.conf', $confSyslogD);
     }
 }

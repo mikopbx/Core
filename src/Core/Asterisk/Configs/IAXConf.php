@@ -36,9 +36,7 @@ class IAXConf extends AsteriskConfigClass
 {
     // The module hook applying priority
     public int $priority = 600;
-
     public const TYPE_IAX2 = 'IAX2';
-
     protected string $description = 'iax.conf';
 
     /**
@@ -64,9 +62,8 @@ class IAXConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $conf = '';
-        $conf .= $this->generateGeneral();
-        $conf .= $this->generateProviders();
+        $conf = $this->generateGeneral();
+        $conf.= $this->generateProviders();
 
         // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/iax.conf', $conf);
@@ -80,17 +77,15 @@ class IAXConf extends AsteriskConfigClass
      */
     private function generateGeneral(): string
     {
-        $iax_port = (trim($this->generalSettings[PbxSettingsConstants::IAX_PORT]) !== '') ? $this->generalSettings[PbxSettingsConstants::IAX_PORT] : '4569';
-        $conf     = '[general]' . "\n";
-        // $conf .= "context=public-direct-dial \n";
-        $conf .= "bindport={$iax_port}\n";
-        $conf .= "bindaddr=0.0.0.0\n";
-        $conf .= "delayreject=yes\n";
-        $conf .= "iaxthreadcount=100\n";
-        $conf .= "iaxmaxthreadcount=200\n";
-        $conf .= "jitterbuffer=no\n";
-        $conf .= "forcejitterbuffer=no\n\n";
-
+        $iax_port = $this->generalSettings[PbxSettingsConstants::IAX_PORT];
+        $conf     = '[general]'.PHP_EOL;
+        $conf .= "bindport=$iax_port".PHP_EOL;
+        $conf .= "bindaddr=0.0.0.0".PHP_EOL;
+        $conf .= "delayreject=yes".PHP_EOL;
+        $conf .= "iaxthreadcount=100".PHP_EOL;
+        $conf .= "iaxmaxthreadcount=200".PHP_EOL;
+        $conf .= "jitterbuffer=no".PHP_EOL;
+        $conf .= "forcejitterbuffer=no".PHP_EOL.PHP_EOL;
         return $conf;
     }
 
@@ -107,37 +102,42 @@ class IAXConf extends AsteriskConfigClass
         $lang      = str_replace('_', '-', strtolower($this->generalSettings[PbxSettingsConstants::PBX_LANGUAGE]));
         $providers = $this->getProviders();
         foreach ($providers as $provider) {
-            $prov_config .= "[{$provider['uniqid']}];\n";
-            $prov_config .= "type=friend\n";
-            $prov_config .= "auth=md5\n";
-            $prov_config .= "context={$provider['uniqid']}-incoming \n";
-            $prov_config .= "language={$lang}\n";
-            $prov_config .= "qualify=2000\n";
-            $prov_config .= "transfer=mediaonly\n";
-            $prov_config .= "disallow=all\n";
-            $prov_config .= ";username={$provider['username']}\n";
-            $prov_config .= "host=dynamic\n";
-            $prov_config .= "trunk=yes\n";
-
-            $prov_config .= "secret={$provider['secret']}\n";
+            $manual_attributes = Util::parseIniSettings(base64_decode($provider['manualattributes']));
+            $options = [
+                'type' => 'friend',
+                'auth' => 'plaintext',
+                'context' => "{$provider['uniqid']}-incoming",
+                'language' => $lang,
+                'qualify' => 2000,
+                'transfer' => 'mediaonly',
+                'disallow' => 'all',
+                'username' => $provider['username'],
+                'trunk' => 'yes',
+                'secret' => $provider['secret'],
+                'host' => 'dynamic'
+            ];
+            $prov_config .= "[{$provider['uniqid']}];".PHP_EOL;
             foreach ($provider['codecs'] as $codec) {
-                $prov_config .= "allow={$codec}\n";
+                $prov_config .= "allow=$codec".PHP_EOL;
             }
             $prov_config .= "setvar=contextID={$provider['uniqid']}-incoming".PHP_EOL;
-            $prov_config .= "\n";
+            $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, ' ');
+            $prov_config .= PHP_EOL;
 
             // Formulate the registration string
-            if ($provider['noregister'] == 0) {
+            if ($provider['noregister'] === '0') {
                 // Registration is only required if the current host has a dynamic IP
-                $user   = $provider['username'];
-                $secret = (trim($provider['secret']) == '') ? '' : ":{$provider['secret']}";
-                $host   = $provider['host'];
-                $port        = '';
-                $reg_strings .= "register => {$user}{$secret}@{$host}{$port} \n";
+                $user   = $options['username'];
+                $secret = (trim($options['secret']) === '') ? '' : ":{$options['secret']}";
+                [$host, $port] = explode( ':',$provider['host']);
+                if(!empty($port)){
+                    $port = ":$port";
+                }
+                $reg_strings .= "register => $user$secret@$host$port ".PHP_EOL;
             }
         }
 
-        return $reg_strings . "\n" . $prov_config;
+        return $reg_strings .PHP_EOL . $prov_config;
     }
 
     /**
@@ -151,26 +151,19 @@ class IAXConf extends AsteriskConfigClass
         // Получим настройки всех аккаунтов.
         $arrIaxProviders = Iax::find("disabled IS NULL OR disabled = '0'");
         foreach ($arrIaxProviders as $peer) {
-            /** @var \MikoPBX\Common\Models\Iax $peer */
+            /** @var Iax $peer */
             $arr_data = $peer->toArray();
-
-            // $network_filter = NetworkFilters::findFirst($peer->networkfilterid);
-            // $arr_data['permit'] = ($network_filter==null)?'':$network_filter->permit;
-            // $arr_data['deny']   = ($network_filter==null)?'':$network_filter->deny;
-
             $arr_data['codecs'] = [];
             $filter             = [
                 'conditions' => 'disabled="0"',
                 'order'      => 'type, priority',
             ];
-            $codecs             = Codecs::find($filter);
+            $codecs  = Codecs::find($filter);
             foreach ($codecs as $ob_codec) {
                 $arr_data['codecs'][] = $ob_codec->name;
             }
             $data_providers[] = $arr_data;
         }
-
         return $data_providers;
     }
-
 }

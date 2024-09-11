@@ -30,6 +30,7 @@ use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\{BeanstalkClient, SystemMessages};
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudParametersAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadConferenceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFail2BanConfAction;
@@ -200,6 +201,7 @@ class WorkerModelsEvents extends WorkerBase
             ReloadDialplanAction::class,
             ReloadParkingAction::class,
             ReloadQueuesAction::class,
+            ReloadConferenceAction::class,
             ReloadManagerAction::class,
             ReloadVoicemailAction::class,
             ReloadMOHAction::class,

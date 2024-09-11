@@ -1280,4 +1280,7 @@ El cupón se puede activar una vez y luego se canjea.',
     'nw_NATInfo3' => '%SIP_PORT% TCP/UDP y %TLS_PORT% TCP',
     'nw_NATInfo5' => 'Si se especifica un nombre de host externo, se utilizará con preferencia a la dirección IP externa.',
     'nw_PublicTLSPort' => 'Número de puerto SIP TLS reenviado al PBX interno %TLS_PORT%',
+    'gs_ErrorSaveSettings' => 'Error al guardar la configuración',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'El número de extensión especificado ya está en uso',
+    'fw_iaxDescription' => 'IAX: registro telefónico y tráfico de voz',
 ];

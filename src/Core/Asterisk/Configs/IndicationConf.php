@@ -20,6 +20,8 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 use function MikoPBX\Common\Config\appPath;
 
@@ -32,8 +34,21 @@ use function MikoPBX\Common\Config\appPath;
  */
 class IndicationConf extends AsteriskConfigClass
 {
-    // The module hook applying priority
-    public int $priority = 1000;
+    public const LANG_ZONE_MAP = [
+        'ru-ru' => 'ru',
+        'en-en' => 'us',
+        'en-gb' => 'uk',
+        'de-de' => 'de',
+        'da-dk' => 'dk',
+        'es-es' => 'es',
+        'gr-gr' => 'gr',
+        'fr-ca' => 'fr',
+        'it-it' => 'it',
+        'ja-jp' => 'jp',
+        'nl-nl' => 'nl',
+        'pl-pl' => 'pl',
+        'pt-br' => 'pt',
+    ];
 
     protected string $description = 'indications.conf';
 
@@ -44,13 +59,12 @@ class IndicationConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $country = 'ru'; // TODO: Add to the interface if it's an important option
+        $lang     = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LANGUAGE);
+        $country  = self::LANG_ZONE_MAP[$lang] ?? 'ru';
         $filePath = appPath('src/Core/Asterisk/Configs/Samples/indications.conf.sample');
         $data     = file_get_contents($filePath);
         $conf     = str_replace('{country}', $country, $data);
-
         // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/indications.conf', $conf);
     }
-
 }

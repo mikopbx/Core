@@ -22,11 +22,12 @@ namespace MikoPBX\PBXCoreREST\Lib\System;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 /**
  *
  * @package MikoPBX\PBXCoreREST\Lib\System
  */
-class ConvertAudioFileAction extends \Phalcon\Di\Injectable
+class ConvertAudioFileAction extends Injectable
 {
     /**
      * Convert the audio file to various codecs using Asterisk.
@@ -38,18 +39,18 @@ class ConvertAudioFileAction extends \Phalcon\Di\Injectable
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        if ( ! file_exists($filename)) {
+        $res->success   = true;
+        if (!file_exists($filename)) {
             $res->success    = false;
-            $res->messages[] = "File '{$filename}' not found.";
-
-            return $res;
+            $res->messages[] = "File '$filename' not found.";
         }
         $out          = [];
         $tmp_filename = '/tmp/' . time() . "_" . basename($filename);
-        if (false === copy($filename, $tmp_filename)) {
+        if ($res->success && false === copy($filename, $tmp_filename)) {
             $res->success    = false;
-            $res->messages[] = "Unable to create temporary file '{$tmp_filename}'.";
-
+            $res->messages[] = "Unable to create temporary file '$tmp_filename'.";
+        }
+        if(!$res->success){
             return $res;
         }
 
@@ -60,26 +61,24 @@ class ConvertAudioFileAction extends \Phalcon\Di\Injectable
 
         // Convert file to wav format
         $tmp_filename = escapeshellcmd($tmp_filename);
-        $n_filename   = escapeshellcmd($n_filename);
         $soxPath      = Util::which('sox');
-        Processes::mwExec("{$soxPath} -v 0.99 -G '{$tmp_filename}' -c 1 -r 8000 -b 16 '{$n_filename}'", $out);
+        $soxIPath      = Util::which('soxi');
+        $busyBoxPath      = Util::which('busybox');
+        // Pre-conversion to wav step 1.
+        if(Processes::mwExec("$soxIPath $tmp_filename | $busyBoxPath grep MPEG") === 0){
+            Processes::mwExec("$soxPath $tmp_filename $tmp_filename.wav", $out);
+            unlink($tmp_filename);
+            $tmp_filename = "$tmp_filename.wav";
+        }
+        $n_filename   = escapeshellcmd($n_filename);
+        // Pre-conversion to wav step 2.
+        Processes::mwExec("$soxPath -v 0.99 -G '$tmp_filename' -c 1 -r 8000 -b 16 '$n_filename'", $out);
         $result_str = implode('', $out);
 
         // Convert wav file to mp3 format
         $lamePath = Util::which('lame');
-        Processes::mwExec("{$lamePath} -b 32 --silent '{$n_filename}' '{$n_filename_mp3}'", $out);
+        Processes::mwExec("$lamePath -b 16 --silent '$n_filename' '$n_filename_mp3'", $out);
         $result_mp3 = implode('', $out);
-
-        // Convert the file to various codecs using Asterisk
-        $codecs = ['alaw', 'ulaw', 'gsm', 'g722', 'wav'];
-        $rmPath       = Util::which('rm');
-        $asteriskPath = Util::which('asterisk');
-        foreach ($codecs as $codec){
-            $result = shell_exec("$asteriskPath -rx 'file convert $tmp_filename $trimmedFileName.$codec'");
-            if(strpos($result, 'Converted') !== 0){
-                shell_exec("$rmPath -rf /root/test.{$codec}");
-            }
-        }
 
         // Remove temporary file
         unlink($tmp_filename);
@@ -91,9 +90,8 @@ class ConvertAudioFileAction extends \Phalcon\Di\Injectable
             return $res;
         }
 
-        if (file_exists($filename)
-            && $filename !== $n_filename
-            && $filename !== $n_filename_mp3) {
+        if ($filename !== $n_filename
+            && $filename !== $n_filename_mp3 && file_exists($filename)) {
             // Remove the original file if it's different from the converted files
             unlink($filename);
         }

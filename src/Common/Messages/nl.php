@@ -1279,4 +1279,7 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'nw_NATInfo6OR' => 'OF',
     'nw_PublicSIPPort' => 'SIP-poortnummer doorgestuurd naar interne %SIP_PORT% PBX',
     'nw_PublicTLSPort' => 'SIP TLS-poortnummer doorgestuurd naar interne %TLS_PORT% PBX',
+    'gs_ErrorSaveSettings' => 'Fout bij opslaan van instellingen',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Het opgegeven toestelnummer is al in gebruik',
+    'fw_iaxDescription' => 'IAX - telefoonregistratie en spraakverkeer',
 ];

@@ -130,11 +130,15 @@ class SIPConf extends AsteriskConfigClass
         if ($di === null) {
             return false;
         }
-        $mikoPBXConfig = new MikoPBXConfig();
         [$topology, $extIpAddress, $externalHostName, $subnets] = $this->getTopologyData();
 
-        $generalSettings = $mikoPBXConfig->getGeneralSettings();
-        $now_hash        = md5($topology . $externalHostName . $extIpAddress . $generalSettings[PbxSettingsConstants::SIP_PORT]. $generalSettings[PbxSettingsConstants::TLS_PORT] . implode('',$subnets));
+        $externalSipPort    = $this->generalSettings[PbxSettingsConstants::EXTERNAL_SIP_PORT];
+        $externalTlsPort    = $this->generalSettings[PbxSettingsConstants::EXTERNAL_TLS_PORT];
+        $sipPort            = $this->generalSettings[PbxSettingsConstants::SIP_PORT];
+        $tlsPort            = $this->generalSettings[PbxSettingsConstants::TLS_PORT];
+
+        $now_hash           = md5($topology . $externalHostName . $extIpAddress . $sipPort.$externalSipPort. $tlsPort .$externalTlsPort. implode('',$subnets));
+
         $old_hash        = '';
         $varEtcDir       = $di->getShared('config')->path('core.varEtcDir');
         if (file_exists($varEtcDir . self::TOPOLOGY_HASH_FILE)) {
@@ -388,7 +392,7 @@ class SIPConf extends AsteriskConfigClass
             $arr_data['transport'] = trim($arr_data['transport']);
             // Retrieve used codecs.
             $arr_data['codecs'] = $this->getCodecs();
-            $context_id = self::getContextId($sip_peer->host.$sip_peer->port);
+            $context_id = self::getContextId($sip_peer->host, $sip_peer->port);
             if ( ! isset($this->contexts_data[$context_id])) {
                 $this->contexts_data[$context_id] = [];
             }
@@ -1084,7 +1088,7 @@ class SIPConf extends AsteriskConfigClass
 
         // Add configuration section header
         $conf    .= "[{$provider['uniqid']}]".PHP_EOL;
-        $conf    .= 'set_var=contextID='.$context.PHP_EOL;
+        $conf    .= 'set_var=providerID='.$provider['uniqid'].PHP_EOL;
 
         // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
@@ -1098,11 +1102,17 @@ class SIPConf extends AsteriskConfigClass
      * This method generates the context ID for a given name by removing non-alphanumeric characters and appending "-incoming".
      *
      * @param string $name The name to generate the context ID from.
+     * @param string $port The port to generate the context ID from.
      * @return string The generated context ID.
      */
-    public static function getContextId(string $name = ''):string
+    public static function getContextId(string $name, string $port):string
     {
-        return preg_replace("/[^a-z\d]/iu", '', $name).'-incoming';
+        if (filter_var($name, FILTER_VALIDATE_IP)) {
+            $nameNew = $name;
+        }else{
+            $nameNew = gethostbyname($name);
+        }
+        return preg_replace("/[^a-z\d]/iu", '', $nameNew.$port).'-incoming';
     }
 
     /**
@@ -1117,21 +1127,7 @@ class SIPConf extends AsteriskConfigClass
      */
     public static function getToneZone(array &$options, string $lang): void
     {
-        $settings = [
-            'ru-ru' => 'ru',
-            'en-gb' => 'uk',
-            'de-de' => 'de',
-            'da-dk' => 'dk',
-            'es-es' => 'es',
-            'gr-gr' => 'gr',
-            'fr-ca' => 'fr',
-            'it-it' => 'it',
-            'ja-jp' => 'jp',
-            'nl-nl' => 'nl',
-            'pl-pl' => 'pl',
-            'pt-br' => 'pt',
-        ];
-        $toneZone = $settings[$lang] ?? '';
+        $toneZone = IndicationConf::LANG_ZONE_MAP[$lang] ?? 'ru';
         if ( ! empty($toneZone)) {
             $options['inband_progress'] = 'yes';
             $options['tone_zone']       = $toneZone;

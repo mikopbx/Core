@@ -1280,4 +1280,7 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'nw_NATInfo5' => 'Jeśli określono zewnętrzną nazwę hosta, będzie ona używana zamiast zewnętrznego adresu IP.',
     'nw_NATInfo6OR' => 'LUB',
     'nw_PublicTLSPort' => 'Numer portu SIP TLS przekazywany do wewnętrznej centrali %TLS_PORT% PBX',
+    'gs_ErrorSaveSettings' => 'Błąd podczas zapisywania ustawień',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Podany numer wewnętrzny jest już zajęty',
+    'fw_iaxDescription' => 'IAX - rejestracja telefonu i ruch głosowy',
 ];

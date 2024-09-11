@@ -1283,4 +1283,7 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'nw_NATInfo1' => 'Wenn Ihr Netzwerk für die Unterstützung von 1:1-NAT konfiguriert ist (normalerweise die Standardeinstellung in Clouds), müssen Sie keine zusätzlichen Einstellungen an Ihrem Router vornehmen.',
     'nw_NATInfo2' => 'Wenn 1:1 NAT nicht verwendet wird, leiten Sie in Ihren Router-Einstellungen die folgenden Ports von der öffentlichen IP auf die interne IP-Adresse der TK-Anlage um.',
     'nw_PublicSIPPort' => 'SIP-Portnummer, die an die interne %SIP_PORT%-PBX weitergeleitet wird',
+    'gs_ErrorSaveSettings' => 'Fehler beim Speichern der Einstellungen',
+    'mo_ThisNumberNotUniqueForExtensionsModels' => 'Die angegebene Nebenstellennummer wird bereits verwendet',
+    'fw_iaxDescription' => 'IAX – Telefonregistrierung und Sprachverkehr',
 ];
