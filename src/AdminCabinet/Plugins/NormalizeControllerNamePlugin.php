@@ -19,6 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Plugins;
 
+use MikoPBX\Common\Providers\RouterProvider;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
@@ -31,6 +32,7 @@ use Phalcon\Text;
  */
 class NormalizeControllerNamePlugin extends Injectable
 {
+
 
     /**
      * This action is executed before execute any action in the application
@@ -63,7 +65,7 @@ class NormalizeControllerNamePlugin extends Injectable
                 // @examples
                 // /admin-cabinet/module-users-groups/module-users-groups/index
                 // /admin-cabinet/module-users-groups/module-users-groups/modify/1
-                $checkController = ucfirst(Text::camelize($dispatcher->getParam('moduleUniqueId'),'-'));
+                $checkController = ucfirst(Text::camelize($dispatcher->getParam(RouterProvider::ModuleUniqueId)??'','-'));
                 $checkAction = $dispatcher->getControllerName();
                 $controllerClass = "{$checkNamespace}\\{$checkController}{$controllerSuffix}";
                 $actionMethod = "{$checkAction}{$actionSuffix}";
@@ -80,7 +82,7 @@ class NormalizeControllerNamePlugin extends Injectable
                 }
             } else {
                 $moduleParams = $dispatcher->getParams();
-                unset($moduleParams['moduleUniqueId']);
+                unset($moduleParams[RouterProvider::ModuleUniqueId]);
                 $dispatcher->setParams($moduleParams);
             }
         }

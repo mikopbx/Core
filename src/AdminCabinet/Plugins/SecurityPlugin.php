@@ -109,23 +109,46 @@ class SecurityPlugin extends Injectable
      *
      * @param Dispatcher $dispatcher The dispatcher object used to forward the request.
      */
-    private function redirectToHome($dispatcher): void{
+    private function redirectToHome(Dispatcher $dispatcher): void{
         // Retrieve the home page path from the session, defaulting to a predefined path if not set
         $homePath = $this->session->get(SessionController::SESSION_ID)[SessionController::HOME_PAGE];
         if (empty($homePath)){
             $homePath='/admin-cabinet/extensions/index';
         }
+
+        $currentPageCacheKey = 'redirectCount'.md5($homePath);
+        $redirectCount = $this->session->get($currentPageCacheKey)??0;
+        $redirectCount++;
+        $this->session->set($currentPageCacheKey, $redirectCount);
+        if ($redirectCount > 5){
+            $this->session->set($currentPageCacheKey, 0);
+            $this->forwardTo401Error($dispatcher);
+            return;
+        }
+
         // Extract the module, controller, and action from the home page path
         $module = explode('/', $homePath)[1];
         $controller = explode('/', $homePath)[2];
         $action = explode('/', $homePath)[3];
+        if (strpos($module, 'module-') === 0) {
+            $camelizedNameSpace = \Phalcon\Text::Camelize($module);
+            $namespace = "Modules\\{$camelizedNameSpace}\\App\\Controllers";
 
-        // Forward the request to the determined route
-        $dispatcher->forward([
-            'module' => $module,
-            'controller' => $controller,
-            'action' => $action
-        ]);
+            // Forward the request to the determined route with namespace
+            $dispatcher->forward([
+                'module' => $module,
+                'controller' => $controller,
+                'action' => $action,
+                'namespace' => $namespace
+            ]);
+        } else {
+            // Forward the request to the determined route
+            $dispatcher->forward([
+                'module' => $module,
+                'controller' => $controller,
+                'action' => $action
+            ]);
+        }
     }
 
     /**
