@@ -1283,4 +1283,6 @@ Il coupon può essere attivato una volta, dopodiché viene riscattato.',
     'gs_ErrorSaveSettings' => 'Errore durante il salvataggio delle impostazioni',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Il numero di interno specificato è già in uso',
     'fw_iaxDescription' => 'IAX - registrazione telefonica e traffico vocale',
+    'ext_WrongGetModuleLink' => 'Errore durante il recupero del file del modulo dal repository',
+    'ext_NoLicenseRequired' => 'Modulo gratuito',
 ];

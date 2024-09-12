@@ -1249,4 +1249,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'gs_ErrorSaveSettings' => 'Det gick inte att spara inställningar',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Det angivna anknytningsnumret används redan',
     'fw_iaxDescription' => 'IAX - telefonregistrering och rösttrafik',
+    'ext_WrongGetModuleLink' => 'Det gick inte att hämta modulfilen från förvaret',
+    'ext_NoLicenseRequired' => 'Gratis modul',
 ];

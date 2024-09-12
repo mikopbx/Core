@@ -1283,4 +1283,6 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'gs_ErrorSaveSettings' => 'Fejl under lagring af indstillinger',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Det angivne lokalnummer er allerede i brug',
     'fw_iaxDescription' => 'IAX - telefonregistrering og taletrafik',
+    'ext_WrongGetModuleLink' => 'Fejl ved hentning af modulfil fra repository',
+    'ext_NoLicenseRequired' => 'Gratis modul',
 ];

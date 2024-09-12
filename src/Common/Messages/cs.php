@@ -1283,4 +1283,6 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'gs_ErrorSaveSettings' => 'Při ukládání nastavení došlo k chybě',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Zadané číslo pobočky se již používá',
     'fw_iaxDescription' => 'IAX - registrace telefonu a hlasový provoz',
+    'ext_WrongGetModuleLink' => 'Chyba při získávání souboru modulu z úložiště',
+    'ext_NoLicenseRequired' => 'Modul zdarma',
 ];

@@ -1265,4 +1265,6 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'gs_ErrorSaveSettings' => 'Eroare la salvarea setărilor',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Numărul de extensie specificat este deja în uz',
     'fw_iaxDescription' => 'IAX - înregistrare telefonică și trafic vocal',
+    'ext_NoLicenseRequired' => 'Modul gratuit',
+    'ext_WrongGetModuleLink' => 'Eroare la obținerea fișierului modulului din depozit',
 ];

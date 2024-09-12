@@ -1249,4 +1249,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'gs_ErrorSaveSettings' => 'Ayarlar kaydedilirken hata oluştu',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Belirtilen dahili numara zaten kullanımda',
     'fw_iaxDescription' => 'IAX - telefon kaydı ve ses trafiği',
+    'ext_WrongGetModuleLink' => 'Depodan modül dosyası alınırken hata oluştu',
+    'ext_NoLicenseRequired' => 'Ücretsiz modül',
 ];

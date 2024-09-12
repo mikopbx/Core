@@ -1283,4 +1283,6 @@ return [
     'gs_ErrorSaveSettings' => 'Σφάλμα αποθήκευσης ρυθμίσεων',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Ο καθορισμένος αριθμός επέκτασης χρησιμοποιείται ήδη',
     'fw_iaxDescription' => 'IAX - εγγραφή τηλεφώνου και φωνητική κίνηση',
+    'ext_WrongGetModuleLink' => 'Σφάλμα κατά τη λήψη του αρχείου μονάδας από το χώρο αποθήκευσης',
+    'ext_NoLicenseRequired' => 'Δωρεάν ενότητα',
 ];

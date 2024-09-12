@@ -1286,4 +1286,6 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'gs_ErrorSaveSettings' => 'Fehler beim Speichern der Einstellungen',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Die angegebene Nebenstellennummer wird bereits verwendet',
     'fw_iaxDescription' => 'IAX – Telefonregistrierung und Sprachverkehr',
+    'ext_WrongGetModuleLink' => 'Fehler beim Abrufen der Moduldatei aus dem Repository',
+    'ext_NoLicenseRequired' => 'Kostenloses Modul',
 ];

@@ -1283,4 +1283,6 @@ El cupón se puede activar una vez y luego se canjea.',
     'gs_ErrorSaveSettings' => 'Error al guardar la configuración',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'El número de extensión especificado ya está en uso',
     'fw_iaxDescription' => 'IAX: registro telefónico y tráfico de voz',
+    'ext_NoLicenseRequired' => 'módulo gratuito',
+    'ext_WrongGetModuleLink' => 'Error al obtener el archivo del módulo del repositorio',
 ];
