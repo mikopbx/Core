@@ -49,6 +49,8 @@ class WorkerMarketplaceChecker extends WorkerBase
         $managedCache = $this->di->get(ManagedCacheProvider::SERVICE_NAME);
         $lic = $this->di->getShared(MarketPlaceProvider::SERVICE_NAME);
 
+        $randomTTLShift = rand(0, 300);
+
         // Retrieve the last license check timestamp from the cache
         $lastCheck = $managedCache->get(self::CACHE_KEY);
         if ($lastCheck === null) {
@@ -60,7 +62,7 @@ class WorkerMarketplaceChecker extends WorkerBase
             $lic->checkModules();
 
             // Store the current timestamp in the cache to track the last repository check
-            $managedCache->set(self::CACHE_KEY, time(), 3600); // Check every hour
+            $managedCache->set(self::CACHE_KEY, time(), 3600 + $randomTTLShift); // Check every hour
         }
 
         // Retrieve the last get license request from the cache
@@ -75,7 +77,7 @@ class WorkerMarketplaceChecker extends WorkerBase
                     file_put_contents(MarketPlaceProvider::LIC_FILE_PATH, json_encode($regInfo->attributes()));
                 }
             }
-            $managedCache->set(self::CACHE_KEY_LICENSE_INFO, time(), 86400); // Check every day
+            $managedCache->set(self::CACHE_KEY_LICENSE_INFO, time(), 86400 + $randomTTLShift); // Check every day
         }
     }
 }
