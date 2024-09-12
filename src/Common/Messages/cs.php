@@ -1282,4 +1282,5 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'nw_PublicTLSPort' => 'Číslo portu SIP TLS přesměrováno na interní %TLS_PORT% PBX',
     'gs_ErrorSaveSettings' => 'Při ukládání nastavení došlo k chybě',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Zadané číslo pobočky se již používá',
+    'fw_iaxDescription' => 'IAX - registrace telefonu a hlasový provoz',
 ];

@@ -1282,4 +1282,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'nw_NATInfo4' => '%RTP_PORT_FROM%-%RTP_PORT_TO%UDP',
     'gs_ErrorSaveSettings' => 'Erreur lors de l\'enregistrement des paramètres',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Le numéro de poste spécifié est déjà utilisé',
+    'fw_iaxDescription' => 'IAX - enregistrement téléphonique et trafic vocal',
 ];

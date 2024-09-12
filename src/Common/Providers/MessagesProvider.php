@@ -103,6 +103,15 @@ class MessagesProvider implements ServiceProviderInterface
                         }
                     }
                 }
+
+                // Load language static array
+                $langFile = appPath("/src/Common/Messages/languages.php");
+                if (file_exists($langFile)) {
+                    $langArr = self::includeLanguageFile($langFile);
+                    if (!empty($langArr)) {
+                        $translates = array_merge($translates, $langArr);
+                    }
+                }
                 if ($cacheKey) {
                     $di->get(ManagedCacheProvider::SERVICE_NAME)->set($cacheKey, $translates);
                 }

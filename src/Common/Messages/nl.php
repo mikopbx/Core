@@ -1281,4 +1281,5 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'nw_PublicTLSPort' => 'SIP TLS-poortnummer doorgestuurd naar interne %TLS_PORT% PBX',
     'gs_ErrorSaveSettings' => 'Fout bij opslaan van instellingen',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Het opgegeven toestelnummer is al in gebruik',
+    'fw_iaxDescription' => 'IAX - telefoonregistratie en spraakverkeer',
 ];

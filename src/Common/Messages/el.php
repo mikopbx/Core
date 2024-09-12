@@ -1282,4 +1282,5 @@ return [
     'nw_PublicTLSPort' => 'Ο αριθμός θύρας SIP TLS προωθείται στο εσωτερικό PBX %TLS_PORT%',
     'gs_ErrorSaveSettings' => 'Σφάλμα αποθήκευσης ρυθμίσεων',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Ο καθορισμένος αριθμός επέκτασης χρησιμοποιείται ήδη',
+    'fw_iaxDescription' => 'IAX - εγγραφή τηλεφώνου και φωνητική κίνηση',
 ];
