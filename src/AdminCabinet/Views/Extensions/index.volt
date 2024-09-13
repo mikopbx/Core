@@ -1,15 +1,26 @@
 <div class="ui grid">
     <div class="ui row">
-        <div class="ui nine wide column">
+        <div class="ui seven wide column">
             {% if isAllowed('save') %}
                 {{ link_to("extensions/modify", '<i class="add user icon"></i>  '~t._('ex_AddNewExtension'), "class": "ui blue button", "id":"add-new-button") }}
             {% endif %}
         </div>
-        <div class="ui seven wide column">
-            <div class="ui icon fluid input">
-                <input type="search" id="global-search" name="global-search" placeholder="{{ t._('Enter search') }}"
+        <div class="ui nine wide column">
+            <div class="ui right action left icon fluid input">
+                <i class="search icon"></i>
+                <input type="search" id="global-search" name="global-search" placeholder="{{ t._('ex_EnterSearchPhrase') }}"
                        aria-controls="KeysTable">
-                <i class="icon search"></i>
+                <div class="ui basic floating search dropdown button" id="page-length-select">
+                    <div class="text">{{ t._('ex_CalculateAutomatically') }}</div>
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        <div class="item" data-value="auto">{{ t._('ex_CalculateAutomatically') }}</div>
+                        <div class="item" data-value=25>{{ t._('ex_ShowOnlyRows',['rows':25]) }}</div>
+                        <div class="item" data-value=50>{{ t._('ex_ShowOnlyRows',['rows':50]) }}</div>
+                        <div class="item" data-value=100>{{ t._('ex_ShowOnlyRows',['rows':100]) }}</div>
+                        <div class="item" data-value=500>{{ t._('ex_ShowOnlyRows',['rows':500]) }}</div>
+                    </div>
+                </div>
             </div>
         </div>
 

@@ -112,6 +112,13 @@ class Extensions extends ModelsBase
      */
     public ?string $is_general_user_number = "0";
 
+    /**
+     * Field with search words for full text search, consist of username, callerid, email, number, mobile in lower case
+     *
+     * @Column(type="string", nullable=true, default="")
+     */
+    public ?string $search_index = "";
+
 
     /**
      * Get the next available application number from the database.
@@ -557,15 +564,4 @@ class Extensions extends ModelsBase
 
         return $result;
     }
-
-    /**
-     * Sanitizes the caller ID by removing any characters that are not alphanumeric or spaces.
-     * This function is automatically triggered before saving the call model.
-     */
-    public function beforeSave()
-    {
-        // Sanitizes the caller ID by removing any characters that are not alphanumeric or spaces.
-        $this->callerid = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $this->callerid);
-    }
-
 }

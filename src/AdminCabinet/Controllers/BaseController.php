@@ -23,6 +23,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
+use Phalcon\Filter;
 use Phalcon\Http\ResponseInterface;
 use Phalcon\Mvc\{Controller, Dispatcher, View};
 use Phalcon\Tag;
@@ -400,4 +401,37 @@ class BaseController extends Controller
             fclose($ifp);
         }
     }
+
+    /**
+     * Recursively sanitizes input data based on the provided filter.
+     *
+     * @param array $data The data to be sanitized.
+     * @param \Phalcon\Filter\FilterInterface $filter The filter object used for sanitization.
+     *
+     * @return array The sanitized data.
+     */
+    public static function sanitizeData(array $data, \Phalcon\Filter\FilterInterface $filter): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                // Recursively sanitize array values
+                $data[$key] = self::sanitizeData($value, $filter);
+            } elseif (is_string($value)) {
+                // Check if the string starts with 'http'
+                if (stripos($value, 'http') === 0) {
+                    // If the string starts with 'http', sanitize it as a URL
+                    $data[$key] = $filter->sanitize($value, FILTER::FILTER_URL);
+                } else {
+                    // Sanitize regular strings (trim and remove illegal characters)
+                    $data[$key] = $filter->sanitize($value, [FILTER::FILTER_STRING, FILTER::FILTER_TRIM]);
+                }
+            } elseif (is_numeric($value)) {
+                // Sanitize numeric values as integers
+                $data[$key] = $filter->sanitize($value, FILTER::FILTER_INT);
+            }
+        }
+
+        return $data;
+    }
+
 }

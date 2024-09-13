@@ -40,6 +40,12 @@ const extensionsIndex = {
     $globalSearch: $('#global-search'),
 
     /**
+     * The page length selector.
+     * @type {jQuery}
+     */
+    $pageLengthSelector:$('#page-length-select'),
+
+    /**
      * The data table object.
      * @type {Object}
      */
@@ -115,6 +121,18 @@ const extensionsIndex = {
                 window.location.reload();
         });
 
+        // Event listener to save the user's page length selection and update the table
+        extensionsIndex.$pageLengthSelector.dropdown({
+            onChange(pageLength) {
+                if (pageLength==='auto'){
+                    pageLength = extensionsIndex.calculatePageLength();
+                    localStorage.removeItem('extensionsTablePageLength');
+                } else {
+                    localStorage.setItem('extensionsTablePageLength', pageLength);
+                }
+                extensionsIndex.dataTable.page.len(pageLength).draw();
+            },
+        });
     },
 
     // Set up the DataTable on the extensions list.
@@ -124,13 +142,14 @@ const extensionsIndex = {
             localStorage.removeItem('DataTables_extensions-table_/admin-cabinet/extensions/index/');
         }
 
+        // Get the user's saved value or use the automatically calculated value if none exists
+        const savedPageLength = localStorage.getItem('extensionsTablePageLength');
+        const pageLength = savedPageLength ? savedPageLength : extensionsIndex.calculatePageLength();
+
         extensionsIndex.$extensionsList.DataTable({
             // Enable state saving to automatically save and restore the table's state
             stateSave: true,
 
-            search: {
-                search: `${extensionsIndex.$globalSearch.val()}`,
-            },
             columnDefs: [
                 { defaultContent: "-",  targets: "_all"},
                 { responsivePriority: 1,  targets: 0},
@@ -182,7 +201,7 @@ const extensionsIndex = {
             // stateSave: true,
             sDom: 'rtip',
             deferRender: true,
-            pageLength: extensionsIndex.calculatePageLength(),
+            pageLength: pageLength,
             scrollCollapse: true,
             // scroller: true,
             language: SemanticLocalization.dataTableLocalisation,
@@ -229,15 +248,29 @@ const extensionsIndex = {
                 });
             },
         });
+
+        // Set the select input value to the saved value if it exists
+        if (savedPageLength) {
+            extensionsIndex.$pageLengthSelector.dropdown('set value',savedPageLength);
+        }
+
         extensionsIndex.dataTable = extensionsIndex.$extensionsList.DataTable();
 
+        // Initialize debounce timer variable
+        let searchDebounceTimer = null;
+
         extensionsIndex.$globalSearch.on('keyup', (e) => {
-            if (e.keyCode === 13
-                || e.keyCode === 8
-                || extensionsIndex.$globalSearch.val().length > 2) {
+            // Clear previous timer if the user is still typing
+            clearTimeout(searchDebounceTimer);
+
+            // Set a new timer for delayed execution
+            searchDebounceTimer = setTimeout(() => {
                 const text = extensionsIndex.$globalSearch.val();
-                extensionsIndex.applyFilter(text);
-            }
+                // Trigger the search if input is valid (Enter, Backspace, or more than 2 characters)
+                if (e.keyCode === 13 || e.keyCode === 8 || text.length >= 2) {
+                    extensionsIndex.applyFilter(text);
+                }
+            }, 500); // 500ms delay before executing the search
         });
 
         extensionsIndex.dataTable.on('draw', () => {
