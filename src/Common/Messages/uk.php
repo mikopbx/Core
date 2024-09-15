@@ -1283,6 +1283,4 @@ return [
     'gs_ErrorSaveSettings' => 'Помилка збереження налаштувань',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Вказаний внутрішній номер вже використовується',
     'fw_iaxDescription' => 'IAX - реєстрація телефонів та голосовий трафік',
-    'ext_WrongGetModuleLink' => 'Помилка отримання файлу модуля з репозиторію',
-    'ext_NoLicenseRequired' => 'Безкоштовний модуль',
 ];

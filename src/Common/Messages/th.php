@@ -1247,6 +1247,4 @@ return [
     'gs_ErrorSaveSettings' => 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'หมายเลขต่อขยายที่ระบุมีการใช้งานแล้ว',
     'fw_iaxDescription' => 'IAX - การลงทะเบียนโทรศัพท์และการรับส่งข้อมูลด้วยเสียง',
-    'ext_WrongGetModuleLink' => 'เกิดข้อผิดพลาดในการรับไฟล์โมดูลจากที่เก็บ',
-    'ext_NoLicenseRequired' => 'โมดูลฟรี',
 ];

@@ -1283,6 +1283,4 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'gs_ErrorSaveSettings' => 'Błąd podczas zapisywania ustawień',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Podany numer wewnętrzny jest już zajęty',
     'fw_iaxDescription' => 'IAX - rejestracja telefonu i ruch głosowy',
-    'ext_WrongGetModuleLink' => 'Błąd podczas pobierania pliku modułu z repozytorium',
-    'ext_NoLicenseRequired' => 'Darmowy moduł',
 ];

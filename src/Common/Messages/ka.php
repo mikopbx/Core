@@ -1283,6 +1283,4 @@ return [
     'gs_ErrorSaveSettings' => 'შეცდომა პარამეტრების შენახვისას',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'მითითებული გაფართოების ნომერი უკვე გამოიყენება',
     'fw_iaxDescription' => 'IAX - ტელეფონის რეგისტრაცია და ხმოვანი ტრაფიკი',
-    'ext_WrongGetModuleLink' => 'შეცდომა მოდულის ფაილის საცავიდან მიღებისას',
-    'ext_NoLicenseRequired' => 'უფასო მოდული',
 ];

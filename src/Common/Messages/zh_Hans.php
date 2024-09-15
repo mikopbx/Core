@@ -1249,6 +1249,4 @@ return [
     'gs_ErrorSaveSettings' => '保存设置时出错',
     'mo_ThisNumberNotUniqueForExtensionsModels' => '指定的分机号码已被使用',
     'fw_iaxDescription' => 'IAX-电话注册和语音流量',
-    'ext_WrongGetModuleLink' => '从存储库获取模块文件时出错',
-    'ext_NoLicenseRequired' => '免费模块',
 ];

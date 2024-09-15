@@ -1282,6 +1282,4 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'gs_ErrorSaveSettings' => 'Fout bij opslaan van instellingen',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Het opgegeven toestelnummer is al in gebruik',
     'fw_iaxDescription' => 'IAX - telefoonregistratie en spraakverkeer',
-    'ext_WrongGetModuleLink' => 'Fout bij het ophalen van het modulebestand uit de repository',
-    'ext_NoLicenseRequired' => 'Gratis module',
 ];

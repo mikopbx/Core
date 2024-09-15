@@ -1249,6 +1249,4 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'gs_ErrorSaveSettings' => 'Lỗi lưu cài đặt',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Số máy nhánh được chỉ định đã được sử dụng',
     'fw_iaxDescription' => 'IAX - đăng ký điện thoại và lưu lượng thoại',
-    'ext_WrongGetModuleLink' => 'Lỗi nhận tệp mô-đun từ kho lưu trữ',
-    'ext_NoLicenseRequired' => 'Mô-đun miễn phí',
 ];

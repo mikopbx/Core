@@ -1234,6 +1234,4 @@ Kupongin voi aktivoida kerran, jonka jälkeen se lunastetaan.',
     'log_DownloadLogs' => 'Lataa kaikki järjestelmälokit',
     'dbg_NoDebugInformation' => 'Ei tietoa',
     'dbg_Header' => 'Virheenkorjaustiedot',
-    'ext_WrongGetModuleLink' => 'Virhe haettaessa moduulitiedostoa arkistosta',
-    'ext_NoLicenseRequired' => 'Ilmainen moduuli',
 ];

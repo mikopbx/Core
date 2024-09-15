@@ -1283,6 +1283,4 @@ return [
     'mo_ThisNumberNotUniqueForExtensionsModels' => '指定された内線番号はすでに使用されています',
     'gs_ErrorSaveSettings' => '設定の保存中にエラーが発生しました',
     'fw_iaxDescription' => 'IAX - 電話の登録と音声トラフィック',
-    'ext_WrongGetModuleLink' => 'リポジトリからモジュール ファイルを取得中にエラーが発生しました',
-    'ext_NoLicenseRequired' => '無料モジュール',
 ];
