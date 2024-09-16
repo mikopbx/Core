@@ -136,8 +136,6 @@ class SSHConf extends Injectable
     private function getCreateSshUser(): string
     {
         $cat = Util::which('cat');
-        $cut = Util::which('cut');
-        $sed = Util::which('sed');
         $chown = Util::which('chown');
         $deluser = Util::which('deluser');
         $delgroup = Util::which('delgroup');
@@ -280,7 +278,6 @@ class SSHConf extends Injectable
         $cat = Util::which('cat');
         $cut = Util::which('cut');
         $sed = Util::which('sed');
-        $chown = Util::which('chown');
 
         $currentGroupId = trim(shell_exec("$cat /etc/passwd | grep '^$sshLogin:' | $cut -f 3 -d ':'"));
         shell_exec("$sed -i 's/$sshLogin:x:$currentGroupId:/$sshLogin:x:0:/g' /etc/passwd");
