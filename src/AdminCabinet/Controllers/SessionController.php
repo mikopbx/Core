@@ -292,6 +292,7 @@ class SessionController extends BaseController
     }
 
     /**
+     * Creates a key for storing login attempts based on the current time interval.
      *
      * @param int $interval
      * @return string

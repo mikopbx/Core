@@ -1127,21 +1127,7 @@ class SIPConf extends AsteriskConfigClass
      */
     public static function getToneZone(array &$options, string $lang): void
     {
-        $settings = [
-            'ru-ru' => 'ru',
-            'en-gb' => 'uk',
-            'de-de' => 'de',
-            'da-dk' => 'dk',
-            'es-es' => 'es',
-            'gr-gr' => 'gr',
-            'fr-ca' => 'fr',
-            'it-it' => 'it',
-            'ja-jp' => 'jp',
-            'nl-nl' => 'nl',
-            'pl-pl' => 'pl',
-            'pt-br' => 'pt',
-        ];
-        $toneZone = $settings[$lang] ?? '';
+        $toneZone = IndicationConf::LANG_ZONE_MAP[$lang] ?? 'ru';
         if ( ! empty($toneZone)) {
             $options['inband_progress'] = 'yes';
             $options['tone_zone']       = $toneZone;

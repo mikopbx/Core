@@ -53,7 +53,7 @@ class Util
      *
      * @return string The resulting configuration string.
      */
-    public static function overrideConfigurationArray($options, $manual_attributes, $section): string
+    public static function overrideConfigurationArray(&$options, $manual_attributes, $section): string
     {
         $result_config = '';
         if ($manual_attributes !== null && isset($manual_attributes[$section])) {
@@ -70,9 +70,9 @@ class Util
             }
             if (is_array($value)) {
                 array_unshift($value, ' ');
-                $result_config .= trim(implode("\n{$key} = ", $value)) . "\n";
+                $result_config .= trim(implode("\n$key = ", $value)) . "\n";
             } else {
-                $result_config .= "{$key} = {$value}\n";
+                $result_config .= "$key = $value\n";
             }
         }
 
@@ -744,30 +744,33 @@ class Util
         foreach ($sections as $section) {
             $data_rows = explode("\n", trim($section));
             $section_name = trim($data_rows[0] ?? '');
-            if (!empty($section_name)) {
+            if(empty($section_name) || strpos($section_name, '[') === false){
+                // Noname section
+                $section_name = ' ';
+            }else{
                 unset($data_rows[0]);
-                $manual_data[$section_name] = [];
-                foreach ($data_rows as $row) {
-                    $value = '';
+            }
+            $manual_data[$section_name] = [];
+            foreach ($data_rows as $row) {
+                $value = '';
 
-                    // Skip rows without an equal sign
-                    if (strpos($row, '=') === false) {
-                        continue;
-                    }
-                    $key = '';
-                    $arr_value = explode('=', $row);
-                    if (count($arr_value) > 1) {
-                        $key = trim($arr_value[0]);
-                        unset($arr_value[0]);
-                        $value = trim(implode('=', $arr_value));
-                    }
-
-                    // Skip rows with empty key or value not equal to '0'
-                    if (($value !== '0' && empty($value)) || empty($key)) {
-                        continue;
-                    }
-                    $manual_data[$section_name][$key] = $value;
+                // Skip rows without an equal sign
+                if (strpos($row, '=') === false) {
+                    continue;
                 }
+                $key = '';
+                $arr_value = explode('=', $row);
+                if (count($arr_value) > 1) {
+                    $key = trim($arr_value[0]);
+                    unset($arr_value[0]);
+                    $value = trim(implode('=', $arr_value));
+                }
+
+                // Skip rows with empty key or value not equal to '0'
+                if (($value !== '0' && empty($value)) || empty($key)) {
+                    continue;
+                }
+                $manual_data[$section_name][$key] = $value;
             }
         }
 

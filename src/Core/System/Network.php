@@ -783,19 +783,17 @@ class Network extends Injectable
 
                 // Obtain IP and wait for the process to finish
                 $workerPath = '/etc/rc/udhcpc_configure';
-                $options = '-t 6 -T 5 -q -n';
+                $options = '-t 2 -T 2 -q -n';
                 $arr_commands[] = "$udhcpc $options -i $if_name -x hostname:$hostname -s $workerPath";
                 // Start a new udhcpc process in the background
                 $options = '-t 6 -T 5 -S -b -n';
                 $arr_commands[] = "$nohup $udhcpc $options -p {$pid_file} -i $if_name -x hostname:$hostname -s $workerPath 2>&1 &";
                 /*
                    udhcpc - utility for configuring the interface
-                               - configures /etc/resolv.conf
+                          - configures /etc/resolv.conf
                     Further route configuration will be performed in udhcpcConfigureRenewBound();
-                    and udhcpcConfigureDeconfig(). These methods will be called by the script WorkerUdhcpcConfigure.php.
-                    // man udhcp
+                    and udhcpcConfigureDeconfig(). These methods will be called by the PHP script udhcpc_configure.
                     // http://pwet.fr/man/linux/administration_systeme/udhcpc/
-
                 */
             } else {
                 // Static IP configuration

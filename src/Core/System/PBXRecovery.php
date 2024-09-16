@@ -97,7 +97,9 @@ class PBXRecovery
                 // Prepare for reinstalling
                 file_put_contents('/tmp/ejectcd', '');
                 $pbx_firmwarePath = Util::which('pbx_firmware');
-                passthru("{$pbx_firmwarePath} /offload/firmware.img.gz {$this->DEVICE}");
+                $recovery_cmd = 'exec < /dev/console > /dev/console 2>/dev/console;' .
+                    "{$pbx_firmwarePath} /offload/firmware.img.gz {$this->DEVICE}";
+                passthru($recovery_cmd);
                 break;
             case '3':
                 // Cancel operation
