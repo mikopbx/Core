@@ -27,6 +27,7 @@ use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
+use Phalcon\Filter;
 use Phalcon\Mvc\Controller;
 use Pheanstalk\Pheanstalk;
 use Throwable;
@@ -145,4 +146,35 @@ class BaseController extends Controller
         return array($debug, $requestMessage);
     }
 
+    /**
+     * Recursively sanitizes input data based on the provided filter.
+     *
+     * @param array $data The data to be sanitized.
+     * @param \Phalcon\Filter\FilterInterface $filter The filter object used for sanitization.
+     *
+     * @return array The sanitized data.
+     */
+    public static function sanitizeData(array $data, \Phalcon\Filter\FilterInterface $filter): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                // Recursively sanitize array values
+                $data[$key] = self::sanitizeData($value, $filter);
+            } elseif (is_string($value)) {
+                // Check if the string starts with 'http'
+                if (stripos($value, 'http') === 0) {
+                    // If the string starts with 'http', sanitize it as a URL
+                    $data[$key] = $filter->sanitize($value, FILTER::FILTER_URL);
+                } else {
+                    // Sanitize regular strings (trim and remove illegal characters)
+                    $data[$key] = $filter->sanitize($value, [FILTER::FILTER_STRING, FILTER::FILTER_TRIM]);
+                }
+            } elseif (is_numeric($value)) {
+                // Sanitize numeric values as integers
+                $data[$key] = $filter->sanitize($value, FILTER::FILTER_INT);
+            }
+        }
+
+        return $data;
+    }
 }

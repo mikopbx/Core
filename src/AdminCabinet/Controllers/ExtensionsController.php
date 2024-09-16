@@ -22,7 +22,6 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\ExtensionEditForm;
 use MikoPBX\Common\Models\{Extensions, Sip, Users};
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
-use Phalcon\Filter;
 use function MikoPBX\Common\Config\appPath;
 
 class ExtensionsController extends BaseController
