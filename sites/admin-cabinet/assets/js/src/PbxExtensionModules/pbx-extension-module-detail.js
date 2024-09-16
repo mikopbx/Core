@@ -217,7 +217,7 @@ const extensionModuleDetail = {
      * @return {string} HTML string representing the commercial status of the module.
      */
     prepareCommercialView(commercial) {
-        if(commercial==='1'){
+        if(commercial===1){
             return '<i class="ui donate icon"></i> '+globalTranslate.ext_CommercialModule;
         }
         return '<i class="puzzle piece icon"></i> '+globalTranslate.ext_FreeModule;

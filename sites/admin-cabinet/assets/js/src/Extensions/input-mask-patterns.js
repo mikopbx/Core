@@ -549,7 +549,10 @@ const InputMaskPatterns = [
         mask: '+509-##-##-####', cc: 'HT', name_en: 'Haiti', desc_en: '', name_ru: 'Гаити', desc_ru: '',
     },
     {
-        mask: '+36(###)###-###', cc: 'HU', name_en: 'Hungary', desc_en: '', name_ru: 'Венгрия', desc_ru: '',
+        mask: '+36(##)###-####', cc: 'HU', name_en: 'Hungary', desc_en: '', name_ru: 'Венгрия', desc_ru: '',
+    },
+    {
+        mask: '+36(#)###-####', cc: 'HU', name_en: 'Hungary', desc_en: 'Landline (short area code)', name_ru: 'Венгрия', desc_ru: 'Городской (короткий код)',
     },
     {
         mask: '+62(8##)###-####',

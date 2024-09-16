@@ -85,7 +85,6 @@ abstract class DatabaseProviderBase
                                         $variable  = str_replace(':', '', $variable);
                                         $statement = str_replace(":$variable", "'$value'", $statement);
                                         $statement = preg_replace('/= \?/', " = '{$value}'", $statement, 1);
-                                      //  $statement = preg_replace('/\?/', " = '{$value}'", $statement, 1);
                                     }
                                 }
                                 $callStack = json_encode(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,50), JSON_PRETTY_PRINT);

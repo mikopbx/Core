@@ -158,7 +158,7 @@ const marketplace = {
         }
 
         let additionalIcon = '<i class="puzzle piece icon"></i>';
-        if (obj.commercial !== '0') {
+        if (obj.commercial !== 0) {
             additionalIcon = '<i class="ui donate icon"></i>';
         }
         const dynamicRow = `

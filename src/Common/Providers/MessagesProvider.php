@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -101,6 +101,15 @@ class MessagesProvider implements ServiceProviderInterface
                             $additionalTranslates[] = $langArr;
                             $translates = array_merge($translates, ...$additionalTranslates);
                         }
+                    }
+                }
+
+                // Load language static array
+                $langFile = appPath("/src/Common/Messages/languages.php");
+                if (file_exists($langFile)) {
+                    $langArr = self::includeLanguageFile($langFile);
+                    if (!empty($langArr)) {
+                        $translates = array_merge($translates, $langArr);
                     }
                 }
                 if ($cacheKey) {

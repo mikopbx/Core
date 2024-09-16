@@ -25,9 +25,9 @@ use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConf;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\PHPConf;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -77,7 +77,7 @@ class WorkerLogRotate extends WorkerBase
      */
     public function logRotate(string $moduleUniqid): void
     {
-        $logPath = System::getLogDir() . '/' . $moduleUniqid . '/';
+        $logPath = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $moduleUniqid . '/';
         if (!file_exists($logPath)) {
             return;
         }

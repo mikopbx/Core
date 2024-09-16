@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -111,6 +111,13 @@ class Extensions extends ModelsBase
      * @Column(type="string", length=1, nullable=true, default="0")
      */
     public ?string $is_general_user_number = "0";
+
+    /**
+     * Field with search words for full text search, consist of username, callerid, email, number, mobile in lower case
+     *
+     * @Column(type="string", nullable=true, default="")
+     */
+    public ?string $search_index = "";
 
 
     /**
@@ -593,15 +600,4 @@ class Extensions extends ModelsBase
 
         return $result;
     }
-
-    /**
-     * Sanitizes the caller ID by removing any characters that are not alphanumeric or spaces.
-     * This function is automatically triggered before saving the call model.
-     */
-    public function beforeSave()
-    {
-        // Sanitizes the caller ID by removing any characters that are not alphanumeric or spaces.
-        $this->callerid = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $this->callerid);
-    }
-
 }

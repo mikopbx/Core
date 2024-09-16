@@ -36,7 +36,7 @@ use Phalcon\Mvc\Router;
 class RouterProvider implements ServiceProviderInterface
 {
     public const SERVICE_NAME = 'router';
-
+    const ModuleUniqueId = 'moduleUniqueId';
     /**
      * Register the router service provider.
      *
@@ -44,6 +44,7 @@ class RouterProvider implements ServiceProviderInterface
      */
     public function register(DiInterface $di): void
     {
+
         $di->set(
             self::SERVICE_NAME,
             function () {
@@ -69,7 +70,7 @@ class RouterProvider implements ServiceProviderInterface
                  * /admin-cabinet/module-users-groups/modify/1
                  *
                  */
-                $router->add('/admin-cabinet/{moduleUniqueId:module-[\w-]+}/:action/:params', [
+                $router->add('/admin-cabinet/{'.self::ModuleUniqueId.':module-[\w-]+}/:action/:params', [
                     'module'     => 'admin-cabinet',
                     'namespace'  => 1,
                     'controller' => 1,
@@ -92,7 +93,7 @@ class RouterProvider implements ServiceProviderInterface
                 * /admin-cabinet/module-users-groups/access-groups/index
                 *
                 */
-                $router->add('/admin-cabinet/{moduleUniqueId:module-[\w-]+}/:controller/:action/:params', [
+                $router->add('/admin-cabinet/{'.self::ModuleUniqueId.':module-[\w-]+}/:controller/:action/:params', [
                     'module'     => 'admin-cabinet',
                     'namespace'  => 1,
                     'controller' => 2,

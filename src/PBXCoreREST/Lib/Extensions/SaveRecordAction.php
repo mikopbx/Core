@@ -196,8 +196,8 @@ class SaveRecordAction extends Injectable
                     $extension->$name = $isMobile ? Extensions::TYPE_EXTERNAL : Extensions::TYPE_SIP;
                     break;
                 case 'callerid':
-                    // Sanitize the caller ID based on 'user_username' on model before save function
-                    $extension->$name = $dataStructure->user_username;
+                    // Sanitize the caller ID based on 'user_username'
+                    $extension->$name = self::sanitizeCallerId( $dataStructure->user_username);
                     break;
                 case 'userid':
                     // Set 'userid' to the ID of the user entity
@@ -206,6 +206,10 @@ class SaveRecordAction extends Injectable
                 case 'number':
                     // Set 'number' based on the value of mobile_number or number
                     $extension->$name = $isMobile ? $dataStructure->mobile_number : $dataStructure->number;
+                    break;
+                case 'search-index':
+                    // Generate search index for the extension
+                    $extension->$name = self::generateSearchIndex($dataStructure, $isMobile);
                     break;
                 default:
                     if (property_exists($dataStructure, $name)) {
@@ -363,5 +367,36 @@ class SaveRecordAction extends Injectable
             $result = $deletedMobileNumber->delete();
         }
         return [$deletedMobileNumber, $result];
+    }
+
+    /**
+     * Generate a search index for the extension.
+     *
+     * @param DataStructure $dataStructure The data structure containing the input data.
+     * @param bool $isMobile Flag indicating if it's a mobile extension.
+     * @return string The generated search index.
+     */
+    private static function generateSearchIndex(DataStructure $dataStructure, bool $isMobile = false): string
+    {
+        // Collect data for the search index
+        $username = mb_strtolower($dataStructure->user_username);
+        $callerId = mb_strtolower(self::sanitizeCallerId($dataStructure->user_username));
+        $email = mb_strtolower($dataStructure->user_email);
+        $internalNumber = mb_strtolower($dataStructure->number);
+        $mobileNumber = $isMobile ? mb_strtolower($dataStructure->mobile_number) : '';
+
+        // Combine all fields into a single string
+        return $username . ' ' . $callerId . ' ' . $email . ' ' . $internalNumber . ' ' . $mobileNumber;
+    }
+
+    /**
+     * Sanitize the caller ID by removing non-alphanumeric characters.
+     *
+     * @param string $callerId
+     * @return string
+     */
+    private static function sanitizeCallerId(string $callerId): string
+    {
+        return preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $callerId);
     }
 }

@@ -42,12 +42,14 @@ class ExtensionsController extends BaseController
     public function getNewRecordsAction(): void
     {
         // Fetching parameters from POST request
-        $currentPage = $this->request->getPost('draw');
-        $position = $this->request->getPost('start');
-        $recordsPerPage = $this->request->getPost('length');
-        $searchPhrase = $this->request->getPost('search');
-        $order = $this->request->getPost('order');
-        $columns = $this->request->getPost('columns');
+        $postData = self::sanitizeData($this->request->getPost(),$this->filter);
+
+        $currentPage = $postData['draw'];
+        $position = $postData['start'];
+        $recordsPerPage = $postData['length'];
+        $searchPhrase = $postData['search']['value']??'';
+        $order = $postData['order'];
+        $columns = $postData['columns'];
 
         // Initializing view variables
         $this->view->draw = $currentPage;
@@ -58,12 +60,12 @@ class ExtensionsController extends BaseController
         $parameters = $this->buildQueryParameters();
 
         // Count the number of unique calls considering filters
-        if (!empty($searchPhrase['value'])) {
-            $this->prepareConditionsForSearchPhrases($searchPhrase['value'], $parameters);
+        if (!empty($searchPhrase)) {
+            $this->prepareConditionsForSearchPhrases($searchPhrase, $parameters);
         }
 
         // Execute the query and populate recordsFiltered
-        $this->executeCountQuery($searchPhrase['value'], $parameters);
+        $this->executeCountQuery($searchPhrase, $parameters);
 
         // Update query parameters for the main query
         $this->updateMainQueryParameters($parameters, $order, $columns, $recordsPerPage, $position);
@@ -117,16 +119,11 @@ class ExtensionsController extends BaseController
     private function prepareConditionsForSearchPhrases(string $searchPhrase, array &$parameters): void
     {
         // Prepare SQL conditions to search in username, number, email, etc.
-        $parameters['conditions'] = 'Users.username LIKE :SearchPhrase1:';
-        $parameters['conditions'] .= ' OR Extensions.number LIKE :SearchPhrase2:';
-        $parameters['conditions'] .= ' OR ExternalExtensions.number LIKE :SearchPhrase3:';
-        $parameters['conditions'] .= ' OR Users.email LIKE :SearchPhrase4:';
+        $parameters['conditions'] = 'Extensions.search_index LIKE :SearchPhrase:';
 
         // Bind search parameters
-        $parameters['bind']['SearchPhrase1'] = "%{$searchPhrase}%";
-        $parameters['bind']['SearchPhrase2'] = "%{$searchPhrase}%";
-        $parameters['bind']['SearchPhrase3'] = "%{$searchPhrase}%";
-        $parameters['bind']['SearchPhrase4'] = "%{$searchPhrase}%";
+        $searchPhrase = mb_strtolower($searchPhrase,'UTF-8');
+        $parameters['bind']['SearchPhrase'] = "%{$searchPhrase}%";
     }
 
     /**
@@ -191,6 +188,7 @@ class ExtensionsController extends BaseController
                 'email' => 'Users.email',
                 'type' => 'Extensions.type',
                 'avatar' => 'Users.avatar',
+                'search_index' => 'Extensions.search_index',
             ],
             'joins' => [
                 'Sip' => [
@@ -282,5 +280,4 @@ class ExtensionsController extends BaseController
         $this->view->represent = $extension->getRepresent();
         $this->view->avatar = $getRecordStructure->user_avatar;
     }
-
 }
