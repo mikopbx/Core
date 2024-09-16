@@ -105,13 +105,8 @@ class MessagesProvider implements ServiceProviderInterface
                 }
 
                 // Load language static array
-                $langFile = appPath("/src/Common/Messages/languages.php");
-                if (file_exists($langFile)) {
-                    $langArr = self::includeLanguageFile($langFile);
-                    if (!empty($langArr)) {
-                        $translates = array_merge($translates, $langArr);
-                    }
-                }
+                $translates = array_merge($translates, self::getAvailableLanguages());
+
                 if ($cacheKey) {
                     $di->get(ManagedCacheProvider::SERVICE_NAME)->set($cacheKey, $translates);
                 }
@@ -145,5 +140,43 @@ class MessagesProvider implements ServiceProviderInterface
 
         // Return an empty array if there was an error or $langArr is not an array.
         return [];
+    }
+
+    /**
+     * Retrieve the list of available languages for system selectors.
+     * Each language is represented in its own native language.
+     *
+     * @return array An associative array where keys are language codes and values are language names in their native form.
+     */
+    public static function getAvailableLanguages():array
+    {
+        return [
+            'ex_Russian' => 'Русский',
+            'ex_English' => 'English',
+            'ex_EnglishUK' => 'English (UK)',
+            'ex_Japanese' => '日本語',
+            'ex_Deutsch' => 'Deutsch',
+            'ex_Danish' => 'Dansk',
+            'ex_Spanish' => 'Español',
+            'ex_Greek' => 'Ελληνικά',
+            'ex_French' => 'Français',
+            'ex_Italian' => 'Italiano',
+            'ex_Portuguese' => 'Português',
+            'ex_PortugueseBrazil' => 'Português (Brasil)',
+            'ex_Ukrainian' => 'Українська',
+            'ex_Vietnamese' => 'Tiếng Việt',
+            'ex_Chinese' => '中文',
+            'ex_Polish' => 'Polski',
+            'ex_Dutch' => 'Nederlands',
+            'ex_Swedish' => 'Svenska',
+            'ex_Czech' => 'Čeština',
+            'ex_Turkish' => 'Türkçe',
+            'ex_Georgian' => 'ქართული',
+            'ex_Azerbaijan' => 'Azərbaycan',
+            'ex_Romanian' => 'Română',
+            'ex_Thai' => 'ไทย',
+            'ex_Finnish' => 'Suomi',
+            'ex_Hungarian' => 'Magyar',
+        ];
     }
 }
