@@ -66,7 +66,7 @@ class MarketPlaceProvider implements ServiceProviderInterface
             self::SERVICE_NAME,
             function () {
                 try {
-                    return new License('http://127.0.0.1:8223');
+                    return new License();
                 } catch (Throwable $e){
                     SystemMessages::sysLogMsg(__CLASS__, $e->getMessage());
                 }
