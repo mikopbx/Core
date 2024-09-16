@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
-use AWS\CRT\Internal\Extension;
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, SystemMessages, Util};
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettingsConstants;
