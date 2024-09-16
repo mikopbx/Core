@@ -1225,4 +1225,9 @@ return [
     'gs_ErrorSaveSettings' => 'Помилка збереження налаштувань',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Вказаний внутрішній номер вже використовується',
     'fw_iaxDescription' => 'IAX - реєстрація телефонів та голосовий трафік',
+    'ext_WrongGetModuleLink' => 'Помилка отримання файлу модуля з репозиторію',
+    'ext_NoLicenseRequired' => 'Безкоштовний модуль',
+    'ex_ShowOnlyRows' => 'за %rows% записів',
+    'ex_CalculateAutomatically' => 'Авто',
+    'ex_EnterSearchPhrase' => 'Введіть дані для пошуку',
 ];

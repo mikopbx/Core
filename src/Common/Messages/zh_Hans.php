@@ -1225,4 +1225,9 @@ return [
     'gs_ErrorSaveSettings' => '保存设置时出错',
     'mo_ThisNumberNotUniqueForExtensionsModels' => '指定的分机号码已被使用',
     'fw_iaxDescription' => 'IAX-电话注册和语音流量',
+    'ext_WrongGetModuleLink' => '从存储库获取模块文件时出错',
+    'ext_NoLicenseRequired' => '免费模块',
+    'ex_ShowOnlyRows' => '通过 %rows% 条记录',
+    'ex_CalculateAutomatically' => '汽车',
+    'ex_EnterSearchPhrase' => '输入您的搜索详细信息',
 ];

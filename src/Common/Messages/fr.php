@@ -1225,4 +1225,9 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'gs_ErrorSaveSettings' => 'Erreur lors de l\'enregistrement des paramètres',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Le numéro de poste spécifié est déjà utilisé',
     'fw_iaxDescription' => 'IAX - enregistrement téléphonique et trafic vocal',
+    'ex_ShowOnlyRows' => 'par les enregistrements %rows%',
+    'ex_CalculateAutomatically' => 'Auto',
+    'ex_EnterSearchPhrase' => 'Entrez les détails de votre recherche',
+    'ext_WrongGetModuleLink' => 'Erreur lors de l\'obtention du fichier de module à partir du référentiel',
+    'ext_NoLicenseRequired' => 'Module gratuit',
 ];

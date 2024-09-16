@@ -1225,4 +1225,9 @@ return [
     'mo_ThisNumberNotUniqueForExtensionsModels' => '指定された内線番号はすでに使用されています',
     'gs_ErrorSaveSettings' => '設定の保存中にエラーが発生しました',
     'fw_iaxDescription' => 'IAX - 電話の登録と音声トラフィック',
+    'ext_WrongGetModuleLink' => 'リポジトリからモジュール ファイルを取得中にエラーが発生しました',
+    'ext_NoLicenseRequired' => '無料モジュール',
+    'ex_ShowOnlyRows' => '%rows% レコードによる',
+    'ex_CalculateAutomatically' => '自動',
+    'ex_EnterSearchPhrase' => '検索の詳細を入力してください',
 ];
