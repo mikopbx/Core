@@ -23,10 +23,8 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\MikoPBXConfig;
-use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Core\Workers\WorkerPrepareAdvice;
 use Phalcon\Di\Injectable;
 
 /**
@@ -38,6 +36,13 @@ use Phalcon\Di\Injectable;
  */
 class SSHConf extends Injectable
 {
+    // Client keep-alive interval in seconds
+    private const CLIENT_KEEP_ALIVE_INTERVAL = 60;
+
+    // Client idle timeout in seconds
+    private const CLIENT_IDLE_TIMEOUT = 1800;
+
+
     private MikoPBXConfig $mikoPBXConfig;
 
     /**
@@ -73,7 +78,17 @@ class SSHConf extends Injectable
         $sshPasswordDisabled = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD) === '1';
         $options = $sshPasswordDisabled ? '-s' : '';
         $dropbear = Util::which('dropbear');
-        $result = Processes::mwExec("$dropbear -p '$sshPort' $options -c /etc/rc/hello > /var/log/dropbear_start.log");
+
+        // Adding keep-alive and idle timeout options to Dropbear configuration
+        $command = sprintf(
+            "%s -p '%s' %s -K %d -I %d -c /etc/rc/hello > /var/log/dropbear_start.log",
+            $dropbear,
+            $sshPort,
+            $options,
+            self::CLIENT_KEEP_ALIVE_INTERVAL,
+            self::CLIENT_IDLE_TIMEOUT
+        );
+        $result = Processes::mwExec($command);
 
         $this->generateAuthorizedKeys($sshLogin);
         $this->fixRights($sshLogin);
@@ -120,38 +135,37 @@ class SSHConf extends Injectable
      */
     private function getCreateSshUser(): string
     {
+        $cat = Util::which('cat');
+        $cut = Util::which('cut');
+        $sed = Util::which('sed');
+        $chown = Util::which('chown');
+        $deluser = Util::which('deluser');
+        $delgroup = Util::which('delgroup');
+        $addgroup = Util::which('addgroup');
+        $adduser = Util::which('adduser');
+
         $sshLogin = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LOGIN);
         $homeDir = $this->getUserHomeDir($sshLogin);
-        // System users, you can't touch them
-        $mainUsers = ['root', 'www'];
-        $bbPath = Util::which('busybox');
-        // We clean all non-system users
-        exec("$bbPath cut -f 1 -d ':' < /etc/passwd", $systemUsers);
+        $mainUsers = ['root', 'www']; // System users that should not be modified
+
+        // Clean up non-system users
+        exec("$cat -f 1 -d ':' < /etc/passwd", $systemUsers);
         foreach ($systemUsers as $user){
             if($sshLogin === $user || in_array($user, $mainUsers, true)){
                 continue;
             }
-            // Deleting the user
-            shell_exec("$bbPath deluser $user");
-            // Deleting the group
-            shell_exec("$bbPath delgroup $user");
+            // Deleting the user and associated group
+            shell_exec("$deluser $user");
+            shell_exec("$delgroup $user");
         }
-        if ($sshLogin !== 'root') {
-            // Adding a group '$sshLogin'
-            shell_exec("$bbPath addgroup $sshLogin");
-            // Adding user '$sshLogin'
-            shell_exec("$bbPath adduser -h $homeDir -g 'MikoPBX SSH Admin' -s /bin/bash -G root -D '$sshLogin'");
-            // Adding a user to the group '$sshLogin'
-            shell_exec("$bbPath addgroup -S '$sshLogin' $sshLogin");
-            // Adding a user to the group 'root'
-            shell_exec("$bbPath addgroup -S '$sshLogin' root");
 
-            $cat = Util::which('cat');
-            $cut = Util::which('cut');
-            $sed = Util::which('sed');
-            $chown = Util::which('chown');
-            $currentGroupId = trim(shell_exec("$cat /etc/passwd | grep '^$sshLogin:' | $cut -f 3 -d ':'"));
-            shell_exec("$sed -i 's/$sshLogin:x:$currentGroupId:/$sshLogin:x:0:/g' /etc/passwd");
+        // Adding SSH user if not root
+        if ($sshLogin !== 'root') {
+            shell_exec("$addgroup $sshLogin");
+            shell_exec("$adduser -h $homeDir -g 'MikoPBX SSH Admin' -s /bin/bash -G root -D '$sshLogin'");
+            shell_exec("$addgroup -S '$sshLogin' $sshLogin");
+            shell_exec("$addgroup -S '$sshLogin' root");
+            $this->updateUserGroupId($sshLogin);
             shell_exec("$chown -R $sshLogin:$sshLogin $homeDir");
         }
         return $sshLogin;
@@ -223,7 +237,8 @@ class SSHConf extends Injectable
     /**
      * Corrects file permissions and ownership for SSH user directories.
      *
-     * Sets appropriate permissions and ownership on the home directory and SSH-related files to secure the environment.
+     * Sets appropriate permissions and ownership on the home directory and
+     * SSH-related files to secure the environment.
      *
      * @param string $sshLogin SSH login username.
      * @return void
@@ -252,5 +267,22 @@ class SSHConf extends Injectable
 
         // Change ownership to the user for both home and SSH directories
         Processes::mwExec("$chown -R $sshLogin:$sshLogin $homeDir");
+    }
+
+    /**
+     * Updates the user group ID in /etc/passwd.
+     *
+     * @param string $sshLogin SSH login username.
+     * @return void
+     */
+    private function updateUserGroupId(string $sshLogin): void
+    {
+        $cat = Util::which('cat');
+        $cut = Util::which('cut');
+        $sed = Util::which('sed');
+        $chown = Util::which('chown');
+
+        $currentGroupId = trim(shell_exec("$cat /etc/passwd | grep '^$sshLogin:' | $cut -f 3 -d ':'"));
+        shell_exec("$sed -i 's/$sshLogin:x:$currentGroupId:/$sshLogin:x:0:/g' /etc/passwd");
     }
 }

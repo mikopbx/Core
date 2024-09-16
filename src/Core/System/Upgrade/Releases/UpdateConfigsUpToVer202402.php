@@ -20,6 +20,10 @@
 namespace MikoPBX\Core\System\Upgrade\Releases;
 
 use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\FirewallRules;
+use MikoPBX\Common\Models\NetworkFilters;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
@@ -54,6 +58,7 @@ class UpdateConfigsUpToVer202402 extends Injectable implements UpgradeSystemConf
             return;
         }
         $this->updateSearchIndex();
+        $this->updateFirewallRulesForIAX();
     }
 
     private function updateSearchIndex():void
@@ -108,6 +113,40 @@ class UpdateConfigsUpToVer202402 extends Injectable implements UpgradeSystemConf
             // Combine all fields into a single string
             $extension->search_index =  $username . ' ' . $callerId . ' ' . $email . ' ' . $internalNumber . ' ' . $mobileNumber;
             $extension->save();
+        }
+    }
+
+    /**
+     * Update firewall rules for IAX
+     * https://github.com/mikopbx/Core/issues/782
+     */
+    public function updateFirewallRulesForIAX(): void
+    {
+        $colName  = PbxSettingsConstants::IAX_PORT;
+        $iax_port = PbxSettings::getValueByKey(PbxSettingsConstants::IAX_PORT);
+        $nets = NetworkFilters::find(['columns' => 'id']);
+        foreach ($nets as $net){
+            $filter = [
+                "portFromKey='$colName' AND networkfilterid='$net->id'",
+                'columns' => 'id'
+            ];
+            $rule = FirewallRules::findFirst($filter);
+            if($rule){
+                continue;
+            }
+            $rule = new FirewallRules();
+            foreach ($rule->toArray() as $key => $value){
+                $rule->$key = $value;
+            }
+            $rule->networkfilterid = $net->id;
+            $rule->action       = 'block';
+            $rule->portfrom    = $iax_port;
+            $rule->portto      = $iax_port;
+            $rule->protocol    = 'udp';
+            $rule->portFromKey = $colName;
+            $rule->portToKey   = $colName;
+            $rule->category    = 'IAX';
+            $rule->save();
         }
     }
 }

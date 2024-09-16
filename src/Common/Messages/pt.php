@@ -1,61 +1,5 @@
 <?php
 return [
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    /*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
-    'ex_Russian' => 'Русский',
-    'ex_English' => 'English',
-    'ex_EnglishUK' => 'English(UK)',
-    'ex_Japanese' => '日本語',
-    'ex_Deutsch' => 'Deutsch',
-    'ex_Danish' => 'Dansk',
-    'ex_Spanish' => 'Espanol',
-    'ex_Greek' => 'Ελληνική',
-    'ex_French' => 'Le français',
-    'ex_Italian' => 'Italiano',
-    'ex_Portuguese' => 'Português',
-    'ex_PortugueseBrazil' => 'Português (Brazil)',
-    'ex_Ukrainian' => 'Українська',
-    'ex_Vietnamese' => 'Tiếng việt',
-    'ex_Chinese' => '中国人',
-    'ex_Polish' => 'Polskie',
-    'ex_Dutch' => 'Nederlands',
-    'ex_Swedish' => 'Svenska',
-    'ex_Czech' => 'Čeština',
-    'ex_Turkish' => 'Türkçe',
-    'ex_Georgian' => 'ქართველი',
-    'ex_Thai' => 'ไทย',
     'cal_Last30Days' => 'Últimos 30 dias',
     'cal_LastWeek' => 'Últimos 7 dias',
     'cal_Yesterday' => 'Ontem',
@@ -1117,8 +1061,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'f2b_Jail_asterisk_security_log_v2' => 'Erros de autorização SIP (security_log)',
     'f2b_Jail_asterisk_error_v2' => 'Erros de autorização SIP (erro)',
     'f2b_Jail_asterisk_public_v2' => 'Erros de autorização SIP (público)',
-    'ex_Azerbaijan' => 'Azərbaycan',
-    'ex_Romanian' => 'Română',
     'gs_ElevenDigthts' => '11 dígitos',
     'cr_pinCode' => 'PIN de conferência',
     'tf_AllowRestriction' => 'Aplicar apenas a determinadas rotas de entrada',

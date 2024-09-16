@@ -28,7 +28,6 @@ use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
