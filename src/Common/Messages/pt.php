@@ -1225,4 +1225,9 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'gs_ErrorSaveSettings' => 'Erro ao salvar as configurações',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'O número de ramal especificado já está em uso',
     'fw_iaxDescription' => 'IAX - registro telefônico e tráfego de voz',
+    'ex_EnterSearchPhrase' => 'Insira os detalhes da sua pesquisa',
+    'ex_ShowOnlyRows' => 'por registros %rows%',
+    'ex_CalculateAutomatically' => 'Auto',
+    'ext_WrongGetModuleLink' => 'Erro ao obter o arquivo do módulo do repositório',
+    'ext_NoLicenseRequired' => 'Módulo grátis',
 ];

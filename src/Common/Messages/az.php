@@ -1258,4 +1258,9 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'gs_ErrorSaveSettings' => 'Parametrləri yadda saxlama xətası',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Göstərilən artırma nömrəsi artıq istifadə olunur',
     'fw_iaxDescription' => 'IAX - telefon qeydiyyatı və səs trafiki',
+    'ext_WrongGetModuleLink' => 'Modul faylını depodan əldə etmək xətası',
+    'ext_NoLicenseRequired' => 'Pulsuz modul',
+    'ex_ShowOnlyRows' => '%rows% qeydləri ilə',
+    'ex_CalculateAutomatically' => 'Avtomatik',
+    'ex_EnterSearchPhrase' => 'Axtarış məlumatlarınızı daxil edin',
 ];
