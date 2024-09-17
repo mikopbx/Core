@@ -207,7 +207,7 @@ class SaveRecordAction extends Injectable
                     // Set 'number' based on the value of mobile_number or number
                     $extension->$name = $isMobile ? $dataStructure->mobile_number : $dataStructure->number;
                     break;
-                case 'search-index':
+                case 'search_index':
                     // Generate search index for the extension
                     $extension->$name = self::generateSearchIndex($dataStructure, $isMobile);
                     break;
@@ -390,13 +390,15 @@ class SaveRecordAction extends Injectable
     }
 
     /**
-     * Sanitize the caller ID by removing non-alphanumeric characters.
+     * Sanitize the caller ID by removing invalid characters.
+     * Allows letters (from all languages), numbers, spaces, and common phone symbols.
      *
      * @param string $callerId
      * @return string
      */
     private static function sanitizeCallerId(string $callerId): string
     {
-        return preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $callerId);
+        // Allow letters from any language, numbers, spaces, and common phone symbols.
+        return preg_replace('/[^\p{L}\p{N}\s\+\-\.\@]/u', '', $callerId);
     }
 }

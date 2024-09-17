@@ -61,6 +61,11 @@ class UpdateConfigsUpToVer202402 extends Injectable implements UpgradeSystemConf
         $this->updateFirewallRulesForIAX();
     }
 
+    /**
+     *  Update the search index on the Extension table
+     *
+     * @return void
+     */
     private function updateSearchIndex():void
     {
         $parameters = [
