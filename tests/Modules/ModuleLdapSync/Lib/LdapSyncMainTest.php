@@ -29,13 +29,16 @@ class LdapSyncMainTest extends AbstractUnitTest
 
     public function testSyncAllUsers()
     {
-        LdapSyncMain::syncAllUsers();
+        $serversList = LdapServers::find('id=2')->toArray();
+        foreach ($serversList as $server) {
+            LdapSyncMain::syncUsersPerServer($server);
+        }
         $this->assertTrue(true);
     }
 
     public function testGetUsersList()
     {
-        $serverParams = LdapServers::findFirst()->toArray();
+        $serverParams = LdapServers::findFirstById(2)->toArray();
 
         $attributes = json_decode($serverParams['attributes'], true);
         $serverParams = array_merge($attributes, $serverParams);
@@ -46,6 +49,5 @@ class LdapSyncMainTest extends AbstractUnitTest
         $res = $ldapConnector->getUsersList();
         $this->assertTrue($res->success);
     }
-
 
 }
