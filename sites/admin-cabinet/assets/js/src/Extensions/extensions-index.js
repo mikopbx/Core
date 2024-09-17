@@ -149,7 +149,6 @@ const extensionsIndex = {
         extensionsIndex.$extensionsList.DataTable({
             // Enable state saving to automatically save and restore the table's state
             stateSave: true,
-
             columnDefs: [
                 { defaultContent: "-",  targets: "_all"},
                 { responsivePriority: 1,  targets: 0},
@@ -192,7 +191,7 @@ const extensionsIndex = {
             ],
             order: [[1, 'asc']],
             serverSide: true,
-            processing: true,
+            processing: false,
             ajax: {
                 url: `${globalRootUrl}extensions/getNewRecords`,
                 type: 'POST',
@@ -218,6 +217,8 @@ const extensionsIndex = {
                 $templateRow.find('.number').text(data.number);
                 $templateRow.find('.mobile input').attr('value', data.mobile);
                 $templateRow.find('.email').text(data.email);
+
+                $templateRow.find('.action-buttons').removeClass('small').addClass('tiny');
 
                 const $editButton = $templateRow.find('.action-buttons .button.edit');
                 if ($editButton!==undefined){
@@ -284,7 +285,7 @@ const extensionsIndex = {
 
         // Calculate window height and available space for table
         const windowHeight = window.innerHeight;
-        const headerFooterHeight = 400; // Estimate height for header, footer, and other elements
+        const headerFooterHeight = 380; // Estimate height for header, footer, and other elements
 
         // Calculate new page length
         return Math.max(Math.floor((windowHeight - headerFooterHeight) / rowHeight), 5);

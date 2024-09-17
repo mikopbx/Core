@@ -574,3 +574,12 @@ Plugins extensions settings button
 a.ui.button.pbx-extensions-settings {
     margin-top: -7px;
 }
+
+/** More extensions on one page */
+#extensions-table td {
+    padding: .1em .6em;
+}
+
+#extensions-table th {
+    padding: .4em .6em;
+}
