@@ -108,6 +108,7 @@ class ModelsBase extends Model
     public function initialize(): void
     {
         self::setup(['orm.events' => true]);
+        self::setup(['orm.exception_on_failed_metadata_save' => false]);
         $this->keepSnapshots(true);
         $this->addExtensionModulesRelations();
 
