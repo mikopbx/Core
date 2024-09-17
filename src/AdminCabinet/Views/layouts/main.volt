@@ -30,7 +30,7 @@
                     {%set contentClass='grey' %}
                 {% endif %}
                     <div class="ui {{ contentClass}} loading segment" id="content-frame">
-                        {% if (isExternalModuleController) %}
+                        {% if (isExternalModuleController AND showModuleStatusToggle) %}
                             {{ partial("partials/modulesStatusToggle") }}
                         {% endif %}
                         <div id="ajax-messages"></div>

@@ -139,6 +139,7 @@ class BaseController extends Controller
             }
             $this->view->module = $module->toArray();
             $this->view->globalModuleUniqueId = $module->uniqid;
+            $this->view->showModuleStatusToggle = $this->showModuleStatusToggle??true;
         }
     }
 
