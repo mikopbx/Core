@@ -418,6 +418,9 @@ class ModelsBase extends Model
                             $name = '<i class="cogs icon"></i> '
                                 . $this->t('mo_SystemExten_' . $this->number);
                             break;
+                        case Extensions::TYPE_PARKING:
+                            $name = $this->t('mo_ParkingExtension',['number'=> $this->number]);
+                            break;
                         case Extensions::TYPE_EXTERNAL:
                         case Extensions::TYPE_SIP:
                         default:

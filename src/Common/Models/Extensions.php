@@ -538,12 +538,24 @@ class Extensions extends ModelsBase
      */
     public function validation(): bool
     {
+
+        $existingRecord = self::findFirst(
+            [
+                'conditions' => 'number = :number:',
+                'bind'       => ['number' => $this->number],
+            ]
+        );
+        $currentRepresent = 'unknown';
+        if ($existingRecord!==null) {
+            $currentRepresent = $existingRecord->getRepresent();
+        }
+
         $validation = new Validation();
         $validation->add(
             'number',
             new UniquenessValidator(
                 [
-                    'message' => $this->t('mo_ThisNumberNotUniqueForExtensionsModels'),
+                    'message' => $this->t('mo_ThisNumberNotUniqueForExtensionsModels', ['record'=>$currentRepresent]),
                 ]
             )
         );
