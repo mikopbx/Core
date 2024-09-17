@@ -26,8 +26,8 @@
 
     </div>
 </div>
-<div class="ui hidden divider"></div>
-<table class="ui selectable unstackable compact table" id="extensions-table">
+<br>
+<table class="ui selectable unstackable very compact table" id="extensions-table">
     <thead>
     <tr>
         <th></th>
