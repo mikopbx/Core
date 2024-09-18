@@ -114,7 +114,7 @@ const extensionsIndex = {
 
 
         // Reset datatable sorts and page
-        $("a[href='/admin-cabinet/extensions/index/#reset-cache']").on('click', function(e) {
+        $(`a[href='${globalRootUrl}extensions/index/#reset-cache']`).on('click', function(e) {
                 e.preventDefault();
                 extensionsIndex.$extensionsList.DataTable().state.clear();
                 window.location.hash = '#reset-cache';
@@ -277,8 +277,39 @@ const extensionsIndex = {
         extensionsIndex.dataTable.on('draw', () => {
             extensionsIndex.$globalSearch.closest('div').removeClass('loading');
         });
+
+
+        // Restore the saved search phrase from DataTables state
+        const state = extensionsIndex.dataTable.state.loaded();
+        if (state && state.search) {
+            extensionsIndex.$globalSearch.val(state.search.search); // Set the search field with the saved value
+        }
+
+        // Retrieves the value of 'search' query parameter from the URL.
+        const searchValue = extensionsIndex.getQueryParam('search');
+
+        // Sets the global search input value and applies the filter if a search value is provided.
+        if (searchValue) {
+            extensionsIndex.$globalSearch.val(searchValue);
+            extensionsIndex.applyFilter(searchValue);
+        }
     },
 
+    /**
+     * Retrieves the value of a specified query parameter from the URL.
+     *
+     * @param {string} param - The name of the query parameter to retrieve.
+     * @return {string|null} The value of the query parameter, or null if not found.
+     */
+    getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    },
+
+    /**
+     * Calculates the number of rows that can fit on a page based on the current window height.
+     * @returns {number}
+     */
     calculatePageLength() {
         // Calculate row height
         let rowHeight = extensionsIndex.$extensionsList.find('tr').first().outerHeight();

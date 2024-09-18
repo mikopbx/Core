@@ -42,7 +42,7 @@ class ExtensionsController extends BaseController
     public function getNewRecordsAction(): void
     {
         // Fetching parameters from POST request
-        $postData = self::sanitizeData($this->request->getPost(),$this->filter);
+        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
 
         $currentPage = $postData['draw'];
         $position = $postData['start'];
@@ -118,12 +118,41 @@ class ExtensionsController extends BaseController
      */
     private function prepareConditionsForSearchPhrases(string $searchPhrase, array &$parameters): void
     {
-        // Prepare SQL conditions to search in username, number, email, etc.
-        $parameters['conditions'] = 'Extensions.search_index LIKE :SearchPhrase:';
+        // Convert the search phrase to lowercase for case-insensitive matching
+        $searchPhrase = mb_strtolower($searchPhrase, 'UTF-8');
 
-        // Bind search parameters
-        $searchPhrase = mb_strtolower($searchPhrase,'UTF-8');
-        $parameters['bind']['SearchPhrase'] = "%{$searchPhrase}%";
+        // Determine the condition based on specific keywords in the search phrase
+        if (strpos($searchPhrase, 'id:') === 0) {
+            // If the search phrase starts with 'id:', search by Extensions.id with exact match
+            $id = substr($searchPhrase, 3); // Remove 'id:' prefix
+            $parameters['conditions'] = 'Extensions.id = :SearchId:';
+            $parameters['bind']['SearchId'] = (int) $id; // Cast ID to an integer for safety
+        } elseif (strpos($searchPhrase, 'email:') === 0) {
+            // If the search phrase starts with 'email:', search by User.email using a LIKE query
+            $email = substr($searchPhrase, 6); // Remove 'email:' prefix
+            $parameters['conditions'] = 'Users.email LIKE :SearchEmail:';
+            $parameters['bind']['SearchEmail'] = "%{$email}%"; // Use partial matching for email
+        } elseif (strpos($searchPhrase, 'number:') === 0) {
+            // If the search phrase starts with 'number:', search by Extensions.number using a LIKE query
+            $number = substr($searchPhrase, 7); // Remove 'number:' prefix
+            $parameters['conditions'] = 'Extensions.number LIKE :SearchNumber:';
+            $parameters['bind']['SearchNumber'] = "%{$number}%"; // Use partial matching for number
+        } elseif (strpos($searchPhrase, 'mobile:') === 0) {
+            // If the search phrase starts with 'mobile:', search by ExternalExtensions.mobile using a LIKE query$mobile = substr($searchPhrase, 7); // Remove 'mobile:' prefix
+            $mobile = substr($searchPhrase, 7); // Remove 'number:' prefix
+            $mobile = preg_replace('/\D/', '', $mobile); // Remove all non-digit characters
+            $parameters['conditions'] = 'ExternalExtensions.number LIKE :SearchMobile:';
+            $parameters['bind']['SearchMobile'] = "%{$mobile}%"; // Use partial matching for mobile number
+        } elseif (strpos($searchPhrase, 'name:') === 0) {
+            // If the search phrase starts with 'name:', search by User.name using a LIKE query
+            $name = substr($searchPhrase, 5); // Remove 'name:' prefix
+            $parameters['conditions'] = 'Users.username LIKE :SearchName:';
+            $parameters['bind']['SearchName'] = "%{$name}%"; // Use partial matching for name
+        } else {
+            // Default case: if no specific keyword is found, search by search_index field using a LIKE query
+            $parameters['conditions'] = 'Extensions.search_index LIKE :SearchPhrase:';
+            $parameters['bind']['SearchPhrase'] = "%{$searchPhrase}%"; // Use partial matching for the general search phrase
+        }
     }
 
     /**
