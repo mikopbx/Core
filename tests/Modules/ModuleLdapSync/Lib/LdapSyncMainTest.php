@@ -22,6 +22,7 @@ namespace MikoPBX\Tests\Modules\ModuleLdapSync\Lib;
 use Modules\ModuleLdapSync\Lib\LdapSyncConnector;
 use Modules\ModuleLdapSync\Lib\LdapSyncMain;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
+use Modules\ModuleLdapSync\Lib\LdapSyncUsers;
 use Modules\ModuleLdapSync\Models\LdapServers;
 
 class LdapSyncMainTest extends AbstractUnitTest
@@ -29,16 +30,16 @@ class LdapSyncMainTest extends AbstractUnitTest
 
     public function testSyncAllUsers()
     {
-        $serversList = LdapServers::find('id=2')->toArray();
-        foreach ($serversList as $server) {
-            LdapSyncMain::syncUsersPerServer($server);
+        $serversList = LdapServers::find('id=1')->toArray();
+        foreach ($serversList as $ldapCredentials) {
+            LdapSyncMain::syncUsersPerServer($ldapCredentials);
         }
         $this->assertTrue(true);
     }
 
     public function testGetUsersList()
     {
-        $serverParams = LdapServers::findFirstById(2)->toArray();
+        $serverParams = LdapServers::findFirstById(1)->toArray();
 
         $attributes = json_decode($serverParams['attributes'], true);
         $serverParams = array_merge($attributes, $serverParams);
@@ -48,6 +49,15 @@ class LdapSyncMainTest extends AbstractUnitTest
         // Retrieve the list of available LDAP users
         $res = $ldapConnector->getUsersList();
         $this->assertTrue($res->success);
+    }
+
+    function testGetDisabledUsers()
+    {
+        $serversList = LdapServers::find('id=1')->toArray();
+        foreach ($serversList as $ldapCredentials) {
+            $res = LdapSyncUsers::getDisabledUsers($ldapCredentials['id']);
+            $this->assertTrue($res->success);
+        }
     }
 
 }
