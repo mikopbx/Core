@@ -133,10 +133,10 @@ class ExtensionsController extends BaseController
             $parameters['conditions'] = 'Users.email LIKE :SearchEmail:';
             $parameters['bind']['SearchEmail'] = "%{$email}%"; // Use partial matching for email
         } elseif (strpos($searchPhrase, 'number:') === 0) {
-            // If the search phrase starts with 'number:', search by Extensions.number using a LIKE query
+            // If the search phrase starts with 'number:', search by Extensions.number using a query
             $number = substr($searchPhrase, 7); // Remove 'number:' prefix
-            $parameters['conditions'] = 'Extensions.number LIKE :SearchNumber:';
-            $parameters['bind']['SearchNumber'] = "%{$number}%"; // Use partial matching for number
+            $parameters['conditions'] = 'Extensions.number = :SearchNumber:';
+            $parameters['bind']['SearchNumber'] = $number;
         } elseif (strpos($searchPhrase, 'mobile:') === 0) {
             // If the search phrase starts with 'mobile:', search by ExternalExtensions.mobile using a LIKE query$mobile = substr($searchPhrase, 7); // Remove 'mobile:' prefix
             $mobile = substr($searchPhrase, 7); // Remove 'number:' prefix

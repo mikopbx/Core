@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Controllers\Extensions;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\ExtensionsManagementProcessor;
+use Phalcon\Filter;
 
 /**
  * Handles the POST requests for extensions data.
@@ -56,6 +57,16 @@ class PostController extends BaseController
     {
         // Fetching parameters from POST request
         $postData = self::sanitizeData($this->request->getPost(), $this->filter);
+
+        // Do not sanitize the sip_manualattributes field
+        if ($this->request->getPost('sip_manualattributes') !== '') {
+            $postData['sip_manualattributes'] = $this->request->getPost('sip_manualattributes', FILTER::FILTER_TRIM);
+        }
+
+        // Do not sanitize passwords
+        if ($this->request->getPost('sip_secret') !== '') {
+            $postData['sip_secret'] = $this->request->getPost('sip_secret');
+        }
 
         $this->sendRequestToBackendWorker(ExtensionsManagementProcessor::class, $actionName, $postData);
     }
