@@ -281,7 +281,7 @@ const Extensions = {
                 if (response.data['available'] === true) {
                     $(`.ui.input.${cssClassName}`).parent().removeClass('error');
                     $(`#${cssClassName}-error`).addClass('hidden');
-                } else if (userId.length > 0 && response.data['userId'] === userId) {
+                } else if (userId.length > 0 && parseInt(response.data['userId']) === parseInt(userId)) {
                     $(`.ui.input.${cssClassName}`).parent().removeClass('error');
                     $(`#${cssClassName}-error`).addClass('hidden');
                 } else {

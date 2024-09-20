@@ -767,10 +767,12 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'index') {
             $this->headerCollectionCSS
+                ->addCss('css/vendor/semantic/search.min.css', true)
                 ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
                 ->addCss('css/vendor/datatable/responsive/responsive.semanticui.min.css', true);
 
             $this->footerCollectionJS
+                ->addJs('js/vendor/semantic/search.min.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/datatable/responsive/dataTables.responsive.min.js', true)
                 ->addJs('js/vendor/datatable/responsive/responsive.semanticui.min.js', true)
@@ -786,7 +788,6 @@ class AssetProvider implements ServiceProviderInterface
         } elseif ($action === 'modify') {
             $this->semanticCollectionCSS->addCss('css/vendor/semantic/card.min.css', true);
             $this->footerCollectionJS
-                //->addJs('js/vendor/inputmask/inputmask.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask-multi.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)

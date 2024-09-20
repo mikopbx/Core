@@ -233,6 +233,8 @@ const extension = {
             extension.cbOnCompleteNumber();
         });
 
+        //extension.$mobile_number.val(new libphonenumber.AsYouType().input('+'+extension.$mobile_number.val()));
+
         // Set up the input masks for the mobile number input
         const maskList = $.masksSort(InputMaskPatterns, ['#'], /[0-9]|#/, 'mask');
         extension.$mobile_number.inputmasks({
@@ -254,6 +256,38 @@ const extension = {
             listKey: 'mask',
         });
 
+        extension.$mobile_number.on('paste', function(e) {
+            e.preventDefault(); // Предотвращаем стандартное поведение вставки
+
+            // Получаем вставленные данные из буфера обмена
+            let pastedData = '';
+            if (e.originalEvent.clipboardData && e.originalEvent.clipboardData.getData) {
+                pastedData = e.originalEvent.clipboardData.getData('text');
+            } else if (window.clipboardData && window.clipboardData.getData) { // Для IE
+                pastedData = window.clipboardData.getData('text');
+            }
+
+            // Проверяем, начинается ли вставленный текст с '+'
+            if (pastedData.charAt(0) === '+') {
+                // Сохраняем '+' и удаляем остальные нежелательные символы
+                var processedData = '+' + pastedData.slice(1).replace(/\D/g, '');
+            } else {
+                // Удаляем все символы, кроме цифр
+                var processedData = pastedData.replace(/\D/g, '');
+            }
+
+            // Вставляем очищенные данные в поле ввода
+            const input = this;
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const currentValue = $(input).val();
+            const newValue = currentValue.substring(0, start) + processedData + currentValue.substring(end);
+            extension.$mobile_number.inputmask("remove");
+            extension.$mobile_number.val(newValue);
+            // Триггерим событие 'input' для применения маски ввода
+            $(input).trigger('input');
+        });
+
         // Set up the input mask for the email input
         let timeoutEmailId;
         extension.$email.inputmask('email', {
@@ -272,7 +306,7 @@ const extension = {
             extension.cbOnCompleteEmail();
         });
 
-        // Attach a focusout event listener to the mobile number input
+        //Attach a focusout event listener to the mobile number input
         extension.$mobile_number.focusout(function (e) {
             let phone = $(e.target).val().replace(/[^0-9]/g, "");
             if (phone === '') {
@@ -353,7 +387,8 @@ const extension = {
             // Check if call forwarding was set to the default mobile number
             if (extension.$formObj.form('get value', 'fwd_forwarding') === extension.defaultMobileNumber) {
                 // If the ring length is empty, set it to 45
-                if (extension.$formObj.form('get value', 'fwd_ringlength').length === 0) {
+                if (extension.$formObj.form('get value', 'fwd_ringlength').length === 0
+                    || extension.$formObj.form('get value', 'fwd_ringlength')==="0") {
                     extension.$formObj.form('set value', 'fwd_ringlength', 45);
                 }
 

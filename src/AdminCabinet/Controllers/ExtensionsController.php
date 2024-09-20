@@ -143,11 +143,6 @@ class ExtensionsController extends BaseController
             $mobile = preg_replace('/\D/', '', $mobile); // Remove all non-digit characters
             $parameters['conditions'] = 'ExternalExtensions.number LIKE :SearchMobile:';
             $parameters['bind']['SearchMobile'] = "%{$mobile}%"; // Use partial matching for mobile number
-        } elseif (strpos($searchPhrase, 'name:') === 0) {
-            // If the search phrase starts with 'name:', search by User.name using a LIKE query
-            $name = substr($searchPhrase, 5); // Remove 'name:' prefix
-            $parameters['conditions'] = 'Users.username LIKE :SearchName:';
-            $parameters['bind']['SearchName'] = "%{$name}%"; // Use partial matching for name
         } else {
             // Default case: if no specific keyword is found, search by search_index field using a LIKE query
             $parameters['conditions'] = 'Extensions.search_index LIKE :SearchPhrase:';

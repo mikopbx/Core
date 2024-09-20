@@ -583,3 +583,8 @@ a.ui.button.pbx-extensions-settings {
 #extensions-table th {
     padding: .4em .6em;
 }
+
+/** Improve extensions search filed view */
+#search-extensions-input .prompt{
+    border-radius: 5px;
+}

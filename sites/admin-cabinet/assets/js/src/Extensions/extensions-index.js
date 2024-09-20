@@ -46,6 +46,12 @@ const extensionsIndex = {
     $pageLengthSelector:$('#page-length-select'),
 
     /**
+     * The page length selector.
+     * @type {jQuery}
+     */
+    $searchExtensionsInput: $('#search-extensions-input'),
+
+    /**
      * The data table object.
      * @type {Object}
      */
@@ -133,6 +139,36 @@ const extensionsIndex = {
                 extensionsIndex.dataTable.page.len(pageLength).draw();
             },
         });
+        extensionsIndex.$pageLengthSelector.on('click', function(event) {
+            event.stopPropagation(); // Prevent the event from bubbling
+        });
+        // Initialize the Search component
+        extensionsIndex.$searchExtensionsInput.search({
+            minCharacters: 0,
+            searchOnFocus: false,
+            searchFields: ['title'],
+            showNoResults: false,
+            source: [
+                { title: globalTranslate.ex_SearchByExtension, value: 'number:' },
+                { title: globalTranslate.ex_SearchByMobile, value: 'mobile:' },
+                { title: globalTranslate.ex_SearchByEmail, value: 'email:' },
+                { title: globalTranslate.ex_SearchByID, value: 'id:' },
+                { title: globalTranslate.ex_SearchByCustomPhrase, value: '' },
+            ],
+            onSelect: function(result, response) {
+                extensionsIndex.$globalSearch.val(result.value);
+                extensionsIndex.$searchExtensionsInput.search('hide results');
+                return false;
+            }
+        });
+
+
+        // Start the search when you click on the icon
+        $('#search-icon').on('click', function() {
+            extensionsIndex.$globalSearch.focus();
+            extensionsIndex.$searchExtensionsInput.search('query');
+        });
+
     },
 
     // Set up the DataTable on the extensions list.
@@ -316,7 +352,7 @@ const extensionsIndex = {
 
         // Calculate window height and available space for table
         const windowHeight = window.innerHeight;
-        const headerFooterHeight = 380; // Estimate height for header, footer, and other elements
+        const headerFooterHeight = 390; // Estimate height for header, footer, and other elements
 
         // Calculate new page length
         return Math.max(Math.floor((windowHeight - headerFooterHeight) / rowHeight), 5);
