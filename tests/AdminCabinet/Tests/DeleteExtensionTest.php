@@ -52,7 +52,7 @@ class DeleteExtensionTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
         $this->clickModifyButtonOnRowWithText($params['username']);
 
         // TESTS
@@ -62,12 +62,12 @@ class DeleteExtensionTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
 
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
         $this->clickDeleteButtonOnRowWithText($params['username']);
         $this->waitForAjax();
 
         // Try to find element with ID on page
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
         $xpath = "//table[@id='extensions-table']//tr[@id='{$elementID}']";
         $els = self::$driver->findElements(WebDriverBy::xpath($xpath));
 

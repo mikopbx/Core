@@ -57,7 +57,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table','global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('number', $params['number']);
@@ -90,7 +90,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('mobile_number', $params['mobile']);
@@ -131,7 +131,8 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
+
 
         $this->clickModifyButtonOnRowWithText($params['username']);
         $this->changeInputField('mobile_number', '');
@@ -172,7 +173,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
@@ -203,7 +204,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
@@ -233,7 +234,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
@@ -273,7 +274,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         // Fill search field
-        $this->fillDataTableSearchInput('global-search', $params['username']);
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
 
         $this->clickModifyButtonOnRowWithText($params['username']);
 
