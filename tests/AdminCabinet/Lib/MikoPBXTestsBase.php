@@ -127,28 +127,6 @@ class MikoPBXTestsBase extends BrowserStackTest
         }
     }
 
-    /**
-     * Wait until datatable draw
-     * @param $datatableId
-     * @param $timeoutInSeconds
-     * @return void
-     * @throws Exception
-     */
-    protected function waitForDataTableDraw(string $datatableId, int $timeoutInSeconds = 10)
-    {
-        $endTime = time() + $timeoutInSeconds;
-        while (time() < $endTime) {
-            $isDrawComplete = self::$driver->executeScript("
-            var table = $('#$datatableId').DataTable();
-            return table && table.draw && table.draw(false) !== undefined;
-        ");
-            if ($isDrawComplete) {
-                return;
-            }
-            usleep(500000);
-        }
-        throw new \Exception("Timeout waiting for DataTable draw to complete.");
-    }
 
     /**
      * Fails a test with the given message.
@@ -763,7 +741,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         $this->waitForAjax();
 
         // Wait for DataTableDraw
-        $this->waitForDataTableDraw($datatableId,10);
+        usleep(5000000);
     }
 
     /**
