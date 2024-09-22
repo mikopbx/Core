@@ -1230,4 +1230,10 @@ return [
     'ex_EnterSearchPhrase' => 'Εισαγάγετε τα στοιχεία αναζήτησής σας',
     'ext_WrongGetModuleLink' => 'Σφάλμα κατά τη λήψη του αρχείου μονάδας από το χώρο αποθήκευσης',
     'ext_NoLicenseRequired' => 'Δωρεάν ενότητα',
+    'ex_SearchByMobile' => 'Αναζήτηση με αριθμό κινητού τηλεφώνου',
+    'ex_SearchByEmail' => 'Αναζήτηση μέσω email',
+    'ex_SearchByID' => 'Αναζήτηση με εσωτερική ταυτότητα υπαλλήλου',
+    'ex_SearchByCustomPhrase' => 'Αναζήτηση πλήρους κειμένου',
+    'mo_ParkingExtension' => 'Θέση στάθμευσης %number%',
+    'ex_SearchByExtension' => 'Αναζήτηση με αριθμό επέκτασης',
 ];

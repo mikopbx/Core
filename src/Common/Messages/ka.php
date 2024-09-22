@@ -1230,4 +1230,10 @@ return [
     'ex_EnterSearchPhrase' => 'შეიყვანეთ თქვენი ძიების დეტალები',
     'ext_WrongGetModuleLink' => 'შეცდომა მოდულის ფაილის საცავიდან მიღებისას',
     'ext_NoLicenseRequired' => 'უფასო მოდული',
+    'ex_SearchByExtension' => 'ძიება გაფართოების ნომრით',
+    'ex_SearchByMobile' => 'მოძებნეთ მობილური ნომრით',
+    'ex_SearchByEmail' => 'მოძებნეთ ელექტრონული ფოსტით',
+    'ex_SearchByID' => 'ძიება შიდა თანამშრომლის ID-ით',
+    'ex_SearchByCustomPhrase' => 'სრული ტექსტის ძიება',
+    'mo_ParkingExtension' => 'პარკირების ადგილი %number%',
 ];

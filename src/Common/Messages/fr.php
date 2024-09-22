@@ -1230,4 +1230,10 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ex_EnterSearchPhrase' => 'Entrez les détails de votre recherche',
     'ext_WrongGetModuleLink' => 'Erreur lors de l\'obtention du fichier de module à partir du référentiel',
     'ext_NoLicenseRequired' => 'Module gratuit',
+    'ex_SearchByEmail' => 'Rechercher par email',
+    'ex_SearchByID' => 'Recherche par ID d\'employé interne',
+    'ex_SearchByCustomPhrase' => 'Recherche en texte intégral',
+    'ex_SearchByExtension' => 'Recherche par numéro de poste',
+    'ex_SearchByMobile' => 'Recherche par numéro de mobile',
+    'mo_ParkingExtension' => 'Emplacement de stationnement %number%',
 ];

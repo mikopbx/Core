@@ -1263,4 +1263,10 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ex_ShowOnlyRows' => '%rows% qeydləri ilə',
     'ex_CalculateAutomatically' => 'Avtomatik',
     'ex_EnterSearchPhrase' => 'Axtarış məlumatlarınızı daxil edin',
+    'mo_ParkingExtension' => 'Dayanacaq yeri %number%',
+    'ex_SearchByExtension' => 'Artırma nömrəsinə görə axtarın',
+    'ex_SearchByMobile' => 'Mobil nömrə ilə axtarın',
+    'ex_SearchByEmail' => 'E-poçtla axtarın',
+    'ex_SearchByID' => 'Daxili işçi ID-si ilə axtarın',
+    'ex_SearchByCustomPhrase' => 'Tam mətn axtarışı',
 ];

@@ -1228,4 +1228,10 @@ return [
     'ex_ShowOnlyRows' => 'โดยบันทึก %rows%',
     'ex_CalculateAutomatically' => 'อัตโนมัติ',
     'ex_EnterSearchPhrase' => 'ป้อนรายละเอียดการค้นหาของคุณ',
+    'ex_SearchByMobile' => 'ค้นหาด้วยหมายเลขโทรศัพท์มือถือ',
+    'ex_SearchByEmail' => 'ค้นหาทางอีเมล',
+    'ex_SearchByID' => 'ค้นหาตามรหัสพนักงานภายใน',
+    'ex_SearchByCustomPhrase' => 'ค้นหาข้อความแบบเต็ม',
+    'mo_ParkingExtension' => 'ช่องจอดรถ %number%',
+    'ex_SearchByExtension' => 'ค้นหาตามหมายเลขส่วนขยาย',
 ];

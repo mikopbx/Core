@@ -1230,4 +1230,10 @@ return [
     'ex_ShowOnlyRows' => '通过 %rows% 条记录',
     'ex_CalculateAutomatically' => '汽车',
     'ex_EnterSearchPhrase' => '输入您的搜索详细信息',
+    'ex_SearchByEmail' => '通过电子邮件搜索',
+    'ex_SearchByID' => '按内部员工 ID 搜索',
+    'mo_ParkingExtension' => '停车位%number%',
+    'ex_SearchByExtension' => '按分机号码搜索',
+    'ex_SearchByMobile' => '按手机号码搜索',
+    'ex_SearchByCustomPhrase' => '全文搜索',
 ];

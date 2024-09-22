@@ -1230,4 +1230,10 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_CalculateAutomatically' => 'Auto',
     'ext_WrongGetModuleLink' => 'Erro ao obter o arquivo do módulo do repositório',
     'ext_NoLicenseRequired' => 'Módulo grátis',
+    'mo_ParkingExtension' => 'Vaga de estacionamento %number%',
+    'ex_SearchByExtension' => 'Pesquisar por número de ramal',
+    'ex_SearchByMobile' => 'Pesquise por número de celular',
+    'ex_SearchByEmail' => 'Pesquisar por e-mail',
+    'ex_SearchByID' => 'Pesquisar por ID de funcionário interno',
+    'ex_SearchByCustomPhrase' => 'Pesquisa de texto completo',
 ];
