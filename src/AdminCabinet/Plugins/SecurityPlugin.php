@@ -116,16 +116,6 @@ class SecurityPlugin extends Injectable
             $homePath='/admin-cabinet/extensions/index';
         }
 
-        $currentPageCacheKey = 'redirectCount'.md5($homePath);
-        $redirectCount = $this->session->get($currentPageCacheKey)??0;
-        $redirectCount++;
-        $this->session->set($currentPageCacheKey, $redirectCount);
-        if ($redirectCount > 5){
-            $this->session->set($currentPageCacheKey, 0);
-            $this->forwardTo401Error($dispatcher);
-            return;
-        }
-
         // Extract the module, controller, and action from the home page path
         $module = explode('/', $homePath)[1];
         $controller = explode('/', $homePath)[2];
@@ -155,7 +145,7 @@ class SecurityPlugin extends Injectable
      * Redirects the user to a 401 error page.
      * @param $dispatcher Dispatcher instance for handling the redirection.
      */
-    private function forwardTo401Error($dispatcher): void{
+    private function forwardTo401Error(Dispatcher $dispatcher): void{
         $dispatcher->forward([
             'module' => 'admin-cabinet',
             'controller' => 'errors',
@@ -168,7 +158,7 @@ class SecurityPlugin extends Injectable
      * Redirects the user to the login page.
      * @param $dispatcher Dispatcher instance for handling the redirection.
      */
-    private function forwardToLoginPage($dispatcher): void{
+    private function forwardToLoginPage(Dispatcher $dispatcher): void{
         $dispatcher->forward([
             'controller' => 'session',
             'action' => 'index',
