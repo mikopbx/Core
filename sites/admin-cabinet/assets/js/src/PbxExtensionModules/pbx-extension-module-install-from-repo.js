@@ -149,7 +149,7 @@ const installationFromRepo = {
                         console.debug(response);
                         if (response.result === true) {
                             $('html, body').animate({
-                                scrollTop: installationFromRepo.$progressBarBlock.offset().top,
+                                scrollTop: installationFromRepo.$progressBarBlock.offset().top-50,
                             }, 2000);
                         }
                     });

@@ -137,7 +137,7 @@ const installationFromZip = {
             console.debug(response);
             if (response.result === true) {
                 $('html, body').animate({
-                    scrollTop: installationFromZip.$progressBarBlock.offset().top,
+                    scrollTop: installationFromZip.$progressBarBlock.offset().top-50,
                 }, 2000);
             }
         });
