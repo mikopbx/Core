@@ -89,8 +89,10 @@ class Notifications
         if(!$di){
             return;
         }
+        $adminMail = PbxSettings::getValueByKey(PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL);
+
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $cacheKey = 'SendAdminNotification:' . md5($subject . implode('', $messages));
+        $cacheKey = 'SendAdminNotification:' . md5($adminMail. $subject . implode('', $messages));
         $cacheTime = 3600 * 24; // 1 day
 
         // Check if the message is not urgent and has been sent recently from cache.
@@ -108,7 +110,6 @@ class Notifications
         $text = str_replace(PHP_EOL, '<br>', $text);
 
         // Get the admin email address from PbxSettings.
-        $adminMail = PbxSettings::getValueByKey(PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL);
         $notify = new Notifications();
         $result = $notify->sendMail($adminMail, $subject, trim($text));
 
