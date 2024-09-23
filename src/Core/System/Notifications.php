@@ -90,16 +90,11 @@ class Notifications
             return;
         }
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $cacheKey = 'sendAdminNotification:' . md5($subject . implode('', $messages));
+        $cacheKey = 'SendAdminNotification:' . md5($subject . implode('', $messages));
         $cacheTime = 3600 * 24; // 1 day
 
         // Check if the message is not urgent and has been sent recently from cache.
         if (!$urgent &&  $managedCache->has($cacheKey)) {
-            return;
-        }
-
-        // Check if the notification system is available (e.g., PHP Mailer is configured and working).
-        if (!self::checkConnection(self::TYPE_PHP_MAILER)) {
             return;
         }
 
@@ -197,6 +192,7 @@ class Notifications
         }
         if (!empty($messages)) {
             SystemMessages::sysLogMsg('PHPMailer', implode(' ', $messages), LOG_ERR);
+            return false;
         }
         return true;
     }
