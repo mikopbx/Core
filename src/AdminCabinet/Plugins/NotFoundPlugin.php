@@ -59,14 +59,6 @@ class NotFoundPlugin extends Injectable
                     );
 
                     return false;
-                case DispatcherException::EXCEPTION_CYCLIC_ROUTING:
-                    $dispatcher->forward(
-                        [
-                            'controller' => 'errors',
-                            'action'     => 'show500',
-                        ]
-                    );
-                    return false;
             }
         }
 

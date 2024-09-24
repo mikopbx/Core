@@ -24,6 +24,7 @@ use MikoPBX\AdminCabinet\Controllers\LanguageController;
 use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Providers\AclProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
@@ -114,6 +115,20 @@ class SecurityPlugin extends Injectable
         $homePath = $this->session->get(SessionController::SESSION_ID)[SessionController::HOME_PAGE];
         if (empty($homePath)){
             $homePath='/admin-cabinet/extensions/index';
+        }
+
+        $redis = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME);
+
+        $currentPageCacheKey = 'RedirectCount:'.$this->session->getId().':'.md5($homePath);
+
+
+        $redirectCount = $redis->get($currentPageCacheKey)??0;
+        $redirectCount++;
+        $redis->set($currentPageCacheKey, $redirectCount, 5);
+        if ($redirectCount > 25){
+            $redis->delete($currentPageCacheKey);
+            $this->forwardTo401Error($dispatcher);
+            return;
         }
 
         // Extract the module, controller, and action from the home page path
