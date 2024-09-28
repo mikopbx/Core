@@ -1230,4 +1230,10 @@ return [
     'ex_ShowOnlyRows' => 'за %rows% записів',
     'ex_CalculateAutomatically' => 'Авто',
     'ex_EnterSearchPhrase' => 'Введіть дані для пошуку',
+    'mo_ParkingExtension' => 'Слот для паркування %number%',
+    'ex_SearchByExtension' => 'Пошук за внутрішнім номером',
+    'ex_SearchByMobile' => 'Пошук за номером мобільного',
+    'ex_SearchByID' => 'Пошук за внутрішнім ідентифікатором співробітника',
+    'ex_SearchByCustomPhrase' => 'Повнотекстовий пошук',
+    'ex_SearchByEmail' => 'Пошук електронною поштою',
 ];

@@ -1230,4 +1230,10 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'ex_EnterSearchPhrase' => 'Nhập chi tiết tìm kiếm của bạn',
     'ext_WrongGetModuleLink' => 'Lỗi nhận tệp mô-đun từ kho lưu trữ',
     'ext_NoLicenseRequired' => 'Mô-đun miễn phí',
+    'ex_SearchByExtension' => 'Tìm kiếm theo số máy nhánh',
+    'ex_SearchByMobile' => 'Tìm kiếm theo số điện thoại di động',
+    'ex_SearchByEmail' => 'Tìm kiếm bằng email',
+    'ex_SearchByID' => 'Tìm kiếm theo ID nhân viên nội bộ',
+    'ex_SearchByCustomPhrase' => 'Tìm kiếm toàn văn',
+    'mo_ParkingExtension' => 'Khe đỗ xe %number%',
 ];

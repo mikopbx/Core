@@ -1229,4 +1229,10 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_CalculateAutomatically' => 'Auto',
     'ex_EnterSearchPhrase' => 'Insira os detalhes da sua pesquisa',
     'ext_NoLicenseRequired' => 'Módulo grátis',
+    'ex_SearchByMobile' => 'Pesquise por número de celular',
+    'ex_SearchByEmail' => 'Pesquisar por e-mail',
+    'ex_SearchByID' => 'Pesquisar por ID de funcionário interno',
+    'ex_SearchByCustomPhrase' => 'Pesquisa de texto completo',
+    'ex_SearchByExtension' => 'Pesquisar por número de ramal',
+    'mo_ParkingExtension' => 'Vaga de estacionamento %number%',
 ];

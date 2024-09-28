@@ -1230,4 +1230,10 @@ return [
     'ex_ShowOnlyRows' => '%rows% レコードによる',
     'ex_CalculateAutomatically' => '自動',
     'ex_EnterSearchPhrase' => '検索の詳細を入力してください',
+    'ex_SearchByExtension' => '内線番号で検索する',
+    'ex_SearchByMobile' => '携帯電話番号で検索',
+    'ex_SearchByEmail' => 'メールで検索',
+    'ex_SearchByID' => '社内従業員IDで検索',
+    'ex_SearchByCustomPhrase' => '全文検索',
+    'mo_ParkingExtension' => '駐車スロット%number%',
 ];

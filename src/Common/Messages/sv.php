@@ -1230,4 +1230,10 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ex_ShowOnlyRows' => 'av %rows% poster',
     'ex_CalculateAutomatically' => 'Bil',
     'ex_EnterSearchPhrase' => 'Ange dina sökdetaljer',
+    'ex_SearchByExtension' => 'Sök på anknytningsnummer',
+    'ex_SearchByEmail' => 'Sök via e-post',
+    'ex_SearchByID' => 'Sök på internt medarbetar-ID',
+    'ex_SearchByCustomPhrase' => 'Fulltextsökning',
+    'mo_ParkingExtension' => 'Parkeringsplats %number%',
+    'ex_SearchByMobile' => 'Sök på mobilnummer',
 ];
