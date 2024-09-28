@@ -25,7 +25,7 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
-use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
+use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 use Throwable;
@@ -61,7 +61,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      * Minimal required version PBX from the module.json
      * @var string
      */
-    protected string $min_pbx_version;
+    protected string $min_pbx_version='2024.2.3';
 
     /**
      * Module developer name  from the module.json
@@ -89,7 +89,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
     /**
      * Phalcon config service
-     * @var \Phalcon\Config|null
+     * @var \Phalcon\Config\Config|null
      */
     protected $config;
 
@@ -141,7 +141,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $this->moduleDir = $this->config->path('core.modulesDir') . '/' . $this->moduleUniqueID;
 
         // Load module settings from module.json file
-        $settings_file = "{$this->moduleDir}/module.json";
+        $settings_file = "$this->moduleDir}/module.json";
         if (file_exists($settings_file)) {
             $module_settings = json_decode(file_get_contents($settings_file), true);
             if ($module_settings) {
@@ -235,7 +235,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     public function checkCompatibility():bool
     {
         // Get the current PBX version from the settings.
-        $currentVersionPBX = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
+        $currentVersionPBX = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
 
         // Remove any '-dev' suffix from the version.
         $currentVersionPBX = str_replace('-dev', '', $currentVersionPBX);
@@ -261,7 +261,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     public function activateLicense(): bool
     {
         if($this->lic_product_id>0) {
-            $lic = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
+            $lic = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
             if (empty($lic)) {
                 $this->messages[] = $this->translation->_("ext_EmptyLicenseKey");
                 return false;
@@ -292,10 +292,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
         // Restore database settings
         $modulesDir          = $this->config->path('core.modulesDir');
-        $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
+        $backupPath = "$modulesDir/Backup/$this->moduleUniqueID";
         if (is_dir($backupPath)) {
-            $cpPath = Util::which('cp');
-            Processes::mwExec("{$cpPath} -r {$backupPath}/db/* {$this->moduleDir}/db/");
+            $cp = Util::which('cp');
+            Processes::mwExec("$cp -r $backupPath/db/* $this->moduleDir/db/");
         }
 
         // Volt
@@ -315,8 +315,8 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         // Add regular www rights
         Util::addRegularWWWRights($this->moduleDir);
         $dirs = [
-            "{$this->moduleDir}/agi-bin",
-            "{$this->moduleDir}/bin"
+            "$this->moduleDir/agi-bin",
+            "$this->moduleDir/bin"
         ];
         foreach ($dirs as $dir) {
             if(file_exists($dir) && is_dir($dir)){
@@ -424,35 +424,35 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      */
     public function unInstallFiles(bool $keepSettings = false):bool
     {
-        $cpPath = Util::which('cp');
-        $rmPath = Util::which('rm');
+        $cp = Util::which('cp');
+        $rm = Util::which('rm');
         $modulesDir          = $this->config->path('core.modulesDir');
-        $backupPath = "{$modulesDir}/Backup/{$this->moduleUniqueID}";
-        Processes::mwExec("{$rmPath} -rf {$backupPath}");
+        $backupPath = "$modulesDir/Backup/$this->moduleUniqueID";
+        Processes::mwExec("$rm -rf {$backupPath}");
         if ($keepSettings) {
             Util::mwMkdir($backupPath);
-            Processes::mwExec("{$cpPath} -r {$this->moduleDir}/db {$backupPath}/");
+            Processes::mwExec("$cp -r {$this->moduleDir}/db {$backupPath}/");
         }
-        Processes::mwExec("{$rmPath} -rf {$this->moduleDir}");
+        Processes::mwExec("$rm -rf {$this->moduleDir}");
 
         // Remove assets
         // IMG
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        $moduleImageCacheDir = "{$imgCacheDir}/{$this->moduleUniqueID}";
+        $moduleImageCacheDir = "$imgCacheDir/$this->moduleUniqueID";
         if (file_exists($moduleImageCacheDir)){
             unlink($moduleImageCacheDir);
         }
 
         // CSS
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        $moduleCSSCacheDir = "{$cssCacheDir}/{$this->moduleUniqueID}";
+        $moduleCSSCacheDir = "$cssCacheDir/$this->moduleUniqueID";
         if (file_exists($moduleCSSCacheDir)){
             unlink($moduleCSSCacheDir);
         }
 
         // JS
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        $moduleJSCacheDir = "{$jsCacheDir}/{$this->moduleUniqueID}";
+        $moduleJSCacheDir = "$jsCacheDir/$this->moduleUniqueID";
         if (file_exists($moduleJSCacheDir)){
             unlink($moduleJSCacheDir);
         }
@@ -485,13 +485,13 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $module = PbxExtensionModules::findFirstByUniqid($this->moduleUniqueID);
         if ( ! $module) {
             $module           = new PbxExtensionModules();
-            $module->name     = $this->translation->_("Breadcrumb{$this->moduleUniqueID}");
+            $module->name     = $this->translation->_("Breadcrumb$this->moduleUniqueID");
             $module->disabled = '1';
         }
         $module->uniqid        = $this->moduleUniqueID;
         $module->developer     = $this->developer;
         $module->version       = $this->version;
-        $module->description   = $this->translation->_("SubHeader{$this->moduleUniqueID}");
+        $module->description   = $this->translation->_("SubHeader$this->moduleUniqueID");
         $module->support_email = $this->support_email;
 
         try {
@@ -519,7 +519,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $dbUpgrade = new UpdateDatabase();
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\$this->moduleUniqueID\\Models\\$className";
             $upgradeResult = $dbUpgrade->createUpdateDbTableByAnnotations($moduleModelClass);
             if (!$upgradeResult){
                 return false;
@@ -540,7 +540,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
      */
     public function addToSidebar(): bool
     {
-        $menuSettingsKey           = "AdditionalMenuItem{$this->moduleUniqueID}";
+        $menuSettingsKey           = "AdditionalMenuItem$this->moduleUniqueID";
         $menuSettings              = PbxSettings::findFirstByKey($menuSettingsKey);
         if ($menuSettings === null) {
             $menuSettings      = new PbxSettings();
@@ -550,7 +550,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
             'uniqid'        => $this->moduleUniqueID,
             'group'         => 'modules',
             'iconClass'     => 'puzzle',
-            'caption'       => "Breadcrumb{$this->moduleUniqueID}",
+            'caption'       => "Breadcrumb$this->moduleUniqueID",
             'showAtSidebar' => true,
         ];
         $menuSettings->value = json_encode($value);
@@ -567,10 +567,10 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
     {
         $cacheDirs = [];
         $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
-        $rmPath = Util::which('rm');
+        $rm = Util::which('rm');
         foreach ($cacheDirs as $cacheDir) {
             if (!empty($cacheDir)) {
-                Processes::mwExec("{$rmPath} -rf {$cacheDir}/*");
+                Processes::mwExec("$rm -rf $cacheDir/*");
             }
         }
     }

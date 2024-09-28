@@ -69,8 +69,8 @@ class OutOffWorkTimeController extends BaseController
                 'calType'          => $calTypeArray[$timeFrame->calType],
                 'date_from'        => ( ! empty($timeFrame->date_from)) > 0 ? date("d.m.Y", $timeFrame->date_from) : '',
                 'date_to'          => ( ! empty($timeFrame->date_to)) > 0 ? date("d.m.Y", $timeFrame->date_to) : '',
-                'weekday_from'     => ( ! empty($timeFrame->weekday_from)) ? $this->translation->_(date('D',strtotime("Sunday +{$timeFrame->weekday_from} days"))) : '',
-                'weekday_to'       => ( ! empty($timeFrame->weekday_to)) ? $this->translation->_(date('D',strtotime("Sunday +{$timeFrame->weekday_to} days"))) : '',
+                'weekday_from'     => ( ! empty($timeFrame->weekday_from)) ? $this->translation->_(date('D',strtotime("Sunday +$timeFrame->weekday_from days"))) : '',
+                'weekday_to'       => ( ! empty($timeFrame->weekday_to)) ? $this->translation->_(date('D',strtotime("Sunday +$timeFrame->weekday_to days"))) : '',
                 'time_from'        => $timeFrame->time_from,
                 'time_to'          => $timeFrame->time_to,
                 'action'           => $timeFrame->action,
@@ -157,7 +157,7 @@ class OutOffWorkTimeController extends BaseController
         // Create an array to store the available week days and populate it with the default values.
         $weekDays = ['-1' => '-'];
         for ($i = "1"; $i <= 7; $i++) {
-            $weekDays[$i] = $this->translation->_(date('D', strtotime("Sunday +{$i} days")));
+            $weekDays[$i] = $this->translation->_(date('D', strtotime("Sunday +$i days")));
         }
 
         // Create a new TimeFrameEditForm object with the $timeFrame and arrays for the forwarding extensions, audio messages, available actions, and week days.
@@ -316,7 +316,7 @@ class OutOffWorkTimeController extends BaseController
 
         // If the ID is empty, set the reload parameter to the modified record's ID
         if (empty($data['id'])) {
-            $this->view->reload = "out-off-work-time/modify/{$timeFrame->id}";
+            $this->view->reload = "out-off-work-time/modify/$timeFrame->id";
         }
 
         // If there was no error saving the record, save the allowed outbound rules
@@ -391,9 +391,8 @@ class OutOffWorkTimeController extends BaseController
         // Find the OutWorkTimes record with the specified id
         $timeFrame = OutWorkTimes::findFirstByid($id);
         // If the record exists, delete it
-        if ($timeFrame !== null) {
-            $timeFrame->delete();
-        }
+        $timeFrame?->delete();
+
         // Redirect to the OutOffWorkTime index page
         $this->forward('OutOffWorkTime/index');
     }

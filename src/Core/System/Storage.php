@@ -24,7 +24,6 @@ use JsonException;
 use MikoPBX\Common\Config\ClassLoader;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\ConfigProvider;
@@ -37,7 +36,7 @@ use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
-use Phalcon\Di;
+use Phalcon\Di\Injectable;
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -46,9 +45,9 @@ use function MikoPBX\Common\Config\appPath;
  * Manages storage-related operations.
  *
  * @package MikoPBX\Core\System
- * @property \Phalcon\Config config
+ * @property \Phalcon\Config\Config config
  */
-class Storage extends Di\Injectable
+class Storage extends Injectable
 {
     /**
      * Move read-only sounds to the storage.
@@ -780,7 +779,7 @@ class Storage extends Di\Injectable
                 if (file_exists($entry)) {
                     continue;
                 }
-                if ($isLiveCd && strpos($entry, '/offload/') === 0) {
+                if ($isLiveCd && str_starts_with($entry, '/offload/')) {
                     continue;
                 }
                 $path .= " $entry";
@@ -883,7 +882,7 @@ class Storage extends Di\Injectable
      */
     private function getStorageDev(array $disk, string $cf_disk): string
     {
-        if (!empty($disk['uniqid']) && strpos($disk['uniqid'], 'STORAGE-DISK') === false) {
+        if (!empty($disk['uniqid']) && !str_contains($disk['uniqid'], 'STORAGE-DISK')) {
             // Find the partition name by UID.
             $lsblk = Util::which('lsblk');
             $grep = Util::which('grep');
@@ -1155,7 +1154,7 @@ class Storage extends Di\Injectable
     public function createAGIBINSymlinks(bool $isLiveCd): void
     {
         $agiBinDir = $this->config->path(Directories::AST_AGI_BIN_DIR);
-        if ($isLiveCd && strpos($agiBinDir, '/offload/') !== 0) {
+        if ($isLiveCd && !str_starts_with($agiBinDir, '/offload/')) {
             Util::mwMkdir($agiBinDir);
         }
 
@@ -1335,7 +1334,7 @@ class Storage extends Di\Injectable
             );
             $disk_data = explode('|', implode(" ", $out));
             if (count($disk_data) === 3) {
-                $m_size = round(($disk_data[1] + $disk_data[2]) / 1024, 1);
+                $m_size = round((intval($disk_data[1]) + intval($disk_data[2])) / 1024, 1);
 
                 // Add Docker disk information to the result
                 $res_disks[] = [
@@ -1485,15 +1484,15 @@ class Storage extends Di\Injectable
      * @param string $filter The filter to match the disk name.
      * @return string|bool The mount point if the disk is mounted, or false if not mounted.
      */
-    public static function diskIsMounted(string $disk, string $filter = '/dev/')
+    public static function diskIsMounted(string $disk, string $filter = '/dev/'): bool|string
     {
         $out = [];
-        $grepPath = Util::which('grep');
-        $mountPath = Util::which('mount');
-        $headPath = Util::which('head');
+        $grep = Util::which('grep');
+        $mount = Util::which('mount');
+        $head = Util::which('head');
 
         // Execute mount command and grep the output for the disk name
-        Processes::mwExec("$mountPath | $grepPath '$filter${disk}' | $headPath -n 1", $out);
+        Processes::mwExec("$mount | $grep '{$filter}{$disk}' | $head -n 1", $out);
         if (count($out) > 0) {
             $res_out = end($out);
         } else {
@@ -1534,9 +1533,9 @@ class Storage extends Di\Injectable
      * Get the free space in megabytes for a given HDD.
      *
      * @param string $hdd The name of the HDD.
-     * @return int The free space in megabytes.
+     * @return float|int The free space in megabytes.
      */
-    public static function getFreeSpace(string $hdd)
+    public static function getFreeSpace(string $hdd): float|int
     {
         $out = [];
         $hdd = escapeshellarg($hdd);
@@ -1678,7 +1677,7 @@ class Storage extends Di\Injectable
         $type = $data['children'][0]['type'] ?? '';
 
         // Check if the disk is not a RAID type
-        if (strpos($type, 'raid') === false) {
+        if (!str_contains($type, 'raid')) {
             $children = $data['children'] ?? [];
             foreach ($children as $child) {
                 $result[] = $child['name'];
@@ -1833,7 +1832,7 @@ class Storage extends Di\Injectable
      */
     public static function connectStorageInCloud(): string
     {
-        if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"') === null) {
+        if (PbxSettings::findFirst('key="' . PbxSettings::CLOUD_PROVISIONING . '"') === null) {
             return SystemMessages::RESULT_SKIPPED;
         }
 

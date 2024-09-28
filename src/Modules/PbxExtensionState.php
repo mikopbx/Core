@@ -44,9 +44,9 @@ use Throwable;
 class PbxExtensionState extends Injectable
 {
 
-    const DISABLED_BY_EXCEPTION = 'DisabledByException';
-    const DISABLED_BY_USER = 'DisabledByUser';
-    const DISABLED_BY_LICENSE = 'DisabledByLicense';
+    public const string DISABLED_BY_EXCEPTION = 'DisabledByException';
+    public const string DISABLED_BY_USER = 'DisabledByUser';
+    public const string DISABLED_BY_LICENSE = 'DisabledByLicense';
 
     private array $messages;
     private $lic_feature_id;
@@ -68,7 +68,7 @@ class PbxExtensionState extends Injectable
         $this->modulesRoot    = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('core.modulesDir');
 
         // Check if module.json file exists
-        $moduleJson           = "{$this->modulesRoot}/{$this->moduleUniqueID}/module.json";
+        $moduleJson           = "$this->modulesRoot/$this->moduleUniqueID/module.json";
         if ( ! file_exists($moduleJson)) {
             $this->messages[] = 'module.json not found for module ' . $this->moduleUniqueID;
             return;
@@ -103,7 +103,7 @@ class PbxExtensionState extends Injectable
     private function reloadConfigClass(): void
     {
         $class_name      = str_replace('Module', '', $this->moduleUniqueID);
-        $configClassName = "Modules\\{$this->moduleUniqueID}\\Lib\\{$class_name}Conf";
+        $configClassName = "Modules\\$this->moduleUniqueID\\Lib\\{$class_name}Conf";
         if (class_exists($configClassName)) {
             $this->configClass = new $configClassName();
         } else {
@@ -326,10 +326,10 @@ class PbxExtensionState extends Injectable
         // Attempt to remove the current module, if no errors occur, it can be disabled
         // For example, the module may be referenced by a record in the Extensions table,
         // which needs to be deleted when the module is disabled
-        $modelsFiles = glob("{$this->modulesRoot}/{$this->moduleUniqueID}/Models/*.php", GLOB_NOSORT);
+        $modelsFiles = glob("$this->modulesRoot/$this->moduleUniqueID/Models/*.php", GLOB_NOSORT);
         foreach ($modelsFiles as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\$this->moduleUniqueID\\Models\\$className";
             try {
                 if ( ! class_exists($moduleModelClass)) {
                     continue;
@@ -479,11 +479,11 @@ class PbxExtensionState extends Injectable
         // Check for broken references that prevent enabling the module
         // For example, if an employee has been deleted and the module references their extension.
         //
-        $modelsFiles = glob("{$this->modulesRoot}/{$this->moduleUniqueID}/Models/*.php", GLOB_NOSORT);
+        $modelsFiles = glob("$this->modulesRoot/$this->moduleUniqueID/Models/*.php", GLOB_NOSORT);
         $translator  = $this->di->getShared('translation');
         foreach ($modelsFiles as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\{$className}";
+            $moduleModelClass = "Modules\\$this->moduleUniqueID\\Models\\$className";
 
             try {
                 if ( ! class_exists($moduleModelClass)) {
@@ -549,10 +549,10 @@ class PbxExtensionState extends Injectable
     {
         $cacheDirs = [];
         $cacheDirs[] = $this->config->path('adminApplication.voltCacheDir');
-        $rmPath = Util::which('rm');
+        $rm = Util::which('rm');
         foreach ($cacheDirs as $cacheDir) {
             if (!empty($cacheDir)) {
-                Processes::mwExec("{$rmPath} -rf {$cacheDir}/*");
+                Processes::mwExec("$rm -rf $cacheDir/*");
             }
         }
     }

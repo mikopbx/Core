@@ -1,4 +1,4 @@
-{{ form('outbound-routes/save', 'role': 'form', 'class': 'ui large form  ', 'id':'outbound-route-form') }}
+{{ form(['action' : 'outbound-routes/save', 'method': 'post', 'role': 'form', 'class': 'ui large form  ', 'id':'outbound-route-form']) }}
 
 {{ form.render('id') }}
 {{ form.render('priority') }}
@@ -43,4 +43,4 @@
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 {{ partial("partials/submitbutton",['indexurl':'outbound-routes/index/']) }}
-{{ end_form() }}
+{{ close('form') }}

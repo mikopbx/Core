@@ -20,7 +20,6 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -129,7 +128,7 @@ class ResParkingConf extends AsteriskConfigClass
      *
      * @return array|null An associative array representing the park slot data.
      *
-     * @throws \Phalcon\Exception
+     * @throws \Exception
      */
     public static function getParkSlotData(?string $extension = null) : ?array
     {
@@ -158,11 +157,11 @@ class ResParkingConf extends AsteriskConfigClass
      */
     public function getSettings(): void
     {
-        $this->ParkingExt       = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_EXT);
-        $this->ParkingFeature   = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_FEATURE);
-        $this->ParkingDuration  = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_DURATION);
-        $this->ParkingStartSlot = (int)PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT);
-        $this->ParkingEndSlot   = (int)PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT);
+        $this->ParkingExt       = PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_EXT);
+        $this->ParkingFeature   = PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_FEATURE);
+        $this->ParkingDuration  = PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_DURATION);
+        $this->ParkingStartSlot = (int)PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_START_SLOT);
+        $this->ParkingEndSlot   = (int)PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_END_SLOT);
     }
 
     /**

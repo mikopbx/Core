@@ -22,15 +22,15 @@ namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 use MikoPBX\Common\Models\ConferenceRooms;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
-
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 /**
  *  Class DeleteRecord
  *  Delete a conference room and all its dependencies.
  *
  * @package MikoPBX\PBXCoreREST\Lib\ConferenceRooms
  */
-class DeleteRecordAction extends \Phalcon\Di\Injectable
+class DeleteRecordAction extends Injectable
 {
 
     /**

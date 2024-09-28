@@ -54,11 +54,11 @@ class NotFoundMiddleware extends Injectable implements MiddlewareInterface
     /**
      * Call me
      *
-     * @param Micro $api
+     * @param Micro $application
      *
      * @return bool
      */
-    public function call(Micro $api): bool
+    public function call(Micro $application): bool
     {
         return true;
     }

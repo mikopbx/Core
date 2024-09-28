@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\AdminCabinet\Providers;
 
 use MikoPBX\AdminCabinet\Controllers\SessionController;
-use MikoPBX\AdminCabinet\Plugins\AssetManager as Manager;
+use MikoPBX\AdminCabinet\Plugins\AssetManager;
 use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\MessagesProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
@@ -43,18 +43,18 @@ use function MikoPBX\Common\Config\appPath;
  */
 class AssetProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'assets';
+    public const string SERVICE_NAME = 'assets';
 
-    public const HEADER_JS = 'headerJS';
-    public const HEADER_CSS = 'headerCSS';
-    public const HEADER_PBX_JS = 'headerPBXJS';
-    public const HEADER_SENTRY_JS = 'headerSentryJS';
-    public const SEMANTIC_UI_CSS = 'SemanticUICSS';
-    public const SEMANTIC_UI_JS = 'SemanticUIJS';
-    public const FOOTER_ACE = 'footerACE';
-    public const FOOTER_LOC = 'footerLoc';
-    public const FOOTER_JS = 'footerJS';
-    public const FOOTER_PBX_JS = 'footerPBXJS';
+    public const string HEADER_JS = 'headerJS';
+    public const string HEADER_CSS = 'headerCSS';
+    public const string HEADER_PBX_JS = 'headerPBXJS';
+    public const string HEADER_SENTRY_JS = 'headerSentryJS';
+    public const string SEMANTIC_UI_CSS = 'SemanticUICSS';
+    public const string SEMANTIC_UI_JS = 'SemanticUIJS';
+    public const string FOOTER_ACE = 'footerACE';
+    public const string FOOTER_LOC = 'footerLoc';
+    public const string FOOTER_JS = 'footerJS';
+    public const string FOOTER_PBX_JS = 'footerPBXJS';
 
     private Collection $headerCollectionJSForExtensions;
     private Collection $footerCollectionJSForExtensions;
@@ -67,7 +67,7 @@ class AssetProvider implements ServiceProviderInterface
     private Collection $footerCollectionLoc;
     private Collection $headerCollectionSentryJS;
     private string $jsCacheDir;
-    private Manager $manager;
+    private \Phalcon\Assets\Manager $manager;
 
     /**
      * Registers assets service provider
@@ -86,7 +86,8 @@ class AssetProvider implements ServiceProviderInterface
 
                 // Module and PBX version caching for proper PBX operation when installing modules.
                 $version = PBXConfModulesProvider::getVersionsHash();
-                $assets->initializeClassVariables($version);
+                $tagFactory = $di->get('tag');
+                $assets->initializeClassVariables($version, $tagFactory);
                 $dispatcher = $di->get(DispatcherProvider::SERVICE_NAME);
                 $controller = $dispatcher->getControllerName();
                 $action = $dispatcher->getActionName();
@@ -120,33 +121,23 @@ class AssetProvider implements ServiceProviderInterface
     /**
      * Initialize class variables
      */
-    public function initializeClassVariables(string $version)
+    public function initializeClassVariables(string $version, \Phalcon\Html\TagFactory $tagFactory): void
     {
-        $this->manager = new Manager();
+        $this->manager = new AssetManager($tagFactory, ['prefix'=>'/admin-cabinet/assets/']);
         $this->manager->setVersion($version);
 
         $this->jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
 
         $this->headerCollectionJSForExtensions = $this->manager->collection(self::HEADER_JS);
-        $this->headerCollectionJSForExtensions->setPrefix('assets/');
-
         $this->footerCollectionJSForExtensions = $this->manager->collection(self::FOOTER_JS);
-        $this->footerCollectionJSForExtensions->setPrefix('assets/');
         $this->headerCollectionJS = $this->manager->collection(self::HEADER_PBX_JS);
-        $this->headerCollectionJS->setPrefix('assets/');
         $this->headerCollectionCSS = $this->manager->collection(self::HEADER_CSS);
-        $this->headerCollectionCSS->setPrefix('assets/');
         $this->footerCollectionJS = $this->manager->collection(self::FOOTER_PBX_JS);
-        $this->footerCollectionJS->setPrefix('assets/');
         $this->headerCollectionSentryJS = $this->manager->collection(self::HEADER_SENTRY_JS);
         $this->semanticCollectionCSS = $this->manager->collection(self::SEMANTIC_UI_CSS);
-        $this->semanticCollectionCSS->setPrefix('assets/');
         $this->semanticCollectionJS = $this->manager->collection(self::SEMANTIC_UI_JS);
-        $this->semanticCollectionJS->setPrefix('assets/');
         $this->footerCollectionACE = $this->manager->collection(self::FOOTER_ACE);
-        $this->footerCollectionACE->setPrefix('assets/');
         $this->footerCollectionLoc = $this->manager->collection(self::FOOTER_LOC);
-        $this->footerCollectionLoc->setPrefix('assets/');
     }
 
     /**
@@ -289,7 +280,7 @@ class AssetProvider implements ServiceProviderInterface
     private function makeLocalizationAssets(DiInterface $di, string $version): void
     {
         $language = $di->getShared(LanguageProvider::SERVICE_NAME);
-        $fileName = "{$this->jsCacheDir}/localization-{$language}-{$version}.min.js";
+        $fileName = "$this->jsCacheDir/localization-$language-$version.min.js";
         if (!file_exists($fileName)) {
             $arrStr = [];
             foreach ($di->getShared(MessagesProvider::SERVICE_NAME) as $key => $value) {
@@ -301,7 +292,7 @@ class AssetProvider implements ServiceProviderInterface
             }
             $scriptArray = json_encode($arrStr);
             $proxyCode = "
-                const globalTranslateArray = {$scriptArray};
+                const globalTranslateArray = $scriptArray;
                 
                 globalTranslate = new Proxy(globalTranslateArray, {
                     get: function(target, prop, receiver) {
@@ -317,7 +308,7 @@ class AssetProvider implements ServiceProviderInterface
             file_put_contents($fileName, $proxyCode);
         }
 
-        $langJSFile = "js/cache/localization-{$language}-{$version}.min.js";
+        $langJSFile = "js/cache/localization-$language-$version.min.js";
         $this->footerCollectionLoc->addJs($langJSFile, true);
     }
 
@@ -326,7 +317,7 @@ class AssetProvider implements ServiceProviderInterface
      *
      * @param string $action
      */
-    private function makeCallQueuesAssets(string $action)
+    private function makeCallQueuesAssets(string $action): void
     {
         if ($action === 'index') {
             $this->headerCollectionCSS
@@ -351,7 +342,7 @@ class AssetProvider implements ServiceProviderInterface
      *
      * @param string $action
      */
-    private function makeConferenceRoomsAssets(string $action)
+    private function makeConferenceRoomsAssets(string $action): void
     {
         if ($action === 'index') {
             $this->footerCollectionJS

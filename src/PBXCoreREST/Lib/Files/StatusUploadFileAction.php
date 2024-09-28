@@ -21,7 +21,8 @@ namespace MikoPBX\PBXCoreREST\Lib\Files;
 
 
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class StatusUploadFile
@@ -29,7 +30,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Files
  */
-class StatusUploadFileAction extends \Phalcon\Di\Injectable
+class StatusUploadFileAction extends Injectable
 {
 
     /**

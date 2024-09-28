@@ -30,7 +30,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class ResponseProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'response';
+    public const string SERVICE_NAME = 'response';
 
     /**
      * Register response service provider

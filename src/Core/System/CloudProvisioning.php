@@ -20,9 +20,9 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\CloudProvisioning\AWSCloud;
 use MikoPBX\Core\System\CloudProvisioning\AzureCloud;
+use MikoPBX\Core\System\CloudProvisioning\CloudProvider;
 use MikoPBX\Core\System\CloudProvisioning\GoogleCloud;
 use MikoPBX\Core\System\CloudProvisioning\VKCloud;
 use MikoPBX\Core\System\CloudProvisioning\YandexCloud;
@@ -77,7 +77,7 @@ class CloudProvisioning
      */
     private static function checkItNeedToStartProvisioning(): bool
     {
-        if (PbxSettings::findFirst('key="' . PbxSettingsConstants::CLOUD_PROVISIONING . '"') === null) {
+        if (PbxSettings::findFirst('key="' . PbxSettings::CLOUD_PROVISIONING . '"') === null) {
             return true;    // Need provision
         }
         return false;   // Provisioning is already completed
@@ -85,19 +85,19 @@ class CloudProvisioning
 
     /**
      * After provisioning, perform the following actions:
-     * @param $provider mixed The provider object.
+     * @param CloudProvider $provider The provider object.
      * @param string $cloudName The name of the cloud.
      * @return void
      */
-    public static function afterProvisioning($provider, string $cloudName): void
+    public static function afterProvisioning(CloudProvider $provider, string $cloudName): void
     {
         // Enable firewall and Fail2Ban
-        $provider->updatePbxSettings(PbxSettingsConstants::PBX_FIREWALL_ENABLED, '1');
-        $provider->updatePbxSettings(PbxSettingsConstants::PBX_FAIL2BAN_ENABLED, '1');
+        $provider->updatePbxSettings(PbxSettings::PBX_FIREWALL_ENABLED, '1');
+        $provider->updatePbxSettings(PbxSettings::PBX_FAIL2BAN_ENABLED, '1');
 
         // Mark provisioning as completed
-        $provider->updatePbxSettings(PbxSettingsConstants::CLOUD_PROVISIONING, '1');
-        $provider->updatePbxSettings(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE, $cloudName);
+        $provider->updatePbxSettings(PbxSettings::CLOUD_PROVISIONING, '1');
+        $provider->updatePbxSettings(PbxSettings::VIRTUAL_HARDWARE_TYPE, $cloudName);
 
     }
 }

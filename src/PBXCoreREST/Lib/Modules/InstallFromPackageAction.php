@@ -34,7 +34,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 class InstallFromPackageAction extends ModuleInstallationBase
 {
 
-    const UPLOAD_TIMEOUT = 120;
+    const int UPLOAD_TIMEOUT = 120;
 
     // Path to the downloaded zip archive
     private string $filePath;

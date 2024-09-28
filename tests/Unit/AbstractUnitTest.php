@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace MikoPBX\Tests\Unit;
 
 use MikoPBX\Core\Config\RegisterDIServices;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\FactoryDefault;
-use Phalcon\Incubator\Test\PHPUnit\UnitTestCase;
+use MikoPBX\Tests\Unit\Incubator\PHPUnit\UnitTestCase;
 use PHPUnit\Framework\IncompleteTestError;
 
 abstract class AbstractUnitTest extends UnitTestCase

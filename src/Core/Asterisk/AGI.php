@@ -47,7 +47,7 @@ class AGI extends AGIBase
      *
      * @return array, see evaluate for return information.
      */
-    public function verbose($message, $level = 1)
+    public function verbose(string $message, int $level = 1):array
     {
         $ret = ['code' => 500, 'result' => -1, 'data' => ''];
         foreach (explode("\n", str_replace("\r\n", "\n", print_r($message, true))) as $msg) {
@@ -66,9 +66,9 @@ class AGI extends AGIBase
      * @example examples/input.php Get text input from the user and say it back
      * @example examples/ping.php Ping an IP address
      *
-     * @return array, see evaluate for return information.  ['result'] is 0 on success, -1 on failure.
+     * @return array see evaluate for return information.  ['result'] is 0 on success, -1 on failure.
      */
-    public function answer()
+    public function answer(): array
     {
         return $this->evaluate('ANSWER');
     }
@@ -81,9 +81,9 @@ class AGI extends AGIBase
      * @param string $family
      * @param string $key
      *
-     * @return array, see evaluate for return information. ['result'] is 1 on sucess, 0 otherwise.
+     * @return array see evaluate for return information. ['result'] is 1 on sucess, 0 otherwise.
      */
-    public function database_del($family, $key)
+    public function database_del(string $family, string $key): array
     {
         return $this->evaluate("DATABASE DEL \"$family\" \"$key\"");
     }
@@ -96,9 +96,9 @@ class AGI extends AGIBase
      * @param string $family
      * @param string $keytree
      *
-     * @return array, see evaluate for return information. ['result'] is 1 on sucess, 0 otherwise.
+     * @return array see evaluate for return information. ['result'] is 1 on sucess, 0 otherwise.
      */
-    public function database_deltree(string $family, string $keytree = '')
+    public function database_deltree(string $family, string $keytree = ''): array
     {
         $cmd = "DATABASE DELTREE \"$family\"";
         if (!empty($keytree)) {
@@ -116,10 +116,10 @@ class AGI extends AGIBase
      * @param string $family
      * @param string $key
      *
-     * @return array, see evaluate for return information. ['result'] is 1 on sucess, 0 failure. ['data'] holds the
+     * @return array see evaluate for return information. ['result'] is 1 on sucess, 0 failure. ['data'] holds the
      *                value
      */
-    public function database_get($family, $key)
+    public function database_get(string $family, string $key): array
     {
         return $this->evaluate("DATABASE GET \"$family\" \"$key\"");
     }
@@ -131,9 +131,9 @@ class AGI extends AGIBase
      * @param string $key
      * @param string $value
      *
-     * @return array, see evaluate for return information. ['result'] is 1 on sucess, 0 otherwise
+     * @return array see evaluate for return information. ['result'] is 1 on sucess, 0 otherwise
      */
-    public function databasePut($family, $key, $value)
+    public function databasePut(string $family, string $key, string $value): array
     {
         $value = str_replace("\n", '\n', addslashes($value));
 
@@ -148,9 +148,9 @@ class AGI extends AGIBase
      * @param string           $pVariable
      * @param string|int|float $pValue
      *
-     * @return array, see evaluate for return information. ['result'] is 1 on sucess, 0 otherwise
+     * @return array see evaluate for return information. ['result'] is 1 on sucess, 0 otherwise
      */
-    public function set_var($pVariable, $pValue)
+    public function set_var(string $pVariable, string|int|float $pValue):array
     {
         if (is_numeric($pValue)) {
             return $this->evaluate("Set({$pVariable}={$pValue});");
@@ -170,10 +170,10 @@ class AGI extends AGIBase
      * @param string $variable name
      * @param bool   $getvalue return the value only
      *
-     * @return array | string, see evaluate for return information. ['result'] is 0 if variable hasn't been set, 1 if
+     * @return array | string see evaluate for return information. ['result'] is 0 if variable hasn't been set, 1 if
      *               it has. ['data'] holds the value. returns value if $getvalue is TRUE
      */
-    public function get_variable($variable, $getvalue = false)
+    public function get_variable(string $variable, bool $getvalue = false):array| string
     {
         $res = $this->evaluate("GET VARIABLE $variable");
         if ($getvalue === false) {
@@ -196,9 +196,9 @@ class AGI extends AGIBase
      *
      * @param string $channel
      *
-     * @return array, see evaluate for return information. ['result'] is 1 on success, -1 on failure.
+     * @return array see evaluate for return information. ['result'] is 1 on success, -1 on failure.
      */
-    public function hangup($channel = '')
+    public function hangup(string $channel = ''): array
     {
         return $this->evaluate("HANGUP $channel");
     }
@@ -212,7 +212,7 @@ class AGI extends AGIBase
      *
      * @return array, see evaluate for return information.
      */
-    public function noop($string = "")
+    public function noop(string $string = ""):array
     {
         return $this->evaluate("NOOP \"$string\"");
     }
@@ -226,10 +226,10 @@ class AGI extends AGIBase
      *
      * @param string $image without extension, often in /var/lib/asterisk/images
      *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or error, 0 if the image is sent
+     * @return array see evaluate for return information. ['result'] is -1 on hangup or error, 0 if the image is sent
      *                or channel does not support image transmission.
      */
-    public function send_image($image)
+    public function send_image(string $image): array
     {
         return $this->evaluate("SEND IMAGE $image");
     }
@@ -241,12 +241,12 @@ class AGI extends AGIBase
      *
      * @link http://www.voip-info.org/wiki-send+text
      *
-     * @param $text
+     * @param string $text
      *
-     * @return array, see evaluate for return information. ['result'] is -1 on hangup or error, 0 if the text is sent or
+     * @return array see evaluate for return information. ['result'] is -1 on hangup or error, 0 if the text is sent or
      * channel does not support text transmission.
      */
-    public function send_text($text)
+    public function send_text(string $text): array
     {
         return $this->evaluate("SEND TEXT \"$text\"");
     }
@@ -263,7 +263,7 @@ class AGI extends AGIBase
      *
      * @return array, see evaluate for return information.
      */
-    public function set_autohangup($time = 0)
+    public function set_autohangup(int $time = 0): array
     {
         return $this->evaluate("SET AUTOHANGUP $time");
     }
@@ -283,7 +283,7 @@ class AGI extends AGIBase
      *
      * @return array, see evaluate for return information.
      */
-    public function set_callerid($cid)
+    public function set_callerid(string $cid): array
     {
         return $this->evaluate("SET CALLERID $cid");
     }
@@ -298,7 +298,7 @@ class AGI extends AGIBase
      *
      * @return array, see evaluate for return information.
      */
-    public function set_music($enabled = true, $class = '')
+    public function set_music(bool $enabled = true, string $class = ''):array
     {
         $enabled = ($enabled) ? 'ON' : 'OFF';
 
@@ -309,18 +309,18 @@ class AGI extends AGIBase
      * Sets a variable to the specified value. The variables so created can later be used by later using
      * ${<variablename>} in the dialplan.
      *
-     * These variables live in the channel Asterisk creates when you pickup a phone and as such they are both local and
+     * These variables live in the channel Asterisk creates when you pick up a phone and as such they are both local and
      * temporary. Variables created in one channel can not be accessed by another channel. When you hang up the phone,
      * the channel is deleted and any variables in that channel are deleted as well.
      *
      * @link http://www.voip-info.org/wiki-set+variable
      *
-     * @param string $variable is case sensitive
+     * @param string $variable is case-sensitive
      * @param string $value
      *
      * @return array, see evaluate for return information.
      */
-    public function set_variable($variable, $value)
+    public function set_variable(string $variable, string $value): array
     {
         $value = str_replace("\n", '\n', addslashes($value));
 
@@ -332,7 +332,7 @@ class AGI extends AGIBase
      *
      * Note that the timeout is set from the current time forward, not counting the number of seconds the call has
      * already been up. Each time you call AbsoluteTimeout(), all previous absolute timeouts are cancelled. Will return
-     * the call to the T extension so that you can playback an explanatory note to the calling party (the called party
+     * the call to the T extension so that you can play back an explanatory note to the calling party (the called party
      * will not hear that)
      *
      * @link http://www.voip-info.org/wiki-Asterisk+-+documentation+of+application+commands
@@ -343,7 +343,7 @@ class AGI extends AGIBase
      *
      * @return array, see evaluate for return information.
      */
-    public function exec_absolutetimeout($seconds = 0)
+    public function exec_absolutetimeout(int $seconds = 0):array
     {
         return $this->exec('AbsoluteTimeout', $seconds);
     }
@@ -360,7 +360,7 @@ class AGI extends AGIBase
      * @return array, see evaluate for return information. ['result'] is whatever the application returns, or -2 on
      *                failure to find application
      */
-    public function exec($application, $options)
+    public function exec(string $application, mixed $options): array
     {
         if (is_array($options)) {
             $options = join(',', $options);
@@ -381,13 +381,13 @@ class AGI extends AGIBase
      *
      * @param string $type
      * @param string $identifier
-     * @param int    $timeout
-     * @param string $options
-     * @param string $url
+     * @param int|null $timeout
+     * @param string|null $options
+     * @param string|null $url
      *
      * @return array, see evaluate for return information.
      */
-    public function exec_dial($type, $identifier, $timeout = null, $options = null, $url = null)
+    public function exec_dial(string $type, string $identifier, ?int $timeout = null, ?string $options = null, ?string $url = null): array
     {
         return $this->exec(
             'Dial',
@@ -405,12 +405,12 @@ class AGI extends AGIBase
      * are optional, not the trailing arguments.  Thuse goto($z) sets the priority to $z.
      *
      * @param string $a
-     * @param string $b ;
-     * @param string $c ;
+     * @param string|null $b ;
+     * @param string|null $c ;
      *
      * @return array, see evaluate for return information.
      */
-    public function exec_goto($a, $b = null, $c = null)
+    public function exec_goto(string $a, ?string $b = null, ?string $c = null): array
     {
         return $this->exec('Goto', trim($a . $this->option_delim . $b . $this->option_delim . $c, $this->option_delim));
     }
@@ -436,7 +436,7 @@ class AGI extends AGIBase
      *
      * @link    http://www.voip-info.org/wiki-stream+file
      */
-    public function stream_file($filename, $escape_digits = '', $offset = 0)
+    public function stream_file(string $filename, string $escape_digits = '', int $offset = 0): array
     {
         return $this->evaluate("STREAM FILE $filename \"$escape_digits\" $offset");
     }
@@ -484,7 +484,7 @@ class AGI extends AGIBase
      *
      * @link    http://www.voip-info.org/wiki-get+data
      */
-    public function getData($filename, $timeout = null, $max_digits = null)
+    public function getData(string $filename, ?int $timeout = null, ?int $max_digits = null): array
     {
         return $this->evaluate(rtrim("GET DATA $filename $timeout $max_digits"));
     }
@@ -499,7 +499,7 @@ class AGI extends AGIBase
      * @return array, see evaluate for return information. ['result'] is 0 if wait completes with no
      * digit received, otherwise a decimal value of the DTMF tone.  Use chr() to convert to ASCII.
      */
-    public function wait_for_digit($timeout = -1)
+    public function wait_for_digit(int $timeout = -1): array
     {
         return $this->evaluate("WAIT FOR DIGIT $timeout");
     }

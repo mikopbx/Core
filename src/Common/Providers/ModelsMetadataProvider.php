@@ -25,6 +25,7 @@ namespace MikoPBX\Common\Providers;
 use Phalcon\Cache\AdapterFactory;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
+
 use Phalcon\Mvc\Model\MetaData\Redis;
 use Phalcon\Mvc\Model\MetaData\Strategy\Annotations as StrategyAnnotations;
 use Phalcon\Storage\SerializerFactory;
@@ -36,7 +37,7 @@ use Phalcon\Storage\SerializerFactory;
  */
 class ModelsMetadataProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'modelsMetadata';
+    public const string SERVICE_NAME = 'modelsMetadata';
 
     /**
      * Register Models metadata service provider.

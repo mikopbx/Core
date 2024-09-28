@@ -19,18 +19,19 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Starts the collection of logs and captures TCP packets.
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class StartLogAction extends \Phalcon\Di\Injectable
+class StartLogAction extends Injectable
 {
     /**
      * Starts the collection of logs and captures TCP packets.
@@ -41,20 +42,20 @@ class StartLogAction extends \Phalcon\Di\Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $logDir = System::getLogDir();
+        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR);
 
         // TCP dump
-        $tcpDumpDir = "{$logDir}/tcpDump";
+        $tcpDumpDir = "$logDir/tcpDump";
         Util::mwMkdir($tcpDumpDir);
         $network = new Network();
         $arr_eth = $network->getInterfacesNames();
-        $tcpdumpPath = Util::which('tcpdump');
+        $tcpdump = Util::which('tcpdump');
         $timeout = 300;
         foreach ($arr_eth as $eth) {
             Processes::mwExecBgWithTimeout(
-                "{$tcpdumpPath} -i {$eth} -n -s 0 -vvv -w {$tcpDumpDir}/{$eth}.pcap",
+                "$tcpdump -i $eth -n -s 0 -vvv -w $tcpDumpDir/$eth.pcap",
                 $timeout,
-                "{$tcpDumpDir}/{$eth}_out.log"
+                "$tcpDumpDir/{$eth}_out.log"
             );
         }
         $res->success = true;

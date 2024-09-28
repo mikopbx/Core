@@ -101,7 +101,7 @@ class WorkerModuleInstaller extends WorkerBase
         file_put_contents( $this->progress_file, '50');
         ModulesDBConnectionsProvider::recreateModulesDBConnections();
         Util::addRegularWWWRights($currentModuleDir);
-        $pbxExtensionSetupClass = "Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
+        $pbxExtensionSetupClass = "Modules\\$moduleUniqueID\\Setup\\PbxExtensionSetup";
         if (class_exists($pbxExtensionSetupClass)
             && method_exists($pbxExtensionSetupClass, 'installModule')) {
             try {
@@ -115,7 +115,7 @@ class WorkerModuleInstaller extends WorkerBase
                 file_put_contents($this->error_file, 'Exception on installNewModuleFromFile: ' . $e->getMessage(), FILE_APPEND);
             }
         } else {
-            file_put_contents($this->error_file,"Install error: the class {$pbxExtensionSetupClass} does not exists", FILE_APPEND);
+            file_put_contents($this->error_file,"Install error: the class $pbxExtensionSetupClass does not exists", FILE_APPEND);
         }
         file_put_contents( $this->progress_file, '100');
     }

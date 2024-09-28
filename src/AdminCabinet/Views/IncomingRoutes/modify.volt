@@ -1,4 +1,4 @@
-{{ form('incoming-routes/save', 'role': 'form', 'class': 'ui large form', 'id':'incoming-route-form') }}
+{{ form(['action' : 'incoming-routes/save', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'incoming-route-form']) }}
 
 
 {{ form.render('id') }}
@@ -39,4 +39,4 @@
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 {{ partial("partials/submitbutton",['indexurl':'incoming-routes/index']) }}
-{{ end_form() }}
+{{ close('form') }}

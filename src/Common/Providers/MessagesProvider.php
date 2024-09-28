@@ -33,7 +33,7 @@ use function MikoPBX\Common\Config\appPath;
  */
 class MessagesProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'messages';
+    public const string SERVICE_NAME = 'messages';
 
     /**
      * Register the messages service provider.
@@ -68,7 +68,7 @@ class MessagesProvider implements ServiceProviderInterface
 
                 if ($language !== 'en') {
                     // Check if the translation file exists for the selected language
-                    $langFile = appPath("/src/Common/Messages/{$language}.php");
+                    $langFile = appPath("/src/Common/Messages/$language.php");
                     if (file_exists($langFile)) {
                         $langArr = self::includeLanguageFile($langFile);
                         if (!empty($langArr)) {
@@ -92,7 +92,7 @@ class MessagesProvider implements ServiceProviderInterface
                 if ($language !== 'en') {
                     $additionalTranslates = [[]];
                     $results              = glob(
-                        $coreConfig->modulesDir . "/*/{Messages}/{$language}.php",
+                        $coreConfig->modulesDir . "/*/{Messages}/$language.php",
                         GLOB_BRACE
                     );
                     foreach ($results as $path) {

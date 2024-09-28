@@ -18,7 +18,7 @@
  */
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
@@ -57,14 +57,14 @@ class ProcessPBXSettings extends Injectable
         // FeaturesSettings
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::PBX_LANGUAGE,
-                PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH,
-                PbxSettingsConstants::PBX_FEATURE_ATTENDED_TRANSFER,
-                PbxSettingsConstants::PBX_FEATURE_BLIND_TRANSFER,
-                PbxSettingsConstants::PBX_FEATURE_DIGIT_TIMEOUT,
-                PbxSettingsConstants::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT,
-                PbxSettingsConstants::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT,
-                PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN,
+                PbxSettings::PBX_LANGUAGE,
+                PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH,
+                PbxSettings::PBX_FEATURE_ATTENDED_TRANSFER,
+                PbxSettings::PBX_FEATURE_BLIND_TRANSFER,
+                PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT,
+                PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT,
+                PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT,
+                PbxSettings::PBX_FEATURE_PICKUP_EXTEN,
             ],
             'actions' => [
                 ReloadFeaturesAction::class,
@@ -75,9 +75,9 @@ class ProcessPBXSettings extends Injectable
         // Parking settings
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::PBX_CALL_PARKING_EXT,
-                PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT,
-                PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT,
+                PbxSettings::PBX_CALL_PARKING_EXT,
+                PbxSettings::PBX_CALL_PARKING_START_SLOT,
+                PbxSettings::PBX_CALL_PARKING_END_SLOT,
             ],
             'actions' => [
                 ReloadFeaturesAction::class, // ??? parkcall in features.conf ???
@@ -89,9 +89,9 @@ class ProcessPBXSettings extends Injectable
         // CallRecordSettings
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::PBX_RECORD_CALLS,
-                PbxSettingsConstants::PBX_RECORD_CALLS_INNER,
-                PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD,
+                PbxSettings::PBX_RECORD_CALLS,
+                PbxSettings::PBX_RECORD_CALLS_INNER,
+                PbxSettings::PBX_SPLIT_AUDIO_THREAD,
             ],
             'actions' => [
                 ReloadDialplanAction::class,
@@ -101,7 +101,7 @@ class ProcessPBXSettings extends Injectable
         // CallRecordSettings / The period of storing conversation records
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD,
+                PbxSettings::PBX_RECORD_SAVE_PERIOD,
             ],
             'actions' => [
                 ReloadRecordSavePeriodAction::class,
@@ -111,9 +111,9 @@ class ProcessPBXSettings extends Injectable
         // AMIParameters
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::AMI_PORT,
-                PbxSettingsConstants::AJAM_PORT,
-                PbxSettingsConstants::AJAM_PORT_TLS,
+                PbxSettings::AMI_PORT,
+                PbxSettings::AJAM_PORT,
+                PbxSettings::AJAM_PORT_TLS,
             ],
             'actions' => [
                 ReloadManagerAction::class,
@@ -123,7 +123,7 @@ class ProcessPBXSettings extends Injectable
         // IaxParameters
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::IAX_PORT,
+                PbxSettings::IAX_PORT,
             ],
             'actions' => [
                 ReloadIAXAction::class,
@@ -133,8 +133,8 @@ class ProcessPBXSettings extends Injectable
         // Guest calls without authorization
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::PBX_ALLOW_GUEST_CALLS,
-                PbxSettingsConstants::USE_WEB_RTC,
+                PbxSettings::PBX_ALLOW_GUEST_CALLS,
+                PbxSettings::USE_WEB_RTC,
             ],
             'actions' => [
                 ReloadPJSIPAction::class,
@@ -145,12 +145,12 @@ class ProcessPBXSettings extends Injectable
         // SipParameters
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::SIP_PORT,
-                PbxSettingsConstants::TLS_PORT,
-                PbxSettingsConstants::SIP_DEFAULT_EXPIRY,
-                PbxSettingsConstants::SIP_MIN_EXPIRY,
-                PbxSettingsConstants::SIP_MAX_EXPIRY,
-                PbxSettingsConstants::PBX_LANGUAGE,
+                PbxSettings::SIP_PORT,
+                PbxSettings::TLS_PORT,
+                PbxSettings::SIP_DEFAULT_EXPIRY,
+                PbxSettings::SIP_MIN_EXPIRY,
+                PbxSettings::SIP_MAX_EXPIRY,
+                PbxSettings::PBX_LANGUAGE,
             ],
             'actions' => [
                 ReloadPJSIPAction::class,
@@ -160,9 +160,9 @@ class ProcessPBXSettings extends Injectable
         // RTPParameters
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::RTP_PORT_FROM,
-                PbxSettingsConstants::RTP_PORT_TO,
-                PbxSettingsConstants::RTP_STUN_SERVER,
+                PbxSettings::RTP_PORT_FROM,
+                PbxSettings::RTP_PORT_TO,
+                PbxSettings::RTP_STUN_SERVER,
             ],
             'actions' => [
                 ReloadRTPAction::class,
@@ -172,14 +172,14 @@ class ProcessPBXSettings extends Injectable
         // SSHParameters
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::SSH_LOGIN,
-                PbxSettingsConstants::SSH_PORT,
-                PbxSettingsConstants::SSH_RSA_KEY,
-                PbxSettingsConstants::SSH_DSS_KEY,
-                PbxSettingsConstants::SSH_PASSWORD,
-                PbxSettingsConstants::SSH_ECDSA_KEY,
-                PbxSettingsConstants::SSH_AUTHORIZED_KEYS,
-                PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD,
+                PbxSettings::SSH_LOGIN,
+                PbxSettings::SSH_PORT,
+                PbxSettings::SSH_RSA_KEY,
+                PbxSettings::SSH_DSS_KEY,
+                PbxSettings::SSH_PASSWORD,
+                PbxSettings::SSH_ECDSA_KEY,
+                PbxSettings::SSH_AUTHORIZED_KEYS,
+                PbxSettings::SSH_DISABLE_SSH_PASSWORD,
             ],
             'actions' => [
                 ReloadSSHAction::class,
@@ -189,19 +189,19 @@ class ProcessPBXSettings extends Injectable
         // FirewallParameters
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::SIP_PORT,
-                PbxSettingsConstants::TLS_PORT,
-                PbxSettingsConstants::RTP_PORT_FROM,
-                PbxSettingsConstants::RTP_PORT_TO,
-                PbxSettingsConstants::IAX_PORT,
-                PbxSettingsConstants::AMI_PORT,
-                PbxSettingsConstants::AJAM_PORT,
-                PbxSettingsConstants::AJAM_PORT_TLS,
-                PbxSettingsConstants::WEB_PORT,
-                PbxSettingsConstants::WEB_HTTPS_PORT,
-                PbxSettingsConstants::SSH_PORT,
-                PbxSettingsConstants::PBX_FIREWALL_ENABLED,
-                PbxSettingsConstants::PBX_FAIL2BAN_ENABLED,
+                PbxSettings::SIP_PORT,
+                PbxSettings::TLS_PORT,
+                PbxSettings::RTP_PORT_FROM,
+                PbxSettings::RTP_PORT_TO,
+                PbxSettings::IAX_PORT,
+                PbxSettings::AMI_PORT,
+                PbxSettings::AJAM_PORT,
+                PbxSettings::AJAM_PORT_TLS,
+                PbxSettings::WEB_PORT,
+                PbxSettings::WEB_HTTPS_PORT,
+                PbxSettings::SSH_PORT,
+                PbxSettings::PBX_FIREWALL_ENABLED,
+                PbxSettings::PBX_FAIL2BAN_ENABLED,
             ],
             'actions' => [
                 ReloadFirewallAction::class,
@@ -212,11 +212,11 @@ class ProcessPBXSettings extends Injectable
         // FirewallParameters
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::WEB_PORT,
-                PbxSettingsConstants::WEB_HTTPS_PORT,
-                PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY,
-                PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY,
-                PbxSettingsConstants::REDIRECT_TO_HTTPS,
+                PbxSettings::WEB_PORT,
+                PbxSettings::WEB_HTTPS_PORT,
+                PbxSettings::WEB_HTTPS_PUBLIC_KEY,
+                PbxSettings::WEB_HTTPS_PRIVATE_KEY,
+                PbxSettings::REDIRECT_TO_HTTPS,
             ],
             'actions' => [
                 ReloadNginxAction::class,
@@ -226,7 +226,7 @@ class ProcessPBXSettings extends Injectable
         // CronParameters
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::RESTART_EVERY_NIGHT,
+                PbxSettings::RESTART_EVERY_NIGHT,
             ],
             'actions' => [
                 ReloadCrondAction::class,
@@ -236,9 +236,9 @@ class ProcessPBXSettings extends Injectable
         // DialplanParameters
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::PBX_LANGUAGE,
-                PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_IN,
-                PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_OUT,
+                PbxSettings::PBX_LANGUAGE,
+                PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN,
+                PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT,
             ],
             'actions' => [
                 ReloadDialplanAction::class,
@@ -247,7 +247,7 @@ class ProcessPBXSettings extends Injectable
         // DialplanParameters
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::PBX_LANGUAGE,
+                PbxSettings::PBX_LANGUAGE,
             ],
             'actions' => [
                 RestartPBXCoreAction::class,
@@ -257,15 +257,15 @@ class ProcessPBXSettings extends Injectable
         // VoiceMailParameters
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::MAIL_TPL_VOICEMAIL_SUBJECT,
-                PbxSettingsConstants::MAIL_TPL_VOICEMAIL_BODY,
-                PbxSettingsConstants::MAIL_TPL_VOICEMAIL_FOOTER,
-                PbxSettingsConstants::MAIL_SMTP_SENDER_ADDRESS,
-                PbxSettingsConstants::MAIL_SMTP_USERNAME,
-                PbxSettingsConstants::PBX_TIMEZONE,
-                PbxSettingsConstants::VOICEMAIL_NOTIFICATIONS_EMAIL,
-                PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL,
-                PbxSettingsConstants::SYSTEM_EMAIL_FOR_MISSED,
+                PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT,
+                PbxSettings::MAIL_TPL_VOICEMAIL_BODY,
+                PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER,
+                PbxSettings::MAIL_SMTP_SENDER_ADDRESS,
+                PbxSettings::MAIL_SMTP_USERNAME,
+                PbxSettings::PBX_TIMEZONE,
+                PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL,
+                PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL,
+                PbxSettings::SYSTEM_EMAIL_FOR_MISSED,
             ],
             'actions' => [
                 ReloadVoicemailAction::class,
@@ -275,8 +275,8 @@ class ProcessPBXSettings extends Injectable
         // VisualLanguageSettings
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::SSH_LANGUAGE,
-                PbxSettingsConstants::WEB_ADMIN_LANGUAGE,
+                PbxSettings::SSH_LANGUAGE,
+                PbxSettings::WEB_ADMIN_LANGUAGE,
             ],
             'actions' => [
                 ReloadRestAPIWorkerAction::class,
@@ -286,7 +286,7 @@ class ProcessPBXSettings extends Injectable
         // LicenseSettings
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::PBX_LICENSE,
+                PbxSettings::PBX_LICENSE,
             ],
             'actions' => [
                 ReloadLicenseAction::class,
@@ -297,7 +297,7 @@ class ProcessPBXSettings extends Injectable
         // TimeZoneSettings
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::PBX_TIMEZONE,
+                PbxSettings::PBX_TIMEZONE,
             ],
             'actions' => [
                 ReloadTimezoneAction::class,
@@ -312,9 +312,9 @@ class ProcessPBXSettings extends Injectable
         // NTPSettings
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS,
-                PbxSettingsConstants::NTP_SERVER,
-                PbxSettingsConstants::PBX_TIMEZONE,
+                PbxSettings::PBX_MANUAL_TIME_SETTINGS,
+                PbxSettings::NTP_SERVER,
+                PbxSettings::PBX_TIMEZONE,
             ],
             'actions' => [
                 ReloadNTPAction::class,
@@ -324,7 +324,7 @@ class ProcessPBXSettings extends Injectable
         // Sentry
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::SEND_METRICS,
+                PbxSettings::SEND_METRICS,
             ],
             'actions' => [
                 ReloadSentryAction::class,
@@ -334,7 +334,7 @@ class ProcessPBXSettings extends Injectable
         // Default description texts
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::WEB_ADMIN_PASSWORD,
+                PbxSettings::WEB_ADMIN_PASSWORD,
             ],
             'actions' => [
                 ReloadCloudDescriptionAction::class,
@@ -344,9 +344,9 @@ class ProcessPBXSettings extends Injectable
         // Recording settings for WorkerCallEvents
         $tables[] = [
             'keys' => [
-                PbxSettingsConstants::PBX_RECORD_CALLS_INNER,
-                PbxSettingsConstants::PBX_RECORD_CALLS,
-                PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD,
+                PbxSettings::PBX_RECORD_CALLS_INNER,
+                PbxSettings::PBX_RECORD_CALLS,
+                PbxSettings::PBX_SPLIT_AUDIO_THREAD,
             ],
             'actions' => [
                 ReloadRecordingSettingsAction::class,

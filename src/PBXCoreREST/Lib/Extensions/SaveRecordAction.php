@@ -19,20 +19,17 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\ExternalPhones;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
-use Phalcon\Security\Random;
 
 /**
  * Class SaveRecord
@@ -153,7 +150,7 @@ class SaveRecordAction extends Injectable
         foreach ($metaData->getAttributes($userEntity) as $name) {
             switch ($name) {
                 case 'language':
-                    $userEntity->$name = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LANGUAGE);
+                    $userEntity->$name = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
                     break;
                 default:
                     $propertyKey = 'user_' . $name;

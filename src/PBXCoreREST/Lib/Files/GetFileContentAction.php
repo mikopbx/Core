@@ -24,7 +24,8 @@ use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class GetFileContent
@@ -32,7 +33,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Files
  */
-class GetFileContentAction extends \Phalcon\Di\Injectable
+class GetFileContentAction extends Injectable
 {
     /**
      * Returns file content
@@ -46,7 +47,7 @@ class GetFileContentAction extends \Phalcon\Di\Injectable
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $customFile     = CustomFiles::findFirst("filepath = '{$filename}'");
+        $customFile     = CustomFiles::findFirst("filepath = '$filename'");
         if ($customFile !== null) {
             $filename_orgn = "{$filename}.orgn";
             if ($needOriginal && file_exists($filename_orgn)) {
@@ -57,8 +58,8 @@ class GetFileContentAction extends \Phalcon\Di\Injectable
             $di           = Di::getDefault();
             $dirsConfig   = $di->getShared('config');
             $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' .time(). '.conf';
-            $cmd          = "{$cat} {$filename} > {$filenameTmp}";
-            Processes::mwExec("{$cmd}; chown www:www {$filenameTmp}");
+            $cmd          = "$cat $filename > $filenameTmp";
+            Processes::mwExec("$cmd; chown www:www $filenameTmp");
             $res->data['filename'] = $filenameTmp;
         } else {
             $res->success    = false;

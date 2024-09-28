@@ -38,7 +38,7 @@ class ActionTransferCheck
      * @param array $data The event data.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         $filter = [
             'linkedid=:linkedid: AND endtime = "" AND transfer=0 AND (src_chan=:src_chan: OR dst_chan=:src_chan:)',

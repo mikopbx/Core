@@ -33,9 +33,9 @@ use Phalcon\Di\Injectable;
  */
 class RedisConf extends Injectable
 {
-    public const PROC_NAME = 'redis-server';
+    public const string PROC_NAME = 'redis-server';
 
-    public const CONF_FILE = '/etc/redis.conf';
+    public const string CONF_FILE = '/etc/redis.conf';
 
     public string $port = '';
 
@@ -80,8 +80,8 @@ class RedisConf extends Injectable
     {
         $config = $this->getDI()->get(ConfigProvider::SERVICE_NAME)->redis;
         $this->port = $config->port;
-        $conf   = "bind {$config->host}" . PHP_EOL;
-        $conf  .= "port {$config->port}" . PHP_EOL;
+        $conf   = "bind $config->host" . PHP_EOL;
+        $conf  .= "port $config->port" . PHP_EOL;
         $conf  .= "dir /var/tmp" . PHP_EOL;
         $conf  .= "loglevel warning" . PHP_EOL;
         $conf  .= "syslog-enabled yes" . PHP_EOL;

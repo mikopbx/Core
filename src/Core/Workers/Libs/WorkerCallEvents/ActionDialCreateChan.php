@@ -42,7 +42,7 @@ class ActionDialCreateChan
      *
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         // If the destination channel is not empty, add it to the active channels in the worker.
         $chan = $data['dst_chan'] ?? '';

@@ -25,7 +25,7 @@ use MikoPBX\Core\System\SystemMessages;
 
 class YandexCloud extends CloudProvider
 {
-    public const CloudID = 'YandexCloud';
+    public const string CloudID = 'YandexCloud';
 
     private Client $client;
 
@@ -129,7 +129,7 @@ class YandexCloud extends CloudProvider
     {
         if (isset($metadata['serviceAccounts'])) {
             foreach ($metadata['serviceAccounts'] as $account) {
-                if (strpos($account['email'], 'gserviceaccount') !== false) {
+                if (str_contains($account['email'], 'gserviceaccount')) {
                     return false;
                 }
             }

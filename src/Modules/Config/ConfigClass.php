@@ -25,7 +25,7 @@ use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Assets\Manager;
-use Phalcon\Config;
+use Phalcon\Config\Config;
 use Phalcon\Forms\Form;
 use Phalcon\Mvc\Dispatcher;
 use Phalcon\Mvc\Micro;
@@ -64,7 +64,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     /**
      * Access to the /etc/inc/mikopbx-settings.json values.
      *
-     * @var \Phalcon\Config
+     * @var \Phalcon\Config\Config
      */
     protected Config $config;
 
@@ -196,7 +196,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function modelsEventChangeData($data): void
+    public function modelsEventChangeData(mixed $data): void
     {
     }
 
@@ -408,7 +408,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onBeforeFormInitialize(Form $form, $entity, $options):void
+    public function onBeforeFormInitialize(Form $form, mixed $entity, mixed $options):void
     {
     }
 

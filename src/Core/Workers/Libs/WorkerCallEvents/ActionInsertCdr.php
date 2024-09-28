@@ -38,7 +38,7 @@ class ActionInsertCdr
      * @param array $cdr The call detail record data.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $cdr): void
+    public static function execute(WorkerCallEvents $worker, array $cdr): void
     {
         foreach ($cdr['rows'] as $data) {
             if (empty($data['UNIQUEID'])) {
@@ -54,7 +54,6 @@ class ActionInsertCdr
                 ]
             );
             if (!$m_data) {
-                /** @var CallDetailRecords $m_data */
                 $m_data = new CallDetailRecords();
             }
             $f_list = $m_data->toArray();

@@ -23,11 +23,11 @@ use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 use MikoPBX\Core\System\MikoPBXConfig;
-use Phalcon\Config as ConfigAlias;
+use Phalcon\Config\Config as ConfigAlias;
 
 class UpdateConfigsUpToVer2021124 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2021.1.24';
+  	public const string PBX_VERSION = '2021.1.24';
 
 	private ConfigAlias $config;
     private MikoPBXConfig $mikoPBXConfig;
@@ -57,7 +57,7 @@ class UpdateConfigsUpToVer2021124 extends Injectable implements UpgradeSystemCon
     /**
      * Deletes all not actual cache folders
      */
-    private function deleteOldCacheFolders()
+    private function deleteOldCacheFolders(): void
     {
         $oldCacheFolders = [
             '/storage/usbdisk1/mikopbx/tmp/models_cache',

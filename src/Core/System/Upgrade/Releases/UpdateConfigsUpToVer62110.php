@@ -32,7 +32,7 @@ use Phalcon\Di\Injectable;
  */
 class UpdateConfigsUpToVer62110 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '6.2.110';
+  	public const string PBX_VERSION = '6.2.110';
 
     public function processUpdate():void
     {

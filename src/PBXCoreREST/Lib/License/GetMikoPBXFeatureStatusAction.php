@@ -19,21 +19,21 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\License;
 
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Service\License;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
-use Phalcon\Text;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Class GetMikoPBXFeatureStatusAction
  * Check for free MikoPBX base license.
  * @package MikoPBX\PBXCoreREST\Lib\License
  */
-class GetMikoPBXFeatureStatusAction extends \Phalcon\Di\Injectable
+class GetMikoPBXFeatureStatusAction extends Injectable
 {
     /**
      * Check for free MikoPBX base license.
@@ -44,34 +44,23 @@ class GetMikoPBXFeatureStatusAction extends \Phalcon\Di\Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $licenseKey = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
+        $licenseKey = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
         $di = Di::getDefault();
         if ((strlen($licenseKey) === 28
             && Text::startsWith($licenseKey, 'MIKO-')
         )) {
-            $cacheKey = 'PBXCoreREST:LicenseManagementProcessor:GetMikoPBXFeatureStatusAction:' . $licenseKey;
-            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
-            $lastMikoPBXFeatureInfo = $managedCache->get($cacheKey);
-            if ($lastMikoPBXFeatureInfo === null) {
-                $lastMikoPBXFeatureInfo = [];
-                $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
-                $checkBaseFeature = $license->featureAvailable(33);
-                if ($checkBaseFeature['success'] === false) {
-                    $lastMikoPBXFeatureInfo['success'] = false;
-                    $textError = (string)($checkBaseFeature['error'] ?? '');
-                    $lastMikoPBXFeatureInfo['messages']['license'][] = $license->translateLicenseErrorMessage($textError);
-                    $cacheTimeout = 120;
-                } else {
-                    $lastMikoPBXFeatureInfo['success'] = true;
-                    $cacheTimeout = 86400;
-                }
-                $res->success =  $lastMikoPBXFeatureInfo['success'];
-                $res->messages = $lastMikoPBXFeatureInfo['messages']??[];
-                $managedCache->set($cacheKey, $lastMikoPBXFeatureInfo, $cacheTimeout); // Check not often than every 2 minutes
+            $lastMikoPBXFeatureInfo = [];
+            $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
+            $checkBaseFeature = $license->featureAvailable(License::MIKOPBX_FEATURE);
+            if ($checkBaseFeature['success'] === false) {
+                $lastMikoPBXFeatureInfo['success'] = false;
+                $textError = (string)($checkBaseFeature['error'] ?? '');
+                $lastMikoPBXFeatureInfo['messages']['license'][] = $license->translateLicenseErrorMessage($textError);
             } else {
-                $res->success = $lastMikoPBXFeatureInfo['success'];
-                $res->messages = $lastMikoPBXFeatureInfo['messages']??[];
+                $lastMikoPBXFeatureInfo['success'] = true;
             }
+            $res->success = $lastMikoPBXFeatureInfo['success'];
+            $res->messages = $lastMikoPBXFeatureInfo['messages'] ?? [];
         } else {
             $res->success = false;
             $translation = $di->get(TranslationProvider::SERVICE_NAME);

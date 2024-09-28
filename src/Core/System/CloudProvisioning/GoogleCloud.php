@@ -32,7 +32,7 @@ class GoogleCloud extends CloudProvider
         $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
     }
 
-    public const CloudID = 'GoogleCloud';
+    public const string CloudID = 'GoogleCloud';
 
     /**
      * Performs the Google Cloud provisioning using the Metadata Service.
@@ -127,7 +127,7 @@ class GoogleCloud extends CloudProvider
     {
         if (isset($metadata['serviceAccounts'])) {
             foreach ($metadata['serviceAccounts'] as $account) {
-                if (strpos($account['email'], 'gserviceaccount') !== false) {
+                if (str_contains($account['email'], 'gserviceaccount')) {
                     return true;
                 }
             }

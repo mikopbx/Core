@@ -19,7 +19,7 @@
  */
 
 namespace MikoPBX\Core\RootFS\etc\rc;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use MikoPBX\Core\System\{Directories, Processes, SystemMessages, Util, Storage};
 
 require_once('Globals.php');
@@ -97,11 +97,11 @@ while ($attempts--) {
             continue;
         }
         // Run partition check on the disk.
-        $fsck = Util::which("fsck.{$fsType}");
+        $fsck = Util::which("fsck.$fsType");
         // Check disk for errors.
-        Processes::mwExec("if [ -b /dev/{$partName} ]; then {$fsck} -f -p /dev/{$partName}; fi;");
+        Processes::mwExec("if [ -b /dev/$partName ]; then $fsck -f -p /dev/$partName; fi;");
         // Mount the disk.
-        $resultMount = Processes::mwExec("{$mount} -t {$fsType} -rw UUID=\"{$uuid}\" {$cfDir}");
+        $resultMount = Processes::mwExec("$mount -t $fsType -rw UUID=\"$uuid\" $cfDir");
         if ($resultMount !== 0) {
             // Mounting error.
             continue;
@@ -115,16 +115,16 @@ while ($attempts--) {
                 @unlink($dbFile);
                 @rename($old_db_name, $dbFile);
             }
-            if (Processes::mwExec("{$sqlite3} {$dbFile} 'VACUUM'") !== 0) {
+            if (Processes::mwExec("$sqlite3 $dbFile 'VACUUM'") !== 0) {
                 $tmp_name = '/tmp/' . time() . '.db.dmp';
-                Processes::mwExec("{$sqlite3} {$dbFile} .dump | {$sqlite3} {$tmp_name}");
-                Processes::mwExec("{$rm} {$dbFile}*");
-                Processes::mwExec("{$mv} {$tmp_name} {$dbFile}");
+                Processes::mwExec("$sqlite3 $dbFile .dump | $sqlite3 $tmp_name");
+                Processes::mwExec("$rm $dbFile*");
+                Processes::mwExec("$mv $tmp_name $dbFile");
             }
             // Disk found and mounted, exit the loop.
             break;
         }
-        Processes::mwExec("{$umount} -f /dev/{$partName}");
+        Processes::mwExec("$umount -f /dev/$partName");
     }
 
     if ($cfgdevice) {
@@ -143,5 +143,5 @@ if ( ! $cfgdevice) {
     exit (1);
 } else {
     // Write the connected device name to a file.
-    file_put_contents("{$varEtcDir}/cfdevice", $cfgdevice);
+    file_put_contents("$varEtcDir/cfdevice", $cfgdevice);
 }

@@ -29,10 +29,10 @@ namespace MikoPBX\Core\System;
 class PBXRecovery
 {
     // ASCII codes for colored output
-    const REDON    = "\033[31;1m";
-    const REDOFF   = "\033[0m";
-    const GREENON  = "\033[32;1m";
-    const GREENOFF = "\033[0m";
+    public const string REDON    = "\033[31;1m";
+    public const string REDOFF   = "\033[0m";
+    public const string GREENON  = "\033[32;1m";
+    public const string GREENOFF = "\033[0m";
 
     // Recover disk name
     private string $DEVICE;
@@ -62,7 +62,7 @@ class PBXRecovery
      * Clears the terminal and provides the user with recovery options.
      * Handles the user's selection input.
      */
-    public function run()
+    public function run(): void
     {
         system('clear');
         echo "\n";
@@ -84,7 +84,7 @@ class PBXRecovery
      *
      * @param string $input User's selection input
      */
-    private function handleInput(string $input)
+    private function handleInput(string $input): void
     {
         switch ($input) {
             case '1':
@@ -96,9 +96,9 @@ class PBXRecovery
             case '2':
                 // Prepare for reinstalling
                 file_put_contents('/tmp/ejectcd', '');
-                $pbx_firmwarePath = Util::which('pbx_firmware');
+                $pbx_firmware = Util::which('pbx_firmware');
                 $recovery_cmd = 'exec < /dev/console > /dev/console 2>/dev/console;' .
-                    "{$pbx_firmwarePath} /offload/firmware.img.gz {$this->DEVICE}";
+                    "$pbx_firmware /offload/firmware.img.gz $this->DEVICE";
                 passthru($recovery_cmd);
                 break;
             case '3':

@@ -19,13 +19,14 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Files;
 
+use GuzzleHttp\Psr7\UploadedFile;
+use Http\Factory\Guzzle\StreamFactory;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerMergeUploadedFile;
-use Phalcon\Di;
-use Phalcon\Http\Message\StreamFactory;
-use Phalcon\Http\Message\UploadedFile;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class UploadFile
@@ -33,7 +34,7 @@ use Phalcon\Http\Message\UploadedFile;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Files
  */
-class UploadFileAction extends \Phalcon\Di\Injectable
+class UploadFileAction extends Injectable
 {
     /**
      * Process upload files by chunks.
@@ -69,7 +70,7 @@ class UploadFileAction extends \Phalcon\Di\Injectable
         $extension = (string)pathinfo($parameters['resumableFilename'], PATHINFO_EXTENSION);
         $fileName .= '.' . $extension;
         $parameters['resumableFilename'] = $fileName;
-        $parameters['fullUploadedFileName'] = "{$parameters['tempDir']}/{$fileName}";
+        $parameters['fullUploadedFileName'] = "{$parameters['tempDir']}/$fileName";
 
         // Delete old progress and result file
         $oldMergeProgressFile = "{$parameters['tempDir']}/merging_progress";
@@ -124,7 +125,7 @@ class UploadFileAction extends \Phalcon\Di\Injectable
         $chunks_dest_file = "{$parameters['tempDir']}/{$parameters['resumableFilename']}.part{$parameters['resumableChunkNumber']}";
         if (file_exists($chunks_dest_file)) {
             $rm = Util::which('rm');
-            Processes::mwExec("{$rm} -f {$chunks_dest_file}");
+            Processes::mwExec("$rm -f $chunks_dest_file");
         }
         $file->moveTo($chunks_dest_file);
 
@@ -161,9 +162,9 @@ class UploadFileAction extends \Phalcon\Di\Injectable
             );
 
             // We will start the background process to merge parts into one file
-            $phpPath               = Util::which('php');
+            $php               = Util::which('php');
             $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMergeUploadedFile::class);
-            Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
+            Processes::mwExecBg("$php -f $workerFilesMergerPath start '$settings_file'");
 
             return true;
         }

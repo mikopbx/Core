@@ -22,7 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use DateTime;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\CDRConfigInterface;
-use MikoPBX\Common\Models\{PbxSettings, PbxSettingsConstants};
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 
 class CallDetailRecordsController extends BaseController
@@ -42,6 +42,7 @@ class CallDetailRecordsController extends BaseController
      * Requests new package of call history records for DataTable JSON.
      *
      * @return void
+     * @throws \DateMalformedStringException
      */
     public function getNewRecordsAction(): void
     {
@@ -179,6 +180,7 @@ class CallDetailRecordsController extends BaseController
      * @param string $searchPhrase The search phrase entered by the user.
      * @param array $parameters The CDR query parameters.
      * @return void
+     * @throws \DateMalformedStringException
      */
     private function prepareConditionsForSearchPhrases(string &$searchPhrase, array &$parameters): void
     {
@@ -223,7 +225,7 @@ class CallDetailRecordsController extends BaseController
 
         if (preg_match_all("/\d+/", $searchPhrase, $matches)) {
             $needCloseAnd = false;
-            $extensionsLength = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH);
+            $extensionsLength = PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
             if ($parameters['conditions'] !== '') {
                 $parameters['conditions'] .= ' AND (';
                 $needCloseAnd = true;
@@ -236,9 +238,9 @@ class CallDetailRecordsController extends BaseController
                 } else {
                     $seekNumber = substr($matches[0][0], -9);
                     $parameters['conditions'] .= 'src_num LIKE :SearchPhrase1: OR dst_num LIKE :SearchPhrase2: OR did LIKE :SearchPhrase3:';
-                    $parameters['bind']['SearchPhrase1'] = "%{$seekNumber}%";
-                    $parameters['bind']['SearchPhrase2'] = "%{$seekNumber}%";
-                    $parameters['bind']['SearchPhrase3'] = "%{$seekNumber}%";
+                    $parameters['bind']['SearchPhrase1'] = "%$seekNumber%";
+                    $parameters['bind']['SearchPhrase2'] = "%$seekNumber%";
+                    $parameters['bind']['SearchPhrase3'] = "%$seekNumber%";
                 }
 
                 $searchPhrase = str_replace($matches[0][0], '', $searchPhrase);
@@ -265,12 +267,12 @@ class CallDetailRecordsController extends BaseController
                     $parameters['conditions'] .= ' OR (src_num LIKE :SearchPhrase5: AND did = :SearchPhrase6:)';
                     $parameters['conditions'] .= ' OR (src_num = :SearchPhrase8: AND did LIKE :SearchPhrase7:)';
                     $parameters['bind']['SearchPhrase1'] = $matches[0][0];
-                    $parameters['bind']['SearchPhrase2'] = "%{$seekNumber}%";
-                    $parameters['bind']['SearchPhrase3'] = "%{$seekNumber}%";
+                    $parameters['bind']['SearchPhrase2'] = "%$seekNumber%";
+                    $parameters['bind']['SearchPhrase3'] = "%$seekNumber%";
                     $parameters['bind']['SearchPhrase4'] = $matches[0][0];
-                    $parameters['bind']['SearchPhrase5'] = "%{$seekNumber}%";
+                    $parameters['bind']['SearchPhrase5'] = "%$seekNumber%";
                     $parameters['bind']['SearchPhrase6'] = $matches[0][0];
-                    $parameters['bind']['SearchPhrase7'] = "%{$seekNumber}%";
+                    $parameters['bind']['SearchPhrase7'] = "%$seekNumber%";
                     $parameters['bind']['SearchPhrase8'] = $matches[0][0];
                 } elseif ($extensionsLength !== strlen($matches[0][0]) && $extensionsLength === strlen(
                         $matches[0][1]
@@ -280,13 +282,13 @@ class CallDetailRecordsController extends BaseController
                     $parameters['conditions'] .= ' OR (src_num = :SearchPhrase3: AND dst_num LIKE :SearchPhrase4:)';
                     $parameters['conditions'] .= ' OR (src_num LIKE :SearchPhrase5: AND did = :SearchPhrase6:)';
                     $parameters['conditions'] .= ' OR (src_num = :SearchPhrase8: AND did LIKE :SearchPhrase7:)';
-                    $parameters['bind']['SearchPhrase1'] = "%{$seekNumber}%";
+                    $parameters['bind']['SearchPhrase1'] = "%$seekNumber%";
                     $parameters['bind']['SearchPhrase2'] = $matches[0][1];
                     $parameters['bind']['SearchPhrase3'] = $matches[0][1];
-                    $parameters['bind']['SearchPhrase4'] = "%{$seekNumber}%";
-                    $parameters['bind']['SearchPhrase5'] = "%{$seekNumber}%";
+                    $parameters['bind']['SearchPhrase4'] = "%$seekNumber%";
+                    $parameters['bind']['SearchPhrase5'] = "%$seekNumber%";
                     $parameters['bind']['SearchPhrase6'] = $matches[0][1];
-                    $parameters['bind']['SearchPhrase7'] = "%{$seekNumber}%";
+                    $parameters['bind']['SearchPhrase7'] = "%$seekNumber%";
                     $parameters['bind']['SearchPhrase8'] = $matches[0][1];
                 } else {
                     $seekNumber0 = substr($matches[0][0], -9);
@@ -295,14 +297,14 @@ class CallDetailRecordsController extends BaseController
                     $parameters['conditions'] .= ' OR (src_num LIKE :SearchPhrase3: AND dst_num LIKE :SearchPhrase4:)';
                     $parameters['conditions'] .= ' OR (src_num LIKE :SearchPhrase5: AND did LIKE :SearchPhrase6:)';
                     $parameters['conditions'] .= ' OR (src_num LIKE :SearchPhrase7: AND did LIKE :SearchPhrase8:)';
-                    $parameters['bind']['SearchPhrase1'] = "%{$seekNumber0}%";
-                    $parameters['bind']['SearchPhrase2'] = "%{$seekNumber1}%";
-                    $parameters['bind']['SearchPhrase3'] = "%{$seekNumber1}%";
-                    $parameters['bind']['SearchPhrase4'] = "%{$seekNumber0}%";
-                    $parameters['bind']['SearchPhrase5'] = "%{$seekNumber0}%";
-                    $parameters['bind']['SearchPhrase6'] = "%{$seekNumber1}%";
-                    $parameters['bind']['SearchPhrase7'] = "%{$seekNumber1}%";
-                    $parameters['bind']['SearchPhrase8'] = "%{$seekNumber0}%";
+                    $parameters['bind']['SearchPhrase1'] = "%$seekNumber0%";
+                    $parameters['bind']['SearchPhrase2'] = "%$seekNumber1%";
+                    $parameters['bind']['SearchPhrase3'] = "%$seekNumber1%";
+                    $parameters['bind']['SearchPhrase4'] = "%$seekNumber0%";
+                    $parameters['bind']['SearchPhrase5'] = "%$seekNumber0%";
+                    $parameters['bind']['SearchPhrase6'] = "%$seekNumber1%";
+                    $parameters['bind']['SearchPhrase7'] = "%$seekNumber1%";
+                    $parameters['bind']['SearchPhrase8'] = "%$seekNumber0%";
                 }
                 $searchPhrase = str_replace([$matches[0][0], $matches[0][1]], '', $searchPhrase);
             } elseif (count($matches[0]) > 2) {

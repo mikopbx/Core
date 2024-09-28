@@ -25,7 +25,8 @@ use MikoPBX\Common\Models\ExternalPhones;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class GetRecord
@@ -33,7 +34,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Extensions
  */
-class GetRecordAction extends \Phalcon\Di\Injectable
+class GetRecordAction extends Injectable
 {
 
     /**

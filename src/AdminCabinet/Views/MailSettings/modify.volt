@@ -1,4 +1,4 @@
-{{ form('mail-settings/save', 'role': 'form', 'class': 'ui form large', 'id': 'mail-settings-form') }}
+{{ form(['action' : 'mail-settings/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id': 'mail-settings-form']) }}
 <div class="ui top attached tabular menu" id="mail-settings-menu">
     <a class="item active" data-tab="smtp">{{ t._('ms_SMTPSettings') }}</a>
     <a class="item" data-tab="missed">{{ t._('ms_NotificationTemplatesMissed') }}</a>
@@ -130,4 +130,4 @@
 }}
 {{ partial("partials/submitbutton",['indexurl':'']) }}
 <div class="ui clearing hidden divider"></div>
-{{ end_form() }}
+{{ close('form') }}

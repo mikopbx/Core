@@ -30,7 +30,7 @@ use Phalcon\Di\Injectable;
  *
  * @property \MikoPBX\Common\Providers\MarketPlaceProvider license
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
- * @property \Phalcon\Config config
+ * @property \Phalcon\Config\Config config
  *
  */
 class AdviceProcessor extends Injectable

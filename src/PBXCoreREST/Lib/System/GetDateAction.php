@@ -20,12 +20,13 @@
 namespace MikoPBX\PBXCoreREST\Lib\System;
 
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  *
  * @package MikoPBX\PBXCoreREST\Lib\System
  */
-class GetDateAction extends \Phalcon\Di\Injectable
+class GetDateAction extends Injectable
 {
     /**
      *

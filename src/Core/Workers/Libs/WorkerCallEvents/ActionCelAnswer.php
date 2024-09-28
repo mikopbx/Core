@@ -36,10 +36,11 @@ class ActionCelAnswer
      * Executes the action when a Call Event Log (CEL) answer event occurs.
      *
      * @param WorkerCallEvents $worker Instance of WorkerCallEvents.
-     * @param array $data Data related to the event.
+     * @param array|null $data Data related to the event.
      * @return void
+     * @throws \Exception
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, ?array$data): void
     {
         $channel = $data['Channel'] ?? '';
         $worker->addActiveChan($channel, $data['LinkedID']);

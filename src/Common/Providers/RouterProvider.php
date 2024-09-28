@@ -27,6 +27,7 @@ use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Mvc\Router;
+use MikoPBX\Common\Library\Text;
 
 /**
  * Registers the Router service.
@@ -35,8 +36,8 @@ use Phalcon\Mvc\Router;
  */
 class RouterProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'router';
-    const ModuleUniqueId = 'moduleUniqueId';
+    public const string SERVICE_NAME = 'router';
+    const string ModuleUniqueId = 'moduleUniqueId';
     /**
      * Register the router service provider.
      *
@@ -79,8 +80,8 @@ class RouterProvider implements ServiceProviderInterface
                 ])->convert(
                     'namespace',
                     function ($namespace) {
-                        $camelizedNameSpace = \Phalcon\Text::Camelize($namespace);
-                        return "Modules\\{$camelizedNameSpace}\\App\\Controllers";
+                        $camelizedNameSpace = Text::camelize($namespace);
+                        return "Modules\\$camelizedNameSpace\\App\\Controllers";
                     }
                 );
 
@@ -102,8 +103,8 @@ class RouterProvider implements ServiceProviderInterface
                 ])->convert(
                     'namespace',
                     function ($namespace) {
-                        $camelizedNameSpace = \Phalcon\Text::Camelize($namespace);
-                        return "Modules\\{$camelizedNameSpace}\\App\\Controllers";
+                        $camelizedNameSpace = Text::camelize($namespace);
+                        return "Modules\\$camelizedNameSpace\\App\\Controllers";
                     }
                 );
 

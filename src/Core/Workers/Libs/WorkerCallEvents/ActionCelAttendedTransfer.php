@@ -38,6 +38,7 @@ class ActionCelAttendedTransfer
      * @param WorkerCallEvents $worker Instance of WorkerCallEvents.
      * @param array $data Data related to the event.
      * @return void
+     * @throws \Exception
      */
     public static function execute(WorkerCallEvents $worker, array $data): void
     {

@@ -20,7 +20,6 @@
 namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
 
@@ -76,7 +75,7 @@ class Utils extends Injectable
             $parameters = [
                 'conditions' => 'number LIKE :SearchPhrase1:',
                 'bind' => [
-                    'SearchPhrase1' => "%{$seekNumber}",
+                    'SearchPhrase1' => "%$seekNumber",
                 ],
             ];
         } else {

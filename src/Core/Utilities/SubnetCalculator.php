@@ -61,7 +61,7 @@ class SubnetCalculator
      *
      * @var array
      */
-    private $quads = [];
+    private array $quads = [];
     /**
      * Subnet mask in format used for subnet calculations.
      *
@@ -96,7 +96,7 @@ class SubnetCalculator
      *
      * @throws \Throwable IP or network size not valid.
      */
-    private function validateInputs(string $ip, string $network_size)
+    private function validateInputs(string $ip, string $network_size): void
     {
         if ( ! filter_var($ip, FILTER_VALIDATE_IP)) {
             throw new Error("IP address $ip not valid.");
@@ -480,7 +480,7 @@ class SubnetCalculator
      * Each of the above is provided in dotted quads, hexedecimal, and binary notation.
      * Also contains number of IP addresses and number of addressable hosts, IP address range, and broadcast address.
      */
-    public function printSubnetReport()
+    public function printSubnetReport(): void
     {
         print($this->__tostring());
     }
@@ -492,7 +492,7 @@ class SubnetCalculator
      */
     public function __tostring()
     {
-        $string = sprintf("%-18s %15s %8s %32s\n", "{$this->ip}/{$this->network_size}", 'Quads', 'Hex', 'Binary');
+        $string = sprintf("%-18s %15s %8s %32s\n", "$this->ip/$this->network_size", 'Quads', 'Hex', 'Binary');
         $string .= sprintf(
             "%-18s %15s %8s %32s\n",
             '------------------',

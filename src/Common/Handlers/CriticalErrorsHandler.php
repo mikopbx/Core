@@ -24,7 +24,7 @@ namespace MikoPBX\Common\Handlers;
 use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
 use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
 use MikoPBX\Core\System\SystemMessages;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Throwable;
 /**
  * Collects errors and send them to Sentry cloud for software improvement reasons

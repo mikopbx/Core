@@ -28,14 +28,14 @@ use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
-use Phalcon\Config as ConfigAlias;
+use Phalcon\Config\Config as ConfigAlias;
 use Phalcon\Di\Injectable;
 use SQLite3;
 use Throwable;
 
 class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemConfigInterface
 {
-    public const PBX_VERSION = '2020.2.754';
+    public const string PBX_VERSION = '2020.2.754';
 
     private ConfigAlias $config;
 
@@ -75,7 +75,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
     /**
      * Deletes all not actual codecs
      */
-    private function deleteOrphanCodecs()
+    private function deleteOrphanCodecs(): void
     {
         $availCodecs = [
             // Видео кодеки.
@@ -145,7 +145,7 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
                 continue;
             }
             $codecData->name = $availCodec;
-            if (strpos($availCodec, 'h26') === 0) {
+            if (str_starts_with($availCodec, 'h26')) {
                 $type = 'video';
             } else {
                 $type = 'audio';
@@ -243,8 +243,8 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
         ];
         foreach ($oldCacheDirs as $old_cache_dir) {
             if (is_dir($old_cache_dir)) {
-                $rmPath = Util::which('rm');
-                Processes::mwExec("{$rmPath} -rf $old_cache_dir");
+                $rm = Util::which('rm');
+                Processes::mwExec("$rm -rf $old_cache_dir");
             }
         }
     }
@@ -266,8 +266,8 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
         ];
         foreach ($oldCacheDirs as $old_cache_dir) {
             if (is_dir($old_cache_dir)) {
-                $rmPath = Util::which('rm');
-                Processes::mwExec("{$rmPath} -rf $old_cache_dir");
+                $rm = Util::which('rm');
+                Processes::mwExec("$rm -rf $old_cache_dir");
             }
         }
     }

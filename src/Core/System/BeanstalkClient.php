@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di\Injectable;
+use Pheanstalk\Contract\JobIdInterface;
 use Pheanstalk\Contract\PheanstalkInterface;
 use Pheanstalk\Job;
 use Pheanstalk\Pheanstalk;
@@ -36,11 +37,11 @@ use Throwable;
  */
 class BeanstalkClient extends Injectable
 {
-    public const INBOX_PREFIX = 'INBOX_';
+    public const string INBOX_PREFIX = 'INBOX_';
 
-    public const QUEUE_ERROR = 'queue_error';
+    public const string QUEUE_ERROR = 'queue_error';
 
-    public const RESPONSE_IN_FILE = 'response-in-file';
+    public const string RESPONSE_IN_FILE = 'response-in-file';
 
     /** @var Pheanstalk */
     private Pheanstalk $queue;
@@ -95,9 +96,9 @@ class BeanstalkClient extends Injectable
      * Subscribe on new message in tube
      *
      * @param string           $tube     - listening tube
-     * @param array | callable $callback - worker
+     * @param array $callback - worker
      */
-    public function subscribe(string $tube, $callback): void
+    public function subscribe(string $tube, array $callback): void
     {
         $tube = str_replace("\\", '-', $tube);
         $this->queue->watch($tube);
@@ -126,7 +127,8 @@ class BeanstalkClient extends Injectable
      *
      * @return bool|string
      */
-    public function request($job_data, int $timeout = 10, int $priority = PheanstalkInterface::DEFAULT_PRIORITY) {
+    public function request($job_data, int $timeout = 10, int $priority = PheanstalkInterface::DEFAULT_PRIORITY): bool|string
+    {
         $this->message = false;
         $inbox_tube    = uniqid(self::INBOX_PREFIX, true);
         $this->queue->watch($inbox_tube);
@@ -216,13 +218,14 @@ class BeanstalkClient extends Injectable
      * @return \Pheanstalk\Job
      */
     public function publish(
-        $job_data,
-        $tube = null,
+        mixed $job_data,
+        ?string $tube = null,
         int $priority = PheanstalkInterface::DEFAULT_PRIORITY,
         int $delay = PheanstalkInterface::DEFAULT_DELAY,
         int $ttr = PheanstalkInterface::DEFAULT_TTR
     ): Job {
-        $tube = str_replace("\\", '-', $tube);
+        $tube = str_replace("\\", '-', $tube??'');
+
         // Change tube
         if ( ! empty($tube) && $this->tube !== $tube) {
             $this->queue->useTube($tube);
@@ -240,7 +243,7 @@ class BeanstalkClient extends Injectable
     /**
      * Drops orphaned tasks
      */
-    public function cleanTubes()
+    public function cleanTubes(): void
     {
         $tubes          = $this->queue->listTubes();
         $deletedJobInfo = [];
@@ -259,11 +262,11 @@ class BeanstalkClient extends Injectable
                     $id = $job->getId();
                     SystemMessages::sysLogMsg(
                         __METHOD__,
-                        "Deleted buried job with ID {$id} from {$tube} with message {$job->getData()}",
+                        "Deleted buried job with ID $id from $tube with message {$job->getData()}",
                         LOG_DEBUG
                     );
                     $this->queue->delete($job);
-                    $deletedJobInfo[] = "{$id} from {$tube}";
+                    $deletedJobInfo[] = "$id from $tube";
                 }
 
                 // Delete outdated jobs
@@ -280,11 +283,11 @@ class BeanstalkClient extends Injectable
                     if ($age > $expectedTimeToExecute) {
                         SystemMessages::sysLogMsg(
                             __METHOD__,
-                            "Deleted outdated job with ID {$id} from {$tube} with message {$job->getData()}",
+                            "Deleted outdated job with ID $id from $tube with message {$job->getData()}",
                             LOG_DEBUG
                         );
                         $this->queue->delete($job);
-                        $deletedJobInfo[] = "{$id} from {$tube}";
+                        $deletedJobInfo[] = "$id from $tube";
                     }
                 }
             } catch (Throwable $e) {
@@ -383,9 +386,9 @@ class BeanstalkClient extends Injectable
     /**
      * Buries a job in the Beanstalkd server.
      *
-     * @param mixed $job The job to be buried.
+     * @param ?JobIdInterface $job The job to be buried.
      */
-    private function buryJob($job):void
+    private function buryJob(?JobIdInterface $job):void
     {
         if(!isset($job)){
             return;
@@ -419,10 +422,10 @@ class BeanstalkClient extends Injectable
     /**
      * Sends a reply message.
      *
-     * @param mixed $response The response message.
+     * @param string $response The response message.
      * @return void
      */
-    public function reply($response): void
+    public function reply(string $response): void
     {
         if (isset($this->message['inbox_tube'])) {
             $this->queue->useTube($this->message['inbox_tube']);
@@ -441,7 +444,7 @@ class BeanstalkClient extends Injectable
      * @param mixed $handler The error handler.
      * @return void
      */
-    public function setErrorHandler($handler): void
+    public function setErrorHandler(mixed $handler): void
     {
         $this->error_handler = $handler;
     }
@@ -452,7 +455,7 @@ class BeanstalkClient extends Injectable
      * @param mixed $handler The timeout handler.
      * @return void
      */
-    public function setTimeoutHandler($handler): void
+    public function setTimeoutHandler(mixed $handler): void
     {
         $this->timeout_handler = $handler;
     }

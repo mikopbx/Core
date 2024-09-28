@@ -22,13 +22,14 @@ namespace MikoPBX\PBXCoreREST\Lib\Iax;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Retrieves the statuses of IAX providers registration.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Iax
  */
-class GetRegistryAction extends \Phalcon\Di\Injectable
+class GetRegistryAction extends Injectable
 {
     /**
      * Retrieves the statuses of IAX providers registration.

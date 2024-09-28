@@ -33,7 +33,7 @@ use Phalcon\Flash\Session as FlashSession;
  */
 class FlashProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'flash';
+    public const string SERVICE_NAME = 'flash';
 
     /**
      * Register flash service provider

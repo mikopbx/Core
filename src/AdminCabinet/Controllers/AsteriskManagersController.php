@@ -54,7 +54,7 @@ class AsteriskManagersController extends BaseController
     /**
      * Generates Asterisk Managers index page
      */
-    public function indexAction()
+    public function indexAction(): void
     {
         $amiUsers = AsteriskManagerUsers::find();
         $amiUsers->setHydrateMode(
@@ -76,7 +76,7 @@ class AsteriskManagersController extends BaseController
      *
      * @param string $id AsteriskManagerUsers record ID
      */
-    public function modifyAction(string $id = '')
+    public function modifyAction(string $id = ''): void
     {
         $manager = AsteriskManagerUsers::findFirstById($id);
         if ($manager === null) {
@@ -140,7 +140,7 @@ class AsteriskManagersController extends BaseController
             }
             $manager->$name = $data[$name];
         }
-        $this->saveEntity($manager, "asterisk-managers/modify/{$manager->id}");
+        $this->saveEntity($manager, "asterisk-managers/modify/$manager->id");
     }
 
     /**
@@ -157,9 +157,7 @@ class AsteriskManagersController extends BaseController
         }
 
         $manager = AsteriskManagerUsers::findFirstByid($amiId);
-        if ($manager !== null) {
-            $manager->delete();
-        }
+        $manager?->delete();
         $this->forward('asterisk-managers/index');
     }
 
@@ -173,7 +171,7 @@ class AsteriskManagersController extends BaseController
     public function availableAction(string $username): void
     {
         $result = true;
-        $amiUser = AsteriskManagerUsers::findFirst("username = '{$username}'");
+        $amiUser = AsteriskManagerUsers::findFirst("username = '$username'");
         if ($amiUser !== null) {
             $result             = false;
             $this->view->userId = $amiUser->id;

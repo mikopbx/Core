@@ -15,7 +15,7 @@ use MikoPBX\Modules\Config\SystemConfigInterface;
  */
 class ReloadModuleStateAction implements ReloadActionInterface
 {
-    const MODULE_SETTINGS_KEY = 'MODULE_SETTINGS_DATA';
+    public const string MODULE_SETTINGS_KEY = 'MODULE_SETTINGS_DATA';
 
     /**
      * Executes the action to reload module state based on provided parameters.

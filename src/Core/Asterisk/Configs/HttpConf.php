@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -43,32 +43,32 @@ class HttpConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $enabled = ($this->generalSettings[PbxSettingsConstants::AJAM_ENABLED] === '1') ? 'yes' : 'no';
+        $enabled = ($this->generalSettings[PbxSettings::AJAM_ENABLED] === '1') ? 'yes' : 'no';
         $conf    = "[general]\n" .
-            "enabled={$enabled}\n" .
+            "enabled=$enabled\n" .
             "bindaddr=0.0.0.0\n" .
-            "bindport={$this->generalSettings[PbxSettingsConstants::AJAM_PORT]}\n" .
+            "bindport={$this->generalSettings[PbxSettings::AJAM_PORT]}\n" .
             "prefix=asterisk\n" .
             "enablestatic=yes\n\n";
 
-        if ( ! empty($this->generalSettings[PbxSettingsConstants::AJAM_PORT_TLS])) {
+        if ( ! empty($this->generalSettings[PbxSettings::AJAM_PORT_TLS])) {
             $keys_dir = '/etc/asterisk/keys';
             Util::mwMkdir($keys_dir);
-            $WEBHTTPSPublicKey  = $this->generalSettings[PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY];
-            $WEBHTTPSPrivateKey = $this->generalSettings[PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY];
+            $WEBHTTPSPublicKey  = $this->generalSettings[PbxSettings::WEB_HTTPS_PUBLIC_KEY];
+            $WEBHTTPSPrivateKey = $this->generalSettings[PbxSettings::WEB_HTTPS_PRIVATE_KEY];
 
             if ( ! empty($WEBHTTPSPublicKey) && ! empty($WEBHTTPSPrivateKey)) {
-                $s_data = "{$WEBHTTPSPublicKey}\n{$WEBHTTPSPrivateKey}";
+                $s_data = "$WEBHTTPSPublicKey\n$WEBHTTPSPrivateKey";
             } else {
                 // Generate SSL certificate
                 $data   = Util::generateSslCert();
                 $s_data = implode("\n", $data);
             }
             $conf .= "tlsenable=yes\n" .
-                "tlsbindaddr=0.0.0.0:{$this->generalSettings[PbxSettingsConstants::AJAM_PORT_TLS]}\n" .
-                "tlscertfile={$keys_dir}/ajam.pem\n" .
-                "tlsprivatekey={$keys_dir}/ajam.pem\n";
-            Util::fileWriteContent("{$keys_dir}/ajam.pem", $s_data);
+                "tlsbindaddr=0.0.0.0:{$this->generalSettings[PbxSettings::AJAM_PORT_TLS]}\n" .
+                "tlscertfile=$keys_dir/ajam.pem\n" .
+                "tlsprivatekey=$keys_dir/ajam.pem\n";
+            Util::fileWriteContent("$keys_dir/ajam.pem", $s_data);
         }
 
         // Write the configuration content to the file

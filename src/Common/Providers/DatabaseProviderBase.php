@@ -23,10 +23,10 @@ namespace MikoPBX\Common\Providers;
 
 
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Events\Manager as EventsManager;
-use Phalcon\Logger;
+use Phalcon\Logger\Logger;
 use Phalcon\Logger\Adapter\Stream as FileLogger;
 
 /**
@@ -84,11 +84,11 @@ abstract class DatabaseProviderBase
                                         }
                                         $variable  = str_replace(':', '', $variable);
                                         $statement = str_replace(":$variable", "'$value'", $statement);
-                                        $statement = preg_replace('/= \?/', " = '{$value}'", $statement, 1);
+                                        $statement = preg_replace('/= \?/', " = '$value'", $statement, 1);
                                     }
                                 }
                                 $callStack = json_encode(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,50), JSON_PRETTY_PRINT);
-                                $logger->debug("Request: \n {$statement}\nCall stack:\n{$callStack} \n\n\n\n");
+                                $logger->debug("Request: \n $statement\nCall stack:\n$callStack \n\n\n\n");
                             }
                         }
                     );
@@ -109,8 +109,6 @@ abstract class DatabaseProviderBase
     {
         $dbProvidersList = [
             // Always recreate it before change DB providers
-            ModelsCacheProvider::class,
-
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
 

@@ -1,4 +1,4 @@
-{{ form('time-settings/save', 'role': 'form', 'class': 'ui large form', 'id':'time-settings-form') }}
+{{ form(['action' : 'time-settings/save', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'time-settings-form']) }}
 <div class="three fields">
     <div class="field">
         <label>{{ t._('ts_TimeZone') }}</label>
@@ -33,4 +33,4 @@
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 {{ partial("partials/submitbutton",['indexurl':'']) }}
 <div class="ui clearing hidden divider"></div>
-{{ end_form() }}
+{{ close('form') }}

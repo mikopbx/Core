@@ -20,13 +20,14 @@
 namespace MikoPBX\PBXCoreREST\Lib\Sysinfo;
 
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Gets an external IP address of the system
  *
  * @package MikoPBX\PBXCoreREST\Lib\Sysinfo
  */
-class GetExternalIpInfoAction extends \Phalcon\Di\Injectable
+class GetExternalIpInfoAction extends Injectable
 {
     /**
      * Gets an external IP address of the system

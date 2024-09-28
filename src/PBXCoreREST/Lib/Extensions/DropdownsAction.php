@@ -23,7 +23,8 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Text;
+use MikoPBX\Common\Library\Text;
+use Phalcon\Di\Injectable;
 
 /**
  * Class Dropdowns
@@ -31,7 +32,7 @@ use Phalcon\Text;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Extensions
  */
-class DropdownsAction extends \Phalcon\Di\Injectable
+class DropdownsAction extends Injectable
 {
 
     /**
@@ -157,10 +158,10 @@ class DropdownsAction extends \Phalcon\Di\Injectable
             'name' => $represent,
             'value' => $record->number,
             'type' => $type,
-            'typeLocalized' => Util::translate("ex_dropdownCategory_{$type}"),
+            'typeLocalized' => Util::translate("ex_dropdownCategory_$type"),
             'sorter' => ($record->userid > 0) ?
-                "{$type}{$clearedRepresent}{$record->number}" :
-                "{$type}{$clearedRepresent}",
+                "$type$clearedRepresent$record->number" :
+                "$type$clearedRepresent",
         ];
     }
 
@@ -171,10 +172,10 @@ class DropdownsAction extends \Phalcon\Di\Injectable
      *
      * @return mixed|null The module object if found, null otherwise.
      */
-    private static function findModuleByExtensionNumber(string $number)
+    private static function findModuleByExtensionNumber(string $number): mixed
     {
         $result = null;
-        $extension = Extensions::findFirst("number ='{$number}'");
+        $extension = Extensions::findFirst("number ='$number'");
         $relatedLinks = $extension->getRelatedLinks();
         $moduleUniqueID = false;
 
@@ -204,7 +205,7 @@ class DropdownsAction extends \Phalcon\Di\Injectable
      *
      * @return int - Returns a negative, zero, or positive integer based on the comparison result.
      */
-    private static function sortExtensionsArray($a, $b): int
+    private static function sortExtensionsArray(array $a, array $b): int
     {
         return strcmp($a['sorter'], $b['sorter']);
     }

@@ -80,9 +80,9 @@ class IVRConf extends AsteriskConfigClass
             $conf          .= 'same => n,GotoIf($[${try_count} > ' . $ivr['number_of_repeat'] . ']?internal,' . $ivr['timeout_extension'] . ',1)' . "\n\t";
             $conf          .= 'same => n,Set(try_count=$[${try_count} + 1])' . "\n\t";
             $conf          .= "same => n,Set(TIMEOUT(digit)=2) \n\t";
-            $conf          .= "same => n,Background({$audio_message}) \n\t";
+            $conf          .= "same => n,Background($audio_message) \n\t";
             if ($timeout_wait_exten > 0) {
-                $conf .= "same => n,WaitExten({$timeout_wait_exten}) \n";
+                $conf .= "same => n,WaitExten($timeout_wait_exten) \n";
             } else {
                 $conf .= "same => n,Goto(t,1)\n";
             }
@@ -90,8 +90,8 @@ class IVRConf extends AsteriskConfigClass
             // Fetch IVR menu actions from the database
             $res = IvrMenuActions::find("ivr_menu_id = '{$ivr['uniqid']}'");
             foreach ($res as $ext) {
-                $conf .= "exten => {$ext->digits},1,StopMixMonitor()\n";
-                $conf .= "\tsame => n,Goto(internal,{$ext->extension},1)\n";
+                $conf .= "exten => $ext->digits,1,StopMixMonitor()\n";
+                $conf .= "\tsame => n,Goto(internal,$ext->extension,1)\n";
             }
 
             // Handle invalid and timeout extensions.
@@ -133,17 +133,17 @@ class IVRConf extends AsteriskConfigClass
      * Retrieves the duration of a sound file.
      *
      * @param string $filename The file name.
-     * @return int The duration of the sound file.
+     * @return float|int The duration of the sound file.
      */
-    public function getSoundFileDuration($filename)
+    public function getSoundFileDuration(string $filename): float|int
     {
         $result = 7;
         if (file_exists($filename)) {
-            $soxiPath = Util::which('soxi');
-            $awkPath  = Util::which('awk');
-            $grepPath = Util::which('grep');
+            $soxi = Util::which('soxi');
+            $awk  = Util::which('awk');
+            $grep = Util::which('grep');
             Processes::mwExec(
-                "{$soxiPath}  {$filename} 2>/dev/null | {$grepPath} Duration | {$awkPath}  '{ print $3}'",
+                "$soxi $filename 2>/dev/null | $grep Duration | $awk  '{ print $3}'",
                 $out
             );
             $time_str = implode($out);

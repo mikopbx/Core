@@ -32,8 +32,7 @@ use MikoPBX\Common\Models\{AsteriskManagerUsers,
     Users
 };
 use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
-use Modules\ModuleUsersUI\App\Controllers\UsersCredentialsController;
-use Phalcon\Text;
+use MikoPBX\Common\Library\Text;
 
 class TopMenuSearchController extends BaseController
 {
@@ -102,7 +101,7 @@ class TopMenuSearchController extends BaseController
             'name' => $represent,
             'value' => $link,
             'type' => $type,
-            'typeLocalized' => $this->translation->_("ex_dropdownCategory_{$type}"),
+            'typeLocalized' => $this->translation->_("ex_dropdownCategory_$type"),
             'sorter' => $clearedRepresent,
         ];
     }

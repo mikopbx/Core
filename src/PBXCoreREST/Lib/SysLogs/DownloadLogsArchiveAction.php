@@ -21,7 +21,8 @@ namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Requests a zipped archive containing logs and PCAP file
@@ -29,7 +30,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class DownloadLogsArchiveAction extends \Phalcon\Di\Injectable
+class DownloadLogsArchiveAction extends Injectable
 {
     /**
      * Requests a zipped archive containing logs and PCAP file
@@ -44,21 +45,21 @@ class DownloadLogsArchiveAction extends \Phalcon\Di\Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $progress_file = "{$resultFile}.progress";
+        $progress_file = "$resultFile.progress";
         if (!file_exists($progress_file)) {
             $res->messages[] = 'Archive does not exist. Try again!';
         } elseif (file_exists($progress_file) && file_get_contents($progress_file) === '100') {
             $uid = Util::generateRandomString(36);
             $di = Di::getDefault();
             $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
-            $result_dir = "{$downloadLink}/{$uid}";
+            $result_dir = "$downloadLink/$uid";
             Util::mwMkdir($result_dir);
             $link_name = 'MikoPBXLogs_' . basename($resultFile);
-            Util::createUpdateSymlink($resultFile, "{$result_dir}/{$link_name}");
-            Util::addRegularWWWRights("{$result_dir}/{$link_name}");
+            Util::createUpdateSymlink($resultFile, "$result_dir/$link_name");
+            Util::addRegularWWWRights("$result_dir/$link_name");
             $res->success = true;
             $res->data['status'] = "READY";
-            $res->data['filename'] = "{$uid}/{$link_name}";
+            $res->data['filename'] = "$uid/$link_name";
         } else {
             $res->success = true;
             $res->data['status'] = "PREPARING";

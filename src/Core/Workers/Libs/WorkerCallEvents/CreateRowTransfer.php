@@ -43,7 +43,7 @@ class CreateRowTransfer
      * @param array $data The event data.
      * @param array|null $calls_data The call data.
      */
-    public static function execute(WorkerCallEvents $worker, $action, $data, $calls_data = null): void
+    public static function execute(WorkerCallEvents $worker, string $action, array $data, ?array $calls_data = null): void
     {
         if (isset($worker->checkChanHangupTransfer[$data['agi_channel']])) {
             return;
@@ -65,7 +65,7 @@ class CreateRowTransfer
      * @param array $data The event data.
      * @param array|null $calls_data The call data.
      */
-    private static function initCallsData($data, &$calls_data): void
+    private static function initCallsData(array $data, ?array &$calls_data): void
     {
         if (null === $calls_data) {
             $filter = [
@@ -88,8 +88,9 @@ class CreateRowTransfer
      * @param string $action The action type.
      * @param array $data The event data.
      * @param array $calls_data The call data.
+     * @throws \Exception
      */
-    private static function fillRedirectCdrData($worker, $action, $data, $calls_data): void
+    private static function fillRedirectCdrData(WorkerCallEvents $worker, string $action, array $data, array $calls_data): void
     {
         $insert_data = [];
         foreach ($calls_data as $row_data) {
@@ -146,7 +147,7 @@ class CreateRowTransfer
      * @param array $calls_data The call data.
      * @return bool Whether the transfer is failed or not.
      */
-    private static function isFailRedirect($calls_data): bool
+    private static function isFailRedirect(array $calls_data): bool
     {
         return empty($calls_data[0]['answer']) && count($calls_data) === 1;
     }
@@ -158,7 +159,7 @@ class CreateRowTransfer
      * @param array $data The event data.
      * @param array $calls_data The call data.
      */
-    private static function fillFailRedirectCdrData(WorkerCallEvents $worker, $data, $calls_data): void
+    private static function fillFailRedirectCdrData(WorkerCallEvents $worker, array $data, array $calls_data): void
     {
         // Resume recording when transfer is interrupted.
         $row_data = $calls_data[0];

@@ -36,15 +36,15 @@ use MikoPBX\AdminCabinet\Controllers\OutOffWorkTimeController;
 use MikoPBX\AdminCabinet\Controllers\ProvidersController;
 use MikoPBX\AdminCabinet\Controllers\SoundFilesController;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Common\Providers\ModelsCacheProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Events\Event;
 use Phalcon\Events\Manager;
 use Phalcon\Messages\Message;
@@ -54,9 +54,8 @@ use Phalcon\Mvc\Model\Relation;
 use Phalcon\Mvc\Model\Resultset;
 use Phalcon\Mvc\Model\Resultset\Simple;
 use Phalcon\Mvc\Model\ResultsetInterface;
-use Phalcon\Security\Random;
-use Phalcon\Text;
-use Phalcon\Url;
+use Phalcon\Encryption\Security\Random;
+use Phalcon\Mvc\Url;
 
 /**
  * Class ModelsBase
@@ -86,7 +85,7 @@ class ModelsBase extends Model
      * All models with lover than this version in module.json won't be attached as children
      * We use this constant to disable old modules that may not be compatible with the current version of MikoPBX
      */
-    public const MIN_MODULE_MODEL_VER = '2020.2.468';
+    public const string MIN_MODULE_MODEL_VER = '2024.2.3';
 
     /**
      * Returns Cache key for the models cache service
@@ -99,7 +98,7 @@ class ModelsBase extends Model
     public static function makeCacheKey(string $modelClass, string $keyName): string
     {
         $category = explode('\\', $modelClass)[3];
-        return "{$category}:{$keyName}";
+        return "$category:$keyName";
     }
 
     /**
@@ -137,13 +136,13 @@ class ModelsBase extends Model
     /**
      * Attaches model's relationships from modules models classes
      */
-    private function addExtensionModulesRelations()
+    private function addExtensionModulesRelations(): void
     {
         $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $module) {
             $moduleDir = PbxExtensionUtils::getModuleDir($module['uniqid']);
 
-            $moduleJson = "{$moduleDir}/module.json";
+            $moduleJson = "$moduleDir/module.json";
             if (!file_exists($moduleJson)) {
                 continue;
             }
@@ -154,11 +153,11 @@ class ModelsBase extends Model
                 continue;
             }
 
-            $moduleModelsDir = "{$moduleDir}/Models";
+            $moduleModelsDir = "$moduleDir/Models";
             $results = glob($moduleModelsDir . '/*.php', GLOB_NOSORT);
             foreach ($results as $file) {
                 $className = pathinfo($file)['filename'];
-                $moduleModelClass = "Modules\\{$module['uniqid']}\\Models\\{$className}";
+                $moduleModelClass = "Modules\\{$module['uniqid']}\\Models\\$className";
 
                 if (class_exists($moduleModelClass)
                     && method_exists($moduleModelClass, 'getDynamicRelations')) {
@@ -242,8 +241,8 @@ class ModelsBase extends Model
         }
         if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
             $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
-            $category = explode('\\', $calledClass)[3];
-            $keys = $managedCache->getKeys($category);
+            $category = explode('\\', $calledClass)[3].'*';
+            $keys = $managedCache->getAdapter()->keys($category);
             $prefix = $managedCache->getPrefix();
             // Delete all items from the managed cache
             foreach ($keys as $key) {
@@ -251,18 +250,6 @@ class ModelsBase extends Model
                 $managedCache->delete($cacheKey);
             }
         }
-        if ($di->has(ModelsCacheProvider::SERVICE_NAME)) {
-            $modelsCache = $di->getShared(ModelsCacheProvider::SERVICE_NAME);
-            $category = explode('\\', $calledClass)[3];
-            $keys = $modelsCache->getKeys($category);
-            $prefix = $modelsCache->getPrefix();
-            // Delete all items from the models cache
-            foreach ($keys as $key) {
-                $cacheKey = str_ireplace($prefix, '', $key);
-                $modelsCache->delete($cacheKey);
-            }
-        }
-
     }
 
     /**
@@ -322,12 +309,12 @@ class ModelsBase extends Model
      * Function to access the translation array from models.
      * It is used for messages in a user-friendly language.
      *
-     * @param $message
-     * @param array $parameters
+     * @param string $message
+     * @param ?array $parameters
      *
-     * @return mixed
+     * @return string
      */
-    public function t($message, $parameters = [])
+    public function t(string $message, ?array $parameters = []): string
     {
         return $this->getDI()->getShared(TranslationProvider::SERVICE_NAME)->t($message, $parameters);
     }
@@ -357,7 +344,7 @@ class ModelsBase extends Model
                     ? $this->t('mo_NewElementCallQueues')
                     : $this->t('mo_CallQueueShort4Dropdown') . ': '
                     . $this->name
-                    . " <{$this->extension}>";
+                    . " <$this->extension>";
                 break;
             case ConferenceRooms::class:
                 $name = '<i class="phone volume icon"></i> ';
@@ -365,10 +352,10 @@ class ModelsBase extends Model
                     ? $this->t('mo_NewElementConferenceRooms')
                     : $this->t('mo_ConferenceRoomsShort4Dropdown') . ': '
                     . $this->name
-                    . " <{$this->extension}>";
+                    . " <$this->extension>";
                 break;
             case CustomFiles::class:
-                $name = "<i class='file icon'></i> {$this->filepath}";
+                $name = "<i class='file icon'></i> $this->filepath";
                 break;
             case DialplanApplications::class:
                 $name = '<i class="php icon"></i> ';
@@ -376,7 +363,7 @@ class ModelsBase extends Model
                     ? $this->t('mo_NewElementDialplanApplications')
                     : $this->t('mo_ApplicationShort4Dropdown') . ': '
                     . $this->name
-                    . " <{$this->extension}>";
+                    . " <$this->extension>";
                 break;
             case ExtensionForwardingRights::class:
                 $name = $this->Extensions->getRepresent();
@@ -388,13 +375,13 @@ class ModelsBase extends Model
                     $icon = '<i class="icons"><i class="user outline icon"></i></i>';
                 }
                 if (empty($this->id)) {
-                    $name = "{$icon} {$this->t('mo_NewElementExtensions')}";
+                    $name = "$icon {$this->t('mo_NewElementExtensions')}";
                 } elseif ($this->userid > 0) {
                     $name = '';
                     if (isset($this->Users->username)) {
                         $name = $this->trimName($this->Users->username);
                     }
-                    $name = "{$icon} {$name} <{$this->number}>";
+                    $name = "$icon $name <$this->number>";
                 } else {
                     switch (strtoupper($this->type)) {
                         case Extensions::TYPE_CONFERENCE:
@@ -425,7 +412,7 @@ class ModelsBase extends Model
                         case Extensions::TYPE_EXTERNAL:
                         case Extensions::TYPE_SIP:
                         default:
-                            $name = "{$this->callerid} <{$this->number}>";
+                            $name = "$this->callerid <$this->number>";
                     }
                 }
                 break;
@@ -443,7 +430,7 @@ class ModelsBase extends Model
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementIax');
                 } elseif ($this->disabled === '1') {
-                    $name .= "{$this->description} ({$this->t( 'mo_Disabled' )})";
+                    $name .= "$this->description ({$this->t( 'mo_Disabled' )})";
                 } else {
                     $name .= $this->description;
                 }
@@ -454,7 +441,7 @@ class ModelsBase extends Model
                     ? $this->t('mo_NewElementIvrMenu')
                     : $this->t('mo_IVRMenuShort4Dropdown') . ': '
                     . $this->name
-                    . " <{$this->extension}>";
+                    . " <$this->extension>";
                 break;
             case IvrMenuActions::class:
                 $name = $this->Extensions->getRepresent();
@@ -514,11 +501,11 @@ class ModelsBase extends Model
                         if (!empty($represent)){
                             $represent.=' ';
                         }
-                        $weekday_from = $this->t(date('D',strtotime("Sunday +{$this->weekday_from} days")));
+                        $weekday_from = $this->t(date('D',strtotime("Sunday +$this->weekday_from days")));
                         $represent .= "<i class='icon outline calendar minus' ></i>";
                         $represent .= "$weekday_from";
                         if (!empty($this->weekday_to) && $this->weekday_from !== $this->weekday_to){
-                            $weekday_to = $this->t(date('D',strtotime("Sunday +{$this->weekday_to} days")));
+                            $weekday_to = $this->t(date('D',strtotime("Sunday +$this->weekday_to days")));
                             $represent .= " - $weekday_to";
                         }
                     }
@@ -556,7 +543,7 @@ class ModelsBase extends Model
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementSip');
                 } elseif ($this->disabled === '1') {
-                    $name .= "{$this->description} ({$this->t( 'mo_Disabled' )})";
+                    $name .= "$this->description ({$this->t( 'mo_Disabled' )})";
                 } else {
                     $name .= $this->description;
                 }
@@ -586,7 +573,7 @@ class ModelsBase extends Model
             $result = $this->t(
                 'rep' . $category,
                 [
-                    'represent' => "<a href='{$link}'>{$name}</a>",
+                    'represent' => "<a href='$link'>$name</a>",
                 ]
             );
         } else {
@@ -757,7 +744,7 @@ class ModelsBase extends Model
         // Remove the "Controller" suffix if present
         $controllerName = str_replace("Controller", "", $controllerName);
         $unCamelizedControllerName = Text::uncamelize($controllerName, '-');
-        $link = $url->get("{$unCamelizedControllerName}//{$action}//{$recordId}", null, null, $baseUri);
+        $link = $url->get("$unCamelizedControllerName//$action//$recordId", null, null, $baseUri);
 
         return $link;
     }

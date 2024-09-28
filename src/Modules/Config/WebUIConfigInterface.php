@@ -35,23 +35,23 @@ use Phalcon\Mvc\View;
  */
 interface WebUIConfigInterface
 {
-    public const AUTHENTICATE_USER = 'authenticateUser';
+    public const string AUTHENTICATE_USER = 'authenticateUser';
 
-    public const ON_AFTER_ACL_LIST_PREPARED = 'onAfterACLPrepared';
+    public const string ON_AFTER_ACL_LIST_PREPARED = 'onAfterACLPrepared';
 
-    public const ON_BEFORE_HEADER_MENU_SHOW = 'onBeforeHeaderMenuShow';
+    public const string ON_BEFORE_HEADER_MENU_SHOW = 'onBeforeHeaderMenuShow';
 
-    public const ON_AFTER_ROUTES_PREPARED = 'onAfterRoutesPrepared';
+    public const string ON_AFTER_ROUTES_PREPARED = 'onAfterRoutesPrepared';
 
-    public const ON_AFTER_ASSETS_PREPARED = 'onAfterAssetsPrepared';
+    public const string ON_AFTER_ASSETS_PREPARED = 'onAfterAssetsPrepared';
 
-    public const ON_VOLT_BLOCK_COMPILE = 'onVoltBlockCompile';
+    public const string ON_VOLT_BLOCK_COMPILE = 'onVoltBlockCompile';
 
-    public const ON_BEFORE_FORM_INITIALIZE = 'onBeforeFormInitialize';
+    public const string ON_BEFORE_FORM_INITIALIZE = 'onBeforeFormInitialize';
 
-    public const ON_BEFORE_EXECUTE_ROUTE = 'onBeforeExecuteRoute';
+    public const string ON_BEFORE_EXECUTE_ROUTE = 'onBeforeExecuteRoute';
 
-    public const ON_AFTER_EXECUTE_ROUTE = 'onAfterExecuteRoute';
+    public const string ON_AFTER_EXECUTE_ROUTE = 'onAfterExecuteRoute';
 
     /**
      * Authenticates a user over an external module.
@@ -127,7 +127,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onBeforeFormInitialize(Form $form, $entity, $options):void;
+    public function onBeforeFormInitialize(Form $form, mixed $entity, mixed $options):void;
 
     /**
      * Called from BaseController before executing a route.

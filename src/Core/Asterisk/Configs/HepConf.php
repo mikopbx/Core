@@ -59,9 +59,9 @@ class HepConf extends AsteriskConfigClass
      *
      * @return void
      */
-    public static function reload()
+    public static function reload(): void
     {
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'module reload res_hep.so'", $out);
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload res_hep.so'", $out);
     }
 }

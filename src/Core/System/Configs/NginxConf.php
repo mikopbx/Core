@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Network;
@@ -39,8 +39,8 @@ use Phalcon\Di\Injectable;
  */
 class NginxConf extends Injectable
 {
-    public const  MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
-    private const PID_FILE = '/var/run/nginx.pid';
+    public const string  MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
+    private const string PID_FILE = '/var/run/nginx.pid';
 
     private MikoPBXConfig $mikoPBXConfig;
 
@@ -60,9 +60,9 @@ class NginxConf extends Injectable
     {
         $pid = self::getPid();
         if (!empty($pid)) {
-            $killPath = Util::which('kill');
+            $kill = Util::which('kill');
             // reload Nginx workers gracefully
-            Processes::mwExec("{$killPath} -SIGHUP {$pid} ");
+            Processes::mwExec("$kill -SIGHUP $pid ");
         } else {
             $nginxPath = Util::which('nginx');
             Processes::killByName('nginx');
@@ -97,8 +97,8 @@ class NginxConf extends Injectable
     public function generateConf(bool $not_ssl = false, int $level = 0): void
     {
         $configPath      = '/etc/nginx/mikopbx/conf.d';
-        $httpConfigFile  = "{$configPath}/http-server.conf";
-        $httpsConfigFile = "{$configPath}/https-server.conf";
+        $httpConfigFile  = "$configPath/http-server.conf";
+        $httpsConfigFile = "$configPath/https-server.conf";
         $dns_server      = '127.0.0.1';
 
         $net = new Network();
@@ -111,10 +111,10 @@ class NginxConf extends Injectable
         }
 
         // HTTP
-        $WEBPort      = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_PORT);
-        $WEBHTTPSPort = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PORT);
+        $WEBPort      = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_PORT);
+        $WEBHTTPSPort = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_HTTPS_PORT);
 
-        $config = file_get_contents("{$httpConfigFile}.original");
+        $config = file_get_contents("$httpConfigFile.original");
 
         // Define the placeholders that will be replaced in the configuration string.
         $placeholders = ['<DNS>', '<WEBPort>'];
@@ -126,7 +126,7 @@ class NginxConf extends Injectable
         // This operation updates DNS and Web Port settings in the configuration.
         $config = str_replace($placeholders, $replacementValues, $config);
 
-        $RedirectToHttps = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::REDIRECT_TO_HTTPS);
+        $RedirectToHttps = $this->mikoPBXConfig->getGeneralSettings(PbxSettings::REDIRECT_TO_HTTPS);
         if ($RedirectToHttps === '1' && $not_ssl === false) {
             $includeRow = 'include mikopbx/locations/*.conf;';
 
@@ -139,8 +139,8 @@ class NginxConf extends Injectable
         file_put_contents($httpConfigFile, $config);
 
         // SSL
-        $WEBHTTPSPublicKey  = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY);
-        $WEBHTTPSPrivateKey = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY);
+        $WEBHTTPSPublicKey  = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
+        $WEBHTTPSPrivateKey = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
         if (
             $not_ssl === false
             && ! empty($WEBHTTPSPublicKey)
@@ -150,7 +150,7 @@ class NginxConf extends Injectable
             $private_filename = '/etc/ssl/private/nginx.key';
             file_put_contents($public_filename, $WEBHTTPSPublicKey);
             file_put_contents($private_filename, $WEBHTTPSPrivateKey);
-            $config = file_get_contents("{$httpsConfigFile}.original");
+            $config = file_get_contents("$httpsConfigFile.original");
 
             // Define the placeholders that will be replaced in the configuration string.
             $placeholders = ['<DNS>', '<WEBHTTPSPort>'];
@@ -185,9 +185,9 @@ class NginxConf extends Injectable
      */
     private function testCurrentNginxConfig(): bool
     {
-        $nginxPath = Util::which('nginx');
+        $nginx = Util::which('nginx');
         $out       = [];
-        Processes::mwExec("{$nginxPath} -t", $out);
+        Processes::mwExec("$nginx -t", $out);
         $res = implode($out);
 
         return (false === stripos($res, 'test failed'));
@@ -204,20 +204,20 @@ class NginxConf extends Injectable
         if (!is_dir($locationsPath)){
             Util::mwMkdir($locationsPath,true);
         }
-        $rmPath            = Util::which('rm');
-        Processes::mwExec("{$rmPath} -rf {$locationsPath}/*.conf");
+        $rm            = Util::which('rm');
+        Processes::mwExec("$rm -rf $locationsPath/*.conf");
 
         // Add additional modules routes
         $additionalLocations = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::CREATE_NGINX_LOCATIONS);
         foreach ($additionalLocations as $moduleUniqueId=>$locationContent) {
-            $confFileName = "{$locationsPath}/{$moduleUniqueId}.conf";
+            $confFileName = "$locationsPath/$moduleUniqueId.conf";
             file_put_contents($confFileName, $locationContent);
             if ( $this->testCurrentNginxConfig()) {
                 // Test passed successfully.
                 continue;
             }
             // Config test failed. Rollback the config.
-            Processes::mwExec("{$rmPath} {$confFileName}");
+            Processes::mwExec("$rm $confFileName");
             SystemMessages::sysLogMsg('nginx', 'Failed test config file for module' . $moduleUniqueId, LOG_ERR);
         }
     }

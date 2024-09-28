@@ -35,21 +35,21 @@ use function sha1;
  */
 class Response extends PhResponse
 {
-    public const OK = 200;
-    public const CREATED = 201;
-    public const ACCEPTED = 202;
-    public const MOVED_PERMANENTLY = 301;
-    public const FOUND = 302;
-    public const TEMPORARY_REDIRECT = 307;
-    public const PERMANENTLY_REDIRECT = 308;
-    public const BAD_REQUEST = 400;
-    public const UNAUTHORIZED = 401;
-    public const FORBIDDEN = 403;
-    public const NOT_FOUND = 404;
-    public const INTERNAL_SERVER_ERROR = 500;
-    public const NOT_IMPLEMENTED = 501;
-    public const BAD_GATEWAY = 502;
-    private $codes = [
+    public const int OK = 200;
+    public const int CREATED = 201;
+    public const int ACCEPTED = 202;
+    public const int MOVED_PERMANENTLY = 301;
+    public const int FOUND = 302;
+    public const int TEMPORARY_REDIRECT = 307;
+    public const int PERMANENTLY_REDIRECT = 308;
+    public const int BAD_REQUEST = 400;
+    public const int UNAUTHORIZED = 401;
+    public const int FORBIDDEN = 403;
+    public const int NOT_FOUND = 404;
+    public const int INTERNAL_SERVER_ERROR = 500;
+    public const int NOT_IMPLEMENTED = 501;
+    public const int BAD_GATEWAY = 502;
+    private array $codes = [
         200 => 'OK',
         301 => 'Moved Permanently',
         302 => 'Found',
@@ -70,7 +70,7 @@ class Response extends PhResponse
      * @param int $code
      * @return int|string
      */
-    public function getHttpCodeDescription(int $code)
+    public function getHttpCodeDescription(int $code): int|string
     {
         if (true === isset($this->codes[$code])) {
             return sprintf('%d (%s)', $code, $this->codes[$code]);
@@ -138,7 +138,7 @@ class Response extends PhResponse
      * @param Messages $errors
      * @return Response
      */
-    public function setPayloadErrors($errors): Response
+    public function setPayloadErrors(Messages $errors): Response
     {
         $data = [];
         foreach ($errors as $error) {
@@ -153,10 +153,10 @@ class Response extends PhResponse
     /**
      * Set the payload code as Success.
      *
-     * @param null|string|array $content
+     * @param array|string|null $content
      * @return Response
      */
-    public function setPayloadSuccess($content = []): Response
+    public function setPayloadSuccess(array|string|null $content = []): Response
     {
         $data = (true === is_array($content)) ? $content : ['data' => $content];
         $this->setJsonContent($data);

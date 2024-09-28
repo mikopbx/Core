@@ -25,7 +25,8 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerDownloader;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class StartDownload
@@ -33,7 +34,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class StartDownloadAction extends \Phalcon\Di\Injectable
+class StartDownloadAction extends Injectable
 {
     /**
      * Starts the module download in a separate background process.
@@ -55,7 +56,7 @@ class StartDownloadAction extends \Phalcon\Di\Injectable
             $tempDir = '/tmp';
         }
 
-        $moduleDirTmp = "{$tempDir}/{$moduleUniqueID}";
+        $moduleDirTmp = "$tempDir/$moduleUniqueID";
         Util::mwMkdir($moduleDirTmp);
 
         $download_settings = [
@@ -77,8 +78,8 @@ class StartDownloadAction extends \Phalcon\Di\Injectable
             json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
         $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
-        $phpPath = Util::which('php');
-        Processes::mwExecBg("{$phpPath} -f {$workerDownloaderPath} start {$moduleDirTmp}/download_settings.json");
+        $php = Util::which('php');
+        Processes::mwExecBg("$php -f $workerDownloaderPath start $moduleDirTmp/download_settings.json");
 
         $res->data['uniqid'] = $moduleUniqueID;
         $res->data[FilesConstants::D_STATUS] = FilesConstants::DOWNLOAD_IN_PROGRESS;

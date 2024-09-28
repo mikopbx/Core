@@ -24,6 +24,7 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Modules\Setup\PbxExtensionSetupFailure;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class UninstallModule
@@ -31,7 +32,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class UninstallModuleAction extends \Phalcon\Di\Injectable
+class UninstallModuleAction extends Injectable
 {
     /**
      * Uninstall extension module
@@ -48,7 +49,7 @@ class UninstallModuleAction extends \Phalcon\Di\Injectable
         $currentModuleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
 
         // Kill all module processes
-        if (is_dir("{$currentModuleDir}/bin")) {
+        if (is_dir("$currentModuleDir/bin")) {
             $kill = Util::which('kill');
             $lsof = Util::which('lsof');
             $grep = Util::which('grep');
@@ -57,12 +58,12 @@ class UninstallModuleAction extends \Phalcon\Di\Injectable
 
             // Execute the command to kill all processes related to the module
             Processes::mwExec(
-                "$kill -9 $($lsof {$currentModuleDir}/bin/* |  $grep -v COMMAND | $awk  '{ print $2}' | $uniq)"
+                "$kill -9 $($lsof $currentModuleDir/bin/* |  $grep -v COMMAND | $awk  '{ print $2}' | $uniq)"
             );
         }
 
         // Uninstall module with keep settings and backup db
-        $moduleClass = "Modules\\{$moduleUniqueID}\\Setup\\PbxExtensionSetup";
+        $moduleClass = "Modules\\$moduleUniqueID\\Setup\\PbxExtensionSetup";
 
         try {
             if (class_exists($moduleClass)
@@ -82,7 +83,7 @@ class UninstallModuleAction extends \Phalcon\Di\Injectable
                 $rm = Util::which('rm');
 
                 // Remove the module directory recursively
-                Processes::mwExec("$rm -rf {$currentModuleDir}");
+                Processes::mwExec("$rm -rf $currentModuleDir");
 
                 // Use the fallback class to unregister the module from the database
                 $moduleClass = PbxExtensionSetupFailure::class;

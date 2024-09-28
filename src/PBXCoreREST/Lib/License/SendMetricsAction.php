@@ -21,19 +21,19 @@ namespace MikoPBX\PBXCoreREST\Lib\License;
 
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Class SendMetricsAction
  * Sends PBX metrics to the license server.
  * @package MikoPBX\PBXCoreREST\Lib\License
  */
-class SendMetricsAction extends \Phalcon\Di\Injectable
+class SendMetricsAction extends Injectable
 {
     /**
      * Sends PBX metrics to the license server.
@@ -55,7 +55,7 @@ class SendMetricsAction extends \Phalcon\Di\Injectable
         if ($lastSend === null) {
 
             // License Key
-            $licenseKey = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
+            $licenseKey = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
             if (empty($licenseKey)){
                 return $res;
             }
@@ -66,20 +66,20 @@ class SendMetricsAction extends \Phalcon\Di\Injectable
             $dataMetrics = [];
 
             // PBXVersion
-            $dataMetrics['PBXname'] = 'MikoPBX@' . PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
+            $dataMetrics['PBXname'] = 'MikoPBX@' . PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
 
             // SIP Extensions count
             $extensions = Extensions::find('type="' . Extensions::TYPE_SIP . '"');
             $dataMetrics['CountSipExtensions'] = $extensions->count();
 
             // Interface language
-            $dataMetrics['WebAdminLanguage'] = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
+            $dataMetrics['WebAdminLanguage'] = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
 
             // PBX language
-            $dataMetrics['PBXLanguage'] = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LANGUAGE);
+            $dataMetrics['PBXLanguage'] = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
 
             // Virtual Hardware Type
-            $dataMetrics['VirtualHardwareType'] = PbxSettings::getValueByKey(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE);
+            $dataMetrics['VirtualHardwareType'] = PbxSettings::getValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE);
 
             // Hypervisor
             $restAnswer = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [

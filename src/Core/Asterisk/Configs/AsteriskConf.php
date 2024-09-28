@@ -20,11 +20,11 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 
 /**
  * Represents the AsteriskConf class responsible for generating asterisk.conf configuration file.
@@ -43,7 +43,7 @@ class AsteriskConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $lang = $this->generalSettings[PbxSettingsConstants::PBX_LANGUAGE];
+        $lang = $this->generalSettings[PbxSettings::PBX_LANGUAGE];
 
         // Build the configuration content
         $conf = "[directories]\n" .
@@ -65,7 +65,7 @@ class AsteriskConf extends AsteriskConfigClass
             "dumpcore = no\n" .
             "transcode_via_sln = no\n" .
             "hideconnect = yes\n" .
-            "defaultlanguage = {$lang}\n" .
+            "defaultlanguage = $lang\n" .
             "systemname = mikopbx\n";
 
         // Write the configuration content to the file
@@ -91,7 +91,7 @@ class AsteriskConf extends AsteriskConfigClass
      */
     public static function getLogFile():string
     {
-        return System::getLogDir() . '/asterisk/asterisk-cli.log';
+        return Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/asterisk-cli.log';
     }
 
     /**
@@ -130,6 +130,6 @@ class AsteriskConf extends AsteriskConfigClass
         if (Util::mFileSize($f_name) > $mb10) {
             $options = '-f';
         }
-        Processes::mwExecBg("{$logRotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+        Processes::mwExecBg("$logRotatePath $options '$path_conf' > /dev/null 2> /dev/null");
     }
 }

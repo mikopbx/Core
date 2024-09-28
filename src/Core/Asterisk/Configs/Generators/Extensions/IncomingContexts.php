@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
 
 use MikoPBX\Common\Models\IncomingRoutingTable;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ConferenceConf;
@@ -41,7 +41,7 @@ class IncomingContexts extends AsteriskConfigClass
     public int $priority = 530;
 
     // @var array|string $provider Provider information for routing.
-    public $provider;
+    public array|string $provider;
 
     // @var string $login Login information.
     public string $login;
@@ -71,12 +71,12 @@ class IncomingContexts extends AsteriskConfigClass
      * Generate incoming contexts.
      *
      * @param string|array $provider
-     * @param string|array $login
+     * @param string $login
      * @param string $uniqId
      *
      * @return string
      */
-    public static function generate($provider, string $login = '', string $uniqId = ''): string
+    public static function generate(array|string $provider, string $login = '', string $uniqId = ''): string
     {
         $generator           = new self();
         $generator->provider = $provider;
@@ -100,7 +100,7 @@ class IncomingContexts extends AsteriskConfigClass
     {
         $this->confExtensions = ConferenceConf::getConferenceExtensions();
         $this->routes         = $this->getRoutes();
-        $this->lang           = str_replace('_', '-', $this->generalSettings[PbxSettingsConstants::PBX_LANGUAGE]);
+        $this->lang           = str_replace('_', '-', $this->generalSettings[PbxSettings::PBX_LANGUAGE]);
         $this->need_def_rout  = $this->checkNeedDefRout();
     }
 
@@ -228,7 +228,7 @@ class IncomingContexts extends AsteriskConfigClass
         }
 
         // Generate dialplan strings.
-        $rout_data .= "exten => {$ext_prefix}{$rout_number},1,NoOp(--- Incoming call ---)\n\t";
+        $rout_data .= "exten => $ext_prefix$rout_number,1,NoOp(--- Incoming call ---)\n\t";
         $rout_data .= 'same => n,Set(CHANNEL(language)=' . $this->lang . ')' . "\n\t";
         $rout_data .= 'same => n,Set(CHANNEL(hangup_handler_wipe)=hangup_handler,s,1)' . "\n\t";
         $rout_data .= 'same => n,Set(__FROM_DID=${EXTEN})' . "\n\t";
@@ -304,8 +304,8 @@ class IncomingContexts extends AsteriskConfigClass
             $dialplanCommands = " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?'."Goto(internal,{$rout['extension']},1));";
         } else {
             // For other extensions, handle the answer timeout and generate the appropriate dial command.
-            $dialplanCommands = " \n\t"."same => n,Set(M_TIMEOUT={$timeout})".
-                                " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?'."Dial(Local/{$rout['extension']}@internal-incoming,{$timeout},".'${TRANSFER_OPTIONS}'."Kg));";
+            $dialplanCommands = " \n\t"."same => n,Set(M_TIMEOUT=$timeout)".
+                                " \n\t".'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?'."Dial(Local/{$rout['extension']}@internal-incoming,$timeout,".'${TRANSFER_OPTIONS}'."Kg));";
         }
 
         $mediaFile = $this->getSoundFilePath($rout);
@@ -395,7 +395,7 @@ class IncomingContexts extends AsteriskConfigClass
                 }
 
                 // Replace the '_X!,1' with the login in the dialplan and assign it to the login key.
-                $this->dialplan[$_login] = str_replace('_X!,1', "{$_login},1", $this->dialplan['X!']);
+                $this->dialplan[$_login] = str_replace('_X!,1', "$_login,1", $this->dialplan['X!']);
             }
         }
     }
@@ -412,11 +412,11 @@ class IncomingContexts extends AsteriskConfigClass
     {
         $add_login_pattern = $this->needAddLoginExtension();
         if ($this->isMultipleRoutes($add_login_pattern)) {
-            $this->dialplan[$this->login]       = str_replace('_X!,1', "{$this->login},1", $this->dialplan['X!']);
+            $this->dialplan[$this->login]       = str_replace('_X!,1', "$this->login,1", $this->dialplan['X!']);
             $this->rout_data_dial[$this->login] = $this->rout_data_dial['X!'];
         } elseif ($this->defaultRouteOnly($add_login_pattern)) {
             // Only default route required.
-            $this->dialplan[$this->login] = str_replace('_X!,1', "{$this->login},1", $this->dialplan['X!']);
+            $this->dialplan[$this->login] = str_replace('_X!,1', "$this->login,1", $this->dialplan['X!']);
         }
     }
 
@@ -529,7 +529,7 @@ class IncomingContexts extends AsteriskConfigClass
         $id = is_string($this->provider) ? $this->provider : $this->uniqId;
 
         // Initialize the dialplan with the ID
-        $conf = "\n" . "[{$id}-incoming]\n";
+        $conf = "\n" . "[$id-incoming]\n";
 
         // Iterate through the dialplan
         foreach ($this->dialplan as $dpln) {
@@ -613,10 +613,10 @@ class IncomingContexts extends AsteriskConfigClass
         if (in_array($default_action->extension, $this->confExtensions, true)) {
             // This is a conference. No need to handle answer timeout here.
             // The call will be immediately answered by the conference.
-            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Goto(internal,{$default_action->extension},1)); default action" . "\n";
+            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Goto(internal,$default_action->extension,1)); default action" . "\n";
         } else {
             // Dial the local extension if the DIALSTATUS is not ANSWER or BUSY.
-            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Dial(Local/{$default_action->extension}@internal,,".'${TRANSFER_OPTIONS}'."Kg)); default action" . "\n";
+            $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Dial(Local/$default_action->extension@internal,,".'${TRANSFER_OPTIONS}'."Kg)); default action" . "\n";
         }
 
         // Execute the hook method for generating the context after the dial.

@@ -86,7 +86,7 @@ class CheckSIPPasswords extends Injectable
         $queryResult = $this->di->get('modelsManager')->createBuilder($parameters)->getQuery()->execute();
 
         foreach ($queryResult as $user) {
-            $key = "{$user->username} <{$user->number}>";
+            $key = "$user->username <$user->number>";
             $messages['warning'][] =
                 [
                     'messageTpl' => 'adv_SipPasswordWeak',

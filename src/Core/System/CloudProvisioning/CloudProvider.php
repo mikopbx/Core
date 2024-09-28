@@ -21,14 +21,12 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
 abstract class CloudProvider
 {
-    protected const HTTP_TIMEOUT = 3;
+    protected const int HTTP_TIMEOUT = 3;
 
     abstract public function provision(): bool;
 
@@ -46,16 +44,16 @@ abstract class CloudProvider
         if (count($arrData) === 2) {
             $data = $arrData[1];
         }
-        $this->updatePbxSettings(PbxSettingsConstants::SSH_AUTHORIZED_KEYS, $data);
+        $this->updatePbxSettings(PbxSettings::SSH_AUTHORIZED_KEYS, $data);
     }
 
     /**
      * Updates the PBX settings with the provided key and data.
      *
      * @param string $keyName The key name.
-     * @param mixed $data The data to be stored.
+     * @param string|int|null $data The data to be stored.
      */
-    public function updatePbxSettings(string $keyName, $data): void
+    public function updatePbxSettings(string $keyName, string|int|null $data): void
     {
         $setting = PbxSettings::findFirst('key="' . $keyName . '"');
         if (!$setting) {
@@ -86,13 +84,13 @@ abstract class CloudProvider
         if ($lanData !== null) {
 
             if (empty($extipaddr)) {
-                PbxSettings::setValue(PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP, '1');
+                PbxSettings::setValue(PbxSettings::AUTO_UPDATE_EXTERNAL_IP, '1');
             } elseif ($lanData->ipaddr === $extipaddr) {
                 $lanData->topology = LanInterfaces::TOPOLOGY_PUBLIC;
             } else {
                 $lanData->extipaddr = $extipaddr;
                 $lanData->topology = LanInterfaces::TOPOLOGY_PRIVATE;
-                PbxSettings::setValue(PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP, '1');
+                PbxSettings::setValue(PbxSettings::AUTO_UPDATE_EXTERNAL_IP, '1');
             }
             $message = "      |- Update LAN settings external IP: $extipaddr";
             SystemMessages::echoToTeletype($message);
@@ -116,7 +114,7 @@ abstract class CloudProvider
      */
     protected function updateHostName(string $hostname): void
     {
-        $this->updatePbxSettings(PbxSettingsConstants::PBX_NAME, $hostname);
+        $this->updatePbxSettings(PbxSettings::PBX_NAME, $hostname);
         $lanData = LanInterfaces::findFirst();
         if ($lanData !== null) {
             $lanData->hostname = $hostname;
@@ -130,9 +128,9 @@ abstract class CloudProvider
     protected function updateSSHCredentials(string $sshLogin, string $hashSalt): void
     {
         $data = md5(shell_exec(Util::which('ifconfig')) . $hashSalt . time());
-        $this->updatePbxSettings(PbxSettingsConstants::SSH_LOGIN, $sshLogin);
-        $this->updatePbxSettings(PbxSettingsConstants::SSH_PASSWORD, $data);
-        $this->updatePbxSettings(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD, '1');
+        $this->updatePbxSettings(PbxSettings::SSH_LOGIN, $sshLogin);
+        $this->updatePbxSettings(PbxSettings::SSH_PASSWORD, $data);
+        $this->updatePbxSettings(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '1');
     }
 
     /**
@@ -145,9 +143,9 @@ abstract class CloudProvider
         if (empty($webPassword)) {
             return;
         }
-        $this->updatePbxSettings(PbxSettingsConstants::WEB_ADMIN_PASSWORD, $webPassword);
-        $this->updatePbxSettings(PbxSettingsConstants::CLOUD_INSTANCE_ID, $webPassword);
-        $this->updatePbxSettings(PbxSettingsConstants::PBX_DESCRIPTION, PbxSettingsConstants::DEFAULT_CLOUD_PASSWORD_DESCRIPTION);
+        $this->updatePbxSettings(PbxSettings::WEB_ADMIN_PASSWORD, $webPassword);
+        $this->updatePbxSettings(PbxSettings::CLOUD_INSTANCE_ID, $webPassword);
+        $this->updatePbxSettings(PbxSettings::PBX_DESCRIPTION, PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION);
     }
 
 }

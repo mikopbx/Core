@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Firewall;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class GetBannedIp
@@ -29,7 +30,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Firewall
  */
-class GetBannedIpAction extends \Phalcon\Di\Injectable
+class GetBannedIpAction extends Injectable
 {
     /**
      * Retrieve a list of banned IP addresses or get data for a specific IP address.

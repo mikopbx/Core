@@ -29,8 +29,8 @@ use MikoPBX\Core\System\{Directories, Processes, Storage, SystemMessages, Util};
  */
 class WorkerRemoveOldRecords extends WorkerBase
 {
-    private const MIN_SPACE_MB = 500;
-    public const MIN_SPACE_MB_ALERT = 200;
+    private const int MIN_SPACE_MB = 500;
+    public const int MIN_SPACE_MB_ALERT = 200;
 
     /**
      * Starts the worker and checks disk space. Sends notifications in case of problems.
@@ -87,7 +87,7 @@ class WorkerRemoveOldRecords extends WorkerBase
     private function cleanStorage(): void
     {
         $varEtcDir = $this->di->getShared('config')->path('core.varEtcDir');
-        $filename = "{$varEtcDir}/storage_device";
+        $filename = "$varEtcDir/storage_device";
         if (file_exists($filename)) {
             $mount_point = file_get_contents($filename);
         } else {
@@ -115,7 +115,7 @@ class WorkerRemoveOldRecords extends WorkerBase
 
         // Get the oldest directories in the monitor directory
         Processes::mwExec(
-            "$find {$monitor_dir}/*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | $sort | $head -n 10 | $awk '{print $2}'",
+            "$find $monitor_dir/*/*/*  -maxdepth 0 -type d  -printf '%T+ %p\n' 2> /dev/null | $sort | $head -n 10 | $awk '{print $2}'",
             $out
         );
         $rm = Util::which('rm');
@@ -129,7 +129,7 @@ class WorkerRemoveOldRecords extends WorkerBase
                 // Disk cleanup is not required
                 break;
             }
-            Processes::mwExec("$rm -rf {$dir_info}");
+            Processes::mwExec("$rm -rf $dir_info");
         }
     }
 }

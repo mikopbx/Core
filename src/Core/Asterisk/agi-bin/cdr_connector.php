@@ -18,7 +18,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\AGI;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{ResParkingConf};
@@ -34,7 +34,7 @@ require_once 'Globals.php';
  *
  * @return array The data for the dialing event.
  */
-function Event_dial($agi, $action)
+function Event_dial(AGI $agi, string $action): array
 {
     $now  = Util::getNowDate();
     $data = [];
@@ -111,7 +111,7 @@ function Event_dial($agi, $action)
  *
  * @return array The data for the channel creation event.
  */
-function Event_dial_create_chan($agi, $action)
+function Event_dial_create_chan(AGI $agi, string $action): array
 {
     $now                = Util::getNowDate();
     $data               = [];
@@ -149,7 +149,7 @@ function Event_dial_create_chan($agi, $action)
  *
  * @return array The data for the call answer event.
  */
-function Event_dial_answer($agi, $action)
+function Event_dial_answer(AGI $agi, string $action): array
 {
     $now = Util::getNowDate();
 
@@ -184,7 +184,7 @@ function Event_dial_answer($agi, $action)
     $PICKUPEER     = trim('' . $agi->get_variable("PICKUPEER", true));
     $data['dnid']  = $agi->request['agi_dnid'];
     $mikoPBXConfig = new MikoPBXConfig();
-    $pickupexten   = $mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN);
+    $pickupexten   = $mikoPBXConfig->getGeneralSettings(PbxSettings::PBX_FEATURE_PICKUP_EXTEN);
     if ('unknown' == $data['dnid'] && $PICKUPEER != '') {
         // Most likely an answer to a call from 1C.
         $data['dnid'] = $pickupexten;
@@ -213,7 +213,7 @@ function Event_dial_answer($agi, $action)
  *
  * @return array The data for the call hangup event.
  */
-function Event_dial_hangup_DEPRECATED($agi, $action)
+function Event_dial_hangup_DEPRECATED(AGI $agi, string $action): array
 {
     $now                 = Util::getNowDate();
     $data                = [];
@@ -237,7 +237,7 @@ function Event_dial_hangup_DEPRECATED($agi, $action)
  *
  * @return array The data for the transfer dial event.
  */
-function Event_transfer_dial($agi, $action)
+function Event_transfer_dial(AGI $agi, string $action): array
 {
     $now = Util::getNowDate();
     $id  = $agi->request['agi_uniqueid'] . '_' . Util::generateRandomString();
@@ -283,7 +283,7 @@ function Event_transfer_dial($agi, $action)
  *
  * @return array The data for the transfer dial channel creation event.
  */
-function Event_transfer_dial_create_chan($agi, $action)
+function Event_transfer_dial_create_chan(AGI $agi, string $action): array
 {
     $id                        = $agi->get_variable("transfer_UNIQUEID", true);
     $data                      = [];
@@ -303,7 +303,7 @@ function Event_transfer_dial_create_chan($agi, $action)
  *
  * @return array The data for the transfer dial answer event.
  */
-function Event_transfer_dial_answer($agi, $action)
+function Event_transfer_dial_answer(AGI $agi, string $action): array
 {
     $data                      = [];
     $now                       = Util::getNowDate();
@@ -325,7 +325,7 @@ function Event_transfer_dial_answer($agi, $action)
  *
  * @return array The data for the transfer dial hangup event.
  */
-function Event_transfer_dial_hangup($agi, $action)
+function Event_transfer_dial_hangup(AGI $agi, string $action): array
 {
     $now                  = Util::getNowDate();
     $data                 = [];
@@ -357,7 +357,7 @@ function Event_transfer_dial_hangup($agi, $action)
  *
  * @return array The data for the channel hangup event.
  */
-function Event_hangup_chan($agi, $action)
+function Event_hangup_chan(AGI $agi, string $action): array
 {
     $now                  = Util::getNowDate();
     $data                 = [];
@@ -387,7 +387,7 @@ function Event_hangup_chan($agi, $action)
  *
  * @return array The data for the unpark call event.
  */
-function Event_unpark_call($agi, $action)
+function Event_unpark_call(AGI $agi, string $action): array
 {
     $now = Util::getNowDate();
     // Processing parking data.
@@ -458,7 +458,7 @@ function Event_unpark_call($agi, $action)
  *
  * @return array The data for the unpark call timeout event.
  */
-function Event_unpark_call_timeout($agi, $action)
+function Event_unpark_call_timeout(AGI $agi, string $action): array
 {
     $now = Util::getNowDate();
     $id  = $agi->request['agi_uniqueid'] . '_' . Util::generateRandomString();
@@ -499,7 +499,7 @@ function Event_unpark_call_timeout($agi, $action)
  *
  * @return array The data for the queue start event.
  */
-function Event_queue_start($agi, $action)
+function Event_queue_start(AGI $agi, string $action): array
 {
     $now        = Util::getNowDate();
     $time_start = null;
@@ -529,7 +529,6 @@ function Event_queue_start($agi, $action)
         $data['src_num']  = $agi->request['agi_callerid'];
         $data['start']    = $time_start;
         $data['linkedid'] = $agi->get_variable("CHANNEL(linkedid)", true);
-        $data['transfer'] = '0';
         $agi->set_variable("__pt1c_q_UNIQUEID", "$id");
     }
     if ( ! empty($ISTRANSFER)) {
@@ -549,7 +548,7 @@ function Event_queue_start($agi, $action)
  *
  * @return array The data for the queue answer event.
  */
-function Event_queue_answer($agi, $action)
+function Event_queue_answer(AGI $agi, string $action): array
 {
     $now                 = Util::getNowDate();
     $id                  = $agi->get_variable("pt1c_q_UNIQUEID", true);
@@ -571,7 +570,7 @@ function Event_queue_answer($agi, $action)
  *
  * @return array The data for the queue end event.
  */
-function Event_queue_end($agi, $action)
+function Event_queue_end(AGI $agi, string $action): array
 {
     $now                 = Util::getNowDate();
     $id                  = $agi->get_variable("pt1c_q_UNIQUEID", true);
@@ -593,8 +592,9 @@ function Event_queue_end($agi, $action)
  * @param string $action The action associated with the MeetMe dial event.
  *
  * @return array The data for the MeetMe dial event.
+ * @throws Exception
  */
-function Event_meetme_dial($agi, $action)
+function Event_meetme_dial(AGI $agi, string $action): array
 {
     $now        = Util::getNowDate();
     $id         = '';
@@ -653,7 +653,7 @@ function Event_meetme_dial($agi, $action)
         'dst_chan'      => 'MeetMe:' . $mikoidconf,
         'start'         => $time_start,
         'answer'        => $time_start,
-        'recordingfile' => "{$recordingfile}.mp3",
+        'recordingfile' => "$recordingfile.mp3",
         'did'           => $agi->get_variable('FROM_DID', true),
         'transfer'      => '0',
         'UNIQUEID'      => $id,
@@ -673,7 +673,7 @@ function Event_meetme_dial($agi, $action)
  *
  * @return array The data for the MeetMe hangup event.
  */
-function Event_hangup_chan_meetme($agi, $action): array
+function Event_hangup_chan_meetme(AGI $agi, string $action): array
 {
     $now                 = Util::getNowDate();
     $data                = [];
@@ -706,7 +706,7 @@ function Event_hangup_chan_meetme($agi, $action): array
  *
  * @return array The data for the dial app event.
  */
-function Event_dial_app($agi, $action)
+function Event_dial_app(AGI $agi, string $action): array
 {
     $id        = $agi->request['agi_uniqueid'] . '_' . Util::generateRandomString();
     $extension = $agi->get_variable("APPEXTEN", true);
@@ -732,7 +732,7 @@ function Event_dial_app($agi, $action)
  *
  * @return array The data for the dial outworktimes event.
  */
-function Event_dial_outworktimes($agi, $action)
+function Event_dial_outworktimes(AGI $agi, string $action): array
 {
     $data             = Event_dial($agi, $action);
     $data['dst_chan'] = 'App:outworktimes';

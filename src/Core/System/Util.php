@@ -29,7 +29,7 @@ use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use ReflectionClass;
 use ReflectionException;
 use Throwable;
@@ -53,7 +53,7 @@ class Util
      *
      * @return string The resulting configuration string.
      */
-    public static function overrideConfigurationArray(&$options, $manual_attributes, $section): string
+    public static function overrideConfigurationArray(array &$options, ?array $manual_attributes, string $section): string
     {
         $result_config = '';
         if ($manual_attributes !== null && isset($manual_attributes[$section])) {
@@ -87,13 +87,14 @@ class Util
      * @param string $dest_number The destination number.
      *
      * @return array The result of the Originate command.
+     * @throws Exception
      */
     public static function amiOriginate(string $peer_number, string $peer_mobile, string $dest_number): array
     {
         $am = self::getAstManager('off');
         $channel = 'Local/' . $peer_number . '@internal-originate';
         $context = 'all_peers';
-        $variable = "pt1c_cid={$dest_number},__peer_mobile={$peer_mobile}";
+        $variable = "pt1c_cid=$dest_number,__peer_mobile=$peer_mobile";
 
         return $am->Originate(
             $channel,
@@ -117,7 +118,7 @@ class Util
      *
      * @return AsteriskManager The Asterisk Manager object.
      *
-     * @throws \Phalcon\Exception
+     * @throws Exception
      */
     public static function getAstManager(string $events = 'on'): AsteriskManager
     {
@@ -128,7 +129,7 @@ class Util
         }
         $di = Di::getDefault();
         if ($di === null) {
-            throw new \Phalcon\Exception("di not found");
+            throw new \Exception("di not found");
         }
 
         // Try to connect to Asterisk Manager
@@ -170,11 +171,9 @@ class Util
      *
      * @return bool True if the string is a valid JSON, false otherwise.
      */
-    public static function isJson($jsonString): bool
+    public static function isJson(mixed $jsonString): bool
     {
-        json_decode($jsonString, true);
-
-        return (json_last_error() === JSON_ERROR_NONE);
+        return json_validate($jsonString);
     }
 
     /**
@@ -184,7 +183,7 @@ class Util
      *
      * @return float|int The size of the file in megabytes.
      */
-    public static function mFileSize(string $filename)
+    public static function mFileSize(string $filename): float|int
     {
         $size = 0;
         if (file_exists($filename)) {
@@ -220,7 +219,7 @@ class Util
      *
      * @param string $filename The filename.
      *
-     * @return bool True if the file exists and has a non-zero size, false otherwise.
+     * @return ?bool True if the file exists and has a non-zero size, false otherwise.
      */
     public static function recFileExists(string $filename): ?bool
     {
@@ -234,7 +233,7 @@ class Util
      *
      * @return string The converted date string or the original input data.
      */
-    public static function numberToDate($data): string
+    public static function numberToDate(mixed $data): string
     {
         $re_number = '/^\d+.\d+$/';
         preg_match_all($re_number, $data, $matches, PREG_SET_ORDER, 0);
@@ -256,7 +255,7 @@ class Util
     public static function fileWriteContent(string $filename, string $data): void
     {
         /** @var CustomFiles $res */
-        $res = CustomFiles::findFirst("filepath = '{$filename}'");
+        $res = CustomFiles::findFirst("filepath = '$filename'");
         if ($res === null) {
             // File is not yet registered in the database, create a new CustomFiles entry
             $res = new CustomFiles();
@@ -265,7 +264,7 @@ class Util
             $res->save();
         }
 
-        $filename_orgn = "{$filename}.orgn";
+        $filename_orgn = "$filename.orgn";
 
         switch ($res->mode){
             case CustomFiles::MODE_NONE:
@@ -298,7 +297,7 @@ class Util
                 $scriptText = base64_decode((string)$res->content);
                 $tempScriptFile = tempnam(sys_get_temp_dir(), 'temp_script.sh');
                 file_put_contents($tempScriptFile, $scriptText);
-                $command = "/bin/sh {$tempScriptFile} {$filename}";
+                $command = "/bin/sh $tempScriptFile $filename";
                 Processes::mwExec($command);
                 unlink($tempScriptFile);
 
@@ -349,10 +348,10 @@ class Util
      */
     public static function trimExtensionForFile(string $filename, string $delimiter = '.'): string
     {
-        $tmp_arr = explode((string)$delimiter, $filename);
+        $tmp_arr = explode($delimiter, $filename);
         if (count($tmp_arr) > 1) {
             unset($tmp_arr[count($tmp_arr) - 1]);
-            $filename = implode((string)$delimiter, $tmp_arr);
+            $filename = implode($delimiter, $tmp_arr);
         }
 
         return $filename;
@@ -368,9 +367,9 @@ class Util
     {
         $result = 0;
         if (file_exists($filename)) {
-            $duPath = self::which('du');
-            $awkPath = self::which('awk');
-            Processes::mwExec("{$duPath} -d 0 -k '{$filename}' | {$awkPath}  '{ print $1}'", $out);
+            $du = self::which('du');
+            $awk = self::which('awk');
+            Processes::mwExec("$du -d 0 -k '$filename' | $awk  '{ print $1}'", $out);
             $time_str = implode($out);
             preg_match_all('/^\d+$/', $time_str, $matches, PREG_SET_ORDER, 0);
             if (count($matches) > 0) {
@@ -397,8 +396,8 @@ class Util
 
         // Search for the command in each binary folder
         foreach (explode(':', $binaryFolders) as $path) {
-            if (is_executable("{$path}/{$cmd}")) {
-                return "{$path}/{$cmd}";
+            if (is_executable("$path/$cmd")) {
+                return "$path/$cmd";
             }
         }
 
@@ -456,8 +455,8 @@ class Util
      */
     public static function setCyrillicFont(): void
     {
-        $setfontPath = self::which('setfont');
-        Processes::mwExec("{$setfontPath} /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
+        $setfont = self::which('setfont');
+        Processes::mwExec("$setfont /usr/share/consolefonts/Cyr_a8x16.psfu.gz 2>/dev/null");
     }
 
     /**
@@ -525,7 +524,7 @@ class Util
      *
      * @return array The generated SSL certificate (public and private keys).
      */
-    public static function generateSslCert($options = null, $config_args_pkey = null, $config_args_csr = null): array
+    public static function generateSslCert(?array $options = null, ?array $config_args_pkey = null, ?array $config_args_csr = null): array
     {
         // Initialize options if not provided
         if (!$options) {
@@ -682,12 +681,12 @@ class Util
     public static function addRegularWWWRights($folder): void
     {
         if (posix_getuid() === 0) {
-            $findPath = self::which('find');
-            $chownPath = self::which('chown');
-            $chmodPath = self::which('chmod');
-            Processes::mwExec("{$findPath} {$folder} -type d -exec {$chmodPath} 755 {} \;");
-            Processes::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 644 {} \;");
-            Processes::mwExec("{$chownPath} -R www:www {$folder}");
+            $find = self::which('find');
+            $chown = self::which('chown');
+            $chmod = self::which('chmod');
+            Processes::mwExec("$find $folder -type d -exec $chmod 755 {} \;");
+            Processes::mwExec("$find $folder -type f -exec $chmod 644 {} \;");
+            Processes::mwExec("$chown -R www:www $folder");
         }
     }
 
@@ -702,11 +701,11 @@ class Util
     {
         // Check if the script is running with root privileges
         if (posix_getuid() === 0) {
-            $findPath = self::which('find');
-            $chmodPath = self::which('chmod');
+            $find = self::which('find');
+            $chmod = self::which('chmod');
 
             // Execute find command to locate files and modify their permissions
-            Processes::mwExec("{$findPath} {$folder} -type f -exec {$chmodPath} 755 {} \;");
+            Processes::mwExec("$find $folder -type f -exec $chmod 755 {} \;");
         }
     }
 
@@ -731,7 +730,7 @@ class Util
         foreach ($tmp_arr as &$row) {
             $row = trim($row);
             $pos = strpos($row, ']');
-            if ($pos !== false && strpos($row, '[') === 0) {
+            if ($pos !== false && str_starts_with($row, '[')) {
                 $row = "\n" . substr($row, 0, $pos);
             }
         }
@@ -744,7 +743,7 @@ class Util
         foreach ($sections as $section) {
             $data_rows = explode("\n", trim($section));
             $section_name = trim($data_rows[0] ?? '');
-            if(empty($section_name) || strpos($section_name, '[') === false){
+            if(empty($section_name) || !str_contains($section_name, '[')){
                 // Noname section
                 $section_name = ' ';
             }else{
@@ -755,7 +754,7 @@ class Util
                 $value = '';
 
                 // Skip rows without an equal sign
-                if (strpos($row, '=') === false) {
+                if (!str_contains($row, '=')) {
                     continue;
                 }
                 $key = '';

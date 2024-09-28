@@ -19,18 +19,19 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
-use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Returns list of log files to show them on web interface
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class GetLogsListAction extends \Phalcon\Di\Injectable
+class GetLogsListAction extends Injectable
 {
-    public const DEFAULT_FILENAME = 'asterisk/messages';
+    public const string DEFAULT_FILENAME = 'asterisk/messages';
 
     /**
      * Returns list of log files to show them on web interface
@@ -41,7 +42,7 @@ class GetLogsListAction extends \Phalcon\Di\Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $logDir = System::getLogDir();
+        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR);
         $filesList = [];
         $entries = self::scanDirRecursively($logDir);
         $entries = Util::flattenArray($entries);
@@ -60,7 +61,7 @@ class GetLogsListAction extends \Phalcon\Di\Injectable
             $filesList[$relativePath] =
                 [
                     'path' => $relativePath,
-                    'size' => "{$fileSizeKB} kb",
+                    'size' => "$fileSizeKB kb",
                     'default' => $default,
                 ];
             if ($default) {

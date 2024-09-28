@@ -25,6 +25,7 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use SQLite3;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class Fail2banUnban
@@ -32,7 +33,7 @@ use SQLite3;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Firewall
  */
-class Fail2BanUnbanAction extends \Phalcon\Di\Injectable
+class Fail2BanUnbanAction extends Injectable
 {
     /**
      * Remove an IP address from the fail2ban ban list.
@@ -49,12 +50,12 @@ class Fail2BanUnbanAction extends \Phalcon\Di\Injectable
         $res->success = true;
         if ( ! Verify::isIpAddress($ip)) {
             $res->success = false;
-            $res->messages[]="Not valid ip '{$ip}'.";
+            $res->messages[]="Not valid ip '$ip'.";
         }
         $fail2ban        = new Fail2BanConf();
         if ($fail2ban->fail2ban_enable) {
             $fail2ban = Util::which('fail2ban-client');
-            $res->success  = (Processes::mwExec("{$fail2ban} unban {$ip}") === 0);
+            $res->success  = (Processes::mwExec("$fail2ban unban $ip") === 0);
         } else {
             $res = self::fail2banUnbanDb($ip);
         }
@@ -75,12 +76,12 @@ class Fail2BanUnbanAction extends \Phalcon\Di\Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $jail_q  = ($jail === '') ? '' : "AND jail = '{$jail}'";
+        $jail_q  = ($jail === '') ? '' : "AND jail = '$jail'";
         $path_db = Fail2BanConf::FAIL2BAN_DB_PATH;
         if(!file_exists($path_db)){
             // Database table does not exist. No ban.
             $res->success    = false;
-            $res->messages[] = "DB {$path_db} not found";
+            $res->messages[] = "DB $path_db not found";
             return $res;
         }
         $db      = new SQLite3($path_db);
@@ -91,7 +92,7 @@ class Fail2BanUnbanAction extends \Phalcon\Di\Injectable
             $res->success = true;
             return $res;
         }
-        $q = 'DELETE' . " FROM bans WHERE ip = '{$ip}' {$jail_q}";
+        $q = 'DELETE' . " FROM bans WHERE ip = '$ip' $jail_q";
         $db->query($q);
 
         $err = $db->lastErrorMsg();

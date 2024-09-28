@@ -20,8 +20,8 @@
 namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class Iax
@@ -141,7 +141,7 @@ class Iax extends ModelsBase
      * @param string $text The manual attributes text.
      * @return void
      */
-    public function setManualAttributes($text): void
+    public function setManualAttributes(string $text): void
     {
         $this->manualattributes = base64_encode($text);
     }

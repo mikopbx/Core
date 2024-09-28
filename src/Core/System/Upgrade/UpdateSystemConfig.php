@@ -22,17 +22,16 @@ namespace MikoPBX\Core\System\Upgrade;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Modules\PbxExtensionUtils;
-use Phalcon\Di;
+use Phalcon\Di\Injectable;
 
 use function MikoPBX\Common\Config\appPath;
 
-class UpdateSystemConfig extends Di\Injectable
+class UpdateSystemConfig extends Injectable
 {
 
     private MikoPBXConfig $mikoPBXConfig;
@@ -53,7 +52,7 @@ class UpdateSystemConfig extends Di\Injectable
         $this->deleteLostModules();
         // Clear all caches on any changed models
         ModelsBase::clearCache(PbxSettings::class);
-        $previous_version = (string)str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::PBX_VERSION));
+        $previous_version = (string)str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings(PbxSettings::PBX_VERSION));
         $current_version  = (string)str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {
             $upgradeClasses      = [];
@@ -61,7 +60,7 @@ class UpdateSystemConfig extends Di\Injectable
             $upgradeClassesFiles = glob($upgradeClassesDir . '/*.php', GLOB_NOSORT);
             foreach ($upgradeClassesFiles as $file) {
                 $className        = pathinfo($file)['filename'];
-                $moduleModelClass = "\\MikoPBX\\Core\\System\\Upgrade\\Releases\\{$className}";
+                $moduleModelClass = "\\MikoPBX\\Core\\System\\Upgrade\\Releases\\$className";
                 if (class_exists($moduleModelClass)) {
                     $upgradeClasses[$moduleModelClass::PBX_VERSION] = $moduleModelClass;
                 }
@@ -79,7 +78,7 @@ class UpdateSystemConfig extends Di\Injectable
             }
 
             $this->updateConfigEveryNewRelease();
-            $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::PBX_VERSION, trim(file_get_contents('/etc/version')));
+            $this->mikoPBXConfig->setGeneralSettings(PbxSettings::PBX_VERSION, trim(file_get_contents('/etc/version')));
         }
         $storage = new Storage();
         $storage->moveReadOnlySoundsToStorage();
@@ -96,7 +95,7 @@ class UpdateSystemConfig extends Di\Injectable
         $modules = PbxExtensionModules::find();
         $modulesDir = $this->getDI()->getShared('config')->path('core.modulesDir');
         foreach ($modules as $module) {
-            if ( ! is_dir("{$modulesDir}/{$module->uniqid}")) {
+            if ( ! is_dir("$modulesDir/$module->uniqid")) {
                 $module->delete();
             }
         }
@@ -119,7 +118,7 @@ class UpdateSystemConfig extends Di\Injectable
      *
      * @return int|bool
      */
-    private function sortArrayByReleaseNumber($a, $b)
+    private function sortArrayByReleaseNumber($a, $b): bool|int
     {
         return version_compare($a, $b);
     }

@@ -19,17 +19,18 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Erase log file with the provided name.
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class EraseFileAction extends \Phalcon\Di\Injectable
+class EraseFileAction extends Injectable
 {
     /**
      * Erase log file with the provided name.
@@ -43,7 +44,7 @@ class EraseFileAction extends \Phalcon\Di\Injectable
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $filename = System::getLogDir() . '/' . $filename;
+        $filename = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
         if (!file_exists($filename)) {
             $res->success = false;
             $res->messages[] = 'File does not exist ' . $filename;

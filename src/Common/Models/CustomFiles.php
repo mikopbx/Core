@@ -19,8 +19,8 @@
 
 namespace MikoPBX\Common\Models;
 
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class CustomFiles
@@ -30,10 +30,10 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 class CustomFiles extends ModelsBase
 {
 
-    public const MODE_NONE = 'none';
-    public const MODE_APPEND = 'append';
-    public const MODE_OVERRIDE = 'override';
-    public const MODE_SCRIPT = 'script';
+    public const string MODE_NONE = 'none';
+    public const string MODE_APPEND = 'append';
+    public const string MODE_OVERRIDE = 'override';
+    public const string MODE_SCRIPT = 'script';
 
     /**
      * @Primary

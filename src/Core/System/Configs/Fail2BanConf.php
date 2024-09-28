@@ -19,19 +19,19 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use MikoPBX\Modules\Config\SystemConfigInterface;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
-use Phalcon\Text;
+
 use SQLite3;
 
 /**
@@ -43,11 +43,11 @@ use SQLite3;
  */
 class Fail2BanConf extends Injectable
 {
-    private const FILTER_PATH     = '/etc/fail2ban/filter.d';
-    private const ACTION_PATH     = '/etc/fail2ban/action.d';
-    private const JAILS_DIR       = '/etc/fail2ban/jail.d';
-    private const PID_FILE        = '/var/run/fail2ban/fail2ban.pid';
-    public const FAIL2BAN_DB_PATH = '/var/lib/fail2ban/fail2ban.sqlite3';
+    private const string FILTER_PATH     = '/etc/fail2ban/filter.d';
+    private const string ACTION_PATH     = '/etc/fail2ban/action.d';
+    private const string JAILS_DIR       = '/etc/fail2ban/jail.d';
+    private const string PID_FILE        = '/var/run/fail2ban/fail2ban.pid';
+    public const string FAIL2BAN_DB_PATH = '/var/lib/fail2ban/fail2ban.sqlite3';
 
     public bool $fail2ban_enable;
     private array $allPbxSettings;
@@ -58,7 +58,7 @@ class Fail2BanConf extends Injectable
     public function __construct()
     {
         $this->allPbxSettings  = PbxSettings::getAllPbxSettings();
-        $fail2ban_enable       = $this->allPbxSettings[PbxSettingsConstants::PBX_FAIL2BAN_ENABLED];
+        $fail2ban_enable       = $this->allPbxSettings[PbxSettings::PBX_FAIL2BAN_ENABLED];
         $this->fail2ban_enable = ($fail2ban_enable === '1');
     }
 
@@ -290,22 +290,22 @@ class Fail2BanConf extends Injectable
 
         // Define ports for different services
         $httpPorts = [
-            $this->allPbxSettings[PbxSettingsConstants::WEB_PORT],
-            $this->allPbxSettings[PbxSettingsConstants::WEB_HTTPS_PORT]
+            $this->allPbxSettings[PbxSettings::WEB_PORT],
+            $this->allPbxSettings[PbxSettings::WEB_HTTPS_PORT]
         ];
         $sshPort = [
-            $this->allPbxSettings[PbxSettingsConstants::SSH_PORT],
+            $this->allPbxSettings[PbxSettings::SSH_PORT],
         ];
         $asteriskPorts = [
-            $this->allPbxSettings[PbxSettingsConstants::SIP_PORT],
-            $this->allPbxSettings[PbxSettingsConstants::TLS_PORT],
-            $this->allPbxSettings[PbxSettingsConstants::IAX_PORT],
-            $this->allPbxSettings[PbxSettingsConstants::RTP_PORT_FROM].':'.$this->allPbxSettings[PbxSettingsConstants::RTP_PORT_TO],
-            $this->allPbxSettings[PbxSettingsConstants::AJAM_PORT_TLS]
+            $this->allPbxSettings[PbxSettings::SIP_PORT],
+            $this->allPbxSettings[PbxSettings::TLS_PORT],
+            $this->allPbxSettings[PbxSettings::IAX_PORT],
+            $this->allPbxSettings[PbxSettings::RTP_PORT_FROM].':'.$this->allPbxSettings[PbxSettings::RTP_PORT_TO],
+            $this->allPbxSettings[PbxSettings::AJAM_PORT_TLS]
         ];
         $asteriskAMI = [
-            $this->allPbxSettings[PbxSettingsConstants::AMI_PORT],
-            $this->allPbxSettings[PbxSettingsConstants::AJAM_PORT],
+            $this->allPbxSettings[PbxSettings::AMI_PORT],
+            $this->allPbxSettings[PbxSettings::AJAM_PORT],
         ];
 
         // Define jails and their corresponding actions

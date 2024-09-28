@@ -22,12 +22,11 @@ namespace MikoPBX\Core\System;
 use DateTime;
 use DateTimeZone;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
-use Phalcon\Di;
+use Phalcon\Di\Injectable;
 
 
 /**
@@ -36,9 +35,9 @@ use Phalcon\Di;
  * This class provides various system-level functionalities.
  *
  * @package MikoPBX\Core\System
- * @property \Phalcon\Config config
+ * @property \Phalcon\Config\Config config
  */
-class System extends Di\Injectable
+class System extends Injectable
 {
 
     /**
@@ -88,10 +87,10 @@ class System extends Di\Injectable
      */
     public static function setDate(int $timeStamp, string $remote_tz): bool
     {
-        $datePath = Util::which('date');
+        $date = Util::which('date');
 
         // Fetch timezone from database
-        $db_tz = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
+        $db_tz = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
         $origin_tz = '';
 
         // Read existing timezone from file if it exists
@@ -114,7 +113,7 @@ class System extends Di\Injectable
         $timeStamp  = $timeStamp - $offset;
 
         // Execute date command to set system time
-        Processes::mwExec("{$datePath} +%s -s @{$timeStamp}");
+        Processes::mwExec("$date +%s -s @$timeStamp");
 
         return true;
     }
@@ -127,7 +126,7 @@ class System extends Di\Injectable
     public static function reboot(): void
     {
         $pbx_reboot = Util::which('pbx_reboot');
-        Processes::mwExec("{$pbx_reboot} > /dev/null 2>&1");
+        Processes::mwExec("$pbx_reboot > /dev/null 2>&1");
     }
 
     /**
@@ -145,8 +144,8 @@ class System extends Di\Injectable
      */
     public static function shutdown(): void
     {
-        $shutdownPath = Util::which('shutdown');
-        Processes::mwExec("{$shutdownPath} > /dev/null 2>&1");
+        $shutdown = Util::which('shutdown');
+        Processes::mwExec("$shutdown > /dev/null 2>&1");
     }
 
     /**
@@ -157,7 +156,7 @@ class System extends Di\Injectable
     public static function timezoneConfigure(): void
     {
         // Get the timezone setting from the database
-        $timezone = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
+        $timezone = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
 
         // If /etc/TZ or /etc/localtime exist, delete them
         if (file_exists('/etc/TZ')) {
@@ -171,18 +170,18 @@ class System extends Di\Injectable
         if ($timezone) {
 
             // The path to the zone file
-            $zone_file = "/usr/share/zoneinfo/{$timezone}";
+            $zone_file = "/usr/share/zoneinfo/$timezone";
 
             // If the zone file exists, copy it to /etc/localtime
             if ( ! file_exists($zone_file)) {
                 return;
             }
-            $cpPath = Util::which('cp');
-            Processes::mwExec("{$cpPath}  {$zone_file} /etc/localtime");
+            $cp = Util::which('cp');
+            Processes::mwExec("$cp $zone_file /etc/localtime");
 
             // Write the timezone to /etc/TZ and set the TZ environment variable
             file_put_contents('/etc/TZ', $timezone);
-            putenv("TZ={$timezone}");
+            putenv("TZ=$timezone");
 
             // Execute the export TZ command and configure PHP's timezone
             Processes::mwExec("export TZ;");
@@ -229,7 +228,7 @@ class System extends Di\Injectable
         $rawData     = file_get_contents($certFile);
         $certs       = explode(PHP_EOL.PHP_EOL, $rawData);
         foreach ($certs as $cert){
-            if(strpos($cert, '-----BEGIN CERTIFICATE-----') === false){
+            if(!str_contains($cert, '-----BEGIN CERTIFICATE-----')){
                 continue;
             }
             file_put_contents($tmpFile, $cert);

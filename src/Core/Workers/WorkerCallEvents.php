@@ -23,7 +23,6 @@ require_once 'Globals.php';
 use MikoPBX\Core\System\{BeanstalkClient, Directories, SystemMessages, Util};
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
@@ -32,9 +31,8 @@ use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\UpdateDataInDB;
-use Phalcon\Di;
-use Phalcon\Exception;
-use Phalcon\Text;
+use Phalcon\Di\Di;
+use MikoPBX\Common\Library\Text;
 use Throwable;
 use DateTime;
 
@@ -49,7 +47,7 @@ use DateTime;
  */
 class WorkerCallEvents extends WorkerBase
 {
-    public const CACHE_KEY_RECORDINGS = 'Workers:WorkerCallEvents:RecordingsSettingsSynced';
+    public const string CACHE_KEY_RECORDINGS = 'Workers:WorkerCallEvents:RecordingsSettingsSynced';
     public array $mixMonitorChannels = [];
     public array $checkChanHangupTransfer = [];
     protected bool $record_calls = true;
@@ -65,7 +63,7 @@ class WorkerCallEvents extends WorkerBase
      * Adds a new active channel to the cache.
      *
      * @param string $channel The name of the channel to be added.
-     *
+     * @param string $id
      * @return void
      */
     public function addActiveChan(string $channel, string $id = ''): void
@@ -159,8 +157,8 @@ class WorkerCallEvents extends WorkerBase
             if (!in_array($channel, $arr, true)) {
                 return '';
             }
-            $srcFile = "{$f}.wav";
-            $resFile = "{$f}.mp3";
+            $srcFile = "$f.wav";
+            $resFile = "$f.mp3";
             $this->am->MixMonitor($channel, $srcFile, $options, '', $actionID);
             $this->mixMonitorChannels[$channel] = $resFile;
             $this->am->UserEvent('StartRecording', ['recordingfile' => $resFile, 'recchan' => $channel]);
@@ -187,7 +185,7 @@ class WorkerCallEvents extends WorkerBase
             if (empty($sub_dir)) {
                 $sub_dir = date('Y/m/d/H/');
             }
-            $f = "{$monitor_dir}/{$sub_dir}{$file_name}";
+            $f = "$monitor_dir/$sub_dir$file_name";
         } else {
             $f = Util::trimExtensionForFile($full_name);
         }
@@ -208,7 +206,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @return void This function does not return any value.
      */
-    public function StopMixMonitor($channel, string $actionID = ''): void
+    public function StopMixMonitor(string $channel, string $actionID = ''): void
     {
         if (isset($this->mixMonitorChannels[$channel])) {
             unset($this->mixMonitorChannels[$channel]);
@@ -226,7 +224,8 @@ class WorkerCallEvents extends WorkerBase
      * @param array $argv The command-line arguments passed to the worker.
      *
      * @return void This function does not return any value.
-     * @throws Exception
+     *
+     * @throws \DateMalformedStringException
      */
     public function start(array $argv): void
     {
@@ -343,9 +342,9 @@ class WorkerCallEvents extends WorkerBase
         }
 
         // Set some class properties based on the PbxSettings values
-        $this->notRecInner = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_CALLS_INNER) === '0';
-        $this->record_calls = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_CALLS) === '1';
-        $this->split_audio_thread = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD) === '1';
+        $this->notRecInner = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_CALLS_INNER) === '0';
+        $this->record_calls = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_CALLS) === '1';
+        $this->split_audio_thread = PbxSettings::getValueByKey(PbxSettings::PBX_SPLIT_AUDIO_THREAD) === '1';
 
         // Store the current timestamp in the cache to track the last execution
         $managedCache->set(self::CACHE_KEY_RECORDINGS, time(), 86400); // Repeat every day
@@ -366,6 +365,7 @@ class WorkerCallEvents extends WorkerBase
      * Ping callback for keep alive check
      *
      * @param BeanstalkClient $message
+     * @throws \DateMalformedStringException
      */
     public function pingCallBack(BeanstalkClient $message): void
     {
@@ -497,7 +497,7 @@ class WorkerCallEvents extends WorkerBase
      *
      * @return void
      */
-    public function errorHandler($m): void
+    public function errorHandler(mixed $m): void
     {
         SystemMessages::sysLogMsg(self::class . '_ERROR', $m, LOG_ERR);
     }
@@ -505,6 +505,7 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Clearing old cdr records
      * @return void
+     * @throws \DateMalformedStringException
      */
     public function deleteOldRecords(): void
     {
@@ -514,7 +515,7 @@ class WorkerCallEvents extends WorkerBase
             return;
         }
         $this->deleteCdrTimer = 0;
-        $savePeriod = (int)PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD);
+        $savePeriod = (int)PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD);
         if($savePeriod < 30){
             return;
         }

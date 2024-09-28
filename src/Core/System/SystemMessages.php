@@ -21,9 +21,9 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\LoggerProvider;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * SystemMessages class
@@ -31,11 +31,11 @@ use Phalcon\Di;
  * @package MikoPBX\Core\System
  *
  */
-class SystemMessages extends Di\Injectable
+class SystemMessages extends Injectable
 {
-    public const RESULT_DONE = 'Done';
-    public const RESULT_FAILED = 'Failed';
-    public const RESULT_SKIPPED = 'Skipped';
+    public const string RESULT_DONE = 'Done';
+    public const string RESULT_FAILED = 'Failed';
+    public const string RESULT_SKIPPED = 'Skipped';
 
     private static array $defaultTexts = [
         self::RESULT_DONE => " \033[32;1mDONE\033[0m \n", // Green for DONE
@@ -63,10 +63,10 @@ class SystemMessages extends Di\Injectable
      * Echoes a message and logs it to the ttyS0-ttyS5.
      *
      * @param string $message The message to echo in a serial console.
-     *
+     * @param bool $echoToConsole
      * @return void
      */
-    public static function echoToTeletype(string $message, $echoToConsole=false): void
+    public static function echoToTeletype(string $message, bool $echoToConsole=false): void
     {
         if ($echoToConsole){
             echo $message;
@@ -216,7 +216,7 @@ class SystemMessages extends Di\Injectable
         $lineWidth = 70;
         $borderLine = str_repeat('+', $lineWidth);
         $emptyLine = "|" . str_repeat(' ', $lineWidth - 2) . "|";
-        $version = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
+        $version = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
 
         $info = PHP_EOL . $borderLine;
         $info .= PHP_EOL . self::formatLine($header, $lineWidth, 'center');
@@ -224,7 +224,7 @@ class SystemMessages extends Di\Injectable
         $info .= PHP_EOL . $borderLine;
 
         $addresses = self::getNetworkAddresses();
-        $port = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_HTTPS_PORT);
+        $port = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
         $info .= PHP_EOL . self::formatLine("Web Interface Access", $lineWidth, 'center');
         $info .= PHP_EOL . $emptyLine;
 
@@ -309,11 +309,11 @@ class SystemMessages extends Di\Injectable
      */
     private static function showWebCredentials(int $lineWidth): string
     {
-        $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
-        $webAdminPassword = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
-        $defaultPassword = PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::WEB_ADMIN_PASSWORD];
+        $cloudInstanceId = PbxSettings::getValueByKey(PbxSettings::CLOUD_INSTANCE_ID);
+        $webAdminPassword = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+        $defaultPassword = PbxSettings::getDefaultArrayValues()[PbxSettings::WEB_ADMIN_PASSWORD];
         if ($cloudInstanceId === $webAdminPassword || $webAdminPassword === $defaultPassword) {
-            $adminUser = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
+            $adminUser = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LOGIN);
             $info = self::formatLine("Web credentials:", $lineWidth);
             $info .= PHP_EOL . self::formatLine("   Login: $adminUser", $lineWidth);
             $info .= PHP_EOL . self::formatLine("   Password: $webAdminPassword", $lineWidth);
@@ -330,13 +330,12 @@ class SystemMessages extends Di\Injectable
      */
     private static function showSSHCredentials(int $lineWidth): string
     {
-        $cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
-        $sshUser = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LOGIN);
-        $sshPassword = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
-        $defaultSshPassword = PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::SSH_PASSWORD];
-        $sshPort = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PORT);
-        $authorizedKeys = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_AUTHORIZED_KEYS);
-        $disablePassLogin = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD);
+        $sshUser = PbxSettings::getValueByKey(PbxSettings::SSH_LOGIN);
+        $sshPassword = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+        $defaultSshPassword = PbxSettings::getDefaultArrayValues()[PbxSettings::SSH_PASSWORD];
+        $sshPort = PbxSettings::getValueByKey(PbxSettings::SSH_PORT);
+        $authorizedKeys = PbxSettings::getValueByKey(PbxSettings::SSH_AUTHORIZED_KEYS);
+        $disablePassLogin = PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD);
 
         if ($disablePassLogin === '1' and strlen($authorizedKeys)<80){
             $info = self::formatLine("SSH access disabled!", $lineWidth);

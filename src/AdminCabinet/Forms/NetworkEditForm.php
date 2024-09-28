@@ -21,7 +21,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
@@ -49,17 +48,17 @@ class NetworkEditForm extends BaseForm
         $this->add(new Text('secondarydns', ['class' => 'ipaddress']));
         $this->add(new Text('extipaddr', ['placeholder'=>'123.111.123.111']));
         $this->add(new Text('exthostname', ['placeholder'=>'mikopbx.company.com']));
-        $this->add(new Numeric(PbxSettingsConstants::EXTERNAL_SIP_PORT,
+        $this->add(new Numeric(PbxSettings::EXTERNAL_SIP_PORT,
             [
-                'placeholder'=>PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::EXTERNAL_SIP_PORT],
+                'placeholder'=>PbxSettings::getDefaultArrayValues()[PbxSettings::EXTERNAL_SIP_PORT],
                 'style'=>'width:130px;',
-                'value'=>PbxSettings::getValueByKey(PbxSettingsConstants::EXTERNAL_SIP_PORT)
+                'value'=>PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_PORT)
             ]));
-        $this->add(new Numeric(PbxSettingsConstants::EXTERNAL_TLS_PORT,
+        $this->add(new Numeric(PbxSettings::EXTERNAL_TLS_PORT,
             [
-                'placeholder'=>PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::EXTERNAL_TLS_PORT],
+                'placeholder'=>PbxSettings::getDefaultArrayValues()[PbxSettings::EXTERNAL_TLS_PORT],
                 'style'=>'width:130px;',
-                'value'=>PbxSettings::getValueByKey(PbxSettingsConstants::EXTERNAL_TLS_PORT)
+                'value'=>PbxSettings::getValueByKey(PbxSettings::EXTERNAL_TLS_PORT)
             ]));
 
         // topology
@@ -70,12 +69,12 @@ class NetworkEditForm extends BaseForm
         $this->add(new Check('usenat', $cheskArr));
 
          // AUTO_UPDATE_EXTERNAL_IP
-        $autoUpdateExternalIP = PbxSettings::getValueByKey(PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP);
+        $autoUpdateExternalIP = PbxSettings::getValueByKey(PbxSettings::AUTO_UPDATE_EXTERNAL_IP);
         $cheskArr = ['value' => null];
         if ($autoUpdateExternalIP == '1') {
             $cheskArr = ['checked' => 'checked', 'value' => null];
         }
-        $this->add(new Check(PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP, $cheskArr));
+        $this->add(new Check(PbxSettings::AUTO_UPDATE_EXTERNAL_IP, $cheskArr));
 
         // interfaces
         $arrInterfaces = [];

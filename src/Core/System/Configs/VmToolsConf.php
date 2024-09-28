@@ -30,7 +30,7 @@ use MikoPBX\Core\System\Util;
  */
 class VmToolsConf
 {
-    public const VMWARE = 'vmware';
+    public const string VMWARE = 'vmware';
 
     /**
      * Configure VM tools.

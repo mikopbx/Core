@@ -22,9 +22,8 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Config;
 
 use MikoPBX\Common\Providers\ConfigProvider;
-use Phalcon\Di;
-use Phalcon\Loader;
-use function MikoPBX\Common\Config\appPath;
+use Phalcon\Di\Di;
+use Phalcon\Autoload\Loader;
 
 class ClassLoader
 {
@@ -37,9 +36,8 @@ class ClassLoader
         require appPath('vendor/autoload.php');
 
         $di = Di::getDefault();
-        if ($di !== null) {
-            $di->register(new ConfigProvider());
-        }
+        $di?->register(new ConfigProvider());
+
 
         $libraryFiles = [
             // Sentry - cloud error logger
@@ -57,9 +55,9 @@ class ClassLoader
         ];
 
         $loader = new Loader();
-        $loader->registerFiles($libraryFiles);
+        $loader->setFiles($libraryFiles);
 
-        $loader->registerNamespaces($nameSpaces);
+        $loader->setNamespaces($nameSpaces);
         $loader->register();
     }
 

@@ -27,55 +27,55 @@ namespace MikoPBX\Core\Asterisk\Configs;
  */
 interface AsteriskConfigInterface
 {
-    public const EXTENSION_GEN_HINTS = 'extensionGenHints';
+    public const string EXTENSION_GEN_HINTS = 'extensionGenHints';
 
-    public const EXTENSIONS_GEN_CREATE_CHANNEL_DIALPLAN = 'extensionGenCreateChannelDialplan';
+    public const string EXTENSIONS_GEN_CREATE_CHANNEL_DIALPLAN = 'extensionGenCreateChannelDialplan';
 
-    public const GENERATE_PUBLIC_CONTEXT = 'generatePublicContext';
+    public const string GENERATE_PUBLIC_CONTEXT = 'generatePublicContext';
 
-    public const EXTENSION_GEN_INTERNAL_TRANSFER = 'extensionGenInternalTransfer';
+    public const string EXTENSION_GEN_INTERNAL_TRANSFER = 'extensionGenInternalTransfer';
 
-    public const GET_INCLUDE_INTERNAL_TRANSFER = 'getIncludeInternalTransfer';
+    public const string GET_INCLUDE_INTERNAL_TRANSFER = 'getIncludeInternalTransfer';
 
-    public const EXTENSION_GLOBALS = 'extensionGlobals';
+    public const string EXTENSION_GLOBALS = 'extensionGlobals';
 
-    public const EXTENSION_GEN_CONTEXTS = 'extensionGenContexts';
+    public const string EXTENSION_GEN_CONTEXTS = 'extensionGenContexts';
 
-    public const GET_INCLUDE_INTERNAL = 'getIncludeInternal';
+    public const string GET_INCLUDE_INTERNAL = 'getIncludeInternal';
 
-    public const EXTENSION_GEN_INTERNAL = 'extensionGenInternal';
-    public const EXTENSION_GEN_INTERNAL_USERS_PRE_DIAL = 'extensionGenInternalUsersPreDial';
-    public const EXTENSION_GEN_ALL_PEERS_CONTEXT = 'extensionGenAllPeersContext';
+    public const string EXTENSION_GEN_INTERNAL = 'extensionGenInternal';
+    public const string EXTENSION_GEN_INTERNAL_USERS_PRE_DIAL = 'extensionGenInternalUsersPreDial';
+    public const string EXTENSION_GEN_ALL_PEERS_CONTEXT = 'extensionGenAllPeersContext';
 
-    public const GENERATE_INCOMING_ROUT_BEFORE_DIAL_PRE_SYSTEM = 'generateIncomingRoutBeforeDialPreSystem';
-    public const GENERATE_INCOMING_ROUT_BEFORE_DIAL = 'generateIncomingRoutBeforeDial';
-    public const GENERATE_INCOMING_ROUT_BEFORE_DIAL_SYSTEM = 'generateIncomingRoutBeforeDialSystem';
+    public const string GENERATE_INCOMING_ROUT_BEFORE_DIAL_PRE_SYSTEM = 'generateIncomingRoutBeforeDialPreSystem';
+    public const string GENERATE_INCOMING_ROUT_BEFORE_DIAL = 'generateIncomingRoutBeforeDial';
+    public const string GENERATE_INCOMING_ROUT_BEFORE_DIAL_SYSTEM = 'generateIncomingRoutBeforeDialSystem';
 
-    public const GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT = 'generateIncomingRoutAfterDialContext';
+    public const string GENERATE_INCOMING_ROUT_AFTER_DIAL_CONTEXT = 'generateIncomingRoutAfterDialContext';
 
-    public const GET_FEATURE_MAP = 'getFeatureMap';
+    public const string GET_FEATURE_MAP = 'getFeatureMap';
 
-    public const GENERATE_MODULES_CONF = 'generateModulesConf';
+    public const string GENERATE_MODULES_CONF = 'generateModulesConf';
 
-    public const GENERATE_MANAGER_CONF = 'generateManagerConf';
+    public const string GENERATE_MANAGER_CONF = 'generateManagerConf';
 
-    public const GENERATE_PEERS_PJ = 'generatePeersPj';
+    public const string GENERATE_PEERS_PJ = 'generatePeersPj';
 
-    public const GENERATE_PEER_PJ_ADDITIONAL_OPTIONS = 'generatePeerPjAdditionalOptions';
+    public const string GENERATE_PEER_PJ_ADDITIONAL_OPTIONS = 'generatePeerPjAdditionalOptions';
 
-    public const GENERATE_OUT_ROUT_CONTEXT = 'generateOutRoutContext';
+    public const string GENERATE_OUT_ROUT_CONTEXT = 'generateOutRoutContext';
 
-    public const GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT = 'generateOutRoutAfterDialContext';
+    public const string GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT = 'generateOutRoutAfterDialContext';
 
-    public const OVERRIDE_PJSIP_OPTIONS = 'overridePJSIPOptions';
+    public const string OVERRIDE_PJSIP_OPTIONS = 'overridePJSIPOptions';
 
-    public const OVERRIDE_PROVIDER_PJSIP_OPTIONS = 'overrideProviderPJSIPOptions';
+    public const string OVERRIDE_PROVIDER_PJSIP_OPTIONS = 'overrideProviderPJSIPOptions';
 
-    public const GENERATE_CONFIG = 'generateConfig';
+    public const string GENERATE_CONFIG = 'generateConfig';
 
-    public const GET_DEPENDENCE_MODELS = 'getDependenceModels';
+    public const string GET_DEPENDENCE_MODELS = 'getDependenceModels';
 
-    public const GET_SETTINGS = 'getSettings';
+    public const string GET_SETTINGS = 'getSettings';
 
 
     /**

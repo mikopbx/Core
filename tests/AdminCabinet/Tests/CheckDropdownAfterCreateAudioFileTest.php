@@ -20,7 +20,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use GuzzleHttp\Exception\GuzzleException;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 class CheckDropdownAfterCreateAudioFileTest extends MikoPBXTestsBase
@@ -52,7 +52,7 @@ class CheckDropdownAfterCreateAudioFileTest extends MikoPBXTestsBase
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/recording");
 
         // Check if the specified element exists in the dropdown menu
-        $elementFound = $this->checkIfElementExistOnDropdownMenu(PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_IN, $params['name']);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu(PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN, $params['name']);
 
         // Asserts
         if (!$elementFound) {

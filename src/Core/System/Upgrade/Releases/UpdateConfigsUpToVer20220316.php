@@ -19,19 +19,13 @@
 
 namespace MikoPBX\Core\System\Upgrade\Releases;
 
-use MikoPBX\Common\Models\Codecs;
-use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\FirewallRules;
-use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer20220316 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2022.3.16';
+  	public const string PBX_VERSION = '2022.3.16';
 
 	/**
      * Class constructor.

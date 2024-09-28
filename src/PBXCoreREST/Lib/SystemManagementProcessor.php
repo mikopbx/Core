@@ -87,8 +87,8 @@ class SystemManagementProcessor extends Injectable
                 }while($ch <= 10 && !$res->success);
                 break;
             case 'convertAudioFile':
-                $mvPath = Util::which('mv');
-                Processes::mwExec("{$mvPath} {$request['data']['temp_filename']} {$request['data']['filename']}");
+                $mv = Util::which('mv');
+                Processes::mwExec("$mv {$request['data']['temp_filename']} {$request['data']['filename']}");
                 $res = ConvertAudioFileAction::main($request['data']['filename']);
                 break;
             default:

@@ -1,4 +1,4 @@
-{{ form('network/save', 'role': 'form', 'class': 'ui form large', 'id':'network-form') }}
+{{ form(['action' : 'network/save','method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'network-form']) }}
 
 <input type="hidden" name="is-docker" value="{{ isDocker }}">
 
@@ -18,4 +18,4 @@
 {{ partial("partials/submitbutton",['indexurl':'']) }}
 
 <div class="ui clearing hidden divider"></div>
-{{ end_form() }}
+{{ close('form') }}

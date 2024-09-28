@@ -1,4 +1,4 @@
-{{ form('sound-files/save', 'role': 'form', 'class': 'ui form large', 'id':'sound-file-form') }}
+{{ form(['action' : 'sound-files/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'sound-file-form']) }}
 {{ form.render('id') }}
 {{ form.render('category') }}
 <input type="file" name="sound-file" accept=".wav,.mp3" style="display: none!important;" id="file"/>
@@ -67,5 +67,5 @@
 {{ partial("partials/submitbutton",[
     'indexurl':'sound-files/index/#/'~category
 ]) }}
-{{ end_form() }}
+{{ close('form') }}
 

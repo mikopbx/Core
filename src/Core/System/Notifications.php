@@ -20,9 +20,8 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use PHPMailer\PHPMailer\PHPMailer;
 use Throwable;
 
@@ -33,7 +32,7 @@ use Throwable;
  */
 class Notifications
 {
-    public const TYPE_PHP_MAILER = 'PHP_MAILER';
+    public const string TYPE_PHP_MAILER = 'PHP_MAILER';
     private array $settings;
     private bool $enableNotifications;
     private string $fromAddres;
@@ -46,19 +45,19 @@ class Notifications
     {
         $mikoPBXConfig = new MikoPBXConfig();
         $this->settings = $mikoPBXConfig->getGeneralSettings();
-        $this->enableNotifications = $this->settings[PbxSettingsConstants::MAIL_ENABLE_NOTIFICATIONS] === '1';
+        $this->enableNotifications = $this->settings[PbxSettings::MAIL_ENABLE_NOTIFICATIONS] === '1';
 
-        $mailSMTPSenderAddress = $this->settings[PbxSettingsConstants::MAIL_SMTP_SENDER_ADDRESS] ?? '';
+        $mailSMTPSenderAddress = $this->settings[PbxSettings::MAIL_SMTP_SENDER_ADDRESS] ?? '';
         if (!empty($mailSMTPSenderAddress)) {
             $this->fromAddres = $mailSMTPSenderAddress;
         } else {
-            $this->fromAddres = $this->settings[PbxSettingsConstants::MAIL_SMTP_USERNAME];
+            $this->fromAddres = $this->settings[PbxSettings::MAIL_SMTP_USERNAME];
         }
 
-        if (empty($this->settings[PbxSettingsConstants::MAIL_SMTP_FROM_USERNAME])) {
+        if (empty($this->settings[PbxSettings::MAIL_SMTP_FROM_USERNAME])) {
             $this->fromName = 'MikoPBX notification';
         } else {
-            $this->fromName = $this->settings[PbxSettingsConstants::MAIL_SMTP_FROM_USERNAME];
+            $this->fromName = $this->settings[PbxSettings::MAIL_SMTP_FROM_USERNAME];
         }
     }
 
@@ -89,7 +88,7 @@ class Notifications
         if(!$di){
             return;
         }
-        $adminMail = PbxSettings::getValueByKey(PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL);
+        $adminMail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
 
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
         $cacheKey = 'SendAdminNotification:' . md5($adminMail. $subject . implode('', $messages));
@@ -129,7 +128,7 @@ class Notifications
         if (!self::checkConnection(self::TYPE_PHP_MAILER)) {
             return false;
         }
-        $systemNotificationsEmail = $this->settings[PbxSettingsConstants::SYSTEM_NOTIFICATIONS_EMAIL];
+        $systemNotificationsEmail = $this->settings[PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL];
         $result = $this->sendMail($systemNotificationsEmail, 'Test mail from MIKO PBX', '<b>Test message</b><hr>');
         return ($result === true);
     }
@@ -139,7 +138,7 @@ class Notifications
      * @param string $type The type of mail server.
      * @return bool True if the connection is successful, false otherwise.
      */
-    public static function checkConnection($type): bool
+    public static function checkConnection(string $type): bool
     {
         $timeoutPath = Util::which('timeout');
         $phpPath = Util::which('php');
@@ -154,13 +153,13 @@ class Notifications
     /**
      * Sends an email using PHPMailer.
      *
-     * @param string|array $to The recipient(s) of the email.
+     * @param array|string $to The recipient(s) of the email.
      * @param string $subject The subject of the email.
      * @param string $message The body of the email.
      * @param string $filename The path to the file to be attached (optional).
      * @return bool True if the email is sent successfully, false otherwise.
      */
-    public function sendMail($to, $subject, $message, string $filename = ''): bool
+    public function sendMail(array|string $to, string $subject, string $message, string $filename = ''): bool
     {
         if (!$this->enableNotifications) {
             return false;
@@ -208,20 +207,20 @@ class Notifications
         $mail->isSMTP();
         $mail->SMTPDebug = 0;
         $mail->Timeout = 5;
-        $mail->Host = $this->settings[PbxSettingsConstants::MAIL_SMTP_HOST];
-        if ($this->settings[PbxSettingsConstants::MAIL_SMTP_USE_TLS] === "1") {
+        $mail->Host = $this->settings[PbxSettings::MAIL_SMTP_HOST];
+        if ($this->settings[PbxSettings::MAIL_SMTP_USE_TLS] === "1") {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         } else {
             $mail->SMTPSecure = '';
             $mail->SMTPAutoTLS = false;
         }
-        if (empty($this->settings[PbxSettingsConstants::MAIL_SMTP_USERNAME]) && empty($this->settings[PbxSettingsConstants::MAIL_SMTP_PASSWORD])) {
+        if (empty($this->settings[PbxSettings::MAIL_SMTP_USERNAME]) && empty($this->settings[PbxSettings::MAIL_SMTP_PASSWORD])) {
             $mail->SMTPAuth = false;
         } else {
             $mail->SMTPAuth = true;
-            $mail->Username = $this->settings[PbxSettingsConstants::MAIL_SMTP_USERNAME];
-            $mail->Password = $this->settings[PbxSettingsConstants::MAIL_SMTP_PASSWORD];
-            if ($this->settings[PbxSettingsConstants::MAIL_SMTP_CERT_CHECK] !== '1') {
+            $mail->Username = $this->settings[PbxSettings::MAIL_SMTP_USERNAME];
+            $mail->Password = $this->settings[PbxSettings::MAIL_SMTP_PASSWORD];
+            if ($this->settings[PbxSettings::MAIL_SMTP_CERT_CHECK] !== '1') {
                 $mail->SMTPOptions = [
                     'ssl' => [
                         'verify_peer' => false,
@@ -231,7 +230,7 @@ class Notifications
                 ];
             }
         }
-        $mail->Port = (integer)$this->settings[PbxSettingsConstants::MAIL_SMTP_PORT];
+        $mail->Port = (integer)$this->settings[PbxSettings::MAIL_SMTP_PORT];
         $mail->CharSet = 'UTF-8';
 
         return $mail;

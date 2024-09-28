@@ -23,10 +23,10 @@ use MikoPBX\AdminCabinet\Forms\LicensingActivateCouponForm;
 use MikoPBX\AdminCabinet\Forms\LicensingChangeLicenseKeyForm;
 use MikoPBX\AdminCabinet\Forms\LicensingGetKeyForm;
 use MikoPBX\AdminCabinet\Forms\PbxExtensionModuleSettingsForm;
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
-use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
+use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Modules\PbxExtensionState;
-use Phalcon\Text;
 
 class PbxExtensionModulesController extends BaseController
 {
@@ -70,7 +70,7 @@ class PbxExtensionModulesController extends BaseController
         $this->view->modulelist = $moduleList;
 
         // License key management tab //
-        $licKey = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
+        $licKey = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
         if (strlen($licKey) !== 28
             || !Text::startsWith($licKey, 'MIKO-')) {
             $licKey = '';
@@ -97,7 +97,7 @@ class PbxExtensionModulesController extends BaseController
      */
     public function modifyAction(string $uniqid): void
     {
-        $menuSettings = "AdditionalMenuItem{$uniqid}";
+        $menuSettings = "AdditionalMenuItem$uniqid";
         $unCamelizedControllerName = Text::uncamelize($uniqid, '-');
         $previousMenuSettings = PbxSettings::findFirstByKey($menuSettings);
         $this->view->showAtMainMenu = $previousMenuSettings !== false;

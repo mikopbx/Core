@@ -19,7 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Password;
@@ -40,9 +40,9 @@ class MailSettingsEditForm extends BaseForm
 
         foreach ($options as $key => $value) {
             switch ($key) {
-                case PbxSettingsConstants::MAIL_ENABLE_NOTIFICATIONS :
-                case PbxSettingsConstants::MAIL_SMTP_USE_TLS :
-                case PbxSettingsConstants::MAIL_SMTP_CERT_CHECK :
+                case PbxSettings::MAIL_ENABLE_NOTIFICATIONS :
+                case PbxSettings::MAIL_SMTP_USE_TLS :
+                case PbxSettings::MAIL_SMTP_CERT_CHECK :
                     $cheskarr = ['value' => null];
                     if ($value) {
                         $cheskarr = ['checked' => 'checked', 'value' => null];
@@ -50,10 +50,10 @@ class MailSettingsEditForm extends BaseForm
                     $this->add(new Check($key, $cheskarr));
                     break;
 
-                case PbxSettingsConstants::MAIL_TPL_MISSED_CALL_BODY :
-                case PbxSettingsConstants::MAIL_TPL_MISSED_CALL_FOOTER :
-                case PbxSettingsConstants::MAIL_TPL_VOICEMAIL_BODY :
-                case PbxSettingsConstants::MAIL_TPL_VOICEMAIL_FOOTER :
+                case PbxSettings::MAIL_TPL_MISSED_CALL_BODY :
+                case PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER :
+                case PbxSettings::MAIL_TPL_VOICEMAIL_BODY :
+                case PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER :
 
                     $this->add(
                         new TextArea(
@@ -64,7 +64,7 @@ class MailSettingsEditForm extends BaseForm
                     );
                     break;
 
-                case PbxSettingsConstants::MAIL_SMTP_PASSWORD :
+                case PbxSettings::MAIL_SMTP_PASSWORD :
                     $this->add(
                         new Password(
                             $key, [

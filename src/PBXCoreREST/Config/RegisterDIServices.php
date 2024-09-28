@@ -29,7 +29,6 @@ use MikoPBX\Common\Providers\{AclProvider,
     LoggerProvider,
     MainDatabaseProvider,
     MessagesProvider,
-    ModelsCacheProvider,
     ModelsAnnotationsProvider,
     ModelsMetadataProvider,
     ModulesDBConnectionsProvider,
@@ -79,7 +78,6 @@ class RegisterDIServices
 
             // Inject caches
             ManagedCacheProvider::class,
-            ModelsCacheProvider::class,
 
             // Inject Queue connection
             BeanstalkConnectionWorkerApiProvider::class,

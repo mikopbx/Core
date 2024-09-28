@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Common\Models;
 
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Mvc\Model\Relation;
 use Phalcon\Mvc\Model\ResultsetInterface;
 

@@ -21,8 +21,6 @@
 namespace MikoPBX\AdminCabinet;
 
 use MikoPBX\AdminCabinet\Config\RegisterDIServices;
-use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
-use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
 use Phalcon\Di\DiInterface;
 use Phalcon\Mvc\ModuleDefinitionInterface;
 
@@ -42,7 +40,8 @@ class Module implements ModuleDefinitionInterface
      *
      * @param \Phalcon\Di\DiInterface $container
      */
-    public function registerServices(DiInterface $container){
+    public function registerServices(DiInterface $container): void
+    {
         RegisterDIServices::init($container);
     }
 

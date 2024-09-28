@@ -22,7 +22,8 @@ namespace MikoPBX\PBXCoreREST\Lib\CallQueues;
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class DeleteRecord
@@ -30,7 +31,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\CallQueues
  */
-class DeleteRecordAction extends \Phalcon\Di\Injectable
+class DeleteRecordAction extends Injectable
 {
 
     /**

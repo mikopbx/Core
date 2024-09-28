@@ -25,8 +25,8 @@ use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
-use Phalcon\Text;
+use Phalcon\Di\Injectable;
+use MikoPBX\Common\Library\Text;
 use Throwable;
 
 /**
@@ -35,7 +35,7 @@ use Throwable;
  *
  * @package MikoPBX\Core\Workers
  */
-abstract class WorkerBase extends Di\Injectable implements WorkerInterface
+abstract class WorkerBase extends Injectable implements WorkerInterface
 {
     /**
      * Maximum number of processes that can be created.
@@ -103,10 +103,10 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
             $pidFile = $pidFilesDir . '/' . $baseName;
             // Delete old PID files
             $rm = Util::which('rm');
-            Processes::mwExec("{$rm} -rf {$pidFile}*");
+            Processes::mwExec("$rm -rf $pidFile*");
             $i = 1;
             foreach ($processes as $process) {
-                file_put_contents("{$pidFile}-{$i}.pid", $process);
+                file_put_contents("$pidFile-$i.pid", $process);
                 $i++;
             }
         }
@@ -121,7 +121,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
     {
         $name = str_replace("\\", '-', static::class);
 
-        return "/var/run/{$name}.pid";
+        return "/var/run/$name.pid";
     }
 
     /**
@@ -185,12 +185,12 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
         $processTitle = cli_get_process_title();
         $e = error_get_last();
         if ($e === null) {
-            SystemMessages::sysLogMsg($processTitle, "shutdownHandler after {$timeElapsedSecs} seconds", LOG_DEBUG);
+            SystemMessages::sysLogMsg($processTitle, "shutdownHandler after $timeElapsedSecs seconds", LOG_DEBUG);
         } else {
             $details = implode(PHP_EOL,$e);
             SystemMessages::sysLogMsg(
                 $processTitle,
-                "shutdownHandler after {$timeElapsedSecs} seconds with error: {$details}",
+                "shutdownHandler after $timeElapsedSecs seconds with error: $details",
                 LOG_DEBUG
             );
         }
@@ -242,7 +242,7 @@ abstract class WorkerBase extends Di\Injectable implements WorkerInterface
      */
     public function makePingTubeName(string $workerClassName): string
     {
-        return Text::camelize("ping_{$workerClassName}", '\\');
+        return Text::camelize("ping_$workerClassName", '\\');
     }
 
     /**

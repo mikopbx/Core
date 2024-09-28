@@ -36,7 +36,7 @@ class H323Conf extends AsteriskConfigClass
     public int $priority = 1000;
 
     protected string $description = 'ooh323.conf';
-    public const MODULE_NAME = 'chan_ooh323.so';
+    public const string MODULE_NAME = 'chan_ooh323.so';
 
     /**
      * Generates the configuration for the ooh323.conf file.
@@ -72,8 +72,8 @@ class H323Conf extends AsteriskConfigClass
         $h323 = new H323Conf();
         $h323->generateConfig();
 
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'module reload ".self::MODULE_NAME."'");
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload ".self::MODULE_NAME."'");
     }
 
     /**

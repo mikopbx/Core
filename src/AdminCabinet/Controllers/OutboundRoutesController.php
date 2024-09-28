@@ -160,7 +160,7 @@ class OutboundRoutesController extends BaseController
 
         // If it was the creation of a new record, reload the page with the specified ID
         if (empty($data['id'])) {
-            $this->view->reload = "outbound-routes/modify/{$rule->id}";
+            $this->view->reload = "outbound-routes/modify/$rule->id";
         }
     }
 
@@ -173,9 +173,7 @@ class OutboundRoutesController extends BaseController
     public function deleteAction(string $id = ''): void
     {
         $rule = OutgoingRoutingTable::findFirstByid($id);
-        if ($rule !== null) {
-            $rule->delete();
-        }
+        $rule?->delete();
 
         $this->forward('outbound-routes/index');
     }
@@ -217,7 +215,7 @@ class OutboundRoutesController extends BaseController
         $sDisabled = $this->translation->_('mo_Disabled');
         if ($a == $b) {
             return 0;
-        } elseif (strpos($a, $sDisabled) !== false && strpos($b, $sDisabled) === false) {
+        } elseif (str_contains($a, $sDisabled) && !str_contains($b, $sDisabled)) {
             return 1;
         } else {
             return ($a < $b) ? -1 : 1;

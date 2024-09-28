@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Asterisk\Configs\ExtensionsConf;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
@@ -106,7 +106,7 @@ class InternalContexts extends AsteriskConfigClass
                  'exten => _X!,1,NoOp()'.PHP_EOL."\t";
 
         // If WebRTC is used, set up SIP and WS contacts. Otherwise, set DST contact.
-        if($this->generalSettings[PbxSettingsConstants::USE_WEB_RTC] === '1') {
+        if($this->generalSettings[PbxSettings::USE_WEB_RTC] === '1') {
             $conf .= 'same => n,Set(SIP_CONTACT=${PJSIP_DIAL_CONTACTS(${EXTEN})})'.PHP_EOL."\t".
                      'same => n,Set(WS_CONTACTS=${PJSIP_DIAL_CONTACTS(${EXTEN}-WS)})'.PHP_EOL."\t".
                      'same => n,Set(DST_CONTACT=${SIP_CONTACT}${IF($["${SIP_CONTACT}x" != "x" && "${WS_CONTACTS}x" != "x"]?&)}${WS_CONTACTS})'.PHP_EOL."\t";
@@ -244,7 +244,7 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'exten => _[hit],1,Hangup()' . " \n";
 
         // Handle pickup extension if it exists.
-        $pickupExtension = $this->generalSettings[PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN];
+        $pickupExtension = $this->generalSettings[PbxSettings::PBX_FEATURE_PICKUP_EXTEN];
         if(!empty($pickupExtension)){
             $conf            .= 'exten => _' . $pickupExtension . $this->extensionPattern . ',1,Set(PICKUPEER=' . $this->technology . '/${FILTER(0-9,${EXTEN:2})})' . "\n\t";
             $conf            .= 'same => n,Set(pt1c_dnid=${EXTEN})' . "\n\t";

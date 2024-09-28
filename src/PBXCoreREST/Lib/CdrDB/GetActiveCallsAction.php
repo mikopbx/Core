@@ -23,13 +23,14 @@ namespace MikoPBX\PBXCoreREST\Lib\CdrDB;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\Workers\WorkerCdr;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Get active calls based on CDR data.
  *
  * @package MikoPBX\PBXCoreREST\Lib\CdrDB
  */
-class GetActiveCallsAction extends \Phalcon\Di\Injectable
+class GetActiveCallsAction extends Injectable
 {
     /**
      * Get active calls based on CDR data.

@@ -28,9 +28,9 @@ use Phalcon\Mvc\Model\Relation;
  */
 class OutWorkTimes extends ModelsBase
 {
-    public const CAL_TYPE_NONE = 'none';
-    public const CAL_TYPE_CALDAV = 'caldav';
-    public const CAL_TYPE_ICAL = 'ical';
+    public const string CAL_TYPE_NONE = 'none';
+    public const string CAL_TYPE_CALDAV = 'caldav';
+    public const string CAL_TYPE_ICAL = 'ical';
 
     /**
      * @Primary

@@ -26,7 +26,7 @@ use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
-use Phalcon\Filter;
+use Phalcon\Filter\Filter;
 use Phalcon\Mvc\Controller;
 use Pheanstalk\Pheanstalk;
 use Throwable;
@@ -56,7 +56,7 @@ class BaseController extends Controller
     public function sendRequestToBackendWorker(
         string $processor,
         string $actionName,
-        $payload = null,
+        mixed $payload = null,
         string $moduleName='',
         int $maxTimeout = 10,
         int $priority = Pheanstalk::DEFAULT_PRIORITY
@@ -109,12 +109,12 @@ class BaseController extends Controller
      * Prepare a request message for sending to backend worker
      *
      * @param string $processor
-     * @param $payload
+     * @param mixed $payload
      * @param string $actionName
      * @param string $moduleName
      * @return array
      */
-    public function prepareRequestMessage(string $processor, $payload, string $actionName, string $moduleName): array
+    public function prepareRequestMessage(string $processor, mixed $payload, string $actionName, string $moduleName): array
     {
         // Old style modules, we can remove it after 2025
         if ($processor === 'modules') {

@@ -1,4 +1,4 @@
-{{ form('ivr-menu/save', 'role': 'form', 'class': 'ui large form','id':'ivr-menu-form') }}
+{{ form(['action' : 'ivr-menu/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'ivr-menu-form']) }}
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
 <div class="ui ribbon label" id="ivr-menu-extension-number">
@@ -78,7 +78,7 @@
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
 {{ partial("partials/submitbutton",['indexurl':'ivr-menu/index']) }}
-{{ end_form() }}
+{{ close('form') }}
 
 
 <script type="application/javascript">

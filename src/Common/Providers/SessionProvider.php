@@ -36,9 +36,9 @@ use Phalcon\Storage\SerializerFactory;
  */
 class SessionProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'session';
+    public const string SERVICE_NAME = 'session';
 
-    public const CACHE_PREFIX = '_PHCM_SESS:';
+    public const string CACHE_PREFIX = '_PHCM_SESS:';
 
     /**
      * Register the session service provider.

@@ -1,4 +1,4 @@
-{{ form('dialplan-applications/save', 'role': 'form', 'class': 'ui form large', 'id':'dialplan-application-form') }}
+{{ form(['action' : 'dialplan-applications/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'dialplan-application-form']) }}
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
 {{ form.render('applicationlogic') }}
@@ -61,4 +61,4 @@
 }}
 
 {{ partial("partials/submitbutton",['indexurl':'dialplan-applications/index/']) }}
-{{ end_form() }}
+{{ close('form') }}

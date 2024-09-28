@@ -25,7 +25,6 @@ use MikoPBX\Common\Providers\{LoggerProvider,
     MainDatabaseProvider,
     ManagedCacheProvider,
     ModelsAnnotationsProvider,
-    ModelsCacheProvider,
     ModelsMetadataProvider,
     PBXConfModulesProvider,
     RouterProvider,
@@ -58,7 +57,6 @@ class RegisterDIServices
 
             // Inject caches
             ManagedCacheProvider::class,
-            ModelsCacheProvider::class,
 
             // Inject PBX modules
             PBXConfModulesProvider::class,

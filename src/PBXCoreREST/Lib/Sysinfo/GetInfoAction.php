@@ -21,19 +21,19 @@ namespace MikoPBX\PBXCoreREST\Lib\Sysinfo;
 
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Service\Main;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Gets a collection of the system information and put it into temp file.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Sysinfo
  */
-class GetInfoAction extends \Phalcon\Di\Injectable
+class GetInfoAction extends Injectable
 {
     /**
      * Gets a collection of the system information and put it into temp file.
@@ -113,7 +113,7 @@ class GetInfoAction extends \Phalcon\Di\Injectable
      */
     private static function getPBXVersion(): string
     {
-        $version = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
+        $version = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
         $content = '─────────────────────────────────────── PBXVersion ───────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
         $content .= $version . PHP_EOL;
@@ -149,9 +149,9 @@ class GetInfoAction extends \Phalcon\Di\Injectable
         $content    = '───────────────────────────────────────── CPU load ───────────────────────────────────────';
         $content    .= PHP_EOL . PHP_EOL;
         $ut         = [];
-        $grepPath   = Util::which('grep');
-        $mpstatPath = Util::which('mpstat');
-        Processes::mwExec("{$mpstatPath} | {$grepPath} all", $ut);
+        $grep   = Util::which('grep');
+        $mpstat = Util::which('mpstat');
+        Processes::mwExec("$mpstat | $grep all", $ut);
         preg_match("/^.*\s+all\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+.*\s+(.*)\s*.*/i", $ut[0], $matches);
         $rv = 100 - $matches[1];
 
@@ -174,23 +174,23 @@ class GetInfoAction extends \Phalcon\Di\Injectable
         $content  = '───────────────────────────────────────── MemInfo ────────────────────────────────────────';
         $content  .= PHP_EOL . PHP_EOL;
         $out      = [];
-        $catPath  = Util::which('cat');
-        $grepPath = Util::which('grep');
-        $awkPath  = Util::which('awk');
-        $freePath = Util::which('free');
-        Processes::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'Inactive:' | {$awkPath} '{print $2}'", $out);
+        $cat  = Util::which('cat');
+        $grep = Util::which('grep');
+        $awk  = Util::which('awk');
+        $free = Util::which('free');
+        Processes::mwExec("$cat /proc/meminfo | $grep -C 0 'Inactive:' | $awk '{print $2}'", $out);
         $inactive = round((1 * implode($out)) / 1024, 2);
-        $content  .= "inactive = {$inactive}" . PHP_EOL;
-        Processes::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'MemFree:' | {$awkPath} '{print $2}'", $out);
-        $free    = round((1 * implode($out)) / 1024, 2);
-        $content .= "free = {$free}" . PHP_EOL;
-        Processes::mwExec("{$catPath} /proc/meminfo | {$grepPath} -C 0 'MemTotal:' | {$awkPath} '{print $2}'", $out);
+        $content  .= "inactive = $inactive" . PHP_EOL;
+        Processes::mwExec("$cat /proc/meminfo | $grep -C 0 'MemFree:' | $awk '{print $2}'", $out);
+        $freeMem    = round((1 * implode($out)) / 1024, 2);
+        $content .= "free = $freeMem" . PHP_EOL;
+        Processes::mwExec("$cat /proc/meminfo | $grep -C 0 'MemTotal:' | $awk '{print $2}'", $out);
         $total   = round((1 * implode($out)) / 1024, 2);
-        $content .= "total = {$total}" . PHP_EOL . PHP_EOL;
+        $content .= "total = $total" . PHP_EOL . PHP_EOL;
 
         $content .= '────────────────────────────────────────── Free ─────────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        Processes::mwExec($freePath, $out);
+        Processes::mwExec($free, $out);
         $content .= implode(PHP_EOL, $out) . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
         return $content;
@@ -295,9 +295,9 @@ class GetInfoAction extends \Phalcon\Di\Injectable
     {
         $content      = '────────────────────────────────────────── iptables ──────────────────────────────────────';
         $content      .= PHP_EOL . PHP_EOL;
-        $iptablesPath = Util::which('iptables');
+        $iptables = Util::which('iptables');
         $out          = [];
-        Processes::mwExec("{$iptablesPath} -S", $out);
+        Processes::mwExec("$iptables -S", $out);
         $iptablesOut = implode(PHP_EOL, $out);
         $content     .= $iptablesOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -313,11 +313,11 @@ class GetInfoAction extends \Phalcon\Di\Injectable
     {
         $content  = '──────────────────────────────────────────── ping ────────────────────────────────────────';
         $content  .= PHP_EOL . PHP_EOL;
-        $pingPath = Util::which('ping');
+        $ping = Util::which('ping');
         $out      = [];
-        Processes::mwExec("{$pingPath} 8.8.8.8 -w 1", $out);
+        Processes::mwExec("$ping 8.8.8.8 -w 1", $out);
         $pingOut = implode(PHP_EOL, $out);
-        Processes::mwExec("{$pingPath} ya.ru -w 1", $out);
+        Processes::mwExec("$ping ya.ru -w 1", $out);
         $ping2Out = implode(PHP_EOL, $out);
         $content  .= $pingOut . PHP_EOL;
         $content  .= PHP_EOL . PHP_EOL;
@@ -333,13 +333,13 @@ class GetInfoAction extends \Phalcon\Di\Injectable
      */
     private static function getOpenSSLInfo(): string
     {
-        $opensslPath = Util::which('openssl');
-        $timeoutPath = Util::which('timeout');
+        $openssl = Util::which('openssl');
+        $timeout = Util::which('timeout');
 
         $content = '─────────────────────────────────────── openssl ─────────────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
         $out     = [];
-        Processes::mwExec("{$timeoutPath} 1 {$opensslPath} s_client -connect lic.miko.ru:443", $out);
+        Processes::mwExec("$timeout 1 $openssl s_client -connect lic.miko.ru:443", $out);
         $opensslOut = implode(PHP_EOL, $out);
         $content    .= $opensslOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -353,23 +353,23 @@ class GetInfoAction extends \Phalcon\Di\Injectable
      */
     private static function getAsteriskInfo(): string
     {
-        $asteriskPath = Util::which('asterisk');
+        $asterisk = Util::which('asterisk');
 
         $content = '────────────────────────────────── asterisk registrations ────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        Processes::mwExec("{$asteriskPath} -rx 'pjsip show registrations' ", $out);
+        Processes::mwExec("$asterisk -rx 'pjsip show registrations' ", $out);
         $asteriskOut = implode(PHP_EOL, $out);
         $content     .= $asteriskOut . PHP_EOL;
 
         $content .= '────────────────────────────────── asterisk endpoints ───────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        Processes::mwExec("{$asteriskPath} -rx 'pjsip show endpoints' ", $out);
+        Processes::mwExec("$asterisk -rx 'pjsip show endpoints' ", $out);
         $asteriskOut = implode(PHP_EOL, $out);
         $content     .= $asteriskOut . PHP_EOL;
 
         $content .= '─────────────────────────────────── asterisk contacts ───────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;
-        Processes::mwExec("{$asteriskPath} -rx 'pjsip show contacts' ", $out);
+        Processes::mwExec("$asterisk -rx 'pjsip show contacts' ", $out);
         $asteriskOut = implode(PHP_EOL, $out);
         $content     .= $asteriskOut . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
@@ -388,7 +388,7 @@ class GetInfoAction extends \Phalcon\Di\Injectable
         $modeNone = CustomFiles::MODE_NONE;
         $files   = CustomFiles::find("mode!='$modeNone'");
         foreach ($files as $file) {
-            $content .= "({$file->mode}){$file->filepath}" . PHP_EOL;
+            $content .= "($file->mode)$file->filepath" . PHP_EOL;
         }
         $content .= PHP_EOL . PHP_EOL;
         return $content;
@@ -419,7 +419,7 @@ class GetInfoAction extends \Phalcon\Di\Injectable
     {
         $content    = '───────────────────────────────────────── Environment ─────────────────────────────────────────';
         $content    .= PHP_EOL . PHP_EOL;
-        $installationType = PbxSettings::getValueByKey(PbxSettingsConstants::VIRTUAL_HARDWARE_TYPE);
+        $installationType = PbxSettings::getValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE);
         if ($installationType){
             $content .= 'Machine hardware: '.$installationType . PHP_EOL;
         }

@@ -23,7 +23,7 @@ namespace MikoPBX\Common\Providers;
 
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Registry;
+use Phalcon\Support\Registry;
 
 /**
  * Registers the registry service provider.
@@ -32,7 +32,7 @@ use Phalcon\Registry;
  */
 class RegistryProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'registry';
+    public const string SERVICE_NAME = 'registry';
 
     /**
      * Register the registry service provider.

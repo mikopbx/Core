@@ -23,6 +23,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Files;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Class RemoveAudioFile
@@ -30,7 +31,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Files
  */
-class RemoveAudioFileAction extends \Phalcon\Di\Injectable
+class RemoveAudioFileAction extends Injectable
 {
     /**
      * Delete file from disk by filepath
@@ -53,7 +54,7 @@ class RemoveAudioFileAction extends \Phalcon\Di\Injectable
 
         if ( ! file_exists($filePath)) {
             $res->success         = true;
-            $res->data['message'] = "File '{$filePath}' already deleted";
+            $res->data['message'] = "File '$filePath' already deleted";
 
             return $res;
         }
@@ -66,8 +67,8 @@ class RemoveAudioFileAction extends \Phalcon\Di\Injectable
             escapeshellarg(Util::trimExtensionForFile($filePath) . ".alaw"),
         ];
 
-        $rmPath = Util::which('rm');
-        Processes::mwExec("{$rmPath} -rf " . implode(' ', $arrDeletedFiles), $out);
+        $rm = Util::which('rm');
+        Processes::mwExec("$rm -rf " . implode(' ', $arrDeletedFiles), $out);
         if (file_exists($filePath)) {
             $res->success  = false;
             $res->messages = $out;

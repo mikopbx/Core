@@ -55,7 +55,7 @@ class FirewallManagementProcessor extends Injectable
                 $res = GetBannedIpAction::main();
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - {$action} in ".__CLASS__;
+                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
         }
         $res->function = $action;
 

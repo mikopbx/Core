@@ -21,7 +21,8 @@ namespace MikoPBX\PBXCoreREST\Lib\License;
 
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Class CaptureFeatureForProductIdAction
@@ -29,7 +30,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\License
  */
-class CaptureFeatureForProductIdAction extends \Phalcon\Di\Injectable
+class CaptureFeatureForProductIdAction extends Injectable
 {
     /**
      * Tries to capture feature.

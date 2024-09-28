@@ -23,7 +23,7 @@ use MikoPBX\Common\Providers\RouterProvider;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher;
-use Phalcon\Text;
+use MikoPBX\Common\Library\Text;
 
 /**
  * NormalizeControllerNamePlugin
@@ -67,8 +67,8 @@ class NormalizeControllerNamePlugin extends Injectable
                 // /admin-cabinet/module-users-groups/module-users-groups/modify/1
                 $checkController = ucfirst(Text::camelize($dispatcher->getParam(RouterProvider::ModuleUniqueId)??'','-'));
                 $checkAction = $dispatcher->getControllerName();
-                $controllerClass = "{$checkNamespace}\\{$checkController}{$controllerSuffix}";
-                $actionMethod = "{$checkAction}{$actionSuffix}";
+                $controllerClass = "$checkNamespace\\$checkController$controllerSuffix";
+                $actionMethod = "$checkAction$actionSuffix";
                 if (method_exists($controllerClass, $actionMethod)){
                     $params = $dispatcher->getActionName();
 

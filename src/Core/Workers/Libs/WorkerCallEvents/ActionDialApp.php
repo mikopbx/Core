@@ -37,7 +37,7 @@ class ActionDialApp
      * @param array $data Data related to the event.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         // Ends the previous application
         ActionAppEnd::execute($worker, $data);

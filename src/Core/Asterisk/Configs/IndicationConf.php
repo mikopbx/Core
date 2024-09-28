@@ -21,7 +21,6 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 use function MikoPBX\Common\Config\appPath;
 
@@ -34,7 +33,7 @@ use function MikoPBX\Common\Config\appPath;
  */
 class IndicationConf extends AsteriskConfigClass
 {
-    public const LANG_ZONE_MAP = [
+    public const array LANG_ZONE_MAP = [
         'ru-ru' => 'ru',
         'en-en' => 'us',
         'en-gb' => 'uk',
@@ -59,7 +58,7 @@ class IndicationConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $lang     = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LANGUAGE);
+        $lang     = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
         $country  = self::LANG_ZONE_MAP[$lang] ?? 'ru';
         $filePath = appPath('src/Core/Asterisk/Configs/Samples/indications.conf.sample');
         $data     = file_get_contents($filePath);

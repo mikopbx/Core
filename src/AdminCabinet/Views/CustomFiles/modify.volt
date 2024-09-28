@@ -1,4 +1,4 @@
-{{ form('custom-files/save', 'role': 'form', 'class': 'ui form large', 'id':'custom-file-form') }}
+{{ form(['action' : 'custom-files/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'custom-file-form']) }}
 {{ form.render('id') }}
 {{ form.render('content') }}
 {{ form.render('filepath') }}
@@ -44,4 +44,4 @@
 
 <div class="ui hidden divider"></div>
 {{ partial("partials/submitbutton",['indexurl':'custom-files/index/']) }}
-{{ end_form() }}
+{{ close('form') }}

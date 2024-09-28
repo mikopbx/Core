@@ -21,13 +21,14 @@ namespace MikoPBX\PBXCoreREST\Lib\Sysinfo;
 
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Returns DMI information
  *
  * @package MikoPBX\PBXCoreREST\Lib\Sysinfo
  */
-class GetDMIInfoAction extends \Phalcon\Di\Injectable
+class GetDMIInfoAction extends Injectable
 {
     /**
      * Returns DMI information
@@ -43,7 +44,7 @@ class GetDMIInfoAction extends \Phalcon\Di\Injectable
         $grep = Util::which('grep');
         $awk = Util::which('awk');
         $result = shell_exec("$dmesg | $grep DMI | $awk -F 'DMI: ' '{ print $2}'");
-        $result = trim($result);
+        $result = trim($result??'');
         $res->data = ['DMI'=>$result];
         if ($result){
             $res->success = true;

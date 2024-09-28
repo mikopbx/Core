@@ -22,7 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use DateTime;
 use DateTimeZone;
 use MikoPBX\AdminCabinet\Forms\TimeSettingsEditForm;
-use MikoPBX\Common\Models\{PbxSettings, PbxSettingsConstants};
+use MikoPBX\Common\Models\{PbxSettings};
 
 class TimeSettingsController extends BaseController
 {
@@ -52,9 +52,9 @@ class TimeSettingsController extends BaseController
     private function getTimeSettingsArray(): array
     {
         return [
-            PbxSettingsConstants::PBX_TIMEZONE,
-            PbxSettingsConstants::NTP_SERVER,
-            PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS,
+            PbxSettings::PBX_TIMEZONE,
+            PbxSettings::NTP_SERVER,
+            PbxSettings::PBX_MANUAL_TIME_SETTINGS,
         ];
     }
 
@@ -62,6 +62,7 @@ class TimeSettingsController extends BaseController
      * Generate an array of time zones.
      *
      * @return array Array of time zones.
+     * @throws \DateInvalidTimeZoneException
      */
     private function generateTimezoneList(): array
     {
@@ -86,7 +87,7 @@ class TimeSettingsController extends BaseController
         $timezone_offsets = [];
         foreach ($timezones as $timezone) {
             $tz                          = new DateTimeZone($timezone);
-            $timezone_offsets[$timezone] = (int)$tz->getOffset(new DateTime());
+            $timezone_offsets[$timezone] = $tz->getOffset(new DateTime());
         }
 
         // sort timezone by offset
@@ -98,9 +99,9 @@ class TimeSettingsController extends BaseController
             $absOffset = (int)abs($offset);
             $offset_formatted = gmdate('H:i', $absOffset);
 
-            $pretty_offset = "UTC${offset_prefix}${offset_formatted}";
+            $pretty_offset = "UTC$offset_prefix$offset_formatted";
 
-            $timezone_list[$timezone] = "$timezone (${pretty_offset})";
+            $timezone_list[$timezone] = "$timezone ($pretty_offset)";
         }
 
         return $timezone_list;
@@ -109,7 +110,7 @@ class TimeSettingsController extends BaseController
     /**
      * Save timezone settings
      */
-    public function saveAction()
+    public function saveAction(): void
     {
         if ( ! $this->request->isPost()) {
             return;
@@ -127,11 +128,11 @@ class TimeSettingsController extends BaseController
             }
 
             switch ($key) {
-                case PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS:
+                case PbxSettings::PBX_MANUAL_TIME_SETTINGS:
                 case "***ALL CHECK BOXES ABOVE***":
                     $record->value = ($data[$key] === 'on') ? '1' : '0';
                     break;
-                case PbxSettingsConstants::NTP_SERVER:
+                case PbxSettings::NTP_SERVER:
                     $ntp_servers   = preg_split('/\r\n|\r|\n| |,/', $data[$key]);
                     if (is_array($ntp_servers)){
                         $record->value = implode(PHP_EOL, $ntp_servers);

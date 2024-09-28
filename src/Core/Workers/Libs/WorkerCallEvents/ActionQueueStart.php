@@ -38,7 +38,7 @@ class ActionQueueStart
      * @param array $data The event data.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         if ($data['transfer'] === '1') {
             // If it's a transfer, perform a search for related data.

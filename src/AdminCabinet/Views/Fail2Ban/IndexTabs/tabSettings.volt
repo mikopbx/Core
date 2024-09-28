@@ -1,4 +1,4 @@
-{{ form('fail2-ban/save', 'role': 'form', 'class': 'ui form large', 'id':'fail2ban-settings-form') }}
+{{ form(['action' : 'fail2-ban/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'fail2ban-settings-form']) }}
         {{ form.render('id') }}
 <div class="three fields disability">
     <div class="field ">
@@ -22,4 +22,4 @@
 
     {{ partial("partials/submitbutton") }}
     <div class="ui clearing hidden divider"></div>
-{{ end_form() }}
+{{ close('form') }}

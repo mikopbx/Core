@@ -19,10 +19,10 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 /**
@@ -34,9 +34,9 @@ use Phalcon\Di\Injectable;
  */
 class SyslogConf extends Injectable
 {
-    public const CONF_FILE   ='/etc/rsyslog.conf';
-    public const PROC_NAME   ='rsyslogd';
-    public const SYS_LOG_LINK='/var/log/messages';
+    public const string CONF_FILE   ='/etc/rsyslog.conf';
+    public const string PROC_NAME   ='rsyslogd';
+    public const string SYS_LOG_LINK='/var/log/messages';
 
     /**
      * Restarts syslog daemon.
@@ -94,7 +94,7 @@ class SyslogConf extends Injectable
      */
     public static function getSyslogFile(string $name = 'messages'): string
     {
-        $logDir = System::getLogDir() . '/system';
+        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/system';
         Util::mwMkdir($logDir);
         $logFileName = $logDir . '/' . $name;
         if (!file_exists($logFileName)){
@@ -115,7 +115,7 @@ class SyslogConf extends Injectable
         $di          = Di::getDefault();
         $logFile     = self::getSyslogFile($serviceName);
         $textScript  =  '#!/bin/sh'.PHP_EOL.
-                        "logName='{$logFile}';".PHP_EOL.
+                        "logName='$logFile';".PHP_EOL.
                         'if [ ! -f "$logName" ]; then exit; fi'.PHP_EOL.
                         'for srcId in 5 4 3 2 1 ""; do'.PHP_EOL.
                         '  dstId=$((srcId + 1));'.PHP_EOL.

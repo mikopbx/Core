@@ -19,13 +19,12 @@
 
 namespace MikoPBX\Core\System\CloudProvisioning;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\System\Util;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
 class AzureCloud extends CloudProvider
 {
-    public const CloudID = 'AzureCloud';
+    public const string CloudID = 'AzureCloud';
 
     private Client $client;
 

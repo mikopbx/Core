@@ -20,8 +20,8 @@
 namespace MikoPBX\Common\Models;
 
 use Phalcon\Mvc\Model\Relation;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class Extensions
@@ -46,15 +46,15 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
 class Extensions extends ModelsBase
 {
 
-    public const  TYPE_DIALPLAN_APPLICATION = 'DIALPLAN APPLICATION';
-    public const  TYPE_SIP = 'SIP';
-    public const  TYPE_QUEUE = 'QUEUE';
-    public const  TYPE_EXTERNAL = 'EXTERNAL';
-    public const  TYPE_IVR_MENU = 'IVR MENU';
-    public const  TYPE_CONFERENCE = 'CONFERENCE';
-    public const  TYPE_MODULES = 'MODULES';
-    public const  TYPE_SYSTEM = 'SYSTEM';
-    public const  TYPE_PARKING = 'PARKING';
+    public const string TYPE_DIALPLAN_APPLICATION = 'DIALPLAN APPLICATION';
+    public const string TYPE_SIP = 'SIP';
+    public const string TYPE_QUEUE = 'QUEUE';
+    public const string TYPE_EXTERNAL = 'EXTERNAL';
+    public const string TYPE_IVR_MENU = 'IVR MENU';
+    public const string TYPE_CONFERENCE = 'CONFERENCE';
+    public const string TYPE_MODULES = 'MODULES';
+    public const string TYPE_SYSTEM = 'SYSTEM';
+    public const string TYPE_PARKING = 'PARKING';
 
     /**
      * @Primary
@@ -136,7 +136,7 @@ class Extensions extends ModelsBase
         // Find the next available application number starting from 2200100
         $freeExtension = '2200100';
         for ($i = 100; ; $i++) {
-            $freeExtension = "2200{$i}";
+            $freeExtension = "2200$i";
             if (!in_array(['number' => $freeExtension], $result, false)) {
                 break;
             }
@@ -155,7 +155,7 @@ class Extensions extends ModelsBase
             return $number;
         }
         $number = preg_replace('/\D+/', '', $number);
-        $extensionLength = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH);
+        $extensionLength = PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
         if(strlen($number) > $extensionLength){
             $query = 'number LIKE :phone:';
             $phone = '%'.substr($number, -9);
@@ -201,7 +201,7 @@ class Extensions extends ModelsBase
             $started = 200;
         }
 
-        $extensionsLength = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH);
+        $extensionsLength = PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
         $maxExtension = (10 ** $extensionsLength) - 1;
 
         $occupied = Extensions::find(['columns' => 'number'])->toArray();

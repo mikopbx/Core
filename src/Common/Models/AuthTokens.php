@@ -19,8 +19,6 @@
 
 namespace MikoPBX\Common\Models;
 
-use Phalcon\Mvc\Model\Behavior\Timestampable;
-
 /**
  * Class AuthTokens
  *

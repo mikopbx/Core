@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\{Directories, Util};
 
 /**
@@ -32,9 +32,9 @@ use MikoPBX\Core\System\{Directories, Util};
 class ExtensionsConf extends AsteriskConfigClass
 {
     public int $priority = 500;
-    public const ALL_NUMBER_EXTENSION = '_[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!';
-    public const ALL_EXTENSION = '_[0-9*#+a-zA-Z]!';
-    public const DIGIT_NUMBER_EXTENSION = '_X!';
+    public const string ALL_NUMBER_EXTENSION = '_[0-9*#+a-zA-Z][0-9*#+a-zA-Z]!';
+    public const string ALL_EXTENSION = '_[0-9*#+a-zA-Z]!';
+    public const string DIGIT_NUMBER_EXTENSION = '_X!';
 
     protected string $description = 'extensions.conf';
 
@@ -65,18 +65,18 @@ class ExtensionsConf extends AsteriskConfigClass
         /** @scrutinizer ignore-call */
         $conf              = "[globals]" .PHP_EOL.
             "TRANSFER_CONTEXT=internal-transfer;".PHP_EOL;
-        if ($this->generalSettings[PbxSettingsConstants::PBX_RECORD_CALLS] === '1') {
+        if ($this->generalSettings[PbxSettings::PBX_RECORD_CALLS] === '1') {
             $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
             $conf .= "MONITOR_DIR=" . $monitorDir .PHP_EOL;
-            $conf .= "MONITOR_STEREO=" . $this->generalSettings[PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD] .PHP_EOL;
+            $conf .= "MONITOR_STEREO=" . $this->generalSettings[PbxSettings::PBX_SPLIT_AUDIO_THREAD] .PHP_EOL;
         }
-        if ($this->generalSettings[PbxSettingsConstants::PBX_RECORD_CALLS_INNER] === '0') {
+        if ($this->generalSettings[PbxSettings::PBX_RECORD_CALLS_INNER] === '0') {
             $conf .= "MONITOR_INNER=0".PHP_EOL;
         }else{
             $conf .= "MONITOR_INNER=1".PHP_EOL;
         }
-        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings[PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_IN]).PHP_EOL;
-        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings[PbxSettingsConstants::PBX_RECORD_ANNOUNCEMENT_OUT]).PHP_EOL;
+        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings[PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN]).PHP_EOL;
+        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings[PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT]).PHP_EOL;
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GLOBALS);
         $conf .= PHP_EOL.PHP_EOL;
         $conf .= "[general]".PHP_EOL;
@@ -113,7 +113,7 @@ class ExtensionsConf extends AsteriskConfigClass
      *
      * @param string $conf The current configuration.
      */
-    private function generateOtherExten(&$conf): void
+    private function generateOtherExten(string &$conf): void
     {
         // Context for AMI originate. Without it, the CallerID is not displayed correctly.
         $conf .= '[sipregistrations]' . "\n\n";
@@ -230,7 +230,7 @@ class ExtensionsConf extends AsteriskConfigClass
      *
      * @return void
      */
-    private function generateInternalTransfer(&$conf): void
+    private function generateInternalTransfer(string &$conf): void
     {
         $conf              .= "[internal-transfer] \n";
 
@@ -250,7 +250,7 @@ class ExtensionsConf extends AsteriskConfigClass
      *
      * @return void
      */
-    private function generateSipHints(&$conf): void
+    private function generateSipHints(string &$conf): void
     {
         $conf .= "[internal-hints] \n";
 
@@ -290,7 +290,7 @@ class ExtensionsConf extends AsteriskConfigClass
      *
      * @return string The generated extension.
      */
-    public static function getExtenByDid($did):string
+    public static function getExtenByDid(string $did):string
     {
         if(mb_strpos($did, '_') === 0){
             $ext_prefix = '';

@@ -39,10 +39,10 @@ class Udhcpc extends Network
          * If true, skip the action and exit the script.
          */
         if(Util::isDocker()){
-            Util::sysLogMsg(__METHOD__, "Skipped action {$action}... because of docker", LOG_DEBUG);
+            SystemMessages::sysLogMsg(__METHOD__, "Skipped action $action... because of docker", LOG_DEBUG);
             return;
         } else {
-            Util::sysLogMsg(__METHOD__, "Starting action {$action}...", LOG_DEBUG);
+            SystemMessages::sysLogMsg(__METHOD__, "Starting action $action...", LOG_DEBUG);
         }
 
         if ($action === 'deconfig' && Util::isT2SdeLinux()) {
@@ -112,7 +112,7 @@ class Udhcpc extends Network
 
         // Get the values of environment variables.
         foreach ($env_vars as $key => $value) {
-            $env_vars[$key] = trim(getenv("{$prefix}{$value}"));
+            $env_vars[$key] = trim(getenv("$prefix$value"));
         }
 
         /** @var LanInterfaces $if_data */
@@ -218,7 +218,7 @@ class Udhcpc extends Network
             // Only add the default route if this interface is for the internet.
             $routers = explode(' ', $env_vars['router']);
             foreach ($routers as $router) {
-                Processes::mwExec("route add default gw {$router} dev {$env_vars['interface']}");
+                Processes::mwExec("route add default gw $router dev {$env_vars['interface']}");
             }
         }
 

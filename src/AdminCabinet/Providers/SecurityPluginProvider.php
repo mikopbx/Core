@@ -32,7 +32,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class SecurityPluginProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'securityPlugin';
+    public const string SERVICE_NAME = 'securityPlugin';
 
     /**
      * Register security plugin provider

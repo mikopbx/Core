@@ -20,22 +20,22 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ConfigProvider;
-use Phalcon\Config;
-use Phalcon\Di;
+use Phalcon\Config\Config;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Class PBXInstaller
  * Handles the installation of MikoPBX onto a selected drive
  * @package MikoPBX\Core\System
  */
-class PBXInstaller extends Di\Injectable
+class PBXInstaller extends Injectable
 {
     /**
      * Access to the /etc/inc/mikopbx-settings.json values
      *
-     * @var \Phalcon\Config
+     * @var \Phalcon\Config\Config
      */
     private Config $config;
 
@@ -62,7 +62,7 @@ class PBXInstaller extends Di\Injectable
     /**
      * Initiates the installation steps.
      */
-    public function run()
+    public function run(): void
     {
         $this->scanAllHdd();
         if ($this->processValidDisks()){
@@ -76,7 +76,7 @@ class PBXInstaller extends Di\Injectable
     /**
      * Scans all connected HDDs.
      */
-    private function scanAllHdd()
+    private function scanAllHdd(): void
     {
         $storage = new Storage();
         $all_hdd = $storage->getAllHdd();
@@ -90,7 +90,7 @@ class PBXInstaller extends Di\Injectable
      *
      * @param array $disk Information about the disk
      */
-    private function processDisk(array $disk)
+    private function processDisk(array $disk): void
     {
         // Initialize a variable to hold additional info
         $other_info = '';
@@ -105,7 +105,7 @@ class PBXInstaller extends Di\Injectable
 
         // Add a visual effect to the additional info if it's not empty
         if ($other_info !== '') {
-            $other_info = "[ \033[31;1m{$other_info}\033[0m ]";
+            $other_info = "[ \033[31;1m$other_info\033[0m ]";
         }
 
         // Update the selected disk if the current disk's size is smaller
@@ -175,7 +175,7 @@ class PBXInstaller extends Di\Injectable
 
 *******************************************************************************
 * ' . Util::translate('WARNING') . '!
-* ' . Util::translate('The PBX is about to be installed onto the') . " \033[33;1m{$this->target_disk}\033[0m.
+* ' . Util::translate('The PBX is about to be installed onto the') . " \033[33;1m$this->target_disk\033[0m.
 * - " . Util::translate('everything on this device will be erased!') . '
 * - ' . Util::translate('this cannot be undone!') . '
 *******************************************************************************
@@ -196,7 +196,7 @@ class PBXInstaller extends Di\Injectable
     /**
      * Start the installation process.
      */
-    private function proceedInstallation()
+    private function proceedInstallation(): void
     {
         // Save the target disk to a file
         $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
@@ -217,7 +217,7 @@ class PBXInstaller extends Di\Injectable
     /**
      * Unmount the partitions of the selected disk.
      */
-    private function unmountPartitions()
+    private function unmountPartitions(): void
     {
         echo Util::translate(" - Unmounting partitions...").PHP_EOL;
         $grep = Util::which('grep');
@@ -227,19 +227,19 @@ class PBXInstaller extends Di\Injectable
 
         // Get all mounted partitions
         $mnt_dirs = [];
-        Processes::mwExec("{$mount} | $grep '^/dev/{$this->target_disk}' | $awk '{print $3}'", $mnt_dirs);
+        Processes::mwExec("$mount | $grep '^/dev/$this->target_disk' | $awk '{print $3}'", $mnt_dirs);
         foreach ($mnt_dirs as $mnt) {
             // Terminate all related processes.
             Processes::mwExec("/sbin/shell_functions.sh killprocesses '$mnt' -TERM 0;");
             // Unmount.
-            Processes::mwExec("{$umount} {$mnt}");
+            Processes::mwExec("$umount $mnt");
         }
     }
 
     /**
      * Unpack the image to the target disk.
      */
-    private function unpackImage()
+    private function unpackImage(): void
     {
         echo Util::translate(" - Unpacking img...").PHP_EOL;
         $pv = Util::which('pv');
@@ -247,14 +247,14 @@ class PBXInstaller extends Di\Injectable
         $gunzip = Util::which('gunzip');
 
         $install_cmd = 'exec < /dev/console > /dev/console 2>/dev/console;' .
-            "{$pv} -p /offload/firmware.img.gz | {$gunzip} | {$dd} of=/dev/{$this->target_disk} bs=4M 2> /dev/null";
+            "$pv -p /offload/firmware.img.gz | $gunzip | $dd of=/dev/$this->target_disk bs=4M 2> /dev/null";
         passthru($install_cmd);
     }
 
     /**
      * Mount the storage partition.
      */
-    private function mountStorage()
+    private function mountStorage(): void
     {
         // Connect the disk for data storage.
         Storage::selectAndConfigureStorageDisk(false,true);
@@ -299,7 +299,7 @@ class PBXInstaller extends Di\Injectable
             echo "$res ...".PHP_EOL;
         }
         // If another language is selected - use another settings file.
-        $lang = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LANGUAGE);
+        $lang = PbxSettings::getValueByKey(PbxSettings::SSH_LANGUAGE);
         $filename_lang = "/offload/conf/mikopbx-$lang.db";
         if ($lang !== 'en' && file_exists($filename_lang)) {
             $filename = $filename_lang;

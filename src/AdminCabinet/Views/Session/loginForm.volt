@@ -5,8 +5,7 @@
         <div class="sub header"> {{ DescriptionFromSettings }}</div>
     </div>
 </h1>
-
-{{ form('session/start', 'role': 'form', 'class': 'ui large form segment', 'id' :'login-form') }}
+{{ form(['action' : 'session/start','method': 'post', 'class': 'ui large form segment', 'id' :'login-form']) }}
 <h6 class="ui center aligned header">
     <div class="ui dropdown" id="web-admin-language-selector">
         <input type="hidden" name="WebAdminLanguage">
@@ -39,4 +38,4 @@
 <div class="ui fluid large black button" id="submitbutton">
     {{ t._('auth_SubmitButton') }}
 </div>
-{{ end_form() }}
+{{ close('form') }}

@@ -72,7 +72,7 @@ class DialplanApplicationConf extends AsteriskConfigClass
      * @param array $app The dialplan application data.
      * @return string The generated configuration for the plaintext application.
      */
-    private function generatePlaneTextApp($app): string
+    private function generatePlaneTextApp(array $app): string
     {
         $text_app     = base64_decode($app['applicationlogic']);
         $arr_data_app = explode("\n", trim($text_app));
@@ -98,15 +98,15 @@ class DialplanApplicationConf extends AsteriskConfigClass
      * @param array $app The dialplan application data.
      * @return string The generated configuration for the PHP application.
      */
-    private function generatePhpApp($app): string
+    private function generatePhpApp(array $app): string
     {
         $agiBinDir = $this->config->path('asterisk.astagidir');
 
         // Create PHP script file for the application
         $text_app     = "#!/usr/bin/php\n";
         $text_app     .= base64_decode($app['applicationlogic']);
-        file_put_contents("{$agiBinDir}/{$app['uniqid']}.php", $text_app);
-        chmod("{$agiBinDir}/{$app['uniqid']}.php", 0755);
+        file_put_contents("$agiBinDir/{$app['uniqid']}.php", $text_app);
+        chmod("$agiBinDir/{$app['uniqid']}.php", 0755);
 
         // Generate the dialplan configuration for the PHP application
         $result = 'exten => _' . $app['extension'] . ',1,ExecIf($["${CHANNEL(channeltype)}" == "Local"]?Gosub(set_orign_chan,s,1))' . "\n\t";

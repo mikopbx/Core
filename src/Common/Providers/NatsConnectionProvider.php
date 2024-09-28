@@ -34,7 +34,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class NatsConnectionProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'natsConnection';
+    public const string SERVICE_NAME = 'natsConnection';
 
     /**
      * Registers natsConnection service provider

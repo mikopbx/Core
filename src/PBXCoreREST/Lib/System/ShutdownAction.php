@@ -21,12 +21,13 @@ namespace MikoPBX\PBXCoreREST\Lib\System;
 
 use MikoPBX\Core\System\System;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  *
  * @package MikoPBX\PBXCoreREST\Lib\System
  */
-class ShutdownAction extends \Phalcon\Di\Injectable
+class ShutdownAction extends Injectable
 {
     /**
      *

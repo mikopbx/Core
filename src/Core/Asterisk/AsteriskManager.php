@@ -40,7 +40,7 @@ class AsteriskManager
      * @var array
      * @access public
      */
-    public $config;
+    public array $config;
 
     /** @var string  */
     private string $listenEvents;
@@ -58,7 +58,7 @@ class AsteriskManager
      * @access public
      * @var string
      */
-    public $server;
+    public string $server;
 
     /**
      * Port on the server we are connected to
@@ -66,7 +66,7 @@ class AsteriskManager
      * @access public
      * @var int
      */
-    public $port;
+    public int $port;
 
     /**
      * Parent AGI
@@ -74,7 +74,7 @@ class AsteriskManager
      * @access public
      * @var AGI
      */
-    public $pagi;
+    public AGI $pagi;
 
     /**
      * Event Handlers
@@ -82,7 +82,7 @@ class AsteriskManager
      * @access private
      * @var array
      */
-    private $event_handlers;
+    private array $event_handlers;
 
     /**
      * Whether we're successfully logged in
@@ -90,7 +90,7 @@ class AsteriskManager
      * @access private
      * @var bool
      */
-    private $_loggedIn = false;
+    private bool $_loggedIn = false;
 
     /**
      * Constructor
@@ -98,7 +98,7 @@ class AsteriskManager
      * @param ?string $config    is the name of the config file to parse or a parent agi from which to read the config
      * @param array  $optconfig is an array of configuration vars and vals, stuffed into $this->config['asmanager']
      */
-    public function __construct($config = null, $optconfig = [])
+    public function __construct(?string $config = null, array $optconfig = [])
     {
         // load config
         if ( !is_null($config) && file_exists($config)) {
@@ -203,7 +203,7 @@ class AsteriskManager
      * @param array $parameters The parameters for the request (optional).
      * @return array The response from the socket.
      */
-    public function sendRequestTimeout($action, $parameters = [])
+    public function sendRequestTimeout(string $action, array $parameters = []): array
     {
         if ( ! is_resource($this->socket) && !$this->connectDefault()) {
             return [];
@@ -256,7 +256,7 @@ class AsteriskManager
     {
         $timeout = false;
         do {
-            $type       = null;
+            $type       = '';
             $parameters = [];
             $response   = [];
             if(!$this->waitResponseGetInitialData($response)) {
@@ -289,7 +289,8 @@ class AsteriskManager
      * @param array $response The variable to store the response data.
      * @return bool True if the initial data was obtained successfully, false otherwise.
      */
-    private function waitResponseGetInitialData(& $response):bool{
+    private function waitResponseGetInitialData(array &$response):bool
+    {
         if ( !is_resource($this->socket) && !$this->connectDefault()) {
             return false;
         }
@@ -316,7 +317,7 @@ class AsteriskManager
      * @param array $parameters The parameters containing the sub-data.
      * @return void
      */
-    private function waitResponseProcessResponse($type, &$timeout, $allow_timeout, $parameters):void{
+    private function waitResponseProcessResponse(string $type, bool &$timeout, bool $allow_timeout, array $parameters):void{
         switch ($type) {
             case '':
                 // Timeout occured
@@ -339,7 +340,7 @@ class AsteriskManager
      * @param string $type The variable to store the event type.
      * @return void
      */
-    private function waitResponseGetEventType($parameters, $buffer, $a, & $type):void{
+    private function waitResponseGetEventType(array $parameters, string $buffer, int $a, string &$type):void{
         if ( ! count($parameters)) {
             $type = strtolower(substr($buffer, 0, $a));
         }
@@ -352,7 +353,7 @@ class AsteriskManager
      * @param array $parameters The parameters to store the data.
      * @return void
      */
-    private function waitResponseReadFollowsPart($event_text, & $parameters):void{
+    private function waitResponseReadFollowsPart(string $event_text, array & $parameters):void{
         if ( ($event_text === 'Follows') && !count($parameters)) {
             // A follows response means there is a miltiline field that follows.
             $parameters['data'] = '';
@@ -371,7 +372,7 @@ class AsteriskManager
      * @param array $parameters The parameters to store the sub-data.
      * @return void
      */
-    private function waitResponseReadCompletePart($event_text, &$parameters):void{
+    private function waitResponseReadCompletePart(string $event_text, array &$parameters):void{
         $settings = [
             'Queue status will follow'          => ['QueueStatusComplete'],
             'Channels will follow'              => ['CoreShowChannelsComplete'],
@@ -396,7 +397,8 @@ class AsteriskManager
      *
      * @return array An array containing the data from the socket response or an error message.
      */
-    private function getDataFromSocket() {
+    private function getDataFromSocket(): array
+    {
         $response = [];
         if(!is_resource($this->socket)){
             $response['error'] = 'Socket not init.';
@@ -423,7 +425,8 @@ class AsteriskManager
      *
      * @return string The string data from the socket response.
      */
-    private function getStringDataFromSocket() {
+    private function getStringDataFromSocket(): string
+    {
         $response = $this->getDataFromSocket();
         return $response['data'] ?? '';
     }
@@ -434,7 +437,7 @@ class AsteriskManager
      * @param string $req The data to send.
      * @return bool True if the data was sent successfully, false otherwise.
      */
-    private function sendDataToSocket($req) : bool{
+    private function sendDataToSocket(string $req) : bool{
         if(!is_resource($this->socket)){
             return false;
         }
@@ -501,7 +504,7 @@ class AsteriskManager
      *
      * @return mixed result of event handler or false if no handler was found
      */
-    public function processEvent($parameters)
+    public function processEvent(array $parameters): mixed
     {
         $ret = false;
         $e   = strtolower($parameters['Event']);
@@ -521,7 +524,7 @@ class AsteriskManager
         return $ret;
     }
 
-    public function microtimeFloat()
+    public function microtimeFloat(): float
     {
         [$usec, $sec] = explode(" ", microtime());
 
@@ -533,7 +536,7 @@ class AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Ping
      */
-    public function Ping()
+    public function Ping(): array
     {
         return $this->sendRequestTimeout('Ping');
     }
@@ -545,7 +548,7 @@ class AsteriskManager
      *
      * @return array of parameters, empty on timeout
      */
-    public function waitUserEvent($allow_timeout = false): array
+    public function waitUserEvent(bool $allow_timeout = false): array
     {
         $timeout = false;
         do {
@@ -588,7 +591,7 @@ class AsteriskManager
      * @example examples/sip_show_peer.php Get information about a sip peer
      *
      */
-    public function connect($server = null, $username = null, $secret = null, $events = 'on'): bool
+    public function connect(string $server = null, string $username = null, string $secret = null, string $events = 'on'): bool
     {
         $this->listenEvents = $events;
         // use config if not specified
@@ -661,11 +664,11 @@ class AsteriskManager
      * Send a request
      *
      * @param string $action
-     * @param array  $parameters
+     * @param array $parameters
      *
      * @return array of parameters
      */
-    public function sendRequest($action, $parameters = [])
+    public function sendRequest(string $action, array $parameters = []): array
     {
         $req = "Action: $action\r\n";
         foreach ($parameters as $var => $val) {
@@ -685,7 +688,7 @@ class AsteriskManager
      *
      * @example examples/sip_show_peer.php Get information about a sip peer
      */
-    public function disconnect()
+    public function disconnect(): void
     {
         if ($this->_loggedIn === true) {
             $this->logoff();
@@ -700,12 +703,12 @@ class AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Logoff
      */
-    private function Logoff()
+    private function Logoff(): array
     {
         return $this->sendRequestTimeout('Logoff');
     }
 
-    public function loggedIn()
+    public function loggedIn(): bool
     {
         return $this->_loggedIn;
     }
@@ -718,11 +721,11 @@ class AsteriskManager
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+AbsoluteTimeout
      *
      * @param string $channel Channel name to hangup
-     * @param int    $timeout Maximum duration of the call (sec)
+     * @param int $timeout Maximum duration of the call (sec)
      *
      * @return array
      */
-    public function AbsoluteTimeout($channel, $timeout)
+    public function AbsoluteTimeout(string $channel, int $timeout): array
     {
         return $this->sendRequest('AbsoluteTimeout', ['Channel' => $channel, 'Timeout' => $timeout]);
     }
@@ -737,7 +740,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function ChangeMonitor($channel, $file)
+    public function ChangeMonitor(string $channel, string $file): array
     {
         return $this->sendRequest('ChangeMontior', ['Channel' => $channel, 'File' => $file]);
     }
@@ -753,7 +756,7 @@ class AsteriskManager
      * @link    http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Command
      * @link    http://www.voip-info.org/wiki-Asterisk+CLI
      */
-    public function Command($command, $actionid = null)
+    public function Command(string $command, string $actionid = null): array
     {
         $parameters = ['Command' => $command];
         if ($actionid) {
@@ -772,7 +775,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function Events($eventMask)
+    public function Events(string $eventMask): array
     {
         return $this->sendRequest('Events', ['EventMask' => $eventMask]);
     }
@@ -788,7 +791,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function ExtensionState($exten, $context, $actionid = null)
+    public function ExtensionState(string $exten, string $context, ?string $actionid = null): array
     {
         $parameters = ['Exten' => $exten, 'Context' => $context];
         if ($actionid) {
@@ -804,7 +807,7 @@ class AsteriskManager
      * @param bool $group Indicates whether to group the channels by Linkedid (optional, default is true).
      * @return array The channels information.
      */
-    public function GetChannels($group = true)
+    public function GetChannels(bool $group = true): array
     {
         $res      = $this->sendRequestTimeout('CoreShowChannels');
         $channels = null;
@@ -837,7 +840,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function Hangup($channel)
+    public function Hangup(string $channel): array
     {
         return $this->sendRequest('Hangup', ['Channel' => $channel]);
     }
@@ -848,7 +851,7 @@ class AsteriskManager
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+IAXpeers
      * @return array
      */
-    public function IAXpeerlist()
+    public function IAXpeerlist(): array
     {
         $result   = $this->sendRequestTimeout('IAXpeerlist');
         $data     = (isset($result['data']) && is_array($result['data'])) ? $result['data'] : [];
@@ -876,11 +879,11 @@ class AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+ListCommands
      *
-     * @param string $actionid message matching variable
+     * @param string|null $actionid message matching variable
      *
      * @return array
      */
-    public function ListCommands($actionid = null)
+    public function ListCommands(?string $actionid = null): array
     {
         if ($actionid) {
             return $this->sendRequest('ListCommands', ['ActionID' => $actionid]);
@@ -896,7 +899,7 @@ class AsteriskManager
      * @param array $headers The headers for the UserEvent.
      * @return array The response from Asterisk.
      */
-    public function UserEvent($name, $headers)
+    public function UserEvent(string $name, array $headers): array
     {
         $headers['UserEvent'] = $name;
 
@@ -915,11 +918,11 @@ class AsteriskManager
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+MailboxCount
      *
      * @param string $mailbox  Full mailbox ID <mailbox>@<vm-context>
-     * @param string $actionid message matching variable
+     * @param string|null $actionid message matching variable
      *
      * @return array
      */
-    public function MailboxCount($mailbox, $actionid = null)
+    public function MailboxCount(string $mailbox, ?string $actionid = null): array
     {
         $parameters = ['Mailbox' => $mailbox];
         if ($actionid) {
@@ -940,11 +943,11 @@ class AsteriskManager
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+MailboxStatus
      *
      * @param string $mailbox  Full mailbox ID <mailbox>@<vm-context>
-     * @param string $actionid message matching variable
+     * @param string|null $actionid message matching variable
      *
      * @return array
      */
-    public function MailboxStatus($mailbox, $actionid = null)
+    public function MailboxStatus(string $mailbox, ?string $actionid = null): array
     {
         $parameters = ['Mailbox' => $mailbox];
         if ($actionid) {
@@ -960,13 +963,13 @@ class AsteriskManager
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Monitor
      *
      * @param string $channel
-     * @param string $file
-     * @param string $format
-     * @param bool   $mix
+     * @param string|null $file
+     * @param string|null $format
+     * @param bool|null $mix
      *
      * @return array
      */
-    public function Monitor($channel, $file = null, $format = null, $mix = null)
+    public function Monitor(string $channel, ?string $file = null, ?string $format = null, ?bool $mix = null): array
     {
         $parameters = ['Channel' => $channel];
         if ($file) {
@@ -991,10 +994,10 @@ class AsteriskManager
      * @param string $file
      * @param string $options
      * @param string $command
-     *
+     * @param string $ActionID
      * @return array
      */
-    public function MixMonitor($channel, $file, $options, $command='', string $ActionID = '')
+    public function MixMonitor(string $channel, string $file, string $options, string $command='', string $ActionID = ''): array
     {
         $parameters            = [
             'Channel' => $channel,
@@ -1018,7 +1021,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function StopMixMonitor($channel, string $ActionID = '')
+    public function StopMixMonitor(string $channel, string $ActionID = ''): array
     {
         $parameters = [
             'Channel' => $channel,
@@ -1036,7 +1039,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function DBPut($Family, $Key, $Val = '')
+    public function DBPut(string $Family, string $Key, string $Val = ''): array
     {
         $parameters = ['Family' => $Family, 'Key' => $Key, 'Val' => $Val];
         return $this->sendRequestTimeout('DBPut', $parameters);
@@ -1045,11 +1048,11 @@ class AsteriskManager
     /**
      * MeetmeListRooms
      *
-     * @param $ActionID
+     * @param string $ActionID
      *
      * @return array
      */
-    public function MeetmeListRooms($ActionID = ''): array
+    public function MeetmeListRooms(string $ActionID = ''): array
     {
         if (empty($ActionID)) {
             $ActionID = Util::generateRandomString(5);
@@ -1069,7 +1072,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function DBGet($Family, $Key)
+    public function DBGet(string $Family, string $Key): array
     {
         $parameters = ['Family' => $Family, 'Key' => $Key];
 
@@ -1081,35 +1084,36 @@ class AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Originate
      *
-     * @param string $channel     Channel name to call
-     * @param ?string $exten       Extension to use (requires 'Context' and 'Priority')
-     * @param ?string $context     Context to use (requires 'Exten' and 'Priority')
-     * @param ?string $priority    Priority to use (requires 'Exten' and 'Context')
+     * @param string|null $channel Channel name to call
+     * @param ?string $exten Extension to use (requires 'Context' and 'Priority')
+     * @param ?string $context Context to use (requires 'Exten' and 'Priority')
+     * @param int|null $priority Priority to use (requires 'Exten' and 'Context')
      * @param ?string $application Application to use
-     * @param ?string $data        Data to use (requires 'Application')
-     * @param ?int    $timeout     How long to wait for call to be answered (in ms)
-     * @param ?string $callerid    Caller ID to be set on the outgoing channel
-     * @param ?string $variable    Channel variable to set (VAR1=value1|VAR2=value2)
-     * @param ?string $account     Account code
-     * @param bool   $async       true fast origination
-     * @param ?string $actionid    message matching variable
+     * @param ?string $data Data to use (requires 'Application')
+     * @param ?int $timeout How long to wait for call to be answered (in ms)
+     * @param ?string $callerid Caller ID to be set on the outgoing channel
+     * @param ?string $variable Channel variable to set (VAR1=value1|VAR2=value2)
+     * @param ?string $account Account code
+     * @param bool $async true fast origination
+     * @param ?string $actionid message matching variable
      *
      * @return array
      */
     public function Originate(
-        $channel,
-        $exten = null,
-        $context = null,
-        $priority = null,
-        $application = null,
-        $data = null,
-        $timeout = null,
-        $callerid = null,
-        $variable = null,
-        $account = null,
-        $async = true,
-        $actionid = null
-    ) {
+        ?string $channel,
+        ?string  $exten = null,
+        ?string  $context = null,
+        ?int     $priority = null,
+        ?string  $application = null,
+        ?string  $data = null,
+        ?int $timeout = null,
+        ?string  $callerid = null,
+        ?string $variable = null,
+        ?string $account = null,
+        bool   $async = true,
+        ?string $actionid = null
+    ): array
+    {
 
         $parameters = [
             'Exten'         => $exten,
@@ -1140,12 +1144,12 @@ class AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+ParkedCalls
      *
-     * @param string $actionid   message matching variable
-     * @param string $parkinglot message matching variable
+     * @param string|null $actionid   message matching variable
+     * @param string|null $parkinglot message matching variable
      *
      * @return array
      */
-    public function ParkedCalls($parkinglot = null, $actionid = null)
+    public function ParkedCalls(?string $parkinglot = null, ?string $actionid = null): array
     {
         $parameters = [];
         if ($actionid) {
@@ -1166,11 +1170,11 @@ class AsteriskManager
      *
      * @param string $queue
      * @param string $interface
-     * @param int    $penalty
+     * @param int $penalty
      *
      * @return array
      */
-    public function QueueAdd($queue, $interface, $penalty = 0)
+    public function QueueAdd(string $queue, string $interface, int $penalty = 0): array
     {
         $parameters = ['Queue' => $queue, 'Interface' => $interface];
         if ($penalty) {
@@ -1190,7 +1194,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function QueueRemove($queue, $interface)
+    public function QueueRemove(string $queue, string $interface): array
     {
         return $this->sendRequest('QueueRemove', ['Queue' => $queue, 'Interface' => $interface]);
     }
@@ -1200,7 +1204,7 @@ class AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Queues
      */
-    public function Queues()
+    public function Queues(): array
     {
         return $this->sendRequest('Queues');
     }
@@ -1210,11 +1214,11 @@ class AsteriskManager
      *
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+QueueStatus
      *
-     * @param string $actionid message matching variable
+     * @param string|null $actionid message matching variable
      *
      * @return array
      */
-    public function QueueStatus($actionid = null)
+    public function QueueStatus(?string $actionid = null): array
     {
         if ($actionid) {
             return $this->sendRequest('QueueStatus', ['ActionID' => $actionid]);
@@ -1232,11 +1236,11 @@ class AsteriskManager
      * @param string $extrachannel
      * @param string $exten
      * @param string $context
-     * @param string $priority
+     * @param int $priority
      *
      * @return array
      */
-    public function Redirect($channel, $extrachannel, $exten, $context, $priority)
+    public function Redirect(string $channel, string $extrachannel, string $exten, string $context, int $priority): array
     {
         return $this->sendRequest(
             'Redirect',
@@ -1257,11 +1261,11 @@ class AsteriskManager
      *
      * @param string $userfield
      * @param string $channel
-     * @param string $append
+     * @param string|null $append
      *
      * @return array
      */
-    public function SetCDRUserField($userfield, $channel, $append = null)
+    public function SetCDRUserField(string $userfield, string $channel, ?string $append = null): array
     {
         $parameters = ['UserField' => $userfield, 'Channel' => $channel];
         if ($append) {
@@ -1282,7 +1286,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function SetVar($channel, $variable, $value)
+    public function SetVar(string $channel, string $variable, string $value): array
     {
         $params = [
             'Channel'   => $channel,
@@ -1298,11 +1302,11 @@ class AsteriskManager
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Status
      *
      * @param string $channel
-     * @param null|string $actionid message matching variable
+     * @param string|null $actionid message matching variable
      *
      * @return array
      */
-    public function Status($channel, $actionid = null)
+    public function Status(string $channel, ?string $actionid = null): array
     {
         $parameters = ['Channel' => $channel];
         if ($actionid) {
@@ -1325,7 +1329,7 @@ class AsteriskManager
      *
      * @return array
      */
-    public function StopMonitor($channel)
+    public function StopMonitor(string $channel): array
     {
         return $this->sendRequest('StopMonitor', ['Channel' => $channel]);
     }
@@ -1335,7 +1339,7 @@ class AsteriskManager
      *
      * @return array The SIP registry information.
      */
-    public function getSipRegistry()
+    public function getSipRegistry(): array
     {
         $peers  = [];
         $result = $this->sendRequestTimeout('SIPshowregistry');
@@ -1440,7 +1444,7 @@ class AsteriskManager
      * @param string $peer The peer name.
      * @return array The SIP peer information.
      */
-    public function getSipPeer($peer)
+    public function getSipPeer(string $peer): array
     {
         $parameters           = ['Peer' => trim($peer)];
         $res                  = $this->sendRequestTimeout('SIPshowpeer', $parameters);
@@ -1458,7 +1462,7 @@ class AsteriskManager
      * @param string $prefix The prefix for the peer (optional).
      * @return array The PJSIP peer information.
      */
-    public function getPjSipPeer($peer, string $prefix = ''):array
+    public function getPjSipPeer(string $peer, string $prefix = ''):array
     {
         $result     = [];
         if(empty($prefix)){
@@ -1497,12 +1501,12 @@ class AsteriskManager
     // *********************************************************************************************************
 
     /**
-     * @param       $conference
+     * @param  string $conference
      * @param array $vars
      *
      * @return array
      */
-    public function meetMeCollectInfo($conference, $vars = []): array
+    public function meetMeCollectInfo(string $conference, array $vars = []): array
     {
         $result    = [];
         $conf_data = $this->MeetmeList($conference);
@@ -1526,12 +1530,12 @@ class AsteriskManager
     /**
      * MeetmeList
      *
-     * @param $Conference
-     * @param $ActionID
+     * @param string $Conference
+     * @param string $ActionID
      *
      * @return array
      */
-    public function MeetmeList($Conference, $ActionID = ''): array
+    public function MeetmeList(string $Conference, string $ActionID = ''): array
     {
         if (empty($ActionID)) {
             $ActionID = Util::generateRandomString(5);
@@ -1550,14 +1554,14 @@ class AsteriskManager
      * @link http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+GetVar
      * @link http://www.voip-info.org/wiki-Asterisk+variables
      *
-     * @param string      $channel  Channel to read variable from
-     * @param string      $variable
-     * @param null|string $actionId message matching variable
-     * @param bool        $retArray
+     * @param string $channel  Channel to read variable from
+     * @param string $variable
+     * @param string|null $actionId message matching variable
+     * @param bool $retArray
      *
      * @return string | array
      */
-    public function GetVar($channel, $variable, $actionId = null, $retArray = true)
+    public function GetVar(string $channel, string $variable, string $actionId = null, bool $retArray = true): array|string
     {
         $parameters = ['Channel' => $channel, 'Variable' => $variable];
         if ($actionId) {
@@ -1584,12 +1588,12 @@ class AsteriskManager
      *   Fired after ParkedCalls Cdr - ParkedCallsComplete - QueueParams - QueueMember - QueueStatusEnd - Status -
      *   StatusComplete - ZapShowChannels - Fired after ZapShowChannels ZapShowChannelsComplete -
      *
-     * @param string         $event    type or * for default handler
-     * @param string | array $callback function
+     * @param string $event    type or * for default handler
+     * @param array | string $callback function
      *
      * @return bool sucess
      */
-    public function addEventHandler($event, $callback)
+    public function addEventHandler(string $event, array|string $callback): bool
     {
         $event = strtolower($event);
         if (isset($this->event_handlers[$event])) {

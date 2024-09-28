@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Throwable;
 
 /**
@@ -41,7 +41,7 @@ class SelectCDR
      * @param array $filter The filter parameters for selecting CDR.
      * @return string The selected CDR data in JSON format.
      */
-    public static function execute($filter): string
+    public static function execute(array $filter): string
     {
 
         if (self::filterNotValid($filter)) {

@@ -36,11 +36,11 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class BeanstalkConnectionModelsProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'beanstalkConnectionModels';
+    public const string SERVICE_NAME = 'beanstalkConnectionModels';
 
-    public const SOURCE_INVOKE_ACTION = 'WorkerModelsEvents->invokeAction';
+    public const string SOURCE_INVOKE_ACTION = 'WorkerModelsEvents->invokeAction';
 
-    public const SOURCE_MODELS_CHANGED = 'ModelsBase->sendChangesToBackend';
+    public const string SOURCE_MODELS_CHANGED = 'ModelsBase->sendChangesToBackend';
 
     /**
      * Register beanstalkConnectionModels service provider.

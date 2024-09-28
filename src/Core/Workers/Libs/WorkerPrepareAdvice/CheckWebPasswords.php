@@ -20,7 +20,6 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
@@ -56,14 +55,14 @@ class CheckWebPasswords extends Injectable
                 'messageTpl' => 'adv_YouUseDefaultWebPassword',
                 'messageParams' => $messageParams
             ];
-            $messages['needUpdate'][] = PbxSettingsConstants::WEB_ADMIN_PASSWORD;
+            $messages['needUpdate'][] = PbxSettings::WEB_ADMIN_PASSWORD;
         } elseif (Util::isSimplePassword($passwords->web)) {
             // Check for weak password
             $messages['error'][] = [
                 'messageTpl' => 'adv_WebPasswordWeak',
                 'messageParams' => $messageParams
             ];
-            $messages['needUpdate'][] = PbxSettingsConstants::WEB_ADMIN_PASSWORD;
+            $messages['needUpdate'][] = PbxSettings::WEB_ADMIN_PASSWORD;
         }
 
         return $messages;
@@ -79,9 +78,9 @@ class CheckWebPasswords extends Injectable
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
 
         $passwords = new \stdClass();
-        $passwords->web = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
-        $passwords->webByDefault = $arrOfDefaultValues[PbxSettingsConstants::WEB_ADMIN_PASSWORD];
-        $passwords->cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
+        $passwords->web = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+        $passwords->webByDefault = $arrOfDefaultValues[PbxSettings::WEB_ADMIN_PASSWORD];
+        $passwords->cloudInstanceId = PbxSettings::getValueByKey(PbxSettings::CLOUD_INSTANCE_ID);
         return $passwords;
     }
 }

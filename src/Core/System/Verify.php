@@ -61,7 +61,7 @@ class Verify
      *
      * @return bool Returns true if $arg is a numeric integer, false otherwise.
      */
-    public function isNumericInt($arg): bool
+    public function isNumericInt(mixed $arg): bool
     {
         // Check if $arg has any non-numeric characters.
         // If it does, it's not a numeric integer, so return false.

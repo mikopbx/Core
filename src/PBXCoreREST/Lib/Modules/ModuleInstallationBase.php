@@ -26,7 +26,8 @@ use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerModuleInstaller;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class ModuleInstallationBase
@@ -34,34 +35,34 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class ModuleInstallationBase extends \Phalcon\Di\Injectable
+class ModuleInstallationBase extends Injectable
 {
 
     // Common constants
-    const INSTALLATION_MUTEX = 'ModuleInstallation';
-    const MODULE_WAS_ENABLED = 'moduleWasEnabled';
+    public const string INSTALLATION_MUTEX = 'ModuleInstallation';
+    public const string MODULE_WAS_ENABLED = 'moduleWasEnabled';
 
     // Error messages
-    const ERR_EMPTY_REPO_RESULT = "ext_EmptyRepoAnswer";
-    const MSG_NO_LICENSE_REQ = "ext_NoLicenseRequired";
-    const ERR_DOWNLOAD_TIMEOUT = "ext_ErrDownloadTimeout";
-    const ERR_UPLOAD_TIMEOUT = "ext_ErrUploadTimeout";
-    const ERR_INSTALLATION_TIMEOUT = "ext_ErrInstallationTimeout";
+    public const string ERR_EMPTY_REPO_RESULT = "ext_EmptyRepoAnswer";
+    public const string MSG_NO_LICENSE_REQ = "ext_NoLicenseRequired";
+    public const string ERR_DOWNLOAD_TIMEOUT = "ext_ErrDownloadTimeout";
+    public const string ERR_UPLOAD_TIMEOUT = "ext_ErrUploadTimeout";
+    public const string ERR_INSTALLATION_TIMEOUT = "ext_ErrInstallationTimeout";
 
-    const ERR_EMPTY_GET_MODULE_LINK = "ext_WrongGetModuleLink";
+    public const string ERR_EMPTY_GET_MODULE_LINK = "ext_WrongGetModuleLink";
 
     // Timeout values
-    const INSTALLATION_TIMEOUT = 120;
+    public const int INSTALLATION_TIMEOUT = 120;
 
     // Install stages
-    const STAGE_I_GET_RELEASE = 'Stage_I_GetRelease';
-    const STAGE_I_UPLOAD_MODULE = 'Stage_I_UploadModule'; // Install from package stage
-    const STAGE_II_CHECK_LICENSE = 'Stage_II_CheckLicense';
-    const STAGE_III_GET_LINK = 'Stage_III_GetDownloadLink';
-    const STAGE_IV_DOWNLOAD_MODULE = 'Stage_IV_DownloadModule';
-    const STAGE_V_INSTALL_MODULE = 'Stage_V_InstallModule';
-    const STAGE_VI_ENABLE_MODULE = 'Stage_VI_EnableModule';
-    const STAGE_VII_FINAL_STATUS = 'Stage_VII_FinalStatus';
+    public const string STAGE_I_GET_RELEASE = 'Stage_I_GetRelease';
+    public const string STAGE_I_UPLOAD_MODULE = 'Stage_I_UploadModule'; // Install from package stage
+    public const string STAGE_II_CHECK_LICENSE = 'Stage_II_CheckLicense';
+    public const string STAGE_III_GET_LINK = 'Stage_III_GetDownloadLink';
+    public const string STAGE_IV_DOWNLOAD_MODULE = 'Stage_IV_DownloadModule';
+    public const string STAGE_V_INSTALL_MODULE = 'Stage_V_InstallModule';
+    public const string STAGE_VI_ENABLE_MODULE = 'Stage_VI_EnableModule';
+    public const string STAGE_VII_FINAL_STATUS = 'Stage_VII_FinalStatus';
 
 
     // Pub/sub nchan channel id to send response to backend
@@ -205,16 +206,16 @@ class ModuleInstallationBase extends \Phalcon\Di\Injectable
         ];
 
         // Save the installation settings to a JSON file
-        $settings_file = "{$temp_dir}/install_settings.json";
+        $settings_file = "$temp_dir/install_settings.json";
         file_put_contents(
             $settings_file,
             json_encode($install_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
         );
-        $phpPath = Util::which('php');
+        $php = Util::which('php');
         $workerModuleInstallerPath = Util::getFilePathByClassName(WorkerModuleInstaller::class);
 
         // Execute the background process to install the module
-        Processes::mwExecBg("{$phpPath} -f {$workerModuleInstallerPath} start '{$settings_file}'");
+        Processes::mwExecBg("$php -f $workerModuleInstallerPath start '$settings_file'");
         $res->data[FilesConstants::FILE_PATH] = $filePath;
         $res->data[self::MODULE_WAS_ENABLED] = $moduleWasEnabled;
         $res->success = true;

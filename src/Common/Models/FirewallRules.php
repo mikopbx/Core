@@ -115,32 +115,32 @@ class FirewallRules extends ModelsBase
             'SIP' => [
                 'rules' => [
                     [
-                        'portfrom' => $protectedPortSet[PbxSettingsConstants::SIP_PORT],
-                        'portto' => $protectedPortSet[PbxSettingsConstants::SIP_PORT],
+                        'portfrom' => $protectedPortSet[PbxSettings::SIP_PORT],
+                        'portto' => $protectedPortSet[PbxSettings::SIP_PORT],
                         'protocol' => 'udp',
-                        'portFromKey' => PbxSettingsConstants::SIP_PORT,
-                        'portToKey' => PbxSettingsConstants::SIP_PORT,
+                        'portFromKey' => PbxSettings::SIP_PORT,
+                        'portToKey' => PbxSettings::SIP_PORT,
                     ],
                     [
-                        'portfrom' => $protectedPortSet[PbxSettingsConstants::SIP_PORT],
-                        'portto' => $protectedPortSet[PbxSettingsConstants::SIP_PORT],
+                        'portfrom' => $protectedPortSet[PbxSettings::SIP_PORT],
+                        'portto' => $protectedPortSet[PbxSettings::SIP_PORT],
                         'protocol' => 'tcp',
-                        'portFromKey' => PbxSettingsConstants::SIP_PORT,
-                        'portToKey' => PbxSettingsConstants::SIP_PORT,
+                        'portFromKey' => PbxSettings::SIP_PORT,
+                        'portToKey' => PbxSettings::SIP_PORT,
                     ],
                     [
-                        'portfrom' => $protectedPortSet[PbxSettingsConstants::TLS_PORT],
-                        'portto' => $protectedPortSet[PbxSettingsConstants::TLS_PORT],
+                        'portfrom' => $protectedPortSet[PbxSettings::TLS_PORT],
+                        'portto' => $protectedPortSet[PbxSettings::TLS_PORT],
                         'protocol' => 'tcp',
-                        'portFromKey' => PbxSettingsConstants::TLS_PORT,
-                        'portToKey' => PbxSettingsConstants::TLS_PORT,
+                        'portFromKey' => PbxSettings::TLS_PORT,
+                        'portToKey' => PbxSettings::TLS_PORT,
                     ],
                     [
-                        'portfrom' => $protectedPortSet[PbxSettingsConstants::RTP_PORT_FROM],
-                        'portto' => $protectedPortSet[PbxSettingsConstants::RTP_PORT_TO],
+                        'portfrom' => $protectedPortSet[PbxSettings::RTP_PORT_FROM],
+                        'portto' => $protectedPortSet[PbxSettings::RTP_PORT_TO],
                         'protocol' => 'udp',
-                        'portFromKey' => PbxSettingsConstants::RTP_PORT_FROM,
-                        'portToKey' => PbxSettingsConstants::RTP_PORT_TO,
+                        'portFromKey' => PbxSettings::RTP_PORT_FROM,
+                        'portToKey' => PbxSettings::RTP_PORT_TO,
                     ],
                 ],
                 'action' => 'allow',
@@ -149,11 +149,11 @@ class FirewallRules extends ModelsBase
             'IAX' => [
                 'rules' => [
                     [
-                        'portfrom' => $protectedPortSet[PbxSettingsConstants::IAX_PORT],
-                        'portto' => $protectedPortSet[PbxSettingsConstants::IAX_PORT],
+                        'portfrom' => $protectedPortSet[PbxSettings::IAX_PORT],
+                        'portto' => $protectedPortSet[PbxSettings::IAX_PORT],
                         'protocol' => 'udp',
-                        'portFromKey' => PbxSettingsConstants::IAX_PORT,
-                        'portToKey' => PbxSettingsConstants::IAX_PORT,
+                        'portFromKey' => PbxSettings::IAX_PORT,
+                        'portToKey' => PbxSettings::IAX_PORT,
                     ]
                 ],
                 'action' => 'allow',
@@ -162,18 +162,18 @@ class FirewallRules extends ModelsBase
             'WEB' => [
                 'rules' => [
                     [
-                        'portfrom' => $protectedPortSet[PbxSettingsConstants::WEB_PORT],
-                        'portto' => $protectedPortSet[PbxSettingsConstants::WEB_PORT],
+                        'portfrom' => $protectedPortSet[PbxSettings::WEB_PORT],
+                        'portto' => $protectedPortSet[PbxSettings::WEB_PORT],
                         'protocol' => 'tcp',
-                        'portFromKey' => PbxSettingsConstants::WEB_PORT,
-                        'portToKey' => PbxSettingsConstants::WEB_PORT,
+                        'portFromKey' => PbxSettings::WEB_PORT,
+                        'portToKey' => PbxSettings::WEB_PORT,
                     ],
                     [
-                        'portfrom' => $protectedPortSet[PbxSettingsConstants::WEB_HTTPS_PORT],
-                        'portto' => $protectedPortSet[PbxSettingsConstants::WEB_HTTPS_PORT],
+                        'portfrom' => $protectedPortSet[PbxSettings::WEB_HTTPS_PORT],
+                        'portto' => $protectedPortSet[PbxSettings::WEB_HTTPS_PORT],
                         'protocol' => 'tcp',
-                        'portFromKey' => PbxSettingsConstants::WEB_HTTPS_PORT,
-                        'portToKey' => PbxSettingsConstants::WEB_HTTPS_PORT,
+                        'portFromKey' => PbxSettings::WEB_HTTPS_PORT,
+                        'portToKey' => PbxSettings::WEB_HTTPS_PORT,
                     ],
                 ],
                 'action' => 'allow',
@@ -183,11 +183,11 @@ class FirewallRules extends ModelsBase
             'SSH' => [
                 'rules' => [
                     [
-                        'portfrom' => $protectedPortSet[PbxSettingsConstants::SSH_PORT],
-                        'portto' => $protectedPortSet[PbxSettingsConstants::SSH_PORT],
+                        'portfrom' => $protectedPortSet[PbxSettings::SSH_PORT],
+                        'portto' => $protectedPortSet[PbxSettings::SSH_PORT],
                         'protocol' => 'tcp',
-                        'portFromKey' => PbxSettingsConstants::SSH_PORT,
-                        'portToKey' => PbxSettingsConstants::SSH_PORT,
+                        'portFromKey' => PbxSettings::SSH_PORT,
+                        'portToKey' => PbxSettings::SSH_PORT,
                     ],
                 ],
                 'action' => 'allow',
@@ -196,11 +196,11 @@ class FirewallRules extends ModelsBase
             'AMI' => [
                 'rules' => [
                     [
-                        'portfrom' => $protectedPortSet[PbxSettingsConstants::AMI_PORT],
-                        'portto' => $protectedPortSet[PbxSettingsConstants::AMI_PORT],
+                        'portfrom' => $protectedPortSet[PbxSettings::AMI_PORT],
+                        'portto' => $protectedPortSet[PbxSettings::AMI_PORT],
                         'protocol' => 'tcp',
-                        'portFromKey' => PbxSettingsConstants::AMI_PORT,
-                        'portToKey' => PbxSettingsConstants::AMI_PORT,
+                        'portFromKey' => PbxSettings::AMI_PORT,
+                        'portToKey' => PbxSettings::AMI_PORT,
                     ],
                 ],
                 'action' => 'allow',
@@ -209,18 +209,18 @@ class FirewallRules extends ModelsBase
             'AJAM' => [
                 'rules' => [
                     [
-                        'portfrom' => $protectedPortSet[PbxSettingsConstants::AJAM_PORT],
-                        'portto' => $protectedPortSet[PbxSettingsConstants::AJAM_PORT],
+                        'portfrom' => $protectedPortSet[PbxSettings::AJAM_PORT],
+                        'portto' => $protectedPortSet[PbxSettings::AJAM_PORT],
                         'protocol' => 'tcp',
-                        'portFromKey' => PbxSettingsConstants::AJAM_PORT,
-                        'portToKey' => PbxSettingsConstants::AJAM_PORT,
+                        'portFromKey' => PbxSettings::AJAM_PORT,
+                        'portToKey' => PbxSettings::AJAM_PORT,
                     ],
                     [
-                        'portfrom' => $protectedPortSet[PbxSettingsConstants::AJAM_PORT_TLS],
-                        'portto' => $protectedPortSet[PbxSettingsConstants::AJAM_PORT_TLS],
+                        'portfrom' => $protectedPortSet[PbxSettings::AJAM_PORT_TLS],
+                        'portto' => $protectedPortSet[PbxSettings::AJAM_PORT_TLS],
                         'protocol' => 'tcp',
-                        'portFromKey' => PbxSettingsConstants::AJAM_PORT_TLS,
-                        'portToKey' => PbxSettingsConstants::AJAM_PORT_TLS,
+                        'portFromKey' => PbxSettings::AJAM_PORT_TLS,
+                        'portToKey' => PbxSettings::AJAM_PORT_TLS,
                     ],
                 ],
                 'action' => 'allow',
@@ -258,17 +258,17 @@ class FirewallRules extends ModelsBase
     public static function getProtectedPortSet(): array
     {
         $portSet = [
-            PbxSettingsConstants::RTP_PORT_FROM,
-            PbxSettingsConstants::RTP_PORT_TO,
-            PbxSettingsConstants::SIP_PORT,
-            PbxSettingsConstants::TLS_PORT,
-            PbxSettingsConstants::AMI_PORT,
-            PbxSettingsConstants::AJAM_PORT,
-            PbxSettingsConstants::AJAM_PORT_TLS,
-            PbxSettingsConstants::WEB_PORT,
-            PbxSettingsConstants::WEB_HTTPS_PORT,
-            PbxSettingsConstants::SSH_PORT,
-            PbxSettingsConstants::IAX_PORT,
+            PbxSettings::RTP_PORT_FROM,
+            PbxSettings::RTP_PORT_TO,
+            PbxSettings::SIP_PORT,
+            PbxSettings::TLS_PORT,
+            PbxSettings::AMI_PORT,
+            PbxSettings::AJAM_PORT,
+            PbxSettings::AJAM_PORT_TLS,
+            PbxSettings::WEB_PORT,
+            PbxSettings::WEB_HTTPS_PORT,
+            PbxSettings::SSH_PORT,
+            PbxSettings::IAX_PORT,
         ];
         $result = [];
         foreach ($portSet as $portName) {

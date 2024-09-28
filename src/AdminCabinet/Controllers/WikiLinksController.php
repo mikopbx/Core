@@ -22,7 +22,6 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\System\Util;
 use Phalcon\Cache\Adapter\Redis;
 use Exception;
 use GuzzleHttp;
@@ -50,6 +49,7 @@ class WikiLinksController extends BaseController
     /**
      * Customization of links to the wiki documentation.
      * @return void
+     * @throws Exception
      */
     private function customWikiLinks(): void
     {
@@ -96,7 +96,7 @@ class WikiLinksController extends BaseController
                 try {
                     $links = json_decode(file_get_contents($filename), true, 512, JSON_THROW_ON_ERROR);
                 } catch (\Exception $e) {
-                    Util::sysLogMsg('WikiLinksController', $e->getMessage());
+                    SystemMessages::sysLogMsg('WikiLinksController', $e->getMessage());
                 }
             }
         }
@@ -117,7 +117,7 @@ class WikiLinksController extends BaseController
             try {
                 $links = json_decode($module->wiki_links, true, 512, JSON_THROW_ON_ERROR);
             } catch (\JsonException $e) {
-                Util::sysLogMsg(__CLASS__, $e->getMessage());
+                SystemMessages::sysLogMsg(__CLASS__, $e->getMessage());
             }
         }
         $this->view->success = true;

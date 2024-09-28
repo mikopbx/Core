@@ -40,7 +40,7 @@ use Throwable;
  */
 class CallDetailRecordsTmp extends CallDetailRecordsBase
 {
-    public const CACHE_KEY = 'Workers:Cdr';
+    public const string CACHE_KEY = 'Workers:Cdr';
 
     /**
      * Initialize the model.
@@ -53,14 +53,14 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
         $this->setConnectionService('dbCDR');
     }
 
-     public function beforeSave()
+     public function beforeSave(): void
      {
          if(empty($this->linkedid)){
              $trace = debug_backtrace();
              $error =  "Call trace:\n";
              foreach ($trace as $index => $item) {
                  if ($index > 0) {
-                     $error.= "{$index}. {$item['file']} (line {$item['line']})\n";
+                     $error.= "$index. {$item['file']} (line {$item['line']})\n";
                  }
              }
              SystemMessages::sysLogMsg('ERROR_CDR '.getmypid(), $error);

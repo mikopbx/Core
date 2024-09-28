@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
@@ -27,7 +27,7 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Mvc\Model\Manager;
 
 /**
@@ -44,7 +44,7 @@ class VoiceMailConf extends AsteriskConfigClass
     /**
      * The voice mailbox extension.
      */
-    public const VOICE_MAIL_EXT = 'voicemail';
+    public const string VOICE_MAIL_EXT = 'voicemail';
     protected string $description = 'voicemail.conf';
 
 
@@ -106,13 +106,13 @@ class VoiceMailConf extends AsteriskConfigClass
         }
 
         // Get the sender address from generalSettings or fallback to MailSMTPUsername
-        $from = $this->generalSettings[PbxSettingsConstants::MAIL_SMTP_SENDER_ADDRESS];
+        $from = $this->generalSettings[PbxSettings::MAIL_SMTP_SENDER_ADDRESS];
         if (empty($from)) {
-            $from =  $this->generalSettings[PbxSettingsConstants::MAIL_SMTP_USERNAME];
+            $from =  $this->generalSettings[PbxSettings::MAIL_SMTP_USERNAME];
         }
 
         // Get the PBX timezone and voicemail-sender path
-        $timezone = $this->generalSettings[PbxSettingsConstants::PBX_TIMEZONE];
+        $timezone = $this->generalSettings[PbxSettings::PBX_TIMEZONE];
         $msmtpPath = Util::which('voicemail-sender');
 
         // Create the voicemail configuration string
@@ -130,18 +130,18 @@ class VoiceMailConf extends AsteriskConfigClass
             "pbxskip=yes\n" .
             "fromstring=VoiceMail\n" .
             "emailsubject=\n" .
-            "emailbody={$emailBody}\n" .
+            "emailbody=$emailBody\n" .
             "emaildateformat=%A, %d %B %Y в %H:%M:%S\n" .
             "pagerdateformat=%T %D\n" .
-            "mailcmd={$msmtpPath}\n" .
-            "serveremail={$from}\n\n" .
+            "mailcmd=$msmtpPath\n" .
+            "serveremail=$from\n\n" .
             "[zonemessages]\n" .
-            "local={$timezone}|'vm-received' q 'digits/at' H 'hours' M 'minutes'\n\n";
+            "local=$timezone|'vm-received' q 'digits/at' H 'hours' M 'minutes'\n\n";
 
         // Append voicemail context and mail_box to the configuration string
         $conf .= "[voicemailcontext]\n";
-        $mail_box = $this->generalSettings[PbxSettingsConstants::VOICEMAIL_NOTIFICATIONS_EMAIL];
-        $conf .= "admin => admin," . Util::translate("user") . ",{$mail_box},,attach=yes|tz=local|delete=yes\n";
+        $mail_box = $this->generalSettings[PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL];
+        $conf .= "admin => admin," . Util::translate("user") . ",$mail_box,,attach=yes|tz=local|delete=yes\n";
 
         // Write the configuration string to voicemail.conf file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/voicemail.conf', $conf);
@@ -156,7 +156,8 @@ class VoiceMailConf extends AsteriskConfigClass
      * @param bool $copy Whether to perform the copy operation.
      * @return string The recording file name.
      */
-    public static function getCopyFilename($srcFileName, $linkedId, $time, bool $copy = true):string{
+    public static function getCopyFilename(string $srcFileName, string $linkedId, int $time, bool $copy = true):string
+    {
         // Generate the destination filename with .wav extension
         $filename = Util::trimExtensionForFile($srcFileName) . '.wav';
         $recordingFile = '';
@@ -169,11 +170,11 @@ class VoiceMailConf extends AsteriskConfigClass
         // Create the directory if it doesn't exist
         if(Util::mwMkdir($dirName)){
             $recordingFile = $dirName.$linkedId.'.wav';
-            $cpPath = Util::which('cp');
+            $cp = Util::which('cp');
 
             // Perform the copy operation if $copy is true
             if($copy === true){
-                Processes::mwExec("{$cpPath} {$filename} {$recordingFile}");
+                Processes::mwExec("$cp $filename $recordingFile");
             }
 
             // Check if the recording file exists
@@ -249,7 +250,7 @@ class VoiceMailConf extends AsteriskConfigClass
      * @param string $linkedId
      * @return array
      */
-    public static function getToMail($linkedId):array
+    public static function getToMail(string $linkedId):array
     {
         $toMails  = [];
         $allMails = self::getUsersVM();

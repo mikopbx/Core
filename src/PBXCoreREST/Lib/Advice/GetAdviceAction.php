@@ -24,14 +24,15 @@ use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Workers\WorkerPrepareAdvice;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Get active calls based on CDR data.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Advice
  */
-class GetAdviceAction extends \Phalcon\Di\Injectable
+class GetAdviceAction extends Injectable
 {
     /**
      * Generates a list of notifications about the system, firewall, passwords, and wrong settings.

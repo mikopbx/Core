@@ -23,7 +23,7 @@ namespace MikoPBX\Common\Providers;
 
 use Phalcon\Annotations\Adapter\Memory;
 
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -34,7 +34,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class ModelsAnnotationsProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'annotations';
+    public const string SERVICE_NAME = 'annotations';
 
     /**
      * Registers the Models annotations service provider.

@@ -22,7 +22,6 @@ namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -35,9 +34,9 @@ use MikoPBX\Core\Workers\WorkerCallEvents;
  */
 class ActionDialAnswer
 {
-    private const NEED_CONTINUE = 1;
-    private const NEED_BREAK = 2;
-    private const NORM_EXIT = 0;
+    private const int NEED_CONTINUE = 1;
+    private const int NEED_BREAK = 2;
+    private const int NORM_EXIT = 0;
 
 
     /**
@@ -47,10 +46,10 @@ class ActionDialAnswer
      * @param array $data Data related to the event.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array$data): void
     {
         // Retrieve the pickup extension number from the PBX settings.
-        $pickupexten = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FEATURE_PICKUP_EXTEN);
+        $pickupexten = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_PICKUP_EXTEN);
 
         // Check if the dialed number (dnid) matches the pickup extension.
         if (trim($data['dnid']) === $pickupexten) {
@@ -93,8 +92,9 @@ class ActionDialAnswer
      * @param WorkerCallEvents $worker Instance of WorkerCallEvents.
      * @param array $data Data related to the event.
      * @return void
+     * @throws \Exception
      */
-    private static function fillPickUpCdr($worker, $data): void
+    private static function fillPickUpCdr(WorkerCallEvents $worker, array $data): void
     {
         // This is a call pickup event.
         // It occurs when we try to answer a call directed to another extension.
@@ -151,7 +151,7 @@ class ActionDialAnswer
      * @param array $data Data related to the event.
      * @return void
      */
-    private static function checkSmartIvrCalls($data): void
+    private static function checkSmartIvrCalls(array $data): void
     {
         // If the 'ENDCALLONANSWER' field in the data array is empty, return without doing anything.
         if (empty($data['ENDCALLONANSWER'])) {
@@ -197,7 +197,7 @@ class ActionDialAnswer
      * @param array $data Data related to the event.
      * @return array
      */
-    private static function getCallDataFilter($data): array
+    private static function getCallDataFilter(array $data): array
     {
         // The 'org_id' field in the data array represents the original ID of a call.
 
@@ -238,7 +238,7 @@ class ActionDialAnswer
      * @param object $row Current call record.
      * @return int
      */
-    private static function fillAnsweredCdr($worker, $data, $row): int
+    private static function fillAnsweredCdr(WorkerCallEvents $worker, array $data, object $row): int
     {
         // If the dialstatus of the call is 'ORIGINATE', special handling is needed.
         // This typically represents an outgoing call.

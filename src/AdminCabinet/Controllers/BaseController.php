@@ -19,15 +19,16 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
-use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings, PbxSettingsConstants};
-use Phalcon\Filter;
+use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
+use Phalcon\Filter\Filter;
+use Phalcon\Flash\Exception;
 use Phalcon\Http\ResponseInterface;
 use Phalcon\Mvc\{Controller, Dispatcher, View};
 use Phalcon\Tag;
-use Phalcon\Text;
 
 /**
  * @property \Phalcon\Session\Manager session
@@ -38,7 +39,7 @@ use Phalcon\Text;
  * @property \Phalcon\Flash\Session flash
  * @property \Phalcon\Tag tag
  * @property \Phalcon\Config\Adapter\Json config
- * @property \Phalcon\Logger loggerAuth
+ * @property \Phalcon\Logger\Logger loggerAuth
  */
 class BaseController extends Controller
 {
@@ -73,17 +74,17 @@ class BaseController extends Controller
     protected function prepareView(): void
     {
         // Set the default timezone based on PBX settings
-        date_default_timezone_set(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE));
+        date_default_timezone_set(PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE));
 
         // Set PBXLicense view variable if session exists
         if ($this->session->has(SessionController::SESSION_ID)) {
-            $this->view->PBXLicense = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
+            $this->view->PBXLicense = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
         } else {
             $this->view->PBXLicense = '';
         }
 
         // Set URLs for Wiki and Support based on language
-        $this->view->urlToWiki = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";
+        $this->view->urlToWiki = "https://wiki.mikopbx.com/$this->controllerNameUnCamelized";
         if ($this->language === 'ru') {
             $this->view->urlToSupport = 'https://www.mikopbx.ru/support/?fromPBX=true';
         } else {
@@ -98,10 +99,10 @@ class BaseController extends Controller
             case'save':
             case'modify':
             case'*** WITHOUT ACTION ***':
-                $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}");
+                $title .= '|' . $this->translation->_("Breadcrumb$this->controllerName");
                 break;
             default:
-                $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}{$this->actionName}");
+                $title .= '|' . $this->translation->_("Breadcrumb$this->controllerName$this->actionName");
         }
         Tag::setTitle($title);
 
@@ -111,11 +112,11 @@ class BaseController extends Controller
         $this->view->urlToLogo = $this->url->get('assets/img/logo-mikopbx.svg');
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent = '';
-        $this->view->WebAdminLanguage = $this->session->get(PbxSettingsConstants::WEB_ADMIN_LANGUAGE)??PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
+        $this->view->WebAdminLanguage = $this->session->get(PbxSettings::WEB_ADMIN_LANGUAGE)??PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
         $this->view->AvailableLanguages = json_encode(LanguageController::getAvailableWebAdminLanguages());
         $this->view->submitMode = $this->session->get('SubmitMode') ?? 'SaveSettings';
         $this->view->lastSentryEventId = $this->setLastSentryEventId();
-        $this->view->PBXVersion = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
+        $this->view->PBXVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
         $this->view->MetaTegHeadDescription = $this->translation->_('MetaTegHeadDescription');
         $this->view->isExternalModuleController = $this->isExternalModuleController;
 
@@ -146,6 +147,7 @@ class BaseController extends Controller
     /**
      * Performs actions before executing the route.
      *
+     * @param Dispatcher $dispatcher
      * @return void
      */
     public function beforeExecuteRoute(Dispatcher $dispatcher): void
@@ -164,9 +166,9 @@ class BaseController extends Controller
         $this->controllerName = Text::camelize($this->dispatcher->getControllerName(), '_');
         // Add module variables into view if it is an external module controller
         if (str_starts_with($this->dispatcher->getNamespaceName(), 'Modules')) {
-            $this->view->pick("Modules/{$this->getModuleUniqueId()}/{$this->controllerName}/{$this->actionName}");
+            $this->view->pick("Modules/{$this->getModuleUniqueId()}/$this->controllerName/$this->actionName");
         } else  {
-            $this->view->pick("{$this->controllerName}/{$this->actionName}");
+            $this->view->pick("$this->controllerName/$this->actionName");
         }
 
         PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_EXECUTE_ROUTE,[$dispatcher]);
@@ -175,7 +177,9 @@ class BaseController extends Controller
     /**
      * Performs actions after executing the route and returns the response.
      *
-     * @return \Phalcon\Http\ResponseInterface
+     * @param Dispatcher $dispatcher
+     * @return ResponseInterface
+     * @throws Exception
      */
     public function afterExecuteRoute(Dispatcher $dispatcher): ResponseInterface
     {
@@ -223,7 +227,7 @@ class BaseController extends Controller
             $moduleUniqueID = $this->getModuleUniqueId();
             $this->dispatcher->forward(
                 [
-                    'namespace'=>"Modules\\{$moduleUniqueID}\\App\\Controllers",
+                    'namespace'=>"Modules\\$moduleUniqueID\\App\\Controllers",
                     'controller' => $uriParts[1],
                     'action' => $uriParts[2],
                     'params' => $params,
@@ -318,7 +322,7 @@ class BaseController extends Controller
      * @param mixed $entity The entity to be saved.
      * @return bool True if the entity was successfully saved, false otherwise.
      */
-    protected function saveEntity($entity, string $reloadPath=''): bool
+    protected function saveEntity(mixed $entity, string $reloadPath=''): bool
     {
         $success = $entity->save();
 
@@ -349,7 +353,7 @@ class BaseController extends Controller
      * @param mixed $entity The entity to be deleted.
      * @return bool True if the entity was successfully deleted, false otherwise.
      */
-    protected function deleteEntity($entity, string $reloadPath=''): bool
+    protected function deleteEntity(mixed $entity, string $reloadPath=''): bool
     {
         $success = $entity->delete();
 

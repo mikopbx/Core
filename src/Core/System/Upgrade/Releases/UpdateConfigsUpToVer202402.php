@@ -23,17 +23,16 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use Phalcon\Di\Injectable;
 use MikoPBX\Core\System\MikoPBXConfig;
-use Phalcon\Config as ConfigAlias;
+use Phalcon\Config\Config as ConfigAlias;
 
 class UpdateConfigsUpToVer202402 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2024.2.3';
+  	public const string PBX_VERSION = '2024.2.3';
 
 	private ConfigAlias $config;
     private MikoPBXConfig $mikoPBXConfig;
@@ -127,8 +126,8 @@ class UpdateConfigsUpToVer202402 extends Injectable implements UpgradeSystemConf
      */
     public function updateFirewallRulesForIAX(): void
     {
-        $colName  = PbxSettingsConstants::IAX_PORT;
-        $iax_port = PbxSettings::getValueByKey(PbxSettingsConstants::IAX_PORT);
+        $colName  = PbxSettings::IAX_PORT;
+        $iax_port = PbxSettings::getValueByKey(PbxSettings::IAX_PORT);
         $nets = NetworkFilters::find(['columns' => 'id']);
         foreach ($nets as $net){
             $filter = [

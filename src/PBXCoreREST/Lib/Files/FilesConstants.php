@@ -24,19 +24,19 @@ namespace MikoPBX\PBXCoreREST\Lib\Files;
  */
 abstract class FilesConstants
 {
-    const STATUS_NOT_FOUND = 'NOT_FOUND';
-    const DOWNLOAD_ERROR = 'DOWNLOAD_ERROR';
-    const DOWNLOAD_COMPLETE = 'DOWNLOAD_COMPLETE';
-    const DOWNLOAD_IN_PROGRESS = 'DOWNLOAD_IN_PROGRESS';
+    public const string STATUS_NOT_FOUND = 'NOT_FOUND';
+    public const string DOWNLOAD_ERROR = 'DOWNLOAD_ERROR';
+    public const string DOWNLOAD_COMPLETE = 'DOWNLOAD_COMPLETE';
+    public const string DOWNLOAD_IN_PROGRESS = 'DOWNLOAD_IN_PROGRESS';
 
-    const UPLOAD_IN_PROGRESS = 'UPLOAD_IN_PROGRESS';
-    const UPLOAD_MERGING = 'MERGING';
-    const UPLOAD_WAITING_FOR_NEXT_PART = 'WAITING_FOR_NEXT_PART';
-    const UPLOAD_COMPLETE = 'UPLOAD_COMPLETE';
+    public const string UPLOAD_IN_PROGRESS = 'UPLOAD_IN_PROGRESS';
+    public const string UPLOAD_MERGING = 'MERGING';
+    public const string UPLOAD_WAITING_FOR_NEXT_PART = 'WAITING_FOR_NEXT_PART';
+    public const string UPLOAD_COMPLETE = 'UPLOAD_COMPLETE';
 
-    const D_STATUS  = 'd_status';
-    const D_STATUS_PROGRESS = 'd_status_progress';
-    const D_ERROR  = 'd_error';
+    public const string D_STATUS  = 'd_status';
+    public const string D_STATUS_PROGRESS = 'd_status_progress';
+    public const string D_ERROR  = 'd_error';
 
-    const FILE_PATH = 'filePath';
+    public const string FILE_PATH = 'filePath';
 }

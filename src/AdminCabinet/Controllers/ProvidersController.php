@@ -116,7 +116,7 @@ class ProvidersController extends BaseController
     /**
      * Opens the IAX provider card and fills in default values.
      *
-     * @param string $uniqid Unique identifier of the provider (optional) when opening an existing one.
+     * @param string $uniqId
      */
     public function modifyiaxAction(string $uniqId = ''): void
     {
@@ -259,7 +259,7 @@ class ProvidersController extends BaseController
 
         // If it was creating a new provider, reload the page with the specified ID
         if (empty($data['id'])) {
-            $this->view->reload = "providers/modify{$type}/{$data['uniqid']}";
+            $this->view->reload = "providers/modify$type/{$data['uniqid']}";
         }
     }
 

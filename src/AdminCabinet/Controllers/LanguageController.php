@@ -20,9 +20,8 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 
 /**
  * LanguageController
@@ -41,11 +40,11 @@ class LanguageController extends BaseController
         if (!isset($newLanguage)) {
             return;
         }
-        $languageSettings = PbxSettings::findFirstByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
+        $languageSettings = PbxSettings::findFirstByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
         if ($languageSettings === null) {
             $languageSettings = new PbxSettings();
-            $languageSettings->key = PbxSettingsConstants::WEB_ADMIN_LANGUAGE;
-            $languageSettings->value = PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::WEB_ADMIN_LANGUAGE];
+            $languageSettings->key = PbxSettings::WEB_ADMIN_LANGUAGE;
+            $languageSettings->value = PbxSettings::getDefaultArrayValues()[PbxSettings::WEB_ADMIN_LANGUAGE];
         }
         if ($newLanguage !== $languageSettings->value) {
             $languageSettings->value = $newLanguage;
@@ -60,7 +59,7 @@ class LanguageController extends BaseController
     {
         $newLanguage = $this->request->getPost('newLanguage', 'string');
         if (array_key_exists($newLanguage, self::getAvailableWebAdminLanguages())) {
-            $this->session->set(PbxSettingsConstants::WEB_ADMIN_LANGUAGE, $newLanguage);
+            $this->session->set(PbxSettings::WEB_ADMIN_LANGUAGE, $newLanguage);
             if ($this->session->has(SessionController::SESSION_ID)) {
                 self::updateSystemLanguage($newLanguage);
             }

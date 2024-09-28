@@ -69,7 +69,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessPBXSettings;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessCustomFiles;
 use MikoPBX\Modules\Config\SystemConfigInterface;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Pheanstalk\Contract\PheanstalkInterface;
 use RuntimeException;
 use Throwable;
@@ -505,7 +505,7 @@ class WorkerModelsEvents extends WorkerBase
 
         // Iterate through the PBX settings dependency table and update the modified tables array
         foreach ($this->pbxSettingsDependencyTable as $data) {
-            $additionalConditions = (isset($data['strPosKey']) && strpos($key, $data['strPosKey']) !== false);
+            $additionalConditions = (isset($data['strPosKey']) && str_contains($key, $data['strPosKey']));
 
             // Check additional conditions and the setting name
             if (!$additionalConditions && !in_array($key, $data['keys'], true)) {
@@ -556,7 +556,8 @@ class WorkerModelsEvents extends WorkerBase
         $message->reply(json_encode($message->getBody() . ':pong'));
     }
 
-    private function createUniqueKeyFromArray(array $array) {
+    private function createUniqueKeyFromArray(array $array): string
+    {
         // Convert the array to JSON string
         $json = json_encode($array);
 

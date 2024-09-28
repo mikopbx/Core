@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Modules;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\PbxExtensionState;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class DisableModule
@@ -29,7 +30,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class DisableModuleAction extends \Phalcon\Di\Injectable
+class DisableModuleAction extends Injectable
 {
     /**
      * Disables extension module.

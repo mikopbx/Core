@@ -24,9 +24,8 @@ namespace MikoPBX\Common\Providers;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Modules\Config\ConfigClass;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -37,9 +36,9 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class PBXConfModulesProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'pbxConfModules';
+    public const string SERVICE_NAME = 'pbxConfModules';
 
-    public const VERSION_HASH = 'versionHash';
+    public const string VERSION_HASH = 'versionHash';
 
     /**
      * Registers pbxConfModules service provider.
@@ -131,7 +130,7 @@ class PBXConfModulesProvider implements ServiceProviderInterface
         $cache = $di->get(ManagedCacheProvider::SERVICE_NAME);
         $version = $cache->get(PBXConfModulesProvider::VERSION_HASH) ?? '';
         if (empty($version) or $recreate){
-            $result = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
+            $result = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
             $modulesVersions = PbxExtensionModules::getModulesArray();
             foreach ($modulesVersions as $module) {
                 $result .= "{$module['id']}{$module['version']}";

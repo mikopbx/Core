@@ -73,14 +73,14 @@ class ActionHangupChan
     /**
      * Hangs up the channel for end calls.
      *
-     * @param mixed $worker The worker instance.
+     * @param WorkerCallEvents $worker The worker instance.
      * @param array $data The data containing call details.
      * @param array $transfer_calls The array to store transfer calls.
      * @param array $channels The array to store channels.
      *
      * @return void
      */
-    private static function hangupChanEndCalls($worker, array $data, array &$transfer_calls, array &$channels): void
+    private static function hangupChanEndCalls(WorkerCallEvents $worker, array $data, array &$transfer_calls, array &$channels): void
     {
         $filter = [
             'linkedid=:linkedid: AND endtime = ""',
@@ -207,12 +207,13 @@ class ActionHangupChan
      * Checks for SIP transfers when hanging up a channel.
      *
      * @param WorkerCallEvents $worker The worker instance.
-     * @param mixed $data The data containing call details.
+     * @param array $data The data containing call details.
      * @param array $channels The list of channels.
      *
      * @return void
+     * @throws \Exception
      */
-    public static function hangupChanCheckSipTrtansfer(WorkerCallEvents $worker, $data, $channels): void
+    public static function hangupChanCheckSipTrtansfer(WorkerCallEvents $worker, array $data, array $channels): void
     {
         $not_local = (stripos($data['agi_channel'], 'local/') === false);
         if ($not_local === false || $data['OLD_LINKEDID'] !== $data['linkedid']) {

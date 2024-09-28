@@ -25,7 +25,6 @@ use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
@@ -33,7 +32,7 @@ use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer202202103 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2022.2.103';
+  	public const string PBX_VERSION = '2022.2.103';
 
 	/**
      * Class constructor.
@@ -57,8 +56,8 @@ class UpdateConfigsUpToVer202202103 extends Injectable implements UpgradeSystemC
      * @return void
      */
     private function updateFirewallRules():void{
-        $colName = PbxSettingsConstants::TLS_PORT;
-        $portTls = PbxSettings::getValueByKey(PbxSettingsConstants::TLS_PORT);
+        $colName = PbxSettings::TLS_PORT;
+        $portTls = PbxSettings::getValueByKey(PbxSettings::TLS_PORT);
 
         /** @var NetworkFilters $net */
         $nets = NetworkFilters::find(['columns' => 'id']);
@@ -120,9 +119,7 @@ class UpdateConfigsUpToVer202202103 extends Injectable implements UpgradeSystemC
 
         /** @var Codecs $codecForRemove */
         $codecForRemove = Codecs::findFirst("name='g719'");
-        if($codecForRemove!==null){
-            $codecForRemove->delete();
-        }
+        $codecForRemove?->delete();
     }
 
     /**

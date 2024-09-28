@@ -19,8 +19,8 @@
 
 namespace MikoPBX\Common\Models;
 
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class LanInterfaces
@@ -31,8 +31,8 @@ use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class LanInterfaces extends ModelsBase
 {
-    const TOPOLOGY_PUBLIC = 'public';
-    const TOPOLOGY_PRIVATE = 'private';
+    public const string TOPOLOGY_PUBLIC = 'public';
+    public const string TOPOLOGY_PRIVATE = 'private';
 
     /**
      * @Primary

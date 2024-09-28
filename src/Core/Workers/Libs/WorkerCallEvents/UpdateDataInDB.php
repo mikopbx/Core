@@ -40,7 +40,7 @@ class UpdateDataInDB
      * @param array $data The data to be updated.
      * @return void
      */
-    public static function execute($data): void
+    public static function execute(array $data): void
     {
         if (empty($data['UNIQUEID'])) {
             SystemMessages::sysLogMsg(__FUNCTION__, 'UNIQUEID is empty ' . json_encode($data), LOG_DEBUG);
@@ -85,8 +85,9 @@ class UpdateDataInDB
      * @param CallDetailRecordsTmp $m_data The CallDetailRecordsTmp object.
      * @param array $data The additional data.
      * @return void
+     * @throws \Exception
      */
-    private static function sendUserEventData(CallDetailRecordsTmp $m_data, $data): void
+    private static function sendUserEventData(CallDetailRecordsTmp $m_data, array $data): void
     {
         $insert_data = $m_data->toArray();
         if ($insert_data['work_completed'] === "1") {

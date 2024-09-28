@@ -39,7 +39,7 @@ class ActionTransferDial
      * @param array $data The event data.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         $chan = $data['src_chan'] ?? '';
         if (!empty($chan)) {

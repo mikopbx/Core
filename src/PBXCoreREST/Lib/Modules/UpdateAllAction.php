@@ -22,13 +22,14 @@ namespace MikoPBX\PBXCoreREST\Lib\Modules;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Core\System\Util;
+use Phalcon\Di\Injectable;
 
 /**
  * Class UpdateAll
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class UpdateAllAction extends \Phalcon\Di\Injectable
+class UpdateAllAction extends Injectable
 {
 
     /**

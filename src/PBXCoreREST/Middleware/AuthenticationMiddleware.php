@@ -42,28 +42,28 @@ class AuthenticationMiddleware implements MiddlewareInterface
     /**
      * Call me
      *
-     * @param Micro $api
+     * @param Micro $application
      *
      * @return bool
      */
-    public function call(Micro $api)
+    public function call(Micro $application): bool
     {
         /** @var Request $request */
-        $request = $api->getService(RequestProvider::SERVICE_NAME);
+        $request = $application->getService(RequestProvider::SERVICE_NAME);
         /** @var Response $response */
-        $response = $api->getService(ResponseProvider::SERVICE_NAME);
+        $response = $application->getService(ResponseProvider::SERVICE_NAME);
 
-        $isNoAuthApi = $request->thisIsModuleNoAuthRequest($api);
+        $isNoAuthApi = $request->thisIsModuleNoAuthRequest($application);
         if (
             true !== $request->isLocalHostRequest()
             && true !== $request->isDebugModeEnabled()
             && true !== $request->isAuthorizedSessionRequest()
             && true !== $isNoAuthApi
         ) {
-            $loggerAuth = $api->getService(LoggerAuthProvider::SERVICE_NAME);
+            $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
             $loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: Wrong password");
             $this->halt(
-                $api,
+                $application,
                 $response::UNAUTHORIZED,
                 'The user isn\'t authenticated.'
             );
@@ -72,9 +72,9 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
         if (true !== $isNoAuthApi
          && true !== $request->isLocalHostRequest()
-         && true !== $request->isAllowedAction($api)) {
+         && true !== $request->isAllowedAction($application)) {
              $this->halt(
-                $api,
+                 $application,
                 $response::FORBIDDEN,
                 'The route is not allowed'
             );

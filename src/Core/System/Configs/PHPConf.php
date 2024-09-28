@@ -21,11 +21,10 @@ namespace MikoPBX\Core\System\Configs;
 
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 /**
@@ -51,8 +50,8 @@ class PHPConf extends Injectable
             file_put_contents($src_log_file, '');
         }
         $options = file_exists($dst_log_file) ? '>' : '';
-        $catPath = Util::which('cat');
-        Processes::mwExec("{$catPath} {$src_log_file} 2> /dev/null >{$options} {$dst_log_file}");
+        $cat = Util::which('cat');
+        Processes::mwExec("$cat $src_log_file 2> /dev/null >$options $dst_log_file");
         Util::createUpdateSymlink($dst_log_file, $src_log_file);
     }
 
@@ -64,7 +63,7 @@ class PHPConf extends Injectable
      */
     public static function getLogFile(): string
     {
-        $logdir = System::getLogDir() . '/php';
+        $logdir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/php';
         Util::mwMkdir($logdir);
         return "$logdir/error.log";
     }
@@ -76,7 +75,7 @@ class PHPConf extends Injectable
      */
     public static function logRotate(): void
     {
-        $logrotatePath = Util::which('logrotate');
+        $logrotate = Util::which('logrotate');
 
         $max_size    = 10;
         $f_name      = self::getLogFile();
@@ -108,7 +107,7 @@ class PHPConf extends Injectable
         if (Util::mFileSize($f_name) > $mb10) {
             $options = '-f';
         }
-        Processes::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+        Processes::mwExecBg("$logrotate $options '$path_conf' > /dev/null 2> /dev/null");
     }
 
     /**
@@ -118,11 +117,11 @@ class PHPConf extends Injectable
      */
     public static function phpTimeZoneConfigure(): void
     {
-        $timezone      = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_TIMEZONE);
+        $timezone      = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
         date_default_timezone_set($timezone);
         if (file_exists('/etc/TZ')) {
-            $catPath = Util::which('cat');
-            Processes::mwExec("export TZ='$({$catPath} /etc/TZ)'");
+            $cat = Util::which('cat');
+            Processes::mwExec("export TZ='$($cat /etc/TZ)'");
         }
         $etcPhpIniPath = '/etc/php.d/01-timezone.ini';
         $contents = 'date.timezone="'.$timezone.'"';
@@ -136,7 +135,7 @@ class PHPConf extends Injectable
      */
     public static function reStart(): void
     {
-        $phpFPMPath = Util::which('php-fpm');
+        $php_fpm = Util::which('php-fpm');
 
         // Send graceful shutdown signal
         Processes::mwExec('kill -SIGQUIT "$(cat /var/run/php-fpm.pid)"');
@@ -144,6 +143,6 @@ class PHPConf extends Injectable
 
         // Forcefully terminate
         Processes::killByName('php-fpm');
-        Processes::mwExec("{$phpFPMPath} -c /etc/php.ini");
+        Processes::mwExec("$php_fpm -c /etc/php.ini");
     }
 }

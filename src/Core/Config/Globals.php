@@ -24,10 +24,6 @@
 declare(strict_types=1);
 namespace MikoPBX\Core\Config;
 
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\RegistryProvider;
-use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
-use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
 use Phalcon\Di\FactoryDefault\Cli;
 
 if (PHP_SAPI !== "cli") {

@@ -21,12 +21,13 @@ namespace MikoPBX\PBXCoreREST\Lib\System;
 
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  *
  * @package MikoPBX\PBXCoreREST\Lib\System
  */
-class UpdateMailSettingsAction extends \Phalcon\Di\Injectable
+class UpdateMailSettingsAction extends Injectable
 {
     /**
      *

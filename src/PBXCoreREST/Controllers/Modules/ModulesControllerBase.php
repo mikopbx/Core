@@ -74,7 +74,7 @@ class ModulesControllerBase extends BaseController
             'action'         => $actionName,
             'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
             'processor'      => 'modules',
-            'debug'     => strpos($this->request->getHeader('Cookie'),'XDEBUG_SESSION')!==false
+            'debug'     => str_contains($this->request->getHeader('Cookie'), 'XDEBUG_SESSION')
         ]);
 
         $response   = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME)->request($request, 30, 0);
@@ -87,7 +87,7 @@ class ModulesControllerBase extends BaseController
                     $size = filesize($filename);
                     $name = basename($filename);
                     $this->response->setHeader('Content-Description', "config file");
-                    $this->response->setHeader('Content-Disposition', "attachment; filename={$name}");
+                    $this->response->setHeader('Content-Disposition', "attachment; filename=$name");
                     $this->response->setHeader('Content-type', "text/plain");
                     $this->response->setHeader('Content-Transfer-Encoding', "binary");
                     $this->response->setContentLength($size);

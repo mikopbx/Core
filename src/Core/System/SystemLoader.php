@@ -19,9 +19,6 @@
 
 namespace MikoPBX\Core\System;
 
-use MikoPBX\Common\Models\LanInterfaces;
-use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
@@ -39,7 +36,7 @@ use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VmToolsConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
-use Phalcon\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * SystemLoader class
@@ -47,9 +44,9 @@ use Phalcon\Di;
  * This class is responsible for loading the system services.
  *
  * @package MikoPBX\Core\System
- * @property \Phalcon\Config config
+ * @property \Phalcon\Config\Config config
  */
-class SystemLoader extends Di\Injectable
+class SystemLoader extends Injectable
 {
     /**
      * Message displayed during the start of a stage.
@@ -63,7 +60,7 @@ class SystemLoader extends Di\Injectable
      *
      * @var bool
      */
-    private bool $isDocker = false;
+    private bool $isDocker;
 
 
     /**
@@ -71,7 +68,7 @@ class SystemLoader extends Di\Injectable
      *
      * @var bool
      */
-    private bool $isRecoveryMode = false;
+    private bool $isRecoveryMode;
 
 
     /**

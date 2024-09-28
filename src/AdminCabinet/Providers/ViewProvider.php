@@ -34,7 +34,7 @@ use function MikoPBX\Common\Config\appPath;
  */
 class ViewProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'view';
+    public const string SERVICE_NAME = 'view';
 
     /**
      * Register view service provider

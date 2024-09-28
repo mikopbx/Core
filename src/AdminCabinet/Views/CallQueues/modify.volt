@@ -1,4 +1,4 @@
-{{ form('call-queues/save', 'role': 'form', 'class': 'ui large form','id':'queue-form') }}
+{{ form(['action' : 'call-queues/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'queue-form']) }}
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
 <div class="ui ribbon label" id="queue-extension-number">
@@ -164,4 +164,4 @@
 
 {{ partial("partials/submitbutton",['indexurl':'call-queues/index/']) }}
 
-{{ end_form() }}
+{{ close('form') }}

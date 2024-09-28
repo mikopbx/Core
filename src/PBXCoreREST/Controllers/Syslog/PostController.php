@@ -23,7 +23,7 @@ use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\SysLogsManagementProcessor;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 
 /**
  * Get system logs (POST).
@@ -140,7 +140,7 @@ class PostController extends BaseController
                 } else {
                     $scheme                       = $this->request->getScheme();
                     $host                         = $this->request->getHttpHost();
-                    $response['data']['filename'] = "{$scheme}://{$host}/pbxcore/files/cache/{$response['data']['filename']}";
+                    $response['data']['filename'] = "$scheme://$host/pbxcore/files/cache/{$response['data']['filename']}";
                 }
             }
             $this->response->setPayloadSuccess($response);

@@ -22,7 +22,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
@@ -51,7 +50,7 @@ class ExtensionEditForm extends BaseForm
 
         // Number
         // Limit the length of internal extension based on settings
-        $extensionsLength = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_INTERNAL_EXTENSION_LENGTH);
+        $extensionsLength = PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
         $this->add(
             new Text(
                 'number', [

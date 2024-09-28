@@ -1,4 +1,4 @@
-{{ form('asterisk-managers/save', 'role': 'form', 'class': 'ui large form', 'id':'save-ami-form') }}
+{{ form(['action' : 'asterisk-managers/save', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'save-ami-form']) }}
 {{ form.render('id') }}
 
 <div class="six wide field">
@@ -66,4 +66,4 @@
 <button class="ui large button uncheck"><i class="eraser icon"></i>{{ t._('bt_Clear') }}</button>
 
 
-{{ end_form() }}
+{{ close('form') }}

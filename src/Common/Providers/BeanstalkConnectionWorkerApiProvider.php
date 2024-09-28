@@ -50,7 +50,7 @@ use Pheanstalk\Contract\PheanstalkInterface;
  */
 class BeanstalkConnectionWorkerApiProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'beanstalkConnectionWorkerAPI';
+    public const string SERVICE_NAME = 'beanstalkConnectionWorkerAPI';
 
     /**
      * Register beanstalkConnectionWorkerAPI service provider

@@ -63,7 +63,7 @@ class SoundFilesController extends BaseController
 
         // Set the category and audio path in the view
         $this->view->category = $file->category;
-        $this->view->audioPath = empty($file->path) ? '' : "/pbxcore/api/cdr/v2/playback?view={$file->path}";
+        $this->view->audioPath = empty($file->path) ? '' : "/pbxcore/api/cdr/v2/playback?view=$file->path";
 
         // Set the representation of the file in the view
         $this->view->represent = $file->getRepresent();
@@ -110,7 +110,7 @@ class SoundFilesController extends BaseController
             $this->view->success = true;
             // If it was creating a new record, reload the page
             if (empty($data['id'])) {
-                $this->view->reload = "sound-files/modify/{$soundFile->id}";
+                $this->view->reload = "sound-files/modify/$soundFile->id";
             }
         }
     }
@@ -164,7 +164,7 @@ class SoundFilesController extends BaseController
      */
     public function getSoundFilesAction(string $category = 'custom'): void
     {
-        $soundFiles = SoundFiles::find("category='{$category}'");
+        $soundFiles = SoundFiles::find("category='$category'");
         $soundFilesList = [];
         foreach ($soundFiles as $soundFile) {
             $soundFilesList[] =

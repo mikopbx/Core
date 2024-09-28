@@ -24,17 +24,18 @@ use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Upgrade the PBX using uploaded IMG file.
  * @package MikoPBX\PBXCoreREST\Lib\System
  */
-class UpgradeFromImageAction extends \Phalcon\Di\Injectable
+class UpgradeFromImageAction extends Injectable
 {
-    const CF_DEVICE = '/var/etc/cfdevice';
-    const STORAGE_DEVICE = '/var/etc/storage_device';
+    public const string CF_DEVICE = '/var/etc/cfdevice';
+    public const string STORAGE_DEVICE = '/var/etc/storage_device';
 
-    const MIN_SPACE_MB = 400;
+    public const int MIN_SPACE_MB = 400;
 
 
     /**
@@ -107,7 +108,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         $messages = [];
         if (!file_exists($imageFileLocation)) {
             $success = false;
-            $messages[] = "The update file '{$imageFileLocation}' could not be found.";
+            $messages[] = "The update file '$imageFileLocation' could not be found.";
         }
 
         if (!file_exists(self::CF_DEVICE)) {
@@ -246,7 +247,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
 
         // Decompress the IMG file
         $gunzip = Util::which('gunzip');
-        $decompressCmd = "$gunzip -c '{$imageFileLocation}' > '{$decompressedImg}'";
+        $decompressCmd = "$gunzip -c '$imageFileLocation' > '$decompressedImg'";
         Processes::mwExec($decompressCmd);
 
         // Setup loop device with the correct offset
@@ -269,10 +270,10 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         }
 
         // Extract files from initramfs.igz
-        $initramfsPath = "{$mountPoint}/boot/initramfs.igz";
-        self::extractFileFromInitramfs($initramfsPath, 'sbin/firmware_upgrade.sh', "{$desiredLocation}/firmware_upgrade.sh");
-        self::extractFileFromInitramfs($initramfsPath, 'sbin/pbx_firmware', "{$desiredLocation}/pbx_firmware");
-        self::extractFileFromInitramfs($initramfsPath, 'etc/version', "{$desiredLocation}/version");
+        $initramfsPath = "$mountPoint/boot/initramfs.igz";
+        self::extractFileFromInitramfs($initramfsPath, 'sbin/firmware_upgrade.sh', "$desiredLocation/firmware_upgrade.sh");
+        self::extractFileFromInitramfs($initramfsPath, 'sbin/pbx_firmware', "$desiredLocation/pbx_firmware");
+        self::extractFileFromInitramfs($initramfsPath, 'etc/version', "$desiredLocation/version");
 
         // Clean-up
         $umount = Util::which('umount');
@@ -281,9 +282,9 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
         unlink($decompressedImg);
 
         // Check files
-        if (filesize("{$desiredLocation}/firmware_upgrade.sh")===0
-            || filesize("{$desiredLocation}/pbx_firmware")===0
-            || filesize("{$desiredLocation}/version")===0
+        if (filesize("$desiredLocation/firmware_upgrade.sh")===0
+            || filesize("$desiredLocation/pbx_firmware")===0
+            || filesize("$desiredLocation/version")===0
         ) {
             $res->success = false;
             $res->messages[] = "Failed to extract required files from the initramfs image.";
@@ -324,7 +325,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
     private static function setupLoopDevice(string $filePath, int $offset): ?string
     {
         $losetup = Util::which('losetup');
-        $cmd = "{$losetup} --show -f -o {$offset} {$filePath}";
+        $cmd = "$losetup --show -f -o $offset $filePath";
 
         // Execute the command and capture the output
         Processes::mwExec($cmd, $output, $returnVar);
@@ -348,7 +349,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
     {
         $gunzip = Util::which('gunzip');
         $cpio = Util::which('cpio');
-        $cmd = "$gunzip -c '{$initramfsPath}' | $cpio -i --to-stdout '{$filePath}' 2>/dev/null> '{$outputPath}'";
+        $cmd = "$gunzip -c '$initramfsPath' | $cpio -i --to-stdout '$filePath' 2>/dev/null> '$outputPath'";
         exec($cmd);
     }
 
@@ -361,7 +362,7 @@ class UpgradeFromImageAction extends \Phalcon\Di\Injectable
     private static function destroyLoopDevice(string $loopDevice): void
     {
         $losetup = Util::which('losetup');
-        $cmd = "{$losetup} -d {$loopDevice}";
+        $cmd = "$losetup -d $loopDevice";
         Processes::mwExec($cmd, $output, $returnVar);
     }
 

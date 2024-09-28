@@ -1,6 +1,6 @@
 <div class="ui grey top right attached label" id="status"><i
             class="spinner loading icon"></i>{{ t._("pr_UpdateStatus") }}</div>
-{{ form('extensions/save', 'role': 'form', 'class': 'ui form large', 'id':'extensions-form') }}
+{{ form(['action' : 'extensions/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'extensions-form']) }}
 
 {{ form.render('id') }}
 {{ form.render('type') }}
@@ -167,4 +167,4 @@
 }}
 
 {{ partial("partials/submitbutton",['indexurl':'extensions/index/']) }}
-{{ end_form() }}
+{{ close('form') }}

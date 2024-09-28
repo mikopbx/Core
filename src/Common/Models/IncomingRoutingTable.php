@@ -28,12 +28,12 @@ use Phalcon\Mvc\Model\Relation;
  */
 class IncomingRoutingTable extends ModelsBase
 {
-    public const ACTION_EXTENSION = 'extension';
-    public const ACTION_HANGUP    = 'hangup';
-    public const ACTION_BUSY      = 'busy';
-    public const ACTION_DID       = 'did2user';
-    public const ACTION_VOICEMAIL = 'voicemail';
-    public const ACTION_PLAYBACK  = 'playback';
+    public const string ACTION_EXTENSION = 'extension';
+    public const string ACTION_HANGUP    = 'hangup';
+    public const string ACTION_BUSY      = 'busy';
+    public const string ACTION_DID       = 'did2user';
+    public const string ACTION_VOICEMAIL = 'voicemail';
+    public const string ACTION_PLAYBACK  = 'playback';
 
     /**
      * @Primary

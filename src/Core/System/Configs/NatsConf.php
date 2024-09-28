@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
@@ -36,7 +36,7 @@ use Phalcon\Di\Injectable;
  */
 class NatsConf extends Injectable
 {
-    public const PROC_NAME = 'gnatsd';
+    public const string PROC_NAME = 'gnatsd';
 
     private MikoPBXConfig $mikoPBXConfig;
 
@@ -88,7 +88,7 @@ class NatsConf extends Injectable
         $conf_file = "$confDir/natsd.conf";
         Util::fileWriteContent($conf_file, $config);
 
-        $lic = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::PBX_LICENSE);
+        $lic = $this->mikoPBXConfig->getGeneralSettings(PbxSettings::PBX_LICENSE);
         file_put_contents("$sessionsDir/license.key", $lic);
 
         if (file_exists($pid_file)) {

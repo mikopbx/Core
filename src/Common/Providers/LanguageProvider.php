@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di\DiInterface;
@@ -30,8 +29,8 @@ use Phalcon\Di\ServiceProviderInterface;
 
 class LanguageProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'language';
-    public const PREFERRED_LANG_WEB = 'PREFERRED_LANG_WEB';
+    public const string SERVICE_NAME = 'language';
+    public const string PREFERRED_LANG_WEB = 'PREFERRED_LANG_WEB';
 
     /**
      * Registers the language service provider.
@@ -83,10 +82,10 @@ class LanguageProvider implements ServiceProviderInterface
         $processTitle = cli_get_process_title();
 
         if ($this->isApiOrModelEventProcess($processTitle) || $di->has(self::PREFERRED_LANG_WEB)) {
-            return PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
+            return PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
         }
 
-        return PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LANGUAGE);
+        return PbxSettings::getValueByKey(PbxSettings::SSH_LANGUAGE);
     }
 
     /**
@@ -97,8 +96,8 @@ class LanguageProvider implements ServiceProviderInterface
      */
     private function isApiOrModelEventProcess(string $processTitle): bool
     {
-        return strpos($processTitle, WorkerApiCommands::class) !== false ||
-            strpos($processTitle, WorkerModelsEvents::class) !== false;
+        return str_contains($processTitle, WorkerApiCommands::class) ||
+            str_contains($processTitle, WorkerModelsEvents::class);
     }
 
     /**
@@ -110,10 +109,10 @@ class LanguageProvider implements ServiceProviderInterface
     private function getLanguageForWeb(DiInterface $di): string
     {
         $session = $di->getShared(SessionProvider::SERVICE_NAME);
-        $language = $session->get(PbxSettingsConstants::WEB_ADMIN_LANGUAGE) ?? '';
+        $language = $session->get(PbxSettings::WEB_ADMIN_LANGUAGE) ?? '';
 
         if (empty($language)) {
-            $language = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
+            $language = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
         }
 
         return $language;

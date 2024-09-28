@@ -21,7 +21,7 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
 use GuzzleHttp\Exception\GuzzleException;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 
 /**
@@ -165,12 +165,12 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
 
         $params[] = [
             [
-                PbxSettingsConstants::PBX_NAME                 => 'Тестовая 72',
-                PbxSettingsConstants::PBX_DESCRIPTION            => 'log: admin  pass: 123456789MikoPBX#1 last test:' . date("Y-m-d H:i:s"),
-                PbxSettingsConstants::PBX_LANGUAGE            => 'en-en',
-                PbxSettingsConstants::PBX_RECORD_CALLS         => true,
-                PbxSettingsConstants::SEND_METRICS            => false,
-                PbxSettingsConstants::SSH_AUTHORIZED_KEYS      => $SSHAuthorizedKeys,
+                PbxSettings::PBX_NAME                 => 'Тестовая 72',
+                PbxSettings::PBX_DESCRIPTION            => 'log: admin  pass: 123456789MikoPBX#1 last test:' . date("Y-m-d H:i:s"),
+                PbxSettings::PBX_LANGUAGE            => 'en-en',
+                PbxSettings::PBX_RECORD_CALLS         => true,
+                PbxSettings::SEND_METRICS            => false,
+                PbxSettings::SSH_AUTHORIZED_KEYS      => $SSHAuthorizedKeys,
                 'codec_alaw'             => true,
                 'codec_ulaw'             => false,
                 'codec_g726'             => true,
@@ -182,7 +182,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDZ3hd6/gqPxMMCqFytFdVznYD3Debp2LKTRiJEaS2S
                 'codec_h264'             => true,
                 'codec_h263'             => false,
                 'codec_h263p'            => true,
-                PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD    => '90'
+                PbxSettings::PBX_RECORD_SAVE_PERIOD    => '90'
             ],
         ];
 

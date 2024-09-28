@@ -19,7 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Select;
@@ -40,10 +40,10 @@ class TimeSettingsEditForm extends BaseForm
 
         foreach ($entity as $item) {
             switch ($item->key) {
-                case PbxSettingsConstants::PBX_TIMEZONE :
+                case PbxSettings::PBX_TIMEZONE :
                 {
                     $ntpserver = new Select(
-                        PbxSettingsConstants::PBX_TIMEZONE, $options, [
+                        PbxSettings::PBX_TIMEZONE, $options, [
                             'using' => [
                                 'id',
                                 'name',
@@ -56,16 +56,16 @@ class TimeSettingsEditForm extends BaseForm
                     $this->add($ntpserver);
                     break;
                 }
-                case PbxSettingsConstants::NTP_SERVER:
+                case PbxSettings::NTP_SERVER:
                     $this->add(new TextArea($item->key, ['value' => $item->value, "rows" => 4]));
                     break;
-                case PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS :
+                case PbxSettings::PBX_MANUAL_TIME_SETTINGS :
                 {
                     $cheskarr = ['value' => null];
                     if ($item->value) {
                         $cheskarr = ['checked' => 'checked', 'value' => null];
                     }
-                    $this->add(new Check(PbxSettingsConstants::PBX_MANUAL_TIME_SETTINGS, $cheskarr));
+                    $this->add(new Check(PbxSettings::PBX_MANUAL_TIME_SETTINGS, $cheskarr));
                     break;
                 }
                 default :

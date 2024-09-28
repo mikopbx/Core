@@ -54,7 +54,7 @@ class ConferenceConf extends AsteriskConfigClass
         $conf = '';
         $data = self::getConferenceExtensions();
         foreach ($data as $conference) {
-            $conf .= "exten => {$conference},1,Goto(conference-rooms,{$conference},1)" . "\n";
+            $conf .= "exten => $conference,1,Goto(conference-rooms,$conference,1)" . "\n";
         }
         $conf .= "\n";
 
@@ -71,7 +71,7 @@ class ConferenceConf extends AsteriskConfigClass
         $conf = '';
         $data = self::getConferenceExtensions();
         foreach ($data as $conference) {
-            $conf .= "exten => {$conference},1,Goto(conference-rooms,{$conference},1)" . "\n";
+            $conf .= "exten => $conference,1,Goto(conference-rooms,$conference,1)" . "\n";
         }
         $conf .= "\n";
 
@@ -153,7 +153,7 @@ class ConferenceConf extends AsteriskConfigClass
         $conf = '';
         $data = self::getConferenceExtensions();
         foreach ($data as $conference) {
-            $conf .= "exten => {$conference},hint,Custom:{$conference} \n";
+            $conf .= "exten => $conference,hint,Custom:$conference \n";
         }
 
         return $conf;

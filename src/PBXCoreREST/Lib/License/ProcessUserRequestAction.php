@@ -21,21 +21,21 @@ namespace MikoPBX\PBXCoreREST\Lib\License;
 
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
-use Phalcon\Text;
+use Phalcon\Di\Di;
+use MikoPBX\Common\Library\Text;
 use SimpleXMLElement;
+use Phalcon\Di\Injectable;
 
 /**
  * Class ProcessUserRequestAction
  * Check and update license key on database.
  * @package MikoPBX\PBXCoreREST\Lib\License
  */
-class ProcessUserRequestAction extends \Phalcon\Di\Injectable
+class ProcessUserRequestAction extends Injectable
 {
     /**
      * Check and update a license key on a database.
@@ -52,17 +52,17 @@ class ProcessUserRequestAction extends \Phalcon\Di\Injectable
         $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
         if (strlen($data['licKey']) === 28 && Text::startsWith($data['licKey'], 'MIKO-')) {
             ModelsBase::clearCache(PbxSettings::class);
-            $oldLicKey = $mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::PBX_LICENSE);
+            $oldLicKey = $mikoPBXConfig->getGeneralSettings(PbxSettings::PBX_LICENSE);
             if ($oldLicKey !== $data['licKey']) {
                 $licenseInfo = $license->getLicenseInfo($data['licKey']);
                 if ($licenseInfo instanceof SimpleXMLElement) {
-                    $mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::PBX_LICENSE, $data['licKey']);
+                    $mikoPBXConfig->setGeneralSettings(PbxSettings::PBX_LICENSE, $data['licKey']);
                     $license->changeLicenseKey($data['licKey']);
                     $license->addTrial('11'); // MikoPBX forever license
-                    $res->data[PbxSettingsConstants::PBX_LICENSE] = $data['licKey'];
+                    $res->data[PbxSettings::PBX_LICENSE] = $data['licKey'];
                     $res->messages['info'][] = $translation->_('lic_SuccessfulActivation');
                     $res->success = true;
-                } elseif (!empty($licenseInfo) && strpos($licenseInfo, '2026') !== false) {
+                } elseif (!empty($licenseInfo) && str_contains($licenseInfo, '2026')) {
                     $res->messages['license'][] = $translation->_('lic_FailedCheckLicense2026');
                     $res->success = false;
                 } elseif (!empty($licenseInfo)) {
@@ -87,10 +87,10 @@ class ProcessUserRequestAction extends \Phalcon\Di\Injectable
             $newLicenseKey = (string)$license->getTrialLicense($data);
             if (strlen($newLicenseKey) === 28
                 && Text::startsWith($newLicenseKey, 'MIKO-')) {
-                $mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::PBX_LICENSE, $newLicenseKey);
+                $mikoPBXConfig->setGeneralSettings(PbxSettings::PBX_LICENSE, $newLicenseKey);
                 $license->changeLicenseKey($newLicenseKey);
                 $res->success = true;
-                $res->data[PbxSettingsConstants::PBX_LICENSE] = $newLicenseKey;
+                $res->data[PbxSettings::PBX_LICENSE] = $newLicenseKey;
                 $res->messages['info'] = $translation->_('lic_SuccessfulActivation');
             } else {
                 // No internet connection, or wrong data sent to license server, or something else

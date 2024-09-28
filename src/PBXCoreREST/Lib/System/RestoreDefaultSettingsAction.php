@@ -35,7 +35,6 @@ use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\Users;
@@ -47,14 +46,15 @@ use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Returns MikoPBX into default settings stage without any extensions, providers, cdr and sound files
  *
  * @package MikoPBX\PBXCoreREST\Lib\System
  */
-class RestoreDefaultSettingsAction extends \Phalcon\Di\Injectable
+class RestoreDefaultSettingsAction extends Injectable
 {
     /**
      * Restore default system settings.
@@ -86,7 +86,7 @@ class RestoreDefaultSettingsAction extends \Phalcon\Di\Injectable
         $records = PbxExtensionModules::find();
         foreach ($records as $record) {
             $moduleDir = PbxExtensionUtils::getModuleDir($record->uniqid);
-            Processes::mwExec("{$rm} -rf {$moduleDir}");
+            Processes::mwExec("$rm -rf $moduleDir");
             if ( ! $record->delete()) {
                 $res->messages[] = $record->getMessages();
                 $res->success    = false;
@@ -96,22 +96,22 @@ class RestoreDefaultSettingsAction extends \Phalcon\Di\Injectable
         // Reset PBXSettings
         $defaultValues = PbxSettings::getDefaultArrayValues();
         $fixedKeys = [
-            PbxSettingsConstants::PBX_NAME,
-            PbxSettingsConstants::PBX_DESCRIPTION,
-            PbxSettingsConstants::SSH_PASSWORD,
-            PbxSettingsConstants::SSH_RSA_KEY,
-            PbxSettingsConstants::SSH_DSS_KEY,
-            PbxSettingsConstants::SSH_AUTHORIZED_KEYS,
-            PbxSettingsConstants::SSH_ECDSA_KEY,
-            PbxSettingsConstants::SSH_LANGUAGE,
-            PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY,
-            PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY,
-            PbxSettingsConstants::REDIRECT_TO_HTTPS,
-            PbxSettingsConstants::PBX_LANGUAGE,
-            PbxSettingsConstants::PBX_VERSION,
-            PbxSettingsConstants::WEB_ADMIN_LOGIN,
-            PbxSettingsConstants::WEB_ADMIN_PASSWORD,
-            PbxSettingsConstants::WEB_ADMIN_LANGUAGE,
+            PbxSettings::PBX_NAME,
+            PbxSettings::PBX_DESCRIPTION,
+            PbxSettings::SSH_PASSWORD,
+            PbxSettings::SSH_RSA_KEY,
+            PbxSettings::SSH_DSS_KEY,
+            PbxSettings::SSH_AUTHORIZED_KEYS,
+            PbxSettings::SSH_ECDSA_KEY,
+            PbxSettings::SSH_LANGUAGE,
+            PbxSettings::WEB_HTTPS_PUBLIC_KEY,
+            PbxSettings::WEB_HTTPS_PRIVATE_KEY,
+            PbxSettings::REDIRECT_TO_HTTPS,
+            PbxSettings::PBX_LANGUAGE,
+            PbxSettings::PBX_VERSION,
+            PbxSettings::WEB_ADMIN_LOGIN,
+            PbxSettings::WEB_ADMIN_PASSWORD,
+            PbxSettings::WEB_ADMIN_LANGUAGE,
         ];
         foreach ($defaultValues as $key=>$defaultValue){
             if (in_array($key, $fixedKeys, true)){
@@ -127,14 +127,14 @@ class RestoreDefaultSettingsAction extends \Phalcon\Di\Injectable
 
         // Delete CallRecords from database
         $cdr = CdrDb::getPathToDB();
-        Processes::mwExec("{$rm} -rf {$cdr}*");
+        Processes::mwExec("$rm -rf $cdr*");
         $dbUpdater = new UpdateDatabase();
         $dbUpdater->updateDatabaseStructure();
 
         // Delete CallRecords sound files
         $callRecordsPath = $di->getShared('config')->path('asterisk.monitordir');
         if (stripos($callRecordsPath, '/storage/usbdisk1/mikopbx') !== false) {
-            Processes::mwExec("{$rm} -rf {$callRecordsPath}/*");
+            Processes::mwExec("$rm -rf $callRecordsPath/*");
         }
 
         // Recreate parking slots
@@ -188,7 +188,7 @@ class RestoreDefaultSettingsAction extends \Phalcon\Di\Injectable
      *
      * @return void
      */
-    public static function cleaningMainTables(&$res):void
+    public static function cleaningMainTables(PBXApiResult &$res):void
     {
         // Define the models and conditions for cleaning
         $clearThisModels = [
@@ -235,7 +235,7 @@ class RestoreDefaultSettingsAction extends \Phalcon\Di\Injectable
      *
      * @return void
      */
-    public static function cleaningOtherExtensions(&$res):void
+    public static function cleaningOtherExtensions(PBXApiResult &$res):void
     {
         // Define the parameters for querying the extensions to delete
         $parameters     = [
@@ -278,7 +278,7 @@ class RestoreDefaultSettingsAction extends \Phalcon\Di\Injectable
      *
      * @return void
      */
-    public static function cleaningSoundFiles(&$res):void
+    public static function cleaningSoundFiles(PBXApiResult &$res):void
     {
         $rm     = Util::which('rm');
         $parameters = [
@@ -290,7 +290,7 @@ class RestoreDefaultSettingsAction extends \Phalcon\Di\Injectable
         $records    = SoundFiles::find($parameters);
         foreach ($records as $record) {
             if (stripos($record->path, '/storage/usbdisk1/mikopbx') !== false) {
-                Processes::mwExec("{$rm} -rf {$record->path}");
+                Processes::mwExec("$rm -rf $record->path");
                 if ( ! $record->delete()) {
                     $res->messages[] = $record->getMessages();
                     $res->success    = false;
@@ -320,7 +320,7 @@ class RestoreDefaultSettingsAction extends \Phalcon\Di\Injectable
      *
      * @return void
      */
-    public static function createParkingSlots()
+    public static function createParkingSlots(): void
     {
         // Delete all parking slots
         $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
@@ -334,9 +334,9 @@ class RestoreDefaultSettingsAction extends \Phalcon\Di\Injectable
             }
         }
 
-        $startSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT));
-        $endSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT));
-        $reservedSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_EXT));
+        $startSlot = intval(PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_START_SLOT));
+        $endSlot = intval(PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_END_SLOT));
+        $reservedSlot = intval(PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_EXT));
 
         // Create an array of new numbers
         $numbers = range($startSlot, $endSlot);

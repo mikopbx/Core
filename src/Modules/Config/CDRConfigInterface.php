@@ -28,7 +28,7 @@ namespace MikoPBX\Modules\Config;
  */
 interface CDRConfigInterface
 {
-    public const APPLY_ACL_FILTERS_TO_CDR_QUERY = 'applyACLFiltersToCDRQuery';
+    public const string APPLY_ACL_FILTERS_TO_CDR_QUERY = 'applyACLFiltersToCDRQuery';
 
     /**
      * Adds an extra filters before execute request to CDR table.

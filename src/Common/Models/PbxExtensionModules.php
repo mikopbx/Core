@@ -19,10 +19,11 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\System\SystemMessages;
-use Phalcon\Validation;
-use Phalcon\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Di\Di;
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
 /**
  * Class PbxExtensionModules
@@ -124,20 +125,24 @@ class PbxExtensionModules extends ModelsBase
     public static function getEnabledModulesArray(): array
     {
         // Check if it globally disabled
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::DISABLE_ALL_MODULES)==='1'){
+        if (PbxSettings::getValueByKey(PbxSettings::DISABLE_ALL_MODULES)==='1'){
             return [];
         }
 
-        // Get the list of disabled modules
-        $parameters = [
-            'conditions' => 'disabled="0"',
-            'columns' => 'uniqid',
-            'cache' => [
-                'key' => ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray'),
-                'lifetime' => 3600,
-            ]
-        ];
-        return PbxExtensionModules::find($parameters)->toArray();
+        $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray');
+        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $modulesArray = $redis->get($cacheKey);
+        if (empty($modulesArray)){
+            // Get the list of disabled modules
+            $parameters = [
+                'conditions' => 'disabled="0"',
+                'columns' => 'uniqid'
+            ];
+            $modulesArray = PbxExtensionModules::find($parameters)->toArray();
+            $redis->set($cacheKey, $modulesArray, 3600);
+        }
+
+        return $modulesArray;
     }
 
     /**
@@ -146,14 +151,17 @@ class PbxExtensionModules extends ModelsBase
      */
     public static function getModulesArray(): array
     {
-        $parameters = [
-            'cache' => [
-                'key' => ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray'),
-                'lifetime' => 3600,
-            ],
-            'order'=>'id desc',
-        ];
-        return PbxExtensionModules::find($parameters)->toArray();
+        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray');
+        $modulesArray = $redis->get($cacheKey);
+        if (empty($modulesArray)){
+            $parameters = [
+                'order'=>'id desc',
+            ];
+            $modulesArray = PbxExtensionModules::find($parameters)->toArray();
+            $redis->set($cacheKey, $modulesArray, 3600);
+        }
+        return $modulesArray;
     }
 
     /**

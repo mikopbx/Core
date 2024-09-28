@@ -36,7 +36,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class MainDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'db';
+    public const string SERVICE_NAME = 'db';
 
     /**
      * Register db service provider

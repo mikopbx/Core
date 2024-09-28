@@ -24,7 +24,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Core\System\Notifications;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Throwable;
 
 /**

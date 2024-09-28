@@ -4,12 +4,12 @@ namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use GuzzleHttp;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class GetModuleInfo
@@ -17,9 +17,9 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class GetModuleInfoAction  extends \Phalcon\Di\Injectable
+class GetModuleInfoAction  extends Injectable
 {
-    const WRONG_MODULE_INFO = 'Wrong module info';
+    public const string WRONG_MODULE_INFO = 'Wrong module info';
 
 
     /**
@@ -39,13 +39,13 @@ class GetModuleInfoAction  extends \Phalcon\Di\Injectable
             $res->messages[] = 'Dependency injector does not initialized';
             return $res;
         }
-        $WebUiLanguage = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LANGUAGE);
+        $WebUiLanguage = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
         $cacheKey = "ModulesManagementProcessor:GetModuleInfo:$moduleUniqueID:$WebUiLanguage";
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
         if ($managedCache->has($cacheKey)){
             $body = $managedCache->get($cacheKey);
         } else {
-            $PBXVersion = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_VERSION);
+            $PBXVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
             $PBXVersion = (string)str_ireplace('-dev', '', $PBXVersion);
             $body = '';
             $client = new GuzzleHttp\Client();
@@ -72,7 +72,7 @@ class GetModuleInfoAction  extends \Phalcon\Di\Injectable
                 }
             } catch (\Throwable $e) {
                 $code = Response::INTERNAL_SERVER_ERROR;
-                Util::sysLogMsg(static::class, $e->getMessage());
+                SystemMessages::sysLogMsg(static::class, $e->getMessage());
                 $res->messages[] = $e->getMessage();
             }
 

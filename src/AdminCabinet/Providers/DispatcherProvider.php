@@ -41,7 +41,7 @@ use Whoops\Handler\PrettyPageHandler;
  */
 class DispatcherProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'dispatcher';
+    public const string SERVICE_NAME = 'dispatcher';
 
     /**
      * Register dispatcher service provider

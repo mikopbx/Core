@@ -33,7 +33,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class ElementsProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'elements';
+    public const string SERVICE_NAME = 'elements';
 
     /**
      * Register elements service provider

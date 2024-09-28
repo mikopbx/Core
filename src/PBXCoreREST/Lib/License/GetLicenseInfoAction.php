@@ -20,21 +20,21 @@
 namespace MikoPBX\PBXCoreREST\Lib\License;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
-use Phalcon\Text;
+use Phalcon\Di\Di;
+use MikoPBX\Common\Library\Text;
 use SimpleXMLElement;
+use Phalcon\Di\Injectable;
 
 /**
  * Class GetLicenseInfoAction
  * Returns license info from license server by key.
  * @package MikoPBX\PBXCoreREST\Lib\License
  */
-class GetLicenseInfoAction extends \Phalcon\Di\Injectable
+class GetLicenseInfoAction extends Injectable
 {
     /**
      * Returns license info from license server by key.
@@ -47,7 +47,7 @@ class GetLicenseInfoAction extends \Phalcon\Di\Injectable
         $res->processor = __METHOD__;
         $di = Di::getDefault();
         // Retrieve the last get license request from the cache
-        $licenseKey = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
+        $licenseKey = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
         if ((strlen($licenseKey) === 28
             && Text::startsWith($licenseKey, 'MIKO-')
         )) {

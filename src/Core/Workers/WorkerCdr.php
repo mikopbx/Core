@@ -21,9 +21,11 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, PbxSettingsConstants, Users};
+use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, Users};
 use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use Phalcon\Di\Di;
 
 /**
  * Class WorkerCdr
@@ -37,8 +39,8 @@ use MikoPBX\Common\Providers\CDRDatabaseProvider;
 class WorkerCdr extends WorkerBase
 {
     // Tube names for Beanstalk queues.
-    public const SELECT_CDR_TUBE = 'select_cdr_tube';
-    public const UPDATE_CDR_TUBE = 'update_cdr_tube';
+    public const string SELECT_CDR_TUBE = 'select_cdr_tube';
+    public const string UPDATE_CDR_TUBE = 'update_cdr_tube';
 
     // Define properties
     private BeanstalkClient $clientQueue;
@@ -82,32 +84,36 @@ class WorkerCdr extends WorkerBase
         // Retrieve system settings
         $this->internal_numbers = [];
         $this->no_answered_calls = [];
-        $this->emailForMissed = PbxSettings::getValueByKey(PbxSettingsConstants::SYSTEM_EMAIL_FOR_MISSED);
+        $this->emailForMissed = PbxSettings::getValueByKey(PbxSettings::SYSTEM_EMAIL_FOR_MISSED);
 
         // Construct parameters for user data query
-        $usersClass = Users::class;
-        $parameters = [
-            'columns' => [
-                'email' => 'email',
-                'language' => 'language',
-                'number' => 'Extensions.number'
-            ],
-            'joins' => [
-                'Extensions' => [
-                    0 => Extensions::class,
-                    1 => "Extensions.userid={$usersClass}.id",
-                    2 => 'Extensions',
-                    3 => 'INNER',
+        $cacheKey = ModelsBase::makeCacheKey(Users::class, 'Workers-WorkerCdr-initSettings');
+        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $results = $redis->get($cacheKey);
+        if (empty($results)) {
+            // Define parameters for user data query
+            $usersClass = Users::class;
+            $parameters = [
+                'columns' => [
+                    'email' => 'email',
+                    'language' => 'language',
+                    'number' => 'Extensions.number'
                 ],
-            ],
-            'cache' => [
-                'key' => ModelsBase::makeCacheKey(Users::class, 'Workers-WorkerCdr-initSettings'),
-                'lifetime' => 300,
-            ]
-        ];
+                'joins' => [
+                    'Extensions' => [
+                        0 => Extensions::class,
+                        1 => "Extensions.userid=$usersClass.id",
+                        2 => 'Extensions',
+                        3 => 'INNER',
+                    ],
+                ]
+            ];
 
-        // Get user data and populate internal_numbers array
-        $results = Users::find($parameters);
+            // Get user data and populate internal_numbers array
+            $results = Users::find($parameters);
+            $redis->set($cacheKey, $results, 300);
+        }
+
         foreach ($results as $record) {
             if (empty($record->email)) {
                 continue;
@@ -124,7 +130,7 @@ class WorkerCdr extends WorkerBase
      *
      * @param array $result CDR data
      */
-    private function updateCdr($result): void
+    private function updateCdr(array $result): void
     {
         // Re-initialize system settings for each call to this function
         // to ensure we have the most up-to-date settings.
@@ -193,6 +199,7 @@ class WorkerCdr extends WorkerBase
      *
      * @return array The array of active channels.
      * The array key is the Linkedid of the channel, and the value is an array of channel details.
+     * @throws \Exception
      */
     private function getActiveIdChannels(): array
     {
@@ -214,7 +221,7 @@ class WorkerCdr extends WorkerBase
      *
      * @return array An array consisting of the disposition status and the modified row.
      */
-    private function setDisposition(int $billsec, string $dialstatus, $row): array
+    private function setDisposition(int $billsec, string $dialstatus, array $row): array
     {
 
         // Set the default disposition to 'NOANSWER'
@@ -259,7 +266,7 @@ class WorkerCdr extends WorkerBase
      *
      * @return array An array consisting of the modified row and billsec.
      */
-    private function checkBillsecMakeRecFile(int $billsec, $row): array
+    private function checkBillsecMakeRecFile(int $billsec, array $row): array
     {
 
         // If billsec is less than or equal to zero, the call wasn't answered
@@ -270,12 +277,12 @@ class WorkerCdr extends WorkerBase
             // Launch a background process to convert the recording to mp3
             $wav2mp3Path = Util::which('wav2mp3.sh');
             $lostWav2mp3Path = Util::which('convert-lost-wav2mp3.sh');
-            $nicePath = Util::which('nice');
-            Processes::mwExecBg("{$nicePath} -n -19 {$wav2mp3Path} '{$p_info['dirname']}/{$p_info['filename']}'");
+            $nice = Util::which('nice');
+            Processes::mwExecBg("$nice -n -19 $wav2mp3Path '{$p_info['dirname']}/{$p_info['filename']}'");
 
             // Get the directory with current month's recordings
             $dir = dirname($p_info['dirname'], 2);
-            Processes::mwExecBg("{$nicePath} -n -19 {$lostWav2mp3Path} '$dir'");
+            Processes::mwExecBg("$nice -n -19 $lostWav2mp3Path '$dir'");
             // After a successful conversion, the original recording files will be deleted
         }else{
             $row['recordingfile'] = '';

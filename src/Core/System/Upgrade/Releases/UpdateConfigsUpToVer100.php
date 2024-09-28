@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\System\Upgrade\Releases;
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
@@ -33,7 +33,7 @@ use Phalcon\Di\Injectable;
  */
 class UpdateConfigsUpToVer100 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '1.0.0';
+  	public const string PBX_VERSION = '1.0.0';
 
     public function processUpdate():void
     {
@@ -53,10 +53,10 @@ class UpdateConfigsUpToVer100 extends Injectable implements UpgradeSystemConfigI
         }
         $generalConfig = new MikoPBXConfig();
         $newPasswordSsh = 'S'.md5(''.$now.'ssh'.$now);
-        $generalConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD, $newPasswordSsh);
-        $generalConfig->setGeneralSettings(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING, md5($newPasswordSsh));
-        $generalConfig->setGeneralSettings(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD, '1');
-        $generalConfig->setGeneralSettings(PbxSettingsConstants::SSH_AUTHORIZED_KEYS, '');
-        $generalConfig->setGeneralSettings(PbxSettingsConstants::PBX_ALLOW_GUEST_CALLS, '0');
+        $generalConfig->setGeneralSettings(PbxSettings::SSH_PASSWORD, $newPasswordSsh);
+        $generalConfig->setGeneralSettings(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newPasswordSsh));
+        $generalConfig->setGeneralSettings(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '1');
+        $generalConfig->setGeneralSettings(PbxSettings::SSH_AUTHORIZED_KEYS, '');
+        $generalConfig->setGeneralSettings(PbxSettings::PBX_ALLOW_GUEST_CALLS, '0');
     }
 }

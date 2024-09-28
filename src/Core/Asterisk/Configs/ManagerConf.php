@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -67,7 +67,7 @@ class ManagerConf extends AsteriskConfigClass
         // Generate the configuration content
         $conf = "[general]\n" .
             "enabled = yes\n" .
-            "port = {$this->generalSettings[PbxSettingsConstants::AMI_PORT]};\n" .
+            "port = {$this->generalSettings[PbxSettings::AMI_PORT]};\n" .
             "bindaddr = 0.0.0.0\n" .
             "displayconnects = no\n" .
             "allowmultiplelogin = yes\n" .
@@ -76,7 +76,7 @@ class ManagerConf extends AsteriskConfigClass
             'channelvars=' . implode(',', $vars) . "\n" .
             "httptimeout = 60\n\n";
 
-        if ($this->generalSettings[PbxSettingsConstants::AMI_ENABLED] === '1') {
+        if ($this->generalSettings[PbxSettings::AMI_ENABLED] === '1') {
             // Fetch the Asterisk manager users
             /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $managers */
             /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $user */

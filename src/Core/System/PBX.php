@@ -21,7 +21,6 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
@@ -44,7 +43,7 @@ use MikoPBX\Core\Asterisk\Configs\{AclConf,
     VoiceMailConf};
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Modules\Config\SystemConfigInterface;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 /**
@@ -71,8 +70,8 @@ class PBX extends Injectable
     {
         Processes::killByName('safe_asterisk');
         sleep(1);
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'core stop now'");
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'core stop now'");
         Processes::processWorker('', '', WorkerCallEvents::class, 'stop');
         Processes::killByName('asterisk');
     }
@@ -83,9 +82,9 @@ class PBX extends Injectable
     public function start(): void
     {
         Network::startSipDump();
-        $safe_asteriskPath = Util::which('safe_asterisk');
+        $safe_asterisk = Util::which('safe_asterisk');
         // The "-n" option disables color highlighting in Asterisk CLI.
-        Processes::mwExecBg("{$safe_asteriskPath} -f");
+        Processes::mwExecBg("$safe_asterisk -f");
         // Send notifications to modules
         PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::ON_AFTER_PBX_STARTED);
     }
@@ -105,16 +104,16 @@ class PBX extends Injectable
      * Rotates the specified PBX log file.
      * @param string $fileName The name of the log file to rotate.
      */
-    public static function rotatePbxLog($fileName): void
+    public static function rotatePbxLog(string $fileName): void
     {
         $di           = Di::getDefault();
-        $asteriskPath = Util::which('asterisk');
+        $asterisk = Util::which('asterisk');
         if ($di === null) {
             return;
         }
         $max_size    = 10;
-        $log_dir     = System::getLogDir() . '/asterisk/';
-        $text_config = "{$log_dir}{$fileName} {
+        $log_dir     = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
+        $text_config = "$log_dir$fileName {
     nocreate
     nocopytruncate
     delaycompress
@@ -125,7 +124,7 @@ class PBX extends Injectable
     missingok
     noolddir
     postrotate
-        {$asteriskPath} -rx 'logger reload' > /dev/null 2> /dev/null
+        $asterisk -rx 'logger reload' > /dev/null 2> /dev/null
     endscript
 }";
         $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
@@ -134,11 +133,11 @@ class PBX extends Injectable
         $mb10 = $max_size * 1024 * 1024;
 
         $options = '';
-        if (Util::mFileSize("{$log_dir}{$fileName}") > $mb10) {
+        if (Util::mFileSize("$log_dir$fileName") > $mb10) {
             $options = '-f';
         }
-        $logrotatePath = Util::which('logrotate');
-        Processes::mwExecBg("{$logrotatePath} {$options} '{$path_conf}' > /dev/null 2> /dev/null");
+        $logrotate = Util::which('logrotate');
+        Processes::mwExecBg("$logrotate $options '$path_conf' > /dev/null 2> /dev/null");
     }
 
     /**
@@ -149,8 +148,8 @@ class PBX extends Injectable
         $featuresConf = new FeaturesConf();
         $featuresConf->generateConfig();
         $arr_out      = [];
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'module reload features'", $arr_out);
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload features'", $arr_out);
     }
 
     /**
@@ -168,8 +167,8 @@ class PBX extends Injectable
         $indicationConf->generateConfig();
 
         $arr_out      = [];
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'core reload'", $arr_out);
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'core reload'", $arr_out);
     }
 
     /**
@@ -183,8 +182,8 @@ class PBX extends Injectable
         $indicationConf = new IndicationConf();
         $indicationConf->generateConfig();
 
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'core restart now'");
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'core restart now'");
     }
 
     /**
@@ -199,9 +198,9 @@ class PBX extends Injectable
         $httpConf->generateConfig();
 
         $arr_out      = [];
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'module reload manager'", $arr_out);
-        Processes::mwExec("{$asteriskPath} -rx 'module reload http'", $arr_out);
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload manager'", $arr_out);
+        Processes::mwExec("$asterisk -rx 'module reload http'", $arr_out);
     }
 
     /**
@@ -211,8 +210,8 @@ class PBX extends Injectable
     {
         $o = new MusicOnHoldConf();
         $o->generateConfig();
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'moh reload'");
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'moh reload'");
     }
 
     /**
@@ -222,8 +221,8 @@ class PBX extends Injectable
     {
         $o = new ConferenceConf();
         $o->generateConfig();
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("$asteriskPath -rx 'module reload app_confbridge'");
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload app_confbridge'");
     }
 
 
@@ -235,8 +234,8 @@ class PBX extends Injectable
         $o = new VoiceMailConf();
         $o->generateConfig();
         $arr_out      = [];
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'voicemail reload'", $arr_out);
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'voicemail reload'", $arr_out);
     }
 
     /**
@@ -248,8 +247,8 @@ class PBX extends Injectable
         $pbx = new ModulesConf();
         $pbx->generateConfig();
         $arr_out      = [];
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'core restart now'", $arr_out);
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'core restart now'", $arr_out);
 
         return [
             'result' => 'Success',
@@ -264,11 +263,10 @@ class PBX extends Injectable
      * @param string $desc The description of the codec.
      * @param string $type The type of the codec.
      */
-    public static function checkCodec($name, $desc, $type): void
+    public static function checkCodec(string $name, string $desc, string $type): void
     {
         $codec = Codecs::findFirst('name="' . $name . '"');
         if ($codec === null) {
-            /** @var \MikoPBX\Common\Models\Codecs $codec */
             $codec              = new Codecs();
             $codec->name        = $name;
             $codec->type        = $type;
@@ -293,16 +291,16 @@ class PBX extends Injectable
         $acl = new AclConf();
         $acl->generateConfig();
 
-        $asteriskPath = Util::which('asterisk');
+        $asterisk = Util::which('asterisk');
         if ($needRestart === false) {
-            Processes::mwExec("{$asteriskPath} -rx 'module reload acl'");
-            Processes::mwExec("{$asteriskPath} -rx 'core reload'");
+            Processes::mwExec("$asterisk -rx 'module reload acl'");
+            Processes::mwExec("$asterisk -rx 'core reload'");
         } else {
             SystemMessages::sysLogMsg('SIP RELOAD', 'Need reload asterisk',LOG_INFO);
             // Terminate channels.
-            Processes::mwExec("{$asteriskPath} -rx 'channel request hangup all'");
+            Processes::mwExec("$asterisk -rx 'channel request hangup all'");
             usleep(500000);
-            Processes::mwExec("{$asteriskPath} -rx 'core restart now'");
+            Processes::mwExec("$asterisk -rx 'core restart now'");
         }
     }
 
@@ -313,8 +311,8 @@ class PBX extends Injectable
     {
         $rtp = new RtpConf();
         $rtp->generateConfig();
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'module reload res_rtp_asterisk'");
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload res_rtp_asterisk'");
     }
 
     /**
@@ -324,8 +322,8 @@ class PBX extends Injectable
     {
         $iax    = new IAXConf();
         $iax->generateConfig();
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'iax2 reload'");
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'iax2 reload'");
     }
 
 
@@ -340,11 +338,11 @@ class PBX extends Injectable
         $out        = [];
         $options = '';
 
-        $timeoutPath  = Util::which('timeout');
-        $asteriskPath = Util::which('asterisk');
+        $timeout  = Util::which('timeout');
+        $asterisk = Util::which('asterisk');
         while (true) {
             $execResult = Processes::mwExec(
-                "{$timeoutPath} {$options} 1 {$asteriskPath} -rx'core waitfullybooted'",
+                "$timeout $options 1 $asterisk -rx'core waitfullybooted'",
                 $out
             );
             if ($execResult === 0 && implode('', $out) === 'Asterisk has fully booted.') {
@@ -412,9 +410,9 @@ class PBX extends Injectable
         if ($di->getShared(RegistryProvider::SERVICE_NAME)->booting !== true) {
             $extensions = new ExtensionsConf();
             $extensions->generateConfig();
-            $path_asterisk = Util::which('asterisk');
-            Processes::mwExec("{$path_asterisk} -rx 'dialplan reload'");
-            Processes::mwExec("{$path_asterisk} -rx 'module reload pbx_lua.so'");
+            $asterisk = Util::which('asterisk');
+            Processes::mwExec("$asterisk -rx 'dialplan reload'");
+            Processes::mwExec("$asterisk -rx 'module reload pbx_lua.so'");
         }
     }
 
@@ -425,7 +423,7 @@ class PBX extends Injectable
      */
     public static function updateSavePeriod(string $value = ''):void{
         if(empty($value)){
-            $value = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_RECORD_SAVE_PERIOD);
+            $value = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD);
         }
         $filename   = '/var/etc/record-save-period';
         file_put_contents($filename, $value);

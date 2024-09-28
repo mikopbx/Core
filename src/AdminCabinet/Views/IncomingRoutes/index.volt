@@ -76,7 +76,7 @@
         {% endif %}
     {% endfor %}
 <div class="ui hidden divider"></div>
-{{ form('incoming-routes/save', 'role': 'form', 'class': 'ui grey segment form', 'id':'default-rule-form') }}
+{{ form(['action' : 'incoming-routes/save', 'method': 'post', 'role': 'form', 'class': 'ui grey segment form', 'id':'default-rule-form']) }}
     {% for element in form %}
         {% if element.getName() =='action' %}
 
@@ -108,4 +108,4 @@
 
 {{ partial("partials/submitbutton",['indexurl':'']) }}
 <div class="ui clearing hidden divider"></div>
-{{ end_form() }}
+{{ close('form') }}

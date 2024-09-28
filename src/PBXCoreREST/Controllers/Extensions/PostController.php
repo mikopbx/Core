@@ -22,7 +22,7 @@ namespace MikoPBX\PBXCoreREST\Controllers\Extensions;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\ExtensionsManagementProcessor;
-use Phalcon\Filter;
+use Phalcon\Filter\Filter;
 
 /**
  * Handles the POST requests for extensions data.

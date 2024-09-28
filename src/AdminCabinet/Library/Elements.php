@@ -46,12 +46,11 @@ use MikoPBX\AdminCabinet\Controllers\UpdateController;
 use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Di\Injectable;
-use Phalcon\Text;
+use MikoPBX\Common\Library\Text;
 
 /**
  * Elements
@@ -307,12 +306,12 @@ class Elements extends Injectable
                     $groupHtml .= "<i class='{$groupparams['iconclass']} icon'></i>";
                 }
                 $groupHtml .= $this->translation->_($groupparams['caption']) . '</div>';
-                $groupHtml .= "<div class='menu' data-group='{$group}'>";
+                $groupHtml .= "<div class='menu' data-group='$group'>";
                 foreach ($groupparams['submenu'] as $controller => $option) {
                     if ($this->ifItPossibleToShowThisElement($controller, $option['action'])) {
                         $link = $this->getLinkToControllerAction($controller,  $option['action'], $option['param']);
                         $caption = $this->translation->_($option['caption']);
-                        $groupHtml .= "<a class='item {$option['style']}' href='{$link}'";
+                        $groupHtml .= "<a class='item {$option['style']}' href='$link'";
                         if (isset($option['data-value'])) {
                             $groupHtml .= " data-value='{$option['data-value']}'";
                         }
@@ -328,7 +327,7 @@ class Elements extends Injectable
             } elseif ($this->ifItPossibleToShowThisElement($group, $groupparams['action'] ?? 'index')) {
                     $link = $this->getLinkToControllerAction($group,  $groupparams['action'], $groupparams['param']);
                     $caption = $this->translation->_($groupparams['caption']);
-                    $groupHtml .= "<a class='item {$groupparams['style']}' href='{$link}'>
+                    $groupHtml .= "<a class='item {$groupparams['style']}' href='$link'>
                     	    <i class='{$groupparams['iconclass']} icon'></i>{$caption}
                         </a>";
                     $addToHTML = true;
@@ -402,11 +401,11 @@ class Elements extends Injectable
         $modules = PbxExtensionModules::getEnabledModulesArray();
         foreach ($modules as $module) {
             $moduleUniqId = $module['uniqid'];
-            $moduleMainController = "Modules\\{$moduleUniqId}\\App\\Controllers\\{$moduleUniqId}Controller";
+            $moduleMainController = "Modules\\$moduleUniqId\\App\\Controllers\\{$moduleUniqId}Controller";
             if (!class_exists($moduleMainController) || !method_exists($moduleMainController, 'indexAction')) {
                 continue;
             }
-            $menuSettingsKey = "AdditionalMenuItem{$moduleUniqId}";
+            $menuSettingsKey = "AdditionalMenuItem$moduleUniqId";
             $menuSettings = PbxSettings::findFirstByKey($menuSettingsKey);
             if ($menuSettings !== null) {
                 $menuItem = json_decode($menuSettings->value, true);
@@ -432,8 +431,8 @@ class Elements extends Injectable
      */
     private function addMenuItemSSHMenu(): void
     {
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD) !== '1') {
-            $sshPort = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PORT);
+        if (PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD) !== '1') {
+            $sshPort = PbxSettings::getValueByKey(PbxSettings::SSH_PORT);
             $this->_headerMenu['maintenance']['submenu'][ConsoleController::class]['data-value'] = "root@{$_SERVER['SERVER_ADDR']}:$sshPort";
         } else {
             unset ($this->_headerMenu['maintenance']['submenu'][ConsoleController::class]);

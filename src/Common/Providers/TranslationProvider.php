@@ -35,7 +35,7 @@ use Phalcon\Translate\TranslateFactory;
  */
 class TranslationProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'translation';
+    public const string SERVICE_NAME = 'translation';
 
     /**
      * Register the translation service provider.

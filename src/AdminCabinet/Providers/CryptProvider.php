@@ -24,11 +24,10 @@ namespace MikoPBX\AdminCabinet\Providers;
 
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
-use Phalcon\Crypt;
+use Phalcon\Encryption\Crypt;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Security\Random;
+use Phalcon\Encryption\Security\Random;
 
 /**
  * Initializes Crypt provider
@@ -37,7 +36,7 @@ use Phalcon\Security\Random;
  */
 class CryptProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'crypt';
+    public const string SERVICE_NAME = 'crypt';
 
     /**
      * Register elements service provider
@@ -68,9 +67,9 @@ class CryptProvider implements ServiceProviderInterface
      */
     private static function getEncryptionKey():string
     {
-        $encryptionKey   = PbxSettings::getValueByKey(PbxSettingsConstants::WWW_ENCRYPTION_KEY);
+        $encryptionKey   = PbxSettings::getValueByKey(PbxSettings::WWW_ENCRYPTION_KEY);
         if (empty($encryptionKey)){
-            $record = PbxSettings::findFirstByKey(PbxSettingsConstants::WWW_ENCRYPTION_KEY);
+            $record = PbxSettings::findFirstByKey(PbxSettings::WWW_ENCRYPTION_KEY);
             if ($record===null){
                 $random = new Random();
                 try {
@@ -81,7 +80,7 @@ class CryptProvider implements ServiceProviderInterface
                     $encryptionKey = md5(microtime());
                 }
                 $record = new PbxSettings();
-                $record->key = PbxSettingsConstants::WWW_ENCRYPTION_KEY;
+                $record->key = PbxSettings::WWW_ENCRYPTION_KEY;
                 $record->value = $encryptionKey;
                 $record->save();
             }

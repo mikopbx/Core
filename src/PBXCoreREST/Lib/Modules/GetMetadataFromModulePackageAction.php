@@ -21,13 +21,14 @@ namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use ZipArchive;
+use Phalcon\Di\Injectable;
 
 /**
  * Class GetMetadataFromModulePackage
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class GetMetadataFromModulePackageAction extends \Phalcon\Di\Injectable
+class GetMetadataFromModulePackageAction extends Injectable
 {
     /**
      * Unpacks a module ZIP file and retrieves metadata information from the JSON config inside.

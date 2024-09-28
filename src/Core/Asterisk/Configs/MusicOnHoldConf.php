@@ -75,7 +75,7 @@ class MusicOnHoldConf extends AsteriskConfigClass
         $mask  = '/*.mp3';
 
         // Get the list of MP3 files in the specified path
-        $fList = glob("{$path}{$mask}");
+        $fList = glob("$path$mask");
         if (count($fList) !== 0) {
             // Iterate through the MP3 files and add them to the database
             foreach ($fList as $resultMp3) {
@@ -89,19 +89,19 @@ class MusicOnHoldConf extends AsteriskConfigClass
         SystemMessages::sysLogMsg(static::class, 'Attempt to restore MOH from default...');
 
         // Get the list of MP3 files from the default location
-        $filesList = glob("/offload/asterisk/sounds/moh{$mask}");
-        $cpPath    = Util::which('cp');
+        $filesList = glob("/offload/asterisk/sounds/moh$mask");
+        $cp    = Util::which('cp');
         foreach ($filesList as $srcFile) {
-            $resultMp3 = "{$path}/" . basename($srcFile);
+            $resultMp3 = "$path/" . basename($srcFile);
             $resultWav = Util::trimExtensionForFile($resultMp3) . '.wav';
 
             // Copy the file to the specified path
-            Processes::mwExec("{$cpPath} $srcFile {$resultMp3}");
+            Processes::mwExec("$cp $srcFile $resultMp3");
 
             // Convert the MP3 file to WAV format
             ConvertAudioFileAction::main($resultMp3);
             if ( ! file_exists($resultWav)) {
-                SystemMessages::sysLogMsg(static::class, "Failed to convert file {$resultWav}...");
+                SystemMessages::sysLogMsg(static::class, "Failed to convert file $resultWav...");
             }
 
             // Add the MP3 file to the database
@@ -117,14 +117,14 @@ class MusicOnHoldConf extends AsteriskConfigClass
     protected function checkAddFileToDB(string $resultMp3): void
     {
         /** @var SoundFiles $sf */
-        $sf = SoundFiles::findFirst("path='{$resultMp3}'");
+        $sf = SoundFiles::findFirst("path='$resultMp3'");
         if ($sf === null) {
             $sf           = new SoundFiles();
             $sf->category = SoundFiles::CATEGORY_MOH;
             $sf->name     = basename($resultMp3);
             $sf->path     = $resultMp3;
             if ( ! $sf->save()) {
-                SystemMessages::sysLogMsg(static::class, "Error save SoundFiles record {$sf->name}...");
+                SystemMessages::sysLogMsg(static::class, "Error save SoundFiles record $sf->name...");
             }
         }
     }

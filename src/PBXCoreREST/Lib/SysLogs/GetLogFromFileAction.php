@@ -23,14 +23,14 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Gets partially filtered log file strings.
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class GetLogFromFileAction extends \Phalcon\Di\Injectable
+class GetLogFromFileAction extends Injectable
 {
     /**
      * Gets partially filtered log file strings.
@@ -67,23 +67,22 @@ class GetLogFromFileAction extends \Phalcon\Di\Injectable
             $filter = escapeshellarg($filter);
             $linesPlusOffset = $lines + $offset;
 
-            $di = Di::getDefault();
             $cacheDir = Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR);
             if (!file_exists($cacheDir)) {
                 Util::mwMkdir($cacheDir, true);
             }
             $filenameTmp = $cacheDir . '/' . __FUNCTION__ . '_' . time() . '.log';
             if (empty($filter)) {
-                $cmd = "{$tail} -n {$linesPlusOffset} {$filename}";
+                $cmd = "$tail -n $linesPlusOffset $filename";
             } else {
-                $cmd = "{$grep} --text -h -e " . str_replace('&', "' -e '", $filter) . " -F {$filename} | $tail -n {$linesPlusOffset}";
+                $cmd = "$grep --text -h -e " . str_replace('&', "' -e '", $filter) . " -F $filename | $tail -n $linesPlusOffset";
             }
             if ($offset > 0) {
-                $cmd .= " | {$head} -n {$lines}";
+                $cmd .= " | $head -n $lines";
             }
 
-            $sedPath = Util::which('sed');
-            $cmd .= ' | ' . $sedPath . ' -E \'s/\\\\([tnrfvb]|040)/ /g\'';
+            $sed = Util::which('sed');
+            $cmd .= ' | ' . $sed . ' -E \'s/\\\\([tnrfvb]|040)/ /g\'';
             $cmd .= " > $filenameTmp";
 
             Processes::mwExec("$cmd; chown www:www $filenameTmp");

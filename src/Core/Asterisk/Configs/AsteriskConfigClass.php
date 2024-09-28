@@ -27,7 +27,7 @@ use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\SystemMessages;
-use Phalcon\Config;
+use Phalcon\Config\Config;
 use Phalcon\Di\Injectable;
 
 /**
@@ -47,14 +47,14 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     /**
      * Easy way to get or set the PbxSettings values
      *
-     * @var \MikoPBX\Core\System\MikoPBXConfig
+     * @var MikoPBXConfig
      */
     protected MikoPBXConfig $mikoPBXConfig;
 
     /**
      * Access to the /etc/inc/mikopbx-settings.json values
      *
-     * @var \Phalcon\Config
+     * @var Config
      */
     protected Config $config;
 
@@ -185,7 +185,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     protected function echoGenerateConfig(): void
     {
         if ($this->booting === true && !empty($this->description)) {
-            $this->stageMessage = "   |- generate config {$this->description}...";
+            $this->stageMessage = "   |- generate config $this->description...";
             SystemMessages::echoWithSyslog($this->stageMessage);  // Output the message and log it in syslog
             SystemMessages::echoToTeletype($this->stageMessage); // Output to TTY
         }

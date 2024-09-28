@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Plugins;
 
 use MikoPBX\AdminCabinet\Providers\AssetProvider;
 use MikoPBX\Common\Providers\ConfigProvider;
+use Phalcon\Assets\Exception;
 use Phalcon\Assets\Manager;
 use function MikoPBX\Common\Config\appPath;
 
@@ -29,12 +30,21 @@ class AssetManager extends Manager
 {
     private string $version;
 
+    private string $prefix;
+
+    public function __construct(\Phalcon\Html\TagFactory $tagFactory, array $options = [])
+    {
+        $this->version = '1.0';
+        $this->prefix = $options['prefix']??'';
+        parent::__construct( $tagFactory, $options);
+    }
+
     /**
      * Sets asset versions
      *
      * @param string $version
      */
-    public function setVersion(string $version)
+    public function setVersion(string $version): void
     {
         $this->version = $version;
     }
@@ -42,40 +52,55 @@ class AssetManager extends Manager
     /**
      * Prints the HTML for CSS assets
      *
-     * @param string|null $collectionName
+     * @param string|null $name
      *
      * @return string
+     * @throws Exception
      */
-    public function outputCss(string $collectionName = null): string
+    public function outputCss(string $name = null): string
     {
-        if ($collectionName !== null) {
-            foreach ($this->collection($collectionName) as $resource) {
+        if ($name !== null) {
+            foreach ($this->collection($name) as $resource) {
                 $resource->setVersion($this->version);
+                if ($resource->isLocal()){
+                    $resource->setPath($this->prefix.$resource->getPath());
+                }
             }
         }
-
-        return parent::outputCss($collectionName);
+        return parent::outputCss($name)??'';
     }
 
     /**
      * Prints the HTML for JS assets
      *
-     * @param string|null $collectionName
+     * @param string|null $name
      *
      * @return string
+     * @throws Exception
      */
-    public function outputJs(string $collectionName = null): string
+    public function outputJs(string $name = null): string
     {
-        if ($collectionName !== null) {
-            foreach ($this->collection($collectionName) as $resource) {
+        if ($name !== null) {
+            foreach ($this->collection($name) as $resource) {
                 $resource->setVersion($this->version);
+                if ($resource->isLocal()){
+                    $resource->setPath($this->prefix.$resource->getPath());
+                }
             }
         }
 
-        return parent::outputJs($collectionName);
+        return parent::outputJs($name)??'';
     }
 
-    public function outputCombinedHeaderJs(string $controller, string $action){
+    /**
+     *
+     * @param string $controller
+     * @param string $action
+     * @return string
+     * @throws Exception
+     */
+    public function outputCombinedHeaderJs(string $controller, string $action): string
+    {
 
         $jsCachePath = appPath('sites/admin-cabinet/assets/js/cache').'/'.$this->version;
         if (!is_dir($jsCachePath)){
@@ -116,7 +141,8 @@ class AssetManager extends Manager
 
     }
 
-    public function outputCombinedFooterJs(string $controller, string $action){
+    public function outputCombinedFooterJs(string $controller, string $action): string
+    {
 
         $jsCachePath = appPath('sites/admin-cabinet/assets/js/cache').'/'.$this->version;
         if (!is_dir($jsCachePath)){
@@ -158,7 +184,15 @@ class AssetManager extends Manager
 
     }
 
-    public function outputCombinedHeaderCSS(string $controller, string $action){
+    /**
+     *
+     * @param string $controller
+     * @param string $action
+     * @return string
+     * @throws Exception
+     */
+    public function outputCombinedHeaderCSS(string $controller, string $action): string
+    {
 
         $CSSCachePath = appPath('sites/admin-cabinet/assets/css/cache').'/'.$this->version;
         if (!is_dir($CSSCachePath)){

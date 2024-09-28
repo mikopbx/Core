@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Iax;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\Util;
 
@@ -36,7 +36,7 @@ class IAXConf extends AsteriskConfigClass
 {
     // The module hook applying priority
     public int $priority = 600;
-    public const TYPE_IAX2 = 'IAX2';
+    public const string TYPE_IAX2 = 'IAX2';
     protected string $description = 'iax.conf';
 
     /**
@@ -77,7 +77,7 @@ class IAXConf extends AsteriskConfigClass
      */
     private function generateGeneral(): string
     {
-        $iax_port = $this->generalSettings[PbxSettingsConstants::IAX_PORT];
+        $iax_port = $this->generalSettings[PbxSettings::IAX_PORT];
         $conf     = '[general]'.PHP_EOL;
         $conf .= "bindport=$iax_port".PHP_EOL;
         $conf .= "bindaddr=0.0.0.0".PHP_EOL;
@@ -99,7 +99,7 @@ class IAXConf extends AsteriskConfigClass
         $reg_strings = '';
         $prov_config = '';
 
-        $lang      = str_replace('_', '-', strtolower($this->generalSettings[PbxSettingsConstants::PBX_LANGUAGE]));
+        $lang      = str_replace('_', '-', strtolower($this->generalSettings[PbxSettings::PBX_LANGUAGE]));
         $providers = $this->getProviders();
         foreach ($providers as $provider) {
             $manual_attributes = Util::parseIniSettings(base64_decode($provider['manualattributes']));

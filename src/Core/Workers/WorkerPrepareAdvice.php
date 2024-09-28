@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +19,10 @@
 
 namespace MikoPBX\Core\Workers;
 
-use Generator;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\SystemMessages;
@@ -38,21 +36,17 @@ use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckStorage;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckUpdates;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckWebPasswords;
-use Phalcon\Di;
-use Recoil\React\ReactKernel;
+use Phalcon\Di\Di;
 use Throwable;
 
 require_once 'Globals.php';
 
-
 /**
- * WorkerPrepareAdvice is a worker class responsible for prepare system advice.
- *
- * @package MikoPBX\Core\Workers
+ * WorkerPrepareAdvice is a worker class responsible for preparing system advice.
  */
 class WorkerPrepareAdvice extends WorkerBase
 {
-    public const ARR_ADVICE_TYPES = [
+    public const array ARR_ADVICE_TYPES = [
         ['type' => CheckConnection::class, 'cacheTime' => 120],
         ['type' => CheckCorruptedFiles::class, 'cacheTime' => 3600],
         ['type' => CheckWebPasswords::class, 'cacheTime' => 864000],
@@ -69,8 +63,9 @@ class WorkerPrepareAdvice extends WorkerBase
     public array $messages;
 
     /**
-     * Cleanup cache for advice after changing any models
-     * @param array $record parameters of the event
+     * Cleans up cache for advice after changing any models.
+     *
+     * @param array $record Parameters of the event.
      * @return void
      */
     public static function afterModelEvents(array $record): void
@@ -82,16 +77,16 @@ class WorkerPrepareAdvice extends WorkerBase
         switch ($record['model']) {
             case PbxSettings::class:
                 switch ($record['recordId']) {
-                    case PbxSettingsConstants::SSH_PASSWORD_HASH_STRING:
-                    case PbxSettingsConstants::SSH_PASSWORD:
-                    case PbxSettingsConstants::SSH_PASSWORD_HASH_FILE:
+                    case PbxSettings::SSH_PASSWORD_HASH_STRING:
+                    case PbxSettings::SSH_PASSWORD:
+                    case PbxSettings::SSH_PASSWORD_HASH_FILE:
                         $cacheKeys[self::getCacheKey(CheckSSHPasswords::class)] = true;
                         $cacheKeys[self::getCacheKey(CheckSSHConfig::class)] = true;
                         break;
-                    case PbxSettingsConstants::WEB_ADMIN_PASSWORD:
+                    case PbxSettings::WEB_ADMIN_PASSWORD:
                         $cacheKeys[self::getCacheKey(CheckWebPasswords::class)] = true;
                         break;
-                    case PbxSettingsConstants::PBX_FIREWALL_ENABLED:
+                    case PbxSettings::PBX_FIREWALL_ENABLED:
                         $cacheKeys[self::getCacheKey(CheckFirewalls::class)] = true;
                         break;
                     default:
@@ -124,25 +119,37 @@ class WorkerPrepareAdvice extends WorkerBase
     public function start(array $argv): void
     {
         $adviceTypes = self::ARR_ADVICE_TYPES;
-        // Use ReactKernel to start parallel execution
-        ReactKernel::start(
-            function () use ($adviceTypes) {
-                // Parallel execution https://github.com/recoilphp/recoil
-                foreach ($adviceTypes as $adviceType) {
-                    yield $this->processAdvice($adviceType);
+
+        // Asynchronously process each advice type using pcntl_fork
+        foreach ($adviceTypes as $adviceType) {
+            $pid = pcntl_fork();
+            if ($pid == -1) {
+                // Error during fork.
+                throw new \RuntimeException("Failed to fork process");
+            } elseif ($pid == 0) {
+                // Child process.
+                try {
+                    $this->processAdvice($adviceType);
+                } catch (Throwable $e) {
+                    CriticalErrorsHandler::handleExceptionWithSyslog($e);
                 }
+                exit(0); // Exit the child process.
             }
-        );
+            // Parent process continues the loop.
+        }
+
+        // Optionally, wait for all child processes to finish.
+        while (pcntl_waitpid(0, $status) != -1) {
+            // You can process the status if needed.
+        }
     }
 
     /**
      * Processes advice of a specific type and caches the result.
      *
      * @param array $adviceType An array containing advice type and cache time.
-     *
-     * @return Generator|null A Generator object used for parallel execution.
      */
-    private function processAdvice(array $adviceType): ?Generator
+    private function processAdvice(array $adviceType): void
     {
         $start = microtime(true);
         $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
@@ -154,26 +161,25 @@ class WorkerPrepareAdvice extends WorkerBase
                 $checkObj = new $currentAdviceClass();
                 $newAdvice = $checkObj->process();
                 $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 CriticalErrorsHandler::handleExceptionWithSyslog($e);
             }
             $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 5) {
                 SystemMessages::sysLogMsg(
                     __METHOD__,
-                    "WARNING: Service WorkerPrepareAdvice:{$adviceType['type']} processed more than {$timeElapsedSecs} seconds",
+                    "WARNING: Service WorkerPrepareAdvice:{$adviceType['type']} processed more than $timeElapsedSecs seconds",
                     LOG_WARNING
                 );
             }
         }
-        // Yield to allow parallel execution to continue
-        yield;
     }
 
     /**
-     * Prepares a redis cache key for an advice type
-     * @param string $currentAdviceType current advice type
-     * @return string cache key
+     * Prepares a cache key for an advice type.
+     *
+     * @param string $currentAdviceType Current advice type.
+     * @return string Cache key.
      */
     public static function getCacheKey(string $currentAdviceType): string
     {

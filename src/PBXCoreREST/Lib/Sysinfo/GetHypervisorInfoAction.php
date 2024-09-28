@@ -21,13 +21,14 @@ namespace MikoPBX\PBXCoreREST\Lib\Sysinfo;
 
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  * Returns hypervisor information
  *
  * @package MikoPBX\PBXCoreREST\Lib\Sysinfo
  */
-class GetHypervisorInfoAction extends \Phalcon\Di\Injectable
+class GetHypervisorInfoAction extends Injectable
 {
     /**
      * Returns hypervisor information
@@ -43,7 +44,7 @@ class GetHypervisorInfoAction extends \Phalcon\Di\Injectable
         $grep = Util::which('grep');
         $awk = Util::which('awk');
         $result = shell_exec("$dmesg | $grep 'Hypervisor detected' | $awk -F 'Hypervisor detected: ' '{ print $2}'");
-        $result = trim($result);
+        $result = trim($result??'');
         $res->data =['Hypervisor'=>$result];
         if ($result){
             $res->success = true;

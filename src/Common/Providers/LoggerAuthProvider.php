@@ -23,7 +23,7 @@ namespace MikoPBX\Common\Providers;
 
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Logger;
+use Phalcon\Logger\Logger;
 use Phalcon\Logger\Adapter\Syslog;
 use Phalcon\Logger\Formatter\Line;
 
@@ -34,7 +34,7 @@ use Phalcon\Logger\Formatter\Line;
  */
 class LoggerAuthProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'loggerAuth';
+    public const string SERVICE_NAME = 'loggerAuth';
 
     /**
      * Register syslog auth service provider

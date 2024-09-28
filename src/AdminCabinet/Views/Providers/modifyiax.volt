@@ -1,6 +1,6 @@
 <div class="ui grey top right attached label" id="status"><i
             class="spinner loading icon"></i>{{ t._("pr_UpdateStatus") }}</div>
-{{ form('providers/save/iax', 'role': 'form', 'class': 'ui large form ', 'id':'save-provider-form') }}
+{{ form(['action' : 'providers/save/iax', 'method': 'post', 'role': 'form', 'class': 'ui large form ', 'id':'save-provider-form']) }}
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
 {{ form.render('type') }}
@@ -76,4 +76,4 @@
     </div>
 </div>
 {{ partial("partials/submitbutton",['indexurl':'providers/index/']) }}
-{{ end_form() }}
+{{ close('form') }}

@@ -40,7 +40,7 @@ class MikoPBXConfig extends Injectable
      *
      * @return bool True if the value was successfully saved, false otherwise.
      */
-    public function setGeneralSettings(string $db_key, $value): bool
+    public function setGeneralSettings(string $db_key, mixed $value): bool
     {
         $data = PbxSettings::findFirst("key = '$db_key'");
         if (null === $data) {
@@ -78,7 +78,7 @@ class MikoPBXConfig extends Injectable
      *
      * @return array|string The array of general settings or the value of the specified key.
      */
-    public function getGeneralSettings(string $db_key = '')
+    public function getGeneralSettings(string $db_key = ''): array|string
     {
         if ($db_key === '') {
             $result = PbxSettings::getAllPbxSettings();

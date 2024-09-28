@@ -32,13 +32,13 @@ use Phalcon\Mvc\Micro;
  */
 interface RestAPIConfigInterface
 {
-    public const MODULE_RESTAPI_CALLBACK = 'moduleRestAPICallback';
+    public const string MODULE_RESTAPI_CALLBACK = 'moduleRestAPICallback';
 
-    public const GET_PBXCORE_REST_ADDITIONAL_ROUTES = 'getPBXCoreRESTAdditionalRoutes';
+    public const string GET_PBXCORE_REST_ADDITIONAL_ROUTES = 'getPBXCoreRESTAdditionalRoutes';
 
-    public const ON_BEFORE_EXECUTE_RESTAPI_ROUTE = 'onBeforeExecuteRestAPIRoute';
+    public const string ON_BEFORE_EXECUTE_RESTAPI_ROUTE = 'onBeforeExecuteRestAPIRoute';
 
-    public const ON_AFTER_EXECUTE_RESTAPI_ROUTE = 'onAfterExecuteRestAPIRoute';
+    public const string ON_AFTER_EXECUTE_RESTAPI_ROUTE = 'onAfterExecuteRestAPIRoute';
 
     /**
      * Returns array of additional routes for PBXCoreREST interface from module

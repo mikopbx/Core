@@ -80,7 +80,7 @@ use Phalcon\Events\Event;
  */
 class RouterProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = '';
+    public const string SERVICE_NAME = '';
 
     /**
      * Register response service provider

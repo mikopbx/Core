@@ -28,7 +28,7 @@ use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use Phalcon\Db\Column;
 use Phalcon\Db\Index;
-use Phalcon\Di;
+use Phalcon\Di\Injectable;
 use ReflectionClass;
 
 use Throwable;
@@ -40,11 +40,11 @@ use function MikoPBX\Common\Config\appPath;
  * Class UpdateDatabase
  *
  *
- * @property \Phalcon\Config config
+ * @property \Phalcon\Config\Config config
  *
  *  @package MikoPBX\Core\System\Upgrade
  */
-class UpdateDatabase extends Di\Injectable
+class UpdateDatabase extends Injectable
 {
 
     /**
@@ -70,10 +70,10 @@ class UpdateDatabase extends Di\Injectable
     private function updateDbStructureByModelsAnnotations(): void
     {
         $modelsDir = appPath('src/Common/Models');
-        $results   = glob("{$modelsDir}/*.php", GLOB_NOSORT);
+        $results   = glob("$modelsDir/*.php", GLOB_NOSORT);
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "MikoPBX\\Common\\Models\\{$className}";
+            $moduleModelClass = "MikoPBX\\Common\\Models\\$className";
             try {
                 $this->createUpdateDbTableByAnnotations($moduleModelClass);
             } catch (Throwable $exception){
@@ -100,7 +100,7 @@ class UpdateDatabase extends Di\Injectable
         $chmodPath = Util::which('chmod');
 
         // Set execute permissions for files in the modules' binary directories
-        Processes::mwExec("$findPath $modulesDir/*/*bin/ -type f -exec {$chmodPath} +x {} \;");
+        Processes::mwExec("$findPath $modulesDir/*/*bin/ -type f -exec $chmodPath +x {} \;");
 
         // Set ownership of the modules directory to www:www
         Processes::mwExec("$chownPath -R www:www $modulesDir/*");
@@ -312,9 +312,9 @@ class UpdateDatabase extends Di\Injectable
                 // Create temporary clone on current table with all columns and date
                 // Delete original table
                 $gluedColumns = implode(',', $currentStateColumnList);
-                $query        = "CREATE TEMPORARY TABLE {$tableName}_backup({$gluedColumns}); 
-INSERT INTO {$tableName}_backup SELECT {$gluedColumns} FROM {$tableName}; 
-DROP TABLE  {$tableName}";
+                $query        = "CREATE TEMPORARY TABLE {$tableName}_backup($gluedColumns); 
+INSERT INTO {$tableName}_backup SELECT $gluedColumns FROM $tableName; 
+DROP TABLE  $tableName";
                 $result       = $result && $connectionService->execute($query);
 
                 // Create new table with new columns structure
@@ -324,7 +324,7 @@ DROP TABLE  {$tableName}";
                 $newColumnNames  = array_intersect($newColNames, $oldColNames);
                 $gluedNewColumns = implode(',', $newColumnNames);
                 $result          = $result && $connectionService->execute(
-                        "INSERT INTO {$tableName} ( {$gluedNewColumns}) SELECT {$gluedNewColumns}  FROM {$tableName}_backup;"
+                        "INSERT INTO $tableName ( $gluedNewColumns) SELECT $gluedNewColumns  FROM {$tableName}_backup;"
                     );
 
                 // Drop temporary table
@@ -420,7 +420,7 @@ DROP TABLE  {$tableName}";
      *
      * @return bool
      */
-    private function updateIndexes(string $tableName, $connectionService, array $indexes): bool
+    private function updateIndexes(string $tableName, mixed $connectionService, array $indexes): bool
     {
         $result         = true;
         $currentIndexes = $connectionService->describeIndexes($tableName);
@@ -430,7 +430,7 @@ DROP TABLE  {$tableName}";
             if (stripos($indexName, 'sqlite_autoindex') === false
                 && ! array_key_exists($indexName, $indexes)
             ) {
-                $msg = " - UpdateDatabase: Delete index: {$indexName} ";
+                $msg = " - UpdateDatabase: Delete index: $indexName ";
                 SystemMessages::echoWithSyslog($msg);
                 $result += $connectionService->dropIndex($tableName, '', $indexName);
                 SystemMessages::echoResult($msg);
@@ -442,14 +442,14 @@ DROP TABLE  {$tableName}";
             if (array_key_exists($indexName, $currentIndexes)) {
                 $currentIndex = $currentIndexes[$indexName];
                 if ($describedIndex->getColumns() !== $currentIndex->getColumns()) {
-                    $msg = " - UpdateDatabase: Update index: {$indexName} ";
+                    $msg = " - UpdateDatabase: Update index: $indexName ";
                     SystemMessages::echoWithSyslog($msg);
                     $result += $connectionService->dropIndex($tableName, '', $indexName);
                     $result += $connectionService->addIndex($tableName, '', $describedIndex);
                     SystemMessages::echoResult($msg);
                 }
             } else {
-                $msg = " - UpdateDatabase: Add new index: {$indexName} ";
+                $msg = " - UpdateDatabase: Add new index: $indexName ";
                 SystemMessages::echoWithSyslog($msg);
                 $result += $connectionService->addIndex($tableName, '', $describedIndex);
                 SystemMessages::echoResult($msg);

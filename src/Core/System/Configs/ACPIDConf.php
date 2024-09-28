@@ -31,7 +31,7 @@ use Phalcon\Di\Injectable;
  */
 class ACPIDConf extends Injectable
 {
-    public const PROC_NAME = 'acpid';
+    public const string PROC_NAME = 'acpid';
 
     /**
      * Restarts Beanstalk server

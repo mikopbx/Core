@@ -23,7 +23,8 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerDownloader;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class DownloadNewFirmware
@@ -31,7 +32,7 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Files
  */
-class DownloadNewFirmwareAction extends \Phalcon\Di\Injectable
+class DownloadNewFirmwareAction extends Injectable
 {
     /**
      * Downloads the firmware file from the provided URL.
@@ -52,17 +53,17 @@ class DownloadNewFirmwareAction extends \Phalcon\Di\Injectable
         } else {
             $uploadDir = '/tmp';
         }
-        $firmwareDirTmp = "{$uploadDir}/{$data['version']}";
+        $firmwareDirTmp = "$uploadDir/{$data['version']}";
 
         if (file_exists($firmwareDirTmp)) {
-            $rmPath = Util::which('rm');
-            Processes::mwExec("{$rmPath} -rf {$firmwareDirTmp}/* ");
+            $rm = Util::which('rm');
+            Processes::mwExec("$rm -rf $firmwareDirTmp/* ");
         } else {
             Util::mwMkdir($firmwareDirTmp);
         }
 
         $download_settings = [
-            'res_file' => "{$firmwareDirTmp}/update.img",
+            'res_file' => "$firmwareDirTmp/update.img",
             'url'      => $data['url'],
             'size'     => $data['size'],
             'md5'      => $data['md5'],
@@ -70,11 +71,11 @@ class DownloadNewFirmwareAction extends \Phalcon\Di\Injectable
 
         $workerDownloaderPath = Util::getFilePathByClassName(WorkerDownloader::class);
         file_put_contents(
-            "{$firmwareDirTmp}/download_settings.json",
+            "$firmwareDirTmp/download_settings.json",
             json_encode($download_settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         );
-        $phpPath = Util::which('php');
-        Processes::mwExecBg("{$phpPath} -f {$workerDownloaderPath} start {$firmwareDirTmp}/download_settings.json");
+        $php = Util::which('php');
+        Processes::mwExecBg("$php -f $workerDownloaderPath start $firmwareDirTmp/download_settings.json");
 
         $res                   = new PBXApiResult();
         $res->processor        = __METHOD__;

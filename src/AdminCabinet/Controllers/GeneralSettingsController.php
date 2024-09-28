@@ -23,7 +23,6 @@ use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -81,12 +80,12 @@ class GeneralSettingsController extends BaseController
         // Initialize an array to keep track of passwords that fail the check
         $passwordCheckFail = [];
 
-        $cloudInstanceId = $data[PbxSettingsConstants::CLOUD_INSTANCE_ID] ?? '';
-        $checkPasswordFields = [PbxSettingsConstants::SSH_PASSWORD, PbxSettingsConstants::WEB_ADMIN_PASSWORD];
+        $cloudInstanceId = $data[PbxSettings::CLOUD_INSTANCE_ID] ?? '';
+        $checkPasswordFields = [PbxSettings::SSH_PASSWORD, PbxSettings::WEB_ADMIN_PASSWORD];
 
         // If SSH is disabled, remove the SSH_PASSWORD key
-        if ($data[PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD] === 'on') {
-            unset($checkPasswordFields[PbxSettingsConstants::SSH_PASSWORD]);
+        if ($data[PbxSettings::SSH_DISABLE_SSH_PASSWORD] === 'on') {
+            unset($checkPasswordFields[PbxSettings::SSH_PASSWORD]);
         }
 
         // Loop through and check passwords
@@ -141,9 +140,9 @@ class GeneralSettingsController extends BaseController
         }
 
         list($result, $messages) = $this->createParkingExtensions(
-            $data[PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT],
-            $data[PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT],
-            $data[PbxSettingsConstants::PBX_CALL_PARKING_EXT],
+            $data[PbxSettings::PBX_CALL_PARKING_START_SLOT],
+            $data[PbxSettings::PBX_CALL_PARKING_END_SLOT],
+            $data[PbxSettings::PBX_CALL_PARKING_EXT],
         );
 
         if (!$result) {
@@ -251,50 +250,50 @@ class GeneralSettingsController extends BaseController
         $pbxSettings = PbxSettings::getDefaultArrayValues();
 
         // Process SSHPassword and set SSHPasswordHash accordingly
-        if (isset($data[PbxSettingsConstants::SSH_PASSWORD])) {
-            if ($data[PbxSettingsConstants::SSH_PASSWORD] === $pbxSettings[PbxSettingsConstants::SSH_PASSWORD]
-                || $data[PbxSettingsConstants::SSH_PASSWORD] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
-                $data[PbxSettingsConstants::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettingsConstants::WEB_ADMIN_PASSWORD]);
+        if (isset($data[PbxSettings::SSH_PASSWORD])) {
+            if ($data[PbxSettings::SSH_PASSWORD] === $pbxSettings[PbxSettings::SSH_PASSWORD]
+                || $data[PbxSettings::SSH_PASSWORD] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                $data[PbxSettings::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettings::WEB_ADMIN_PASSWORD]);
             } else {
-                $data[PbxSettingsConstants::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettingsConstants::SSH_PASSWORD]);
+                $data[PbxSettings::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettings::SSH_PASSWORD]);
             }
         }
 
         // Update PBX settings
         foreach ($pbxSettings as $key => $value) {
             switch ($key) {
-                case PbxSettingsConstants::PBX_RECORD_CALLS:
-                case PbxSettingsConstants::PBX_RECORD_CALLS_INNER:
-                case PbxSettingsConstants::AJAM_ENABLED:
-                case PbxSettingsConstants::AMI_ENABLED:
-                case PbxSettingsConstants::RESTART_EVERY_NIGHT:
-                case PbxSettingsConstants::REDIRECT_TO_HTTPS:
-                case PbxSettingsConstants::PBX_SPLIT_AUDIO_THREAD:
-                case PbxSettingsConstants::USE_WEB_RTC:
-                case PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD:
-                case PbxSettingsConstants::PBX_ALLOW_GUEST_CALLS:
-                case PbxSettingsConstants::DISABLE_ALL_MODULES:
+                case PbxSettings::PBX_RECORD_CALLS:
+                case PbxSettings::PBX_RECORD_CALLS_INNER:
+                case PbxSettings::AJAM_ENABLED:
+                case PbxSettings::AMI_ENABLED:
+                case PbxSettings::RESTART_EVERY_NIGHT:
+                case PbxSettings::REDIRECT_TO_HTTPS:
+                case PbxSettings::PBX_SPLIT_AUDIO_THREAD:
+                case PbxSettings::USE_WEB_RTC:
+                case PbxSettings::SSH_DISABLE_SSH_PASSWORD:
+                case PbxSettings::PBX_ALLOW_GUEST_CALLS:
+                case PbxSettings::DISABLE_ALL_MODULES:
                 case '***ALL CHECK BOXES ABOVE***':
                     $newValue = ($data[$key] === 'on') ? '1' : '0';
                     break;
-                case PbxSettingsConstants::SSH_PASSWORD:
+                case PbxSettings::SSH_PASSWORD:
                     // Set newValue as WebAdminPassword if SSHPassword is the same as the default value
                     if ($data[$key] === $value) {
-                        $newValue = $data[PbxSettingsConstants::WEB_ADMIN_PASSWORD];
+                        $newValue = $data[PbxSettings::WEB_ADMIN_PASSWORD];
                     } elseif ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $data[$key];
                     } else {
                         continue 2;
                     }
                     break;
-                case PbxSettingsConstants::SEND_METRICS:
+                case PbxSettings::SEND_METRICS:
                     $newValue = ($data[$key] === 'on') ? '1' : '0';
-                    $this->session->set(PbxSettingsConstants::SEND_METRICS, $newValue);
+                    $this->session->set(PbxSettings::SEND_METRICS, $newValue);
                     break;
-                case PbxSettingsConstants::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT:
-                    $newValue = ceil((int)$data[PbxSettingsConstants::PBX_FEATURE_DIGIT_TIMEOUT] / 1000);
+                case PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT:
+                    $newValue = ceil((int)$data[PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT] / 1000);
                     break;
-                case PbxSettingsConstants::WEB_ADMIN_PASSWORD:
+                case PbxSettings::WEB_ADMIN_PASSWORD:
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $this->security->hash($data[$key]);
                     } else {
@@ -311,7 +310,7 @@ class GeneralSettingsController extends BaseController
         }
 
         // Reset a cloud provision flag
-        PbxSettings::setValue(PbxSettingsConstants::CLOUD_PROVISIONING, '1', $messages['error']);
+        PbxSettings::setValue(PbxSettings::CLOUD_PROVISIONING, '1', $messages['error']);
 
         $result = count($messages['error']) === 0;
         return [$result, $messages];

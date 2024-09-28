@@ -21,7 +21,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\FirewallEditForm;
 use MikoPBX\AdminCabinet\Library\Cidr;
-use MikoPBX\Common\Models\{FirewallRules, LanInterfaces, NetworkFilters, PbxSettings, PbxSettingsConstants};
+use MikoPBX\Common\Models\{FirewallRules, LanInterfaces, NetworkFilters, PbxSettings};
 
 class FirewallController extends BaseController
 {
@@ -41,7 +41,7 @@ class FirewallController extends BaseController
                 continue;
             }
 
-            if (strpos($interface->subnet, '.') === false) {
+            if (!str_contains($interface->subnet, '.')) {
                 $localAddresses[] = $calculator->cidr2network(
                         $interface->ipaddr,
                         $interface->subnet
@@ -62,7 +62,7 @@ class FirewallController extends BaseController
 
             $permitParts = explode('/', $filter->permit);
 
-            if (strpos($permitParts[1], '.') === false) {
+            if (!str_contains($permitParts[1], '.')) {
                 $networksTable[$filter->id]['network'] = $calculator->cidr2network(
                         $permitParts[0],
                         $permitParts[1]
@@ -127,7 +127,7 @@ class FirewallController extends BaseController
         usort($networksTable, [__CLASS__, 'sortArrayByNetwork']);
 
         $this->view->rulesTable         = $networksTable;
-        $this->view->PBXFirewallEnabled = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED);
+        $this->view->PBXFirewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
     }
 
 
@@ -184,7 +184,7 @@ class FirewallController extends BaseController
 
         // If it was new entity we will reload page with new ID
         if (empty($data['id'])) {
-            $this->view->reload = "firewall/modify/{$filterRecordId}";
+            $this->view->reload = "firewall/modify/$filterRecordId";
         }
 
         // Update firewall rules Firewall
@@ -320,7 +320,7 @@ class FirewallController extends BaseController
                 } else {
                     $newRule->action = 'block';
                 }
-                $newRule->description = "{$newRule->action} connection from network: {$data['network']} / {$data['subnet']}";
+                $newRule->description = "$newRule->action connection from network: {$data['network']} / {$data['subnet']}";
 
                 if ($newRule->save() === false) {
                     $errors = $newRule->getMessages();
@@ -341,7 +341,7 @@ class FirewallController extends BaseController
      *
      * @param string $networkId
      */
-    public function deleteAction(string $networkId = '')
+    public function deleteAction(string $networkId = ''): void
     {
         $this->db->begin();
         $filterRecord = NetworkFilters::findFirstById($networkId);
@@ -366,10 +366,10 @@ class FirewallController extends BaseController
      */
     public function enableAction(): void
     {
-        $fail2BanEnabled = PbxSettings::findFirstByKey(PbxSettingsConstants::PBX_FAIL2BAN_ENABLED);
+        $fail2BanEnabled = PbxSettings::findFirstByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
         if ($fail2BanEnabled === null) {
             $fail2BanEnabled      = new PbxSettings();
-            $fail2BanEnabled->key = PbxSettingsConstants::PBX_FAIL2BAN_ENABLED;
+            $fail2BanEnabled->key = PbxSettings::PBX_FAIL2BAN_ENABLED;
         }
         $fail2BanEnabled->value = '1';
         if ($fail2BanEnabled->save() === false) {
@@ -380,10 +380,10 @@ class FirewallController extends BaseController
             return;
         }
 
-        $firewallEnabled = PbxSettings::findFirstByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED);
+        $firewallEnabled = PbxSettings::findFirstByKey(PbxSettings::PBX_FIREWALL_ENABLED);
         if ($firewallEnabled === null) {
             $firewallEnabled      = new PbxSettings();
-            $firewallEnabled->key = PbxSettingsConstants::PBX_FAIL2BAN_ENABLED;
+            $firewallEnabled->key = PbxSettings::PBX_FAIL2BAN_ENABLED;
         }
         $firewallEnabled->value = '1';
         if ($firewallEnabled->save() === false) {
@@ -401,10 +401,10 @@ class FirewallController extends BaseController
      */
     public function disableAction(): void
     {
-        $fail2BanEnabled = PbxSettings::findFirstByKey(PbxSettingsConstants::PBX_FAIL2BAN_ENABLED);
+        $fail2BanEnabled = PbxSettings::findFirstByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
         if ($fail2BanEnabled === null) {
             $fail2BanEnabled      = new PbxSettings();
-            $fail2BanEnabled->key = PbxSettingsConstants::PBX_FAIL2BAN_ENABLED;
+            $fail2BanEnabled->key = PbxSettings::PBX_FAIL2BAN_ENABLED;
         }
         $fail2BanEnabled->value = '0';
         if ($fail2BanEnabled->save() === false) {
@@ -415,10 +415,10 @@ class FirewallController extends BaseController
             return;
         }
 
-        $firewallEnabled = PbxSettings::findFirstByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED);
+        $firewallEnabled = PbxSettings::findFirstByKey(PbxSettings::PBX_FIREWALL_ENABLED);
         if ($firewallEnabled === null) {
             $firewallEnabled      = new PbxSettings();
-            $firewallEnabled->key = PbxSettingsConstants::PBX_FAIL2BAN_ENABLED;
+            $firewallEnabled->key = PbxSettings::PBX_FAIL2BAN_ENABLED;
         }
         $firewallEnabled->value = '0';
         if ($firewallEnabled->save() === false) {

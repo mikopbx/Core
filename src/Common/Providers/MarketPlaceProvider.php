@@ -51,9 +51,9 @@ use Throwable;
  */
 class MarketPlaceProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'license';
+    public const string SERVICE_NAME = 'license';
 
-    public const LIC_FILE_PATH = '/var/etc/licenseInfo.json';
+    public const string LIC_FILE_PATH = '/var/etc/licenseInfo.json';
 
     /**
      * Register license service provider

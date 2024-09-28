@@ -28,11 +28,11 @@ use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use Phalcon\Di\Injectable;
 use MikoPBX\Core\System\MikoPBXConfig;
-use Phalcon\Config as ConfigAlias;
+use Phalcon\Config\Config as ConfigAlias;
 
 class UpdateConfigsUpToVer2020362 extends Injectable implements UpgradeSystemConfigInterface
 {
-    public const PBX_VERSION = '2020.3.62';
+    public const string PBX_VERSION = '2020.3.62';
 
     private ConfigAlias $config;
     private MikoPBXConfig $mikoPBXConfig;

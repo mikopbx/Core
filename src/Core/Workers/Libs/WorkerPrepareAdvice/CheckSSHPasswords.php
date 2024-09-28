@@ -20,7 +20,6 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
@@ -56,7 +55,7 @@ class CheckSSHPasswords extends Injectable
                 'messageTpl' => 'adv_YouUseDefaultSSHPassword',
                 'messageParams' => $messageParams
             ];
-            $messages['needUpdate'][] = PbxSettingsConstants::SSH_PASSWORD;
+            $messages['needUpdate'][] = PbxSettings::SSH_PASSWORD;
         } elseif (Util::isSimplePassword($passwords->ssh)) {
             // Check for weak password
             $messages['warning'][] = [
@@ -69,7 +68,7 @@ class CheckSSHPasswords extends Injectable
                 'messageTpl' => 'adv_SSHPPasswordCorrupt',
                 'messageParams' => $messageParams
             ];
-            $messages['needUpdate'][] = PbxSettingsConstants::SSH_PASSWORD;
+            $messages['needUpdate'][] = PbxSettings::SSH_PASSWORD;
         }
 
         return $messages;
@@ -85,10 +84,10 @@ class CheckSSHPasswords extends Injectable
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
 
         $passwords = new \stdClass();
-        $passwords->ssh = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
-        $passwords->sshByDefault = $arrOfDefaultValues[PbxSettingsConstants::SSH_PASSWORD];
-        $passwords->sshHashFile = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE);
-        $passwords->cloudInstanceId = PbxSettings::getValueByKey(PbxSettingsConstants::CLOUD_INSTANCE_ID);
+        $passwords->ssh = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+        $passwords->sshByDefault = $arrOfDefaultValues[PbxSettings::SSH_PASSWORD];
+        $passwords->sshHashFile = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE);
+        $passwords->cloudInstanceId = PbxSettings::getValueByKey(PbxSettings::CLOUD_INSTANCE_ID);
         return $passwords;
     }
 

@@ -39,7 +39,7 @@ class ActionTransferDialHangup
      * @param array $data The event data.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         $pos = stripos($data['agi_channel'], 'local/');
         if ($pos === false) {
@@ -58,7 +58,7 @@ class ActionTransferDialHangup
      *
      * @return void
      */
-    private static function fillLocalChannelCdr(WorkerCallEvents $worker, $data): void
+    private static function fillLocalChannelCdr(WorkerCallEvents $worker, array $data): void
     {
 
         // This is NOT a local channel.
@@ -121,7 +121,7 @@ class ActionTransferDialHangup
      *
      * @return void
      */
-    private static function fillNotAnsweredCdr(WorkerCallEvents $worker, $data): void
+    private static function fillNotAnsweredCdr(WorkerCallEvents $worker, array $data): void
     {
         $filter = [
             'linkedid=:linkedid: AND endtime = "" AND (src_chan=:src_chan: AND dst_chan=:dst_chan:)',

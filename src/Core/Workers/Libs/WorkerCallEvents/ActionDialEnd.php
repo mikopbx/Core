@@ -40,7 +40,7 @@ class ActionDialEnd
      *
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         // Get the filter conditions based on the data.
         $filter = self::getFilter($data);
@@ -65,7 +65,7 @@ class ActionDialEnd
      *
      * @return array The filter array used for querying specific CDRs.
      */
-    private static function getFilter($data): array
+    private static function getFilter(array $data): array
     {
         return [
             'UNIQUEID=:UNIQUEID: AND src_chan=:src_chan: AND dst_chan = ""',

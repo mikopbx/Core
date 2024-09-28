@@ -20,7 +20,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\Fail2BanEditForm;
-use MikoPBX\Common\Models\{Fail2BanRules, PbxSettings, PbxSettingsConstants};
+use MikoPBX\Common\Models\{Fail2BanRules, PbxSettings};
 
 class Fail2BanController extends BaseController
 {
@@ -37,12 +37,12 @@ class Fail2BanController extends BaseController
         }
 
         // Get the Fail2Ban enabled status from PbxSettings
-        $fail2BanEnabled = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FAIL2BAN_ENABLED);
+        $fail2BanEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
 
         // Set the Fail2BanEditForm and its data to the view
         $this->view->form = new Fail2BanEditForm(
             $rules,
-            [PbxSettingsConstants::PBX_FAIL2BAN_ENABLED => $fail2BanEnabled]
+            [PbxSettings::PBX_FAIL2BAN_ENABLED => $fail2BanEnabled]
         );
         $this->view->submitMode = null;
     }

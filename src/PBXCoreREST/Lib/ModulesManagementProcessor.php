@@ -32,7 +32,7 @@ use MikoPBX\PBXCoreREST\Lib\Modules\StartDownloadAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\StatusOfModuleInstallationAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\UninstallModuleAction;
 use MikoPBX\PBXCoreREST\Lib\Modules\UpdateAllAction;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 /**

@@ -19,18 +19,19 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Prepares a downloadable link for a log file with the provided name.
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class DownloadLogFileAction extends \Phalcon\Di\Injectable
+class DownloadLogFileAction extends Injectable
 {
     /**
      * Prepares a downloadable link for a log file with the provided name.
@@ -44,7 +45,7 @@ class DownloadLogFileAction extends \Phalcon\Di\Injectable
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $filename       = System::getLogDir() . '/' . $filename;
+        $filename       = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
         if ( ! file_exists($filename)) {
             $res->success    = false;
             $res->messages[] = 'File does not exist ' . $filename;
@@ -52,15 +53,15 @@ class DownloadLogFileAction extends \Phalcon\Di\Injectable
             $uid          = Util::generateRandomString(36);
             $di           = Di::getDefault();
             $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
-            $result_dir   = "{$downloadLink}/{$uid}";
+            $result_dir   = "$downloadLink/$uid";
             Util::mwMkdir($result_dir);
             $link_name = basename($filename);
-            $lnPath    = Util::which('ln');
-            $chownPath = Util::which('chown');
-            Processes::mwExec("{$lnPath} -s {$filename} {$result_dir}/{$link_name}");
-            Processes::mwExec("{$chownPath} www:www {$result_dir}/{$link_name}");
+            $ln    = Util::which('ln');
+            $chown = Util::which('chown');
+            Processes::mwExec("$ln -s $filename $result_dir/$link_name");
+            Processes::mwExec("$chown www:www $result_dir/$link_name");
             $res->success          = true;
-            $res->data['filename'] = "{$uid}/{$link_name}";
+            $res->data['filename'] = "$uid/$link_name";
         }
 
         return $res;

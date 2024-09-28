@@ -31,7 +31,7 @@ class Cidr extends Injectable
 {
     // convert cidr to netmask
     // e.g. 21 = 255.255.248.0
-    public function cidr2netmask($cidr)
+    public function cidr2netmask(int $cidr): false|string
     {
         $bin = '';
         for ($i = 1; $i <= 32; $i++) {
@@ -49,14 +49,14 @@ class Cidr extends Injectable
 
     // get network address from cidr subnet
     // e.g. 10.0.2.56/21 = 10.0.0.0
-    public function cidr2network($ip, $cidr)
+    public function cidr2network(string $ip, int $cidr): false|string
     {
-        return long2ip((ip2long($ip)) & ((-1 << (32 - (int)$cidr))));
+        return long2ip((ip2long($ip)) & ((-1 << (32 - $cidr))));
     }
 
     // convert netmask to cidr
     // e.g. 255.255.255.128 = 25
-    public function netmask2cidr($netmask)
+    public function netmask2cidr(string $netmask): int
     {
         $bits    = 0;
         $netmask = explode(".", $netmask);
@@ -71,7 +71,7 @@ class Cidr extends Injectable
     // is ip in subnet
     // e.g. is 10.5.21.30 in 10.5.16.0/20 == true
     //      is 192.168.50.2 in 192.168.30.0/23 == false
-    public function cidr_match($ip, $network, $cidr)
+    public function cidr_match(string $ip, string $network, int $cidr):bool
     {
         if ((ip2long($ip) & ~((1 << (32 - $cidr)) - 1)) == ip2long($network)) {
             return true;

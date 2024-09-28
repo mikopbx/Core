@@ -96,8 +96,8 @@ class WorkerLogRotate extends WorkerBase
 }' . PHP_EOL;
             $pathConf = '/tmp/' . pathinfo($file)['filename'] . '.conf';
             file_put_contents($pathConf, $textConfig);
-            $logrotatePath = Util::which('logrotate');
-            Processes::mwExec("{$logrotatePath} '{$pathConf}' > /dev/null 2> /dev/null");
+            $logrotate = Util::which('logrotate');
+            Processes::mwExec("$logrotate '$pathConf' > /dev/null 2> /dev/null");
             if (file_exists($pathConf)) {
                 unlink($pathConf);
             }

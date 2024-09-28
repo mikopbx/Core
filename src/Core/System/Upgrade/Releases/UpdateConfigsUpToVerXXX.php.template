@@ -22,7 +22,7 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use Phalcon\Di\Injectable;
 use MikoPBX\Core\System\MikoPBXConfig;
-use Phalcon\Config as ConfigAlias;
+use Phalcon\Config\Config as ConfigAlias;
 
 class UpdateConfigsUpToVerXXX extends Injectable implements UpgradeSystemConfigInterface
 {

@@ -23,18 +23,18 @@ use MikoPBX\Common\Models\DialplanApplications;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Models\PbxSettingsConstants;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
-use Phalcon\Config as ConfigAlias;
+use Phalcon\Config\Config as ConfigAlias;
 use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer2020162 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2020.1.62';
+  	public const string PBX_VERSION = '2020.1.62';
 
     private ConfigAlias $config;
     private MikoPBXConfig $mikoPBXConfig;
@@ -67,18 +67,18 @@ class UpdateConfigsUpToVer2020162 extends Injectable implements UpgradeSystemCon
         $astdb_file = $this->config->path('astDatabase.dbfile');
         if (file_exists($astdb_file)) {
             // С переходом на PJSIP удалим статусы SIP.
-            Processes::mwExec("{$sqlite3Path}  {$astdb_file} 'DELETE FROM astdb WHERE key LIKE \"/UserBuddyStatus/SIP%\"'");
+            Processes::mwExec("$sqlite3Path  $astdb_file 'DELETE FROM astdb WHERE key LIKE \"/UserBuddyStatus/SIP%\"'");
         }
 
         PBX::checkCodec('ilbc', 'iLBC', 'audio');
         PBX::checkCodec('opus', 'Opus Codec', 'audio');
 
-        $PrivateKey = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY);
-        $PublicKey  = $this->mikoPBXConfig->getGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY);
+        $PrivateKey = $this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
+        $PublicKey  = $this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
         if (empty($PrivateKey) || empty($PublicKey)) {
             $certs = Util::generateSslCert();
-            $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PRIVATE_KEY, $certs['PrivateKey']);
-            $this->mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::WEB_HTTPS_PUBLIC_KEY, $certs['PublicKey']);
+            $this->mikoPBXConfig->setGeneralSettings(PbxSettings::WEB_HTTPS_PRIVATE_KEY, $certs['PrivateKey']);
+            $this->mikoPBXConfig->setGeneralSettings(PbxSettings::WEB_HTTPS_PUBLIC_KEY, $certs['PublicKey']);
         }
 
 
@@ -98,7 +98,7 @@ class UpdateConfigsUpToVer2020162 extends Injectable implements UpgradeSystemCon
             $d_app->uniqid           = 'DIALPLAN-APPLICATION-' . md5(time());
 
             if ($d_app->save()) {
-                $extension = Extensions::findFirst("number = '{$app_number}'");
+                $extension = Extensions::findFirst("number = '$app_number'");
                 if ($extension === null) {
                     $extension                    = new Extensions();
                     $extension->number            = $app_number;

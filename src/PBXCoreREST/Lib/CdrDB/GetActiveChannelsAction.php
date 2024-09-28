@@ -22,7 +22,6 @@ namespace MikoPBX\PBXCoreREST\Lib\CdrDB;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Exception;
 use Phalcon\Di\Injectable;
 
 /**
@@ -45,7 +44,7 @@ class GetActiveChannelsAction extends Injectable
 
         try {
             $activeChannels = Util::getAstManager('off')->GetChannels();
-        }catch (Exception $e){
+        }catch (\Throwable $e){
             $res->success = false;
             $res->messages[] = $e->getMessage();
             return $res;

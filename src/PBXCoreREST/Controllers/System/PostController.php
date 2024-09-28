@@ -24,7 +24,7 @@ use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 
 /**
  * System management (POST).
@@ -106,10 +106,10 @@ class PostController extends BaseController
         $mohDir                = $di->getShared('config')->path('asterisk.mohdir');
         switch ($category) {
             case SoundFiles::CATEGORY_MOH:
-                $data['filename'] = "{$mohDir}/" . basename($data['temp_filename']);
+                $data['filename'] = "$mohDir/" . basename($data['temp_filename']);
                 break;
             case SoundFiles::CATEGORY_CUSTOM:
-                $data['filename'] = "{$mediaDir}/" . basename($data['temp_filename']);
+                $data['filename'] = "$mediaDir/" . basename($data['temp_filename']);
                 break;
             default:
                 $this->sendError(Response::BAD_REQUEST, 'Category not set');

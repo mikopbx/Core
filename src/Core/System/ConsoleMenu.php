@@ -23,13 +23,12 @@ use Closure;
 use Exception;
 use LucidFrame\Console\ConsoleTable;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\{Configs\IptablesConf, Configs\NginxConf};
 use MikoPBX\Service\Main;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use PhpSchool\CliMenu\Action\GoBackAction;
 use PhpSchool\CliMenu\Builder\CliMenuBuilder;
 use PhpSchool\CliMenu\CliMenu;
@@ -207,11 +206,9 @@ class ConsoleMenu
                 "[$index] $name",
                 function () use ($language) {
                     $mikoPBXConfig = new MikoPBXConfig();
-                    $mikoPBXConfig->setGeneralSettings(PbxSettingsConstants::SSH_LANGUAGE, $language);
+                    $mikoPBXConfig->setGeneralSettings(PbxSettings::SSH_LANGUAGE, $language);
                     $di = Di::getDefault();
-                    if ($di) {
-                        $di->remove(TranslationProvider::SERVICE_NAME);
-                    }
+                    $di?->remove(TranslationProvider::SERVICE_NAME);
                     $this->start();
                 }
             );
@@ -286,7 +283,7 @@ class ConsoleMenu
             try {
                 $menuBuilder->open();
             } catch (\Throwable $e) {
-                Util::sysLogMsg('ConsoleMenu', $e->getMessage());
+                SystemMessages::sysLogMsg('ConsoleMenu', $e->getMessage());
                 sleep(1);
             }
         }
@@ -424,7 +421,7 @@ class ConsoleMenu
     public function firewallWarning(): string
     {
         // Check if the firewall is disabled
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED) === '0') {
+        if (PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) === '0') {
             return "\033[01;34m (" . Util::translate('Firewall disabled') . ") \033[39m";
         }
         return '';
@@ -514,7 +511,7 @@ class ConsoleMenu
     public function setupFirewall(CliMenu $menu): void
     {
         // Code for firewall optionn
-        $firewall_enable = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED);
+        $firewall_enable = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
 
         if ($firewall_enable === '1') {
             $action = 'disable';
@@ -544,8 +541,8 @@ class ConsoleMenu
             if ('enable' === $action) {
                 $enable = '1';
             }
-            PbxSettings::setValue(PbxSettingsConstants::PBX_FIREWALL_ENABLED, $enable);
-            PbxSettings::setValue(PbxSettingsConstants::PBX_FAIL2BAN_ENABLED, $enable);
+            PbxSettings::setValue(PbxSettings::PBX_FIREWALL_ENABLED, $enable);
+            PbxSettings::setValue(PbxSettings::PBX_FAIL2BAN_ENABLED, $enable);
             IptablesConf::reloadFirewall();
             echo "Firewall is {$action}d...";
         }

@@ -345,7 +345,7 @@ class CallQueuesController extends BaseController
                 ],
             ];
             $queueMembers = CallQueueMembers::find($parameters);
-            if (is_countable($queueMembers) && count($queueMembers) > 1) {
+            if ($queueMembers->count() > 1) {
                 // Remove extra members and create a new one
                 if ($queueMembers->delete() === false) {
                     $errors = $queueMembers->getMessages();
@@ -354,7 +354,7 @@ class CallQueuesController extends BaseController
                     return false;
                 }
                 $queueMember = new CallQueueMembers();
-            } elseif (is_countable($queueMembers) && count($queueMembers) === 1) {
+            } elseif ($queueMembers->count() === 1) {
                 $queueMember = $queueMembers->getFirst();
             } else {
                 $queueMember = new CallQueueMembers();

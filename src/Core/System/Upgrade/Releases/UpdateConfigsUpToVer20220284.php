@@ -26,7 +26,7 @@ use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer20220284 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2022.2.84';
+  	public const string PBX_VERSION = '2022.2.84';
 
 	/**
      * Class constructor.

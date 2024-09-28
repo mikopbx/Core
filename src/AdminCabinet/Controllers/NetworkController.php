@@ -22,7 +22,6 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\NetworkEditForm;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Util;
 
 class NetworkController extends BaseController
@@ -65,12 +64,12 @@ class NetworkController extends BaseController
 
         $this->view->setVars(
             [
-                'SIP_PORT' => PbxSettings::getValueByKey(PbxSettingsConstants::SIP_PORT),
-                'EXTERNAL_SIP_PORT' => PbxSettings::getValueByKey(PbxSettingsConstants::EXTERNAL_SIP_PORT),
-                'TLS_PORT' => PbxSettings::getValueByKey(PbxSettingsConstants::TLS_PORT),
-                'EXTERNAL_TLS_PORT' => PbxSettings::getValueByKey(PbxSettingsConstants::EXTERNAL_TLS_PORT),
-                'RTP_PORT_FROM' => PbxSettings::getValueByKey(PbxSettingsConstants::RTP_PORT_FROM),
-                'RTP_PORT_TO' => PbxSettings::getValueByKey(PbxSettingsConstants::RTP_PORT_TO),
+                'SIP_PORT' => PbxSettings::getValueByKey(PbxSettings::SIP_PORT),
+                'EXTERNAL_SIP_PORT' => PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_PORT),
+                'TLS_PORT' => PbxSettings::getValueByKey(PbxSettings::TLS_PORT),
+                'EXTERNAL_TLS_PORT' => PbxSettings::getValueByKey(PbxSettings::EXTERNAL_TLS_PORT),
+                'RTP_PORT_FROM' => PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM),
+                'RTP_PORT_TO' => PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO),
                 'form' => $form,
                 'eths' => $arrEth,
                 'deletableEths' => $deletableInterfaces,
@@ -254,18 +253,18 @@ class NetworkController extends BaseController
         $messages = [];
         foreach ($data as $key => $value) {
             switch ($key) {
-                case PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP:
+                case PbxSettings::AUTO_UPDATE_EXTERNAL_IP:
                     PbxSettings::setValue($key, $value === 'on' ? '1' : '0', $messages);
                     break;
-                case PbxSettingsConstants::EXTERNAL_SIP_PORT:
+                case PbxSettings::EXTERNAL_SIP_PORT:
                     if (empty($value)) {
-                        $value = PbxSettings::getValueByKey(PbxSettingsConstants::SIP_PORT);
+                        $value = PbxSettings::getValueByKey(PbxSettings::SIP_PORT);
                     }
                     PbxSettings::setValue($key, trim($value), $messages);
                     break;
-                case PbxSettingsConstants::EXTERNAL_TLS_PORT:
+                case PbxSettings::EXTERNAL_TLS_PORT:
                     if (empty($value)) {
-                        $value = PbxSettings::getValueByKey(PbxSettingsConstants::TLS_PORT);
+                        $value = PbxSettings::getValueByKey(PbxSettings::TLS_PORT);
                     }
                     PbxSettings::setValue($key, trim($value), $messages);
                     break;

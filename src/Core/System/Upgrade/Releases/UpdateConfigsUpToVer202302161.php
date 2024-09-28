@@ -22,14 +22,13 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemConfigInterface
 {
-    public const PBX_VERSION = '2023.2.161';
+    public const string PBX_VERSION = '2023.2.161';
 
     /**
      * Class constructor.
@@ -91,7 +90,7 @@ class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemC
      *
      * @return void
      */
-    private function createParkingSlots()
+    private function createParkingSlots(): void
     {
         // Delete all parking slots
         $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
@@ -105,9 +104,9 @@ class UpdateConfigsUpToVer202302161 extends Injectable implements UpgradeSystemC
             }
         }
 
-        $startSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_START_SLOT));
-        $endSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_END_SLOT));
-        $reservedSlot = intval(PbxSettings::getValueByKey(PbxSettingsConstants::PBX_CALL_PARKING_EXT));
+        $startSlot = intval(PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_START_SLOT));
+        $endSlot = intval(PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_END_SLOT));
+        $reservedSlot = intval(PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_EXT));
 
         // Create an array of new numbers
         $numbers = range($startSlot, $endSlot);

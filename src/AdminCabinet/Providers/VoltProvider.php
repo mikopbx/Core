@@ -26,7 +26,6 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Mvc\Dispatcher;
 use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
 
 /**
@@ -36,7 +35,7 @@ use Phalcon\Mvc\View\Engine\Volt as VoltEngine;
  */
 class VoltProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'volt';
+    public const string SERVICE_NAME = 'volt';
 
     /**
      * Register volt service provider
@@ -62,7 +61,7 @@ class VoltProvider implements ServiceProviderInterface
                 $compiler->addFunction('in_array', 'in_array');
                 $compiler->addFunction('is_a', 'is_a');
                 $compiler->addFunction('count', function ($key) {
-                    return "count({$key})";
+                    return "count($key)";
                 });
 
                 if ($appConfig->debugMode === true) {

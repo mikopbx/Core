@@ -28,6 +28,7 @@ require_once 'Globals.php';
  *
  * @param string $EXTEN The extension to retrieve active channels for.
  * @return string An associative array where the key is the Linkedid and the value is an array of channels.
+ * @throws Exception
  */
 function getActiveIdChannels(string $EXTEN):string
 {

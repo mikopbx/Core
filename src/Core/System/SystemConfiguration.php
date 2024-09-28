@@ -20,7 +20,8 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Providers\ConfigProvider;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * SystemConfiguration class
@@ -28,10 +29,10 @@ use Phalcon\Di;
  * @package MikoPBX\Core\System
  *
  */
-class SystemConfiguration extends Di\Injectable
+class SystemConfiguration extends Injectable
 {
     private string $configDBPath='';
-    private const DEFAULT_CONFIG_DB = '/conf.default/mikopbx.db';
+    private const string DEFAULT_CONFIG_DB = '/conf.default/mikopbx.db';
 
     public function __construct()
     {
@@ -73,7 +74,7 @@ class SystemConfiguration extends Di\Injectable
             $sqlite3= Util::which('sqlite3');
 
             SystemMessages::echoToTeletype("    - Restore $lastBackUp ...".PHP_EOL, true);
-            shell_exec("$rm -rf {$confFile}*");
+            shell_exec("$rm -rf $confFile*");
             shell_exec("$gzip -c -d $lastBackUp | sqlite3 $confFile");
             Processes::mwExec("$sqlite3 $confFile 'select * from m_Storage'", $out, $ret);
             if($ret !== 0){

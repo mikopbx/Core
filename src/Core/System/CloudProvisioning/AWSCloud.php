@@ -26,7 +26,7 @@ use MikoPBX\Core\System\SystemMessages;
 
 class AWSCloud extends CloudProvider
 {
-    public const CloudID = 'AWSCloud';
+    public const string CloudID = 'AWSCloud';
 
     private Client $client;
 

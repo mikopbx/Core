@@ -37,10 +37,10 @@ class ActionHangupChanMeetme
      * Executes the hangup channel action for a MeetMe conference.
      *
      * @param WorkerCallEvents $worker The worker instance.
-     * @param mixed $data The data containing call details.
+     * @param array $data The data containing call details.
      * @return void
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         clearstatcache();
         $recordingfile = '';
@@ -98,7 +98,7 @@ class ActionHangupChanMeetme
             }
             $res = $row->save();
             if (!$res) {
-                Util::sysLogMsg('Action_hangup_chan_meetme', implode(' ', $row->getMessages()), LOG_DEBUG);
+                SystemMessages::sysLogMsg('Action_hangup_chan_meetme', implode(' ', $row->getMessages()), LOG_DEBUG);
             }
         }
     }

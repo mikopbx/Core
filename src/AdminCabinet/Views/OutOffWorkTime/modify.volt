@@ -1,4 +1,4 @@
-{{ form('out-off-work-time/save', 'role': 'form', 'class': 'ui large form', 'id':'save-outoffwork-form') }}
+{{ form(['action' : 'out-off-work-time/save', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'save-outoffwork-form']) }}
 {{ form.render('id') }}
 <input type="hidden" name="serverOffset" id="serverOffset" value="{{ serverOffset }}"/>
 <div class="field max-width-800">
@@ -194,4 +194,4 @@
     ['arrayOfPartials':hookVoltBlock('AdditionalTab')]) }}
 
 {{ partial("partials/submitbutton",['indexurl':'out-off-work-time/index/']) }}
-{{ end_form() }}
+{{ close('form') }}

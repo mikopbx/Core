@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@ namespace MikoPBX\Core\Workers\Cron;
 
 require_once 'Globals.php';
 
-use Generator;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, SystemMessages, Util};
@@ -39,7 +38,6 @@ use MikoPBX\Core\Workers\WorkerPrepareAdvice;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
-use Recoil\React\ReactKernel;
 use Throwable;
 
 /**
@@ -52,10 +50,10 @@ use Throwable;
 class WorkerSafeScriptsCore extends WorkerBase
 {
     // Constants to denote the methods of checking workers' statuses.
-    public const CHECK_BY_BEANSTALK = 'checkWorkerBeanstalk';
+    public const string CHECK_BY_BEANSTALK = 'checkWorkerBeanstalk';
 
-    public const CHECK_BY_AMI = 'checkWorkerAMI';
-    public const CHECK_BY_PID_NOT_ALERT = 'checkPidNotAlert';
+    public const string CHECK_BY_AMI = 'checkWorkerAMI';
+    public const string CHECK_BY_PID_NOT_ALERT = 'checkPidNotAlert';
 
     /**
      * Restarts all registered workers.
@@ -67,17 +65,30 @@ class WorkerSafeScriptsCore extends WorkerBase
         // Prepare the list of workers to be restarted.
         $arrWorkers = $this->prepareWorkersList();
 
-        // Start the parallel execution of restart for all the workers.
-        ReactKernel::start(
-            function () use ($arrWorkers) {
-                // Parallel execution https://github.com/recoilphp/recoil
-                foreach ($arrWorkers as $workersWithCurrentType) {
-                    foreach ($workersWithCurrentType as $worker) {
-                        yield $this->restartWorker($worker);
+        // Asynchronously restart all workers using pcntl_fork.
+        foreach ($arrWorkers as $workersWithCurrentType) {
+            foreach ($workersWithCurrentType as $worker) {
+                $pid = pcntl_fork();
+                if ($pid == -1) {
+                    // Error during fork.
+                    throw new \RuntimeException("Failed to fork process");
+                } elseif ($pid == 0) {
+                    // Child process.
+                    try {
+                        $this->restartWorker($worker);
+                    } catch (Throwable $e) {
+                        CriticalErrorsHandler::handleExceptionWithSyslog($e);
                     }
+                    exit(0); // Exit the child process.
                 }
+                // Parent process continues the loop.
             }
-        );
+        }
+
+        // Optionally, wait for all child processes to finish.
+        while (pcntl_waitpid(0, $status) != -1) {
+            // You can process the status if needed.
+        }
     }
 
     /**
@@ -116,8 +127,7 @@ class WorkerSafeScriptsCore extends WorkerBase
 
         // Get the list of module workers.
         $arrModulesWorkers = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::GET_MODULE_WORKERS);
-        $arrModulesWorkers = array_values($arrModulesWorkers);
-        $arrModulesWorkers = array_merge(...$arrModulesWorkers);
+        $arrModulesWorkers = array_merge(...array_values($arrModulesWorkers));
 
         // If there are module workers, add them to the workers' list.
         if (!empty($arrModulesWorkers)) {
@@ -131,7 +141,7 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
 
     /**
-     * Starts all workers or checks them.
+     * Starts or checks all workers.
      *
      * @param array $argv The command-line arguments passed to the worker.
      *
@@ -145,34 +155,47 @@ class WorkerSafeScriptsCore extends WorkerBase
         // Prepare the list of workers to be started.
         $arrWorkers = $this->prepareWorkersList();
 
-        // Start the parallel execution for starting or checking all workers.
-        ReactKernel::start(
-            function () use ($arrWorkers) {
-                // Parallel execution https://github.com/recoilphp/recoil
-                foreach ($arrWorkers as $workerType => $workersWithCurrentType) {
-                    foreach ($workersWithCurrentType as $worker) {
+        // Asynchronously start or check all workers using pcntl_fork.
+        foreach ($arrWorkers as $workerType => $workersWithCurrentType) {
+            foreach ($workersWithCurrentType as $worker) {
+                $pid = pcntl_fork();
+                if ($pid == -1) {
+                    // Error during fork.
+                    throw new \RuntimeException("Failed to fork process");
+                } elseif ($pid == 0) {
+                    // Child process.
+                    try {
                         if ($workerType === self::CHECK_BY_BEANSTALK) {
-                            yield $this->checkWorkerBeanstalk($worker);
+                            $this->checkWorkerBeanstalk($worker);
                         } elseif ($workerType === self::CHECK_BY_PID_NOT_ALERT) {
-                            yield $this->checkPidNotAlert($worker);
+                            $this->checkPidNotAlert($worker);
                         } elseif ($workerType === self::CHECK_BY_AMI) {
-                            yield $this->checkWorkerAMI($worker);
+                            $this->checkWorkerAMI($worker);
                         }
+                    } catch (Throwable $e) {
+                        CriticalErrorsHandler::handleExceptionWithSyslog($e);
                     }
+                    exit(0); // Exit the child process.
                 }
+                // Parent process continues the loop.
             }
-        );
+        }
+
+        // Optionally, wait for all child processes to finish.
+        while (pcntl_waitpid(0, $status) != -1) {
+            // You can process the status if needed.
+        }
     }
 
     /**
-     * Pings a worker to check if it is dead. If it is, it is killed and started again.
+     * Checks a worker via Beanstalk and restarts it if it is unresponsive.
      * Uses Beanstalk queue to send ping and check workers.
      *
      * @param string $workerClassName The class name of the worker.
      *
-     * @return Generator|null
+     * @return void
      */
-    public function checkWorkerBeanstalk(string $workerClassName): ?Generator
+    public function checkWorkerBeanstalk(string $workerClassName): void
     {
         // Check if the worker is alive. If not, restart it.
         // The check is done by pinging the worker using a Beanstalk queue.
@@ -181,37 +204,34 @@ class WorkerSafeScriptsCore extends WorkerBase
             $WorkerPID = Processes::getPidOfProcess($workerClassName);
             $result = false;
             if ($WorkerPID !== '') {
-                // We had service PID, so we will ping it
+                // Ping the worker via Beanstalk queue.
                 $queue = new BeanstalkClient($this->makePingTubeName($workerClassName));
-                // Check service with higher priority
                 [$result] = $queue->sendRequest('ping', 5, 1);
             }
             if (false === $result) {
                 Processes::processPHPWorker($workerClassName);
-                SystemMessages::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
+                SystemMessages::sysLogMsg(__METHOD__, "Service $workerClassName started.", LOG_NOTICE);
             }
             $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 10) {
                 SystemMessages::sysLogMsg(
                     __METHOD__,
-                    "WARNING: Service {$workerClassName} processed more than {$timeElapsedSecs} seconds",
-                    LOG_WARNING
+                    "WARNING: Service $workerClassName processed more than $timeElapsedSecs seconds"
                 );
             }
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
-        yield;
     }
 
     /**
-     * Checks the PID worker and starts it if it died.
+     * Checks the worker by PID and restarts it if it has terminated.
      *
      * @param string $workerClassName The class name of the worker.
      *
-     * @return Generator|null
+     * @return void
      */
-    public function checkPidNotAlert(string $workerClassName): Generator
+    public function checkPidNotAlert(string $workerClassName): void
     {
         // Check if the worker is alive based on its PID. If not, restart it.
         $start = microtime(true);
@@ -224,23 +244,21 @@ class WorkerSafeScriptsCore extends WorkerBase
         if ($timeElapsedSecs > 10) {
             SystemMessages::sysLogMsg(
                 __CLASS__,
-                "WARNING: Service {$workerClassName} processed more than {$timeElapsedSecs} seconds",
-                LOG_WARNING
+                "WARNING: Service $workerClassName processed more than $timeElapsedSecs seconds"
             );
         }
-        yield;
     }
 
     /**
-     * Pings a worker to check if it is dead. If it is, it is killed and started again.
+     * Checks the worker by PID and restarts it if it has terminated.
      * Uses AMI UserEvent to send ping and check workers.
      *
      * @param string $workerClassName The class name of the worker.
      * @param int $level The recursion level.
      *
-     * @return Generator|null
+     * @return void
      */
-    public function checkWorkerAMI(string $workerClassName, int $level = 0): ?Generator
+    public function checkWorkerAMI(string $workerClassName, int $level = 0): void
     {
         // Check if the worker is alive. If not, restart it.
         // The check is done by pinging the worker using an AMI UserEvent.
@@ -249,49 +267,42 @@ class WorkerSafeScriptsCore extends WorkerBase
             $res_ping = false;
             $WorkerPID = Processes::getPidOfProcess($workerClassName);
             if ($WorkerPID !== '') {
-                // We have the service PID, so we will ping it
+                // Ping the worker via AMI.
                 $am = Util::getAstManager();
                 $res_ping = $am->pingAMIListener($this->makePingTubeName($workerClassName));
                 if (false === $res_ping) {
-                    SystemMessages::sysLogMsg(__METHOD__, 'Restart...', LOG_ERR);
+                    SystemMessages::sysLogMsg(__METHOD__, 'Restarting...', LOG_ERR);
                 }
             }
 
             if ($res_ping === false && $level < 10) {
                 Processes::processPHPWorker($workerClassName);
-                SystemMessages::sysLogMsg(__METHOD__, "Service {$workerClassName} started.", LOG_NOTICE);
-                // Wait 1 second while service will be ready to listen requests
-                sleep(1);
+                SystemMessages::sysLogMsg(__METHOD__, "Service $workerClassName started.", LOG_NOTICE);
+                sleep(1); // Wait 1 second while the service becomes ready to receive requests.
 
-                // Check service again
+                // Recheck the service.
                 $this->checkWorkerAMI($workerClassName, $level + 1);
             }
             $timeElapsedSecs = round(microtime(true) - $start, 2);
             if ($timeElapsedSecs > 10) {
                 SystemMessages::sysLogMsg(
                     __METHOD__,
-                    "WARNING: Service {$workerClassName} processed more than {$timeElapsedSecs} seconds",
-                    LOG_WARNING
+                    "WARNING: Service $workerClassName processed more than $timeElapsedSecs seconds"
                 );
             }
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
-        yield;
     }
 
     /**
      * Restarts a worker by class name.
      *
      * @param string $workerClassName The class name of the worker.
-     *
-     * @return Generator|null
      */
-    public function restartWorker(string $workerClassName): ?Generator
+    public function restartWorker(string $workerClassName): void
     {
-        // Restart the worker and yield control back to the calling code.
         Processes::processPHPWorker($workerClassName, 'start', 'restart');
-        yield;
     }
 }
 
@@ -301,10 +312,10 @@ try {
 
     // If command-line arguments are provided, set the process title and check for active processes.
     if (isset($argv) && count($argv) > 1) {
-        cli_set_process_title("{$workerClassname} {$argv[1]}");
-        $activeProcesses = Processes::getPidOfProcess("{$workerClassname} {$argv[1]}", posix_getpid());
+        cli_set_process_title("$workerClassname $argv[1]");
+        $activeProcesses = Processes::getPidOfProcess("$workerClassname $argv[1]", posix_getpid());
         if (!empty($activeProcesses)) {
-            SystemMessages::sysLogMsg($workerClassname, "WARNING: Other started process {$activeProcesses} with parameter: {$argv[1]} is working now...", LOG_DEBUG);
+            SystemMessages::sysLogMsg($workerClassname, "WARNING: Other started process $activeProcesses with parameter: $argv[1] is working now...", LOG_DEBUG);
             return;
         }
         $worker = new $workerClassname();

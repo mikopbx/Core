@@ -20,7 +20,6 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di\Injectable;
 
@@ -34,7 +33,7 @@ use Phalcon\Di\Injectable;
 class SentryConf extends Injectable
 {
 
-    public const CONF_FILE = '/var/etc/sentry.conf';
+    public const string CONF_FILE = '/var/etc/sentry.conf';
 
     /**
      * Sets up the Sentry conf file.
@@ -43,7 +42,7 @@ class SentryConf extends Injectable
      */
     public function configure(): void
     {
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::SEND_METRICS) === '1') {
+        if (PbxSettings::getValueByKey(PbxSettings::SEND_METRICS) === '1') {
             touch(self::CONF_FILE);
 
             $sentryConfig = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('sentry');
@@ -58,7 +57,7 @@ class SentryConf extends Injectable
             // Set 'release' option if /etc/version file exists
             if (file_exists('/etc/version')) {
                 $pbxVersion    = str_replace("\n", "", file_get_contents('/etc/version', false));
-                $options['release']="mikopbx@{$pbxVersion}";
+                $options['release']="mikopbx@$pbxVersion";
             }
             $conf = json_encode($options,JSON_PRETTY_PRINT);
 

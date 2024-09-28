@@ -21,7 +21,6 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetExternalIpInfoAction;
 use Phalcon\Di\Injectable;
@@ -36,7 +35,7 @@ use Throwable;
  */
 class Network extends Injectable
 {
-    public const INTERNET_FLAG_FILE = '/var/etc/internet_flag';
+    public const string INTERNET_FLAG_FILE = '/var/etc/internet_flag';
 
     /**
      * Starts the SIP dump process.
@@ -50,14 +49,14 @@ class Network extends Injectable
         }
 
         Processes::killByName('pcapsipdump');
-        $log_dir = System::getLogDir() . '/pcapsipdump';
+        $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/pcapsipdump';
         Util::mwMkdir($log_dir);
 
         $network = new Network();
         $arr_eth = $network->getInterfacesNames();
         $pcapsipdumpPath = Util::which('pcapsipdump');
         foreach ($arr_eth as $eth) {
-            $pid_file = "/var/run/pcapsipdump_{$eth}.pid";
+            $pid_file = "/var/run/pcapsipdump_$eth.pid";
             Processes::mwExecBg(
                 $pcapsipdumpPath . ' -T 120 -P ' . $pid_file . ' -i ' . $eth . ' -m \'^(INVITE|REGISTER)$\' -L ' . $log_dir . '/dump.db'
             );
@@ -71,15 +70,15 @@ class Network extends Injectable
      */
     public function getInterfacesNames(): array
     {
-        $grepPath = Util::which('grep');
-        $awkPath = Util::which('awk');
+        $grep = Util::which('grep');
+        $awk = Util::which('awk');
         if (Util::isDocker()) {
-            $ifconfigPath = Util::which('ifconfig');
-            $command = "{$ifconfigPath} | {$grepPath} -o -E '^[a-zA-Z0-9]+' | {$grepPath} -v 'lo'";
+            $ifconfig = Util::which('ifconfig');
+            $command = "$ifconfig | $grep -o -E '^[a-zA-Z0-9]+' | $grep -v 'lo'";
         } else {
             // Universal command to retrieve all PCI network interfaces.
-            $lsPath = Util::which('ls');
-            $command = "{$lsPath} -l /sys/class/net | {$grepPath} devices | {$grepPath} -v virtual | {$awkPath} '{ print $9 }'";
+            $ls = Util::which('ls');
+            $command = "$ls -l /sys/class/net | $grep devices | $grep -v virtual | $awk '{ print $9 }'";
         }
         Processes::mwExec($command, $names);
         return $names;
@@ -203,7 +202,7 @@ class Network extends Injectable
             $eth_settings = LanInterfaces::findFirst("disabled='0'");
             if ($eth_settings !== null) {
                 $eth_settings->internet = '1';
-                if (PbxSettings::getValueByKey(PbxSettingsConstants::ENABLE_USE_NAT)==='1'){
+                if (PbxSettings::getValueByKey(PbxSettings::ENABLE_USE_NAT)==='1'){
                     $eth_settings->topology=LanInterfaces::TOPOLOGY_PRIVATE;
                 }
                 $eth_settings->save();
@@ -262,7 +261,7 @@ class Network extends Injectable
      */
     public function disableLanInterface(string $name): void
     {
-        $if_data = LanInterfaces::findFirst("interface = '{$name}'");
+        $if_data = LanInterfaces::findFirst("interface = '$name'");
         if ($if_data !== null) {
             $if_data->internet = 0;
             $if_data->disabled = 1;
@@ -331,7 +330,7 @@ class Network extends Injectable
             if (!isset($data[$key]) || (string)$value === (string)$data[$key]) {
                 continue;
             }
-            SystemMessages::sysLogMsg(__METHOD__, "Find new network settings: {$key} changed {$value}=>{$data[$key]}");
+            SystemMessages::sysLogMsg(__METHOD__, "Find new network settings: $key changed $value=>$data[$key]");
             $isChange = true;
         }
         return $isChange;
@@ -423,7 +422,7 @@ class Network extends Injectable
      */
     public function updateExternalIp(): void
     {
-        if (PbxSettings::getValueByKey(PbxSettingsConstants::AUTO_UPDATE_EXTERNAL_IP)!=='1'){
+        if (PbxSettings::getValueByKey(PbxSettings::AUTO_UPDATE_EXTERNAL_IP)!=='1'){
             return;
         }
         $ipInfoResult = GetExternalIpInfoAction::main();
@@ -435,7 +434,7 @@ class Network extends Injectable
                 if ($oldExtIp !== $currentIP) {
                     $lan->extipaddr = $currentIP;
                     if ($lan->save()) {
-                        SystemMessages::sysLogMsg(__METHOD__, "External IP address updated for interface {$lan->interface}");
+                        SystemMessages::sysLogMsg(__METHOD__, "External IP address updated for interface $lan->interface");
                     }
                 }
             }
@@ -477,17 +476,17 @@ class Network extends Injectable
                 /**
                  * Stop networking using systemctl (systemd-based systems).
                  */
-                $systemctlPath = Util::which('systemctl');
-                Processes::mwExec("{$systemctlPath} stop networking");
+                $systemctl = Util::which('systemctl');
+                Processes::mwExec("$systemctl stop networking");
             } else {
                 /**
                  * Stop networking on T2SDE (non-systemd) systems.
                  */
                 $if_list = $this->getInterfaces();
                 $arr_commands = [];
-                $ifconfigPath = Util::which('ifconfig');
+                $ifconfig = Util::which('ifconfig');
                 foreach ($if_list as $if_name => $data) {
-                    $arr_commands[] = "{$ifconfigPath} $if_name down";
+                    $arr_commands[] = "$ifconfig $if_name down";
                 }
 
                 /**
@@ -537,7 +536,7 @@ class Network extends Injectable
             $named_dns[] = $ns;
 
             // Append the DNS server to resolv.conf
-            $resolv_conf .= "nameserver {$ns}\n";
+            $resolv_conf .= "nameserver $ns\n";
         }
 
         // If no DNS servers were found, use default ones and add them to named_dns
@@ -562,8 +561,8 @@ class Network extends Injectable
             file_put_contents('/etc/systemd/resolved.conf', $s_resolv_conf);
 
             // Restart systemd-resolved service
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("{$systemctlPath} restart systemd-resolved");
+            $systemctl = Util::which('systemctl');
+            Processes::mwExec("$systemctl restart systemd-resolved");
         } else {
             // Write resolv.conf content to the file
             file_put_contents('/etc/resolv.conf', $resolv_conf);
@@ -675,8 +674,8 @@ class Network extends Injectable
         if ($savedConf !== $conf) {
             file_put_contents($pdnsdConfFile, $conf);
         }
-        $pdnsdPath = Util::which('pdnsd');
-        $pid = Processes::getPidOfProcess($pdnsdPath);
+        $pdnsd = Util::which('pdnsd');
+        $pid = Processes::getPidOfProcess($pdnsd);
 
         // Check if pdnsd process is running and the configuration has not changed
         if (!empty($pid) && $savedConf === $conf) {
@@ -698,7 +697,7 @@ class Network extends Injectable
         }
 
         // Start the pdnsd service with the updated configuration
-        Processes::mwExec("{$pdnsdPath} -c /etc/pdnsd.conf -4");
+        Processes::mwExec("$pdnsd -c /etc/pdnsd.conf -4");
     }
 
     /**
@@ -770,13 +769,13 @@ class Network extends Injectable
                  * -q - exit after obtaining lease.
                  * -n - exit if lease is not obtained.
                  */
-                $pid_file = "/var/run/udhcpc_{$if_name}";
+                $pid_file = "/var/run/udhcpc_$if_name";
                 $pid_pcc = Processes::getPidOfProcess($pid_file);
                 if (!empty($pid_pcc) && file_exists($pid_file)) {
                     // Terminate the old udhcpc process
                     $kill = Util::which('kill');
                     $cat = Util::which('cat');
-                    system("$kill `$cat {$pid_file}` {$pid_pcc}");
+                    system("$kill `$cat $pid_file` $pid_pcc");
                 }
                 $udhcpc = Util::which('udhcpc');
                 $nohup = Util::which('nohup');
@@ -787,7 +786,7 @@ class Network extends Injectable
                 $arr_commands[] = "$udhcpc $options -i $if_name -x hostname:$hostname -s $workerPath";
                 // Start a new udhcpc process in the background
                 $options = '-t 6 -T 5 -S -b -n';
-                $arr_commands[] = "$nohup $udhcpc $options -p {$pid_file} -i $if_name -x hostname:$hostname -s $workerPath 2>&1 &";
+                $arr_commands[] = "$nohup $udhcpc $options -p $pid_file -i $if_name -x hostname:$hostname -s $workerPath 2>&1 &";
                 /*
                    udhcpc - utility for configuring the interface
                           - configures /etc/resolv.conf
@@ -841,7 +840,7 @@ class Network extends Injectable
         $this->hostsGenerate();
 
         foreach ($eth_mtu as $eth) {
-            Processes::mwExecBg("/etc/rc/networking_set_mtu '{$eth}'");
+            Processes::mwExecBg("/etc/rc/networking_set_mtu '$eth'");
         }
 
         // Additional "manual" routes
@@ -898,7 +897,7 @@ class Network extends Injectable
         if (empty($interface)) {
             $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}'";
         } else {
-            $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}' | $grep '{$interface}'";
+            $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}' | $grep '$interface'";
         }
         $arr_commands = [];
         Processes::mwExec($command, $arr_commands);
@@ -923,7 +922,7 @@ class Network extends Injectable
         }
         if (!empty($data)) {
             $openvpn = Util::which('openvpn');
-            Processes::mwExecBg("$openvpn --config /etc/openvpn.ovpn --writepid {$pidFile}", '/dev/null', 5);
+            Processes::mwExecBg("$openvpn --config /etc/openvpn.ovpn --writepid $pidFile", '/dev/null', 5);
         }
     }
 

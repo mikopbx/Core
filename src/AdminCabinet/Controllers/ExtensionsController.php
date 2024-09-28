@@ -122,31 +122,31 @@ class ExtensionsController extends BaseController
         $searchPhrase = mb_strtolower($searchPhrase, 'UTF-8');
 
         // Determine the condition based on specific keywords in the search phrase
-        if (strpos($searchPhrase, 'id:') === 0) {
+        if (str_starts_with($searchPhrase, 'id:')) {
             // If the search phrase starts with 'id:', search by Extensions.id with exact match
             $id = substr($searchPhrase, 3); // Remove 'id:' prefix
             $parameters['conditions'] = 'Extensions.id = :SearchId:';
             $parameters['bind']['SearchId'] = (int) $id; // Cast ID to an integer for safety
-        } elseif (strpos($searchPhrase, 'email:') === 0) {
+        } elseif (str_starts_with($searchPhrase, 'email:')) {
             // If the search phrase starts with 'email:', search by User.email using a LIKE query
             $email = substr($searchPhrase, 6); // Remove 'email:' prefix
             $parameters['conditions'] = 'Users.email LIKE :SearchEmail:';
-            $parameters['bind']['SearchEmail'] = "%{$email}%"; // Use partial matching for email
-        } elseif (strpos($searchPhrase, 'number:') === 0) {
+            $parameters['bind']['SearchEmail'] = "%$email%"; // Use partial matching for email
+        } elseif (str_starts_with($searchPhrase, 'number:')) {
             // If the search phrase starts with 'number:', search by Extensions.number using a query
             $number = substr($searchPhrase, 7); // Remove 'number:' prefix
             $parameters['conditions'] = 'Extensions.number = :SearchNumber:';
             $parameters['bind']['SearchNumber'] = $number;
-        } elseif (strpos($searchPhrase, 'mobile:') === 0) {
+        } elseif (str_starts_with($searchPhrase, 'mobile:')) {
             // If the search phrase starts with 'mobile:', search by ExternalExtensions.mobile using a LIKE query$mobile = substr($searchPhrase, 7); // Remove 'mobile:' prefix
             $mobile = substr($searchPhrase, 7); // Remove 'number:' prefix
             $mobile = preg_replace('/\D/', '', $mobile); // Remove all non-digit characters
             $parameters['conditions'] = 'ExternalExtensions.number LIKE :SearchMobile:';
-            $parameters['bind']['SearchMobile'] = "%{$mobile}%"; // Use partial matching for mobile number
+            $parameters['bind']['SearchMobile'] = "%$mobile%"; // Use partial matching for mobile number
         } else {
             // Default case: if no specific keyword is found, search by search_index field using a LIKE query
             $parameters['conditions'] = 'Extensions.search_index LIKE :SearchPhrase:';
-            $parameters['bind']['SearchPhrase'] = "%{$searchPhrase}%"; // Use partial matching for the general search phrase
+            $parameters['bind']['SearchPhrase'] = "%$searchPhrase%"; // Use partial matching for the general search phrase
         }
     }
 
@@ -255,11 +255,11 @@ class ExtensionsController extends BaseController
             if ($userData['avatar']) {
                 $filename = md5($userData['avatar']);
                 $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-                $imgFile = "{$imgCacheDir}/$filename.jpg";
+                $imgFile = "$imgCacheDir/$filename.jpg";
                 if (!file_exists($imgFile)) {
                     $this->base64ToJpegFile($userData['avatar'], $imgFile);
                 }
-                $userData['avatar'] = "{$this->url->get()}assets/img/cache/{$filename}.jpg";
+                $userData['avatar'] = "{$this->url->get()}assets/img/cache/$filename.jpg";
             } else {
                 $userData['avatar'] = "{$this->url->get()}assets/img/unknownPerson.jpg";
             }

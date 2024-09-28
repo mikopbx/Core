@@ -183,7 +183,7 @@ class OutgoingContext extends AsteriskConfigClass
      * @param array $rout The routing data.
      * @return string The generated configuration string.
      */
-    private function generateOutgoingRegexPattern($rout): string
+    private function generateOutgoingRegexPattern(array $rout): string
     {
         $conf         = '';
         $regexPattern = '';
@@ -215,10 +215,10 @@ class OutgoingContext extends AsteriskConfigClass
      * @param string $id_dialplan The ID of the dialplan.
      * @param array $rout The routing data.
      */
-    private function generateProviderContext(string &$conf, $id_dialplan, array $rout): void
+    private function generateProviderContext(string &$conf, string $id_dialplan, array $rout): void
     {
         // Add context header
-        $conf .= "\n[{$id_dialplan}]\n";
+        $conf .= "\n[$id_dialplan]\n";
 
         // Initialize variables for extensionVar and changeExtension
         [$extensionVar, $changeExtension] = $this->initTrimVariables($rout);

@@ -3,7 +3,7 @@
     "description": "Free PBX system for SMB based on Asterisk",
     "homepage": "https://www.mikopbx.com",
     "require": {
-        "php": "^7.4",
+        "php": "^8.3",
         "ext-curl": "*",
         "ext-iconv": "*",
         "ext-json": "*",
@@ -11,12 +11,13 @@
         "ext-openssl": "*",
         "ext-pcntl": "*",
         "ext-pdo": "*",
-        "ext-phalcon": "^4.1.0",
+        "ext-phalcon": "^5.7.0",
         "ext-posix": "*",
         "ext-simplexml": "*",
         "ext-sockets": "*",
         "ext-sqlite3": "*",
         "ext-zip": "*",
+        "ext-mailparse": "*",
         "filp/whoops": "^2.15.2",
         "guzzlehttp/guzzle": "^7.5.3",
         "malkusch/lock": "*",
@@ -27,19 +28,17 @@
         "phplucidframe/console-table": "^1.2",
         "phpmailer/phpmailer": "^6.1",
         "psr/log": "^1.0.1",
-        "recoil/react": "^1.0",
-        "recoil/recoil": "^1.0",
         "repejota/nats": "0.8.4",
         "sentry/sdk": "^3.3.0"
     },
     "require-dev": {
         "ext-xdebug": "*",
         "roave/security-advisories": "dev-master",
-        "phpunit/phpunit-selenium": "^8.0",
+        "phpunit/phpunit-selenium": "^9.0",
         "php-webdriver/webdriver": "^1.14.0",
         "browserstack/browserstack-local": "^v1.1.0",
-        "blackfire/php-sdk": "^v1.33.0",
-        "phalcon/incubator-test": "v1.0.0-alpha.1"
+        "phpunit/phpunit": "^9.0",
+        "phalcon/ide-stubs": "^5.0.0"
     },
     "autoload": {
         "psr-4": {
@@ -94,7 +93,7 @@
     "config": {
         "sort-packages": true,
         "platform": {
-            "php": "7.4.6"
+            "php": "8.3"
         },
         "allow-plugins": {
             "php-http/discovery": true

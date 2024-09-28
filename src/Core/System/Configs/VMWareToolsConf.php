@@ -52,9 +52,9 @@ class VMWareToolsConf
             Util::mwMkdir($dirVM);
         }
 
-        file_put_contents("{$dirVM}/tools.conf", $conf);
-        $vmtoolsdPath = Util::which('vmtoolsd');
-        $result = Processes::mwExec("{$vmtoolsdPath} --background=/var/run/vmtoolsd.pid > /dev/null 2> /dev/null");
+        file_put_contents("$dirVM/tools.conf", $conf);
+        $vmtoolsd = Util::which('vmtoolsd');
+        $result = Processes::mwExec("$vmtoolsd --background=/var/run/vmtoolsd.pid > /dev/null 2> /dev/null");
 
         return $result === 0;
     }

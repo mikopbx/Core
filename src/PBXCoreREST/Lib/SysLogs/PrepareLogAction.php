@@ -23,14 +23,15 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerMakeLogFilesArchive;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  * Stops tcpdump and starts creating a log files archive for download.
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class PrepareLogAction extends \Phalcon\Di\Injectable
+class PrepareLogAction extends Injectable
 {
     /**
      * Stops tcpdump and starts creating a log files archive for download.
@@ -60,11 +61,11 @@ class PrepareLogAction extends \Phalcon\Di\Injectable
             Processes::killByName('timeout');
             Processes::killByName('tcpdump');
         }
-        $settings_file = "{$temp_dir}/log-settings-" . $prefix . ".json";
+        $settings_file = "$temp_dir/log-settings-" . $prefix . ".json";
         file_put_contents($settings_file, json_encode($merge_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-        $phpPath = Util::which('php');
+        $php = Util::which('php');
         $workerFilesMergerPath = Util::getFilePathByClassName(WorkerMakeLogFilesArchive::class);
-        Processes::mwExecBg("{$phpPath} -f {$workerFilesMergerPath} start '{$settings_file}'");
+        Processes::mwExecBg("$php -f $workerFilesMergerPath start '$settings_file'");
 
         return $res;
     }

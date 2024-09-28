@@ -125,7 +125,7 @@ class WorkerApiCommands extends WorkerBase
                     }
                 } else {
                     $res->success = false;
-                    $res->messages['error'][] = "Unknown processor - {$processor} in prepareAnswer";
+                    $res->messages['error'][] = "Unknown processor - $processor in prepareAnswer";
                 }
             } catch (Throwable $exception) {
                 $request = [];

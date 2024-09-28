@@ -26,7 +26,7 @@ use MikoPBX\Core\System\SystemMessages;
 
 class VKCloud extends CloudProvider
 {
-    public const CloudID = 'VKCloud';
+    public const string CloudID = 'VKCloud';
 
     private Client $client;
 

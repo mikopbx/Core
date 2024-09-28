@@ -21,16 +21,18 @@ namespace MikoPBX\PBXCoreREST\Lib\System;
 
 use MikoPBX\Core\System\System;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Injectable;
 
 /**
  *
  * @package MikoPBX\PBXCoreREST\Lib\System
  */
-class SetDateAction extends \Phalcon\Di\Injectable
+class SetDateAction extends Injectable
 {
     /**
      *
      * @return PBXApiResult An object containing the result of the API call.
+     * @throws \Exception
      */
     public static function main(array $data): PBXApiResult
     {

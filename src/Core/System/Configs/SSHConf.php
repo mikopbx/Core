@@ -21,7 +21,6 @@ namespace MikoPBX\Core\System\Configs;
 
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -37,10 +36,10 @@ use Phalcon\Di\Injectable;
 class SSHConf extends Injectable
 {
     // Client keep-alive interval in seconds
-    private const CLIENT_KEEP_ALIVE_INTERVAL = 60;
+    private const int CLIENT_KEEP_ALIVE_INTERVAL = 60;
 
     // Client idle timeout in seconds
-    private const CLIENT_IDLE_TIMEOUT = 1800;
+    private const int CLIENT_IDLE_TIMEOUT = 1800;
 
 
     private MikoPBXConfig $mikoPBXConfig;
@@ -66,7 +65,7 @@ class SSHConf extends Injectable
         }
         $this->generateDropbearKeys();
         $sshLogin = $this->getCreateSshUser();
-        $sshPort  = escapeshellcmd(PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PORT));
+        $sshPort  = escapeshellcmd(PbxSettings::getValueByKey(PbxSettings::SSH_PORT));
 
         // Update root password and restart SSH server
         $this->updateShellPassword($sshLogin);
@@ -75,7 +74,7 @@ class SSHConf extends Injectable
         Processes::killByName('dropbear');
         usleep(500000); // Delay to ensure process has stopped
 
-        $sshPasswordDisabled = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD) === '1';
+        $sshPasswordDisabled = PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD) === '1';
         $options = $sshPasswordDisabled ? '-s' : '';
         $dropbear = Util::which('dropbear');
 
@@ -103,10 +102,10 @@ class SSHConf extends Injectable
     private function generateDropbearKeys(): void
     {
         $keyTypes = [
-            "rsa" => PbxSettingsConstants::SSH_RSA_KEY,
-            "dss" => PbxSettingsConstants::SSH_DSS_KEY,
-            "ecdsa" => PbxSettingsConstants::SSH_ECDSA_KEY,
-            "ed25519" => PbxSettingsConstants::SSH_ED25519_KEY
+            "rsa" => PbxSettings::SSH_RSA_KEY,
+            "dss" => PbxSettings::SSH_DSS_KEY,
+            "ecdsa" => PbxSettings::SSH_ECDSA_KEY,
+            "ed25519" => PbxSettings::SSH_ED25519_KEY
         ];
 
         $dropBearDir = '/etc/dropbear';
@@ -115,7 +114,7 @@ class SSHConf extends Injectable
         $dropbearkey = Util::which('dropbearkey');
         // Get keys from DB
         foreach ($keyTypes as $keyType => $dbKey) {
-            $resKeyFilePath = "{$dropBearDir}/dropbear_" . $keyType . "_host_key";
+            $resKeyFilePath = "$dropBearDir/dropbear_" . $keyType . "_host_key";
             $keyValue = trim(PbxSettings::getValueByKey($dbKey));
             if (strlen($keyValue) > 100) {
                 file_put_contents($resKeyFilePath, base64_decode($keyValue));
@@ -142,7 +141,7 @@ class SSHConf extends Injectable
         $addgroup = Util::which('addgroup');
         $adduser = Util::which('adduser');
 
-        $sshLogin = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_LOGIN);
+        $sshLogin = PbxSettings::getValueByKey(PbxSettings::SSH_LOGIN);
         $homeDir = $this->getUserHomeDir($sshLogin);
         $mainUsers = ['root', 'www']; // System users that should not be modified
 
@@ -190,9 +189,9 @@ class SSHConf extends Injectable
      */
     private function updateShellPassword(string $sshLogin = 'root'): void
     {
-        $password           = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD);
-        $hashString         = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING);
-        $disablePassLogin   = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_DISABLE_SSH_PASSWORD);
+        $password           = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+        $hashString         = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING);
+        $disablePassLogin   = PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD);
 
         $echo     = Util::which('echo');
         $chpasswd = Util::which('chpasswd');
@@ -210,9 +209,9 @@ class SSHConf extends Injectable
 
         // Security hash check and notification
         $currentHash = md5_file('/etc/shadow');
-        PbxSettings::setValue(PbxSettingsConstants::SSH_PASSWORD_HASH_FILE, $currentHash);
+        PbxSettings::setValue(PbxSettings::SSH_PASSWORD_HASH_FILE, $currentHash);
         if ($hashString !== md5($password)) {
-            PbxSettings::setValue(PbxSettingsConstants::SSH_PASSWORD_HASH_STRING, md5($password));
+            PbxSettings::setValue(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($password));
         }
     }
 
@@ -228,7 +227,7 @@ class SSHConf extends Injectable
         $sshDir = "$homeDir/.ssh";
         Util::mwMkdir($sshDir);
 
-        $authorizedKeys = PbxSettings::getValueByKey(PbxSettingsConstants::SSH_AUTHORIZED_KEYS);
+        $authorizedKeys = PbxSettings::getValueByKey(PbxSettings::SSH_AUTHORIZED_KEYS);
         file_put_contents("$sshDir/authorized_keys", $authorizedKeys);
     }
 

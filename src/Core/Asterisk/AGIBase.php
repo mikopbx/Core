@@ -97,7 +97,7 @@ class AGIBase {
      * @param array $ret The parsed response array.
      * @return void
      */
-    protected function evaluateParseResponse($str, &$ret):void{
+    protected function evaluateParseResponse(string $str, array &$ret):void{
         $ret['result'] = null;
         $ret['data']   = '';
         if ( (int)$ret['code'] !== 200){
@@ -160,7 +160,7 @@ class AGIBase {
             $count = 0;
             $str   = substr($str, 1) . "\n";
             $line  = fgets($this->in, 4096);
-            while (strpos($line, $ret['code']) !== 0 && $count < 5) {
+            while (!str_starts_with($line, $ret['code']) && $count < 5) {
                 $str   .= $line;
                 $line  = fgets($this->in, 4096);
                 $count = (trim($line) === '') ? $count + 1 : 0;
@@ -182,7 +182,7 @@ class AGIBase {
      *
      * @return array ('code'=>$code, 'result'=>$result, 'data'=>$data)
      */
-    public function evaluate($command)
+    public function evaluate(string $command): array
     {
         $broken = ['code' => 500, 'result' => -1, 'data' => ''];
 

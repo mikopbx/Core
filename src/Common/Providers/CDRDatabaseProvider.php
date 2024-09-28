@@ -26,7 +26,7 @@ use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\WorkerCdr;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -39,7 +39,7 @@ use Phalcon\Di\ServiceProviderInterface;
  */
 class CDRDatabaseProvider extends DatabaseProviderBase implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'dbCDR';
+    public const string SERVICE_NAME = 'dbCDR';
 
     /**
      * Register dbCDR service provider

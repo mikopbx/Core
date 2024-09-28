@@ -22,8 +22,8 @@ namespace MikoPBX\Core\System;
 use Error;
 use JsonException;
 use MikoPBX\Common\Models\LanInterfaces;
-use MikoPBX\Common\Models\PbxSettingsConstants;
-use Phalcon\Di;
+use MikoPBX\Common\Models\PbxSettings;
+use Phalcon\Di\Injectable;
 use ReflectionClass;
 
 require_once 'Globals.php';
@@ -33,10 +33,10 @@ require_once 'Globals.php';
  * This class is responsible for initializing the system, configuring environment settings,
  * preparing databases, and handling system startup and shutdown behaviors.
  */
-class DockerEntrypoint extends Di\Injectable
+class DockerEntrypoint extends Injectable
 {
-    private const  PATH_DB = '/cf/conf/mikopbx.db';
-    private const  pathInc = '/etc/inc/mikopbx-settings.json';
+    private const string PATH_DB = '/cf/conf/mikopbx.db';
+    private const string pathInc = '/etc/inc/mikopbx-settings.json';
     public float $workerStartTime;
     private array $jsonSettings;
     private array $settings;
@@ -213,30 +213,30 @@ class DockerEntrypoint extends Di\Injectable
      */
     private function applyEnvironmentSettings(): void
     {
-        $reflection = new ReflectionClass(PbxSettingsConstants::class);
+        $reflection = new ReflectionClass(PbxSettings::class);
         $constants = $reflection->getConstants();
 
         foreach ($constants as $name => $dbKey) {
             $envValue = getenv($name);
             if ($envValue !== false) {
                 switch ($dbKey) {
-                    case PbxSettingsConstants::BEANSTALK_PORT:
-                    case PbxSettingsConstants::REDIS_PORT:
-                    case PbxSettingsConstants::GNATS_PORT:
+                    case PbxSettings::BEANSTALK_PORT:
+                    case PbxSettings::REDIS_PORT:
+                    case PbxSettings::GNATS_PORT:
                         $this->updateJsonSettings($dbKey, 'port', intval($envValue));
                         break;
-                    case PbxSettingsConstants::GNATS_HTTP_PORT:
+                    case PbxSettings::GNATS_HTTP_PORT:
                         $this->updateJsonSettings('gnats', 'httpPort', intval($envValue));
                         break;
-                    case PbxSettingsConstants::ENABLE_USE_NAT:
+                    case PbxSettings::ENABLE_USE_NAT:
                         if ($envValue==='1'){
                             $this->reconfigureNetwork("topology", LanInterfaces::TOPOLOGY_PRIVATE);
                         }
                         break;
-                    case PbxSettingsConstants::EXTERNAL_SIP_HOST_NAME:
+                    case PbxSettings::EXTERNAL_SIP_HOST_NAME:
                         $this->reconfigureNetwork("exthostname", $envValue);
                         break;
-                    case PbxSettingsConstants::EXTERNAL_SIP_IP_ADDR:
+                    case PbxSettings::EXTERNAL_SIP_IP_ADDR:
                         $this->reconfigureNetwork("extipaddr", $envValue);
                         break;
                     default:
@@ -278,7 +278,7 @@ class DockerEntrypoint extends Di\Injectable
      * @param string $key The setting key to update.
      * @param mixed $newValue The new value to set.
      */
-    private function updateJsonSettings(string $path, string $key, $newValue): void
+    private function updateJsonSettings(string $path, string $key, mixed $newValue): void
     {
         if ($this->jsonSettings[$path][$key] ?? null !== $newValue)
             $this->jsonSettings[$path][$key] = $newValue;

@@ -265,7 +265,7 @@ class IncomingRoutesController extends BaseController
 
         // If this was the creation of a new rule, reload the page with the newly created rule's ID
         if (empty($data['id'])) {
-            $this->view->reload = "incoming-routes/modify/{$rule->id}";
+            $this->view->reload = "incoming-routes/modify/$rule->id";
         }
     }
 
@@ -275,16 +275,14 @@ class IncomingRoutesController extends BaseController
      * @param string $ruleId The identifier of the routing rule to delete.
      * @return void
      */
-    public function deleteAction(string $ruleId)
+    public function deleteAction(string $ruleId): void
     {
         if ((int)$ruleId === 1) {
             $this->forward('incoming-routes/index'); // The first rule is the default route, do not delete it.
         }
 
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
-        if ($rule !== null) {
-            $rule->delete();
-        }
+        $rule?->delete();
 
         $this->forward('incoming-routes/index');
     }

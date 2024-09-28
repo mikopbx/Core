@@ -29,7 +29,6 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     MarketPlaceProvider,
     LoggerProvider,
     MainDatabaseProvider,
-    ModelsCacheProvider,
     ManagedCacheProvider,
     ModelsMetadataProvider,
     ModelsAnnotationsProvider,
@@ -45,7 +44,7 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     LanguageProvider,
     WhoopsErrorHandlerProvider};
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 
 /**
  * Initialize services on dependency injector
@@ -78,7 +77,6 @@ class RegisterDIServices
 
             // Inject caches
             ManagedCacheProvider::class,
-            ModelsCacheProvider::class,
 
             // Inject Translations
             MessagesProvider::class,

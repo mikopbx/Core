@@ -20,7 +20,8 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di;
+use Phalcon\Di\Di;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class StatusOfModuleInstallation
@@ -28,14 +29,14 @@ use Phalcon\Di;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class StatusOfModuleInstallationAction extends \Phalcon\Di\Injectable
+class StatusOfModuleInstallationAction extends Injectable
 {
-    const PROGRESS_FILE_NOT_FOUND = 'PROGRESS_FILE_NOT_FOUND';
-    const INSTALLATION_ERROR = 'INSTALLATION_ERROR';
-    const INSTALLATION_COMPLETE = 'INSTALLATION_COMPLETE';
-    const INSTALLATION_IN_PROGRESS = 'INSTALLATION_IN_PROGRESS';
-    const I_STATUS = 'i_status';
-    const I_STATUS_PROGRESS = 'i_status_progress';
+    const string PROGRESS_FILE_NOT_FOUND = 'PROGRESS_FILE_NOT_FOUND';
+    const string INSTALLATION_ERROR = 'INSTALLATION_ERROR';
+    const string INSTALLATION_COMPLETE = 'INSTALLATION_COMPLETE';
+    const string INSTALLATION_IN_PROGRESS = 'INSTALLATION_IN_PROGRESS';
+    const string I_STATUS = 'i_status';
+    const string I_STATUS_PROGRESS = 'i_status_progress';
 
     /**
      * Checks the status of a module installation by the provided zip file path.

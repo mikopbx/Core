@@ -19,17 +19,17 @@
 
 namespace MikoPBX\Modules;
 
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Mvc\Application;
 use Phalcon\Mvc\Router;
-use Phalcon\Text;
 use Throwable;
-
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -47,20 +47,24 @@ class PbxExtensionUtils
      */
     public static function isEnabled(string $moduleUniqueID): bool
     {
-        $parameters = [
-            'conditions' => 'uniqid = :uniqid:',
-            'bind' => [
-                'uniqid' => $moduleUniqueID,
-            ],
-            'cache' => [
-                'key' => ModelsBase::makeCacheKey(PbxExtensionModules::class, 'isEnabled' . $moduleUniqueID),
-                'lifetime' => 3600,
-            ]
-        ];
+        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'isEnabled' . $moduleUniqueID);
+        $moduleState = $redis->get($cacheKey);
+        if (empty($moduleState)) {
+            $parameters = [
+                'conditions' => 'uniqid = :uniqid:',
+                'bind' => [
+                    'uniqid' => $moduleUniqueID,
+                ],
+            ];
 
-        $result = PbxExtensionModules::findFirst($parameters);
+            $result = PbxExtensionModules::findFirst($parameters);
 
-        return ($result !== null && $result->disabled !== '1');
+            $moduleState = ($result !== null && $result->disabled !== '1');
+            $redis->set($cacheKey, $moduleState, 3600);
+        }
+
+        return $moduleState;
     }
 
     /**
@@ -74,9 +78,9 @@ class PbxExtensionUtils
         $moduleDir = self::getModuleDir($moduleUniqueID);
 
         // Create symlinks for IMG
-        $moduleImageDir = "{$moduleDir}/public/assets/img";
+        $moduleImageDir = "$moduleDir/public/assets/img";
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        $moduleImageCacheDir = "{$imgCacheDir}/{$moduleUniqueID}";
+        $moduleImageCacheDir = "$imgCacheDir/$moduleUniqueID";
         if (file_exists($moduleImageCacheDir)) {
             unlink($moduleImageCacheDir);
         }
@@ -85,9 +89,9 @@ class PbxExtensionUtils
         }
 
         // Create symlinks for CSS
-        $moduleCSSDir = "{$moduleDir}/public/assets/css";
+        $moduleCSSDir = "$moduleDir/public/assets/css";
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        $moduleCSSCacheDir = "{$cssCacheDir}/{$moduleUniqueID}";
+        $moduleCSSCacheDir = "$cssCacheDir/$moduleUniqueID";
         if (file_exists($moduleCSSCacheDir)) {
             unlink($moduleCSSCacheDir);
         }
@@ -96,9 +100,9 @@ class PbxExtensionUtils
         }
 
         // Create symlinks for JS
-        $moduleJSDir = "{$moduleDir}/public/assets/js";
+        $moduleJSDir = "$moduleDir/public/assets/js";
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        $moduleJSCacheDir = "{$jsCacheDir}/{$moduleUniqueID}";
+        $moduleJSCacheDir = "$jsCacheDir/$moduleUniqueID";
         if (file_exists($moduleJSCacheDir)) {
             unlink($moduleJSCacheDir);
         }
@@ -117,12 +121,12 @@ class PbxExtensionUtils
     {
         $di = Di::getDefault();
         if ($di === null) {
-            return "/tmp/{$moduleUniqueID}";
+            return "/tmp/$moduleUniqueID";
         }
         $config = $di->getShared('config');
         $modulesDir = $config->path('core.modulesDir');
 
-        return "{$modulesDir}/{$moduleUniqueID}";
+        return "$modulesDir/$moduleUniqueID";
     }
 
     /**
@@ -143,15 +147,15 @@ class PbxExtensionUtils
 
         // Create symlinks to AGI-BIN
         $agiBinDir = $config->path('asterisk.astagidir');
-        $moduleAgiBinDir = "{$moduleDir}/agi-bin";
+        $moduleAgiBinDir = "$moduleDir/agi-bin";
         $files = glob("$moduleAgiBinDir/*.{php}", GLOB_BRACE);
         foreach ($files as $file) {
             $newFilename = $agiBinDir . '/' . basename($file);
             Util::createUpdateSymlink($file, $newFilename);
         }
 
-        $pathChmod = Util::which('chmod');
-        Processes::mwExec("{$pathChmod} +x {$agiBinDir}/*");
+        $chmod = Util::which('chmod');
+        Processes::mwExec("$chmod +x $agiBinDir/*");
     }
 
     /**
@@ -168,9 +172,9 @@ class PbxExtensionUtils
         if ($di === null) {
             return;
         }
-        $moduleViewDir = "{$moduleDir}/App/Views";
+        $moduleViewDir = "$moduleDir/App/Views";
         $viewCacheDir = appPath('src/AdminCabinet/Views/Modules');
-        $moduleViewCacheDir = "{$viewCacheDir}/{$moduleUniqueID}";
+        $moduleViewCacheDir = "$viewCacheDir/$moduleUniqueID";
         if (file_exists($moduleViewCacheDir)) {
             unlink($moduleViewCacheDir);
         }
@@ -195,7 +199,7 @@ class PbxExtensionUtils
             $moduleDir = PbxExtensionUtils::getModuleDir($module['uniqid']);
 
             // Check if module.json file exists
-            $moduleJson = "{$moduleDir}/module.json";
+            $moduleJson = "$moduleDir/module.json";
             if (!file_exists($moduleJson)) {
                 $needDisable = true;
             }
@@ -214,12 +218,42 @@ class PbxExtensionUtils
     }
 
     /**
+     * Disables a module by its unique ID.
+     *
+     * @param string $moduleUniqueId The unique ID of the module to be disabled.
+     * @param string $exceptionMessage The exception message.
+     */
+    private static function forceDisableModule(string $moduleUniqueId, string $exceptionMessage = ''): void
+    {
+        $reason = PbxExtensionState::DISABLED_BY_EXCEPTION;
+        $reasonText = $exceptionMessage;
+        try {
+            // Disable the module using the PbxExtensionState class
+            $moduleStateProcessor = new PbxExtensionState($moduleUniqueId);
+            $moduleStateProcessor->disableModule($reason, $reasonText);
+        } catch (Throwable $exception) {
+            // Log an error message if module disabling fails
+            SystemMessages::sysLogMsg(__CLASS__, "Can not disable module $moduleUniqueId Message: $exception", LOG_ERR);
+        } finally {
+            // Update module status to disabled if it was not already disabled
+            $currentModule = PbxExtensionModules::findFirstByUniqid($moduleUniqueId);
+            if ($currentModule->disabled === '0') {
+                SystemMessages::sysLogMsg(__CLASS__, "Force disable module $moduleUniqueId on the PbxExtensionModules table", LOG_ERR);
+                $currentModule->disabled = '1';
+                $currentModule->disableReason = $reason;
+                $currentModule->disableReasonText = $reasonText;
+                $currentModule->update();
+            }
+        }
+    }
+
+    /**
      * Registers enabled modules with App/Module.php file as external modules for the application.
      *
      * @param Application $application The application instance.
      * @return void
      */
-    public static function registerEnabledModulesInApp(Application &$application)
+    public static function registerEnabledModulesInApp(Application &$application): void
     {
         $parameters = [
             'conditions' => 'disabled=0',
@@ -229,11 +263,11 @@ class PbxExtensionUtils
             $moduleUniqueId = $module['uniqid'];
             $moduleDir = PbxExtensionUtils::getModuleDir($moduleUniqueId);
             $unCamelizedModuleName = Text::uncamelize($moduleUniqueId, '-');
-            $moduleAppClass = "{$moduleDir}/App/Module.php";
+            $moduleAppClass = "$moduleDir/App/Module.php";
             if (file_exists($moduleAppClass)) {
                 $application->registerModules([
                     $unCamelizedModuleName => [
-                        "className" => "Modules\\{$moduleUniqueId}\\App\\Module",
+                        "className" => "Modules\\$moduleUniqueId\\App\\Module",
                         "path" => $moduleAppClass,
                     ],
                 ], true);
@@ -247,7 +281,7 @@ class PbxExtensionUtils
      * @param Router $router
      * @return void
      */
-    public static function registerEnabledModulesInRouter(Router &$router)
+    public static function registerEnabledModulesInRouter(Router &$router): void
     {
         $parameters = [
             'conditions' => 'disabled=0',
@@ -257,14 +291,14 @@ class PbxExtensionUtils
             $moduleUniqueId = $module['uniqid'];
             $moduleDir = PbxExtensionUtils::getModuleDir($moduleUniqueId);
             $unCamelizedModuleName = Text::uncamelize($moduleUniqueId, '-');
-            $moduleAppClass = "{$moduleDir}/App/Module.php";
+            $moduleAppClass = "$moduleDir/App/Module.php";
             if (file_exists($moduleAppClass)) {
-                $router->add("/{$unCamelizedModuleName}/:controller/:action/:params", [
+                $router->add("/$unCamelizedModuleName/:controller/:action/:params", [
                     'module' => $unCamelizedModuleName,
                     'controller' => 1,
                     'action' => 2,
                     'params' => 3,
-                    'namespace' => "Modules\\{$moduleUniqueId}\\App\\Controllers"
+                    'namespace' => "Modules\\$moduleUniqueId\\App\\Controllers"
                 ]);
             }
         }
@@ -276,7 +310,7 @@ class PbxExtensionUtils
      * @param string $moduleFile The file path of the module.
      * @param string $exceptionMessage The exception message.
      */
-    public static function disableBadModule(string $moduleFile, string $exceptionMessage=''): void
+    public static function disableBadModule(string $moduleFile, string $exceptionMessage = ''): void
     {
         // Check if the module is within the /custom_modules/ directory
         $customModulesPos = strpos($moduleFile, '/custom_modules/');
@@ -288,37 +322,7 @@ class PbxExtensionUtils
             if (!empty($moduleUniqueId)) {
                 // Disable the module using its unique ID
                 self::forceDisableModule($moduleUniqueId, $exceptionMessage);
-                SystemMessages::sysLogMsg(__CLASS__, "The module {$moduleUniqueId} was disabled because an exception occurred in it", LOG_ERR);
-            }
-        }
-    }
-
-    /**
-     * Disables a module by its unique ID.
-     *
-     * @param string $moduleUniqueId The unique ID of the module to be disabled.
-     * @param string $exceptionMessage The exception message.
-     */
-    private static function forceDisableModule(string $moduleUniqueId, string $exceptionMessage=''): void
-    {
-        $reason =  PbxExtensionState::DISABLED_BY_EXCEPTION;
-        $reasonText = $exceptionMessage;
-        try {
-            // Disable the module using the PbxExtensionState class
-            $moduleStateProcessor = new PbxExtensionState($moduleUniqueId);
-            $moduleStateProcessor->disableModule($reason, $reasonText);
-        } catch (Throwable $exception) {
-            // Log an error message if module disabling fails
-            SystemMessages::sysLogMsg(__CLASS__, "Can not disable module {$moduleUniqueId} Message: {$exception}", LOG_ERR);
-        } finally {
-            // Update module status to disabled if it was not already disabled
-            $currentModule = PbxExtensionModules::findFirstByUniqid($moduleUniqueId);
-            if ($currentModule->disabled === '0') {
-                SystemMessages::sysLogMsg(__CLASS__, "Force disable module {$moduleUniqueId} on the PbxExtensionModules table", LOG_ERR);
-                $currentModule->disabled = '1';
-                $currentModule->disableReason = $reason;
-                $currentModule->disableReasonText = $reasonText;
-                $currentModule->update();
+                SystemMessages::sysLogMsg(__CLASS__, "The module $moduleUniqueId was disabled because an exception occurred in it", LOG_ERR);
             }
         }
     }

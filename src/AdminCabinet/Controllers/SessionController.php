@@ -23,11 +23,11 @@ use ErrorException;
 use MikoPBX\AdminCabinet\Forms\LoginForm;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
+use Phalcon\Encryption\Security\Exception;
 
 /**
  * Class SessionController
@@ -42,32 +42,32 @@ class SessionController extends BaseController
     /**
      * Constant for session ID used within the admin cabinet.
      */
-    public const SESSION_ID = 'authAdminCabinet';
+    public const string SESSION_ID = 'authAdminCabinet';
 
     /**
      * Constant for user role within the session.
      */
-    public const ROLE = 'role';
+    public const string ROLE = 'role';
 
     /**
      * Constant for the default home page after login.
      */
-    public const HOME_PAGE = 'homePage';
+    public const string HOME_PAGE = 'homePage';
 
     /**
      * Constant for the user's name within the session.
      */
-    public const USER_NAME = 'userName';
+    public const string USER_NAME = 'userName';
 
     /**
      * Constant for maximum login attempts within the interval.
      */
-    private const LOGIN_ATTEMPTS=10;
+    private const int LOGIN_ATTEMPTS=10;
 
     /**
      * Constant for the interval to reset login attempts (in seconds).
      */
-    private const LOGIN_ATTEMPTS_INTERVAL=300;
+    private const int LOGIN_ATTEMPTS_INTERVAL=300;
 
     /**
      * Renders the login page.
@@ -77,9 +77,9 @@ class SessionController extends BaseController
      */
     public function indexAction(): void
     {
-        $this->view->setVar('NameFromSettings', PbxSettings::getValueByKey(PbxSettingsConstants::PBX_NAME));
-        $description = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_DESCRIPTION);
-        if ($description===PbxSettingsConstants::DEFAULT_CLOUD_PASSWORD_DESCRIPTION){
+        $this->view->setVar('NameFromSettings', PbxSettings::getValueByKey(PbxSettings::PBX_NAME));
+        $description = PbxSettings::getValueByKey(PbxSettings::PBX_DESCRIPTION);
+        if ($description===PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION){
             $description=$this->translation->_($description);
         }
         $this->view->setVar('DescriptionFromSettings', $description);
@@ -108,7 +108,7 @@ class SessionController extends BaseController
         $remainAttempts = $this->countRemainAttempts($remoteAddress,true,self::LOGIN_ATTEMPTS_INTERVAL,self::LOGIN_ATTEMPTS);
         if ($remainAttempts === 0) {
             $userAgent = $this->request->getUserAgent();
-            $this->loggerAuth->warning("From: {$remoteAddress} UserAgent:{$userAgent} Cause: Wrong password");
+            $this->loggerAuth->warning("From: $remoteAddress UserAgent:$userAgent Cause: Wrong password");
             $this->flash->error($this->translation->_('auth_TooManyLoginAttempts',['interval'=>self::LOGIN_ATTEMPTS_INTERVAL]));
             $this->view->success = true;
             $this->view->reload = $this->url->get('session/index');
@@ -147,8 +147,8 @@ class SessionController extends BaseController
         if ($userLoggedIn) {
             // Register the session with the specified parameters
             $this->_registerSession($sessionParams);
-            if ($this->session->has(PbxSettingsConstants::WEB_ADMIN_LANGUAGE)){
-                LanguageController::updateSystemLanguage($this->session->get(PbxSettingsConstants::WEB_ADMIN_LANGUAGE));
+            if ($this->session->has(PbxSettings::WEB_ADMIN_LANGUAGE)){
+                LanguageController::updateSystemLanguage($this->session->get(PbxSettings::WEB_ADMIN_LANGUAGE));
             }
             $this->view->success = true;
             $backUri = $this->request->getPost('backUri');
@@ -172,6 +172,7 @@ class SessionController extends BaseController
      * This method sets session variables and optionally sets a cookie for remembering the session.
      *
      * @param array $sessionParams Parameters to store in the session.
+     * @throws Exception
      */
     private function _registerSession(array $sessionParams): void
     {
@@ -190,6 +191,7 @@ class SessionController extends BaseController
      * This method is called if the user selects the 'remember me' option on the login form.
      *
      * @param array $sessionParams Parameters associated with the session.
+     * @throws Exception
      */
     private function updateRememberMeCookies(array $sessionParams): void
     {
@@ -266,13 +268,13 @@ class SessionController extends BaseController
     private function checkCredentials(string $login, string $password):bool
     {
         // Check admin login name
-        $storedLogin = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_LOGIN);
+        $storedLogin = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LOGIN);
         if ($storedLogin !== $login) {
             return false;
         }
 
         // Old password check method
-        $passwordHash = PbxSettings::getValueByKey(PbxSettingsConstants::WEB_ADMIN_PASSWORD);
+        $passwordHash = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
         if ($passwordHash === $password) {
             return true;
         }
@@ -314,7 +316,7 @@ class SessionController extends BaseController
      * @param int $maxCount The maximum allowed login attempts within the given interval.
      * @return int The remaining number of attempts within the interval.
      */
-    private function countRemainAttempts($remoteAddress, bool $increment = true, int $interval=300, int $maxCount=10): int
+    private function countRemainAttempts(mixed $remoteAddress, bool $increment = true, int $interval=300, int $maxCount=10): int
     {
         if (!is_string($remoteAddress)){
             return $maxCount;

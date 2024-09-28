@@ -34,8 +34,8 @@ use Phalcon\Storage\SerializerFactory;
  */
 class ManagedCacheProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'managedCache';
-    public const CACHE_PREFIX = 'managed-cache:';
+    public const string SERVICE_NAME = 'managedCache';
+    public const string CACHE_PREFIX = 'managed-cache:';
 
     /**
      * Register the managedCache service provider.

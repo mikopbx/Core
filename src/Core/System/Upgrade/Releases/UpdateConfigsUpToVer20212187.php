@@ -24,20 +24,20 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 use MikoPBX\Core\System\MikoPBXConfig;
-use Phalcon\Config as ConfigAlias;
+use Phalcon\Config\Config as ConfigAlias;
 
 class UpdateConfigsUpToVer20212187 extends Injectable implements UpgradeSystemConfigInterface
 {
-    public const PBX_VERSION = '2021.2.187';
+    public const string PBX_VERSION = '2021.2.187';
 
     private ConfigAlias $config;
     private MikoPBXConfig $mikoPBXConfig;
     private bool $isLiveCD;
 
-    private const  OLD_MONITOR_PATH = '/storage/usbdisk1/mikopbx/voicemailarchive/monitor';
+    private const string  OLD_MONITOR_PATH = '/storage/usbdisk1/mikopbx/voicemailarchive/monitor';
 
     private string $monitorDir = '/storage/usbdisk1/mikopbx/astspool/monitor';
     private string $mvPath;
@@ -94,7 +94,7 @@ class UpdateConfigsUpToVer20212187 extends Injectable implements UpgradeSystemCo
                 $this->moveDirCreateLink($_oldPath, $_newDir);
             }
         } else {
-            Processes::mwExec("{$this->mvPath} '{$oldPath}' '{$newDir}'");
+            Processes::mwExec("$this->mvPath '$oldPath' '$newDir'");
         }
     }
 
@@ -112,11 +112,11 @@ class UpdateConfigsUpToVer20212187 extends Injectable implements UpgradeSystemCo
             $newDir  = $this->monitorDir . "/" . $filename;
             $this->moveDirCreateLink($oldPath, $newDir);
             $out = [];
-            Processes::mwExec("{$this->findPath} " . $this::OLD_MONITOR_PATH . " -type f", $out);
+            Processes::mwExec("$this->findPath " . $this::OLD_MONITOR_PATH . " -type f", $out);
             if (count($out) !== 0) {
                 SystemMessages::sysLogMsg(static::class, 'Error moving old recording dir.');
             } else {
-                Processes::mwExec("{$this->rmPath} -rf '{$oldPath}'");
+                Processes::mwExec("$this->rmPath -rf '$oldPath'");
                 Util::createUpdateSymlink($newDir, $oldPath);
             }
         }

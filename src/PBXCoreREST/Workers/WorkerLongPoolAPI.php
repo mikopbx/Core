@@ -27,7 +27,6 @@ use MikoPBX\PBXCoreREST\Lib\CdrDB\GetActiveChannelsAction;
 use MikoPBX\PBXCoreREST\Lib\Sip\GetRegistryAction as GetSipRegistryAction;
 use MikoPBX\PBXCoreREST\Lib\Iax\GetRegistryAction as GetIaxRegistryAction;
 
-use Throwable;
 
 use function clearstatcache;
 
@@ -152,7 +151,7 @@ class WorkerLongPoolAPI extends WorkerBase
      * @param string|null $common_chan The optional common channel.
      * @return string The data to send.
      */
-    private function execFunction(string $channel, string $common_chan = null)
+    private function execFunction(string $channel, string $common_chan = null): ?string
     {
         clearstatcache();
         if ( ! $this->checkAction($channel, $common_chan)) {
@@ -181,7 +180,7 @@ class WorkerLongPoolAPI extends WorkerBase
      * @param string|null $common_chan The optional common channel.
      * @return bool Whether the action is enabled or not.
      */
-    private function checkAction(string $channel, string $common_chan = null)
+    private function checkAction(string $channel, string $common_chan = null): bool
     {
         if ( ! $common_chan) {
             $actions = $GLOBALS['ACTIONS'];

@@ -21,10 +21,9 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
-use Phalcon\Text;
+use MikoPBX\Common\Library\Text;
 use SimpleXMLElement;
 
 /**
@@ -34,8 +33,8 @@ use SimpleXMLElement;
  */
 class WorkerMarketplaceChecker extends WorkerBase
 {
-    public const CACHE_KEY = 'Workers:WorkerMarketplaceChecker:lastCheck';
-    public const CACHE_KEY_LICENSE_INFO = 'Workers:WorkerMarketplaceChecker:lastGetLicenseCheck';
+    public const string CACHE_KEY = 'Workers:WorkerMarketplaceChecker:lastCheck';
+    public const string CACHE_KEY_LICENSE_INFO = 'Workers:WorkerMarketplaceChecker:lastGetLicenseCheck';
 
 
     /**
@@ -66,7 +65,7 @@ class WorkerMarketplaceChecker extends WorkerBase
         }
 
         // Retrieve the last get license request from the cache
-        $licenseKey = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
+        $licenseKey = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
         if ((strlen($licenseKey) === 28
             && Text::startsWith($licenseKey, 'MIKO-')
         )) {

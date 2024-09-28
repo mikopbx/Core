@@ -28,8 +28,8 @@ use Phalcon\Mvc\Model\Relation;
  */
 class SoundFiles extends ModelsBase
 {
-    public const CATEGORY_MOH = 'moh';
-    public const CATEGORY_CUSTOM = 'custom';
+    public const string CATEGORY_MOH = 'moh';
+    public const string CATEGORY_CUSTOM = 'custom';
 
     /**
      * @Primary

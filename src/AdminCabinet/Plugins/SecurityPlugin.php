@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Plugins;
 use MikoPBX\AdminCabinet\Controllers\ErrorsController;
 use MikoPBX\AdminCabinet\Controllers\LanguageController;
 use MikoPBX\AdminCabinet\Controllers\SessionController;
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
@@ -135,9 +136,9 @@ class SecurityPlugin extends Injectable
         $module = explode('/', $homePath)[1];
         $controller = explode('/', $homePath)[2];
         $action = explode('/', $homePath)[3];
-        if (strpos($module, 'module-') === 0) {
-            $camelizedNameSpace = \Phalcon\Text::Camelize($module);
-            $namespace = "Modules\\{$camelizedNameSpace}\\App\\Controllers";
+        if (str_starts_with($module, 'module-')) {
+            $camelizedNameSpace = Text::camelize($module);
+            $namespace = "Modules\\$camelizedNameSpace\\App\\Controllers";
 
             // Forward the request to the determined route with namespace
             $dispatcher->forward([

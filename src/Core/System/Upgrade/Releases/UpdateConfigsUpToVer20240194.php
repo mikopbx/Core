@@ -21,13 +21,12 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer20240194 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const PBX_VERSION = '2024.1.94';
+  	public const string PBX_VERSION = '2024.1.94';
 
     private bool $isLiveCD;
 
@@ -61,7 +60,7 @@ class UpdateConfigsUpToVer20240194 extends Injectable implements UpgradeSystemCo
         foreach ($res as $item) {
             if ($item['topology']===LanInterfaces::TOPOLOGY_PRIVATE && $item['internet']==='1'){
                 $parts   = explode(':', trim($item['exthostname']));
-                $extPort = PbxSettings::getDefaultArrayValues()[PbxSettingsConstants::EXTERNAL_SIP_PORT];
+                $extPort = PbxSettings::getDefaultArrayValues()[PbxSettings::EXTERNAL_SIP_PORT];
                 if (!empty($parts[1])){
                     $extPort=$parts[1];
                 } else {
@@ -70,7 +69,7 @@ class UpdateConfigsUpToVer20240194 extends Injectable implements UpgradeSystemCo
                         $extPort=$parts[1];
                     }
                 }
-                PbxSettings::setValue(PbxSettingsConstants::EXTERNAL_SIP_PORT, $extPort);
+                PbxSettings::setValue(PbxSettings::EXTERNAL_SIP_PORT, $extPort);
             }
         }
     }

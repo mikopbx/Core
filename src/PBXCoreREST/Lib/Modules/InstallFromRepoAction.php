@@ -33,7 +33,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  */
 class InstallFromRepoAction extends ModuleInstallationBase
 {
-    const DOWNLOAD_TIMEOUT = 120;
+    const int DOWNLOAD_TIMEOUT = 120;
 
     // Optional release ID for the module. Defaults to 0.
     private int $moduleReleaseId = 0;

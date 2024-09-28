@@ -1,4 +1,4 @@
-{{ form('licensing/modify', 'role': 'form', 'class': 'ui form large disable-if-no-internet', 'id':'licencing-modify-form') }}
+{{ form(['action' : 'licensing/modify', 'method': 'post', 'role': 'form', 'class': 'ui form large disable-if-no-internet', 'id':'licencing-modify-form']) }}
 
 <div id="licenseKeySection" class="disabled">
     <h2 class="ui header">{{ t._('lic_LicenseKey') }}</h2>
@@ -119,4 +119,4 @@
     </div>
     <div class="ui clearing hidden divider"></div>
 </div>
-{{ end_form() }}
+{{ close('form') }}

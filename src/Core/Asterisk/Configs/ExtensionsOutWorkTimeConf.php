@@ -42,7 +42,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
 {
     // The module hook applying priority
     public int $priority = 510;
-    public const OUT_WORK_TIME_CONTEXT = 'check-out-work-time';
+    public const string OUT_WORK_TIME_CONTEXT = 'check-out-work-time';
     private string $conf = '';
 
     /**
@@ -72,8 +72,8 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         $arr_out      = [];
         $pid = Processes::getPidOfProcess('asterisk');
         if(!empty($pid)){
-            $asteriskPath = Util::which('asterisk');
-            Processes::mwExec("{$asteriskPath} -rx 'module reload res_calendar'", $arr_out);
+            $asterisk = Util::which('asterisk');
+            Processes::mwExec("$asterisk -rx 'module reload res_calendar'", $arr_out);
         }
 
     }
@@ -211,9 +211,9 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
                 $modelType = ucfirst($provider->type);
                 $provByType = $provider->$modelType;
                 if (get_class($provider->$modelType) === Iax::class) {
-                    $context_id = "{$provider->uniqid}-incoming";
+                    $context_id = "$provider->uniqid-incoming";
                 }elseif ($provByType->registration_type === Sip::REG_TYPE_INBOUND){
-                    $context_id = "{$provider->uniqid}-incoming";
+                    $context_id = "$provider->uniqid-incoming";
                 } else {
                     $context_id = SIPConf::getContextId($provByType->host , $provByType->port);
                 }
@@ -230,11 +230,12 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
     /**
      * Generate the out-of-work rule based on the provided data.
      *
-     * @param array    $srcOutData The data for the out-of-work rule.
+     * @param array $srcOutData The data for the out-of-work rule.
      * @param string  &$conf_out_set_var The output string for the SET variables.
      * @param string  &$conf The output string for the configuration.
      *
      * @return void
+     * @throws \DateMalformedStringException
      */
     private function generateOutWorkRule(array $srcOutData, string &$conf_out_set_var, string &$conf): void
     {
@@ -245,7 +246,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
             [$mDays, $months] = $this->initDaysMonthsInterval($srcOutData);
             $appdata = $this->initRuleAppData($srcOutData, $conf_out_set_var);
             foreach ($timesArray as $times) {
-                $conf .= "same => n,GotoIfTime($times,$weekdays,$mDays,$months?{$appdata})\n\t";
+                $conf .= "same => n,GotoIfTime($times,$weekdays,$mDays,$months?$appdata)\n\t";
             }
         }else{
             foreach ($intervals as $interval){
@@ -259,7 +260,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
 
                 $year = 1 * date('Y', $srcOutData['date_from']);
                 foreach ($timesArray as $times) {
-                    $timeAppData = "GotoIfTime($times,$weekdays,$mDays,$months?{$appdata})";
+                    $timeAppData = "GotoIfTime($times,$weekdays,$mDays,$months?$appdata)";
                     $conf .= 'same => n,ExecIf($["${currentYear}" == "'.$year.'"]?'.$timeAppData.')'."\n\t";
                 }
             }
@@ -271,6 +272,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
      * @param $date_from
      * @param $date_to
      * @return array
+     * @throws \DateMalformedStringException
      */
     private function splitIntoMonthlyIntervals($date_from, $date_to):array
     {
@@ -317,12 +319,12 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
             $time_to    = $this->normaliseTime($time_to, '23:59');
             if (strtotime($time_from) > strtotime($time_to)) {
                 $intervals = [
-                    "{$time_from}-23:59",
-                    "00:00-{$time_to}"
+                    "$time_from-23:59",
+                    "00:00-$time_to"
                 ];
             } else {
                 $intervals = [
-                    "{$time_from}-{$time_to}"
+                    "$time_from-$time_to"
                 ];
             }
         }
@@ -336,10 +338,10 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
      * @param string $defVal The default value to be used if the source time is empty.
      * @return string The normalized time.
      */
-    private function normaliseTime($srcTime, $defVal = '00:00'): string
+    private function normaliseTime(string $srcTime, string $defVal = '00:00'): string
     {
         $time = (empty($srcTime)) ? $defVal : $srcTime;
-        return (strlen($time) === 4) ? "0{$time}" : $time;
+        return (strlen($time) === 4) ? "0$time" : $time;
     }
 
     /**
@@ -350,7 +352,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
      *
      * @return string An array containing the data.
      */
-    private function initRuleAppData($ruleData, string &$conf_out_set_var): string
+    private function initRuleAppData(array $ruleData, string &$conf_out_set_var): string
     {
         if (IncomingRoutingTable::ACTION_EXTENSION === $ruleData['action']) {
             $appdata = "internal,{$ruleData['extension']},1";
@@ -359,9 +361,9 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
             $res = SoundFiles::findFirst($ruleData['audio_message_id']);
             $audio_message = ($res === null) ? '' : Util::trimExtensionForFile($res->path??'');
             $dialplanName = "work-time-set-var-{$ruleData['id']}";
-            if (strpos($conf_out_set_var, "[$dialplanName]") === false
-                && strpos($this->conf, "[$dialplanName]") === false) {
-                $conf_out_set_var .= "[{$dialplanName}]\n" .
+            if (!str_contains($conf_out_set_var, "[$dialplanName]")
+                && !str_contains($this->conf, "[$dialplanName]")) {
+                $conf_out_set_var .= "[$dialplanName]\n" .
                     'exten => ' . ExtensionsConf::ALL_EXTENSION . ',1,Set(filename=' . $audio_message . ')' . "\n\t" .
                     'same => n,Goto(playback-exit,${EXTEN},1)' . "\n" .
                     'exten => _[hit],1,Hangup()' . PHP_EOL . PHP_EOL;
@@ -392,7 +394,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         } else {
             $weekday_from = (empty($weekday_from)) ? '1' : $weekday_from;
             $weekday_to = (empty($weekday_to)) ? '7' : $weekday_to;
-            $weekdays = "{$arr_weekday[$weekday_from]}-{$arr_weekday[$weekday_to]}";
+            $weekdays = "$arr_weekday[$weekday_from]-$arr_weekday[$weekday_to]";
         }
         return $weekdays;
     }

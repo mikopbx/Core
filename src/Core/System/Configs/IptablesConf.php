@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-use MikoPBX\Common\Models\{FirewallRules, NetworkFilters, PbxSettings, PbxSettingsConstants, Sip};
+use MikoPBX\Common\Models\{FirewallRules, NetworkFilters, PbxSettings, Sip};
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -36,7 +36,7 @@ use Phalcon\Di\Injectable;
 class IptablesConf extends Injectable
 {
     // Path to the MikoPBX iptables configuration file.
-    public const IP_TABLE_MIKO_CONF = '/etc/iptables/iptables.mikopbx';
+    public const string IP_TABLE_MIKO_CONF = '/etc/iptables/iptables.mikopbx';
 
     // Indicates if the firewall is enabled.
     private bool $firewall_enable;
@@ -57,14 +57,14 @@ class IptablesConf extends Injectable
     public function __construct()
     {
         // Check if the firewall is enabled.
-        $firewall_enable       = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED);
+        $firewall_enable       = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
         $this->firewall_enable = ($firewall_enable === '1');
 
         // Get the SIP, TLS, and RTP port settings.
-        $this->sipPort  = PbxSettings::getValueByKey(PbxSettingsConstants::SIP_PORT);
-        $this->tlsPort  = PbxSettings::getValueByKey(PbxSettingsConstants::TLS_PORT);
-        $defaultRTPFrom = PbxSettings::getValueByKey(PbxSettingsConstants::RTP_PORT_FROM);
-        $defaultRTPTo   = PbxSettings::getValueByKey(PbxSettingsConstants::RTP_PORT_TO);
+        $this->sipPort  = PbxSettings::getValueByKey(PbxSettings::SIP_PORT);
+        $this->tlsPort  = PbxSettings::getValueByKey(PbxSettings::TLS_PORT);
+        $defaultRTPFrom = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM);
+        $defaultRTPTo   = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO);
         $this->rtpPorts = "$defaultRTPFrom:$defaultRTPTo";
 
         // Initialize the Fail2Ban configuration.
@@ -271,7 +271,7 @@ class IptablesConf extends Injectable
      *
      * @return void
      */
-    private function makeCmdMultiport($options, &$arr_command)
+    private function makeCmdMultiport(array $options, array &$arr_command): void
     {
         foreach ($options as $protocol => $data){
             foreach ($data as $subnet => $ports){

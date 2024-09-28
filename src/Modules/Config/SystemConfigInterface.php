@@ -30,29 +30,29 @@ namespace MikoPBX\Modules\Config;
 interface SystemConfigInterface
 {
 
-    public const MODELS_EVENT_NEED_RELOAD = 'modelsEventNeedReload';
+    public const string MODELS_EVENT_NEED_RELOAD = 'modelsEventNeedReload';
 
-    public const MODELS_EVENT_CHANGE_DATA = 'modelsEventChangeData';
+    public const string MODELS_EVENT_CHANGE_DATA = 'modelsEventChangeData';
 
-    public const CREATE_CRON_TASKS = 'createCronTasks';
+    public const string CREATE_CRON_TASKS = 'createCronTasks';
 
-    public const CREATE_NGINX_LOCATIONS = 'createNginxLocations';
+    public const string CREATE_NGINX_LOCATIONS = 'createNginxLocations';
 
-    public const GENERATE_FAIL2BAN_JAILS = 'generateFail2BanJails';
+    public const string GENERATE_FAIL2BAN_JAILS = 'generateFail2BanJails';
 
-    public const ON_AFTER_MODULE_DISABLE = 'onAfterModuleDisable';
+    public const string ON_AFTER_MODULE_DISABLE = 'onAfterModuleDisable';
 
-    public const ON_AFTER_MODULE_ENABLE = 'onAfterModuleEnable';
+    public const string ON_AFTER_MODULE_ENABLE = 'onAfterModuleEnable';
 
-    public const GET_MODULE_WORKERS = 'getModuleWorkers';
+    public const string GET_MODULE_WORKERS = 'getModuleWorkers';
 
-    public const GET_DEFAULT_FIREWALL_RULES = 'getDefaultFirewallRules';
+    public const string GET_DEFAULT_FIREWALL_RULES = 'getDefaultFirewallRules';
 
-    public const ON_AFTER_PBX_STARTED = 'onAfterPbxStarted';
+    public const string ON_AFTER_PBX_STARTED = 'onAfterPbxStarted';
 
-    public const ON_BEFORE_MODULE_DISABLE = 'onBeforeModuleDisable';
+    public const string ON_BEFORE_MODULE_DISABLE = 'onBeforeModuleDisable';
 
-    public const ON_BEFORE_MODULE_ENABLE = 'onBeforeModuleEnable';
+    public const string ON_BEFORE_MODULE_ENABLE = 'onBeforeModuleEnable';
 
 
     /**
@@ -89,7 +89,7 @@ interface SystemConfigInterface
      *
      * @return void
      */
-    public function modelsEventChangeData($data): void;
+    public function modelsEventChangeData(mixed $data): void;
 
     /**
      * This method is called in the WorkerModelsEvents after the models changing process is finished.

@@ -45,8 +45,8 @@ class QueueConf extends AsteriskConfigClass
         $queue = new self();
         $queue->generateConfig();
         $out          = [];
-        $asteriskPath = Util::which('asterisk');
-        Processes::mwExec("{$asteriskPath} -rx 'queue reload all '", $out);
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'queue reload all '", $out);
     }
 
     /**
@@ -109,7 +109,7 @@ class QueueConf extends AsteriskConfigClass
         $db_data        = $this->getQueueData();
         foreach ($db_data as $queue) {
             $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
-            $reservedExtension = trim($queue['redirect_to_extension_if_empty']);
+            $reservedExtension = trim($queue['redirect_to_extension_if_empty'] ?? '');
             if(!empty($reservedExtension)){
                 // Check if the queue is empty.
                 $queue_ext_conf .= 'same => n,Set(mLogged=${QUEUE_MEMBER('.$queue['uniqid'].',logged)})'.PHP_EOL."\t";
@@ -134,12 +134,13 @@ class QueueConf extends AsteriskConfigClass
             if (!empty($cid)) {
                 $queue_ext_conf .= "same => n,Set(CALLERID(name)=$cid:" . '${CALLERID(name)}' . ") \n\t";
             }
-            $ringLength = trim($queue['timeout_to_redirect_to_extension']);
+
+            $ringLength = trim($queue['timeout_to_redirect_to_extension'] ?? '');
             $queue_ext_conf .= "same => n,Queue({$queue['uniqid']},kT$options,,,$ringLength,,,queue_agent_answer) \n\t";
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${EMPTY})' . "\n\t";
             // Notify about the end of the queue.
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
-            $timeoutExtension = trim($queue['timeout_extension']);
+            $timeoutExtension = trim($queue['timeout_extension']??'');
             if ($timeoutExtension !== '') {
                 // If no answer within the timeout, perform redirection.
                 $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,'.$timeoutExtension.',1))' . " \n\t";
@@ -175,14 +176,14 @@ class QueueConf extends AsteriskConfigClass
 
             // Check if periodic announce is set
             $periodic_announce = '';
-            if (trim($queue_data['periodic_announce']) !== '') {
+            if (trim($queue_data['periodic_announce']??'') !== '') {
                 $announce_file     = Util::trimExtensionForFile($queue_data['periodic_announce']);
-                $periodic_announce = "periodic-announce={$announce_file} \n";
+                $periodic_announce = "periodic-announce=$announce_file \n";
             }
 
             // Check if periodic announce frequency is set
             $periodic_announce_frequency = '';
-            if (trim($queue_data['periodic_announce_frequency']) !== '') {
+            if (trim($queue_data['periodic_announce_frequency']??'') !== '') {
                 $periodic_announce_frequency = "periodic-announce-frequency={$queue_data['periodic_announce_frequency']} \n";
             }
 
@@ -199,17 +200,17 @@ class QueueConf extends AsteriskConfigClass
             // Build the queue configuration string
             $q_conf .= "[{$queue_data['uniqid']}]; {$queue_data['name']}\n";
             $q_conf .= "musicclass=$mohClass \n";
-            $q_conf .= "strategy={$strategy} \n";
-            $q_conf .= "timeout={$timeout} \n";
+            $q_conf .= "strategy=$strategy \n";
+            $q_conf .= "timeout=$timeout \n";
             $q_conf .= "retry=1 \n";
-            $q_conf .= "wrapuptime={$wrapuptime} \n";
-            $q_conf .= "ringinuse={$ringinuse} \n";
+            $q_conf .= "wrapuptime=$wrapuptime \n";
+            $q_conf .= "ringinuse=$ringinuse \n";
             $q_conf .= $periodic_announce;
             $q_conf .= $periodic_announce_frequency;
             $q_conf .= "joinempty=no \n";
             $q_conf .= "leavewhenempty=no \n";
-            $q_conf .= "announce-position={$announceposition} \n";
-            $q_conf .= "announce-holdtime={$announceholdtime} \n";
+            $q_conf .= "announce-position=$announceposition \n";
+            $q_conf .= "announce-holdtime=$announceholdtime \n";
             $q_conf .= "relative-periodic-announce=yes \n";
             $q_conf .= $announce_frequency;
 
@@ -225,7 +226,7 @@ class QueueConf extends AsteriskConfigClass
                 }
 
                 // Add the member to the queue configuration
-                $q_conf .= "member => Local/{$agent['agent']}@internal/n,{$penalty},\"{$agent['agent']}\"{$hint} \n";
+                $q_conf .= "member => Local/{$agent['agent']}@internal/n,$penalty,\"{$agent['agent']}\"$hint \n";
             }
             $q_conf .= "\n";
         }

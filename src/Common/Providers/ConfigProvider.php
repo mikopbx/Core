@@ -21,12 +21,12 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-use Phalcon\Config;
+use Phalcon\Config\Config;
 use Phalcon\Config\Adapter\Json;
-use Phalcon\Di;
+use Phalcon\Config\Exception;
+use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Exception;
 use Throwable;
 
 /**
@@ -38,14 +38,14 @@ use Throwable;
  */
 class ConfigProvider implements ServiceProviderInterface
 {
-    public const SERVICE_NAME = 'config';
+    public const string SERVICE_NAME = 'config';
 
     /**
      * Register config provider.
      *
      * @param \Phalcon\Di\DiInterface $di The DI container.
      *
-     * @throws \Phalcon\Exception If the config file is not found or not readable.
+     * @throws \Phalcon\Config\Exception If the config file is not found or not readable.
      */
     public function register(DiInterface $di): void
     {

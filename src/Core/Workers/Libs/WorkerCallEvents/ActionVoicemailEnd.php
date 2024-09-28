@@ -38,7 +38,7 @@ class ActionVoicemailEnd
      * @param WorkerCallEvents $worker The worker instance.
      * @param array $data The event data.
      */
-    public static function execute(WorkerCallEvents $worker, $data): void
+    public static function execute(WorkerCallEvents $worker, array $data): void
     {
         $recordingFile = VoiceMailConf::getCopyFilename($data['vm-recordingfile'], $data['linkedid'], time(), false);
         $filter = [

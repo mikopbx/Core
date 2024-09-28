@@ -21,7 +21,7 @@ namespace MikoPBX\Core\Asterisk;
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\{Directories, Util};
-use Phalcon\Di;
+use Phalcon\Di\Di;
 
 /**
  * Additional methods
@@ -83,11 +83,11 @@ class CdrDb
      *
      * @return string The path to the recording file without the extension.
      */
-    public static function MeetMeSetRecFilename($file_name): string
+    public static function MeetMeSetRecFilename(string $file_name): string
     {
         $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
         $sub_dir     = date("Y/m/d/H/");
 
-        return "{$monitor_dir}/{$sub_dir}{$file_name}";
+        return "$monitor_dir/$sub_dir$file_name";
     }
 }

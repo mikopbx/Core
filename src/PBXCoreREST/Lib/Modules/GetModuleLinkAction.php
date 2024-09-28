@@ -20,11 +20,11 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use GuzzleHttp;
+use Phalcon\Di\Injectable;
 
 /**
  *  Class GetModuleLink
@@ -32,7 +32,7 @@ use GuzzleHttp;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Modules
  */
-class GetModuleLinkAction extends \Phalcon\Di\Injectable
+class GetModuleLinkAction extends Injectable
 {
     /**
      * Retrieves the installation link for a module.
@@ -46,7 +46,7 @@ class GetModuleLinkAction extends \Phalcon\Di\Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $licenseKey = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_LICENSE);
+        $licenseKey = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
 
         $client = new GuzzleHttp\Client();
         $body = '';
@@ -71,7 +71,7 @@ class GetModuleLinkAction extends \Phalcon\Di\Injectable
             }
         } catch (\Throwable $e) {
             $code = Response::INTERNAL_SERVER_ERROR;
-            Util::sysLogMsg(static::class, $e->getMessage());
+            SystemMessages::sysLogMsg(static::class, $e->getMessage());
             $res->messages[] = $e->getMessage();
         }
 
