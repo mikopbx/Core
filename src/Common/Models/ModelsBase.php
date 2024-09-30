@@ -85,7 +85,7 @@ class ModelsBase extends Model
      * All models with lover than this version in module.json won't be attached as children
      * We use this constant to disable old modules that may not be compatible with the current version of MikoPBX
      */
-    public const string MIN_MODULE_MODEL_VER = '2024.2.3';
+    public const string MIN_MODULE_MODEL_VER = '2020.2.468';
 
     /**
      * Returns Cache key for the models cache service
