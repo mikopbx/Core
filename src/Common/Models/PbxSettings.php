@@ -34,7 +34,7 @@ use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class PbxSettings extends ModelsBase
 {
-    use PbxSettingsConstants;
+    use PbxSettingsConstantsTrait;
     /**
      * Key by which the value is stored
      *
