@@ -305,7 +305,7 @@ class SIPConf extends AsteriskConfigClass
             $arr_data['permit'] = ($network_filter === null) ? '' : $network_filter->permit;
             $arr_data['deny']   = ($network_filter === null) ? '' : $network_filter->deny;
 
-            $arr_data['transport'] = trim($arr_data['transport']);
+            $arr_data['transport'] = trim($arr_data['transport']??'');
             // Retrieve used codecs.
             $arr_data['codecs'] = $this->getCodecs();
             $arr_data['enableRecording'] = $sip_peer->enableRecording !== '0';
