@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use Phalcon\Di\Di;
@@ -188,7 +189,7 @@ class Notifications
                 $messages[] = $mail->ErrorInfo;
             }
         } catch (Throwable $e) {
-            $messages[] = $e->getMessage();
+            $messages[] = CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
         if (!empty($messages)) {
             SystemMessages::sysLogMsg('PHPMailer', implode(' ', $messages), LOG_ERR);

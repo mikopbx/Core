@@ -29,6 +29,7 @@ use MikoPBX\Common\Models\{Codecs,
     Sip,
     SipHosts,
     Users};
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\AstDB;
@@ -171,7 +172,7 @@ class SIPConf extends AsteriskConfigClass
             try {
                 $sub = new SubnetCalculator($lan_config['ipaddr'], $lan_config['subnet']);
             } catch (Throwable $e) {
-                SystemMessages::sysLogMsg(self::class, $e->getMessage(), LOG_ERR);
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
                 continue;
             }
             $net = $sub->getNetworkPortion() . '/' . $lan_config['subnet'];

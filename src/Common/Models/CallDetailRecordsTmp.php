@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\SystemMessages;
 use Throwable;
@@ -121,7 +122,7 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
                 $managedCache->delete('Workers:Cdr:' . $rowData['UNIQUEID']);
             }
         } catch (Throwable $e) {
-            SystemMessages::sysLogMsg(self::class, $e->getMessage());
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
             return;
         }
     }

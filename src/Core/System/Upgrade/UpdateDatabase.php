@@ -258,7 +258,7 @@ class UpdateDatabase extends Injectable
 
         // Create additional indexes
         $modelClassAnnotation = $modelAnnotation->getClassAnnotations();
-        if ($modelClassAnnotation !== false
+        if ($modelClassAnnotation !== null
             && $modelClassAnnotation->has('Indexes')) {
             $additionalIndexes = $modelClassAnnotation->get('Indexes')->getArguments();
             foreach ($additionalIndexes as $index) {

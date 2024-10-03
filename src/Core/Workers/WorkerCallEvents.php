@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, Directories, SystemMessages, Util};
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
@@ -410,6 +411,7 @@ class WorkerCallEvents extends WorkerBase
                 JSON_THROW_ON_ERROR
             );
         } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $data = [];
         }
 

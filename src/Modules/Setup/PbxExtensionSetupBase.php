@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Modules\Setup;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Processes;
@@ -213,7 +214,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
             PBXConfModulesProvider::getVersionsHash(true);
 
         } catch (Throwable $exception) {
-            $this->messages[] = $exception->getMessage();
+            $this->messages[] = CriticalErrorsHandler::handleExceptionWithSyslog($exception);
             return false;
         }
 

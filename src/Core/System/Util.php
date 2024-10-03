@@ -23,6 +23,7 @@ use DateTime;
 use Exception;
 use MikoPBX\Common\Models\{CustomFiles};
 use malkusch\lock\mutex\PHPRedisMutex;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\AmiConnectionCommand;
 use MikoPBX\Common\Providers\AmiConnectionListener;
 use MikoPBX\Common\Providers\LanguageProvider;
@@ -157,6 +158,7 @@ class Util
             try {
                 $randomString .= $characters[random_int(0, $charactersLength - 1)];
             } catch (Throwable $e) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
                 $randomString = '';
             }
         }

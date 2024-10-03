@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\CallDetailRecords;
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\Util;
@@ -57,6 +58,7 @@ class SelectCDR
             }
             $res_data = json_encode($res->toArray());
         } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $res_data = '[]';
         }
 
@@ -75,6 +77,7 @@ class SelectCDR
                 $res = CallDetailRecords::find($filter['add_pack_query']);
                 $res_data = json_encode($res->toArray(), JSON_THROW_ON_ERROR);
             } catch (Throwable $e) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
                 $res_data = '[]';
             }
         }
