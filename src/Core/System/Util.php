@@ -731,7 +731,7 @@ class Util
             $row = trim($row);
             $pos = strpos($row, ']');
             if ($pos !== false && str_starts_with($row, '[')) {
-                $row = "\n" . substr($row, 0, $pos);
+                $row = "\n" . substr($row, 0, $pos+1);
             }
         }
         unset($row);
@@ -743,7 +743,7 @@ class Util
         foreach ($sections as $section) {
             $data_rows = explode("\n", trim($section));
             $section_name = trim($data_rows[0] ?? '');
-            if(empty($section_name) || !str_contains($section_name, '[')){
+            if(empty($section_name) || !str_contains($section_name, '=')){
                 // Noname section
                 $section_name = ' ';
             }else{
