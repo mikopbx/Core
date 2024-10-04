@@ -888,7 +888,7 @@ class Storage extends Injectable
             $grep = Util::which('grep');
             $cut = Util::which('cut');
             $cmd = "$lsblk -r -o NAME,UUID | $grep {$disk['uniqid']} | $cut -d ' ' -f 1";
-            $dev = '/dev/' . trim(shell_exec($cmd));
+            $dev = '/dev/' . trim(shell_exec($cmd)??'');
             if ($this->hddExists($dev)) {
                 // Disk exists.
                 return $dev;
