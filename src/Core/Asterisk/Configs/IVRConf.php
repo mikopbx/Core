@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -46,7 +47,7 @@ class IVRConf extends AsteriskConfigClass
         /** @var Sip $sip_peer */
         foreach ($db_data as $sip_peer) {
             $len = strlen($sip_peer['extension']);
-            if ( ! in_array($len, $arr_lens)) {
+            if (! in_array($len, $arr_lens)) {
                 $arr_lens[] = $len;
             }
         }
@@ -190,5 +191,4 @@ class IVRConf extends AsteriskConfigClass
 
         return $conf;
     }
-
 }

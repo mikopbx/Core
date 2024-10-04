@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -40,9 +41,9 @@ class MailSettingsEditForm extends BaseForm
 
         foreach ($options as $key => $value) {
             switch ($key) {
-                case PbxSettings::MAIL_ENABLE_NOTIFICATIONS :
-                case PbxSettings::MAIL_SMTP_USE_TLS :
-                case PbxSettings::MAIL_SMTP_CERT_CHECK :
+                case PbxSettings::MAIL_ENABLE_NOTIFICATIONS:
+                case PbxSettings::MAIL_SMTP_USE_TLS:
+                case PbxSettings::MAIL_SMTP_CERT_CHECK:
                     $cheskarr = ['value' => null];
                     if ($value) {
                         $cheskarr = ['checked' => 'checked', 'value' => null];
@@ -50,34 +51,36 @@ class MailSettingsEditForm extends BaseForm
                     $this->add(new Check($key, $cheskarr));
                     break;
 
-                case PbxSettings::MAIL_TPL_MISSED_CALL_BODY :
-                case PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER :
-                case PbxSettings::MAIL_TPL_VOICEMAIL_BODY :
-                case PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER :
-
+                case PbxSettings::MAIL_TPL_MISSED_CALL_BODY:
+                case PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER:
+                case PbxSettings::MAIL_TPL_VOICEMAIL_BODY:
+                case PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER:
                     $this->add(
                         new TextArea(
-                            $key, [
+                            $key,
+                            [
                                 'value' => $value,
                             ]
                         )
                     );
                     break;
 
-                case PbxSettings::MAIL_SMTP_PASSWORD :
+                case PbxSettings::MAIL_SMTP_PASSWORD:
                     $this->add(
                         new Password(
-                            $key, [
+                            $key,
+                            [
                                 'value' => $value,
                             ]
                         )
                     );
                     break;
 
-                default :
+                default:
                     $this->add(
                         new Text(
-                            $key, [
+                            $key,
+                            [
                                 'value' => $value,
                             ]
                         )
@@ -85,5 +88,4 @@ class MailSettingsEditForm extends BaseForm
             }
         }
     }
-
 }

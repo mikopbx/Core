@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -30,11 +31,9 @@ use Phalcon\Db\Column;
 use Phalcon\Db\Index;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
-
 use Throwable;
 
 use function MikoPBX\Common\Config\appPath;
-
 
 /**
  * Class UpdateDatabase
@@ -46,7 +45,6 @@ use function MikoPBX\Common\Config\appPath;
  */
 class UpdateDatabase extends Injectable
 {
-
     /**
      * Updates database structure according to models annotations
      */
@@ -57,7 +55,7 @@ class UpdateDatabase extends Injectable
             $this->updateDbStructureByModelsAnnotations();
             MainDatabaseProvider::recreateDBConnections(); // if we change anything in structure
         } catch (Throwable $e) {
-            SystemMessages::echoWithSyslog('Errors within database upgrade process '.$e->getMessage());
+            SystemMessages::echoWithSyslog('Errors within database upgrade process ' . $e->getMessage());
         }
     }
 
@@ -76,9 +74,9 @@ class UpdateDatabase extends Injectable
             $moduleModelClass = "MikoPBX\\Common\\Models\\$className";
             try {
                 $this->createUpdateDbTableByAnnotations($moduleModelClass);
-            } catch (Throwable $exception){
+            } catch (Throwable $exception) {
                 // Log errors encountered during table update
-                SystemMessages::echoWithSyslog('Errors within update table '.$className.' '.$exception->getMessage());
+                SystemMessages::echoWithSyslog('Errors within update table ' . $className . ' ' . $exception->getMessage());
             }
         }
 
@@ -92,7 +90,7 @@ class UpdateDatabase extends Injectable
      *
      * @return void
      */
-    private function updatePermitCustomModules():void
+    private function updatePermitCustomModules(): void
     {
         $modulesDir = $this->config->path('core.modulesDir');
         $findPath  = Util::which('find');
@@ -121,7 +119,8 @@ class UpdateDatabase extends Injectable
         // Check if the model class exists and has properties
         if (
             ! class_exists($modelClassName)
-            || count(get_class_vars($modelClassName)) === 0) {
+            || count(get_class_vars($modelClassName)) === 0
+        ) {
             return true;
         }
 
@@ -184,7 +183,8 @@ class UpdateDatabase extends Injectable
                 // Try to find size of field
                 if (array_key_exists($attribute, $propertiesAnnotations)) {
                     $propertyDescription = $propertiesAnnotations[$attribute];
-                    if ($propertyDescription->has('Column')
+                    if (
+                        $propertyDescription->has('Column')
                         && $propertyDescription->get('Column')->hasArgument('length')
                     ) {
                         $table_structure[$attribute]['size'] = $propertyDescription->get('Column')->getArgument(
@@ -258,8 +258,10 @@ class UpdateDatabase extends Injectable
 
         // Create additional indexes
         $modelClassAnnotation = $modelAnnotation->getClassAnnotations();
-        if ($modelClassAnnotation !== null
-            && $modelClassAnnotation->has('Indexes')) {
+        if (
+            $modelClassAnnotation !== null
+            && $modelClassAnnotation->has('Indexes')
+        ) {
             $additionalIndexes = $modelClassAnnotation->get('Indexes')->getArguments();
             foreach ($additionalIndexes as $index) {
                 $indexName           = "i_{$tableName}_{$index['name']}";
@@ -288,7 +290,7 @@ class UpdateDatabase extends Injectable
         // Starting the transaction
         $connectionService->begin();
 
-        if ( ! $connectionService->tableExists($tableName)) {
+        if (! $connectionService->tableExists($tableName)) {
             $msg = ' - UpdateDatabase: Create new table: ' . $tableName . ' ';
             SystemMessages::echoWithSyslog($msg);
             $result = $connectionService->createTable($tableName, '', $columnsNew);
@@ -324,8 +326,8 @@ DROP TABLE  $tableName";
                 $newColumnNames  = array_intersect($newColNames, $oldColNames);
                 $gluedNewColumns = implode(',', $newColumnNames);
                 $result          = $result && $connectionService->execute(
-                        "INSERT INTO $tableName ( $gluedNewColumns) SELECT $gluedNewColumns  FROM {$tableName}_backup;"
-                    );
+                    "INSERT INTO $tableName ( $gluedNewColumns) SELECT $gluedNewColumns  FROM {$tableName}_backup;"
+                );
 
                 // Drop temporary table
                 $result = $result && $connectionService->execute("DROP TABLE {$tableName}_backup;");
@@ -391,14 +393,18 @@ DROP TABLE  $tableName";
             foreach ($comparedSettings as $compared_setting) {
                 if ($oldField->$compared_setting() !== $newField->$compared_setting()) {
                     // Sqlite transform "1" to ""1"" in default settings, but it is normal
-                    if ($compared_setting === 'getDefault'
-                        && $oldField->$compared_setting() === '"' . $newField->$compared_setting() . '"') {
+                    if (
+                        $compared_setting === 'getDefault'
+                        && $oldField->$compared_setting() === '"' . $newField->$compared_setting() . '"'
+                    ) {
                         continue;
                     }
 
                     // Description for "length" is integer, but table structure store it as string
-                    if ($compared_setting === 'getSize'
-                        && (string)$oldField->$compared_setting() === (string)$newField->$compared_setting()) {
+                    if (
+                        $compared_setting === 'getSize'
+                        && (string)$oldField->$compared_setting() === (string)$newField->$compared_setting()
+                    ) {
                         continue;
                     }
 
@@ -427,7 +433,8 @@ DROP TABLE  $tableName";
 
         // Drop not exist indexes
         foreach ($currentIndexes as $indexName => $currentIndex) {
-            if (stripos($indexName, 'sqlite_autoindex') === false
+            if (
+                stripos($indexName, 'sqlite_autoindex') === false
                 && ! array_key_exists($indexName, $indexes)
             ) {
                 $msg = " - UpdateDatabase: Delete index: $indexName ";

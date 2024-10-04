@@ -39,6 +39,7 @@ class UpdateDataInDB
      *
      * @param array $data The data to be updated.
      * @return void
+     * @throws \Exception
      */
     public static function execute(array $data): void
     {

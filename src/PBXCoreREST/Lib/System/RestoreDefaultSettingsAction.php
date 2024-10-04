@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -87,7 +88,7 @@ class RestoreDefaultSettingsAction extends Injectable
         foreach ($records as $record) {
             $moduleDir = PbxExtensionUtils::getModuleDir($record->uniqid);
             Processes::mwExec("$rm -rf $moduleDir");
-            if ( ! $record->delete()) {
+            if (! $record->delete()) {
                 $res->messages[] = $record->getMessages();
                 $res->success    = false;
             }
@@ -113,12 +114,12 @@ class RestoreDefaultSettingsAction extends Injectable
             PbxSettings::WEB_ADMIN_PASSWORD,
             PbxSettings::WEB_ADMIN_LANGUAGE,
         ];
-        foreach ($defaultValues as $key=>$defaultValue){
-            if (in_array($key, $fixedKeys, true)){
+        foreach ($defaultValues as $key => $defaultValue) {
+            if (in_array($key, $fixedKeys, true)) {
                 continue;
             }
             $record = PbxSettings::findFirstByKey($key);
-            if ($record===null){
+            if ($record === null) {
                 $record = new PbxSettings();
                 $record->key = $key;
             }
@@ -155,7 +156,7 @@ class RestoreDefaultSettingsAction extends Injectable
      *
      * @return void
      */
-    public static function preCleaning(PBXApiResult &$res):void
+    public static function preCleaning(PBXApiResult &$res): void
     {
         $preCleaning = [
             CallQueues::class => [
@@ -169,11 +170,11 @@ class RestoreDefaultSettingsAction extends Injectable
         ];
         foreach ($preCleaning as $class => $columns) {
             $records = call_user_func([$class, 'find']);
-            foreach ($records as $record){
-                foreach ($columns as $column){
+            foreach ($records as $record) {
+                foreach ($columns as $column) {
                     $record->$column = '';
                 }
-                if ( ! $record->save()) {
+                if (! $record->save()) {
                     $res->messages[] = $record->getMessages();
                     $res->success    = false;
                 }
@@ -188,7 +189,7 @@ class RestoreDefaultSettingsAction extends Injectable
      *
      * @return void
      */
-    public static function cleaningMainTables(PBXApiResult &$res):void
+    public static function cleaningMainTables(PBXApiResult &$res): void
     {
         // Define the models and conditions for cleaning
         $clearThisModels = [
@@ -206,7 +207,7 @@ class RestoreDefaultSettingsAction extends Injectable
             [Extensions::class => 'type="' . Extensions::TYPE_QUEUE . '"'],  // QUEUE
             [Users::class => 'id>"1"'], // All except root with their extensions
             [CustomFiles::class => ''],
-            [NetworkFilters::class=>'permit!="0.0.0.0/0" AND deny!="0.0.0.0/0"'] //Delete all other rules
+            [NetworkFilters::class => 'permit!="0.0.0.0/0" AND deny!="0.0.0.0/0"'] //Delete all other rules
         ];
 
         // Iterate over each model and perform deletion based on conditions
@@ -222,7 +223,7 @@ class RestoreDefaultSettingsAction extends Injectable
         }
         // Allow all connections for 0.0.0.0/0 in firewall rules
         $firewallRules = FirewallRules::find();
-        foreach ($firewallRules as $firewallRule){
+        foreach ($firewallRules as $firewallRule) {
             $firewallRule->action = 'allow';
             $firewallRule->save();
         }
@@ -235,7 +236,7 @@ class RestoreDefaultSettingsAction extends Injectable
      *
      * @return void
      */
-    public static function cleaningOtherExtensions(PBXApiResult &$res):void
+    public static function cleaningOtherExtensions(PBXApiResult &$res): void
     {
         // Define the parameters for querying the extensions to delete
         $parameters     = [
@@ -261,7 +262,7 @@ class RestoreDefaultSettingsAction extends Injectable
                 $stopDeleting = true;
                 continue;
             }
-            if ( ! $record->delete()) {
+            if (! $record->delete()) {
                 $deleteAttempts += 1;
             }
             if ($deleteAttempts > $countRecords * 10) {
@@ -278,7 +279,7 @@ class RestoreDefaultSettingsAction extends Injectable
      *
      * @return void
      */
-    public static function cleaningSoundFiles(PBXApiResult &$res):void
+    public static function cleaningSoundFiles(PBXApiResult &$res): void
     {
         $rm     = Util::which('rm');
         $parameters = [
@@ -291,7 +292,7 @@ class RestoreDefaultSettingsAction extends Injectable
         foreach ($records as $record) {
             if (stripos($record->path, '/storage/usbdisk1/mikopbx') !== false) {
                 Processes::mwExec("$rm -rf $record->path");
-                if ( ! $record->delete()) {
+                if (! $record->delete()) {
                     $res->messages[] = $record->getMessages();
                     $res->success    = false;
                 }
@@ -303,11 +304,11 @@ class RestoreDefaultSettingsAction extends Injectable
      * Deletes main database (CF) backups
      * @return void
      */
-    public static function cleaningBackups():void
+    public static function cleaningBackups(): void
     {
         $di = Di::getDefault();
-        $dir = $di->getShared('config')->path('core.mediaMountPoint').'/mikopbx/backup';
-        if(file_exists($dir)){
+        $dir = $di->getShared('config')->path('core.mediaMountPoint') . '/mikopbx/backup';
+        if (file_exists($dir)) {
             $chAttr     = Util::which('chattr');
             Processes::mwExec("$chAttr -i -R $dir");
             $rm     = Util::which('rm');
@@ -355,5 +356,4 @@ class RestoreDefaultSettingsAction extends Injectable
             }
         }
     }
-
 }

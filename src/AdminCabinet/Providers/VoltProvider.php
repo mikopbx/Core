@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,7 +21,6 @@
 declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Providers;
-
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
@@ -85,7 +85,7 @@ class VoltProvider implements ServiceProviderInterface
                     function ($action, $controller = '') {
                         // If we don't provide the second parameter
                         // there is some array with parameters instead of empty string.
-                        if (is_array($controller)){
+                        if (is_array($controller)) {
                             $controller = '$this->dispatcher->getHandlerClass()';
                         }
                         return '$this->di->get("' . SecurityPluginProvider::SERVICE_NAME . '",[' . $controller . ',' . $action . '])';

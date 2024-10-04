@@ -20,10 +20,10 @@ class ReloadCloudDescriptionAction implements ReloadActionInterface
         $webAdminPassword = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
         $defaultDescription = PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION;
 
-        if ($cloudInstanceId === $webAdminPassword && $description!==$defaultDescription){
+        if ($cloudInstanceId === $webAdminPassword && $description !== $defaultDescription) {
             $config = new MikoPBXConfig();
             $config->setGeneralSettings(PbxSettings::PBX_DESCRIPTION, $defaultDescription);
-        } elseIf ($description === $defaultDescription) {
+        } elseif ($description === $defaultDescription) {
             $config = new MikoPBXConfig();
             $config->resetGeneralSettings(PbxSettings::PBX_DESCRIPTION);
         }

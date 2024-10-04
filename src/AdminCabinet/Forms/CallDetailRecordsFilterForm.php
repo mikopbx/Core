@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -30,7 +31,6 @@ use Phalcon\Forms\Element\Text;
  */
 class CallDetailRecordsFilterForm extends BaseForm
 {
-
     public function initialize(/** @scrutinizer ignore-unused */ $entity = null, $options = null): void
     {
         parent::initialize($entity, $options);

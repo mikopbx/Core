@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -98,6 +99,5 @@ class CloudProvisioning
         // Mark provisioning as completed
         $provider->updatePbxSettings(PbxSettings::CLOUD_PROVISIONING, '1');
         $provider->updatePbxSettings(PbxSettings::VIRTUAL_HARDWARE_TYPE, $cloudName);
-
     }
 }

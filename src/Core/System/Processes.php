@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\System;
-
 
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use Phalcon\Di\Di;
@@ -135,8 +135,7 @@ class Processes
         string $className,
         string $paramForPHPWorker = 'start',
         string $action = 'restart'
-    ): void
-    {
+    ): void {
         SystemMessages::sysLogMsg(__METHOD__, "processPHPWorker " . $className . " action-" . $action, LOG_DEBUG);
         $workerPath = Util::getFilePathByClassName($className);
         if (empty($workerPath)) {
@@ -316,7 +315,7 @@ class Processes
      * @param string $outFile The path to the output file.
      * @return bool True if the process starts successfully, false otherwise.
      */
-    public static function safeStartDaemon(string $procName, string $args, int $attemptsCount = 20, int $timout = 1000000, string $outFile='/dev/null'): bool
+    public static function safeStartDaemon(string $procName, string $args, int $attemptsCount = 20, int $timout = 1000000, string $outFile = '/dev/null'): bool
     {
         $result = true;
         $baseName = "safe-$procName";
@@ -344,5 +343,4 @@ class Processes
 
         return $result;
     }
-
 }

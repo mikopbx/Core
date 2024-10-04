@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -46,20 +47,24 @@ class NetworkEditForm extends BaseForm
         $this->add(new Text('gateway', ['class' => 'ipaddress']));
         $this->add(new Text('primarydns', ['class' => 'ipaddress']));
         $this->add(new Text('secondarydns', ['class' => 'ipaddress']));
-        $this->add(new Text('extipaddr', ['placeholder'=>'123.111.123.111']));
-        $this->add(new Text('exthostname', ['placeholder'=>'mikopbx.company.com']));
-        $this->add(new Numeric(PbxSettings::EXTERNAL_SIP_PORT,
+        $this->add(new Text('extipaddr', ['placeholder' => '123.111.123.111']));
+        $this->add(new Text('exthostname', ['placeholder' => 'mikopbx.company.com']));
+        $this->add(new Numeric(
+            PbxSettings::EXTERNAL_SIP_PORT,
             [
-                'placeholder'=>PbxSettings::getDefaultArrayValues()[PbxSettings::EXTERNAL_SIP_PORT],
-                'style'=>'width:130px;',
-                'value'=>PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_PORT)
-            ]));
-        $this->add(new Numeric(PbxSettings::EXTERNAL_TLS_PORT,
+                'placeholder' => PbxSettings::getDefaultArrayValues()[PbxSettings::EXTERNAL_SIP_PORT],
+                'style' => 'width:130px;',
+                'value' => PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_PORT)
+            ]
+        ));
+        $this->add(new Numeric(
+            PbxSettings::EXTERNAL_TLS_PORT,
             [
-                'placeholder'=>PbxSettings::getDefaultArrayValues()[PbxSettings::EXTERNAL_TLS_PORT],
-                'style'=>'width:130px;',
-                'value'=>PbxSettings::getValueByKey(PbxSettings::EXTERNAL_TLS_PORT)
-            ]));
+                'placeholder' => PbxSettings::getDefaultArrayValues()[PbxSettings::EXTERNAL_TLS_PORT],
+                'style' => 'width:130px;',
+                'value' => PbxSettings::getValueByKey(PbxSettings::EXTERNAL_TLS_PORT)
+            ]
+        ));
 
         // topology
         $cheskArr = ['value' => null];
@@ -81,7 +86,8 @@ class NetworkEditForm extends BaseForm
         foreach ($options['eths'] as $eth) {
             $this->add(
                 new Hidden(
-                    'interface_' . $eth->id, [
+                    'interface_' . $eth->id,
+                    [
                         'value' => $eth->interface,
                     ]
                 )
@@ -89,7 +95,8 @@ class NetworkEditForm extends BaseForm
 
             $this->add(
                 new Text(
-                    'name_' . $eth->id, [
+                    'name_' . $eth->id,
+                    [
                         'value' => $eth->name,
                     ]
                 )
@@ -105,7 +112,8 @@ class NetworkEditForm extends BaseForm
 
             $this->add(
                 new Text(
-                    'ipaddr_' . $eth->id, [
+                    'ipaddr_' . $eth->id,
+                    [
                         'value' => $eth->ipaddr,
                         'class' => 'ipaddress',
                     ]
@@ -149,7 +157,9 @@ class NetworkEditForm extends BaseForm
                 "32" => "32 - 255.255.255.255",
             ];
             $mask = new Select(
-                'subnet_' . $eth->id, $arrMasks, [
+                'subnet_' . $eth->id,
+                $arrMasks,
+                [
                     'using' => [
                         'id',
                         'name',
@@ -163,7 +173,8 @@ class NetworkEditForm extends BaseForm
 
             $this->add(
                 new Numeric(
-                    'vlanid_' . $eth->id, [
+                    'vlanid_' . $eth->id,
+                    [
                         'value' => $eth->vlanid,
                     ]
                 )
@@ -180,7 +191,9 @@ class NetworkEditForm extends BaseForm
 
         // Selector the internet interface
         $internetInterface = new Select(
-            'internet_interface', $arrInterfaces, [
+            'internet_interface',
+            $arrInterfaces,
+            [
                 'using' => [
                     'id',
                     'name',
@@ -195,7 +208,9 @@ class NetworkEditForm extends BaseForm
 
         // Template for new lan
         $newInterface = new Select(
-            'interface_0', $arrRealInterfaces, [
+            'interface_0',
+            $arrRealInterfaces,
+            [
                 'using' => [
                     'id',
                     'name',

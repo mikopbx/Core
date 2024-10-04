@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -125,14 +126,14 @@ class PbxExtensionModules extends ModelsBase
     public static function getEnabledModulesArray(): array
     {
         // Check if it globally disabled
-        if (PbxSettings::getValueByKey(PbxSettings::DISABLE_ALL_MODULES)==='1'){
+        if (PbxSettings::getValueByKey(PbxSettings::DISABLE_ALL_MODULES) === '1') {
             return [];
         }
 
         $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray');
         $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
         $modulesArray = $redis->get($cacheKey);
-        if (empty($modulesArray)){
+        if (empty($modulesArray)) {
             // Get the list of disabled modules
             $parameters = [
                 'conditions' => 'disabled="0"',
@@ -154,9 +155,9 @@ class PbxExtensionModules extends ModelsBase
         $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
         $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray');
         $modulesArray = $redis->get($cacheKey);
-        if (empty($modulesArray)){
+        if (empty($modulesArray)) {
             $parameters = [
-                'order'=>'id desc',
+                'order' => 'id desc',
             ];
             $modulesArray = PbxExtensionModules::find($parameters)->toArray();
             $redis->set($cacheKey, $modulesArray, 3600);
@@ -209,4 +210,3 @@ class PbxExtensionModules extends ModelsBase
         PBXConfModulesProvider::recreateModulesProvider();
     }
 }
-

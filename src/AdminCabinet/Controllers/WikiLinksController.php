@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -25,6 +26,7 @@ use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Cache\Adapter\Redis;
 use Exception;
 use GuzzleHttp;
+
 use function MikoPBX\Common\Config\appPath;
 
 class WikiLinksController extends BaseController
@@ -90,7 +92,6 @@ class WikiLinksController extends BaseController
             $redis->set($cacheKey, $links, $ttl);
         }
         if (empty($links)) {
-
             $filename = appPath(str_replace('LANG', $language, 'src/Common/WikiLinks/LANG.json'));
             if (file_exists($filename)) {
                 try {

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -37,7 +38,6 @@ use Phalcon\Di\Injectable;
  */
 class ModuleInstallationBase extends Injectable
 {
-
     // Common constants
     public const string INSTALLATION_MUTEX = 'ModuleInstallation';
     public const string MODULE_WAS_ENABLED = 'moduleWasEnabled';
@@ -79,7 +79,7 @@ class ModuleInstallationBase extends Injectable
      *
      * @return array An array containing the installation result and a success flag.
      */
-    protected function installNewModule(string $filePath):array
+    protected function installNewModule(string $filePath): array
     {
         // Initialization
         $maximumInstallationTime = self::INSTALLATION_TIMEOUT;
@@ -94,7 +94,7 @@ class ModuleInstallationBase extends Injectable
         // Monitor installation progress
         while ($maximumInstallationTime > 0) {
             $resStatus = StatusOfModuleInstallationAction::main($filePath);
-            $this->pushMessageToBrowser( self::STAGE_V_INSTALL_MODULE, $resStatus->getResult());
+            $this->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, $resStatus->getResult());
             if (!$resStatus->success) {
                 return [$resStatus->messages, false];
             } elseif ($resStatus->data[StatusOfModuleInstallationAction::I_STATUS] === StatusOfModuleInstallationAction::INSTALLATION_IN_PROGRESS) {
@@ -106,7 +106,7 @@ class ModuleInstallationBase extends Injectable
         }
 
         // Installation timeout
-        $this->pushMessageToBrowser( self::STAGE_V_INSTALL_MODULE, [self::ERR_INSTALLATION_TIMEOUT]);
+        $this->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, [self::ERR_INSTALLATION_TIMEOUT]);
         return [self::ERR_INSTALLATION_TIMEOUT, false];
     }
 
@@ -118,10 +118,10 @@ class ModuleInstallationBase extends Injectable
      *
      * @return array An array containing the module enabling process result and a success flag.
      */
-    protected function enableModule( PBXApiResult $installationResult):array
+    protected function enableModule(PBXApiResult $installationResult): array
     {
         // Check if the module was previously enabled
-        if ($installationResult->data[self::MODULE_WAS_ENABLED]){
+        if ($installationResult->data[self::MODULE_WAS_ENABLED]) {
             $res = EnableModuleAction::main($this->moduleUniqueId);
             $this->pushMessageToBrowser(self::STAGE_VI_ENABLE_MODULE, $res->getResult());
             return [$res->messages, $res->success];
@@ -135,18 +135,18 @@ class ModuleInstallationBase extends Injectable
      * @param array $data pushing data
      * @return void
      */
-    protected function pushMessageToBrowser( string $stage, array $data):void
+    protected function pushMessageToBrowser(string $stage, array $data): void
     {
         $message = [
             'stage' => $stage,
             'moduleUniqueId' => $this->moduleUniqueId,
             'stageDetails' => $data,
-            'pid'=>posix_getpid()
+            'pid' => posix_getpid()
         ];
 
         $di = Di::getDefault();
         $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-            '/pbxcore/api/nchan/pub/'.$this->asyncChannelId,
+            '/pbxcore/api/nchan/pub/' . $this->asyncChannelId,
             PBXCoreRESTClientProvider::HTTP_METHOD_POST,
             $message,
             ['Content-Type' => 'application/json']

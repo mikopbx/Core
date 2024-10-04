@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -63,7 +64,7 @@ class IAXConf extends AsteriskConfigClass
     protected function generateConfigProtected(): void
     {
         $conf = $this->generateGeneral();
-        $conf.= $this->generateProviders();
+        $conf .= $this->generateProviders();
 
         // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/iax.conf', $conf);
@@ -78,14 +79,14 @@ class IAXConf extends AsteriskConfigClass
     private function generateGeneral(): string
     {
         $iax_port = $this->generalSettings[PbxSettings::IAX_PORT];
-        $conf     = '[general]'.PHP_EOL;
-        $conf .= "bindport=$iax_port".PHP_EOL;
-        $conf .= "bindaddr=0.0.0.0".PHP_EOL;
-        $conf .= "delayreject=yes".PHP_EOL;
-        $conf .= "iaxthreadcount=100".PHP_EOL;
-        $conf .= "iaxmaxthreadcount=200".PHP_EOL;
-        $conf .= "jitterbuffer=no".PHP_EOL;
-        $conf .= "forcejitterbuffer=no".PHP_EOL.PHP_EOL;
+        $conf     = '[general]' . PHP_EOL;
+        $conf .= "bindport=$iax_port" . PHP_EOL;
+        $conf .= "bindaddr=0.0.0.0" . PHP_EOL;
+        $conf .= "delayreject=yes" . PHP_EOL;
+        $conf .= "iaxthreadcount=100" . PHP_EOL;
+        $conf .= "iaxmaxthreadcount=200" . PHP_EOL;
+        $conf .= "jitterbuffer=no" . PHP_EOL;
+        $conf .= "forcejitterbuffer=no" . PHP_EOL . PHP_EOL;
         return $conf;
     }
 
@@ -116,11 +117,11 @@ class IAXConf extends AsteriskConfigClass
                 'secret' => $provider['secret'],
                 'host' => 'dynamic'
             ];
-            $prov_config .= "[{$provider['uniqid']}];".PHP_EOL;
+            $prov_config .= "[{$provider['uniqid']}];" . PHP_EOL;
             foreach ($provider['codecs'] as $codec) {
-                $prov_config .= "allow=$codec".PHP_EOL;
+                $prov_config .= "allow=$codec" . PHP_EOL;
             }
-            $prov_config .= "setvar=contextID={$provider['uniqid']}-incoming".PHP_EOL;
+            $prov_config .= "setvar=contextID={$provider['uniqid']}-incoming" . PHP_EOL;
             $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, ' ');
             $prov_config .= PHP_EOL;
 
@@ -129,15 +130,15 @@ class IAXConf extends AsteriskConfigClass
                 // Registration is only required if the current host has a dynamic IP
                 $user   = $options['username'];
                 $secret = (trim($options['secret']) === '') ? '' : ":{$options['secret']}";
-                [$host, $port] = explode( ':',$provider['host']);
-                if(!empty($port)){
+                [$host, $port] = explode(':', $provider['host']);
+                if (!empty($port)) {
                     $port = ":$port";
                 }
-                $reg_strings .= "register => $user$secret@$host$port ".PHP_EOL;
+                $reg_strings .= "register => $user$secret@$host$port " . PHP_EOL;
             }
         }
 
-        return $reg_strings .PHP_EOL . $prov_config;
+        return $reg_strings . PHP_EOL . $prov_config;
     }
 
     /**

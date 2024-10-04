@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -18,6 +19,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
+
 require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, SystemMessages, Util};
@@ -86,9 +88,9 @@ class WorkerNotifyByEmail extends WorkerBase
             if (in_array($keyHash, $tmpArray, true)) {
                 continue;
             }
-            if(isset($phonesCid[$call['to_number']])){
+            if (isset($phonesCid[$call['to_number']])) {
                 $call['to_name'] = $phonesCid[$call['to_number']];
-            }else{
+            } else {
                 $call['to_name'] = Extensions::getCidByPhoneNumber($call['to_number']);
                 $phonesCid[$call['to_number']] = $call['to_name'];
             }
@@ -141,9 +143,10 @@ class WorkerNotifyByEmail extends WorkerBase
                 $params['duration'],
                 explode('.', $params['start'])[0]
             ],
-            $src);
+            $src
+        );
     }
 }
 
-// Start worker process
+// Start a worker process
 WorkerNotifyByEmail::startWorker($argv ?? []);

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,7 +20,6 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\SystemMessages;
@@ -34,7 +34,6 @@ use MikoPBX\Core\Workers\WorkerCallEvents;
  */
 class ActionHangupChan
 {
-
     /**
      * Executes the hangup channel action.
      *
@@ -42,6 +41,7 @@ class ActionHangupChan
      * @param array $data The data containing call details.
      *
      * @return void
+     * @throws \Exception
      */
     public static function execute(WorkerCallEvents $worker, array $data): void
     {

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -124,13 +125,11 @@ class ModelsBase extends Model
                         self::clearCache(get_class($record));
                         break;
                     default:
-
                 }
             }
         );
 
         $this->setEventsManager($eventsManager);
-
     }
 
     /**
@@ -159,8 +158,10 @@ class ModelsBase extends Model
                 $className = pathinfo($file)['filename'];
                 $moduleModelClass = "Modules\\{$module['uniqid']}\\Models\\$className";
 
-                if (class_exists($moduleModelClass)
-                    && method_exists($moduleModelClass, 'getDynamicRelations')) {
+                if (
+                    class_exists($moduleModelClass)
+                    && method_exists($moduleModelClass, 'getDynamicRelations')
+                ) {
                     $moduleModelClass::getDynamicRelations($this);
                 }
             }
@@ -241,7 +242,7 @@ class ModelsBase extends Model
         }
         if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
             $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
-            $category = explode('\\', $calledClass)[3].'*';
+            $category = explode('\\', $calledClass)[3] . '*';
             $keys = $managedCache->getAdapter()->keys($category);
             $prefix = $managedCache->getPrefix();
             // Delete all items from the managed cache
@@ -275,7 +276,7 @@ class ModelsBase extends Model
                 $relatedRecords = $this->getRelated($relatedModel);
 
                 // Create a new error message template
-                $newErrorMessage = '<div class="ui header">'.$this->t('ConstraintViolation').'</div>';
+                $newErrorMessage = '<div class="ui header">' . $this->t('ConstraintViolation') . '</div>';
                 $newErrorMessage .= "<ul class='list'>";
                 if ($relatedRecords === false) {
                     // Throw an exception if there is an error in the model relationship
@@ -407,7 +408,7 @@ class ModelsBase extends Model
                                 . $this->t('mo_SystemExten_' . $this->number);
                             break;
                         case Extensions::TYPE_PARKING:
-                            $name = $this->t('mo_ParkingExtension',['number'=> $this->number]);
+                            $name = $this->t('mo_ParkingExtension', ['number' => $this->number]);
                             break;
                         case Extensions::TYPE_EXTERNAL:
                         case Extensions::TYPE_SIP:
@@ -492,31 +493,31 @@ class ModelsBase extends Model
                         $represent .= "<i class='icon outline calendar alternate' ></i>";
                         $date_from = date("d.m.Y", $this->date_from);
                         $represent .= "$date_from";
-                        $date_to = date("d.m.Y", $this->date_to)??$date_from;
-                        if ($date_from !== $date_to){
+                        $date_to = date("d.m.Y", $this->date_to) ?? $date_from;
+                        if ($date_from !== $date_to) {
                             $represent .= " - $date_to";
                         }
                     }
                     if (!empty($this->weekday_from)) {
-                        if (!empty($represent)){
-                            $represent.=' ';
+                        if (!empty($represent)) {
+                            $represent .= ' ';
                         }
-                        $weekday_from = $this->t(date('D',strtotime("Sunday +$this->weekday_from days")));
+                        $weekday_from = $this->t(date('D', strtotime("Sunday +$this->weekday_from days")));
                         $represent .= "<i class='icon outline calendar minus' ></i>";
                         $represent .= "$weekday_from";
-                        if (!empty($this->weekday_to) && $this->weekday_from !== $this->weekday_to){
-                            $weekday_to = $this->t(date('D',strtotime("Sunday +$this->weekday_to days")));
+                        if (!empty($this->weekday_to) && $this->weekday_from !== $this->weekday_to) {
+                            $weekday_to = $this->t(date('D', strtotime("Sunday +$this->weekday_to days")));
                             $represent .= " - $weekday_to";
                         }
                     }
 
                     if (!empty($this->time_from)) {
-                        if (!empty($represent)){
-                            $represent.=' ';
+                        if (!empty($represent)) {
+                            $represent .= ' ';
                         }
                         $represent .= "<i class='icon clock outline' ></i>";
                         $represent .= "$this->time_from";
-                        if ($this->time_from !== $this->time_to){
+                        if ($this->time_from !== $this->time_to) {
                             $represent .= " - $this->time_to";
                         }
                     }
@@ -551,9 +552,9 @@ class ModelsBase extends Model
                 break;
             case Users::class:
                 $name = '<i class="user outline icon"></i> ' . $this->username;
-                foreach ($this->Extensions??[] as $extension){
-                    if ($extension->type===Extensions::TYPE_SIP){
-                        $name .= ' <'.$extension->number.'>';
+                foreach ($this->Extensions ?? [] as $extension) {
+                    if ($extension->type === Extensions::TYPE_SIP) {
+                        $name .= ' <' . $extension->number . '>';
                     }
                 }
                 break;
@@ -613,31 +614,30 @@ class ModelsBase extends Model
 
         switch (static::class) {
             case AsteriskManagerUsers::class:
-                $link = $this->buildRecordUrl(AsteriskManagersController::class, 'modify',  $this->id);
+                $link = $this->buildRecordUrl(AsteriskManagersController::class, 'modify', $this->id);
                 break;
             case CallQueueMembers::class:
-                $link = $this->buildRecordUrl(CallQueuesController::class, 'modify',  $this->CallQueues->uniqid);
+                $link = $this->buildRecordUrl(CallQueuesController::class, 'modify', $this->CallQueues->uniqid);
                 break;
             case CallQueues::class:
-                $link = $this->buildRecordUrl(CallQueuesController::class, 'modify',  $this->uniqid);
+                $link = $this->buildRecordUrl(CallQueuesController::class, 'modify', $this->uniqid);
                 break;
             case ConferenceRooms::class:
-                $link = $this->buildRecordUrl(ConferenceRoomsController::class, 'modify',  $this->uniqid);
+                $link = $this->buildRecordUrl(ConferenceRoomsController::class, 'modify', $this->uniqid);
                 break;
             case CustomFiles::class:
-                $link = $this->buildRecordUrl(CustomFilesController::class, 'modify',  $this->id);
+                $link = $this->buildRecordUrl(CustomFilesController::class, 'modify', $this->id);
                 break;
             case DialplanApplications::class:
-                $link = $this->buildRecordUrl(DialplanApplicationsController::class, 'modify',  $this->uniqid);
+                $link = $this->buildRecordUrl(DialplanApplicationsController::class, 'modify', $this->uniqid);
                 break;
             case ExtensionForwardingRights::class:
-
                 break;
             case Extensions::class:
-                $link = $this->buildRecordUrl(ExtensionsController::class, 'modify',  $this->id);
+                $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $this->id);
                 break;
             case ExternalPhones::class:
-                if ( $this->Extensions->is_general_user_number === "1") {
+                if ($this->Extensions->is_general_user_number === "1") {
                     $parameters = [
                         'conditions' => 'is_general_user_number="1" AND type="' . Extensions::TYPE_EXTERNAL . '" AND userid=:userid:',
                         'bind' => [
@@ -718,7 +718,7 @@ class ModelsBase extends Model
                 }
                 break;
             case SoundFiles::class:
-                $link = $this->buildRecordUrl(SoundFilesController::class, 'modify',$this->id);
+                $link = $this->buildRecordUrl(SoundFilesController::class, 'modify', $this->id);
                 break;
             default:
         }
@@ -735,7 +735,7 @@ class ModelsBase extends Model
      *
      * @return string The generated record URL.
      */
-    private function buildRecordUrl(string $controllerClass, string  $action, string $recordId=''):string
+    private function buildRecordUrl(string $controllerClass, string $action, string $recordId = ''): string
     {
         $url = new Url();
         $baseUri = $this->di->getShared('config')->path('adminApplication.baseUri');
@@ -787,7 +787,7 @@ class ModelsBase extends Model
         $result = true;
         $relations = $currentDeleteRecord->_modelsManager->getRelations(get_class($currentDeleteRecord));
         foreach ($relations as $relation) {
-            $foreignKey = $relation->getOption('foreignKey')??[];
+            $foreignKey = $relation->getOption('foreignKey') ?? [];
             if (!array_key_exists('action', $foreignKey)) {
                 continue;
             }
@@ -816,7 +816,8 @@ class ModelsBase extends Model
                 case Relation::ACTION_RESTRICT:
                     // Restrict deletion and add message about unsatisfied undeleted links
                     foreach ($relatedRecords as $relatedRecord) {
-                        if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
+                        if (
+                            serialize($relatedRecord) === serialize($theFirstDeleteRecord)
                             || serialize($relatedRecord) === serialize($currentDeleteRecord)
                         ) {
                             continue;
@@ -837,16 +838,17 @@ class ModelsBase extends Model
                 case Relation::ACTION_CASCADE:
                     // Delete all related records
                     foreach ($relatedRecords as $relatedRecord) {
-                        if (serialize($relatedRecord) === serialize($theFirstDeleteRecord)
+                        if (
+                            serialize($relatedRecord) === serialize($theFirstDeleteRecord)
                             || serialize($relatedRecord) === serialize($currentDeleteRecord)
                         ) {
                             continue;
                             // It is the checked object
                         }
                         $result = $result && $relatedRecord->checkRelationsSatisfaction(
-                                $theFirstDeleteRecord,
-                                $relatedRecord
-                            );
+                            $theFirstDeleteRecord,
+                            $relatedRecord
+                        );
                         if ($result) {
                             $result = $relatedRecord->delete();
                         }
@@ -886,7 +888,7 @@ class ModelsBase extends Model
      *
      * @return string The generated unique id.
      */
-    public static function generateUniqueID(string $alias=''):string
+    public static function generateUniqueID(string $alias = ''): string
     {
         $random = new Random();
         $hashLength = 4;

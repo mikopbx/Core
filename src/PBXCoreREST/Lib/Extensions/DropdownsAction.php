@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -34,7 +35,6 @@ use Phalcon\Di\Injectable;
  */
 class DropdownsAction extends Injectable
 {
-
     /**
      * Generate a select list of extensions based on the given type.
      *
@@ -57,9 +57,9 @@ class DropdownsAction extends Injectable
         // Process fetched extensions
         foreach ($extensions as $record) {
              $extensionData = self::processExtension($record);
-             if ($extensionData!==[]){
-                 $res->data[]=$extensionData;
-             }
+            if ($extensionData !== []) {
+                $res->data[] = $extensionData;
+            }
         }
 
         // Sort the results based on the sorter value
@@ -139,12 +139,12 @@ class DropdownsAction extends Injectable
      */
     private static function processExtension(Extensions $record): array
     {
-        $type = ($record->userid > 0) ? ' USER' : $record->type??'';
+        $type = ($record->userid > 0) ? ' USER' : $record->type ?? '';
         $type = Text::underscore(strtoupper($type));
 
         if ($type === Extensions::TYPE_MODULES) {
             // Check if the extension belongs to a module and if the module is disabled
-            $module = self::findModuleByExtensionNumber($record->number??'');
+            $module = self::findModuleByExtensionNumber($record->number ?? '');
             if ($module === null || $module->disabled === '1') {
                 return []; // Skip disabled modules
             }
@@ -209,5 +209,4 @@ class DropdownsAction extends Injectable
     {
         return strcmp($a['sorter'], $b['sorter']);
     }
-
 }

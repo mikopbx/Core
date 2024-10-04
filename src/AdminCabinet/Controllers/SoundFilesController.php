@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -24,7 +25,6 @@ use MikoPBX\Common\Models\SoundFiles;
 
 class SoundFilesController extends BaseController
 {
-
     /**
      * Build sounds list
      */
@@ -176,5 +176,4 @@ class SoundFilesController extends BaseController
         $this->view->results = $soundFilesList;
         $this->view->success = true;
     }
-
 }

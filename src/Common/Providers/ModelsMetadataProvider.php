@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,11 +22,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-
 use Phalcon\Cache\AdapterFactory;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-
 use Phalcon\Mvc\Model\MetaData\Redis;
 use Phalcon\Mvc\Model\MetaData\Strategy\Annotations as StrategyAnnotations;
 use Phalcon\Storage\SerializerFactory;
@@ -49,7 +48,7 @@ class ModelsMetadataProvider implements ServiceProviderInterface
         $config = $di->getShared(ConfigProvider::SERVICE_NAME);
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($config){
+            function () use ($config) {
                 $serializerFactory = new SerializerFactory();
                 $adapterFactory    = new AdapterFactory($serializerFactory);
                 $options = [

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -26,9 +27,9 @@ use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer20220284 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const string PBX_VERSION = '2022.2.84';
+    public const string PBX_VERSION = '2022.2.84';
 
-	/**
+    /**
      * Class constructor.
      */
     public function __construct()
@@ -38,16 +39,16 @@ class UpdateConfigsUpToVer20220284 extends Injectable implements UpgradeSystemCo
     /**
      * https://github.com/mikopbx/Core/issues/155
      */
-    public function processUpdate():void
+    public function processUpdate(): void
     {
         $extensions = [
             IncomingRoutingTable::ACTION_HANGUP,
             IncomingRoutingTable::ACTION_BUSY,
             IncomingRoutingTable::ACTION_DID
         ];
-        foreach ($extensions as $extension){
+        foreach ($extensions as $extension) {
             $data                = Extensions::findFirst('number="' . $extension . '"');
-            if ($data===null) {
+            if ($data === null) {
                 $data                    = new Extensions();
                 $data->number            = $extension;
             }

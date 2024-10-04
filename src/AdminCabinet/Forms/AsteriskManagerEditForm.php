@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -65,7 +66,9 @@ class AsteriskManagerEditForm extends BaseForm
 
         // Networkfilterid
         $networkfilterid = new Select(
-            'networkfilterid', $options['network_filters'], [
+            'networkfilterid',
+            $options['network_filters'],
+            [
                 'using' => [
                     'id',
                     'name',
@@ -78,7 +81,6 @@ class AsteriskManagerEditForm extends BaseForm
         $this->add($networkfilterid);
 
         // Description
-        $this->addTextArea('description', $entity->description??'', 65);
-
+        $this->addTextArea('description', $entity->description ?? '', 65);
     }
 }

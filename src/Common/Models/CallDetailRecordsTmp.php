@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -54,19 +55,19 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
         $this->setConnectionService('dbCDR');
     }
 
-     public function beforeSave(): void
-     {
-         if(empty($this->linkedid)){
-             $trace = debug_backtrace();
-             $error =  "Call trace:\n";
-             foreach ($trace as $index => $item) {
-                 if ($index > 0) {
-                     $error.= "$index. {$item['file']} (line {$item['line']})\n";
-                 }
-             }
-             SystemMessages::sysLogMsg('ERROR_CDR '.getmypid(), $error);
-         }
-     }
+    public function beforeSave(): void
+    {
+        if (empty($this->linkedid)) {
+            $trace = debug_backtrace();
+            $error =  "Call trace:\n";
+            foreach ($trace as $index => $item) {
+                if ($index > 0) {
+                    $error .= "$index. {$item['file']} (line {$item['line']})\n";
+                }
+            }
+            SystemMessages::sysLogMsg('ERROR_CDR ' . getmypid(), $error);
+        }
+    }
 
     /**
      * Perform necessary actions after saving the record.
@@ -76,8 +77,10 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
         $moveToGeneral = true;
         // Check if the call was answered and either an interception or originate.
         // In such cases, forcefully logging the call is not required.
-        if ($this->disposition === 'ANSWERED' &&
-            ($this->appname === 'interception' || $this->appname === 'originate')) {
+        if (
+            $this->disposition === 'ANSWERED' &&
+            ($this->appname === 'interception' || $this->appname === 'originate')
+        ) {
             $moveToGeneral = false;
         }
 
@@ -134,5 +137,4 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
     {
         $this->saveCdrCache(false);
     }
-
 }

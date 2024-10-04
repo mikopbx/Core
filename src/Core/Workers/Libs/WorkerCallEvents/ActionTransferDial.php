@@ -20,7 +20,6 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 

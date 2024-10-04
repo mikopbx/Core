@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -33,7 +34,7 @@ class ExternalPhonesConf extends AsteriskConfigClass
     // The module hook applying priority
     public int $priority = 580;
 
-    private ?array $arrExternalPhones=null;
+    private ?array $arrExternalPhones = null;
 
     /**
      * Retrieves settings for external phones.
@@ -60,7 +61,7 @@ class ExternalPhonesConf extends AsteriskConfigClass
      */
     public function extensionGenInternal(): string
     {
-        if ($this->arrExternalPhones===null){
+        if ($this->arrExternalPhones === null) {
             $this->getSettings();
         }
         $conf = '';
@@ -81,7 +82,7 @@ class ExternalPhonesConf extends AsteriskConfigClass
      */
     public function extensionGenInternalTransfer(): string
     {
-        if ($this->arrExternalPhones===null){
+        if ($this->arrExternalPhones === null) {
             $this->getSettings();
         }
         $conf = '';
@@ -103,5 +104,4 @@ class ExternalPhonesConf extends AsteriskConfigClass
     {
         return [ExternalPhones::class];
     }
-
 }

@@ -122,4 +122,4 @@ class WorkerModuleInstaller extends WorkerBase
 }
 
 // Start a worker process
-WorkerModuleInstaller::startWorker($argv??[]);
+WorkerModuleInstaller::startWorker($argv ?? []);

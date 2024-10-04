@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -69,7 +70,7 @@ class GeneralSettingsEditForm extends BaseForm
                 case PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT:
                 case PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT:
                 case '***ALL NUMBERIC ABOVE***':
-                    $this->add(new Numeric($key, ['value' => $value, 'style'=>'width:130px;']));
+                    $this->add(new Numeric($key, ['value' => $value, 'style' => 'width:130px;']));
                     break;
                 case PbxSettings::SSH_PASSWORD:
                     $this->add(new Password($key, ['value' => self::HIDDEN_PASSWORD]));
@@ -97,7 +98,7 @@ class GeneralSettingsEditForm extends BaseForm
                 case PbxSettings::WEB_HTTPS_PUBLIC_KEY:
                 case PbxSettings::WEB_HTTPS_PRIVATE_KEY:
                 case '***ALL TEXTAREA ABOVE***':
-                    $this->addTextArea($key, $value??'', 65);
+                    $this->addTextArea($key, $value ?? '', 65);
                     break;
                 case PbxSettings::PBX_LANGUAGE:
                     $language = new Select(
@@ -119,8 +120,8 @@ class GeneralSettingsEditForm extends BaseForm
                             'sv-sv' => $this->translation->_('ex_Swedish'),
                             'cs-cs' => $this->translation->_('ex_Czech'),
                             'tr-tr' => $this->translation->_('ex_Turkish'),
-                        ]
-                        , [
+                        ],
+                        [
                             'using' => [
                                 'id',
                                 'name',
@@ -143,8 +144,8 @@ class GeneralSettingsEditForm extends BaseForm
                             6 => $this->translation->_('gs_SixDigthts'),
                             7 => $this->translation->_('gs_SevenDigthts'),
                             11 => $this->translation->_('gs_ElevenDigthts'),
-                        ]
-                        , [
+                        ],
+                        [
                             'using' => [
                                 'id',
                                 'name',
@@ -156,7 +157,7 @@ class GeneralSettingsEditForm extends BaseForm
                     );
                     $this->add($extLength);
                     break;
-                case PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN :
+                case PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN:
                 case PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT:
                     $currentSoundFile = SoundFiles::findFirstById($value);
                     $selectArray = [];
@@ -166,7 +167,9 @@ class GeneralSettingsEditForm extends BaseForm
 
                     // Audio_message_id
                     $audioMessage = new Select(
-                        $key, $selectArray, [
+                        $key,
+                        $selectArray,
+                        [
                             'using' => [
                                 'id',
                                 'name',

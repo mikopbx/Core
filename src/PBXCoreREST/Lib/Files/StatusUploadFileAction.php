@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -19,7 +20,6 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Files;
 
-
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -32,7 +32,6 @@ use Phalcon\Di\Injectable;
  */
 class StatusUploadFileAction extends Injectable
 {
-
     /**
      * Returns Status of uploading and merging process
      *

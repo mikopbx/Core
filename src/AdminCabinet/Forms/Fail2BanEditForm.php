@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -34,7 +35,6 @@ use Phalcon\Forms\Element\Text;
  */
 class Fail2BanEditForm extends BaseForm
 {
-
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
@@ -52,7 +52,7 @@ class Fail2BanEditForm extends BaseForm
                     $this->add(new Numeric($key));
                     break;
                 case "whitelist":
-                    $this->addTextArea($key, $value??'', 95);
+                    $this->addTextArea($key, $value ?? '', 95);
                     break;
                 default:
                     $this->add(new Text($key));

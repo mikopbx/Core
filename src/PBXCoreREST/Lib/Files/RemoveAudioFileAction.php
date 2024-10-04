@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\PBXCoreREST\Lib\Files;
-
 
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -45,14 +45,14 @@ class RemoveAudioFileAction extends Injectable
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         $extension      = Util::getExtensionOfFile($filePath);
-        if ( ! in_array($extension, ['mp3', 'wav', 'alaw'])) {
+        if (! in_array($extension, ['mp3', 'wav', 'alaw'])) {
             $res->success    = false;
             $res->messages[] = "It is forbidden to remove the file type $extension.";
 
             return $res;
         }
 
-        if ( ! file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             $res->success         = true;
             $res->data['message'] = "File '$filePath' already deleted";
 

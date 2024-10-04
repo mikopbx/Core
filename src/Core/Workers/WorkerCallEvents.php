@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,6 +19,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
+
 require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, Directories, SystemMessages, Util};
@@ -109,7 +111,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public function getActiveChanId(string $channel): string
     {
-        return $this->activeChannels[$channel]??'';
+        return $this->activeChannels[$channel] ?? '';
     }
 
     /**
@@ -126,8 +128,10 @@ class WorkerCallEvents extends WorkerBase
         $dst = substr($dst, -9);
         $enable = true;
         $isInner = in_array($src, $this->innerNumbers, true) && in_array($dst, $this->innerNumbers, true);
-        if (($this->notRecInner && $isInner) ||
-            in_array($src, $this->exceptionsNumbers, true) || in_array($dst, $this->exceptionsNumbers, true)) {
+        if (
+            ($this->notRecInner && $isInner) ||
+            in_array($src, $this->exceptionsNumbers, true) || in_array($dst, $this->exceptionsNumbers, true)
+        ) {
             $enable = false;
         }
         return $enable;
@@ -180,7 +184,7 @@ class WorkerCallEvents extends WorkerBase
      */
     public function setMonitorFilenameOptions(string $full_name, string $sub_dir, string $file_name): array
     {
-        $full_name = Util::trimExtensionForFile($full_name).'.wav';
+        $full_name = Util::trimExtensionForFile($full_name) . '.wav';
         if (!file_exists($full_name)) {
             $monitor_dir = Directories::getDir(Directories::AST_MONITOR_DIR);
             if (empty($sub_dir)) {
@@ -378,9 +382,10 @@ class WorkerCallEvents extends WorkerBase
     /**
      * Calls the events worker.
      *
-     * @param  BeanstalkClient $tube object.
+     * @param BeanstalkClient $tube object.
      *
      * @return void
+     * @throws \Exception
      */
     public function callEventsWorker(BeanstalkClient $tube): void
     {
@@ -394,7 +399,7 @@ class WorkerCallEvents extends WorkerBase
         if ('ANSWER' === $event) {
             ActionCelAnswer::execute($this, $data);
         }
-        if('ATTENDEDTRANSFER' === $event){
+        if ('ATTENDEDTRANSFER' === $event) {
             ActionCelAttendedTransfer::execute($this, $data);
         }
         // If event is not 'USER_DEFINED', return
@@ -513,12 +518,12 @@ class WorkerCallEvents extends WorkerBase
     {
         // Cleaning will be performed every ping
         $this->deleteCdrTimer++;
-        if($this->deleteCdrTimer <= 61){
+        if ($this->deleteCdrTimer <= 61) {
             return;
         }
         $this->deleteCdrTimer = 0;
         $savePeriod = (int)PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD);
-        if($savePeriod < 30){
+        if ($savePeriod < 30) {
             return;
         }
         $limitData  = (new DateTime())->modify("-$savePeriod days")->format('Y-m-d');
@@ -528,5 +533,5 @@ class WorkerCallEvents extends WorkerBase
 }
 
 
-// Start worker process
+// Start a worker process
 WorkerCallEvents::startWorker($argv ?? []);

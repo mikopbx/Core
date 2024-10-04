@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -67,7 +68,7 @@ class MarketPlaceProvider implements ServiceProviderInterface
             function () {
                 try {
                     return new License();
-                } catch (Throwable $e){
+                } catch (Throwable $e) {
                     SystemMessages::sysLogMsg(__CLASS__, $e->getMessage());
                 }
                 return null;

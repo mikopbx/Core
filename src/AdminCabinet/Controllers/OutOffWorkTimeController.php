@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -30,8 +31,6 @@ use MikoPBX\Core\Asterisk\Configs\SIPConf;
 
 class OutOffWorkTimeController extends BaseController
 {
-
-
     /**
      * This function retrieves OutWorkTimes data and formats it into an array that is used to display on the index page.
      */
@@ -58,10 +57,10 @@ class OutOffWorkTimeController extends BaseController
         foreach ($timeFrames as $timeFrame) {
             // If the description is less than 45 characters, use the entire string.
             // Otherwise, truncate it to 45 characters and add an ellipsis.
-            if(mb_strlen($timeFrame->description) < 45){
+            if (mb_strlen($timeFrame->description) < 45) {
                 $shot_description = $timeFrame->description;
             } else {
-                $shot_description = trim(mb_substr($timeFrame->description, 0 , 45)).'...';
+                $shot_description = trim(mb_substr($timeFrame->description, 0, 45)) . '...';
             }
             // Add the formatted OutWorkTimes record to the array of records to be displayed on the index page.
             $timeframesTable[] = [
@@ -69,8 +68,8 @@ class OutOffWorkTimeController extends BaseController
                 'calType'          => $calTypeArray[$timeFrame->calType],
                 'date_from'        => ( ! empty($timeFrame->date_from)) > 0 ? date("d.m.Y", $timeFrame->date_from) : '',
                 'date_to'          => ( ! empty($timeFrame->date_to)) > 0 ? date("d.m.Y", $timeFrame->date_to) : '',
-                'weekday_from'     => ( ! empty($timeFrame->weekday_from)) ? $this->translation->_(date('D',strtotime("Sunday +$timeFrame->weekday_from days"))) : '',
-                'weekday_to'       => ( ! empty($timeFrame->weekday_to)) ? $this->translation->_(date('D',strtotime("Sunday +$timeFrame->weekday_to days"))) : '',
+                'weekday_from'     => ( ! empty($timeFrame->weekday_from)) ? $this->translation->_(date('D', strtotime("Sunday +$timeFrame->weekday_from days"))) : '',
+                'weekday_to'       => ( ! empty($timeFrame->weekday_to)) ? $this->translation->_(date('D', strtotime("Sunday +$timeFrame->weekday_to days"))) : '',
                 'time_from'        => $timeFrame->time_from,
                 'time_to'          => $timeFrame->time_to,
                 'action'           => $timeFrame->action,
@@ -91,13 +90,13 @@ class OutOffWorkTimeController extends BaseController
         $this->view->disable();
         $result = true;
 
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
         $priorityTable = $this->request->getPost();
         $rules = OutWorkTimes::find();
-        foreach ($rules as $rule){
-            if (array_key_exists ( $rule->id, $priorityTable)){
+        foreach ($rules as $rule) {
+            if (array_key_exists($rule->id, $priorityTable)) {
                 $rule->priority = $priorityTable[$rule->id];
                 $result         .= $rule->update();
             }
@@ -162,7 +161,8 @@ class OutOffWorkTimeController extends BaseController
 
         // Create a new TimeFrameEditForm object with the $timeFrame and arrays for the forwarding extensions, audio messages, available actions, and week days.
         $form = new TimeFrameEditForm(
-            $timeFrame, [
+            $timeFrame,
+            [
                 'extensions' => $forwardingExtensions,
                 'audio-message' => $audioMessages,
                 'available-actions' => $availableActions,
@@ -192,11 +192,11 @@ class OutOffWorkTimeController extends BaseController
         ];
         $data = Sip::find($filter)->toArray();
         $providersId = [];
-        foreach ($data as $providerData){
-            if($providerData['registration_type'] === Sip::REG_TYPE_INBOUND || empty($providerData['host'])){
+        foreach ($data as $providerData) {
+            if ($providerData['registration_type'] === Sip::REG_TYPE_INBOUND || empty($providerData['host'])) {
                 $providersId[$providerData['uniqid']] = $providerData['uniqid'];
-            }else{
-                $providersId[$providerData['uniqid']] = SIPConf::getContextId($providerData['host'] , $providerData['port']);
+            } else {
+                $providersId[$providerData['uniqid']] = SIPConf::getContextId($providerData['host'], $providerData['port']);
             }
         }
         unset($data);
@@ -245,7 +245,7 @@ class OutOffWorkTimeController extends BaseController
     public function saveAction(): void
     {
         // Check if the request method is POST
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
 
@@ -266,16 +266,16 @@ class OutOffWorkTimeController extends BaseController
             switch ($name) {
                 case 'weekday_from':
                 case 'weekday_to':
-                    if ( ! array_key_exists($name, $data)) {
+                    if (! array_key_exists($name, $data)) {
                         $timeFrame->$name = '';
                     } else {
                         $timeFrame->$name = ($data[$name] < 1) ? null : $data[$name];
                     }
                     break;
                 case 'allowRestriction':
-                    if(isset($data[$name])){
+                    if (isset($data[$name])) {
                         $timeFrame->$name = ($data[$name] === 'on') ? '1' : '0';
-                    }else{
+                    } else {
                         $timeFrame->$name = '0';
                     }
                     break;
@@ -286,14 +286,14 @@ class OutOffWorkTimeController extends BaseController
                 case 'date_to':
                 case 'time_from':
                 case 'time_to':
-                    if ( ! array_key_exists($name, $data)) {
+                    if (! array_key_exists($name, $data)) {
                         $timeFrame->$name = '';
                     } else {
                         $timeFrame->$name = $data[$name];
                     }
                     break;
                 default:
-                    if ( ! array_key_exists($name, $data)) {
+                    if (! array_key_exists($name, $data)) {
                         continue 2;
                     }
                     $timeFrame->$name = $data[$name];
@@ -301,7 +301,7 @@ class OutOffWorkTimeController extends BaseController
         }
 
         // If the action is 'playmessage', set the extension to an empty string
-        if('playmessage' === $timeFrame->action){
+        if ('playmessage' === $timeFrame->action) {
             $timeFrame->extension = '';
         }
 
@@ -396,5 +396,4 @@ class OutOffWorkTimeController extends BaseController
         // Redirect to the OutOffWorkTime index page
         $this->forward('OutOffWorkTime/index');
     }
-
 }

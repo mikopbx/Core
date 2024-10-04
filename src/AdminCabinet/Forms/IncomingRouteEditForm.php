@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -69,7 +70,9 @@ class IncomingRouteEditForm extends BaseForm
 
         // Add select dropdown for Providers
         $providers = new Select(
-            'provider', $this->prepareProviders(), [
+            'provider',
+            $this->prepareProviders(),
+            [
                 'using' => ['id', 'name'],
                 'useEmpty' => false,
                 'class' => 'ui selection dropdown provider-select',
@@ -79,7 +82,9 @@ class IncomingRouteEditForm extends BaseForm
 
         // Add select dropdown for Extension
         $extension = new Select(
-            'extension', $this->prepareForwardingExtensions($entity->extension ?? ''), [
+            'extension',
+            $this->prepareForwardingExtensions($entity->extension ?? ''),
+            [
                 'using' => [
                     'id',
                     'name',
@@ -92,7 +97,9 @@ class IncomingRouteEditForm extends BaseForm
 
         // Audio_message_id
         $audioMessage = new Select(
-            'audio_message_id', $options['soundfiles'], [
+            'audio_message_id',
+            $options['soundfiles'],
+            [
                                   'using' => [
                                       'id',
                                       'name',
@@ -127,7 +134,6 @@ class IncomingRouteEditForm extends BaseForm
             $modelType = ucfirst($provider->type);
             $provByType = $provider->$modelType;
             $providersList[$provByType->uniqid] = $provByType->getRepresent();
-
         }
         return $providersList;
     }

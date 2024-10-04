@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,44 +21,45 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\CallQueueEditForm;
-use MikoPBX\Common\Models\{CallQueueMembers, CallQueues, Extensions, SoundFiles};
+use MikoPBX\Common\Models\CallQueueMembers;
+use MikoPBX\Common\Models\CallQueues;
+use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\SoundFiles;
 
 class CallQueuesController extends BaseController
 {
-
     /**
      *  Builds call queues representation
      */
     public function indexAction(): void
     {
         $records = CallQueueMembers::find();
-        $callQueueMembers=[];
+        $callQueueMembers = [];
         foreach ($records as $record) {
-            $callQueueMembers[$record->queue][$record->id]=[
-                'priority'=>$record->priority,
-                'represent'=>$record->Extensions===null?'ERROR':$record->Extensions->getRepresent()
+            $callQueueMembers[$record->queue][$record->id] = [
+                'priority' => $record->priority,
+                'represent' => $record->Extensions === null ? 'ERROR' : $record->Extensions->getRepresent()
             ];
         }
 
         $records = CallQueues::find();
-        $callQueuesList=[];
+        $callQueuesList = [];
         foreach ($records as $record) {
             $members = $callQueueMembers[$record->uniqid];
-            if (is_array($members)){
+            if (is_array($members)) {
                 usort($members, [__CLASS__, 'sortArrayByPriority']);
             } else {
                 $members = [];
             }
-            $callQueuesList[]=[
-                'uniqid'=>$record->uniqid,
-                'name'=>$record->name,
-                'extension'=>$record->extension,
-                'members'=>$members,
-                'description'=>$record->description,
+            $callQueuesList[] = [
+                'uniqid' => $record->uniqid,
+                'name' => $record->name,
+                'extension' => $record->extension,
+                'members' => $members,
+                'description' => $record->description,
             ];
         }
         $this->view->callQueuesList = $callQueuesList;
-
     }
 
     /**
@@ -96,7 +98,7 @@ class CallQueuesController extends BaseController
                     'id'       => $member->id,
                     'number'   => $member->extension,
                     'priority'  => $member->priority,
-                    'callerid' => $member->Extensions===null?'ERROR':$member->Extensions->getRepresent(),
+                    'callerid' => $member->Extensions === null ? 'ERROR' : $member->Extensions->getRepresent(),
                 ];
             }
             usort($queueMembersList, [__CLASS__, 'sortArrayByPriority']);
@@ -127,15 +129,16 @@ class CallQueuesController extends BaseController
 
         $soundFiles         = SoundFiles::find(['columns' => 'id,name,category']);
         foreach ($soundFiles as $soundFile) {
-            if(SoundFiles::CATEGORY_CUSTOM === $soundFile->category){
+            if (SoundFiles::CATEGORY_CUSTOM === $soundFile->category) {
                 $soundfilesList[$soundFile->id] = $soundFile->name;
-            }else{
+            } else {
                 $mohSoundFilesList[$soundFile->id] = $soundFile->name;
             }
         }
 
         $form                        = new CallQueueEditForm(
-            $queue, [
+            $queue,
+            [
                       'extensions' => $extensionList,
                       'soundfiles' => $soundfilesList,
                       'mohSoundFiles' => $mohSoundFilesList,
@@ -157,7 +160,7 @@ class CallQueuesController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
         $this->db->begin();
@@ -178,7 +181,7 @@ class CallQueuesController extends BaseController
         }
 
         // Update the extension parameters
-        if ( ! $this->updateExtension($extension, $data)) {
+        if (! $this->updateExtension($extension, $data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -186,7 +189,7 @@ class CallQueuesController extends BaseController
         }
 
         // Update the queue parameters
-        if ( ! $this->updateQueue($queue, $data)) {
+        if (! $this->updateQueue($queue, $data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -194,7 +197,7 @@ class CallQueuesController extends BaseController
         }
 
         // Update the queue members
-        if ( ! $this->updateQueueMembers($data)) {
+        if (! $this->updateQueueMembers($data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -267,7 +270,7 @@ class CallQueuesController extends BaseController
                 case "moh_sound_id":
                 case "redirect_to_extension_if_repeat_exceeded":
                 case "redirect_to_extension_if_empty":
-                    if ( ! array_key_exists($name, $data) || empty($data[$name])) {
+                    if (! array_key_exists($name, $data) || empty($data[$name])) {
                         $queue->$name = null;
                         continue 2;
                     }
@@ -276,7 +279,7 @@ class CallQueuesController extends BaseController
                     break;
                 case "timeout_to_redirect_to_extension":
                 case "number_unanswered_calls_to_redirect":
-                    if ( ! array_key_exists($name, $data)) {
+                    if (! array_key_exists($name, $data)) {
                         continue 2;
                     }
                     if (empty($data[$name])) {
@@ -286,10 +289,12 @@ class CallQueuesController extends BaseController
                     }
                     break;
                 case "timeout_extension":
-                    if ( ! array_key_exists($name, $data)
+                    if (
+                        ! array_key_exists($name, $data)
                         || empty($data[$name])
                         || (array_key_exists('timeout_to_redirect_to_extension', $data)
-                            && intval($data['timeout_to_redirect_to_extension']) === 0)) {
+                            && intval($data['timeout_to_redirect_to_extension']) === 0)
+                    ) {
                         $queue->$name = null;
                         continue 2;
                     }
@@ -297,10 +302,12 @@ class CallQueuesController extends BaseController
 
                     break;
                 case "redirect_to_extension_if_unanswered":
-                    if ( ! array_key_exists($name, $data)
+                    if (
+                        ! array_key_exists($name, $data)
                         || empty($data[$name])
                         || (array_key_exists('number_unanswered_calls_to_redirect', $data)
-                            && intval($data['number_unanswered_calls_to_redirect']) === 0)) {
+                            && intval($data['number_unanswered_calls_to_redirect']) === 0)
+                    ) {
                         $queue->$name = null;
                         continue 2;
                     }
@@ -308,7 +315,7 @@ class CallQueuesController extends BaseController
 
                     break;
                 default:
-                    if ( ! array_key_exists($name, $data)) {
+                    if (! array_key_exists($name, $data)) {
                         continue 2;
                     }
                     $queue->$name = $data[$name];
@@ -391,5 +398,4 @@ class CallQueuesController extends BaseController
 
         return true;
     }
-
 }

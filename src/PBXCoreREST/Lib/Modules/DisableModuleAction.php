@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -40,7 +41,7 @@ class DisableModuleAction extends Injectable
      * @param string $reasonText Store the reason why the module was disabled in text mode, some logs
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function main(string $moduleUniqueID, string $reason='', string $reasonText=''): PBXApiResult
+    public static function main(string $moduleUniqueID, string $reason = '', string $reasonText = ''): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;

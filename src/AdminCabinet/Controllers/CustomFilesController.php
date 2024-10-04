@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,10 +23,8 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\CustomFilesEditForm;
 use MikoPBX\Common\Models\CustomFiles;
 
-
 class CustomFilesController extends BaseController
 {
-
     /**
      * Build the list of files.
      */
@@ -62,7 +61,7 @@ class CustomFilesController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
 
@@ -82,13 +81,13 @@ class CustomFilesController extends BaseController
                     $customFile->setContent($data[$name]);
                     break;
                 default:
-                    if ( ! array_key_exists($name, $data)) {
+                    if (! array_key_exists($name, $data)) {
                         continue 2;
                     }
                     $customFile->$name = $data[$name];
             }
         }
-        if (empty($customFile->getContent())){
+        if (empty($customFile->getContent())) {
             $customFile->mode = CustomFiles::MODE_NONE;
         }
 

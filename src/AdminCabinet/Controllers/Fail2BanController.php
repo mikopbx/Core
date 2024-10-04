@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -24,7 +25,6 @@ use MikoPBX\Common\Models\{Fail2BanRules, PbxSettings};
 
 class Fail2BanController extends BaseController
 {
-
     /**
      * Builds the index page for the internal numbers and employees.
      */
@@ -98,5 +98,4 @@ class Fail2BanController extends BaseController
         $this->view->success = false;
         $this->db->commit();
     }
-
 }

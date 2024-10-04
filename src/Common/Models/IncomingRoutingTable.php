@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -178,14 +179,12 @@ class IncomingRoutingTable extends ModelsBase
      * Returns the maximum priority value of +1
      * @return int
      */
-    public static function getMaxNewPriority():int
+    public static function getMaxNewPriority(): int
     {
         $parameters = [
             'column' => 'priority',
-            'conditions'=>'id!=1'
+            'conditions' => 'id!=1'
         ];
-        return (int)IncomingRoutingTable::maximum($parameters)+1;
+        return (int)IncomingRoutingTable::maximum($parameters) + 1;
     }
-
 }
-

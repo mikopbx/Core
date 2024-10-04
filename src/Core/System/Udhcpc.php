@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -32,13 +33,13 @@ class Udhcpc extends Network
      * @param string $action
      * @return void
      */
-    public function configure(string $action):void
+    public function configure(string $action): void
     {
         /**
          * Check if running inside a Docker container.
          * If true, skip the action and exit the script.
          */
-        if(Util::isDocker()){
+        if (Util::isDocker()) {
             SystemMessages::sysLogMsg(__METHOD__, "Skipped action $action... because of docker", LOG_DEBUG);
             return;
         } else {
@@ -173,8 +174,8 @@ class Udhcpc extends Network
             'ipttl' => '',
             'lease' => '', // 86400
             'domain' => '', // bad
-            'mtu'=>'' , // 1500
-            'staticroutes'=> '', // 0.0.0.0/0 10.0.0.1 169.254.169.254/32 10.0.0.65 0.0.0.0/0 10.0.0.1
+            'mtu' => '' , // 1500
+            'staticroutes' => '', // 0.0.0.0/0 10.0.0.1 169.254.169.254/32 10.0.0.65 0.0.0.0/0 10.0.0.1
             'mask' => '', // 24
         ];
 

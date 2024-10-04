@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -28,7 +29,7 @@ use Phalcon\Support\HelperFactory;
  */
 class Text
 {
-    public static function camelize(string $text, string $delimiters = null, bool $lowerFirst = false):string
+    public static function camelize(string $text, string $delimiters = null, bool $lowerFirst = false): string
     {
         $helper = new HelperFactory();
         if ($delimiters === '\\') {
@@ -37,7 +38,7 @@ class Text
         return $helper->camelize($text, $delimiters, $lowerFirst);
     }
 
-    public static function uncamelize(string $text, string $delimiter = '_'):string
+    public static function uncamelize(string $text, string $delimiter = '_'): string
     {
         $helper = new HelperFactory();
         if ($delimiter === '\\') {
@@ -46,13 +47,14 @@ class Text
         return $helper->uncamelize($text, $delimiter);
     }
 
-    public static function startsWith(string $haystack, string $needle, bool $ignoreCase = true):bool
+    public static function startsWith(string $haystack, string $needle, bool $ignoreCase = true): bool
     {
         $helper = new HelperFactory();
         return $helper->startsWith($haystack, $needle, $ignoreCase);
     }
 
-    public static function underscore(string $text):string{
+    public static function underscore(string $text): string
+    {
         $helper = new HelperFactory();
         return $helper->underscore($text);
     }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
-
 
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\Sip;
@@ -104,6 +104,4 @@ class AclConf extends AsteriskConfigClass
 
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/acl.conf', $conf_acl);
     }
-
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -33,7 +34,6 @@ use function MikoPBX\Common\Config\appPath;
 
 class UpdateSystemConfig extends Injectable
 {
-
     private MikoPBXConfig $mikoPBXConfig;
 
     /**
@@ -95,7 +95,7 @@ class UpdateSystemConfig extends Injectable
         $modules = PbxExtensionModules::find();
         $modulesDir = $this->getDI()->getShared('config')->path('core.modulesDir');
         foreach ($modules as $module) {
-            if ( ! is_dir("$modulesDir/$module->uniqid")) {
+            if (! is_dir("$modulesDir/$module->uniqid")) {
                 $module->delete();
             }
         }
@@ -122,5 +122,4 @@ class UpdateSystemConfig extends Injectable
     {
         return version_compare($a, $b);
     }
-
 }

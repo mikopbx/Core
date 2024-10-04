@@ -55,7 +55,7 @@ $mv         = Util::which('mv');
  * The device containing the configuration file.
  * Empty if no device is found.
  *
- * @var string
+ * @var string $cfgdevice
  */
 $cfgdevice = '';
 /* check if there's already an fstab (NFS booting?) */

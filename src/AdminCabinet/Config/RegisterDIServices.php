@@ -21,34 +21,34 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Config;
 
-use MikoPBX\AdminCabinet\Providers\{AssetProvider,
-    CryptProvider,
-    DispatcherProvider,
-    ElementsProvider,
-    FlashProvider,
-    SecurityPluginProvider,
-    ViewProvider,
-    VoltProvider};
-use MikoPBX\Common\Providers\{AclProvider,
-    BeanstalkConnectionModelsProvider,
-    CDRDatabaseProvider,
-    LanguageProvider,
-    MarketPlaceProvider,
-    LoggerAuthProvider,
-    LoggerProvider,
-    MainDatabaseProvider,
-    ManagedCacheProvider,
-    MessagesProvider,
-    ModelsAnnotationsProvider,
-    ModelsMetadataProvider,
-    ModulesDBConnectionsProvider,
-    PBXConfModulesProvider,
-    PBXCoreRESTClientProvider,
-    RegistryProvider,
-    RouterProvider,
-    SessionProvider,
-    TranslationProvider,
-    UrlProvider,};
+use MikoPBX\AdminCabinet\Providers\AssetProvider;
+use MikoPBX\AdminCabinet\Providers\CryptProvider;
+use MikoPBX\AdminCabinet\Providers\DispatcherProvider;
+use MikoPBX\AdminCabinet\Providers\ElementsProvider;
+use MikoPBX\AdminCabinet\Providers\FlashProvider;
+use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
+use MikoPBX\AdminCabinet\Providers\ViewProvider;
+use MikoPBX\AdminCabinet\Providers\VoltProvider;
+use MikoPBX\Common\Providers\AclProvider;
+use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\LanguageProvider;
+use MikoPBX\Common\Providers\MarketPlaceProvider;
+use MikoPBX\Common\Providers\LoggerAuthProvider;
+use MikoPBX\Common\Providers\LoggerProvider;
+use MikoPBX\Common\Providers\MainDatabaseProvider;
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\MessagesProvider;
+use MikoPBX\Common\Providers\ModelsAnnotationsProvider;
+use MikoPBX\Common\Providers\ModelsMetadataProvider;
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
+use MikoPBX\Common\Providers\RegistryProvider;
+use MikoPBX\Common\Providers\RouterProvider;
+use MikoPBX\Common\Providers\SessionProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Common\Providers\UrlProvider;
 use Phalcon\Di\DiInterface;
 
 class RegisterDIServices
@@ -123,7 +123,7 @@ class RegisterDIServices
             $di->register(new $provider());
         }
 
-        // Set library name
+        // Set the library name
         $di->getShared(RegistryProvider::SERVICE_NAME)->libraryName = 'admin-cabinet';
     }
 }

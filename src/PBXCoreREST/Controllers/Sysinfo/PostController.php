@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -40,5 +41,4 @@ class PostController extends BaseController
         $data = $this->request->getPost();
         $this->sendRequestToBackendWorker(SysinfoManagementProcessor::class, $actionName, $data);
     }
-
 }

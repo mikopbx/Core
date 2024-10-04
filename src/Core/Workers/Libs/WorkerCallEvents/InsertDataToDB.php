@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,11 +20,9 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
 
-
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-
 
 /**
  * Class InsertDataToDB
@@ -33,7 +32,6 @@ use MikoPBX\Core\System\Util;
  */
 class InsertDataToDB
 {
-
     /*
      * Execute the insertion of data into the database.
      *
@@ -153,5 +151,4 @@ class InsertDataToDB
             SystemMessages::sysLogMsg(__FUNCTION__, implode(' ', $m_data->getMessages()), LOG_ERR);
         }
     }
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -80,7 +81,9 @@ class FirewallEditForm extends BaseForm
         krsort($arrMasks, SORT_NUMERIC);
 
         $mask = new Select(
-            'subnet', $arrMasks, [
+            'subnet',
+            $arrMasks,
+            [
                 'using' => [
                     'id',
                     'name',

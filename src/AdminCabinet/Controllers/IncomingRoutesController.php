@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,7 +23,6 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\DefaultIncomingRouteForm;
 use MikoPBX\AdminCabinet\Forms\IncomingRouteEditForm;
 use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, OutWorkTimesRouts, Sip, SoundFiles};
-
 
 class IncomingRoutesController extends BaseController
 {
@@ -96,10 +96,12 @@ class IncomingRoutesController extends BaseController
         unset($soundFiles);
 
         $form = new DefaultIncomingRouteForm(
-            $defaultRule, [
+            $defaultRule,
+            [
             'extensions' => $forwardingExtensions,
             'soundfiles' => $soundFilesList,
-        ]);
+            ]
+        );
         $this->view->form         = $form;
         $this->view->routingTable = $routingTable;
         $this->view->submitMode   = null;
@@ -119,18 +121,18 @@ class IncomingRoutesController extends BaseController
         } // First row is the default route, don't modify it.
 
         $idIsEmpty = false;
-        if(empty($ruleId)){
+        if (empty($ruleId)) {
             $idIsEmpty = true;
-            $ruleId = (string)($_GET['copy-source']??'');
+            $ruleId = (string)($_GET['copy-source'] ?? '');
         }
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
         if ($rule === null) {
             $rule = new IncomingRoutingTable();
             $rule->priority = IncomingRoutingTable::getMaxNewPriority();
-        }elseif($idIsEmpty) {
+        } elseif ($idIsEmpty) {
             $oldRule = $rule;
             $rule     = new IncomingRoutingTable();
-            foreach ($oldRule->toArray() as $key => $value){
+            foreach ($oldRule->toArray() as $key => $value) {
                 $rule->writeAttribute($key, $value);
             }
             $rule->id   = '';
@@ -138,7 +140,7 @@ class IncomingRoutesController extends BaseController
             $rule->priority = IncomingRoutingTable::getMaxNewPriority();
         }
 
-        if (empty($rule->provider)){
+        if (empty($rule->provider)) {
             $rule->provider = 'none';
         }
 
@@ -164,7 +166,7 @@ class IncomingRoutesController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
         $this->db->begin();
@@ -216,7 +218,7 @@ class IncomingRoutesController extends BaseController
 
         // Retrieve time conditions associated with the rule's number and provider
         $manager = $this->di->get('modelsManager');
-        $providerCondition = empty($rule->provider)? 'provider IS NULL':'provider = "'.$rule->provider.'"';
+        $providerCondition = empty($rule->provider) ? 'provider IS NULL' : 'provider = "' . $rule->provider . '"';
         $options     = [
             'models'     => [
                 'IncomingRoutingTable' => IncomingRoutingTable::class,
@@ -224,7 +226,7 @@ class IncomingRoutesController extends BaseController
             'columns' => [
                 'timeConditionId' => 'OutWorkTimesRouts.timeConditionId',
             ],
-            'conditions' => 'number = :did: AND '.$providerCondition,
+            'conditions' => 'number = :did: AND ' . $providerCondition,
             'bind'       => [
                 'did' => $rule->number,
             ],
@@ -242,7 +244,7 @@ class IncomingRoutesController extends BaseController
         $result = array_merge(...$query->execute()->toArray());
 
         // Create or update OutWorkTimesRouts records based on time conditions
-        foreach ($result as $conditionId){
+        foreach ($result as $conditionId) {
             $filter = [
                 'conditions' => 'timeConditionId=:timeConditionId: AND routId=:routId:',
                 'bind'       => [
@@ -251,7 +253,7 @@ class IncomingRoutesController extends BaseController
                 ],
             ];
             $outTime = OutWorkTimesRouts::findFirst($filter);
-            if(!$outTime){
+            if (!$outTime) {
                 $outTime = new OutWorkTimesRouts();
                 $outTime->routId = $rule->id;
                 $outTime->timeConditionId = $conditionId;
@@ -297,13 +299,13 @@ class IncomingRoutesController extends BaseController
         $this->view->disable();
         $result = true;
 
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
         $priorityTable = $this->request->getPost();
         $rules = IncomingRoutingTable::find();
-        foreach ($rules as $rule){
-            if (array_key_exists ( $rule->id, $priorityTable)){
+        foreach ($rules as $rule) {
+            if (array_key_exists($rule->id, $priorityTable)) {
                 $rule->priority = $priorityTable[$rule->id];
                 $result         .= $rule->update();
             }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -62,7 +63,6 @@ class GeneralSettingsController extends BaseController
         // Create an instance of the GeneralSettingsEditForm and assign it to the view
         $this->view->form = new GeneralSettingsEditForm(null, $pbxSettings);
         $this->view->submitMode = null;
-
     }
 
     /**
@@ -155,7 +155,6 @@ class GeneralSettingsController extends BaseController
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
         $this->view->success = true;
         $this->db->commit();
-
     }
 
 
@@ -244,15 +243,17 @@ class GeneralSettingsController extends BaseController
      *
      * @return array
      */
-    private function updatePBXSettings(array $data):array
+    private function updatePBXSettings(array $data): array
     {
-        $messages = ['error'=>[]];
+        $messages = ['error' => []];
         $pbxSettings = PbxSettings::getDefaultArrayValues();
 
         // Process SSHPassword and set SSHPasswordHash accordingly
         if (isset($data[PbxSettings::SSH_PASSWORD])) {
-            if ($data[PbxSettings::SSH_PASSWORD] === $pbxSettings[PbxSettings::SSH_PASSWORD]
-                || $data[PbxSettings::SSH_PASSWORD] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+            if (
+                $data[PbxSettings::SSH_PASSWORD] === $pbxSettings[PbxSettings::SSH_PASSWORD]
+                || $data[PbxSettings::SSH_PASSWORD] === GeneralSettingsEditForm::HIDDEN_PASSWORD
+            ) {
                 $data[PbxSettings::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettings::WEB_ADMIN_PASSWORD]);
             } else {
                 $data[PbxSettings::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettings::SSH_PASSWORD]);
@@ -315,5 +316,4 @@ class GeneralSettingsController extends BaseController
         $result = count($messages['error']) === 0;
         return [$result, $messages];
     }
-
 }

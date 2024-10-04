@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -46,25 +47,25 @@ class RedisConf extends Injectable
      */
     public function reStart(): void
     {
-        $mainRunner = 'safe-'.self::PROC_NAME;
+        $mainRunner = 'safe-' . self::PROC_NAME;
         Processes::killByName($mainRunner);
         Processes::killByName(self::PROC_NAME);
 
         $ch = 0;
-        do{
+        do {
             $ch++;
             // Wait for Redis to finish its work
             sleep(1);
             $pid1 = Processes::getPidOfProcess($mainRunner);
             $pid2 = Processes::getPidOfProcess(self::PROC_NAME);
-        }while(!empty($pid1.$pid2) && $ch < 30);
+        } while (!empty($pid1 . $pid2) && $ch < 30);
 
         $this->configure();
         Processes::safeStartDaemon(self::PROC_NAME, self::CONF_FILE);
 
         $redisCli = Util::which('redis-cli');
-        for ($i=1; $i <= 60; $i++){
-            if(Processes::mwExec("$redisCli -p $this->port info") === 0){
+        for ($i = 1; $i <= 60; $i++) {
+            if (Processes::mwExec("$redisCli -p $this->port info") === 0) {
                 break;
             }
             sleep(1);
@@ -93,14 +94,14 @@ class RedisConf extends Injectable
      * Generate additional syslog rules.
      * @return void
      */
-    public static function generateSyslogConf():void
+    public static function generateSyslogConf(): void
     {
         Util::mwMkdir('/etc/rsyslog.d');
         $log_fileRedis       = SyslogConf::getSyslogFile('redis');
         $pathScriptRedis     = SyslogConf::createRotateScript('redis');
-        $confSyslogD = '$outchannel log_redis,'.$log_fileRedis.',10485760,'.$pathScriptRedis.PHP_EOL.
-            'if $programname == "redis-server" then :omfile:$log_redis'.PHP_EOL.
-            'if $programname == "redis-server" then stop'.PHP_EOL;
+        $confSyslogD = '$outchannel log_redis,' . $log_fileRedis . ',10485760,' . $pathScriptRedis . PHP_EOL .
+            'if $programname == "redis-server" then :omfile:$log_redis' . PHP_EOL .
+            'if $programname == "redis-server" then stop' . PHP_EOL;
         file_put_contents('/etc/rsyslog.d/redis.conf', $confSyslogD);
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -353,17 +354,15 @@ class SystemLoader extends Injectable
 
         // Display network information
         $headerMessage = "All services are fully loaded welcome";
-        $welcomeMessage = SystemMessages::getInfoMessage($headerMessage,true);
+        $welcomeMessage = SystemMessages::getInfoMessage($headerMessage, true);
         $this->echoStartMsg($welcomeMessage);
 
-         if (!$this->isDocker){
+        if (!$this->isDocker) {
             // Display the console menu info
-            $message =  PHP_EOL. PHP_EOL.'Run /etc/rc/console_menu if you want to start the console menu...' . PHP_EOL;
+            $message =  PHP_EOL . PHP_EOL . 'Run /etc/rc/console_menu if you want to start the console menu...' . PHP_EOL;
             SystemMessages::echoToTeletype($message);
         }
 
         return true;
     }
-
-
 }

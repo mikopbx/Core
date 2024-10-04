@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -45,8 +46,8 @@ class UsersManagementProcessor extends Injectable
         $res->processor = __METHOD__;
         switch ($action) {
             case 'available':
-               $res = AvailableAction::main($data);
-               break;
+                $res = AvailableAction::main($data);
+                break;
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -31,8 +32,8 @@ use Phalcon\Di\ServiceProviderInterface;
  *
  * @package MikoPBX\Common\Providers
  */
-class AmiConnectionListener  implements ServiceProviderInterface{
-
+class AmiConnectionListener implements ServiceProviderInterface
+{
     public const string SERVICE_NAME = 'amiListener';
 
     /**

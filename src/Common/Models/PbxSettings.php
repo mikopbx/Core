@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -35,6 +36,7 @@ use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 class PbxSettings extends ModelsBase
 {
     use PbxSettingsConstantsTrait;
+
     /**
      * Key by which the value is stored
      *
@@ -195,7 +197,8 @@ class PbxSettings extends ModelsBase
             }
 
             foreach ($currentSettings as $record) {
-                if ($record->key === $key
+                if (
+                    $record->key === $key
                     && isset($record->value)
                 ) {
                     return $record->value;

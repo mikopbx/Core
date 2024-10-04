@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -27,7 +28,6 @@ use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
-
 /**
  * Class TimeFrameEditForm
  *
@@ -41,19 +41,21 @@ class TimeFrameEditForm extends BaseForm
         parent::initialize($entity, $options);
         foreach ($entity as $key => $value) {
             switch ($key) {
-                case 'id' :
+                case 'id':
                     $this->add(new Hidden($key));
                     break;
-                case 'allowRestriction' :
+                case 'allowRestriction':
                     $cheskarr = ['value' => null];
                     if ($value) {
                         $cheskarr = ['checked' => 'checked', 'value' => null];
                     }
                     $this->add(new Check('allowRestriction', $cheskarr));
                     break;
-                case 'extension' :
+                case 'extension':
                     $extension = new Select(
-                        $key, $options['extensions'], [
+                        $key,
+                        $options['extensions'],
+                        [
                             'using' => [
                                 'id',
                                 'name',
@@ -64,9 +66,11 @@ class TimeFrameEditForm extends BaseForm
                     );
                     $this->add($extension);
                     break;
-                case 'audio_message_id' :
+                case 'audio_message_id':
                     $audiomessageid = new Select(
-                        $key, $options['audio-message'], [
+                        $key,
+                        $options['audio-message'],
+                        [
                             'using' => [
                                 'id',
                                 'name',
@@ -77,9 +81,11 @@ class TimeFrameEditForm extends BaseForm
                     );
                     $this->add($audiomessageid);
                     break;
-                case 'action' :
+                case 'action':
                     $action = new Select(
-                        $key, $options['available-actions'], [
+                        $key,
+                        $options['available-actions'],
+                        [
                             'using' => [
                                 'id',
                                 'name',
@@ -90,7 +96,7 @@ class TimeFrameEditForm extends BaseForm
                     );
                     $this->add($action);
                     break;
-                case 'calType' :
+                case 'calType':
                     $calTypeArray = [
                         OutWorkTimes::CAL_TYPE_NONE     => $this->translation->_('tf_CAL_TYPE_NONE'),
                         OutWorkTimes::CAL_TYPE_CALDAV   => $this->translation->_('tf_CAL_TYPE_CALDAV'),
@@ -101,7 +107,9 @@ class TimeFrameEditForm extends BaseForm
                         $value = OutWorkTimes::CAL_TYPE_NONE;
                     }
                     $calType = new Select(
-                        $key, $calTypeArray, [
+                        $key,
+                        $calTypeArray,
+                        [
                            'using' => [
                                'id',
                                'name',
@@ -109,14 +117,16 @@ class TimeFrameEditForm extends BaseForm
                            'useEmpty' => false,
                            'value' => $value,
                            'class' => 'ui selection dropdown search',
-                       ]
+                        ]
                     );
                     $this->add($calType);
                     break;
-                case 'weekday_from' :
-                case 'weekday_to' :
+                case 'weekday_from':
+                case 'weekday_to':
                     $action = new Select(
-                        $key, $options['week-days'], [
+                        $key,
+                        $options['week-days'],
+                        [
                             'using' => [
                                 'id',
                                 'name',
@@ -128,13 +138,13 @@ class TimeFrameEditForm extends BaseForm
                     );
                     $this->add($action);
                     break;
-                case 'description' :
-                    $this->addTextArea($key, $value??'', 65);
+                case 'description':
+                    $this->addTextArea($key, $value ?? '', 65);
                     break;
-                case 'calSecret' :
+                case 'calSecret':
                     $this->add(new Password($key, ['value' => $value]));
                     break;
-                default :
+                default:
                     $this->add(new Text($key, ['autocomplete' => 'off']));
             }
         }

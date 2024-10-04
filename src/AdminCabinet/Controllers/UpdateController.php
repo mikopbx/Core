@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -23,7 +24,6 @@ use MikoPBX\Core\System\Util;
 
 class UpdateController extends BaseController
 {
-
     /**
      * Display the update station page.
      *
@@ -32,8 +32,8 @@ class UpdateController extends BaseController
     {
         $this->view->setVars(
             [
-                'isDocker'=>Util::isDocker(),
-                'submitMode'=>null,
+                'isDocker' => Util::isDocker(),
+                'submitMode' => null,
             ]
         );
     }

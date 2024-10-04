@@ -42,6 +42,7 @@ class CreateRowTransfer
      * @param string $action The action type.
      * @param array $data The event data.
      * @param array|null $calls_data The call data.
+     * @throws \Exception
      */
     public static function execute(WorkerCallEvents $worker, string $action, array $data, ?array $calls_data = null): void
     {

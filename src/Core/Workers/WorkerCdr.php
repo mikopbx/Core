@@ -129,6 +129,7 @@ class WorkerCdr extends WorkerBase
      * Updates CDR and processes active call chains and unanswered calls.
      *
      * @param array $result CDR data
+     * @throws \Exception
      */
     private function updateCdr(array $result): void
     {
@@ -402,5 +403,5 @@ class WorkerCdr extends WorkerBase
 
 }
 
-// Start worker process
+// Start a worker process
 WorkerCdr::startWorker($argv ?? []);

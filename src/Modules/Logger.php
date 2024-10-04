@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -50,7 +51,7 @@ class Logger
         $logPath        = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $this->module_name . '/';
 
         // Create the log directory if it does not exist
-        if (!is_dir($logPath)){
+        if (!is_dir($logPath)) {
             Util::mwMkdir($logPath);
             Util::addRegularWWWRights($logPath);
         }
@@ -110,15 +111,14 @@ class Logger
      *
      * @return string The decoded string.
      */
-    private function getDecodedString(mixed $data):string
+    private function getDecodedString(mixed $data): string
     {
         $printedData = print_r($data, true);
-        if(is_bool($printedData)){
+        if (is_bool($printedData)) {
             $result = '';
-        }else{
+        } else {
             $result = urldecode($printedData);
         }
         return $result;
     }
-
 }

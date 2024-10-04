@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -39,7 +40,6 @@ use PhpSchool\CliMenu\Style\SelectableStyle;
 
 class ConsoleMenu
 {
-
     private bool $isLiveCd;
     private bool $isDocker;
 
@@ -356,7 +356,6 @@ class ConsoleMenu
                     $externAddress = $if_data['extipaddr'];
                 }
             }
-
         }
 
         // Check for system integrity

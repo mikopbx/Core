@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -32,9 +33,9 @@ use Phalcon\Di\Injectable;
  */
 class UpdateConfigsUpToVer62110 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const string PBX_VERSION = '6.2.110';
+    public const string PBX_VERSION = '6.2.110';
 
-    public function processUpdate():void
+    public function processUpdate(): void
     {
         /** @var \MikoPBX\Common\Models\Codecs $codec_g722 */
         $codec_g722 = Codecs::findFirst('name="g722"');

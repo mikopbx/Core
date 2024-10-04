@@ -187,5 +187,5 @@ class WorkerDownloader extends WorkerBase
     }
 }
 
-// Start worker process
+// Start a worker process
 WorkerDownloader::startWorker($argv??[], false);

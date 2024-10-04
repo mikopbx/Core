@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,7 +22,6 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Core\System\Storage;
 use Phalcon\Di\Injectable;
-
 
 /**
  * Class StorageManagementProcessor
@@ -69,7 +69,7 @@ class StorageManagementProcessor extends Injectable
                 $res->data['status'] = Storage::statusMkfs($data['dev']);
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }
 
         $res->function = $action;

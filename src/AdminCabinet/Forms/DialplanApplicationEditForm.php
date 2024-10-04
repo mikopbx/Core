@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -44,7 +45,7 @@ class DialplanApplicationEditForm extends BaseForm
                     $this->add(new Hidden($key));
                     break;
                 case "description":
-                    $this->addTextArea($key, $value??'', 95);
+                    $this->addTextArea($key, $value ?? '', 95);
                     break;
                 case "type":
                     $select = new Select(
@@ -52,8 +53,8 @@ class DialplanApplicationEditForm extends BaseForm
                         [
                             'php' => $this->translation->_("da_TypePhp"),
                             'plaintext' => $this->translation->_("da_TypePlaintext"),
-                        ]
-                        , [
+                        ],
+                        [
                             'using' => [
                                 'id',
                                 'name',

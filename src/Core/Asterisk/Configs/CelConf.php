@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
-
 
 use MikoPBX\Core\System\Util;
 
@@ -52,15 +52,14 @@ class CelConf extends AsteriskConfigClass
         // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/cel.conf', $conf);
 
-        $conf = "[general]" .PHP_EOL.
-                "enabled = yes" .PHP_EOL.
-                "host = 127.0.0.1" .PHP_EOL.
-                "port = ".$config->port .PHP_EOL.
-                "priority = 1" .PHP_EOL.
-                "tube = asterisk-cel".PHP_EOL;
+        $conf = "[general]" . PHP_EOL .
+                "enabled = yes" . PHP_EOL .
+                "host = 127.0.0.1" . PHP_EOL .
+                "port = " . $config->port . PHP_EOL .
+                "priority = 1" . PHP_EOL .
+                "tube = asterisk-cel" . PHP_EOL;
 
         // Write the configuration content to the file
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/cel_beanstalkd.conf', $conf);
-
     }
 }

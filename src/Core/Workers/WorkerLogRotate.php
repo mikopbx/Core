@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,6 +19,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
+
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\PbxExtensionModules;
@@ -51,7 +53,6 @@ class WorkerLogRotate extends WorkerBase
         // Retrieve the last log rotate timestamp from the cache
         $lastLogRotate = $managedCache->get($cacheKey);
         if ($lastLogRotate === null) {
-
             // Perform log rotation for system logs
             PHPConf::logRotate();
             PBX::logRotate();
@@ -105,5 +106,5 @@ class WorkerLogRotate extends WorkerBase
     }
 }
 
-// Start worker process
+// Start a worker process
 WorkerLogRotate::startWorker($argv ?? []);

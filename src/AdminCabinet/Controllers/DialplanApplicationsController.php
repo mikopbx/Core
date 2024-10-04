@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,12 +23,10 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\DialplanApplicationEditForm;
 use MikoPBX\Common\Models\{DialplanApplications, Extensions};
 
-
 class DialplanApplicationsController extends BaseController
 {
-
     /**
-     * Builds list of dialplan applications
+     * Builds a list of dialplan applications
      */
     public function indexAction(): void
     {
@@ -63,7 +62,7 @@ class DialplanApplicationsController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
 
@@ -86,7 +85,7 @@ class DialplanApplicationsController extends BaseController
         }
 
         // Заполним параметры внутреннего номера
-        if ( ! $this->updateExtension($extension, $data)) {
+        if (! $this->updateExtension($extension, $data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -94,7 +93,7 @@ class DialplanApplicationsController extends BaseController
         }
 
         // Заполним параметры пользователя
-        if ( ! $this->updateDialplanApplication($appRecord, $data)) {
+        if (! $this->updateDialplanApplication($appRecord, $data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -170,5 +169,4 @@ class DialplanApplicationsController extends BaseController
 
         return true;
     }
-
 }

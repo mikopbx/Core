@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -61,7 +62,6 @@ use MikoPBX\Common\Library\Text;
  */
 class Elements extends Injectable
 {
-
     private array $_headerMenu
         = [
             'setup' => [
@@ -309,7 +309,7 @@ class Elements extends Injectable
                 $groupHtml .= "<div class='menu' data-group='$group'>";
                 foreach ($groupparams['submenu'] as $controller => $option) {
                     if ($this->ifItPossibleToShowThisElement($controller, $option['action'])) {
-                        $link = $this->getLinkToControllerAction($controller,  $option['action'], $option['param']);
+                        $link = $this->getLinkToControllerAction($controller, $option['action'], $option['param']);
                         $caption = $this->translation->_($option['caption']);
                         $groupHtml .= "<a class='item {$option['style']}' href='$link'";
                         if (isset($option['data-value'])) {
@@ -325,7 +325,7 @@ class Elements extends Injectable
                 $groupHtml .= '</div>';
                 $groupHtml .= '</div>';
             } elseif ($this->ifItPossibleToShowThisElement($group, $groupparams['action'] ?? 'index')) {
-                    $link = $this->getLinkToControllerAction($group,  $groupparams['action'], $groupparams['param']);
+                    $link = $this->getLinkToControllerAction($group, $groupparams['action'], $groupparams['param']);
                     $caption = $this->translation->_($groupparams['caption']);
                     $groupHtml .= "<a class='item {$groupparams['style']}' href='$link'>
                     	    <i class='{$groupparams['iconclass']} icon'></i>{$caption}
@@ -350,7 +350,8 @@ class Elements extends Injectable
     {
         $result = '';
         foreach ($this->_headerMenu as $index => $group) {
-            if ($index === $controllerClass
+            if (
+                $index === $controllerClass
                 && array_key_exists('iconclass', $group[$controllerClass])
                 && !empty($group[$controllerClass]['iconclass'])
             ) {
@@ -359,8 +360,10 @@ class Elements extends Injectable
             }
             if (array_key_exists('submenu', $group)) {
                 foreach ($group['submenu'] as $index2 => $submenu) {
-                    if ($index2 === $controllerClass
-                        && !empty($submenu['iconclass'])) {
+                    if (
+                        $index2 === $controllerClass
+                        && !empty($submenu['iconclass'])
+                    ) {
                         $result = "<i class='{$submenu['iconclass']} icon'></i>";
                         break;
                     }
@@ -421,7 +424,10 @@ class Elements extends Injectable
             }
         }
 
-        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW, [&$this->_headerMenu]);
+        PBXConfModulesProvider::hookModulesMethod(
+            WebUIConfigInterface::ON_BEFORE_HEADER_MENU_SHOW,
+            [&$this->_headerMenu]
+        );
     }
 
     /**
@@ -433,9 +439,10 @@ class Elements extends Injectable
     {
         if (PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD) !== '1') {
             $sshPort = PbxSettings::getValueByKey(PbxSettings::SSH_PORT);
-            $this->_headerMenu['maintenance']['submenu'][ConsoleController::class]['data-value'] = "root@{$_SERVER['SERVER_ADDR']}:$sshPort";
+            $this->_headerMenu['maintenance']['submenu'][ConsoleController::class]['data-value']
+                = "root@{$_SERVER['SERVER_ADDR']}:$sshPort";
         } else {
-            unset ($this->_headerMenu['maintenance']['submenu'][ConsoleController::class]);
+            unset($this->_headerMenu['maintenance']['submenu'][ConsoleController::class]);
         }
     }
 
@@ -458,7 +465,7 @@ class Elements extends Injectable
         // Convert the controller name to a dash-separated format
         $controllerName = Text::uncamelize($controllerName, '-');
 
-        if ($controllerParts[0]==='Module'){
+        if ($controllerParts[0] === 'Module') {
             // Convert the module name to a dash-separated format
             $moduleName = Text::uncamelize($controllerParts[1], '-');
             $url = $this->url->get("$moduleName/$controllerName/$action/$param");
@@ -476,17 +483,16 @@ class Elements extends Injectable
      * @param string $action The name of the action.
      * @return bool True if the element can be shown, false otherwise.
      */
-    private function ifItPossibleToShowThisElement(string $controller, string $action):bool
+    private function ifItPossibleToShowThisElement(string $controller, string $action): bool
     {
         // Check if the application is running in a Docker environment and if the controller is in the hidden list.
         // If so, return false as the element should not be shown.
-        if (Util::isDocker() and in_array($controller, $this->_hiddenInDocker)){
-           return false;
+        if (Util::isDocker() and in_array($controller, $this->_hiddenInDocker)) {
+            return false;
         }
 
         // If the application is not running in Docker or the controller is not in the hidden list,
         // use the SecurityPluginProvider to check if the element can be shown.
         return $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controller, $action]);
     }
-
 }

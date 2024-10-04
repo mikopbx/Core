@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -45,9 +46,9 @@ class BeanstalkConf extends Injectable
     public function reStart(): void
     {
         $config = $this->getDI()->get('config')->beanstalk;
-        $conf   = "-l $config->host -p $config->port -z ".self::JOB_DATA_SIZE_LIMIT;
+        $conf   = "-l $config->host -p $config->port -z " . self::JOB_DATA_SIZE_LIMIT;
         $result = Processes::safeStartDaemon(self::PROC_NAME, $conf);
-        if(!$result){
+        if (!$result) {
             sleep(10);
             Processes::safeStartDaemon(self::PROC_NAME, $conf);
         }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -49,7 +50,7 @@ class YandexCloud extends CloudProvider
 
         SystemMessages::echoToTeletype(PHP_EOL);
 
-        $sshKeys = $metadata['attributes']['ssh-keys']??'';
+        $sshKeys = $metadata['attributes']['ssh-keys'] ?? '';
 
         // Extract username
         $username = $this->extractUserNameFromSshKeys($sshKeys);

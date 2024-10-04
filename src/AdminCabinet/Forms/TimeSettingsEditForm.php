@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -43,7 +44,9 @@ class TimeSettingsEditForm extends BaseForm
                 case PbxSettings::PBX_TIMEZONE :
                 {
                     $ntpserver = new Select(
-                        PbxSettings::PBX_TIMEZONE, $options, [
+                        PbxSettings::PBX_TIMEZONE,
+                        $options,
+                        [
                             'using' => [
                                 'id',
                                 'name',
@@ -72,7 +75,8 @@ class TimeSettingsEditForm extends BaseForm
                 {
                     $this->add(
                         new Text(
-                            $item->key, [
+                            $item->key,
+                            [
                                 'value' => $item->value,
                             ]
                         )
@@ -82,6 +86,5 @@ class TimeSettingsEditForm extends BaseForm
         }
 
         $this->add(new Text('ManualDateTime', ['value' => '']));
-
     }
 }

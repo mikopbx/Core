@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\PBXCoreREST\Lib\Files;
-
 
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Core\System\Processes;
@@ -57,7 +57,7 @@ class GetFileContentAction extends Injectable
             $cat          = Util::which('cat');
             $di           = Di::getDefault();
             $dirsConfig   = $di->getShared('config');
-            $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' .time(). '.conf';
+            $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.conf';
             $cmd          = "$cat $filename > $filenameTmp";
             Processes::mwExec("$cmd; chown www:www $filenameTmp");
             $res->data['filename'] = $filenameTmp;

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -25,8 +26,8 @@ use Phalcon\Http\Response;
 class LicensingController extends BaseController
 {
     /**
-     * Old services still use old controller address
-     * License key, get new key, activate coupon form
+     * Old services still use an old controller address
+     * License key, get a new key, activate a coupon form
      *
      */
     public function modifyAction(): void
@@ -39,11 +40,10 @@ class LicensingController extends BaseController
 
         // Perform the redirect
         $response->redirect($redirectUrl)->send();
-
     }
 
     /**
-     * After some changes on form we will refresh some session cache
+     * After some changes on form, we will refresh some session cache
      */
     public function saveAction(): void
     {

@@ -20,8 +20,8 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\ConferenceRoomEditForm;
-use MikoPBX\Common\Models\{ConferenceRooms, Extensions};
-
+use MikoPBX\Common\Models\ConferenceRooms;
+use MikoPBX\Common\Models\Extensions;
 
 class ConferenceRoomsController extends BaseController
 {
@@ -58,7 +58,7 @@ class ConferenceRoomsController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
         $this->db->begin();
@@ -79,7 +79,7 @@ class ConferenceRoomsController extends BaseController
         }
 
         // Update extension parameters
-        if ( ! $this->updateExtension($extension, $data)) {
+        if (! $this->updateExtension($extension, $data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -87,7 +87,7 @@ class ConferenceRoomsController extends BaseController
         }
 
         // Update conference room parameters
-        if ( ! $this->updateConferenceRoom($room, $data)) {
+        if (! $this->updateConferenceRoom($room, $data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -143,7 +143,7 @@ class ConferenceRoomsController extends BaseController
                     $room->$name = $data[$name];
                     break;
                 default:
-                    if ( ! array_key_exists($name, $data)) {
+                    if (! array_key_exists($name, $data)) {
                         continue 2;
                     }
                     $room->$name = $data[$name];
@@ -158,5 +158,4 @@ class ConferenceRoomsController extends BaseController
 
         return true;
     }
-
 }

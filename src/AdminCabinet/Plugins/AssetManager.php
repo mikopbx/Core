@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
@@ -19,11 +20,11 @@
 
 namespace MikoPBX\AdminCabinet\Plugins;
 
-
 use MikoPBX\AdminCabinet\Providers\AssetProvider;
 use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Assets\Exception;
 use Phalcon\Assets\Manager;
+
 use function MikoPBX\Common\Config\appPath;
 
 class AssetManager extends Manager
@@ -35,8 +36,8 @@ class AssetManager extends Manager
     public function __construct(\Phalcon\Html\TagFactory $tagFactory, array $options = [])
     {
         $this->version = '1.0';
-        $this->prefix = $options['prefix']??'';
-        parent::__construct( $tagFactory, $options);
+        $this->prefix = $options['prefix'] ?? '';
+        parent::__construct($tagFactory, $options);
     }
 
     /**
@@ -62,12 +63,12 @@ class AssetManager extends Manager
         if ($name !== null) {
             foreach ($this->collection($name) as $resource) {
                 $resource->setVersion($this->version);
-                if ($resource->isLocal()){
-                    $resource->setPath($this->prefix.$resource->getPath());
+                if ($resource->isLocal()) {
+                    $resource->setPath($this->prefix . $resource->getPath());
                 }
             }
         }
-        return parent::outputCss($name)??'';
+        return parent::outputCss($name) ?? '';
     }
 
     /**
@@ -83,13 +84,13 @@ class AssetManager extends Manager
         if ($name !== null) {
             foreach ($this->collection($name) as $resource) {
                 $resource->setVersion($this->version);
-                if ($resource->isLocal()){
-                    $resource->setPath($this->prefix.$resource->getPath());
+                if ($resource->isLocal()) {
+                    $resource->setPath($this->prefix . $resource->getPath());
                 }
             }
         }
 
-        return parent::outputJs($name)??'';
+        return parent::outputJs($name) ?? '';
     }
 
     /**
@@ -102,8 +103,8 @@ class AssetManager extends Manager
     public function outputCombinedHeaderJs(string $controller, string $action): string
     {
 
-        $jsCachePath = appPath('sites/admin-cabinet/assets/js/cache').'/'.$this->version;
-        if (!is_dir($jsCachePath)){
+        $jsCachePath = appPath('sites/admin-cabinet/assets/js/cache') . '/' . $this->version;
+        if (!is_dir($jsCachePath)) {
             mkdir($jsCachePath, 0755, true);
         }
 
@@ -113,39 +114,38 @@ class AssetManager extends Manager
             AssetProvider::HEADER_JS
         ];
 
-        $needCombineJS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineJS')??false;
-        if (!$needCombineJS){
+        $needCombineJS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineJS') ?? false;
+        if (!$needCombineJS) {
             $resultTags = '';
-            foreach ($headerJSCollections as $collectionName){
-                $resultTags .= $this->outputJS($collectionName).PHP_EOL;
+            foreach ($headerJSCollections as $collectionName) {
+                $resultTags .= $this->outputJS($collectionName) . PHP_EOL;
             }
             return $resultTags;
         }
 
         // Need to combine and minify all JS files in one and save it as cached file
         $combinedJsFilePath = "{$jsCachePath}/{$controller}-{$action}-header.js";
-        if (!file_exists($combinedJsFilePath)){
+        if (!file_exists($combinedJsFilePath)) {
             file_put_contents($combinedJsFilePath, '', LOCK_EX);
-            foreach ($headerJSCollections as $collectionName){
-                file_put_contents($combinedJsFilePath, '// Data collection '.$collectionName.PHP_EOL, FILE_APPEND | LOCK_EX);
+            foreach ($headerJSCollections as $collectionName) {
+                file_put_contents($combinedJsFilePath, '// Data collection ' . $collectionName . PHP_EOL, FILE_APPEND | LOCK_EX);
                 foreach ($this->collection($collectionName) as $resource) {
-                    file_put_contents($combinedJsFilePath, '// JS file '.$resource->getPath().PHP_EOL, FILE_APPEND | LOCK_EX);
-                    $sourceJsPath = appPath('sites/admin-cabinet/assets/').$resource->getPath();
-                    file_put_contents($combinedJsFilePath, file_get_contents($sourceJsPath),FILE_APPEND | LOCK_EX);
+                    file_put_contents($combinedJsFilePath, '// JS file ' . $resource->getPath() . PHP_EOL, FILE_APPEND | LOCK_EX);
+                    $sourceJsPath = appPath('sites/admin-cabinet/assets/') . $resource->getPath();
+                    file_put_contents($combinedJsFilePath, file_get_contents($sourceJsPath), FILE_APPEND | LOCK_EX);
                     file_put_contents($combinedJsFilePath, PHP_EOL, FILE_APPEND | LOCK_EX);
                 }
             }
         }
 
-        return "<script src='/admin-cabinet/assets/js/cache/{$this->version}/{$controller}-{$action}-header.js?ver=".$this->version."'></script>";
-
+        return "<script src='/admin-cabinet/assets/js/cache/{$this->version}/{$controller}-{$action}-header.js?ver=" . $this->version . "'></script>";
     }
 
     public function outputCombinedFooterJs(string $controller, string $action): string
     {
 
-        $jsCachePath = appPath('sites/admin-cabinet/assets/js/cache').'/'.$this->version;
-        if (!is_dir($jsCachePath)){
+        $jsCachePath = appPath('sites/admin-cabinet/assets/js/cache') . '/' . $this->version;
+        if (!is_dir($jsCachePath)) {
             mkdir($jsCachePath, 0755, true);
         }
 
@@ -156,32 +156,31 @@ class AssetManager extends Manager
             AssetProvider::FOOTER_PBX_JS
         ];
 
-        $needCombineJS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineJS')??false;
-        if (!$needCombineJS){
+        $needCombineJS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineJS') ?? false;
+        if (!$needCombineJS) {
             $resultTags = '';
-            foreach ($headerJSCollections as $collectionName){
-                $resultTags .= $this->outputJS($collectionName).PHP_EOL;
+            foreach ($headerJSCollections as $collectionName) {
+                $resultTags .= $this->outputJS($collectionName) . PHP_EOL;
             }
             return $resultTags;
         }
 
         // Need to combine and minify all JS files in one and save it as cached file
         $combinedJsFilePath = "{$jsCachePath}/{$controller}-{$action}-footer.js";
-        if (!file_exists($combinedJsFilePath)){
+        if (!file_exists($combinedJsFilePath)) {
             file_put_contents($combinedJsFilePath, '', LOCK_EX);
-            foreach ($headerJSCollections as $collectionName){
-                file_put_contents($combinedJsFilePath, '// Data collection '.$collectionName.PHP_EOL, FILE_APPEND | LOCK_EX);
+            foreach ($headerJSCollections as $collectionName) {
+                file_put_contents($combinedJsFilePath, '// Data collection ' . $collectionName . PHP_EOL, FILE_APPEND | LOCK_EX);
                 foreach ($this->collection($collectionName) as $resource) {
-                    file_put_contents($combinedJsFilePath, '// JS file '.$resource->getPath().PHP_EOL, FILE_APPEND | LOCK_EX);
-                    $sourceJsPath = appPath('sites/admin-cabinet/assets/').$resource->getPath();
-                    file_put_contents($combinedJsFilePath, file_get_contents($sourceJsPath),FILE_APPEND | LOCK_EX);
+                    file_put_contents($combinedJsFilePath, '// JS file ' . $resource->getPath() . PHP_EOL, FILE_APPEND | LOCK_EX);
+                    $sourceJsPath = appPath('sites/admin-cabinet/assets/') . $resource->getPath();
+                    file_put_contents($combinedJsFilePath, file_get_contents($sourceJsPath), FILE_APPEND | LOCK_EX);
                     file_put_contents($combinedJsFilePath, PHP_EOL, FILE_APPEND | LOCK_EX);
                 }
             }
         }
 
-        return "<script src='/admin-cabinet/assets/js/cache/{$this->version}/{$controller}-{$action}-footer.js?ver=".$this->version."'></script>";
-
+        return "<script src='/admin-cabinet/assets/js/cache/{$this->version}/{$controller}-{$action}-footer.js?ver=" . $this->version . "'></script>";
     }
 
     /**
@@ -194,8 +193,8 @@ class AssetManager extends Manager
     public function outputCombinedHeaderCSS(string $controller, string $action): string
     {
 
-        $CSSCachePath = appPath('sites/admin-cabinet/assets/css/cache').'/'.$this->version;
-        if (!is_dir($CSSCachePath)){
+        $CSSCachePath = appPath('sites/admin-cabinet/assets/css/cache') . '/' . $this->version;
+        if (!is_dir($CSSCachePath)) {
             mkdir($CSSCachePath, 0755, true);
         }
 
@@ -204,24 +203,24 @@ class AssetManager extends Manager
             AssetProvider::HEADER_CSS,
         ];
 
-        $needCombineCSS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineCSS')??false;
-        if (!$needCombineCSS){
+        $needCombineCSS = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME)->path('adminApplication.combineCSS') ?? false;
+        if (!$needCombineCSS) {
             $resultTags = '';
-            foreach ($headerJSCollections as $collectionName){
-                $resultTags .= $this->outputCss($collectionName).PHP_EOL;
+            foreach ($headerJSCollections as $collectionName) {
+                $resultTags .= $this->outputCss($collectionName) . PHP_EOL;
             }
             return $resultTags;
         }
 
         // Need to combine and minify all CSS files in one and save it as cached file
         $combinedCSSFilePath = "{$CSSCachePath}/{$controller}-{$action}.css";
-        if (!file_exists($combinedCSSFilePath)){
+        if (!file_exists($combinedCSSFilePath)) {
             file_put_contents($combinedCSSFilePath, '', LOCK_EX);
-            foreach ($headerJSCollections as $collectionName){
-                file_put_contents($combinedCSSFilePath, '/* Data collection '.$collectionName.'*/'.PHP_EOL.PHP_EOL, FILE_APPEND | LOCK_EX);
+            foreach ($headerJSCollections as $collectionName) {
+                file_put_contents($combinedCSSFilePath, '/* Data collection ' . $collectionName . '*/' . PHP_EOL . PHP_EOL, FILE_APPEND | LOCK_EX);
                 foreach ($this->collection($collectionName) as $resource) {
-                    file_put_contents($combinedCSSFilePath, '/* CSS file '.$resource->getPath().'*/'.PHP_EOL.PHP_EOL, FILE_APPEND | LOCK_EX);
-                    $sourceCSSPath = appPath('sites/admin-cabinet/assets/').$resource->getPath();
+                    file_put_contents($combinedCSSFilePath, '/* CSS file ' . $resource->getPath() . '*/' . PHP_EOL . PHP_EOL, FILE_APPEND | LOCK_EX);
+                    $sourceCSSPath = appPath('sites/admin-cabinet/assets/') . $resource->getPath();
                     $sourceCSSContent = file_get_contents($sourceCSSPath);
                     $sourceCSSContent = str_replace(
                         [   '../themes/default/assets',],
@@ -230,13 +229,12 @@ class AssetManager extends Manager
                         ],
                         $sourceCSSContent
                     );
-                    file_put_contents($combinedCSSFilePath, $sourceCSSContent,FILE_APPEND | LOCK_EX);
-                    file_put_contents($combinedCSSFilePath, PHP_EOL.PHP_EOL, FILE_APPEND | LOCK_EX);
+                    file_put_contents($combinedCSSFilePath, $sourceCSSContent, FILE_APPEND | LOCK_EX);
+                    file_put_contents($combinedCSSFilePath, PHP_EOL . PHP_EOL, FILE_APPEND | LOCK_EX);
                 }
             }
         }
 
-        return "<link rel='stylesheet' type='text/css' href='/admin-cabinet/assets/css/cache/{$this->version}/{$controller}-{$action}.css?ver=".$this->version."'>";
-
+        return "<link rel='stylesheet' type='text/css' href='/admin-cabinet/assets/css/cache/{$this->version}/{$controller}-{$action}.css?ver=" . $this->version . "'>";
     }
 }

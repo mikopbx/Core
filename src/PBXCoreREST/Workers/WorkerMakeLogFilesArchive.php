@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -51,7 +52,7 @@ class WorkerMakeLogFilesArchive extends WorkerBase
         $settings_file = $argv[2] ?? '';
 
         // Check if the settings file exists
-        if ( ! file_exists($settings_file)) {
+        if (! file_exists($settings_file)) {
             SystemMessages::sysLogMsg("WorkerMakeLogFilesArchive", 'File with settings not found', LOG_ERR);
 
             return;
@@ -59,7 +60,7 @@ class WorkerMakeLogFilesArchive extends WorkerBase
         $file_data = json_decode(file_get_contents($settings_file), true);
 
         // Check if the 'result_file' key is present in the settings file
-        if ( ! isset($file_data['result_file'])) {
+        if (! isset($file_data['result_file'])) {
             SystemMessages::sysLogMsg("WorkerMakeLogFilesArchive", 'Wrong settings', LOG_ERR);
 
             return;
@@ -89,15 +90,15 @@ class WorkerMakeLogFilesArchive extends WorkerBase
         $zip     = new ZipArchive();
 
         $storageDir = '';
-        Storage::isStorageDiskMounted('',$storageDir);
-        if($zip->open($resultFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true){
+        Storage::isStorageDiskMounted('', $storageDir);
+        if ($zip->open($resultFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
             foreach ($out as $filename) {
-                if ( !file_exists($filename)) {
+                if (!file_exists($filename)) {
                     continue;
                 }
                 $zip->addFile($filename, str_replace("$storageDir/mikopbx/", '', $filename));
             }
-            if(version_compare(PHP_VERSION, '8.0.0') >= 0){
+            if (version_compare(PHP_VERSION, '8.0.0') >= 0) {
                 $zip->registerProgressCallback(0.05, [$this, "progress"]);
             }
             $zip->close();
@@ -110,7 +111,7 @@ class WorkerMakeLogFilesArchive extends WorkerBase
         Processes::mwExec("$rm -rf $systemInfoFile $settings_file");
     }
 
-    public function progress($rate):void
+    public function progress($rate): void
     {
         $progress = round($rate * 100);
         if ($progress % 5 === 0) {

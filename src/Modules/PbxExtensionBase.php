@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -63,13 +64,13 @@ abstract class PbxExtensionBase extends Injectable
         $this->config  = $this->getDI()->getShared('config');
         $modulesDir    = $this->config->path('core.modulesDir');
 
-        if (empty($this->moduleUniqueId)){
+        if (empty($this->moduleUniqueId)) {
             // Get child class parameters and define module Dir and UniqueID
             $reflector = new ReflectionClassAlias(static::class);
             $partsOfNameSpace = explode('\\', $reflector->getNamespaceName());
-            if (count($partsOfNameSpace)===3 && $partsOfNameSpace[0]==='Modules'){
+            if (count($partsOfNameSpace) === 3 && $partsOfNameSpace[0] === 'Modules') {
                 $this->moduleUniqueId = $partsOfNameSpace[1];
-                $this->moduleDir =  $modulesDir.'/'.$this->moduleUniqueId;
+                $this->moduleDir =  $modulesDir . '/' . $this->moduleUniqueId;
             }
         } else {
             $this->moduleDir  = "$modulesDir$this->moduleUniqueId";
@@ -77,6 +78,5 @@ abstract class PbxExtensionBase extends Injectable
 
         $className        = basename(str_replace('\\', '/', static::class));
         $this->logger =  new Logger($className, $this->moduleUniqueId);
-
     }
 }

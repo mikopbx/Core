@@ -20,7 +20,8 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\AsteriskManagerEditForm;
-use MikoPBX\Common\Models\{AsteriskManagerUsers, NetworkFilters};
+use MikoPBX\Common\Models\AsteriskManagerUsers;
+use MikoPBX\Common\Models\NetworkFilters;
 use Phalcon\Mvc\Model\Resultset;
 
 class AsteriskManagersController extends BaseController
@@ -135,7 +136,7 @@ class AsteriskManagersController extends BaseController
                 $manager->$name.= ($data[$name . '_write'] === 'on') ? 'write' : '';
                 continue;
             }
-            if ( ! array_key_exists($name, $data)) {
+            if (! array_key_exists($name, $data)) {
                 continue;
             }
             $manager->$name = $data[$name];

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -45,7 +46,6 @@ use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class Extensions extends ModelsBase
 {
-
     public const string TYPE_DIALPLAN_APPLICATION = 'DIALPLAN APPLICATION';
     public const string TYPE_SIP = 'SIP';
     public const string TYPE_QUEUE = 'QUEUE';
@@ -135,7 +135,7 @@ class Extensions extends ModelsBase
 
         // Find the next available application number starting from 2200100
         $freeExtension = '2200100';
-        for ($i = 100; ; $i++) {
+        for ($i = 100;; $i++) {
             $freeExtension = "2200$i";
             if (!in_array(['number' => $freeExtension], $result, false)) {
                 break;
@@ -149,17 +149,17 @@ class Extensions extends ModelsBase
      * @param string $number
      * @return string
      */
-    public static function getCidByPhoneNumber(string $number):string
+    public static function getCidByPhoneNumber(string $number): string
     {
-        if(empty($number)){
+        if (empty($number)) {
             return $number;
         }
         $number = preg_replace('/\D+/', '', $number);
         $extensionLength = PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
-        if(strlen($number) > $extensionLength){
+        if (strlen($number) > $extensionLength) {
             $query = 'number LIKE :phone:';
-            $phone = '%'.substr($number, -9);
-        }else{
+            $phone = '%' . substr($number, -9);
+        } else {
             $query = 'number = :phone:';
             $phone = $number;
         }
@@ -171,9 +171,9 @@ class Extensions extends ModelsBase
             ]
         ];
         $data = self::findFirst($filter);
-        if($data){
+        if ($data) {
             $cid = $data->callerid;
-        }else{
+        } else {
             $cid = $number;
         }
 
@@ -193,7 +193,7 @@ class Extensions extends ModelsBase
     {
         $parameters = [
             'column' => 'number',
-            'conditions'=>'type="'.Extensions::TYPE_SIP.'" and userid is not null'
+            'conditions' => 'type="' . Extensions::TYPE_SIP . '" and userid is not null'
         ];
         $started = Extensions::minimum($parameters);
         if ($started === null) {
@@ -207,8 +207,8 @@ class Extensions extends ModelsBase
         $occupied = Extensions::find(['columns' => 'number'])->toArray();
         $occupied = array_column($occupied, 'number');
 
-        for ($i = $started; $i <= $maxExtension ; $i++) {
-            if (!in_array((string)$i, $occupied)){
+        for ($i = $started; $i <= $maxExtension; $i++) {
+            if (!in_array((string)$i, $occupied)) {
                 return (string)$i;
             }
         }
@@ -506,7 +506,8 @@ class Extensions extends ModelsBase
         }
         $relations = $this->_modelsManager->getRelations(__CLASS__);
         foreach ($relations as $relation) {
-            if ($relation->getFields() === 'number'
+            if (
+                $relation->getFields() === 'number'
                 ||
                 (
                     is_array($relation->getFields())
@@ -546,7 +547,7 @@ class Extensions extends ModelsBase
             ]
         );
         $currentRepresent = 'unknown';
-        if ($existingRecord!==null) {
+        if ($existingRecord !== null) {
             $currentRepresent = $existingRecord->getRepresent();
         }
 
@@ -555,7 +556,7 @@ class Extensions extends ModelsBase
             'number',
             new UniquenessValidator(
                 [
-                    'message' => $this->t('mo_ThisNumberNotUniqueForExtensionsModels', ['record'=>$currentRepresent]),
+                    'message' => $this->t('mo_ThisNumberNotUniqueForExtensionsModels', ['record' => $currentRepresent]),
                 ]
             )
         );
@@ -578,7 +579,8 @@ class Extensions extends ModelsBase
             $relationFields = $relation->getFields();
 
             // Check if the relation is based on the 'number' field
-            if ($relationFields === 'number'
+            if (
+                $relationFields === 'number'
                 ||
                 (
                     is_array($relationFields)

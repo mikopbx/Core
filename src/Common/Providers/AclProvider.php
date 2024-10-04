@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -62,7 +63,7 @@ class AclProvider implements ServiceProviderInterface
     {
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($di){
+            function () use ($di) {
 
                 $cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
                 $acl = $cache->get(self::CACHE_KEY);
@@ -102,10 +103,10 @@ class AclProvider implements ServiceProviderInterface
      *  Clear ACL cache
      * @return void
      */
-    public static function clearCache():void {
+    public static function clearCache(): void
+    {
         $di = Di::getDefault();
         $cache = $di->get(ManagedCacheProvider::SERVICE_NAME);
         $cache->delete(self::CACHE_KEY);
     }
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\System\Configs;
-
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\MikoPBXConfig;
@@ -124,7 +124,6 @@ class SSHConf extends Injectable
                 $this->mikoPBXConfig->setGeneralSettings($dbKey, $newKey);
             }
         }
-
     }
 
     /**
@@ -147,8 +146,8 @@ class SSHConf extends Injectable
 
         // Clean up non-system users
         exec("$cat -f 1 -d ':' < /etc/passwd", $systemUsers);
-        foreach ($systemUsers as $user){
-            if($sshLogin === $user || in_array($user, $mainUsers, true)){
+        foreach ($systemUsers as $user) {
+            if ($sshLogin === $user || in_array($user, $mainUsers, true)) {
                 continue;
             }
             // Deleting the user and associated group
@@ -200,7 +199,7 @@ class SSHConf extends Injectable
         if ($disablePassLogin === '1') {
             Processes::mwExec("$passwd -l $sshLogin");
             Processes::mwExec("$passwd -l root");
-        } elseif($sshLogin === 'root') {
+        } elseif ($sshLogin === 'root') {
             Processes::mwExec("$echo '$sshLogin:$password' | $chpasswd");
         } else {
             Processes::mwExec("$passwd -l root");

@@ -306,7 +306,7 @@ class WorkerSafeScriptsCore extends WorkerBase
     }
 }
 
-// Start worker process
+// Start a worker process
 $workerClassname = WorkerSafeScriptsCore::class;
 try {
 

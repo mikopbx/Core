@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,9 +20,9 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
+
 use function MikoPBX\Common\Config\appPath;
 
 /**

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -31,7 +32,6 @@ use MikoPBX\Core\Workers\WorkerCallEvents;
  */
 class ActionAppEnd
 {
-
     /**
      * Executes the end application action.
      *
@@ -74,5 +74,4 @@ class ActionAppEnd
             ],
         ];
     }
-
 }

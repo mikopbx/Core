@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -30,7 +31,6 @@ use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
-
 /**
  * Class ExtensionEditForm
  *
@@ -53,7 +53,8 @@ class ExtensionEditForm extends BaseForm
         $extensionsLength = PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
         $this->add(
             new Text(
-                'number', [
+                'number',
+                [
                     "data-inputmask" => "'mask': '9{2,$extensionsLength}'",
                 ]
             )
@@ -88,7 +89,8 @@ class ExtensionEditForm extends BaseForm
         // USER Email
         $this->add(
             new Text(
-                'user_email', ["value" => $entity->user_email, 'autocomplete' => 'off']
+                'user_email',
+                ["value" => $entity->user_email, 'autocomplete' => 'off']
             )
         );
 
@@ -107,7 +109,8 @@ class ExtensionEditForm extends BaseForm
         // SIP Secret
         $this->add(
             new Text(
-                'sip_secret', [
+                'sip_secret',
+                [
                     "value" => $entity->sip_secret,
                     "class" => "confidential-field",
                     'autocomplete' => 'off'
@@ -125,7 +128,9 @@ class ExtensionEditForm extends BaseForm
         ];
 
         $dtmfmode = new Select(
-            'sip_dtmfmode', $arrDTMFType, [
+            'sip_dtmfmode',
+            $arrDTMFType,
+            [
                 'using' => [
                     'id',
                     'name',
@@ -152,7 +157,9 @@ class ExtensionEditForm extends BaseForm
         ];
 
         $transport = new Select(
-            'sip_transport', $arrTransport, [
+            'sip_transport',
+            $arrTransport,
+            [
                 'using' => [
                     'id',
                     'name',
@@ -168,7 +175,9 @@ class ExtensionEditForm extends BaseForm
 
         // SIP Networkfilterid
         $networkfilterid = new Select(
-            'sip_networkfilterid', $this->prepareNetworkFilters(), [
+            'sip_networkfilterid',
+            $this->prepareNetworkFilters(),
+            [
                 'using' => [
                     'id',
                     'name',
@@ -181,7 +190,7 @@ class ExtensionEditForm extends BaseForm
         $this->add($networkfilterid);
 
         // SIP Manualattributes
-        $this->addTextArea('sip_manualattributes', base64_decode($entity->sip_manualattributes)??'', 80);
+        $this->addTextArea('sip_manualattributes', base64_decode($entity->sip_manualattributes) ?? '', 80);
 
         // EXTERNAL Extension
         $this->add(new Text('mobile_number', ["value" => $entity->mobile_number, 'autocomplete' => 'off']));
@@ -203,7 +212,9 @@ class ExtensionEditForm extends BaseForm
         // Forwarding
         $this->add(
             new Select(
-                'fwd_forwarding', $forwardingExtensions, [
+                'fwd_forwarding',
+                $forwardingExtensions,
+                [
                     'using' => [
                         'id',
                         'name',
@@ -218,7 +229,9 @@ class ExtensionEditForm extends BaseForm
         // Forwardingonbusy
         $this->add(
             new Select(
-                'fwd_forwardingonbusy', $forwardingExtensions, [
+                'fwd_forwardingonbusy',
+                $forwardingExtensions,
+                [
                     'using' => [
                         'id',
                         'name',
@@ -233,7 +246,9 @@ class ExtensionEditForm extends BaseForm
         // Forwardingonunavailable
         $this->add(
             new Select(
-                'fwd_forwardingonunavailable', $forwardingExtensions, [
+                'fwd_forwardingonunavailable',
+                $forwardingExtensions,
+                [
                     'using' => [
                         'id',
                         'name',
@@ -249,7 +264,8 @@ class ExtensionEditForm extends BaseForm
         $ringDuration = (int)$entity->fwd_ringlength;
         $this->add(
             new Numeric(
-                'fwd_ringlength', [
+                'fwd_ringlength',
+                [
                     "maxlength" => 2,
                     "style" => "width: 80px;",
                     "defaultValue" => 120,

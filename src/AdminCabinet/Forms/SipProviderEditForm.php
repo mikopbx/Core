@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -77,7 +78,9 @@ class SipProviderEditForm extends BaseForm
         ];
 
         $dtmfmode = new Select(
-            'dtmfmode', $arrDTMFType, [
+            'dtmfmode',
+            $arrDTMFType,
+            [
                 'using' => [
                     'id',
                     'name',
@@ -100,7 +103,9 @@ class SipProviderEditForm extends BaseForm
             $regTypeValue = ($entity->noregister === '0') ? Sip::REG_TYPE_OUTBOUND : Sip::REG_TYPE_NONE;
         }
         $regType = new Select(
-            'registration_type', $regTypeArray, [
+            'registration_type',
+            $regTypeArray,
+            [
                 'using' => [
                     'id',
                     'name',
@@ -119,7 +124,9 @@ class SipProviderEditForm extends BaseForm
             Sip::TRANSPORT_TLS => Sip::TRANSPORT_TLS,
         ];
         $transport = new Select(
-            'transport', $arrTransport, [
+            'transport',
+            $arrTransport,
+            [
                 'using' => [
                     'id',
                     'name',
@@ -146,7 +153,7 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Check('qualify', $cheskarr));
 
         // Qualifyfreq
-        $this->add(new Numeric('qualifyfreq',["maxlength" => 3,
+        $this->add(new Numeric('qualifyfreq', ["maxlength" => 3,
             "style" => "width: 80px;"]));
 
         // Fromuser
@@ -177,9 +184,9 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Check('receive_calls_without_auth', $cheskarr));
 
         // Manualattributes
-        $this->addTextArea('manualattributes', $entity->getManualAttributes()??'', 65);
+        $this->addTextArea('manualattributes', $entity->getManualAttributes() ?? '', 65);
 
         // Note
-        $this->addTextArea('note', $options['note']??'', 80, ['class'=>'confidential-field']);
+        $this->addTextArea('note', $options['note'] ?? '', 80, ['class' => 'confidential-field']);
     }
 }

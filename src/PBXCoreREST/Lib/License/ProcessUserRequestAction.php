@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -85,8 +86,10 @@ class ProcessUserRequestAction extends Injectable
             }
         } else { // Only add trial for a license key
             $newLicenseKey = (string)$license->getTrialLicense($data);
-            if (strlen($newLicenseKey) === 28
-                && Text::startsWith($newLicenseKey, 'MIKO-')) {
+            if (
+                strlen($newLicenseKey) === 28
+                && Text::startsWith($newLicenseKey, 'MIKO-')
+            ) {
                 $mikoPBXConfig->setGeneralSettings(PbxSettings::PBX_LICENSE, $newLicenseKey);
                 $license->changeLicenseKey($newLicenseKey);
                 $res->success = true;

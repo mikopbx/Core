@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -26,7 +27,6 @@ namespace MikoPBX\Common\Models;
  */
 class LongPollSubscribe extends ModelsBase
 {
-
     /**
      * @Primary
      * @Identity

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,6 +23,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\ExtensionEditForm;
 use MikoPBX\Common\Models\{Extensions, Sip, Users};
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
+
 use function MikoPBX\Common\Config\appPath;
 
 class ExtensionsController extends BaseController
@@ -31,7 +33,6 @@ class ExtensionsController extends BaseController
      */
     public function indexAction(): void
     {
-
     }
 
     /**
@@ -47,7 +48,7 @@ class ExtensionsController extends BaseController
         $currentPage = $postData['draw'];
         $position = $postData['start'];
         $recordsPerPage = $postData['length'];
-        $searchPhrase = $postData['search']['value']??'';
+        $searchPhrase = $postData['search']['value'] ?? '';
         $order = $postData['order'];
         $columns = $postData['columns'];
 
@@ -72,7 +73,6 @@ class ExtensionsController extends BaseController
 
         // Execute the main query and populate the view
         $this->executeMainQuery($parameters);
-
     }
 
     /**

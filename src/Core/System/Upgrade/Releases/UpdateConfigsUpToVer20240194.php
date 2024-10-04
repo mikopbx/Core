@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -26,11 +27,11 @@ use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer20240194 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const string PBX_VERSION = '2024.1.94';
+    public const string PBX_VERSION = '2024.1.94';
 
     private bool $isLiveCD;
 
-	/**
+    /**
      * Class constructor.
      */
     public function __construct()
@@ -38,12 +39,12 @@ class UpdateConfigsUpToVer20240194 extends Injectable implements UpgradeSystemCo
         $this->isLiveCD      = file_exists('/offload/livecd');
     }
 
-	/**
+    /**
      * Main function
      */
-    public function processUpdate():void
+    public function processUpdate(): void
     {
-  		if ($this->isLiveCD) {
+        if ($this->isLiveCD) {
             return;
         }
 
@@ -58,15 +59,15 @@ class UpdateConfigsUpToVer20240194 extends Injectable implements UpgradeSystemCo
     {
         $res = LanInterfaces::find('disabled=0')->toArray();
         foreach ($res as $item) {
-            if ($item['topology']===LanInterfaces::TOPOLOGY_PRIVATE && $item['internet']==='1'){
+            if ($item['topology'] === LanInterfaces::TOPOLOGY_PRIVATE && $item['internet'] === '1') {
                 $parts   = explode(':', trim($item['exthostname']));
                 $extPort = PbxSettings::getDefaultArrayValues()[PbxSettings::EXTERNAL_SIP_PORT];
-                if (!empty($parts[1])){
-                    $extPort=$parts[1];
+                if (!empty($parts[1])) {
+                    $extPort = $parts[1];
                 } else {
                     $parts   = explode(':', trim($item['extipaddr']));
-                    if (!empty($parts[1])){
-                        $extPort=$parts[1];
+                    if (!empty($parts[1])) {
+                        $extPort = $parts[1];
                     }
                 }
                 PbxSettings::setValue(PbxSettings::EXTERNAL_SIP_PORT, $extPort);

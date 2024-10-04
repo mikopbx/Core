@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -41,10 +42,10 @@ class WorkerMergeUploadedFile extends WorkerBase
      */
     public function start(array $argv): void
     {
-        $settings_file = $argv[2]??'';
+        $settings_file = $argv[2] ?? '';
 
         // Check if the settings file exists
-        if ( ! file_exists($settings_file)) {
+        if (! file_exists($settings_file)) {
             SystemMessages::sysLogMsg(__CLASS__, 'File with settings not found', LOG_ERR);
 
             return;
@@ -117,5 +118,5 @@ class WorkerMergeUploadedFile extends WorkerBase
     }
 }
 
-// Start worker process
-WorkerMergeUploadedFile::startWorker($argv??[]);
+// Start a worker process
+WorkerMergeUploadedFile::startWorker($argv ?? []);

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -44,7 +45,7 @@ class AWSCloud extends CloudProvider
     {
         // Cloud check
         $checkValue = $this->getMetaDataAWS('services/partition');
-        if ($checkValue!=='aws'){
+        if ($checkValue !== 'aws') {
             return false;
         }
 
@@ -73,7 +74,7 @@ class AWSCloud extends CloudProvider
         $this->updateSSHKeys($sshKey);
 
         // Update SSH and WEB passwords using some unique identifier from the metadata
-        $vmId = $this->getMetaDataAWS('instance-id')??'';
+        $vmId = $this->getMetaDataAWS('instance-id') ?? '';
         $this->updateSSHCredentials('ec2-user', $vmId);
         $this->updateWebPassword($vmId);
 

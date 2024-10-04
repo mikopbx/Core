@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,6 +19,7 @@
  */
 
 namespace MikoPBX\Core\Utilities;
+
 use Error;
 
 /**
@@ -98,7 +100,7 @@ class SubnetCalculator
      */
     private function validateInputs(string $ip, string $network_size): void
     {
-        if ( ! filter_var($ip, FILTER_VALIDATE_IP)) {
+        if (! filter_var($ip, FILTER_VALIDATE_IP)) {
             throw new Error("IP address $ip not valid.");
         }
         if (($network_size < 1) || ($network_size > 32)) {
@@ -134,7 +136,7 @@ class SubnetCalculator
      *
      * @return string subnet
      */
-    private function subnetCalculation(string $format, string $separator = ''):string
+    private function subnetCalculation(string $format, string $separator = ''): string
     {
         $mask_quads   = [];
         $mask_quads[] = sprintf($format, ($this->subnet_mask >> 24) & 0xFF);
@@ -163,7 +165,7 @@ class SubnetCalculator
      *
      * @return string formatted subnet mask.
      */
-    private function hostCalculation(string $format, string $separator = ''):string
+    private function hostCalculation(string $format, string $separator = ''): string
     {
         $network_quads   = [];
         $network_quads[] = sprintf("$format", $this->quads[0] & ~($this->subnet_mask >> 24));

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -37,7 +38,6 @@ use Phalcon\Mvc\Dispatcher;
  */
 class SecurityPlugin extends Injectable
 {
-
     /**
      * Executes before every request is dispatched.
      * Verifies user authentication and authorization for the requested resource.
@@ -83,14 +83,17 @@ class SecurityPlugin extends Injectable
         // Authenticated users: validate access to the requested resource
         if ($isAuthenticated) {
             // Redirect to home if the controller is missing or irrelevant
-            if (!class_exists($controllerClass)
-                || ($controllerClass === SessionController::class && strtoupper($action) !== 'END')) {
+            if (
+                !class_exists($controllerClass)
+                || ($controllerClass === SessionController::class && strtoupper($action) !== 'END')
+            ) {
                 $this->redirectToHome($dispatcher);
                 return true;
             }
 
             // Restrict access to unauthorized resources
-            if (!$this->isLocalHostRequest()
+            if (
+                !$this->isLocalHostRequest()
                 && !$this->isAllowedAction($controllerClass, $action)
                 && !in_array($controllerClass, $publicControllers)
             ) {
@@ -111,22 +114,23 @@ class SecurityPlugin extends Injectable
      *
      * @param Dispatcher $dispatcher The dispatcher object used to forward the request.
      */
-    private function redirectToHome(Dispatcher $dispatcher): void{
+    private function redirectToHome(Dispatcher $dispatcher): void
+    {
         // Retrieve the home page path from the session, defaulting to a predefined path if not set
         $homePath = $this->session->get(SessionController::SESSION_ID)[SessionController::HOME_PAGE];
-        if (empty($homePath)){
-            $homePath='/admin-cabinet/extensions/index';
+        if (empty($homePath)) {
+            $homePath = '/admin-cabinet/extensions/index';
         }
 
         $redis = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME);
 
-        $currentPageCacheKey = 'RedirectCount:'.$this->session->getId().':'.md5($homePath);
+        $currentPageCacheKey = 'RedirectCount:' . $this->session->getId() . ':' . md5($homePath);
 
 
-        $redirectCount = $redis->get($currentPageCacheKey)??0;
+        $redirectCount = $redis->get($currentPageCacheKey) ?? 0;
         $redirectCount++;
         $redis->set($currentPageCacheKey, $redirectCount, 5);
-        if ($redirectCount > 25){
+        if ($redirectCount > 25) {
             $redis->delete($currentPageCacheKey);
             $this->forwardTo401Error($dispatcher);
             return;
@@ -161,7 +165,8 @@ class SecurityPlugin extends Injectable
      * Redirects the user to a 401 error page.
      * @param $dispatcher Dispatcher instance for handling the redirection.
      */
-    private function forwardTo401Error(Dispatcher $dispatcher): void{
+    private function forwardTo401Error(Dispatcher $dispatcher): void
+    {
         $dispatcher->forward([
             'module' => 'admin-cabinet',
             'controller' => 'errors',
@@ -174,7 +179,8 @@ class SecurityPlugin extends Injectable
      * Redirects the user to the login page.
      * @param $dispatcher Dispatcher instance for handling the redirection.
      */
-    private function forwardToLoginPage(Dispatcher $dispatcher): void{
+    private function forwardToLoginPage(Dispatcher $dispatcher): void
+    {
         $dispatcher->forward([
             'controller' => 'session',
             'action' => 'index',
@@ -195,8 +201,7 @@ class SecurityPlugin extends Injectable
      *
      * @return bool true if the user is authenticated, false otherwise.
      */
-    private
-    function checkUserAuth(): bool
+    private function checkUserAuth(): bool
     {
         // Check if it is a localhost request or if the user is already authenticated.
         if ($this->session->has(SessionController::SESSION_ID)) {
@@ -259,5 +264,4 @@ class SecurityPlugin extends Injectable
     {
         return ($_SERVER['REMOTE_ADDR'] === '127.0.0.1');
     }
-
 }

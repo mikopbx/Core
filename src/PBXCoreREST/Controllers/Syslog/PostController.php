@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -98,7 +99,7 @@ class PostController extends BaseController
             $response = json_decode($response, true);
 
             $filename = $response['data']['filename'] ?? '';
-            if ( ! file_exists($filename)) {
+            if (! file_exists($filename)) {
                 $response['messages'][] = 'Log file not found';
             } else {
                 $response['data']['filename'] = $filename;
@@ -135,7 +136,7 @@ class PostController extends BaseController
                 $di           = Di::getDefault();
                 $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
                 $filename     = $downloadLink . "/" . $response['data']['filename'] ?? '';
-                if ( ! file_exists($filename)) {
+                if (! file_exists($filename)) {
                     $response['messages'][] = 'File not found';
                 } else {
                     $scheme                       = $this->request->getScheme();

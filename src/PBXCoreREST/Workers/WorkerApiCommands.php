@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -28,6 +29,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use Throwable;
+
 use function xdebug_break;
 
 require_once 'Globals.php';
@@ -96,7 +98,7 @@ class WorkerApiCommands extends WorkerBase
             $async = false;
             try {
                 $request = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
-                $async   = ($request['async']??false) === true;
+                $async   = ($request['async'] ?? false) === true;
                 $processor = $request['processor'];
                 $res->processor = $processor;
                 // Old style, we can remove it in 2025
@@ -111,8 +113,7 @@ class WorkerApiCommands extends WorkerBase
 
                 // This is the child process
                 if (method_exists($processor, 'callback')) {
-
-                    cli_set_process_title(__CLASS__.'-'.$request['action']);
+                    cli_set_process_title(__CLASS__ . '-' . $request['action']);
                     // Execute async job
                     if ($async) {
                         $res->success = true;
@@ -176,8 +177,10 @@ class WorkerApiCommands extends WorkerBase
         $restartActions = $this->getNeedRestartActions();
         foreach ($restartActions as $processor => $actions) {
             foreach ($actions as $action) {
-                if ($processor === $request['processor']
-                    && $action === $request['action']) {
+                if (
+                    $processor === $request['processor']
+                    && $action === $request['action']
+                ) {
                     $this->needRestart = true;
                     Processes::restartAllWorkers();
                     return;
@@ -206,5 +209,5 @@ class WorkerApiCommands extends WorkerBase
     }
 }
 
-// Start worker process
+// Start a worker process
 WorkerApiCommands::startWorker($argv ?? []);

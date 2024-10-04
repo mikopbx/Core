@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -23,7 +24,7 @@ use Exception;
 use Phalcon\Di\Injectable;
 use Phalcon\Events\Event;
 use Phalcon\Mvc\Dispatcher as MvcDispatcher;
-use Phalcon\Mvc\Dispatcher\Exception as DispatcherException;
+use Phalcon\Dispatcher\Exception as DispatcherException;
 
 /**
  * NotFoundPlugin
@@ -32,7 +33,6 @@ use Phalcon\Mvc\Dispatcher\Exception as DispatcherException;
  */
 class NotFoundPlugin extends Injectable
 {
-
     /**
      * This action is executed before perform any action in the application
      *

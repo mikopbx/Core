@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -26,7 +27,6 @@ use MikoPBX\Common\Models\{PbxSettings};
 
 class TimeSettingsController extends BaseController
 {
-
     /**
      * Form for editing and configuring time settings on the station.
      */
@@ -112,7 +112,7 @@ class TimeSettingsController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
 
@@ -134,12 +134,12 @@ class TimeSettingsController extends BaseController
                     break;
                 case PbxSettings::NTP_SERVER:
                     $ntp_servers   = preg_split('/\r\n|\r|\n| |,/', $data[$key]);
-                    if (is_array($ntp_servers)){
+                    if (is_array($ntp_servers)) {
                         $record->value = implode(PHP_EOL, $ntp_servers);
                     }
                     break;
                 default:
-                    if ( ! array_key_exists($key, $data)) {
+                    if (! array_key_exists($key, $data)) {
                         continue 2;
                     }
                     $record->value = $data[$key];

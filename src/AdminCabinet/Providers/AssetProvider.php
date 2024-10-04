@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -34,6 +35,7 @@ use Phalcon\Assets\Collection;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Mvc\Dispatcher;
+
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -123,7 +125,7 @@ class AssetProvider implements ServiceProviderInterface
      */
     public function initializeClassVariables(string $version, \Phalcon\Html\TagFactory $tagFactory): void
     {
-        $this->manager = new AssetManager($tagFactory, ['prefix'=>'/admin-cabinet/assets/']);
+        $this->manager = new AssetManager($tagFactory, ['prefix' => '/admin-cabinet/assets/']);
         $this->manager->setVersion($version);
 
         $this->jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
@@ -146,7 +148,7 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeSentryAssets(): void
     {
-        if (file_exists(SentryConf::CONF_FILE) && file_exists(Network::INTERNET_FLAG_FILE)){
+        if (file_exists(SentryConf::CONF_FILE) && file_exists(Network::INTERNET_FLAG_FILE)) {
             $this->headerCollectionSentryJS->addjs(
                 'assets/js/vendor/sentry/bundle.min.js',
                 true
@@ -558,7 +560,6 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/vendor/semantic/modal.min.css', true)
                 ->addCss('css/vendor/semantic/progress.min.css', true)
                 ->addCss('css/PbxExtensionModules/slides.css', true);
-
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
@@ -896,5 +897,4 @@ class AssetProvider implements ServiceProviderInterface
             $this->semanticCollectionCSS->addCss('css/AsteriskManagers/manager-modify.css', true);
         }
     }
-
 }

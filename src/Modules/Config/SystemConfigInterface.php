@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,7 +20,6 @@
 
 namespace MikoPBX\Modules\Config;
 
-
 /**
  * Interface SystemConfigInterface
  *
@@ -29,7 +29,6 @@ namespace MikoPBX\Modules\Config;
  */
 interface SystemConfigInterface
 {
-
     public const string MODELS_EVENT_NEED_RELOAD = 'modelsEventNeedReload';
 
     public const string MODELS_EVENT_CHANGE_DATA = 'modelsEventChangeData';
@@ -166,5 +165,4 @@ interface SystemConfigInterface
      * @return int
      */
     public function getMethodPriority(string $methodName = ''): int;
-
 }

@@ -1,5 +1,6 @@
 #!/usr/bin/php
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -66,7 +67,7 @@ function Event_dial(AGI $agi, string $action): array
     }
 
     $data['action'] = "$action";
-    if ( ! empty($IS_ORGNT)) {
+    if (! empty($IS_ORGNT)) {
         $dst_num            = $agi->request['agi_callerid'];
         $src_num            = $agi->request['agi_extension'];
         $data['dialstatus'] = 'ORIGINATE';
@@ -127,12 +128,12 @@ function Event_dial_create_chan(AGI $agi, string $action): array
     }
 
     $IS_ORGNT = $agi->get_variable("IS_ORGNT", true);
-    if ( ! empty($IS_ORGNT)) {
+    if (! empty($IS_ORGNT)) {
         // It's probably necessary to search for two IDs.
         // Applicable only for Originate, when we use two channels as the caller,
         // a mobile number and an internal number.
         $peer_mobile = $agi->get_variable("peer_mobile", true);
-        if ( ! empty($peer_mobile) && stripos($id, $peer_mobile) === false) {
+        if (! empty($peer_mobile) && stripos($id, $peer_mobile) === false) {
             $id             = substr($agi->request['agi_uniqueid'], 0, 16) . '_' . $peer_mobile . '_' . $IS_ORGNT;
             $data['org_id'] = $id;
         }
@@ -166,18 +167,18 @@ function Event_dial_answer(AGI $agi, string $action): array
     $data['BRIDGEPEER']      = $agi->get_variable("FROM_CHAN", true);
 
     $IS_ORGNT = $agi->get_variable("IS_ORGNT", true);
-    if ( ! empty($IS_ORGNT)) {
+    if (! empty($IS_ORGNT)) {
         // Probably need to override the ID.
         // Applicable only for Originate, when we use two channels as the caller,
         // a mobile number and an internal number.
         $peer_mobile = $agi->get_variable("peer_mobile", true);
-        if ( ! empty($peer_mobile) && stripos($id, $peer_mobile) === false) {
+        if (! empty($peer_mobile) && stripos($id, $peer_mobile) === false) {
             $id             = substr($agi->request['agi_uniqueid'], 0, 16) . '_' . $peer_mobile . '_' . $IS_ORGNT;
             $data['org_id'] = $id;
         }
     }
 
-    if ( ! empty($data['ENDCALLONANSWER'])) {
+    if (! empty($data['ENDCALLONANSWER'])) {
         $agi->set_variable("__ENDCALLONANSWER", "");
     }
 
@@ -386,6 +387,7 @@ function Event_hangup_chan(AGI $agi, string $action): array
  * @param string $action The action associated with the unpark call event.
  *
  * @return array The data for the unpark call event.
+ * @throws Exception
  */
 function Event_unpark_call(AGI $agi, string $action): array
 {
@@ -518,20 +520,20 @@ function Event_queue_start(AGI $agi, string $action): array
         'dst_num'  => $agi->request['agi_extension'],
         'dst_chan' => 'Queue:' . $agi->request['agi_extension'],
         // 'answer'   => $time_start,
-        // 'end'  	   => $now,
+        // 'end'       => $now,
         'did'      => $agi->get_variable("FROM_DID", true),
         'is_app'   => '1',
         'UNIQUEID' => $id,
         'linkedid' => $agi->get_variable("CHANNEL(linkedid)", true),
     ];
-    if ( ! empty($time_start)) {
+    if (! empty($time_start)) {
         $data['src_chan'] = $agi->get_variable("QUEUE_SRC_CHAN", true);
         $data['src_num']  = $agi->request['agi_callerid'];
         $data['start']    = $time_start;
         $data['linkedid'] = $agi->get_variable("CHANNEL(linkedid)", true);
         $agi->set_variable("__pt1c_q_UNIQUEID", "$id");
     }
-    if ( ! empty($ISTRANSFER)) {
+    if (! empty($ISTRANSFER)) {
         $data['transfer'] = '1';
     } else {
         $data['transfer'] = '0';
@@ -684,7 +686,7 @@ function Event_hangup_chan_meetme(AGI $agi, string $action): array
     $data['end']         = $now;
 
     $confId = $agi->get_variable('MEETMEUNIQUEID', true);
-    if(empty($confId)){
+    if (empty($confId)) {
         $confId = $agi->get_variable('CONFBRIDGEUNIQUEID', true);
     }
     $data['meetme_id']   = $confId;

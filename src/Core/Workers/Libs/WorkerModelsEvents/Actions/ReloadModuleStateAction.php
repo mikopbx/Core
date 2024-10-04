@@ -32,7 +32,6 @@ class ReloadModuleStateAction implements ReloadActionInterface
                 $this->executeReloder($record[self::MODULE_SETTINGS_KEY]);
             }
         }
-
     }
 
     /**
@@ -87,17 +86,21 @@ class ReloadModuleStateAction implements ReloadActionInterface
      * @param array $moduleRecord Module configuration data.
      * @return void
      */
-    public function handleModuleConfigChanges(ConfigClass $configClassObj, array $moduleRecord):void
+    public function handleModuleConfigChanges(ConfigClass $configClassObj, array $moduleRecord): void
     {
         // Reconfigure fail2ban and restart iptables
-        if (method_exists($configClassObj, SystemConfigInterface::GENERATE_FAIL2BAN_JAILS)
-            && !empty(call_user_func([$configClassObj, SystemConfigInterface::GENERATE_FAIL2BAN_JAILS]))) {
+        if (
+            method_exists($configClassObj, SystemConfigInterface::GENERATE_FAIL2BAN_JAILS)
+            && !empty(call_user_func([$configClassObj, SystemConfigInterface::GENERATE_FAIL2BAN_JAILS]))
+        ) {
             WorkerModelsEvents::invokeAction(ReloadFail2BanConfAction::class, [], 50);
         }
 
         // Refresh Nginx conf if the module has any locations
-        if (method_exists($configClassObj, SystemConfigInterface::CREATE_NGINX_LOCATIONS)
-            && !empty(call_user_func([$configClassObj, SystemConfigInterface::CREATE_NGINX_LOCATIONS]))) {
+        if (
+            method_exists($configClassObj, SystemConfigInterface::CREATE_NGINX_LOCATIONS)
+            && !empty(call_user_func([$configClassObj, SystemConfigInterface::CREATE_NGINX_LOCATIONS]))
+        ) {
             WorkerModelsEvents::invokeAction(ReloadNginxConfAction::class, [], 50);
         }
 
@@ -111,17 +114,23 @@ class ReloadModuleStateAction implements ReloadActionInterface
         }
 
         // Reconfigure asterisk manager interface
-        if (method_exists($configClassObj, AsteriskConfigInterface::GENERATE_MANAGER_CONF)
-            && !empty(call_user_func([$configClassObj, AsteriskConfigInterface::GENERATE_MANAGER_CONF]))) {
+        if (
+            method_exists($configClassObj, AsteriskConfigInterface::GENERATE_MANAGER_CONF)
+            && !empty(call_user_func([$configClassObj, AsteriskConfigInterface::GENERATE_MANAGER_CONF]))
+        ) {
             WorkerModelsEvents::invokeAction(ReloadManagerAction::class, [], 50);
         }
 
         // Hook modules AFTER_ methods
-        if ($moduleRecord['disabled'] === '1'
-            && method_exists($configClassObj, SystemConfigInterface::ON_AFTER_MODULE_DISABLE)) {
+        if (
+            $moduleRecord['disabled'] === '1'
+            && method_exists($configClassObj, SystemConfigInterface::ON_AFTER_MODULE_DISABLE)
+        ) {
             call_user_func([$configClassObj, SystemConfigInterface::ON_AFTER_MODULE_DISABLE]);
-        } elseif ($moduleRecord['disabled'] === '0'
-            && method_exists($configClassObj, SystemConfigInterface::ON_AFTER_MODULE_ENABLE)) {
+        } elseif (
+            $moduleRecord['disabled'] === '0'
+            && method_exists($configClassObj, SystemConfigInterface::ON_AFTER_MODULE_ENABLE)
+        ) {
             call_user_func([$configClassObj, SystemConfigInterface::ON_AFTER_MODULE_ENABLE]);
         }
     }

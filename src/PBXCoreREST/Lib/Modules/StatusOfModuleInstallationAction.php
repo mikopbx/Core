@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -76,7 +77,6 @@ class StatusOfModuleInstallationAction extends Injectable
             if ($resModuleMetadata->success) {
                 $res->data['uniqid'] = $resModuleMetadata->data['uniqid'];
             }
-
         } else {
             $res->success = true;
             $res->data[self::I_STATUS] = self::INSTALLATION_IN_PROGRESS;

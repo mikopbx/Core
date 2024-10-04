@@ -231,7 +231,7 @@ class CallDetailRecordsController extends BaseController
                 $needCloseAnd = true;
             }
             if (count($matches[0]) === 1) {
-                if ($extensionsLength === strlen($matches[0][0])) {
+                if ($extensionsLength == strlen($matches[0][0])) {
                     $parameters['conditions'] .= 'src_num = :SearchPhrase1: OR dst_num = :SearchPhrase2:';
                     $parameters['bind']['SearchPhrase1'] = $matches[0][0];
                     $parameters['bind']['SearchPhrase2'] = $matches[0][0];
@@ -245,7 +245,7 @@ class CallDetailRecordsController extends BaseController
 
                 $searchPhrase = str_replace($matches[0][0], '', $searchPhrase);
             } elseif (count($matches[0]) === 2) {
-                if ($extensionsLength === strlen($matches[0][0]) && $extensionsLength === strlen($matches[0][1])) {
+                if ($extensionsLength == strlen($matches[0][0]) && $extensionsLength === strlen($matches[0][1])) {
                     $parameters['conditions'] .= '(src_num = :SearchPhrase1: AND dst_num = :SearchPhrase2:)';
                     $parameters['conditions'] .= ' OR (src_num = :SearchPhrase3: AND dst_num = :SearchPhrase4:)';
                     $parameters['conditions'] .= ' OR (src_num = :SearchPhrase5: AND did = :SearchPhrase6:)';
@@ -258,9 +258,9 @@ class CallDetailRecordsController extends BaseController
                     $parameters['bind']['SearchPhrase6'] = $matches[0][0];
                     $parameters['bind']['SearchPhrase7'] = $matches[0][1];
                     $parameters['bind']['SearchPhrase8'] = $matches[0][0];
-                } elseif ($extensionsLength === strlen($matches[0][0]) && $extensionsLength !== strlen(
-                        $matches[0][1]
-                    )) {
+                } elseif ($extensionsLength == strlen($matches[0][0]) && $extensionsLength !== strlen(
+                    $matches[0][1]
+                )) {
                     $seekNumber = substr($matches[0][1], -9);
                     $parameters['conditions'] .= '(src_num = :SearchPhrase1: AND dst_num LIKE :SearchPhrase2:)';
                     $parameters['conditions'] .= ' OR (src_num LIKE :SearchPhrase3: AND dst_num = :SearchPhrase4:)';
@@ -275,8 +275,8 @@ class CallDetailRecordsController extends BaseController
                     $parameters['bind']['SearchPhrase7'] = "%$seekNumber%";
                     $parameters['bind']['SearchPhrase8'] = $matches[0][0];
                 } elseif ($extensionsLength !== strlen($matches[0][0]) && $extensionsLength === strlen(
-                        $matches[0][1]
-                    )) {
+                    $matches[0][1]
+                )) {
                     $seekNumber = substr($matches[0][0], -9);
                     $parameters['conditions'] .= '(src_num LIKE :SearchPhrase1: AND dst_num = :SearchPhrase2:)';
                     $parameters['conditions'] .= ' OR (src_num = :SearchPhrase3: AND dst_num LIKE :SearchPhrase4:)';
@@ -327,7 +327,7 @@ class CallDetailRecordsController extends BaseController
      */
     private function selectCDRRecordsWithFilters(array $parameters): array
     {
-        // Apply ACL filters to CDR query using hook method
+        // Apply ACL filters to CDR query using a hook method
         PBXConfModulesProvider::hookModulesMethod(CDRConfigInterface::APPLY_ACL_FILTERS_TO_CDR_QUERY, [&$parameters]);
 
         // Retrieve CDR records based on the filtered parameters

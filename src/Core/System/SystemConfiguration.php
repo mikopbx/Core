@@ -36,7 +36,7 @@ class SystemConfiguration extends Injectable
 
     public function __construct()
     {
-       $this->configDBPath = $this->di->getShared(ConfigProvider::SERVICE_NAME)->path('database.dbfile');
+        $this->configDBPath = $this->di->getShared(ConfigProvider::SERVICE_NAME)->path('database.dbfile');
     }
     /**
      * Trying to restore the backup
@@ -54,11 +54,11 @@ class SystemConfiguration extends Injectable
         $confBackupDir = Directories::getDir(Directories::CORE_CONF_BACKUP_DIR);
         $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'], ['',''], $confBackupDir);
         $confFile    = $this->configDBPath;
-        foreach ($storages as $dev => $fs){
+        foreach ($storages as $dev => $fs) {
             SystemMessages::echoToTeletype(PHP_EOL."    - mount $dev ...".PHP_EOL, true);
             Util::mwMkdir($tmpMountDir."/$dev");
             $res = Storage::mountDisk($dev, $fs, $tmpMountDir."/$dev");
-            if(!$res){
+            if (!$res) {
                 SystemMessages::echoToTeletype("    - fail mount $dev ...".PHP_EOL, true);
             }
         }
@@ -68,7 +68,7 @@ class SystemConfiguration extends Injectable
         $find    = Util::which('find');
         $cut    = Util::which('cut');
         $lastBackUp  = trim(shell_exec("$find $tmpMountDir/dev/*$backupDir -type f -printf '%T@ %p\\n' | $sort -n | $tail -1 | $cut -f2- -d' '"));
-        if(!empty($lastBackUp)){
+        if (!empty($lastBackUp)) {
             $rm     = Util::which('rm');
             $gzip   = Util::which('gzip');
             $sqlite3= Util::which('sqlite3');
@@ -77,15 +77,15 @@ class SystemConfiguration extends Injectable
             shell_exec("$rm -rf $confFile*");
             shell_exec("$gzip -c -d $lastBackUp | sqlite3 $confFile");
             Processes::mwExec("$sqlite3 $confFile 'select * from m_Storage'", $out, $ret);
-            if($ret !== 0){
+            if ($ret !== 0) {
                 SystemMessages::echoToTeletype("    - restore $lastBackUp failed...".PHP_EOL, true);
                 copy(self::DEFAULT_CONFIG_DB, $confFile);
-            }elseif(!$this->isDefaultConf()){
+            } elseif (!$this->isDefaultConf()) {
                 System::reboot();
             }
         }
         $mount   = Util::which('umount');
-        foreach ($storages as $dev => $fs){
+        foreach ($storages as $dev => $fs) {
             SystemMessages::echoToTeletype("    - umount $dev ...".PHP_EOL, true);
             shell_exec("$mount $dev");
         }

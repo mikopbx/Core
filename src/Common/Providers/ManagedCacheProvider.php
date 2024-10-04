@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -26,7 +27,6 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Cache\Adapter\Redis;
 use Phalcon\Storage\SerializerFactory;
 
-
 /**
  * The ManagedCacheProvider class is responsible for registering the managedCache service.
  *
@@ -47,7 +47,7 @@ class ManagedCacheProvider implements ServiceProviderInterface
         $config = $di->getShared(ConfigProvider::SERVICE_NAME);
         $di->setShared(
             self::SERVICE_NAME,
-            function () use ($config){
+            function () use ($config) {
                 $serializerFactory = new SerializerFactory();
 
                 $options = [
@@ -60,7 +60,6 @@ class ManagedCacheProvider implements ServiceProviderInterface
                 ];
 
                 return new Redis($serializerFactory, $options);
-
             }
         );
     }

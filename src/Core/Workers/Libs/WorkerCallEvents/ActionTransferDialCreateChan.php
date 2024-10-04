@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
-
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\SystemMessages;
@@ -78,7 +78,7 @@ class ActionTransferDialCreateChan
             } // END IF
 
             $row->writeAttribute('dst_chan', $data['dst_chan']);
-            if (isset($data['dst_call_id']) && !empty($data['dst_call_id'])) {
+            if (!empty($data['dst_call_id'])) {
                 $row->writeAttribute('dst_call_id', $data['dst_call_id']);
             }
             $res = $row->save();

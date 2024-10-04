@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -89,7 +90,7 @@ class GetController extends BaseController
         if ($response !== false) {
             $response = json_decode($response, true);
             $filename = $response['data']['filename'] ?? '';
-            if ( ! file_exists($filename)) {
+            if (! file_exists($filename)) {
                 $response['messages'][] = 'System information collected file not found';
             } else {
                 // Read the content of the file and include it in the response

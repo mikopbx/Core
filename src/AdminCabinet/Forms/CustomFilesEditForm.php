@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -25,7 +26,6 @@ use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
-
 /**
  * Class CustomFilesEditForm
  *
@@ -47,7 +47,7 @@ class CustomFilesEditForm extends BaseForm
                     $this->add(new Hidden($key));
                     break;
                 case "description":
-                    $this->addTextArea($key, $value??'', 65);
+                    $this->addTextArea($key, $value ?? '', 65);
                     break;
                 case "mode":
                     $select = new Select(
@@ -57,8 +57,8 @@ class CustomFilesEditForm extends BaseForm
                             CustomFiles::MODE_APPEND => $this->translation->_("cf_FileActionsAppend"),
                             CustomFiles::MODE_OVERRIDE => $this->translation->_("cf_FileActionsOverride"),
                             CustomFiles::MODE_SCRIPT => $this->translation->_("cf_FileActionsScript"),
-                        ]
-                        , [
+                        ],
+                        [
                             'using' => [
                                 'id',
                                 'name',

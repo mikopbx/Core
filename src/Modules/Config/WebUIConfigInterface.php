@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -72,7 +73,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onAfterACLPrepared(AclList $aclList):void;
+    public function onAfterACLPrepared(AclList $aclList): void;
 
     /**
      * Modifies the system menu.
@@ -82,7 +83,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onBeforeHeaderMenuShow(array &$menuItems):void;
+    public function onBeforeHeaderMenuShow(array &$menuItems): void;
 
     /**
      * Modifies the system routes.
@@ -92,7 +93,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onAfterRoutesPrepared(Router $router):void;
+    public function onAfterRoutesPrepared(Router $router): void;
 
     /**
      * Modifies the system assets.
@@ -103,7 +104,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onAfterAssetsPrepared(Manager $assets, Dispatcher $dispatcher):void;
+    public function onAfterAssetsPrepared(Manager $assets, Dispatcher $dispatcher): void;
 
     /**
      * Prepares the include block within a Volt template.
@@ -115,7 +116,7 @@ interface WebUIConfigInterface
      *
      * @return string the volt partial file path without extension.
      */
-    public function onVoltBlockCompile(string $controller, string $blockName, View $view):string;
+    public function onVoltBlockCompile(string $controller, string $blockName, View $view): string;
 
     /**
      * Called from BaseForm before the form is initialized.
@@ -127,7 +128,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onBeforeFormInitialize(Form $form, mixed $entity, mixed $options):void;
+    public function onBeforeFormInitialize(Form $form, mixed $entity, mixed $options): void;
 
     /**
      * Called from BaseController before executing a route.
@@ -136,7 +137,7 @@ interface WebUIConfigInterface
      * @param Dispatcher $dispatcher
      * @return void
      */
-    public function onBeforeExecuteRoute(Dispatcher $dispatcher):void;
+    public function onBeforeExecuteRoute(Dispatcher $dispatcher): void;
 
     /**
      * Called from BaseController after executing a route.
@@ -146,7 +147,5 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onAfterExecuteRoute(Dispatcher $dispatcher):void;
-
-
+    public function onAfterExecuteRoute(Dispatcher $dispatcher): void;
 }

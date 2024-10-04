@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -267,7 +268,7 @@ class WorkerModelsEvents extends WorkerBase
         }
 
         // Check if enough time has passed since the last change
-        if ((time() - $this->last_change)<$this->timeout) {
+        if ((time() - $this->last_change) < $this->timeout) {
             SystemMessages::sysLogMsg(__METHOD__, "Wait more time before starting the reload.", LOG_DEBUG);
             return;
         }
@@ -283,7 +284,7 @@ class WorkerModelsEvents extends WorkerBase
             try {
                 $parameters = $this->plannedReloadActions[$actionClassName]['parameters'];
                 $hashes = array_keys($parameters);
-                SystemMessages::sysLogMsg($actionClassName, "Start action for the next parameters hashes: ".PHP_EOL . json_encode($hashes, JSON_PRETTY_PRINT), LOG_DEBUG);
+                SystemMessages::sysLogMsg($actionClassName, "Start action for the next parameters hashes: " . PHP_EOL . json_encode($hashes, JSON_PRETTY_PRINT), LOG_DEBUG);
 
                 $actionObject = new $actionClassName();
                 $actionObject->execute($parameters);
@@ -291,10 +292,9 @@ class WorkerModelsEvents extends WorkerBase
             } catch (Throwable $exception) {
                 CriticalErrorsHandler::handleExceptionWithSyslog($exception);
             }
-
         }
-        if (count($executedActions)>0){
-            SystemMessages::sysLogMsg(__METHOD__, "Reload actions were executed in the next order: ".PHP_EOL . json_encode($executedActions, JSON_PRETTY_PRINT), LOG_DEBUG);
+        if (count($executedActions) > 0) {
+            SystemMessages::sysLogMsg(__METHOD__, "Reload actions were executed in the next order: " . PHP_EOL . json_encode($executedActions, JSON_PRETTY_PRINT), LOG_DEBUG);
         }
 
         // Send information about models changes to additional modules bulky without any details
@@ -317,11 +317,12 @@ class WorkerModelsEvents extends WorkerBase
             $receivedMessage = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
 
             // Check the source of the message and perform actions accordingly
-            if ($receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_INVOKE_ACTION
-                && in_array($receivedMessage['action'], $this->reloadActions)) {
+            if (
+                $receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_INVOKE_ACTION
+                && in_array($receivedMessage['action'], $this->reloadActions)
+            ) {
                 // Store the modified table and its parameters
                 $this->planReloadAction($receivedMessage['action'], $receivedMessage['parameters']);
-
             } elseif ($receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED) {
                 // Fill the modified tables array with the changes from the received message
                 $this->fillModifiedTables($receivedMessage);
@@ -355,11 +356,11 @@ class WorkerModelsEvents extends WorkerBase
     {
         $countPlannedActions = count($this->plannedReloadActions);
         $modifiedModel = $data['model'] ?? '';
-        if (empty($modifiedModel)){
+        if (empty($modifiedModel)) {
             return;
         }
 
-        SystemMessages::sysLogMsg(__METHOD__, "New changes received:".PHP_EOL . json_encode($data, JSON_PRETTY_PRINT), LOG_DEBUG);
+        SystemMessages::sysLogMsg(__METHOD__, "New changes received:" . PHP_EOL . json_encode($data, JSON_PRETTY_PRINT), LOG_DEBUG);
 
         // Clear cache for the called class
         ModelsBase::clearCache($modifiedModel);
@@ -465,17 +466,16 @@ class WorkerModelsEvents extends WorkerBase
         $newHash = $this->createUniqueKeyFromArray($parameters);
         if (!array_key_exists($action, $this->plannedReloadActions)) {
             $this->plannedReloadActions[$action]['parameters'][$newHash] = $parameters;
-            SystemMessages::sysLogMsg(__METHOD__, "New reload task $action planned with parameters (hash=$newHash):".PHP_EOL . json_encode($parameters, JSON_PRETTY_PRINT), LOG_DEBUG);
+            SystemMessages::sysLogMsg(__METHOD__, "New reload task $action planned with parameters (hash=$newHash):" . PHP_EOL . json_encode($parameters, JSON_PRETTY_PRINT), LOG_DEBUG);
         } else {
-            foreach ($this->plannedReloadActions[$action]['parameters'] as $oldHash=>$existParameters) {
+            foreach ($this->plannedReloadActions[$action]['parameters'] as $oldHash => $existParameters) {
                 if ($newHash === $oldHash) {
                     return;
                 }
                 $this->plannedReloadActions[$action]['parameters'][$newHash] = $parameters;
-                SystemMessages::sysLogMsg(__METHOD__, "Existing reload task $action received a new parameters (hash=$newHash)".PHP_EOL . json_encode($parameters, JSON_PRETTY_PRINT), LOG_DEBUG);
+                SystemMessages::sysLogMsg(__METHOD__, "Existing reload task $action received a new parameters (hash=$newHash)" . PHP_EOL . json_encode($parameters, JSON_PRETTY_PRINT), LOG_DEBUG);
             }
         }
-
     }
 
     /**

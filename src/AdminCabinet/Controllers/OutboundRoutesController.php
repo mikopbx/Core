@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -22,10 +23,8 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\OutgoingRouteEditForm;
 use MikoPBX\Common\Models\{OutgoingRoutingTable, Providers};
 
-
 class OutboundRoutesController extends BaseController
 {
-
     /**
      * Builds the list outgoing routes
      */
@@ -78,20 +77,20 @@ class OutboundRoutesController extends BaseController
     public function modifyAction(string $id = ''): void
     {
         $idIsEmpty = false;
-        if(empty($id)){
+        if (empty($id)) {
             $idIsEmpty = true;
-            $id = (string)($_GET['copy-source']??'');
+            $id = (string)($_GET['copy-source'] ?? '');
         }
 
         $rule = OutgoingRoutingTable::findFirstByid($id);
         if ($rule === null) {
             $rule = new OutgoingRoutingTable();
-            $rule->priority = (int)OutgoingRoutingTable::maximum(['column' => 'priority'])+1;
-        }elseif($idIsEmpty){
+            $rule->priority = (int)OutgoingRoutingTable::maximum(['column' => 'priority']) + 1;
+        } elseif ($idIsEmpty) {
             $oldRule = $rule;
             $rule = new OutgoingRoutingTable();
-            $rule->priority = (int)OutgoingRoutingTable::maximum(['column' => 'priority'])+1;
-            foreach ($oldRule->toArray() as $key => $value){
+            $rule->priority = (int)OutgoingRoutingTable::maximum(['column' => 'priority']) + 1;
+            foreach ($oldRule->toArray() as $key => $value) {
                 $rule->writeAttribute($key, $value);
             }
             $rule->rulename = '';
@@ -131,14 +130,14 @@ class OutboundRoutesController extends BaseController
             switch ($name) {
                 case 'restnumbers':
                 {
-                    if ( ! array_key_exists($name, $data)) {
+                    if (! array_key_exists($name, $data)) {
                         continue 2;
                     }
                     $rule->$name = $data[$name] === '' ? '-1' : $data[$name];
                     break;
                 }
                 default:
-                    if ( ! array_key_exists($name, $data)) {
+                    if (! array_key_exists($name, $data)) {
                         continue 2;
                     }
                     $rule->$name = $data[$name];
@@ -188,13 +187,13 @@ class OutboundRoutesController extends BaseController
         $this->view->disable();
         $result = true;
 
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
         $priorityTable = $this->request->getPost();
         $rules = OutgoingRoutingTable::find();
-        foreach ($rules as $rule){
-            if (array_key_exists ( $rule->id, $priorityTable)){
+        foreach ($rules as $rule) {
+            if (array_key_exists($rule->id, $priorityTable)) {
                 $rule->priority = $priorityTable[$rule->id];
                 $result         .= $rule->update();
             }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -60,31 +61,31 @@ class SystemManagementProcessor extends Injectable
                 $res = RebootAction::main();
                 break;
             case 'shutdown':
-                $res= ShutdownAction::main();
+                $res = ShutdownAction::main();
                 break;
             case 'getDate':
-                $res= GetDateAction::main();
+                $res = GetDateAction::main();
                 break;
             case 'setDate':
-                $res= SetDateAction::main($data);
+                $res = SetDateAction::main($data);
                 break;
             case 'updateMailSettings':
-             $res = UpdateMailSettingsAction::main();
+                $res = UpdateMailSettingsAction::main();
                 break;
             case 'sendMail':
                 $res = SendMailAction::main($data);
                 break;
             case 'upgrade':
-                $imageFileLocation = $data['temp_filename']??'';
+                $imageFileLocation = $data['temp_filename'] ?? '';
                 $res = UpgradeFromImageAction::main($imageFileLocation);
                 break;
             case 'restoreDefault':
                 $ch = 0;
-                do{
+                do {
                     $ch++;
                     $res = RestoreDefaultSettingsAction::main();
                     sleep(1);
-                }while($ch <= 10 && !$res->success);
+                } while ($ch <= 10 && !$res->success);
                 break;
             case 'convertAudioFile':
                 $mv = Util::which('mv');
@@ -92,7 +93,7 @@ class SystemManagementProcessor extends Injectable
                 $res = ConvertAudioFileAction::main($request['data']['filename']);
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }
 
         $res->function = $action;

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -82,17 +83,17 @@ class Notifications
      *
      * @return void
      */
-    public static function sendAdminNotification(string $subject, array $messages, bool $urgent=false): void
+    public static function sendAdminNotification(string $subject, array $messages, bool $urgent = false): void
     {
         // Prevent sending the same message twice.
         $di = Di::getDefault();
-        if(!$di){
+        if (!$di) {
             return;
         }
         $adminMail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
 
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $cacheKey = 'SendAdminNotification:' . md5($adminMail. $subject . implode('', $messages));
+        $cacheKey = 'SendAdminNotification:' . md5($adminMail . $subject . implode('', $messages));
         $cacheTime = 3600 * 24; // 1 day
 
         // Check if the message is not urgent and has been sent recently from cache.
@@ -117,7 +118,6 @@ class Notifications
         if ($result) {
             $managedCache->set($cacheKey, true, $cacheTime);
         }
-
     }
 
     /**
@@ -231,7 +231,7 @@ class Notifications
                 ];
             }
         }
-        $mail->Port = (integer)$this->settings[PbxSettings::MAIL_SMTP_PORT];
+        $mail->Port = (int)$this->settings[PbxSettings::MAIL_SMTP_PORT];
         $mail->CharSet = 'UTF-8';
 
         return $mail;

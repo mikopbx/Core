@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -26,6 +27,7 @@ use MikoPBX\Common\Providers\WhoopsErrorHandlerProvider;
 use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Di\Di;
 use Throwable;
+
 /**
  * Collects errors and send them to Sentry cloud for software improvement reasons
  */
@@ -43,7 +45,7 @@ class CriticalErrorsHandler
         // Sentry
         $di = Di::getDefault();
         $sentryErrorHandler = $di->get(SentryErrorHandlerProvider::SERVICE_NAME);
-        if ($sentryErrorHandler){
+        if ($sentryErrorHandler) {
             $sentryErrorHandler->captureException($exception);
         }
 
@@ -63,15 +65,14 @@ class CriticalErrorsHandler
         // Sentry
         $di = Di::getDefault();
         $sentryErrorHandler = $di->get(SentryErrorHandlerProvider::SERVICE_NAME);
-        if ($sentryErrorHandler){
+        if ($sentryErrorHandler) {
             $sentryErrorHandler->captureException($exception);
         }
 
         // Whoops
         $whoops = $di->get(WhoopsErrorHandlerProvider::SERVICE_NAME);
-        if ($whoops){
+        if ($whoops) {
             $whoops->handleException($exception);
         }
     }
-
 }

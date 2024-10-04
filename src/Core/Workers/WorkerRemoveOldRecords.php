@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,6 +19,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
+
 require_once 'Globals.php';
 
 use MikoPBX\Core\System\{Directories, Processes, Storage, SystemMessages, Util};
@@ -46,7 +48,6 @@ class WorkerRemoveOldRecords extends WorkerBase
         // Check disk space for each disk
         foreach ($hdd as $disk) {
             if ($disk['sys_disk'] === true && !Storage::isStorageDiskMounted("{$disk['id']}4")) {
-
                 // Skip the system disk (4th partition) if it's not mounted
                 continue;
             }
@@ -134,5 +135,5 @@ class WorkerRemoveOldRecords extends WorkerBase
     }
 }
 
-// Start worker process
+// Start a worker process
 WorkerRemoveOldRecords::startWorker($argv ?? []);

@@ -1,8 +1,6 @@
 <?php
 
-
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
-
 
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
@@ -246,7 +244,7 @@ class OutgoingContext extends AsteriskConfigClass
         $dialCommand = $this->getDialCommand($rout);
 
         // Set DIAL_COMMAND variable
-        $conf .= 'same => n,Set(DIAL_COMMAND='.$dialCommand.')' . "\n\t";
+        $conf .= 'same => n,Set(DIAL_COMMAND=' . $dialCommand . ')' . "\n\t";
         $conf .= 'same => n,ExecIf($["${DEF_DIAL_COMMAND}x" != "x"]?Set(DIAL_COMMAND=${DEF_DIAL_COMMAND}))' . "\n\t";
 
         // Customize all-outgoing context
@@ -261,8 +259,8 @@ class OutgoingContext extends AsteriskConfigClass
 
         // Generating outgoing dialplan for additional modules; overriding the route's dialplan.
         $confModules = $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_OUT_ROUT_CONTEXT, [$rout]);
-        if ( !empty($confModules)) {
-            $conf .= trim($confModules)."\n\t";
+        if (!empty($confModules)) {
+            $conf .= trim($confModules) . "\n\t";
         }
         // Execute dial based on ISTRANSFER
         $conf .= 'same => n,Gosub(${ISTRANSFER}dial,${EXTEN},1)' . "\n\t";
@@ -271,8 +269,8 @@ class OutgoingContext extends AsteriskConfigClass
         $conf .= 'same => n,Dial(${DIAL_COMMAND},600,${DOPTIONS}TK${DIAL_OUT_ANSWER_OPTIONS}b(dial_create_chan,s,1))' . "\n\t";
         // Generate outgoing dialplan for additional modules
         $confModules = $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_OUT_ROUT_AFTER_DIAL_CONTEXT, [$rout]);
-        if ( !empty($confModules)) {
-            $conf .= trim($confModules)."\n\t";
+        if (!empty($confModules)) {
+            $conf .= trim($confModules) . "\n\t";
         }
 
         // Customize provider-specific outgoing context after Dial command

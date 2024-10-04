@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -42,12 +43,12 @@ class NTPConf extends Injectable
         $ntp_servers = PbxSettings::getValueByKey(PbxSettings::NTP_SERVER);
         $ntp_servers = preg_split('/\r\n|\r|\n| /', $ntp_servers);
         $ntp_conf = '';
-        foreach ($ntp_servers as $ntp_server){
-            if ( ! empty($ntp_server)) {
-                $ntp_conf .= "server $ntp_server".PHP_EOL;
+        foreach ($ntp_servers as $ntp_server) {
+            if (! empty($ntp_server)) {
+                $ntp_conf .= "server $ntp_server" . PHP_EOL;
             }
         }
-        if ($ntp_conf==='') {
+        if ($ntp_conf === '') {
             $ntp_conf = 'server 0.pool.ntp.org
 server 1.pool.ntp.org
 server 2.pool.ntp.org';

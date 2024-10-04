@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -24,8 +25,6 @@ use MikoPBX\Common\Models\{Extensions, IvrMenu, IvrMenuActions, SoundFiles};
 
 class IvrMenuController extends BaseController
 {
-
-
     /**
      * Builds the IVR menu representation.
      *
@@ -35,27 +34,27 @@ class IvrMenuController extends BaseController
     public function indexAction(): void
     {
         $records = IvrMenuActions::find();
-        $ivrMenuActions=[];
+        $ivrMenuActions = [];
         foreach ($records as $record) {
-            $ivrMenuActions[$record->ivr_menu_id][$record->id]=[
-                'digits'=>$record->digits,
-                'represent'=>$record->Extensions===null?'ERROR':$record->Extensions->getRepresent()
+            $ivrMenuActions[$record->ivr_menu_id][$record->id] = [
+                'digits' => $record->digits,
+                'represent' => $record->Extensions === null ? 'ERROR' : $record->Extensions->getRepresent()
             ];
         }
 
         $records = IvrMenu::find();
-        $ivrMenuList=[];
+        $ivrMenuList = [];
 
         // Retrieve IVR menus and build the representation
         foreach ($records as $record) {
             usort($ivrMenuActions[$record->uniqid], [__CLASS__, 'sortArrayByDigits']);
-            $ivrMenuList[]=[
-                'uniqid'=>$record->uniqid,
-                'name'=>$record->name,
-                'extension'=>$record->extension,
-                'actions'=>$ivrMenuActions[$record->uniqid],
-                'description'=>$record->description,
-                'timeoutExtension'=>$record->TimeoutExtensions===null?'ERROR':$record->TimeoutExtensions->getRepresent()
+            $ivrMenuList[] = [
+                'uniqid' => $record->uniqid,
+                'name' => $record->name,
+                'extension' => $record->extension,
+                'actions' => $ivrMenuActions[$record->uniqid],
+                'description' => $record->description,
+                'timeoutExtension' => $record->TimeoutExtensions === null ? 'ERROR' : $record->TimeoutExtensions->getRepresent()
             ];
         }
         $this->view->ivrmenu = $ivrMenuList;
@@ -101,7 +100,7 @@ class IvrMenuController extends BaseController
             ];
             $actions    = IvrMenuActions::find($parameters);
             foreach ($actions as $action) {
-                $represent = $action->Extensions===null?"ERROR":$action->Extensions->getRepresent();
+                $represent = $action->Extensions === null ? "ERROR" : $action->Extensions->getRepresent();
                 // Build IVR menu actions array
                 $ivrActionsList[]         = [
                     'id'                 => $action->id,
@@ -139,10 +138,11 @@ class IvrMenuController extends BaseController
 
         // Construct the form for modifying the IVR menu
         $form                   = new IvrMenuEditForm(
-            $ivrmenu, [
+            $ivrmenu,
+            [
             'extensions' => $extensionList,
             'soundfiles' => $soundfilesList,
-        ]
+            ]
         );
 
         // Assign data to the view for rendering
@@ -150,7 +150,6 @@ class IvrMenuController extends BaseController
         $this->view->ivractions = $ivrActionsList;
         $this->view->represent  = $ivrmenu->getRepresent();
         $this->view->extension  = $ivrmenu->extension;
-
     }
 
     /**
@@ -177,7 +176,7 @@ class IvrMenuController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
 
@@ -199,7 +198,7 @@ class IvrMenuController extends BaseController
         }
 
         // Update IVR menu parameters
-        if ( ! $this->updateExtension($extension, $data)) {
+        if (! $this->updateExtension($extension, $data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -207,7 +206,7 @@ class IvrMenuController extends BaseController
         }
 
         // Update IVR menu actions
-        if ( ! $this->updateIVRMenu($ivrMenuRecord, $data)) {
+        if (! $this->updateIVRMenu($ivrMenuRecord, $data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -215,7 +214,7 @@ class IvrMenuController extends BaseController
         }
 
         // Update IVR menu actions
-        if ( ! $this->updateIVRMenuActions($data)) {
+        if (! $this->updateIVRMenuActions($data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -278,7 +277,7 @@ class IvrMenuController extends BaseController
                     }
                     break;
                 default:
-                    if ( ! array_key_exists($name, $data)) {
+                    if (! array_key_exists($name, $data)) {
                         continue 2;
                     }
                     $ivrMenu->$name = $data[$name];
@@ -351,5 +350,4 @@ class IvrMenuController extends BaseController
 
         return true;
     }
-
 }

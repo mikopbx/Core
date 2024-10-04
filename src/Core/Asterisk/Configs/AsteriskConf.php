@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
-
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Directories;
@@ -72,11 +72,11 @@ class AsteriskConf extends AsteriskConfigClass
         Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/asterisk.conf', $conf);
 
         $logCmdFile  = self::getLogFile();
-        if(!file_exists($logCmdFile)){
+        if (!file_exists($logCmdFile)) {
             file_put_contents($logCmdFile, '');
         }
         $cmdFileLink = '/root/.asterisk_history';
-        if(!file_exists($cmdFileLink)){
+        if (!file_exists($cmdFileLink)) {
             Util::createUpdateSymlink($logCmdFile, $cmdFileLink, true);
         }
 
@@ -89,7 +89,7 @@ class AsteriskConf extends AsteriskConfigClass
      *
      * @return string The log file path.
      */
-    public static function getLogFile():string
+    public static function getLogFile(): string
     {
         return Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/asterisk-cli.log';
     }
@@ -118,7 +118,7 @@ class AsteriskConf extends AsteriskConfigClass
     endscript
 }";
         $di = Di::getDefault();
-        if ($di !== null){
+        if ($di !== null) {
             $varEtcDir = $di->getConfig()->path('core.varEtcDir');
         } else {
             $varEtcDir = '/var/etc';

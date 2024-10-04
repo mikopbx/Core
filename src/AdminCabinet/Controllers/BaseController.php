@@ -23,11 +23,14 @@ use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
-use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
+use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Filter\Filter;
 use Phalcon\Flash\Exception;
 use Phalcon\Http\ResponseInterface;
-use Phalcon\Mvc\{Controller, Dispatcher, View};
+use Phalcon\Mvc\Controller;
+use Phalcon\Mvc\Dispatcher;
+use Phalcon\Mvc\View;
 use Phalcon\Tag;
 
 /**
@@ -67,7 +70,7 @@ class BaseController extends Controller
     }
 
     /**
-     * Prepares the view by setting necessary variables and configurations.
+     * Prepares the view by setting the necessary variables and configurations.
      *
      * @return void
      */
@@ -94,11 +97,11 @@ class BaseController extends Controller
         // Set the title based on the current action
         $title = 'MikoPBX';
         switch ($this->actionName) {
-            case'index':
-            case'delete':
-            case'save':
-            case'modify':
-            case'*** WITHOUT ACTION ***':
+            case 'index':
+            case 'delete':
+            case 'save':
+            case 'modify':
+            case '*** WITHOUT ACTION ***':
                 $title .= '|' . $this->translation->_("Breadcrumb$this->controllerName");
                 break;
             default:
@@ -120,7 +123,7 @@ class BaseController extends Controller
         $this->view->MetaTegHeadDescription = $this->translation->_('MetaTegHeadDescription');
         $this->view->isExternalModuleController = $this->isExternalModuleController;
 
-        if ($this->controllerClass!==SessionController::class){
+        if ($this->controllerClass!==SessionController::class) {
             $this->view->setTemplateAfter('main');
         }
 
@@ -167,11 +170,11 @@ class BaseController extends Controller
         // Add module variables into view if it is an external module controller
         if (str_starts_with($this->dispatcher->getNamespaceName(), 'Modules')) {
             $this->view->pick("Modules/{$this->getModuleUniqueId()}/$this->controllerName/$this->actionName");
-        } else  {
+        } else {
             $this->view->pick("$this->controllerName/$this->actionName");
         }
 
-        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_EXECUTE_ROUTE,[$dispatcher]);
+        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_EXECUTE_ROUTE, [$dispatcher]);
     }
 
     /**
@@ -198,8 +201,8 @@ class BaseController extends Controller
                 $data['message'] = $data['message'] ?? $this->flash->getMessages();
 
                 // Let's add information about the last error to display a dialog window for the user.
-                $sentry =  $this->di->get(SentryErrorHandlerProvider::SERVICE_NAME,['admin-cabinet']);
-                if ($sentry){
+                $sentry =  $this->di->get(SentryErrorHandlerProvider::SERVICE_NAME, ['admin-cabinet']);
+                if ($sentry) {
                     $data['lastSentryEventId'] = $sentry->getLastEventId();
                 }
 
@@ -208,7 +211,7 @@ class BaseController extends Controller
             $this->response->setContent($result);
         }
 
-        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_EXECUTE_ROUTE,[$dispatcher]);
+        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_AFTER_EXECUTE_ROUTE, [$dispatcher]);
 
         return $this->response->send();
     }
@@ -222,7 +225,7 @@ class BaseController extends Controller
     protected function forward(string $uri): void
     {
         $uriParts = explode('/', $uri);
-        if ($this->isExternalModuleController and count($uriParts)>2){
+        if ($this->isExternalModuleController and count($uriParts)>2) {
             $params = array_slice($uriParts, 3);
             $moduleUniqueID = $this->getModuleUniqueId();
             $this->dispatcher->forward(
@@ -297,7 +300,7 @@ class BaseController extends Controller
         $result = null;
         // Allow anonymous statistics collection for JS code
         $sentry =  $this->di->get(SentryErrorHandlerProvider::SERVICE_NAME);
-        if ($sentry){
+        if ($sentry) {
             $result = $sentry->getLastEventId();
         }
         return $result;
@@ -322,7 +325,7 @@ class BaseController extends Controller
      * @param mixed $entity The entity to be saved.
      * @return bool True if the entity was successfully saved, false otherwise.
      */
-    protected function saveEntity(mixed $entity, string $reloadPath=''): bool
+    protected function saveEntity(mixed $entity, string $reloadPath = ''): bool
     {
         $success = $entity->save();
 
@@ -331,14 +334,14 @@ class BaseController extends Controller
             $this->flash->error(implode('<br>', $errors));
         } elseif (!$this->request->isAjax()) {
             $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-            if ($reloadPath!==''){
+            if ($reloadPath!=='') {
                 $this->forward($reloadPath);
             }
         }
 
         if ($this->request->isAjax()) {
             $this->view->success = $success;
-            if ($reloadPath!=='' && $success){
+            if ($reloadPath!=='' && $success) {
                 $this->view->reload = str_replace('{id}', $entity->id, $reloadPath);
             }
         }
@@ -353,7 +356,7 @@ class BaseController extends Controller
      * @param mixed $entity The entity to be deleted.
      * @return bool True if the entity was successfully deleted, false otherwise.
      */
-    protected function deleteEntity(mixed $entity, string $reloadPath=''): bool
+    protected function deleteEntity(mixed $entity, string $reloadPath = ''): bool
     {
         $success = $entity->delete();
 
@@ -362,14 +365,14 @@ class BaseController extends Controller
             $this->flash->error(implode('<br>', $errors));
         } elseif (!$this->request->isAjax()) {
             // $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-            if ($reloadPath!==''){
+            if ($reloadPath!=='') {
                 $this->forward($reloadPath);
             }
         }
 
         if ($this->request->isAjax()) {
             $this->view->success = $success;
-            if ($reloadPath!=='' && $success){
+            if ($reloadPath!=='' && $success) {
                 $this->view->reload = $reloadPath;
             }
         }
@@ -438,5 +441,4 @@ class BaseController extends Controller
 
         return $data;
     }
-
 }

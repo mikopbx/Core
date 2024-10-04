@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -57,9 +58,9 @@ class QueueConf extends AsteriskConfigClass
     public function extensionGenContexts(): string
     {
         // Generate internal numbering plan.
-        $conf = PHP_EOL."[queue_agent_answer]".PHP_EOL;
-        $conf .= 'exten => s,1,Gosub(queue_answer,${EXTEN},1)' . PHP_EOL."\t";
-        $conf .= "same => n,Return()".PHP_EOL.PHP_EOL;
+        $conf = PHP_EOL . "[queue_agent_answer]" . PHP_EOL;
+        $conf .= 'exten => s,1,Gosub(queue_answer,${EXTEN},1)' . PHP_EOL . "\t";
+        $conf .= "same => n,Return()" . PHP_EOL . PHP_EOL;
 
         return $conf;
     }
@@ -74,7 +75,7 @@ class QueueConf extends AsteriskConfigClass
         $conf    = '';
         $db_data = $this->getQueueData();
         foreach ($db_data as $queue) {
-            $conf .= "exten => {$queue['extension']},hint,Custom:{$queue['extension']}".PHP_EOL;
+            $conf .= "exten => {$queue['extension']},hint,Custom:{$queue['extension']}" . PHP_EOL;
         }
 
         return $conf;
@@ -90,8 +91,8 @@ class QueueConf extends AsteriskConfigClass
         $conf    = '';
         $db_data = $this->getQueueData();
         foreach ($db_data as $queue) {
-            $conf .= 'exten => _' . $queue['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . PHP_EOL. " \t";
-            $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " ".PHP_EOL;
+            $conf .= 'exten => _' . $queue['extension'] . ',1,Set(__ISTRANSFER=transfer_)' . PHP_EOL . " \t";
+            $conf .= 'same => n,Goto(internal,${EXTEN},1)' . " " . PHP_EOL;
         }
         $conf .= PHP_EOL;
 
@@ -110,11 +111,11 @@ class QueueConf extends AsteriskConfigClass
         foreach ($db_data as $queue) {
             $queue_ext_conf .= "exten => {$queue['extension']},1,NoOp(--- Start Queue ---) \n\t";
             $reservedExtension = trim($queue['redirect_to_extension_if_empty'] ?? '');
-            if(!empty($reservedExtension)){
+            if (!empty($reservedExtension)) {
                 // Check if the queue is empty.
-                $queue_ext_conf .= 'same => n,Set(mLogged=${QUEUE_MEMBER('.$queue['uniqid'].',logged)})'.PHP_EOL."\t";
-                $queue_ext_conf .= 'same => n,ExecIf($["${mLogged}" == "0"]?Set(pt1c_UNIQUEID=${UNDEFINED}))'.PHP_EOL."\t";
-                $queue_ext_conf .= 'same => n,GotoIf($["${mLogged}" == "0"]?internal,'.$reservedExtension.',1)'.PHP_EOL."\t";
+                $queue_ext_conf .= 'same => n,Set(mLogged=${QUEUE_MEMBER(' . $queue['uniqid'] . ',logged)})' . PHP_EOL . "\t";
+                $queue_ext_conf .= 'same => n,ExecIf($["${mLogged}" == "0"]?Set(pt1c_UNIQUEID=${UNDEFINED}))' . PHP_EOL . "\t";
+                $queue_ext_conf .= 'same => n,GotoIf($["${mLogged}" == "0"]?internal,' . $reservedExtension . ',1)' . PHP_EOL . "\t";
             }
             // Redirect the call to the queue.
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${CHANNEL})' . "\n\t";
@@ -123,12 +124,12 @@ class QueueConf extends AsteriskConfigClass
             $options = '${MQ_OPTIONS}';
             $callerHear = $queue['caller_hear'] ?? '';
             if ($callerHear === 'ringing') {
-                $queue_ext_conf .= 'same => n,Set(MQ_OPTIONS=${MQ_OPTIONS}r)'."\n\t";
-            }else{
+                $queue_ext_conf .= 'same => n,Set(MQ_OPTIONS=${MQ_OPTIONS}r)' . "\n\t";
+            } else {
                 // We answer if you need MOH
                 $queue_ext_conf .= "same => n,Answer() \n\t";
             }
-            $queue_ext_conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(queue-pre-dial-custom,${EXTEN},1)}" == "1"]?queue-pre-dial-custom,${EXTEN},1)'."\n\t";
+            $queue_ext_conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(queue-pre-dial-custom,${EXTEN},1)}" == "1"]?queue-pre-dial-custom,${EXTEN},1)' . "\n\t";
             $queue_ext_conf .= 'same => n,Gosub(queue_start,${EXTEN},1)' . "\n\t";
             $cid = preg_replace('/[^a-zA-Zа-яА-Я0-9 ]/ui', '', $queue['callerid_prefix'] ?? '');
             if (!empty($cid)) {
@@ -140,15 +141,15 @@ class QueueConf extends AsteriskConfigClass
             $queue_ext_conf .= 'same => n,Set(__QUEUE_SRC_CHAN=${EMPTY})' . "\n\t";
             // Notify about the end of the queue.
             $queue_ext_conf .= 'same => n,Gosub(queue_end,${EXTEN},1)' . "\n\t";
-            $timeoutExtension = trim($queue['timeout_extension']??'');
+            $timeoutExtension = trim($queue['timeout_extension'] ?? '');
             if ($timeoutExtension !== '') {
                 // If no answer within the timeout, perform redirection.
-                $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,'.$timeoutExtension.',1))' . " \n\t";
+                $queue_ext_conf .= 'same => n,ExecIf($["${QUEUESTATUS}" == "TIMEOUT"]?Goto(internal,' . $timeoutExtension . ',1))' . " \n\t";
             }
             if (!empty($reservedExtension)) {
                 // If the queue is empty, perform redirection.
                 $exp            = '$["${QUEUESTATUS}" == "JOINEMPTY" || "${QUEUESTATUS}" == "LEAVEEMPTY" ]';
-                $queue_ext_conf .= 'same => n,ExecIf('.$exp.'?Goto(internal,'.$reservedExtension.',1))' . " \n\t";
+                $queue_ext_conf .= 'same => n,ExecIf(' . $exp . '?Goto(internal,' . $reservedExtension . ',1))' . " \n\t";
             }
             $queue_ext_conf .= "\n";
         }
@@ -176,14 +177,14 @@ class QueueConf extends AsteriskConfigClass
 
             // Check if periodic announce is set
             $periodic_announce = '';
-            if (trim($queue_data['periodic_announce']??'') !== '') {
+            if (trim($queue_data['periodic_announce'] ?? '') !== '') {
                 $announce_file     = Util::trimExtensionForFile($queue_data['periodic_announce']);
                 $periodic_announce = "periodic-announce=$announce_file \n";
             }
 
             // Check if periodic announce frequency is set
             $periodic_announce_frequency = '';
-            if (trim($queue_data['periodic_announce_frequency']??'') !== '') {
+            if (trim($queue_data['periodic_announce_frequency'] ?? '') !== '') {
                 $periodic_announce_frequency = "periodic-announce-frequency={$queue_data['periodic_announce_frequency']} \n";
             }
 
@@ -193,7 +194,7 @@ class QueueConf extends AsteriskConfigClass
                 $announce_frequency .= "announce-frequency=30 \n";
             }
 
-            $mohClass = empty($queue_data['moh_sound'])?'default':$queue_data['moh_sound'];
+            $mohClass = empty($queue_data['moh_sound']) ? 'default' : $queue_data['moh_sound'];
 
             $strategy = $queue_data['strategy'];
 
@@ -258,8 +259,8 @@ class QueueConf extends AsteriskConfigClass
                     ];
             }
             $arrResult[$queueUniqId]['agents'] = $arrAgents;
-            $arrResult[$queueUniqId]['periodic_announce'] = ($queue->SoundFiles)?$queue->SoundFiles->path:'';
-            $arrResult[$queueUniqId]['moh_sound']         = ($queue->MohSoundFiles)?"moh-{$queue->MohSoundFiles->id}":'';
+            $arrResult[$queueUniqId]['periodic_announce'] = ($queue->SoundFiles) ? $queue->SoundFiles->path : '';
+            $arrResult[$queueUniqId]['moh_sound']         = ($queue->MohSoundFiles) ? "moh-{$queue->MohSoundFiles->id}" : '';
 
             foreach ($queue as $key => $value) {
                 if ($key === 'callqueuemembers' || $key === "soundfiles") {

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2021 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\Asterisk\Configs;
-
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ConfigProvider;
@@ -88,7 +88,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
         $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
         $this->messages = [];
 
-        if ($this->getDI()->has(RegistryProvider::SERVICE_NAME)){
+        if ($this->getDI()->has(RegistryProvider::SERVICE_NAME)) {
             $this->booting = $this->getDI()->getShared(RegistryProvider::SERVICE_NAME)->booting === true;
         }
     }
@@ -551,5 +551,4 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
         }
         return $result;
     }
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -33,14 +34,15 @@ use Phalcon\Forms\Element\Text;
  */
 class SystemDiagnosticForm extends BaseForm
 {
-
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
 
         // Filenames dropdown
         $filenames = new Select(
-            'filenames', [], ['class' => 'ui fluid selection search dropdown filenames-select']
+            'filenames',
+            [],
+            ['class' => 'ui fluid selection search dropdown filenames-select']
         );
         $this->add($filenames);
         $this->add(new Hidden('filename', ['value' => $_REQUEST['filename'] ?? '']));

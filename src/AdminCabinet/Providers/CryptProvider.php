@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,9 +20,7 @@
 
 declare(strict_types=1);
 
-
 namespace MikoPBX\AdminCabinet\Providers;
-
 
 use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Encryption\Crypt;
@@ -65,12 +64,12 @@ class CryptProvider implements ServiceProviderInterface
      *
      * @return string The encryption key.
      */
-    private static function getEncryptionKey():string
+    private static function getEncryptionKey(): string
     {
         $encryptionKey   = PbxSettings::getValueByKey(PbxSettings::WWW_ENCRYPTION_KEY);
-        if (empty($encryptionKey)){
+        if (empty($encryptionKey)) {
             $record = PbxSettings::findFirstByKey(PbxSettings::WWW_ENCRYPTION_KEY);
-            if ($record===null){
+            if ($record === null) {
                 $random = new Random();
                 try {
                     // Try generating a new encryption key.

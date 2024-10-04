@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -33,7 +34,6 @@ use Phalcon\Forms\Element\Text;
  */
 class PbxExtensionModuleSettingsForm extends BaseForm
 {
-
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
@@ -60,7 +60,8 @@ class PbxExtensionModuleSettingsForm extends BaseForm
         // Caption
         $this->add(
             new Text(
-                'caption', [
+                'caption',
+                [
                     'value' => $this->di->get('translation')->_($options['caption']),
                 ]
             )
@@ -70,7 +71,9 @@ class PbxExtensionModuleSettingsForm extends BaseForm
         $menuGroups = $this->di->getElements()->getMenuGroups();
 
         $groups = new Select(
-            'menu-group', $menuGroups, [
+            'menu-group',
+            $menuGroups,
+            [
                 'using' => [
                     'id',
                     'name',

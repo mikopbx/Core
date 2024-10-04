@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -48,8 +49,10 @@ class CheckWebPasswords extends Injectable
             'url' => $this->url->get('general-settings/modify/#/passwords')
         ];
 
-        if ($passwords->webByDefault === $passwords->web
-            || $passwords->web === $passwords->cloudInstanceId) {
+        if (
+            $passwords->webByDefault === $passwords->web
+            || $passwords->web === $passwords->cloudInstanceId
+        ) {
             // Check for default password
             $messages['error'][] = [
                 'messageTpl' => 'adv_YouUseDefaultWebPassword',

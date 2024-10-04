@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,6 +19,7 @@
  */
 
 namespace MikoPBX\Core\Workers;
+
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\PbxSettings;
@@ -27,7 +29,8 @@ use MikoPBX\Common\Library\Text;
 use SimpleXMLElement;
 
 /**
- * WorkerMarketplaceChecker is a worker class responsible for checking the registration status of the PBX and its modules.
+ * WorkerMarketplaceChecker is a worker class responsible for checking the registration
+ * status of the PBX and its modules.
  *
  * @package MikoPBX\Core\Workers
  */
@@ -53,7 +56,6 @@ class WorkerMarketplaceChecker extends WorkerBase
         // Retrieve the last license check timestamp from the cache
         $lastCheck = $managedCache->get(self::CACHE_KEY);
         if ($lastCheck === null) {
-
             // Perform PBX registration check
             $lic->checkPBX();
 
@@ -66,9 +68,11 @@ class WorkerMarketplaceChecker extends WorkerBase
 
         // Retrieve the last get license request from the cache
         $licenseKey = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
-        if ((strlen($licenseKey) === 28
+        if (
+            (strlen($licenseKey) === 28
             && Text::startsWith($licenseKey, 'MIKO-')
-        )) {
+            )
+        ) {
             $lastGetLicenseInfo = $managedCache->get(self::CACHE_KEY_LICENSE_INFO . ':' . $licenseKey);
             if ($lastGetLicenseInfo === null) {
                 $regInfo = $lic->getLicenseInfo($licenseKey);
@@ -81,5 +85,5 @@ class WorkerMarketplaceChecker extends WorkerBase
     }
 }
 
-// Start worker process
+// Start a worker process
 WorkerMarketplaceChecker::startWorker($argv ?? []);

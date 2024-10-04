@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -31,7 +32,6 @@ require_once 'Globals.php';
  */
 class WorkerCheckFail2BanAlive extends WorkerBase
 {
-
     /**
      * Starts the Fail2Ban alive check worker.
      *
@@ -46,7 +46,6 @@ class WorkerCheckFail2BanAlive extends WorkerBase
         // Retrieve the last Fail2Ban check timestamp from the cache
         $lastFail2BanCheck = $managedCache->get($cacheKey);
         if ($lastFail2BanCheck === null) {
-
             // Perform Fail2Ban check
             Fail2BanConf::checkFail2ban();
 
@@ -56,9 +55,5 @@ class WorkerCheckFail2BanAlive extends WorkerBase
     }
 }
 
-// Start worker process
+// Start a worker process
 WorkerCheckFail2BanAlive::startWorker($argv ?? []);
-
-
-
-

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -34,9 +35,9 @@ use Phalcon\Di\Injectable;
  */
 class SyslogConf extends Injectable
 {
-    public const string CONF_FILE   ='/etc/rsyslog.conf';
-    public const string PROC_NAME   ='rsyslogd';
-    public const string SYS_LOG_LINK='/var/log/messages';
+    public const string CONF_FILE   = '/etc/rsyslog.conf';
+    public const string PROC_NAME   = 'rsyslogd';
+    public const string SYS_LOG_LINK = '/var/log/messages';
 
     /**
      * Restarts syslog daemon.
@@ -45,7 +46,7 @@ class SyslogConf extends Injectable
     {
         $this->generateConfigFile();
         $pidSyslogD = Processes::getPidOfProcess('syslogd', self::PROC_NAME);
-        if(!empty($pidSyslogD)){
+        if (!empty($pidSyslogD)) {
             $logreadPath = Util::which('logread');
             Processes::mwExec("$logreadPath  2>/dev/null >> " . self::SYS_LOG_LINK);
             $oldLogPath = self::SYS_LOG_LINK;
@@ -66,22 +67,23 @@ class SyslogConf extends Injectable
     /**
      * Generates the configuration file.
      */
-    private function generateConfigFile():void{
+    private function generateConfigFile(): void
+    {
         $pathScriptMessages = self::createRotateScript(basename(self::SYS_LOG_LINK));
         $log_fileMessages   = self::getSyslogFile();
 
         file_put_contents($log_fileMessages, '', FILE_APPEND);
-        $conf = PHP_EOL.
-                '$ModLoad imuxsock'.PHP_EOL.
-                'template(name="mikopbx" type="string"'.PHP_EOL.
-                '  string="%TIMESTAMP:::date-rfc3164% %syslogfacility-text%.%syslogseverity-text% %syslogtag% %msg%\n"'."\n".
-                ')'.PHP_EOL.
-                '$ActionFileDefaultTemplate mikopbx'.PHP_EOL.
-                '$IncludeConfig /etc/rsyslog.d/*.conf'.PHP_EOL.
+        $conf = PHP_EOL .
+                '$ModLoad imuxsock' . PHP_EOL .
+                'template(name="mikopbx" type="string"' . PHP_EOL .
+                '  string="%TIMESTAMP:::date-rfc3164% %syslogfacility-text%.%syslogseverity-text% %syslogtag% %msg%\n"' . "\n" .
+                ')' . PHP_EOL .
+                '$ActionFileDefaultTemplate mikopbx' . PHP_EOL .
+                '$IncludeConfig /etc/rsyslog.d/*.conf' . PHP_EOL .
 
-                PHP_EOL.
-                '$outchannel log_rotation,'.$log_fileMessages.',10485760,'.$pathScriptMessages.PHP_EOL
-                .'*.* :omfile:$log_rotation'.PHP_EOL;
+                PHP_EOL .
+                '$outchannel log_rotation,' . $log_fileMessages . ',10485760,' . $pathScriptMessages . PHP_EOL
+                . '*.* :omfile:$log_rotation' . PHP_EOL;
         Util::fileWriteContent(self::CONF_FILE, $conf);
         Util::createUpdateSymlink($log_fileMessages, self::SYS_LOG_LINK);
         Util::mwMkdir('/etc/rsyslog.d');
@@ -97,7 +99,7 @@ class SyslogConf extends Injectable
         $logDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/system';
         Util::mwMkdir($logDir);
         $logFileName = $logDir . '/' . $name;
-        if (!file_exists($logFileName)){
+        if (!file_exists($logFileName)) {
             file_put_contents($logFileName, '');
         }
         return "$logFileName";
@@ -114,27 +116,27 @@ class SyslogConf extends Injectable
         $chmodPath   = Util::which('chmod');
         $di          = Di::getDefault();
         $logFile     = self::getSyslogFile($serviceName);
-        $textScript  =  '#!/bin/sh'.PHP_EOL.
-                        "logName='$logFile';".PHP_EOL.
-                        'if [ ! -f "$logName" ]; then exit; fi'.PHP_EOL.
-                        'for srcId in 5 4 3 2 1 ""; do'.PHP_EOL.
-                        '  dstId=$((srcId + 1));'.PHP_EOL.
-                        '  if [ "x" != "${srcId}x" ]; then'.PHP_EOL.
-                        '    srcId=".${srcId}"'.PHP_EOL.
-                        '  fi'.PHP_EOL.
-                        '  srcFilename="${logName}${srcId}"'.PHP_EOL.
-                        '  if [ -f "$srcFilename" ];then'.PHP_EOL.
-                        '    dstFilename="${logName}.${dstId}"'.PHP_EOL.
-                        '    '.$mvPath.' -f "$srcFilename" "$dstFilename"'.PHP_EOL.
-                        '  fi'.PHP_EOL.
-                        'done'.PHP_EOL.
+        $textScript  =  '#!/bin/sh' . PHP_EOL .
+                        "logName='$logFile';" . PHP_EOL .
+                        'if [ ! -f "$logName" ]; then exit; fi' . PHP_EOL .
+                        'for srcId in 5 4 3 2 1 ""; do' . PHP_EOL .
+                        '  dstId=$((srcId + 1));' . PHP_EOL .
+                        '  if [ "x" != "${srcId}x" ]; then' . PHP_EOL .
+                        '    srcId=".${srcId}"' . PHP_EOL .
+                        '  fi' . PHP_EOL .
+                        '  srcFilename="${logName}${srcId}"' . PHP_EOL .
+                        '  if [ -f "$srcFilename" ];then' . PHP_EOL .
+                        '    dstFilename="${logName}.${dstId}"' . PHP_EOL .
+                        '    ' . $mvPath . ' -f "$srcFilename" "$dstFilename"' . PHP_EOL .
+                        '  fi' . PHP_EOL .
+                        'done' . PHP_EOL .
                         PHP_EOL;
-        if($di){
+        if ($di) {
             $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
-        }else{
+        } else {
             $varEtcDir = '/etc';
         }
-        $pathScript   = $varEtcDir . '/'.$serviceName.'_logrotate.sh';
+        $pathScript   = $varEtcDir . '/' . $serviceName . '_logrotate.sh';
         file_put_contents($pathScript, $textScript);
         Processes::mwExec("$chmodPath +x $pathScript");
 

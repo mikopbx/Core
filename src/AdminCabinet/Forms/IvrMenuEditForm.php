@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -52,7 +53,8 @@ class IvrMenuEditForm extends BaseForm
         // Number of repeat
         $this->add(
             new Numeric(
-                'number_of_repeat', [
+                'number_of_repeat',
+                [
                     "maxlength" => 2,
                     "style" => "width: 80px;",
                     "defaultValue" => 3,
@@ -63,7 +65,8 @@ class IvrMenuEditForm extends BaseForm
         // Timeout
         $this->add(
             new Numeric(
-                'timeout', [
+                'timeout',
+                [
                     "maxlength" => 2,
                     "style" => "width: 80px;",
                     "defaultValue" => 7,
@@ -73,7 +76,9 @@ class IvrMenuEditForm extends BaseForm
 
         // Timeoutextension
         $extension = new Select(
-            'timeout_extension', $options['extensions'], [
+            'timeout_extension',
+            $options['extensions'],
+            [
                 'using' => [
                     'id',
                     'name',
@@ -86,7 +91,9 @@ class IvrMenuEditForm extends BaseForm
 
         // Audio_message_id
         $audioMessage = new Select(
-            'audio_message_id', $options['soundfiles'], [
+            'audio_message_id',
+            $options['soundfiles'],
+            [
                 'using' => [
                     'id',
                     'name',
@@ -106,7 +113,6 @@ class IvrMenuEditForm extends BaseForm
         $this->add(new Check('allow_enter_any_internal_extension', $cheskarr));
 
         // Description
-        $this->addTextArea('description', $entity->description??'', 65);
-
+        $this->addTextArea('description', $entity->description ?? '', 65);
     }
 }

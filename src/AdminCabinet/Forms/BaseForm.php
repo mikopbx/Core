@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -29,10 +30,12 @@ use Phalcon\Forms\Form;
  */
 abstract class BaseForm extends Form
 {
-
     public function initialize($entity = null, $options = null): void
     {
-        PBXConfModulesProvider::hookModulesMethod(WebUIConfigInterface::ON_BEFORE_FORM_INITIALIZE, [$this, $entity, $options]);
+        PBXConfModulesProvider::hookModulesMethod(
+            WebUIConfigInterface::ON_BEFORE_FORM_INITIALIZE,
+            [$this, $entity, $options]
+        );
     }
 
     /**
@@ -44,20 +47,20 @@ abstract class BaseForm extends Form
      * @param array $options Additional options for TextArea element
      * @return void
      */
-    public function addTextArea(string $areaName, string $areaValue, int $areaWidth = 90, array $options=[]): void
+    public function addTextArea(string $areaName, string $areaValue, int $areaWidth = 90, array $options = []): void
     {
         $rows = 1;
         $strings = '';
-        if (array_key_exists('placeholder', $options) && !empty($options["placeholder"])){
+        if (array_key_exists('placeholder', $options) && !empty($options["placeholder"])) {
             $strings = explode("\n", $options["placeholder"]);
         }
-        if (!empty($areaValue)){
+        if (!empty($areaValue)) {
             $strings = explode("\n", $areaValue);
         }
         foreach ($strings as $string) {
             $rows += ceil(strlen($string) / $areaWidth);
         }
-        $options["rows"]=max($rows, 2);
+        $options["rows"] = max($rows, 2);
         $options["value"] = $areaValue;
         $this->add(new TextArea($areaName, $options));
     }

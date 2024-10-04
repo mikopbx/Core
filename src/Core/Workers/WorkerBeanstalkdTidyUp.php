@@ -68,5 +68,5 @@ class WorkerBeanstalkdTidyUp extends WorkerBase
 
 }
 
-// Start worker process
+// Start a worker process
 WorkerBeanstalkdTidyUp::startWorker($argv ?? []);

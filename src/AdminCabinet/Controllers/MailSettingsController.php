@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -24,7 +25,6 @@ use MikoPBX\Common\Models\PbxSettings;
 
 class MailSettingsController extends BaseController
 {
-
     /**
      * Modify mail settings action.
      *
@@ -78,7 +78,7 @@ class MailSettingsController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
         $data = $this->request->getPost();
@@ -100,7 +100,7 @@ class MailSettingsController extends BaseController
                     $record->value = ($data[$key] == 'on') ? "1" : "0";
                     break;
                 default:
-                    if ( ! array_key_exists($key, $data)) {
+                    if (! array_key_exists($key, $data)) {
                         continue 2;
                     }
                     $record->value = $data[$key];

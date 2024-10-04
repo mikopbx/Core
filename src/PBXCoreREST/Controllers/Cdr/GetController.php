@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\PBXCoreREST\Controllers\Cdr;
-
 
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
@@ -59,7 +59,6 @@ use MikoPBX\PBXCoreREST\Lib\CdrDBProcessor;
  */
 class GetController extends BaseController
 {
-
     /**
      * This method retrieves the list of active calls  from CDR.
      *
@@ -108,7 +107,7 @@ class GetController extends BaseController
     private function playback(): void
     {
         $filename  = $this->request->get('view');
-        if(empty($filename)){
+        if (empty($filename)) {
             $this->sendError(Response::NOT_FOUND, 'Empty filename');
             return;
         }
@@ -147,7 +146,7 @@ class GetController extends BaseController
                 $length = $end - $start + 1;
 
                 $this->response->resetHeaders();
-                if ( ! $fp = fopen($filename, 'rb')) {
+                if (! $fp = fopen($filename, 'rb')) {
                     $this->sendError(Response::INTERNAL_SERVER_ERROR);
                 } else {
                     $this->response->setRawHeader('HTTP/1.1 206 Partial Content');
@@ -193,5 +192,4 @@ class GetController extends BaseController
             $this->sendError(Response::NOT_FOUND, $filename);
         }
     }
-
 }

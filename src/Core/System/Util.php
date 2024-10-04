@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -44,7 +45,6 @@ use Throwable;
  */
 class Util
 {
-
     /**
      * Overrides configuration array with manual attributes for a specific section.
      *
@@ -262,13 +262,13 @@ class Util
             // File is not yet registered in the database, create a new CustomFiles entry
             $res = new CustomFiles();
             $res->writeAttribute('filepath', $filename);
-            $res->writeAttribute('mode',  CustomFiles::MODE_NONE);
+            $res->writeAttribute('mode', CustomFiles::MODE_NONE);
             $res->save();
         }
 
         $filename_orgn = "$filename.orgn";
 
-        switch ($res->mode){
+        switch ($res->mode) {
             case CustomFiles::MODE_NONE:
                 if (file_exists($filename_orgn)) {
                     unlink($filename_orgn);
@@ -658,10 +658,12 @@ class Util
             $arrPaths = explode(' ', $parameters);
             if (count($arrPaths) > 0) {
                 foreach ($arrPaths as $path) {
-                    if (!empty($path)
+                    if (
+                        !empty($path)
                         && !file_exists($path)
                         && !mkdir($path, 0755, true)
-                        && !is_dir($path)) {
+                        && !is_dir($path)
+                    ) {
                         $result = false;
                         SystemMessages::sysLogMsg(__METHOD__, 'Error on create folder ' . $path, LOG_ERR);
                     }
@@ -733,7 +735,7 @@ class Util
             $row = trim($row);
             $pos = strpos($row, ']');
             if ($pos !== false && str_starts_with($row, '[')) {
-                $row = "\n" . substr($row, 0, $pos+1);
+                $row = "\n" . substr($row, 0, $pos + 1);
             }
         }
         unset($row);
@@ -745,10 +747,10 @@ class Util
         foreach ($sections as $section) {
             $data_rows = explode("\n", trim($section));
             $section_name = trim($data_rows[0] ?? '');
-            if(empty($section_name) || !str_contains($section_name, '=')){
+            if (empty($section_name) || !str_contains($section_name, '=')) {
                 // Noname section
                 $section_name = ' ';
-            }else{
+            } else {
                 unset($data_rows[0]);
             }
             $manual_data[$section_name] = [];
@@ -875,6 +877,4 @@ class Util
     {
         return file_exists('/offload/livecd');
     }
-
-
 }

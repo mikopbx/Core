@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -50,7 +51,8 @@ class GetLogsListAction extends Injectable
         foreach ($entries as $entry) {
             $fileSize = filesize($entry);
             $now = time();
-            if ($fileSize === 0
+            if (
+                $fileSize === 0
                 || $now - filemtime($entry) > 604800 // Older than 10 days
             ) {
                 continue;
@@ -71,7 +73,6 @@ class GetLogsListAction extends Injectable
         if (!$defaultFound) {
             if (isset($filesList['system/messages'])) {
                 $filesList['system/messages']['default'] = true;
-
             } else {
                 $filesList[array_key_first($filesList)]['default'] = true;
             }

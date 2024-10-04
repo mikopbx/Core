@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -29,7 +30,6 @@ use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
  */
 class CustomFiles extends ModelsBase
 {
-
     public const string MODE_NONE = 'none';
     public const string MODE_APPEND = 'append';
     public const string MODE_OVERRIDE = 'override';
@@ -125,7 +125,7 @@ class CustomFiles extends ModelsBase
      * @param string $text The content to be encoded and set.
      * @return void
      */
-    public function setContent(string  $text): void
+    public function setContent(string $text): void
     {
         $this->content = base64_encode($text);
     }

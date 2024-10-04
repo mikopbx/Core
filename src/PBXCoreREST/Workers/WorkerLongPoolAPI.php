@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,6 +19,7 @@
  */
 
 namespace MikoPBX\PBXCoreREST\Workers;
+
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\LongPollSubscribe;
@@ -45,7 +47,6 @@ use function clearstatcache;
  */
 class WorkerLongPoolAPI extends WorkerBase
 {
-
     /**
      * Starts the worker.
      *
@@ -74,7 +75,7 @@ class WorkerLongPoolAPI extends WorkerBase
                         $this->postData($url, "$data_for_send\n");
                     }
 
-                    if ( ! isset($COMMON_CNANNELS[$channel_data['channel']])) {
+                    if (! isset($COMMON_CNANNELS[$channel_data['channel']])) {
                         continue;
                     }
 
@@ -98,7 +99,7 @@ class WorkerLongPoolAPI extends WorkerBase
      * @param string $url The URL to retrieve data from.
      * @return array The retrieved data as an associative array.
      */
-    private function getData(string $url):array
+    private function getData(string $url): array
     {
         $result = [];
         $ch = curl_init($url);
@@ -110,9 +111,9 @@ class WorkerLongPoolAPI extends WorkerBase
         $resultRequest = curl_exec($ch);
         curl_close($ch);
 
-        if(is_string($resultRequest)){
+        if (is_string($resultRequest)) {
             $resultTmp = json_decode($resultRequest, true);
-            if(is_array($resultTmp)){
+            if (is_array($resultTmp)) {
                 $result = $resultTmp;
             }
         }
@@ -129,16 +130,15 @@ class WorkerLongPoolAPI extends WorkerBase
         /** @var \MikoPBX\Common\Models\LongPollSubscribe[] $subscribes */
         $subscribes = LongPollSubscribe::find('enable=1');
 
-        /** @var \MikoPBX\Common\Models\LongPollSubscribe $sub */
         foreach ($subscribes as $sub) {
             $last_action                                     = $GLOBALS['ACTIONS'][$sub->action]['last_action'] ?? time(
-                ) - 1;
+            ) - 1;
             $GLOBALS['ACTIONS'][$sub->action]                = $sub->toArray();
             $GLOBALS['ACTIONS'][$sub->action]['last_action'] = $last_action;
 
 
             $last_action                                                            = $GLOBALS['COMMON_CNANNELS'][$sub->channel][$sub->action]['last_action'] ?? time(
-                ) - 1;
+            ) - 1;
             $GLOBALS['COMMON_CNANNELS'][$sub->channel][$sub->action]                = $sub->toArray();
             $GLOBALS['COMMON_CNANNELS'][$sub->channel][$sub->action]['last_action'] = $last_action;
         }
@@ -149,12 +149,12 @@ class WorkerLongPoolAPI extends WorkerBase
      *
      * @param string $channel The channel to execute the function for.
      * @param string|null $common_chan The optional common channel.
-     * @return string The data to send.
+     * @return ?string The data to send.
      */
     private function execFunction(string $channel, string $common_chan = null): ?string
     {
         clearstatcache();
-        if ( ! $this->checkAction($channel, $common_chan)) {
+        if (! $this->checkAction($channel, $common_chan)) {
             return '';
         }
         $data_for_send = null;
@@ -182,14 +182,14 @@ class WorkerLongPoolAPI extends WorkerBase
      */
     private function checkAction(string $channel, string $common_chan = null): bool
     {
-        if ( ! $common_chan) {
+        if (! $common_chan) {
             $actions = $GLOBALS['ACTIONS'];
         } else {
             $actions = $GLOBALS['COMMON_CNANNELS'][$common_chan];
         }
 
         $enable = false;
-        if ( ! $actions) {
+        if (! $actions) {
             return $enable;
         }
         // $data = null;
@@ -226,15 +226,14 @@ class WorkerLongPoolAPI extends WorkerBase
         curl_setopt($ch, CURLOPT_TIMEOUT, 1);
         $resultRequest = curl_exec($ch);
         curl_close($ch);
-        if (is_string($resultRequest)){
+        if (is_string($resultRequest)) {
             $result = json_decode($resultRequest, true);
         } else {
             $result = [];
         }
         return $result;
     }
-
 }
 
-// Start worker process
-WorkerLongPoolAPI::startWorker($argv??[]);
+// Start a worker process
+WorkerLongPoolAPI::startWorker($argv ?? []);

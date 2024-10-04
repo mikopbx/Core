@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -31,7 +32,6 @@ use Phalcon\Di\Injectable;
  */
 class UpdateAllAction extends Injectable
 {
-
     /**
      * Update all installed modules
      * @param string $asyncChannelId Pub/sub nchan channel id to send response to frontend
@@ -41,26 +41,26 @@ class UpdateAllAction extends Injectable
     public static function main(string $asyncChannelId, array $modulesForUpdate): void
     {
         // Get a list of installed modules
-        $parameters=[
-            'columns'=>[
+        $parameters = [
+            'columns' => [
                 'uniqid'
             ],
-            'conditions'=>'uniqid IN ({uniqid:array})',
-            'bind'=>
+            'conditions' => 'uniqid IN ({uniqid:array})',
+            'bind' =>
                 [
-                    'uniqid'=>$modulesForUpdate
+                    'uniqid' => $modulesForUpdate
                 ]
         ];
         $installedModules = PbxExtensionModules::find($parameters)->toArray();
 
         // Calculate total mutex timeout and extra 5 seconds to prevent installing the same module in the second thread
-        $installationTimeout = InstallFromRepoAction::DOWNLOAD_TIMEOUT+ ModuleInstallationBase::INSTALLATION_TIMEOUT+5;
-        $mutexTimeout = count($installedModules)*($installationTimeout);
+        $installationTimeout = InstallFromRepoAction::DOWNLOAD_TIMEOUT + ModuleInstallationBase::INSTALLATION_TIMEOUT + 5;
+        $mutexTimeout = count($installedModules) * ($installationTimeout);
         // Create a mutex to ensure synchronized access
         $mutex = Util::createMutex('UpdateAll', 'singleThread', $mutexTimeout);
 
         // Synchronize the update process
-        try{
+        try {
             $mutex->synchronized(
                 function () use ($installedModules, $asyncChannelId): void {
                     // Cycle by them and call install from repository
@@ -70,7 +70,8 @@ class UpdateAllAction extends Injectable
                         $installer = new InstallFromRepoAction($asyncChannelId, $moduleUniqueID, $releaseId);
                         $installer->start();
                     }
-                });
+                }
+            );
         } catch (\Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }

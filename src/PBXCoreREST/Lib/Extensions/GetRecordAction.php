@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -36,7 +37,6 @@ use Phalcon\Di\Injectable;
  */
 class GetRecordAction extends Injectable
 {
-
     /**
      * Gets extension data for existing or for the new record
      *
@@ -53,7 +53,7 @@ class GetRecordAction extends Injectable
             'models' => [
                 'Extensions' => Extensions::class,
             ],
-            'conditions' => 'Extensions.id = :ext_id: AND Extensions.type="' . Extensions::TYPE_SIP.'"',
+            'conditions' => 'Extensions.id = :ext_id: AND Extensions.type="' . Extensions::TYPE_SIP . '"',
             'bind' => [
                 'ext_id' => $id
             ],
@@ -63,20 +63,20 @@ class GetRecordAction extends Injectable
                 'user_id' => 'Users.id',
                 'user_username' => 'Users.username',
                 'user_email' => 'Users.email',
-                'user_avatar'=>  'Users.avatar',
-                'fwd_ringlength'=>'ExtensionForwardingRights.ringlength',
-                'fwd_forwardingonbusy'=>'ExtensionForwardingRights.forwardingonbusy',
-                'fwd_forwardingonunavailable'=>'ExtensionForwardingRights.forwardingonunavailable',
-                'fwd_forwarding'=>'ExtensionForwardingRights.forwarding',
-                'mobile_number'=>'ExternalPhones.extension',
-                'mobile_uniqid'=>'ExternalPhones.uniqid',
-                'mobile_dialstring'=>'ExternalPhones.dialstring',
-                'sip_enableRecording' =>'Sip.enableRecording',
-                'sip_dtmfmode' =>'Sip.dtmfmode',
+                'user_avatar' =>  'Users.avatar',
+                'fwd_ringlength' => 'ExtensionForwardingRights.ringlength',
+                'fwd_forwardingonbusy' => 'ExtensionForwardingRights.forwardingonbusy',
+                'fwd_forwardingonunavailable' => 'ExtensionForwardingRights.forwardingonunavailable',
+                'fwd_forwarding' => 'ExtensionForwardingRights.forwarding',
+                'mobile_number' => 'ExternalPhones.extension',
+                'mobile_uniqid' => 'ExternalPhones.uniqid',
+                'mobile_dialstring' => 'ExternalPhones.dialstring',
+                'sip_enableRecording' => 'Sip.enableRecording',
+                'sip_dtmfmode' => 'Sip.dtmfmode',
                 'sip_manualattributes' => 'Sip.manualattributes',
                 'sip_uniqid' => 'Sip.uniqid',
                 'sip_secret' => 'Sip.secret',
-                'sip_networkfilterid'=>'Sip.networkfilterid',
+                'sip_networkfilterid' => 'Sip.networkfilterid',
                 'sip_transport' => 'Sip.transport'
             ],
             'joins' => [
@@ -94,7 +94,7 @@ class GetRecordAction extends Injectable
                 ],
                 'ExtensionsExternal' => [
                     0 => Extensions::class,
-                    1 => 'ExtensionsExternal.userid = Users.id AND ExtensionsExternal.type="' . Extensions::TYPE_EXTERNAL.'"',
+                    1 => 'ExtensionsExternal.userid = Users.id AND ExtensionsExternal.type="' . Extensions::TYPE_EXTERNAL . '"',
                     2 => 'ExtensionsExternal',
                     3 => 'LEFT',
                 ],
@@ -121,7 +121,7 @@ class GetRecordAction extends Injectable
             $dataFromRequest = [];
         } else {
             $dataFromRequest = $extension->toArray();
-            $dataFromRequest['sip_manualattributes']=base64_decode($dataFromRequest['sip_manualattributes']);
+            $dataFromRequest['sip_manualattributes'] = base64_decode($dataFromRequest['sip_manualattributes']);
         }
 
         $dataStructure = new DataStructure($dataFromRequest);

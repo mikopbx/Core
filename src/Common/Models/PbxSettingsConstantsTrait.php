@@ -17,7 +17,7 @@ trait PbxSettingsConstantsTrait
     // Language and region settings
     public const string PBX_LANGUAGE = 'PBXLanguage';
     public const string WEB_ADMIN_LANGUAGE = 'WebAdminLanguage';
-    public const string SSH_LANGUAGE ='SSHLanguage';
+    public const string SSH_LANGUAGE = 'SSHLanguage';
     public const string PBX_TIMEZONE = 'PBXTimezone';
 
     // Cloud and security settings
@@ -51,8 +51,8 @@ trait PbxSettingsConstantsTrait
     // SIP and RTP settings
     public const string SIP_PORT = 'SIPPort';
     public const string TLS_PORT = 'TLS_PORT';
-    public const string EXTERNAL_SIP_PORT='externalSIPPort';
-    public const string EXTERNAL_TLS_PORT='externalTLSPort';
+    public const string EXTERNAL_SIP_PORT = 'externalSIPPort';
+    public const string EXTERNAL_TLS_PORT = 'externalTLSPort';
     public const string SIP_DEFAULT_EXPIRY = 'SIPDefaultExpiry';
     public const string SIP_MIN_EXPIRY = 'SIPMinExpiry';
     public const string SIP_MAX_EXPIRY = 'SIPMaxExpiry';
@@ -125,7 +125,7 @@ trait PbxSettingsConstantsTrait
 
     // Miscellaneous settings
     public const string RESTART_EVERY_NIGHT = 'RestartEveryNight';
-    public const string PBX_MANUAL_TIME_SETTINGS='PBXManualTimeSettings';
+    public const string PBX_MANUAL_TIME_SETTINGS = 'PBXManualTimeSettings';
     public const string SEND_METRICS = 'SendMetrics';
     public const string DISABLE_ALL_MODULES = 'DisableAllModules'; // Disable all modules if it set to '1'
     public const string NTP_SERVER = 'NTPServer';
@@ -138,9 +138,8 @@ trait PbxSettingsConstantsTrait
     public const string GNATS_HTTP_PORT = 'gnats-http';
 
     // Service constants for Docker containers
-    public const string ENABLE_USE_NAT='enableUseNat';
-    public const string EXTERNAL_SIP_HOST_NAME='ExternalSipHostName';
-    public const string EXTERNAL_SIP_IP_ADDR='ExternalSipIpAddr';
+    public const string ENABLE_USE_NAT = 'enableUseNat';
+    public const string EXTERNAL_SIP_HOST_NAME = 'ExternalSipHostName';
+    public const string EXTERNAL_SIP_IP_ADDR = 'ExternalSipIpAddr';
     public const string AUTO_UPDATE_EXTERNAL_IP = 'autoUpdateExternalIp';
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -60,13 +61,13 @@ class GetModuleLinkAction extends Injectable
                     ],
                     'json' => [
                         'LICENSE' => $licenseKey,
-                        'RELEASEID'=> $moduleReleaseId,
+                        'RELEASEID' => $moduleReleaseId,
                     ],
                     'timeout' => 5,
                 ]
             );
             $code = $request->getStatusCode();
-            if ($code === Response::OK){
+            if ($code === Response::OK) {
                 $body = $request->getBody()->getContents();
             }
         } catch (\Throwable $e) {
@@ -79,7 +80,7 @@ class GetModuleLinkAction extends Injectable
             return $res;
         }
 
-        $res->data = json_decode($body, true)??[];
+        $res->data = json_decode($body, true) ?? [];
         $res->success = true;
         return $res;
     }

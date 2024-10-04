@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -26,7 +27,6 @@ use MikoPBX\Core\System\Util;
 
 class NetworkController extends BaseController
 {
-
     /**
      * Lan cards settings form
      */
@@ -272,7 +272,7 @@ class NetworkController extends BaseController
             }
         }
         $result = count($messages) === 0;
-        return [$result, ['error'=>$messages]];
+        return [$result, ['error' => $messages]];
     }
 
     /**

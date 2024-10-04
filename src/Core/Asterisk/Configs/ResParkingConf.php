@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -90,7 +91,8 @@ class ResParkingConf extends AsteriskConfigClass
     /**
      * ResParkingConf constructor.
      */
-    public function __construct(){
+    public function __construct()
+    {
         parent::__construct();
         $this->getSettings();
     }
@@ -102,17 +104,17 @@ class ResParkingConf extends AsteriskConfigClass
     protected function generateConfigProtected(): void
     {
         // Generate the configuration content
-        $conf   = "[general]".PHP_EOL.
-            "parkeddynamic = yes".PHP_EOL.PHP_EOL.
-            "[default]".PHP_EOL.
-            "context => parked-calls".PHP_EOL.
-            "parkedcallreparking = caller".PHP_EOL.
-            "parkedcalltransfers = caller".PHP_EOL.
-            "parkext => $this->ParkingExt".PHP_EOL.
-            "findslot => next".PHP_EOL.
-            "comebacktoorigin=no".PHP_EOL.
-            "comebackcontext = parked-calls-timeout".PHP_EOL.
-            "parkpos => $this->ParkingStartSlot-$this->ParkingEndSlot".PHP_EOL.PHP_EOL;
+        $conf   = "[general]" . PHP_EOL .
+            "parkeddynamic = yes" . PHP_EOL . PHP_EOL .
+            "[default]" . PHP_EOL .
+            "context => parked-calls" . PHP_EOL .
+            "parkedcallreparking = caller" . PHP_EOL .
+            "parkedcalltransfers = caller" . PHP_EOL .
+            "parkext => $this->ParkingExt" . PHP_EOL .
+            "findslot => next" . PHP_EOL .
+            "comebacktoorigin=no" . PHP_EOL .
+            "comebackcontext = parked-calls-timeout" . PHP_EOL .
+            "parkpos => $this->ParkingStartSlot-$this->ParkingEndSlot" . PHP_EOL . PHP_EOL;
 
         // Write the configuration content to the file
         file_put_contents($this->config->path('asterisk.astetcdir') . '/res_parking.conf', $conf);
@@ -130,7 +132,7 @@ class ResParkingConf extends AsteriskConfigClass
      *
      * @throws \Exception
      */
-    public static function getParkSlotData(?string $extension = null) : ?array
+    public static function getParkSlotData(?string $extension = null): ?array
     {
         $ParkeeChannel = null;
         $am            = Util::getAstManager('off');
@@ -219,9 +221,9 @@ class ResParkingConf extends AsteriskConfigClass
      */
     public function getIncludeInternalTransfer(): string
     {
-        if(empty($this->ParkingExt)){
+        if (empty($this->ParkingExt)) {
             $conf = '';
-        }else{
+        } else {
             $conf = 'exten => ' . $this->ParkingExt . ',1,Goto(parked-calls,${EXTEN},1)' . PHP_EOL;
         }
         return $conf;
@@ -236,7 +238,7 @@ class ResParkingConf extends AsteriskConfigClass
      */
     public function extensionGlobals(): string
     {
-        return "PARKING_DURATION=$this->ParkingDuration".PHP_EOL;
+        return "PARKING_DURATION=$this->ParkingDuration" . PHP_EOL;
     }
 
     /**
@@ -248,6 +250,6 @@ class ResParkingConf extends AsteriskConfigClass
      */
     public function getFeatureMap(): string
     {
-        return "parkcall => $this->ParkingFeature".PHP_EOL;
+        return "parkcall => $this->ParkingFeature" . PHP_EOL;
     }
 }

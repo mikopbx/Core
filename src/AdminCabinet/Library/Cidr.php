@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -71,7 +72,7 @@ class Cidr extends Injectable
     // is ip in subnet
     // e.g. is 10.5.21.30 in 10.5.16.0/20 == true
     //      is 192.168.50.2 in 192.168.30.0/23 == false
-    public function cidr_match(string $ip, string $network, int $cidr):bool
+    public function cidr_match(string $ip, string $network, int $cidr): bool
     {
         if ((ip2long($ip) & ~((1 << (32 - $cidr)) - 1)) == ip2long($network)) {
             return true;

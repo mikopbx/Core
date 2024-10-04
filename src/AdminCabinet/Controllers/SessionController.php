@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -62,12 +63,12 @@ class SessionController extends BaseController
     /**
      * Constant for maximum login attempts within the interval.
      */
-    private const int LOGIN_ATTEMPTS=10;
+    private const int LOGIN_ATTEMPTS = 10;
 
     /**
      * Constant for the interval to reset login attempts (in seconds).
      */
-    private const int LOGIN_ATTEMPTS_INTERVAL=300;
+    private const int LOGIN_ATTEMPTS_INTERVAL = 300;
 
     /**
      * Renders the login page.
@@ -79,14 +80,14 @@ class SessionController extends BaseController
     {
         $this->view->setVar('NameFromSettings', PbxSettings::getValueByKey(PbxSettings::PBX_NAME));
         $description = PbxSettings::getValueByKey(PbxSettings::PBX_DESCRIPTION);
-        if ($description===PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION){
-            $description=$this->translation->_($description);
+        if ($description === PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION) {
+            $description = $this->translation->_($description);
         }
         $this->view->setVar('DescriptionFromSettings', $description);
         $this->view->setVar('form', new LoginForm());
 
         $remoteAddress = $this->request->getClientAddress(true);
-        $remainAttempts = $this->countRemainAttempts($remoteAddress,false,self::LOGIN_ATTEMPTS_INTERVAL,self::LOGIN_ATTEMPTS);
+        $remainAttempts = $this->countRemainAttempts($remoteAddress, false, self::LOGIN_ATTEMPTS_INTERVAL, self::LOGIN_ATTEMPTS);
         $this->view->remainAttempts = $remainAttempts;
         $this->view->loginAttemptsInterval = self::LOGIN_ATTEMPTS_INTERVAL;
     }
@@ -105,11 +106,11 @@ class SessionController extends BaseController
             $this->forward('session/index');
         }
         $remoteAddress = $this->request->getClientAddress(true);
-        $remainAttempts = $this->countRemainAttempts($remoteAddress,true,self::LOGIN_ATTEMPTS_INTERVAL,self::LOGIN_ATTEMPTS);
+        $remainAttempts = $this->countRemainAttempts($remoteAddress, true, self::LOGIN_ATTEMPTS_INTERVAL, self::LOGIN_ATTEMPTS);
         if ($remainAttempts === 0) {
             $userAgent = $this->request->getUserAgent();
             $this->loggerAuth->warning("From: $remoteAddress UserAgent:$userAgent Cause: Wrong password");
-            $this->flash->error($this->translation->_('auth_TooManyLoginAttempts',['interval'=>self::LOGIN_ATTEMPTS_INTERVAL]));
+            $this->flash->error($this->translation->_('auth_TooManyLoginAttempts', ['interval' => self::LOGIN_ATTEMPTS_INTERVAL]));
             $this->view->success = true;
             $this->view->reload = $this->url->get('session/index');
             return;
@@ -121,8 +122,7 @@ class SessionController extends BaseController
         $userLoggedIn = false;
         $sessionParams = [];
         // Check if the provided login and password match the stored values
-        if ($this->checkCredentials($loginFromUser, $passFromUser))
-            {
+        if ($this->checkCredentials($loginFromUser, $passFromUser)) {
             $sessionParams = [
                 SessionController::ROLE => AclProvider::ROLE_ADMINS,
                 SessionController::HOME_PAGE => $this->url->get('extensions/index'),
@@ -147,7 +147,7 @@ class SessionController extends BaseController
         if ($userLoggedIn) {
             // Register the session with the specified parameters
             $this->_registerSession($sessionParams);
-            if ($this->session->has(PbxSettings::WEB_ADMIN_LANGUAGE)){
+            if ($this->session->has(PbxSettings::WEB_ADMIN_LANGUAGE)) {
                 LanguageController::updateSystemLanguage($this->session->get(PbxSettings::WEB_ADMIN_LANGUAGE));
             }
             $this->view->success = true;
@@ -160,10 +160,9 @@ class SessionController extends BaseController
         } else {
             // Authentication failed
             $this->view->success = false;
-            $this->flash->error($this->translation->_('auth_WrongLoginPassword',['attempts'=>$remainAttempts]));
+            $this->flash->error($this->translation->_('auth_WrongLoginPassword', ['attempts' => $remainAttempts]));
             $this->clearAuthCookies();
         }
-
     }
 
     /**
@@ -265,7 +264,7 @@ class SessionController extends BaseController
      * @return bool True if credentials are correct, otherwise false.
      * @throws ErrorException Throws an exception if there is an error during the process.
      */
-    private function checkCredentials(string $login, string $password):bool
+    private function checkCredentials(string $login, string $password): bool
     {
         // Check admin login name
         $storedLogin = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LOGIN);
@@ -280,7 +279,7 @@ class SessionController extends BaseController
         }
 
         // New password check method
-        set_error_handler(function($severity, $message, $file, $line) {
+        set_error_handler(function ($severity, $message, $file, $line) {
             throw new ErrorException($message, 0, $severity, $file, $line);
         });
 
@@ -316,14 +315,14 @@ class SessionController extends BaseController
      * @param int $maxCount The maximum allowed login attempts within the given interval.
      * @return int The remaining number of attempts within the interval.
      */
-    private function countRemainAttempts(mixed $remoteAddress, bool $increment = true, int $interval=300, int $maxCount=10): int
+    private function countRemainAttempts(mixed $remoteAddress, bool $increment = true, int $interval = 300, int $maxCount = 10): int
     {
-        if (!is_string($remoteAddress)){
+        if (!is_string($remoteAddress)) {
             return $maxCount;
         }
         $redisAdapter = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
         $zKey = self::getSessionsKeepAliveKey($interval);
-        if ($increment){
+        if ($increment) {
             $redisAdapter->zIncrBy($zKey, 1, $remoteAddress);
         } else {
             $redisAdapter->zIncrBy($zKey, 0, $remoteAddress);
@@ -331,6 +330,6 @@ class SessionController extends BaseController
         $redisAdapter->expire($zKey, $interval);
 
         $count = $redisAdapter->zScore($zKey, $remoteAddress);
-        return Max($maxCount-$count,0);
+        return Max($maxCount - $count, 0);
     }
 }

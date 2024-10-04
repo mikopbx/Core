@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -44,9 +45,9 @@ class GetDMIInfoAction extends Injectable
         $grep = Util::which('grep');
         $awk = Util::which('awk');
         $result = shell_exec("$dmesg | $grep DMI | $awk -F 'DMI: ' '{ print $2}'");
-        $result = trim($result??'');
-        $res->data = ['DMI'=>$result];
-        if ($result){
+        $result = trim($result ?? '');
+        $res->data = ['DMI' => $result];
+        if ($result) {
             $res->success = true;
         }
         return $res;

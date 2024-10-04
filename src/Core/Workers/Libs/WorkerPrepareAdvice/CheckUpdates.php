@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -69,16 +70,14 @@ class CheckUpdates extends Injectable
         $answer = json_decode($res->getBody(), false);
         if ($answer !== null && $answer->newVersionAvailable === true) {
             $messages['info'][] = [
-                'messageTpl'=>'adv_AvailableNewVersionPBX',
-                'messageParams'=>[
+                'messageTpl' => 'adv_AvailableNewVersionPBX',
+                'messageParams' => [
                     'url' => $this->url->get('update/index/'),
                     'ver' => $answer->version,
                 ]
             ];
-
         }
 
         return $messages;
     }
-
 }

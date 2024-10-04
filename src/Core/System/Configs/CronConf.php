@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -57,11 +58,11 @@ class CronConf extends Injectable
      */
     public function reStart(): int
     {
-        $booting = $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting??false;
+        $booting = $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting ?? false;
         $this->generateConfig($booting);
         if (Util::isSystemctl()) {
             $systemctl = Util::which('systemctl');
-            Processes::mwExec("$systemctl restart ".self::PROC_NAME);
+            Processes::mwExec("$systemctl restart " . self::PROC_NAME);
         } else {
             // T2SDE or Docker
             $cronPath = Util::which(self::PROC_NAME);
@@ -90,29 +91,29 @@ class CronConf extends Injectable
         $ntpd      = Util::which('ntpd');
         $dump      = Util::which('dump-conf-db');
         $checkIpPath   = Util::which('check-out-ip');
-        $recordsCleaner= Util::which('records-cleaner');
+        $recordsCleaner = Util::which('records-cleaner');
         $cleanerLinks  = Util::which('cleaner-download-links');
 
         // Restart every night if enabled
         if ($restart_night === '1') {
-            $mast_have[] = '0 1 * * * ' . $asterisk . ' -rx"core restart now" > /dev/null 2> /dev/null'.PHP_EOL;
+            $mast_have[] = '0 1 * * * ' . $asterisk . ' -rx"core restart now" > /dev/null 2> /dev/null' . PHP_EOL;
         }
         // Update NTP time every 5 minutes
-        $mast_have[] = '*/5 * * * * ' . $ntpd . ' -q > /dev/null 2> /dev/null'.PHP_EOL;
+        $mast_have[] = '*/5 * * * * ' . $ntpd . ' -q > /dev/null 2> /dev/null' . PHP_EOL;
 
         // Perform database dump every 5 minutes
-        $mast_have[] = '*/5 * * * * ' . "$dump > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/5 * * * * ' . "$dump > /dev/null 2> /dev/null" . PHP_EOL;
         // Clearing outdated conversation records
-        $mast_have[] = '*/30 * * * * ' . "$recordsCleaner > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/30 * * * * ' . "$recordsCleaner > /dev/null 2> /dev/null" . PHP_EOL;
 
         // Check IP address every minute
-        $mast_have[] = '*/1 * * * * ' . "$checkIpPath > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/1 * * * * ' . "$checkIpPath > /dev/null 2> /dev/null" . PHP_EOL;
 
         // Clean download links every 6 minutes
-        $mast_have[] = '*/6 * * * * ' . "$cleanerLinks > /dev/null 2> /dev/null".PHP_EOL;
+        $mast_have[] = '*/6 * * * * ' . "$cleanerLinks > /dev/null 2> /dev/null" . PHP_EOL;
 
         // Run WorkerSafeScripts every minute
-        $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts.PHP_EOL;
+        $mast_have[] = '*/1 * * * * ' . $WorkerSafeScripts . PHP_EOL;
 
         // Add additional modules includes
         $tasks = [];
@@ -132,14 +133,14 @@ class CronConf extends Injectable
      * Generate additional syslog rules.
      * @return void
      */
-    public static function generateSyslogConf():void
+    public static function generateSyslogConf(): void
     {
         Util::mwMkdir('/etc/rsyslog.d');
         $log_fileRedis       = SyslogConf::getSyslogFile(self::PROC_NAME);
         $pathScriptRedis     = SyslogConf::createRotateScript(self::PROC_NAME);
-        $confSyslogD = '$outchannel log_'.self::PROC_NAME.','.$log_fileRedis.',10485760,'.$pathScriptRedis.PHP_EOL.
-            'if $programname == "'.self::PROC_NAME.'" then :omfile:$log_'.self::PROC_NAME.PHP_EOL.
-            'if $programname == "'.self::PROC_NAME.'" then stop'.PHP_EOL;
-        file_put_contents('/etc/rsyslog.d/'.self::PROC_NAME.'.conf', $confSyslogD);
+        $confSyslogD = '$outchannel log_' . self::PROC_NAME . ',' . $log_fileRedis . ',10485760,' . $pathScriptRedis . PHP_EOL .
+            'if $programname == "' . self::PROC_NAME . '" then :omfile:$log_' . self::PROC_NAME . PHP_EOL .
+            'if $programname == "' . self::PROC_NAME . '" then stop' . PHP_EOL;
+        file_put_contents('/etc/rsyslog.d/' . self::PROC_NAME . '.conf', $confSyslogD);
     }
 }

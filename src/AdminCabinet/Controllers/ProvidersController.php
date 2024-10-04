@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -24,7 +25,6 @@ use MikoPBX\Common\Models\{Iax, Providers, Sip, SipHosts};
 
 class ProvidersController extends BaseController
 {
-
     /**
      * Retrieves and prepares a list of providers for display in the index view.
      */
@@ -58,9 +58,9 @@ class ProvidersController extends BaseController
     public function modifysipAction(string $uniqId = ''): void
     {
         $idIsEmpty = false;
-        if(empty($uniqId)){
+        if (empty($uniqId)) {
             $idIsEmpty = true;
-            $uniqId = (string)($_GET['copy-source']??'');
+            $uniqId = (string)($_GET['copy-source'] ?? '');
         }
         /** @var Providers $provider */
         $provider = Providers::findFirstByUniqid($uniqId);
@@ -78,15 +78,15 @@ class ProvidersController extends BaseController
             $provider->Sip->qualifyfreq = 60;
             $provider->Sip->qualify = '1';
             $provider->Sip->secret = SIP::generateSipPassword();
-        }elseif($idIsEmpty){
+        } elseif ($idIsEmpty) {
             $uniqId = Sip::generateUniqueID('SIP-TRUNK-');
             $oldProvider = $provider;
             $provider = new Providers();
-            foreach ($oldProvider->toArray() as $key => $value){
+            foreach ($oldProvider->toArray() as $key => $value) {
                 $provider->writeAttribute($key, $value);
             }
             $provider->Sip = new Sip();
-            foreach ($oldProvider->Sip->toArray() as $key => $value){
+            foreach ($oldProvider->Sip->toArray() as $key => $value) {
                 $provider->Sip->writeAttribute($key, $value);
             }
             $provider->id     = '';
@@ -121,9 +121,9 @@ class ProvidersController extends BaseController
     public function modifyiaxAction(string $uniqId = ''): void
     {
         $idIsEmpty = false;
-        if(empty($uniqId)){
+        if (empty($uniqId)) {
             $idIsEmpty = true;
-            $uniqId = (string)($_GET['copy-source']??'');
+            $uniqId = (string)($_GET['copy-source'] ?? '');
         }
 
         $provider = Providers::findFirstByUniqid($uniqId);
@@ -138,15 +138,15 @@ class ProvidersController extends BaseController
             $provider->Iax->uniqid = $uniqId;
             $provider->Iax->disabled = '0';
             $provider->Iax->qualify = '1';
-        }elseif($idIsEmpty){
+        } elseif ($idIsEmpty) {
             $uniqId = Iax::generateUniqueID('IAX-TRUNK-');
             $oldProvider = $provider;
             $provider = new Providers();
-            foreach ($oldProvider->toArray() as $key => $value){
+            foreach ($oldProvider->toArray() as $key => $value) {
                 $provider->writeAttribute($key, $value);
             }
             $provider->Iax = new Iax();
-            foreach ($oldProvider->Iax->toArray() as $key => $value){
+            foreach ($oldProvider->Iax->toArray() as $key => $value) {
                 $provider->Iax->writeAttribute($key, $value);
             }
             $provider->id     = '';
@@ -292,7 +292,7 @@ class ProvidersController extends BaseController
             }
         }
 
-        if (isset($data['note'])){
+        if (isset($data['note'])) {
             $provider->note = $data['note'];
         }
         if ($provider->save() === false) {
@@ -446,5 +446,4 @@ class ProvidersController extends BaseController
 
         $this->forward('providers/index');
     }
-
 }

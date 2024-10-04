@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -62,7 +63,9 @@ class CallQueueEditForm extends BaseForm
         ];
 
         $strategy = new Select(
-            'strategy', $arrActions, [
+            'strategy',
+            $arrActions,
+            [
                 'using' => [
                     'id',
                     'name',
@@ -96,7 +99,9 @@ class CallQueueEditForm extends BaseForm
         ];
 
         $callerhear = new Select(
-            'caller_hear', $arrActions, [
+            'caller_hear',
+            $arrActions,
+            [
                 'using' => [
                     'id',
                     'name',
@@ -125,7 +130,9 @@ class CallQueueEditForm extends BaseForm
 
 
         $periodicannouncesoundid = new Select(
-            'periodic_announce_sound_id', $options['soundfiles'], [
+            'periodic_announce_sound_id',
+            $options['soundfiles'],
+            [
                 'using' => [
                     'id',
                     'name',
@@ -137,7 +144,9 @@ class CallQueueEditForm extends BaseForm
         $this->add($periodicannouncesoundid);
 
         $periodicannouncesoundid = new Select(
-            'moh_sound_id', $options['mohSoundFiles'], [
+            'moh_sound_id',
+            $options['mohSoundFiles'],
+            [
                 'using' => [
                     'id',
                     'name',
@@ -166,7 +175,9 @@ class CallQueueEditForm extends BaseForm
 
         // Timeoutextension
         $extension = new Select(
-            'timeout_extension', $options['extensions'], [
+            'timeout_extension',
+            $options['extensions'],
+            [
                 'using' => [
                     'id',
                     'name',
@@ -179,7 +190,9 @@ class CallQueueEditForm extends BaseForm
 
         // Redirecttoextensionifempty
         $extension = new Select(
-            'redirect_to_extension_if_empty', $options['extensions'], [
+            'redirect_to_extension_if_empty',
+            $options['extensions'],
+            [
                 'using' => [
                     'id',
                     'name',
@@ -205,7 +218,9 @@ class CallQueueEditForm extends BaseForm
 
         // Redirecttoextensionifunanswered
         $extension = new Select(
-            'redirect_to_extension_if_unanswered', $options['extensions'], [
+            'redirect_to_extension_if_unanswered',
+            $options['extensions'],
+            [
                 'using' => [
                     'id',
                     'name',
@@ -231,7 +246,9 @@ class CallQueueEditForm extends BaseForm
 
         // Redirecttoextensionifrepeatexceeded
         $extension = new Select(
-            'redirect_to_extension_if_repeat_exceeded', $options['extensions'], [
+            'redirect_to_extension_if_repeat_exceeded',
+            $options['extensions'],
+            [
                 'using' => [
                     'id',
                     'name',
@@ -246,6 +263,6 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Text('callerid_prefix'));
 
         // Description
-        $this->addTextArea('description', $entity->description??'', 65);
+        $this->addTextArea('description', $entity->description ?? '', 65);
     }
 }

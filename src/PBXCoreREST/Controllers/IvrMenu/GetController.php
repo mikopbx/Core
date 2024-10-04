@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -31,7 +32,6 @@ use MikoPBX\PBXCoreREST\Lib\IvrMenuManagementProcessor;
  */
 class GetController extends BaseController
 {
-
     /**
      * Handles the call to different actions based on the action name
      *
@@ -45,5 +45,4 @@ class GetController extends BaseController
         $requestData = $this->request->get();
         $this->sendRequestToBackendWorker(IvrMenuManagementProcessor::class, $actionName, $requestData);
     }
-
 }

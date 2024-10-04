@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -47,7 +48,7 @@ class OutgoingRouteEditForm extends BaseForm
         $this->add(new Text('rulename'));
 
         // Note
-        $this->addTextArea('note', $entity->note??'', 65);
+        $this->addTextArea('note', $entity->note ?? '', 65);
 
         // Numberbeginswith
         $this->add(new Text('numberbeginswith'));
@@ -63,7 +64,9 @@ class OutgoingRouteEditForm extends BaseForm
 
         // Providers
         $providers = new Select(
-            'providerid', $options, [
+            'providerid',
+            $options,
+            [
                 'using' => [
                     'id',
                     'name',

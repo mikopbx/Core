@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -86,13 +87,13 @@ class Response extends PhResponse
      */
     public function send(): ResponseInterface
     {
-        $content   = $this->getContent()??'';
+        $content   = $this->getContent() ?? '';
         $timestamp = date('c');
         $hash      = sha1($timestamp . $content);
         $eTag      = sha1($content);
 
         $content = json_decode($content, true);
-        if(!is_array($content)){
+        if (!is_array($content)) {
             $content = [];
         }
         $jsonapi = [

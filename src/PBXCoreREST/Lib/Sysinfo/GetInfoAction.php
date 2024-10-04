@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -101,7 +102,7 @@ class GetInfoAction extends Injectable
         $datePath = Util::which('date');
         $ut         = [];
         Processes::mwExec($datePath, $ut);
-        $content .= implode(PHP_EOL, $ut). PHP_EOL;
+        $content .= implode(PHP_EOL, $ut) . PHP_EOL;
         $content .= PHP_EOL . PHP_EOL;
         return $content;
     }
@@ -420,8 +421,8 @@ class GetInfoAction extends Injectable
         $content    = '───────────────────────────────────────── Environment ─────────────────────────────────────────';
         $content    .= PHP_EOL . PHP_EOL;
         $installationType = PbxSettings::getValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE);
-        if ($installationType){
-            $content .= 'Machine hardware: '.$installationType . PHP_EOL;
+        if ($installationType) {
+            $content .= 'Machine hardware: ' . $installationType . PHP_EOL;
         }
         $hyperVisor = GetHypervisorInfoAction::main();
         if ($hyperVisor->success) {
@@ -434,5 +435,4 @@ class GetInfoAction extends Injectable
         $content .= PHP_EOL . PHP_EOL;
         return $content;
     }
-
 }

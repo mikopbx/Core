@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -20,7 +21,6 @@
 declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Providers;
-
 
 use MikoPBX\AdminCabinet\{
     Plugins\NormalizeControllerNamePlugin,

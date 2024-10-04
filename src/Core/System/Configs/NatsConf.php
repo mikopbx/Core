@@ -70,8 +70,8 @@ class NatsConf extends Injectable
         $settings = [
             'port'             => $config->port,
             'http_port'        => $config->httpPort,
-            'debug'            => 'false',
-            'trace'            => 'false',
+            'debug'            => 'true',
+            'trace'            => 'true',
             'logtime'          => 'true',
             'pid_file'         => $pid_file,
             'max_connections'  => '1000',

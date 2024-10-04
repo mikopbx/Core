@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -46,7 +47,7 @@ class GetSipSecretAction extends Injectable
 
         $extension = Extensions::findFirstByNumber($number);
         if ($extension !== null) {
-            $res->data['secret'] = $extension->Sip->secret??'';
+            $res->data['secret'] = $extension->Sip->secret ?? '';
             return $res;
         }
         return $res;

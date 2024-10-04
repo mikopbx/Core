@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -49,7 +50,6 @@ class DockerEntrypoint extends Injectable
     {
         pcntl_async_signals(true);
         register_shutdown_function([$this, 'shutdownHandler']);
-
     }
 
     /**
@@ -124,7 +124,7 @@ class DockerEntrypoint extends Injectable
         $chown = Util::which('chown');
         $chgrp = Util::which('chgrp');
         $currentUserId = trim(shell_exec("$grep '^$userID:' < /etc/shadow | $cut -d ':' -f 3"));
-        if ($currentUserId!=='' && !empty($newUserId) && $currentUserId !== $newUserId) {
+        if ($currentUserId !== '' && !empty($newUserId) && $currentUserId !== $newUserId) {
             SystemMessages::sysLogMsg(__METHOD__, " - Old $userID user id: $currentUserId; New $userID user id: $newUserId", LOG_DEBUG);
             $commands[] = "$sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
             $id = '';
@@ -138,7 +138,7 @@ class DockerEntrypoint extends Injectable
         }
 
         $currentGroupId = trim(shell_exec("$grep '^$userID:' < /etc/group | $cut -d ':' -f 3"));
-        if ($currentGroupId!=='' && !empty($newGroupId) && $currentGroupId !== $newGroupId) {
+        if ($currentGroupId !== '' && !empty($newGroupId) && $currentGroupId !== $newGroupId) {
             SystemMessages::sysLogMsg(__METHOD__, " - Old $userID group id: $currentGroupId; New $userID group id: $newGroupId", LOG_DEBUG);
             $commands[] = "$sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
             $commands[] = "$sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/shadow";
@@ -229,7 +229,7 @@ class DockerEntrypoint extends Injectable
                         $this->updateJsonSettings('gnats', 'httpPort', intval($envValue));
                         break;
                     case PbxSettings::ENABLE_USE_NAT:
-                        if ($envValue==='1'){
+                        if ($envValue === '1') {
                             $this->reconfigureNetwork("topology", LanInterfaces::TOPOLOGY_PRIVATE);
                         }
                         break;
@@ -280,8 +280,9 @@ class DockerEntrypoint extends Injectable
      */
     private function updateJsonSettings(string $path, string $key, mixed $newValue): void
     {
-        if ($this->jsonSettings[$path][$key] ?? null !== $newValue)
+        if ($this->jsonSettings[$path][$key] ?? null !== $newValue) {
             $this->jsonSettings[$path][$key] = $newValue;
+        }
         $newData = json_encode($this->jsonSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         file_put_contents(self::pathInc, $newData);
         SystemMessages::sysLogMsg(__METHOD__, " - Update $path:$key to '$newValue' in /etc/inc/mikopbx-settings.json", LOG_INFO);
@@ -305,7 +306,7 @@ class DockerEntrypoint extends Injectable
             } else {
                 SystemMessages::sysLogMsg(__METHOD__, " - Update $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
             }
-        } elseif(!array_key_exists($key, $this->settings)) {
+        } elseif (!array_key_exists($key, $this->settings)) {
             SystemMessages::sysLogMsg(__METHOD__, " - Unknown environment settings key:  $key", LOG_ERR);
         }
     }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -33,7 +34,6 @@ use Phalcon\Di\Injectable;
  */
 class DeleteRecordAction extends Injectable
 {
-
     /**
      * Deletes the dialplan application record with its dependent tables.
      *
@@ -51,8 +51,8 @@ class DeleteRecordAction extends Injectable
 
         // Find the queue by ID
         $record = DialplanApplications::findFirstByUniqid($id);
-        if ($record===null){
-            $res->messages['error'][] = 'Dialplan application with id '.$id.' does not exist';
+        if ($record === null) {
+            $res->messages['error'][] = 'Dialplan application with id ' . $id . ' does not exist';
             $res->success = false;
             return  $res;
         }
@@ -61,7 +61,7 @@ class DeleteRecordAction extends Injectable
 
         // Delete associated extensions
         $extension = $record->Extensions;
-        if ($extension!==null && !$extension->delete()) {
+        if ($extension !== null && !$extension->delete()) {
             $res->messages['error'][] = implode(PHP_EOL, $extension->getMessages());
             $res->success = false;
         }
@@ -75,5 +75,4 @@ class DeleteRecordAction extends Injectable
         $res->data['id'] = $id;
         return $res;
     }
-
 }

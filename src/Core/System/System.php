@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -28,7 +29,6 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Di\Injectable;
 
-
 /**
  * Class System
  *
@@ -39,7 +39,6 @@ use Phalcon\Di\Injectable;
  */
 class System extends Injectable
 {
-
     /**
      * Returns the directory where logs are stored.
      * @deprecated use Directories::getDir(Directories::CORE_LOGS_DIR);
@@ -99,7 +98,7 @@ class System extends Injectable
         }
 
         // If the timezones are different, configure the timezone
-        if ($origin_tz !== $db_tz){
+        if ($origin_tz !== $db_tz) {
             self::timezoneConfigure();
         }
 
@@ -168,12 +167,11 @@ class System extends Injectable
 
         // If a timezone is set, configure it
         if ($timezone) {
-
             // The path to the zone file
             $zone_file = "/usr/share/zoneinfo/$timezone";
 
             // If the zone file exists, copy it to /etc/localtime
-            if ( ! file_exists($zone_file)) {
+            if (! file_exists($zone_file)) {
                 return;
             }
             $cp = Util::which('cp');
@@ -187,7 +185,6 @@ class System extends Injectable
             Processes::mwExec("export TZ;");
             PHPConf::phpTimeZoneConfigure();
         }
-
     }
 
     /**
@@ -201,8 +198,8 @@ class System extends Injectable
         $locales = ['en_US', 'en_GB', 'ru_RU'];
         $localeDefPath = Util::which('localedef');
         $localePath = Util::which('locale');
-        foreach ($locales as $locale){
-            if(Processes::mwExec("$localePath -a | grep $locale") === 0){
+        foreach ($locales as $locale) {
+            if (Processes::mwExec("$localePath -a | grep $locale") === 0) {
                 continue;
             }
             shell_exec("$localeDefPath -i $locale -f UTF-8 $locale.UTF-8");
@@ -226,16 +223,16 @@ class System extends Injectable
         $certFile    = "$openSslDir/certs/ca-certificates.crt";
         $tmpFile     = tempnam('/tmp', 'cert-');
         $rawData     = file_get_contents($certFile);
-        $certs       = explode(PHP_EOL.PHP_EOL, $rawData);
-        foreach ($certs as $cert){
-            if(!str_contains($cert, '-----BEGIN CERTIFICATE-----')){
+        $certs       = explode(PHP_EOL . PHP_EOL, $rawData);
+        foreach ($certs as $cert) {
+            if (!str_contains($cert, '-----BEGIN CERTIFICATE-----')) {
                 continue;
             }
             file_put_contents($tmpFile, $cert);
             $hash = trim(shell_exec("$openSslPath x509 -subject_hash -noout -in '$tmpFile'"));
             rename($tmpFile, "$openSslDir/certs/$hash.0");
         }
-        if(file_exists($tmpFile)){
+        if (file_exists($tmpFile)) {
             unlink($tmpFile);
         }
     }

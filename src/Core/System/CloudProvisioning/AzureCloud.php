@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -18,6 +19,7 @@
  */
 
 namespace MikoPBX\Core\System\CloudProvisioning;
+
 use MikoPBX\Core\System\SystemMessages;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -41,7 +43,8 @@ class AzureCloud extends CloudProvider
     public function provision(): bool
     {
         $metadata = $this->retrieveInstanceMetadata();
-        if ($metadata === null
+        if (
+            $metadata === null
             || $metadata['compute']['azEnvironment'] !== 'AzurePublicCloud'
             || empty($metadata['compute']['vmId'])
         ) {
@@ -67,7 +70,7 @@ class AzureCloud extends CloudProvider
         $this->updateSSHKeys(implode(PHP_EOL, $sshKeys));
 
         // Update SSH anf WEB password using some unique identifier from the metadata
-        $vmId =$metadata['compute']['vmId'] ;
+        $vmId = $metadata['compute']['vmId'] ;
         $this->updateSSHCredentials($adminUsername, $vmId);
         $this->updateWebPassword($vmId);
 

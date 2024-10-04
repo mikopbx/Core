@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -137,7 +138,7 @@ class SIPConf extends AsteriskConfigClass
         $sipPort            = $this->generalSettings[PbxSettings::SIP_PORT];
         $tlsPort            = $this->generalSettings[PbxSettings::TLS_PORT];
 
-        $now_hash           = md5($topology . $externalHostName . $extIpAddress . $sipPort.$externalSipPort. $tlsPort .$externalTlsPort. implode('',$subnets));
+        $now_hash           = md5($topology . $externalHostName . $extIpAddress . $sipPort . $externalSipPort . $tlsPort . $externalTlsPort . implode('', $subnets));
 
         $old_hash        = '';
         $varEtcDir       = $di->getShared('config')->path('core.varEtcDir');
@@ -222,8 +223,8 @@ class SIPConf extends AsteriskConfigClass
             $contextsData = $this->contexts_data[$provider['context_id']];
             if (count($contextsData) === 1) {
                 $conf .= IncomingContexts::generate($provider['uniqid'], $provider['username']);
-            } elseif ( ! in_array($provider['context_id'], $contexts, true)) {
-                $context_id = str_replace('-incoming','',$provider['context_id']);
+            } elseif (! in_array($provider['context_id'], $contexts, true)) {
+                $context_id = str_replace('-incoming', '', $provider['context_id']);
                 $conf      .= IncomingContexts::generate($contextsData, '', $context_id);
                 $contexts[] = $provider['context_id'];
             }
@@ -232,28 +233,28 @@ class SIPConf extends AsteriskConfigClass
         $usersNumbers = [];
         $extensionsData = Extensions::find([ 'conditions' => 'userid <> "" and userid>0 ', 'columns' => 'userid,number']);
         /** @var Extensions $extension */
-        foreach ($extensionsData as $extension){
+        foreach ($extensionsData as $extension) {
             $usersNumbers[$extension->userid][] = $extension->number;
         }
 
-        $conf.=PHP_EOL.'[monitor-internal]'.PHP_EOL;
+        $conf .= PHP_EOL . '[monitor-internal]' . PHP_EOL;
         $confExceptions = '';
 
         // Process peers and their numbers.
         foreach ($this->data_peers as $peer) {
-            $numbers = $usersNumbers[$peer['user_id']]??[];
-            foreach ($numbers as $num){
-                $num = substr($num,-9);
-                if(!str_contains($conf, " $num,")){
-                    $conf  .= "exten => $num,1,NoOp(-)".PHP_EOL;
+            $numbers = $usersNumbers[$peer['user_id']] ?? [];
+            foreach ($numbers as $num) {
+                $num = substr($num, -9);
+                if (!str_contains($conf, " $num,")) {
+                    $conf  .= "exten => $num,1,NoOp(-)" . PHP_EOL;
                 }
-                if($peer['enableRecording'] !== true && !str_contains($confExceptions, " $num,")){
-                    $confExceptions .= "exten => $num,1,NoOp(-)".PHP_EOL;
+                if ($peer['enableRecording'] !== true && !str_contains($confExceptions, " $num,")) {
+                    $confExceptions .= "exten => $num,1,NoOp(-)" . PHP_EOL;
                 }
             }
         }
-        $conf.= PHP_EOL.'[monitor-exceptions]'.PHP_EOL.
-            $confExceptions.PHP_EOL.PHP_EOL;
+        $conf .= PHP_EOL . '[monitor-exceptions]' . PHP_EOL .
+            $confExceptions . PHP_EOL . PHP_EOL;
         return $conf;
     }
 
@@ -298,7 +299,7 @@ class SIPConf extends AsteriskConfigClass
             $network_filter = null;
 
             // Retrieve associated network filter if available.
-            if ( ! empty($sip_peer->networkfilterid)) {
+            if (! empty($sip_peer->networkfilterid)) {
                 $network_filter = NetworkFilters::findFirst($sip_peer->networkfilterid);
             }
 
@@ -306,7 +307,7 @@ class SIPConf extends AsteriskConfigClass
             $arr_data['permit'] = ($network_filter === null) ? '' : $network_filter->permit;
             $arr_data['deny']   = ($network_filter === null) ? '' : $network_filter->deny;
 
-            $arr_data['transport'] = trim($arr_data['transport']??'');
+            $arr_data['transport'] = trim($arr_data['transport'] ?? '');
             // Retrieve used codecs.
             $arr_data['codecs'] = $this->getCodecs();
             $arr_data['enableRecording'] = $sip_peer->enableRecording !== '0';
@@ -389,19 +390,19 @@ class SIPConf extends AsteriskConfigClass
             $arr_data['permit']                     = ($network_filter === null) ? '' : $network_filter->permit;
             $arr_data['deny']                       = ($network_filter === null) ? '' : $network_filter->deny;
 
-            $arr_data['transport'] = trim($arr_data['transport']??'');
+            $arr_data['transport'] = trim($arr_data['transport'] ?? '');
             // Retrieve used codecs.
             $arr_data['codecs'] = $this->getCodecs();
             $context_id = self::getContextId($sip_peer->host, $sip_peer->port);
-            if ( ! isset($this->contexts_data[$context_id])) {
+            if (! isset($this->contexts_data[$context_id])) {
                 $this->contexts_data[$context_id] = [];
             }
             $this->contexts_data[$context_id][$sip_peer->uniqid] = $sip_peer->username;
             $arr_data['context_id'] = $context_id;
-            if(empty($arr_data['registration_type'])){
-                if($sip_peer->noregister === '0'){
+            if (empty($arr_data['registration_type'])) {
+                if ($sip_peer->noregister === '0') {
                     $arr_data['registration_type'] = Sip::REG_TYPE_OUTBOUND;
-                }else{
+                } else {
                     $arr_data['registration_type'] = Sip::REG_TYPE_NONE;
                 }
             }
@@ -475,7 +476,7 @@ class SIPConf extends AsteriskConfigClass
 
         // Process each SIP host.
         foreach ($sipHosts as $hostData) {
-            if ( ! isset($dataSipHosts[$hostData->provider_id])) {
+            if (! isset($dataSipHosts[$hostData->provider_id])) {
                 $dataSipHosts[$hostData->provider_id] = [];
             }
             $dataSipHosts[$hostData->provider_id][] = str_replace(PHP_EOL, '', $hostData->address);
@@ -499,8 +500,8 @@ class SIPConf extends AsteriskConfigClass
         $conf = '';
         foreach ($this->data_peers as $peer) {
             $hint = "$this->technology/{$peer['extension']}";
-            if($this->generalSettings[PbxSettings::USE_WEB_RTC] === '1') {
-                $hint.="&$this->technology/{$peer['extension']}-WS";
+            if ($this->generalSettings[PbxSettings::USE_WEB_RTC] === '1') {
+                $hint .= "&$this->technology/{$peer['extension']}-WS";
             }
             $conf .= "exten => {$peer['extension']},hint,$hint&Custom:{$peer['extension']} \n";
         }
@@ -572,16 +573,15 @@ class SIPConf extends AsteriskConfigClass
             'asterisk_error = 0' . "\n" .
             'asterisk_warning = 2' . "\n" .
             'asterisk_debug = 1,3,4,5,6' . "\n\n";
-        file_put_contents($astEtcDir.'/pjproject.conf', $pjConf);
+        file_put_contents($astEtcDir . '/pjproject.conf', $pjConf);
 
         // Write sorcery.conf file
-        file_put_contents($astEtcDir.'/sorcery.conf', '');
+        file_put_contents($astEtcDir . '/sorcery.conf', '');
 
         // Asterisk has to be restarted to apply the changes over ami
-        if ($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting!==true) {
+        if ($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting !== true) {
             $this->updateAsteriskDatabase();
         }
-
     }
 
     /**
@@ -589,7 +589,7 @@ class SIPConf extends AsteriskConfigClass
      *
      * @return bool True if the update was successful, false otherwise.
      */
-    public function updateAsteriskDatabase():bool
+    public function updateAsteriskDatabase(): bool
     {
         if ($this->data_peers === null) {
             $this->getSettings();
@@ -634,7 +634,7 @@ class SIPConf extends AsteriskConfigClass
         $resolveOk = Processes::mwExec("timeout 1 getent hosts '$externalHostName'") === 0;
 
         // Check if external hostname is provided and can be resolved
-        if(!empty($externalHostName) && !$resolveOk){
+        if (!empty($externalHostName) && !$resolveOk) {
             SystemMessages::sysLogMsg('DNS', "ERROR: DNS $externalHostName not resolved, It will not be used in SIP signaling.");
         }
 
@@ -643,7 +643,7 @@ class SIPConf extends AsteriskConfigClass
             foreach ($subnets as $net) {
                 $natConf .= "local_net=$net\n";
             }
-            if ( !empty($externalHostName) && $resolveOk ) {
+            if (!empty($externalHostName) && $resolveOk) {
                 // If external hostname is provided and resolved, use it for signaling
                 $parts   = explode(':', $externalHostName);
                 $externalHostNameWithoutPort = $parts[0];
@@ -651,7 +651,7 @@ class SIPConf extends AsteriskConfigClass
                 $natConf .= 'external_signaling_address=' . $externalHostNameWithoutPort . "\n";
                 $tlsNatConf = "{$natConf}external_signaling_port=$externalTlsPort";
                 $natConf .= 'external_signaling_port=' . $externalSipPort;
-            } elseif ( ! empty($extIpAddress)) {
+            } elseif (! empty($extIpAddress)) {
                 // If external IP address is provided, use it for signaling
                 $parts   = explode(':', $extIpAddress);
                 $externalIPWithoutPort = $parts[0];
@@ -710,10 +710,10 @@ class SIPConf extends AsteriskConfigClass
         }
 
         $varEtcDir = $this->config->path('core.varEtcDir');
-        $hash = md5($topology . $externalHostName . $extIpAddress . $sipPort.$externalSipPort. $tlsPort .$externalTlsPort. implode('',$subnets));
+        $hash = md5($topology . $externalHostName . $extIpAddress . $sipPort . $externalSipPort . $tlsPort . $externalTlsPort . implode('', $subnets));
 
         // Write the configuration content to the file
-        file_put_contents($varEtcDir.self::TOPOLOGY_HASH_FILE, $hash);
+        file_put_contents($varEtcDir . self::TOPOLOGY_HASH_FILE, $hash);
         $conf .= "\n";
         return $conf;
     }
@@ -738,13 +738,13 @@ class SIPConf extends AsteriskConfigClass
             $manual_attributes = Util::parseIniSettings(base64_decode($provider['manualattributes'] ?? ''));
 
             // Generate registration strings for outbound registration type
-            if($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND){
+            if ($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND) {
                 $reg_strings .= $this->generateProviderRegistrationAuth($provider, $manual_attributes);
                 $reg_strings .= $this->generateProviderRegistration($provider, $manual_attributes);
             }
 
             // Generate provider authentication configuration if registration type is not none
-            if($provider['registration_type'] !== Sip::REG_TYPE_NONE){
+            if ($provider['registration_type'] !== Sip::REG_TYPE_NONE) {
                 $prov_config .= $this->generateProviderAuth($provider, $manual_attributes);
             }
 
@@ -769,7 +769,8 @@ class SIPConf extends AsteriskConfigClass
      * @param array $manual_attributes The manual attributes for the provider.
      * @return string The generated registration authentication configuration.
      */
-    private function generateProviderRegistrationAuth(array $provider, array $manual_attributes): string {
+    private function generateProviderRegistrationAuth(array $provider, array $manual_attributes): string
+    {
         // Initialize the configuration string
         $conf = '';
 
@@ -811,12 +812,12 @@ class SIPConf extends AsteriskConfigClass
         $newOptions = $options;
         $modulesOverridingArrays = PBXConfModulesProvider::hookModulesMethod($method, [$extensionOrId, $options]);
         foreach ($modulesOverridingArrays as $newOptionsSet) {
-            if($options === $newOptionsSet){
+            if ($options === $newOptionsSet) {
                 continue;
             }
             // How to make some order of overrides?
-            foreach ($newOptionsSet as $key => $value){
-                if(isset($newOptions[$key])){
+            foreach ($newOptionsSet as $key => $value) {
+                if (isset($newOptions[$key])) {
                     $newOptions[$key] = $value;
                 }
             }
@@ -833,7 +834,8 @@ class SIPConf extends AsteriskConfigClass
      * @param array $manual_attributes The manual attributes for the provider.
      * @return string The generated registration configuration.
      */
-    private function generateProviderRegistration(array $provider, array $manual_attributes): string {
+    private function generateProviderRegistration(array $provider, array $manual_attributes): string
+    {
 
         // Initialize the configuration string
         $conf = '';
@@ -852,10 +854,10 @@ class SIPConf extends AsteriskConfigClass
             'client_uri'               => "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}",
         ];
 
-        if(!empty($provider['transport'])){
+        if (!empty($provider['transport'])) {
             $options['transport'] = "transport-{$provider['transport']}";
         }
-        if(!empty($provider['outbound_proxy'])){
+        if (!empty($provider['outbound_proxy'])) {
             $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
         }
 
@@ -884,7 +886,8 @@ class SIPConf extends AsteriskConfigClass
      * @param array $manual_attributes The manual attributes for the provider.
      * @return string The generated authentication configuration.
      */
-    private function generateProviderAuth(array $provider, array $manual_attributes): string {
+    private function generateProviderAuth(array $provider, array $manual_attributes): string
+    {
 
         // Initialize the configuration string
         $conf = '';
@@ -926,9 +929,9 @@ class SIPConf extends AsteriskConfigClass
         $conf        = '';
 
         $contact     = '';
-        if($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND){
+        if ($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND) {
             $contact = "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}";
-        }elseif($provider['registration_type'] === Sip::REG_TYPE_NONE) {
+        } elseif ($provider['registration_type'] === Sip::REG_TYPE_NONE) {
             $contact = "sip:{$provider['host']}:{$provider['port']}";
         }
         $options = [
@@ -938,7 +941,7 @@ class SIPConf extends AsteriskConfigClass
             'minimum_expiration' => $this->generalSettings[PbxSettings::SIP_MIN_EXPIRY],
             'default_expiration' => $this->generalSettings[PbxSettings::SIP_DEFAULT_EXPIRY],
         ];
-        if(!empty($contact)){
+        if (!empty($contact)) {
             $options['contact'] = $contact;
         }
 
@@ -946,7 +949,7 @@ class SIPConf extends AsteriskConfigClass
             $options['qualify_frequency'] = $provider['qualifyfreq'];
             $options['qualify_timeout']   = '3.0';
         }
-        if(!empty($provider['outbound_proxy'])){
+        if (!empty($provider['outbound_proxy'])) {
             $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
         }
 
@@ -975,15 +978,16 @@ class SIPConf extends AsteriskConfigClass
      * @param array $manual_attributes The manual attributes for the provider.
      * @return string The generated Identify configuration.
      */
-    private function generateProviderIdentify(array $provider, array $manual_attributes): string {
+    private function generateProviderIdentify(array $provider, array $manual_attributes): string
+    {
         // Initialize the configuration string
         $conf          = '';
 
         $providerHosts = $this->dataSipHosts[$provider['uniqid']] ?? [];
-        if(!empty($provider['outbound_proxy'])){
+        if (!empty($provider['outbound_proxy'])) {
             $providerHosts[] = explode(':', $provider['outbound_proxy'])[0];
         }
-        if(empty($providerHosts)){
+        if (empty($providerHosts)) {
             // Return empty configuration if provider hosts are empty
             return '';
         }
@@ -1016,23 +1020,26 @@ class SIPConf extends AsteriskConfigClass
      * @param array $manual_attributes The manual attributes for the provider.
      * @return string The generated Endpoint configuration.
      */
-    private function generateProviderEndpoint(array $provider, array $manual_attributes): string {
+    private function generateProviderEndpoint(array $provider, array $manual_attributes): string
+    {
         // Initialize the configuration string
         $conf       = '';
 
         $fromdomain = (trim($provider['fromdomain']) === '') ? $provider['host'] : $provider['fromdomain'];
         $from       = (trim($provider['fromuser']) === '') ? "{$provider['username']}; username" : "{$provider['fromuser']}; fromuser";
 
-        if($provider['disablefromuser'] === '1'){
+        if ($provider['disablefromuser'] === '1') {
             $from_user   = null;
-            $contactUser = trim($provider['username']??'');
-        }else{
+            $contactUser = trim($provider['username'] ?? '');
+        } else {
             $from_user   = $from;
             $contactUser = $from;
         }
         $language   = $this->generalSettings[PbxSettings::PBX_LANGUAGE];
-        if ($provider['registration_type'] === Sip::REG_TYPE_INBOUND
-            || count($this->contexts_data[$provider['context_id']]) === 1) {
+        if (
+            $provider['registration_type'] === Sip::REG_TYPE_INBOUND
+            || count($this->contexts_data[$provider['context_id']]) === 1
+        ) {
             $context_id = $provider['uniqid'];
             $context = "$context_id-incoming";
         } else {
@@ -1060,21 +1067,21 @@ class SIPConf extends AsteriskConfigClass
             'aors'            => $provider['uniqid'],
             'timers'          => 'no',
             'rtp_timeout'     => '30',
-            'rtp_timeout_hold'=> '30',
+            'rtp_timeout_hold' => '30',
         ];
 
-        if(!empty($provider['transport'])){
+        if (!empty($provider['transport'])) {
             $options['transport'] = "transport-{$provider['transport']}";
-            if($provider['transport'] === Sip::TRANSPORT_TLS){
+            if ($provider['transport'] === Sip::TRANSPORT_TLS) {
                 $options['media_encryption'] = 'sdes';
             }
         }
-        if(!empty($provider['outbound_proxy'])){
+        if (!empty($provider['outbound_proxy'])) {
             $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
         }
         if ($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND) {
             $options['outbound_auth'] = "{$provider['uniqid']}-AUTH";
-        }elseif ($provider['registration_type'] === Sip::REG_TYPE_INBOUND){
+        } elseif ($provider['registration_type'] === Sip::REG_TYPE_INBOUND) {
             $options['auth'] = "{$provider['uniqid']}-AUTH";
         }
         self::getToneZone($options, $language);
@@ -1087,8 +1094,8 @@ class SIPConf extends AsteriskConfigClass
         );
 
         // Add configuration section header
-        $conf    .= "[{$provider['uniqid']}]".PHP_EOL;
-        $conf    .= 'set_var=providerID='.$provider['uniqid'].PHP_EOL;
+        $conf    .= "[{$provider['uniqid']}]" . PHP_EOL;
+        $conf    .= 'set_var=providerID=' . $provider['uniqid'] . PHP_EOL;
 
         // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
@@ -1105,14 +1112,14 @@ class SIPConf extends AsteriskConfigClass
      * @param string $port The port to generate the context ID from.
      * @return string The generated context ID.
      */
-    public static function getContextId(string $name, string $port):string
+    public static function getContextId(string $name, string $port): string
     {
         if (filter_var($name, FILTER_VALIDATE_IP)) {
             $nameNew = $name;
-        }else{
+        } else {
             $nameNew = gethostbyname($name);
         }
-        return preg_replace("/[^a-z\d]/iu", '', $nameNew.$port).'-incoming';
+        return preg_replace("/[^a-z\d]/iu", '', $nameNew . $port) . '-incoming';
     }
 
     /**
@@ -1128,7 +1135,7 @@ class SIPConf extends AsteriskConfigClass
     public static function getToneZone(array &$options, string $lang): void
     {
         $toneZone = IndicationConf::LANG_ZONE_MAP[$lang] ?? 'ru';
-        if ( ! empty($toneZone)) {
+        if (! empty($toneZone)) {
             $options['inband_progress'] = 'yes';
             $options['tone_zone']       = $toneZone;
         }
@@ -1237,7 +1244,7 @@ class SIPConf extends AsteriskConfigClass
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
 
         // Generate the WebRTC aor section if enabled
-        if($this->generalSettings[PbxSettings::USE_WEB_RTC] === '1'){
+        if ($this->generalSettings[PbxSettings::USE_WEB_RTC] === '1') {
             $conf    .= "[{$peer['extension']}-WS]\n";
             $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
         }
@@ -1266,9 +1273,9 @@ class SIPConf extends AsteriskConfigClass
         $language = (trim($language) === '') ? 'en-en' : $language;
 
         $calleridname = (trim($peer['calleridname']) === '') ? $peer['extension'] : $peer['calleridname'];
-        if(mb_strlen($calleridname) !== strlen($calleridname)){
+        if (mb_strlen($calleridname) !== strlen($calleridname)) {
             // Limit the length of calleridname to 40 characters
-            $calleridname = mb_substr($calleridname,0, 40);
+            $calleridname = mb_substr($calleridname, 0, 40);
         }
 
         $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
@@ -1303,9 +1310,9 @@ class SIPConf extends AsteriskConfigClass
         ];
 
         // Set transport and media encryption options if applicable
-        if(!empty($peer['transport'])){
+        if (!empty($peer['transport'])) {
             $options['transport'] = "transport-{$peer['transport']}";
-            if($peer['transport'] === Sip::TRANSPORT_TLS){
+            if ($peer['transport'] === Sip::TRANSPORT_TLS) {
                 $options['media_encryption'] = 'sdes';
             }
         }
@@ -1327,7 +1334,7 @@ class SIPConf extends AsteriskConfigClass
 
 
         // Generate the WebRTC endpoint section if enabled
-        if($this->generalSettings[PbxSettings::USE_WEB_RTC] === '1') {
+        if ($this->generalSettings[PbxSettings::USE_WEB_RTC] === '1') {
             unset($options['media_encryption']);
 
             $conf .= "[{$peer['extension']}-WS] \n";
@@ -1337,7 +1344,7 @@ class SIPConf extends AsteriskConfigClass
 
             // Set Opus codec as a priority
             $opusIndex = array_search('opus', $options['allow']);
-            if($opusIndex !== false){
+            if ($opusIndex !== false) {
                 unset($options['allow'][$opusIndex]);
                 array_unshift($options['allow'], 'opus');
             }
@@ -1353,5 +1360,4 @@ class SIPConf extends AsteriskConfigClass
         }
         return $conf;
     }
-
 }

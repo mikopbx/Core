@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -24,7 +25,6 @@ use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 
-
 /**
  * Class DefaultIncomingRouteForm
  *
@@ -49,7 +49,9 @@ class DefaultIncomingRouteForm extends BaseForm
                     ];
 
                     $defaultActions = new Select(
-                        'action', $arrDefaultActions, [
+                        'action',
+                        $arrDefaultActions,
+                        [
                             'using' => [
                                 'id',
                                 'name',
@@ -65,11 +67,13 @@ class DefaultIncomingRouteForm extends BaseForm
                 case 'audio_message_id' :{
                     // Audio_message_id
                     $fileId = (string)$options['soundfiles'];
-                    if(empty($fileId)){
+                    if (empty($fileId)) {
                         $fileId = 'none';
                     }
                     $audioMessage = new Select(
-                        'audio_message_id', $fileId, [
+                        'audio_message_id',
+                        $fileId,
+                        [
                                               'using' => [
                                                   'id',
                                                   'name',
@@ -84,7 +88,9 @@ class DefaultIncomingRouteForm extends BaseForm
                 {
                     // Extension
                     $extension = new Select(
-                        'extension', $options['extensions'], [
+                        'extension',
+                        $options['extensions'],
+                        [
                             'using' => [
                                 'id',
                                 'name',

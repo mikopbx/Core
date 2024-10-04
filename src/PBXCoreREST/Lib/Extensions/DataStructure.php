@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -26,7 +27,6 @@ use MikoPBX\Common\Models\Sip;
 
 class DataStructure
 {
-
     public ?string $id;
 
     public string $type = Extensions::TYPE_SIP;
@@ -108,14 +108,14 @@ class DataStructure
             $this->mobile_uniqid = ExternalPhones::generateUniqueID();
         }
         if (empty($this->sip_networkfilterid)) {
-            $this->sip_networkfilterid='none';
+            $this->sip_networkfilterid = 'none';
         }
         if (empty($this->sip_dtmfmode)) {
-            $this->sip_dtmfmode='auto';
+            $this->sip_dtmfmode = 'auto';
         }
 
         // Sanitize extension
-        if (!empty($this->number)){
+        if (!empty($this->number)) {
             $this->number = preg_replace('/\D/', '', $this->number);
         }
         if (empty($this->number)) {
@@ -123,7 +123,7 @@ class DataStructure
         }
 
         // Sanitize mobile numbers
-        if (!empty($this->mobile_number)){
+        if (!empty($this->mobile_number)) {
             $this->mobile_number = preg_replace('/\D/', '', $this->mobile_number);
         }
         if (empty($this->mobile_dialstring)) {

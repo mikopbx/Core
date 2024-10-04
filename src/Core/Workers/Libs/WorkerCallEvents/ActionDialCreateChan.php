@@ -108,10 +108,10 @@ class ActionDialCreateChan
                 $row->writeAttribute('dst_chan', $data['dst_chan']);
             }
 
-            if (isset($data['to_account']) && !empty($data['to_account'])) {
+            if (!empty($data['to_account'])) {
                 $row->writeAttribute($account_col, $data['to_account']);
             }
-            if (isset($data['dst_call_id']) && !empty($data['dst_call_id'])) {
+            if (!empty($data['dst_call_id'])) {
                 $row->writeAttribute('dst_call_id', $data['dst_call_id']);
             }
 

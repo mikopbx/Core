@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
@@ -110,7 +111,7 @@ class UploadFileAction extends Injectable
      */
     private static function moveUploadedPartToSeparateDir(array $parameters, array $file_data): bool
     {
-        if ( ! file_exists($file_data['file_path'])) {
+        if (! file_exists($file_data['file_path'])) {
             return false;
         }
         $factory          = new StreamFactory();

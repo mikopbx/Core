@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -25,7 +26,6 @@ use MikoPBX\Common\Models\{FirewallRules, LanInterfaces, NetworkFilters, PbxSett
 
 class FirewallController extends BaseController
 {
-
     /**
      * Prepares index page
      */
@@ -43,9 +43,9 @@ class FirewallController extends BaseController
 
             if (!str_contains($interface->subnet, '.')) {
                 $localAddresses[] = $calculator->cidr2network(
-                        $interface->ipaddr,
-                        $interface->subnet
-                    ) . '/' . $interface->subnet;
+                    $interface->ipaddr,
+                    intval($interface->subnet)
+                ) . '/' . $interface->subnet;
             } else {
                 $cidr             = $calculator->netmask2cidr($interface->subnet);
                 $localAddresses[] = $calculator->cidr2network($interface->ipaddr, $cidr) . '/' . $cidr;
@@ -64,15 +64,15 @@ class FirewallController extends BaseController
 
             if (!str_contains($permitParts[1], '.')) {
                 $networksTable[$filter->id]['network'] = $calculator->cidr2network(
-                        $permitParts[0],
-                        $permitParts[1]
-                    ) . '/' . $permitParts[1];
+                    $permitParts[0],
+                    intval($permitParts[1])
+                ) . '/' . $permitParts[1];
             } else {
                 $cidr                                  = $calculator->netmask2cidr($permitParts[1]);
                 $networksTable[$filter->id]['network'] = $calculator->cidr2network(
-                        $permitParts[0],
-                        $cidr
-                    ) . '/' . $cidr;
+                    $permitParts[0],
+                    $cidr
+                ) . '/' . $cidr;
             }
             $networksTable[$filter->id]['permanent'] = false;
 
@@ -89,7 +89,7 @@ class FirewallController extends BaseController
             $firewallRules = $filter->FirewallRules;
             foreach ($firewallRules as $rule) {
                 $networksTable[$filter->id]['category'][$rule->category]['action'] = $rule->action;
-                if ( ! array_key_exists('name', $networksTable[$filter->id]['category'][$rule->category])) {
+                if (! array_key_exists('name', $networksTable[$filter->id]['category'][$rule->category])) {
                     $networksTable[$filter->id]['category'][$rule->category]['name'] = $rule->category;
                 }
             }
@@ -105,7 +105,7 @@ class FirewallController extends BaseController
                     break;
                 }
             }
-            if ( ! $existsPersistentRecord) {
+            if (! $existsPersistentRecord) {
                 foreach ($defaultRules as $key => $value) {
                     $networksTableNewRecord['category'][$key] = [
                         'name'   => $key,
@@ -166,7 +166,7 @@ class FirewallController extends BaseController
      */
     public function saveAction(): void
     {
-        if ( ! $this->request->isPost()) {
+        if (! $this->request->isPost()) {
             return;
         }
 
@@ -189,7 +189,7 @@ class FirewallController extends BaseController
 
         // Update firewall rules Firewall
         $data['id'] = $filterRecordId;
-        if ( ! $this->updateFirewallRules($data)) {
+        if (! $this->updateFirewallRules($data)) {
             $this->view->success = false;
             $this->db->rollback();
 
@@ -222,9 +222,9 @@ class FirewallController extends BaseController
             switch ($name) {
                 case 'permit':
                     $filterRecord->$name = $calculator->cidr2network(
-                            $data['network'],
-                            $data['subnet']
-                        ) . '/' . $data['subnet'];
+                        $data['network'],
+                        intval($data['subnet'])
+                    ) . '/' . $data['subnet'];
                     break;
                 case 'deny':
                     $filterRecord->$name = '0.0.0.0/0';

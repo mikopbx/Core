@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -21,7 +22,6 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\DialplanApplications;
 
-
 /**
  * Represents the configuration class for Dialplan applications.
  * Generates the configuration content for extensions.conf.
@@ -30,7 +30,6 @@ use MikoPBX\Common\Models\DialplanApplications;
  */
 class DialplanApplicationConf extends AsteriskConfigClass
 {
-
     public int $priority = 550;
 
 
@@ -79,7 +78,7 @@ class DialplanApplicationConf extends AsteriskConfigClass
 
         $app_data = '';
         foreach ($arr_data_app as $row) {
-            if(trim($row) === ''){
+            if (trim($row) === '') {
                 continue;
             }
             if ('' === $app_data) {
@@ -127,7 +126,7 @@ class DialplanApplicationConf extends AsteriskConfigClass
         $arrDialplanApplications = DialplanApplications::find()->toArray();
         foreach ($arrDialplanApplications as $app) {
             // Skip non-numeric extensions
-            if(!is_numeric($app['extension'])){
+            if (!is_numeric($app['extension'])) {
                 continue;
             }
             $conf .= "exten => {$app['extension']},hint,Custom:{$app['extension']} \n";

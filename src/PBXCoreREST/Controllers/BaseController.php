@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -28,7 +29,7 @@ use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use Phalcon\Filter\Filter;
 use Phalcon\Mvc\Controller;
-use Pheanstalk\Pheanstalk;
+use Pheanstalk\Contract\PheanstalkInterface;
 use Throwable;
 
 /**
@@ -38,8 +39,6 @@ use Throwable;
  */
 class BaseController extends Controller
 {
-
-
     /**
      * Send a request to the backend worker.
      *
@@ -57,25 +56,24 @@ class BaseController extends Controller
         string $processor,
         string $actionName,
         mixed $payload = null,
-        string $moduleName='',
+        string $moduleName = '',
         int $maxTimeout = 10,
-        int $priority = Pheanstalk::DEFAULT_PRIORITY
-    ): void
-    {
+        int $priority = PheanstalkInterface::DEFAULT_PRIORITY
+    ): void {
         list($debug, $requestMessage) = $this->prepareRequestMessage($processor, $payload, $actionName, $moduleName);
 
         try {
             $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
             $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
-            if ($debug){
+            if ($debug) {
                 $maxTimeout = 9999;
             }
             $response       = $beanstalkQueue->request($message, $maxTimeout, $priority);
             if ($response !== false) {
                 $response = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
-                if (array_key_exists(BeanstalkClient::QUEUE_ERROR, $response)){
+                if (array_key_exists(BeanstalkClient::QUEUE_ERROR, $response)) {
                     $this->response->setPayloadError($response[BeanstalkClient::QUEUE_ERROR]);
-                } elseif (array_key_exists(BeanstalkClient::RESPONSE_IN_FILE, $response)){
+                } elseif (array_key_exists(BeanstalkClient::RESPONSE_IN_FILE, $response)) {
                     $tempFile = $response[BeanstalkClient::RESPONSE_IN_FILE];
                     $response = unserialize(file_get_contents($tempFile));
                     $this->response->setPayloadSuccess($response);
@@ -130,13 +128,13 @@ class BaseController extends Controller
             'processor' => $processor,
             'data' => $payload,
             'action' => $actionName,
-            'async'=> false,
-            'asyncChannelId'=> '',
+            'async' => false,
+            'asyncChannelId' => '',
             'debug' => $debug
         ];
-        if ($this->request->isAsyncRequest()){
-            $requestMessage['async']= true;
-            $requestMessage['asyncChannelId']= $this->request->getAsyncRequestChannelId();
+        if ($this->request->isAsyncRequest()) {
+            $requestMessage['async'] = true;
+            $requestMessage['asyncChannelId'] = $this->request->getAsyncRequestChannelId();
         }
 
         if ($processor === PbxExtensionsProcessor::class) {

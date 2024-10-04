@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -35,7 +36,6 @@ use Throwable;
  */
 class SelectCDR
 {
-
     /**
      * Execute the selection of Call Detail Records (CDR) based on the specified filters.
      *
@@ -100,7 +100,6 @@ class SelectCDR
         }
 
         return $res_data;
-
     }
 
     /**

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -34,7 +35,7 @@ use Phalcon\Di\Injectable;
 
 class UpdateConfigsUpToVer2020162 extends Injectable implements UpgradeSystemConfigInterface
 {
-  	public const string PBX_VERSION = '2020.1.62';
+    public const string PBX_VERSION = '2020.1.62';
 
     private ConfigAlias $config;
     private MikoPBXConfig $mikoPBXConfig;
@@ -48,7 +49,7 @@ class UpdateConfigsUpToVer2020162 extends Injectable implements UpgradeSystemCon
         $this->mikoPBXConfig = new MikoPBXConfig();
     }
 
-    public function processUpdate():void
+    public function processUpdate(): void
     {
         $sqlite3Path = Util::which('sqlite3');
 

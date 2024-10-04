@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -144,7 +145,7 @@ class AsteriskManagerUsers extends ModelsBase
      *
      * @Column(type="string", nullable=true)
      */
-    public ?string  $command = '';
+    public ?string $command = '';
 
     /**
      * ID of the network filter associated with the user

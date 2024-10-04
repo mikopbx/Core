@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\Workers\Libs\WorkerCallEvents;
-
 
 use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Core\System\Util;
@@ -40,7 +40,7 @@ class ActionCelAnswer
      * @return void
      * @throws \Exception
      */
-    public static function execute(WorkerCallEvents $worker, ?array$data): void
+    public static function execute(WorkerCallEvents $worker, ?array $data): void
     {
         $channel = $data['Channel'] ?? '';
         $worker->addActiveChan($channel, $data['LinkedID']);
@@ -103,5 +103,4 @@ class ActionCelAnswer
             InsertDataToDB::execute($insert_data);
         }
     }
-
 }

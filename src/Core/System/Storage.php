@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -37,6 +38,7 @@ use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di\Injectable;
+
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -63,7 +65,7 @@ class Storage extends Injectable
         }
 
         // Create the current media directory if it doesn't exist
-        $currentMediaDir =  $this->config->path('asterisk.customSoundDir'). '/';
+        $currentMediaDir =  $this->config->path('asterisk.customSoundDir') . '/';
         if (!file_exists($currentMediaDir)) {
             Util::mwMkdir($currentMediaDir);
         }
@@ -102,7 +104,8 @@ class Storage extends Injectable
     public static function isStorageDiskMounted(string $filter = '', string &$mount_dir = ''): bool
     {
         // Check if it's a T2Sde Linux and /storage/usbdisk1/ exists
-        if (!Util::isT2SdeLinux()
+        if (
+            !Util::isT2SdeLinux()
             && file_exists('/storage/usbdisk1/')
         ) {
             $mount_dir = '/storage/usbdisk1/';
@@ -145,7 +148,7 @@ class Storage extends Injectable
             return;
         }
 
-        $oldMohDir =  $this->config->path('asterisk.astvarlibdir'). '/sounds/moh';
+        $oldMohDir =  $this->config->path('asterisk.astvarlibdir') . '/sounds/moh';
         $currentMohDir = $this->config->path('asterisk.mohdir');
 
         // If the old MOH directory doesn't exist or unable to create the current MOH directory, return
@@ -178,7 +181,7 @@ class Storage extends Injectable
      * @param string $dev The device path of the disk.
      * @return bool Returns true if the file system creation process is initiated, false otherwise.
      */
-    public static function mkfs_disk(string $dev):bool
+    public static function mkfs_disk(string $dev): bool
     {
         if (!file_exists($dev)) {
             $dev = "/dev/$dev";
@@ -313,13 +316,13 @@ class Storage extends Injectable
      * @param bool $forceFormatStorage Flag to determine if the disk should be formatted
      * @return bool Returns true on success, false otherwise
      */
-    public static function selectAndConfigureStorageDisk(bool $automatic=false, bool $forceFormatStorage = false): bool
+    public static function selectAndConfigureStorageDisk(bool $automatic = false, bool $forceFormatStorage = false): bool
     {
         $storage = new self();
 
         // Check if the storage disk is already mounted
         if (self::isStorageDiskMounted()) {
-            SystemMessages::echoWithSyslog(PHP_EOL." " . Util::translate('Storage disk is already mounted...') . " ");
+            SystemMessages::echoWithSyslog(PHP_EOL . " " . Util::translate('Storage disk is already mounted...') . " ");
             sleep(2);
             return true;
         }
@@ -357,7 +360,7 @@ class Storage extends Injectable
             }
 
             // Check if the disk is a system disk and has a valid partition
-           if ($disk['size'] < 2*1024) {
+            if ($disk['size'] < 2 * 1024) {
                 // If the disk size is less than 2 gb, continue to the next iteration
                 continue;
             }
@@ -368,9 +371,9 @@ class Storage extends Injectable
 
         if (empty($validDisks)) {
             // If no valid disks were found, log a message and return 0
-            $message = '   |- '.Util::translate('Valid disks not found...');
+            $message = '   |- ' . Util::translate('Valid disks not found...');
             SystemMessages::echoWithSyslog($message);
-            SystemMessages::echoToTeletype(PHP_EOL.$message);
+            SystemMessages::echoToTeletype(PHP_EOL . $message);
             sleep(3);
             return false;
         }
@@ -378,20 +381,20 @@ class Storage extends Injectable
         // Check if the disk selection should be automatic
         if ($automatic) {
             $target_disk_storage = $selected_disk['id'];
-            SystemMessages::echoToTeletype(PHP_EOL.'   - '."Automatically selected storage disk is $target_disk_storage");
+            SystemMessages::echoToTeletype(PHP_EOL . '   - ' . "Automatically selected storage disk is $target_disk_storage");
         } else {
-            echo PHP_EOL." " . Util::translate('Select the drive to store the data.');
-            echo PHP_EOL." " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m ".PHP_EOL.PHP_EOL;
-            echo(PHP_EOL." " . Util::translate('Valid disks are:') . " ".PHP_EOL.PHP_EOL);
+            echo PHP_EOL . " " . Util::translate('Select the drive to store the data.');
+            echo PHP_EOL . " " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m " . PHP_EOL . PHP_EOL;
+            echo(PHP_EOL . " " . Util::translate('Valid disks are:') . " " . PHP_EOL . PHP_EOL);
             foreach ($validDisks as $disk) {
                 echo($disk);
             }
             echo PHP_EOL;
             // Open standard input in binary mode for interactive reading
             $fp = fopen('php://stdin', 'rb');
-            if ($forceFormatStorage){
+            if ($forceFormatStorage) {
                 echo '*******************************************************************************
-* ' . Util::translate('WARNING').'
+* ' . Util::translate('WARNING') . '
 * - ' . Util::translate('everything on this device will be erased!') . '
 * - ' . Util::translate('this cannot be undone!') . '
 *******************************************************************************';
@@ -415,13 +418,13 @@ class Storage extends Injectable
         }
         $partitionName = self::getDevPartName($target_disk_storage, $part);
         if ($part === '1' && (!self::isStorageDisk($partitionName) || $forceFormatStorage)) {
-            echo PHP_EOL . Util::translate('Partitioning and formatting storage disk').': '.$dev_disk.'...'.PHP_EOL;
+            echo PHP_EOL . Util::translate('Partitioning and formatting storage disk') . ': ' . $dev_disk . '...' . PHP_EOL;
             $storage->formatEntireDisk($dev_disk);
-        } elseif($part === '4' && $forceFormatStorage) {
-            echo PHP_EOL . Util::translate('Formatting storage partition 4 on disk').': '.$dev_disk.'...'.PHP_EOL;
+        } elseif ($part === '4' && $forceFormatStorage) {
+            echo PHP_EOL . Util::translate('Formatting storage partition 4 on disk') . ': ' . $dev_disk . '...' . PHP_EOL;
             passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four create $dev_disk");
-        } elseif($part === '4') {
-            echo PHP_EOL . Util::translate('Update storage partition 4 on disk').': '.$dev_disk.'...'.PHP_EOL;
+        } elseif ($part === '4') {
+            echo PHP_EOL . Util::translate('Update storage partition 4 on disk') . ': ' . $dev_disk . '...' . PHP_EOL;
             passthru("exec </dev/console >/dev/console 2>/dev/console; /sbin/initial_storage_part_four update $dev_disk");
         }
         $partitionName = self::getDevPartName($target_disk_storage, $part);
@@ -433,7 +436,7 @@ class Storage extends Injectable
             'filesystemtype' => 'ext4',
             'name' => 'Storage №1'
         ];
-        echo PHP_EOL ."Disk part: $dev_disk, uid: $uuid".PHP_EOL;
+        echo PHP_EOL . "Disk part: $dev_disk, uid: $uuid" . PHP_EOL;
         // Save the disk settings
         $storage->saveDiskSettings($data);
         if (file_exists('/offload/livecd')) {
@@ -447,14 +450,14 @@ class Storage extends Injectable
         MainDatabaseProvider::recreateDBConnections();
         $success = self::isStorageDiskMounted();
         if ($success === true && $automatic) {
-            SystemMessages::echoToTeletype(PHP_EOL.'   |- The data storage disk has been successfully mounted ... ');
+            SystemMessages::echoToTeletype(PHP_EOL . '   |- The data storage disk has been successfully mounted ... ');
             sleep(2);
             System::reboot();
             return true;
         }
 
         if ($automatic) {
-            SystemMessages::echoToTeletype(PHP_EOL.'   |- Storage disk was not mounted automatically ... ');
+            SystemMessages::echoToTeletype(PHP_EOL . '   |- Storage disk was not mounted automatically ... ');
         }
 
         fclose(STDERR);
@@ -480,13 +483,13 @@ class Storage extends Injectable
 
         // Check if the disk was mounted successfully
         if ($success === true) {
-            SystemMessages::echoWithSyslog( "\n   |- " . Util::translate('Storage disk was mounted successfully...') . " \n\n");
+            SystemMessages::echoWithSyslog("\n   |- " . Util::translate('Storage disk was mounted successfully...') . " \n\n");
         } else {
-            SystemMessages::echoWithSyslog( "\n   |- " . Util::translate('Failed to mount the disc...') . " \n\n");
+            SystemMessages::echoWithSyslog("\n   |- " . Util::translate('Failed to mount the disc...') . " \n\n");
         }
 
         sleep(3);
-        if ($STDERR!==false){
+        if ($STDERR !== false) {
             fclose($STDERR);
         }
 
@@ -510,24 +513,24 @@ class Storage extends Injectable
 
         $basenameDisk = basename($dev);
         $pathToDisk = trim(shell_exec("$lsBlkPath -n -p -a -r -o NAME,TYPE | $grepPath disk | $grepPath '$basenameDisk' | $cutPath -d ' ' -f 1"));
-        if($verbose) {
-            echo "Get dev full path...".PHP_EOL;
-            echo "Source dev: $dev, result full path: $pathToDisk".PHP_EOL;
+        if ($verbose) {
+            echo "Get dev full path..." . PHP_EOL;
+            echo "Source dev: $dev, result full path: $pathToDisk" . PHP_EOL;
         }
             // Touch the disk to update disk tables
         $partProbePath = Util::which('partprobe');
-        shell_exec($partProbePath." '$pathToDisk'");
+        shell_exec($partProbePath . " '$pathToDisk'");
 
         // Touch the disk to update disk tables
         $command = "$lsBlkPath -r -p | $grepPath ' part' | $sortPath -u | $cutPath -d ' ' -f 1 | $grepPath '" . $pathToDisk . "' | $grepPath \"$part\$\"";
         $devName = trim(shell_exec($command));
-        if(empty($devName) && $verbose ){
+        if (empty($devName) && $verbose) {
             $verboseMsg = trim(shell_exec("$lsBlkPath -r -p"));
-            echo "---   filtered command   ---".PHP_EOL;
-            echo $command.PHP_EOL;
-            echo "---   result 'lsblk -r -p'   ---".PHP_EOL;
-            echo $verboseMsg.PHP_EOL;
-            echo "---   ---   ---".PHP_EOL;
+            echo "---   filtered command   ---" . PHP_EOL;
+            echo $command . PHP_EOL;
+            echo "---   result 'lsblk -r -p'   ---" . PHP_EOL;
+            echo $verboseMsg . PHP_EOL;
+            echo "---   ---   ---" . PHP_EOL;
         }
         return $devName;
     }
@@ -599,8 +602,8 @@ class Storage extends Injectable
         foreach ($data as $key => $value) {
             $storage_settings->writeAttribute($key, $value);
         }
-        if(!$storage_settings->save()){
-            echo PHP_EOL ."Fail save new storage ID in database...".PHP_EOL;
+        if (!$storage_settings->save()) {
+            echo PHP_EOL . "Fail save new storage ID in database..." . PHP_EOL;
         }
     }
 
@@ -888,7 +891,7 @@ class Storage extends Injectable
             $grep = Util::which('grep');
             $cut = Util::which('cut');
             $cmd = "$lsblk -r -o NAME,UUID | $grep {$disk['uniqid']} | $cut -d ' ' -f 1";
-            $dev = '/dev/' . trim(shell_exec($cmd)??'');
+            $dev = '/dev/' . trim(shell_exec($cmd) ?? '');
             if ($this->hddExists($dev)) {
                 // Disk exists.
                 return $dev;
@@ -1000,8 +1003,8 @@ class Storage extends Injectable
         // Mount the file systems
         $mountPath     = Util::which('mount');
         $resultOfMount = Processes::mwExec("$mountPath -a", $out);
-        if($resultOfMount !== 0){
-            SystemMessages::echoToTeletype(" - Error mount ". implode(' ', $out));
+        if ($resultOfMount !== 0) {
+            SystemMessages::echoToTeletype(" - Error mount " . implode(' ', $out));
         }
         // Add regular www rights to /cf directory
         Util::addRegularWWWRights('/cf');
@@ -1131,7 +1134,6 @@ class Storage extends Injectable
         // Create symlink for image cache directory
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
         Util::createUpdateSymlink($this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/img', $imgCacheDir);
-
     }
 
     /**
@@ -1320,7 +1322,6 @@ class Storage extends Injectable
         $res_disks = [];
 
         if (Util::isDocker()) {
-
             // Get disk information for /storage directory
             $out = [];
             $grepPath = Util::which('grep');
@@ -1837,7 +1838,7 @@ class Storage extends Injectable
         }
 
         // In some Clouds the virtual machine starts immediately before the storage disk was attached
-        if (!self::selectAndConfigureStorageDisk(true)){
+        if (!self::selectAndConfigureStorageDisk(true)) {
             return SystemMessages::RESULT_FAILED;
         }
 
