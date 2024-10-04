@@ -476,7 +476,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'iv_ValidateNoIVRExtensions' => 'IVR menyusu üçün yığım əməliyyatları təyin edilməyib',
     'iv_ValidateNameIsEmpty' => 'IVR menyu adı göstərilməyib',
     'iv_ValidateDigitsIsNotCorrect' => 'Kod sahəsi düzgün doldurulmayıb',
-    'mo_NewElementOutgoingRoutingTable' => 'Yeni Giden Zənglərin İdarə Edilməsi Qaydası',
+    'mo_NewElementOutgoingRoutingTable' => 'Gedən zəngləri emal etmək üçün yeni qayda',
     'mo_NewElementIncomingRoutingTable' => 'Yeni gələn zənglərin idarə edilməsi qaydası',
     'mo_NewElementSip' => 'Yeni SIP provayderi',
     'mo_NewElementIax' => 'Yeni IAX provayderi',
