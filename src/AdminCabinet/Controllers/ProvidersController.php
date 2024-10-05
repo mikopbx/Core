@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\{IaxProviderEditForm, SipProviderEditForm};
 use MikoPBX\Common\Models\{Iax, Providers, Sip, SipHosts};
+use Phalcon\Filter\Filter;
 
 class ProvidersController extends BaseController
 {
@@ -60,7 +61,7 @@ class ProvidersController extends BaseController
         $idIsEmpty = false;
         if (empty($uniqId)) {
             $idIsEmpty = true;
-            $uniqId = (string)($_GET['copy-source'] ?? '');
+            $uniqId = $this->request->get('copy-source', Filter::FILTER_STRING, '');
         }
         /** @var Providers $provider */
         $provider = Providers::findFirstByUniqid($uniqId);
@@ -123,7 +124,7 @@ class ProvidersController extends BaseController
         $idIsEmpty = false;
         if (empty($uniqId)) {
             $idIsEmpty = true;
-            $uniqId = (string)($_GET['copy-source'] ?? '');
+            $uniqId = $this->request->get('copy-source', Filter::FILTER_STRING, '');
         }
 
         $provider = Providers::findFirstByUniqid($uniqId);

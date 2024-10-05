@@ -23,6 +23,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\DefaultIncomingRouteForm;
 use MikoPBX\AdminCabinet\Forms\IncomingRouteEditForm;
 use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, OutWorkTimesRouts, Sip, SoundFiles};
+use Phalcon\Filter\Filter;
 
 class IncomingRoutesController extends BaseController
 {
@@ -123,7 +124,7 @@ class IncomingRoutesController extends BaseController
         $idIsEmpty = false;
         if (empty($ruleId)) {
             $idIsEmpty = true;
-            $ruleId = (string)($_GET['copy-source'] ?? '');
+            $ruleId = $this->request->get('copy-source', Filter::FILTER_INT, '');
         }
         $rule = IncomingRoutingTable::findFirstByid($ruleId);
         if ($rule === null) {

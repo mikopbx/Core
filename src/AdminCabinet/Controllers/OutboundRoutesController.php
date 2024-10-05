@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\OutgoingRouteEditForm;
 use MikoPBX\Common\Models\{OutgoingRoutingTable, Providers};
+use Phalcon\Filter\Filter;
 
 class OutboundRoutesController extends BaseController
 {
@@ -72,17 +73,17 @@ class OutboundRoutesController extends BaseController
     /**
      * Shows the edit form for an outbound route
      *
-     * @param string $id
+     * @param string $ruleId The ID of the routing rule to edit.
      */
-    public function modifyAction(string $id = ''): void
+    public function modifyAction(string $ruleId = ''): void
     {
         $idIsEmpty = false;
-        if (empty($id)) {
+        if (empty($ruleId)) {
             $idIsEmpty = true;
-            $id = (string)($_GET['copy-source'] ?? '');
+            $ruleId = $this->request->get('copy-source', Filter::FILTER_INT, '');
         }
 
-        $rule = OutgoingRoutingTable::findFirstByid($id);
+        $rule = OutgoingRoutingTable::findFirstByid($ruleId);
         if ($rule === null) {
             $rule = new OutgoingRoutingTable();
             $rule->priority = (int)OutgoingRoutingTable::maximum(['column' => 'priority']) + 1;
