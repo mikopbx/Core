@@ -56,6 +56,12 @@ run_bin()
 	done;
 }
 
+# Check if binary exists
+if [ -z "$PATHTOBIN" ]; then
+	message "Failed to start '$NAMESAFE': Executable not found."
+	exit 127
+fi
+
 # Check if another instance of the script is already running
 if [ -f "$PIDFILE" ]; then
   message "Found another pid file.";
