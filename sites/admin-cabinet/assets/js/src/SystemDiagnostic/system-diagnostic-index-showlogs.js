@@ -192,14 +192,16 @@ const systemDiagnosticLogs = {
      * Function to adjust the height of the logs depending on the screen mode.
      */
     adjustLogHeight() {
-        let aceHeight = window.innerHeight - systemDiagnosticLogs.$logContent.offset().top - 50;
-        if (document.fullscreenElement) {
-            // If fullscreen mode is active
-            aceHeight = window.innerHeight - 50;
-        }
-        // Recalculate the size of the ACE editor
-        $('.log-content-readonly').css('min-height',  `${aceHeight}px`);
-        systemDiagnosticLogs.viewer.resize();
+        setTimeout(() => {
+            let aceHeight = window.innerHeight - systemDiagnosticLogs.$logContent.offset().top - 25;
+            if (document.fullscreenElement) {
+                // If fullscreen mode is active
+                aceHeight = window.innerHeight - 80;
+            }
+            // Recalculate the size of the ACE editor
+            $('.log-content-readonly').css('min-height',  `${aceHeight}px`);
+            systemDiagnosticLogs.viewer.resize();
+        }, 300);
     },
     /**
      * Initializes the ACE editor for log viewing.
