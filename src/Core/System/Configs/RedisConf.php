@@ -45,7 +45,7 @@ class RedisConf extends Injectable
      *
      * @return void
      */
-    public function reStart(): void
+    public function reStart(): bool
     {
         $mainRunner = 'safe-' . self::PROC_NAME;
         Processes::killByName($mainRunner);
@@ -63,13 +63,16 @@ class RedisConf extends Injectable
         $this->configure();
         Processes::safeStartDaemon(self::PROC_NAME, self::CONF_FILE);
 
+        $result = false;
         $redisCli = Util::which('redis-cli');
         for ($i = 1; $i <= 60; $i++) {
             if (Processes::mwExec("$redisCli -p $this->port info") === 0) {
+                $result = true;
                 break;
             }
             sleep(1);
         }
+        return $result;
     }
 
     /**

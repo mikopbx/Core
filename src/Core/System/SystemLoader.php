@@ -127,23 +127,24 @@ class SystemLoader extends Injectable
         $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = true;
 
         // Start the ACPID daemon
-        $this->echoStartMsg(PHP_EOL);
-        $this->echoStartMsg(' - Start acpid daemon...');
-        $ACPIDConf = new ACPIDConf();
-        $ACPIDConf->reStart();
-        $this->echoResultMsg();
-
+        if (!$this->isDocker) {
+            $this->echoStartMsg(PHP_EOL);
+            $this->echoStartMsg(' - Start acpid daemon...');
+            $ACPIDConf = new ACPIDConf();
+            $ACPIDStatus = $ACPIDConf->reStart();
+            $this->echoResultMsg($ACPIDStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+        }
         // Start the Beanstalkd daemon
         $this->echoStartMsg(' - Start beanstalkd daemon...');
         $beanstalkConf = new BeanstalkConf();
-        $beanstalkConf->reStart();
-        $this->echoResultMsg();
+        $beanstalkStatus = $beanstalkConf->reStart();
+        $this->echoResultMsg($beanstalkStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Start the Redis daemon
         $this->echoStartMsg(' - Start redis daemon...');
         $redisConf = new RedisConf();
-        $redisConf->reStart();
-        $this->echoResultMsg();
+        $redisStatus = $redisConf->reStart();
+        $this->echoResultMsg($redisStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Configure Sentry error logger
         $this->echoStartMsg(' - Configuring sentry error logger ...');
@@ -189,8 +190,8 @@ class SystemLoader extends Injectable
         // Start the syslogd daemon
         $this->echoStartMsg(' - Start syslogd daemon...');
         $syslogConf = new SyslogConf();
-        $syslogConf->reStart();
-        $this->echoResultMsg();
+        $syslogStatus = $syslogConf->reStart();
+        $this->echoResultMsg($syslogStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Update the database structure
         $dbUpdater = new UpdateDatabase();
@@ -309,8 +310,9 @@ class SystemLoader extends Injectable
         // Start the NATS queue daemon
         $this->echoStartMsg(' - Start nats queue daemon...');
         $natsConf = new NatsConf();
-        $natsConf->reStart();
-        $this->echoResultMsg();
+        $natsStatus = $natsConf->reStart();
+        $this->echoResultMsg($natsStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+
 
         // Start the PHP-FPM daemon
         $this->echoStartMsg(' - Start php-fpm daemon...');

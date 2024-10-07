@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -19,7 +20,6 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
@@ -36,7 +36,6 @@ use Phalcon\Di\Injectable;
  */
 class PHPConf extends Injectable
 {
-
     /**
      * Relocates PHP error log to the storage mount.
      *
@@ -46,7 +45,7 @@ class PHPConf extends Injectable
     {
         $src_log_file = '/var/log/php_error.log';
         $dst_log_file = self::getLogFile();
-        if ( ! file_exists($src_log_file)) {
+        if (! file_exists($src_log_file)) {
             file_put_contents($src_log_file, '');
         }
         $options = file_exists($dst_log_file) ? '>' : '';
@@ -94,7 +93,7 @@ class PHPConf extends Injectable
 }";
         // TODO::Add restart PHP-FPM after rotation
         $di     = Di::getDefault();
-        if ($di !== null){
+        if ($di !== null) {
             $varEtcDir = $di->getConfig()->path('core.varEtcDir');
         } else {
             $varEtcDir = '/var/etc';
@@ -124,7 +123,7 @@ class PHPConf extends Injectable
             Processes::mwExec("export TZ='$($cat /etc/TZ)'");
         }
         $etcPhpIniPath = '/etc/php.d/01-timezone.ini';
-        $contents = 'date.timezone="'.$timezone.'"';
+        $contents = 'date.timezone="' . $timezone . '"';
         file_put_contents($etcPhpIniPath, $contents);
     }
 

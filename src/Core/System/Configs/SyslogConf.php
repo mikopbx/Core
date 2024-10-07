@@ -42,7 +42,7 @@ class SyslogConf extends Injectable
     /**
      * Restarts syslog daemon.
      */
-    public function reStart(): void
+    public function reStart(): bool
     {
         $this->generateConfigFile();
         $pidSyslogD = Processes::getPidOfProcess('syslogd', self::PROC_NAME);
@@ -61,7 +61,7 @@ class SyslogConf extends Injectable
         RedisConf::generateSyslogConf();
         CronConf::generateSyslogConf();
 
-        Processes::safeStartDaemon(self::PROC_NAME, '-n');
+        return Processes::safeStartDaemon(self::PROC_NAME, '-n');
     }
 
     /**

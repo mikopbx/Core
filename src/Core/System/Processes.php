@@ -72,9 +72,9 @@ class Processes
      *
      * @param string $command The command to execute.
      * @param int $timeout The timeout value in seconds.
-     * @param string $logname The name of the log file to redirect the output.
+     * @param string $logName The name of the log file to redirect the output.
      */
-    public static function mwExecBgWithTimeout(string $command, int $timeout = 4, string $logname = '/dev/null'): void
+    public static function mwExecBgWithTimeout(string $command, int $timeout = 4, string $logName = '/dev/null'): void
     {
         $di = Di::getDefault();
 
@@ -85,7 +85,7 @@ class Processes
         }
         $nohup = Util::which('nohup');
         $timeout = Util::which('timeout');
-        exec("$nohup $timeout $timeout $command > $logname 2>&1 &");
+        exec("$nohup $timeout $timeout $command > $logName 2>&1 &");
     }
 
     /**
@@ -198,7 +198,8 @@ class Processes
                         if (!isset($processes[$countProc4Kill])) {
                             break;
                         }
-                        // Kill old processes with timeout, maybe it is a soft restart and the worker dies without any help
+                        // Kill old processes with timeout, maybe it is a soft restart and
+                        // the worker dies without any help
                         self::mwExec("$kill -SIGUSR1 $processes[$countProc4Kill]  > /dev/null 2>&1 &");
                         self::mwExecBg("$kill -SIGTERM $activeProcesses", '/dev/null', 10);
                         $countProc4Kill--;
@@ -270,8 +271,13 @@ class Processes
      * @param string $out_file The path to the output file.
      * @return array|bool The status of the process.
      */
-    public static function processWorker(string $cmd, string $param, string $proc_name, string $action, string $out_file = '/dev/null'): bool|array
-    {
+    public static function processWorker(
+        string $cmd,
+        string $param,
+        string $proc_name,
+        string $action,
+        string $out_file = '/dev/null'
+    ): bool|array {
         $kill = Util::which('kill');
         $nohup = Util::which('nohup');
 
@@ -315,8 +321,13 @@ class Processes
      * @param string $outFile The path to the output file.
      * @return bool True if the process starts successfully, false otherwise.
      */
-    public static function safeStartDaemon(string $procName, string $args, int $attemptsCount = 20, int $timout = 1000000, string $outFile = '/dev/null'): bool
-    {
+    public static function safeStartDaemon(
+        string $procName,
+        string $args,
+        int $attemptsCount = 20,
+        int $timout = 1000000,
+        string $outFile = '/dev/null'
+    ): bool {
         $result = true;
         $baseName = "safe-$procName";
         $safeLink = "/sbin/$baseName";

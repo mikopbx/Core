@@ -43,14 +43,15 @@ class BeanstalkConf extends Injectable
      * and restarts the Beanstalk server using the retrieved configuration. If the server fails to start,
      * it waits for 10 seconds and retries the startup process.
      */
-    public function reStart(): void
+    public function reStart(): bool
     {
         $config = $this->getDI()->get('config')->beanstalk;
         $conf   = "-l $config->host -p $config->port -z " . self::JOB_DATA_SIZE_LIMIT;
         $result = Processes::safeStartDaemon(self::PROC_NAME, $conf);
         if (!$result) {
             sleep(10);
-            Processes::safeStartDaemon(self::PROC_NAME, $conf);
+            $result = Processes::safeStartDaemon(self::PROC_NAME, $conf);
         }
+        return $result;
     }
 }

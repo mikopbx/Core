@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 namespace MikoPBX\Core\System\Configs;
-
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Directories;
@@ -51,9 +51,9 @@ class NatsConf extends Injectable
     /**
      * Restarts the gnats server.
      *
-     * @return void
+     * @return bool
      */
-    public function reStart(): void
+    public function reStart(): bool
     {
         $config = $this->getDI()->get('config')->gnats;
 
@@ -95,15 +95,16 @@ class NatsConf extends Injectable
             $killAllPath = Util::which('killall');
             $killPath = Util::which('kill');
             $catPath = Util::which('cat');
-            Processes::mwExec("$killAllPath safe-".self::PROC_NAME);
+            Processes::mwExec("$killAllPath safe-" . self::PROC_NAME);
             Processes::mwExec("$killPath $($catPath $pid_file)");
         }
         $outFile = "$logDir/gnats_process.log";
         $args = "--config $conf_file";
         $result = Processes::safeStartDaemon(self::PROC_NAME, $args, 20, 1000000, $outFile);
-        if(!$result){
+        if (!$result) {
             sleep(10);
-            Processes::safeStartDaemon(self::PROC_NAME, $args, 20, 1000000, $outFile);
+            $result = Processes::safeStartDaemon(self::PROC_NAME, $args, 20, 1000000, $outFile);
         }
+        return $result;
     }
 }

@@ -37,9 +37,9 @@ class ACPIDConf extends Injectable
     /**
      * Restarts Beanstalk server
      */
-    public function reStart(): void
+    public function reStart(): bool
     {
         $conf   = "-c '/etc/acpi/events' -n -f";
-        Processes::safeStartDaemon(self::PROC_NAME, $conf);
+        return Processes::safeStartDaemon(self::PROC_NAME, $conf);
     }
 }
