@@ -166,12 +166,12 @@ else
   rm -rf "${img_file}";
 fi
 
-echo " - Reboot pending. Cancel with rm /tmp/rebooting ..."
+echo " - Reboot pending. Cancel with 'touch /tmp/cancel_rebooting'"
 # Waiting timeout
 WAIT_TIME=10
 counter=0
 while [ $counter -lt $WAIT_TIME ]; do
-    if [ ! -f /tmp/rebooting ]; then
+    if [ -f /tmp/cancel_rebooting ]; then
         # Flag file was deleted
         echo "System reboot was cancelled"
         exit 0
