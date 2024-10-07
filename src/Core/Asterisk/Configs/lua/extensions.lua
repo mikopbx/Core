@@ -85,7 +85,7 @@ end
 ]]
 function getNowDate()
     local a,b = math.modf(os.clock())
-    return os.date("%Y-%m-%d %H:%M:%S.")..tostring(b):sub(3,5);
+    return channel["STRFTIME(${EPOCH},,%Y-%m-%d %H:%M:%S)"]:get().."."..tostring(b):sub(3,5);
 end
 
 --[[

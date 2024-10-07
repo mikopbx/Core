@@ -84,7 +84,7 @@ while ($attempts--) {
             // Adjust the disk name for RAID.
             $disk     = $diskInfo['name'];
         }
-        $children = $diskInfo['children'];
+        $children = $diskInfo['children']??[];
         if(count($children)<3){
             // Disk is only of interest if it contains 3 or more partitions.
             continue;
