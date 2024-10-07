@@ -103,6 +103,37 @@ const dialplanApplication = {
         dialplanApplication.changeAceMode();
 
         dialplanApplication.defaultExtension = dialplanApplication.$formObj.form('get value', 'extension');
+
+        //  Add handlers for fullscreen mode buttons
+        $('.fullscreen-toggle-btn').on('click', function () {
+            const container = $(this).siblings('.application-code')[0];
+            dialplanApplication.toggleFullScreen(container);
+        });
+
+        // Add handler to recalculate sizes when exiting fullscreen mode
+        document.addEventListener('fullscreenchange', dialplanApplication.adjustEditorHeight);
+    },
+
+    /**
+     * Enable/disable fullscreen mode for a specific block.
+     *
+     * @param {HTMLElement} container - The container to expand to fullscreen.
+     */
+    toggleFullScreen(container) {
+        if (!document.fullscreenElement) {
+            container.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    },
+
+    /**
+     * Recalculate editor heights when the screen mode changes.
+     */
+    adjustEditorHeight() {
+        dialplanApplication.editor.resize();
     },
 
     /**

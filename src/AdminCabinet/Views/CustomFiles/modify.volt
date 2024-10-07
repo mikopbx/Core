@@ -26,17 +26,32 @@
 
 <!-- original-section -->
 <div class="ui bottom attached tab" data-tab="original">
-    <div id="config-file-original" class="application-code"></div>
+    <div class="code-container">
+        <div id="config-file-original" class="application-code"></div>
+        <div class="fullscreen-toggle-btn">
+            <i class="inverted expand icon"></i>
+        </div>
+    </div>
 </div>
 
 <!-- editor-section -->
 <div class="ui bottom attached tab" data-tab="editor">
-    <div id="user-edit-config" class="application-code"></div>
+    <div class="code-container">
+        <div id="user-edit-config" class="application-code"></div>
+        <div class="fullscreen-toggle-btn">
+            <i class="inverted expand icon"></i>
+        </div>
+    </div>
 </div>
 
 <!-- result-section -->
 <div class="ui bottom attached tab" data-tab="result">
-    <div id="config-file-result" class="application-code"></div>
+    <div class="code-container">
+        <div id="config-file-result" class="application-code"></div>
+        <div class="fullscreen-toggle-btn">
+            <i class="inverted expand icon"></i>
+        </div>
+    </div>
 </div>
 
 

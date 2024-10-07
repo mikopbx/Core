@@ -311,8 +311,43 @@ const customFile = {
             // Trigger change event to acknowledge the modification
             Form.dataChanged();
         });
+
+        //  Add handlers for fullscreen mode buttons
+        $('.fullscreen-toggle-btn').on('click', function () {
+            const container = $(this).siblings('.application-code')[0];
+            customFile.toggleFullScreen(container);
+        });
+
+        // Add handler to recalculate sizes when exiting fullscreen mode
+        document.addEventListener('fullscreenchange', customFile.adjustEditorHeight);
+
+    },
+    /**
+     * Enable/disable fullscreen mode for a specific block.
+     *
+     * @param {HTMLElement} container - The container to expand to fullscreen.
+     */
+    toggleFullScreen(container) {
+        if (!document.fullscreenElement) {
+            container.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
     },
 
+    /**
+     * Recalculate editor heights when the screen mode changes.
+     */
+    adjustEditorHeight() {
+        const editors = [customFile.viewerOriginal, customFile.viewerResult, customFile.editor];
+        editors.forEach(editor => {
+            if (editor) {
+                editor.resize();
+            }
+        });
+    },
     /**
      * Callback function to be called before the form is sent
      * @param {Object} settings - The current settings of the form

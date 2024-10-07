@@ -50,8 +50,11 @@
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainTabFields')]) }}
 </div>
 <div class="ui bottom attached tab segment active" data-tab="code">
-    <div id="application-code" class="application-code">
-        <pre></pre>
+    <div class="code-container">
+        <div id="application-code" class="application-code"></div>
+        <div class="fullscreen-toggle-btn">
+            <i class="inverted expand icon"></i>
+        </div>
     </div>
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('CodeTabFields')]) }}
 </div>

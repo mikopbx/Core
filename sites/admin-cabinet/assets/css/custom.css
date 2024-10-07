@@ -588,3 +588,20 @@ a.ui.button.pbx-extensions-settings {
 #search-extensions-input .prompt{
     border-radius: 5px;
 }
+
+/* Button to expand code block */
+.code-container {
+    position: relative;
+}
+
+.fullscreen-toggle-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.fullscreen-toggle-btn i {
+    font-size: 1.2em;
+}

@@ -1,4 +1,4 @@
-<div class="ui basic segment">
+<div class="ui basic segment" id="system-logs-segment">
 <div class="ui active dimmer" id="get-logs-dimmer">
     <div class="ui indeterminate text loader">{{ t._('sd_CollectingLogsInfo') }}</div>
 </div>
@@ -31,6 +31,7 @@
         <div class="ui right floated field">
             <label>&nbsp;</label>
             <div class="ui buttons">
+                <div class="ui icon button" id="fullscreen-toggle" data-content="{{ t._('sd_ToolTipFullscreen') }}"><i class="expand icon"></i></div>
                 <div class="ui icon button" id="download-file" data-content="{{ t._('sd_ToolTipDownload') }}" ><i class="download icon"></i></div>
                 <div class="ui icon button" id="show-last-log" data-content="{{ t._('sd_ToolTipRefresh') }}"><i class="refresh icon"></i></div>
                 <div class="ui icon button" id="show-last-log-auto" data-content="{{ t._('sd_ToolTipAutoUpdate') }}">

@@ -145,12 +145,11 @@ const systemDiagnosticLogs = {
             }
         });
 
-        // Event listener for "Erase file" button click
+        // Event listener for the "Erase file" button click
         systemDiagnosticLogs.$eraseBtn.on('click', (e) => {
             e.preventDefault();
             systemDiagnosticLogs.eraseCurrentFileContent();
         });
-
 
         // Event listener for Enter keypress on input fields
         $('input').keyup((event) => {
@@ -158,8 +157,50 @@ const systemDiagnosticLogs = {
                 systemDiagnosticLogs.updateLogFromServer();
             }
         });
+
+        // Event listener for Fullscreen button click
+        $('#fullscreen-toggle').on('click', systemDiagnosticLogs.toggleFullScreen);
+
+        // Listening for the fullscreen change event
+        document.addEventListener('fullscreenchange', systemDiagnosticLogs.adjustLogHeight);
+
+        // Initial height calculation
+        systemDiagnosticLogs.adjustLogHeight();
     },
 
+    /**
+     * Toggles the full-screen mode of the 'system-logs-segment' element.
+     * If the element is not in full-screen mode, it requests full-screen mode.
+     * If the element is already in full-screen mode, it exits full-screen mode.
+     * Logs an error message to the console if there is an issue enabling full-screen mode.
+     *
+     * @return {void}
+     */
+    toggleFullScreen() {
+        const logContainer = document.getElementById('system-logs-segment');
+
+        if (!document.fullscreenElement) {
+            logContainer.requestFullscreen().catch((err) => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    },
+
+    /**
+     * Function to adjust the height of the logs depending on the screen mode.
+     */
+    adjustLogHeight() {
+        let aceHeight = window.innerHeight - systemDiagnosticLogs.$logContent.offset().top - 50;
+        if (document.fullscreenElement) {
+            // If fullscreen mode is active
+            aceHeight = window.innerHeight - 50;
+        }
+        // Recalculate the size of the ACE editor
+        $('.log-content-readonly').css('min-height',  `${aceHeight}px`);
+        systemDiagnosticLogs.viewer.resize();
+    },
     /**
      * Initializes the ACE editor for log viewing.
      */
@@ -183,12 +224,6 @@ const systemDiagnosticLogs = {
             readOnly: true,
         });
 
-        // Resize the ACE editor to fit the window height
-        $(window).load(function () {
-            const aceHeight = window.innerHeight - systemDiagnosticLogs.$logContent.offset().top - 50;
-            $('.log-content-readonly').css('min-height', `${aceHeight}px`);
-            systemDiagnosticLogs.viewer.resize();
-        });
     },
 
     /**
