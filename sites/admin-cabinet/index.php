@@ -28,7 +28,7 @@ class Application extends BaseApplication
     /**
      * Register the services here to make them general or register in the ModuleDefinition to make them module-specific
      */
-    protected function registerServices()
+    protected function registerServices(): void
     {
 
         $di = new \Phalcon\Di\FactoryDefault();
@@ -43,7 +43,7 @@ class Application extends BaseApplication
         $this->setDI($di);
     }
 
-    public function main()
+    public function main(): void
     {
         $this->registerServices();
 

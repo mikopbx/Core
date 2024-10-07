@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -75,11 +76,12 @@ class NginxConf extends Injectable
      *
      * @return string The process ID.
      */
-    private static function getPid():string{
+    private static function getPid(): string
+    {
         $filePid = trim(file_get_contents(self::PID_FILE));
-        if(!empty($filePid)) {
+        if (!empty($filePid)) {
             $pid = Processes::getPidOfProcess("^$filePid ");
-        }else{
+        } else {
             $nginxPath = Util::which('nginx');
             $pid       = Processes::getPidOfProcess($nginxPath);
         }
@@ -133,7 +135,7 @@ class NginxConf extends Injectable
             $conf_data = 'if ( $remote_addr != "127.0.0.1" ) {' . PHP_EOL
                 . '        ' . 'return 301 https://$host:' . $WEBHTTPSPort . '$request_uri;' . PHP_EOL
                 . '    }' . PHP_EOL
-                . '    '.$includeRow. PHP_EOL;
+                . '    ' . $includeRow . PHP_EOL;
             $config    = str_replace($includeRow, $conf_data, $config);
         }
         file_put_contents($httpConfigFile, $config);
@@ -201,18 +203,18 @@ class NginxConf extends Injectable
     public function generateModulesConfigs(): void
     {
         $locationsPath     = self::MODULES_LOCATIONS_PATH;
-        if (!is_dir($locationsPath)){
-            Util::mwMkdir($locationsPath,true);
+        if (!is_dir($locationsPath)) {
+            Util::mwMkdir($locationsPath, true);
         }
         $rm            = Util::which('rm');
         Processes::mwExec("$rm -rf $locationsPath/*.conf");
 
         // Add additional modules routes
         $additionalLocations = PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::CREATE_NGINX_LOCATIONS);
-        foreach ($additionalLocations as $moduleUniqueId=>$locationContent) {
+        foreach ($additionalLocations as $moduleUniqueId => $locationContent) {
             $confFileName = "$locationsPath/$moduleUniqueId.conf";
             file_put_contents($confFileName, $locationContent);
-            if ( $this->testCurrentNginxConfig()) {
+            if ($this->testCurrentNginxConfig()) {
                 // Test passed successfully.
                 continue;
             }
