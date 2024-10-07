@@ -66,6 +66,6 @@ class VmToolsConf
         $grepPath = Util::which('grep');
         $awk = Util::which('awk');
         $result = shell_exec("$lsCpuPath | $grepPath vendor | $awk -F ' ' '{ print $3}'");
-        return strtolower(trim($result));
+        return strtolower(trim($result??''));
     }
 }
