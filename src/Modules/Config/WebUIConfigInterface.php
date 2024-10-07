@@ -128,7 +128,7 @@ interface WebUIConfigInterface
      *
      * @return void
      */
-    public function onBeforeFormInitialize(Form $form, mixed $entity, mixed $options): void;
+    public function onBeforeFormInitialize(Form $form, $entity, $options): void;
 
     /**
      * Called from BaseController before executing a route.

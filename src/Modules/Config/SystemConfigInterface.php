@@ -88,7 +88,7 @@ interface SystemConfigInterface
      *
      * @return void
      */
-    public function modelsEventChangeData(mixed $data): void;
+    public function modelsEventChangeData($data): void;
 
     /**
      * This method is called in the WorkerModelsEvents after the models changing process is finished.

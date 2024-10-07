@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -41,10 +42,10 @@ use ReflectionClass as ReflectionClassAlias;
  * @package MikoPBX\Modules\Config
  */
 abstract class ConfigClass extends AsteriskConfigClass implements
-                             SystemConfigInterface,
-                             RestAPIConfigInterface,
-                             WebUIConfigInterface,
-                             AsteriskConfigInterface
+    SystemConfigInterface,
+    RestAPIConfigInterface,
+    WebUIConfigInterface,
+    AsteriskConfigInterface
 {
     // The module hook applying priority
     protected int $priority = 10000;
@@ -98,7 +99,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     public function __construct()
     {
 
-       parent::__construct();
+        parent::__construct();
 
         // Get child class parameters and define module Dir and UniqueID
         $reflector        = new ReflectionClassAlias(static::class);
@@ -126,7 +127,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      * @param string $methodName
      * @return int
      */
-    public function getMethodPriority(string $methodName=''):int
+    public function getMethodPriority(string $methodName = ''): int
     {
         return $this->priority;
     }
@@ -196,7 +197,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function modelsEventChangeData(mixed $data): void
+    public function modelsEventChangeData($data): void
     {
     }
 
@@ -354,7 +355,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onBeforeHeaderMenuShow(array &$menuItems):void
+    public function onBeforeHeaderMenuShow(array &$menuItems): void
     {
     }
 
@@ -366,7 +367,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onAfterRoutesPrepared(Router $router):void
+    public function onAfterRoutesPrepared(Router $router): void
     {
     }
 
@@ -379,7 +380,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onAfterAssetsPrepared(Manager $assets, Dispatcher $dispatcher):void
+    public function onAfterAssetsPrepared(Manager $assets, Dispatcher $dispatcher): void
     {
     }
 
@@ -393,7 +394,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return string the volt partial file path without extension.
      */
-    public function onVoltBlockCompile(string $controller, string $blockName, View $view):string
+    public function onVoltBlockCompile(string $controller, string $blockName, View $view): string
     {
         return '';
     }
@@ -408,7 +409,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onBeforeFormInitialize(Form $form, mixed $entity, mixed $options):void
+    public function onBeforeFormInitialize(Form $form, $entity, $options): void
     {
     }
 
@@ -420,7 +421,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onBeforeExecuteRoute(Dispatcher $dispatcher):void
+    public function onBeforeExecuteRoute(Dispatcher $dispatcher): void
     {
     }
 
@@ -432,7 +433,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onAfterExecuteRoute(Dispatcher $dispatcher):void
+    public function onAfterExecuteRoute(Dispatcher $dispatcher): void
     {
     }
 
@@ -458,9 +459,8 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onBeforeExecuteRestAPIRoute(Micro $app):void
+    public function onBeforeExecuteRestAPIRoute(Micro $app): void
     {
-
     }
 
     /**
@@ -471,8 +471,7 @@ abstract class ConfigClass extends AsteriskConfigClass implements
      *
      * @return void
      */
-    public function onAfterExecuteRestAPIRoute(Micro $app):void
+    public function onAfterExecuteRestAPIRoute(Micro $app): void
     {
-
     }
 }
