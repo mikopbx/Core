@@ -517,7 +517,7 @@ class Storage extends Injectable
         $sortPath  = Util::which('sort');
 
         $basenameDisk = basename($dev);
-        $pathToDisk = trim(shell_exec("$lsBlkPath -n -p -a -r -o NAME,TYPE | $grepPath disk | $grepPath '$basenameDisk' | $cutPath -d ' ' -f 1"));
+        $pathToDisk = trim(shell_exec("$lsBlkPath -n -p -a -r -o NAME,TYPE | $grepPath disk | $grepPath '$basenameDisk' | $cutPath -d ' ' -f 1")??'');
         if ($verbose) {
             echo "Get dev full path..." . PHP_EOL;
             echo "Source dev: $dev, result full path: $pathToDisk" . PHP_EOL;
@@ -528,9 +528,9 @@ class Storage extends Injectable
 
         // Touch the disk to update disk tables
         $command = "$lsBlkPath -r -p | $grepPath ' part' | $sortPath -u | $cutPath -d ' ' -f 1 | $grepPath '" . $pathToDisk . "' | $grepPath \"$part\$\"";
-        $devName = trim(shell_exec($command));
+        $devName = trim(shell_exec($command??'')??'');
         if (empty($devName) && $verbose) {
-            $verboseMsg = trim(shell_exec("$lsBlkPath -r -p"));
+            $verboseMsg = trim(shell_exec("$lsBlkPath -r -p")??'');
             echo "---   filtered command   ---" . PHP_EOL;
             echo $command . PHP_EOL;
             echo "---   result 'lsblk -r -p'   ---" . PHP_EOL;
