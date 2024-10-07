@@ -59,7 +59,7 @@ class StorageManagementProcessor extends Injectable
                 $res->success = Storage::umountDisk($data['dir']);
                 break;
             case 'mkfs':
-                $res->success = Storage::mkfs_disk($data['dev']);
+                $res->success = Storage::mkfsDisk($data['dev']);
                 if ($res->success) {
                     $res->data['status'] = 'inprogress';
                 }

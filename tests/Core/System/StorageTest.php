@@ -90,7 +90,7 @@ class StorageTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
         $this->assertTrue(true);
     }
 
-    public function testMkfs_disk()
+    public function testMkfsDisk()
     {
     }
 
