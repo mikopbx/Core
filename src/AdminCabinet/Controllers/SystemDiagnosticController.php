@@ -21,11 +21,16 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\SystemDiagnosticForm;
+use Phalcon\Filter\Filter;
 
 class SystemDiagnosticController extends BaseController
 {
     public function indexAction(): void
     {
-        $this->view->form     = new SystemDiagnosticForm();
+        $options = [
+            'filename' => $this->request->get('filename', FILTER::FILTER_STRING, ''),
+            'filter' => $this->request->get('filter', FILTER::FILTER_STRING, ''),
+        ];
+        $this->view->form     = new SystemDiagnosticForm(null, $options);
     }
 }

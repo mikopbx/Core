@@ -45,8 +45,8 @@ class SystemDiagnosticForm extends BaseForm
             ['class' => 'ui fluid selection search dropdown filenames-select']
         );
         $this->add($filenames);
-        $this->add(new Hidden('filename', ['value' => $_REQUEST['filename'] ?? '']));
-        $this->add(new Text('filter', ['value' => $_REQUEST['filter'] ?? '']));
+        $this->add(new Hidden('filename', ['value' => $options['filename']]));
+        $this->add(new Text('filter', ['value' => $options['filter']]));
         $this->add(new Numeric('lines', ['value' => '1500']));
         $this->add(new Numeric('offset', ['value' => '0']));
     }
