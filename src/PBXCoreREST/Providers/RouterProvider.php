@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,7 +19,6 @@
  */
 
 declare(strict_types=1);
-
 
 namespace MikoPBX\PBXCoreREST\Providers;
 
@@ -59,7 +59,6 @@ use MikoPBX\PBXCoreREST\Controllers\
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController
 };
-
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
@@ -71,7 +70,6 @@ use Phalcon\Events\Manager;
 use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Micro\Collection;
 use Phalcon\Events\Event;
-
 
 /**
  * Register Router service
@@ -258,13 +256,13 @@ class RouterProvider implements ServiceProviderInterface
         $eventsManager->attach(
             "micro:beforeExecuteRoute",
             function (Event $event, $app) {
-                PBXConfModulesProvider::hookModulesMethod(RestAPIConfigInterface::ON_BEFORE_EXECUTE_RESTAPI_ROUTE,[$app]);
+                PBXConfModulesProvider::hookModulesMethod(RestAPIConfigInterface::ON_BEFORE_EXECUTE_RESTAPI_ROUTE, [$app]);
             }
         );
         $eventsManager->attach(
             "micro:afterExecuteRoute",
             function (Event $event, $app) {
-                PBXConfModulesProvider::hookModulesMethod(RestAPIConfigInterface::ON_AFTER_EXECUTE_RESTAPI_ROUTE,[$app]);
+                PBXConfModulesProvider::hookModulesMethod(RestAPIConfigInterface::ON_AFTER_EXECUTE_RESTAPI_ROUTE, [$app]);
             }
         );
     }

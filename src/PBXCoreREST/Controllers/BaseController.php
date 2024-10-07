@@ -120,9 +120,9 @@ class BaseController extends Controller
         }
 
         // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
-        // and set XDEBUG_SESSION Cookie header on REST request to debug it
+        // and set XDEBUG_API_SESSION Cookie header on REST request to debug it
         // The set will break the WorkerApiCommands() execution on prepareAnswer method
-        $debug = strpos($this->request->getHeader('Cookie'), 'XDEBUG_SESSION') !== false;
+        $debug = strpos($this->request->getHeader('Cookie'), 'XDEBUG_API_SESSION') !== false;
 
         $requestMessage = [
             'processor' => $processor,
