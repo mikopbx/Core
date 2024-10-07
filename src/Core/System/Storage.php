@@ -115,7 +115,8 @@ class Storage extends Injectable
             $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
             $filename = "$varEtcDir/storage_device";
 
-            // If the storage_device file exists, read its contents as the filter, otherwise use 'usbdisk1' as the filter
+            // If the storage_device file exists, read its contents as the filter,
+            // otherwise use 'usbdisk1' as the filter
             if (file_exists($filename)) {
                 $filter = file_get_contents($filename);
             } else {
@@ -131,7 +132,7 @@ class Storage extends Injectable
 
         // Execute the command to filter the mount points based on the filter
         $out = shell_exec("$mount | $grep $filter | $awk '{print $3}' | $head -n 1");
-        $mount_dir = trim($out);
+        $mount_dir = trim($out ?? '');
         return ($mount_dir !== '');
     }
 
@@ -181,7 +182,7 @@ class Storage extends Injectable
      * @param string $dev The device path of the disk.
      * @return bool Returns true if the file system creation process is initiated, false otherwise.
      */
-    public static function mkfs_disk(string $dev): bool
+    public static function mkfsDisk(string $dev): bool
     {
         if (!file_exists($dev)) {
             $dev = "/dev/$dev";
@@ -316,8 +317,10 @@ class Storage extends Injectable
      * @param bool $forceFormatStorage Flag to determine if the disk should be formatted
      * @return bool Returns true on success, false otherwise
      */
-    public static function selectAndConfigureStorageDisk(bool $automatic = false, bool $forceFormatStorage = false): bool
-    {
+    public static function selectAndConfigureStorageDisk(
+        bool $automatic = false,
+        bool $forceFormatStorage = false
+    ): bool {
         $storage = new self();
 
         // Check if the storage disk is already mounted
@@ -381,7 +384,9 @@ class Storage extends Injectable
         // Check if the disk selection should be automatic
         if ($automatic) {
             $target_disk_storage = $selected_disk['id'];
-            SystemMessages::echoToTeletype(PHP_EOL . '   - ' . "Automatically selected storage disk is $target_disk_storage");
+            SystemMessages::echoToTeletype(
+                PHP_EOL . '   - ' . "Automatically selected storage disk is $target_disk_storage"
+            );
         } else {
             echo PHP_EOL . " " . Util::translate('Select the drive to store the data.');
             echo PHP_EOL . " " . Util::translate('Selected disk:') . "\033[33;1m [{$selected_disk['id']}] \033[0m " . PHP_EOL . PHP_EOL;
