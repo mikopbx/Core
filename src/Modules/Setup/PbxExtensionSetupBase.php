@@ -142,7 +142,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $this->moduleDir = $this->config->path('core.modulesDir') . '/' . $this->moduleUniqueID;
 
         // Load module settings from module.json file
-        $settings_file = "$this->moduleDir}/module.json";
+        $settings_file = "$this->moduleDir/module.json";
         if (file_exists($settings_file)) {
             $module_settings = json_decode(file_get_contents($settings_file), true);
             if ($module_settings) {
