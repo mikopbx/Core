@@ -11,5 +11,5 @@
         </div>
     </div>
 </div>
-<div id="pbx-version">MIKOPBX ver: {{ PBXVersion }}</div>
+<div id="pbx-version">{{ PBXName }} ver: {{ PBXVersion }}</div>
 {{ content() }}
