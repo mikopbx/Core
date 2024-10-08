@@ -1236,4 +1236,5 @@ Il coupon può essere attivato una volta, dopodiché viene riscattato.',
     'ex_SearchByEmail' => 'Cerca tramite e-mail',
     'ex_SearchByID' => 'Cerca per ID dipendente interno',
     'ex_SearchByCustomPhrase' => 'Ricerca nel testo completo',
+    'sd_ToolTipFullscreen' => 'Espandi a schermo intero',
 ];

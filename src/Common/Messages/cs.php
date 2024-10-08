@@ -1236,4 +1236,5 @@ Kupón lze aktivovat jednou, poté se uplatní.',
     'ex_SearchByEmail' => 'Vyhledávání e-mailem',
     'ex_SearchByID' => 'Vyhledávání podle interního ID zaměstnance',
     'ex_SearchByCustomPhrase' => 'Fulltextové vyhledávání',
+    'sd_ToolTipFullscreen' => 'Rozbalte na celou obrazovku',
 ];

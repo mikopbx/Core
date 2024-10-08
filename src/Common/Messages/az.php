@@ -1269,4 +1269,5 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ex_SearchByEmail' => 'E-poçtla axtarın',
     'ex_SearchByID' => 'Daxili işçi ID-si ilə axtarın',
     'ex_SearchByCustomPhrase' => 'Tam mətn axtarışı',
+    'sd_ToolTipFullscreen' => 'Tam ekrana qədər genişləndirin',
 ];

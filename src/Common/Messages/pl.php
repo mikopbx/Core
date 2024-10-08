@@ -1236,4 +1236,5 @@ Kupon można aktywować jednorazowo, po czym zostaje on wykorzystany.',
     'ex_SearchByCustomPhrase' => 'Wyszukiwanie pełnotekstowe',
     'mo_ParkingExtension' => 'Miejsce parkingowe %number%',
     'ex_SearchByExtension' => 'Wyszukaj według numeru wewnętrznego',
+    'sd_ToolTipFullscreen' => 'Rozwiń do pełnego ekranu',
 ];

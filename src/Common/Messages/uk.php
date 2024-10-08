@@ -1236,4 +1236,5 @@ return [
     'ex_SearchByID' => 'Пошук за внутрішнім ідентифікатором співробітника',
     'ex_SearchByCustomPhrase' => 'Повнотекстовий пошук',
     'ex_SearchByEmail' => 'Пошук електронною поштою',
+    'sd_ToolTipFullscreen' => 'Розгорнути на весь екран',
 ];

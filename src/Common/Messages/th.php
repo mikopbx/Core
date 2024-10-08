@@ -1234,4 +1234,5 @@ return [
     'ex_SearchByCustomPhrase' => 'ค้นหาข้อความแบบเต็ม',
     'mo_ParkingExtension' => 'ช่องจอดรถ %number%',
     'ex_SearchByExtension' => 'ค้นหาตามหมายเลขส่วนขยาย',
+    'sd_ToolTipFullscreen' => 'ขยายให้เต็มหน้าจอ',
 ];

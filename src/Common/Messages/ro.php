@@ -1235,4 +1235,5 @@ Cuponul poate fi activat o singură dată, după care devine valorificat.',
     'ex_SearchByID' => 'Căutați după ID-ul intern al angajatului',
     'ex_SearchByCustomPhrase' => 'Căutare text integral',
     'mo_ParkingExtension' => 'Spațiu de parcare %number%',
+    'sd_ToolTipFullscreen' => 'Extindeți la ecran complet',
 ];

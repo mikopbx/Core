@@ -1236,4 +1236,5 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ex_SearchByExtension' => 'Recherche par numéro de poste',
     'ex_SearchByMobile' => 'Recherche par numéro de mobile',
     'mo_ParkingExtension' => 'Emplacement de stationnement %number%',
+    'sd_ToolTipFullscreen' => 'Agrandir en plein écran',
 ];

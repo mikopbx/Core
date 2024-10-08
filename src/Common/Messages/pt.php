@@ -1236,4 +1236,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_SearchByEmail' => 'Pesquisar por e-mail',
     'ex_SearchByID' => 'Pesquisar por ID de funcionário interno',
     'ex_SearchByCustomPhrase' => 'Pesquisa de texto completo',
+    'sd_ToolTipFullscreen' => 'Expandir para tela inteira',
 ];

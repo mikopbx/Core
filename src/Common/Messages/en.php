@@ -1239,4 +1239,5 @@ The coupon can be activated once, after which it becomes redeemed.',
     'ex_SearchByMobile' => 'Search by mobile number',
     'ex_SearchByEmail' => 'Search by email',
     'ex_SearchByID' => 'Search by internal employee ID',
+    'sd_ToolTipFullscreen' => 'Expand to full screen',
 ];

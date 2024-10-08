@@ -1235,4 +1235,5 @@ De coupon kan één keer worden geactiveerd, waarna deze wordt ingewisseld.',
     'ex_SearchByEmail' => 'Zoek per e-mail',
     'ex_SearchByID' => 'Zoeken op interne werknemers-ID',
     'ex_SearchByCustomPhrase' => 'Zoeken in volledige tekst',
+    'sd_ToolTipFullscreen' => 'Uitbreiden naar volledig scherm',
 ];

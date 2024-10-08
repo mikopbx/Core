@@ -1236,4 +1236,5 @@ return [
     'ex_SearchByExtension' => '按分机号码搜索',
     'ex_SearchByMobile' => '按手机号码搜索',
     'ex_SearchByCustomPhrase' => '全文搜索',
+    'sd_ToolTipFullscreen' => '展开至全屏',
 ];

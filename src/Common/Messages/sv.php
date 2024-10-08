@@ -1236,4 +1236,5 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ex_SearchByCustomPhrase' => 'Fulltextsökning',
     'mo_ParkingExtension' => 'Parkeringsplats %number%',
     'ex_SearchByMobile' => 'Sök på mobilnummer',
+    'sd_ToolTipFullscreen' => 'Expandera till helskärm',
 ];

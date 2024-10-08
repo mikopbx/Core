@@ -1234,4 +1234,5 @@ A kupon egyszer aktiválható, ezután válik beválthatóvá.',
     'ex_SearchByID' => 'Keresés belső alkalmazotti azonosító alapján',
     'ex_SearchByCustomPhrase' => 'Teljes szöveges keresés',
     'mo_ParkingExtension' => 'Parkolóhely %number%',
+    'sd_ToolTipFullscreen' => 'Kibontás teljes képernyőre',
 ];

@@ -1236,4 +1236,5 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'ex_SearchByMobile' => 'Cep telefonu numarasına göre ara',
     'ex_SearchByEmail' => 'E-postayla ara',
     'ex_SearchByCustomPhrase' => 'Tam metin araması',
+    'sd_ToolTipFullscreen' => 'Tam ekrana genişlet',
 ];

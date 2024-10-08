@@ -1236,4 +1236,5 @@ return [
     'ex_SearchByID' => 'ძიება შიდა თანამშრომლის ID-ით',
     'ex_SearchByCustomPhrase' => 'სრული ტექსტის ძიება',
     'mo_ParkingExtension' => 'პარკირების ადგილი %number%',
+    'sd_ToolTipFullscreen' => 'გაფართოება სრულ ეკრანზე',
 ];

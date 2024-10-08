@@ -1236,4 +1236,5 @@ El cupón se puede activar una vez y luego se canjea.',
     'ex_SearchByEmail' => 'Buscar por correo electrónico',
     'ex_SearchByID' => 'Buscar por ID de empleado interno',
     'ex_SearchByCustomPhrase' => 'Búsqueda de texto completo',
+    'sd_ToolTipFullscreen' => 'Ampliar a pantalla completa',
 ];

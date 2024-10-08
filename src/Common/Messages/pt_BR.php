@@ -1235,4 +1235,5 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'ex_SearchByCustomPhrase' => 'Pesquisa de texto completo',
     'ex_SearchByExtension' => 'Pesquisar por número de ramal',
     'mo_ParkingExtension' => 'Vaga de estacionamento %number%',
+    'sd_ToolTipFullscreen' => 'Expandir para tela inteira',
 ];

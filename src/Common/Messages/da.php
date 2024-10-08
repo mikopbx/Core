@@ -1236,4 +1236,5 @@ Kuponen kan aktiveres én gang, hvorefter den bliver indløst.',
     'ex_SearchByID' => 'Søg på internt medarbejder-id',
     'ex_SearchByCustomPhrase' => 'Fuld tekstsøgning',
     'mo_ParkingExtension' => 'Parkeringsplads %number%',
+    'sd_ToolTipFullscreen' => 'Udvid til fuld skærm',
 ];

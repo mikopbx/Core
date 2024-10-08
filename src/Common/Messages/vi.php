@@ -1236,4 +1236,5 @@ Phiếu giảm giá có thể được kích hoạt một lần, sau đó nó s�
     'ex_SearchByID' => 'Tìm kiếm theo ID nhân viên nội bộ',
     'ex_SearchByCustomPhrase' => 'Tìm kiếm toàn văn',
     'mo_ParkingExtension' => 'Khe đỗ xe %number%',
+    'sd_ToolTipFullscreen' => 'Mở rộng ra toàn màn hình',
 ];

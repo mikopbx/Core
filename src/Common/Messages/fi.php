@@ -1234,4 +1234,5 @@ Kupongin voi aktivoida kerran, jonka jälkeen se lunastetaan.',
     'ex_SearchByCustomPhrase' => 'Koko tekstihaku',
     'ex_SearchByExtension' => 'Hae alanumeron mukaan',
     'mo_ParkingExtension' => 'Pysäköintipaikka %number%',
+    'sd_ToolTipFullscreen' => 'Laajenna koko näyttöön',
 ];

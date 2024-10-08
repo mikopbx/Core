@@ -1236,4 +1236,5 @@ return [
     'ex_SearchByCustomPhrase' => 'Αναζήτηση πλήρους κειμένου',
     'mo_ParkingExtension' => 'Θέση στάθμευσης %number%',
     'ex_SearchByExtension' => 'Αναζήτηση με αριθμό επέκτασης',
+    'sd_ToolTipFullscreen' => 'Ανάπτυξη σε πλήρη οθόνη',
 ];

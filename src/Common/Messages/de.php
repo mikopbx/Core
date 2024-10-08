@@ -1239,4 +1239,5 @@ Der Gutschein kann einmalig aktiviert und anschließend eingelöst werden.',
     'ex_SearchByID' => 'Suche nach interner Mitarbeiter-ID',
     'ex_SearchByCustomPhrase' => 'Volltextsuche',
     'mo_ParkingExtension' => 'Parkplatz %number%',
+    'sd_ToolTipFullscreen' => 'Auf Vollbild erweitern',
 ];

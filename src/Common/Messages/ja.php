@@ -1236,4 +1236,5 @@ return [
     'ex_SearchByID' => '社内従業員IDで検索',
     'ex_SearchByCustomPhrase' => '全文検索',
     'mo_ParkingExtension' => '駐車スロット%number%',
+    'sd_ToolTipFullscreen' => '全画面に拡大',
 ];
