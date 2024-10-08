@@ -151,6 +151,7 @@ class ProcessPBXSettings extends Injectable
                 PbxSettings::SIP_MIN_EXPIRY,
                 PbxSettings::SIP_MAX_EXPIRY,
                 PbxSettings::PBX_LANGUAGE,
+                PbxSettings::PBX_TIMEZONE,
             ],
             'actions' => [
                 ReloadPJSIPAction::class,

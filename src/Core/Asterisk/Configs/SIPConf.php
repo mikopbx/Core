@@ -137,8 +137,9 @@ class SIPConf extends AsteriskConfigClass
         $externalTlsPort    = $this->generalSettings[PbxSettings::EXTERNAL_TLS_PORT];
         $sipPort            = $this->generalSettings[PbxSettings::SIP_PORT];
         $tlsPort            = $this->generalSettings[PbxSettings::TLS_PORT];
+        $timeZone           = $this->generalSettings[PbxSettings::PBX_TIMEZONE];
 
-        $now_hash           = md5($topology . $externalHostName . $extIpAddress . $sipPort . $externalSipPort . $tlsPort . $externalTlsPort . implode('', $subnets));
+        $now_hash           = md5($timeZone.$topology . $externalHostName . $extIpAddress . $sipPort . $externalSipPort . $tlsPort . $externalTlsPort . implode('', $subnets));
 
         $old_hash        = '';
         $varEtcDir       = $di->getShared('config')->path('core.varEtcDir');
@@ -628,6 +629,7 @@ class SIPConf extends AsteriskConfigClass
         $tlsPort    = $this->generalSettings[PbxSettings::TLS_PORT];
         $externalSipPort    = $this->generalSettings[PbxSettings::EXTERNAL_SIP_PORT];
         $externalTlsPort    = $this->generalSettings[PbxSettings::EXTERNAL_TLS_PORT];
+        $timeZone           = $this->generalSettings[PbxSettings::PBX_TIMEZONE];
         $natConf    = '';
         $tlsNatConf = '';
 
@@ -710,7 +712,7 @@ class SIPConf extends AsteriskConfigClass
         }
 
         $varEtcDir = $this->config->path('core.varEtcDir');
-        $hash = md5($topology . $externalHostName . $extIpAddress . $sipPort . $externalSipPort . $tlsPort . $externalTlsPort . implode('', $subnets));
+        $hash = md5($timeZone . $topology . $externalHostName . $extIpAddress . $sipPort . $externalSipPort . $tlsPort . $externalTlsPort . implode('', $subnets));
 
         // Write the configuration content to the file
         file_put_contents($varEtcDir . self::TOPOLOGY_HASH_FILE, $hash);
