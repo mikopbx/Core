@@ -159,7 +159,7 @@ const systemDiagnosticLogs = {
         });
 
         // Event listener for Fullscreen button click
-        $('#fullscreen-toggle').on('click', systemDiagnosticLogs.toggleFullScreen);
+        $('.fullscreen-toggle-btn').on('click', systemDiagnosticLogs.toggleFullScreen);
 
         // Listening for the fullscreen change event
         document.addEventListener('fullscreenchange', systemDiagnosticLogs.adjustLogHeight);
