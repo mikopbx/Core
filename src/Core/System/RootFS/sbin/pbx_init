@@ -46,13 +46,13 @@ while : ; do
     fi
 
     if [ -f /tmp/rebooting ]; then
-        echo "Reboot pending (${0}). Cancel with rm /tmp/rebooting"
+        echo "Reboot pending (${0}). Cancel with 'touch /tmp/cancel_rebooting'"
         # Waiting timeout
         WAIT_TIME=10
         counter=0
 
         while [ $counter -lt $WAIT_TIME ]; do
-            if [ ! -f /tmp/rebooting ]; then
+            if [ -f /tmp/cancel_rebooting ]; then
                 # Flag file was deleted
                 echo "System reboot was cancelled"
                 touch /tmp/start_sh
