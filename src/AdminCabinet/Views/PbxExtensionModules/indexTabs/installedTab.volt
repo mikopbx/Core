@@ -24,12 +24,12 @@
             </div>
             {% if module['disableReason']=='DisabledByException' %}
                 <i class="bug red icon wide popup-on-click vertically-aligned"
-                   data-html="<div class='header'>{{ t._('ext_DisableReasonHeader') }}</div><div class='content'>{{ t._('ext_ModuleExecutionProblem') }}:<br>{{ module['disableReasonText'] }}</div></div>"
+                   data-html="<div class='header'>{{ t._('ext_DisableReasonHeader') }}</div><div class='content'>{{ t._('ext_ModuleExecutionProblem') }}<br>{{ module['disableReasonText'] }}</div></div>"
                 >
                 </i>
             {% elseif module['disableReason']=='DisabledByLicense' %}
                 <i class="ui icons vertically-aligned popup-on-click"
-                   data-html="<div class='header'>{{ t._('ext_DisableReasonHeader') }}</div><div class='content'>{{ t._('ext_ModuleLicenseProblem') }}:<br>{{ module['disableReasonText'] }}</div></div>"
+                   data-html="<div class='header'>{{ t._('ext_DisableReasonHeader') }}</div><div class='content'>{{ t._('ext_ModuleLicenseProblem') }}<br>{{ module['disableReasonText'] }}</div></div>"
                 >
                     <i class="big red dont icon"></i>
                     <i class="key icon"></i>
