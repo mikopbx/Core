@@ -281,14 +281,6 @@ class WorkerCdr extends WorkerBase
             $nice = Util::which('nice');
             Processes::mwExecBg("$nice -n -19 $wav2mp3Path '{$p_info['dirname']}/{$p_info['filename']}'");
 
-            $dirLink = str_replace('/monitor/', '/pretty-monitor/', dirname($p_info['dirname']));
-            $formattedDate = date('Y-m-d-H_i', strtotime($row['start']));
-            $uid = str_replace('mikopbx-', '', $row['linkedid']);
-            $prettyFilename = "{$uid}-$formattedDate-{$row['src_num']}-{$row['dst_num']}-id-{$row['id']}";
-            $mkdirPath = Util::which('mkdir');
-            $lnPath = Util::which('ln');
-            shell_exec("$mkdirPath -p $dirLink; $lnPath -s {$row['recordingfile']} $dirLink/$prettyFilename.mp3");
-
             // Get the directory with current month's recordings
             $dir = dirname($p_info['dirname'], 2);
             Processes::mwExecBg("$nice -n -19 $lostWav2mp3Path '$dir'");
