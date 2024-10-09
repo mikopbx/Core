@@ -23,6 +23,7 @@ namespace MikoPBX\AdminCabinet\Plugins;
 use MikoPBX\AdminCabinet\Controllers\ErrorsController;
 use MikoPBX\AdminCabinet\Controllers\LanguageController;
 use MikoPBX\AdminCabinet\Controllers\SessionController;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Providers\AclProvider;
@@ -106,6 +107,78 @@ class SecurityPlugin extends Injectable
     }
 
     /**
+     * Checks if the current user is authenticated.
+     *
+     * This method checks if the current user is authenticated based on whether they have an existing session or a valid
+     * "remember me" cookie.
+     * If the request is from localhost or the user already has an active session, the method returns
+     * true.
+     * If a "remember me" cookie exists, the method checks if it matches any active tokens in the AuthTokens table.
+     * If a match is found, the user's session is set, and the method returns true. If none of these conditions are met,
+     * the method returns false.
+     *
+     * @return bool true if the user is authenticated, false otherwise.
+     */
+    private function checkUserAuth(): bool
+    {
+        // Check if it is a localhost request or if the user is already authenticated.
+        if ($this->session->has(SessionController::SESSION_ID)) {
+            return true;
+        }
+
+        // Check if remember me cookie exists.
+        if (!$this->cookies->has('random_token')) {
+            return false;
+        }
+        try {
+            $token = $this->cookies->get('random_token')->getValue();
+            $currentDate = date("Y-m-d H:i:s", time());
+
+            // Delete expired tokens and check if the token matches any active tokens.
+            $userTokens = AuthTokens::find();
+            foreach ($userTokens as $userToken) {
+                if ($userToken->expiryDate < $currentDate) {
+                    $userToken->delete();
+                } elseif ($this->security->checkHash($token, $userToken->tokenHash)) {
+                    $sessionParams = json_decode($userToken->sessionParams, true);
+                    $this->session->set(SessionController::SESSION_ID, $sessionParams);
+                    return true;
+                }
+            }
+
+        } catch (\Throwable $e) {
+            //CriticalErrorsHandler::handleException($e);
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the request is coming from localhost.
+     *
+     * @return bool
+     */
+    public function isLocalHostRequest(): bool
+    {
+        return ($_SERVER['REMOTE_ADDR'] === '127.0.0.1');
+    }
+
+    /**
+     * Redirects the user to the login page.
+     * @param $dispatcher Dispatcher instance for handling the redirection.
+     */
+    private function forwardToLoginPage(Dispatcher $dispatcher): void
+    {
+        $dispatcher->forward([
+            'controller' => 'session',
+            'action' => 'index',
+            'module' => 'admin-cabinet',
+            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
+        ]);
+    }
+
+    /**
      * Redirects to the user's home page or a default page if the home page is not set.
      *
      * This method determines the user's home page based on the session data. If the home page path is not set in the session,
@@ -176,62 +249,6 @@ class SecurityPlugin extends Injectable
     }
 
     /**
-     * Redirects the user to the login page.
-     * @param $dispatcher Dispatcher instance for handling the redirection.
-     */
-    private function forwardToLoginPage(Dispatcher $dispatcher): void
-    {
-        $dispatcher->forward([
-            'controller' => 'session',
-            'action' => 'index',
-            'module' => 'admin-cabinet',
-            'namespace' => 'MikoPBX\AdminCabinet\Controllers'
-        ]);
-    }
-    /**
-     * Checks if the current user is authenticated.
-     *
-     * This method checks if the current user is authenticated based on whether they have an existing session or a valid
-     * "remember me" cookie.
-     * If the request is from localhost or the user already has an active session, the method returns
-     * true.
-     * If a "remember me" cookie exists, the method checks if it matches any active tokens in the AuthTokens table.
-     * If a match is found, the user's session is set, and the method returns true. If none of these conditions are met,
-     * the method returns false.
-     *
-     * @return bool true if the user is authenticated, false otherwise.
-     */
-    private function checkUserAuth(): bool
-    {
-        // Check if it is a localhost request or if the user is already authenticated.
-        if ($this->session->has(SessionController::SESSION_ID)) {
-            return true;
-        }
-
-        // Check if remember me cookie exists.
-        if (!$this->cookies->has('random_token')) {
-            return false;
-        }
-
-        $token = $this->cookies->get('random_token')->getValue();
-        $currentDate = date("Y-m-d H:i:s", time());
-
-        // Delete expired tokens and check if the token matches any active tokens.
-        $userTokens = AuthTokens::find();
-        foreach ($userTokens as $userToken) {
-            if ($userToken->expiryDate < $currentDate) {
-                $userToken->delete();
-            } elseif ($this->security->checkHash($token, $userToken->tokenHash)) {
-                $sessionParams = json_decode($userToken->sessionParams, true);
-                $this->session->set(SessionController::SESSION_ID, $sessionParams);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Checks if an action is allowed for the current user.
      *
      * This method checks if the specified $action is allowed for the current user based on their role. It gets the user's
@@ -253,15 +270,5 @@ class SecurityPlugin extends Injectable
         } else {
             return true;
         }
-    }
-
-    /**
-     * Check if the request is coming from localhost.
-     *
-     * @return bool
-     */
-    public function isLocalHostRequest(): bool
-    {
-        return ($_SERVER['REMOTE_ADDR'] === '127.0.0.1');
     }
 }
