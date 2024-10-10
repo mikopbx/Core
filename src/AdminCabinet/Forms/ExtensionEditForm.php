@@ -69,14 +69,14 @@ class ExtensionEditForm extends BaseForm
         // Show_in_phonebook
         $cheskarr = ['value' => null];
         if ($entity->show_in_phonebook) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
+            $cheskarr = ['checked' => '1'];
         }
         $this->add(new Check('show_in_phonebook', $cheskarr));
 
         // Public_access
         $cheskarr = ['value' => null];
         if ($entity->public_access) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
+            $cheskarr = ['checked' => '1'];
         }
         $this->add(new Check('public_access', $cheskarr));
 
@@ -145,7 +145,7 @@ class ExtensionEditForm extends BaseForm
         // SIP EnableRecording
         $checkArr = ['value' => null];
         if ($entity->sip_enableRecording !== '0') {
-            $checkArr = ['checked' => 'checked', 'value' => null];
+            $checkArr = ['checked' => '1'];
         }
         $this->add(new Check('sip_enableRecording', $checkArr));
 
