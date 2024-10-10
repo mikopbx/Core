@@ -182,9 +182,9 @@ class SIPConf extends AsteriskConfigClass
                 $subnets[] = $net;
             }
             if (trim($if_data['internet']) === '1') {
-                $topology    = trim($if_data['topology']);
-                $extipaddr   = trim($if_data['extipaddr']);
-                $exthostname = trim($if_data['exthostname']);
+                $topology    = trim($if_data['topology']??'');
+                $extipaddr   = trim($if_data['extipaddr']??'');
+                $exthostname = trim($if_data['exthostname']??'');
             }
         }
 
@@ -599,11 +599,11 @@ class SIPConf extends AsteriskConfigClass
         $db = new AstDB();
         foreach ($this->data_peers as $peer) {
             // Update Asterisk database with routing information.
-            $ringLength = ((string)$peer['ringlength'] === '0') ? '' : trim($peer['ringlength']);
+            $ringLength = ((string)$peer['ringlength'] === '0') ? '' : trim($peer['ringlength']??'');
             $warError |= !$db->databasePut('FW_TIME', $peer['extension'], $ringLength);
-            $warError |= !$db->databasePut('FW', $peer['extension'], trim($peer['forwarding']));
-            $warError |= !$db->databasePut('FW_BUSY', $peer['extension'], trim($peer['forwardingonbusy']));
-            $warError |= !$db->databasePut('FW_UNAV', $peer['extension'], trim($peer['forwardingonunavailable']));
+            $warError |= !$db->databasePut('FW', $peer['extension'], trim($peer['forwarding']??''));
+            $warError |= !$db->databasePut('FW_BUSY', $peer['extension'], trim($peer['forwardingonbusy']??''));
+            $warError |= !$db->databasePut('FW_UNAV', $peer['extension'], trim($peer['forwardingonunavailable']??''));
         }
 
         return !$warError;
@@ -1281,7 +1281,7 @@ class SIPConf extends AsteriskConfigClass
         }
 
         $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
-        $peer['transport'] = trim($peer['transport']);
+        $peer['transport'] = trim($peer['transport']??'');
         // Prepare the options for the endpoint section
         $options  = [
             'type'                 => 'endpoint',

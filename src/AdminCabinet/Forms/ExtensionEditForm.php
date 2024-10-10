@@ -104,7 +104,7 @@ class ExtensionEditForm extends BaseForm
         $this->add(new Hidden('sip_extension', ["value" => $entity->number]));
 
         // SIP Type
-        $this->add(new Hidden('sip_type', ["value" => $entity->type]));
+        $this->add(new Hidden('sip_type', ["value" => $entity->sip_type]));
 
         // SIP Secret
         $this->add(

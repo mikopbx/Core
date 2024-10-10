@@ -75,6 +75,7 @@ class GetRecordAction extends Injectable
                 'sip_dtmfmode' => 'Sip.dtmfmode',
                 'sip_manualattributes' => 'Sip.manualattributes',
                 'sip_uniqid' => 'Sip.uniqid',
+                'sip_type' => 'Sip.type',
                 'sip_secret' => 'Sip.secret',
                 'sip_networkfilterid' => 'Sip.networkfilterid',
                 'sip_transport' => 'Sip.transport'
