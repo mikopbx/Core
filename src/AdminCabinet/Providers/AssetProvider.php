@@ -150,11 +150,11 @@ class AssetProvider implements ServiceProviderInterface
     {
         if (file_exists(SentryConf::CONF_FILE) && file_exists(Network::INTERNET_FLAG_FILE)) {
             $this->headerCollectionSentryJS->addjs(
-                'assets/js/vendor/sentry/bundle.min.js',
+                'js/vendor/sentry/bundle.min.js',
                 true
             );
             $this->headerCollectionSentryJS->addJs(
-                "assets/js/pbx/main/sentry-error-logger.js",
+                "js/pbx/main/sentry-error-logger.js",
                 true
             );
         }
