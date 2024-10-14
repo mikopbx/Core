@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -38,7 +39,7 @@ use Phalcon\Mvc\Micro;
 class Request extends PhRequest
 {
     /**
-     * Check the header of request to understand if it needs async response or not
+     * Check the header of a request to understand if it needs async response or not
      * @return bool
      */
     public function isAsyncRequest(): bool
@@ -52,9 +53,37 @@ class Request extends PhRequest
      */
     public function getAsyncRequestChannelId(): string
     {
-        return $this->getHeader('X-Async-Response-Channel-Id')??'';
+        return $this->getHeader('X-Async-Response-Channel-Id') ?? '';
     }
 
+    /**
+     * Checks if the current request is a debug request.
+     *
+     * This method inspects the presence of the 'X-Debug-The-Request' header
+     * to determine if the request is for debugging purposes.
+     *
+     * @examples
+     * curl -X POST \
+     *      -H 'Content-Type: application/json' \
+     *      -H 'Cookie: XDEBUG_SESSION=PHPSTORM' \
+     *      -H 'X-Debug-The-Request: 1' \
+     *      -d '{"filename": "/storage/usbdisk1/mikopbx/tmp/mikopbx-2023.1.223-x86_64.img"}' \
+     *      http://127.0.0.1/pbxcore/api/system/upgrade
+     *
+     * Or add a header at any semantic API request
+     * ...
+     *  beforeXHR(xhr) {
+     *      xhr.setRequestHeader ('X-Debug-The-Request', 1);
+     *      return xhr;
+     * },
+     * ...
+     *
+     * @return bool True if the request is a debug request, false otherwise.
+     */
+    public function isDebugRequest(): bool
+    {
+        return !empty($this->getHeader('X-Debug-The-Request'));
+    }
     /**
      * Check if the request is coming from localhost.
      *
@@ -64,6 +93,25 @@ class Request extends PhRequest
     {
         return ($_SERVER['REMOTE_ADDR'] === '127.0.0.1');
     }
+
+    /**
+     * Requested execution timeout
+     * @return int
+     */
+    public function getRequestTimeout(): int
+    {
+        return intval($this->getHeader('X-Processor-Timeout')) ?? 10;
+    }
+
+    /**
+     * Requested execution priority
+     * @return int
+     */
+    public function getRequestPriority(): int
+    {
+        return intval($this->getHeader('X-Processor-Priority')) ?? 10;
+    }
+
 
     /**
      * Check if debug mode is enabled.
@@ -100,9 +148,9 @@ class Request extends PhRequest
      */
     public function isAllowedAction($api): bool
     {
-        $pattern = $api->router->getMatches()[0]??'';
+        $pattern = $api->router->getMatches()[0] ?? '';
         $partsOfPattern = explode('/', $pattern);
-        if (count($partsOfPattern)===5){
+        if (count($partsOfPattern) === 5) {
             $role = $api->getSharedService(SessionProvider::SERVICE_NAME)->get(SessionController::SESSION_ID)[SessionController::ROLE] ?? AclProvider::ROLE_GUESTS;
             $acl =  $api->getSharedService(AclProvider::SERVICE_NAME);
             $controller = "/$partsOfPattern[1]/$partsOfPattern[2]/$partsOfPattern[3]";
@@ -125,11 +173,11 @@ class Request extends PhRequest
     {
         $pattern  = $api->request->getURI(true);
         $additionalRoutes = PBXConfModulesProvider::hookModulesMethod(RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
-        foreach ($additionalRoutes as $additionalRoutesFromModule){
+        foreach ($additionalRoutes as $additionalRoutesFromModule) {
             foreach ($additionalRoutesFromModule as $additionalRoute) {
                 $noAuth = $additionalRoute[5] ?? false;
                 // Let's prepare a regular expression to check the URI
-                $resultPattern = '/^'.str_replace('/', '\/', $additionalRoute[2]).'/';
+                $resultPattern = '/^' . str_replace('/', '\/', $additionalRoute[2]) . '/';
                 $resultPattern = preg_replace('/\{[^\/]+\}/', '[^\/]+', $resultPattern);
                 // Let's check the URI
                 if ($noAuth === true && preg_match($resultPattern, $pattern)) {

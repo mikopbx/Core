@@ -112,26 +112,25 @@ class BaseController extends Controller
      * @param string $moduleName
      * @return array
      */
-    public function prepareRequestMessage(string $processor, mixed $payload, string $actionName, string $moduleName): array
-    {
+    public function prepareRequestMessage(
+        string $processor,
+        mixed $payload,
+        string $actionName,
+        string $moduleName
+    ): array {
         // Old style modules, we can remove it after 2025
         if ($processor === 'modules') {
             $processor = PbxExtensionsProcessor::class;
         }
-
-        // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
-        // and set XDEBUG_API_SESSION Cookie header on REST request to debug it
-        // The set will break the WorkerApiCommands() execution on prepareAnswer method
-        $debug = strpos($this->request->getHeader('Cookie'), 'XDEBUG_API_SESSION') !== false;
 
         $requestMessage = [
             'processor' => $processor,
             'data' => $payload,
             'action' => $actionName,
             'async' => false,
-            'asyncChannelId' => '',
-            'debug' => $debug
+            'asyncChannelId' => ''
         ];
+
         if ($this->request->isAsyncRequest()) {
             $requestMessage['async'] = true;
             $requestMessage['asyncChannelId'] = $this->request->getAsyncRequestChannelId();
@@ -140,7 +139,10 @@ class BaseController extends Controller
         if ($processor === PbxExtensionsProcessor::class) {
             $requestMessage['module'] = $moduleName;
         }
-        return array($debug, $requestMessage);
+
+        $requestMessage['debug'] = $this->request->isDebugRequest();
+
+        return array($requestMessage['debug'], $requestMessage);
     }
 
     /**

@@ -22,7 +22,7 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
-use MikoPBX\Core\System\{BeanstalkClient, Configs\BeanstalkConf, Processes, SystemMessages};
+use MikoPBX\Core\System\{BeanstalkClient, Configs\BeanstalkConf, Directories, Processes, SystemMessages};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -105,11 +105,8 @@ class WorkerApiCommands extends WorkerBase
                 if ($processor === 'modules') {
                     $processor = PbxExtensionsProcessor::class;
                 }
-                // Start xdebug session, don't forget to install xdebug.remote_mode = jit on xdebug.ini
-                // and set XDEBUG_SESSION Cookie header on REST request to debug it
-                if (isset($request['debug']) && $request['debug'] === true && extension_loaded('xdebug')) {
-                    xdebug_break();
-                }
+
+                $this->breakpointHere($request);
 
                 // This is the child process
                 if (method_exists($processor, 'callback')) {
@@ -144,8 +141,8 @@ class WorkerApiCommands extends WorkerBase
 
                     // Check the response size and write in on file if it bigger than Beanstalk can digest
                     if (strlen($encodedResult) > BeanstalkConf::JOB_DATA_SIZE_LIMIT) {
-                        $dirsConfig = $this->di->getShared('config');
-                        $filenameTmp = $dirsConfig->path('www.downloadCacheDir') . '/temp-' . __FUNCTION__ . '_' . microtime() . '.data';
+                        $downloadCacheDir = Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR);
+                        $filenameTmp = $downloadCacheDir . '/temp-' . __FUNCTION__ . '_' . microtime() . '.data';
                         if (file_put_contents($filenameTmp, serialize($res->getResult()))) {
                             $encodedResult = json_encode([BeanstalkClient::RESPONSE_IN_FILE => $filenameTmp]);
                         } else {
@@ -206,6 +203,42 @@ class WorkerApiCommands extends WorkerBase
                 'uninstallModule',
             ],
         ];
+    }
+
+    /**
+     * Start xdebug session if request called with special header: "X-Debug-The-Request"
+     *
+     * Add xdebug.start_with_request = trigger to xdebug.ini
+     *
+     * @examples
+     * curl -X POST \
+     * -H 'Content-Type: application/json' \
+     * -H 'Cookie: XDEBUG_SESSION=PHPSTORM' \
+     * -H 'X-Debug-The-Request: 1' \
+     * -d '{"filename": "/storage/usbdisk1/mikopbx/tmp/mikopbx-2023.1.223-x86_64.img"}' \
+     * http://127.0.0.1/pbxcore/api/system/upgrade
+     *
+     * Or add a header at any semantic API request
+     * $.api({
+     *      url: ...,
+     *      on: 'now',
+     *      method: 'POST',
+     *      beforeXHR(xhr) {
+     *          xhr.setRequestHeader ('X-Debug-The-Request', 1);
+     *          return xhr;
+     *      },
+     *      ...
+     * });
+     */
+    private function breakpointHere(array $request): void
+    {
+        if (isset($request['debug']) && $request['debug'] === true && extension_loaded('xdebug')) {
+            if (function_exists('xdebug_connect_to_client')) {
+                if (xdebug_connect_to_client()) {
+                    xdebug_break();
+                }
+            }
+        }
     }
 }
 

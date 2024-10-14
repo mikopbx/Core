@@ -1,27 +1,13 @@
 <?php
-/*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
 
 namespace MikoPBX\PBXCoreREST\Controllers\Modules;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
+use Pheanstalk\Contract\PheanstalkInterface;
 
 /**
  * Base controller for handling module-related actions.
@@ -44,7 +30,6 @@ use MikoPBX\PBXCoreREST\Http\Response;
  *   curl http://127.0.0.1/pbxcore/api/modules/ModuleCTIClient/reload
  *   curl http://127.0.0.1/pbxcore/api/modules/ModuleBitrix24Integration/reload
  *
- *
  * Execution of actions without main authorization.
  * curl http://127.0.0.1/pbxcore/api/modules/ModuleAutoprovision/getcfg?mac=00135E874B49&solt=test
  * curl http://127.0.0.1/pbxcore/api/modules/ModuleAutoprovision/getimg?file=logo-yealink-132x32.dob
@@ -65,59 +50,130 @@ class ModulesControllerBase extends BaseController
      */
     public function callActionForModule(string $moduleName, string $actionName): void
     {
+        $maxTimeout = max(10, $this->request->getRequestTimeout());
+        $priority = max(PheanstalkInterface::DEFAULT_PRIORITY, $this->request->getRequestPriority());
+        // Old style modules, we can remove it after 2025
         $_REQUEST['ip_srv'] = $_SERVER['SERVER_ADDR'];
-        $input              = file_get_contents('php://input');
-        $request            = json_encode([
-            'data'           => $_REQUEST,
-            'module'         => $moduleName,
-            'input'          => $input,
-            'action'         => $actionName,
-            'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
-            'processor'      => 'modules',
-            'debug'     => str_contains($this->request->getHeader('Cookie'), 'XDEBUG_SESSION')
-        ]);
 
-        $response   = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME)->request($request, 30, 0);
-        if ($response !== false) {
-            $response = json_decode($response, true);
-            if (isset($response['data']['fpassthru'])) {
-                $filename = $response['data']['filename']??'';
-                $fp = fopen($filename, "rb");
-                if ($fp!==false) {
-                    $size = filesize($filename);
-                    $name = basename($filename);
-                    $this->response->setHeader('Content-Description', "config file");
-                    $this->response->setHeader('Content-Disposition', "attachment; filename=$name");
-                    $this->response->setHeader('Content-type', "text/plain");
-                    $this->response->setHeader('Content-Transfer-Encoding', "binary");
-                    $this->response->setContentLength($size);
-                    $this->response->sendHeaders();
-                    fpassthru($fp);
-                    fclose($fp);
-                }
-                if (isset($response['data']['need_delete']) && $response['data']['need_delete'] === true) {
-                    unlink($filename);
-                }
-            } elseif (isset($response['html'])) {
-                echo $response['html'];
-                $this->response->sendRaw();
-            } elseif (isset($response['redirect'])) {
-                $this->response->redirect($response['redirect'], true);
-                $this->response->sendRaw();
-            } elseif ( isset($response['echo'], $response['headers']) ) {
-                foreach ($response['headers'] as $name => $value) {
-                    $this->response->setHeader($name, $value);
-                }
-                $this->response->setPayloadSuccess($response['echo']);
-            } elseif (isset($response['echo_file'])) {
-                $this->response->setStatusCode(Response::OK, 'OK')->sendHeaders();
-                $this->response->setFileToSend($response['echo_file']);
-                $this->response->sendRaw();
-            } else {
-                $this->response->setPayloadSuccess($response);
+        $payload = file_get_contents('php://input');
+        list($debug, $requestMessage) = $this->prepareRequestMessage(
+            PbxExtensionsProcessor::class,
+            $payload,
+            $actionName,
+            $moduleName
+        );
+
+        try {
+            $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
+            /** @var BeanstalkConnectionWorkerApiProvider $beanstalkQueue */
+            $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
+            if ($debug) {
+                $maxTimeout = 9999;
             }
+            $response = $beanstalkQueue->request($message, $maxTimeout, $priority);
+
+            if ($response !== false) {
+                $response = json_decode($response, true);
+                $this->handleResponse($response);
+            } else {
+                $this->sendError(Response::INTERNAL_SERVER_ERROR);
+            }
+        } catch (\Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            $this->sendError(Response::BAD_REQUEST, $e->getMessage());
+        }
+    }
+
+    /**
+     * Prepare a request message for sending to a backend worker.
+     *
+     * @param string $processor
+     * @param mixed $payload
+     * @param string $actionName
+     * @param string $moduleName
+     * @return array
+     */
+    public function prepareRequestMessage(
+        string $processor,
+        mixed $payload,
+        string $actionName,
+        string $moduleName
+    ): array {
+
+        $requestMessage = [
+            'data' => $_REQUEST,
+            'module' => $moduleName,
+            'input' => $payload,
+            'action' => $actionName,
+            'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
+            'processor' => $processor,
+            'async' => false,
+            'asyncChannelId' => ''
+        ];
+
+        if ($this->request->isAsyncRequest()) {
+            $requestMessage['async'] = true;
+            $requestMessage['asyncChannelId'] = $this->request->getAsyncRequestChannelId();
+        }
+
+        $requestMessage['debug'] = $this->request->isDebugRequest();
+        return [$requestMessage['debug'], $requestMessage];
+    }
+
+    /**
+     * Handles the response from the backend worker.
+     *
+     * @param array $response
+     * @return void
+     */
+    private function handleResponse(array $response): void
+    {
+        if (isset($response['data']['fpassthru'])) {
+            $this->handleFilePassThrough($response['data']);
+        } elseif (isset($response['html'])) {
+            echo $response['html'];
+            $this->response->sendRaw();
+        } elseif (isset($response['redirect'])) {
+            $this->response->redirect($response['redirect'], true);
+            $this->response->sendRaw();
+        } elseif (isset($response['echo'], $response['headers'])) {
+            foreach ($response['headers'] as $name => $value) {
+                $this->response->setHeader($name, $value);
+            }
+            $this->response->setPayloadSuccess($response['echo']);
+        } elseif (isset($response['echo_file'])) {
+            $this->response->setStatusCode(Response::OK, 'OK')->sendHeaders();
+            $this->response->setFileToSend($response['echo_file']);
+            $this->response->sendRaw();
         } else {
-            $this->sendError(Response::INTERNAL_SERVER_ERROR);
+            $this->response->setPayloadSuccess($response);
+        }
+    }
+
+    /**
+     * Handles file pass-through responses.
+     *
+     * @param array $data
+     * @return void
+     */
+    private function handleFilePassThrough(array $data): void
+    {
+        $filename = $data['filename'] ?? '';
+        $fp = fopen($filename, "rb");
+        if ($fp !== false) {
+            $size = filesize($filename);
+            $name = basename($filename);
+            $this->response->setHeader('Content-Description', "config file");
+            $this->response->setHeader('Content-Disposition', "attachment; filename=$name");
+            $this->response->setHeader('Content-Type', "text/plain");
+            $this->response->setHeader('Content-Transfer-Encoding', "binary");
+            $this->response->setContentLength($size);
+            $this->response->sendHeaders();
+            fpassthru($fp);
+            fclose($fp);
+        }
+        if (!empty($data['need_delete'])) {
+            unlink($filename);
         }
     }
 }
