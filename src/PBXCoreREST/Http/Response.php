@@ -93,7 +93,7 @@ class Response extends PhResponse
         $eTag      = sha1($content);
 
         $content = json_decode($content, true);
-        if (!is_array($content)) {
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($content)) {
             $content = [];
         }
         $jsonapi = [
@@ -111,7 +111,7 @@ class Response extends PhResponse
         /**
          * Join the array again
          */
-        $data = $jsonapi + $content + $meta;
+        $data = array_merge($jsonapi, $content, $meta);
         $this
             ->setHeader('E-Tag', $eTag)
             ->setJsonContent($data);

@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -54,8 +55,9 @@ use Phalcon\Di\Di;
  * Upgrade the PBX using uploaded IMG file.
  * curl -X POST -d
  *   '{"filename": "/storage/usbdisk1/mikopbx/tmp/mikopbx-2023.1.223-x86_64.img"}'
- *   http://127.0.0.1/pbxcore/api/system/upgrade -H 'Cookie: XDEBUG_SESSION=PHPSTORM'; curl -F
- *   "file=@mikopbx-2023.1.223-x86_64.img" http://172.16.156.212/pbxcore/api/system/upgrade;
+ *   http://127.0.0.1/pbxcore/api/system/upgrade -H 'Cookie: XDEBUG_SESSION=PHPSTORM';
+ *
+ * curl -F "file=@mikopbx-2023.1.223-x86_64.img" http://172.16.156.212/pbxcore/api/system/upgrade;
  *
  */
 class PostController extends BaseController
@@ -130,5 +132,4 @@ class PostController extends BaseController
             $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
-
 }

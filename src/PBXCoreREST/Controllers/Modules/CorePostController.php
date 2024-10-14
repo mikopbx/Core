@@ -79,7 +79,7 @@ class CorePostController extends BaseController
         switch ($actionName) {
             case 'installFromRepo':
             case 'updateAll':
-                // Extended timeout for long async operation
+                // Extended timeout for a long async operation
                 $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data, '', 600);
                 break;
             default:

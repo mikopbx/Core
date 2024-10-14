@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -43,11 +44,11 @@ class ResponseMiddleware implements MiddlewareInterface
      *
      * @return bool
      */
-    public function call(Micro $application):bool
+    public function call(Micro $application): bool
     {
         /** @var Response $response */
         $response = $application->getService(ResponseProvider::SERVICE_NAME);
-        if ( ! $response->isSent()) {
+        if (! $response->isSent()) {
             $response->send();
         }
 
