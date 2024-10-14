@@ -57,7 +57,6 @@ if [ "$1" = "help" ] || [ -z "$1" ]; then
     exit 0
 fi
 
-
 # First command line argument is treated as a subcommand
 subcmd=$1;
 
@@ -73,12 +72,12 @@ services)
    case "${action}" in
    stop-all)
       # Get process IDs (PIDs) of PHP Worker services
-      pids=$(ps | grep php | grep Worker | cut -d ' ' -f1);
+      pids=$(ps | grep php | grep Worker | awk '{print $1}');
 
       # If PIDs exist, kill the processes
-      if [ "${pids}x" != "x" ];then
+      if [ -n "${pids}" ]; then
         echo 'Killing all PBX services.';
-        kill "$pids";
+        kill ${pids};
       else
         echo 'PBX services not started.';
       fi
@@ -103,10 +102,10 @@ services)
   ;;
 service)
   # Get PIDs of specific service passed as second argument
-  pids=$(ps | grep "$2" | grep -v grep | grep -v "$0" | cut -d ' ' -f1);
+  pids=$(ps | grep "$2" | grep -v grep | grep -v "$0" | awk '{print $1}');
 
   # If PIDs exist, kill the service
-  if [ "${pids}x" != "x" ];then
+  if [ -n "${pids}" ]; then
     echo "Killing PBX service ${2}.";
     echo "${pids}" | xargs kill
   else
@@ -121,7 +120,7 @@ debug)
 
   # Find the file to debug
   pathToFile=$(find /usr/www/src/ -name "${scriptName}.php")
-  if [ ! -f "$pathToFile" ];then
+  if [ ! -f "$pathToFile" ]; then
     echo "File ${scriptName}.php not found.";
     exit 2;
   fi
@@ -130,17 +129,29 @@ debug)
   "${pbxConsole}" cron stop;
   "${pbxConsole}" service "${scriptName}" stop;
 
-  # Configure xdebug
-  export XDEBUG_CONFIG="remote_enable=1 remote_mode=req remote_autostart=0 remote_port=9000 remote_host=${ipDebugger} remote_connect_back=0";
+  # Configure xdebug environment variable for PHP
+  # Adjusted for Xdebug 3
+  export XDEBUG_CONFIG="client_host=${ipDebugger} client_port=9003"
+  export XDEBUG_MODE="debug"
+  export XDEBUG_SESSION=1
 
   # Enable xdebug in PHP if it's not enabled
   if [ ! -f /etc/php.d/15-xdebug.ini ]; then
-    cp /etc/php.d/15-xdebug.ini.disabled /etc/php.d/15-xdebug.ini;
-    sed -i "s/xdebug.remote_host=.*/xdebug.remote_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini;
-  fi;
+    echo "Creating Xdebug configuration file..."
+    cat <<EOL > /etc/php.d/15-xdebug.ini
+zend_extension=xdebug.so
+xdebug.mode=debug
+xdebug.start_with_request=yes
+xdebug.client_host=${ipDebugger}
+xdebug.client_port=9003
+EOL
+  else
+    echo "Updating Xdebug client_host to ${ipDebugger}..."
+    sed -i "s/^xdebug\.client_host=.*/xdebug.client_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini
+  fi
 
   # Start the PHP script with xdebug enabled
-  php -f "$pathToFile" start;
+  php -dxdebug.mode=debug -dxdebug.start_with_request=yes -f "$pathToFile" start;
   ;;
 
 xdebug)
@@ -150,27 +161,49 @@ xdebug)
     ipDebugger="$3";
     case "${action}" in
       enable-cli)
-        echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
-        echo "Changing xdebug.remote_host to address ${ipDebugger} ..."
-        sed "s/xdebug.remote_host=.*/xdebug.remote_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
+        echo "Enabling Xdebug for CLI..."
+        if [ -f /etc/php.d/15-xdebug.ini ]; then
+          echo "Updating Xdebug client_host to ${ipDebugger}..."
+          sed -i "s/^xdebug\.client_host=.*/xdebug.client_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini
+        else
+          echo "Creating Xdebug configuration file..."
+          cat <<EOL > /etc/php.d/15-xdebug.ini
+zend_extension=xdebug.so
+xdebug.mode=debug
+xdebug.start_with_request=yes
+xdebug.client_host=${ipDebugger}
+xdebug.client_port=9003
+EOL
+        fi
         echo "Done"
         ;;
       enable-www)
-        echo "Renaming 15-xdebug.ini.disabled to 15-xdebug.ini ..."
-        echo "Changing xdebug.remote_host to address ${ipDebugger} ..."
-        sed "s/xdebug.remote_host=.*/xdebug.remote_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini.disabled > /etc/php.d/15-xdebug.ini
-        echo "killing the php-fpm processes ..."
+        echo "Enabling Xdebug for WWW..."
+        if [ -f /etc/php.d/15-xdebug.ini ]; then
+          echo "Updating Xdebug client_host to ${ipDebugger}..."
+          sed -i "s/^xdebug\.client_host=.*/xdebug.client_host=${ipDebugger}/" /etc/php.d/15-xdebug.ini
+        else
+          echo "Creating Xdebug configuration file..."
+          cat <<EOL > /etc/php.d/15-xdebug.ini
+zend_extension=xdebug.so
+xdebug.mode=debug
+xdebug.start_with_request=yes
+xdebug.client_host=${ipDebugger}
+xdebug.client_port=9003
+EOL
+        fi
+        echo "Restarting php-fpm..."
         killall php-fpm
         sleep 5;
-        echo "Restarting the php-fpm daemon ..."
         php-fpm -c /etc/php.ini
         echo "Done"
         ;;
       enable-agi)
-        echo "Restarting the asterisk daemon ..."
+        echo "Enabling Xdebug for AGI..."
+        echo "Restarting the Asterisk daemon..."
         killall safe_asterisk
         killall asterisk
-        "${pbxConsole}" enable-cli ${ipDebugger}
+        "${pbxConsole}" xdebug enable-cli ${ipDebugger}
         nohup safe_asterisk -f > /dev/null 2>&1 &
         echo "Done"
         ;;
@@ -184,7 +217,7 @@ cron)
       # If cron is running, kill it
       ps | grep -v grep | grep crond > /dev/null;
       result=$?;
-      if [ "$result" = "0" ];then
+      if [ "$result" = "0" ]; then
         echo 'Killing cron.';
         killall crond;
       else
@@ -193,7 +226,7 @@ cron)
       ;;
     restart)
        # Stop cron and then start it
-      pbx-console cron stop;
+      "${pbxConsole}" cron stop;
       echo 'Starting cron.';
       /usr/sbin/crond -L /dev/null -l 8
       ;;
@@ -201,7 +234,7 @@ cron)
       # If cron is not running, start it
       ps | grep -v grep | grep crond > /dev/null;
       result=$?;
-      if [ "$result" = "1" ];then
+      if [ "$result" = "1" ]; then
         echo 'Starting cron.';
         /usr/sbin/crond -L /dev/null -l 8
       else
