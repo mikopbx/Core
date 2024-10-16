@@ -145,12 +145,7 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Text('outbound_proxy'));
 
         // Qualify
-        $cheskarr = ['value' => null];
-        if ($entity->qualify) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-
-        $this->add(new Check('qualify', $cheskarr));
+        $this->addCheckBox('qualify', intval($entity->qualify) === 1);
 
         // Qualifyfreq
         $this->add(new Numeric('qualifyfreq', ["maxlength" => 3,
@@ -170,18 +165,10 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Check('noregister', $cheskarr));
 
         // Disablefromuser
-        $cheskarr = ['value' => null];
-        if ($entity->disablefromuser) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-        $this->add(new Check('disablefromuser', $cheskarr));
+        $this->addCheckBox('disablefromuser', intval($entity->disablefromuser) === 1);
 
         // Receive_calls_without_auth
-        $cheskarr = ['value' => null];
-        if ($entity->receive_calls_without_auth) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-        $this->add(new Check('receive_calls_without_auth', $cheskarr));
+        $this->addCheckBox('receive_calls_without_auth', intval($entity->receive_calls_without_auth) === 1);
 
         // Manualattributes
         $this->addTextArea('manualattributes', $entity->getManualAttributes() ?? '', 65);

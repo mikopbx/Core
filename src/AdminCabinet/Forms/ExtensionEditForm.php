@@ -67,18 +67,10 @@ class ExtensionEditForm extends BaseForm
         $this->add(new Hidden('is_general_user_number'));
 
         // Show_in_phonebook
-        $cheskarr = ['value' => null];
-        if ($entity->show_in_phonebook) {
-            $cheskarr = ['checked' => '1'];
-        }
-        $this->add(new Check('show_in_phonebook', $cheskarr));
+        $this->addCheckBox('show_in_phonebook', intval($entity->show_in_phonebook) === 1);
 
         // Public_access
-        $cheskarr = ['value' => null];
-        if ($entity->public_access) {
-            $cheskarr = ['checked' => '1'];
-        }
-        $this->add(new Check('public_access', $cheskarr));
+        $this->addCheckBox('public_access', intval($entity->public_access) === 1);
 
         // USER ID
         $this->add(new Hidden('user_id', ["value" => $entity->user_id]));
@@ -143,11 +135,8 @@ class ExtensionEditForm extends BaseForm
         $this->add($dtmfmode);
 
         // SIP EnableRecording
-        $checkArr = ['value' => null];
-        if ($entity->sip_enableRecording !== '0') {
-            $checkArr = ['checked' => '1'];
-        }
-        $this->add(new Check('sip_enableRecording', $checkArr));
+        $this->addCheckBox('sip_enableRecording', intval($entity->sip_enableRecording) !== 0);
+
 
         // SIP Transport
         $arrTransport = [

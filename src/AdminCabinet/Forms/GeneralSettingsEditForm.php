@@ -23,7 +23,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
@@ -194,11 +193,10 @@ class GeneralSettingsEditForm extends BaseForm
                 case PbxSettings::DISABLE_ALL_MODULES:
                 case PbxSettings::SSH_DISABLE_SSH_PASSWORD:
                 case '***ALL CHECK BOXES ABOVE***':
-                    $cheskarr = ['value' => null];
-                    if ($value) {
-                        $cheskarr = ['checked' => 'checked', 'value' => null];
-                    }
-                    $this->add(new Check($key, $cheskarr));
+                    $this->addCheckBox(
+                        $key,
+                        intval($value) === 1
+                    );
                     break;
                 default:
                     $this->add(new Text($key, ['value' => $value]));

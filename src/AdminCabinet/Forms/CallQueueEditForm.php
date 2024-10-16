@@ -85,12 +85,7 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Numeric('seconds_for_wrapup', ["maxlength" => 2, "style" => "width: 80px;"]));
 
         // Recivecallswhileonacall
-        $cheskarr = ['value' => null];
-        if ($entity->recive_calls_while_on_a_call) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-
-        $this->add(new Check('recive_calls_while_on_a_call', $cheskarr));
+        $this->addCheckBox('recive_calls_while_on_a_call', intval($entity->recive_calls_while_on_a_call) === 1);
 
         // Callerhear
         $arrActions = [
@@ -113,21 +108,10 @@ class CallQueueEditForm extends BaseForm
         $this->add($callerhear);
 
         // Announceposition
-        $cheskarr = ['value' => null];
-        if ($entity->announce_position) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-
-        $this->add(new Check('announce_position', $cheskarr));
+        $this->addCheckBox('announce_position', intval($entity->announce_position) === 1);
 
         // Announceholdtime
-        $cheskarr = ['value' => null];
-        if ($entity->announce_hold_time) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-
-        $this->add(new Check('announce_hold_time', $cheskarr));
-
+        $this->addCheckBox('announce_hold_time', intval($entity->announce_hold_time) === 1);
 
         $periodicannouncesoundid = new Select(
             'periodic_announce_sound_id',

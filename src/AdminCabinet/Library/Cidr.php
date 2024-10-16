@@ -22,12 +22,6 @@ namespace MikoPBX\AdminCabinet\Library;
 
 use Phalcon\Di\Injectable;
 
-/**
- * Created by PhpStorm.
- * User: nikolaybeketov
- * Date: 12.03.2018
- * Time: 12:09
- */
 class Cidr extends Injectable
 {
     // convert cidr to netmask
@@ -79,5 +73,52 @@ class Cidr extends Injectable
         }
 
         return false;
+    }
+
+    /**
+     * Retrieves an array of network masks with CIDR notation as the key and the corresponding netmask.
+     *
+     * @return array Associative array where keys are CIDR notation (0-32) and values
+     * are the corresponding netmask strings.
+     */
+    public static function getNetMasks(): array
+    {
+        $arrMasks = [
+            "0" => "0 - 0.0.0.0",
+            "1" => "1 - 128.0.0.0",
+            "2" => "2 - 192.0.0.0",
+            "3" => "3 - 224.0.0.0",
+            "4" => "4 - 240.0.0.0",
+            "5" => "5 - 248.0.0.0",
+            "6" => "6 - 252.0.0.0",
+            "7" => "7 - 254.0.0.0",
+            "8" => "8 - 255.0.0.0",
+            "9" => "9 - 255.128.0.0",
+            "10" => "10 - 255.192.0.0",
+            "11" => "11 - 255.224.0.0",
+            "12" => "12 - 255.240.0.0",
+            "13" => "13 - 255.248.0.0",
+            "14" => "14 - 255.252.0.0",
+            "15" => "15 - 255.254.0.0",
+            "16" => "16 - 255.255.0.0",
+            "17" => "17 - 255.255.128.0",
+            "18" => "18 - 255.255.192.0",
+            "19" => "19 - 255.255.224.0",
+            "20" => "20 - 255.255.240.0",
+            "21" => "21 - 255.255.248.0",
+            "22" => "22 - 255.255.252.0",
+            "23" => "23 - 255.255.254.0",
+            "24" => "24 - 255.255.255.0",
+            "25" => "25 - 255.255.255.128",
+            "26" => "26 - 255.255.255.192",
+            "27" => "27 - 255.255.255.224",
+            "28" => "28 - 255.255.255.240",
+            "29" => "29 - 255.255.255.248",
+            "30" => "30 - 255.255.255.252",
+            "31" => "31 - 255.255.255.254",
+            "32" => "32 - 255.255.255.255",
+        ];
+        krsort($arrMasks, SORT_NUMERIC);
+        return $arrMasks;
     }
 }

@@ -22,7 +22,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Element\TextArea;
@@ -44,11 +43,7 @@ class MailSettingsEditForm extends BaseForm
                 case PbxSettings::MAIL_ENABLE_NOTIFICATIONS:
                 case PbxSettings::MAIL_SMTP_USE_TLS:
                 case PbxSettings::MAIL_SMTP_CERT_CHECK:
-                    $cheskarr = ['value' => null];
-                    if ($value) {
-                        $cheskarr = ['checked' => 'checked', 'value' => null];
-                    }
-                    $this->add(new Check($key, $cheskarr));
+                    $this->addCheckBox($key, intval($value) === 1);
                     break;
 
                 case PbxSettings::MAIL_TPL_MISSED_CALL_BODY:

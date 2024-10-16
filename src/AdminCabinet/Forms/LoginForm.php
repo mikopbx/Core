@@ -21,7 +21,6 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
 
@@ -45,6 +44,6 @@ class LoginForm extends BaseForm
         $this->add($password);
 
         // RememberMe
-        $this->add(new Check('rememberMeCheckBox', ['value' => null]));
+        $this->addCheckBox('rememberMeCheckBox', false);
     }
 }

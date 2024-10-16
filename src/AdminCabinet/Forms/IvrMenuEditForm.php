@@ -21,7 +21,6 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Select;
@@ -105,12 +104,10 @@ class IvrMenuEditForm extends BaseForm
         $this->add($audioMessage);
 
         //Allow_enter_any_internal_extension
-        $cheskarr = ['value' => null];
-        if ($entity->allow_enter_any_internal_extension) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-
-        $this->add(new Check('allow_enter_any_internal_extension', $cheskarr));
+        $this->addCheckBox(
+            'allow_enter_any_internal_extension',
+            intval($entity->allow_enter_any_internal_extension) === 1
+        );
 
         // Description
         $this->addTextArea('description', $entity->description ?? '', 65);

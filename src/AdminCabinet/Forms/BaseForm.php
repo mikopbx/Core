@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
+use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\TextArea;
 use Phalcon\Forms\Form;
 
@@ -63,5 +64,22 @@ abstract class BaseForm extends Form
         $options["rows"] = max($rows, 2);
         $options["value"] = $areaValue;
         $this->add(new TextArea($areaName, $options));
+    }
+
+    /**
+     * Adds a checkbox to the form field with the given name.
+     *
+     * @param string $fieldName The name of the form field.
+     * @param bool $checked Indicates whether the checkbox is checked by default.
+     * @param string $checkedValue The value assigned to the checkbox when it is checked.
+     * @return void
+     */
+    public function addCheckBox(string $fieldName, bool $checked, string $checkedValue = 'on'): void
+    {
+        $checkAr = ['value' => null];
+        if ($checked) {
+            $checkAr = ['checked' => $checkedValue,'value' => $checkedValue];
+        }
+        $this->add(new Check($fieldName, $checkAr));
     }
 }

@@ -22,7 +22,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
@@ -45,11 +44,7 @@ class TimeFrameEditForm extends BaseForm
                     $this->add(new Hidden($key));
                     break;
                 case 'allowRestriction':
-                    $cheskarr = ['value' => null];
-                    if ($value) {
-                        $cheskarr = ['checked' => 'checked', 'value' => null];
-                    }
-                    $this->add(new Check('allowRestriction', $cheskarr));
+                    $this->addCheckBox('allowRestriction', intval($value) === 1);
                     break;
                 case 'extension':
                     $extension = new Select(

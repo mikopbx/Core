@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Config;
 
 use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Core\System\Directories;
 use Phalcon\Di\Di;
 use Phalcon\Autoload\Loader;
 
@@ -50,7 +51,7 @@ class ClassLoader
             appPath('vendor/autoload.php'),
         ];
 
-        $modulesDir = $di->getShared('config')->path('core.modulesDir');
+        $modulesDir = Directories::getDir(Directories::CORE_MODULES_DIR);
         $nameSpaces = [
             'Modules' => $modulesDir,
         ];

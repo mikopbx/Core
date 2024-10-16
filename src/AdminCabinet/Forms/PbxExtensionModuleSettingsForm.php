@@ -21,7 +21,6 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
@@ -50,12 +49,8 @@ class PbxExtensionModuleSettingsForm extends BaseForm
         // IconClass
         $this->add(new Hidden('iconClass', ['value' => $options['iconClass']]));
 
-        // Show module at left menu
-        $cheskarr = ['value' => null];
-        if ($options['showAtSidebar']) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-        $this->add(new Check('show-at-sidebar', $cheskarr));
+        // Show module at a left menu
+        $this->addCheckBox('show-at-sidebar', intval($options['showAtSidebar']) === 1);
 
         // Caption
         $this->add(

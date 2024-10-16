@@ -21,7 +21,6 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
@@ -65,19 +64,16 @@ class IaxProviderEditForm extends BaseForm
         $this->add(new Text('host'));
 
         // Qualify
-        $cheskarr = ['value' => null];
-        if ($entity->qualify) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-
-        $this->add(new Check('qualify', $cheskarr));
+        $this->addCheckBox(
+            'qualify',
+            intval($entity->qualify) === 1
+        );
 
         // Noregister
-        $cheskarr = ['value' => null];
-        if ($entity->noregister) {
-            $cheskarr = ['checked' => 'checked', 'value' => null];
-        }
-        $this->add(new Check('noregister', $cheskarr));
+        $this->addCheckBox(
+            'noregister',
+            intval($entity->noregister) === 1
+        );
 
         // Manualattributes
         $this->addTextArea('manualattributes', $entity->getManualAttributes() ?? '', 80);

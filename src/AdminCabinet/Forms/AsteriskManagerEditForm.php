@@ -46,22 +46,10 @@ class AsteriskManagerEditForm extends BaseForm
         // Secret
         $this->add(new Text('secret', ["class" => "confidential-field"]));
 
-
+        // Rights
         foreach ($options['array_of_checkboxes'] as $checkBox) {
-            $cheskarr = [];
-            $this->add(new Check($checkBox . '_main', $cheskarr));
-
-            if (strpos($entity->$checkBox, 'read') !== false) {
-                $cheskarr = ['checked' => 'checked', 'value' => null];
-            }
-            $this->add(new Check($checkBox . '_read', $cheskarr));
-
-            if (strpos($entity->$checkBox, 'write') !== false) {
-                $cheskarr = ['checked' => 'checked', 'value' => null];
-            } else {
-                $cheskarr = ['value' => null];
-            }
-            $this->add(new Check($checkBox . '_write', $cheskarr));
+            $this->addCheckBox($checkBox . '_read', str_contains($entity->$checkBox, 'read'));
+            $this->addCheckBox($checkBox . '_write', str_contains($entity->$checkBox, 'write'));
         }
 
         // Networkfilterid
