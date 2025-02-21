@@ -85,7 +85,7 @@ _myip() {
     # 3. uniq: Remove duplicates (in case there are multiple matches).
     # 4. head -n 1: Select only the first found IP.
     # 5. 2>/dev/null: Suppress errors if the request fails.
-    ip=$(/usr/bin/curl -s https://checkip.amazonaws.com 2>/dev/null | \
+    ip=$(/usr/bin/timeout 3 /usr/bin/curl -s https://checkip.amazonaws.com 2>/dev/null | \
          /bin/busybox grep -oE '((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)' | \
          /bin/busybox uniq | \
          /bin/busybox head -n 1)

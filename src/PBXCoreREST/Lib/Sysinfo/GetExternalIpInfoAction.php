@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Sysinfo;
 
+use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
 
@@ -39,25 +40,10 @@ class GetExternalIpInfoAction extends Injectable
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $curl = curl_init();
-        if ($curl === false) {
-            $res->messages[] = 'CURL initialization error';
-
-            return $res;
-        }
-        $url = 'ifconfig.me';
-        curl_setopt($curl, CURLOPT_URL, $url);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_TIMEOUT, 2);
-
-        try {
-            $resultRequest = curl_exec($curl);
-        } catch (\Throwable $e) {
-            $res->messages[] = $e->getMessage();
-            return $res;
-        }
-        curl_close($curl);
-        if (is_string($resultRequest)) {
+        $bashPath = Util::which('bash');
+        $timeoutPath = Util::which('timeout');
+        $resultRequest = trim(shell_exec($timeoutPath.' 3 '.$bashPath.' -c "source /etc/profile && _myip"')??'');
+        if (filter_var($resultRequest, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
             $res->success    = true;
             $res->data['ip'] = $resultRequest;
         } else {
