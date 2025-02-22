@@ -37,6 +37,11 @@ use Phalcon\Logger\Adapter\Stream as FileLogger;
 abstract class DatabaseProviderBase
 {
     /**
+     * Database busy timeout in milliseconds
+     */
+    private const DB_BUSY_TIMEOUT = 30000; // 30 seconds
+
+    /**
      * Register the database service provider.
      *
      * @param string                  $serviceName Injection service name
@@ -48,58 +53,85 @@ abstract class DatabaseProviderBase
         $di->setShared(
             $serviceName,
             function () use ($dbConfig) {
-                $dbclass    = 'Phalcon\Db\Adapter\Pdo\\' . $dbConfig['adapter'];
+                $dbclass = 'Phalcon\Db\Adapter\Pdo\\' . $dbConfig['adapter'];
 
                 $folderWithDB = dirname($dbConfig['dbfile']);
                 if (!is_dir($folderWithDB)){
                     Util::mwMkdir($folderWithDB, true);
                 }
 
-                $connection = new $dbclass(
-                    [
-                        'dbname' => $dbConfig['dbfile'],
+                // Create Phalcon adapter with SQLite configuration
+                $connection = new $dbclass([
+                    'dbname' => $dbConfig['dbfile'],
+                    'options' => [
+                        \PDO::ATTR_TIMEOUT => 30,
+                        \PDO::ATTR_PERSISTENT => false,
+                        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
                     ]
-                );
-                $connection->setNestedTransactionsWithSavepoints(true);
-                if ($dbConfig['debugMode']) {
-                    $adapter       = new FileLogger($dbConfig['debugLogFile']);
-                    $logger        = new Logger(
-                        'messages',
-                        [
-                            'main' => $adapter,
-                        ]
-                    );
-                    $eventsManager = new EventsManager();
-                    // Listen to all database events
-                    $eventsManager->attach(
-                        'db',
-                        function ($event, $connection) use ($logger) {
-                            if ($event->getType() === 'beforeQuery') {
-                                $statement = $connection->getSQLStatement();
-                                $variables = $connection->getSqlVariables();
-                                if (is_array($variables)) {
-                                    foreach ($variables as $variable => $value) {
-                                        if (is_array($value)) {
-                                            $value = '(' . implode(', ', $value) . ')';
-                                        }
-                                        $variable  = str_replace(':', '', $variable);
-                                        $statement = str_replace(":$variable", "'$value'", $statement);
-                                        $statement = preg_replace('/= \?/', " = '$value'", $statement, 1);
-                                    }
-                                }
-                                $callStack = json_encode(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,50), JSON_PRETTY_PRINT);
-                                $logger->debug("Request: \n $statement\nCall stack:\n$callStack \n\n\n\n");
-                            }
-                        }
-                    );
+                ]);
 
-                    // Assign the EventsManager to the database adapter instance
-                    $connection->setEventsManager($eventsManager);
+                $connection->setNestedTransactionsWithSavepoints(true);
+
+                if ($dbConfig['debugMode']) {
+                    $this->setupDebugMode($connection, $dbConfig);
                 }
+
+                // Add SQLite optimizations after the connection is created
+                $connection->execute('PRAGMA busy_timeout = ' . self::DB_BUSY_TIMEOUT);
+                $connection->execute('PRAGMA journal_mode = WAL');
+                $connection->execute('PRAGMA synchronous = NORMAL');
+                $connection->execute('PRAGMA temp_store = MEMORY');
+                $connection->execute('PRAGMA cache_size = -2000');
+                $connection->execute('PRAGMA foreign_keys = ON');
+                $connection->execute('PRAGMA locking_mode = NORMAL');
+                $connection->execute('PRAGMA page_size = 4096');
+                $connection->execute('PRAGMA mmap_size = 268435456'); // 256MB memory mapping
 
                 return $connection;
             }
         );
+    }
+
+    /**
+     * Setup debug mode for database connection
+     *
+     * @param mixed $connection Database connection
+     * @param array $dbConfig Database configuration
+     */
+    private function setupDebugMode($connection, array $dbConfig): void
+    {
+        $adapter = new FileLogger($dbConfig['debugLogFile']);
+        $logger = new Logger(
+            'messages',
+            [
+                'main' => $adapter,
+            ]
+        );
+
+        $eventsManager = new EventsManager();
+        $eventsManager->attach(
+            'db',
+            function ($event, $connection) use ($logger) {
+                if ($event->getType() === 'beforeQuery') {
+                    $statement = $connection->getSQLStatement();
+                    $variables = $connection->getSqlVariables();
+                    if (is_array($variables)) {
+                        foreach ($variables as $variable => $value) {
+                            if (is_array($value)) {
+                                $value = '(' . implode(', ', $value) . ')';
+                            }
+                            $variable = str_replace(':', '', $variable);
+                            $statement = str_replace(":$variable", "'$value'", $statement);
+                            $statement = preg_replace('/= \?/', " = '$value'", $statement, 1);
+                        }
+                    }
+                    $callStack = json_encode(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 50), JSON_PRETTY_PRINT);
+                    $logger->debug("Request: \n $statement\nCall stack:\n$callStack \n\n\n\n");
+                }
+            }
+        );
+
+        $connection->setEventsManager($eventsManager);
     }
 
     /**
