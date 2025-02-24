@@ -58,7 +58,6 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
         );
 
         // Change SSH password
-        $this->changeCheckBoxState('SSHDisablePasswordLogins', false);
         $this->changePassword('ssh', 'SSHPassword', $params['password']);
 
         // Change WebAdmin password
@@ -84,6 +83,9 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
     private function changePassword(string $path, string $passwordFieldName, string $password): void
     {
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/{$path}");
+        if ($path==='ssh'){
+            $this->changeCheckBoxState('SSHDisablePasswordLogins', false);
+        }
         $this->changeInputField($passwordFieldName, $password);
         $this->changeInputField($passwordFieldName . 'Repeat', $password);
     }
