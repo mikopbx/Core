@@ -58,8 +58,9 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
         );
 
         // Change SSH password
+        $this->changeCheckBoxState('SSHDisablePasswordLogins', false);
         $this->changePassword('ssh', 'SSHPassword', $params['password']);
-        ;
+
         // Change WebAdmin password
         $this->changePassword('passwords', 'WebAdminPassword', $params['password']);
 
