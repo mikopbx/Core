@@ -37,11 +37,6 @@ use Phalcon\Logger\Adapter\Stream as FileLogger;
 abstract class DatabaseProviderBase
 {
     /**
-     * Database busy timeout in milliseconds
-     */
-    private const DB_BUSY_TIMEOUT = 30000; // 30 seconds
-
-    /**
      * Register the database service provider.
      *
      * @param string                  $serviceName Injection service name
@@ -75,18 +70,6 @@ abstract class DatabaseProviderBase
                 if ($dbConfig['debugMode']) {
                     $this->setupDebugMode($connection, $dbConfig);
                 }
-
-                // Add SQLite optimizations after the connection is created
-                $connection->execute('PRAGMA busy_timeout = ' . self::DB_BUSY_TIMEOUT);
-                $connection->execute('PRAGMA journal_mode = WAL');
-                $connection->execute('PRAGMA synchronous = NORMAL');
-                $connection->execute('PRAGMA temp_store = MEMORY');
-                $connection->execute('PRAGMA cache_size = -2000');
-                $connection->execute('PRAGMA foreign_keys = ON');
-                $connection->execute('PRAGMA locking_mode = NORMAL');
-                $connection->execute('PRAGMA page_size = 4096');
-                $connection->execute('PRAGMA mmap_size = 268435456'); // 256MB memory mapping
-
                 return $connection;
             }
         );
