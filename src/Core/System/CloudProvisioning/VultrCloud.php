@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,22 +66,41 @@ class VultrCloud extends CloudProvider
 
         SystemMessages::echoToTeletype(PHP_EOL);
 
-        // Extract SSH keys from user-data if available
-        $sshKeys = $metadata['public-keys'] ?? '';
+        // Extract SSH keys from public-keys if available
+        $sshKeys = '';
+        if (isset($metadata['public-keys']) && is_array($metadata['public-keys']) && !empty($metadata['public-keys'])) {
+            $sshKeys = implode("\n", $metadata['public-keys']);
+        }
 
         // Extract username from SSH keys or use default
         $username = $this->extractUserNameFromSshKeys($sshKeys);
 
         // Update SSH keys if available
-        $this->updateSSHKeys($sshKeys);
+        if (!empty($sshKeys)) {
+            $this->updateSSHKeys($sshKeys);
+        }
 
         // Update machine name (hostname)
         $hostname = $metadata['hostname'] ?? '';
-        $this->updateHostName($hostname);
+        if (!empty($hostname)) {
+            $this->updateHostName($hostname);
+        }
 
-        // Update LAN settings with the external IP address
-        $extIp = $metadata['public-ipv4'] ?? '';
-        $this->updateLanSettings($extIp);
+        // Extract external IP from interfaces array
+        $extIp = '';
+        if (isset($metadata['interfaces']) && is_array($metadata['interfaces'])) {
+            foreach ($metadata['interfaces'] as $interface) {
+                if (($interface['network-type'] ?? '') === 'public' && isset($interface['ipv4']['address'])) {
+                    $extIp = $interface['ipv4']['address'];
+                    break;
+                }
+            }
+        }
+
+        // Update LAN settings with the external IP address if found
+        if (!empty($extIp)) {
+            $this->updateLanSettings($extIp);
+        }
 
         // Update SSH and WEB passwords using instance ID as unique identifier
         $instanceId = $metadata['instanceid'];
@@ -115,65 +134,31 @@ class VultrCloud extends CloudProvider
         } catch (GuzzleException $e) {
             SystemMessages::sysLogMsg(__CLASS__, "Failed to retrieve Vultr instance metadata: " . $e->getMessage());
 
-            // Try alternative metadata endpoint if main one fails
+            // Try to get external IP as fallback
             try {
-                $response = $this->client->request('GET', 'http://169.254.169.254/latest/meta-data/');
+                $response = $this->client->request('GET', 'https://api.ipify.org');
                 if ($response->getStatusCode() == 200) {
-                    // Process alternative metadata format if needed
-                    // This is a simplified approach, you might need to make multiple requests
-                    // to build the complete metadata object
-                    $metadataRaw = $response->getBody()->getContents();
-                    return $this->processAlternativeMetadata($metadataRaw);
+                    $externalIp = trim($response->getBody()->getContents());
+                    // Create minimal metadata with external IP
+                    return [
+                        'instanceid' => md5(gethostname()), // Use hostname hash as instanceid
+                        'hostname' => gethostname(),
+                        'interfaces' => [
+                            [
+                                'network-type' => 'public',
+                                'ipv4' => [
+                                    'address' => $externalIp
+                                ]
+                            ]
+                        ]
+                    ];
                 }
             } catch (GuzzleException $e2) {
-                SystemMessages::sysLogMsg(__CLASS__, "Failed to retrieve alternative metadata: " . $e2->getMessage());
+                SystemMessages::sysLogMsg(__CLASS__, "Failed to retrieve external IP: " . $e2->getMessage());
             }
         }
 
         return null;
-    }
-
-    /**
-     * Process alternative metadata format if the primary endpoint fails
-     *
-     * @param string $metadataRaw Raw metadata string
-     * @return array Processed metadata
-     */
-    private function processAlternativeMetadata(string $metadataRaw): array
-    {
-        $metadata = [];
-        $lines = explode("\n", $metadataRaw);
-
-        // Try to fetch each important piece of metadata separately
-        try {
-            // Instance ID
-            $response = $this->client->request('GET', 'http://169.254.169.254/latest/meta-data/instance-id');
-            if ($response->getStatusCode() == 200) {
-                $metadata['instanceid'] = trim($response->getBody()->getContents());
-            }
-
-            // Hostname
-            $response = $this->client->request('GET', 'http://169.254.169.254/latest/meta-data/hostname');
-            if ($response->getStatusCode() == 200) {
-                $metadata['hostname'] = trim($response->getBody()->getContents());
-            }
-
-            // Public IP
-            $response = $this->client->request('GET', 'http://169.254.169.254/latest/meta-data/public-ipv4');
-            if ($response->getStatusCode() == 200) {
-                $metadata['public-ipv4'] = trim($response->getBody()->getContents());
-            }
-
-            // Public keys
-            $response = $this->client->request('GET', 'http://169.254.169.254/latest/meta-data/public-keys/');
-            if ($response->getStatusCode() == 200) {
-                $metadata['public-keys'] = trim($response->getBody()->getContents());
-            }
-        } catch (GuzzleException $e) {
-            SystemMessages::sysLogMsg(__CLASS__, "Error fetching individual metadata elements: " . $e->getMessage());
-        }
-
-        return $metadata;
     }
 
     /**
@@ -184,30 +169,42 @@ class VultrCloud extends CloudProvider
      */
     private function extractUserNameFromSshKeys(string $sshKeys): ?string
     {
-        // If the format is "username:ssh-rsa AAAA..."
-        if (strpos($sshKeys, ':') !== false) {
-            $parts = explode(':', $sshKeys);
-            $username = $parts[0];
-            if (strlen($username) >= 3 && strlen($username) < 25) {
-                return $username;
+        // Check if keys are empty
+        if (empty($sshKeys)) {
+            return null;
+        }
+
+        // Split multiple keys if present
+        $keyLines = explode("\n", $sshKeys);
+        $firstKey = trim($keyLines[0]);
+
+        // Try to extract username from SSH key
+        if (strpos($firstKey, ' ') !== false) {
+            $keyParts = explode(' ', $firstKey);
+
+            // If we have a comment part (3rd part in ssh-ed25519 KEY COMMENT format)
+            if (count($keyParts) >= 3) {
+                $comment = $keyParts[2];
+
+                // If comment contains @ (likely an email)
+                if (strpos($comment, '@') !== false) {
+                    $username = explode('@', $comment)[0];
+                    if (strlen($username) >= 3 && strlen($username) < 25) {
+                        return $username;
+                    }
+                } else {
+                    // Just use the comment if it's a reasonable length
+                    if (strlen($comment) >= 3 && strlen($comment) < 25) {
+                        return $comment;
+                    }
+                }
             }
         }
 
-        // If we have ssh-rsa keys without explicit username
-        if (strpos($sshKeys, 'ssh-rsa') !== false) {
-            // Try to extract a comment at the end which often contains email or username
-            $parts = explode(' ', $sshKeys);
-            if (count($parts) >= 3) {
-                $possibleUsername = $parts[2];
-                // If the comment looks like an email, extract the username part
-                if (strpos($possibleUsername, '@') !== false) {
-                    $possibleUsername = explode('@', $possibleUsername)[0];
-                }
-
-                if (strlen($possibleUsername) >= 3 && strlen($possibleUsername) < 25) {
-                    return $possibleUsername;
-                }
-            }
+        // Try to extract from the hostname as fallback
+        $hostname = gethostname();
+        if (preg_match('/^([a-zA-Z0-9]+)-/', $hostname, $matches)) {
+            return $matches[1];
         }
 
         return null; // Return null if no username found
@@ -221,20 +218,28 @@ class VultrCloud extends CloudProvider
      */
     private function isVultrInstance(array $metadata): bool
     {
-        // Check for Vultr-specific metadata fields
-        if (isset($metadata['provider']) && $metadata['provider'] === 'vultr') {
+        // Check for Vultr-specific instance ID format (numeric ID)
+        if (isset($metadata['instanceid']) && is_numeric($metadata['instanceid'])) {
             return true;
         }
 
-        // Check for Vultr's instance ID format
-        if (isset($metadata['instanceid']) && preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/', $metadata['instanceid'])) {
+        // Check for instance-v2-id which appears to be Vultr-specific
+        if (isset($metadata['instance-v2-id']) &&
+            preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/', $metadata['instance-v2-id'])) {
             return true;
         }
 
-        // Check for Vultr's network interface naming pattern
+        // Check for region structure that matches Vultr
+        if (isset($metadata['region']) &&
+            isset($metadata['region']['regioncode']) &&
+            isset($metadata['region']['countrycode'])) {
+            return true;
+        }
+
+        // Check for network interfaces format that matches Vultr
         if (isset($metadata['interfaces']) && is_array($metadata['interfaces'])) {
             foreach ($metadata['interfaces'] as $interface) {
-                if (isset($interface['networkid']) && strpos($interface['networkid'], 'vultr') !== false) {
+                if (isset($interface['network-type']) && $interface['network-type'] === 'public') {
                     return true;
                 }
             }

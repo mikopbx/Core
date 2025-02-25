@@ -25,12 +25,21 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp;
 use MikoPBX\Core\System\SystemMessages;
 
+/**
+ * VKCloud provisioning class for VK Cloud Solutions
+ */
 class VKCloud extends CloudProvider
 {
     public const string CloudID = 'VKCloud';
 
+    /**
+     * HTTP client for API requests
+     */
     private Client $client;
 
+    /**
+     * Constructor initializes HTTP client with timeout
+     */
     public function __construct()
     {
         $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
@@ -43,15 +52,15 @@ class VKCloud extends CloudProvider
      */
     public function provision(): bool
     {
-        // Cloud check
-        $checkValue = $this->getMetaDataVCS('services/partition');
-        if ($checkValue === 'aws') {
-            return false; // It is AWS, not VK
+        // More strict check for VK Cloud
+        if (!$this->isVKCloudInstance()) {
+            return false;
         }
 
         // Update machine name
         $hostname = $this->getMetaDataVCS('hostname');
         if (empty($hostname)) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to get hostname from metadata");
             return false;
         }
 
@@ -81,14 +90,132 @@ class VKCloud extends CloudProvider
     }
 
     /**
-     * Retrieves metadata from the MCS endpoint.
+     * Checks if the instance is running on VK Cloud
      *
-     * @param string $url The URL of the metadata endpoint.
-     * @return string The response body.
+     * @return bool True if running on VK Cloud, false otherwise
+     */
+    private function isVKCloudInstance(): bool
+    {
+        // Check 1: VK Cloud specific service partition check
+        $servicePartition = $this->getMetaDataVCS('services/partition');
+        if ($servicePartition === 'aws') {
+            return false; // It is AWS, not VK
+        }
+
+        // Check 2: Try to get VK Cloud specific metadata
+        try {
+            // Check the product-codes field which should be specific to VK Cloud
+            $productCodes = $this->getMetaDataVCS('product-codes');
+            if (!empty($productCodes) && strpos($productCodes, 'vkcloud') !== false) {
+                return true;
+            }
+
+            // Check instance-id format (VK Cloud typically has a specific format)
+            $instanceId = $this->getMetaDataVCS('instance-id');
+            if (!empty($instanceId) && strlen($instanceId) > 10) {
+                // Check for Vultr specific instance ID format (numeric)
+                if (is_numeric($instanceId)) {
+                    return false; // Likely Vultr, not VK Cloud
+                }
+
+                // Check if available AMI ID contains VK Cloud references
+                $amiId = $this->getMetaDataVCS('ami-id');
+                if (!empty($amiId) && (stripos($amiId, 'vk') !== false || stripos($amiId, 'mail') !== false)) {
+                    return true;
+                }
+            }
+
+            // Check 3: Try to get VK metadata in a different format
+            $response = $this->client->request('GET', 'http://169.254.169.254/openstack/latest/meta_data.json', [
+                'timeout' => self::HTTP_TIMEOUT,
+                'http_errors' => false
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $metadata = json_decode($response->getBody()->getContents(), true);
+
+                // Check for VK Cloud specific fields in OpenStack metadata
+                if (isset($metadata['project_id']) ||
+                    (isset($metadata['meta']) && isset($metadata['meta']['vkcloud_project_id']))) {
+                    return true;
+                }
+            }
+        } catch (GuzzleException $e) {
+            // Failed to get metadata, continue with other checks
+        }
+
+        // Check 4: Network checks for VK Cloud
+        try {
+            // Check the network connectivity to VK Cloud services
+            $response = $this->client->request('GET', 'http://mcs.mail.ru', [
+                'timeout' => 2,
+                'http_errors' => false
+            ]);
+
+            if ($response->getStatusCode() < 400) {
+                // Could connect to VK Cloud faster than normal - might be in their network
+                return true;
+            }
+        } catch (GuzzleException $e) {
+            // Failed network check
+        }
+
+        // Check 5: Examine network interfaces for VK Cloud specific patterns
+        try {
+            // Get MAC addresses of network interfaces
+            $macs = $this->getMetaDataVCS('network/interfaces/macs/');
+            $macAddresses = array_filter(explode("\n", $macs));
+
+            foreach ($macAddresses as $mac) {
+                $mac = trim($mac, '/');
+                // Check for VK Cloud VPC CIDRs or other network identifiers
+                $vpcId = $this->getMetaDataVCS("network/interfaces/macs/$mac/vpc-id");
+                if (!empty($vpcId) && (strpos($vpcId, 'vpc-') === 0)) {
+                    // Check if the VPC ID matches VK Cloud format
+                    // Vultr doesn't use vpc-* format for its identifiers
+                    return true;
+                }
+            }
+        } catch (GuzzleException $e) {
+            // Failed network interface check
+        }
+
+        // Check 6: Check for Vultr-specific metadata to rule out Vultr
+        try {
+            $response = $this->client->request('GET', 'http://169.254.169.254/v1.json', [
+                'timeout' => self::HTTP_TIMEOUT,
+                'http_errors' => false
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $vultrMetadata = json_decode($response->getBody()->getContents(), true);
+
+                // If this succeeds and contains typical Vultr fields, it's Vultr not VK Cloud
+                if (isset($vultrMetadata['instanceid']) ||
+                    isset($vultrMetadata['instance-v2-id']) ||
+                    isset($vultrMetadata['region']['regioncode'])) {
+                    SystemMessages::sysLogMsg(__CLASS__, "Found Vultr-specific metadata, not VK Cloud");
+                    return false;
+                }
+            }
+        } catch (GuzzleException $e) {
+            // Failed Vultr check, that's good for VK Cloud
+        }
+
+        // Default to false if no VK Cloud specific identifiers were found
+        SystemMessages::sysLogMsg(__CLASS__, "Couldn't definitively identify as VK Cloud");
+        return false;
+    }
+
+    /**
+     * Retrieves metadata from the VK Cloud metadata endpoint.
+     *
+     * @param string $url The URL path of the metadata to retrieve.
+     * @return string The response body or empty string if retrieval failed.
      */
     private function getMetaDataVCS(string $url): string
     {
-        $baseUrl = 'http://169.254.169.254/latest/meta-data/';
+        $baseUrl = 'http://169.254.169.254/latest/meta-data';
         $headers = [];
         $params = [];
         $options = [
@@ -97,13 +224,15 @@ class VKCloud extends CloudProvider
             'headers' => $headers
         ];
 
-        $url = "$baseUrl/$url?" . http_build_query($params);
+        $fullUrl = "$baseUrl/$url?" . http_build_query($params);
         try {
-            $res = $this->client->request('GET', $url, $options);
+            $res = $this->client->request('GET', $fullUrl, $options);
             $code = $res->getStatusCode();
         } catch (GuzzleHttp\Exception\ConnectException $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Connection error getting metadata: " . $e->getMessage());
             $code = 0;
         } catch (GuzzleException $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Error getting metadata: " . $e->getMessage());
             $code = 0;
         }
         $body = '';
