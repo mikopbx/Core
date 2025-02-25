@@ -29,6 +29,7 @@ use MikoPBX\Core\System\CloudProvisioning\DigitalOceanCloud;
 use MikoPBX\Core\System\CloudProvisioning\GoogleCloud;
 use MikoPBX\Core\System\CloudProvisioning\VKCloud;
 use MikoPBX\Core\System\CloudProvisioning\YandexCloud;
+use MikoPBX\Core\System\CloudProvisioning\VultrCloud;
 
 /**
  * Class CloudProvisioning
@@ -60,6 +61,7 @@ class CloudProvisioning
             AWSCloud::CloudID => new AWSCloud(),
             DigitalOceanCloud::CloudID => new DigitalOceanCloud(),
             AlibabaCloud::CloudID=>new AlibabaCloud(),
+            VultrCloud::CloudID => new VultrCloud()
         ];
 
         foreach ($providers as $cloudId => $provider) {
