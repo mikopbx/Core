@@ -83,7 +83,7 @@ class GoogleCloud extends CloudProvider
             ]);
 
             if ($response->getStatusCode() == 200) {
-                $metadata = json_decode($response->getBody()->getContents(), true);
+                $metadata = json_decode($response->getBody()->getContents(), true)??[];
                 // Verify that metadata contains the 'serviceAccounts' with 'gserviceaccount' in any value
                 if ($this->containsGoogleDomain($metadata)) {
                     return $metadata;

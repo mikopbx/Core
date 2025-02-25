@@ -132,7 +132,7 @@ class VKCloud extends CloudProvider
             ]);
 
             if ($response->getStatusCode() === 200) {
-                $metadata = json_decode($response->getBody()->getContents(), true);
+                $metadata = json_decode($response->getBody()->getContents(), true)??[];
 
                 // Check for VK Cloud specific fields in OpenStack metadata
                 if (isset($metadata['project_id']) ||
