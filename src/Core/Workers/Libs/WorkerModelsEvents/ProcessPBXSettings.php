@@ -179,6 +179,8 @@ class ProcessPBXSettings extends Injectable
                 PbxSettings::SSH_LOGIN,
                 PbxSettings::SSH_PORT,
                 PbxSettings::SSH_RSA_KEY,
+                PbxSettings::SSH_ID_RSA,
+                PbxSettings::SSH_ID_RSA_PUB,
                 PbxSettings::SSH_DSS_KEY,
                 PbxSettings::SSH_PASSWORD,
                 PbxSettings::SSH_ECDSA_KEY,

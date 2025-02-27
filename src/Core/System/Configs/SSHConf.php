@@ -91,7 +91,7 @@ class SSHConf extends Injectable
 
         $this->generateAuthorizedKeys($sshLogin);
         $this->fixRights($sshLogin);
-        return ($result === 0);
+        return $result === 0;
     }
 
     /**
@@ -111,7 +111,7 @@ class SSHConf extends Injectable
         $dropBearDir = '/etc/dropbear';
         Util::mwMkdir($dropBearDir);
 
-        $dropbearkey = Util::which('dropbearkey');
+        $dropBearKey = Util::which('dropbearkey');
         // Get keys from DB
         foreach ($keyTypes as $keyType => $dbKey) {
             $resKeyFilePath = "$dropBearDir/dropbear_" . $keyType . "_host_key";
@@ -119,10 +119,25 @@ class SSHConf extends Injectable
             if (strlen($keyValue) > 100) {
                 file_put_contents($resKeyFilePath, base64_decode($keyValue));
             } elseif (!file_exists($resKeyFilePath)) {
-                Processes::mwExec("$dropbearkey -t $keyType -f $resKeyFilePath");
+                Processes::mwExec("$dropBearKey -t $keyType -f $resKeyFilePath");
                 $newKey = base64_encode(file_get_contents($resKeyFilePath));
                 $this->mikoPBXConfig->setGeneralSettings($dbKey, $newKey);
             }
+        }
+        $rsaPath = '/root/.ssh/id_rsa';
+        $sshGenPath = Util::which('ssh-keygen');
+        $keyCmd = [
+            [PbxSettings::SSH_ID_RSA, $rsaPath, $sshGenPath.' -t rsa -b 4096 -f '.$rsaPath.' -N "" -q'],
+            [PbxSettings::SSH_ID_RSA_PUB, "$rsaPath.pub", "$sshGenPath -y -f $rsaPath > $rsaPath.pub"],
+        ];
+        foreach ($keyCmd as [$keySetting, $path, $createCmd]){
+            $keyValue = trim(PbxSettings::getValueByKey($keySetting));
+            if(empty($keyValue)){
+                shell_exec($createCmd);
+                $keyValue = base64_encode(file_get_contents($path));
+                $this->mikoPBXConfig->setGeneralSettings($keySetting, $keyValue);
+            }
+            file_put_contents($path, base64_decode($keyValue));
         }
     }
 
@@ -133,7 +148,7 @@ class SSHConf extends Injectable
      */
     private function getCreateSshUser(): string
     {
-        $cat = Util::which('cat');
+        $cut = Util::which('cut');
         $chown = Util::which('chown');
         $deluser = Util::which('deluser');
         $delgroup = Util::which('delgroup');
@@ -145,7 +160,7 @@ class SSHConf extends Injectable
         $mainUsers = ['root', 'www']; // System users that should not be modified
 
         // Clean up non-system users
-        exec("$cat -f 1 -d ':' < /etc/passwd", $systemUsers);
+        exec("$cut -f 1 -d ':' < /etc/passwd", $systemUsers);
         foreach ($systemUsers as $user) {
             if ($sshLogin === $user || in_array($user, $mainUsers, true)) {
                 continue;
@@ -157,10 +172,10 @@ class SSHConf extends Injectable
 
         // Adding SSH user if not root
         if ($sshLogin !== 'root') {
-            shell_exec("$addgroup $sshLogin");
-            shell_exec("$adduser -h $homeDir -g 'MikoPBX SSH Admin' -s /bin/bash -G root -D '$sshLogin'");
-            shell_exec("$addgroup -S '$sshLogin' $sshLogin");
-            shell_exec("$addgroup -S '$sshLogin' root");
+            shell_exec("$addgroup $sshLogin 2> /dev/null");
+            shell_exec("$adduser -h $homeDir -g 'MikoPBX SSH Admin' -s /bin/bash -G root -D '$sshLogin' 2> /dev/null");
+            shell_exec("$addgroup -S '$sshLogin' $sshLogin 2> /dev/null");
+            shell_exec("$addgroup -S '$sshLogin' root 2> /dev/null");
             $this->updateUserGroupId($sshLogin);
             shell_exec("$chown -R $sshLogin:$sshLogin $homeDir");
         }

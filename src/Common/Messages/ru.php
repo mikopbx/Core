@@ -643,6 +643,7 @@ return [
     'gs_SSHLogin' => 'Логин для SSH консоли',
     'gs_SSHPassword' => 'SSH пароль',
     'gs_SSHAuthorizedKeys' => 'SSH Authorized Keys',
+    'gs_SSH_ID_RSA_PUB'     => 'SSH Public RSA Key',
     'gs_SSHecdsaKey' => 'SSH ECDSA Key',
     'gs_SSHRsaKey' => 'SSH RSA Key',
     'gs_SSHDssKey' => 'Ключ SSH DSS',

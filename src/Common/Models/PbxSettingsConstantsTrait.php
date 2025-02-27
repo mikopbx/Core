@@ -45,6 +45,8 @@ trait PbxSettingsConstantsTrait
     public const string SSH_AUTHORIZED_KEYS = 'SSHAuthorizedKeys';
     public const string SSH_RSA_KEY = 'SSHRsaKey';
     public const string SSH_DSS_KEY = 'SSHDssKey';
+    public const string SSH_ID_RSA = 'SSH_ID_RSA';
+    public const string SSH_ID_RSA_PUB = 'SSH_ID_RSA_PUB';
     public const string SSH_ECDSA_KEY = 'SSHecdsaKey';
     public const string SSH_ED25519_KEY = 'SSHed25519Key';
 

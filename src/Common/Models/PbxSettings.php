@@ -110,6 +110,8 @@ class PbxSettings extends ModelsBase
             PbxSettings::SSH_LOGIN => 'root',
             PbxSettings::SSH_PASSWORD => 'admin',
             PbxSettings::SSH_RSA_KEY => '',
+            PbxSettings::SSH_ID_RSA => '',
+            PbxSettings::SSH_ID_RSA_PUB => '',
             PbxSettings::SSH_DSS_KEY => '',
             PbxSettings::SSH_AUTHORIZED_KEYS => '',
             PbxSettings::SSH_ECDSA_KEY => '',

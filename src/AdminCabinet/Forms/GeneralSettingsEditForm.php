@@ -89,6 +89,9 @@ class GeneralSettingsEditForm extends BaseForm
                         )
                     );
                     break;
+                case PbxSettings::SSH_ID_RSA_PUB:
+                    $this->addTextArea($key, base64_decode($value) ?? '', 65, ['readonly' => '']);
+                    break;
                 case PbxSettings::PBX_DESCRIPTION:
                 case PbxSettings::SSH_AUTHORIZED_KEYS:
                 case PbxSettings::SSH_ECDSA_KEY:

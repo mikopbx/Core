@@ -49,6 +49,11 @@
     <label>{{ t._('gs_SSHAuthorizedKeys') }}</label>
     {{ form.render('SSHAuthorizedKeys') }}
 </div>
+<div class="field">
+    <label>{{ t._('gs_SSH_ID_RSA_PUB') }}</label>
+    {{ form.render('SSH_ID_RSA_PUB') }}
+</div>
+
 {% if debugMode == true %}
     <div class="field">
         <label>{{ t._('gs_SSHecdsaKey') }}</label>
