@@ -219,8 +219,8 @@ class UpgradeFromImageAction extends Injectable
             $res->success = false;
         }
 
-        $umount = Util::which('mount');
-        Processes::mwExec("$umount /dev/{$parameters['bootPartitionName']}");
+        $umount = Util::which('umount');
+        Processes::mwExec("$umount {$parameters['bootPartition']}");
 
         return [$res->success, $res->messages];
     }
