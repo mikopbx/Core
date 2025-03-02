@@ -59,7 +59,7 @@ class VultrCloud extends CloudProvider
     public function provision(): bool
     {
         $metadata = $this->retrieveInstanceMetadata();
-        if ($metadata === null || empty($metadata['instanceid'])) {
+        if ($metadata === null || empty($metadata['instance-v2-id'])) {
             // If metadata is null or instance ID is unknown, do not proceed with provisioning.
             return false;
         }
@@ -103,7 +103,7 @@ class VultrCloud extends CloudProvider
         }
 
         // Update SSH and WEB passwords using instance ID as unique identifier
-        $instanceId = $metadata['instanceid'];
+        $instanceId = $metadata['instance-v2-id'];
         $this->updateSSHCredentials($username ?? 'vultr-user', $instanceId);
         $this->updateWebPassword($instanceId);
 
@@ -133,29 +133,6 @@ class VultrCloud extends CloudProvider
             }
         } catch (GuzzleException $e) {
             SystemMessages::sysLogMsg(__CLASS__, "Failed to retrieve Vultr instance metadata: " . $e->getMessage());
-
-            // Try to get external IP as fallback
-            try {
-                $response = $this->client->request('GET', 'https://api.ipify.org');
-                if ($response->getStatusCode() == 200) {
-                    $externalIp = trim($response->getBody()->getContents());
-                    // Create minimal metadata with external IP
-                    return [
-                        'instanceid' => md5(gethostname()), // Use hostname hash as instanceid
-                        'hostname' => gethostname(),
-                        'interfaces' => [
-                            [
-                                'network-type' => 'public',
-                                'ipv4' => [
-                                    'address' => $externalIp
-                                ]
-                            ]
-                        ]
-                    ];
-                }
-            } catch (GuzzleException $e2) {
-                SystemMessages::sysLogMsg(__CLASS__, "Failed to retrieve external IP: " . $e2->getMessage());
-            }
         }
 
         return null;
@@ -218,11 +195,6 @@ class VultrCloud extends CloudProvider
      */
     private function isVultrInstance(array $metadata): bool
     {
-        // Check for Vultr-specific instance ID format (numeric ID)
-        if (isset($metadata['instanceid']) && is_numeric($metadata['instanceid'])) {
-            return true;
-        }
-
         // Check for instance-v2-id which appears to be Vultr-specific
         if (isset($metadata['instance-v2-id']) &&
             preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/', $metadata['instance-v2-id'])) {
@@ -234,15 +206,6 @@ class VultrCloud extends CloudProvider
             isset($metadata['region']['regioncode']) &&
             isset($metadata['region']['countrycode'])) {
             return true;
-        }
-
-        // Check for network interfaces format that matches Vultr
-        if (isset($metadata['interfaces']) && is_array($metadata['interfaces'])) {
-            foreach ($metadata['interfaces'] as $interface) {
-                if (isset($interface['network-type']) && $interface['network-type'] === 'public') {
-                    return true;
-                }
-            }
         }
 
         return false;
