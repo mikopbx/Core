@@ -92,7 +92,7 @@ class UpgradeFromImageAction extends Injectable
         // Write update script
         list($res->success, $res->messages) = self::writeUpdateScript($res->data);
         if ($res->success) {
-            // System::reboot();
+            System::reboot();
         }
         return $res;
     }
