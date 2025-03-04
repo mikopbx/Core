@@ -25,9 +25,9 @@ img_file="$1";
 systemDevice="$2"
 
 # Inform the user of the firmware upgrade process
-echo;
-echo " - Firmware upgrade in progress...";
-echo " - Backing up configuration...";
+echoToWall;
+echoToWall " - Firmware upgrade in progress...";
+echoToWall " - Backing up configuration...";
 
 # Create a temporary directory to backup configuration
 mkdir -p /tmp/configbak;
@@ -36,22 +36,22 @@ mkdir -p /tmp/configbak;
 md5Hash="$(/bin/gunzip -N -l < "${img_file}" | /bin/busybox grep -v uncompressed_name | /bin/busybox awk  '{ print $4}')";
 if [ "$md5Hash" != "$(/bin/gunzip -c "${img_file}" |/bin/busybox md5sum | /bin/busybox cut -f 1 -d ' ')" ] ; then
     # Inform the user of the checksum mismatch and abort the update
-    echo " - The checksum of the system image does not match.";
-    echo " - Update was aborted...";
+    echoToWall " - The checksum of the system image does not match.";
+    echoToWall " - Update was aborted...";
     rm -rf "$img_file";
     # Set a flag to indicate rebooting.
     touch /tmp/rebooting;
     exit 0;
 else
     # Inform the user of successful checksum verification
-    echo " - Successful checksum verification! Start the system upgrade ...";
+    echoToWall " - Successful checksum verification! Start the system upgrade ...";
 fi
 
 # Check if the livecd file exists, and proceed with different operations depending on its existence
 if [ -f /offload/livecd ]; then
   # Copy the configuration to the backup directory and unmount /conf.recover
   /bin/busybox cp -p /conf.recover/conf/* /tmp/configbak | /bin/busybox awk '{print "\t" $0}'
-  echo " - Unmounting /conf.recover partition...";
+  echoToWall " - Unmounting /conf.recover partition...";
   /bin/umount -f /conf.recover;
 else
 
@@ -61,7 +61,7 @@ else
     /sbin/dump-conf-db
   fi;
   # Copy the configuration to the tmp (RAM) directory
-  echo " - Backup the system settings to temporary directory...";
+  echoToWall " - Backup the system settings to temporary directory...";
   /bin/busybox cp -Rv /cf/conf/* /tmp/configbak | /bin/busybox awk '{print "\t" $0}'
 
   mounted_storage=$(mount | /bin/busybox grep storage | /bin/busybox awk '{ print $1}');
@@ -80,7 +80,7 @@ else
     rm -rf "$backupDir"; mkdir -p "$backupDir";
 
     # Copy the configuration to the storage and backup the system image
-    echo " - Backup system partition to storage ...";
+    echoToWall " - Backup system partition to storage ...";
     if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
         /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
     else
@@ -88,7 +88,7 @@ else
     fi
   else
     # Storage is on the main disk which needs to be unmounted, so move the image to RAM
-    echo " - Moving the update img to RAM before storage will be unmounted ..."
+    echoToWall " - Moving the update img to RAM before storage will be unmounted ..."
     tmp_img=$(/bin/busybox basename "$1");
     img_file="/tmp/${tmp_img}";
 
@@ -99,7 +99,7 @@ else
     fi
 
      # Free up the storage
-    echo " - Umount storage partition ...";
+    echoToWall " - Umount storage partition ...";
     /sbin/freestorage;
   fi
 
@@ -120,15 +120,15 @@ if [ -r "${img_file}" ]; then
     # then markup conversion is not required,
     # there is no risk of data loss.
     PARTITION_TYPE=$(/sbin/parted --script "$DISK" print 2>/dev/null | /bin/busybox grep "Partition Table" | /bin/busybox awk '{print $3}');
-    echo " - Performing an action for the $PARTITION_TYPE section";
+    echoToWall " - Performing an action for the $PARTITION_TYPE section";
     if [ "$PARTITION_TYPE" == "msdos" ]; then
-      echo " - At the end of the 4th partition ($partitionFour), 1 Mb of free space will be required...";
+      echoToWall " - At the end of the 4th partition ($partitionFour), 1 Mb of free space will be required...";
       REDUCE_BY=1
       LAST_ENTRY=$(parted -s "$DISK" unit MiB print free 2>/dev/null | tail -n 1)
-      FREE_SPACE=$(echo "$LAST_ENTRY" | /bin/busybox awk '{print $3}' | /bin/busybox grep -o '[0-9]*')
+      FREE_SPACE=$(echoToWall "$LAST_ENTRY" | /bin/busybox awk '{print $3}' | /bin/busybox grep -o '[0-9]*')
       if [[ (-z "$FREE_SPACE" || "$FREE_SPACE" -lt "$REDUCE_BY") && -n "$partitionFour" ]]; then
       	e2fsck -f -y "$partitionFour";
-        echo " - Reducing the 4th section...";
+        echoToWall " - Reducing the 4th section...";
         SECTOR_SIZE=$(blockdev --getss "$DISK")
       	SECTORS_IN_MIB=$((1024 * 1024 / SECTOR_SIZE))
       	sfdisk -d "$DISK" 2> /dev/null > disk_layout.txt
@@ -140,13 +140,13 @@ if [ -r "${img_file}" ]; then
       	rm disk_layout.txt;
       	/sbin/resize2fs "$partitionFour" "$NEW_SIZE_MIB"M;
       fi
-      echo " - Converting markup to GPT."
-      echo -e "w\nY\n" | /bin/gdisk "$DISK" > /dev/null;
+      echoToWall " - Converting markup to GPT."
+      echoToWall -e "w\nY\n" | /bin/gdisk "$DISK" > /dev/null;
       resultGDisk="$?";
       if [ "$resultGDisk" -eq 0 ]; then
-        echo " - The conversion to GPT has been completed successfully."
+        echoToWall " - The conversion to GPT has been completed successfully."
       else
-        echo " - Error converting to GPT."
+        echoToWall " - Error converting to GPT."
       fi
     fi
   fi
@@ -154,26 +154,26 @@ if [ -r "${img_file}" ]; then
   part4Action='create';
   if [ -n "$partitionFour" ]; then
     export FS_BACKUP_PART4=fs-backup-part4.img;
-    echo " - Start backup fs $FS_BACKUP_PART4 super block for part4 ($partitionFour)"
+    echoToWall " - Start backup fs $FS_BACKUP_PART4 super block for part4 ($partitionFour)"
     dd if="$partitionFour" of="$FS_BACKUP_PART4" bs=1M count=1 >/dev/null 2>&1;
     part4Action='update';
   fi
 
-  echo " - Installing new image on $DISK"
+  echoToWall " - Installing new image on $DISK"
   if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
     /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
   else
     /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1;
   fi
   resultPv="$?";
-  echo " - result install code $resultPv";
+  echoToWall " - result install code $resultPv";
   /sbin/blockdev --rereadpt "$DISK" > /dev/null 2>&1;
   sleep 3;
 
   # If the pv command fails or there aren't three primary partitions, restore the system image from the backup
   if [ ! "$resultPv" = '0' ] || [ ! "$(/bin/lsblk -l "$DISK" | /bin/busybox grep -c part)" = '4' ]; then
     if [ -f "$backupImg" ]; then
-      echo " - There are some errors, restoring system from backup to /dev/${systemDevice}"
+      echoToWall " - There are some errors, restoring system from backup to /dev/${systemDevice}"
       if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
         /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
       else
@@ -182,11 +182,11 @@ if [ -r "${img_file}" ]; then
     fi;
   fi;
   rm -rf "$backupImg";
-  echo " - The execution of the dd command was finished...";
+  echoToWall " - The execution of the dd command was finished...";
 
   # Update the partition table
   /sbin/initial_storage_part_four "$part4Action" "$DISK";
-  echo " - Check if it necessary to $part4Action 4-th storage partition. The result is ${?}...";
+  echoToWall " - Check if it necessary to $part4Action 4-th storage partition. The result is ${?}...";
 fi
 
 # Reread the partition table of the system device
@@ -198,41 +198,39 @@ partition3Name=$(/bin/lsblk -r -p | /bin/busybox grep "${systemDevice}" | /bin/b
 
 # If the livecd file exists, re-mount /conf.recover, restore configuration, and reboot the system
 if [ -f /offload/livecd ]; then
-  echo " - Re-mounting /conf.recover partition with read/write mode..."
+  echoToWall " - Re-mounting /conf.recover partition with read/write mode..."
   /bin/mount -w -o noatime "${partition3Name}" /conf.recover | /bin/busybox awk '{print "\t" $0}'
   rm -f /conf.recover/conf/*
-  echo " - Restoring the MikoPBX default configuration ..."
+  echoToWall " - Restoring the MikoPBX default configuration ..."
   /bin/busybox cp -pv /tmp/configbak/* /conf.recover/conf/ | /bin/busybox awk '{print "\t" $0}'
   touch /tmp/ejectcd
 else
   # Format the 3rd partition and mount it as /cf. Then, copy the configuration back and remove the image file
-  echo " - Formating the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
+  echoToWall " - Formating the 3rd partition (${partition3Name}) and mount it as /cf folder ...";
   /sbin/mkfs.ext4 -qF "${partition3Name}" | /bin/busybox awk '{print "\t" $0}'
   sleep 3;
   /bin/mount -w -o noatime "${partition3Name}" /cf | /bin/busybox awk '{print "\t" $0}'
   mkdir -p /cf/conf
-  echo " - Restoring the MikoPBX configuration settings...";
+  echoToWall " - Restoring the MikoPBX configuration settings...";
   /bin/busybox cp -Rv /tmp/configbak/* /cf/conf/ | /bin/busybox awk '{print "\t" $0}'
 
-  echo " - Deleting firmware image...";
+  echoToWall " - Deleting firmware image...";
   rm -rf "${img_file}";
 fi
 
-echo " - Reboot pending. Cancel with 'touch /tmp/cancel_rebooting'"
+echoToWall " - Reboot pending. Cancel with 'touch /tmp/cancel_rebooting'"
 # Waiting timeout
 WAIT_TIME=10
 counter=0
 while [ $counter -lt $WAIT_TIME ]; do
     if [ -f /tmp/cancel_rebooting ]; then
         # Flag file was deleted
-        echo "System reboot was cancelled"
+        echoToWall "System reboot was cancelled"
         exit 0
     fi
     sleep 1
     counter=$((counter+1))
 done
 
-echo "Rebooting the system..."
+echoToWall "Rebooting the system..."
 /sbin/pbx_reboot;
-
-exit 0;

@@ -16,13 +16,17 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 #
+
 if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
   exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>&1
 else
   exec </dev/console >/dev/console 2>/dev/console;
 fi
 
-echo " - Start ${0}";
+# Source shell functions for use later in the script
+. /sbin/shell_functions.sh
+
+echoToWall " - Start ${0}";
 # Starting the syslog daemon with specific options
 /sbin/syslogd -S -C512
 
@@ -31,7 +35,7 @@ HOME=/
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 export HOME PATH
-echo ' - Create system dirs'
+echoToWall ' - Create system dirs'
 
 # Creating necessary directories and symbolic links for the system
 mkdir -p /dev/pts \
@@ -85,7 +89,7 @@ if [ -n "$mdadmPath" ]; then
   "$mdadmPath" --assemble --scan
   mkdir -p /etc/mdadm
   # Config generation
-  echo "DEVICE partitions" >/etc/mdadm/mdadm.conf
+  echoToWall "DEVICE partitions" >/etc/mdadm/mdadm.conf
   arrList=$("$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2)
   for mdName in $arrList; do
     # Getting array index
@@ -102,12 +106,7 @@ if [ -n "$mdadmPath" ]; then
 fi
 # RAID END
 
-# Source shell functions for use later in the script
-. /sbin/shell_functions.sh
-
 # Running a system check for updates
-echo
-echo " - Start /sbin/check-update-pbx script ..."
 /sbin/check-update-pbx
 
 # If the system is rebooting, terminate the script
@@ -116,22 +115,22 @@ if [ -f /tmp/rebooting ]; then
 fi
 
 # Mounting offload and configuration directories
-echo
-echo " - Start /sbin/mountoffload script..."
+echoToWall
+echoToWall " - Start /sbin/mountoffload script..."
 if /sbin/mountoffload; then
-    echo " - Continuing boot process."
-    echo " - Start /etc/rc/mountconfdir script..."
+    echoToWall " - Continuing boot process."
+    echoToWall " - Start /etc/rc/mountconfdir script..."
     if /etc/rc/mountconfdir; then
-      echo " - Continuing boot process."
+      echoToWall " - Continuing boot process."
       # Booting up the system
       /etc/rc/bootup 2>/dev/null
     else
-      echo " - Failed to mount conf, halting boot process."
+      echoToWall " - Failed to mount conf, halting boot process."
       sleep 15;
       exit 1
     fi
 else
-    echo " - Failed to mount offload, halting boot process."
+    echoToWall " - Failed to mount offload, halting boot process."
     sleep 15;
     exit 1
 fi
