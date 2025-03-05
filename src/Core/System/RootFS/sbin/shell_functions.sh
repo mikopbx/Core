@@ -48,9 +48,9 @@ echoToTeletype()
 #   $1: Message to be printed.
 echoToWall()
 {
-    for tty in $(who | awk '{print $2}'); do
-        echo "$1" > "/dev/$tty"
-    done
+  for tty in $(/bin/busybox who | /bin/busybox awk '{print $2}'); do
+      echo "$1" > "/dev/$tty"
+  done
 }
 
 # kill_by_pids: Kills processes by their PIDs.
