@@ -17,14 +17,11 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-# Source shell functions for use later in the script
-. /sbin/shell_functions.sh;
-
-echoToWall " - Start ${0}";
+echo " - Start ${0}";
 # Check whether the script has been run with the "create" argument; if not, exit with status code 6
 action="$1"
 if [ "$action" != "create" ] && [ "$action" != "update" ]; then
-    echoToWall " - Invalid argument: $1. Please use 'create' or 'update'."
+    echo " - Invalid argument: $1. Please use 'create' or 'update'."
     exit 6
 fi
 
@@ -44,7 +41,7 @@ fi;
 
 # Check if the device exists and is a block device
 if [ ! -b "${dev}" ];then
-  echoToWall " - Device ${dev} doesn't exist or isn't a block device."
+  echo " - Device ${dev} doesn't exist or isn't a block device."
 	exit 4; # If the device doesn't exist or isn't a block device, exit with status code 4
 fi;
 
@@ -52,7 +49,7 @@ fi;
 totalMb=$(($(busybox blockdev --getsize64 "${dev}") / 1024 / 1024));
 
 if [ "$totalMb" -le "600" ]; then
-  echoToWall " - Device ${dev} size is less than or equal to 600 MB, there's no point in creating a 4th partition."
+  echo " - Device ${dev} size is less than or equal to 600 MB, there's no point in creating a 4th partition."
   exit 0;
 fi
 
@@ -67,14 +64,14 @@ fi
 count=$(/sbin/sfdisk -l "${dev}" 2>/dev/null | /bin/busybox grep -c "^/dev");
 if [ -n "$partitionFour" ]; then
     # The fourth partition already exists, format it and resize
-    echoToWall " - Formatting and resizing the existing fourth partition ${partitionFour}..."
+    echo " - Formatting and resizing the existing fourth partition ${partitionFour}..."
     /sbin/parted --script "${dev}" resizepart 4 100% 2>/dev/null;
     resultParted=$?;
 elif [ "$count" -eq 3 ] || [ "$count" -eq 4 ]; then
-    echoToWall " - Fix the secondary GPT header;"
-    echoToWall -e "x\ne\nm\nw\nY\n" | /bin/gdisk "$dev" > /dev/null 2>&1;
+    echo " - Fix the secondary GPT header;"
+    echo -e "x\ne\nm\nw\nY\n" | /bin/gdisk "$dev" > /dev/null 2>&1;
     # There are only 3 partitions, add a new one
-    echoToWall " - Adding a new partition №4..."
+    echo " - Adding a new partition №4..."
     # Use parted to create a new partition on the device.
     # The new partition is primary, has ext4 filesystem, starts from 600MiB, and occupies the rest of the disk.
     /sbin/parted --script --align optimal "${dev}" 'mkpart primary ext4 600MiB 100%' > /dev/null 2>&1;
@@ -86,18 +83,18 @@ elif [ "$count" -eq 3 ] || [ "$count" -eq 4 ]; then
     fi;
     if command -v gdisk > /dev/null 2>&1; then
       # correcting the gap between the main table and the first used sector
-      echoToWall -e "x\ne\nj\nm\nw\nY\n" | /bin/gdisk "$dev" > /dev/null 2>&1;
+      echo -e "x\ne\nj\nm\nw\nY\n" | /bin/gdisk "$dev" > /dev/null 2>&1;
       # fix the partition table and use all the space
-      echoToWall "fix" | parted "$dev" print free ---pretend-input-tty > /dev/null 2>&1;
+      echo "fix" | parted "$dev" print free ---pretend-input-tty > /dev/null 2>&1;
     fi;
 else
     # Not the expected number of partitions; exit
-    echoToWall " - Unexpected number of partitions. Exiting."
+    echo " - Unexpected number of partitions. Exiting."
     exit 0
 fi
 
 # Save the exit status of parted command
-echoToWall " - parted return ${resultParted}...";
+echo " - parted return ${resultParted}...";
 
 # Get the name of the new fourth partition
 partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$dev")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/busybox sort -u);
@@ -112,7 +109,7 @@ while [ ! -b "${partitionFour}" ]; do
   fi
   tryCount=$((tryCount + 1));
   if [ $tryCount = "25" ]; then
-    echoToWall " - partition 4 on ${dev} waiting fail...";
+    echo " - partition 4 on ${dev} waiting fail...";
     break;
   fi
   sleep 1;
@@ -121,13 +118,13 @@ done
 # If the partition was successfully created
 if [ "$resultParted" = "0" ];then
     if [ "$action" = "create" ]; then
-        echoToWall " - start mkfs.ext4 $partitionFour...";
+        echo " - start mkfs.ext4 $partitionFour...";
         /sbin/mkfs.ext4 -qF "$partitionFour"
-        echoToWall " - result $?...";
+        echo " - result $?...";
         sleep 5;
-        echoToWall " - start resize2fs $partitionFour...";
+        echo " - start resize2fs $partitionFour...";
         resize2fs "$partitionFour"
-        echoToWall " - result $?...";
+        echo " - result $?...";
         sleep 5;
     fi
 
@@ -143,21 +140,21 @@ if [ "$resultParted" = "0" ];then
     mountResult=$?;
 
     if [ "$mountResult" != "0" ]; then
-        echoToWall " - start check ${partitionFour}...";
+        echo " - start check ${partitionFour}...";
         /sbin/fsck.ext4 -p "$partitionFour";
-        echoToWall " - result $?...";
+        echo " - result $?...";
         mount -t "$type" "${partitionFour}" "$tmp_dir" 2> /dev/null > /dev/null;
         mountResult=$?;
     fi;
 
     if [ "$mountResult" != "0" ]; then
-        echoToWall " - mount ${partitionFour} exit code $mountResult";
+        echo " - mount ${partitionFour} exit code $mountResult";
         type='ext4';
         # If the mount failed, try to create an ext4 filesystem on the new partition
         /bin/busybox yes |"mkfs.${type}" "${partitionFour}" 2> /dev/null > /dev/null;
         mkfsResult=$?;
         if [ "$mkfsResult" != "0" ]; then
-            echoToWall " - ERROR: mkfs on '${partitionFour}' type '${type}' exit code '$mkfsResult'"
+            echo " - ERROR: mkfs on '${partitionFour}' type '${type}' exit code '$mkfsResult'"
         fi;
 
         # Get the UUID of the new partition
@@ -167,7 +164,7 @@ if [ "$resultParted" = "0" ];then
 		    mount -t "${type}" -rw UUID="$uuid" "$tmp_dir"
 		    mountResult="$?";
         if [ "$mountResult" != "0" ]; then
-            echoToWall " - ERROR: can not mount '${partitionFour}' type: '${type}' uuid: '${uuid}' exit code '$?'"
+            echo " - ERROR: can not mount '${partitionFour}' type: '${type}' uuid: '${uuid}' exit code '$?'"
             sleep 30;
         else
             sleep 3;
@@ -188,20 +185,20 @@ if [ "$resultParted" = "0" ];then
     if [ "$mountResult" = "0" ]; then
         # Delete the temporary directory
         rm -rf /tmp/test_mnt;
-        echoToWall " - check filesystem on ${partitionFour}";
+        echo " - check filesystem on ${partitionFour}";
 
         # Check the filesystem on the new partition
         "/sbin/fsck.${type}" -a "${partitionFour}" > /dev/null 2>&1;
         fsckResult="$?";
         if [ "$fsckResult" != "0" ]; then
-            echoToWall " - ERROR: check fs on '${partitionFour}' type: '${type}' exit code '$fsckResult'"
+            echo " - ERROR: check fs on '${partitionFour}' type: '${type}' exit code '$fsckResult'"
         else
-            echoToWall " - check completed..."
+            echo " - check completed..."
         fi;
     else
-        echoToWall " - ERROR: umount ${partitionFour} exit code $mountResult"
+        echo " - ERROR: umount ${partitionFour} exit code $mountResult"
     fi;
 else
-    echoToWall " - partition №4 on ${dev} not found...";
-    echoToWall " - ${dev} - the disk size is probably less than 600Mb.";
+    echo " - partition №4 on ${dev} not found...";
+    echo " - ${dev} - the disk size is probably less than 600Mb.";
 fi;

@@ -43,16 +43,6 @@ echoToTeletype()
   fi;
 }
 
-# echoToTeletype: Prints a message to the all console and the serial port if available.
-# Args:
-#   $1: Message to be printed.
-echoToWall()
-{
-  for tty in $(/bin/busybox who | /bin/busybox awk '{print $2}'); do
-      echo "$1" > "/dev/$tty"
-  done
-}
-
 # kill_by_pids: Kills processes by their PIDs.
 # Args:
 #   $1: List of process PIDs.
@@ -65,7 +55,7 @@ kill_by_pids()
         do
             if [ "$MAIN_PID" = "$handle" ] || [ "$REBOOT_PID" = "$handle" ]; then
                 # Ignore the ID of the main process.
-                echoToWall "---- IGNORE PID - $MAIN_PID ----"
+                echo "---- IGNORE PID - $MAIN_PID ----"
             else
                 kill "$2" "${handle}" > /dev/null 2>&1
                 resultKill=$?;
@@ -73,7 +63,7 @@ kill_by_pids()
                     # name=$(/bin/busybox ps -A -f -o pid,args | /bin/busybox grep "${handle}" | /bin/busybox grep -v grep);
                     # echo " |   - ERROR kill ${handle} ${name} result: $resultKill";
                     # else
-                    echoToWall " |   - kill process ${handle} with option: $2 return: $resultKill"
+                    echo " |   - kill process ${handle} with option: $2 return: $resultKill"
                 fi;
             fi
         done

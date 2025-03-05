@@ -17,7 +17,6 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-. /sbin/shell_functions.sh;
 echo " - Start ${0}";
 delta=1; i=0;
 freeOffloadFile='/tmp/freeoffload';
@@ -47,7 +46,7 @@ while : ; do
     fi
 
     if [ -f /tmp/rebooting ]; then
-        echoToWall "Reboot pending (${0}). Cancel with 'touch /tmp/cancel_rebooting'"
+        echo "Reboot pending (${0}). Cancel with 'touch /tmp/cancel_rebooting'"
         # Waiting timeout
         WAIT_TIME=10
         counter=0
@@ -55,7 +54,7 @@ while : ; do
         while [ $counter -lt $WAIT_TIME ]; do
             if [ -f /tmp/cancel_rebooting ]; then
                 # Flag file was deleted
-                echoToWall "System reboot was cancelled"
+                echo "System reboot was cancelled"
                 touch /tmp/start_sh
                 exit 0
             fi
@@ -63,14 +62,14 @@ while : ; do
             counter=$((counter+1))
         done
 
-        echoToWall "Reboot the system..."
+        echo "Reboot the system..."
         /sbin/pbx_reboot;
 
         # Wait for reboot for 10 seconds.
         # dd if=/dev/urandom bs=1 count=10 2>/dev/null | pv -pL 1 | dd of=/dev/null 2>/dev/null;
     fi
     if [ -f /tmp/shutdown ]; then
-        echoToWall "Waiting for a shutdown (${0})";
+        echo "Waiting for a shutdown (${0})";
         /sbin/shutdown;
         # Wait for reboot for 10 seconds.
         # dd if=/dev/urandom bs=1 count=10 2>/dev/null | pv -pL 1 | dd of=/dev/null 2>/dev/null;
