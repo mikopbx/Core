@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # MikoPBX - free phone system for small business
 # Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -17,7 +17,6 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-echo " - Start ${0}";
 # Check whether the script has been run with the "create" argument; if not, exit with status code 6
 action="$1"
 if [ "$action" != "create" ] && [ "$action" != "update" ]; then

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see <https://www.gnu.org/licenses/>.
 #
-
 if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
   exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>&1
 else
