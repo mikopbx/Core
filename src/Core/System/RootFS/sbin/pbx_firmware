@@ -135,7 +135,7 @@ if [ -r "${img_file}" ]; then
         sed -i "s|^\($partitionFour.*size=\s*\)[0-9]*\(.*\)$|\1$NEW_SIZE\2|" disk_layout.txt
       	sfdisk "$DISK"  > /dev/null 2>&1 < disk_layout.txt
       	rm disk_layout.txt;
-      	/sbin/resize2fs "$partitionFour" "$NEW_SIZE_MIB"M;
+      	/sbin/resize2fs "$partitionFour" "$NEW_SIZE_MIB"M 2> /dev/null > /dev/null;
       fi
       echo " - Converting markup to GPT."
       echo -e "w\nY\n" | /bin/gdisk "$DISK" > /dev/null;
