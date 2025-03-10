@@ -30,6 +30,7 @@ use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\{Configs\IptablesConf, Configs\NginxConf};
 use MikoPBX\Service\Main;
 use Phalcon\Di\Di;
+use Phalcon\Logger\Adapter\Syslog;
 use PhpSchool\CliMenu\Action\GoBackAction;
 use PhpSchool\CliMenu\Builder\CliMenuBuilder;
 use PhpSchool\CliMenu\CliMenu;
@@ -455,8 +456,8 @@ class ConsoleMenu
                         $menu->close();
                     } catch (Exception $e) {
                     }
-                    sleep(2);
                     System::reboot();
+                    sleep(2);
                     exit(0);
                 }
             )
@@ -465,7 +466,7 @@ class ConsoleMenu
                 function (CliMenu $menu) {
                     try {
                         $menu->close();
-                    } catch (Exception $e) {
+                    } catch (Exception $e){
                     }
                     file_put_contents('/tmp/shutdown', '1');
                     exit(0);

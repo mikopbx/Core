@@ -125,7 +125,7 @@ class System extends Injectable
     public static function reboot(): void
     {
         $pbx_reboot = Util::which('pbx_reboot');
-        Processes::mwExec("$pbx_reboot > /dev/null 2>&1");
+        Processes::mwExecBg("$pbx_reboot", "/dev/null", 1);
     }
 
     /**

@@ -229,5 +229,5 @@ while [ $counter -lt $WAIT_TIME ]; do
     counter=$((counter+1))
 done
 
-echo "Rebooting the system..."
+echo " - Rebooting the system..."
 /sbin/pbx_reboot;
