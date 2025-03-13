@@ -183,11 +183,11 @@ function monitorEnable(src, dst)
     end
 
     -- Check if the source or destination numbers are exceptions where conversation recording is disabled
-    if(get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..src..")") == "1")then
-        app["NoOp"]("Is exception numbers. ("..src..") Conversation recording is disabled");
+    if(src and src ~= "" and get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..src..")") == "1")then
+        app["NoOp"](" -- Is exception numbers. ("..src..") Conversation recording is disabled");
         return false;
     end
-    if(get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..dst..")") == "1")then
+    if(dst and dst ~= "" and get_variable("DIALPLAN_EXISTS(monitor-exceptions,"..dst..")") == "1")then
         app["NoOp"]("Is exception numbers. ("..dst..") Conversation recording is disabled");
         return false;
     end
