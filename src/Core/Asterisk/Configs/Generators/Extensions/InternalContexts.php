@@ -387,6 +387,7 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,Set(ringlength=${DB(FW_TIME/${EXTEN})})' . " \n\t";
         $conf .= 'same => n,ExecIf($["${ringlength}x" == "x"]?Set(ringlength=600))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${QUEUE_SRC_CHAN}x" != "x" && "${ISTRANSFER}x" == "x"]?Set(ringlength=600))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${QUEUE_SRC_CHAN}x" != "x"]?Set(DIAL_QUEUE_OPTIONS=i))' . " \n\t";
 
         $conf .= 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1) ' . " \n\t";
 
@@ -394,7 +395,7 @@ class InternalContexts extends AsteriskConfigClass
         $conf .= 'same => n,Gosub(set-dial-contacts,${EXTEN},1)' . " \n\t";
         $conf .= 'same => n,ExecIf($["${FIELDQTY(DST_CONTACT,&)}" != "1"]?Set(__PT1C_SIP_HEADER=${EMPTY_VAR}))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${TRANSFER_OPTIONS}x" == "x" || "${ISTRANSFER}x" != "x"]?Set(TRANSFER_OPTIONS=Tt))' . " \n\t";
-        $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},${TRANSFER_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
+        $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" != "x"]?Dial(${DST_CONTACT},${ringlength},${TRANSFER_OPTIONS}${DIAL_QUEUE_OPTIONS}ekKHhU(${ISTRANSFER}dial_answer)b(dial_create_chan,s,1)):Set(DIALSTATUS=CHANUNAVAIL))' . " \n\t";
         $conf .= 'same => n,ExecIf($["${DST_CONTACT}x" == "x"]?Gosub(dial_end,${EXTEN},1))' . " \n\t";
         $conf .= 'same => n(fw_start),NoOp()' . " \n\t";
         // Redirection can be disabled for internal with the FW_DISABLE_ATRANSFER / FW_DISABLE_INTERNAL option
