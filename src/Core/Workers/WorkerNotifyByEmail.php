@@ -94,6 +94,12 @@ class WorkerNotifyByEmail extends WorkerBase
                 $call['to_name'] = Extensions::getCidByPhoneNumber($call['to_number']);
                 $phonesCid[$call['to_number']] = $call['to_name'];
             }
+            if (isset($phonesCid[$call['from_number']])) {
+                $call['from_name'] = $phonesCid[$call['from_number']];
+            } else {
+                $call['from_name'] = Extensions::getCidByPhoneNumber($call['from_number']);
+                $phonesCid[$call['from_number']] = $call['from_name'];
+            }
             $tmpArray[] = $keyHash;
             if (!isset($emails[$call['email']])) {
                 $emails[$call['email']] = [
@@ -131,6 +137,7 @@ class WorkerNotifyByEmail extends WorkerBase
                 "NOTIFICATION_CALLERID",
                 "NOTIFICATION_TO",
                 "NOTIFICATION_NAME_TO",
+                "NOTIFICATION_NAME_FROM",
                 "NOTIFICATION_DURATION",
                 "NOTIFICATION_DATE"
             ],
@@ -140,6 +147,7 @@ class WorkerNotifyByEmail extends WorkerBase
                 $params['from_number'],
                 $params['to_number'],
                 $params['to_name'],
+                $params['from_name'],
                 $params['duration'],
                 explode('.', $params['start'])[0]
             ],
