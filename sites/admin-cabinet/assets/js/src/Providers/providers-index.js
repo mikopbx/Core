@@ -113,7 +113,11 @@ const providers = {
             columns: [
                 null,
                 null,
-                null,
+                {
+                    render: function(data) {
+                        return data.length > 60 ? data.substr(0, 60) + " ..." : data;
+                    }
+                },
                 {"width": "0"},
                 null,
                 null,
