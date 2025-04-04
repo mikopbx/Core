@@ -250,6 +250,6 @@ class InstallFromRepoAction extends ModuleInstallationBase
 
         // Download timeout
         $this->pushMessageToBrowser(self::STAGE_IV_DOWNLOAD_MODULE, [self::ERR_DOWNLOAD_TIMEOUT]);
-        return [self::ERR_DOWNLOAD_TIMEOUT, false];
+        return [[self::ERR_DOWNLOAD_TIMEOUT], false];
     }
 }
