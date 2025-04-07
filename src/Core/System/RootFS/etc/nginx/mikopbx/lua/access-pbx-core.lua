@@ -10,14 +10,12 @@ local isAllowed = cache:get(cacheKey)
 -- No information in nginx cache
 if isAllowed == nil then
     -- Send request to the backend using the user IP address
-    local backendUrl = "/pbxcore/index.php"
+    local backendUrl = "/pbxcore/api/system/checkAuth"
     local requestMethod = ngx.req.get_method()
     local requestHeaders = ngx.req.get_headers()
     local requestArgs = {
-        view = ngx.var.arg_view,
-        _url = ngx.var.uri
+        view = ngx.var.arg_view
     }
-
     local res = ngx.location.capture(backendUrl, {
         method = ngx[requestMethod],
         header = requestHeaders,
@@ -39,9 +37,9 @@ if isAllowed == nil then
     end
 end
 
-if (isAllowed == false) then
+if (isAllowed == nil or isAllowed == false) then
+    ngx.log(ngx.WARN, "Access denied for session: ", sessionId)
     ngx.status = ngx.HTTP_FORBIDDEN
-    ngx.log(ngx.WARN)
     ngx.say('The user isn\'t authenticated.')
     return ngx.exit(ngx.HTTP_FORBIDDEN)
 end

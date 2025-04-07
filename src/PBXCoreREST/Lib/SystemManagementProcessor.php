@@ -57,6 +57,9 @@ class SystemManagementProcessor extends Injectable
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         switch ($action) {
+            case 'checkAuth':
+                $res->success = true;
+                break;
             case 'reboot':
                 $res = RebootAction::main();
                 break;

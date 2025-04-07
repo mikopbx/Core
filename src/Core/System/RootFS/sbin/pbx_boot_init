@@ -102,12 +102,7 @@ if [ -n "$mdadmPath" ]; then
 fi
 # RAID END
 
-# Source shell functions for use later in the script
-. /sbin/shell_functions.sh
-
 # Running a system check for updates
-echo
-echo " - Start /sbin/check-update-pbx script ..."
 /sbin/check-update-pbx
 
 # If the system is rebooting, terminate the script

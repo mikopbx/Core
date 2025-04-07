@@ -154,7 +154,7 @@ perform_fs_operations() {
         e2fsck -f -p "$partition_name";
         sleep 2;
         echo " - Start resize2fs $partition_name ...";
-        resize2fs "$partition_name";
+        resize2fs "$partition_name" 2> /dev/null > /dev/null;
         sleep 2;
     else
         echo " - Error blkid $?";

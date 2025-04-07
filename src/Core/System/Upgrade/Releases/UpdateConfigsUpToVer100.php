@@ -37,22 +37,21 @@ class UpdateConfigsUpToVer100 extends Injectable implements UpgradeSystemConfigI
 
     public function processUpdate():void
     {
-        $now = time();
         // Обновление конфигов. Это первый запуск системы.
         /** @var \MikoPBX\Common\Models\Sip $peer */
         $peers = Sip::find('type="peer"');
         foreach ($peers as $peer) {
-            $peer->secret = 'E'.md5(''.$now.'sip'.$peer->id);
+            $peer->secret = Sip::generateSipPassword();
             $peer->save();
         }
         /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $manager */
         $managers = AsteriskManagerUsers::find();
         foreach ($managers as $manager) {
-            $manager->secret = 'M'.md5(''.$now.'manager'.$manager->id);
+            $manager->secret = Sip::generateSipPassword();
             $manager->save();
         }
         $generalConfig = new MikoPBXConfig();
-        $newPasswordSsh = 'S'.md5(''.$now.'ssh'.$now);
+        $newPasswordSsh = Sip::generateSipPassword();
         $generalConfig->setGeneralSettings(PbxSettings::SSH_PASSWORD, $newPasswordSsh);
         $generalConfig->setGeneralSettings(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newPasswordSsh));
         $generalConfig->setGeneralSettings(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '1');

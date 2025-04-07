@@ -55,6 +55,9 @@ class GetController extends BaseController
      * Ping backend (described in nginx.conf)
      * @Get("/ping")
      *
+     * Check auth.
+     * @Get("/checkAuth")
+     *
      * Reboot the operating system.
      * @Get("/reboot")
      *

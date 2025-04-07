@@ -251,7 +251,10 @@ class UpgradeFromImageAction extends Injectable
         Processes::mwExec($decompressCmd);
 
         // Setup loop device with the correct offset
-        $offset = 1024 * 512;
+        $parted  = Util::which('parted');
+        $busybox = Util::which('busybox');
+        $cmdOffset = "$parted '$decompressedImg' unit B print | $busybox awk 'NR>3 && /boot/ {gsub(/B/,\"\",$2); print $2+0; exit}' | $busybox head -n 1";
+        $offset = trim(shell_exec($cmdOffset)??'');
         $loopDev = self::setupLoopDevice($decompressedImg, $offset);
 
         if (empty($loopDev)) {

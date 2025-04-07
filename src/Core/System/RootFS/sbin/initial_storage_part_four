@@ -122,7 +122,7 @@ if [ "$resultParted" = "0" ];then
         echo " - result $?...";
         sleep 5;
         echo " - start resize2fs $partitionFour...";
-        resize2fs "$partitionFour"
+        resize2fs "$partitionFour" 2> /dev/null > /dev/null;
         echo " - result $?...";
         sleep 5;
     fi

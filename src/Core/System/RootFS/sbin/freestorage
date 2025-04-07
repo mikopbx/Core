@@ -44,7 +44,7 @@ killprocesses "$storage" -KILL 1;
 freeSwapByName "$storage";
 
 if [ ! "doNotUnMount" = "$1" ]; then
-
+  defaultHistFile="/root/.bash_history"
   if [ -f "$HISTFILE" ] && [ "$HISTFILE" != "$defaultHistFile" ]; then
       cp "$HISTFILE" "$defaultHistFile"
       export HISTFILE="$defaultHistFile"

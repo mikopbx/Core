@@ -194,6 +194,9 @@ const InputMaskPatterns = [
         mask: '+880-##-###-###', cc: 'BD', name_en: 'Bangladesh', desc_en: '', name_ru: 'Бангладеш', desc_ru: '',
     },
     {
+        mask: '+88-XXX-XXXX-XXXX',  cc: 'BD', name_en: 'Bangladesh', desc_en: '', name_ru: 'Бангладеш', desc_ru: '',
+    },
+    {
         mask: '+32(###)###-###', cc: 'BE', name_en: 'Belgium', desc_en: '', name_ru: 'Бельгия', desc_ru: '',
     },
     {

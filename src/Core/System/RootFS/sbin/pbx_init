@@ -25,11 +25,11 @@ while : ; do
 
     if [ ! -t 0 ] || [ ! -t 1 ] ; then
         # Not a TTY, disable the menu.
-        exit 2;
+        exit 10;
     fi
     if [ "$i" -gt 3 ]; then
         # System installation, disable the menu.
-        exit 1;
+        exit 10;
     fi
 
     if [ "$delta" = "0" ]; then
@@ -42,6 +42,7 @@ while : ; do
 
     if [ -f /tmp/ejectcd ]; then
         # System installation, disable the menu.
+        echo "System installation, disable the menu.";
         sleep 20;
     fi
 
@@ -108,7 +109,9 @@ while : ; do
             /bin/sh;
         fi;
     else
+        echo "Waiting free offload ..."
         sleep 5;
+        /bin/sh;
     fi
 
     end_time=$(date +%s);

@@ -108,7 +108,7 @@ class ModuleInstallationBase extends Injectable
 
         // Installation timeout
         $this->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, [self::ERR_INSTALLATION_TIMEOUT]);
-        return [self::ERR_INSTALLATION_TIMEOUT, false];
+        return [[self::ERR_INSTALLATION_TIMEOUT], false];
     }
 
     /**
