@@ -8,7 +8,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\{Processes, SystemMessages};
 use MikoPBX\Core\Workers\WorkerRedisBase;
-use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
@@ -132,6 +132,9 @@ class WorkerApiCommands extends WorkerRedisBase
     {
         try {
             $this->setProcessType(self::PROCESS_TYPES['MAIN']);
+
+            // Check for pending module post-installations immediately after worker starts
+            ModuleInstallationBase::processModulePostInstallations($this->apiRedis);
 
             while ($this->needRestart === false) {
                 try {
@@ -321,11 +324,11 @@ class WorkerApiCommands extends WorkerRedisBase
             SystemManagementProcessor::class => [
                 'restoreDefault',
             ],
-            ModulesManagementProcessor::class => [
-                'enableModule',
-                'disableModule',
-                'uninstallModule',
-            ],
+            // ModulesManagementProcessor::class => [
+            //     'enableModule',
+            //     'disableModule',
+            //     'uninstallModule',
+            // ],
         ];
     }
 
@@ -634,13 +637,67 @@ class WorkerApiCommands extends WorkerRedisBase
     }
 
     /**
-     * Safely handle Redis connections after fork
+     * Set forked flag
      */
     protected function setForked(): void
     {
         parent::setForked();
         // Create new connections for forked process
         $this->initializeApiRedis();
+    }
+
+    /**
+     * Handle SIGUSR1 signal for graceful shutdown
+     * This allows ongoing operations to complete before worker restarts
+     */
+    protected function handleSignalUsr1(): void
+    {
+        // Signal that we're in graceful shutdown mode
+        SystemMessages::sysLogMsg(
+            static::class,
+            "Entering graceful shutdown mode - completing active jobs before restart",
+            LOG_NOTICE
+        );
+
+        // Set a flag in Redis to indicate we're in graceful shutdown
+        try {
+            if ($this->apiRedis) {
+                $this->apiRedis->setex('worker:graceful_shutdown:' . posix_getpid(), 60, '1');
+            }
+        } catch (Throwable $e) {
+            // Ignore errors during shutdown
+        }
+
+        // Allow active processes to finish rather than killing them immediately
+        // The parent process will check if there are any active jobs and wait for them
+        $activeJobsCount = count($this->activeProcesses);
+        if ($activeJobsCount > 0) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Waiting for {$activeJobsCount} active jobs to complete",
+                LOG_NOTICE
+            );
+            
+            // Allow some time for active jobs to complete
+            $waitStart = microtime(true);
+            while (count($this->activeProcesses) > 0) {
+                // Check if we've been waiting too long
+                if ((microtime(true) - $waitStart) > 10) {  // 10 second maximum wait
+                    SystemMessages::sysLogMsg(
+                        static::class,
+                        "Graceful shutdown timeout reached, forcing exit",
+                        LOG_WARNING
+                    );
+                    break;
+                }
+                
+                $this->cleanupFinishedProcesses();
+                usleep(100000);  // 100ms
+            }
+        }
+        
+        // Set flag to restart but allow current method to complete
+        $this->needRestart = true;
     }
 
 }

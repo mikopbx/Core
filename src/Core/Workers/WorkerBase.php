@@ -385,8 +385,8 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
                     exit(0);
                 }
 
-                // For parent process, set restart flag
-                $this->needRestart = true;
+                // Call handler for graceful shutdown implementation
+                $this->handleSignalUsr1();
                 break;
 
             case SIGTERM:
@@ -412,6 +412,16 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
                     LOG_WARNING
                 );
         }
+    }
+
+    /**
+     * Default handler for SIGUSR1 signal
+     * Can be overridden in derived classes to implement graceful shutdown
+     */
+    protected function handleSignalUsr1(): void
+    {
+        // Default implementation just sets the restart flag
+        $this->needRestart = true;
     }
 
     /**

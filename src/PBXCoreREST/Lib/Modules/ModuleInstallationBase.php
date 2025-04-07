@@ -30,6 +30,9 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerModuleInstaller;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
+use MikoPBX\Common\Providers\RedisClientProvider;
+use Redis;
+use Throwable;
 
 /**
  *  Class ModuleInstallationBase
@@ -42,6 +45,11 @@ class ModuleInstallationBase extends Injectable
     // Common constants
     public const string INSTALLATION_MUTEX = 'ModuleInstallation';
     public const string MODULE_WAS_ENABLED = 'moduleWasEnabled';
+
+    // Redis keys for module installation state
+    public const string REDIS_MODULE_INSTALLATION_KEY = 'module:installation:';
+    public const string REDIS_MODULE_POST_INSTALL_QUEUE = 'module:post_install_queue';
+    public const int REDIS_MODULE_INSTALL_TTL = 1800; // 30 minutes
 
     // Error messages
     public const string ERR_EMPTY_REPO_RESULT = "ext_EmptyRepoAnswer";
@@ -102,6 +110,8 @@ class ModuleInstallationBase extends Injectable
                 sleep(1); // Adjust sleep time as needed
                 $maximumInstallationTime--;
             } elseif ($resStatus->data[StatusOfModuleInstallationAction::I_STATUS] === StatusOfModuleInstallationAction::INSTALLATION_COMPLETE) {
+                // Phase 1 (PreInstallation) is complete
+                // The worker will restart, and Phase 2 (PostInstallation) will be handled by WorkerApiCommands
                 return [$installationResult, true];
             }
         }
@@ -210,6 +220,9 @@ class ModuleInstallationBase extends Injectable
             FilesConstants::FILE_PATH => $filePath,
             'currentModuleDir' => $currentModuleDir,
             'uniqid' => $this->moduleUniqueId,
+            // Pass additional parameters for post-installation
+            self::MODULE_WAS_ENABLED => $moduleWasEnabled,
+            'asyncChannelId' => $this->asyncChannelId,
         ];
 
         // Save the installation settings to a JSON file
@@ -218,6 +231,25 @@ class ModuleInstallationBase extends Injectable
             $settings_file,
             json_encode($install_settings, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
         );
+
+        // Save installation state in Redis for post-installation handling after worker restart
+        $redis = RedisClientProvider::getApiRequestsConnection(Di::getDefault());
+        $installationKey = self::REDIS_MODULE_INSTALLATION_KEY . $this->moduleUniqueId;
+        $redis->setex(
+            $installationKey,
+            self::REDIS_MODULE_INSTALL_TTL,
+            json_encode([
+                'uniqid' => $this->moduleUniqueId,
+                self::MODULE_WAS_ENABLED => $moduleWasEnabled,
+                'asyncChannelId' => $this->asyncChannelId,
+                'filePath' => $filePath,
+                'status' => 'preinstalled',
+                'timestamp' => time(),
+            ])
+        );
+        // Add to queue for post-installation processing
+        $redis->rPush(self::REDIS_MODULE_POST_INSTALL_QUEUE, $this->moduleUniqueId);
+
         $php = Util::which('php');
         $workerModuleInstallerPath = Util::getFilePathByClassName(WorkerModuleInstaller::class);
 
@@ -228,5 +260,176 @@ class ModuleInstallationBase extends Injectable
         $res->success = true;
 
         return $res;
+    }
+
+    /**
+     * Handles post-installation process of a module after worker restart
+     * This is called by WorkerApiCommands after restarting to complete the installation
+     *
+     * @param string $moduleUniqueId The unique ID of the module
+     * @param array $installData Installation data from Redis
+     * @return void
+     */
+    public function postInstallModule(string $moduleUniqueId, array $installData, Redis $redis): void
+    {
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            "Starting post-installation process for module: {$moduleUniqueId}",
+            LOG_NOTICE
+        );
+
+        // Set module data from Redis
+        $this->moduleUniqueId = $moduleUniqueId;
+        $this->asyncChannelId = $installData['asyncChannelId'] ?? '';
+        $moduleWasEnabled = $installData[self::MODULE_WAS_ENABLED] ?? false;
+
+        // Enable module if it was previously enabled
+        $enableResult = [[], true];
+        if ($moduleWasEnabled) {
+            $res = EnableModuleAction::main($moduleUniqueId);
+            $this->pushMessageToBrowser(self::STAGE_VI_ENABLE_MODULE, $res->getResult());
+            $enableResult = [$res->messages, $res->success];
+        }
+
+        // Send final status to browser
+        $finalStatus = [
+            'result' => $enableResult[1],
+            'messages' => $enableResult[0]
+        ];
+        $this->pushMessageToBrowser(self::STAGE_VII_FINAL_STATUS, $finalStatus);
+
+        // Clean up Redis key
+        $redis->del(self::REDIS_MODULE_INSTALLATION_KEY . $moduleUniqueId);
+
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            "Post-installation process completed for module: {$moduleUniqueId} with result: " . 
+            ($enableResult[1] ? 'success' : 'failure'),
+            LOG_NOTICE
+        );
+    }
+
+    /**
+     * Check for pending module installations that need post-installation processing
+     * This method runs after worker restart to complete module installations
+     * 
+     * @param Redis $redis Redis connection to use
+     * @return void
+     */
+    public static function processModulePostInstallations(Redis $redis): void
+    {
+        try {
+            // Check if there are modules waiting for post-installation
+            $moduleInstallKey = self::REDIS_MODULE_POST_INSTALL_QUEUE;
+            
+            // Get all pending module IDs
+            $pendingModules = $redis->lRange($moduleInstallKey, 0, -1);
+            
+            if (empty($pendingModules)) {
+                SystemMessages::sysLogMsg(
+                    self::class,
+                    sprintf('Found %d modules pending post-installation', 0),
+                    LOG_NOTICE
+                );
+                return;
+            }
+            
+            SystemMessages::sysLogMsg(
+                self::class,
+                sprintf('Found %d modules pending post-installation', count($pendingModules)),
+                LOG_NOTICE
+            );
+
+            // Process each pending module
+            foreach ($pendingModules as $moduleId) {
+                self::completeModuleInstallation($moduleId, $redis);
+                // Remove this module from the list - corrected parameter order
+                // lrem signature: (string $key, mixed $value, int $count = 0)
+                $redis->lRem($moduleInstallKey, $moduleId, 1);
+            }
+            
+            // Verify if all pending modules have been processed
+            $remainingModules = $redis->lRange($moduleInstallKey, 0, -1);
+            if (empty($remainingModules)) {
+                // All modules have been processed, clear the queue
+                $redis->del($moduleInstallKey);
+                SystemMessages::sysLogMsg(
+                    self::class,
+                    'All pending module installations completed and queue cleared',
+                    LOG_NOTICE
+                );
+            } else {
+                SystemMessages::sysLogMsg(
+                    self::class,
+                    sprintf('Still %d modules remaining in post-installation queue', count($remainingModules)),
+                    LOG_WARNING
+                );
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                self::class,
+                'Error processing post-installations: ' . $e->getMessage(),
+                LOG_ERR
+            );
+        }
+    }
+
+    /**
+     * Complete installation for a specific module
+     * 
+     * @param string $moduleId The unique ID of the module
+     * @param Redis $redis Redis connection to use
+     * @return void
+     */
+    public static function completeModuleInstallation(string $moduleId, Redis $redis): void
+    {
+        try {
+            $installationKey = self::REDIS_MODULE_INSTALLATION_KEY . $moduleId;
+            $installData = $redis->get($installationKey);
+            
+            if (empty($installData)) {
+                SystemMessages::sysLogMsg(
+                    self::class,
+                    "Cannot find installation data for module $moduleId",
+                    LOG_WARNING
+                );
+                return;
+            }
+            
+            $installData = json_decode($installData, true);
+            
+            // Check if module is actually installed
+            if (($installData['status'] ?? '') !== 'installed' || empty($installData['installComplete'])) {
+                SystemMessages::sysLogMsg(
+                    self::class,
+                    "Module $moduleId is not yet fully installed, skipping post-installation",
+                    LOG_NOTICE
+                );
+                return;
+            }
+            
+            SystemMessages::sysLogMsg(
+                self::class,
+                "Starting post-installation process for module $moduleId",
+                LOG_NOTICE
+            );
+            
+            // Create instance of ModuleInstallationBase to handle post-installation
+            $installer = new self();
+            $installer->postInstallModule($moduleId, $installData, $redis);
+            
+            SystemMessages::sysLogMsg(
+                self::class,
+                "Post-installation process completed for module $moduleId",
+                LOG_NOTICE
+            );
+            
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                self::class,
+                'Error completing module installation: ' . $e->getMessage(),
+                LOG_ERR
+            );
+        }
     }
 }

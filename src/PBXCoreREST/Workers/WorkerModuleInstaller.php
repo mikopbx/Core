@@ -23,10 +23,12 @@ namespace MikoPBX\PBXCoreREST\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
 use Throwable;
 use ZipArchive;
 
@@ -40,6 +42,9 @@ class WorkerModuleInstaller extends WorkerBase
 
     private string $progress_file = '';
     private string $error_file = '';
+    private ?string $asyncChannelId = null;
+    private bool $moduleWasEnabled = false;
+    private string $moduleUniqueId = '';
 
     /**
      * Starts the module installation worker process.
@@ -57,7 +62,11 @@ class WorkerModuleInstaller extends WorkerBase
             return;
         }
         $settings = json_decode(file_get_contents($settings_file), true);
-        cli_set_process_title(__CLASS__.'-'.$settings['uniqid']);
+        $this->moduleUniqueId = $settings['uniqid'];
+        $this->asyncChannelId = $settings['asyncChannelId'] ?? null;
+        $this->moduleWasEnabled = $settings['moduleWasEnabled'] ?? false;
+        
+        cli_set_process_title(__CLASS__.'-'.$this->moduleUniqueId);
         $temp_dir            = dirname($settings['filePath']);
         $this->progress_file = $temp_dir . '/installation_progress';
         $this->error_file    = $temp_dir . '/installation_error';
@@ -66,9 +75,8 @@ class WorkerModuleInstaller extends WorkerBase
         $this->installNewModuleFromFile(
             $settings['currentModuleDir'],
             $settings['filePath'],
-            $settings['uniqid']
+            $this->moduleUniqueId
         );
-
     }
 
     /**
@@ -84,38 +92,121 @@ class WorkerModuleInstaller extends WorkerBase
         string $filePath,
         string $moduleUniqueID
     ): void {
-
-        file_put_contents( $this->progress_file, '25');
-        // Unzip module folder
-        $zip = new ZipArchive();
-        if($zip->open($filePath)){
-            $result = $zip->extractTo($currentModuleDir);
-            $zip->close();
-        }else{
-            $result = false;
-        }
-        if ($result === false) {
-            file_put_contents($this->error_file, 'Error occurred during module extraction.', FILE_APPEND);
-            return;
-        }
-        file_put_contents( $this->progress_file, '50');
-        ModulesDBConnectionsProvider::recreateModulesDBConnections();
-        Util::addRegularWWWRights($currentModuleDir);
-        $pbxExtensionSetupClass = "Modules\\$moduleUniqueID\\Setup\\PbxExtensionSetup";
-        if (class_exists($pbxExtensionSetupClass)
-            && method_exists($pbxExtensionSetupClass, 'installModule')) {
-            try {
-                $setup = new $pbxExtensionSetupClass($moduleUniqueID);
-                if ( ! $setup->installModule()) {
-                    file_put_contents($this->error_file, implode(" ", $setup->getMessages()), FILE_APPEND);
+        try {
+            // Start extraction phase
+            file_put_contents($this->progress_file, '25');
+            
+            // Unzip module folder
+            $zip = new ZipArchive();
+            if($zip->open($filePath)) {
+                // Get total number of files
+                $totalFiles = $zip->numFiles;
+                
+                // Extract files one by one to track progress
+                $result = true;
+                for ($i = 0; $i < $totalFiles && $result; $i++) {
+                    $result = $zip->extractTo($currentModuleDir, [$zip->getNameIndex($i)]);
+                    
+                    // Calculate and update progress (25% to 50% range)
+                    $extractionProgress = 25 + round(($i / $totalFiles) * 25);
+                    file_put_contents($this->progress_file, (string)$extractionProgress);
                 }
-            } catch (Throwable $e){
-                file_put_contents($this->error_file, 'Exception on installNewModuleFromFile: ' . $e->getMessage(), FILE_APPEND);
+                
+                $zip->close();
+            } else {
+                $result = false;
             }
-        } else {
-            file_put_contents($this->error_file,"Install error: the class $pbxExtensionSetupClass does not exists", FILE_APPEND);
+            
+            if ($result === false) {
+                file_put_contents($this->error_file, 'Error occurred during module extraction.', FILE_APPEND);
+                file_put_contents($this->progress_file, '0');
+                return;
+            }
+            
+            // Report extraction phase complete
+            file_put_contents($this->progress_file, '50');
+            
+            // Prepare for installation phase
+            ModulesDBConnectionsProvider::recreateModulesDBConnections();
+            Util::addRegularWWWRights($currentModuleDir);
+            
+            // Run the module setup
+            $pbxExtensionSetupClass = "Modules\\$moduleUniqueID\\Setup\\PbxExtensionSetup";
+            if (class_exists($pbxExtensionSetupClass)
+                && method_exists($pbxExtensionSetupClass, 'installModule')) {
+                try {
+                    // Create setup instance
+                    $setup = new $pbxExtensionSetupClass($moduleUniqueID);
+                    
+                    // Update progress during setup (50% to 90% range)
+                    file_put_contents($this->progress_file, '70');
+                    
+                    // Run installation
+                    $installResult = $setup->installModule();
+                    
+                    // Update progress after installation
+                    file_put_contents($this->progress_file, '90');
+                    
+                    if (!$installResult) {
+                        $errorMessage = implode(" ", $setup->getMessages());
+                        file_put_contents($this->error_file, $errorMessage, FILE_APPEND);
+                        SystemMessages::sysLogMsg(__CLASS__, "Installation error: {$errorMessage}", LOG_ERR);
+                    } else {
+                        // Installation succeeded
+                        // Update Redis state to indicate successful installation
+                        $apiRedis = RedisClientProvider::getApiRequestsConnection($this->di);
+                        
+                        // Update module installation status in Redis
+                        $installationKey = ModuleInstallationBase::REDIS_MODULE_INSTALLATION_KEY . $moduleUniqueID;
+                        $installData = json_decode($apiRedis->get($installationKey) ?? '{}', true);
+                        $installData['status'] = 'installed';
+                        $installData['installComplete'] = true;
+                        $apiRedis->setex(
+                            $installationKey,
+                            ModuleInstallationBase::REDIS_MODULE_INSTALL_TTL,
+                            json_encode($installData)
+                        );
+                        
+                        SystemMessages::sysLogMsg(
+                            __CLASS__,
+                            "Module $moduleUniqueID installed successfully, updated Redis state. Initiating worker restart.",
+                            LOG_NOTICE
+                        );
+                        
+                        // Trigger worker restart to initiate post-installation
+                        Processes::restartAllWorkers();
+                    }
+                } catch (Throwable $e) {
+                    $errorMessage = 'Exception on installNewModuleFromFile: ' . $e->getMessage();
+                    file_put_contents($this->error_file, $errorMessage, FILE_APPEND);
+                    SystemMessages::sysLogMsg(__CLASS__, $errorMessage, LOG_ERR);
+                }
+            } else {
+                $errorMessage = "Install error: the class $pbxExtensionSetupClass does not exists";
+                file_put_contents($this->error_file, $errorMessage, FILE_APPEND);
+                SystemMessages::sysLogMsg(__CLASS__, $errorMessage, LOG_ERR);
+            }
+            
+            // Always mark as 100% complete, even if there was an error
+            // The frontend will read the error file to see if there was a problem
+            file_put_contents($this->progress_file, '100');
+            
+            // Log completion
+            SystemMessages::sysLogMsg(
+                __CLASS__, 
+                "Module installation completed for $moduleUniqueID", 
+                LOG_NOTICE
+            );
+            
+        } catch (Throwable $e) {
+            // Catch any unexpected exceptions
+            $errorMessage = 'Fatal error during module installation: ' . $e->getMessage();
+            file_put_contents($this->error_file, $errorMessage, FILE_APPEND);
+            SystemMessages::sysLogMsg(__CLASS__, $errorMessage, LOG_ERR);
+            
+            // Ensure progress is updated
+            file_put_contents($this->progress_file, '100');
         }
-        file_put_contents( $this->progress_file, '100');
     }
 }
 

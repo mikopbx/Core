@@ -195,6 +195,12 @@ class WorkerSafeScriptsCore extends WorkerBase
         // Execute PID collection in parallel
         $this->executeParallel($pidCollectionTasks);
         
+        SystemMessages::sysLogMsg(
+            static::class,
+            "Starting restart process for " . count($runningWorkers) . " workers",
+            LOG_NOTICE
+        );
+        
         // Create tasks for starting new worker instances
         $startTasks = [];
         foreach ($arrWorkers as $workerType => $workersWithCurrentType) {
@@ -210,47 +216,87 @@ class WorkerSafeScriptsCore extends WorkerBase
         $this->executeParallel($startTasks);
         
         // Wait for new instances to initialize
-        sleep(2);
+        SystemMessages::sysLogMsg(
+            static::class,
+            "Started new worker instances, waiting for them to initialize",
+            LOG_NOTICE
+        );
+        sleep(3);
         
         // Create tasks for graceful shutdown of old instances
         $shutdownTasks = [];
         
-        // First handle forks
-        foreach ($workerForks as $worker => $forkPids) {
-            foreach ($forkPids as $pid) {
-                $shutdownTasks[] = function() use ($pid) {
-                    // Send SIGUSR1 to fork
-                    posix_kill((int)$pid, SIGUSR1);
-                    Fiber::suspend();
-                };
-            }
-        }
+        // Signal all workers to begin graceful shutdown
+        SystemMessages::sysLogMsg(
+            static::class,
+            "Sending graceful shutdown signal (SIGUSR1) to running workers",
+            LOG_NOTICE
+        );
         
-        // Execute fork shutdown in parallel
-        $this->executeParallel($shutdownTasks);
-        
-        // Then handle main processes
-        $mainShutdownTasks = [];
+        // First handle main processes with SIGUSR1
         foreach ($runningWorkers as $worker => $pid) {
-            $mainShutdownTasks[] = function() use ($pid) {
+            $shutdownTasks[] = function() use ($pid, $worker) {
                 // Send SIGUSR1 to main process
-                posix_kill((int)$pid, SIGUSR1);
+                if (posix_kill((int)$pid, SIGUSR1)) {
+                    SystemMessages::sysLogMsg(
+                        static::class,
+                        "Sent SIGUSR1 to $worker (PID: $pid)",
+                        LOG_DEBUG
+                    );
+                }
                 Fiber::suspend();
             };
         }
         
-        // Execute main process shutdown in parallel
-        $this->executeParallel($mainShutdownTasks);
+        // Execute main process graceful shutdown in parallel
+        $this->executeParallel($shutdownTasks);
         
-        // Wait for graceful shutdown
-        sleep(5);
+        // Allow more time for graceful shutdown (10-15 seconds should be sufficient)
+        SystemMessages::sysLogMsg(
+            static::class,
+            "Waiting for workers to complete active tasks (graceful shutdown)",
+            LOG_NOTICE
+        );
+        
+        // Check if workers have gracefully shutdown
+        $gracefulShutdownStart = time();
+        $gracefulShutdownTimeout = 15; // seconds
+        
+        while (time() - $gracefulShutdownStart < $gracefulShutdownTimeout) {
+            $allShutdown = true;
+            
+            foreach ($runningWorkers as $worker => $pid) {
+                if (posix_kill((int)$pid, 0)) {
+                    // Process still exists
+                    $allShutdown = false;
+                    break;
+                }
+            }
+            
+            if ($allShutdown) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "All workers have gracefully shutdown",
+                    LOG_NOTICE
+                );
+                break;
+            }
+            
+            sleep(1);
+        }
         
         // Create tasks for force termination of any remaining processes
         $terminateTasks = [];
         
-        // Terminate remaining forks
-        foreach ($workerForks as $worker => $forkPids) {
-            foreach ($forkPids as $pid) {
+        // Check and force terminate main processes that didn't shut down gracefully
+        foreach ($runningWorkers as $worker => $pid) {
+            if (posix_kill((int)$pid, 0)) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "Worker $worker (PID: $pid) didn't shut down gracefully, sending SIGTERM",
+                    LOG_WARNING
+                );
+                
                 $terminateTasks[] = function() use ($pid) {
                     posix_kill((int)$pid, SIGTERM);
                     Fiber::suspend();
@@ -258,16 +304,24 @@ class WorkerSafeScriptsCore extends WorkerBase
             }
         }
         
-        // Terminate remaining main processes
-        foreach ($runningWorkers as $worker => $pid) {
-            $terminateTasks[] = function() use ($pid) {
-                posix_kill((int)$pid, SIGTERM);
-                Fiber::suspend();
-            };
+        // Terminate any remaining forks
+        foreach ($workerForks as $worker => $forkPids) {
+            foreach ($forkPids as $pid) {
+                if (posix_kill((int)$pid, 0)) {
+                    $terminateTasks[] = function() use ($pid) {
+                        posix_kill((int)$pid, SIGTERM);
+                        Fiber::suspend();
+                    };
+                }
+            }
         }
         
-        // Execute termination in parallel
-        $this->executeParallel($terminateTasks);
+        // Execute termination in parallel if needed
+        if (!empty($terminateTasks)) {
+            $this->executeParallel($terminateTasks);
+            // Give processes time to terminate
+            sleep(2);
+        }
         
         SystemMessages::sysLogMsg(__CLASS__, "All workers have been restarted with new codebase", LOG_NOTICE);
     }

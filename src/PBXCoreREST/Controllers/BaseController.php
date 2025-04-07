@@ -85,39 +85,94 @@ class BaseController extends Controller
             $responseKey = WorkerApiCommands::REDIS_API_RESPONSE_PREFIX . $requestMessage['request_id'];
             $response = null;
             $startTime = time();
-
-            // Wait for response with timeout
+            $retryCount = 0;
+            $maxRetries = 5;
+            
+            // Wait for response with timeout and retry logic
             while (time() - $startTime < $maxTimeout) {
-                // Check if response is ready
-                $encodedResponse = $apiRedis->get($responseKey);
-                if ($encodedResponse !== false) {
-                    $response = json_decode($encodedResponse, true);
-                    break;
-                }
-
-                // Subscribe to notification channel
-                $gotResponse = false;
-                $pubSubRedis->subscribe([$responseKey], function($redis, $channel, $message) use (&$gotResponse) {
-                    if ($message === 'ready') {
-                        $gotResponse = true;
-                        $redis->unsubscribe([$channel]);
-                    }
-                });
-
-                if ($gotResponse) {
+                try {
+                    // Check if response is ready
                     $encodedResponse = $apiRedis->get($responseKey);
                     if ($encodedResponse !== false) {
                         $response = json_decode($encodedResponse, true);
                         break;
                     }
-                }
 
-                // Small sleep to prevent CPU overload
-                usleep(100000); // 100ms
+                    // Subscribe to notification channel with timeout
+                    $gotResponse = false;
+                    $subscribeTimeout = 5; // 5 second timeout for subscribe
+                    
+                    try {
+                        // Set read timeout for subscription
+                        $pubSubRedis->setOption(3, $subscribeTimeout); // 3 is Redis::OPT_READ_TIMEOUT
+                        
+                        $pubSubRedis->subscribe([$responseKey], function($redis, $channel, $message) use (&$gotResponse) {
+                            if ($message === 'ready') {
+                                $gotResponse = true;
+                                $redis->unsubscribe([$channel]);
+                            }
+                        });
+                    } catch (Throwable $subscribeException) {
+                        // If connection lost during subscribe, reconnect and continue
+                        if (strpos($subscribeException->getMessage(), 'read error') !== false) {
+                            $retryCount++;
+                            
+                            if ($retryCount > $maxRetries) {
+                                throw $subscribeException; // Max retries exceeded
+                            }
+                            
+                            // Exponential backoff with jitter
+                            $sleepTime = min(pow(2, $retryCount) * 100000, 2000000) + mt_rand(0, 100000);
+                            usleep($sleepTime);
+                            
+                            // Reconnect
+                            $pubSubRedis = RedisClientProvider::getPubSubConnection($this->di);
+                            $apiRedis = RedisClientProvider::getApiRequestsConnection($this->di);
+                            
+                            continue;
+                        }
+                        throw $subscribeException; // Other Redis exceptions
+                    }
+
+                    if ($gotResponse) {
+                        $encodedResponse = $apiRedis->get($responseKey);
+                        if ($encodedResponse !== false) {
+                            $response = json_decode($encodedResponse, true);
+                            break;
+                        }
+                    }
+
+                    // Small sleep to prevent CPU overload
+                    usleep(100000); // 100ms
+                } catch (Throwable $redisException) {
+                    // Handle Redis connection errors with retry
+                    $retryCount++;
+                    
+                    if ($retryCount > $maxRetries) {
+                        throw $redisException; // Max retries exceeded
+                    }
+                    
+                    // Log retry attempt
+                    CriticalErrorsHandler::handleExceptionWithSyslog(
+                        new \Exception("Redis connection error during worker request, retrying ({$retryCount}/{$maxRetries}): " . $redisException->getMessage())
+                    );
+                    
+                    // Exponential backoff with jitter
+                    $sleepTime = min(pow(2, $retryCount) * 100000, 2000000) + mt_rand(0, 100000);
+                    usleep($sleepTime);
+                    
+                    // Reconnect
+                    $pubSubRedis = RedisClientProvider::getPubSubConnection($this->di);
+                    $apiRedis = RedisClientProvider::getApiRequestsConnection($this->di);
+                }
             }
 
             // Clean up
-            $apiRedis->del($responseKey);
+            try {
+                $apiRedis->del($responseKey);
+            } catch (Throwable $e) {
+                // Ignore cleanup errors
+            }
 
             if ($response === null) {
                 $this->response->setPayloadError('Request timeout or worker not responding');
