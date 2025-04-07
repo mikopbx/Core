@@ -353,8 +353,8 @@ class BeanstalkClient extends Injectable
         if (intval($stats['reserves'])>3){
             // Probably an exception did happen during the previous job execution, force to delete it.
             $errorMessage = 'This job has attempted to execute more than 3 times without success.'.PHP_EOL;
-            $errorMessage .= 'Job stats: '.json_encode($stats).PHP_EOL;
-            $errorMessage .= 'Message: '.json_encode($this->message);
+            $errorMessage .= '  Job stats: '.json_encode($stats).PHP_EOL;
+            $errorMessage .= '  Message: '.json_encode($this->message);
             SystemMessages::sysLogMsg(__METHOD__,$errorMessage,LOG_ALERT);
             $this->buryJob($job);
         }

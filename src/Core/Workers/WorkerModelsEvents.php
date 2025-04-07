@@ -85,8 +85,8 @@ ini_set('display_startup_errors', 1);
  */
 class WorkerModelsEvents extends WorkerBase
 {
-private const int ACTION_TIMEOUT = 30;
-        private bool $isProcessing = false; // seconds
+    private const int ACTION_TIMEOUT = 30;
+    private bool $isProcessing = false; // seconds
     private int $last_change;
 
     // Array of planned reload actions that need to be started
@@ -264,7 +264,7 @@ private const int ACTION_TIMEOUT = 30;
     private function waitForEvents(): void
     {
         while ($this->needRestart === false) {
-            $this->beanstalkClient->wait();
+            $this->beanstalkClient->wait(3);
         }
         $this->timeoutHandler(); // Execute all collected changes before exit
     }
@@ -292,12 +292,16 @@ private const int ACTION_TIMEOUT = 30;
             $this->isProcessing = true;
             // Check if there aren't any planned reload actions
             if (count($this->plannedReloadActions) === 0) {
-                SystemMessages::sysLogMsg(__METHOD__, "No planed actions for reload", LOG_DEBUG);
+                // SystemMessages::sysLogMsg(__METHOD__, "No planed actions for reload", LOG_DEBUG);
                 return;
             }
 
             // Check if enough time has passed since the last change
-            if ((time() - $this->last_change) < $this->timeout) {
+            if (
+                !array_key_exists(ReloadModuleStateAction::class, $this->plannedReloadActions)
+                and
+                (time() - $this->last_change) < $this->timeout
+            ) {
                 SystemMessages::sysLogMsg(__METHOD__, "Wait more time before starting the reload.", LOG_DEBUG);
                 return;
             }

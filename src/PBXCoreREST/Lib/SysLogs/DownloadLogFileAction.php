@@ -61,7 +61,7 @@ class DownloadLogFileAction extends Injectable
             Processes::mwExec("$ln -s $filename $result_dir/$link_name");
             Processes::mwExec("$chown www:www $result_dir/$link_name");
             $res->success          = true;
-            $res->data['filename'] = "$uid/$link_name";
+            $res->data['filename'] = "/pbxcore/files/cache/$uid/$link_name";
         }
 
         return $res;

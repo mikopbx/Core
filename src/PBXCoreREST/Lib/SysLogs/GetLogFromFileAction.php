@@ -85,9 +85,11 @@ class GetLogFromFileAction extends Injectable
             $cmd .= ' | ' . $sed . ' -E \'s/\\\\([tnrfvb]|040)/ /g\'';
             $cmd .= " > $filenameTmp";
 
-            Processes::mwExec("$cmd; chown www:www $filenameTmp");
+            Processes::mwExec($cmd);
             $res->data['cmd'] = $cmd;
             $res->data['filename'] = $filenameTmp;
+            $res->data['content'] = mb_convert_encoding('' . file_get_contents($filenameTmp), 'UTF-8', 'UTF-8');
+            unlink($filenameTmp);
         }
 
         return $res;

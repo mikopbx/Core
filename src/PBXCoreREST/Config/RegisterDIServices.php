@@ -34,6 +34,7 @@ use MikoPBX\Common\Providers\{AclProvider,
     ModulesDBConnectionsProvider,
     PBXConfModulesProvider,
     PBXCoreRESTClientProvider,
+    RedisClientProvider,
     RegistryProvider,
     ManagedCacheProvider,
     SentryErrorHandlerProvider,
@@ -76,7 +77,8 @@ class RegisterDIServices
             CDRDatabaseProvider::class,
             ModulesDBConnectionsProvider::class,
 
-            // Inject caches
+            // Inject caches and message queues
+            RedisClientProvider::class,
             ManagedCacheProvider::class,
 
             // Inject Queue connection

@@ -23,14 +23,11 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Controllers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
-use MikoPBX\Core\System\BeanstalkClient;
-use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
+use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Filter\Filter;
 use Phalcon\Mvc\Controller;
-use Pheanstalk\Contract\PheanstalkInterface;
 use Throwable;
 
 /**
@@ -51,45 +48,107 @@ class BaseController extends Controller
      * @param int $priority The priority of the request.
      *
      * @return void
-     *
      */
     public function sendRequestToBackendWorker(
         string $processor,
         string $actionName,
         mixed $payload = null,
         string $moduleName = '',
-        int $maxTimeout = 10,
-        int $priority = PheanstalkInterface::DEFAULT_PRIORITY
+        int $maxTimeout = 30,
+        int $priority = 0
     ): void {
-        list($debug, $requestMessage) = $this->prepareRequestMessage($processor, $payload, $actionName, $moduleName);
+        [$debug, $requestMessage] = $this->prepareRequestMessage($processor, $payload, $actionName, $moduleName);
+        if ($debug) {
+            $maxTimeout = 9999;
+        }
 
         try {
-            $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
-            $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
-            if ($debug) {
-                $maxTimeout = 9999;
+            // Initialize Redis connection
+            if (!$this->di->has(RedisClientProvider::SERVICE_NAME)) {
+                $this->di->register(new RedisClientProvider());
             }
-            $response       = $beanstalkQueue->request($message, $maxTimeout, $priority);
-            if ($response !== false) {
-                $response = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
-                if (array_key_exists(BeanstalkClient::QUEUE_ERROR, $response)) {
-                    $this->response->setPayloadError($response[BeanstalkClient::QUEUE_ERROR]);
-                } elseif (array_key_exists(BeanstalkClient::RESPONSE_IN_FILE, $response)) {
-                    $tempFile = $response[BeanstalkClient::RESPONSE_IN_FILE];
-                    $response = unserialize(file_get_contents($tempFile));
+            $apiRedis = RedisClientProvider::getApiRequestsConnection($this->di);
+            $pubSubRedis = RedisClientProvider::getPubSubConnection($this->di);
+
+            // Generate unique request ID
+            $requestMessage['request_id'] = uniqid('req_', true);
+
+            // Push request to queue
+            $apiRedis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
+
+            if ($requestMessage['async']) {
+                $this->response->setPayloadSuccess(['success' => true]);
+                return;
+            }
+
+            // Subscribe to response channel
+            $responseKey = WorkerApiCommands::REDIS_API_RESPONSE_PREFIX . $requestMessage['request_id'];
+            $response = null;
+            $startTime = time();
+
+            // Wait for response with timeout
+            while (time() - $startTime < $maxTimeout) {
+                // Check if response is ready
+                $encodedResponse = $apiRedis->get($responseKey);
+                if ($encodedResponse !== false) {
+                    $response = json_decode($encodedResponse, true);
+                    break;
+                }
+
+                // Subscribe to notification channel
+                $gotResponse = false;
+                $pubSubRedis->subscribe([$responseKey], function($redis, $channel, $message) use (&$gotResponse) {
+                    if ($message === 'ready') {
+                        $gotResponse = true;
+                        $redis->unsubscribe([$channel]);
+                    }
+                });
+
+                if ($gotResponse) {
+                    $encodedResponse = $apiRedis->get($responseKey);
+                    if ($encodedResponse !== false) {
+                        $response = json_decode($encodedResponse, true);
+                        break;
+                    }
+                }
+
+                // Small sleep to prevent CPU overload
+                usleep(100000); // 100ms
+            }
+
+            // Clean up
+            $apiRedis->del($responseKey);
+
+            if ($response === null) {
+                $this->response->setPayloadError('Request timeout or worker not responding');
+                return;
+            }
+
+            // Handle file-based response
+            if (isset($response[WorkerApiCommands::REDIS_RESPONSE_IN_FILE])) {
+                $filename = $response[WorkerApiCommands::REDIS_RESPONSE_IN_FILE];
+                if (file_exists($filename)) {
+                    $response = unserialize(file_get_contents($filename));
+                    unlink($filename);
                     $this->response->setPayloadSuccess($response);
                 } else {
-                    $this->response->setPayloadSuccess($response);
+                    $this->response->setPayloadError('Response file not found');
                 }
-            } else {
-                SystemMessages::sysLogMsg(__METHOD__, "Empty response from BeanstalkQueue on $message", LOG_ERR);
-                $this->sendError(Response::INTERNAL_SERVER_ERROR);
+                return;
             }
+
+            if (array_key_exists(WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR, $response)) {
+                $this->response->setPayloadError($response[WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR]);
+            } else {
+                $this->response->setPayloadSuccess($response);
+            }
+
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $this->sendError(Response::BAD_REQUEST, $e->getMessage());
+            $this->response->setPayloadError($e->getMessage());
         }
     }
+
 
     /**
      * Sets the response with an error code

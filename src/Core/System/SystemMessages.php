@@ -252,31 +252,45 @@ class SystemMessages extends Injectable
 
     /**
      * Formats a given string to fit within a specified width inside a text box.
+     * Returns original content if formatting is impossible due to constraints.
      *
-     * This function formats a line by applying padding around the text to align it
-     * according to the specified alignment parameter. It can align text to the left (default)
-     * or center it within the line. The line is framed with vertical bars on each side.
-     *
-     * @param string $content The text content to be formatted within the line.
-     * @param int $lineWidth The total width of the line, including the border characters.
-     * @param string $align The text alignment within the line. Valid values are 'left' or 'center'.
-     *                      Default is 'left', which aligns the text to the left with padding on the right.
-     *                      If set to 'center', the text will be centered with padding on both sides.
-     *
-     * @return string The formatted line with the text aligned as specified.
+     * @param string $content The text content to be formatted within the line
+     * @param int $lineWidth The total width of the line, including the border characters
+     * @param string $align The text alignment ('left' or 'center', defaults to 'left')
+     * @return string The formatted line or original content if formatting is impossible
      */
     private static function formatLine(string $content, int $lineWidth, string $align = 'left'): string
     {
-        $padding = $lineWidth - 4 - mb_strlen($content);  // 4 characters are taken by the borders "| "
+        // Return original content if line width is too small for box format
+        if ($lineWidth < 4) {
+            return $content;
+        }
+
+        // Calculate available space for content
+        $maxContentLength = $lineWidth - 4;  // Subtract border characters "| " and " |"
+
+        // If content is too long, return it unchanged
+        if (mb_strlen($content) > $maxContentLength && $lineWidth < mb_strlen($content)) {
+            return $content;
+        }
+
+        // Truncate content if needed but possible
+        if (mb_strlen($content) > $maxContentLength) {
+            $content = mb_substr($content, 0, $maxContentLength);
+        }
+
+        // Calculate padding
+        $padding = $maxContentLength - mb_strlen($content);
+
         if ($align === 'center') {
-            // Center the content by splitting the padding on both sides
+            // Center alignment
             $leftPadding = intdiv($padding, 2);
             $rightPadding = $padding - $leftPadding;
             return "| " . str_repeat(' ', $leftPadding) . $content . str_repeat(' ', $rightPadding) . " |";
-        } else {
-            // Left align the content (default behavior)
-            return "| " . $content . str_repeat(' ', $padding) . " |";
         }
+
+        // Left alignment
+        return "| " . $content . str_repeat(' ', $padding) . " |";
     }
 
 

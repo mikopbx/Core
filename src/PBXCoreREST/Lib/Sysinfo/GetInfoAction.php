@@ -46,18 +46,7 @@ class GetInfoAction extends Injectable
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
         $res->success   = true;
-
-        $di           = Di::getDefault();
-        $dirsConfig   = $di->getShared('config');
-        $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.txt';
-
-        $content = self::prepareSysyinfoContent();
-
-        file_put_contents($filenameTmp, $content);
-        Util::addRegularWWWRights($filenameTmp);
-        $res->data['filename'] = $filenameTmp;
-        $res->processor        = __METHOD__;
-
+        $res->data['content'] = self::prepareSysyinfoContent();
         return $res;
     }
 

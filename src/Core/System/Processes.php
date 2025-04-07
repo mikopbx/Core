@@ -65,6 +65,120 @@ class Processes
      */
     private const VALID_ACTIONS = ['start', 'stop', 'restart', 'status'];
 
+
+    /**
+     * Directory for process lock files
+     */
+    private const LOCK_FILE_DIR = '/var/run/php-workers';
+    private const PID_FILE_SUFFIX = '.pid';
+
+    /**
+     * Cleans up stale PID files in the workers directory
+     * 
+     * @return void
+     */
+    private static function cleanupStalePidFiles(): void
+    {
+        if (!is_dir(self::LOCK_FILE_DIR)) {
+            return;
+        }
+
+        $files = glob(self::LOCK_FILE_DIR . '/*' . self::PID_FILE_SUFFIX . '*');
+        foreach ($files as $file) {
+            // Read PID from file
+            $pid = @file_get_contents($file);
+            if ($pid === false) {
+                @unlink($file);
+                continue;
+            }
+
+            // Check if process is still running
+            if (!self::isProcessRunning($pid)) {
+                @unlink($file);
+            }
+        }
+    }
+
+    /**
+     * Gets the path to the PID file for a given class name
+     *
+     * @param string $className The class name
+     * @param int $instanceNum The instance number (for workers with multiple instances)
+     * @return string Path to the PID file
+     */
+    public static function getPidFilePath(string $className, int $instanceNum = 1): string
+    {
+        // Ensure PID directory exists
+        Util::mwMkdir(self::LOCK_FILE_DIR, true);
+        $name = str_replace('\\', '-', $className);
+        if ($instanceNum > 1) {
+            return self::LOCK_FILE_DIR . "/$name-$instanceNum" . self::PID_FILE_SUFFIX;
+        }
+        return self::LOCK_FILE_DIR . "/$name" . self::PID_FILE_SUFFIX;
+    }
+
+    /**
+     * Gets the path to the PID file for a forked process
+     *
+     * @param string $className The class name
+     * @param int $pid Process ID
+     * @param int $instanceNum The instance number
+     * @return string Path to the forked process PID file
+     */
+    public static function getForkedPidFilePath(string $className, int $pid, int $instanceNum = 1): string
+    {
+        $basePidFile = self::getPidFilePath($className, $instanceNum);
+        return sprintf('%s.%d', $basePidFile, $pid);
+    }
+
+    /**
+     * Saves a PID to a file with proper locking
+     *
+     * @param string $pidFile Path to the PID file
+     * @param int $pid Process ID to save
+     * @throws RuntimeException If unable to write PID file
+     */
+    public static function savePidFile(string $pidFile, int $pid): void
+    {
+        try {
+            $pidDir = dirname($pidFile);
+
+            // Ensure PID directory exists
+            if (!is_dir($pidDir) && !mkdir($pidDir, 0755, true)) {
+                throw new RuntimeException("Could not create PID directory: $pidDir");
+            }
+
+            // Use exclusive file creation to avoid race conditions
+            $handle = fopen($pidFile, 'c+');
+            if ($handle === false) {
+                throw new RuntimeException("Could not open PID file: $pidFile");
+            }
+
+            if (!flock($handle, LOCK_EX | LOCK_NB)) {
+                fclose($handle);
+                throw new RuntimeException("Could not acquire lock on PID file: $pidFile");
+            }
+
+            // Write PID to file
+            if (ftruncate($handle, 0) === false || fwrite($handle, (string)$pid) === false) {
+                flock($handle, LOCK_UN);
+                fclose($handle);
+                throw new RuntimeException("Could not write to PID file: $pidFile");
+            }
+
+            flock($handle, LOCK_UN);
+            fclose($handle);
+
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Failed to save PID file: " . $e->getMessage(),
+                LOG_WARNING
+            );
+            throw new RuntimeException('PID file operation failed', 0, $e);
+        }
+    }
+
     /**
      * Validates process action.
      *
@@ -246,12 +360,22 @@ class Processes
     }
 
     /**
-     * Restarts all workers in a separate process.
+     * Restarts all workers in a separate process with improved pipeline.
+     * 
+     * The restart process:
+     * 1. Starts WorkerSafeScriptsCore with restart parameter
+     * 2. WorkerSafeScriptsCore collects all workers and their forks
+     * 3. Starts new instances of each worker
+     * 4. Gracefully shuts down old workers
+     * 
      */
     public static function restartAllWorkers(): void
     {
         $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
         $php = Util::which('php');
+                
+        // First restart WorkerSafeScriptsCore itself
+        // This will trigger the full restart pipeline
         $workerSafeScripts = "$php -f $workerSafeScriptsPath restart > /dev/null 2> /dev/null";
         self::mwExec($workerSafeScripts);
     }
@@ -268,6 +392,9 @@ class Processes
         string $paramForPHPWorker = 'start',
         string $action = 'restart'
     ): void {
+        // Clean up stale PID files before managing workers
+        self::cleanupStalePidFiles();
+
         if (!self::isValidAction($action)) {
             throw new InvalidArgumentException("Invalid action: $action");
         }
@@ -290,9 +417,7 @@ class Processes
         $activeProcesses = self::getPidOfProcess($className);
         $processes = array_filter(explode(' ', $activeProcesses));
         $currentProcCount = count($processes);
-
-        $workerObject = new $className();
-        $neededProcCount = $workerObject->maxProc;
+        $neededProcCount = 1; // Default to 1 process needed
 
         self::handleWorkerAction(
             $action,
@@ -334,8 +459,7 @@ class Processes
                     $activeProcesses,
                     $kill,
                     $command,
-                    $paramForPHPWorker,
-                    $neededProcCount
+                    $paramForPHPWorker
                 );
                 break;
             case 'stop':
@@ -361,23 +485,38 @@ class Processes
      * @param string $kill Kill command path
      * @param string $command Command to execute
      * @param string $paramForPHPWorker Worker parameters
-     * @param int $neededProcCount Needed process count
      */
     private static function handleRestartAction(
         string $activeProcesses,
         string $kill,
         string $command,
         string $paramForPHPWorker,
-        int $neededProcCount
     ): void {
         if ($activeProcesses !== '') {
-            self::mwExec("$kill -SIGUSR1 $activeProcesses > /dev/null 2>&1 &");
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf("SEND signal: %s", "SIGUSR1 $activeProcesses"),
+                LOG_WARNING
+            );
+
+            // Send SIGUSR1 first to initiate graceful shutdown
+            self::mwExec("$kill -SIGUSR1 $activeProcesses > /dev/null 2>&1");
+            
+            // Wait for 2 seconds to allow worker to handle SIGUSR1
+            sleep(2);
+
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf("SEND signal: %s", "SIGTERM $activeProcesses"),
+                LOG_WARNING
+            );
+
+            // Then send SIGTERM
             self::mwExecBg("$kill -SIGTERM $activeProcesses");
         }
 
-        for ($i = 0; $i < $neededProcCount; $i++) {
-            self::mwExecBg("$command $paramForPHPWorker");
-        }
+        // Start new instance
+        self::mwExecBg("$command $paramForPHPWorker");
     }
 
     /**

@@ -90,6 +90,13 @@ class RedisConf extends Injectable
         $conf  .= "loglevel warning" . PHP_EOL;
         $conf  .= "syslog-enabled yes" . PHP_EOL;
         $conf  .= "syslog-ident redis" . PHP_EOL;
+        # Connection settings
+        $conf  .= "timeout 0" . PHP_EOL;
+        $conf  .= "tcp-keepalive 60" . PHP_EOL;
+        $conf  .= "client-output-buffer-limit pubsub 32mb 8mb 60" . PHP_EOL;
+
+        # Performance tuning
+        $conf  .= "tcp-backlog 511" . PHP_EOL;
         file_put_contents(self::CONF_FILE, $conf);
     }
 

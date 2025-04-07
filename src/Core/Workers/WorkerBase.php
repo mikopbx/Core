@@ -20,13 +20,12 @@
 namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Library\Text;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
-use MikoPBX\Common\Library\Text;
 use RuntimeException;
 use Throwable;
 
@@ -38,6 +37,11 @@ use Throwable;
  */
 abstract class WorkerBase extends Injectable implements WorkerInterface
 {
+    /**
+     * Default restart interval in seconds for worker monitoring
+     */
+    public const int KEEP_ALLIVE_CHECK_INTERVAL = 60;
+
     /**
      * Signals that should be handled by the worker
      */
@@ -58,17 +62,11 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
      * Worker state constants with descriptions
      */
     protected const array WORKER_STATES = [
-        self::STATE_STARTING   => 'STARTING',
-        self::STATE_RUNNING    => 'RUNNING',
-        self::STATE_STOPPING   => 'STOPPING',
+        self::STATE_STARTING => 'STARTING',
+        self::STATE_RUNNING => 'RUNNING',
+        self::STATE_STOPPING => 'STOPPING',
         self::STATE_RESTARTING => 'RESTARTING'
     ];
-
-    /**
-     * File system constants
-     */
-    private const string PID_FILE_DIR = '/var/run';
-    private const string PID_FILE_SUFFIX = '.pid';
 
     /**
      * Resource limits
@@ -79,22 +77,22 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     /**
      * Log message format constants
      */
-    private const string LOG_FORMAT_STATE = '[%s][%s->%s] %s (%.3fs, PID:%d)';
-    private const string LOG_FORMAT_SIGNAL = '[%s][%s] %s from %s (%.3fs, PID:%d)';
-    private const string LOG_FORMAT_NORMAL_SHUTDOWN = '[%s][RUNNING->SHUTDOWN] Clean exit from %s (%.3fs, PID:%d)';
-    private const string LOG_FORMAT_NORMAL_EXIT = '[%s] Successfully executed (%.3fs, PID:%d)';
-    private const string LOG_FORMAT_ERROR_SHUTDOWN = '[%s][SHUTDOWN-ERROR] %s from %s (%.3fs, PID:%d)';
-    private const string LOG_FORMAT_PING = '[%s][PING] %s from %s (%.3fs, PID:%d)';
+    private const string LOG_FORMAT_STATE = '[%s][%s][%s] %s (%.3fs, PID:%d, Parent:%d)';
+    private const string LOG_FORMAT_SIGNAL = '[%s][%s][%s] Signal %s received from %s (%.3fs, PID:%d, Parent:%d)';
+    private const string LOG_FORMAT_NORMAL_SHUTDOWN = '[%s][%s][RUNNING->SHUTDOWN] Clean exit from %s (%.3fs, PID:%d, Parent:%d)';
+    private const string LOG_FORMAT_NORMAL_EXIT = '[%s][%s] Successfully executed (%.3fs, PID:%d, Parent:%d)';
+    private const string LOG_FORMAT_ERROR_SHUTDOWN = '[%s][%s][SHUTDOWN-ERROR] %s from %s (%.3fs, PID:%d, Parent:%d)';
+    private const string LOG_FORMAT_NORMAL_EXIT_FORK = '[%s][FORK] Successfully executed (%.3fs, PID:%d, PPID:%d)';
+    private const string LOG_FORMAT_NORMAL_SHUTDOWN_FORK = '[%s][FORK][RUNNING->SHUTDOWN] Clean exit from %s (%.3fs, PID:%d, PPID:%d)';
+    private const string LOG_FORMAT_PING_ERROR = '[%s][%s][PING-ERROR] %s from %s (%.3fs, PID:%d, Parent:%d)';
 
 
-    private const string LOG_NAMESPACE_SEPARATOR = '\\';
-
+    protected const string LOG_NAMESPACE_SEPARATOR = '\\';
     /**
-     * Flag indicating whether the worker is a forked process
-     *
-     * @var bool
+     * Process type identifiers
      */
-    private bool $isForked = false;
+    private const string PROCESS_TYPE_MAIN = 'MAIN';
+    private const string PROCESS_TYPE_FORK = 'FORK';
 
     /**
      * Maximum number of processes that can be created
@@ -132,26 +130,55 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     protected int $workerState = self::STATE_STARTING;
 
     /**
+     * Flag indicating whether the worker is a forked process
+     *
+     * @var bool
+     */
+    private bool $isForked = false;
+
+    /**
+     * Parent PID
+     *
+     * @var int
+     */
+    private int $parentPid;
+
+
+    /**
      * Constructs a WorkerBase instance.
      * Initializes signal handlers, sets up resource limits, and saves PID file.
      *
-     * @throws RuntimeException If critical initialization fails
+     * @throws RuntimeException|Throwable If critical initialization fails
      */
-    final public function __construct()
+    public function __construct()
     {
         try {
+            // Initialize basic properties first
+            $this->workerStartTime = microtime(true);
+            $this->parentPid = posix_getppid();
+            $this->workerState = self::STATE_STARTING;
+
+            // Set up basic environment
             $this->setResourceLimits();
             $this->initializeSignalHandlers();
             register_shutdown_function([$this, 'shutdownHandler']);
 
-            $this->workerStartTime = microtime(true);
-            $this->setWorkerState(self::STATE_STARTING);
+            // Save PID and update status
             $this->savePidFile();
 
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
             throw $e;
         }
+    }
+
+    /**
+     * Get worker-specific check interval in seconds
+     * Can be overridden in child classes to set custom interval
+     */
+    public static function getCheckInterval(): int
+    {
+        return self::KEEP_ALLIVE_CHECK_INTERVAL;
     }
 
     /**
@@ -188,109 +215,75 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
         $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
         $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
         $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
+        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
+
+        $oldLogStateStr = self::WORKER_STATES[$oldState] ?? 'UNDEFINED';
+        $newLogStateStr = self::WORKER_STATES[$state] ?? 'UNDEFINED';
+        if ($oldLogStateStr === $newLogStateStr) {
+            $logState = $oldLogStateStr;
+        } else {
+            $logState = "$oldLogStateStr->$newLogStateStr";
+        }
 
         SystemMessages::sysLogMsg(
             static::class,
             sprintf(
                 self::LOG_FORMAT_STATE,
                 $workerName,
-                self::WORKER_STATES[$oldState] ?? 'UNDEFINED',
-                self::WORKER_STATES[$state] ?? 'UNKNOWN',
+                $processType,
+                $logState,
                 $namespacePath,
                 $timeElapsed,
-                getmypid()
+                getmypid(),
+                $this->parentPid
             ),
             LOG_DEBUG
         );
     }
 
+    /**
+     * Get current worker status
+     *
+     * @return array Worker status information
+     */
+    protected function getWorkerStatus(): array
+    {
+        return [
+            'state' => $this->workerState,
+            'uptime' => microtime(true) - $this->workerStartTime,
+            'memory' => memory_get_usage(true),
+            'is_forked' => $this->isForked
+        ];
+    }
+
+    /**
+     * Generate the PID file path for the worker.
+     *
+     * @return string The path to the PID file.
+     */
+    public function getPidFile(): string
+    {
+        $pidFile = Processes::getPidFilePath(static::class);
+        if (isset($this->isForked) && $this->isForked === true) {
+            $pid = getmypid();
+            $pidFile = Processes::getForkedPidFilePath(static::class, $pid);
+        }
+        return $pidFile;
+    }
 
     /**
      * Save PID to file(s) with error handling
      *
      * @throws RuntimeException If unable to write PID file
      */
-    /**
-     * Handles PID file operations for worker processes
-     */
     private function savePidFile(): void
     {
-        try {
-            $pid = getmypid();
-            if ($pid === false) {
-                throw new RuntimeException('Could not get process ID');
-            }
-
-            $pidFile = $this->getPidFile();
-            $pidDir = dirname($pidFile);
-
-            // Ensure PID directory exists
-            if (!is_dir($pidDir) && !mkdir($pidDir, 0755, true)) {
-                throw new RuntimeException("Could not create PID directory: $pidDir");
-            }
-
-            // For forked processes, append the PID to the filename
-            if (isset($this->isForked) && $this->isForked === true) {
-                $pidFile = $this->getForkedPidFile($pid);
-            }
-
-            // Use exclusive file creation to avoid race conditions
-            $handle = fopen($pidFile, 'c+');
-            if ($handle === false) {
-                throw new RuntimeException("Could not open PID file: $pidFile");
-            }
-
-            if (!flock($handle, LOCK_EX | LOCK_NB)) {
-                fclose($handle);
-                throw new RuntimeException("Could not acquire lock on PID file: $pidFile");
-            }
-
-            // Write PID to file
-            if (ftruncate($handle, 0) === false ||
-                fwrite($handle, (string)$pid) === false) {
-                flock($handle, LOCK_UN);
-                fclose($handle);
-                throw new RuntimeException("Could not write to PID file: $pidFile");
-            }
-
-            flock($handle, LOCK_UN);
-            fclose($handle);
-
-        } catch (Throwable $e) {
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Failed to save PID file: " . $e->getMessage(),
-                LOG_WARNING
-            );
-            throw new RuntimeException('PID file operation failed', 0, $e);
+        $pid = getmypid();
+        if ($pid === false) {
+            throw new RuntimeException('Could not get process ID');
         }
-    }
-
-    /**
-     * Generate the PID file path for the worker
-     *
-     * @return string The path to the PID file
-     */
-    public function getPidFile(): string
-    {
-        $name = str_replace("\\", '-', static::class);
-        return self::PID_FILE_DIR . "/$name" . self::PID_FILE_SUFFIX;
-    }
-
-    /**
-     * Generates PID file path for forked processes
-     *
-     * @param int $pid Process ID
-     * @return string Full path to the PID file
-     */
-    private function getForkedPidFile(int $pid): string
-    {
-        $basePidFile = $this->getPidFile();
-        return sprintf(
-            '%s.%d',
-            $basePidFile,
-            $pid
-        );
+        $pidFile = $this->getPidFile();
+        Processes::savePidFile($pidFile, $pid);
     }
 
     /**
@@ -323,6 +316,29 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     }
 
     /**
+     * Logs normal exit after operation
+     */
+    private function logNormalExit(): void
+    {
+        $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
+        $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
+        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
+
+        SystemMessages::sysLogMsg(
+            static::class,
+            sprintf(
+                $this->isForked ? self::LOG_FORMAT_NORMAL_EXIT_FORK : self::LOG_FORMAT_NORMAL_EXIT,
+                $workerName,
+                $processType,
+                $timeElapsed,
+                getmypid(),
+                $this->parentPid
+            ),
+            LOG_DEBUG
+        );
+    }
+
+    /**
      * Handles various signals received by the worker
      *
      * @param int $signal Signal number
@@ -333,23 +349,20 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
         $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
         $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
         $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
-
-        $signalNames = [
-            SIGUSR1 => 'SIGUSR1',
-            SIGTERM => 'SIGTERM',
-            SIGINT  => 'SIGINT'
-        ];
+        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
 
         SystemMessages::sysLogMsg(
             static::class,
             sprintf(
                 self::LOG_FORMAT_SIGNAL,
                 $workerName,
-                $signalNames[$signal] ?? "SIG_$signal",
-                'received',
+                $processType,
+                self::WORKER_STATES[$this->workerState] ?? 'UNKNOWN',
+                $this->getSignalString($signal),
                 $namespacePath,
                 $timeElapsed,
-                getmypid()
+                getmypid(),
+                $this->parentPid
             ),
             LOG_DEBUG
         );
@@ -357,12 +370,40 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
         switch ($signal) {
             case SIGUSR1:
                 $this->setWorkerState(self::STATE_RESTARTING);
+
+                // For child processes, exit cleanly
+                if ($this->isForked) {
+                    // Redis-based workers should clean up connections
+                    if ($this instanceof WorkerRedisBase) {
+                        if ($this->managementRedis) {
+                            $this->managementRedis->close();
+                        }
+                        if ($this->pubSubRedis) {
+                            $this->pubSubRedis->close();
+                        }
+                    }
+                    exit(0);
+                }
+
+                // For parent process, set restart flag
                 $this->needRestart = true;
                 break;
+
             case SIGTERM:
             case SIGINT:
                 $this->setWorkerState(self::STATE_STOPPING);
+
+                // Cleanup for Redis-based workers
+                if ($this instanceof WorkerRedisBase) {
+                    if ($this->managementRedis) {
+                        $this->managementRedis->close();
+                    }
+                    if ($this->pubSubRedis) {
+                        $this->pubSubRedis->close();
+                    }
+                }
                 exit(0);
+
             default:
                 // Log unhandled signal
                 SystemMessages::sysLogMsg(
@@ -373,6 +414,21 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
         }
     }
 
+    /**
+     *
+     * @param int $signal
+     * @return string
+     */
+    protected function getSignalString(int $signal): string
+    {
+        $signalNames = [
+            SIGUSR1 => 'SIGUSR1',
+            SIGTERM => 'SIGTERM',
+            SIGINT => 'SIGINT'
+        ];
+
+        return $signalNames[$signal] ?? "SIG_$signal";
+    }
 
     /**
      * Handles the shutdown event of the worker
@@ -404,15 +460,18 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     {
         $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
         $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
+        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
 
         SystemMessages::sysLogMsg(
             $processTitle,
             sprintf(
-                self::LOG_FORMAT_NORMAL_SHUTDOWN,
+                $this->isForked ? self::LOG_FORMAT_NORMAL_SHUTDOWN_FORK : self::LOG_FORMAT_NORMAL_SHUTDOWN,
                 $workerName,
+                $processType,
                 $namespacePath,
                 $timeElapsedSecs,
-                getmypid()
+                getmypid(),
+                $this->parentPid
             ),
             LOG_DEBUG
         );
@@ -439,7 +498,8 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
                 $errorMessage,
                 $namespacePath,
                 $timeElapsedSecs,
-                getmypid()
+                getmypid(),
+                $this->parentPid
             ),
             LOG_ERR
         );
@@ -458,8 +518,8 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
 
             // Determine which PID file to remove
             $pidFile = isset($this->isForked) && $this->isForked === true
-                ? $this->getForkedPidFile($pid)
-                : $this->getPidFile();
+                ? Processes::getForkedPidFilePath(static::class, $pid)
+                : Processes::getPidFilePath(static::class);
 
             // Only remove the file if it exists and contains our PID
             if (file_exists($pidFile)) {
@@ -477,6 +537,7 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
         }
     }
 
+
     /**
      * Handles ping callback to keep connection alive
      *
@@ -485,59 +546,28 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
      */
     public function pingCallBack(BeanstalkClient $message): void
     {
+        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
+        $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
+        $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
+        $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
         try {
-            $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
-            $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
-            $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
-
-            SystemMessages::sysLogMsg(
-                cli_get_process_title(),
-                sprintf(
-                    self::LOG_FORMAT_PING,
-                    $workerName,
-                    substr(json_encode($message->getBody()), 0, 50),  // Truncate long messages
-                    $namespacePath,
-                    $timeElapsed,
-                    getmypid()
-                ),
-                LOG_DEBUG
-            );
-
             $message->reply(json_encode($message->getBody() . ':pong', JSON_THROW_ON_ERROR));
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 static::class,
                 sprintf(
-                    '[%s][PING-ERROR] %s from %s (%.3fs, PID:%d)',
+                    self::LOG_FORMAT_PING_ERROR,
                     $workerName,
+                    $processType,
                     $e->getMessage(),
                     $namespacePath,
                     $timeElapsed,
-                    getmypid()
+                    getmypid(),
+                    $this->parentPid
                 ),
                 LOG_WARNING
             );
         }
-    }
-
-    /**
-     * Logs normal exit after operation
-     */
-    private function logNormalExit(): void
-    {
-        $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
-        $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
-
-        SystemMessages::sysLogMsg(
-            static::class,
-            sprintf(
-                self::LOG_FORMAT_NORMAL_EXIT,
-                $workerName,
-                $timeElapsed,
-                getmypid()
-            ),
-            LOG_DEBUG
-        );
     }
 
     /**
@@ -578,9 +608,12 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     /**
      * Sets flag for forked process after pcntl_fork()
      */
-    public function setForked(): void
+    protected function setForked(): void
     {
         $this->isForked = true;
+        $this->parentPid = posix_getppid();
+        // Reset the worker start time for forked process
+        $this->workerStartTime = microtime(true);
     }
 
     /**

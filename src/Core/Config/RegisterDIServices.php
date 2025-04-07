@@ -37,6 +37,7 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     NatsConnectionProvider,
     PBXConfModulesProvider,
     PBXCoreRESTClientProvider,
+    RedisClientProvider,
     RegistryProvider,
     SentryErrorHandlerProvider,
     TranslationProvider,
@@ -76,7 +77,8 @@ class RegisterDIServices
             MainDatabaseProvider::class,
             CDRDatabaseProvider::class,
 
-            // Inject caches
+            // Inject caches and message queues
+            RedisClientProvider::class,
             ManagedCacheProvider::class,
 
             // Inject Translations
