@@ -38,14 +38,14 @@
             <file>Tests/DeleteProviderTest.php</file>
         </testsuite>
 
-        <testsuite name="IVR Menu">
-            <directory>Tests/IVRMenus</directory>
-        </testsuite>
-
         <testsuite name="Call Queues">
             <directory>Tests/CallQueues</directory>
             <file>Tests/ChangeCallQueueTest.php</file>
             <file>Tests/CheckDropdownsOnDeleteQueueTest.php</file>
+        </testsuite>
+
+        <testsuite name="IVR Menu">
+            <directory>Tests/IVRMenus</directory>
         </testsuite>
 
         <testsuite name="AMI Users">

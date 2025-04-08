@@ -58,6 +58,7 @@ class UpdateConfigsUpToVer202402 extends Injectable implements UpgradeSystemConf
         }
         $this->updateSearchIndex();
         $this->updateFirewallRulesForIAX();
+        $this->updateExtensionsTable();
     }
 
     /**
@@ -124,7 +125,7 @@ class UpdateConfigsUpToVer202402 extends Injectable implements UpgradeSystemConf
      * Update firewall rules for IAX
      * https://github.com/mikopbx/Core/issues/782
      */
-    public function updateFirewallRulesForIAX(): void
+    private function updateFirewallRulesForIAX(): void
     {
         $colName  = PbxSettings::IAX_PORT;
         $iax_port = PbxSettings::getValueByKey(PbxSettings::IAX_PORT);
@@ -151,6 +152,35 @@ class UpdateConfigsUpToVer202402 extends Injectable implements UpgradeSystemConf
             $rule->portToKey   = $colName;
             $rule->category    = 'IAX';
             $rule->save();
+        }
+    }
+
+     /**
+     * Updates show_in_phonebook attribute on Extensions table
+     */
+    private function updateExtensionsTable(): void
+    {
+        $showInPhonebookTypes = [
+            Extensions::TYPE_DIALPLAN_APPLICATION,
+            Extensions::TYPE_SIP,
+            Extensions::TYPE_EXTERNAL,
+            Extensions::TYPE_QUEUE,
+            Extensions::TYPE_IVR_MENU,
+            Extensions::TYPE_CONFERENCE,
+
+        ];
+        $parameters=[
+            'conditions'=>'show_in_phonebook!=1 and type IN ({ids:array})',
+            'bind'       => [
+                'ids' => $showInPhonebookTypes,
+            ],
+        ];
+        $extensions           = Extensions::find($parameters);
+        foreach ($extensions as $extension) {
+            if (in_array($extension->type, $showInPhonebookTypes)) {
+                $extension->show_in_phonebook = '1';
+                $extension->update();
+            }
         }
     }
 }

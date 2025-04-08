@@ -187,6 +187,8 @@ class WorkerApiCommands extends WorkerRedisBase
 
             // Process the job in a forked subprocess
             $this->forkAndProcessJob($jobId, $requestData);
+        } catch (\RedisException $e) {
+            return;
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }

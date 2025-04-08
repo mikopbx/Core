@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\ExternalPhones;
@@ -27,6 +28,7 @@ use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -51,84 +53,119 @@ class SaveRecordAction extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $res->success = true;
+        
+        try {
+            $di = Di::getDefault();
+            $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
+            $db->begin();
+            
+            // Debug log
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf(
+                    'Starting save with data: %s',
+                    json_encode($data)
+                ),
+                LOG_DEBUG
+            );
+            
+            $dataStructure = new DataStructure($data);
 
-        $di = Di::getDefault();
-        $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
-        $db->begin();
-
-        $dataStructure = new DataStructure($data);
-
-        // Save user entity
-        list($userEntity, $res->success) = self::saveUser($dataStructure);
-        if (!$res->success) {
-            // Handle errors and rollback
-            $res->messages['error'][] = $userEntity->getMessages();
-            $db->rollback();
-            return $res;
-        } else {
-            $dataStructure->user_id = $userEntity->id;
-        }
-
-        // Save extension entity
-        list($extension, $res->success) = self::saveExtension($dataStructure, false);
-        if (!$res->success) {
-            // Handle errors and rollback
-            $res->messages['error'][] = implode($extension->getMessages());
-            $db->rollback();
-            return $res;
-        }
-
-        // Save SIP entity
-        list($sipEntity, $res->success) = self::saveSip($dataStructure);
-        if (!$res->success) {
-            // Handle errors and rollback
-            $res->messages['error'][] = implode($sipEntity->getMessages());
-            $db->rollback();
-            return $res;
-        }
-
-        // Save forwarding rights entity
-        list($fwdEntity, $res->success) = self::saveForwardingRights($dataStructure);
-        if (!$res->success) {
-            // Handle errors and rollback
-            $res->messages['error'][] = implode($fwdEntity->getMessages());
-            $db->rollback();
-            return $res;
-        }
-
-        // Check mobile number presence and save related entities
-        if (!empty($dataStructure->mobile_number)) {
-
-            // Save mobile extension
-            list($mobileExtension, $res->success) = self::saveExtension($dataStructure, true);
+            // Save user entity
+            list($userEntity, $res->success) = self::saveUser($dataStructure);
             if (!$res->success) {
                 // Handle errors and rollback
-                $res->messages['error'][] = implode($mobileExtension->getMessages());
+                $res->messages['error'][] = $userEntity->getMessages();
                 $db->rollback();
                 return $res;
+            } else {
+                $dataStructure->user_id = $userEntity->id;
             }
 
-            // Save ExternalPhones for mobile number
-            list($externalPhone, $res->success) = self::saveExternalPhones($dataStructure);
+            // Save extension entity
+            list($extension, $res->success) = self::saveExtension($dataStructure, false);
             if (!$res->success) {
                 // Handle errors and rollback
-                $res->messages['error'][] = implode($externalPhone->getMessages());
+                $res->messages['error'][] = implode($extension->getMessages());
                 $db->rollback();
                 return $res;
             }
-        } else {
-            // Delete mobile number if it was associated with the user
-            list($deletedMobileNumber, $res->success) = self::deleteMobileNumber($userEntity);
+
+            // Save SIP entity
+            list($sipEntity, $res->success) = self::saveSip($dataStructure);
             if (!$res->success) {
-                $res->messages['error'][] = implode($deletedMobileNumber->getMessages());
+                // Handle errors and rollback
+                $res->messages['error'][] = implode($sipEntity->getMessages());
                 $db->rollback();
                 return $res;
+            }
+
+            // Save forwarding rights entity
+            list($fwdEntity, $res->success) = self::saveForwardingRights($dataStructure);
+            if (!$res->success) {
+                // Handle errors and rollback
+                $res->messages['error'][] = implode($fwdEntity->getMessages());
+                $db->rollback();
+                return $res;
+            }
+
+            // Check mobile number presence and save related entities
+            if (!empty($dataStructure->mobile_number)) {
+
+                // Save mobile extension
+                list($mobileExtension, $res->success) = self::saveExtension($dataStructure, true);
+                if (!$res->success) {
+                    // Handle errors and rollback
+                    $res->messages['error'][] = implode($mobileExtension->getMessages());
+                    $db->rollback();
+                    return $res;
+                }
+
+                // Save ExternalPhones for mobile number
+                list($externalPhone, $res->success) = self::saveExternalPhones($dataStructure);
+                if (!$res->success) {
+                    // Handle errors and rollback
+                    $res->messages['error'][] = implode($externalPhone->getMessages());
+                    $db->rollback();
+                    return $res;
+                }
+            } else {
+                // Delete mobile number if it was associated with the user
+                list($deletedMobileNumber, $res->success) = self::deleteMobileNumber($userEntity);
+                if (!$res->success) {
+                    $res->messages['error'][] = implode($deletedMobileNumber->getMessages());
+                    $db->rollback();
+                    return $res;
+                }
+            }
+            $db->commit();
+
+            $res = GetRecordAction::main($extension->id);
+            $res->processor = __METHOD__;
+            return $res;
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf(
+                    'Error saving extension: %s',
+                    $e->getMessage()
+                ),
+                LOG_ERR
+            );
+            
+            // Ensure we also log through system's error handler
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            
+            // Return error in result
+            $res->success = false;
+            $res->messages['error'][] = $e->getMessage();
+            
+            // Try to roll back if database was started
+            if(isset($db) && $db) {
+                try { $db->rollback(); } catch (\Throwable $rollbackEx) { /* ignore */ }
             }
         }
-        $db->commit();
-
-        $res = GetRecordAction::main($extension->id);
-        $res->processor = __METHOD__;
+        
         return $res;
     }
 

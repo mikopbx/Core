@@ -84,13 +84,13 @@ class SIPProviderDataFactory
             'fromdomain' => 'miko.ru',
             'manualattributes' => '[endpoint]' . PHP_EOL . 'callerid=Mark Spenser <79261234567>',
         ],
-        'mango.delete' => [
+        'provider.delete' => [
             'type' => 'sip',
             'uniqid' => 'SIP-1683372748',
             'registration_type' => 'none',
-            'description' => 'Mango office for delete',
-            'host' => 'mango1.office.ru',
-            'username' => 'mango1',
+            'description' => 'Provider for delete',
+            'host' => 'provider1.office.ru',
+            'username' => 'provider1',
             'password' => 'office2',
             'dtmfmode' => 'inband',
             'port' => 5063,

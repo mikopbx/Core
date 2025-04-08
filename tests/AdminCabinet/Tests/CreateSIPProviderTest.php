@@ -21,7 +21,6 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
-use MikoPBX\Tests\AdminCabinet\Tests\Traits\LoginTrait;
 
 /**
  * Base class for SIP provider creation tests

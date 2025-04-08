@@ -391,6 +391,9 @@ trait FormInteractionTrait
                 // Wait for dropdown menu to be visible
                 $this->waitForDropdownMenu();
 
+                $dropdown->clear();
+                $dropdown->sendKeys($value);
+
                 // Select item from visible menu
                 $menuXpath = '//div[contains(@class, "menu") and contains(@class, "visible")]' .
                     '//div[contains(@class, "item") and (@data-value="%s" or contains(normalize-space(text()),"%s"))]';

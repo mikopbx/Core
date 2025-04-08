@@ -24,10 +24,12 @@ namespace MikoPBX\PBXCoreREST\Controllers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\RedisClientProvider;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Filter\Filter;
 use Phalcon\Mvc\Controller;
+use RedisException;
 use Throwable;
 
 /**
@@ -112,26 +114,23 @@ class BaseController extends Controller
                                 $redis->unsubscribe([$channel]);
                             }
                         });
-                    } catch (Throwable $subscribeException) {
-                        // If connection lost during subscribe, reconnect and continue
+                    } catch (RedisException $subscribeException) {
+                        // Handle Redis-specific subscription errors
                         if (strpos($subscribeException->getMessage(), 'read error') !== false) {
-                            $retryCount++;
-                            
-                            if ($retryCount > $maxRetries) {
-                                throw $subscribeException; // Max retries exceeded
-                            }
-                            
-                            // Exponential backoff with jitter
-                            $sleepTime = min(pow(2, $retryCount) * 100000, 2000000) + mt_rand(0, 100000);
-                            usleep($sleepTime);
-                            
-                            // Reconnect
-                            $pubSubRedis = RedisClientProvider::getPubSubConnection($this->di);
-                            $apiRedis = RedisClientProvider::getApiRequestsConnection($this->di);
-                            
-                            continue;
+                            // This is a timeout or connection loss during subscribe, which is expected
+                            // Just log and continue with retry logic in outer catch blocks
+                            SystemMessages::sysLogMsg(
+                                static::class,
+                                "Redis subscribe timeout (expected behavior): " . $subscribeException->getMessage(),
+                                LOG_DEBUG
+                            );
+                        } else {
+                            // For other Redis-specific errors, rethrow to be caught by the outer catch block
+                            throw $subscribeException;
                         }
-                        throw $subscribeException; // Other Redis exceptions
+                    } catch (Throwable $subscribeException) {
+                        // For other types of errors during subscribe, rethrow to be caught by the outer catch block
+                        throw $subscribeException;
                     }
 
                     if ($gotResponse) {
@@ -144,17 +143,81 @@ class BaseController extends Controller
 
                     // Small sleep to prevent CPU overload
                     usleep(100000); // 100ms
-                } catch (Throwable $redisException) {
+                } catch (RedisException $redisException) {
+                    // Specific handling for Redis exceptions
+                    $retryCount++;
+                    
+                    if ($retryCount > $maxRetries) {
+                        // Log last failed attempt before throwing
+                        SystemMessages::sysLogMsg(
+                            static::class,
+                            sprintf(
+                                "Max Redis retry attempts exceeded: %s (action: %s)",
+                                $redisException->getMessage(),
+                                $actionName
+                            ),
+                            LOG_ERR
+                        );
+                        throw $redisException; // Max retries exceeded
+                    }
+                    
+                    // Log Redis-specific retry attempt using both handlers for better visibility
+                    $errorMessage = sprintf(
+                        "Redis connection error during worker request, retrying (%d/%d): %s (action: %s)",
+                        $retryCount, 
+                        $maxRetries, 
+                        $redisException->getMessage(),
+                        $actionName
+                    );
+                    
+                    // Log to system log
+                    SystemMessages::sysLogMsg(static::class, $errorMessage, LOG_WARNING);
+                    
+                    // Also log with error handler for potential capture in Sentry
+                    CriticalErrorsHandler::handleExceptionWithSyslog(
+                        new \Exception($errorMessage)
+                    );
+                    
+                    // Exponential backoff with jitter
+                    $sleepTime = min(pow(2, $retryCount) * 100000, 2000000) + mt_rand(0, 100000);
+                    usleep($sleepTime);
+                    
+                    // Reconnect
+                    $pubSubRedis = RedisClientProvider::getPubSubConnection($this->di);
+                    $apiRedis = RedisClientProvider::getApiRequestsConnection($this->di);
+                } catch (Throwable $otherException) {
                     // Handle Redis connection errors with retry
                     $retryCount++;
                     
                     if ($retryCount > $maxRetries) {
-                        throw $redisException; // Max retries exceeded
+                        // Log last failed attempt before throwing
+                        SystemMessages::sysLogMsg(
+                            static::class,
+                            sprintf(
+                                "Max retry attempts exceeded for general exception: %s (action: %s)",
+                                $otherException->getMessage(),
+                                $actionName
+                            ),
+                            LOG_ERR
+                        );
+                        throw $otherException; // Max retries exceeded
                     }
                     
-                    // Log retry attempt
+                    // Log general exception retry attempt
+                    $errorMessage = sprintf(
+                        "Error during worker request, retrying (%d/%d): %s (action: %s)",
+                        $retryCount, 
+                        $maxRetries, 
+                        $otherException->getMessage(),
+                        $actionName
+                    );
+                    
+                    // Log to system log
+                    SystemMessages::sysLogMsg(static::class, $errorMessage, LOG_WARNING);
+                    
+                    // Also log with error handler for potential capture in Sentry
                     CriticalErrorsHandler::handleExceptionWithSyslog(
-                        new \Exception("Redis connection error during worker request, retrying ({$retryCount}/{$maxRetries}): " . $redisException->getMessage())
+                        new \Exception($errorMessage)
                     );
                     
                     // Exponential backoff with jitter
@@ -199,7 +262,21 @@ class BaseController extends Controller
             }
 
         } catch (Throwable $e) {
+            // Log the error with detailed information
+            $errorMessage = sprintf(
+                "Error in sendRequestToBackendWorker: %s (processor: %s, action: %s)", 
+                $e->getMessage(),
+                $processor,
+                $actionName
+            );
+            
+            // Log to system log first for visibility in server logs
+            SystemMessages::sysLogMsg(static::class, $errorMessage, LOG_ERR);
+            
+            // Then use critical error handler for potential Sentry capture
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            
+            // Return error to client
             $this->response->setPayloadError($e->getMessage());
         }
     }

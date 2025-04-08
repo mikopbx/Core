@@ -365,6 +365,8 @@ class AssetProvider implements ServiceProviderInterface
     private function makeSystemDiagnosticAssets(string $action): void
     {
         if ($action === 'index') {
+            $this->headerCollectionCSS
+                ->addCss('css/SystemDiagnostic/index.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/semantic/popup.min.js', true)
                 ->addJs('js/vendor/semantic/dropdown.min.js', true)

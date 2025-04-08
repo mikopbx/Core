@@ -24,12 +24,12 @@ use MikoPBX\Tests\AdminCabinet\Tests\CreateSIPProviderTest;
 use MikoPBX\Tests\AdminCabinet\Tests\Data\SIPProviderDataFactory;
 
 /**
- * Test class for creating Mango office for delete SIP provider
+ * Test class for creating provider for delete SIP provider
  */
-class MangoDeleteTest extends CreateSIPProviderTest
+class ProviderDeleteTest extends CreateSIPProviderTest
 {
     protected function getSIPProviderData(): array
     {
-        return SIPProviderDataFactory::getSIPProviderData('mango.delete');
+        return SIPProviderDataFactory::getSIPProviderData('provider.delete');
     }
 }
