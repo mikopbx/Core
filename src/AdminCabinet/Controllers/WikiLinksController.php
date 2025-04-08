@@ -68,7 +68,7 @@ class WikiLinksController extends BaseController
         if ($links === []) {
             $ttl = 86400;
             $client = new GuzzleHttp\Client();
-            $url = 'https://raw.githubusercontent.com/mikopbx/Core/master/src/Common/WikiLinks/' . $language . '.json';
+            $url = 'https://raw.githubusercontent.com/mikopbx/Core/refs/heads/master/src/Common/WikiLinks/' . $language . '.json';
 
             try {
                 $res = $client->request('GET', $url, ['timeout' => 5, 'connect_timeout' => 5, 'read_timeout' => 5]);
