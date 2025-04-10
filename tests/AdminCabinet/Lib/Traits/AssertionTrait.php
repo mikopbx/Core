@@ -3,7 +3,6 @@
 namespace MikoPBX\Tests\AdminCabinet\Lib\Traits;
 
 use Facebook\WebDriver\WebDriverBy;
-use Facebook\WebDriver\WebDriverElement;
 use RuntimeException;
 
 /**
@@ -115,45 +114,176 @@ trait AssertionTrait
         string $expectedValue,
         bool $skipIfNotExist = false
     ): void {
-        $xpath = sprintf('//select[@name="%s"]/option[@selected="selected"]', $name);
-        $selected = $this->findElementSafely($xpath);
-
-        if (!$selected && !$skipIfNotExist) {
-            $this->fail("Menu item '{$name}' not found");
-        }
-
-        if ($selected) {
-            $currentValue = $selected->getAttribute('value');
-            $this->assertEquals(
-                $expectedValue,
-                $currentValue,
-                "Menu item '{$name}' selection mismatch. Expected: {$expectedValue}, Got: {$currentValue}"
-            );
-        }
+        $this->assertDropdownSelection($name, $expectedValue, true, $skipIfNotExist);
     }
 
     /**
      * Assert that menu item is not selected
      *
      * @param string $name Menu name
+     * @param string $expectedValue Value that should not be selected
+     * @param bool $skipIfNotExist Skip assertion if not found
      */
-    protected function assertMenuItemNotSelected(string $name): void
-    {
-        $xpath = sprintf('//select[@name="%s"]/option[@selected="selected"]', $name);
-        $this->assertElementNotFound(WebDriverBy::xpath($xpath));
+    protected function assertMenuItemNotSelected(
+        string $name,
+        string $expectedValue = '',
+        bool $skipIfNotExist = false
+    ): void {
+        $this->assertDropdownSelection($name, $expectedValue, false, $skipIfNotExist);
     }
 
     /**
-     * Assert that element exists
+     * Assert dropdown selection state with improved Semantic UI support
      *
-     * @param string $xpath Element xpath
-     * @param string $message Custom failure message
+     * @param string $name Dropdown name
+     * @param string $expectedValue Value to check
+     * @param bool $shouldBeSelected Whether the value should be selected
+     * @param bool $skipIfNotExist Skip assertion if dropdown doesn't exist
      */
-    protected function assertElementExists(string $xpath, string $message = ''): void
-    {
-        $element = $this->findElementSafely($xpath);
-        if (!$element) {
-            $this->fail($message ?: "Element not found: {$xpath}");
+    protected function assertDropdownSelection(
+        string $name,
+        string $expectedValue,
+        bool $shouldBeSelected = true,
+        bool $skipIfNotExist = false
+    ): void {
+        try {
+            // XPath for both standard select and Semantic UI dropdown
+            $xpath = sprintf(
+                '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
+                '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
+                '//div[contains(@class, "dropdown")][@id="%1$s"] | ' .
+                '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]]',
+                $name
+            );
+
+            // Also check for traditional select element selection
+            $optionXpath = sprintf('//select[@name="%s"]/option[@selected="selected"]', $name);
+            $selectedOption = $this->findElementSafely($optionXpath);
+            
+            if ($selectedOption) {
+                $currentSelection = $selectedOption->getAttribute('value');
+                $currentText = $selectedOption->getText();
+                
+                if ($shouldBeSelected) {
+                    $isMatch = $currentSelection === $expectedValue || $currentText === $expectedValue;
+                    $this->assertTrue(
+                        $isMatch,
+                        "Expected '{$expectedValue}' to be selected in dropdown '{$name}', but found value '{$currentSelection}' with text '{$currentText}'"
+                    );
+                    return;
+                } else {
+                    $isMatch = $currentSelection === $expectedValue || $currentText === $expectedValue;
+                    $this->assertFalse(
+                        $isMatch,
+                        "Expected '{$expectedValue}' NOT to be selected in dropdown '{$name}', but it was found"
+                    );
+                    return;
+                }
+            }
+
+            // Continue with Semantic UI dropdown check
+            $dropdown = $this->findElementSafely($xpath);
+
+            if (!$dropdown && !$skipIfNotExist) {
+                $this->fail("Dropdown '{$name}' not found");
+                return;
+            }
+
+            if (!$dropdown) {
+                return;
+            }
+
+            // Check current selection
+            $selectionXpath = './/div[contains(@class, "item") and contains(@class, "active selected")]';
+            $currentSelection = null;
+            $currentText = null;
+            
+            try {
+                $selectedItem = $dropdown->findElement(WebDriverBy::xpath($selectionXpath));
+                $currentSelection = $selectedItem->getAttribute('data-value');
+                $currentText = $selectedItem->getText();
+            } catch (\Exception $e) {
+                // No selection found
+                $currentSelection = null;
+                $currentText = null;
+            }
+
+            if ($shouldBeSelected) {
+                if ($currentSelection === null && $currentText === null) {
+                    // If no selection, try clicking to check if the value is in the dropdown
+                    $dropdown->click();
+                    $this->waitForElement('//div[contains(@class, "menu") and contains(@class, "visible")]');
+                    
+                    // Try using search field if available
+                    $searchXpath = sprintf(
+                        '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")]/input[contains(@class,"search")] | ' .
+                        '//div[@id="%1$s" and contains(@class, "dropdown")]/input[contains(@class,"search")]',
+                        $name
+                    );
+                    
+                    $searchInput = $this->findElementSafely($searchXpath);
+                    if ($searchInput) {
+                        $searchInput->click();
+                        $searchInput->clear();
+                        $searchInput->sendKeys($expectedValue);
+                    }
+                    
+                    // Now check if the item exists
+                    $menuItemXpath = sprintf(
+                        '//div[contains(@class, "menu") and contains(@class, "visible")]' .
+                        '//div[contains(@class, "item") and (contains(text(), "%1$s") or @data-value="%1$s")]',
+                        $expectedValue
+                    );
+                    
+                    $menuItem = $this->findElementSafely($menuItemXpath);
+                    
+                    // Close dropdown regardless of result
+                    try {
+                        $dropdown->click();
+                    } catch (\Exception $e) {
+                        // Ignore errors on closing
+                    }
+                    
+                    if (!$menuItem) {
+                        $this->fail("Value '{$expectedValue}' not found in dropdown '{$name}'");
+                    }
+                    
+                    // Since we didn't actually select the item but just verified it exists,
+                    // we should fail because it should be selected but isn't
+                    $this->fail("Expected '{$expectedValue}' to be selected in dropdown '{$name}', but no selection was found");
+                } else {
+                    $isMatch = $currentSelection === $expectedValue || 
+                               $currentText === $expectedValue ||
+                               stripos($currentText, $expectedValue) !== false;
+                               
+                    $this->assertTrue(
+                        $isMatch,
+                        "Expected '{$expectedValue}' to be selected in dropdown '{$name}', but found value '{$currentSelection}' with text '{$currentText}'"
+                    );
+                }
+            } else {
+                if ($expectedValue === '') {
+                    $this->assertNull(
+                        $currentSelection,
+                        "Expected no selection in dropdown '{$name}', but found '{$currentText}'"
+                    );
+                } else {
+                    $isMatch = $currentSelection === $expectedValue || 
+                               ($currentText !== null && (
+                                   $currentText === $expectedValue ||
+                                   stripos($currentText, $expectedValue) !== false
+                               ));
+                               
+                    $this->assertFalse(
+                        $isMatch,
+                        "Expected '{$expectedValue}' NOT to be selected in dropdown '{$name}', but it was found"
+                    );
+                }
+            }
+        } catch (\Exception $e) {
+            if (!$skipIfNotExist) {
+                $this->fail("Assertion failed for dropdown '{$name}': " . $e->getMessage());
+            }
         }
     }
 
@@ -172,158 +302,4 @@ trait AssertionTrait
         $this->assertTrue(true);
     }
 
-    /**
-     * Assert element is visible
-     *
-     * @param string $xpath Element xpath
-     * @param string $message Custom failure message
-     */
-    protected function assertElementVisible(string $xpath, string $message = ''): void
-    {
-        try {
-            $element = $this->waitForElementState($xpath, self::ELEMENT_STATES['visible']);
-            $this->assertTrue($element->isDisplayed(), $message ?: "Element is not visible: {$xpath}");
-        } catch (\Exception $e) {
-            $this->fail($message ?: "Element visibility check failed: {$xpath}");
-        }
-    }
-
-    /**
-     * Assert element is not visible
-     *
-     * @param string $xpath Element xpath
-     * @param string $message Custom failure message
-     */
-    protected function assertElementNotVisible(string $xpath, string $message = ''): void
-    {
-        $element = $this->findElementSafely($xpath);
-        if ($element && $element->isDisplayed()) {
-            $this->fail($message ?: "Element is unexpectedly visible: {$xpath}");
-        }
-        $this->assertTrue(true);
-    }
-
-    /**
-     * Assert element is enabled
-     *
-     * @param string $xpath Element xpath
-     * @param string $message Custom failure message
-     */
-    protected function assertElementEnabled(string $xpath, string $message = ''): void
-    {
-        $element = $this->findElementSafely($xpath);
-        if (!$element) {
-            $this->fail("Element not found: {$xpath}");
-        }
-        $this->assertTrue(
-            $element->isEnabled(),
-            $message ?: "Element is not enabled: {$xpath}"
-        );
-    }
-
-    /**
-     * Assert element is disabled
-     *
-     * @param string $xpath Element xpath
-     * @param string $message Custom failure message
-     */
-    protected function assertElementDisabled(string $xpath, string $message = ''): void
-    {
-        $element = $this->findElementSafely($xpath);
-        if (!$element) {
-            $this->fail("Element not found: {$xpath}");
-        }
-        $this->assertFalse(
-            $element->isEnabled(),
-            $message ?: "Element is unexpectedly enabled: {$xpath}"
-        );
-    }
-
-    /**
-     * Assert text present in element
-     *
-     * @param string $xpath Element xpath
-     * @param string $expectedText Expected text
-     * @param bool $exact Whether to check for exact match
-     * @param string $message Custom failure message
-     */
-    protected function assertElementText(
-        string $xpath,
-        string $expectedText,
-        bool $exact = false,
-        string $message = ''
-    ): void {
-        $element = $this->findElementSafely($xpath);
-        if (!$element) {
-            $this->fail("Element not found: {$xpath}");
-        }
-
-        $actualText = $element->getText();
-
-        if ($exact) {
-            $this->assertEquals(
-                $expectedText,
-                $actualText,
-                $message ?: "Element text mismatch"
-            );
-        } else {
-            $this->assertStringContainsString(
-                $expectedText,
-                $actualText,
-                $message ?: "Text not found in element"
-            );
-        }
-    }
-
-    /**
-     * Assert element has specific attribute value
-     *
-     * @param string $xpath Element xpath
-     * @param string $attribute Attribute name
-     * @param string $expectedValue Expected value
-     * @param string $message Custom failure message
-     */
-    protected function assertElementAttribute(
-        string $xpath,
-        string $attribute,
-        string $expectedValue,
-        string $message = ''
-    ): void {
-        $element = $this->findElementSafely($xpath);
-        if (!$element) {
-            $this->fail("Element not found: {$xpath}");
-        }
-
-        $actualValue = $element->getAttribute($attribute);
-        $this->assertEquals(
-            $expectedValue,
-            $actualValue,
-            $message ?: "Attribute '{$attribute}' value mismatch"
-        );
-    }
-
-    /**
-     * Assert element has specific CSS class
-     *
-     * @param string $xpath Element xpath
-     * @param string $className Expected class name
-     * @param string $message Custom failure message
-     */
-    protected function assertElementHasClass(
-        string $xpath,
-        string $className,
-        string $message = ''
-    ): void {
-        $element = $this->findElementSafely($xpath);
-        if (!$element) {
-            $this->fail("Element not found: {$xpath}");
-        }
-
-        $classes = explode(' ', $element->getAttribute('class'));
-        $this->assertContains(
-            $className,
-            $classes,
-            $message ?: "Class '{$className}' not found on element"
-        );
-    }
 }

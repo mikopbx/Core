@@ -69,23 +69,6 @@ class MikoPBXTestsBase extends BrowserStackTest
     }
 
     /**
-     * Helper method to wait for element
-     *
-     * @param string $xpath XPath selector
-     * @param int $timeout Timeout in seconds
-     * @return mixed
-     */
-    protected function waitForElement(string $xpath, int $timeout = self::WAIT_TIMEOUT): mixed
-    {
-        $wait = new WebDriverWait(self::$driver, $timeout);
-        return $wait->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(
-                WebDriverBy::xpath($xpath)
-            )
-        );
-    }
-
-    /**
      * Execute action with retry logic
      *
      * @param callable $action Action to execute

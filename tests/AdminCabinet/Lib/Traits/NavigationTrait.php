@@ -40,41 +40,6 @@ trait NavigationTrait
         ]
     ];
 
-    /**
-     * Navigate to specific path with enhanced error handling
-     *
-     * @param string $path Target path
-     * @param array $options Navigation options
-     * @throws RuntimeException
-     */
-    protected function navigateTo(string $path, array $options = []): void
-    {
-        $this->logTestAction("Navigate to", ['path' => $path]);
-
-        $defaultOptions = [
-            'waitForAjax' => true,
-            'retries' => self::NAVIGATION['retries']['navigation'],
-            'timeout' => self::NAVIGATION['timeouts']['wait']
-        ];
-
-        $options = array_merge($defaultOptions, $options);
-
-        try {
-            $this->executeWithRetry(
-                function () use ($path) {
-                    self::$driver->get($path);
-                    $this->waitForPageLoad();
-                },
-                $options['retries']
-            );
-
-            if ($options['waitForAjax']) {
-                $this->waitForAjax($options['timeout']);
-            }
-        } catch (\Exception $e) {
-            $this->handleActionError('navigate', $path, $e);
-        }
-    }
 
     /**
      * Click sidebar menu item by href
@@ -116,7 +81,16 @@ trait NavigationTrait
                 '//td[contains(text(),"%s")]/parent::tr[contains(@class, "row")]//a[contains(@href,"modify")]',
                 $text
             );
-            $this->clickElementWithAction($xpath);
+            try {
+                $element = self::$driver->findElement(WebDriverBy::xpath($xpath));
+                $actions = new WebDriverActions(self::$driver);
+                $actions->moveToElement($element);
+                $actions->perform();
+                $element->click();
+                $this->waitForAjax();
+            } catch (NoSuchElementException $e) {
+                throw new RuntimeException("Element not found: $xpath", 0, $e);
+            }
         } catch (\Exception $e) {
             $this->handleActionError('click modify button', $text, $e);
         }
@@ -256,41 +230,6 @@ trait NavigationTrait
             );
         } catch (\Exception $e) {
             self::annotate("Timeout waiting for AJAX: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Wait for page load to complete
-     *
-     * @param int $timeout Timeout in seconds
-     * @throws TimeoutException
-     */
-    protected function waitForPageLoad(int $timeout = self::NAVIGATION['timeouts']['wait']): void
-    {
-        $this->waitFor(
-            WebDriverExpectedCondition::stalenessOf($this->findElementSafely('//body')),
-            $timeout,
-            'Page load timeout'
-        );
-    }
-
-    /**
-     * Click element using WebDriver Actions
-     *
-     * @param string $xpath Element xpath
-     * @throws RuntimeException
-     */
-    private function clickElementWithAction(string $xpath): void
-    {
-        try {
-            $element = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $actions = new WebDriverActions(self::$driver);
-            $actions->moveToElement($element);
-            $actions->perform();
-            $element->click();
-            $this->waitForAjax();
-        } catch (NoSuchElementException $e) {
-            throw new RuntimeException("Element not found: $xpath", 0, $e);
         }
     }
 

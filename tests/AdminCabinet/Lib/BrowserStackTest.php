@@ -13,9 +13,6 @@
 namespace MikoPBX\Tests\AdminCabinet\Lib;
 
 use Facebook\WebDriver\Remote\RemoteWebDriver;
-use Facebook\WebDriver\WebDriverBy;
-use Facebook\WebDriver\WebDriverExpectedCondition;
-use Facebook\WebDriver\WebDriverWait;
 use GuzzleHttp\Client as GuzzleHttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 use PHPUnit\Framework\TestCase;
