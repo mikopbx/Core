@@ -884,4 +884,5 @@ class Util
     {
         return file_exists('/offload/livecd');
     }
+
 }

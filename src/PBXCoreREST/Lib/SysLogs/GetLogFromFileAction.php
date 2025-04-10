@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ class GetLogFromFileAction extends Injectable
         } else {
             $res->success = true;
             $head = Util::which('head');
-            $grep = '/bin/grep';
+            $grep = '/bin/grep'; //can work with -text option
             if (!is_executable($grep)) {
                 $grep = Util::which('grep');
             }
@@ -72,10 +72,62 @@ class GetLogFromFileAction extends Injectable
                 Util::mwMkdir($cacheDir, true);
             }
             $filenameTmp = $cacheDir . '/' . __FUNCTION__ . '_' . time() . '.log';
-            if (empty($filter)) {
-                $cmd = "$tail -n $linesPlusOffset $filename";
+            
+            // Check if the file is an archive
+            $isArchive = false;
+            $fileExtension = pathinfo($filename, PATHINFO_EXTENSION);
+            if (in_array($fileExtension, ['gz', 'zip', 'bz2', 'xz'])) {
+                $isArchive = true;
+                $decompressedFile = $cacheDir . '/' . basename($filename, '.' . $fileExtension);
+                
+                // Decompress based on file extension
+                switch ($fileExtension) {
+                    case 'gz':
+                        $cmd = Util::which('gunzip') . ' -c ' . $filename . ' > ' . $decompressedFile;
+                        Processes::mwExec($cmd);
+                        break;
+                    case 'bz2':
+                        $cmd = Util::which('bunzip2') . ' -c ' . $filename . ' > ' . $decompressedFile;
+                        Processes::mwExec($cmd);
+                        break;
+                    case 'xz':
+                        $cmd = Util::which('unxz') . ' -c ' . $filename . ' > ' . $decompressedFile;
+                        Processes::mwExec($cmd);
+                        break;
+                    case 'zip':
+                        // Use ZipArchive for ZIP files
+                        $zip = new \ZipArchive();
+                        if ($zip->open($filename) === true) {
+                            // Assuming there's only one file in the archive or we want the first one
+                            if ($zip->numFiles > 0) {
+                                $zipEntryContent = $zip->getFromIndex(0);
+                                file_put_contents($decompressedFile, $zipEntryContent);
+                            }
+                            $zip->close();
+                        } else {
+                            $isArchive = false;
+                        }
+                        break;
+                    default:
+                        $isArchive = false;
+                        break;
+                }
+                
+                if ($isArchive && file_exists($decompressedFile)) {
+                    // Use decompressed file for further operations
+                    $fileToProcess = $decompressedFile;
+                    $res->data['decompressed'] = true;
+                } else {
+                    $fileToProcess = $filename;
+                }
             } else {
-                $cmd = "$grep --text -h -e " . str_replace('&', "' -e '", $filter) . " -F $filename | $tail -n $linesPlusOffset";
+                $fileToProcess = $filename;
+            }
+            
+            if (empty($filter)) {
+                $cmd = "$tail -n $linesPlusOffset $fileToProcess";
+            } else {
+                $cmd = "$grep --text -h -e " . str_replace('&', "' -e '", $filter) . " -F $fileToProcess | $tail -n $linesPlusOffset";
             }
             if ($offset > 0) {
                 $cmd .= " | $head -n $lines";
@@ -90,6 +142,11 @@ class GetLogFromFileAction extends Injectable
             $res->data['filename'] = $filenameTmp;
             $res->data['content'] = mb_convert_encoding('' . file_get_contents($filenameTmp), 'UTF-8', 'UTF-8');
             unlink($filenameTmp);
+            
+            // Clean up decompressed file if it was created
+            if ($isArchive && file_exists($decompressedFile)) {
+                unlink($decompressedFile);
+            }
         }
 
         return $res;

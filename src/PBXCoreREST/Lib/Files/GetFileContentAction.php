@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,10 +21,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Files;
 
 use MikoPBX\Common\Models\CustomFiles;
-use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 /**
@@ -54,13 +51,7 @@ class GetFileContentAction extends Injectable
                 $filename = $filename_orgn;
             }
             $res->success = true;
-            $cat          = Util::which('cat');
-            $di           = Di::getDefault();
-            $dirsConfig   = $di->getShared('config');
-            $filenameTmp  = $dirsConfig->path('www.downloadCacheDir') . '/' . __FUNCTION__ . '_' . time() . '.conf';
-            $cmd          = "$cat $filename > $filenameTmp";
-            Processes::mwExec("$cmd; chown www:www $filenameTmp");
-            $res->data['filename'] = $filenameTmp;
+            $res->data['content'] = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
         } else {
             $res->success    = false;
             $res->messages[] = 'No access to the file ' . $filename;

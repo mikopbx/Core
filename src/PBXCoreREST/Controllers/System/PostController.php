@@ -20,12 +20,8 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\System;
 
-use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
-use Phalcon\Di\Di;
 
 /**
  * System management (POST).
@@ -84,52 +80,9 @@ class PostController extends BaseController
     public function callAction(string $actionName): void
     {
         switch ($actionName) {
-            case 'convertAudioFile':
-                $this->convertAudioFile();
-                break;
             default:
                 $data = $this->request->getPost();
                 $this->sendRequestToBackendWorker(SystemManagementProcessor::class, $actionName, $data);
-        }
-    }
-
-    /**
-     * Categorize and store uploaded audio files
-     *
-     * @return void
-     */
-    private function convertAudioFile(): void
-    {
-        $data                  = [];
-        $category              = $this->request->getPost('category');
-        $data['temp_filename'] = $this->request->getPost('temp_filename');
-        $di                    = Di::getDefault();
-        $mediaDir              = $di->getShared('config')->path('asterisk.customSoundDir');
-        $mohDir                = $di->getShared('config')->path('asterisk.mohdir');
-        switch ($category) {
-            case SoundFiles::CATEGORY_MOH:
-                $data['filename'] = "$mohDir/" . basename($data['temp_filename']);
-                break;
-            case SoundFiles::CATEGORY_CUSTOM:
-                $data['filename'] = "$mediaDir/" . basename($data['temp_filename']);
-                break;
-            default:
-                $this->sendError(Response::BAD_REQUEST, 'Category not set');
-        }
-        $requestMessage = json_encode(
-            [
-                'processor' => SystemManagementProcessor::class,
-                'data'      => $data,
-                'action'    => 'convertAudioFile',
-            ]
-        );
-        $connection     = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
-        $response       = $connection->request($requestMessage, 15, 0);
-        if ($response !== false) {
-            $response = json_decode($response, true);
-            $this->response->setPayloadSuccess($response);
-        } else {
-            $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
 }

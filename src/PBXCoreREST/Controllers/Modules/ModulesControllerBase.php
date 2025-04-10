@@ -2,8 +2,6 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Modules;
 
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
@@ -56,69 +54,76 @@ class ModulesControllerBase extends BaseController
         $_REQUEST['ip_srv'] = $_SERVER['SERVER_ADDR'];
 
         $payload = file_get_contents('php://input');
-        list($debug, $requestMessage) = $this->prepareRequestMessage(
-            PbxExtensionsProcessor::class,
-            $payload,
-            $actionName,
-            $moduleName
-        );
 
-        try {
-            $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
-            /** @var BeanstalkConnectionWorkerApiProvider $beanstalkQueue */
-            $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
-            if ($debug) {
-                $maxTimeout = 9999;
-            }
-            $response = $beanstalkQueue->request($message, $maxTimeout, $priority);
 
-            if ($response !== false) {
-                $response = json_decode($response, true);
-                $this->handleResponse($response);
-            } else {
-                $this->sendError(Response::INTERNAL_SERVER_ERROR);
-            }
-        } catch (\Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $this->sendError(Response::BAD_REQUEST, $e->getMessage());
-        }
+        $this->sendRequestToBackendWorker(PbxExtensionsProcessor::class, $actionName, $payload, $moduleName, $maxTimeout, $priority);
+
+        $response = json_decode($this->response->getContent(), true);
+        $this->handleResponse($response);
+        
+        // list($debug, $requestMessage) = $this->prepareRequestMessage(
+        //     PbxExtensionsProcessor::class,
+        //     $payload,
+        //     $actionName,
+        //     $moduleName
+        // );
+
+        // try {
+        //     $message = json_encode($requestMessage, JSON_THROW_ON_ERROR);
+        //     /** @var BeanstalkConnectionWorkerApiProvider $beanstalkQueue */
+        //     $beanstalkQueue = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
+        //     if ($debug) {
+        //         $maxTimeout = 9999;
+        //     }
+        //     $response = $beanstalkQueue->request($message, $maxTimeout, $priority);
+
+        //     if ($response !== false) {
+        //         $response = json_decode($response, true);
+        //         $this->handleResponse($response);
+        //     } else {
+        //         $this->sendError(Response::INTERNAL_SERVER_ERROR);
+        //     }
+        // } catch (\Throwable $e) {
+        //     CriticalErrorsHandler::handleExceptionWithSyslog($e);
+        //     $this->sendError(Response::BAD_REQUEST, $e->getMessage());
+        // }
     }
 
-    /**
-     * Prepare a request message for sending to a backend worker.
-     *
-     * @param string $processor
-     * @param mixed $payload
-     * @param string $actionName
-     * @param string $moduleName
-     * @return array
-     */
-    public function prepareRequestMessage(
-        string $processor,
-        mixed $payload,
-        string $actionName,
-        string $moduleName
-    ): array {
+    // /**
+    //  * Prepare a request message for sending to a backend worker.
+    //  *
+    //  * @param string $processor
+    //  * @param mixed $payload
+    //  * @param string $actionName
+    //  * @param string $moduleName
+    //  * @return array
+    //  */
+    // public function prepareRequestMessage(
+    //     string $processor,
+    //     mixed $payload,
+    //     string $actionName,
+    //     string $moduleName
+    // ): array {
 
-        $requestMessage = [
-            'data' => $_REQUEST,
-            'module' => $moduleName,
-            'input' => $payload,
-            'action' => $actionName,
-            'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
-            'processor' => $processor,
-            'async' => false,
-            'asyncChannelId' => ''
-        ];
+    //     $requestMessage = [
+    //         'data' => $_REQUEST,
+    //         'module' => $moduleName,
+    //         'input' => $payload,
+    //         'action' => $actionName,
+    //         'REQUEST_METHOD' => $_SERVER['REQUEST_METHOD'],
+    //         'processor' => $processor,
+    //         'async' => false,
+    //         'asyncChannelId' => ''
+    //     ];
 
-        if ($this->request->isAsyncRequest()) {
-            $requestMessage['async'] = true;
-            $requestMessage['asyncChannelId'] = $this->request->getAsyncRequestChannelId();
-        }
+    //     if ($this->request->isAsyncRequest()) {
+    //         $requestMessage['async'] = true;
+    //         $requestMessage['asyncChannelId'] = $this->request->getAsyncRequestChannelId();
+    //     }
 
-        $requestMessage['debug'] = $this->request->isDebugRequest();
-        return [$requestMessage['debug'], $requestMessage];
-    }
+    //     $requestMessage['debug'] = $this->request->isDebugRequest();
+    //     return [$requestMessage['debug'], $requestMessage];
+    // }
 
     /**
      * Handles the response from the backend worker.

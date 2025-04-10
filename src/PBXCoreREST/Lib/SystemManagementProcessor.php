@@ -20,6 +20,8 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
+use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
@@ -91,9 +93,10 @@ class SystemManagementProcessor extends Injectable
                 } while ($ch <= 10 && !$res->success);
                 break;
             case 'convertAudioFile':
-                $mv = Util::which('mv');
-                Processes::mwExec("$mv {$request['data']['temp_filename']} {$request['data']['filename']}");
-                $res = ConvertAudioFileAction::main($request['data']['filename']);
+                $res = ConvertAudioFileAction::moveSoundFileAccordingToCategory($data['category'], $data['temp_filename']);
+                if ($res->success && $res->data['filename'] !== '') {    
+                    $res = ConvertAudioFileAction::main($res->data['filename']);
+                }
                 break;
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;

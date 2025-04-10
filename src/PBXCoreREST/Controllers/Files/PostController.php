@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Files;
 
-use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Http\Response;
@@ -80,47 +79,12 @@ class PostController extends BaseController
     public function callAction(string $actionName=''): void
     {
         switch ($actionName) {
-            case 'getFileContent':
-                $this->getFileContent();
-                break;
             case 'uploadFile':
                 $this->uploadFile();
                 break;
             default:
                 $data = $this->request->getPost();
                 $this->sendRequestToBackendWorker(FilesManagementProcessor::class, $actionName, $data);
-        }
-    }
-
-    /**
-     * Parses the content of a file and includes it in the response.
-     *
-     * @return void
-     */
-    private function getFileContent(): void
-    {
-        $requestMessage = json_encode(
-            [
-                'processor' => FilesManagementProcessor::class,
-                'data'      => $this->request->getPost(),
-                'action'    => 'getFileContent',
-            ]
-        );
-        $connection     = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
-        $response       = $connection->request($requestMessage, 5, 0);
-        if ($response !== false) {
-            $response = json_decode($response, true);
-            $filename = $response['data']['filename'] ?? '';
-            if ( ! file_exists($filename)) {
-                $response['messages'][] = 'Config file not found';
-            } else {
-                $response['data']['filename'] = $filename;
-                $response['data']['content']  = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
-                unlink($filename);
-            }
-            $this->response->setPayloadSuccess($response);
-        } else {
-            $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
 

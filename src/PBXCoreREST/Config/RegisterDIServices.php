@@ -23,7 +23,6 @@ namespace MikoPBX\PBXCoreREST\Config;
 
 use MikoPBX\Common\Providers\{AclProvider,
     BeanstalkConnectionModelsProvider,
-    BeanstalkConnectionWorkerApiProvider,
     CDRDatabaseProvider,
     LoggerAuthProvider,
     LoggerProvider,
@@ -82,7 +81,6 @@ class RegisterDIServices
             ManagedCacheProvider::class,
 
             // Inject Queue connection
-            BeanstalkConnectionWorkerApiProvider::class,
             BeanstalkConnectionModelsProvider::class,
 
             // Inject PBX modules

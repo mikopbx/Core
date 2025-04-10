@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\System;
 
+use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -100,5 +102,39 @@ class ConvertAudioFileAction extends Injectable
         $res->data[]  = $n_filename_mp3;
 
         return $res;
+    }
+
+
+    /**
+     * Moves the uploaded sound file to the appropriate directory based on the category.
+     *
+     * @param string $category The category of the file.
+     * @param string $uploadedFilename The path of the uploaded file.
+     * @return PBXApiResult An object containing the result of the API call.
+     */
+    public static function moveSoundFileAccordingToCategory(string $category, string $uploadedFilename): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        $res->success   = true;
+        switch ($category) {
+            case SoundFiles::CATEGORY_MOH:
+                $mohDir = Directories::getDir(Directories::AST_MOH_DIR);
+                $res->data['filename'] = "$mohDir/" . basename($uploadedFilename);
+                break;
+            case SoundFiles::CATEGORY_CUSTOM:
+                $mediaDir = Directories::getDir(Directories::AST_CUSTOM_SOUND_DIR);
+                $res->data['filename'] = "$mediaDir/" . basename($uploadedFilename);
+                break;
+            default:
+                $res->success = false;
+                $res->messages[] = "Category not set";
+        }
+
+        $mv = Util::which('mv');
+        Processes::mwExec("$mv {$uploadedFilename} {$res->data['filename']}");
+
+        return $res;
+        
     }
 }

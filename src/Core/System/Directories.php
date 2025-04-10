@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Providers\ConfigProvider;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
@@ -91,7 +92,7 @@ class Directories extends Injectable
     {
         $di = Di::getDefault();
         if ($di !== null) {
-            return $di->getConfig()->path($configPath, $default);
+            return $di->getShared(ConfigProvider::SERVICE_NAME)->path($configPath, $default);
         }
 
         return $default;

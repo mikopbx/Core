@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,8 @@
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
 use MikoPBX\Core\System\Directories;
-use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\Files\RestAPIFilesUtils;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 /**
@@ -50,18 +48,8 @@ class DownloadLogFileAction extends Injectable
             $res->success    = false;
             $res->messages[] = 'File does not exist ' . $filename;
         } else {
-            $uid          = Util::generateRandomString(36);
-            $di           = Di::getDefault();
-            $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
-            $result_dir   = "$downloadLink/$uid";
-            Util::mwMkdir($result_dir);
-            $link_name = basename($filename);
-            $ln    = Util::which('ln');
-            $chown = Util::which('chown');
-            Processes::mwExec("$ln -s $filename $result_dir/$link_name");
-            Processes::mwExec("$chown www:www $result_dir/$link_name");
+            $res->data['filename'] = RestAPIFilesUtils::makeFileLinkForDownload($filename, 'MikoPBXLog_');
             $res->success          = true;
-            $res->data['filename'] = "/pbxcore/files/cache/$uid/$link_name";
         }
 
         return $res;

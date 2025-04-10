@@ -20,11 +20,9 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Syslog;
 
-use MikoPBX\Common\Providers\BeanstalkConnectionWorkerApiProvider;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\SysLogsManagementProcessor;
-use Phalcon\Di\Di;
+
 
 /**
  * Get system logs (POST).
@@ -67,54 +65,9 @@ class PostController extends BaseController
     public function callAction(string $actionName): void
     {
         switch ($actionName) {
-            // case 'getLogFromFile':
-            //     $this->getLogFromFileAction();
-            //     break;
-            // case 'downloadLogFile':
-            // case 'downloadLogsArchive':
-            //     $this->downloadFileAction($actionName);
-            //     break;
             default:
                 $data = $this->request->getPost();
                 $this->sendRequestToBackendWorker(SysLogsManagementProcessor::class, $actionName, $data);
-        }
-    }
-
-
-    /**
-     * Prepares downloadable link for log file or archive
-     *
-     * @param string $actionName
-     */
-    private function downloadFileAction(string $actionName): void
-    {
-        $requestMessage = json_encode(
-            [
-                'processor' => SysLogsManagementProcessor::class,
-                'data'      => $this->request->getPost(),
-                'action'    => $actionName,
-            ]
-        );
-        $connection     = $this->di->getShared(BeanstalkConnectionWorkerApiProvider::SERVICE_NAME);
-        $response       = $connection->request($requestMessage, 5, 0);
-
-        if ($response !== false) {
-            $response = json_decode($response, true);
-            if (array_key_exists('filename', $response['data'])) {
-                $di           = Di::getDefault();
-                $downloadLink = $di->getShared('config')->path('www.downloadCacheDir');
-                $filename     = $downloadLink . "/" . $response['data']['filename'] ?? '';
-                if (! file_exists($filename)) {
-                    $response['messages'][] = 'File not found';
-                } else {
-                    $scheme                       = $this->request->getScheme();
-                    $host                         = $this->request->getHttpHost();
-                    $response['data']['filename'] = "$scheme://$host/pbxcore/files/cache/{$response['data']['filename']}";
-                }
-            }
-            $this->response->setPayloadSuccess($response);
-        } else {
-            $this->sendError(Response::INTERNAL_SERVER_ERROR);
         }
     }
 }
