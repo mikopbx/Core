@@ -37,6 +37,7 @@ use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckStorage;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckUpdates;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckWebPasswords;
+use MikoPBX\PBXCoreREST\Lib\Advice\GetAdviceAction;
 use Phalcon\Di\Di;
 use Throwable;
 
@@ -47,6 +48,14 @@ require_once 'Globals.php';
  */
 class WorkerPrepareAdvice extends WorkerBase
 {
+
+    private bool $newAdvice = false;
+
+    /**
+     * Array of advice types with their cache times.
+     *
+     * @var array
+     */
     public const array ARR_ADVICE_TYPES = [
         ['type' => CheckConnection::class, 'cacheTime' => 120],
         ['type' => CheckCorruptedFiles::class, 'cacheTime' => 3600],
@@ -140,6 +149,11 @@ class WorkerPrepareAdvice extends WorkerBase
             // Parent process continues the loop.
         }
 
+        // If there is new advice, send it to the browser.
+        if ($this->newAdvice) {
+            GetAdviceAction::main();
+        }
+
         // Optionally, wait for all child processes to finish.
         while (pcntl_waitpid(0, $status) != -1) {
             // You can process the status if needed.
@@ -163,6 +177,7 @@ class WorkerPrepareAdvice extends WorkerBase
                 $checkObj = new $currentAdviceClass();
                 $newAdvice = $checkObj->process();
                 $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
+                $this->newAdvice = true;
             } catch (Throwable $e) {
                 CriticalErrorsHandler::handleExceptionWithSyslog($e);
             }
@@ -187,6 +202,7 @@ class WorkerPrepareAdvice extends WorkerBase
     {
         return 'WorkerPrepareAdvice:' . $currentAdviceType;
     }
+
 }
 
 // Start a worker process

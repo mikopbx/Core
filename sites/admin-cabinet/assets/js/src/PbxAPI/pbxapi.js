@@ -127,7 +127,6 @@ const PbxApi = {
     dialplanApplicationsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/dialplan-applications/deleteRecord`, // Deletes the call-queues record with its dependent tables.
 
 
-
     /**
      * Tries to parse a JSON string.
      *
@@ -1472,22 +1471,17 @@ const PbxApi = {
     /**
      * Generates a list of notifications about the system, firewall, passwords, and wrong settings.
      *
-     * @param {function} callback - The callback function to be called with the response data or `false` in case of failure.
+     * @param {string} channelId - The ID of the channel to send the response to.
      * @returns {void}
      */
-    AdviceGetList(callback) {
+    AdviceGetList(channelId) {
         $.api({
             url: PbxApi.adviceGetList,
             on: 'now',
             successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError() {
-                callback(false);
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', channelId);
+                return xhr;
             },
         });
     },

@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,6 +42,17 @@ const adviceWorker = {
      */
     $advice: $('#advice'),
 
+    /**.
+     * @type {EventSource}
+     */
+     eventSource: null,
+
+     /**
+      * The identifier for the PUB/SUB channel used to subscribe to advice updates.
+      * This ensures that the client is listening on the correct channel for relevant events.
+      */
+     channelId: 'advice-pub',
+
     /**
      * jQuery element for advice bell button.
      * @type {jQuery}
@@ -53,18 +64,28 @@ const adviceWorker = {
      */
     initialize() {
         adviceWorker.showPreviousAdvice();
-
         // Let's initiate the retrieval of new advice.
-        adviceWorker.restartWorker();
+        adviceWorker.startListenPushNotifications();
         window.addEventListener('ConfigDataChanged', adviceWorker.cbOnDataChanged);
+        PbxApi.AdviceGetList(adviceWorker.channelId);
     },
 
     /**
-     * Restarts the advice worker.
+     * Establishes a connection to the server to start receiving real-time updates on advice.
+     * Utilizes the EventSource API to listen for messages on a specified channel.
      */
-    restartWorker() {
-        window.clearTimeout(adviceWorker.timeoutHandle);
-        adviceWorker.worker();
+    startListenPushNotifications() {
+        const lastEventIdKey = `${adviceWorker.channelId}-lastEventId`;
+        let lastEventId = localStorage.getItem(lastEventIdKey);
+        const subPath = lastEventId ? `/pbxcore/api/nchan/sub/${adviceWorker.channelId}?last_event_id=${lastEventId}` : `/pbxcore/api/nchan/sub/${adviceWorker.channelId}`;
+        adviceWorker.eventSource = new EventSource(subPath);
+
+        adviceWorker.eventSource.addEventListener('message', e => {
+            const response = JSON.parse(e.data);
+            console.debug(response);
+            adviceWorker.cbAfterResponse(response);
+            localStorage.setItem(lastEventIdKey, e.lastEventId);
+        });
     },
 
     /**
@@ -73,7 +94,6 @@ const adviceWorker = {
     cbOnDataChanged() {
         sessionStorage.removeItem(`previousAdvice${globalWebAdminLanguage}`);
         sessionStorage.removeItem(`previousAdviceBell${globalWebAdminLanguage}`);
-        setTimeout(adviceWorker.restartWorker, 3000);
     },
 
     /**
@@ -101,13 +121,6 @@ const adviceWorker = {
     },
 
     /**
-     * Worker function for fetching advice.
-     */
-    worker() {
-        PbxApi.AdviceGetList(adviceWorker.cbAfterResponse);
-    },
-
-    /**
      * Callback function after receiving the response.
      * @param {object} response - Response object from the API.
      */
@@ -116,21 +129,22 @@ const adviceWorker = {
             return;
         }
         adviceWorker.$advice.html('');
-        if (response.advice !== undefined) {
+        if (response.data.advice !== undefined) {
+            const advice = response.data.advice;
             let htmlMessages = '';
             let countMessages = 0;
             let iconBellClass = '';
             htmlMessages += `<div class="ui header">${globalTranslate.adv_PopupHeader}</div>`;
             htmlMessages += '<div class="ui relaxed divided list">';
 
-            if (response.advice.needUpdate !== undefined
-                && response.advice.needUpdate.length > 0) {
-                $(window).trigger('SecurityWarning', [response.advice]);
+            if (advice.needUpdate !== undefined
+                && advice.needUpdate.length > 0) {
+                $(window).trigger('SecurityWarning', [advice]);
             }
 
-            if (response.advice.error !== undefined
-                && response.advice.error.length > 0) {
-                $.each(response.advice.error, (key, value) => {
+            if (advice.error !== undefined
+                && advice.error.length > 0) {
+                $.each(advice.error, (key, value) => {
                     htmlMessages += '<div class="item">';
                     htmlMessages += '<i class="frown outline red icon"></i>';
                     htmlMessages += `${value}`;
@@ -138,9 +152,9 @@ const adviceWorker = {
                     countMessages += 1;
                 });
             }
-            if (response.advice.warning !== undefined
-                && response.advice.warning.length > 0) {
-                $.each(response.advice.warning, (key, value) => {
+            if (advice.warning !== undefined
+                && advice.warning.length > 0) {
+                $.each(advice.warning, (key, value) => {
                     htmlMessages += '<div class="item yellow">';
                     htmlMessages += '<i class="meh outline yellow icon"></i>';
                     htmlMessages += `${value}`;
@@ -148,9 +162,9 @@ const adviceWorker = {
                     countMessages += 1;
                 });
             }
-            if (response.advice.info !== undefined
-                && response.advice.info.length > 0) {
-                $.each(response.advice.info, (key, value) => {
+            if (advice.info !== undefined
+                && advice.info.length > 0) {
+                $.each(advice.info, (key, value) => {
                     htmlMessages += '<div class="item">';
                     htmlMessages += '<i class="smile outline blue icon"></i>';
                     htmlMessages += `${value}`;
@@ -159,15 +173,15 @@ const adviceWorker = {
                 });
             }
 
-            if (response.advice.error !== undefined
-                && response.advice.error.length > 0) {
+            if (advice.error !== undefined
+                && advice.error.length > 0) {
                 iconBellClass = 'red icon bell';
-            } else if (response.advice.warning !== undefined
-                && response.advice.warning.length > 0) {
+            } else if (advice.warning !== undefined
+                && advice.warning.length > 0) {
                 iconBellClass = 'yellow icon bell';
 
-            } else if (response.advice.info !== undefined
-                && response.advice.info.length > 0) {
+            } else if (advice.info !== undefined
+                && advice.info.length > 0) {
                 iconBellClass = 'blue icon bell';
             }
             htmlMessages += '</div>';
@@ -199,9 +213,9 @@ const adviceWorker = {
                 adviceWorker.worker,
                 adviceWorker.timeOut,
             );
-        } else if (response.success === true
-            && response.advice !== undefined
-            && response.advice.length === 0) {
+        } else if (response.result === true
+            && response.data.advice !== undefined
+            && response.data.advice.length === 0) {
             sessionStorage.removeItem(`previousAdvice${globalWebAdminLanguage}`);
             sessionStorage.removeItem(`previousAdviceBell${globalWebAdminLanguage}`);
             adviceWorker.$adviceBellButton
