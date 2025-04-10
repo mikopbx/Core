@@ -228,16 +228,20 @@ class SessionController extends BaseController
      */
     private function clearAuthCookies(): void
     {
-        if ($this->cookies->has('random_token')) {
-            $cookie = $this->cookies->get('random_token');
-            $value = $cookie->getValue();
-            $userTokens = AuthTokens::find();
-            foreach ($userTokens as $userToken) {
+        try {
+            if ($this->cookies->has('random_token')) {
+                $cookie = $this->cookies->get('random_token');
+                $value = $cookie->getValue();
+                $userTokens = AuthTokens::find();
+                foreach ($userTokens as $userToken) {
                 if ($this->security->checkHash($value, $userToken->tokenHash)) {
                     $userToken->delete();
+                    }
                 }
+                $cookie->delete();
             }
-            $cookie->delete();
+        } catch (\Phalcon\Encryption\Crypt\Exception\Mismatch $e) {
+            //CriticalErrorsHandler::handleException($e);
         }
     }
 
