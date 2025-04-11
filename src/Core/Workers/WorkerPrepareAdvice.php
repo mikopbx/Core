@@ -26,6 +26,7 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAmiPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckConnection;
@@ -84,6 +85,7 @@ class WorkerPrepareAdvice extends WorkerBase
         $di = Di::getDefault();
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
         $cacheKeys = [];
+        $isNeedUpdate = false;
         switch ($record['model']) {
             case PbxSettings::class:
                 switch ($record['recordId']) {
@@ -116,6 +118,10 @@ class WorkerPrepareAdvice extends WorkerBase
         SystemMessages::sysLogMsg(__METHOD__, "Cleanup the next caches:" . PHP_EOL . json_encode($cacheKeys, JSON_PRETTY_PRINT), LOG_DEBUG);
         foreach ($cacheKeys as $cacheKey => $value) {
             $managedCache->delete($cacheKey);
+            $isNeedUpdate = true;
+        }
+        if ($isNeedUpdate) {
+            Processes::processPHPWorker(self::class, 'start');
         }
     }
 
