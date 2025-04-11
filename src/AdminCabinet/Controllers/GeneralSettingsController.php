@@ -226,10 +226,14 @@ class GeneralSettingsController extends BaseController
         $codecs = json_decode($codecsData, true);
         foreach ($codecs as $codec) {
             $record = Codecs::findFirstById($codec['codecId']);
-            $record->priority = $codec['priority'];
-            $record->disabled = $codec['disabled'] === true ? '1' : '0';
-            if (!$record->update()) {
-                $messages['error'][] = $record->getMessages();
+            $newPriority = $codec['priority'];
+            $newStatus = $codec['disabled'] === true ? '1' : '0';
+            if (intval($record->priority) !== intval($newPriority) || $record->disabled !== $newStatus) {
+                $record->priority = $newPriority;
+                $record->disabled = $newStatus;
+                if (!$record->update()) {
+                    $messages['error'][] = $record->getMessages();
+                }
             }
         }
         $result = count($messages) === 0;
