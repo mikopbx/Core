@@ -41,7 +41,6 @@
             "browserVersion": "latest",
             "chromeOptions": {
                 "args": [
-                    "incognito",
                     "--start-maximized",
                     "--no-sandbox"
                 ],

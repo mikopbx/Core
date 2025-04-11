@@ -190,6 +190,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         self::annotate("Test failure: $errorMessage", 'error');
 
         // Save page source for debugging
+        $sourceFile = '';
         if (!empty($elementSource)) {
             $sourceFile = sprintf(
                 '%s/failure_%s_%s.html',
@@ -203,7 +204,7 @@ class MikoPBXTestsBase extends BrowserStackTest
         $this->fail(
             "$errorMessage\n" .
             "Screenshot saved at: $screenshotPath\n" .
-            "Page source saved at: $sourceFile"
+            (!empty($sourceFile) ? "Element source saved at: $sourceFile" : '')
         );
     }
 

@@ -23,15 +23,21 @@
         </testsuite>
 
         <testsuite name="PBXSettings">
-              <file>Tests/ChangeLicenseKeyTest.php</file>
-              <file>Tests/FillPBXSettingsTest.php</file>
-              <file>Tests/CustomFileChangeTest.php</file>
-              <file>Tests/FillDataTimeSettingsTest.php</file>
+            <file>Tests/FillDataTimeSettingsTest.php</file>
+            <file>Tests/ChangeLicenseKeyTest.php</file>
+            <file>Tests/FillPBXSettingsTest.php</file>
+            <file>Tests/CustomFileChangeTest.php</file>
+        </testsuite>
+
+        <testsuite name="AudioFilesBeforeCreate">
+            <file>Tests/CheckDropdownBeforeCreateAudioFileTest.php</file>
         </testsuite>
 
         <testsuite name="AudioFiles">
-            <file>Tests/CheckDropdownBeforeCreateAudioFileTest.php</file>
             <directory>Tests/AudioFiles</directory>
+        </testsuite>
+
+        <testsuite name="AudioFilesAfterCreate">
             <file>Tests/CheckDropdownAfterCreateAudioFileTest.php</file>
             <file>Tests/DeleteAudioFileTest.php</file>
             <file>Tests/CheckDropdownAfterDeleteAudioFileTest.php</file>
@@ -40,11 +46,17 @@
         <testsuite name="Providers">
             <directory>Tests/SIPProviders</directory>
             <directory>Tests/IAXProviders</directory>
+        </testsuite>
+
+        <testsuite name="ProvidersAfterCreate">
             <file>Tests/DeleteProviderTest.php</file>
         </testsuite>
 
-        <testsuite name="IncomingCallRules">
+        <testsuite name="IncomingCallRulesBeforeCreate">
             <file>Tests/CreateDefaultIncomingCallRule.php</file>
+        </testsuite>
+
+        <testsuite name="IncomingCallRules">  
             <directory>Tests/IncomingCallRules</directory>
         </testsuite>
 
@@ -58,9 +70,13 @@
         
         <testsuite name="Call Queues">
             <directory>Tests/CallQueues</directory>
+        </testsuite>
+
+        <testsuite name="Call Queues After Create">
             <file>Tests/ChangeCallQueueTest.php</file>
             <file>Tests/CheckDropdownsOnDeleteQueueTest.php</file>
         </testsuite>
+
 
         <testsuite name="IVR Menu">
             <directory>Tests/IVRMenus</directory>
@@ -87,10 +103,16 @@
             <directory>Tests/PBXExtensions</directory>
         </testsuite>
 
-        <testsuite name="Extensions">
+        <testsuite name="ExtensionsBeforeCreate">
             <file>Tests/CreateConferenceRoomsTest.php</file>
             <file>Tests/CreateDialPlanApplicationTest.php</file>
+        </testsuite>
+
+        <testsuite name="Extensions">       
             <directory>Tests/Extensions</directory>
+        </testsuite>
+
+         <testsuite name="ExtensionsAfterCreate">
             <file>Tests/ChangeExtensionsSettingsTest.php</file>
             <file>Tests/DeleteExtensionTest.php</file>
             <file>Tests/DeleteExtensionFromDropDownTest.php</file>
