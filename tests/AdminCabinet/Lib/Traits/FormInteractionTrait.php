@@ -245,6 +245,10 @@ trait FormInteractionTrait
                 return null;
             }
 
+            if ($dropdown) {
+                $elementSource = $dropdown->getAttribute('outerHTML');
+            }
+
             // Check if the desired value is already selected
             try {
                 $selectedItem = $dropdown->findElement(
@@ -262,6 +266,7 @@ trait FormInteractionTrait
                 // No selection found or error getting current selection - proceed with new selection
             }
 
+            
             // Click to open dropdown
             $this->scrollIntoView($dropdown);
             $dropdown->click();
@@ -315,7 +320,7 @@ trait FormInteractionTrait
             
             return null;
         } catch (\Exception $e) {
-            $this->handleActionError('select dropdown item', "{$name} with value {$value}", $e);
+            $this->handleActionError('select dropdown item', "{$name} with value {$value}", $e, $elementSource??'');
             return null;
         }
     }

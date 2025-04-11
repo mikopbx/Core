@@ -177,7 +177,7 @@ class MikoPBXTestsBase extends BrowserStackTest
      * @param Exception $e Exception instance
      * @throws Exception
      */
-    protected function handleActionError(string $action, string $message, Exception $e): void
+    protected function handleActionError(string $action, string $message, Exception $e, string $elementSource = ''): void
     {
         $errorMessage = sprintf(
             "Failed to %s: %s. Error: %s",
@@ -190,14 +190,15 @@ class MikoPBXTestsBase extends BrowserStackTest
         self::annotate("Test failure: $errorMessage", 'error');
 
         // Save page source for debugging
-        $pageSource = self::$driver->getPageSource();
-        $sourceFile = sprintf(
-            '%s/failure_%s_%s.html',
-            self::CONFIG['paths']['logs'],
-            date('Y-m-d_H-i-s'),
-            str_replace(' ', '_', $action)
-        );
-        file_put_contents($sourceFile, $pageSource);
+        if (!empty($elementSource)) {
+            $sourceFile = sprintf(
+                '%s/failure_%s_%s.html',
+                self::CONFIG['paths']['logs'],
+                date('Y-m-d_H-i-s'),
+                str_replace(' ', '_', $action)
+            );
+            file_put_contents($sourceFile, $elementSource);
+        }
 
         $this->fail(
             "$errorMessage\n" .

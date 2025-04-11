@@ -161,7 +161,7 @@ trait NavigationTrait
             $tab->click();
             $this->waitForAjax();
         } catch (\Exception $e) {
-            $this->handleActionError('change tab', $anchor, $e);
+            $this->handleActionError('change tab', $anchor, $e, );
         }
     }
 

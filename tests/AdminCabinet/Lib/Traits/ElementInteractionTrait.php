@@ -76,9 +76,12 @@ trait ElementInteractionTrait
         try {
             $xpath = '//input[@name="id" and @type="hidden"]';
             $input = $this->waitForElement($xpath);
+            if ($input) {
+                $elementSource = $input->getAttribute('outerHTML');
+            }
             return $input->getAttribute('value') ?? 'undefined';
         } catch (\Exception $e) {
-            $this->handleActionError('get current record ID', '', $e);
+            $this->handleActionError('get current record ID', '', $e, $elementSource??'');
             return 'undefined';
         }
     }

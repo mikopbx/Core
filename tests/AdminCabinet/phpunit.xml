@@ -1,6 +1,6 @@
 <!--
  ~ MikoPBX - free phone system for small business
- ~ Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ ~ Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  ~
  ~ This program is free software: you can redistribute it and/or modify
  ~ it under the terms of the GNU General Public License as published by
@@ -20,48 +20,13 @@
     <testsuites>
         <testsuite name="TestMikoPBXPasswords">
             <file>Tests/ChangeWeakPasswordTest.php</file>
-            <file>Tests/FillPBXSettingsTest.php</file>
-            <file>Tests/ChangeLicenseKeyTest.php</file>
         </testsuite>
 
-        <testsuite name="Extensions">
-            <directory>Tests/Extensions</directory>
-            <file>Tests/ChangeExtensionsSettingsTest.php</file>
-            <file>Tests/DeleteExtensionTest.php</file>
-            <file>Tests/DeleteExtensionFromDropDownTest.php</file>
-            <file>Tests/CheckDropdownsOnAddExtensionsTest.php</file>
-        </testsuite>
-
-        <testsuite name="Providers">
-            <directory>Tests/SIPProviders</directory>
-            <directory>Tests/IAXProviders</directory>
-            <file>Tests/DeleteProviderTest.php</file>
-        </testsuite>
-
-        <testsuite name="Call Queues">
-            <directory>Tests/CallQueues</directory>
-            <file>Tests/ChangeCallQueueTest.php</file>
-            <file>Tests/CheckDropdownsOnDeleteQueueTest.php</file>
-        </testsuite>
-
-        <testsuite name="IVR Menu">
-            <directory>Tests/IVRMenus</directory>
-        </testsuite>
-
-        <testsuite name="AMI Users">
-            <directory>Tests/AMIUsers</directory>
-        </testsuite>
-
-        <testsuite name="Out Of Work Periods">
-            <directory>Tests/OutOfWorkPeriods</directory>
-        </testsuite>
-
-        <testsuite name="Firewall Rules">
-            <directory>Tests/FirewallRules</directory>
-        </testsuite>
-
-        <testsuite name="MOHFiles">
-            <directory>Tests/MOHFiles</directory>
+        <testsuite name="PBXSettings">
+              <file>Tests/ChangeLicenseKeyTest.php</file>
+              <file>Tests/FillPBXSettingsTest.php</file>
+              <file>Tests/CustomFileChangeTest.php</file>
+              <file>Tests/FillDataTimeSettingsTest.php</file>
         </testsuite>
 
         <testsuite name="AudioFiles">
@@ -72,26 +37,65 @@
             <file>Tests/CheckDropdownAfterDeleteAudioFileTest.php</file>
         </testsuite>
 
+        <testsuite name="Providers">
+            <directory>Tests/SIPProviders</directory>
+            <directory>Tests/IAXProviders</directory>
+            <file>Tests/DeleteProviderTest.php</file>
+        </testsuite>
+
         <testsuite name="IncomingCallRules">
             <file>Tests/CreateDefaultIncomingCallRule.php</file>
             <directory>Tests/IncomingCallRules</directory>
         </testsuite>
 
-        <testsuite name="IncomingCallRules">
+        <testsuite name="OutgoingCallRules">
             <directory>Tests/OutgoingCallRules</directory>
         </testsuite>
 
+        <testsuite name="Out Of Work Periods">
+            <directory>Tests/OutOfWorkPeriods</directory>
+        </testsuite>
+        
+        <testsuite name="Call Queues">
+            <directory>Tests/CallQueues</directory>
+            <file>Tests/ChangeCallQueueTest.php</file>
+            <file>Tests/CheckDropdownsOnDeleteQueueTest.php</file>
+        </testsuite>
+
+        <testsuite name="IVR Menu">
+            <directory>Tests/IVRMenus</directory>
+        </testsuite>
+
+        <testsuite name="MOHFiles">
+            <directory>Tests/MOHFiles</directory>
+        </testsuite>
+
+        <testsuite name="AMI Users">
+            <directory>Tests/AMIUsers</directory>
+        </testsuite>
+
         <testsuite name="OtherTestMikoPBX">
-            <file>Tests/CustomFileChangeTest.php</file>
-            <file>Tests/FillDataTimeSettingsTest.php</file>
-            <file>Tests/CreateFail2BanRulesTest.php</file>
-            <file>Tests/CreateConferenceRoomsTest.php</file>
-            <file>Tests/CreateDialPlanApplicationTest.php</file>
             <file>Tests/NetworkInterfacesTest.php</file>
         </testsuite>
 
-        <testsuite name="PBXExtensions">
+        <testsuite name="NetworkSettings">
+            <file>Tests/CreateFail2BanRulesTest.php</file>
+            <directory>Tests/FirewallRules</directory>
+        </testsuite>
+        
+        <testsuite name="PBXExtensions"> 
             <directory>Tests/PBXExtensions</directory>
         </testsuite>
+
+        <testsuite name="Extensions">
+            <file>Tests/CreateConferenceRoomsTest.php</file>
+            <file>Tests/CreateDialPlanApplicationTest.php</file>
+            <directory>Tests/Extensions</directory>
+            <file>Tests/ChangeExtensionsSettingsTest.php</file>
+            <file>Tests/DeleteExtensionTest.php</file>
+            <file>Tests/DeleteExtensionFromDropDownTest.php</file>
+            <file>Tests/CheckDropdownsOnAddExtensionsTest.php</file>
+        </testsuite>
+
     </testsuites>
 </phpunit>
