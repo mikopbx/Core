@@ -55,7 +55,7 @@ class ManagedCacheProvider implements ServiceProviderInterface
                     'lifetime'          => 3600,
                     'host'              => $config->path('redis.host'),
                     'port'              => $config->path('redis.port'),
-                    'index'             => 4,
+                    'index'             => RedisClientProvider::REDIS_DB_CACHE,
                     'prefix'            => self::CACHE_PREFIX
                 ];
 

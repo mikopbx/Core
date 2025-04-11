@@ -56,7 +56,7 @@ class ModelsMetadataProvider implements ServiceProviderInterface
                     'port'       => $config->path('redis.port'),
                     'statsKey'   => '_PHCR',
                     'lifetime'   => 600,
-                    'index'      => 2,
+                    'index'      => RedisClientProvider::REDIS_DB_METADATA,
                 ];
                 $metaData = new Redis($adapterFactory, $options);
 

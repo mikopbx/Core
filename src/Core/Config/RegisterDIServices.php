@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     NatsConnectionProvider,
     PBXConfModulesProvider,
     PBXCoreRESTClientProvider,
+    EventBusProvider,
     RedisClientProvider,
     RegistryProvider,
     SentryErrorHandlerProvider,
@@ -107,14 +108,16 @@ class RegisterDIServices
             ModulesDBConnectionsProvider::class,
 
             // Inject Rest API client
-            PBXCoreRESTClientProvider::class
+            PBXCoreRESTClientProvider::class,
+            // Inject EventBus provider
+            EventBusProvider::class
 
         ];
 
         foreach ($providersList as $provider) {
             // Delete previous provider
             $di->remove($provider::SERVICE_NAME);
-            $di->register(new $provider());
+            (new $provider())->register($di);
         }
 
         $di->getShared(RegistryProvider::SERVICE_NAME)->libraryName = 'core-workers';

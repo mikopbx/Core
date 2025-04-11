@@ -244,11 +244,9 @@ class ModelsBase extends Model
             $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
             $category = explode('\\', $calledClass)[3] . '*';
             $keys = $managedCache->getAdapter()->keys($category);
-            $prefix = $managedCache->getPrefix();
             // Delete all items from the managed cache
             foreach ($keys as $key) {
-                $cacheKey = str_ireplace($prefix, '', $key);
-                $managedCache->delete($cacheKey);
+                $managedCache->delete($key);
             }
         }
     }
