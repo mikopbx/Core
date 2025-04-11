@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@ use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Fiber;
-use Redis;
 use Throwable;
 use RuntimeException;
 
@@ -587,41 +586,6 @@ class WorkerSafeScriptsCore extends WorkerBase
                 LOG_WARNING
             );
         }
-    }
-
-    /**
-     * Check if worker status indicates healthy operation
-     *
-     * @param array|null $status Worker status response
-     * @return bool True if worker appears healthy
-     */
-    private function isWorkerHealthy(?array $status): bool
-    {
-        if ($status === null) {
-            return false;
-        }
-
-        // Check required fields
-        if (!isset($status['pid'], $status['timestamp'])) {
-            return false;
-        }
-
-        // Verify process exists
-        if (!posix_kill($status['pid'], 0)) {
-            return false;
-        }
-
-        // Check memory usage if available
-        if (isset($status['memory_usage']) && $status['memory_usage'] > 1024 * 1024 * 512) { // 512MB
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Worker memory usage exceeds limit: {$status['memory_usage']} bytes",
-                LOG_WARNING
-            );
-            return false;
-        }
-
-        return true;
     }
 }
 
