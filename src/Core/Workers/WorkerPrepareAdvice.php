@@ -49,9 +49,6 @@ require_once 'Globals.php';
  */
 class WorkerPrepareAdvice extends WorkerBase
 {
-
-    private bool $newAdvice = false;
-
     /**
      * Array of advice types with their cache times.
      *
@@ -81,7 +78,6 @@ class WorkerPrepareAdvice extends WorkerBase
      */
     public static function afterModelEvents(array $record): void
     {
-        SystemMessages::sysLogMsg(__METHOD__, "After models changes:" . PHP_EOL . json_encode($record, JSON_PRETTY_PRINT), LOG_DEBUG);
         $di = Di::getDefault();
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
         $cacheKeys = [];
@@ -115,7 +111,6 @@ class WorkerPrepareAdvice extends WorkerBase
                 break;
             default:
         }
-        SystemMessages::sysLogMsg(__METHOD__, "Cleanup the next caches:" . PHP_EOL . json_encode($cacheKeys, JSON_PRETTY_PRINT), LOG_DEBUG);
         foreach ($cacheKeys as $cacheKey => $value) {
             $managedCache->delete($cacheKey);
             $isNeedUpdate = true;
@@ -155,11 +150,6 @@ class WorkerPrepareAdvice extends WorkerBase
             // Parent process continues the loop.
         }
 
-        // If there is new advice, send it to the browser.
-        if ($this->newAdvice) {
-            GetAdviceListAction::main();
-        }
-
         // Optionally, wait for all child processes to finish.
         while (pcntl_waitpid(0, $status) != -1) {
             // You can process the status if needed.
@@ -177,13 +167,16 @@ class WorkerPrepareAdvice extends WorkerBase
         $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
         $currentAdviceClass = $adviceType['type'];
         $cacheKey = self::getCacheKey($currentAdviceClass);
+        SystemMessages::sysLogMsg(__METHOD__, "Start advice processing: $cacheKey" . PHP_EOL, LOG_DEBUG);
         if (!$managedCache->has($cacheKey)) {
             // No cache - generate advice and store in cache
             try {
                 $checkObj = new $currentAdviceClass();
                 $newAdvice = $checkObj->process();
                 $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
-                $this->newAdvice = true;
+                SystemMessages::sysLogMsg(__METHOD__, "New advice procesed: $cacheKey" . PHP_EOL, LOG_DEBUG);
+                // Send advice to the browser
+                GetAdviceListAction::main();
             } catch (Throwable $e) {
                 CriticalErrorsHandler::handleExceptionWithSyslog($e);
             }
