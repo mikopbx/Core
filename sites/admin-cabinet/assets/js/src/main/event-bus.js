@@ -58,6 +58,12 @@ const EventBus = {
         let lastEventId = localStorage.getItem(lastEventIdKey);
         let subPath = `/pbxcore/api/nchan/sub/${EventBus.channelId}`;
         subPath += lastEventId ? `?last_event_id=${lastEventId}` : '';
+
+        // Close existing connection if any
+        if (EventBus.eventSource) {
+            EventBus.eventSource.close();
+        }
+
         EventBus.eventSource = new EventSource(subPath);
 
         EventBus.eventSource.addEventListener('message', e => {
@@ -69,6 +75,10 @@ const EventBus = {
 
         EventBus.eventSource.addEventListener('error', e => {
             EventBus.publish('connection-status', false);
+            // Schedule reconnection after 2 seconds
+            setTimeout(() => {
+                EventBus.startListenPushNotifications();
+            }, 2000);
         });
 
         EventBus.eventSource.addEventListener('open', e => {
