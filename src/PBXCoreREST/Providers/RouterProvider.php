@@ -58,7 +58,7 @@ use MikoPBX\PBXCoreREST\Controllers\
     Nchan\GetController as NchanGetController,
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController,
-    Nchan\SubscribresController as NchanSubscribresController
+    UserPageTracker\PostController as UserPageTrackerPostController
 };
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
@@ -211,8 +211,8 @@ class RouterProvider implements ServiceProviderInterface
             [ModulesCoreGetController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'get', '/'],
             [ModulesCorePostController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'post', '/'],
 
-            // Nchan subscriber actions
-            [NchanSubscribresController::class, 'callAction', '/pbxcore/api/nchan/subscriber/{actionName}', 'get', '/'],
+            [UserPageTrackerPostController::class, 'callAction', '/pbxcore/api/user-page-tracker/{actionName}', 'post', '/'],
+
         ];
     }
 

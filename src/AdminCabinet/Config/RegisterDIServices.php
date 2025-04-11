@@ -32,12 +32,13 @@ use MikoPBX\AdminCabinet\Providers\VoltProvider;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\EventBusProvider;
 use MikoPBX\Common\Providers\LanguageProvider;
-use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\LoggerAuthProvider;
 use MikoPBX\Common\Providers\LoggerProvider;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\MessagesProvider;
 use MikoPBX\Common\Providers\ModelsAnnotationsProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
@@ -114,13 +115,16 @@ class RegisterDIServices
             CryptProvider::class,
 
             // Inject Rest API client
-            PBXCoreRESTClientProvider::class
+            PBXCoreRESTClientProvider::class,
+
+            // Inject EventBus provider
+            EventBusProvider::class
         ];
 
         foreach ($adminCabinetProviders as $provider) {
             // Delete previous provider
             $di->remove($provider::SERVICE_NAME);
-            $di->register(new $provider());
+            (new $provider())->register($di);
         }
 
         // Set the library name

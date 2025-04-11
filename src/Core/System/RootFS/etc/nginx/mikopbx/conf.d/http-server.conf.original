@@ -1,7 +1,3 @@
-upstream api_backend {
-    server 127.0.0.1:<WEBPort>;
-}
-
 server {
     listen      <WEBPort>;
     server_name   default;

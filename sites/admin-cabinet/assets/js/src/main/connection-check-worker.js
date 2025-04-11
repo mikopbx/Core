@@ -36,23 +36,11 @@ const connectionCheckWorker = {
     $connectionDimmer: $('#connection-dimmer'),
 
     /**
-     * EventSource object for the connection check.
-     * @type {EventSource}
-     */
-    eventSource: null,
-
-    /**
      * Initialize the connection check worker.
      */
     initialize() {
-        connectionCheckWorker.eventSource = new EventSource('/connection-check');
-
-        connectionCheckWorker.eventSource.addEventListener('error', function(event) {
-            connectionCheckWorker.cbAfterResponse(false);
-        });
-
-        connectionCheckWorker.eventSource.addEventListener('open', function(event) {
-            connectionCheckWorker.cbAfterResponse(true);
+        EventBus.subscribe('connection-status', data => {
+            connectionCheckWorker.cbAfterResponse(data);
         });
     },
 

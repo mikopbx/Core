@@ -114,6 +114,10 @@ const PbxApi = {
     // Users
     usersAvailable: `${Config.pbxUrl}/pbxcore/api/users/available?email={email}`, // Checks the email uniqueness.
 
+    // User Page Tracker
+    userPageTrackerPageView: `${Config.pbxUrl}/pbxcore/api/user-page-tracker/pageView`, // Tracks the page view.
+    userPageTrackerPageLeave: `${Config.pbxUrl}/pbxcore/api/user-page-tracker/pageLeave`, // Tracks the page leave.
+
     // Call queues
     callQueuesDeleteRecord: `${Config.pbxUrl}/pbxcore/api/call-queues/deleteRecord`, // Deletes the call queue record with its dependent tables.
 
@@ -1483,6 +1487,36 @@ const PbxApi = {
                 xhr.setRequestHeader ('X-Async-Response-Channel-Id', channelId);
                 return xhr;
             },
+        });
+    },
+
+    /**
+     * Tracks the page view.
+     *
+     * @param {string} pageName - The name of the page to track.
+     * @returns {void}
+     */
+    UserPageTrackerPageView(pageName) {
+        $.api({
+            url: PbxApi.userPageTrackerPageView,
+            on: 'now',
+            method: 'POST',
+            data: {pageName},
+        });
+    },
+
+    /**
+     * Tracks the page leave.
+     *
+     * @param {string} pageName - The name of the page to track.
+     * @returns {void}
+     */
+    UserPageTrackerPageLeave(pageName) {
+        $.api({
+            url: PbxApi.userPageTrackerPageLeave,
+            on: 'now',
+            method: 'POST',
+            data: {pageName},
         });
     },
 

@@ -33,6 +33,7 @@ use MikoPBX\Common\Providers\{AclProvider,
     ModulesDBConnectionsProvider,
     PBXConfModulesProvider,
     PBXCoreRESTClientProvider,
+    EventBusProvider,
     RedisClientProvider,
     RegistryProvider,
     ManagedCacheProvider,
@@ -40,12 +41,14 @@ use MikoPBX\Common\Providers\{AclProvider,
     SessionProvider,
     LanguageProvider,
     TranslationProvider,
-    WhoopsErrorHandlerProvider};
+    WhoopsErrorHandlerProvider
+};
 use MikoPBX\PBXCoreREST\Providers\{
     DispatcherProvider,
     RequestProvider,
     ResponseProvider,
-    RouterProvider};
+    RouterProvider
+};
 use Phalcon\Di\DiInterface;
 
 /**
@@ -108,13 +111,16 @@ class RegisterDIServices
             TranslationProvider::class,
 
             // Inject Rest API client
-            PBXCoreRESTClientProvider::class
+            PBXCoreRESTClientProvider::class,
+
+            // Inject EventBus provider
+            EventBusProvider::class
         ];
 
         foreach ($pbxRestAPIProviders as $provider) {
             // Delete previous provider
             $di->remove($provider::SERVICE_NAME);
-            $di->register(new $provider());
+            (new $provider())->register($di);
         }
 
         $di->getShared(RegistryProvider::SERVICE_NAME)->libraryName = 'pbx-core-rest';

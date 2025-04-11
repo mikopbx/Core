@@ -221,8 +221,10 @@ const Form = {
                     }
                 });
                 // Dispatch 'ConfigDataChanged' event
-                const event = document.createEvent('Event');
-                event.initEvent('ConfigDataChanged', false, true);
+                const event = new CustomEvent('ConfigDataChanged', {
+                    bubbles: false,
+                    cancelable: true
+                });
                 window.dispatchEvent(event);
 
                 // Call cbAfterSendForm function

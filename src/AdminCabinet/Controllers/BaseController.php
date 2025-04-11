@@ -20,11 +20,11 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\Common\Library\Text;
+use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SentryErrorHandlerProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
-use MikoPBX\Common\Models\PbxExtensionModules;
-use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Filter\Filter;
 use Phalcon\Flash\Exception;
 use Phalcon\Http\ResponseInterface;
@@ -87,7 +87,7 @@ class BaseController extends Controller
         }
 
         // Set URLs for Wiki and Support based on language
-        $this->view->urlToWiki = "https://wiki.mikopbx.com/$this->controllerNameUnCamelized";
+        $this->view->urlToWiki = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";
         if ($this->language === 'ru') {
             $this->view->urlToSupport = 'https://www.mikopbx.ru/support/?fromPBX=true';
         } else {
@@ -102,10 +102,10 @@ class BaseController extends Controller
             case 'save':
             case 'modify':
             case '*** WITHOUT ACTION ***':
-                $title .= '|' . $this->translation->_("Breadcrumb$this->controllerName");
+                $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}");
                 break;
             default:
-                $title .= '|' . $this->translation->_("Breadcrumb$this->controllerName$this->actionName");
+                $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}{$this->actionName} ");
         }
         Tag::setTitle($title);
 
@@ -123,7 +123,6 @@ class BaseController extends Controller
         $this->view->PBXName = PbxSettings::getValueByKey(PbxSettings::PBX_NAME);
         $this->view->MetaTegHeadDescription = $this->translation->_('MetaTegHeadDescription');
         $this->view->isExternalModuleController = $this->isExternalModuleController;
-
         if ($this->controllerClass!==SessionController::class) {
             $this->view->setTemplateAfter('main');
         }
@@ -132,7 +131,8 @@ class BaseController extends Controller
         $this->view->actionName = $this->actionName;
         $this->view->controllerName = $this->controllerName;
         $this->view->controllerClass = $this->controllerClass;
-
+        $this->view->currentPage = "AdminCabinet/$this->controllerName/$this->actionName";
+        
         // Add module variables into view if it is an external module controller
         if ($this->isExternalModuleController) {
             /** @var PbxExtensionModules $module */
@@ -145,6 +145,7 @@ class BaseController extends Controller
             $this->view->module = $module->toArray();
             $this->view->globalModuleUniqueId = $module->uniqid;
             $this->view->showModuleStatusToggle = $this->showModuleStatusToggle??true;
+            $this->view->currentPage = "$module->uniqid/$this->controllerName/$this->actionName";
         }
     }
 

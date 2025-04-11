@@ -1,0 +1,74 @@
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+declare(strict_types=1);
+
+namespace MikoPBX\Common\Providers;
+
+
+use Phalcon\Di\Di;
+use Phalcon\Di\DiInterface;
+use Phalcon\Di\ServiceProviderInterface;
+
+/**
+ * Class EventBusProvider
+ *
+ * Service provider for registering the event bus provider in the DI container.
+ *
+ * @package MikoPBX\Common\Providers
+ */
+class EventBusProvider implements ServiceProviderInterface
+{
+    public const string SERVICE_NAME = 'eventBus';
+    public const string CHANNEL_ID = 'event-bus';
+
+    /**
+     * Register event bus provider.
+     *
+     * @param \Phalcon\Di\DiInterface $di The DI container.
+     *
+     * @throws \Phalcon\Config\Exception If the config file is not found or not readable.
+     */
+    public function register(DiInterface $di): void
+    {
+        $di->setShared(
+            self::SERVICE_NAME,
+            function () {
+                return new EventBusProvider();
+            }
+        );
+    }
+
+    /**
+     * Publish an event to the event bus.
+     *
+     * @param string $type The type of event to publish.
+     * @param array $data The data to publish.
+     */
+    public function publish(string $type, array $data): void
+    {
+        $di = Di::getDefault();
+        $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+            '/pbxcore/api/nchan/pub/' . self::CHANNEL_ID,
+            PBXCoreRESTClientProvider::HTTP_METHOD_POST,
+            ['type' => $type, 'data' => $data],
+            ['Content-Type' => 'application/json']  
+        ]);
+    }
+}

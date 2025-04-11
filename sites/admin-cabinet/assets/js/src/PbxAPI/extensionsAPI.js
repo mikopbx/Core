@@ -42,9 +42,9 @@ const Extensions = {
         const pattern = '/pbxcore/api/extensions/getForSelect';
         for (let i = 0; i < sessionStorage.length; i++) {
             const key = sessionStorage.key(i);
-
             // Check if the key matches the pattern
             if (key && key.startsWith(pattern)) {
+                console.debug('Delete key', key);
                 sessionStorage.removeItem(key);
             }
         }

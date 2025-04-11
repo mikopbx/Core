@@ -231,6 +231,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/config.js', true)
                 ->addJs('js/pbx/PbxAPI/pbxapi.js', true)
                 ->addJs('js/pbx/PbxAPI/extensionsAPI.js', true)
+                ->addJs('js/pbx/main/event-bus.js', true)
+                ->addJs('js/pbx/main/user-page-tracker.js', true)
                 ->addJs('js/pbx/main/connection-check-worker.js', true)
                 ->addJs('js/pbx/main/semantic-localization.js', true)
                 ->addJs('js/pbx/Advice/advice-worker.js', true)

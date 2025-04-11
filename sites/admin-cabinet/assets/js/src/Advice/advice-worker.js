@@ -42,17 +42,6 @@ const adviceWorker = {
      */
     $advice: $('#advice'),
 
-    /**.
-     * @type {EventSource}
-     */
-     eventSource: null,
-
-     /**
-      * The identifier for the PUB/SUB channel used to subscribe to advice updates.
-      * This ensures that the client is listening on the correct channel for relevant events.
-      */
-     channelId: 'advice-pub',
-
     /**
      * jQuery element for advice bell button.
      * @type {jQuery}
@@ -64,30 +53,13 @@ const adviceWorker = {
      */
     initialize() {
         adviceWorker.showPreviousAdvice();
-        // Let's initiate the retrieval of new advice.
-        adviceWorker.startListenPushNotifications();
+        EventBus.subscribe('advice', data => {
+            adviceWorker.cbAfterResponse(data);
+        });
         window.addEventListener('ConfigDataChanged', adviceWorker.cbOnDataChanged);
         PbxApi.AdviceGetList(adviceWorker.channelId);
     },
-
-    /**
-     * Establishes a connection to the server to start receiving real-time updates on advice.
-     * Utilizes the EventSource API to listen for messages on a specified channel.
-     */
-    startListenPushNotifications() {
-        const lastEventIdKey = `${adviceWorker.channelId}-lastEventId`;
-        let lastEventId = localStorage.getItem(lastEventIdKey);
-        const subPath = lastEventId ? `/pbxcore/api/nchan/sub/${adviceWorker.channelId}?last_event_id=${lastEventId}` : `/pbxcore/api/nchan/sub/${adviceWorker.channelId}`;
-        adviceWorker.eventSource = new EventSource(subPath);
-
-        adviceWorker.eventSource.addEventListener('message', e => {
-            const response = JSON.parse(e.data);
-            console.debug(response);
-            adviceWorker.cbAfterResponse(response);
-            localStorage.setItem(lastEventIdKey, e.lastEventId);
-        });
-    },
-
+    
     /**
      * Event handler for language or data change.
      */
