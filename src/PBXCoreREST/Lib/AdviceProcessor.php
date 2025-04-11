@@ -19,7 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\Advice\GetAdviceAction;
+use MikoPBX\PBXCoreREST\Lib\Advice\GetAdviceListAction;
 use Phalcon\Di\Injectable;
 
 
@@ -48,7 +48,7 @@ class AdviceProcessor extends Injectable
         $res->processor = __METHOD__;
         $action = $request['action'];
         if ('getList' === $action) {
-            $res = GetAdviceAction::main();
+            $res = GetAdviceListAction::main();
         } else {
             $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
         }

@@ -21,10 +21,10 @@
 namespace MikoPBX\PBXCoreREST\Lib\Advice;
 
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Workers\WorkerPrepareAdvice;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\Common\Providers\EventBusProvider;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
@@ -33,15 +33,8 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Advice
  */
-class GetAdviceAction extends Injectable
+class GetAdviceListAction extends Injectable
 {
-    /**
-     * The channel ID for advice notifications.
-     *
-     * @var string
-     */
-    public const string CHANNEL_ID = 'advice-pub';
-
     /**
      * Generates a list of notifications about the system, firewall, passwords, and wrong settings.
      *
@@ -80,15 +73,9 @@ class GetAdviceAction extends Injectable
         }
         $res->data['advice'] = $result;
         if (count($result) > 0) {
-            $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-                '/pbxcore/api/nchan/pub/' . self::CHANNEL_ID,
-                PBXCoreRESTClientProvider::HTTP_METHOD_POST,
-                $res->getResult(),
-                ['Content-Type' => 'application/json']
-            ]);
+            $di->get(EventBusProvider::SERVICE_NAME)->publish('advice', $res->getResult());
         }
         return $res;
     }
-
 
 }

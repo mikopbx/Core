@@ -37,7 +37,7 @@ use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckStorage;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckUpdates;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckWebPasswords;
-use MikoPBX\PBXCoreREST\Lib\Advice\GetAdviceAction;
+use MikoPBX\PBXCoreREST\Lib\Advice\GetAdviceListAction;
 use Phalcon\Di\Di;
 use Throwable;
 
@@ -151,7 +151,7 @@ class WorkerPrepareAdvice extends WorkerBase
 
         // If there is new advice, send it to the browser.
         if ($this->newAdvice) {
-            GetAdviceAction::main();
+            GetAdviceListAction::main();
         }
 
         // Optionally, wait for all child processes to finish.
