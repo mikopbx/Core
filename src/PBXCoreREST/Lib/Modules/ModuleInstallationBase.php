@@ -30,6 +30,7 @@ use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerModuleInstaller;
 use Phalcon\Di\Di;
+use Redis;
 use Phalcon\Di\Injectable;
 use Throwable;
 
@@ -313,9 +314,8 @@ class ModuleInstallationBase extends Injectable
      * 
      * @return void
      */
-    public static function processModulePostInstallations(): void
+    public static function processModulePostInstallations(Redis $redis): void
     {
-        $redis = Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
 
         try {
             // Check if there are modules waiting for post-installation

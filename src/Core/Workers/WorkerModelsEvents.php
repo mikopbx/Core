@@ -66,6 +66,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadTimezoneAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadVoicemailAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadWorkerCallEventsAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\RestartPBXCoreAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessCustomFiles;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessOtherModels;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessPBXSettings;
@@ -233,6 +234,7 @@ class WorkerModelsEvents extends WorkerBase
             ReloadWorkerCallEventsAction::class,
             ReloadRecordingSettingsAction::class,
             ReloadRecordSavePeriodAction::class,
+            ReloadAdviceAction::class,
             ReloadCloudDescriptionAction::class,
             ReloadCloudParametersAction::class
         ];
@@ -298,8 +300,8 @@ class WorkerModelsEvents extends WorkerBase
 
             // Check if enough time has passed since the last change
             if (
-                !array_key_exists(ReloadModuleStateAction::class, $this->plannedReloadActions)
-                and
+                //!array_key_exists(ReloadModuleStateAction::class, $this->plannedReloadActions)
+                //and
                 (time() - $this->last_change) < $this->timeout
             ) {
                 SystemMessages::sysLogMsg(__METHOD__, "Wait more time before starting the reload.", LOG_DEBUG);
@@ -366,8 +368,6 @@ class WorkerModelsEvents extends WorkerBase
                 // Fill the modified tables array with the changes from the received message
                 $this->fillModifiedTables($receivedMessage);
 
-                // Check the model events to renew advice cache
-                WorkerPrepareAdvice::afterModelEvents($receivedMessage);
             }
 
             // Start the reload process if there are modified tables

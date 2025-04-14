@@ -24,7 +24,6 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PBXSettings\PbxSettingsConstantsTrait;
 use MikoPBX\Common\Models\PBXSettings\PbxSettingsDefaultValuesTrait;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Common\Providers\RedisClientProvider;
 use Phalcon\Di\Di;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
@@ -176,7 +175,7 @@ class PbxSettings extends ModelsBase
         }
         $data->value = PbxSettings::getDefaultArrayValues()[$key]??'';
 
-        $redis = Di::GetDefault()->getShared(RedisClientProvider::SERVICE_NAME);
+        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
         
         $result =  $data->update();
         if ($result) {

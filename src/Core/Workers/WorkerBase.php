@@ -378,9 +378,6 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
                         if ($this->managementRedis) {
                             $this->managementRedis->close();
                         }
-                        if ($this->pubSubRedis) {
-                            $this->pubSubRedis->close();
-                        }
                     }
                     exit(0);
                 }
@@ -397,9 +394,6 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
                 if ($this instanceof WorkerRedisBase) {
                     if ($this->managementRedis) {
                         $this->managementRedis->close();
-                    }
-                    if ($this->pubSubRedis) {
-                        $this->pubSubRedis->close();
                     }
                 }
                 exit(0);
@@ -498,6 +492,7 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     {
         $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
         $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
+        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
         $errorMessage = $error['message'] ?? 'Unknown error';
 
         SystemMessages::sysLogMsg(
@@ -505,6 +500,7 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             sprintf(
                 self::LOG_FORMAT_ERROR_SHUTDOWN,
                 $workerName,
+                $processType,
                 $errorMessage,
                 $namespacePath,
                 $timeElapsedSecs,

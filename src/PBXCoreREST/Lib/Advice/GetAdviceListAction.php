@@ -27,6 +27,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Common\Providers\EventBusProvider;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
+use MikoPBX\Core\System\SystemMessages;
 
 /**
  * Get active calls based on CDR data.
@@ -48,10 +49,33 @@ class GetAdviceListAction extends Injectable
         $result = [];
         $di = Di::getDefault();
         $translation = $di->get(TranslationProvider::SERVICE_NAME);
-        $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
         foreach (WorkerPrepareAdvice::ARR_ADVICE_TYPES as $adviceType) {
             $cacheKey = WorkerPrepareAdvice::getCacheKey($adviceType['type']);
-            $advice = $managedCache->get($cacheKey) ?? [];
+            $advice = [];
+            
+            // Защитная обработка для случаев повреждения данных в кеше
+            try {
+                $cachedData = $managedCache->get($cacheKey);
+                if ($cachedData !== null) {
+                    $advice = $cachedData;
+                }
+            } catch (\Throwable $e) {
+                // Если произошла ошибка десериализации, логируем и продолжаем
+                SystemMessages::sysLogMsg(
+                    __METHOD__, 
+                    "Error getting advice from cache ({$cacheKey}): " . $e->getMessage(),
+                    LOG_WARNING
+                );
+                // Удаляем повреждённый кеш
+                try {
+                    $managedCache->delete($cacheKey);
+                } catch (\Throwable $e) {
+                    // Игнорируем ошибки при очистке кеша
+                }
+                continue;
+            }
+            
             foreach ($advice as $key => $messages) {
                 if (!isset($result[$key])) {
                     $result[$key] = [];

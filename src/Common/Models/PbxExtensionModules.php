@@ -172,8 +172,12 @@ class PbxExtensionModules extends ModelsBase
             $modulesArray = PbxExtensionModules::find($parameters)->toArray();
             if ($useCache) {
                 foreach ($modulesArray as $module) {
-                    $redis->hset($cacheKey, $module['uniqid'], $module);
+                    $redis->hset($cacheKey, $module['uniqid'], json_encode($module));
                 }
+            }
+        } else {
+            foreach ($modulesArray as $uniqid => $module) {
+                $modulesArray[$uniqid] = json_decode($module, true);
             }
         }
         return $modulesArray;

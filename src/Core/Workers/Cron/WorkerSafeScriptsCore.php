@@ -23,7 +23,7 @@ require_once 'Globals.php';
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Core\Workers\WorkerRedisBase;
-use MikoPBX\Common\Providers\{PBXConfModulesProvider, RedisClientProvider};
+use MikoPBX\Common\Providers\{PBXConfModulesProvider};
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, SystemMessages, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
@@ -339,6 +339,7 @@ class WorkerSafeScriptsCore extends WorkerBase
             self::CHECK_BY_REDIS =>
                 [
                     WorkerApiCommands::class,
+                    WorkerPrepareAdvice::class,
                 ],
             self::CHECK_BY_AMI =>
                 [
@@ -352,7 +353,6 @@ class WorkerSafeScriptsCore extends WorkerBase
                 ],
             self::CHECK_BY_PID_NOT_ALERT =>
                 [
-                    WorkerPrepareAdvice::class,
                     WorkerMarketplaceChecker::class,
                     WorkerBeanstalkdTidyUp::class,
                     WorkerCheckFail2BanAlive::class,
@@ -546,14 +546,10 @@ class WorkerSafeScriptsCore extends WorkerBase
     protected function checkWorkerRedis(string $workerClassName): void
     {
         try {
-            $redis = RedisClientProvider::getWorkerManagementConnection($this->di);
-            if ($redis === null) {
-                throw new RuntimeException('Failed to create Redis connection');
-            }
-
+            
             $heartbeatKey = WorkerRedisBase::REDIS_HEARTBEAT_KEY_PREFIX . $workerClassName;
 
-            $lastHeartbeat = $redis->get($heartbeatKey);
+            $lastHeartbeat = $this->redis->get($heartbeatKey);
 
             if ($lastHeartbeat !== false && (time() - (int)$lastHeartbeat) < 10) {
                 return;
@@ -561,7 +557,7 @@ class WorkerSafeScriptsCore extends WorkerBase
 
             // Check status key instead of using pub/sub
             $statusKey = WorkerRedisBase::REDIS_STATUS_KEY_PREFIX . $workerClassName;
-            $status = $redis->get($statusKey);
+            $status = $this->redis->get($statusKey);
 
             if ($status !== false) {
                 $status = json_decode($status, true);

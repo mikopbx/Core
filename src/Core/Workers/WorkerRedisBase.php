@@ -6,7 +6,6 @@ namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\RedisClientProvider;
-use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use Redis;
 use RuntimeException;
@@ -53,13 +52,16 @@ abstract class WorkerRedisBase extends WorkerBase
      * Redis connections
      */
     protected ?Redis $managementRedis = null;
-    protected ?Redis $pubSubRedis = null;
 
     /**
      * Child process PIDs
      */
-    protected ?int $heartbeatPid = null;
     protected ?int $subscriberPid = null;
+    
+    /**
+     * Last heartbeat time
+     */
+    protected float $lastHeartbeatTime = 0;
 
     /**
      * Initialize Redis-based worker with heartbeat and subscription management
@@ -92,10 +94,11 @@ abstract class WorkerRedisBase extends WorkerBase
                     sleep(1);
                 }
             }
-
-            // Then start processes
-            $this->startHeartbeatProcess();
-            $this->startSubscriberProcess();
+            
+            // Set last heartbeat time
+            $this->lastHeartbeatTime = microtime(true);
+            // Initial heartbeat
+            $this->updateWorkerStatus();
 
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
@@ -126,189 +129,13 @@ abstract class WorkerRedisBase extends WorkerBase
             $this->di->register(new RedisClientProvider());
         }
 
-        $this->managementRedis = RedisClientProvider::getWorkerManagementConnection($this->di);
-        $this->pubSubRedis = RedisClientProvider::getPubSubConnection($this->di);
+        $this->managementRedis = $this->di->get(RedisClientProvider::SERVICE_NAME);
 
-        if ($this->managementRedis === null || $this->pubSubRedis === null) {
+        if ($this->managementRedis === null) {
             throw new RuntimeException('Failed to initialize Redis connections');
         }
 
         $this->updateWorkerStatus();
-    }
-
-    /**
-     * Start heartbeat process to monitor worker health
-     */
-    protected function startHeartbeatProcess(): void
-    {
-        $pid = pcntl_fork();
-
-        if ($pid === -1) {
-            throw new RuntimeException('Failed to fork heartbeat process');
-        }
-
-        if ($pid === 0) {
-            // Child process
-            try {
-                $this->setForked();
-                cli_set_process_title(static::class . '_heartbeat');
-                $this->setProcessType(self::PROCESS_TYPES['HEARTBEAT']);
-                $this->runHeartbeat();
-            } catch (Throwable $e) {
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
-                exit(1);
-            }
-        }
-
-        $this->heartbeatPid = $pid;
-    }
-
-    /**
-     * Run the heartbeat loop
-     */
-    protected function runHeartbeat(): void
-    {
-        while (true) {
-            try {
-                // Check parent first
-                if (!$this->checkParentProcess()) {
-                    SystemMessages::sysLogMsg(static::class, "Parent process not responding", LOG_WARNING);
-                    exit(1);
-                }
-                $this->updateWorkerStatus();
-                sleep(self::REDIS_HEARTBEAT_INTERVAL);
-            } catch (Throwable $e) {
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Heartbeat error: " . $e->getMessage(),
-                    LOG_WARNING
-                );
-                sleep(self::REDIS_RECONNECT_INTERVAL);
-            }
-        }
-    }
-
-    /**
-     * Check if parent process is still alive
-     */
-    protected function checkParentProcess(): bool
-    {
-        $ppid = posix_getppid();
-        if ($ppid === 1) {
-            return false;
-        }
-        return posix_kill($ppid, 0);
-    }
-
-    /**
-     * Start subscriber process for Redis pub/sub messages
-     */
-    protected function startSubscriberProcess(): void
-    {
-        $pid = pcntl_fork();
-
-        if ($pid === -1) {
-            throw new RuntimeException('Failed to fork subscriber process');
-        }
-
-        if ($pid === 0) {
-            // Child process
-            try {
-                $this->setForked();
-                cli_set_process_title(static::class . '_subscriber');
-                $this->setProcessType(self::PROCESS_TYPES['SUBSCRIBER']);
-                $this->runSubscriber();
-            } catch (Throwable $e) {
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
-                exit(1);
-            }
-        }
-
-        $this->subscriberPid = $pid;
-    }
-
-    protected function runSubscriber(): void
-    {
-        $connectionAttempts = 0;
-        $maxConnectionAttempts = 3;
-        $lastPingTime = 0;
-        $pingInterval = 30; // Ping every 30 seconds to keep connection alive
-        
-        while (true) {
-            try {
-                // Check parent first
-                if (!$this->checkParentProcess()) {
-                    SystemMessages::sysLogMsg(static::class, "Parent process not responding", LOG_WARNING);
-                    exit(1);
-                }
-
-                $redis = RedisClientProvider::getPubSubConnection($this->di);
-                if ($redis === null) {
-                    throw new RuntimeException('Failed to create Redis connection');
-                }
-                
-                // Reset connection attempts on successful connection
-                $connectionAttempts = 0;
-                
-                // Subscribe to the command channel
-                $channels = [
-                    self::REDIS_COMMAND_CHANNEL_PREFIX . static::class  // Only subscribe to commands
-                ];
-                
-                // Set read timeout to prevent permanent blocking
-                $redis->setOption(Redis::OPT_READ_TIMEOUT, 5.0);
-                
-                // Use a non-blocking approach with a timeout
-                $redis->subscribe($channels, function($redis, $channel, $message) use (&$lastPingTime) {
-                    $lastPingTime = time(); // Update last activity time
-                    $this->handleRedisMessage($redis, $channel, $message);
-                    return true; // Continue subscription
-                });
-                
-                // This code runs if subscribe() returns (should not happen normally)
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Redis subscription returned unexpectedly, reconnecting",
-                    LOG_DEBUG
-                );
-                
-            } catch (Throwable $e) {
-                $connectionAttempts++;
-                
-                // Only log warning for persistent errors
-                $logLevel = ($connectionAttempts > $maxConnectionAttempts) ? LOG_WARNING : LOG_DEBUG;
-                
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Subscriber error (if once it is ok!), will retry: " . $e->getMessage(),
-                    $logLevel
-                );
-                
-                // Progressive backoff: 5s, 10s, 15s, etc.
-                $retryDelay = self::REDIS_RECONNECT_INTERVAL * min($connectionAttempts, 5);
-                sleep($retryDelay);
-            }
-        }
-    }
-
-    /**
-     * Handle incoming Redis messages
-     *
-     * @param Redis  $redis   Redis instance
-     * @param string $channel Channel name
-     * @param string $message Message content
-     */
-    public function handleRedisMessage(Redis $redis, string $channel, string $message): void
-    {
-        try {
-            $data = json_decode($message, true, 512, JSON_THROW_ON_ERROR);
-
-            if (str_starts_with($channel, self::REDIS_COMMAND_CHANNEL_PREFIX)) {
-                $this->handleCommandMessage($data);
-            }
-        } catch (Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        }
     }
 
     protected function handleSignals(): void
@@ -320,14 +147,9 @@ abstract class WorkerRedisBase extends WorkerBase
                         // Main process - clean shutdown
                         $this->setWorkerState(self::STATE_STOPPING);
 
-                        // First kill subscriber (non-blocking)
+                        // Kill subscriber if exists (non-blocking)
                         if ($this->subscriberPid !== null) {
                             posix_kill($this->subscriberPid, SIGTERM);
-                        }
-
-                        // Then kill heartbeat (non-blocking)
-                        if ($this->heartbeatPid !== null) {
-                            posix_kill($this->heartbeatPid, SIGTERM);
                         }
 
                         // Wait for children to finish
@@ -338,13 +160,10 @@ abstract class WorkerRedisBase extends WorkerBase
                         break;
 
                     case self::PROCESS_TYPES['SUBSCRIBER']:
-                    case self::PROCESS_TYPES['HEARTBEAT']:
+                    case self::PROCESS_TYPES['WORKER']:
                         // Child processes - clean exit
                         if ($this->managementRedis) {
                             $this->managementRedis->close();
-                        }
-                        if ($this->pubSubRedis) {
-                            $this->pubSubRedis->close();
                         }
                         break;
                 }
@@ -438,7 +257,6 @@ abstract class WorkerRedisBase extends WorkerBase
                 'class' => static::class,
                 'state' => $this->workerState,
                 'start_time' => $this->workerStartTime,
-                'heartbeat_pid' => $this->heartbeatPid,
                 'subscriber_pid' => $this->subscriberPid,
                 'updated_at' => microtime(true),
                 'memory_usage' => memory_get_usage(true)
@@ -462,11 +280,9 @@ abstract class WorkerRedisBase extends WorkerBase
     {
         $this->setWorkerState(self::STATE_STOPPING);
 
-        // Terminate child processes
-        foreach ([$this->heartbeatPid, $this->subscriberPid] as $pid) {
-            if ($pid !== null && posix_kill($pid, 0)) {
-                posix_kill($pid, SIGTERM);
-            }
+        // Terminate subscriber process if exists
+        if ($this->subscriberPid !== null && posix_kill($this->subscriberPid, 0)) {
+            posix_kill($this->subscriberPid, SIGTERM);
         }
 
         // Clean up Redis keys
@@ -494,12 +310,49 @@ abstract class WorkerRedisBase extends WorkerBase
             $this->managementRedis->close();
             $this->managementRedis = null;
         }
-        if ($this->pubSubRedis) {
-            $this->pubSubRedis->close();
-            $this->pubSubRedis = null;
-        }
 
         // Create new connections for forked process
         $this->initializeRedis();
+    }
+
+      /**
+     * Start a worker process
+     * 
+     * @param callable $taskFunction The function to execute in worker process
+     * @return int The PID of the started worker
+     */
+    protected function startWorkerProcess(callable $taskFunction): int
+    {
+        $pid = pcntl_fork();
+
+        if ($pid === -1) {
+            throw new RuntimeException('Failed to fork worker process');
+        }
+
+        if ($pid === 0) {
+            // This is the child process
+            try {
+                $this->setForked();
+                $this->setProcessType(self::PROCESS_TYPES['WORKER']);
+                $taskFunction();
+                exit(0);
+            } catch (Throwable $e) {
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                exit(1);
+            }
+        }
+        return $pid;
+    }
+
+    /**
+     * Check if heartbeat should be sent
+     */
+    protected function checkHeartbeat(): void
+    {
+        $now = microtime(true);
+        if (($now - $this->lastHeartbeatTime) >= self::REDIS_HEARTBEAT_INTERVAL) {
+            $this->updateWorkerStatus();
+            $this->lastHeartbeatTime = $now;
+        }
     }
 }
