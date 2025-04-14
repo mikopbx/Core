@@ -23,7 +23,6 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Controllers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
@@ -65,18 +64,14 @@ class BaseController extends Controller
         }
 
         try {
-            // Initialize Redis connection
-            if (!$this->di->has(RedisClientProvider::SERVICE_NAME)) {
-                $this->di->register(new RedisClientProvider());
-            }
-            $apiRedis = RedisClientProvider::getApiRequestsConnection($this->di);
-            $pubSubRedis = RedisClientProvider::getPubSubConnection($this->di);
+         
+         
 
             // Generate unique request ID
             $requestMessage['request_id'] = uniqid('req_', true);
 
             // Push request to queue
-            $apiRedis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
+            $this->redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
 
             if ($requestMessage['async']) {
                 $this->response->setPayloadSuccess(['success' => true]);
@@ -94,7 +89,7 @@ class BaseController extends Controller
             while (time() - $startTime < $maxTimeout) {
                 try {
                     // Check if response is ready
-                    $encodedResponse = $apiRedis->get($responseKey);
+                    $encodedResponse = $this->redis->get($responseKey);
                     if ($encodedResponse !== false) {
                         $response = json_decode($encodedResponse, true);
                         break;
@@ -106,9 +101,9 @@ class BaseController extends Controller
                     
                     try {
                         // Set read timeout for subscription
-                        $pubSubRedis->setOption(3, $subscribeTimeout); // 3 is Redis::OPT_READ_TIMEOUT
+                        $this->redis->setOption(3, $subscribeTimeout); // 3 is Redis::OPT_READ_TIMEOUT
                         
-                        $pubSubRedis->subscribe([$responseKey], function($redis, $channel, $message) use (&$gotResponse) {
+                        $this->redis->subscribe([$responseKey], function($redis, $channel, $message) use (&$gotResponse) {
                             if ($message === 'ready') {
                                 $gotResponse = true;
                                 $redis->unsubscribe([$channel]);
@@ -134,7 +129,7 @@ class BaseController extends Controller
                     }
 
                     if ($gotResponse) {
-                        $encodedResponse = $apiRedis->get($responseKey);
+                        $encodedResponse = $this->redis->get($responseKey);
                         if ($encodedResponse !== false) {
                             $response = json_decode($encodedResponse, true);
                             break;
@@ -181,10 +176,6 @@ class BaseController extends Controller
                     // Exponential backoff with jitter
                     $sleepTime = min(pow(2, $retryCount) * 100000, 2000000) + mt_rand(0, 100000);
                     usleep($sleepTime);
-                    
-                    // Reconnect
-                    $pubSubRedis = RedisClientProvider::getPubSubConnection($this->di);
-                    $apiRedis = RedisClientProvider::getApiRequestsConnection($this->di);
                 } catch (Throwable $otherException) {
                     // Handle Redis connection errors with retry
                     $retryCount++;
@@ -223,16 +214,13 @@ class BaseController extends Controller
                     // Exponential backoff with jitter
                     $sleepTime = min(pow(2, $retryCount) * 100000, 2000000) + mt_rand(0, 100000);
                     usleep($sleepTime);
-                    
-                    // Reconnect
-                    $pubSubRedis = RedisClientProvider::getPubSubConnection($this->di);
-                    $apiRedis = RedisClientProvider::getApiRequestsConnection($this->di);
+        
                 }
             }
 
             // Clean up
             try {
-                $apiRedis->del($responseKey);
+                $this->redis->del($responseKey);
             } catch (Throwable $e) {
                 // Ignore cleanup errors
             }

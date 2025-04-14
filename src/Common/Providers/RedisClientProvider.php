@@ -70,6 +70,45 @@ class RedisClientProvider implements ServiceProviderInterface
     }
 
     /**
+     * Test Redis connection and basic operations
+     *
+     * @param Redis $redis
+     * @param bool $testPubSub Whether to test pub/sub functionality
+     * @param DiInterface $di
+     * @return bool
+     */
+    private static function testRedisConnection(Redis $redis, bool $testPubSub, DiInterface $di): bool
+    {
+        try {
+            // Test basic operations
+            $testKey = 'test:connection:' . uniqid();
+            $testValue = 'test_' . microtime(true);
+            
+            if (!$redis->set($testKey, $testValue, ['NX', 'EX' => 5])) {
+                return false;
+            }
+            
+            if ($redis->get($testKey) !== $testValue) {
+                return false;
+            }
+            
+            $redis->del($testKey);
+
+            // For pub/sub connections, we only test basic operations
+            // The actual pub/sub test will happen during subscription
+            return true;
+            
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                self::class,
+                "Redis connection test failed: " . $e->getMessage(),
+                LOG_WARNING
+            );
+            return false;
+        }
+    }
+
+    /**
      * Create a new Redis connection with common settings
      *
      * @param DiInterface $di
@@ -146,7 +185,9 @@ class RedisClientProvider implements ServiceProviderInterface
      * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
-    {  
+    {
+        $config = $di->getShared(ConfigProvider::SERVICE_NAME);
+        
         $di->set(
             self::SERVICE_NAME,
             function () use ($di) {
@@ -224,4 +265,25 @@ class RedisClientProvider implements ServiceProviderInterface
         return self::createRedisConnection($di, self::REDIS_DB_API_REQUESTS);
     }
 
+    /**
+     * Get a Redis connection for caching
+     *
+     * @param DiInterface $di
+     * @return Redis|null
+     */
+    public static function getCacheConnection(DiInterface $di): ?Redis
+    {
+        return self::createRedisConnection($di, self::REDIS_DB_CACHE);
+    }
+
+    /**
+     * Get a Redis connection for metadata
+     *
+     * @param DiInterface $di
+     * @return Redis|null
+     */
+    public static function getMetadataConnection(DiInterface $di): ?Redis
+    {
+        return self::createRedisConnection($di, self::REDIS_DB_METADATA);
+    }
 } 

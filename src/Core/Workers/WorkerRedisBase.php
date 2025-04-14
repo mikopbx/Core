@@ -227,37 +227,69 @@ abstract class WorkerRedisBase extends WorkerBase
         $this->subscriberPid = $pid;
     }
 
-protected function runSubscriber(): void
-{
-    while (true) {
-        try {
-            // Check parent first
-            if (!$this->checkParentProcess()) {
-                SystemMessages::sysLogMsg(static::class, "Parent process not responding", LOG_WARNING);
-                exit(1);
+    protected function runSubscriber(): void
+    {
+        $connectionAttempts = 0;
+        $maxConnectionAttempts = 3;
+        $lastPingTime = 0;
+        $pingInterval = 30; // Ping every 30 seconds to keep connection alive
+        
+        while (true) {
+            try {
+                // Check parent first
+                if (!$this->checkParentProcess()) {
+                    SystemMessages::sysLogMsg(static::class, "Parent process not responding", LOG_WARNING);
+                    exit(1);
+                }
+
+                $redis = RedisClientProvider::getPubSubConnection($this->di);
+                if ($redis === null) {
+                    throw new RuntimeException('Failed to create Redis connection');
+                }
+                
+                // Reset connection attempts on successful connection
+                $connectionAttempts = 0;
+                
+                // Subscribe to the command channel
+                $channels = [
+                    self::REDIS_COMMAND_CHANNEL_PREFIX . static::class  // Only subscribe to commands
+                ];
+                
+                // Set read timeout to prevent permanent blocking
+                $redis->setOption(Redis::OPT_READ_TIMEOUT, 5.0);
+                
+                // Use a non-blocking approach with a timeout
+                $redis->subscribe($channels, function($redis, $channel, $message) use (&$lastPingTime) {
+                    $lastPingTime = time(); // Update last activity time
+                    $this->handleRedisMessage($redis, $channel, $message);
+                    return true; // Continue subscription
+                });
+                
+                // This code runs if subscribe() returns (should not happen normally)
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "Redis subscription returned unexpectedly, reconnecting",
+                    LOG_DEBUG
+                );
+                
+            } catch (Throwable $e) {
+                $connectionAttempts++;
+                
+                // Only log warning for persistent errors
+                $logLevel = ($connectionAttempts > $maxConnectionAttempts) ? LOG_WARNING : LOG_DEBUG;
+                
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "Subscriber error (if once it is ok!), will retry: " . $e->getMessage(),
+                    $logLevel
+                );
+                
+                // Progressive backoff: 5s, 10s, 15s, etc.
+                $retryDelay = self::REDIS_RECONNECT_INTERVAL * min($connectionAttempts, 5);
+                sleep($retryDelay);
             }
-
-            $redis = RedisClientProvider::getPubSubConnection($this->di);
-            if ($redis === null) {
-                throw new RuntimeException('Failed to create Redis connection');
-            }
-
-            $channels = [
-                self::REDIS_COMMAND_CHANNEL_PREFIX . static::class  // Only subscribe to commands
-            ];
-
-            $redis->subscribe($channels, [$this, 'handleRedisMessage']);
-
-        } catch (Throwable $e) {
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Subscriber error (if once it is ok!), will retry: " . $e->getMessage(),
-                LOG_DEBUG
-            );
-            sleep(self::REDIS_RECONNECT_INTERVAL); // Wait before retry
         }
     }
-}
 
     /**
      * Handle incoming Redis messages
@@ -422,8 +454,6 @@ protected function runSubscriber(): void
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
     }
-
-
 
     /**
      * Initiate graceful shutdown of the worker

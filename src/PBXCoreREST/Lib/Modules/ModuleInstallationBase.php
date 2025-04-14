@@ -21,6 +21,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -30,8 +31,6 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerModuleInstaller;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
-use MikoPBX\Common\Providers\RedisClientProvider;
-use Redis;
 use Throwable;
 
 /**
@@ -233,9 +232,8 @@ class ModuleInstallationBase extends Injectable
         );
 
         // Save installation state in Redis for post-installation handling after worker restart
-        $redis = RedisClientProvider::getApiRequestsConnection(Di::getDefault());
         $installationKey = self::REDIS_MODULE_INSTALLATION_KEY . $this->moduleUniqueId;
-        $redis->setex(
+        $this->redis->setex(
             $installationKey,
             self::REDIS_MODULE_INSTALL_TTL,
             json_encode([
@@ -248,7 +246,7 @@ class ModuleInstallationBase extends Injectable
             ])
         );
         // Add to queue for post-installation processing
-        $redis->rPush(self::REDIS_MODULE_POST_INSTALL_QUEUE, $this->moduleUniqueId);
+        $this->redis->rPush(self::REDIS_MODULE_POST_INSTALL_QUEUE, $this->moduleUniqueId);
 
         $php = Util::which('php');
         $workerModuleInstallerPath = Util::getFilePathByClassName(WorkerModuleInstaller::class);
@@ -313,11 +311,12 @@ class ModuleInstallationBase extends Injectable
      * Check for pending module installations that need post-installation processing
      * This method runs after worker restart to complete module installations
      * 
-     * @param Redis $redis Redis connection to use
      * @return void
      */
-    public static function processModulePostInstallations(Redis $redis): void
+    public static function processModulePostInstallations(): void
     {
+        $redis = Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
+
         try {
             // Check if there are modules waiting for post-installation
             $moduleInstallKey = self::REDIS_MODULE_POST_INSTALL_QUEUE;
@@ -342,7 +341,7 @@ class ModuleInstallationBase extends Injectable
 
             // Process each pending module
             foreach ($pendingModules as $moduleId) {
-                self::completeModuleInstallation($moduleId, $redis);
+                self::completeModuleInstallation($moduleId);
                 // Remove this module from the list - corrected parameter order
                 // lrem signature: (string $key, mixed $value, int $count = 0)
                 $redis->lRem($moduleInstallKey, $moduleId, 1);
@@ -378,12 +377,12 @@ class ModuleInstallationBase extends Injectable
      * Complete installation for a specific module
      * 
      * @param string $moduleId The unique ID of the module
-     * @param Redis $redis Redis connection to use
      * @return void
      */
-    public static function completeModuleInstallation(string $moduleId, Redis $redis): void
+    public static function completeModuleInstallation(string $moduleId): void
     {
         try {
+            $redis = Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
             $installationKey = self::REDIS_MODULE_INSTALLATION_KEY . $moduleId;
             $installData = $redis->get($installationKey);
             

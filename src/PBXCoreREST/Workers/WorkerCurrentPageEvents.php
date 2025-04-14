@@ -22,7 +22,6 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\PBXCoreREST\Lib\Sip\GetPeersStatusesAction;
 use Redis;
@@ -61,8 +60,6 @@ class WorkerCurrentPageEvents extends WorkerBase
      */
     public function start(array $argv): void
     {
-        $this->redis = $this->getDI()->get(RedisClientProvider::class);
-    
         foreach (self::PAGE_API_MAPPING as $pageName => $apiMapping) {
             $viewers = $this->redis->sMembers("page:{$pageName}:viewers");
             if (!empty($viewers)) {

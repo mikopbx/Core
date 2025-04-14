@@ -352,12 +352,12 @@ class WorkerSafeScriptsCore extends WorkerBase
                 ],
             self::CHECK_BY_PID_NOT_ALERT =>
                 [
+                    WorkerPrepareAdvice::class,
                     WorkerMarketplaceChecker::class,
                     WorkerBeanstalkdTidyUp::class,
                     WorkerCheckFail2BanAlive::class,
                     WorkerLogRotate::class,
                     WorkerRemoveOldRecords::class,
-                    WorkerPrepareAdvice::class,
                     WorkerNotifyAdministrator::class,
                 ],
         ];

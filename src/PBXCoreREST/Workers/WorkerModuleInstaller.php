@@ -23,7 +23,6 @@ namespace MikoPBX\PBXCoreREST\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
-use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
@@ -153,15 +152,13 @@ class WorkerModuleInstaller extends WorkerBase
                         SystemMessages::sysLogMsg(__CLASS__, "Installation error: {$errorMessage}", LOG_ERR);
                     } else {
                         // Installation succeeded
-                        // Update Redis state to indicate successful installation
-                        $apiRedis = RedisClientProvider::getApiRequestsConnection($this->di);
                         
                         // Update module installation status in Redis
                         $installationKey = ModuleInstallationBase::REDIS_MODULE_INSTALLATION_KEY . $moduleUniqueID;
-                        $installData = json_decode($apiRedis->get($installationKey) ?? '{}', true);
+                        $installData = json_decode($this->redis->get($installationKey) ?? '{}', true);
                         $installData['status'] = 'installed';
                         $installData['installComplete'] = true;
-                        $apiRedis->setex(
+                        $this->redis->setex(
                             $installationKey,
                             ModuleInstallationBase::REDIS_MODULE_INSTALL_TTL,
                             json_encode($installData)

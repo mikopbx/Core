@@ -81,7 +81,6 @@ class WorkerPrepareAdvice extends WorkerBase
         $di = Di::getDefault();
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
         $cacheKeys = [];
-        $isNeedUpdate = false;
         switch ($record['model']) {
             case PbxSettings::class:
                 switch ($record['recordId']) {
@@ -113,11 +112,15 @@ class WorkerPrepareAdvice extends WorkerBase
         }
         foreach ($cacheKeys as $cacheKey => $value) {
             $managedCache->delete($cacheKey);
-            $isNeedUpdate = true;
         }
-        if ($isNeedUpdate) {
-            Processes::processPHPWorker(self::class, 'start');
-        }
+    }
+
+    /**
+     * Get check interval for worker monitoring
+     */
+    public static function getCheckInterval(): int
+    {
+        return 15; // Check every 15 seconds§
     }
 
     /**
@@ -130,6 +133,8 @@ class WorkerPrepareAdvice extends WorkerBase
     public function start(array $argv): void
     {
         $adviceTypes = self::ARR_ADVICE_TYPES;
+
+
 
         // Asynchronously process each advice type using pcntl_fork
         foreach ($adviceTypes as $adviceType) {
@@ -167,14 +172,13 @@ class WorkerPrepareAdvice extends WorkerBase
         $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
         $currentAdviceClass = $adviceType['type'];
         $cacheKey = self::getCacheKey($currentAdviceClass);
-        SystemMessages::sysLogMsg(__METHOD__, "Start advice processing: $cacheKey" . PHP_EOL, LOG_DEBUG);
         if (!$managedCache->has($cacheKey)) {
             // No cache - generate advice and store in cache
             try {
+                SystemMessages::sysLogMsg(__METHOD__, "Start advice processing: $cacheKey", LOG_DEBUG);
                 $checkObj = new $currentAdviceClass();
                 $newAdvice = $checkObj->process();
                 $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
-                SystemMessages::sysLogMsg(__METHOD__, "New advice procesed: $cacheKey" . PHP_EOL, LOG_DEBUG);
                 // Send advice to the browser
                 GetAdviceListAction::main();
             } catch (Throwable $e) {
@@ -188,6 +192,8 @@ class WorkerPrepareAdvice extends WorkerBase
                     LOG_WARNING
                 );
             }
+        } else {
+            SystemMessages::sysLogMsg(__METHOD__, "Advice already exists in cache: $cacheKey", LOG_DEBUG);
         }
     }
 
