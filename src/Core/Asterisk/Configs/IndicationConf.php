@@ -21,8 +21,6 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Util;
-
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -65,6 +63,6 @@ class IndicationConf extends AsteriskConfigClass
         $data     = file_get_contents($filePath);
         $conf     = str_replace('{country}', $country, $data);
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/indications.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

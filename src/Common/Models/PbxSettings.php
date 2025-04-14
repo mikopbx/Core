@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,10 @@
 namespace MikoPBX\Common\Models;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\PBXSettings\PbxSettingsConstantsTrait;
+use MikoPBX\Common\Models\PBXSettings\PbxSettingsDefaultValuesTrait;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use Phalcon\Di\Di;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
@@ -36,7 +39,9 @@ use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 class PbxSettings extends ModelsBase
 {
     use PbxSettingsConstantsTrait;
+    use PbxSettingsDefaultValuesTrait;
 
+    private const string CACHE_KEY = 'PbxSettings';
     /**
      * Key by which the value is stored
      *
@@ -52,167 +57,75 @@ class PbxSettings extends ModelsBase
      */
     public ?string $value = null;
 
+
     /**
      *  Returns default or saved values for all predefined keys if it exists on DB
+     * 
+     * @param bool $useCache true - use cache, false - get from DB
      *
      * @return array
      */
-    public static function getAllPbxSettings(): array
+    public static function getAllPbxSettings(bool $useCache = true): array
     {
-        $arrayOfSettings = self::getDefaultArrayValues();
-        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $cacheKey = ModelsBase::makeCacheKey(PbxSettings::class, 'getAllPbxSettings');
-        $currentSettings = $redis->get($cacheKey);
-        if (empty($currentSettings)) {
-            $currentSettings = parent::find();
-            $redis->set($cacheKey, $currentSettings, 3600);
+        $getDefaultArrayValues = self::getDefaultArrayValues();
+        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+        $currentSettings = [];
+
+        if ($useCache) {
+           $currentSettings =$redis->hgetall(self::CACHE_KEY)??[];
+        }
+
+        if ($currentSettings === []) {
+            $currentSettings = PbxSettings::find()->toArray();
+            foreach ($currentSettings as $record) {
+                $redis->hset(self::CACHE_KEY, $record['key'], $record['value']);
+            }
         }
         foreach ($currentSettings as $record) {
-            if (isset($record->value)) {
-                $arrayOfSettings[$record->key] = $record->value;
+            if (isset($record['value'])) {
+                $getDefaultArrayValues[$record['key']] = $record['value'];
             }
         }
 
-        return $arrayOfSettings;
-    }
-
-    /**
-     * Prepares default values for PbxSettings keys
-     *
-     * @return array default values
-     */
-    public static function getDefaultArrayValues(): array
-    {
-        return [
-            PbxSettings::PBX_NAME => 'PBX system',
-            PbxSettings::VIRTUAL_HARDWARE_TYPE => 'BARE METAL',
-            PbxSettings::PBX_DESCRIPTION => '',
-            PbxSettings::RESTART_EVERY_NIGHT => '0',
-            PbxSettings::SIP_PORT => '5060',
-            PbxSettings::EXTERNAL_SIP_PORT => '5060',
-            PbxSettings::TLS_PORT => '5061',
-            PbxSettings::EXTERNAL_TLS_PORT => '5061',
-            PbxSettings::SIP_DEFAULT_EXPIRY => '120',
-            PbxSettings::SIP_MIN_EXPIRY => '60',
-            PbxSettings::SIP_AUTH_PREFIX => '',
-            PbxSettings::SIP_MAX_EXPIRY => '3600',
-            PbxSettings::RTP_PORT_FROM => '10000',
-            PbxSettings::RTP_PORT_TO => '10200',
-            PbxSettings::RTP_STUN_SERVER => '',
-            PbxSettings::USE_WEB_RTC => '0',
-            PbxSettings::IAX_PORT => '4569',
-            PbxSettings::AMI_ENABLED => '1',
-            PbxSettings::AMI_PORT => '5038',
-            PbxSettings::AJAM_ENABLED => '1',
-            PbxSettings::AJAM_PORT => '8088',
-            PbxSettings::AJAM_PORT_TLS => '8089',
-            PbxSettings::SSH_PORT => '22',
-            PbxSettings::SSH_LOGIN => 'root',
-            PbxSettings::SSH_PASSWORD => 'admin',
-            PbxSettings::SSH_RSA_KEY => '',
-            PbxSettings::SSH_ID_RSA => '',
-            PbxSettings::SSH_ID_RSA_PUB => '',
-            PbxSettings::SSH_DSS_KEY => '',
-            PbxSettings::SSH_AUTHORIZED_KEYS => '',
-            PbxSettings::SSH_ECDSA_KEY => '',
-            PbxSettings::SSH_DISABLE_SSH_PASSWORD => '0',
-            PbxSettings::SSH_LANGUAGE => 'en',
-            PbxSettings::WEB_PORT => '80',
-            PbxSettings::WEB_HTTPS_PORT => '443',
-            PbxSettings::WEB_HTTPS_PUBLIC_KEY => '',
-            PbxSettings::WEB_HTTPS_PRIVATE_KEY => '',
-            PbxSettings::REDIRECT_TO_HTTPS => '0',
-            PbxSettings::MAIL_SMTP_USE_TLS => '0',
-            PbxSettings::MAIL_SMTP_CERT_CHECK => '0',
-            PbxSettings::MAIL_SMTP_HOST => '',
-            PbxSettings::MAIL_SMTP_PORT => '25',
-            PbxSettings::MAIL_SMTP_USERNAME => '',
-            PbxSettings::MAIL_SMTP_PASSWORD => '',
-            PbxSettings::MAIL_SMTP_FROM_USERNAME => 'PBX',
-            PbxSettings::MAIL_SMTP_SENDER_ADDRESS => '',
-            PbxSettings::MAIL_ENABLE_NOTIFICATIONS => '0',
-            PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT => 'You have missing call from <MailSMTPSenderAddress>',
-            PbxSettings::MAIL_TPL_MISSED_CALL_BODY => 'You have missed calls (NOTIFICATION_MISSEDCAUSE) from <NOTIFICATION_CALLERID> at <NOTIFICATION_DATE>',
-            PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER => '',
-            PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT => 'VoiceMail from PBX',
-            PbxSettings::MAIL_TPL_VOICEMAIL_BODY => 'See attach',
-            PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER => '',
-            PbxSettings::NTP_SERVER => '0.pool.ntp.org' . PHP_EOL . '1.pool.ntp.org' . PHP_EOL,
-            PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL => 'admin@mycompany.com',
-            PbxSettings::VOICEMAIL_EXTENSION => '*001',
-            PbxSettings::PBX_LANGUAGE => 'en-en',
-            PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH => '3',
-            PbxSettings::PBX_RECORD_CALLS => '1',
-            PbxSettings::PBX_RECORD_CALLS_INNER => '1',
-            PbxSettings::PBX_SPLIT_AUDIO_THREAD => '0',
-            PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN => '',
-            PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT => '',
-            PbxSettings::PBX_RECORD_SAVE_PERIOD => '',
-            PbxSettings::PBX_CALL_PARKING_EXT => '800',
-            PbxSettings::PBX_CALL_PARKING_FEATURE => '*2',
-            PbxSettings::PBX_CALL_PARKING_DURATION => '50',
-            PbxSettings::PBX_CALL_PARKING_START_SLOT => '801',
-            PbxSettings::PBX_CALL_PARKING_END_SLOT => '820',
-            PbxSettings::PBX_FEATURE_ATTENDED_TRANSFER => '##',
-            PbxSettings::PBX_FEATURE_BLIND_TRANSFER => '**',
-            PbxSettings::PBX_FEATURE_PICKUP_EXTEN => '*8',
-            PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT => '2500',
-            PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT => '45',
-            PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT => '3',
-            PbxSettings::PBX_FIREWALL_ENABLED => '0',
-            PbxSettings::PBX_FAIL2BAN_ENABLED => '0',
-            PbxSettings::PBX_FIREWALL_MAX_REQ => '0',
-            PbxSettings::PBX_TIMEZONE => 'Europe/Moscow',
-            PbxSettings::PBX_MANUAL_TIME_SETTINGS => '0',
-            PbxSettings::PBX_VERSION => '2020.1.1',
-            PbxSettings::PBX_ALLOW_GUEST_CALLS => '0',
-            PbxSettings::WEB_ADMIN_LOGIN => 'admin',
-            PbxSettings::WEB_ADMIN_PASSWORD => 'admin',
-            PbxSettings::WEB_ADMIN_LANGUAGE => 'en',
-            PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL => '',
-            PbxSettings::SYSTEM_EMAIL_FOR_MISSED => '',
-            PbxSettings::SEND_METRICS => '1',
-            PbxSettings::CLOUD_INSTANCE_ID => '',
-            PbxSettings::DISABLE_ALL_MODULES => '0',
-            PbxSettings::PBX_LICENSE => '',
-            PbxSettings::ENABLE_USE_NAT => '0',
-            PbxSettings::AUTO_UPDATE_EXTERNAL_IP => '0',
-            PbxSettings::EXTERNAL_SIP_HOST_NAME => '',
-            PbxSettings::EXTERNAL_SIP_IP_ADDR => '',
-        ];
+        return $getDefaultArrayValues;
     }
 
     /**
      * Returns default or saved value for key if it exists on DB
      *
      * @param $key string value key
-     *
+     * @param bool $useCache true - use cache, false - get from DB
+     * 
      * @return string
      */
-    public static function getValueByKey(string $key): string
+    public static function getValueByKey(string $key, bool $useCache = true): string
     {
         try {
-            $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
-            $cacheKey = ModelsBase::makeCacheKey(PbxSettings::class, 'getValueByKey');
-            $currentSettings = $redis->get($cacheKey);
-            if (empty($currentSettings)) {
-                $currentSettings = parent::find();
-                $redis->set($cacheKey, $currentSettings, 3600);
+            $value = '';
+            if ($useCache) {
+                $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+                $value = $redis->hget(self::CACHE_KEY, $key)??'';
             }
-
-            foreach ($currentSettings as $record) {
-                if (
-                    $record->key === $key
-                    && isset($record->value)
-                ) {
-                    return $record->value;
+            
+            // If value is not found in cache, get it from DB
+            if (empty($value)) {
+                $currentSettings = PbxSettings::findFirstByKey($key);
+                if ($currentSettings !== null) {
+                    if ($useCache) {
+                        $redis->hset(self::CACHE_KEY, $currentSettings->key, $currentSettings->value);
+                    }
+                    $value = $currentSettings->value;
                 }
             }
 
-            $arrOfDefaultValues = self::getDefaultArrayValues();
-            if (array_key_exists($key, $arrOfDefaultValues)) {
-                return $arrOfDefaultValues[$key];
+            // If value is not found in cache, get it from default values
+            if (empty($value)) {
+                $arrOfDefaultValues = self::getDefaultArrayValues();
+                if (array_key_exists($key, $arrOfDefaultValues)) {
+                    $value = $arrOfDefaultValues[$key];
+                }
             }
+            return $value;
         } catch (\Throwable $e) {
             CriticalErrorsHandler::handleException($e);
         }
@@ -227,7 +140,7 @@ class PbxSettings extends ModelsBase
      * @param $messages array error messages
      * @return bool Whether the save was successful or not.
      */
-    public static function setValue(string $key, string $value, array &$messages = []): bool
+    public static function setValueByKey(string $key, string $value, array &$messages = []): bool
     {
         $record = self::findFirstByKey($key);
         if ($record === null) {
@@ -241,17 +154,33 @@ class PbxSettings extends ModelsBase
         $result = $record->save();
         if (!$result) {
             $messages[] = $record->getMessages();
-        }else{
-            // Clean the cache in redis
-            try {
-                $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
-                foreach (['getValueByKey', 'getAllPbxSettings'] as $index){
-                    $cacheKey = ModelsBase::makeCacheKey(PbxSettings::class, $index);
-                    $redis->set($cacheKey, '', 1);
-                }
-            } catch (\Throwable $e) {
-                CriticalErrorsHandler::handleException($e);
-            }
+        } else {
+            $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+            $redis->hset(self::CACHE_KEY, $key, $value);
+        }
+        return $result;
+    }
+
+     /**
+     * Resets a general setting value.
+     *
+     * @param string $db_key The key of the general setting to be reset.
+     *
+     * @return bool True if the value was successfully reset to default, false otherwise.
+     */
+    public static function resetValueToDefault(string $key): bool
+    {
+        $data = PbxSettings::findFirstByKey($key);
+        if (null === $data) {
+            return true;
+        }
+        $data->value = PbxSettings::getDefaultArrayValues()[$key]??'';
+
+        $redis = Di::GetDefault()->getShared(RedisClientProvider::SERVICE_NAME);
+        
+        $result =  $data->update();
+        if ($result) {
+            $redis->hset(self::CACHE_KEY, $key, $data->value);
         }
         return $result;
     }

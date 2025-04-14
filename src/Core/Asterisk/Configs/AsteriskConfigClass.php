@@ -21,12 +21,15 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\System\Util;
 use Phalcon\Config\Config;
 use Phalcon\Di\Injectable;
 
@@ -73,6 +76,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     protected array $messages;
 
     /**
+     * @deprecated Use PbxSettings::getValueByKey instead
      * Array of PbxSettings values
      */
     protected array $generalSettings;
@@ -85,7 +89,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
         $this->config = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME);
         $this->booting = false;
         $this->mikoPBXConfig = new MikoPBXConfig();
-        $this->generalSettings = $this->mikoPBXConfig->getGeneralSettings();
+        $this->generalSettings = PbxSettings::getAllPbxSettings();
         $this->messages = [];
 
         if ($this->getDI()->has(RegistryProvider::SERVICE_NAME)) {
@@ -550,5 +554,17 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
                 $result = $this->priority;
         }
         return $result;
+    }
+
+    /**
+     * Saves the configuration to the file.
+     *
+     * @param string $config The configuration to save.
+     * @param string $filename The filename to save the configuration to.
+     */
+    protected function saveConfig(string $config, string $filename): void
+    {
+        $directory = Directories::getDir(Directories::AST_ETC_DIR);
+        Util::fileWriteContent($directory . '/' . $filename, $config);
     }
 }

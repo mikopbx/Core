@@ -3,7 +3,6 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\MikoPBXConfig;
 
 class ReloadCloudDescriptionAction implements ReloadActionInterface
 {
@@ -21,11 +20,9 @@ class ReloadCloudDescriptionAction implements ReloadActionInterface
         $defaultDescription = PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION;
 
         if ($cloudInstanceId === $webAdminPassword && $description !== $defaultDescription) {
-            $config = new MikoPBXConfig();
-            $config->setGeneralSettings(PbxSettings::PBX_DESCRIPTION, $defaultDescription);
+            PbxSettings::setValueByKey(PbxSettings::PBX_DESCRIPTION, $defaultDescription);
         } elseif ($description === $defaultDescription) {
-            $config = new MikoPBXConfig();
-            $config->resetGeneralSettings(PbxSettings::PBX_DESCRIPTION);
+            PbxSettings::resetValueToDefault(PbxSettings::PBX_DESCRIPTION);
         }
     }
 }

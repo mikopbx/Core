@@ -35,7 +35,7 @@ class HepConf extends AsteriskConfigClass
     // The module hook applying priority
     public int $priority = 1000;
 
-    protected string $description = 'cdr.conf';
+    protected string $description = 'hep.conf';
 
     /**
      * Generates the configuration for the hep.conf file.
@@ -51,7 +51,7 @@ class HepConf extends AsteriskConfigClass
             "capture_id = 1234 \n";
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/hep.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 
     /**

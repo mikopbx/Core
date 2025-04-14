@@ -82,6 +82,6 @@ class SayConf extends AsteriskConfigClass
                 '';
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/say.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

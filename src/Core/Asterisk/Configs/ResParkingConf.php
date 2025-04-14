@@ -117,7 +117,7 @@ class ResParkingConf extends AsteriskConfigClass
             "parkpos => $this->ParkingStartSlot-$this->ParkingEndSlot" . PHP_EOL . PHP_EOL;
 
         // Write the configuration content to the file
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/res_parking.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 
     /**

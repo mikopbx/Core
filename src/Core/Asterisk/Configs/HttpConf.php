@@ -43,19 +43,21 @@ class HttpConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $isEnable = intval($this->generalSettings[PbxSettings::AJAM_ENABLED]) === 1;
+        $isEnable = intval(PbxSettings::getValueByKey(PbxSettings::AJAM_ENABLED)) === 1;
+        $port = PbxSettings::getValueByKey(PbxSettings::AJAM_PORT);
+        $tlsPort = PbxSettings::getValueByKey(PbxSettings::AJAM_PORT_TLS);
         $enabled = ($isEnable) ? 'yes' : 'no';
         $conf    = "[general]".PHP_EOL .
             "enabled=$enabled".PHP_EOL .
             "bindaddr=0.0.0.0".PHP_EOL .
-            "bindport={$this->generalSettings[PbxSettings::AJAM_PORT]}".PHP_EOL .
+            "bindport={$port}".PHP_EOL .
             "prefix=asterisk".PHP_EOL .
             "enablestatic=yes".PHP_EOL.PHP_EOL;
-        if ( ! empty($this->generalSettings[PbxSettings::AJAM_PORT_TLS])) {
+        if ( ! empty($tlsPort)) {
             $keys_dir = '/etc/asterisk/keys';
             Util::mwMkdir($keys_dir);
-            $publicKey  = $this->generalSettings[PbxSettings::WEB_HTTPS_PUBLIC_KEY];
-            $privateKey = $this->generalSettings[PbxSettings::WEB_HTTPS_PRIVATE_KEY];
+            $publicKey  = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
+            $privateKey = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
 
             if ( ! empty($publicKey) && ! empty($privateKey)) {
                 $s_data = "".$publicKey.PHP_EOL.
@@ -66,13 +68,11 @@ class HttpConf extends AsteriskConfigClass
                 $s_data = implode("\n", $data);
             }
             $conf .= "tlsenable=$enabled" . PHP_EOL.
-                "tlsbindaddr=0.0.0.0:{$this->generalSettings[PbxSettings::AJAM_PORT_TLS]}".PHP_EOL.
+                "tlsbindaddr=0.0.0.0:{$tlsPort}".PHP_EOL.
                 "tlscertfile=$keys_dir/ajam.pem".PHP_EOL.
                 "tlsprivatekey=$keys_dir/ajam.pem".PHP_EOL;
             Util::fileWriteContent("$keys_dir/ajam.pem", $s_data);
         }
-
-        // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/http.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

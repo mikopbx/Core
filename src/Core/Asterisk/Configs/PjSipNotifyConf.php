@@ -29,17 +29,17 @@ use MikoPBX\Core\System\Util;
  *
  * @package MikoPBX\Core\Asterisk\Configs
  */
-class SipNotifyConf extends AsteriskConfigClass
+class PjSipNotifyConf extends AsteriskConfigClass
 {
     // The module hook applying priority
     public int $priority = 1000;
 
-    protected string $description = 'sip_notify.conf';
+    protected string $description = 'pjsip_notify.conf';
 
     /**
-     * Generate the configuration content for sip_notify.conf.
+     * Generate the configuration content for pjsip_notify.conf.
      *
-     * This method generates the configuration content for the sip_notify.conf file,
+     * This method generates the configuration content for the pjsip_notify.conf file,
      * including the definitions for Yealink and Snom phone notifications.
      */
     protected function generateConfigProtected(): void
@@ -70,6 +70,6 @@ class SipNotifyConf extends AsteriskConfigClass
         // http://support.yealink.com/faq/faqInfo?id=173
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/pjsip_notify.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

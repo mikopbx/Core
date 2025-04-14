@@ -21,30 +21,33 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 /**
- * Generates the configuration content for cdr_manager.conf.
+ * Class PjprojectConf
+ *
+ * Represents a configuration class for PJSIP.
  *
  * @package MikoPBX\Core\Asterisk\Configs
  */
-class CdrManagerConf extends AsteriskConfigClass
+class PjprojectConf extends AsteriskConfigClass
 {
     // The module hook applying priority
     public int $priority = 1000;
 
-    protected string $description = 'cdr_manager.conf';
+    protected string $description = 'pjproject.conf';
 
     /**
-     * Generates the configuration content for cdr_manager.conf.
+     * Generates the configuration for the hep.conf file.
+     *
+     * @return void
      */
     protected function generateConfigProtected(): void
     {
-        $conf = "[general]\n" .
-            "enabled=yes\n" .
-            "\n" .
-            "[mappings]\n" .
-            "linkedid => linkedid\n" .
-            "recordingfile => recordingfile\n\n";
-
-        // Write the configuration content to the file
-        $this->saveConfig($conf, $this->description);
+        // Write pjproject.conf file
+        $pjConf = '[log_mappings]' . "\n" .
+        'type=log_mappings' . "\n" .
+        'asterisk_error = 0' . "\n" .
+        'asterisk_warning = 2' . "\n" .
+        'asterisk_debug = 1,3,4,5,6' . "\n\n";
+        $this->saveConfig($pjConf, $this->description);
     }
+
 }

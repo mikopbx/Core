@@ -21,30 +21,24 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 /**
- * Generates the configuration content for cdr_manager.conf.
+ * Class CodecsConf
+ *
+ * Represents the configuration class for codecs.conf
  *
  * @package MikoPBX\Core\Asterisk\Configs
  */
-class CdrManagerConf extends AsteriskConfigClass
+class CodecsConf extends AsteriskConfigClass
 {
     // The module hook applying priority
     public int $priority = 1000;
 
-    protected string $description = 'cdr_manager.conf';
+    protected string $description = 'codecs.conf';
 
     /**
-     * Generates the configuration content for cdr_manager.conf.
+     * Generates the configuration for codecs.conf
      */
     protected function generateConfigProtected(): void
     {
-        $conf = "[general]\n" .
-            "enabled=yes\n" .
-            "\n" .
-            "[mappings]\n" .
-            "linkedid => linkedid\n" .
-            "recordingfile => recordingfile\n\n";
-
-        // Write the configuration content to the file
-        $this->saveConfig($conf, $this->description);
+        $this->saveConfig('', $this->description);
     }
 }

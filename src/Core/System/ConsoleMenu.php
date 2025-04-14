@@ -30,7 +30,6 @@ use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\{Configs\IptablesConf, Configs\NginxConf};
 use MikoPBX\Service\Main;
 use Phalcon\Di\Di;
-use Phalcon\Logger\Adapter\Syslog;
 use PhpSchool\CliMenu\Action\GoBackAction;
 use PhpSchool\CliMenu\Builder\CliMenuBuilder;
 use PhpSchool\CliMenu\CliMenu;
@@ -206,8 +205,7 @@ class ConsoleMenu
             $menuBuilder->addItem(
                 "[$index] $name",
                 function () use ($language) {
-                    $mikoPBXConfig = new MikoPBXConfig();
-                    $mikoPBXConfig->setGeneralSettings(PbxSettings::SSH_LANGUAGE, $language);
+                    PbxSettings::setValueByKey(PbxSettings::SSH_LANGUAGE, $language);
                     $di = Di::getDefault();
                     $di?->remove(TranslationProvider::SERVICE_NAME);
                     $this->start();
@@ -541,8 +539,8 @@ class ConsoleMenu
             if ('enable' === $action) {
                 $enable = '1';
             }
-            PbxSettings::setValue(PbxSettings::PBX_FIREWALL_ENABLED, $enable);
-            PbxSettings::setValue(PbxSettings::PBX_FAIL2BAN_ENABLED, $enable);
+            PbxSettings::setValueByKey(PbxSettings::PBX_FIREWALL_ENABLED, $enable);
+            PbxSettings::setValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED, $enable);
             IptablesConf::reloadFirewall();
             echo "Firewall is {$action}d...";
         }
@@ -683,15 +681,13 @@ class ConsoleMenu
             $menu->close();
         } catch (Exception $e) {
         }
-        $mikoPBXConfig = new MikoPBXConfig();
-        $res_login = $mikoPBXConfig->resetGeneralSettings('WebAdminLogin');
-        $res_password = $mikoPBXConfig->resetGeneralSettings('WebAdminPassword');
+        
+        PbxSettings::resetValueToDefault(PbxSettings::WEB_ADMIN_LOGIN);
+        PbxSettings::resetValueToDefault(PbxSettings::WEB_ADMIN_PASSWORD);
 
-        if ($res_login === true && $res_password === true) {
-            echo Util::translate('Password successfully reset. New login: admin. New password: admin.');
-        } else {
-            echo Util::translate('Error resetting password.');
-        }
+        $newLogin = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LOGIN);
+        $newPassword = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+        echo Util::translate("Password successfully reset. New login: $newLogin. New password: $newPassword.");
         sleep(2);
         $this->start();
     }

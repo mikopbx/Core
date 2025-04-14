@@ -21,7 +21,6 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
@@ -41,16 +40,6 @@ class SSHConf extends Injectable
     // Client idle timeout in seconds
     private const int CLIENT_IDLE_TIMEOUT = 1800;
 
-
-    private MikoPBXConfig $mikoPBXConfig;
-
-    /**
-     * Constructor initializing MikoPBX configuration.
-     */
-    public function __construct()
-    {
-        $this->mikoPBXConfig = new MikoPBXConfig();
-    }
 
     /**
      * Configures SSH settings based on current system settings.
@@ -121,7 +110,7 @@ class SSHConf extends Injectable
             } elseif (!file_exists($resKeyFilePath)) {
                 Processes::mwExec("$dropBearKey -t $keyType -f $resKeyFilePath");
                 $newKey = base64_encode(file_get_contents($resKeyFilePath));
-                $this->mikoPBXConfig->setGeneralSettings($dbKey, $newKey);
+                PbxSettings::setValueByKey($dbKey, $newKey);
             }
         }
         $rsaPath = '/root/.ssh/id_rsa';
@@ -135,7 +124,7 @@ class SSHConf extends Injectable
             if(empty($keyValue)){
                 shell_exec($createCmd);
                 $keyValue = base64_encode(file_get_contents($path));
-                $this->mikoPBXConfig->setGeneralSettings($keySetting, $keyValue);
+                PbxSettings::setValueByKey($keySetting, $keyValue);
             }
             file_put_contents($path, base64_decode($keyValue));
         }
@@ -223,9 +212,9 @@ class SSHConf extends Injectable
 
         // Security hash check and notification
         $currentHash = md5_file('/etc/shadow');
-        PbxSettings::setValue(PbxSettings::SSH_PASSWORD_HASH_FILE, $currentHash);
+        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE, $currentHash);
         if ($hashString !== md5($password)) {
-            PbxSettings::setValue(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($password));
+            PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($password));
         }
     }
 

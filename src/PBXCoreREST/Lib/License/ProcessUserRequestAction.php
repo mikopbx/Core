@@ -24,7 +24,6 @@ use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use MikoPBX\Common\Library\Text;
@@ -45,7 +44,6 @@ class ProcessUserRequestAction extends Injectable
      */
     public static function main(array $data): PBXApiResult
     {
-        $mikoPBXConfig = new MikoPBXConfig();
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $di = Di::getDefault();
@@ -53,11 +51,11 @@ class ProcessUserRequestAction extends Injectable
         $license = $di->get(MarketPlaceProvider::SERVICE_NAME);
         if (strlen($data['licKey']) === 28 && Text::startsWith($data['licKey'], 'MIKO-')) {
             ModelsBase::clearCache(PbxSettings::class);
-            $oldLicKey = $mikoPBXConfig->getGeneralSettings(PbxSettings::PBX_LICENSE);
+            $oldLicKey =  PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
             if ($oldLicKey !== $data['licKey']) {
                 $licenseInfo = $license->getLicenseInfo($data['licKey']);
                 if ($licenseInfo['success'] && $licenseInfo['result'] instanceof SimpleXMLElement) {
-                    $mikoPBXConfig->setGeneralSettings(PbxSettings::PBX_LICENSE, $data['licKey']);
+                    PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $data['licKey']);
                     $license->changeLicenseKey($data['licKey']);
                     $license->addTrial('11'); // MikoPBX forever license
                     $res->data[PbxSettings::PBX_LICENSE] = $data['licKey'];
@@ -90,7 +88,7 @@ class ProcessUserRequestAction extends Injectable
                 strlen($newLicenseKey) === 28
                 && Text::startsWith($newLicenseKey, 'MIKO-')
             ) {
-                $mikoPBXConfig->setGeneralSettings(PbxSettings::PBX_LICENSE, $newLicenseKey);
+                PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $newLicenseKey);
                 $license->changeLicenseKey($newLicenseKey);
                 $res->success = true;
                 $res->data[PbxSettings::PBX_LICENSE] = $newLicenseKey;

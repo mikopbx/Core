@@ -21,30 +21,27 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 /**
- * Generates the configuration content for cdr_manager.conf.
+ * Class SorceryConf
+ *
+ * Represents a configuration class for Sorcery.
  *
  * @package MikoPBX\Core\Asterisk\Configs
  */
-class CdrManagerConf extends AsteriskConfigClass
+class SorceryConf extends AsteriskConfigClass
 {
     // The module hook applying priority
     public int $priority = 1000;
 
-    protected string $description = 'cdr_manager.conf';
+    protected string $description = 'sorcery.conf';
 
     /**
-     * Generates the configuration content for cdr_manager.conf.
+     * Generates the configuration for the sorcery.conf file.
+     *
+     * Generates and writes the sorcery.conf configuration files.
      */
     protected function generateConfigProtected(): void
     {
-        $conf = "[general]\n" .
-            "enabled=yes\n" .
-            "\n" .
-            "[mappings]\n" .
-            "linkedid => linkedid\n" .
-            "recordingfile => recordingfile\n\n";
-
-        // Write the configuration content to the file
-        $this->saveConfig($conf, $this->description);
+        // Write sorcery.conf file
+        $this->saveConfig('', $this->description);
     }
 }

@@ -57,18 +57,17 @@ class IptablesConf extends Injectable
      */
     public function __construct()
     {
-        $allPbxSettings = PbxSettings::getAllPbxSettings();
         // Check if the firewall is enabled.
-        $this->firewall_enable  =  intval($allPbxSettings[PbxSettings::PBX_FIREWALL_ENABLED]) === 1;
+        $this->firewall_enable  =  intval(PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED)) === 1;
         // Get the SIP, TLS, and RTP port settings.
-        $this->sipPort          = $allPbxSettings[PbxSettings::SIP_PORT];
-        $this->tlsPort          = $allPbxSettings[PbxSettings::TLS_PORT];
-        $defaultRTPFrom         = $allPbxSettings[PbxSettings::RTP_PORT_FROM];
-        $defaultRTPTo           = $allPbxSettings[PbxSettings::RTP_PORT_TO];
-        $this->maxReqSec        = intval($allPbxSettings[PbxSettings::PBX_FIREWALL_MAX_REQ]);
+        $this->sipPort          = PbxSettings::getValueByKey(PbxSettings::SIP_PORT);
+        $this->tlsPort          = PbxSettings::getValueByKey(PbxSettings::TLS_PORT);
+        $defaultRTPFrom         = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM);
+        $defaultRTPTo           = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO);
+        $this->maxReqSec        = intval(PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_MAX_REQ));
         $this->rtpPorts         = "$defaultRTPFrom:$defaultRTPTo";
         // Initialize the Fail2Ban configuration.
-        $this->fail2ban = new Fail2BanConf($allPbxSettings);
+        $this->fail2ban = new Fail2BanConf();
     }
 
     /**

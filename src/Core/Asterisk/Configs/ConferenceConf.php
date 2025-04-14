@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\ConferenceRooms;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Models\PbxSettings;
 
 /**
  * Generates the configuration content for confbridge.conf.
@@ -41,7 +41,7 @@ class ConferenceConf extends AsteriskConfigClass
     {
         $conf = "";
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/confbridge.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 
     /**
@@ -85,7 +85,7 @@ class ConferenceConf extends AsteriskConfigClass
      */
     public function extensionGenContexts(): string
     {
-        $PBXRecordCalls = $this->generalSettings['PBXRecordCalls'];
+        $PBXRecordCalls = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_CALLS);
 
         // Generate hangup handler
         $conf  = "[hangup_handler_meetme]\n\n";

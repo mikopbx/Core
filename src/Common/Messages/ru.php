@@ -1121,7 +1121,7 @@ return [
     'pass_CheckSSHPasswordDontMatch' => 'Введенные пароли для SSH не совпадают',
     'pass_CheckSSHPasswordEmpty' => 'Поле не заполнено: SSH',
     'pass_CheckSSHPasswordSimple' => 'Пароль для SSH слишком простой.',
-    'adv_FirewallDisabled' => 'В системе отключен сетевой экран - <a href=\'%url%\'>изменить</a>',
+    'adv_FirewallDisabled' => 'В системе отключен сетевой экран или не настроены параметры разрешенных подсетей - <a href=\'%url%\'>изменить</a>',
     'adv_StorageDiskUnMounted' => 'Не подключен диск для хранения настроек и данных!',
     'adv_NetworksNotConfigured' => 'Не настроены параметры разрешенных подсетей - <a href=\'%url%\'>изменить</a>',
     'adv_AvailableNewVersionPBX' => 'Доступна новая версия PBX - <a href=\'%url%\'>%ver%</a>',

@@ -25,7 +25,7 @@ namespace MikoPBX\Common\Providers;
 use Phalcon\Cache\AdapterFactory;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Mvc\Model\MetaData\Redis;
+use Phalcon\Mvc\Model\MetaData\Redis as MetaDataRedis;
 use Phalcon\Mvc\Model\MetaData\Strategy\Annotations as StrategyAnnotations;
 use Phalcon\Storage\SerializerFactory;
 
@@ -37,6 +37,8 @@ use Phalcon\Storage\SerializerFactory;
 class ModelsMetadataProvider implements ServiceProviderInterface
 {
     public const string SERVICE_NAME = 'modelsMetadata';
+    public const string CACHE_PREFIX = '_PH_METADATA:';
+    public const int DATABASE_INDEX = 2;
 
     /**
      * Register Models metadata service provider.
@@ -54,11 +56,11 @@ class ModelsMetadataProvider implements ServiceProviderInterface
                 $options = [
                     'host'       => $config->path('redis.host'),
                     'port'       => $config->path('redis.port'),
-                    'statsKey'   => '_PHCR',
+                    'prefix'   => self::CACHE_PREFIX,
                     'lifetime'   => 600,
-                    'index'      => RedisClientProvider::REDIS_DB_METADATA,
+                    'index'      => self::DATABASE_INDEX,
                 ];
-                $metaData = new Redis($adapterFactory, $options);
+                $metaData = new MetaDataRedis($adapterFactory, $options);
 
                 $metaData->setStrategy(
                     new StrategyAnnotations()

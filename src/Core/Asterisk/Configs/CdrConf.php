@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+
 /**
  * Generates the configuration content for cdr.conf.
  *
@@ -46,6 +47,6 @@ class CdrConf extends AsteriskConfigClass
             "loguserfield=yes\n";
 
         // Write the configuration content to the file
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/cdr.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

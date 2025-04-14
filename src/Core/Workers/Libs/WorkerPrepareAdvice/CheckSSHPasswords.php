@@ -84,10 +84,10 @@ class CheckSSHPasswords extends Injectable
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
 
         $passwords = new \stdClass();
-        $passwords->ssh = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+        $passwords->ssh = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD, false);
         $passwords->sshByDefault = $arrOfDefaultValues[PbxSettings::SSH_PASSWORD];
-        $passwords->sshHashFile = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE);
-        $passwords->cloudInstanceId = PbxSettings::getValueByKey(PbxSettings::CLOUD_INSTANCE_ID);
+        $passwords->sshHashFile = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE, false);
+        $passwords->cloudInstanceId = PbxSettings::getValueByKey(PbxSettings::CLOUD_INSTANCE_ID, false);
         return $passwords;
     }
 

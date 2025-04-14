@@ -20,7 +20,6 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Util;
 
 /**
  * Class FeaturesConf
@@ -43,7 +42,8 @@ class FeaturesConf extends AsteriskConfigClass
      */
     public function extensionGlobals(): string
     {
-        return "PICKUP_EXTEN={$this->generalSettings[PbxSettings::PBX_FEATURE_PICKUP_EXTEN]}\n";
+        $pickupExten = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_PICKUP_EXTEN);
+        return "PICKUP_EXTEN={$pickupExten}\n";
     }
 
     /**
@@ -53,28 +53,54 @@ class FeaturesConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $atxTimeout = $this->generalSettings[PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT];
+        $atxTimeout = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT);
         if (empty($atxTimeout)) {
             $atxTimeout = 45;
         }
+
+        $digitTimeout = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT);
+        if (empty($digitTimeout)) {
+            $digitTimeout = 10;
+        }
+
+        $transferDigitTimeout = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT);
+        if (empty($transferDigitTimeout)) {
+            $transferDigitTimeout = 10;
+        }
+
+        $pickupExten = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_PICKUP_EXTEN);
+        
+        $atxferAbort = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_ATXFER_ABORT);
+        if (empty($atxferAbort)) {
+            $atxferAbort = '*0';
+        }
+        
+        $attendedTransfer = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_ATTENDED_TRANSFER);
+        if (empty($attendedTransfer)) {
+            $attendedTransfer = '##';
+        }
+
+        $blindTransfer = PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_BLIND_TRANSFER);
+        if (empty($blindTransfer)) {
+            $blindTransfer = '**';
+        }
+
         $conf = "[general]\n" .
-            "featuredigittimeout = {$this->generalSettings[PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT]}\n" .
+            "featuredigittimeout = {$digitTimeout}\n" .
             "atxfernoanswertimeout = $atxTimeout\n" .
-            "transferdigittimeout = {$this->generalSettings[PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT]}\n" .
-            "pickupexten = {$this->generalSettings[PbxSettings::PBX_FEATURE_PICKUP_EXTEN]}\n" .
-            "atxferabort = *0\n" .
+            "transferdigittimeout = {$transferDigitTimeout}\n" .
+            "pickupexten = {$pickupExten}\n" .
+            "atxferabort = {$atxferAbort}\n" .
             "\n" .
             "[applicationmap]\n\n" .
             "[featuremap]\n" .
-            "atxfer => {$this->generalSettings[PbxSettings::PBX_FEATURE_ATTENDED_TRANSFER]}\n" .
-            "disconnect = *0\n" .
-            "blindxfer => {$this->generalSettings[PbxSettings::PBX_FEATURE_BLIND_TRANSFER]}\n" .
+            "atxfer => {$attendedTransfer}\n" .
+            "disconnect = {$atxferAbort}\n" .
+            "blindxfer => {$blindTransfer}\n" .
             "\n";
 
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GET_FEATURE_MAP);
 
-
-        // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/features.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

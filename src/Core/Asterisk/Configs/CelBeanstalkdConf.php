@@ -21,29 +21,31 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 /**
- * Generates the configuration content for cel_sqlite3_custom.conf.
+ * Generates the configuration content for cel_beanstalkd.conf.
  *
  * @package MikoPBX\Core\Asterisk\Configs
  */
-class CelSqlite3CustomConf extends AsteriskConfigClass
+class CelBeanstalkdConf extends AsteriskConfigClass
 {
     // The module hook applying priority
     public int $priority = 1000;
 
-    protected string $description = 'cel_sqlite3_custom.conf';
+    public const string BEANSTALK_TUBE = 'asterisk-cel';
+    protected string $description = 'cel_beanstalkd.conf';
 
     /**
-     * Generates the configuration content for cel_sqlite3_custom.conf.
+     * Generates the configuration content for cel_beanstalkd.conf
      */
     protected function generateConfigProtected(): void
     {
-        $cal    = "eventtype, eventtime, cidname, cidnum, cidani, cidrdnis, ciddnid, context, exten, channame, appname, appdata, amaflags, accountcode, uniqueid, userfield, peer, userdeftype, eventextra, linkedid";
-        $values = '\'${eventtype}\',\'${eventtime}\',\'${CALLERID(name)}\',\'${CALLERID(num)}\',\'${CALLERID(ANI)}\',\'${CALLERID(RDNIS)}\',\'${CALLERID(DNID)}\',\'${CHANNEL(context)}\',\'${CHANNEL(exten)}\',\'${CHANNEL(channame)}\',\'${CHANNEL(appname)}\',\'${CHANNEL(appdata)}\',\'${CHANNEL(amaflags)}\',\'${CHANNEL(accountcode)}\',\'${CHANNEL(uniqueid)}\',\'${CHANNEL(userfield)}\',\'${BRIDGEPEER}\',\'${userdeftype}\',\'${eventextra}\',\'${CHANNEL(linkedid)}\'';
+        $config = $this->getDI()->get('config')->beanstalk;
 
-        $conf = "[master]\n" .
-            "table = cel\n" .
-            "columns => $cal \n" .
-            "values => $values \n";
+        $conf = "[general]" . PHP_EOL .
+                "enabled = yes" . PHP_EOL .
+                "host = 127.0.0.1" . PHP_EOL .
+                "port = " . $config->port . PHP_EOL .
+                "priority = 1" . PHP_EOL .
+                "tube = {self::BEANSTALK_TUBE}" . PHP_EOL;
 
         // Write the configuration content to the file
         $this->saveConfig($conf, $this->description);

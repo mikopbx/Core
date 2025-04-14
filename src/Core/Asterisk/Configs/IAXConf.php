@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -57,7 +58,7 @@ class IAXConf extends AsteriskConfigClass
     }
 
     /**
-     * Generates the configuration for the iax.conf and iaxprov.conf files.
+     * Generates the configuration for the iax.conf file.
      *
      * @return void
      */
@@ -67,8 +68,7 @@ class IAXConf extends AsteriskConfigClass
         $conf .= $this->generateProviders();
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/iax.conf', $conf);
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/iaxprov.conf', "[default]\ncodec=alaw\n");
+        $this->saveConfig($conf, $this->description);
     }
 
     /**
@@ -78,7 +78,7 @@ class IAXConf extends AsteriskConfigClass
      */
     private function generateGeneral(): string
     {
-        $iax_port = $this->generalSettings[PbxSettings::IAX_PORT];
+        $iax_port = PbxSettings::getValueByKey(PbxSettings::IAX_PORT);
         $conf     = '[general]' . PHP_EOL;
         $conf .= "bindport=$iax_port" . PHP_EOL;
         $conf .= "bindaddr=0.0.0.0" . PHP_EOL;
@@ -100,7 +100,7 @@ class IAXConf extends AsteriskConfigClass
         $reg_strings = '';
         $prov_config = '';
 
-        $lang      = str_replace('_', '-', strtolower($this->generalSettings[PbxSettings::PBX_LANGUAGE]));
+        $lang      = str_replace('_', '-', strtolower(PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE)));
         $providers = $this->getProviders();
         foreach ($providers as $provider) {
             $manual_attributes = Util::parseIniSettings($provider['manualattributes']);

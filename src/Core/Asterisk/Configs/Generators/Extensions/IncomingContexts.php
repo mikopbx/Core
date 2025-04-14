@@ -99,7 +99,7 @@ class IncomingContexts extends AsteriskConfigClass
     {
         $this->confExtensions = ConferenceConf::getConferenceExtensions();
         $this->routes         = $this->getRoutes();
-        $this->lang           = str_replace('_', '-', $this->generalSettings[PbxSettings::PBX_LANGUAGE]);
+        $this->lang           = str_replace('_', '-', PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE));
         $this->need_def_rout  = $this->checkNeedDefRout();
     }
 

@@ -70,7 +70,7 @@ class UpdateConfigsUpToVer20240194 extends Injectable implements UpgradeSystemCo
                         $extPort = $parts[1];
                     }
                 }
-                PbxSettings::setValue(PbxSettings::EXTERNAL_SIP_PORT, $extPort);
+                PbxSettings::setValueByKey(PbxSettings::EXTERNAL_SIP_PORT, $extPort);
             }
         }
     }

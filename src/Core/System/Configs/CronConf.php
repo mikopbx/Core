@@ -41,16 +41,6 @@ class CronConf extends Injectable
 {
     public const string PROC_NAME = 'crond';
 
-    private MikoPBXConfig $mikoPBXConfig;
-
-    /**
-     * CronConf constructor.
-     */
-    public function __construct()
-    {
-        $this->mikoPBXConfig = new MikoPBXConfig();
-    }
-
     /**
      * Setups crond and restarts it.
      *
@@ -86,7 +76,7 @@ class CronConf extends Injectable
         $phpPath               = Util::which('php');
         $WorkerSafeScripts     = "$phpPath -f $workerSafeScriptsPath start > /dev/null 2> /dev/null";
 
-        $restart_night = $this->mikoPBXConfig->getGeneralSettings(PbxSettings::RESTART_EVERY_NIGHT);
+        $restart_night =  PbxSettings::getValueByKey(PbxSettings::RESTART_EVERY_NIGHT);
         $asterisk  = Util::which('asterisk');
         $ntpd      = Util::which('ntpd');
         $dump      = Util::which('dump-conf-db');

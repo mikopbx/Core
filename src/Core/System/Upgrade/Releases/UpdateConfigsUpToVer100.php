@@ -50,12 +50,11 @@ class UpdateConfigsUpToVer100 extends Injectable implements UpgradeSystemConfigI
             $manager->secret = Sip::generateSipPassword();
             $manager->save();
         }
-        $generalConfig = new MikoPBXConfig();
         $newPasswordSsh = Sip::generateSipPassword();
-        $generalConfig->setGeneralSettings(PbxSettings::SSH_PASSWORD, $newPasswordSsh);
-        $generalConfig->setGeneralSettings(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newPasswordSsh));
-        $generalConfig->setGeneralSettings(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '1');
-        $generalConfig->setGeneralSettings(PbxSettings::SSH_AUTHORIZED_KEYS, '');
-        $generalConfig->setGeneralSettings(PbxSettings::PBX_ALLOW_GUEST_CALLS, '0');
+        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD, $newPasswordSsh);
+        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newPasswordSsh));
+        PbxSettings::setValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '1');
+        PbxSettings::setValueByKey(PbxSettings::SSH_AUTHORIZED_KEYS, '');
+        PbxSettings::setValueByKey(PbxSettings::PBX_ALLOW_GUEST_CALLS, '0');
     }
 }

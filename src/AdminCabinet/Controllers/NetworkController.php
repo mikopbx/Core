@@ -254,19 +254,19 @@ class NetworkController extends BaseController
         foreach ($data as $key => $value) {
             switch ($key) {
                 case PbxSettings::AUTO_UPDATE_EXTERNAL_IP:
-                    PbxSettings::setValue($key, $value === 'on' ? '1' : '0', $messages);
+                    PbxSettings::setValueByKey($key, $value === 'on' ? '1' : '0', $messages);
                     break;
                 case PbxSettings::EXTERNAL_SIP_PORT:
                     if (empty($value)) {
                         $value = PbxSettings::getValueByKey(PbxSettings::SIP_PORT);
                     }
-                    PbxSettings::setValue($key, trim($value), $messages);
+                    PbxSettings::setValueByKey($key, trim($value), $messages);
                     break;
                 case PbxSettings::EXTERNAL_TLS_PORT:
                     if (empty($value)) {
                         $value = PbxSettings::getValueByKey(PbxSettings::TLS_PORT);
                     }
-                    PbxSettings::setValue($key, trim($value), $messages);
+                    PbxSettings::setValueByKey($key, trim($value), $messages);
                     break;
                 default:
             }

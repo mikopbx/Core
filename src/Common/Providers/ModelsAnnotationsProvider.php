@@ -58,6 +58,6 @@ class ModelsAnnotationsProvider implements ServiceProviderInterface
     {
         $di = Di::getDefault();
         $di->remove(self::SERVICE_NAME);
-        $di->register(new self());
+        (new self())->register($di);
     }
 }

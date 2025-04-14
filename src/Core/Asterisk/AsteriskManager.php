@@ -1397,7 +1397,6 @@ class AsteriskManager
         $peers  = [];
         $result = $this->sendRequestTimeout('PJSIPShowEndpoints');
         $endpoints = $result['data']['EndpointList'] ?? [];
-        print_r($endpoints);
         foreach ($endpoints as $peer) {
             if ($peer['ObjectName'] === 'anonymous') {
                 continue;

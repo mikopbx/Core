@@ -84,13 +84,13 @@ abstract class CloudProvider
         if ($lanData !== null) {
 
             if (empty($extipaddr)) {
-                PbxSettings::setValue(PbxSettings::AUTO_UPDATE_EXTERNAL_IP, '1');
+                PbxSettings::setValueByKey(PbxSettings::AUTO_UPDATE_EXTERNAL_IP, '1');
             } elseif ($lanData->ipaddr === $extipaddr) {
                 $lanData->topology = LanInterfaces::TOPOLOGY_PUBLIC;
             } else {
                 $lanData->extipaddr = $extipaddr;
                 $lanData->topology = LanInterfaces::TOPOLOGY_PRIVATE;
-                PbxSettings::setValue(PbxSettings::AUTO_UPDATE_EXTERNAL_IP, '1');
+                PbxSettings::setValueByKey(PbxSettings::AUTO_UPDATE_EXTERNAL_IP, '1');
             }
             $message = "      |- Update LAN settings external IP: $extipaddr";
             SystemMessages::echoToTeletype($message);

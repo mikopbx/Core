@@ -59,7 +59,7 @@ class H323Conf extends AsteriskConfigClass
             PHP_EOL;
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/'. $this->description, $conf);
+        $this->saveConfig($conf, $this->description);
     }
 
     /**

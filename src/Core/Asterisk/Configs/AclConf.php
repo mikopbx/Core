@@ -98,6 +98,7 @@ class AclConf extends AsteriskConfigClass
             $conf_acl .= "[acl_$peer[extension]]".PHP_EOL;
             $conf_acl .= Util::overrideConfigurationArray($options, $manual_attributes, 'acl');
         }
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/acl.conf', $conf_acl);
+
+        $this->saveConfig($conf_acl, $this->description);
     }
 }

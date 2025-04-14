@@ -55,7 +55,7 @@ class GeneralSettingsController extends BaseController
         $this->view->videoCodecs = $videoCodecs;
 
         // Fetch all PBX settings
-        $pbxSettings = PbxSettings::getAllPbxSettings();
+        $pbxSettings = PbxSettings::getAllPbxSettings(false);
 
         // Fetch and assign simple passwords for the view
         $this->view->simplePasswords = $this->getSimplePasswords($pbxSettings);
@@ -313,12 +313,12 @@ class GeneralSettingsController extends BaseController
             }
 
             if (array_key_exists($key, $data)) {
-                PbxSettings::setValue($key, $newValue, $messages['error']);
+                PbxSettings::setValueByKey($key, $newValue, $messages['error']);
             }
         }
 
         // Reset a cloud provision flag
-        PbxSettings::setValue(PbxSettings::CLOUD_PROVISIONING, '1', $messages['error']);
+        PbxSettings::setValueByKey(PbxSettings::CLOUD_PROVISIONING, '1', $messages['error']);
 
         $result = count($messages['error']) === 0;
         return [$result, $messages];

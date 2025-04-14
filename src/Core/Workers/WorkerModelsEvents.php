@@ -92,7 +92,7 @@ class WorkerModelsEvents extends WorkerBase
     // Array of planned reload actions that need to be started
     private array $plannedReloadActions = [];
 
-    private int $timeout = 5;
+    private int $timeout = 2;
 
     // Array of core conf objects
     private array $arrAsteriskConfObjects;

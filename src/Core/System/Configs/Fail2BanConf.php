@@ -51,19 +51,14 @@ class Fail2BanConf extends Injectable
     public const string FAIL2BAN_DB_DIR_PATH = '/var/lib/fail2ban';
 
     public bool $fail2ban_enable;
-    private array $allPbxSettings;
 
     /**
      * Fail2Ban constructor.
-     * @param array $allPbxSettings
+     * 
      */
-    public function __construct(array $allPbxSettings = [])
+    public function __construct()
     {
-        if(empty($allPbxSettings)){
-            $allPbxSettings = PbxSettings::getAllPbxSettings();
-        }
-        $this->allPbxSettings  = $allPbxSettings;
-        $fail2ban_enable       = $this->allPbxSettings[PbxSettings::PBX_FAIL2BAN_ENABLED];
+        $fail2ban_enable       = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
         $this->fail2ban_enable = ($fail2ban_enable === '1');
     }
 
@@ -296,22 +291,22 @@ class Fail2BanConf extends Injectable
 
         // Define ports for different services
         $httpPorts = [
-            $this->allPbxSettings[PbxSettings::WEB_PORT],
-            $this->allPbxSettings[PbxSettings::WEB_HTTPS_PORT]
+            PbxSettings::getValueByKey(PbxSettings::WEB_PORT),
+            PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT)
         ];
         $sshPort = [
-            $this->allPbxSettings[PbxSettings::SSH_PORT],
+            PbxSettings::getValueByKey(PbxSettings::SSH_PORT),
         ];
         $asteriskPorts = [
-            $this->allPbxSettings[PbxSettings::SIP_PORT],
-            $this->allPbxSettings[PbxSettings::TLS_PORT],
-            $this->allPbxSettings[PbxSettings::IAX_PORT],
-            $this->allPbxSettings[PbxSettings::RTP_PORT_FROM] . ':' . $this->allPbxSettings[PbxSettings::RTP_PORT_TO],
-            $this->allPbxSettings[PbxSettings::AJAM_PORT_TLS]
+            PbxSettings::getValueByKey(PbxSettings::SIP_PORT),
+            PbxSettings::getValueByKey(PbxSettings::TLS_PORT),
+            PbxSettings::getValueByKey(PbxSettings::IAX_PORT),
+            PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM) . ':' . PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO),
+            PbxSettings::getValueByKey(PbxSettings::AJAM_PORT_TLS)
         ];
         $asteriskAMI = [
-            $this->allPbxSettings[PbxSettings::AMI_PORT],
-            $this->allPbxSettings[PbxSettings::AJAM_PORT],
+            PbxSettings::getValueByKey(PbxSettings::AMI_PORT),
+            PbxSettings::getValueByKey(PbxSettings::AJAM_PORT),
         ];
 
         // Define jails and their corresponding actions

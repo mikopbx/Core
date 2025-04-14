@@ -184,8 +184,7 @@ function Event_dial_answer(AGI $agi, string $action): array
 
     $PICKUPEER     = trim('' . $agi->get_variable("PICKUPEER", true));
     $data['dnid']  = $agi->request['agi_dnid'];
-    $mikoPBXConfig = new MikoPBXConfig();
-    $pickupexten   = $mikoPBXConfig->getGeneralSettings(PbxSettings::PBX_FEATURE_PICKUP_EXTEN);
+    $pickupexten   =  PbxSettings::getValueByKey(PbxSettings::PBX_FEATURE_PICKUP_EXTEN);
     if ('unknown' == $data['dnid'] && $PICKUPEER != '') {
         // Most likely an answer to a call from 1C.
         $data['dnid'] = $pickupexten;

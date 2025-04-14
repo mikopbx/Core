@@ -29,7 +29,6 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Core\Asterisk\Configs\CelConf;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAnswer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\ActionCelAttendedTransfer;
 use MikoPBX\Core\Workers\Libs\WorkerCallEvents\SelectCDR;
@@ -38,6 +37,7 @@ use Phalcon\Di\Di;
 use MikoPBX\Common\Library\Text;
 use Throwable;
 use DateTime;
+use MikoPBX\Core\Asterisk\Configs\CelBeanstalkdConf;
 
 /**
  * Class WorkerCallEvents
@@ -255,7 +255,7 @@ class WorkerCallEvents extends WorkerBase
         }
 
         // Subscribe to different tubes for different worker tasks
-        $client->subscribe(CelConf::BEANSTALK_TUBE, [$this, 'callEventsWorker']);
+        $client->subscribe(CelBeanstalkdConf::BEANSTALK_TUBE, [$this, 'callEventsWorker']);
         $client->subscribe(self::class, [$this, 'otherEvents']);
         $client->subscribe(WorkerCdr::SELECT_CDR_TUBE, [$this, 'selectCDRWorker']);
         $client->subscribe(WorkerCdr::UPDATE_CDR_TUBE, [$this, 'updateCDRWorker']);

@@ -43,16 +43,6 @@ class NginxConf extends Injectable
     public const string  MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
     private const string PID_FILE = '/var/run/nginx.pid';
 
-    private MikoPBXConfig $mikoPBXConfig;
-
-    /**
-     * NginxConf constructor.
-     */
-    public function __construct()
-    {
-        $this->mikoPBXConfig = new MikoPBXConfig();
-    }
-
     /**
      * Restart Nginx gracefully
      * https://www.cyberciti.biz/faq/howto-unix-linux-gracefully-reload-restart-nginx-webserver/
@@ -113,8 +103,8 @@ class NginxConf extends Injectable
         }
 
         // HTTP
-        $WEBPort      = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_PORT);
-        $WEBHTTPSPort = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_HTTPS_PORT);
+        $WEBPort      = (string)PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
+        $WEBHTTPSPort = (string)PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
 
         $config = file_get_contents("$httpConfigFile.original");
 
@@ -128,7 +118,7 @@ class NginxConf extends Injectable
         // This operation updates DNS and Web Port settings in the configuration.
         $config = str_replace($placeholders, $replacementValues, $config);
 
-        $RedirectToHttps = $this->mikoPBXConfig->getGeneralSettings(PbxSettings::REDIRECT_TO_HTTPS);
+        $RedirectToHttps = PbxSettings::getValueByKey(PbxSettings::REDIRECT_TO_HTTPS);
         if ($RedirectToHttps === '1' && $not_ssl === false) {
             $includeRow = 'include mikopbx/locations/*.conf;';
 
@@ -141,8 +131,8 @@ class NginxConf extends Injectable
         file_put_contents($httpConfigFile, $config);
 
         // SSL
-        $WEBHTTPSPublicKey  = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
-        $WEBHTTPSPrivateKey = (string)$this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
+        $WEBHTTPSPublicKey  = (string)PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
+        $WEBHTTPSPrivateKey = (string)PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
         if (
             $not_ssl === false
             && ! empty($WEBHTTPSPublicKey)

@@ -22,7 +22,6 @@ namespace MikoPBX\PBXCoreREST\Lib\License;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -43,10 +42,9 @@ class ResetLicenseAction extends Injectable
      */
     public static function main(): PBXApiResult
     {
-        $mikoPBXConfig = new MikoPBXConfig();
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $mikoPBXConfig->resetGeneralSettings(PbxSettings::PBX_LICENSE);
+        PbxSettings::resetValueToDefault(PbxSettings::PBX_LICENSE);
         $res->success = true;
         $di = Di::getDefault();
         $license = $di->get(MarketPlaceProvider::SERVICE_NAME);

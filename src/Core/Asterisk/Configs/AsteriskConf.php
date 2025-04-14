@@ -43,20 +43,31 @@ class AsteriskConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $lang = $this->generalSettings[PbxSettings::PBX_LANGUAGE];
+        $lang = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
+        $astetcdir = Directories::getDir(Directories::AST_ETC_DIR);
+        $astagidir = Directories::getDir(Directories::AST_AGI_BIN_DIR);
+        $astkeydir = $astetcdir;
+        $astrundir = '/var/asterisk/run';
+        $astmoddir = Directories::getDir(Directories::AST_MOD_DIR);
+        $astvarlibdir = Directories::getDir(Directories::AST_VAR_LIB_DIR);
+        $astdbdir = Directories::getDir(Directories::AST_DB_DIR);
+        $astlogdir = Directories::getDir(Directories::AST_LOG_DIR);
+        $astspooldir = Directories::getDir(Directories::AST_SPOOL_DIR);
+
+
 
         // Build the configuration content
         $conf = "[directories]\n" .
-            "astetcdir => {$this->config->path('asterisk.astetcdir')}\n" .
-            "astagidir => {$this->config->path('asterisk.astagidir')}\n" .
-            "astkeydir => /etc/asterisk\n" .
-            "astrundir => /var/asterisk/run\n" .
-            "astmoddir => {$this->config->path('asterisk.astmoddir')}\n" .
-            "astvarlibdir => {$this->config->path('asterisk.astvarlibdir')}\n" .
-            "astdbdir => {$this->config->path('asterisk.astdbdir')}\n" .
-            "astlogdir => {$this->config->path('asterisk.astlogdir')}\n" .
-            "astspooldir => {$this->config->path('asterisk.astspooldir')}\n" .
-            "astdatadir => {$this->config->path('asterisk.astvarlibdir')}\n" .
+            "astetcdir => {$astetcdir}\n" .
+            "astagidir => {$astagidir}\n" .
+            "astkeydir => {$astkeydir}\n" .
+            "astrundir => {$astrundir}\n" .
+            "astmoddir => {$astmoddir}\n" .
+            "astvarlibdir => {$astvarlibdir}\n" .
+            "astdbdir => {$astdbdir}\n" .
+            "astlogdir => {$astlogdir}\n" .
+            "astspooldir => {$astspooldir}\n" .
+            "astdatadir => {$astvarlibdir}\n" .
             "\n" .
             "\n" .
             "[options]\n" .
@@ -69,7 +80,7 @@ class AsteriskConf extends AsteriskConfigClass
             "systemname = mikopbx\n";
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/asterisk.conf', $conf);
+        $this->saveConfig($conf, $this->description);
 
         $logCmdFile  = self::getLogFile();
         if (!file_exists($logCmdFile)) {
@@ -91,7 +102,7 @@ class AsteriskConf extends AsteriskConfigClass
      */
     public static function getLogFile(): string
     {
-        return Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/asterisk-cli.log';
+        return Directories::getDir(Directories::AST_LOG_DIR) . '/asterisk-cli.log';
     }
 
     /**
@@ -119,7 +130,7 @@ class AsteriskConf extends AsteriskConfigClass
 }";
         $di = Di::getDefault();
         if ($di !== null) {
-            $varEtcDir = $di->getConfig()->path('core.varEtcDir');
+            $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         } else {
             $varEtcDir = '/var/etc';
         }

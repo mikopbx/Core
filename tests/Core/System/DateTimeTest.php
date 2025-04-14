@@ -21,8 +21,6 @@ namespace MikoPBX\Tests\Core\System;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\PHPConf;
-use MikoPBX\Core\System\MikoPBXConfig;
-use MikoPBX\Tests\Unit\AbstractUnitTest;
 
 class DateTimeTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
 {
@@ -33,8 +31,7 @@ class DateTimeTest extends \MikoPBX\Tests\Unit\AbstractUnitTest
 
     public function testTimezoneConfigure()
     {
-        $mikoPBXConfig = new MikoPBXConfig();
-        $timezone      = $mikoPBXConfig->getGeneralSettings(PbxSettings::PBX_TIMEZONE);
+        $timezone      = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
         PHPConf::phpTimeZoneConfigure();
         $etcPhpIniPath = '/etc/php.ini';
         $contents = file_get_contents($etcPhpIniPath);

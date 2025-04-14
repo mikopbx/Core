@@ -41,9 +41,9 @@ class CheckSSHConfig extends Injectable
     public function process(): array
     {
         $messages   = [];
-        $password   = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
-        $hashString = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING);
-        $hashFile   = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE);
+        $password   = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD, false);
+        $hashString = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, false);
+        $hashFile   = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD_HASH_FILE, false);
         if($hashString !== md5($password)){
             // The password has been changed in an unusual way.
             $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchStringsHash'];

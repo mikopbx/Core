@@ -106,13 +106,13 @@ class VoiceMailConf extends AsteriskConfigClass
         }
 
         // Get the sender address from generalSettings or fallback to MailSMTPUsername
-        $from = $this->generalSettings[PbxSettings::MAIL_SMTP_SENDER_ADDRESS];
+        $from = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_SENDER_ADDRESS);
         if (empty($from)) {
-            $from =  $this->generalSettings[PbxSettings::MAIL_SMTP_USERNAME];
+            $from =  PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_USERNAME);
         }
 
         // Get the PBX timezone and voicemail-sender path
-        $timezone = $this->generalSettings[PbxSettings::PBX_TIMEZONE];
+        $timezone = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
         $msmtpPath = Util::which('voicemail-sender');
 
         // Create the voicemail configuration string
@@ -140,11 +140,11 @@ class VoiceMailConf extends AsteriskConfigClass
 
         // Append voicemail context and mail_box to the configuration string
         $conf .= "[voicemailcontext]\n";
-        $mail_box = $this->generalSettings[PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL];
+        $mail_box = PbxSettings::getValueByKey(PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL);
         $conf .= "admin => admin," . Util::translate("user") . ",$mail_box,,attach=yes|tz=local|delete=yes\n";
 
         // Write the configuration string to voicemail.conf file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/voicemail.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 
     /**

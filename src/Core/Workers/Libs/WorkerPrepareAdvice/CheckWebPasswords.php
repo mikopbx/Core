@@ -81,9 +81,9 @@ class CheckWebPasswords extends Injectable
         $arrOfDefaultValues = PbxSettings::getDefaultArrayValues();
 
         $passwords = new \stdClass();
-        $passwords->web = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+        $passwords->web = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD, false);
         $passwords->webByDefault = $arrOfDefaultValues[PbxSettings::WEB_ADMIN_PASSWORD];
-        $passwords->cloudInstanceId = PbxSettings::getValueByKey(PbxSettings::CLOUD_INSTANCE_ID);
+        $passwords->cloudInstanceId = PbxSettings::getValueByKey(PbxSettings::CLOUD_INSTANCE_ID, false);
         return $passwords;
     }
 }

@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -44,7 +45,7 @@ class MusicOnHoldConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $mohPath = $this->config->path('asterisk.mohdir');
+        $mohPath = Directories::getDir(Directories::AST_MOH_DIR);
         $conf    = "[default]\n" .
             "mode=files\n" .
             "directory=$mohPath\n\n";
@@ -61,7 +62,8 @@ class MusicOnHoldConf extends AsteriskConfigClass
         }
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/musiconhold.conf', $conf);
+        $directory = Directories::getDir(Directories::AST_ETC_DIR);
+        Util::fileWriteContent($directory . '/musiconhold.conf', $conf);
         $this->checkMohFiles();
     }
 
@@ -71,7 +73,7 @@ class MusicOnHoldConf extends AsteriskConfigClass
      */
     protected function checkMohFiles(): void
     {
-        $path  = $this->config->path('asterisk.mohdir');
+        $path  = Directories::getDir(Directories::AST_MOH_DIR);
         $mask  = '/*.mp3';
 
         // Get the list of MP3 files in the specified path

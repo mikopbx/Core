@@ -233,7 +233,7 @@ class QueueConf extends AsteriskConfigClass
         }
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/queues.conf', $q_conf);
+        $this->saveConfig($q_conf, $this->description);
     }
 
     /**

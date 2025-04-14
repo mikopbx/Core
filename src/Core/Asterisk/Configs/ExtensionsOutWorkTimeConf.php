@@ -45,6 +45,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
     public int $priority = 510;
     public const string OUT_WORK_TIME_CONTEXT = 'check-out-work-time';
     private string $conf = '';
+    protected string $description = 'calendar.conf';
 
     /**
      * Generates core modules config files
@@ -69,7 +70,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
                 'app = Playback' . PHP_EOL .
                 'appdata = beep' . PHP_EOL . PHP_EOL;
         }
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/calendar.conf', $config);
+        $this->saveConfig($config, $this->description);
         $arr_out      = [];
         $pid = Processes::getPidOfProcess('asterisk');
         if (!empty($pid)) {

@@ -19,12 +19,11 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Core\System\Util;
 
 /**
  * Class ModulesConf
  *
- * Represents the configuration class for modules.conf and codecs.conf
+ * Represents the configuration class for modules.conf
  *
  * @package MikoPBX\Core\Asterisk\Configs
  */
@@ -36,7 +35,7 @@ class ModulesConf extends AsteriskConfigClass
     protected string $description = 'modules.conf';
 
     /**
-     * Generates the configuration for modules.conf and codecs.conf
+     * Generates the configuration for modules.conf
      */
     protected function generateConfigProtected(): void
     {
@@ -223,7 +222,6 @@ class ModulesConf extends AsteriskConfigClass
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_MODULES_CONF);
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/modules.conf', $conf);
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/codecs.conf', '');
+        $this->saveConfig($conf, $this->description);
     }
 }

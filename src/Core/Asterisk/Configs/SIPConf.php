@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+
 use MikoPBX\Common\Models\{Codecs,
     ExtensionForwardingRights,
     Extensions,
@@ -37,6 +38,7 @@ use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\{ Network, Processes, SystemMessages, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
+use MikoPBX\Core\System\Directories;
 use Throwable;
 
 /**
@@ -134,16 +136,17 @@ class SIPConf extends AsteriskConfigClass
     public function needAsteriskRestart(): bool
     {
         [$topology, $extIpAddress, $externalHostName, $subnets] = $this->getTopologyData();
-        $externalSipPort    = $this->generalSettings[PbxSettings::EXTERNAL_SIP_PORT];
-        $externalTlsPort    = $this->generalSettings[PbxSettings::EXTERNAL_TLS_PORT];
-        $sipPort            = $this->generalSettings[PbxSettings::SIP_PORT];
-        $tlsPort            = $this->generalSettings[PbxSettings::TLS_PORT];
-        $timeZone           = $this->generalSettings[PbxSettings::PBX_TIMEZONE];
+        $externalSipPort    = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_PORT);
+        $externalTlsPort    = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_TLS_PORT);
+        $sipPort            = PbxSettings::getValueByKey(PbxSettings::SIP_PORT);
+        $tlsPort            = PbxSettings::getValueByKey(PbxSettings::TLS_PORT);
+        $timeZone           = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
 
         $now_hash           = md5($timeZone.$topology . $externalHostName . $extIpAddress . $sipPort . $externalSipPort . $tlsPort . $externalTlsPort . implode('', $subnets));
 
         $old_hash        = '';
-        $varEtcDir       = $this->di->getShared('config')->path('core.varEtcDir');
+
+        $varEtcDir       = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         if (file_exists($varEtcDir . self::TOPOLOGY_HASH_FILE)) {
             $old_hash = file_get_contents($varEtcDir . self::TOPOLOGY_HASH_FILE);
         }
@@ -506,7 +509,7 @@ class SIPConf extends AsteriskConfigClass
             $data_peers = $this->getPeers();
             foreach ($data_peers as $peer) {
                 $hint = "$this->technology/$peer[extension]";
-                if ($this->generalSettings[PbxSettings::USE_WEB_RTC] === '1') {
+                if (PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC) === '1') {
                     $hint .= "&$this->technology/$peer[extension]-WS";
                 }
                 $conf .= "exten => $peer[extension],hint,$hint&Custom:$peer[extension] \n";
@@ -569,21 +572,8 @@ class SIPConf extends AsteriskConfigClass
         $conf .= $this->generateProvidersPj();
         $conf .= $this->generatePeersPj();
 
-        $astEtcDir = $this->config->path('asterisk.astetcdir');
-
         // Write pjsip.conf file
-        Util::fileWriteContent($astEtcDir . '/pjsip.conf', $conf);
-
-        // Write pjproject.conf file
-        $pjConf = '[log_mappings]' . "\n" .
-            'type=log_mappings' . "\n" .
-            'asterisk_error = 0' . "\n" .
-            'asterisk_warning = 2' . "\n" .
-            'asterisk_debug = 1,3,4,5,6' . "\n\n";
-        file_put_contents($astEtcDir . '/pjproject.conf', $pjConf);
-
-        // Write sorcery.conf file
-        file_put_contents($astEtcDir . '/sorcery.conf', '');
+        $this->saveConfig($conf, $this->description);
 
         // Asterisk has to be restarted to apply the changes over ami
         if ($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting !== true) {
@@ -623,7 +613,7 @@ class SIPConf extends AsteriskConfigClass
      */
     private function generateGeneralPj(): string
     {
-        $lang = $this->generalSettings[PbxSettings::PBX_LANGUAGE];
+        $lang = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
         [$topology, $extIpAddress, $externalHostName, $subnets] = $this->getTopologyData();
 
         $codecs    = $this->getCodecs();
@@ -631,12 +621,12 @@ class SIPConf extends AsteriskConfigClass
         foreach ($codecs as $codec) {
             $codecConf .= "allow = $codec\n";
         }
-        $pbxVersion = $this->generalSettings['PBXVersion'];
-        $sipPort    = $this->generalSettings[PbxSettings::SIP_PORT];
-        $tlsPort    = $this->generalSettings[PbxSettings::TLS_PORT];
-        $externalSipPort    = $this->generalSettings[PbxSettings::EXTERNAL_SIP_PORT];
-        $externalTlsPort    = $this->generalSettings[PbxSettings::EXTERNAL_TLS_PORT];
-        $timeZone           = $this->generalSettings[PbxSettings::PBX_TIMEZONE];
+        $pbxVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
+        $sipPort    = PbxSettings::getValueByKey(PbxSettings::SIP_PORT);
+        $tlsPort    = PbxSettings::getValueByKey(PbxSettings::TLS_PORT);
+        $externalSipPort    = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_PORT);
+        $externalTlsPort    = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_TLS_PORT);
+        $timeZone           = PbxSettings::getValueByKey(PbxSettings::PBX_TIMEZONE);
         $natConf    = '';
         $tlsNatConf = '';
 
@@ -858,7 +848,7 @@ class SIPConf extends AsteriskConfigClass
             'max_retries'              => '200',
             'forbidden_retry_interval' => '300',
             'fatal_retry_interval'     => '300',
-            'expiration'               => $this->generalSettings[PbxSettings::SIP_DEFAULT_EXPIRY],
+            'expiration'               => PbxSettings::getValueByKey(PbxSettings::SIP_DEFAULT_EXPIRY),
             'server_uri'               => "sip:{$provider['host']}:{$provider['port']}",
             'client_uri'               => "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}",
         ];
@@ -946,9 +936,9 @@ class SIPConf extends AsteriskConfigClass
         $options = [
             'type'               => 'aor',
             'max_contacts'       => '1',
-            'maximum_expiration' => $this->generalSettings[PbxSettings::SIP_MAX_EXPIRY],
-            'minimum_expiration' => $this->generalSettings[PbxSettings::SIP_MIN_EXPIRY],
-            'default_expiration' => $this->generalSettings[PbxSettings::SIP_DEFAULT_EXPIRY],
+            'maximum_expiration' => PbxSettings::getValueByKey(PbxSettings::SIP_MAX_EXPIRY),
+            'minimum_expiration' => PbxSettings::getValueByKey(PbxSettings::SIP_MIN_EXPIRY),
+            'default_expiration' => PbxSettings::getValueByKey(PbxSettings::SIP_DEFAULT_EXPIRY),
         ];
         if (!empty($contact)) {
             $options['contact'] = $contact;
@@ -1044,7 +1034,7 @@ class SIPConf extends AsteriskConfigClass
             $from_user   = $from;
             $contactUser = $from;
         }
-        $language   = $this->generalSettings[PbxSettings::PBX_LANGUAGE];
+        $language   = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
         if (
             $provider['registration_type'] === Sip::REG_TYPE_INBOUND
             || count($this->contexts_data[$provider['context_id']]) === 1
@@ -1158,7 +1148,7 @@ class SIPConf extends AsteriskConfigClass
      */
     public function generatePeersPj(): string
     {
-        $lang = $this->generalSettings[PbxSettings::PBX_LANGUAGE];
+        $lang = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
         $conf = '';
         do {
             $data_peers = $this->getPeers();
@@ -1193,7 +1183,7 @@ class SIPConf extends AsteriskConfigClass
         // Set the options for the auth section
         $options = [
             'type'     => 'auth',
-            'username' => $peer['extension'].$this->generalSettings[PbxSettings::SIP_AUTH_PREFIX],
+            'username' => $peer['extension'].PbxSettings::getValueByKey(PbxSettings::SIP_AUTH_PREFIX),
             'password' => $peer['secret'],
         ];
 
@@ -1247,7 +1237,7 @@ class SIPConf extends AsteriskConfigClass
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
 
         // Generate the WebRTC aor section if enabled
-        if ($this->generalSettings[PbxSettings::USE_WEB_RTC] === '1') {
+        if (PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC) === '1') {
             $conf    .= "[{$peer['extension']}-WS]\n";
             $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
         }
@@ -1337,7 +1327,7 @@ class SIPConf extends AsteriskConfigClass
 
 
         // Generate the WebRTC endpoint section if enabled
-        if ($this->generalSettings[PbxSettings::USE_WEB_RTC] === '1') {
+        if (PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC) === '1') {
             unset($options['media_encryption']);
 
             $conf .= "[{$peer['extension']}-WS] \n";

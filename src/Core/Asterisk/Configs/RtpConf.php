@@ -21,7 +21,6 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Util;
 
 /**
  * Class RtpConf
@@ -44,17 +43,21 @@ class RtpConf extends AsteriskConfigClass
     protected function generateConfigProtected(): void
     {
         $stunConfig = '';
-        $stun = trim($this->generalSettings[PbxSettings::RTP_STUN_SERVER]??'');
+        $stun = trim(PbxSettings::getValueByKey(PbxSettings::RTP_STUN_SERVER)??'');
         if(!empty($stun)){
             $stunConfig = "stunaddr=$stun".PHP_EOL;
         }
+
+        $rtpStart = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM)??'10000';
+        $rtpEnd = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO)??'10200';
+
         $conf = "[general]\n" .
             $stunConfig.
-            "rtpstart={$this->generalSettings[PbxSettings::RTP_PORT_FROM]}".PHP_EOL.
-            "rtpend={$this->generalSettings[PbxSettings::RTP_PORT_TO]}".PHP_EOL.
+            "rtpstart={$rtpStart}".PHP_EOL.
+            "rtpend={$rtpEnd}".PHP_EOL.
             PHP_EOL;
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/rtp.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

@@ -23,7 +23,6 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Util;
 
 /**
  * Class ManagerConf
@@ -63,11 +62,12 @@ class ManagerConf extends AsteriskConfigClass
             'CDR(dst)',
             'CDR(recordingfile)',
         ];
+        $amiPort = PbxSettings::getValueByKey(PbxSettings::AMI_PORT);
 
         // Generate the configuration content
         $conf = "[general]\n" .
             "enabled = yes\n" .
-            "port = {$this->generalSettings[PbxSettings::AMI_PORT]};\n" .
+            "port = {$amiPort};\n" .
             "bindaddr = 0.0.0.0\n" .
             "displayconnects = no\n" .
             "allowmultiplelogin = yes\n" .
@@ -76,7 +76,7 @@ class ManagerConf extends AsteriskConfigClass
             'channelvars=' . implode(',', $vars) . "\n" .
             "httptimeout = 60\n\n";
 
-        if ($this->generalSettings[PbxSettings::AMI_ENABLED] === '1') {
+        if (PbxSettings::getValueByKey(PbxSettings::AMI_ENABLED) === '1') {
             // Fetch the Asterisk manager users
             /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $managers */
             /** @var \MikoPBX\Common\Models\AsteriskManagerUsers $user */
@@ -167,6 +167,6 @@ class ManagerConf extends AsteriskConfigClass
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_MANAGER_CONF);
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/manager.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

@@ -45,6 +45,6 @@ class UdptlConf extends AsteriskConfigClass
         $conf = '';
 
         // Write the configuration content to the file
-        file_put_contents($this->config->path('asterisk.astetcdir') . '/udptl.conf', $conf);
+        $this->saveConfig($conf, $this->description);
     }
 }

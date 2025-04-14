@@ -42,8 +42,7 @@ class Network extends Injectable
      */
     public static function startSipDump(): void
     {
-        $config = new MikoPBXConfig();
-        $use = $config->getGeneralSettings('USE_PCAP_SIP_DUMP');
+        $use = PbxSettings::getValueByKey('USE_PCAP_SIP_DUMP');
         if ($use !== '1') {
             return;
         }

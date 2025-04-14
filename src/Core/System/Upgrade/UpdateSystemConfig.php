@@ -34,16 +34,6 @@ use function MikoPBX\Common\Config\appPath;
 
 class UpdateSystemConfig extends Injectable
 {
-    private MikoPBXConfig $mikoPBXConfig;
-
-    /**
-     * System constructor.
-     */
-    public function __construct()
-    {
-        $this->mikoPBXConfig = new MikoPBXConfig();
-    }
-
     /**
      * Updates settings after every new release
      */
@@ -52,7 +42,7 @@ class UpdateSystemConfig extends Injectable
         $this->deleteLostModules();
         // Clear all caches on any changed models
         ModelsBase::clearCache(PbxSettings::class);
-        $previous_version = (string)str_ireplace('-dev', '', $this->mikoPBXConfig->getGeneralSettings(PbxSettings::PBX_VERSION));
+        $previous_version = (string)str_ireplace('-dev', '',  PbxSettings::getValueByKey(PbxSettings::PBX_VERSION));
         $current_version  = (string)str_ireplace('-dev', '', trim(file_get_contents('/etc/version')));
         if ($previous_version !== $current_version) {
             $upgradeClasses      = [];
@@ -78,7 +68,7 @@ class UpdateSystemConfig extends Injectable
             }
 
             $this->updateConfigEveryNewRelease();
-            $this->mikoPBXConfig->setGeneralSettings(PbxSettings::PBX_VERSION, trim(file_get_contents('/etc/version')));
+            PbxSettings::setValueByKey(PbxSettings::PBX_VERSION, trim(file_get_contents('/etc/version')));
         }
         $storage = new Storage();
         $storage->moveReadOnlySoundsToStorage();

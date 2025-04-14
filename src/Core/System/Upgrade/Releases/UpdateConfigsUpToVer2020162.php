@@ -38,15 +38,12 @@ class UpdateConfigsUpToVer2020162 extends Injectable implements UpgradeSystemCon
     public const string PBX_VERSION = '2020.1.62';
 
     private ConfigAlias $config;
-    private MikoPBXConfig $mikoPBXConfig;
-
     /**
      * Class constructor.
      */
     public function __construct()
     {
         $this->config = $this->getDI()->getShared('config');
-        $this->mikoPBXConfig = new MikoPBXConfig();
     }
 
     public function processUpdate(): void
@@ -74,12 +71,12 @@ class UpdateConfigsUpToVer2020162 extends Injectable implements UpgradeSystemCon
         PBX::checkCodec('ilbc', 'iLBC', 'audio');
         PBX::checkCodec('opus', 'Opus Codec', 'audio');
 
-        $PrivateKey = $this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
-        $PublicKey  = $this->mikoPBXConfig->getGeneralSettings(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
+        $PrivateKey =  PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
+        $PublicKey  = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
         if (empty($PrivateKey) || empty($PublicKey)) {
             $certs = Util::generateSslCert();
-            $this->mikoPBXConfig->setGeneralSettings(PbxSettings::WEB_HTTPS_PRIVATE_KEY, $certs['PrivateKey']);
-            $this->mikoPBXConfig->setGeneralSettings(PbxSettings::WEB_HTTPS_PUBLIC_KEY, $certs['PublicKey']);
+            PbxSettings::setValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY, $certs['PrivateKey']);
+            PbxSettings::setValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY, $certs['PublicKey']);
         }
 
 

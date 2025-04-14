@@ -65,18 +65,18 @@ class ExtensionsConf extends AsteriskConfigClass
         /** @scrutinizer ignore-call */
         $conf              = "[globals]" .PHP_EOL.
             "TRANSFER_CONTEXT=internal-transfer;".PHP_EOL;
-        if ($this->generalSettings[PbxSettings::PBX_RECORD_CALLS] === '1') {
+        if (PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_CALLS) === '1') {
             $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
             $conf .= "MONITOR_DIR=" . $monitorDir .PHP_EOL;
-            $conf .= "MONITOR_STEREO=" . $this->generalSettings[PbxSettings::PBX_SPLIT_AUDIO_THREAD] .PHP_EOL;
+            $conf .= "MONITOR_STEREO=" . PbxSettings::getValueByKey(PbxSettings::PBX_SPLIT_AUDIO_THREAD) .PHP_EOL;
         }
-        if ($this->generalSettings[PbxSettings::PBX_RECORD_CALLS_INNER] === '0') {
+        if (PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_CALLS_INNER) === '0') {
             $conf .= "MONITOR_INNER=0".PHP_EOL;
         }else{
             $conf .= "MONITOR_INNER=1".PHP_EOL;
         }
-        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings[PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN]).PHP_EOL;
-        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile($this->generalSettings[PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT]).PHP_EOL;
+        $conf .= "PBX_REC_ANNONCE_IN=" .ExtensionsAnnounceRecording::getPathAnnounceFile(PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN)).PHP_EOL;
+        $conf .= "PBX_REC_ANNONCE_OUT=".ExtensionsAnnounceRecording::getPathAnnounceFile(PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT)).PHP_EOL;
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::EXTENSION_GLOBALS);
         $conf .= PHP_EOL.PHP_EOL;
         $conf .= "[general]".PHP_EOL;
@@ -96,7 +96,7 @@ class ExtensionsConf extends AsteriskConfigClass
         $conf .= $this->generatePublicContext();
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.astetcdir') . '/extensions.conf', $conf);
+        $this->saveConfig($conf, $this->description);
         $confLua =  '-- extensions["test-default"] = {'.PHP_EOL.
                     '--    ["100"] = function(context, extension)'.PHP_EOL.
                     '--        app.playback("please-hold");'.PHP_EOL.
@@ -105,7 +105,8 @@ class ExtensionsConf extends AsteriskConfigClass
                     '-- };';
 
         // Write the configuration content to the file
-        Util::fileWriteContent($this->config->path('asterisk.luaDialplanDir') . '/99-extensions-override.lua', $confLua);
+        $directory = Directories::getDir(Directories::AST_LUA_DIALPLAN_DIR);
+        Util::fileWriteContent($directory . '/99-extensions-override.lua', $confLua);
     }
 
     /**

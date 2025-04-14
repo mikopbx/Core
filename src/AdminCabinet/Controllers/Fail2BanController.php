@@ -99,7 +99,7 @@ class Fail2BanController extends BaseController
         }
 
         if(isset($data[PbxSettings::PBX_FIREWALL_MAX_REQ])){
-            PbxSettings::setValue(PbxSettings::PBX_FIREWALL_MAX_REQ, $data[PbxSettings::PBX_FIREWALL_MAX_REQ]);
+            PbxSettings::setValueByKey(PbxSettings::PBX_FIREWALL_MAX_REQ, $data[PbxSettings::PBX_FIREWALL_MAX_REQ]);
         }
         // Set success flash message
         $this->flash->success($this->translation->_('ms_SuccessfulSaved'));

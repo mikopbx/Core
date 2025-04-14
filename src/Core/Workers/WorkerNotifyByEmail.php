@@ -65,20 +65,18 @@ class WorkerNotifyByEmail extends WorkerBase
     {
         $phonesCid = [];
         $notifier = new Notifications();
-        $config   = new MikoPBXConfig();
-        $settings = $config->getGeneralSettings();
 
         /** @var BeanstalkClient $message */
         $data = json_decode($message->getBody(), true);
 
-        $template_body = $settings[PbxSettings::MAIL_TPL_MISSED_CALL_BODY];
-        $template_subject = $settings[ PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT];
+        $template_body = PbxSettings::getValueByKey(PbxSettings::MAIL_TPL_MISSED_CALL_BODY);
+        $template_subject = PbxSettings::getValueByKey(PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT);
 
         // Set default subject if not provided
         if (empty($template_subject)) {
             $template_subject = Util::translate("You have missing call") . ' <-- NOTIFICATION_CALLERID';
         }
-        $template_Footer = $settings[PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER];
+        $template_Footer = PbxSettings::getValueByKey(PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER);
         $emails = [];
 
         $tmpArray = [];

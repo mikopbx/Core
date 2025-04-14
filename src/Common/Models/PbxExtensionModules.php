@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -123,16 +123,20 @@ class PbxExtensionModules extends ModelsBase
      * Prepares an array of enabled modules params for reading
      * @return array
      */
-    public static function getEnabledModulesArray(): array
+    public static function getEnabledModulesArray(bool $useCache = true): array
     {
         // Check if it globally disabled
         if (PbxSettings::getValueByKey(PbxSettings::DISABLE_ALL_MODULES) === '1') {
             return [];
         }
 
-        $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray');
-        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $modulesArray = $redis->get($cacheKey);
+        if ($useCache) {
+            $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getEnabledModulesArray');
+            $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
+            $modulesArray = $redis->get($cacheKey)??[];
+        } else {
+            $modulesArray = [];
+        }
         if (empty($modulesArray)) {
             // Get the list of disabled modules
             $parameters = [
@@ -140,7 +144,9 @@ class PbxExtensionModules extends ModelsBase
                 'columns' => 'uniqid'
             ];
             $modulesArray = PbxExtensionModules::find($parameters)->toArray();
-            $redis->set($cacheKey, $modulesArray, 3600);
+            if ($useCache) {
+                $redis->set($cacheKey, $modulesArray, 3600);
+            }
         }
 
         return $modulesArray;
@@ -150,17 +156,25 @@ class PbxExtensionModules extends ModelsBase
      * Prepares an array of modules params for reading
      * @return array
      */
-    public static function getModulesArray(): array
+    public static function getModulesArray(bool $useCache = true): array
     {
-        $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray');
-        $modulesArray = $redis->get($cacheKey);
+        if ($useCache) {
+            $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
+            $cacheKey = ModelsBase::makeCacheKey(PbxExtensionModules::class, 'getModulesArray');
+            $modulesArray = $redis->hgetall($cacheKey)??[];
+        } else {
+            $modulesArray = [];
+        }
         if (empty($modulesArray)) {
             $parameters = [
                 'order' => 'id desc',
             ];
             $modulesArray = PbxExtensionModules::find($parameters)->toArray();
-            $redis->set($cacheKey, $modulesArray, 3600);
+            if ($useCache) {
+                foreach ($modulesArray as $module) {
+                    $redis->hset($cacheKey, $module['uniqid'], $module);
+                }
+            }
         }
         return $modulesArray;
     }
