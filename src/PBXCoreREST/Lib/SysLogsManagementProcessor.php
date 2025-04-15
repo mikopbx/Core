@@ -69,7 +69,7 @@ class SysLogsManagementProcessor extends Injectable
                 $res = DownloadLogsArchiveAction::main($data['filename']);
                 break;
             case 'downloadLogFile':
-                $res = DownloadLogFileAction::main($data['filename']);
+                $res = DownloadLogFileAction::main($data['filename'], $data['archive'] ?? false);
                 break;
             case 'getLogsList':
                 $res = GetLogsListAction::main();

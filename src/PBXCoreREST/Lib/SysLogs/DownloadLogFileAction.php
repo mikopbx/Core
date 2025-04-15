@@ -23,6 +23,7 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\PBXCoreREST\Lib\Files\RestAPIFilesUtils;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
+use ZipArchive;
 
 /**
  * Prepares a downloadable link for a log file with the provided name.
@@ -35,11 +36,12 @@ class DownloadLogFileAction extends Injectable
      * Prepares a downloadable link for a log file with the provided name.
      *
      * @param string $filename The name of the log file.
+     * @param bool $archive Whether to archive the file before download.
      *
      * @return PBXApiResult An object containing the result of the API call.
      *
      */
-    public static function main(string $filename): PBXApiResult
+    public static function main(string $filename, bool $archive = false): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -48,8 +50,25 @@ class DownloadLogFileAction extends Injectable
             $res->success    = false;
             $res->messages[] = 'File does not exist ' . $filename;
         } else {
-            $res->data['filename'] = RestAPIFilesUtils::makeFileLinkForDownload($filename, 'MikoPBXLog_');
-            $res->success          = true;
+            if ($archive) {
+                $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR);
+                $zipFilename = $tempDir . '/'. basename($filename) . '.zip';
+                
+                $zip = new ZipArchive();
+                if ($zip->open($zipFilename, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+                    $zip->addFile($filename, basename($filename));
+                    $zip->close();
+                    
+                    $res->data['filename'] = RestAPIFilesUtils::makeFileLinkForDownload($zipFilename, 'MikoPBXLog_');
+                    $res->success = true;
+                } else {
+                    $res->success = false;
+                    $res->messages[] = 'Unable to create ZIP archive';
+                }
+            } else {
+                $res->data['filename'] = RestAPIFilesUtils::makeFileLinkForDownload($filename, 'MikoPBXLog_');
+                $res->success = true;
+            }
         }
 
         return $res;

@@ -695,7 +695,7 @@ const PbxApi = {
             url: PbxApi.syslogDownloadLogFile,
             on: 'now',
             method: 'POST',
-            data: {filename},
+            data: {filename, archive: true},
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response.data);
