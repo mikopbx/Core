@@ -53,7 +53,7 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
     {
         // Wait until the password validation message is located on the page
         $xpath = '//div[contains(@class, "password-validate")]';
-        self::$driver->wait()->until(
+        self::$driver->wait(10, 500)->until(
             WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::xpath($xpath))
         );
 
@@ -77,6 +77,13 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
         self::$driver->get("{$GLOBALS['SERVER_PBX']}/admin-cabinet/general-settings/modify/#/passwords");
         $this->assertInputFieldValueEqual('WebAdminPassword', $params['checkPassword'], true);
         $this->assertInputFieldValueEqual('WebAdminPasswordRepeat', $params['checkPassword'], true);
+
+
+        // Wait until the $('#show-advice-button .red.icon') change to class to yellow.icon
+        $xpath = '//a[contains(@id, "show-advice-button")]/i[contains(@class,"red")]';
+        self::$driver->wait(10, 500)->until(
+            WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::xpath($xpath))
+        );
     }
 
     // Change password field
