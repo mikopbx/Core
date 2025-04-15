@@ -62,138 +62,109 @@ class BaseController extends Controller
         [$debug, $requestMessage] = $this->prepareRequestMessage($processor, $payload, $actionName, $moduleName);
         if ($debug) {
             $maxTimeout = 9999;
-        }
-        
-        // Увеличиваем таймаут для известных долгих операций
-        if (
-            // Действия связанные с модулями, особенно получение списка доступных
-            ($processor === PbxExtensionsProcessor::class || $processor === 'modules') &&
-            in_array($actionName, ['getAvailableModules', 'installModule', 'updateModule', 'backupModule'], true)
-        ) {
-            $maxTimeout = max($maxTimeout, 300); // Увеличим до 5 минут для операций с модулями
+        } else {
+            // Ensure minimum timeout for testing
+            $maxTimeout = max($maxTimeout, 30);
         }
 
         try {
-            $this->redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
-         
+            // Initialize Redis connection
+            $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
 
             // Generate unique request ID
             $requestMessage['request_id'] = uniqid('req_', true);
-            
-            // Add client-side timestamps for performance tracking
-            $requestMessage['_client_timestamps'] = [
-                'request_sent' => microtime(true)
-            ];
 
             // Push request to queue
-            $this->redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
+            $redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
 
             if ($requestMessage['async']) {
                 $this->response->setPayloadSuccess(['success' => true]);
                 return;
             }
 
-            // Subscribe to response channel
+            // Get response key
             $responseKey = WorkerApiCommands::REDIS_API_RESPONSE_PREFIX . $requestMessage['request_id'];
             $response = null;
-            $startTime = time();
+            $startTime = microtime(true);
             $retryCount = 0;
             $maxRetries = 5;
             
-            // Add a small delay before first check to allow time for processing
-            usleep(50000); // 50ms delay
+            // Wait for response with direct polling and retry logic
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf(
+                    "Waiting for response on key: %s, timeout: %ds",
+                    $responseKey,
+                    $maxTimeout
+                ),
+                LOG_DEBUG
+            );
             
-            // Important: Check if response is already available before setting up subscription
-            $encodedResponse = $this->redis->get($responseKey);
-            if ($encodedResponse !== false) {
-                $response = json_decode($encodedResponse, true);
-                
-                // Log that we found the response immediately
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    sprintf(
-                        "Response found immediately after request: %s (request_id: %s)",
-                        $actionName,
-                        $requestMessage['request_id']
-                    ),
-                    LOG_NOTICE
-                );
-            }
+            // Calculate end time
+            $endTime = $startTime + $maxTimeout;
             
-            // Прогрессивный таймаут - начинаем с частых проверок, затем увеличиваем интервалы
-            $progressiveTimeouts = [
-                // [время после запроса в секундах, интервал проверки в микросекундах]
-                [0, 10000],      // первые 5 секунд - проверка каждые 10мс
-                [5, 100000],     // от 5 до 15 секунд - каждые 100мс
-                [15, 500000],    // от 15 до 60 секунд - каждые 500мс
-                [60, 1000000],   // от 1 до 5 минут - каждую секунду
+            // Polling intervals strategy: fast polling at first, then gradually slow down
+            $pollingIntervals = [
+                // Fast polling for first second (10ms)
+                ['duration' => 1, 'interval' => 10000],
+                // Medium polling for next 4 seconds (50ms)
+                ['duration' => 4, 'interval' => 50000],
+                // Slower polling for next 10 seconds (100ms)
+                ['duration' => 10, 'interval' => 100000],
+                // Very slow polling for the rest (250ms)
+                ['duration' => $maxTimeout, 'interval' => 250000]
             ];
             
-            $lastProgressiveCheck = microtime(true);
-            $currentProgressiveStage = 0;
+            $currentPollingStage = 0;
+            $stageStartTime = $startTime;
+            $currentInterval = $pollingIntervals[0]['interval'];
+            $attempts = 0;
             
-            // Wait for response with progressive timeout and retry logic
-            while ($response === null && time() - $startTime < $maxTimeout) {
+            while (microtime(true) < $endTime) {
                 try {
-                    // Определяем текущий интервал проверки на основе времени с начала запроса
-                    $elapsedSeconds = time() - $startTime;
+                    // Check if we need to adjust polling interval
+                    $elapsedTime = microtime(true) - $startTime;
+                    $stageElapsedTime = microtime(true) - $stageStartTime;
                     
-                    // Обновляем текущую стадию при необходимости
-                    while (
-                        $currentProgressiveStage < count($progressiveTimeouts) - 1 && 
-                        $elapsedSeconds >= $progressiveTimeouts[$currentProgressiveStage + 1][0]
-                    ) {
-                        $currentProgressiveStage++;
+                    if ($currentPollingStage < count($pollingIntervals) - 1 && 
+                        $stageElapsedTime >= $pollingIntervals[$currentPollingStage]['duration']) {
+                        // Move to next polling stage
+                        $currentPollingStage++;
+                        $stageStartTime = microtime(true);
+                        $currentInterval = $pollingIntervals[$currentPollingStage]['interval'];
+                        
+                        // Skip logging interval changes to reduce noise
                     }
                     
-                    // Получаем интервал проверки для текущей стадии
-                    $checkInterval = $progressiveTimeouts[$currentProgressiveStage][1];
+                    // Check for response
+                    $attempts++;
+                    $encodedResponse = $redis->get($responseKey);
                     
-                    // Проверяем, прошло ли достаточно времени с последней проверки
-                    $now = microtime(true);
-                    if ($now - $lastProgressiveCheck < $checkInterval / 1000000) {
-                        // Если еще рано для проверки, делаем короткую паузу
-                        usleep(5000); // 5мс
-                        continue;
-                    }
-                    
-                    // Обновляем время последней проверки
-                    $lastProgressiveCheck = $now;
-                    
-                    // Check if response is ready
-                    $encodedResponse = $this->redis->get($responseKey);
                     if ($encodedResponse !== false) {
+                        $responseTime = microtime(true);
+                        $responseDelay = $responseTime - $startTime;
+                        
+                        // Response received - only log if it took longer than expected (over 1 second)
+                        if ($responseDelay > 1.0) {
+                            SystemMessages::sysLogMsg(
+                                static::class,
+                                sprintf(
+                                    "Delayed response for action '%s' received after %.3fs (attempts: %d)",
+                                    $actionName,
+                                    $responseDelay,
+                                    $attempts
+                                ),
+                                LOG_NOTICE
+                            );
+                        }
+                        
                         $response = json_decode($encodedResponse, true);
                         break;
                     }
                     
-                    // Вместо длительной блокирующей подписки используем короткую проверку на наличие сообщений
-                    try {
-                        // Проверяем, есть ли уже сообщения в канале (без блокировки)
-                        // Адаптивный таймаут для Redis операций в зависимости от текущей стадии
-                        $redisOpTimeout = min(1.0, $checkInterval / 500000); // от 0.02 до 1.0 секунды
-                        $this->redis->setOption(3, $redisOpTimeout);
-                        
-                        // Используем subscribe с коротким таймаутом
-                        $gotResponse = false;
-                        $this->redis->subscribe([$responseKey], function($redis, $channel, $message) use (&$gotResponse) {
-                            if ($message === 'ready') {
-                                $gotResponse = true;
-                                $redis->unsubscribe([$channel]);
-                            }
-                        });
-                        
-                        // Если получили сообщение, пробуем получить ответ
-                        if ($gotResponse) {
-                            $encodedResponse = $this->redis->get($responseKey);
-                            if ($encodedResponse !== false) {
-                                $response = json_decode($encodedResponse, true);
-                                break;
-                            }
-                        }
-                    } catch (RedisException $e) {
-                        // Игнорируем таймаут подписки - это ожидаемое поведение
-                    }
+                    // Short sleep before next check
+                    usleep($currentInterval);
+                    
                 } catch (RedisException $redisException) {
                     // Specific handling for Redis exceptions
                     $retryCount++;
@@ -212,7 +183,7 @@ class BaseController extends Controller
                         throw $redisException; // Max retries exceeded
                     }
                     
-                    // Log Redis-specific retry attempt using both handlers for better visibility
+                    // Log Redis-specific retry attempt
                     $errorMessage = sprintf(
                         "Redis connection error during worker request, retrying (%d/%d): %s (action: %s)",
                         $retryCount, 
@@ -224,7 +195,7 @@ class BaseController extends Controller
                     // Log to system log
                     SystemMessages::sysLogMsg(static::class, $errorMessage, LOG_WARNING);
                     
-                    // Also log with error handler for potential capture in Sentry
+                    // Also log with error handler for potential Sentry capture
                     CriticalErrorsHandler::handleExceptionWithSyslog(
                         new \Exception($errorMessage)
                     );
@@ -232,8 +203,11 @@ class BaseController extends Controller
                     // Exponential backoff with jitter
                     $sleepTime = min(pow(2, $retryCount) * 100000, 2000000) + mt_rand(0, 100000);
                     usleep($sleepTime);
+                    
+                    // Reconnect
+                    $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
                 } catch (Throwable $otherException) {
-                    // Handle Redis connection errors with retry
+                    // Handle other errors with retry
                     $retryCount++;
                     
                     if ($retryCount > $maxRetries) {
@@ -262,7 +236,7 @@ class BaseController extends Controller
                     // Log to system log
                     SystemMessages::sysLogMsg(static::class, $errorMessage, LOG_WARNING);
                     
-                    // Also log with error handler for potential capture in Sentry
+                    // Also log with error handler for potential Sentry capture
                     CriticalErrorsHandler::handleExceptionWithSyslog(
                         new \Exception($errorMessage)
                     );
@@ -270,200 +244,108 @@ class BaseController extends Controller
                     // Exponential backoff with jitter
                     $sleepTime = min(pow(2, $retryCount) * 100000, 2000000) + mt_rand(0, 100000);
                     usleep($sleepTime);
-                }
-            }
-
-            // Add client-side receive timestamp
-            $clientTimestamps = [
-                'response_received' => microtime(true),
-                'total_time' => microtime(true) - $requestMessage['_client_timestamps']['request_sent'],
-                'timeout_info' => [
-                    'max_timeout' => $maxTimeout,
-                    'elapsed_time' => time() - $startTime,
-                    'progressive_stage' => $currentProgressiveStage,
-                ]
-            ];
-            
-            // Последняя попытка проверить наличие ответа перед объявлением таймаута
-            if ($response === null) {
-                // Прогрессивные финальные проверки - с разными интервалами в зависимости от времени запроса
-                $finalCheckIntervals = [100000, 300000, 500000]; // 100мс, 300мс, 500мс
-                
-                // Если запрос был долгим, увеличиваем интервалы проверки
-                if (time() - $startTime > 60) {
-                    $finalCheckIntervals = [500000, 1000000, 2000000]; // 500мс, 1сек, 2сек
-                }
-                
-                for ($finalAttempt = 0; $finalAttempt < count($finalCheckIntervals); $finalAttempt++) {
-                    // Сразу проверяем ответ снова
-                    $encodedResponse = $this->redis->get($responseKey);
-                    if ($encodedResponse !== false) {
-                        $response = json_decode($encodedResponse, true);
-                        // Логируем, что нашли ответ после выхода из основного цикла
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            sprintf(
-                                "Response found after main timeout loop (attempt %d): %s (request_id: %s, elapsed: %ds)",
-                                $finalAttempt + 1,
-                                $actionName,
-                                $requestMessage['request_id'],
-                                time() - $startTime
-                            ),
-                            LOG_NOTICE
-                        );
-                        break;
-                    }
                     
-                    // Если это не последняя проверка, делаем паузу перед следующей
-                    if ($finalAttempt < count($finalCheckIntervals) - 1) {
-                        usleep($finalCheckIntervals[$finalAttempt]);
-                    }
+                    // Reconnect
+                    $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
                 }
-            }
-            
-            // Try to get additional performance metrics
-            try {
-                $metricsKey = "api:metrics:{$requestMessage['request_id']}";
-                $metricsData = $this->redis->get($metricsKey);
-                if ($metricsData !== false) {
-                    $redisMetrics = json_decode($metricsData, true);
-                    $clientTimestamps['redis_metrics'] = $redisMetrics;
-                    
-                    // Calculate round-trip time (client → queue → worker → redis → client)
-                    if (isset($redisMetrics['start'])) {
-                        $clientTimestamps['queue_time'] = $redisMetrics['start'] - $requestMessage['_client_timestamps']['request_sent'];
-                    }
-                    
-                    // Clean up metrics key
-                    $this->redis->del($metricsKey);
-                }
-            } catch (Throwable $e) {
-                // Ignore metrics errors
             }
 
             // Clean up
             try {
-                $this->redis->del($responseKey);
+                $redis->del($responseKey);
             } catch (Throwable $e) {
                 // Ignore cleanup errors
             }
 
+            // Calculate total time taken
+            $totalTime = microtime(true) - $startTime;
+
             if ($response === null) {
-                // Логируем детали о таймауте для отладки
                 SystemMessages::sysLogMsg(
                     static::class,
                     sprintf(
-                        "Request timeout detected: %s, processor: %s, request_id: %s, timeout: %ds, time spent: %ds",
-                        $actionName,
-                        $processor,
-                        $requestMessage['request_id'],
-                        $maxTimeout,
-                        time() - $startTime
+                        "Request timeout after %.3fs: No response received for action %s",
+                        $totalTime,
+                        $actionName
                     ),
                     LOG_WARNING
                 );
-                
-                // Формируем более информативное сообщение для пользователя
-                $timeoutMessage = sprintf(
-                    'Превышено время ожидания ответа (запрос выполнялся %d сек из допустимых %d сек). ' . 
-                    'Возможно, запрос слишком долгий или сервис не отвечает. ' . 
-                    'ID запроса: %s',
-                    time() - $startTime,
-                    $maxTimeout,
-                    $requestMessage['request_id']
-                );
-                
-                $this->response->setPayloadError($timeoutMessage);
+                $this->response->setPayloadError('Request timeout or worker not responding');
                 return;
             }
 
-            // Add client timing data to response
-            if (isset($response['_performance'])) {
-                $response['_performance']['client_side'] = $clientTimestamps;
+           // Handle file-based response
+           if (isset($response[WorkerApiCommands::REDIS_RESPONSE_IN_FILE])) {
+            $filename = $response[WorkerApiCommands::REDIS_RESPONSE_IN_FILE];
+            if (file_exists($filename)) {
+                $fileContent = file_get_contents($filename);
+                if ($fileContent !== false) {
+                    // Check if response is compressed
+                    if (isset($response['compressed']) && $response['compressed'] === true) {
+                        $fileContent = gzdecode($fileContent);
+                    }
+                    
+                    $response = unserialize($fileContent);
+                    unlink($filename);
+                    $this->response->setPayloadSuccess($response);
+                } else {
+                    $this->response->setPayloadError('Failed to read response file');
+                }
+            } else {
+                $this->response->setPayloadError('Response file not found');
+            }
+            return;
+        }
+        
+        // Handle compressed Redis-based large response
+        if (isset($response['large_response_redis'])) {
+            $redisKey = $response['large_response_redis'];
+            $compressedData = $redis->get($redisKey);
+            
+            if ($compressedData !== false) {
+                // Clear the key since we're consuming the data
+                $redis->del($redisKey);
                 
-                // Добавляем информацию о прогрессивных таймаутах
-                $response['_performance']['timeout_strategy'] = [
-                    'max_timeout' => $maxTimeout,
-                    'time_spent' => time() - $startTime,
-                    'progressive_stage_reached' => $currentProgressiveStage,
-                    'progressive_stages' => $progressiveTimeouts
-                ];
-                
-                // Log slow requests (over 1 second total)
-                if ($clientTimestamps['total_time'] > 1.0) {
+                // Decompress and unserialize the data
+                $data = gzdecode($compressedData);
+                if ($data !== false) {
+                    $response = unserialize($data);
+                    $this->response->setPayloadSuccess($response);
+                } else {
+                    $this->response->setPayloadError('Failed to decompress response data');
+                }
+            } else {
+                $this->response->setPayloadError('Large response data not found in Redis');
+            }
+            return;
+        }
+
+
+            if (array_key_exists(WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR, $response)) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    sprintf(
+                        "Setting error response: job_id=%s, error=%s",
+                        $requestMessage['request_id'] ?? 'unknown',
+                        $response[WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR]
+                    ),
+                    LOG_DEBUG
+                );
+                $this->response->setPayloadError($response[WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR]);
+            } else {
+                // Only log response time if it took longer than expected
+                if ($totalTime > 1.0) {
                     SystemMessages::sysLogMsg(
                         static::class,
                         sprintf(
-                            "Slow API request: %s - total: %.3fs, queue: %.3fs, processing: %.3fs, stage: %d",
+                            "Slow response for action '%s': %.3fs with %d attempts",
                             $actionName,
-                            $clientTimestamps['total_time'],
-                            $clientTimestamps['queue_time'] ?? 0,
-                            $response['_performance']['total_processing_time'] ?? 0,
-                            $currentProgressiveStage
+                            $totalTime,
+                            $attempts
                         ),
                         LOG_NOTICE
                     );
                 }
-            } else {
-                $response['_performance'] = [
-                    'client_side' => $clientTimestamps,
-                    'timeout_strategy' => [
-                        'max_timeout' => $maxTimeout,
-                        'time_spent' => time() - $startTime,
-                        'progressive_stage_reached' => $currentProgressiveStage,
-                    ]
-                ];
-            }
-
-            // Handle file-based response
-            if (isset($response[WorkerApiCommands::REDIS_RESPONSE_IN_FILE])) {
-                $filename = $response[WorkerApiCommands::REDIS_RESPONSE_IN_FILE];
-                if (file_exists($filename)) {
-                    $fileContent = file_get_contents($filename);
-                    if ($fileContent !== false) {
-                        // Check if response is compressed
-                        if (isset($response['compressed']) && $response['compressed'] === true) {
-                            $fileContent = gzdecode($fileContent);
-                        }
-                        
-                        $response = unserialize($fileContent);
-                        unlink($filename);
-                        $this->response->setPayloadSuccess($response);
-                    } else {
-                        $this->response->setPayloadError('Failed to read response file');
-                    }
-                } else {
-                    $this->response->setPayloadError('Response file not found');
-                }
-                return;
-            }
-            
-            // Handle compressed Redis-based large response
-            if (isset($response['large_response_redis'])) {
-                $redisKey = $response['large_response_redis'];
-                $compressedData = $this->redis->get($redisKey);
-                
-                if ($compressedData !== false) {
-                    // Clear the key since we're consuming the data
-                    $this->redis->del($redisKey);
-                    
-                    // Decompress and unserialize the data
-                    $data = gzdecode($compressedData);
-                    if ($data !== false) {
-                        $response = unserialize($data);
-                        $this->response->setPayloadSuccess($response);
-                    } else {
-                        $this->response->setPayloadError('Failed to decompress response data');
-                    }
-                } else {
-                    $this->response->setPayloadError('Large response data not found in Redis');
-                }
-                return;
-            }
-
-            if (array_key_exists(WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR, $response)) {
-                $this->response->setPayloadError($response[WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR]);
-            } else {
                 $this->response->setPayloadSuccess($response);
             }
 

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\{Processes, SystemMessages};
 use MikoPBX\Core\Workers\WorkerRedisBase;
 use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
@@ -74,10 +73,6 @@ class WorkerApiCommands extends WorkerRedisBase
     private const int FORK_PROCESS_TIMEOUT = 300; // 5 minutes
     private const int PROCESS_CHECK_INTERVAL = 100000; // 100ms
 
-    /**
-     * Redis client for API operations
-     */
-    private ?Redis $apiRedis = null;
 
     /**
      * Map of active worker jobs and processes
@@ -101,137 +96,6 @@ class WorkerApiCommands extends WorkerRedisBase
     public static function getCheckInterval(): int
     {
         return 15; // Check every 15 seconds
-    }
-
-    /**
-     * Initialize WorkerApiCommands with Redis connections
-     *
-     * @throws RuntimeException If Redis initialization fails
-     */
-    public function __construct()
-    {
-        parent::__construct();
-        $this->initializeApiRedis();
-    }
-
-    /**
-     * Initialize Redis connection for API operations with retry logic
-     *
-     * @param int $maxRetries Maximum number of retry attempts (default 3)
-     * @param int $retryDelay Delay between retries in microseconds (default 500ms)
-     * @throws RuntimeException If Redis initialization fails after all retries
-     */
-    private function initializeApiRedis(int $maxRetries = 3, int $retryDelay = 500000): void
-    {
-        $attempt = 0;
-        $lastException = null;
-        
-        while ($attempt < $maxRetries) {
-            try {
-                $attempt++;
-                
-                // Close inherited connections if any
-                if ($this->apiRedis) {
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "Closing existing Redis connection before reinitializing (attempt {$attempt}/{$maxRetries})",
-                        LOG_DEBUG
-                    );
-                    
-                    try {
-                        $this->apiRedis->close();
-                    } catch (\Throwable $e) {
-                        // Just log but continue - the connection might already be broken
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "Error closing Redis connection: " . $e->getMessage(),
-                            LOG_WARNING
-                        );
-                    }
-                    
-                    $this->apiRedis = null;
-                }
-
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Initializing Redis client for API operations (attempt {$attempt}/{$maxRetries})",
-                    LOG_DEBUG
-                );
-                
-                // Get fresh Redis instance from DI
-                $this->apiRedis = $this->di->get(RedisClientProvider::SERVICE_NAME);
-
-                if ($this->apiRedis === null) {
-                    throw new RuntimeException('Redis client provider returned null');
-                }
-                
-                // Verify connection is working with ping
-                $pingResult = $this->apiRedis->ping();
-                if ($pingResult !== true) {
-                    throw new RuntimeException("Redis ping test failed, returned: " . print_r($pingResult, true));
-                }
-                
-                // Log successful connection details
-                $connectionInfo = [];
-                try {
-                    $connectionInfo = [
-                        'redis_version' => $this->apiRedis->info('server')['redis_version'] ?? 'unknown',
-                        'connected_clients' => $this->apiRedis->info('clients')['connected_clients'] ?? 'unknown',
-                        'used_memory' => $this->apiRedis->info('memory')['used_memory_human'] ?? 'unknown',
-                        'uptime' => $this->apiRedis->info('server')['uptime_in_seconds'] ?? 'unknown',
-                        'tcp_port' => $this->apiRedis->info('server')['tcp_port'] ?? 'unknown'
-                    ];
-                    
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "Redis connection established successfully: " . json_encode($connectionInfo),
-                        LOG_DEBUG
-                    );
-                } catch (Throwable $e) {
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "Warning: Could not get Redis info after connection: " . $e->getMessage(),
-                        LOG_WARNING
-                    );
-                }
-                
-                // Successful connection
-                return;
-                
-            } catch (Throwable $e) {
-                $lastException = $e;
-                
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Redis connection attempt {$attempt}/{$maxRetries} failed: " . $e->getMessage(),
-                    $attempt < $maxRetries ? LOG_WARNING : LOG_ERR
-                );
-                
-                // Wait before retry if this isn't the last attempt
-                if ($attempt < $maxRetries) {
-                    usleep($retryDelay);
-                }
-            }
-        }
-        
-        // If we get here, all attempts failed
-        $errorMsg = 'Failed to initialize API Redis after ' . $maxRetries . ' attempts';
-        if ($lastException) {
-            $errorMsg .= ': ' . $lastException->getMessage();
-        }
-        
-        CriticalErrorsHandler::handleExceptionWithSyslog($lastException ?? new RuntimeException($errorMsg));
-        throw new RuntimeException($errorMsg);
-    }
-
-    /**
-     * Set forked flag and reinitialize connections
-     */
-    protected function setForked(): void
-    {
-        parent::setForked();
-        // Create new API Redis connection for forked process
-        $this->initializeApiRedis();
     }
 
     /**
@@ -266,7 +130,7 @@ class WorkerApiCommands extends WorkerRedisBase
                             "Running module post-installations check with mutex lock",
                             LOG_NOTICE
                         );
-                        ModuleInstallationBase::processModulePostInstallations($this->apiRedis);
+                        ModuleInstallationBase::processModulePostInstallations($this->redis);
                     }
                 );
             } catch (Throwable $e) {
@@ -388,7 +252,7 @@ class WorkerApiCommands extends WorkerRedisBase
 
             // Check both main and failed queues
             $queues = [self::REDIS_API_QUEUE, self::REDIS_FAILED_JOBS_QUEUE];
-            $result = $this->apiRedis->blpop($queues, 1);
+            $result = $this->redis->blpop($queues, 1);
 
             if (!$result) {
                 return;
@@ -422,14 +286,14 @@ class WorkerApiCommands extends WorkerRedisBase
     private function shouldProcessJob(string $jobId): bool
     {
         $attemptKey = self::REDIS_JOB_ATTEMPTS_PREFIX . $jobId;
-        $attempts = (int)$this->apiRedis->get($attemptKey) + 1;
+        $attempts = (int)$this->redis->get($attemptKey) + 1;
 
         if ($attempts > self::MAX_JOB_ATTEMPTS) {
             $this->handleFailedJob($jobId);
             return false;
         }
 
-        $this->apiRedis->setex($attemptKey, self::FAILED_JOB_TTL, (string)$attempts);
+        $this->redis->setex($attemptKey, self::FAILED_JOB_TTL, (string)$attempts);
         return true;
     }
 
@@ -524,7 +388,7 @@ class WorkerApiCommands extends WorkerRedisBase
                 if (pcntl_wexitstatus($status) !== 0) {
                     // Job failed, retry if attempts remain
                     if ($this->shouldProcessJob($jobId)) {
-                        $this->apiRedis->rPush(self::REDIS_FAILED_JOBS_QUEUE, $jobInfo['request_data']);
+                        $this->redis->rPush(self::REDIS_FAILED_JOBS_QUEUE, $jobInfo['request_data']);
                     }
                 }
                 
@@ -622,7 +486,7 @@ class WorkerApiCommands extends WorkerRedisBase
     {
         try {
             // Log error details
-            $attempts = (int)$this->apiRedis->get(self::REDIS_JOB_ATTEMPTS_PREFIX . $jobId);
+            $attempts = (int)$this->redis->get(self::REDIS_JOB_ATTEMPTS_PREFIX . $jobId);
             $errorData = [
                 'job_id' => $jobId,
                 'attempt' => $attempts,
@@ -631,7 +495,7 @@ class WorkerApiCommands extends WorkerRedisBase
                 'timestamp' => microtime(true)
             ];
 
-            $this->managementRedis->hSet(
+            $this->redis->hSet(
                 self::REDIS_JOB_ERRORS_PREFIX . $jobId,
                 (string)$attempts,
                 json_encode($errorData, JSON_THROW_ON_ERROR)
@@ -668,11 +532,11 @@ class WorkerApiCommands extends WorkerRedisBase
                 'job_id' => $jobId,
                 'failed_at' => microtime(true),
                 'attempts' => self::MAX_JOB_ATTEMPTS,
-                'errors' => $this->managementRedis->hGetAll(self::REDIS_JOB_ERRORS_PREFIX . $jobId)
+                'errors' => $this->redis->hGetAll(self::REDIS_JOB_ERRORS_PREFIX . $jobId)
             ];
 
             // Store failed job data for analysis
-            $this->managementRedis->hSet(
+            $this->redis->hSet(
                 self::REDIS_FAILED_JOBS_DATA,
                 $jobId,
                 json_encode($failureData, JSON_THROW_ON_ERROR)
@@ -707,18 +571,18 @@ class WorkerApiCommands extends WorkerRedisBase
     private function sendResponse(string $jobId, array $request, array $result): void
     {
         try {
-            // Замер времени кодирования и сжатия ответа
+            // Performance metrics
             $perfMetrics = [
                 'start' => microtime(true)
             ];
             
-            $responseKey = self::REDIS_API_RESPONSE_PREFIX . ($request['request_id'] ?? $jobId);
+            $responseKey = WorkerApiCommands::REDIS_API_RESPONSE_PREFIX . ($request['request_id'] ?? $jobId);
             $encodedResult = json_encode($result, JSON_THROW_ON_ERROR);
 
             $perfMetrics['encoding_time'] = microtime(true) - $perfMetrics['start'];
             $perfMetrics['encoded_size'] = strlen($encodedResult);
             
-            // Замер времени на обработку больших ответов
+            // Check if response is too large for Redis
             $largeResponseTime = 0;
             if (strlen($encodedResult) > self::MAX_RESPONSE_SIZE) {
                 $largeResponseStart = microtime(true);
@@ -727,48 +591,82 @@ class WorkerApiCommands extends WorkerRedisBase
             }
             $perfMetrics['large_response_time'] = $largeResponseTime;
             
-            // Замер времени на отправку ответа в Redis
+            // Store response in Redis
             $redisStart = microtime(true);
             
-            // Use multi/exec for atomic operation and better reliability
-            $this->apiRedis->multi();
-            
             // Store response with TTL
-            $this->apiRedis->setex($responseKey, self::REDIS_RESPONSE_TTL, $encodedResult);
+            $setResult = $this->redis->setex($responseKey, self::REDIS_RESPONSE_TTL, $encodedResult);
             
-            // Store additional response time metrics
+            // Store metrics for performance analysis (but not visible in logs)
             $metricsKey = "api:metrics:{$request['request_id']}";
-            $this->apiRedis->setex($metricsKey, 3600, json_encode($perfMetrics));
+            $this->redis->setex($metricsKey, 3600, json_encode($perfMetrics));
             
-            // Execute Redis transaction
-            $this->apiRedis->exec();
+            // Only log errors, not success cases
+            if (!$setResult) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    sprintf(
+                        "WARNING: Failed to store response data for job %s. Retrying...",
+                        $jobId
+                    ),
+                    LOG_WARNING
+                );
+                
+                // Retry setting the data
+                $retrySetResult = $this->redis->setex($responseKey, self::REDIS_RESPONSE_TTL, $encodedResult);
+                
+                if (!$retrySetResult) {
+                    SystemMessages::sysLogMsg(
+                        static::class,
+                        sprintf(
+                            "CRITICAL: Retry set failed for job %s",
+                            $jobId
+                        ),
+                        LOG_ERR
+                    );
+                }
+            }
             
-            // Now publish notification separately to ensure data is available before notification
-            // Add a small delay to ensure data is fully available (especially for larger responses)
-            usleep(5000); // 5ms delay
-            
-            // Publish notification for clients - do this after data is stored
-            $this->apiRedis->publish($responseKey, 'ready');
+            // Double-check the data was stored, but only log errors
+            $responseCheck = $this->redis->get($responseKey);
+            if ($responseCheck === false) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    sprintf(
+                        "CRITICAL: Response data for job %s was not found in Redis after setting!",
+                        $jobId
+                    ),
+                    LOG_ERR
+                );
+            }
             
             $perfMetrics['redis_time'] = microtime(true) - $redisStart;
             $perfMetrics['total_time'] = microtime(true) - $perfMetrics['start'];
             
-            // Логируем медленные операции отправки
-            if ($perfMetrics['total_time'] > 0.1) {
+            // Only log slow operations
+            if ($perfMetrics['total_time'] > 0.5) {  // Increased threshold to 500ms
                 SystemMessages::sysLogMsg(
                     static::class,
                     sprintf(
-                        "Slow response delivery: %s (%.3fs) - size: %d bytes, redis: %.3fs",
+                        "Slow response delivery: %s (%.3fs) - size: %d bytes",
                         $request['action'] ?? 'unknown',
                         $perfMetrics['total_time'],
-                        $perfMetrics['encoded_size'],
-                        $perfMetrics['redis_time']
+                        $perfMetrics['encoded_size']
                     ),
                     LOG_NOTICE
                 );
             }
 
         } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf(
+                    "Error during response delivery for job %s: %s",
+                    $jobId,
+                    $e->getMessage()
+                ),
+                LOG_ERR
+            );
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
     }
@@ -792,7 +690,7 @@ class WorkerApiCommands extends WorkerRedisBase
         
         // Otherwise, store compressed data in Redis with special key
         $largeResponseKey = 'large_response:' . uniqid('', true);
-        $this->apiRedis->setex($largeResponseKey, self::REDIS_RESPONSE_TTL, $compressedData);
+        $this->redis->setex($largeResponseKey, self::REDIS_RESPONSE_TTL, $compressedData);
         
         // Return reference to compressed data in Redis
         return json_encode([
@@ -835,8 +733,8 @@ class WorkerApiCommands extends WorkerRedisBase
      */
     private function registerTempFile(string $filepath): void
     {
-        $this->managementRedis->rPush('temp_files', $filepath);
-        $this->managementRedis->expire('temp_files', self::REDIS_RESPONSE_TTL);
+        $this->redis->rPush('temp_files', $filepath);
+        $this->redis->expire('temp_files', self::REDIS_RESPONSE_TTL);
     }
 
     /**
@@ -870,11 +768,6 @@ class WorkerApiCommands extends WorkerRedisBase
             SystemManagementProcessor::class => [
                 'restoreDefault',
             ],
-            // ModulesManagementProcessor::class => [
-            //     'enableModule',
-            //     'disableModule',
-            //     'uninstallModule',
-            // ],
         ];
     }
 
@@ -891,7 +784,7 @@ class WorkerApiCommands extends WorkerRedisBase
         ];
 
         foreach ($keys as $key) {
-            $this->apiRedis->del($key);
+            $this->redis->del($key);
         }
     }
 
@@ -961,9 +854,6 @@ class WorkerApiCommands extends WorkerRedisBase
     private function runWorker(int $workerId): void
     {
         cli_set_process_title(sprintf("%s_worker_%d", static::class, $workerId));
-        
-        // Create new Redis connections for the worker
-        $this->initializeApiRedis();
 
         // Set up signal handling for graceful worker shutdown
         pcntl_signal(SIGUSR1, function () use ($workerId) {
@@ -980,32 +870,11 @@ class WorkerApiCommands extends WorkerRedisBase
             try {
                 // Process signals
                 pcntl_signal_dispatch();
-                
-                // Proactively check Redis connection before attempting BLPOP
-                try {
-                    $pingResult = $this->apiRedis->ping();
-                    if ($pingResult !== true) {
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "Redis ping check failed before BLPOP, reconnecting. Result: " . print_r($pingResult, true),
-                            LOG_WARNING
-                        );
-                        $this->initializeApiRedis();
-                        // Short delay after reconnection
-                        usleep(100000); // 100ms
-                    }
-                } catch (\Throwable $e) {
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "Redis ping check exception: " . $e->getMessage() . ". Reconnecting.",
-                        LOG_WARNING
-                    );
-                    $this->initializeApiRedis();
-                    usleep(100000); // 100ms
-                }
+            
+                $this->redis = $this->di->get('redis');
                 
                 // Get job from queue with 5 second timeout
-                $result = $this->apiRedis->blpop(
+                $result = $this->redis->blpop(
                     [self::REDIS_API_QUEUE, self::REDIS_FAILED_JOBS_QUEUE], 
                     5
                 );
@@ -1025,16 +894,16 @@ class WorkerApiCommands extends WorkerRedisBase
                         // Get Redis connection info for diagnostics
                         $redisInfo = [];
                         try {
-                            $pingResult = $this->apiRedis->ping();
+                            $pingResult = $this->redis->ping();
                             $redisInfo['ping'] = ($pingResult === true) ? 'OK' : 'FAILED';
                             $redisInfo['ping_actual'] = print_r($pingResult, true);
-                            $redisInfo['role'] = $this->apiRedis->info('replication')['role'] ?? 'unknown';
+                            $redisInfo['role'] = $this->redis->info('replication')['role'] ?? 'unknown';
                             $redisInfo['queue_lengths'] = [
-                                'api_queue' => $this->apiRedis->lLen(self::REDIS_API_QUEUE),
-                                'failed_jobs_queue' => $this->apiRedis->lLen(self::REDIS_FAILED_JOBS_QUEUE)
+                                'api_queue' => $this->redis->lLen(self::REDIS_API_QUEUE),
+                                'failed_jobs_queue' => $this->redis->lLen(self::REDIS_FAILED_JOBS_QUEUE)
                             ];
-                            $redisInfo['memory_usage'] = $this->apiRedis->info('memory')['used_memory_human'] ?? 'unknown';
-                            $redisInfo['connected_clients'] = $this->apiRedis->info('clients')['connected_clients'] ?? 'unknown';
+                            $redisInfo['memory_usage'] = $this->redis->info('memory')['used_memory_human'] ?? 'unknown';
+                            $redisInfo['connected_clients'] = $this->redis->info('clients')['connected_clients'] ?? 'unknown';
                         } catch (\Throwable $e) {
                             $redisInfo['error'] = $e->getMessage();
                         }
@@ -1049,35 +918,6 @@ class WorkerApiCommands extends WorkerRedisBase
                             ),
                             LOG_WARNING
                         );
-                        
-                        // Try to recover the connection if possible
-                        // Проверяем результат ping именно на true (булево значение)
-                        try {
-                            $pingCheck = $this->apiRedis->ping();
-                            if ($pingCheck !== true) {
-                                SystemMessages::sysLogMsg(
-                                    static::class,
-                                    "Redis ping check failed: " . print_r($pingCheck, true) . ", attempting to reconnect",
-                                    LOG_WARNING
-                                );
-                                $this->initializeApiRedis();
-                            }
-                        } catch (\Throwable $e) {
-                            SystemMessages::sysLogMsg(
-                                static::class,
-                                "Redis ping check exception: " . $e->getMessage() . ", attempting to reconnect",
-                                LOG_WARNING
-                            );
-                            try {
-                                $this->initializeApiRedis();
-                            } catch (\Throwable $reconnectEx) {
-                                SystemMessages::sysLogMsg(
-                                    static::class,
-                                    "Redis reconnection failed: " . $reconnectEx->getMessage(),
-                                    LOG_ERR
-                                );
-                            }
-                        }
                     }
                     // No job available or invalid format, check signals and continue
                     continue;
@@ -1178,10 +1018,11 @@ class WorkerApiCommands extends WorkerRedisBase
         SystemMessages::sysLogMsg(
             static::class,
             sprintf(
-                "Starting job processing: ID=%s, Action=%s, Processor=%s",
+                "Starting job processing: ID=%s, Action=%s, Processor=%s, PID=%d",
                 $jobId,
                 $request['action'] ?? 'unknown',
-                $request['processor'] ?? 'unknown'
+                $request['processor'] ?? 'unknown',
+                getmypid()
             ),
             LOG_INFO
         );
@@ -1192,7 +1033,8 @@ class WorkerApiCommands extends WorkerRedisBase
             'processing_stages' => [],
             'job_id' => $jobId,
             'action' => $request['action'] ?? 'unknown',
-            'processor' => $request['processor'] ?? 'unknown'
+            'processor' => $request['processor'] ?? 'unknown',
+            'pid' => getmypid()
         ];
 
         try {
@@ -1225,10 +1067,11 @@ class WorkerApiCommands extends WorkerRedisBase
             SystemMessages::sysLogMsg(
                 static::class,
                 sprintf(
-                    "Job %s using processor: %s (prepare: %.3fs)",
+                    "Job %s using processor: %s (prepare: %.3fs, PID: %d)",
                     $jobId,
                     $processor,
-                    $perfMetrics['processing_stages']['prepare']['duration']
+                    $perfMetrics['processing_stages']['prepare']['duration'],
+                    getmypid()
                 ),
                 LOG_DEBUG
             );
@@ -1254,11 +1097,12 @@ class WorkerApiCommands extends WorkerRedisBase
             SystemMessages::sysLogMsg(
                 static::class,
                 sprintf(
-                    "Job %s execution completed: %s::%s (execution: %.3fs)",
+                    "Job %s execution completed: %s::%s (execution: %.3fs, PID: %d)",
                     $jobId,
                     $processor,
                     $request['action'] ?? 'unknown',
-                    $perfMetrics['processing_stages']['execution']['duration']
+                    $perfMetrics['processing_stages']['execution']['duration'],
+                    getmypid()
                 ),
                 LOG_INFO
             );
@@ -1267,11 +1111,12 @@ class WorkerApiCommands extends WorkerRedisBase
             SystemMessages::sysLogMsg(
                 static::class,
                 sprintf(
-                    "Job %s execution failed: %s (%s:%d)",
+                    "Job %s execution failed: %s (%s:%d, PID: %d)",
                     $jobId,
                     $e->getMessage(),
                     $e->getFile(),
-                    $e->getLine()
+                    $e->getLine(),
+                    getmypid()
                 ),
                 LOG_ERR
             );
@@ -1280,6 +1125,7 @@ class WorkerApiCommands extends WorkerRedisBase
             $this->handleJobError($jobId, $e);
             $this->handleProcessingError($e, $res);
         } finally {
+
             // Завершающий расчет метрик
             $perfMetrics['request_completed_at'] = microtime(true);
             $perfMetrics['total_processing_time'] = 
@@ -1306,11 +1152,12 @@ class WorkerApiCommands extends WorkerRedisBase
             SystemMessages::sysLogMsg(
                 static::class,
                 sprintf(
-                    "Job %s completed: action=%s, total=%.3fs, success=%s",
+                    "Job %s completed: action=%s, total=%.3fs, success=%s, PID=%d",
                     $jobId,
                     $request['action'] ?? 'unknown',
                     $perfMetrics['total_processing_time'],
-                    $res->success ? 'true' : 'false'
+                    $res->success ? 'true' : 'false',
+                    getmypid()
                 ),
                 $res->success ? LOG_INFO : LOG_WARNING
             );
@@ -1320,11 +1167,12 @@ class WorkerApiCommands extends WorkerRedisBase
                 SystemMessages::sysLogMsg(
                     static::class,
                     sprintf(
-                        "Long-running request: %s (%.3fs) - execution: %.3fs, response prep: %.3fs",
+                        "Long-running request: %s (%.3fs) - execution: %.3fs, response prep: %.3fs, PID: %d",
                         $request['action'] ?? 'unknown',
                         $perfMetrics['total_processing_time'],
                         $perfMetrics['processing_stages']['execution']['duration'] ?? 0,
-                        $perfMetrics['processing_stages']['response_preparation']['duration'] ?? 0
+                        $perfMetrics['processing_stages']['response_preparation']['duration'] ?? 0,
+                        getmypid()
                     ),
                     LOG_NOTICE
                 );

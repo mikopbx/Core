@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\SystemMessages;
 use Redis;
 use RuntimeException;
@@ -49,11 +48,6 @@ abstract class WorkerRedisBase extends WorkerBase
     protected string $processType = self::PROCESS_TYPES['MAIN'];
 
     /**
-     * Redis connections
-     */
-    protected ?Redis $managementRedis = null;
-
-    /**
      * Child process PIDs
      */
     protected ?int $subscriberPid = null;
@@ -72,29 +66,6 @@ abstract class WorkerRedisBase extends WorkerBase
     {
         try {
             parent::__construct();
-
-            // First initialize Redis
-            $attempts = 0;
-            $maxAttempts = 3;
-
-            while ($attempts < $maxAttempts) {
-                try {
-                    $this->initializeRedis();
-                    break;
-                } catch (Throwable $e) {
-                    $attempts++;
-                    if ($attempts === $maxAttempts) {
-                        throw $e;
-                    }
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "Retry {$attempts} initializing Redis: " . $e->getMessage(),
-                        LOG_WARNING
-                    );
-                    sleep(1);
-                }
-            }
-            
             // Set last heartbeat time
             $this->lastHeartbeatTime = microtime(true);
             // Initial heartbeat
@@ -117,25 +88,6 @@ abstract class WorkerRedisBase extends WorkerBase
             static::class,
             strtolower($type)
         ));
-    }
-    /**
-     * Initialize Redis connections
-     *
-     * @throws RuntimeException If Redis connections cannot be established
-     */
-    protected function initializeRedis(): void
-    {
-        if (!$this->di->has(RedisClientProvider::SERVICE_NAME)) {
-            $this->di->register(new RedisClientProvider());
-        }
-
-        $this->managementRedis = $this->di->get(RedisClientProvider::SERVICE_NAME);
-
-        if ($this->managementRedis === null) {
-            throw new RuntimeException('Failed to initialize Redis connections');
-        }
-
-        $this->updateWorkerStatus();
     }
 
     protected function handleSignals(): void
@@ -161,10 +113,6 @@ abstract class WorkerRedisBase extends WorkerBase
 
                     case self::PROCESS_TYPES['SUBSCRIBER']:
                     case self::PROCESS_TYPES['WORKER']:
-                        // Child processes - clean exit
-                        if ($this->managementRedis) {
-                            $this->managementRedis->close();
-                        }
                         break;
                 }
 
@@ -193,17 +141,13 @@ abstract class WorkerRedisBase extends WorkerBase
      */
     private function cleanupRedisKeys(): void
     {
-        if ($this->managementRedis === null) {
-            return;
-        }
-
         try {
             $keys = [
                 self::REDIS_STATUS_KEY_PREFIX . static::class,
                 self::REDIS_HEARTBEAT_KEY_PREFIX . static::class
             ];
             foreach ($keys as $key) {
-                $this->managementRedis->del($key);
+                $this->redis->del($key);
             }
         } catch (Throwable $e) {
             // Log but continue shutdown
@@ -247,11 +191,9 @@ abstract class WorkerRedisBase extends WorkerBase
      */
     protected function updateWorkerStatus(): void
     {
-        if ($this->managementRedis === null) {
-            return;
-        }
-
         try {
+            $this->redis = $this->di->get('redis');
+            
             $status = [
                 'pid' => getmypid(),
                 'class' => static::class,
@@ -266,8 +208,8 @@ abstract class WorkerRedisBase extends WorkerBase
             $heartbeatKey = self::REDIS_HEARTBEAT_KEY_PREFIX . static::class;
 
             // Set status and heartbeat with TTL
-            $this->managementRedis->setex($statusKey, self::REDIS_STATUS_TTL, json_encode($status));
-            $this->managementRedis->setex($heartbeatKey, self::REDIS_HEARTBEAT_TTL, (string)time());
+            $this->redis->setex($statusKey, self::REDIS_STATUS_TTL, json_encode($status));
+            $this->redis->setex($heartbeatKey, self::REDIS_HEARTBEAT_TTL, (string)time());
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
@@ -286,15 +228,15 @@ abstract class WorkerRedisBase extends WorkerBase
         }
 
         // Clean up Redis keys
-        if ($this->managementRedis !== null) {
+        
             $keys = [
                 self::REDIS_STATUS_KEY_PREFIX . static::class,
                 self::REDIS_HEARTBEAT_KEY_PREFIX . static::class
             ];
             foreach ($keys as $key) {
-                $this->managementRedis->del($key);
+                $this->redis->del($key);
             }
-        }
+        
 
         exit(0);
     }
@@ -306,13 +248,8 @@ abstract class WorkerRedisBase extends WorkerBase
     {
         parent::setForked();
 
-        if ($this->managementRedis) {
-            $this->managementRedis->close();
-            $this->managementRedis = null;
-        }
 
-        // Create new connections for forked process
-        $this->initializeRedis();
+        $this->updateWorkerStatus();
     }
 
       /**
