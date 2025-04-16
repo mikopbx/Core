@@ -523,9 +523,7 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             }
 
             // Determine which PID file to remove
-            $pidFile = isset($this->isForked) && $this->isForked === true
-                ? Processes::getForkedPidFilePath(static::class, $pid)
-                : Processes::getPidFilePath(static::class);
+            $pidFile = $this->getPidFile();
 
             // Only remove the file if it exists and contains our PID
             if (file_exists($pidFile)) {
