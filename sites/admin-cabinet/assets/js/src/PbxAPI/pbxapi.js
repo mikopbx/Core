@@ -1497,12 +1497,9 @@ const PbxApi = {
      * @returns {void}
      */
     UserPageTrackerPageView(pageName) {
-        $.api({
-            url: PbxApi.userPageTrackerPageView,
-            on: 'now',
-            method: 'POST',
-            data: {pageName},
-        });
+        navigator.sendBeacon(PbxApi.userPageTrackerPageView, JSON.stringify({ 
+            pageName: pageName,
+        }));
     },
 
     /**
@@ -1512,12 +1509,9 @@ const PbxApi = {
      * @returns {void}
      */
     UserPageTrackerPageLeave(pageName) {
-        $.api({
-            url: PbxApi.userPageTrackerPageLeave,
-            on: 'now',
-            method: 'POST',
-            data: {pageName},
-        });
+        navigator.sendBeacon(PbxApi.userPageTrackerPageLeave, JSON.stringify({ 
+            pageName: pageName,
+        }));
     },
 
     /**
