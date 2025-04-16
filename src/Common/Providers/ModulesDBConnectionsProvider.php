@@ -21,8 +21,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
-
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Models\ModulesModelsBase;
 use Phalcon\Di\Di;
@@ -51,8 +52,10 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
     {
         $registeredDBServices = [];
         $config = $di->getShared(ConfigProvider::SERVICE_NAME);
-        $modulesDir = $config->path('core.modulesDir');
+        $modulesDir = Directories::getDir(Directories::CORE_MODULES_DIR);
 
+        SystemMessages::sysLogMsg(__CLASS__, 'Modules directory: ' . $modulesDir, LOG_DEBUG);
+        
         $results = glob($modulesDir . '/*/module.json', GLOB_NOSORT);
 
         foreach ($results as $moduleJson) {
@@ -105,6 +108,10 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 $dbFileName = "$dbDir/module.db";
                 $dbFileExistBeforeAttachToConnection = file_exists($dbFileName);
 
+                if ($dbFileExistBeforeAttachToConnection) { 
+                    SystemMessages::sysLogMsg(__CLASS__, 'Database file exists: ' . $dbFileName, LOG_DEBUG);
+                }
+
                 // Log
                 $logDir = "{$config->path('core.logsDir')}/$moduleUniqueId/db";
                 $logFileName = "$logDir/queries.log";
@@ -127,6 +134,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 // if database was created, we have to apply rules
                 if (!$dbFileExistBeforeAttachToConnection) {
                     Util::addRegularWWWRights($dbDir);
+                    SystemMessages::sysLogMsg(__CLASS__, 'Database file created: ' . $dbFileName, LOG_DEBUG);
                 }
             }
         }
@@ -178,7 +186,7 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
     public static function recreateModulesDBConnections(): void
     {
         $di = Di::getDefault();
-        $di->register(new self());
+        (new self())->register($di);
 
         ModelsAnnotationsProvider::recreateAnnotationsProvider();
 

@@ -26,15 +26,11 @@ use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
-use MikoPBX\Core\System\MikoPBXConfig;
-use Phalcon\Config\Config as ConfigAlias;
 
 class UpdateConfigsUpToVer20212187 extends Injectable implements UpgradeSystemConfigInterface
 {
     public const string PBX_VERSION = '2021.2.187';
 
-    private ConfigAlias $config;
-    private MikoPBXConfig $mikoPBXConfig;
     private bool $isLiveCD;
 
     private const string  OLD_MONITOR_PATH = '/storage/usbdisk1/mikopbx/voicemailarchive/monitor';
@@ -50,7 +46,6 @@ class UpdateConfigsUpToVer20212187 extends Injectable implements UpgradeSystemCo
     public function __construct()
     {
         $this->config        = $this->getDI()->getShared('config');
-        $this->mikoPBXConfig = new MikoPBXConfig();
         $this->isLiveCD      = file_exists('/offload/livecd');
 
         $di = Di::getDefault();

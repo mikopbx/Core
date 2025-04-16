@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\IptablesConf;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Modules\PbxExtensionUtils;
@@ -50,9 +49,9 @@ class UpdateSystemConfig extends Injectable
             $upgradeClassesFiles = glob($upgradeClassesDir . '/*.php', GLOB_NOSORT);
             foreach ($upgradeClassesFiles as $file) {
                 $className        = pathinfo($file)['filename'];
-                $moduleModelClass = "\\MikoPBX\\Core\\System\\Upgrade\\Releases\\$className";
-                if (class_exists($moduleModelClass)) {
-                    $upgradeClasses[$moduleModelClass::PBX_VERSION] = $moduleModelClass;
+                $upgradeClass = "\\MikoPBX\\Core\\System\\Upgrade\\Releases\\$className";
+                if (class_exists($upgradeClass)) {
+                    $upgradeClasses[$upgradeClass::PBX_VERSION] = $upgradeClass;
                 }
             }
             uksort($upgradeClasses, [__CLASS__, "sortArrayByReleaseNumber"]);
@@ -70,9 +69,6 @@ class UpdateSystemConfig extends Injectable
             $this->updateConfigEveryNewRelease();
             PbxSettings::setValueByKey(PbxSettings::PBX_VERSION, trim(file_get_contents('/etc/version')));
         }
-        $storage = new Storage();
-        $storage->moveReadOnlySoundsToStorage();
-        $storage->copyMohFilesToStorage();
         return true;
     }
 
@@ -96,8 +92,18 @@ class UpdateSystemConfig extends Injectable
      */
     private function updateConfigEveryNewRelease(): void
     {
+        // Disable old modules
         PbxExtensionUtils::disableOldModules();
+
+        // Update firewall rules
         IptablesConf::updateFirewallRules();
+        
+        // Move read-only sounds to storage
+        $storage = new Storage();
+        $storage->moveReadOnlySoundsToStorage();
+
+        // Copy MOH files to storage
+        $storage->copyMohFilesToStorage();
     }
 
     /**

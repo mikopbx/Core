@@ -22,7 +22,6 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use Phalcon\Di\Injectable;
 

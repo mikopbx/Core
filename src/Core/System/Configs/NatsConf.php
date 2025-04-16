@@ -22,7 +22,6 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Directories;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
 use Phalcon\Di\Injectable;

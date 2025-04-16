@@ -22,15 +22,11 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
-use MikoPBX\Core\System\MikoPBXConfig;
-use Phalcon\Config\Config as ConfigAlias;
 
 class UpdateConfigsUpToVer2021124 extends Injectable implements UpgradeSystemConfigInterface
 {
   	public const string PBX_VERSION = '2021.1.24';
 
-	private ConfigAlias $config;
-    private MikoPBXConfig $mikoPBXConfig;
     private bool $isLiveCD;
 
 	/**
@@ -38,8 +34,6 @@ class UpdateConfigsUpToVer2021124 extends Injectable implements UpgradeSystemCon
      */
     public function __construct()
     {
-        $this->config = $this->getDI()->getShared('config');
-        $this->mikoPBXConfig = new MikoPBXConfig();
         $this->isLiveCD      = file_exists('/offload/livecd');
     }
 

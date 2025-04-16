@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,6 +63,10 @@ class RegisterDIServices
     {
         $adminCabinetProviders = [
 
+            // Inject Logger
+            LoggerAuthProvider::class,
+            LoggerProvider::class,
+
             // Inject cache providers
             ManagedCacheProvider::class,
 
@@ -106,10 +110,6 @@ class RegisterDIServices
 
             // Inject Registry
             RegistryProvider::class,
-
-             // Inject Logger
-            LoggerAuthProvider::class,
-            LoggerProvider::class,
 
             // Inject crypto provider
             CryptProvider::class,

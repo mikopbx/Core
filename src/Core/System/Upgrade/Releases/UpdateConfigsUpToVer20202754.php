@@ -22,13 +22,11 @@ namespace MikoPBX\Core\System\Upgrade\Releases;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
-use Phalcon\Config\Config as ConfigAlias;
 use Phalcon\Di\Injectable;
 use SQLite3;
 use Throwable;
@@ -37,9 +35,6 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
 {
     public const string PBX_VERSION = '2020.2.754';
 
-    private ConfigAlias $config;
-
-    private MikoPBXConfig $mikoPBXConfig;
 
     private bool $isLiveCD;
 
@@ -48,8 +43,6 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
      */
     public function __construct()
     {
-        $this->config        = $this->getDI()->getShared('config');
-        $this->mikoPBXConfig = new MikoPBXConfig();
         $this->isLiveCD      = file_exists('/offload/livecd');
     }
 

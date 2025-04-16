@@ -69,6 +69,10 @@ class RegisterDIServices
             SentryErrorHandlerProvider::class,
             WhoopsErrorHandlerProvider::class,
 
+            // Inject Logger
+            LoggerAuthProvider::class,
+            LoggerProvider::class,
+
             // Inject Registry provider
             RegistryProvider::class,
 
@@ -100,10 +104,6 @@ class RegisterDIServices
 
             // Inject Access control lists provider
             AclProvider::class,
-
-            // Inject Logger
-            LoggerAuthProvider::class,
-            LoggerProvider::class,
 
             // Translates
             MessagesProvider::class,

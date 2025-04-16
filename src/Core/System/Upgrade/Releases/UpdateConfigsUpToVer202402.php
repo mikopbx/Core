@@ -27,15 +27,12 @@ use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use Phalcon\Di\Injectable;
-use MikoPBX\Core\System\MikoPBXConfig;
-use Phalcon\Config\Config as ConfigAlias;
+
 
 class UpdateConfigsUpToVer202402 extends Injectable implements UpgradeSystemConfigInterface
 {
   	public const string PBX_VERSION = '2024.2.3';
 
-	private ConfigAlias $config;
-    private MikoPBXConfig $mikoPBXConfig;
     private bool $isLiveCD;
 
 	/**
@@ -43,8 +40,6 @@ class UpdateConfigsUpToVer202402 extends Injectable implements UpgradeSystemConf
      */
     public function __construct()
     {
-        $this->config = $this->getDI()->getShared('config');
-        $this->mikoPBXConfig = new MikoPBXConfig();
         $this->isLiveCD      = file_exists('/offload/livecd');
     }
 

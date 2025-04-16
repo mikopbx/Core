@@ -69,7 +69,7 @@ class RegisterDIServices
         foreach ($commonProviders as $provider) {
             // Delete previous provider
             $di->remove($provider::SERVICE_NAME);
-            $di->register(new $provider());
+            (new $provider())->register($di);
         }
     }
 }

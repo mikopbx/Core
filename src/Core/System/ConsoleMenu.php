@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -311,7 +311,7 @@ class ConsoleMenu
         $buildtime = trim(file_get_contents('/etc/version.buildtime'));
 
         // Copyright information
-        $copyright_info = 'MikoPBX is Copyright © 2017-2024. All rights reserved.' . PHP_EOL .
+        $copyright_info = 'MikoPBX is Copyright © 2017-2025. All rights reserved.' . PHP_EOL .
             "   \033[01;31m" . $liveCdText . "\033[39m";
 
 
