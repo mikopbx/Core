@@ -250,12 +250,13 @@ class Fail2BanConf extends Injectable
         // Symbolic link to the database.
         if (file_exists($res_file)) {
             $mvPath = Util::which('mv');
+            $rmPath = Util::which('rm');
             if (filetype($res_file) !== 'link') {
                 Processes::mwExec("$mvPath '$res_file'/* '$dir_db'");
                 unlink($res_file);
                 $create_link = true;
             } elseif (readlink($res_file) === "$old_dir_db") {
-                unlink($res_file);
+                Processes::mwExec("$rmPath -rf $res_file");
                 $create_link = true;
                 if (file_exists("$old_dir_db")) {
                     // Move the file to the new location.
