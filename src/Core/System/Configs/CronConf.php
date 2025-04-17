@@ -81,7 +81,7 @@ class CronConf extends Injectable
         $dump      = Util::which('dump-conf-db');
         $checkIpPath   = Util::which('check-out-ip');
         $recordsCleaner = Util::which('records-cleaner');
-        $cleanerLinks  = Util::which('cleaner-download-links');
+        $cleanerLinks  = Util::which('cleanup-stale');
 
         // Restart every night if enabled
         if ($restart_night === '1') {

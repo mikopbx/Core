@@ -30,6 +30,21 @@
 #   Both the symlink and the file will be destroyed after 5 minutes.
 #   If the file name contains "/temp-", it will also be removed.
 
+
+PID_DIR="/var/run/";
+find "$PID_DIR" -type f \( -name "*.pid.*" -o -name "*.pid" \) | while read pid_file; do
+    # Search for pid files and delete non-relevant ones
+    if [ -f "$pid_file" ]; then
+        pid=$(/bin/busybox cat "$pid_file" 2>/dev/null)
+        /bin/busybox ps -o pid | /bin/busybox grep -w "$pid" > /dev/null 2>&1
+        resultPs="$?";
+        if [ "$resultPs" = '1' ]; then
+            echo "Process with PID $pid is not running. Removing file: $pid_file";
+            /usr/sbin/rm -f "$pid_file";
+        fi
+    fi
+done
+
 root_dir=$(grep -rn 'downloadCacheDir' /etc/inc/mikopbx-settings.json | cut -d'"' -f4);
 if [ ! -d "${root_dir}" ]; then
     exit 2;
