@@ -26,9 +26,8 @@ abstract class WorkerRedisBase extends WorkerBase
     protected const int REDIS_HEARTBEAT_TTL = 10;
 
     /**
-     * Redis pub/sub channels and keys
+     * Redis keys for status tracking
      */
-    protected const string REDIS_COMMAND_CHANNEL_PREFIX = 'worker:cmd:';
     public const string REDIS_STATUS_KEY_PREFIX = 'worker:status:';
     public const string REDIS_HEARTBEAT_KEY_PREFIX = 'worker:heartbeat:';
 
@@ -37,8 +36,6 @@ abstract class WorkerRedisBase extends WorkerBase
      */
     protected const array PROCESS_TYPES = [
         'MAIN' => 'main',
-        'HEARTBEAT' => 'heartbeat',
-        'SUBSCRIBER' => 'subscriber',
         'WORKER' => 'worker'
     ];
 
@@ -46,11 +43,6 @@ abstract class WorkerRedisBase extends WorkerBase
      * Current process type
      */
     protected string $processType = self::PROCESS_TYPES['MAIN'];
-
-    /**
-     * Child process PIDs
-     */
-    protected ?int $subscriberPid = null;
     
     /**
      * Last heartbeat time
@@ -58,7 +50,12 @@ abstract class WorkerRedisBase extends WorkerBase
     protected float $lastHeartbeatTime = 0;
 
     /**
-     * Initialize Redis-based worker with heartbeat and subscription management
+     * Flag indicating that worker is in shutdown mode
+     */
+    protected bool $isShuttingDown = false;
+
+    /**
+     * Initialize Redis-based worker with heartbeat management
      *
      * @throws RuntimeException If Redis initialization fails
      */
@@ -90,47 +87,53 @@ abstract class WorkerRedisBase extends WorkerBase
         ));
     }
 
+    /**
+     * Handle signals for graceful shutdown
+     */
     protected function handleSignals(): void
     {
         pcntl_signal(SIGUSR1, function ($signal) {
             try {
                 switch($this->processType) {
                     case self::PROCESS_TYPES['MAIN']:
-                        // Main process - clean shutdown
+                        // Main process - mark for shutdown but let child processes finish current jobs
                         $this->setWorkerState(self::STATE_STOPPING);
-
-                        // Kill subscriber if exists (non-blocking)
-                        if ($this->subscriberPid !== null) {
-                            posix_kill($this->subscriberPid, SIGTERM);
-                        }
-
-                        // Wait for children to finish
-                        pcntl_wait($status);
-
-                        // Clean up Redis keys
-                        $this->cleanupRedisKeys();
+                        $this->isShuttingDown = true;
+                        
+                        // Update status to indicate stopping state
+                        $this->updateWorkerStatus();
+                        
+                        SystemMessages::sysLogMsg(
+                            static::class,
+                            "Main process received shutdown signal, current jobs will finish before exit",
+                            LOG_NOTICE
+                        );
                         break;
 
-                    case self::PROCESS_TYPES['SUBSCRIBER']:
                     case self::PROCESS_TYPES['WORKER']:
+                        // Worker processes should finish current job and exit
+                        $this->isShuttingDown = true;
+                        SystemMessages::sysLogMsg(
+                            static::class,
+                            "Worker process will exit after completing current job",
+                            LOG_DEBUG
+                        );
                         break;
                 }
-
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Clean shutdown of {$this->processType} process",
-                    LOG_DEBUG
-                );
-                exit(0);
 
             } catch (Throwable $e) {
                 SystemMessages::sysLogMsg(
                     static::class,
-                    "Error during shutdown: " . $e->getMessage(),
+                    "Error during shutdown signal handling: " . $e->getMessage(),
                     LOG_ERR
                 );
-                exit(1);
             }
+        });
+        
+        pcntl_signal(SIGTERM, function ($signal) {
+            // Immediate termination
+            $this->cleanupRedisKeys();
+            exit(0);
         });
 
         pcntl_signal_dispatch();
@@ -139,7 +142,7 @@ abstract class WorkerRedisBase extends WorkerBase
     /**
      * Clean up Redis keys on shutdown
      */
-    private function cleanupRedisKeys(): void
+    protected function cleanupRedisKeys(): void
     {
         try {
             $keys = [
@@ -160,33 +163,6 @@ abstract class WorkerRedisBase extends WorkerBase
     }
 
     /**
-     * Handle command messages
-     *
-     * @param array $data Command data
-     */
-    protected function handleCommandMessage(array $data): void
-    {
-        if (!isset($data['action'])) {
-            return;
-        }
-
-        switch ($data['action']) {
-            case 'shutdown':
-                $this->initiateGracefulShutdown();
-                break;
-            case 'status':
-                $this->updateWorkerStatus();
-                break;
-            default:
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Unknown command received: {$data['action']}",
-                    LOG_WARNING
-                );
-        }
-    }
-
-    /**
      * Update worker status in Redis
      */
     protected function updateWorkerStatus(): void
@@ -199,9 +175,9 @@ abstract class WorkerRedisBase extends WorkerBase
                 'class' => static::class,
                 'state' => $this->workerState,
                 'start_time' => $this->workerStartTime,
-                'subscriber_pid' => $this->subscriberPid,
                 'updated_at' => microtime(true),
-                'memory_usage' => memory_get_usage(true)
+                'memory_usage' => memory_get_usage(true),
+                'shutting_down' => $this->isShuttingDown
             ];
 
             $statusKey = self::REDIS_STATUS_KEY_PREFIX . static::class;
@@ -221,22 +197,19 @@ abstract class WorkerRedisBase extends WorkerBase
     protected function initiateGracefulShutdown(): void
     {
         $this->setWorkerState(self::STATE_STOPPING);
-
-        // Terminate subscriber process if exists
-        if ($this->subscriberPid !== null && posix_kill($this->subscriberPid, 0)) {
-            posix_kill($this->subscriberPid, SIGTERM);
-        }
-
+        $this->isShuttingDown = true;
+        
+        // Update status before exiting
+        $this->updateWorkerStatus();
+        
         // Clean up Redis keys
+        $this->cleanupRedisKeys();
         
-            $keys = [
-                self::REDIS_STATUS_KEY_PREFIX . static::class,
-                self::REDIS_HEARTBEAT_KEY_PREFIX . static::class
-            ];
-            foreach ($keys as $key) {
-                $this->redis->del($key);
-            }
-        
+        SystemMessages::sysLogMsg(
+            static::class,
+            "Worker gracefully shutting down",
+            LOG_NOTICE
+        );
 
         exit(0);
     }
@@ -247,38 +220,7 @@ abstract class WorkerRedisBase extends WorkerBase
     protected function setForked(): void
     {
         parent::setForked();
-
-
         $this->updateWorkerStatus();
-    }
-
-      /**
-     * Start a worker process
-     * 
-     * @param callable $taskFunction The function to execute in worker process
-     * @return int The PID of the started worker
-     */
-    protected function startWorkerProcess(callable $taskFunction): int
-    {
-        $pid = pcntl_fork();
-
-        if ($pid === -1) {
-            throw new RuntimeException('Failed to fork worker process');
-        }
-
-        if ($pid === 0) {
-            // This is the child process
-            try {
-                $this->setForked();
-                $this->setProcessType(self::PROCESS_TYPES['WORKER']);
-                $taskFunction();
-                exit(0);
-            } catch (Throwable $e) {
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
-                exit(1);
-            }
-        }
-        return $pid;
     }
 
     /**
@@ -291,5 +233,13 @@ abstract class WorkerRedisBase extends WorkerBase
             $this->updateWorkerStatus();
             $this->lastHeartbeatTime = $now;
         }
+    }
+    
+    /**
+     * Check if worker is in shutdown mode and should exit after current job
+     */
+    protected function shouldExit(): bool
+    {
+        return $this->isShuttingDown;
     }
 }

@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\{BeanstalkClient, SystemMessages};
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAllSystemWorkersAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudParametersAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadConferenceAction;
@@ -41,32 +43,31 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadH323Action;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadHepAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadLicenseAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadMOHAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNTPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNatsAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNetworkAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxConfAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNTPAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadParkingAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPBXCoreAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPHPFPMAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadParkingAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordingSettingsAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordSavePeriodAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRestAPIWorkerAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRTPAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSentryAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordSavePeriodAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordingSettingsAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRestAPIWorkerAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSSHAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSentryAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadSyslogDAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadTimezoneAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadVoicemailAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadWorkerCallEventsAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\RestartPBXCoreAction;
-use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessCustomFiles;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessOtherModels;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessPBXSettings;
@@ -89,6 +90,8 @@ class WorkerModelsEvents extends WorkerBase
     private const int ACTION_TIMEOUT = 30;
     private bool $isProcessing = false; // seconds
     private int $last_change;
+    private const string REDIS_PREFIX = 'worker_models_events:';
+    private const int REDIS_TTL = 86400; // 24 hours
 
     // Array of planned reload actions that need to be started
     private array $plannedReloadActions = [];
@@ -106,6 +109,82 @@ class WorkerModelsEvents extends WorkerBase
     private array $customFilesDependencyTable = [];
 
     private BeanstalkClient $beanstalkClient;
+    
+    
+    /**
+     * Save worker state to Redis
+     */
+    private function saveStateToRedis(): void
+    {
+        try {
+            $state = [
+                'plannedReloadActions' => $this->plannedReloadActions,
+                'last_change' => $this->last_change,
+                'timestamp' => time()
+            ];
+            
+            $workerKey = self::REDIS_PREFIX . self::class . ':' . getmypid();
+            $this->managedCache->set($workerKey, $state, self::REDIS_TTL);
+            SystemMessages::sysLogMsg(__METHOD__, "Worker state saved to Redis with key: $workerKey", LOG_DEBUG);
+        } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+        }
+    }
+    
+    /**
+     * Restore worker state from Redis
+     */
+    private function restoreStateFromRedis(): void
+    {
+        try {
+            // Try to find any previous state from this worker class (regardless of PID)
+            $keyPattern = self::REDIS_PREFIX . self::class . ':*';
+            $keys = $this->managedCache->getAdapter()->keys($keyPattern);
+            
+            if (empty($keys)) {
+                SystemMessages::sysLogMsg(__METHOD__, "No previous worker state found in Redis", LOG_DEBUG);
+                return;
+            }
+            
+            // Use the most recent state
+            $latestKey = $keys[0];
+            $latestTime = 0;
+            
+            foreach ($keys as $key) {
+                $state = $this->managedCache->get($key);
+                if ($state && isset($state['timestamp']) && $state['timestamp'] > $latestTime) {
+                    $latestKey = $key;
+                    $latestTime = $state['timestamp'];
+                }
+            }
+            
+            $state = $this->managedCache->get($latestKey);
+            
+            if ($state) {
+                $this->plannedReloadActions = $state['plannedReloadActions'] ?? [];
+                $this->last_change = $state['last_change'] ?? time() - $this->timeout;
+                
+                $savedTime = $state['timestamp'] ?? 0;
+                $timeDifference = time() - $savedTime;
+                
+                SystemMessages::sysLogMsg(
+                    __METHOD__, 
+                    "Worker state restored from Redis key: $latestKey. State was saved $timeDifference seconds ago. " . 
+                    "Found " . count($this->plannedReloadActions) . " planned actions.", 
+                    LOG_DEBUG
+                );
+                
+                // Delete old keys since we've loaded the state
+                foreach ($keys as $key) {
+                    if ($key !== $latestKey) {
+                        $this->managedCache->delete($key);
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+        }
+    }
 
     /**
      * Invokes an action by publishing a job to the Beanstalk queue.
@@ -156,7 +235,6 @@ class WorkerModelsEvents extends WorkerBase
      */
     private function initializeWorker(): void
     {
-
         $this->beanstalkClient = $this->getBeanstalkClient();
 
         $this->last_change = time() - $this->timeout;
@@ -177,6 +255,9 @@ class WorkerModelsEvents extends WorkerBase
         $this->reloadActions = $this->getReloadActionsWithPriority();
 
         $this->plannedReloadActions = [];
+        
+        // Try to restore state from Redis
+        $this->restoreStateFromRedis();
     }
 
     /**
@@ -199,6 +280,7 @@ class WorkerModelsEvents extends WorkerBase
     private function getReloadActionsWithPriority(): array
     {
         return [
+            ReloadAllSystemWorkersAction::class,
             ReloadModuleStateAction::class,
             ReloadTimezoneAction::class,
             ReloadSyslogDAction::class,
@@ -241,6 +323,18 @@ class WorkerModelsEvents extends WorkerBase
     }
 
     /**
+     * Get worker list for immediate reload
+     * @return array
+     */
+    private function getActionsListForImmediateReload(): array
+    {
+        return [
+            ReloadAdviceAction::class,
+            ReloadAllSystemWorkersAction::class,
+        ];
+    }
+
+    /**
      * Subscribes the worker to relevant Beanstalk queues for processing model changes and handling pings.
      *
      * It ensures that the worker listens for incoming messages related to model changes and system pings,
@@ -253,6 +347,37 @@ class WorkerModelsEvents extends WorkerBase
         $this->beanstalkClient->subscribe(self::class, [$this, 'processModelChanges']);
         $this->beanstalkClient->subscribe($this->makePingTubeName(self::class), [$this, 'pingCallBack']);
         $this->beanstalkClient->setTimeoutHandler([$this, 'timeoutHandler']);
+        
+        // Register signal handlers for graceful shutdown
+        $this->registerSignalHandlers();
+    }
+    
+    /**
+     * Register signal handlers to save state before shutdown
+     */
+    private function registerSignalHandlers(): void
+    {
+        // Handle termination signals
+        pcntl_signal(SIGTERM, [$this, 'handleShutdownSignal']);
+        pcntl_signal(SIGINT, [$this, 'handleShutdownSignal']);
+        pcntl_signal(SIGHUP, [$this, 'handleShutdownSignal']);
+    }
+    
+    /**
+     * Signal handler to save state before shutdown
+     */
+    public function handleShutdownSignal(int $signo): void
+    {
+        SystemMessages::sysLogMsg(__METHOD__, "Received signal $signo. Saving state and exiting...", LOG_NOTICE);
+        
+        // Process any pending reload actions before exit
+        $this->startReload();
+        
+        // Save state to Redis
+        $this->saveStateToRedis();
+        
+        // Exit gracefully
+        exit(0);
     }
 
     /**
@@ -266,9 +391,18 @@ class WorkerModelsEvents extends WorkerBase
     private function waitForEvents(): void
     {
         while ($this->needRestart === false) {
+            // Dispatch pending signals
+            pcntl_signal_dispatch();
+            
+            // Wait for events with a short timeout
             $this->beanstalkClient->wait(3);
         }
-        $this->timeoutHandler(); // Execute all collected changes before exit
+        
+        // Save state before exit
+        $this->saveStateToRedis();
+        
+        // Execute all collected changes before exit
+        $this->timeoutHandler();
     }
 
     /**
@@ -299,18 +433,16 @@ class WorkerModelsEvents extends WorkerBase
             }
 
             // Check if enough time has passed since the last change
-            if (
-                //!array_key_exists(ReloadModuleStateAction::class, $this->plannedReloadActions)
-                //and
-                (time() - $this->last_change) < $this->timeout
-            ) {
-                SystemMessages::sysLogMsg(__METHOD__, "Wait more time before starting the reload.", LOG_DEBUG);
-                return;
-            }
+            $actionsListForImmediateReload = $this->getActionsListForImmediateReload();
 
             $executedActions = [];
             // Process changes for each method in priority order
             foreach ($this->reloadActions as $actionClassName) {
+                if ((time() - $this->last_change) < $this->timeout && !in_array($actionClassName, $actionsListForImmediateReload, true)) {
+                    // SystemMessages::sysLogMsg(__METHOD__, "Wait more time before starting the reload.", LOG_DEBUG);
+                    return;
+                }
+
                 // Skip if there is no change for this method
                 if (!array_key_exists($actionClassName, $this->plannedReloadActions)) {
                     continue;
@@ -340,6 +472,9 @@ class WorkerModelsEvents extends WorkerBase
 
             // Reset the modified tables array
             $this->plannedReloadActions = [];
+            
+            // Save empty state to Redis
+            $this->saveStateToRedis();
         } finally {
             $this->isProcessing = false;
         }
@@ -407,6 +542,9 @@ class WorkerModelsEvents extends WorkerBase
                 SystemMessages::sysLogMsg(__METHOD__, "Existing reload task $action received a new parameters (hash=$newHash)" . PHP_EOL . json_encode($parameters, JSON_PRETTY_PRINT), LOG_DEBUG);
             }
         }
+        
+        // Save state to Redis after planning a new action
+        $this->saveStateToRedis();
     }
 
     private function createUniqueKeyFromArray(array $array): string
@@ -448,6 +586,9 @@ class WorkerModelsEvents extends WorkerBase
         // Start counting time when the new reload actions were received
         if ($countPlannedActions === 0 && count($this->plannedReloadActions) > 0) {
             $this->last_change = time();
+            
+            // Save worker state when new actions are received
+            $this->saveStateToRedis();
         }
     }
 

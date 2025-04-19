@@ -417,7 +417,20 @@ class Processes
         $activeProcesses = self::getPidOfProcess($className);
         $processes = array_filter(explode(' ', $activeProcesses));
         $currentProcCount = count($processes);
-        $neededProcCount = 1; // Default to 1 process needed
+        
+        // Определяем количество нужных экземпляров из maxProc класса
+        $neededProcCount = 1; // По умолчанию 1 процесс
+        
+        if (class_exists($className)) {
+            // Получаем значение maxProc из класса
+            $reflectionClass = new \ReflectionClass($className);
+            if ($reflectionClass->hasProperty('maxProc')) {
+                $defaultProperties = $reflectionClass->getDefaultProperties();
+                if (isset($defaultProperties['maxProc'])) {
+                    $neededProcCount = (int)$defaultProperties['maxProc'];
+                }
+            }
+        }
 
         self::handleWorkerAction(
             $action,
@@ -427,7 +440,8 @@ class Processes
             $kill,
             $currentProcCount,
             $neededProcCount,
-            $processes
+            $processes,
+            $className
         );
     }
 
@@ -442,6 +456,7 @@ class Processes
      * @param int $currentProcCount Current process count
      * @param int $neededProcCount Needed process count
      * @param array $processes Process IDs array
+     * @param string $className Worker class name
      */
     private static function handleWorkerAction(
         string $action,
@@ -451,7 +466,8 @@ class Processes
         string $kill,
         int $currentProcCount,
         int $neededProcCount,
-        array $processes
+        array $processes,
+        string $className = ''
     ): void {
         switch ($action) {
             case 'restart':
@@ -459,7 +475,9 @@ class Processes
                     $activeProcesses,
                     $kill,
                     $command,
-                    $paramForPHPWorker
+                    $paramForPHPWorker,
+                    $className,
+                    $neededProcCount
                 );
                 break;
             case 'stop':
@@ -485,13 +503,29 @@ class Processes
      * @param string $kill Kill command path
      * @param string $command Command to execute
      * @param string $paramForPHPWorker Worker parameters
+     * @param string $workerClass Worker class name
+     * @param int $neededProcCount Number of instances needed
      */
     private static function handleRestartAction(
         string $activeProcesses,
         string $kill,
         string $command,
         string $paramForPHPWorker,
+        string $workerClass = '',
+        int $neededProcCount = 1
     ): void {
+        // Отладочное логирование
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            sprintf(
+                "Restarting worker: %s, neededProcCount=%d, activeProcesses=%s",
+                $workerClass,
+                $neededProcCount,
+                $activeProcesses
+            ),
+            LOG_NOTICE
+        );
+
         if ($activeProcesses !== '') {
             SystemMessages::sysLogMsg(
                 __METHOD__,
@@ -515,8 +549,33 @@ class Processes
             self::mwExecBg("$kill -SIGTERM $activeProcesses");
         }
 
-        // Start new instance
-        self::mwExecBg("$command $paramForPHPWorker");
+        // Запуск воркеров с поддержкой пула
+        if ($neededProcCount > 1) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf("Starting worker pool with %d instances for %s", $neededProcCount, $workerClass),
+                LOG_NOTICE
+            );
+            
+            // Запускаем необходимое количество экземпляров
+            for ($i = 1; $i <= $neededProcCount; $i++) {
+                $instanceParam = " --instance-id={$i}";
+                
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf("Starting worker instance %d/%d: %s", $i, $neededProcCount, $command . " " . $paramForPHPWorker . $instanceParam),
+                    LOG_DEBUG
+                );
+                
+                self::mwExecBg("{$command} {$paramForPHPWorker}{$instanceParam}");
+                
+                // Небольшая задержка между запусками экземпляров для предотвращения конфликтов
+                usleep(250000); // 250ms
+            }
+        } else {
+            // Start new instance (for non-pool workers)
+            self::mwExecBg("$command $paramForPHPWorker");
+        }
     }
 
     /**
@@ -555,9 +614,42 @@ class Processes
             return;
         }
 
+        // Добавляем отладочное логирование
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            sprintf(
+                "Starting worker pool: currentCount=%d, neededCount=%d, command=%s",
+                $currentProcCount,
+                $neededProcCount,
+                $command
+            ),
+            LOG_DEBUG
+        );
+
         if ($neededProcCount > $currentProcCount) {
-            for ($i = $currentProcCount; $i < $neededProcCount; $i++) {
-                self::mwExecBg("$command $paramForPHPWorker");
+            // Запускаем новые экземпляры с указанием instance ID
+            for ($i = 0; $i < $neededProcCount; $i++) {
+                $instanceParam = '';
+                // Если мы запускаем больше одного экземпляра, добавляем параметр instanceId
+                if ($neededProcCount > 1) {
+                    $instanceId = $i + 1; // Нумеруем с 1
+                    $instanceParam = " --instance-id={$instanceId}";
+                }
+                
+                // Отладочное логирование
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf(
+                        "Launching instance #%d with command: %s %s%s",
+                        ($i+1),
+                        $command, 
+                        $paramForPHPWorker,
+                        $instanceParam
+                    ),
+                    LOG_DEBUG
+                );
+                
+                self::mwExecBg("{$command} {$paramForPHPWorker}{$instanceParam}");
             }
         } elseif ($currentProcCount > $neededProcCount) {
             $countProc4Kill = $currentProcCount - $neededProcCount;

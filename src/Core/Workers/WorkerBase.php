@@ -102,6 +102,13 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     public int $maxProc = 1;
 
     /**
+     * Instance identifier for pool workers
+     *
+     * @var int
+     */
+    protected int $instanceId = 1;
+
+    /**
      * Instance of the Asterisk Manager
      *
      * @var AsteriskManager
@@ -157,6 +164,16 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             $this->workerStartTime = microtime(true);
             $this->parentPid = posix_getppid();
             $this->workerState = self::STATE_STARTING;
+
+            // Parse command line arguments for instance ID
+            if (isset($GLOBALS['argv']) && is_array($GLOBALS['argv'])) {
+                foreach ($GLOBALS['argv'] as $arg) {
+                    if (preg_match('/^--instance-id=(\d+)$/', $arg, $matches)) {
+                        $this->instanceId = (int)$matches[1];
+                        break;
+                    }
+                }
+            }
 
             // Set up basic environment
             $this->setResourceLimits();
@@ -263,12 +280,14 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
      */
     public function getPidFile(): string
     {
-        $pidFile = Processes::getPidFilePath(static::class);
         if (isset($this->isForked) && $this->isForked === true) {
             $pid = getmypid();
-            $pidFile = Processes::getForkedPidFilePath(static::class, $pid);
+            // For forked processes, include both instance ID and PID
+            return Processes::getForkedPidFilePath(static::class, $pid, $this->instanceId);
         }
-        return $pidFile;
+        
+        // For regular processes or pool instances, include instance ID
+        return Processes::getPidFilePath(static::class, $this->instanceId);
     }
 
     /**
@@ -375,8 +394,8 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
                 if ($this->isForked) {
                     // Redis-based workers should clean up connections
                     if ($this instanceof WorkerRedisBase) {
-                        if ($this->managementRedis) {
-                            $this->managementRedis->close();
+                        if ($this->redis) {
+                            $this->redis->close();
                         }
                     }
                     exit(0);
@@ -392,8 +411,8 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
 
                 // Cleanup for Redis-based workers
                 if ($this instanceof WorkerRedisBase) {
-                    if ($this->managementRedis) {
-                        $this->managementRedis->close();
+                    if ($this->redis) {
+                        $this->redis->close();
                     }
                 }
                 exit(0);

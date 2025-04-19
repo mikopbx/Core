@@ -72,10 +72,46 @@ class BaseController extends Controller
             $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
 
             // Generate unique request ID
-            $requestMessage['request_id'] = uniqid('req_', true);
+            $requestMessage['request_id'] = uniqid("req_{$actionName}_", true);
 
             // Push request to queue
-            $redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
+            $pushResult = $redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
+            
+            // Проверяем, что задача действительно добавлена в очередь
+            if ($pushResult <= 0) {
+                throw new \RuntimeException("Failed to push request to Redis queue");
+            }
+            
+            // Проверяем текущий размер очереди и логируем
+            $queueLength = $redis->lLen(WorkerApiCommands::REDIS_API_QUEUE);
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf(
+                    "Request added to queue: action=%s, id=%s, queue_position=%d/%d",
+                    $actionName,
+                    $requestMessage['request_id'],
+                    $pushResult,
+                    $queueLength
+                ),
+                LOG_DEBUG
+            );
+            
+            // Подсчитываем, сколько активных воркеров доступны для обработки
+            $activeWorkers = $redis->keys('worker_api_commands:*');
+            $runningWorkers = count($activeWorkers);
+            
+            // Если в очереди много запросов, но мало воркеров, логируем предупреждение
+            if ($queueLength > $runningWorkers * 2) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    sprintf(
+                        "WARNING: Queue backlog detected - %d requests in queue with only %d workers",
+                        $queueLength,
+                        $runningWorkers
+                    ),
+                    LOG_WARNING
+                );
+            }
 
             if ($requestMessage['async']) {
                 $this->response->setPayloadSuccess(['success' => true]);
@@ -88,17 +124,6 @@ class BaseController extends Controller
             $startTime = microtime(true);
             $retryCount = 0;
             $maxRetries = 5;
-            
-            // Wait for response with direct polling and retry logic
-            SystemMessages::sysLogMsg(
-                static::class,
-                sprintf(
-                    "Waiting for response on key: %s, timeout: %ds",
-                    $responseKey,
-                    $maxTimeout
-                ),
-                LOG_DEBUG
-            );
             
             // Calculate end time
             $endTime = $startTime + $maxTimeout;
@@ -119,7 +144,14 @@ class BaseController extends Controller
             $stageStartTime = $startTime;
             $currentInterval = $pollingIntervals[0]['interval'];
             $attempts = 0;
-            
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf(
+                    "Waiting for response on key: %s",
+                    $responseKey,
+                ),
+                LOG_DEBUG
+            );
             while (microtime(true) < $endTime) {
                 try {
                     // Check if we need to adjust polling interval

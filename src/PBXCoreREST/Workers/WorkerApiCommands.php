@@ -5,16 +5,14 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\{Processes, SystemMessages};
 use MikoPBX\Core\Workers\WorkerRedisBase;
 use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
-use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
-use Redis;
 use RuntimeException;
 use Throwable;
-use MikoPBX\Core\System\Util;
 
 require_once 'Globals.php';
 
@@ -63,32 +61,19 @@ class WorkerApiCommands extends WorkerRedisBase
     private const int MAX_JOB_ATTEMPTS = 3;
     private const int FAILED_JOB_TTL = 86400; // 24 hours
 
-    private const int MAX_PARALLEL_JOBS = 3;
 
     /**
      * System configuration
      */
     private const int REDIS_RESPONSE_TTL = 3600; // 1 hour
     private const int MAX_RESPONSE_SIZE = 1048576; // 1MB
-    private const int FORK_PROCESS_TIMEOUT = 300; // 5 minutes
     private const int PROCESS_CHECK_INTERVAL = 100000; // 100ms
 
 
     /**
-     * Map of active worker jobs and processes
-     * @var array<string, array>
+     * Default to 3 concurrent worker processes instead of 1
      */
-    private array $activeJobs = [];
-
-    /**
-     * Array of active worker processes
-     */
-    private array $workerPids = [];
-
-    /**
-     * Default to 5 concurrent worker processes instead of 1
-     */
-    public int $maxProc = 5;
+    public int $maxProc = 3;
 
     /**
      * Get check interval for worker monitoring
@@ -110,59 +95,129 @@ class WorkerApiCommands extends WorkerRedisBase
     public function start(array $argv): void
     {
         try {
-            $this->setProcessType(self::PROCESS_TYPES['MAIN']);
-
-            // Set up signal handling for graceful shutdown
-            pcntl_signal(SIGUSR1, function () {
-                $this->handleGracefulShutdown();
-            });
-
             // Check for pending module post-installations immediately after worker starts
-            // Use mutex to ensure this runs only once among multiple worker instances
-            $mutexTimeout = 10; // 10 seconds should be enough for post-installations check
-            $mutex = Util::createMutex('WorkerApiCommands', 'PostInstallation', $mutexTimeout);
-            
-            try {
-                $mutex->synchronized(
-                    function () {
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "Running module post-installations check with mutex lock",
-                            LOG_NOTICE
-                        );
-                        ModuleInstallationBase::processModulePostInstallations($this->redis);
-                    }
-                );
-            } catch (Throwable $e) {
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Error during module post-installations: " . $e->getMessage(),
-                    LOG_ERR
-                );
-            }
+            ModuleInstallationBase::processModulePostInstallations();     
 
-            // Initialize worker pool
-            $this->initializeWorkerPool();
+            // Log worker instance information
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf(
+                    "Worker instance started: Instance ID=%d, PID=%d, Redis queue=%s",
+                    $this->instanceId,
+                    getmypid(),
+                    self::REDIS_API_QUEUE
+                ),
+                LOG_NOTICE
+            );
 
-            // Monitor the worker pool and maintain a healthy state
-            while ($this->needRestart === false) {
+            // Process requests until shutdown
+            while (!$this->isShuttingDown && $this->needRestart === false) {
                 try {
-                    // Monitor worker pool and restart any dead workers
-                    $this->monitorWorkerPool();
+                    // Process signals
+                    pcntl_signal_dispatch();
                     
                     // Send periodic heartbeat
                     $this->checkHeartbeat();
                     
-                    // Process signals
-                    pcntl_signal_dispatch();
+                    // Connect to Redis
+                    $this->redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
                     
-                    // Short sleep to prevent CPU overuse
-                    usleep(self::PROCESS_CHECK_INTERVAL);
+                    // Периодически проверяем состояние очереди (каждую минуту)
+                    static $lastQueueCheckTime = 0;
+                    if (time() - $lastQueueCheckTime > 60) {
+                        $this->checkQueueState();
+                        $lastQueueCheckTime = time();
+                    }
+                    
+                    // Get job from queue with 5 second timeout
+                    $result = $this->redis->blpop(
+                        [self::REDIS_API_QUEUE, self::REDIS_FAILED_JOBS_QUEUE], 
+                        5
+                    );
+                    
+                    // No job available, check signals and continue
+                    if (!is_array($result) || count($result) !== 2) {
+                        continue;
+                    }
+                    
+                    // Process job data
+                    [$queue, $requestData] = $result;
+                    
+                    // Verify job data
+                    if (!is_string($requestData)) {
+                        SystemMessages::sysLogMsg(
+                            static::class,
+                            sprintf("Invalid job data type: %s", gettype($requestData)),
+                            LOG_WARNING
+                        );
+                        continue;
+                    }
+                    
+                    // Parse JSON data
+                    $request = json_decode($requestData, true);
+                    if ($request === null && json_last_error() !== JSON_ERROR_NONE) {
+                        SystemMessages::sysLogMsg(
+                            static::class,
+                            sprintf("Invalid JSON in job data: %s", json_last_error_msg()),
+                            LOG_WARNING
+                        );
+                        continue;
+                    }
+                    
+                    $jobId = $request['request_id'] ?? uniqid('job_'.$request['action'], true);
+                    
+                    if (!$this->shouldProcessJob($jobId)) {
+                        continue;
+                    }
+
+                    // Логируем, какой воркер взял задачу в обработку
+                    SystemMessages::sysLogMsg(
+                        static::class,
+                        sprintf(
+                            "Worker instance #%d (PID:%d) taking job: %s, action: %s",
+                            $this->instanceId,
+                            getmypid(),
+                            $jobId,
+                            $request['action'] ?? 'unknown'
+                        ),
+                        LOG_DEBUG
+                    );
+                    
+                    // Сохраняем информацию о том, какой воркер обрабатывает задачу
+                    $this->redis->setex(
+                        'api:job:worker:' . $jobId,
+                        300, // 5 минут TTL
+                        json_encode([
+                            'instance_id' => $this->instanceId,
+                            'pid' => getmypid(),
+                            'started_at' => microtime(true)
+                        ])
+                    );
+                    
+                    // Process the job
+                    $this->processJobDirect($jobId, $requestData);
+                    
+                    // If worker is in shutdown mode, exit after completing this job
+                    if ($this->isShuttingDown) {
+                        SystemMessages::sysLogMsg(
+                            static::class,
+                            "Worker completed final job and is now exiting",
+                            LOG_NOTICE
+                        );
+                        break;
+                    }
+                    
                 } catch (Throwable $e) {
                     CriticalErrorsHandler::handleExceptionWithSyslog($e);
                     sleep(1);
                 }
             }
+            
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Worker exiting gracefully",
+                LOG_NOTICE
+            );
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
             throw $e;
@@ -170,110 +225,72 @@ class WorkerApiCommands extends WorkerRedisBase
     }
 
     /**
-     * Handle graceful shutdown
+     * Проверяем и логируем состояние очереди Redis
      */
-    private function handleGracefulShutdown(): void
-    {
-        // Signal that we're in graceful shutdown mode
-        SystemMessages::sysLogMsg(
-            static::class,
-            "Entering graceful shutdown mode - terminating worker pool",
-            LOG_NOTICE
-        );
-
-        $this->setWorkerState(self::STATE_STOPPING);
-
-        // Terminate all worker processes
-        foreach ($this->workerPids as $workerId => $pid) {
-            if (posix_kill($pid, 0)) {
-                // Worker is still running, send SIGUSR1 for graceful shutdown
-                posix_kill($pid, SIGUSR1);
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Sent graceful shutdown signal to worker {$workerId} (pid: {$pid})",
-                    LOG_NOTICE
-                );
-            }
-        }
-        
-        // Wait for workers to terminate
-        $waitStart = microtime(true);
-        $remainingWorkers = count($this->workerPids);
-        
-        while ($remainingWorkers > 0 && (microtime(true) - $waitStart) <= 10) {
-            foreach ($this->workerPids as $workerId => $pid) {
-                $result = pcntl_waitpid($pid, $status, WNOHANG);
-                
-                if ($result === $pid) {
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "Worker {$workerId} (pid: {$pid}) shutdown complete",
-                        LOG_NOTICE
-                    );
-                    
-                    unset($this->workerPids[$workerId]);
-                    $remainingWorkers--;
-                }
-            }
-            
-            if ($remainingWorkers > 0) {
-                usleep(100000); // 100ms
-            }
-        }
-        
-        // Force terminate any remaining workers
-        foreach ($this->workerPids as $workerId => $pid) {
-            if (posix_kill($pid, 0)) {
-                posix_kill($pid, SIGKILL);
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Forced termination of worker {$workerId} (pid: {$pid})",
-                    LOG_WARNING
-                );
-            }
-        }
-        
-        $this->needRestart = true;
-    }
-
-    /**
-     * Process requests from Redis queue
-     *
-     * Checks both main and failed job queues for requests to process.
-     * Handles job retries and error cases.
-     */
-    private function processRequestQueue(): void
+    private function checkQueueState(): void
     {
         try {
-            // Only process if we have capacity and not shutting down
-            if (count($this->activeJobs) >= self::MAX_PARALLEL_JOBS || $this->workerState === self::STATE_STOPPING) {
-                return;
+            // Получаем длину основной очереди
+            $queueLength = $this->redis->lLen(self::REDIS_API_QUEUE);
+            
+            // Проверяем все ключи с ответами
+            $responseKeys = $this->redis->keys(self::REDIS_API_RESPONSE_PREFIX . '*');
+            $responseCount = count($responseKeys);
+            
+            // Проверяем ожидающие запросы
+            $jobsInProgressKeys = $this->redis->keys('api:job:worker:*');
+            $jobsInProgress = count($jobsInProgressKeys);
+            
+            // Логируем информацию о состоянии очереди
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf(
+                    "Queue state: %d requests waiting, %d responses pending, %d jobs in progress - WorkerID %d/%d",
+                    $queueLength,
+                    $responseCount,
+                    $jobsInProgress,
+                    $this->instanceId,
+                    $this->maxProc
+                ),
+                LOG_INFO
+            );
+            
+            // Если есть задачи в очереди, но нет воркеров, которые их обрабатывают, выводим предупреждение
+            if ($queueLength > 0 && $jobsInProgress === 0) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    sprintf(
+                        "WARNING: %d requests in queue but no active jobs in progress!",
+                        $queueLength
+                    ),
+                    LOG_WARNING
+                );
+                
+                // Дополнительно проверяем, какие задачи находятся в очереди
+                $queueItems = $this->redis->lRange(self::REDIS_API_QUEUE, 0, 5); // Первые 5 элементов
+                foreach ($queueItems as $index => $queueItem) {
+                    $item = json_decode($queueItem, true);
+                    if (is_array($item)) {
+                        SystemMessages::sysLogMsg(
+                            static::class,
+                            sprintf(
+                                "Queue item %d: ID=%s, Action=%s, Processor=%s",
+                                $index,
+                                $item['request_id'] ?? 'unknown',
+                                $item['action'] ?? 'unknown',
+                                $item['processor'] ?? 'unknown'
+                            ),
+                            LOG_INFO
+                        );
+                    }
+                }
             }
-
-            // Check both main and failed queues
-            $queues = [self::REDIS_API_QUEUE, self::REDIS_FAILED_JOBS_QUEUE];
-            $result = $this->redis->blpop($queues, 1);
-
-            if (!$result) {
-                return;
-            }
-
-            [$queue, $requestData] = $result;
-
-            $request = json_decode($requestData, true);
-            $jobId = $request['request_id'] ?? uniqid('job:', true);
-
-            // Check and update attempt count
-            if (!$this->shouldProcessJob($jobId)) {
-                return;
-            }
-
-            // Process the job
-            $this->startJobProcessing($jobId, $requestData);
-        } catch (\RedisException $e) {
-            // Redis connection lost - it will be retried later
         } catch (Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf("Error checking queue state: %s", $e->getMessage()),
+                LOG_WARNING
+            );
         }
     }
 
@@ -297,119 +314,6 @@ class WorkerApiCommands extends WorkerRedisBase
         return true;
     }
 
-    /**
-     * Start job processing in a worker process
-     *
-     * @param string $jobId Unique job identifier
-     * @param string $requestData Job request data
-     */
-    private function startJobProcessing(string $jobId, string $requestData): void
-    {
-        // Create job info record first
-        $this->activeJobs[$jobId] = [
-            'start_time' => microtime(true),
-            'request_data' => $requestData,
-            'pid' => null
-        ];
-
-        // Use startWorkerProcess from parent class to handle the process creation
-        $pid = $this->startWorkerProcess(function () use ($jobId, $requestData) {
-            $this->processJob($jobId, $requestData);
-            exit(0);
-        });
-        
-        // Store PID with job
-        $this->activeJobs[$jobId]['pid'] = $pid;
-    }
-
-    /**
-     * Process a job in a worker process
-     *
-     * @param string $jobId Unique job identifier
-     * @param string $requestData Job request data
-     */
-    private function processJob(string $jobId, string $requestData): void
-    {
-        $request = json_decode($requestData, true);
-        $res = new PBXApiResult();
-
-        try {
-            // Set descriptive process title
-            cli_set_process_title(sprintf(
-                '%s_job_%s_%s',
-                static::class,
-                $jobId,
-                $request['action'] ?? 'unknown'
-            ));
-
-            $res->processor = $this->getProcessor($request);
-            $processor = $res->processor;
-
-            if (!method_exists($processor, 'callback')) {
-                throw new RuntimeException("Unknown processor - {$processor}");
-            }
-
-            // Process request
-            if (($request['async'] ?? false) === true) {
-                $this->handleAsyncRequest($request, $res, $processor);
-            } else {
-                $res = $processor::callback($request);
-            }
-        } catch (Throwable $e) {
-            // Handle errors during processing
-            $this->handleJobError($jobId, $e);
-            $this->handleProcessingError($e, $res);
-        } finally {
-            // Always send a response
-            $this->sendResponse($jobId, $request, $res->getResult());
-            
-            // Check if we need to restart workers AFTER response has been sent
-            if ($res->success) {
-                $this->checkNeedReload($request);
-            }
-        }
-    }
-
-    /**
-     * Clean up finished jobs and their resources
-     */
-    private function cleanupFinishedJobs(): void
-    {
-        foreach ($this->activeJobs as $jobId => $jobInfo) {
-            $pid = $jobInfo['pid'];
-            if ($pid === null) {
-                continue;
-            }
-
-            $result = pcntl_waitpid($pid, $status, WNOHANG);
-
-            if ($result === $pid) {
-                // Process completed
-                if (pcntl_wexitstatus($status) !== 0) {
-                    // Job failed, retry if attempts remain
-                    if ($this->shouldProcessJob($jobId)) {
-                        $this->redis->rPush(self::REDIS_FAILED_JOBS_QUEUE, $jobInfo['request_data']);
-                    }
-                }
-                
-                // Remove from active jobs
-                unset($this->activeJobs[$jobId]);
-            } elseif ($result === 0) {
-                // Process still running - check timeout
-                $runtime = microtime(true) - $jobInfo['start_time'];
-                if ($runtime > self::FORK_PROCESS_TIMEOUT) {
-                    // Process hung, terminate it
-                    posix_kill($pid, SIGKILL);
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "Terminated hanging job {$jobId} (pid: {$pid}, exceeded {$this->FORK_PROCESS_TIMEOUT}s)",
-                        LOG_WARNING
-                    );
-                    unset($this->activeJobs[$jobId]);
-                }
-            }
-        }
-    }
 
     /**
      * Get processor class for request
@@ -738,40 +642,6 @@ class WorkerApiCommands extends WorkerRedisBase
     }
 
     /**
-     * Checks if the module or worker needs to be reloaded.
-     *
-     * @param array $request
-     */
-    private function checkNeedReload(array $request): void
-    {
-        $restartActions = $this->getNeedRestartActions();
-        foreach ($restartActions as $processor => $actions) {
-            foreach ($actions as $action) {
-                if ($processor === $request['processor']
-                    && $action === $request['action']) {
-                    $this->needRestart = true;
-                    Processes::restartAllWorkers();
-                    return;
-                }
-            }
-        }
-    }
-
-    /**
-     * Returns array of processor => action that require worker restart
-     *
-     * @return array<string,string[]>
-     */
-    private function getNeedRestartActions(): array
-    {
-        return [
-            SystemManagementProcessor::class => [
-                'restoreDefault',
-            ],
-        ];
-    }
-
-    /**
      * Clean up job-related data
      *
      * @param string $jobId Job identifier
@@ -786,221 +656,6 @@ class WorkerApiCommands extends WorkerRedisBase
         foreach ($keys as $key) {
             $this->redis->del($key);
         }
-    }
-
-    /**
-     * Initialize worker pool by creating multiple worker processes
-     */
-    private function initializeWorkerPool(): void
-    {
-        SystemMessages::sysLogMsg(
-            static::class,
-            "Initializing worker pool with {$this->maxProc} worker processes",
-            LOG_NOTICE
-        );
-        
-        for ($i = 0; $i < $this->maxProc; $i++) {
-            $this->startPoolWorker($i);
-        }
-    }
-    
-    /**
-     * Start a worker process in the pool
-     * 
-     * @param int $workerId Worker identifier
-     * @return int PID of the started worker
-     */
-    private function startPoolWorker(int $workerId): int
-    {
-        $pid = pcntl_fork();
-        
-        if ($pid === -1) {
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Failed to fork worker process {$workerId}",
-                LOG_ERR
-            );
-            return 0;
-        }
-        
-        if ($pid === 0) {
-            // Child process
-            try {
-                $this->setForked();
-                $this->runWorker($workerId);
-                exit(0);
-            } catch (Throwable $e) {
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
-                exit(1);
-            }
-        }
-        
-        // Parent process - store PID
-        $this->workerPids[$workerId] = $pid;
-        SystemMessages::sysLogMsg(
-            static::class,
-            "Started worker {$workerId} with PID {$pid}",
-            LOG_NOTICE
-        );
-        
-        return $pid;
-    }
-    
-    /**
-     * Run worker process to handle jobs from queue
-     * 
-     * @param int $workerId Worker identifier
-     */
-    private function runWorker(int $workerId): void
-    {
-        cli_set_process_title(sprintf("%s_worker_%d", static::class, $workerId));
-
-        // Set up signal handling for graceful worker shutdown
-        pcntl_signal(SIGUSR1, function () use ($workerId) {
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Worker {$workerId} received shutdown signal, exiting gracefully",
-                LOG_NOTICE
-            );
-            exit(0);
-        });
-        
-        // Process requests until shutdown
-        while ($this->workerState !== self::STATE_STOPPING) {
-            try {
-                // Process signals
-                pcntl_signal_dispatch();
-            
-                $this->redis = $this->di->get('redis');
-                
-                // Get job from queue with 5 second timeout
-                $result = $this->redis->blpop(
-                    [self::REDIS_API_QUEUE, self::REDIS_FAILED_JOBS_QUEUE], 
-                    5
-                );
-                
-                // Enhanced diagnostic logging for unexpected BLPOP results
-                if (is_array($result) && count($result) === 0) {
-                    // Это нормальное поведение при тайм-ауте - нет доступных заданий
-                    continue;
-                }
-                
-                // Проверка, что результат - массив с двумя элементами
-                if (!is_array($result) || count($result) !== 2) {
-                    // Результат не является корректным массивом из двух элементов
-                    if ($result !== false && $result !== null) {
-                        // Special handling for empty array case already done above
-                        
-                        // Get Redis connection info for diagnostics
-                        $redisInfo = [];
-                        try {
-                            $pingResult = $this->redis->ping();
-                            $redisInfo['ping'] = ($pingResult === true) ? 'OK' : 'FAILED';
-                            $redisInfo['ping_actual'] = print_r($pingResult, true);
-                            $redisInfo['role'] = $this->redis->info('replication')['role'] ?? 'unknown';
-                            $redisInfo['queue_lengths'] = [
-                                'api_queue' => $this->redis->lLen(self::REDIS_API_QUEUE),
-                                'failed_jobs_queue' => $this->redis->lLen(self::REDIS_FAILED_JOBS_QUEUE)
-                            ];
-                            $redisInfo['memory_usage'] = $this->redis->info('memory')['used_memory_human'] ?? 'unknown';
-                            $redisInfo['connected_clients'] = $this->redis->info('clients')['connected_clients'] ?? 'unknown';
-                        } catch (\Throwable $e) {
-                            $redisInfo['error'] = $e->getMessage();
-                        }
-                        
-                        // Log the unexpected format with detailed diagnostics
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            sprintf(
-                                "Unexpected BLPOP result format: %s | Redis state: %s", 
-                                is_array($result) ? 'array[' . count($result) . ']' . json_encode($result) : gettype($result),
-                                json_encode($redisInfo)
-                            ),
-                            LOG_WARNING
-                        );
-                    }
-                    // No job available or invalid format, check signals and continue
-                    continue;
-                }
-                
-                // Безопасная деструктуризация массива
-                [$queue, $requestData] = $result;
-                
-                // Проверка типа данных requestData
-                if (!is_string($requestData)) {
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        sprintf("Invalid job data type: %s", gettype($requestData)),
-                        LOG_WARNING
-                    );
-                    continue;
-                }
-                
-                // Проверка валидности JSON
-                $request = json_decode($requestData, true);
-                if ($request === null && json_last_error() !== JSON_ERROR_NONE) {
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        sprintf("Invalid JSON in job data: %s", json_last_error_msg()),
-                        LOG_WARNING
-                    );
-                    continue;
-                }
-                
-                $jobId = $request['request_id'] ?? uniqid('job:', true);
-                
-                if (!$this->shouldProcessJob($jobId)) {
-                    continue;
-                }
-                
-                // Process the job directly (no forking)
-                $this->processJobDirect($jobId, $requestData);
-                
-                // Reset worker state after job completion
-                $this->resetWorkerState($workerId);
-                
-            } catch (Throwable $e) {
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
-                // Short delay before next job
-                sleep(1);
-            }
-        }
-    }
-    
-    /**
-     * Monitor worker pool and restart any dead workers
-     */
-    private function monitorWorkerPool(): void
-    {
-        foreach ($this->workerPids as $workerId => $pid) {
-            $result = pcntl_waitpid($pid, $status, WNOHANG);
-            
-            if ($result === $pid) {
-                // Worker process ended - restart it
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Worker {$workerId} (PID: {$pid}) exited, restarting...",
-                    LOG_WARNING
-                );
-                
-                // Restart worker
-                $this->startPoolWorker($workerId);
-            }
-        }
-    }
-    
-    /**
-     * Reset worker state after job completion
-     * 
-     * @param int $workerId Worker identifier
-     */
-    private function resetWorkerState(int $workerId): void
-    {
-        // Reset process title to idle state
-        cli_set_process_title(sprintf("%s_worker_%d_idle", static::class, $workerId));
-        
-        // Encourage garbage collection
-        gc_collect_cycles();
     }
 
     /**
@@ -1176,11 +831,6 @@ class WorkerApiCommands extends WorkerRedisBase
                     ),
                     LOG_NOTICE
                 );
-            }
-            
-            // Check if we need to restart workers AFTER response has been sent
-            if ($res->success) {
-                $this->checkNeedReload($request);
             }
         }
     }
