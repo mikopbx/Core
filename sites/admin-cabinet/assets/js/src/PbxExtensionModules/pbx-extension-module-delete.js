@@ -39,7 +39,13 @@ const deleteModule = {
     $keepSettingsCheckbox: $('#keepModuleSettings'),
 
     /**
-     * Initialize extensionModules list
+     * The identifier for the PUB/SUB channel used to subscribe to uninstallation status updates.
+     * This ensures that the client is listening on the correct channel for relevant events.
+     */
+    channelId: 'uninstall-module',
+
+    /**
+     * Initialize module deinstalation
      */
     initialize() {
 
@@ -74,20 +80,14 @@ const deleteModule = {
                     return true;
                 },
                 onApprove: () => {
-                    // Check if the module is enabled, if enabled, disable it
-                    const status = $(`#${params.uniqid}`).find('.checkbox').checkbox('is checked');
+                    EventBus.subscribe(this.channelId, data => {
+                        deleteModule.cbAfterDelete(data);
+                    });
                     const keepSettings = deleteModule.$keepSettingsCheckbox.checkbox('is checked');
-                    if (status === true) {
-                        PbxApi.ModulesDisableModule(params.uniqid, () => {
-                            PbxApi.ModulesUnInstallModule(
-                                params.uniqid,
-                                keepSettings,
-                                extensionModules.cbAfterDelete,
-                            );
-                        });
-                    } else {
-                        PbxApi.ModulesUnInstallModule(params.uniqid, keepSettings, deleteModule.cbAfterDelete);
-                    }
+                    params.keepSettings = keepSettings;
+                    params.channelId = this.channelId;
+                    PbxApi.ModulesUnInstallModule(params, deleteModule.cbAfterDelete);
+                    
                     return true;
                 },
             })
@@ -99,18 +99,33 @@ const deleteModule = {
      * If successful, reload the page; if not, display an error message.
      * @param {boolean} result - The result of the module deletion.
      */
-    cbAfterDelete(result) {
-        $('a.button').removeClass('disabled');
-        if (result === true) {
-            window.location = `${globalRootUrl}pbx-extension-modules/index/`;
-        } else {
-            $('.ui.message.ajax').remove();
-            let errorMessage = (result.data !== undefined) ? result.data : '';
-            errorMessage = errorMessage.replace(/\n/g, '<br>');
-            UserMessage.showMultiString(errorMessage, globalTranslate.ext_DeleteModuleError);
-        }
-    },
+    cbAfterDelete(response) {
+        if (response===true) return;
+        const stage = response.stage;
+        const stageDetails = response.stageDetails;
+        if (stage ==='Stage_I_DisableModule'){
 
+        } else if (stage === 'Stage_II_StopProcesses'){
+        
+        } else if (stage === 'Stage_III_BackupDB'){
+        
+        } else if (stage === 'Stage_IV_RunInnerUnistaller'){
+        
+        } else if (stage === 'Stage_IV_RunFailoverUnistaller'){
+        
+        } else if (stage === 'Stage_V_DeleteModuleFolder'){
+        
+        } else if (stage === 'Stage_VI_UnregisterModule'){
+        
+        } else if (stage === 'Stage_VII_FinalStatus'){
+            $('a.button').removeClass('disabled');
+            if (stageDetails.result===true){
+                window.location = `${globalRootUrl}pbx-extension-modules/index/`;
+            } else {
+                UserMessage.showMultiString(stageDetails.messages, globalTranslate.ext_DeleteModuleError);
+            }
+        }
+    }
 };
 
 // When the document is ready, initialize the delete module class
