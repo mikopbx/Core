@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Modules\Setup;
 
+use Directory;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
@@ -28,6 +29,10 @@ use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
+use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Common\Providers\MainDatabaseProvider;
+use MikoPBX\Common\Providers\MarketPlaceProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 use Throwable;
@@ -136,13 +141,13 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
 
         // Initialize properties
         $this->messages = [];
-        $this->db      = $this->getDI()->getShared('db');
-        $this->config  = $this->getDI()->getShared('config');
-        $this->license =  $this->getDI()->getShared('license');
-        $this->moduleDir = $this->config->path('core.modulesDir') . '/' . $this->moduleUniqueID;
+        $this->db      = $this->getDI()->getShared(MainDatabaseProvider::SERVICE_NAME);
+        $this->config  = $this->getDI()->getShared(ConfigProvider::SERVICE_NAME);
+        $this->license =  $this->getDI()->getShared(MarketPlaceProvider::SERVICE_NAME);
+        $this->moduleDir = Directories::getDir(Directories::CORE_MODULES_DIR) . '/' . $this->moduleUniqueID;
 
         // Load module settings from module.json file
-        $settings_file = "$this->moduleDir/module.json";
+        $settings_file = "{$this->moduleDir}/module.json";
         if (file_exists($settings_file)) {
             $module_settings = json_decode(file_get_contents($settings_file), true);
             if ($module_settings) {
@@ -315,8 +320,8 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         // Add regular www rights
         Util::addRegularWWWRights($this->moduleDir);
         $dirs = [
-            "$this->moduleDir/agi-bin",
-            "$this->moduleDir/bin"
+            "{$this->moduleDir}/agi-bin",
+            "{$this->moduleDir}/bin"
         ];
         foreach ($dirs as $dir) {
             if (file_exists($dir) && is_dir($dir)) {
@@ -518,7 +523,7 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         $dbUpgrade = new UpdateDatabase();
         foreach ($results as $file) {
             $className        = pathinfo($file)['filename'];
-            $moduleModelClass = "Modules\\$this->moduleUniqueID\\Models\\$className";
+            $moduleModelClass = "Modules\\{$this->moduleUniqueID}\\Models\\$className";
             $upgradeResult = $dbUpgrade->createUpdateDbTableByAnnotations($moduleModelClass);
             if (!$upgradeResult) {
                 return false;

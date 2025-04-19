@@ -971,7 +971,7 @@ const PbxApi = {
             },
             successTest: PbxApi.successTest,
             onSuccess() {
-                callback(true);
+                callback(response);
             },
             onFailure(response) {
                 callback(response);
@@ -985,24 +985,30 @@ const PbxApi = {
     /**
      * Uninstall extension module.
      *
-     * @param {string} moduleName - The ID of the module to be deleted.
-     * @param {boolean} keepSettings - Whether to keep the module settings or not.
+     * @param {Object} params - The parameters required for deleting the module.
+     * @param {string} params.uniqid - The ID of the module to be deleted.
+     * @param {boolean} params.keepSettings - Whether to keep the module settings or not.
+     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
      * @param {function} callback - The callback function to be called after attempting to delete the module.
-     *                              It will receive a boolean indicating the success of the operation.
+     *                              It will receive the response object.
      * @returns {void}
      */
-    ModulesUnInstallModule(moduleName, keepSettings, callback) {
+    ModulesUnInstallModule(params, callback) {
         $.api({
             url: PbxApi.modulesUnInstallModule,
             on: 'now',
             method: 'POST',
             data: {
-                uniqid: moduleName,
-                keepSettings: keepSettings
+                uniqid: params.uniqid,
+                keepSettings: params.keepSettings
+            },
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
             },
             successTest: PbxApi.successTest,
             onSuccess() {
-                callback(true);
+                callback(response);
             },
             onFailure(response) {
                 callback(response);
@@ -1047,56 +1053,42 @@ const PbxApi = {
     /**
      * Disables extension module.
      *
-     * @param {string} moduleUniqueID - The unique ID of the module to be disabled.
-     * @param {function} callback - The callback function to be called after attempting to disable the module.
-     *                              It will receive the response object and a boolean indicating the success of the operation.
+     * @param {Object} params - The parameters required for disabling the module.
+     * @param {string} params.moduleUniqueID - The unique ID of the module to be disabled.
+     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
      * @returns {void}
      */
-    ModulesDisableModule(moduleUniqueID, callback) {
+    ModulesDisableModule(params) {
         $.api({
             url: PbxApi.modulesDisableModule,
             on: 'now',
             method: 'POST',
-            data: {uniqid: moduleUniqueID, reason: 'DisabledByUser'},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
             },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError(response) {
-                callback(response, false);
-            },
-
+            data: {uniqid: params.moduleUniqueID, reason: 'DisabledByUser'},
         });
     },
 
     /**
      * Enables extension module.
      *
-     * @param {string} moduleUniqueID - The unique ID of the module to be disabled.
-     * @param {function} callback - The callback function to be called after attempting to disable the module.
-     *                              It will receive the response object and a boolean indicating the success of the operation.
+     * @param {Object} params - The parameters required for enabling the module.
+     * @param {string} params.moduleUniqueID - The unique ID of the module to be enabled.
+     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
      * @returns {void}
      */
-    ModulesEnableModule(moduleUniqueID, callback) {
+    ModulesEnableModule(params) {
         $.api({
             url: PbxApi.modulesEnableModule,
             on: 'now',
             method: 'POST',
-            data: {uniqid: moduleUniqueID},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
+            data: {uniqid: params.moduleUniqueID},
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
             },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError(response) {
-                callback(response, false);
-            },
-
         });
     },
 
@@ -1475,18 +1467,13 @@ const PbxApi = {
     /**
      * Generates a list of notifications about the system, firewall, passwords, and wrong settings.
      *
-     * @param {string} channelId - The ID of the channel to send the response to.
      * @returns {void}
      */
-    AdviceGetList(channelId) {
+    AdviceGetList() {
         $.api({
             url: PbxApi.adviceGetList,
             on: 'now',
             successTest: PbxApi.successTest,
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', channelId);
-                return xhr;
-            },
         });
     },
 

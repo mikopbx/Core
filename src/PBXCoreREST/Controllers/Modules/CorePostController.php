@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Modules;
 
+use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
 
@@ -76,14 +77,58 @@ class CorePostController extends BaseController
     public function callAction(string $actionName): void
     {
         $data = $this->request->getPost();
+        $this->sanitizeData($data, $this->filter);
         switch ($actionName) {
             case 'installFromRepo':
-            case 'updateAll':
                 // Extended timeout for a long async operation
                 $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data, '', 600);
+                break;
+            case 'updateAll':
+                $asyncChannelId = $data['asyncChannelId'];
+                $modulesForUpdate = $data['modulesForUpdate'];
+                if (is_array($modulesForUpdate)) {
+                    $this->updateAll($asyncChannelId, $modulesForUpdate);
+                } else {
+                    $this->sendError(400, 'Invalid modulesForUpdate parameter');
+                }
                 break;
             default:
                 $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data);
         }
+    }
+
+    /**
+     * Updates all installed modules.
+     *
+     * @param string $asyncChannelId The ID of the async channel.
+     * @param array $modulesForUpdate The list of modules to update.
+     *
+     * @return void
+     */
+    private function updateAll(string $asyncChannelId, array $modulesForUpdate): void
+    {
+         // Get a list of installed modules
+         $parameters = [
+            'columns' => [
+                'uniqid'
+            ],
+            'conditions' => 'uniqid IN ({uniqid:array})',
+            'bind' =>
+                [
+                    'uniqid' => $modulesForUpdate
+                ]
+        ];
+        $installedModules = PbxExtensionModules::find($parameters)->toArray();
+
+        // Cycle by them and call install from repository
+        foreach ($installedModules as $module) {
+            $data = [
+                'asyncChannelId' => $asyncChannelId,
+                'uniqid' => $module['uniqid'],
+                'releaseId' => 0
+            ];
+            $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, 'installFromRepo', $data);
+        }
+            
     }
 }

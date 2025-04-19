@@ -148,7 +148,10 @@ class PbxExtensionModules extends ModelsBase
                 $redis->set($cacheKey, $modulesArray, 3600);
             }
         }
-
+        // sort by uniqid
+        uasort($modulesArray, function ($a, $b) {
+            return strcmp($a['uniqid'], $b['uniqid']);
+        });
         return $modulesArray;
     }
 
@@ -167,7 +170,7 @@ class PbxExtensionModules extends ModelsBase
         }
         if (empty($modulesArray)) {
             $parameters = [
-                'order' => 'id desc',
+                'order' => 'uniqid desc',
             ];
             $modulesArray = PbxExtensionModules::find($parameters)->toArray();
             if ($useCache) {
@@ -180,6 +183,12 @@ class PbxExtensionModules extends ModelsBase
                 $modulesArray[$uniqid] = json_decode($module, true);
             }
         }
+
+        // sort by uniqid
+        uasort($modulesArray, function ($a, $b) {
+            return strcmp($a['uniqid'], $b['uniqid']);
+        });
+
         return $modulesArray;
     }
 

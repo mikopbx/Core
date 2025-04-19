@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,11 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
+use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\PbxExtensionState;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 /**
@@ -33,6 +35,7 @@ use Phalcon\Di\Injectable;
  */
 class EnableModuleAction extends Injectable
 {
+    
     /**
      * Enables extension module.
      *
@@ -40,10 +43,34 @@ class EnableModuleAction extends Injectable
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function main(string $moduleUniqueID): PBXApiResult
+    public static function main(string $moduleUniqueID, string $asyncChannelId=''): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+
+        return Di::getDefault()->get(MutexProvider::SERVICE_NAME)
+            ->synchronized(
+                ModuleInstallationBase::MODULE_MANIPULATION_MUTEX_KEY,
+                function () use ($moduleUniqueID, $asyncChannelId) {
+                    return self::enableModule($moduleUniqueID, $asyncChannelId);
+                },
+                10,
+                30
+            );
+    }
+
+    /**
+     * Enables extension module.
+     *
+     * @param string $moduleUniqueID
+     *
+     * @return PBXApiResult An object containing the result of the API call.
+     */
+    public static function enableModule(string $moduleUniqueID, string $asyncChannelId=''): PBXApiResult
+    {    
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+
         $moduleStateProcessor = new PbxExtensionState($moduleUniqueID);
         if ($moduleStateProcessor->enableModule() === false) {
             $res->success = false;
@@ -52,6 +79,10 @@ class EnableModuleAction extends Injectable
             PBXConfModulesProvider::recreateModulesProvider();
             $res->data = $moduleStateProcessor->getMessages();
             $res->success = true;
+        }
+        if (!empty($asyncChannelId)) {
+            $unifiedModulesEvents = new UnifiedModulesEvents($asyncChannelId, $moduleUniqueID);
+            $unifiedModulesEvents->pushMessageToBrowser('Stage_I_ModuleEnable', $res->getResult());
         }
 
         return $res;

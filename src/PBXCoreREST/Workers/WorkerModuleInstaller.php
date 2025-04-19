@@ -166,12 +166,10 @@ class WorkerModuleInstaller extends WorkerBase
                         
                         SystemMessages::sysLogMsg(
                             __CLASS__,
-                            "Module $moduleUniqueID installed successfully, updated Redis state. Initiating worker restart.",
+                            "Module $moduleUniqueID installed successfully, updated Redis state.",
                             LOG_NOTICE
                         );
                         
-                        // Trigger worker restart to initiate post-installation
-                        Processes::restartAllWorkers();
                     }
                 } catch (Throwable $e) {
                     $errorMessage = 'Exception on installNewModuleFromFile: ' . $e->getMessage();

@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate, UserMessage */
+/* global globalRootUrl, PbxApi, globalTranslate, UserMessage, EventBus */
 
 /**
  * Handles real-time monitoring and updates of module installation statuses.
@@ -64,24 +64,8 @@ const installStatusLoopWorker = {
      * Initializes the installStatusLoopWorker module by setting up the connection to receive server-sent events.
      */
     initialize(){
-        installStatusLoopWorker.startListenPushNotifications();
-    },
-
-    /**
-     * Establishes a connection to the server to start receiving real-time updates on module installation progress.
-     * Utilizes the EventSource API to listen for messages on a specified channel.
-     */
-    startListenPushNotifications() {
-        const lastEventIdKey = `${installStatusLoopWorker.channelId}-lastEventId`;
-        let lastEventId = localStorage.getItem(lastEventIdKey);
-        const subPath = lastEventId ? `/pbxcore/api/nchan/sub/${installStatusLoopWorker.channelId}?last_event_id=${lastEventId}` : `/pbxcore/api/nchan/sub/${installStatusLoopWorker.channelId}`;
-        installStatusLoopWorker.eventSource = new EventSource(subPath);
-
-        installStatusLoopWorker.eventSource.addEventListener('message', e => {
-            const response = JSON.parse(e.data);
-            console.debug(response);
-            installStatusLoopWorker.processModuleInstallation(response);
-            localStorage.setItem(lastEventIdKey, e.lastEventId);
+        EventBus.subscribe(this.channelId, data => {
+           installStatusLoopWorker.processModuleInstallation(data);
         });
     },
 
@@ -92,6 +76,7 @@ const installStatusLoopWorker = {
      * @param {Object} response - The data payload of the server-sent event, containing details about the installation stage and progress.
      */
     processModuleInstallation(response){
+        installStatusLoopWorker.saveMessage(response);
         const moduleUniqueId = response.moduleUniqueId;
         const stage = response.stage;
         const stageDetails = response.stageDetails;
@@ -124,6 +109,25 @@ const installStatusLoopWorker = {
         }
     },
 
+    saveMessage(message) {
+        // Получаем текущую историю
+        let history = JSON.parse(localStorage.getItem('wsModuleInstallationHistory') || '[]');
+        
+        // Добавляем новое сообщение
+        history.push({
+            timestamp: new Date().toISOString(),
+            message: message
+        });
+        
+        // Ограничиваем размер истории (например, до 100 сообщений)
+        if (history.length > 100) {
+            history = history.slice(history.length - 100);
+        }
+        
+        // Сохраняем обновленную историю
+        localStorage.setItem('wsHistory', JSON.stringify(history));
+    },
+
     /**
      * Updates the UI to reflect the progress of a module download.
      * Adjusts the progress bar and status message based on the details provided in the server-sent event.
@@ -138,6 +142,13 @@ const installStatusLoopWorker = {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_DownloadInProgress, downloadProgress);
         } else if (stageDetails.data.d_status === 'DOWNLOAD_COMPLETE') {
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_DownloadInProgress, 50);
+        } else if (stageDetails.data.d_status === 'DOWNLOAD_ERROR') {
+            installStatusLoopWorker.$progressBarBlock.hide();
+            if (stageDetails.messages !== undefined) {
+                installStatusLoopWorker.showModuleInstallationError($row, globalTranslate.ext_InstallationError, stageDetails.messages);
+            } else {
+                installStatusLoopWorker.showModuleInstallationError($row, globalTranslate.ext_InstallationError);
+            }
         }
     },
 
@@ -170,7 +181,7 @@ const installStatusLoopWorker = {
             const installationProgress = Math.round(parseInt(stageDetails.data.i_status_progress, 10)/2+50);
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, installationProgress);
         } else if (stageDetails.data.i_status === 'INSTALLATION_COMPLETE') {
-            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, 100);
+            installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_InstallationInProgress, 98);
         }
     },
 

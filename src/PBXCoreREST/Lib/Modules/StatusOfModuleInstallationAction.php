@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ class StatusOfModuleInstallationAction extends Injectable
             $res->messages['error'][] = file_get_contents($error_file);
         } elseif ('100' === file_get_contents($progress_file)) {
             $res->success = true;
-            $res->data[self::I_STATUS_PROGRESS] = '100';
+            $res->data[self::I_STATUS_PROGRESS] = '98';
             $res->data[self::I_STATUS] = self::INSTALLATION_COMPLETE;
 
             $resModuleMetadata = GetMetadataFromModulePackageAction::main($filePath);

@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalTranslate, UserMessage */
+/* global PbxApi, globalTranslate, UserMessage, EventBus */
 
 /**
  * Represents the status of an external module.
@@ -24,6 +24,12 @@
  * @memberof module:pbxExtensionModuleModify
  */
 class PbxExtensionStatus {
+
+    /**
+     * The identifier for the PUB/SUB channel used to subscribe to module status updates.
+     * This ensures that the client is listening on the correct channel for relevant events.
+     */
+    channelId = 'module-status';
 
     /**
      * Initializes the module status.
@@ -49,6 +55,10 @@ class PbxExtensionStatus {
             onChecked: cbOnChecked,
             onUnchecked: cbOnUnchecked,
         });
+
+        EventBus.subscribe(this.channelId, data => {
+            this.cbAfterChangeModuleStatus(data);
+        });
     }
 
     /**
@@ -69,8 +79,11 @@ class PbxExtensionStatus {
         this.$allToggles.addClass('disabled');
         $('a.button').addClass('disabled');
         this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
-        const cbAfterModuleEnable = $.proxy(this.cbAfterModuleEnable, this);
-        PbxApi.ModulesEnableModule(this.uniqid, cbAfterModuleEnable);
+        const params = {
+            moduleUniqueID: this.uniqid,
+            channelId: this.channelId,
+        };
+        PbxApi.ModulesEnableModule(params);
     }
 
     /**
@@ -81,17 +94,37 @@ class PbxExtensionStatus {
         this.$allToggles.addClass('disabled');
         $('a.button').addClass('disabled');
         this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
-        const cbAfterModuleDisable = $.proxy(this.cbAfterModuleDisable, this);
-        PbxApi.ModulesDisableModule(this.uniqid, cbAfterModuleDisable);
+        const params = {
+            moduleUniqueID: this.uniqid,
+            channelId: this.channelId,
+        };
+        PbxApi.ModulesDisableModule(params);
+    }
+
+    /**
+     * Callback function after changing the module status.
+     * @param {object} response - The response from the server.
+     */
+    cbAfterChangeModuleStatus(response) {
+        if (response.moduleUniqueId !== this.uniqid) {
+            return;
+        }
+        const stageDetails = response.stageDetails;
+        if (response.stage === 'Stage_I_ModuleDisable'){
+            const cbAfterModuleDisable = $.proxy(this.cbAfterModuleDisable, this);
+            cbAfterModuleDisable(stageDetails);
+        } else if (response.stage === 'Stage_I_ModuleEnable'){
+            const cbAfterModuleEnable = $.proxy(this.cbAfterModuleEnable, this);
+            cbAfterModuleEnable(stageDetails);
+        }
     }
 
     /**
      * Callback function after disabling the module.
      * @param {object} response - The response from the server.
-     * @param {boolean} success - Indicates whether the request was successful.
      */
-    cbAfterModuleDisable(response, success) {
-        if (success) {
+    cbAfterModuleDisable(response) {
+        if (response.result) {
             // Update UI to show module is disabled
             this.$toggle.checkbox('set unchecked');
             this.$statusIcon.removeClass('spinner loading icon');
@@ -127,10 +160,9 @@ class PbxExtensionStatus {
     /**
      * Callback function after enabling the module.
      * @param {object} response - The response from the server.
-     * @param {boolean} success - Indicates whether the request was successful.
      */
-    cbAfterModuleEnable(response, success) {
-        if (success) {
+    cbAfterModuleEnable(response) {
+        if (response.result) {
             $('.ui.message.ajax').remove();
             // Update UI to show module is enabled
             this.$toggle.checkbox('set checked');

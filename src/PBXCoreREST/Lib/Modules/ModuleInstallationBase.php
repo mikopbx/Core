@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
-use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
+use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
@@ -30,7 +30,6 @@ use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Workers\WorkerModuleInstaller;
 use Phalcon\Di\Di;
-use Redis;
 use Phalcon\Di\Injectable;
 use Throwable;
 
@@ -43,7 +42,7 @@ use Throwable;
 class ModuleInstallationBase extends Injectable
 {
     // Common constants
-    public const string INSTALLATION_MUTEX = 'ModuleInstallation';
+    public const string MODULE_MANIPULATION_MUTEX_KEY = 'ModuleManipulation';
     public const string MODULE_WAS_ENABLED = 'moduleWasEnabled';
 
     // Redis keys for module installation state
@@ -80,6 +79,21 @@ class ModuleInstallationBase extends Injectable
     // The unique identifier for the module to be installed.
     protected string $moduleUniqueId;
 
+    protected UnifiedModulesEvents $unifiedModulesEvents;
+
+    /**
+     * Class constructor
+     *
+     * @param string $asyncChannelId Pub/sub nchan channel id to send response to frontend
+     * @param string $moduleUniqueId The unique identifier for the module to be installed.
+     */
+    public function __construct(string $asyncChannelId, string $moduleUniqueId)
+    {
+        $this->asyncChannelId = $asyncChannelId;
+        $this->moduleUniqueId = $moduleUniqueId;
+        $this->unifiedModulesEvents = new UnifiedModulesEvents($asyncChannelId, $moduleUniqueId);
+    }
+    
     /**
      * Installs the module from the specified file path.
      * This function manages the module installation process, ensuring completion within the defined timeout.
@@ -95,7 +109,7 @@ class ModuleInstallationBase extends Injectable
 
         // Start installation
         $installationResult = $this->startModuleInstallation($filePath);
-        $this->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, $installationResult->getResult());
+        $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, $installationResult->getResult());
         if (!$installationResult->success) {
             return [$installationResult->messages, false];
         }
@@ -103,7 +117,7 @@ class ModuleInstallationBase extends Injectable
         // Monitor installation progress
         while ($maximumInstallationTime > 0) {
             $resStatus = StatusOfModuleInstallationAction::main($filePath);
-            $this->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, $resStatus->getResult());
+            $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, $resStatus->getResult());
             if (!$resStatus->success) {
                 return [$resStatus->messages, false];
             } elseif ($resStatus->data[StatusOfModuleInstallationAction::I_STATUS] === StatusOfModuleInstallationAction::INSTALLATION_IN_PROGRESS) {
@@ -117,7 +131,7 @@ class ModuleInstallationBase extends Injectable
         }
 
         // Installation timeout
-        $this->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, [self::ERR_INSTALLATION_TIMEOUT]);
+        $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_V_INSTALL_MODULE, [self::ERR_INSTALLATION_TIMEOUT]);
         return [[self::ERR_INSTALLATION_TIMEOUT], false];
     }
 
@@ -133,41 +147,11 @@ class ModuleInstallationBase extends Injectable
     {
         // Check if the module was previously enabled
         if ($installationResult->data[self::MODULE_WAS_ENABLED]) {
-            $res = EnableModuleAction::main($this->moduleUniqueId);
-            $this->pushMessageToBrowser(self::STAGE_VI_ENABLE_MODULE, $res->getResult());
+            $res = EnableModuleAction::enableModule($this->moduleUniqueId);
+            $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_VI_ENABLE_MODULE, $res->getResult());
             return [$res->messages, $res->success];
         }
         return [[], true];
-    }
-
-    /**
-     * Pushes messages to browser
-     * @param string $stage installation stage name
-     * @param array $data pushing data
-     * @return void
-     */
-    protected function pushMessageToBrowser(string $stage, array $data): void
-    {
-        $message = [
-            'stage' => $stage,
-            'moduleUniqueId' => $this->moduleUniqueId,
-            'stageDetails' => $data,
-            'pid' => posix_getpid()
-        ];
-
-        SystemMessages::sysLogMsg(
-            __CLASS__,
-            json_encode($message, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT),
-            LOG_DEBUG
-        );
-
-        $di = Di::getDefault();
-        $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-            '/pbxcore/api/nchan/pub/' . $this->asyncChannelId,
-            PBXCoreRESTClientProvider::HTTP_METHOD_POST,
-            $message,
-            ['Content-Type' => 'application/json']
-        ]);
     }
 
 
@@ -193,7 +177,7 @@ class ModuleInstallationBase extends Injectable
         // Disable the module if it's enabled
         $moduleWasEnabled = false;
         if (PbxExtensionUtils::isEnabled($this->moduleUniqueId)) {
-            $res = DisableModuleAction::main($this->moduleUniqueId);
+            $res = DisableModuleAction::disableModule($this->moduleUniqueId);
             if (!$res->success) {
                 return $res;
             }
@@ -204,7 +188,11 @@ class ModuleInstallationBase extends Injectable
         $needBackup = is_dir($currentModuleDir);
 
         if ($needBackup) {
-            UninstallModuleAction::main($this->moduleUniqueId, true);
+            $uninstaller = new UninstallModuleAction($this->asyncChannelId, $this->moduleUniqueId, true);
+            $res = $uninstaller->uninstallModule();
+            if (!$res->success) {
+                return $res;
+            }
         }
 
         // Start the background process to install the module
@@ -254,6 +242,7 @@ class ModuleInstallationBase extends Injectable
 
         // Execute the background process to install the module
         Processes::mwExecBg("$php -f $workerModuleInstallerPath start '$settings_file'");
+
         $res->data[FilesConstants::FILE_PATH] = $filePath;
         $res->data[self::MODULE_WAS_ENABLED] = $moduleWasEnabled;
         $res->success = true;
@@ -269,7 +258,7 @@ class ModuleInstallationBase extends Injectable
      * @param array $installData Installation data from Redis
      * @return void
      */
-    public function postInstallModule(string $moduleUniqueId, array $installData, Redis $redis): void
+    public function postInstallModule(string $moduleUniqueId, array $installData): void
     {
         SystemMessages::sysLogMsg(
             __CLASS__,
@@ -285,8 +274,8 @@ class ModuleInstallationBase extends Injectable
         // Enable module if it was previously enabled
         $enableResult = [[], true];
         if ($moduleWasEnabled) {
-            $res = EnableModuleAction::main($moduleUniqueId);
-            $this->pushMessageToBrowser(self::STAGE_VI_ENABLE_MODULE, $res->getResult());
+            $res = EnableModuleAction::enableModule($moduleUniqueId);
+            $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_VI_ENABLE_MODULE, $res->getResult());
             $enableResult = [$res->messages, $res->success];
         }
 
@@ -295,15 +284,16 @@ class ModuleInstallationBase extends Injectable
             'result' => $enableResult[1],
             'messages' => $enableResult[0]
         ];
-        $this->pushMessageToBrowser(self::STAGE_VII_FINAL_STATUS, $finalStatus);
+        $this->unifiedModulesEvents->pushMessageToBrowser(self::STAGE_VII_FINAL_STATUS, $finalStatus);
 
         // Clean up Redis key
+        $redis = Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
         $redis->del(self::REDIS_MODULE_INSTALLATION_KEY . $moduleUniqueId);
 
         SystemMessages::sysLogMsg(
             __CLASS__,
-            "Post-installation process completed for module: {$moduleUniqueId} with result: " . 
-            ($enableResult[1] ? 'success' : 'failure'),
+            "Post-installation process completed for module: {$moduleUniqueId} with result: " .
+                ($enableResult[1] ? 'success' : 'failure'),
             LOG_NOTICE
         );
     }
@@ -314,56 +304,62 @@ class ModuleInstallationBase extends Injectable
      * 
      * @return void
      */
-    public static function processModulePostInstallations(Redis $redis): void
+    public static function processModulePostInstallations(): void
     {
-
         try {
-            // Check if there are modules waiting for post-installation
-            $moduleInstallKey = self::REDIS_MODULE_POST_INSTALL_QUEUE;
-            
-            // Get all pending module IDs
-            $pendingModules = $redis->lRange($moduleInstallKey, 0, -1);
-            
-            if (empty($pendingModules)) {
-                SystemMessages::sysLogMsg(
-                    self::class,
-                    sprintf('Found %d modules pending post-installation', 0),
-                    LOG_NOTICE
-                );
-                return;
-            }
-            
-            SystemMessages::sysLogMsg(
-                self::class,
-                sprintf('Found %d modules pending post-installation', count($pendingModules)),
-                LOG_NOTICE
-            );
+            $mutex = Di::getDefault()->get(MutexProvider::SERVICE_NAME);
 
-            // Process each pending module
-            foreach ($pendingModules as $moduleId) {
-                self::completeModuleInstallation($moduleId);
-                // Remove this module from the list - corrected parameter order
-                // lrem signature: (string $key, mixed $value, int $count = 0)
-                $redis->lRem($moduleInstallKey, $moduleId, 1);
-            }
-            
-            // Verify if all pending modules have been processed
-            $remainingModules = $redis->lRange($moduleInstallKey, 0, -1);
-            if (empty($remainingModules)) {
-                // All modules have been processed, clear the queue
-                $redis->del($moduleInstallKey);
+            $mutex->synchronized(ModuleInstallationBase::MODULE_MANIPULATION_MUTEX_KEY, function () {
+
+                $redis = Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
+
+                // Check if there are modules waiting for post-installation
+                $moduleInstallKey = self::REDIS_MODULE_POST_INSTALL_QUEUE;
+
+                // Get all pending module IDs
+                $pendingModules = $redis->lRange($moduleInstallKey, 0, -1);
+
+                if (empty($pendingModules)) {
+                    SystemMessages::sysLogMsg(
+                        self::class,
+                        sprintf('Found %d modules pending post-installation', 0),
+                        LOG_NOTICE
+                    );
+                    return;
+                }
+
                 SystemMessages::sysLogMsg(
                     self::class,
-                    'All pending module installations completed and queue cleared',
+                    sprintf('Found %d modules pending post-installation', count($pendingModules)),
                     LOG_NOTICE
                 );
-            } else {
-                SystemMessages::sysLogMsg(
-                    self::class,
-                    sprintf('Still %d modules remaining in post-installation queue', count($remainingModules)),
-                    LOG_WARNING
-                );
-            }
+
+                // Process each pending module
+                foreach ($pendingModules as $moduleId) {
+                    self::completeModuleInstallation($moduleId);
+                    // Remove this module from the list - corrected parameter order
+                    // lrem signature: (string $key, mixed $value, int $count = 0)
+                    $redis->lRem($moduleInstallKey, $moduleId, 1);
+                }
+
+                // Verify if all pending modules have been processed
+                $remainingModules = $redis->lRange($moduleInstallKey, 0, -1);
+                if (empty($remainingModules)) {
+                    // All modules have been processed, clear the queue
+                    $redis->del($moduleInstallKey);
+                    SystemMessages::sysLogMsg(
+                        self::class,
+                        'All pending module installations completed and queue cleared',
+                        LOG_NOTICE
+                    );
+                } else {
+                    SystemMessages::sysLogMsg(
+                        self::class,
+                        sprintf('Still %d modules remaining in post-installation queue', count($remainingModules)),
+                        LOG_WARNING
+                    );
+                }
+            }, 60, 30);
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 self::class,
@@ -385,7 +381,7 @@ class ModuleInstallationBase extends Injectable
             $redis = Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
             $installationKey = self::REDIS_MODULE_INSTALLATION_KEY . $moduleId;
             $installData = $redis->get($installationKey);
-            
+
             if (empty($installData)) {
                 SystemMessages::sysLogMsg(
                     self::class,
@@ -394,9 +390,9 @@ class ModuleInstallationBase extends Injectable
                 );
                 return;
             }
-            
+
             $installData = json_decode($installData, true);
-            
+
             // Check if module is actually installed
             if (($installData['status'] ?? '') !== 'installed' || empty($installData['installComplete'])) {
                 SystemMessages::sysLogMsg(
@@ -406,23 +402,16 @@ class ModuleInstallationBase extends Injectable
                 );
                 return;
             }
-            
-            SystemMessages::sysLogMsg(
-                self::class,
-                "Starting post-installation process for module $moduleId",
-                LOG_NOTICE
-            );
-            
+
             // Create instance of ModuleInstallationBase to handle post-installation
-            $installer = new self();
+            $installer = new self($installData['asyncChannelId'], $moduleId);
             $installer->postInstallModule($moduleId, $installData, $redis);
-            
+
             SystemMessages::sysLogMsg(
                 self::class,
                 "Post-installation process completed for module $moduleId",
                 LOG_NOTICE
             );
-            
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
                 self::class,

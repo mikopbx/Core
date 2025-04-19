@@ -1266,6 +1266,7 @@ return [
     'adv_SSHPasswordMismatchStringsHash' => 'Пароль SSH был изменен вне web интерфейса MikoPBX',
     'adv_SSHPasswordMismatchFilesHash' => 'Пароль SSH MikoPBX отличается от установленного в конфигурационном файле. Возможно он был изменен вручную из консоли MikoPBX.',
     'adv_ThereIsSomeTroublesWithMikoPBX' => 'Внимание! Обнаружены проблемы в вашей MikoPBX!',
+    'adv_AvailableNewVersionModule' => 'Доступна новая версия модуля %module% - %ver%. Текущая версия: %currentVer%',
     'ex_SearchByExtension' => 'Поиск по внутреннему номеру',
     'ex_SearchByMobile' => 'Поиск по номеру мобильного',
     'ex_SearchByEmail' => 'Поиск по электронной почте',

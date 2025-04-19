@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Modules;
 
 use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\Files\FilesConstants;
@@ -51,7 +52,7 @@ class StartDownloadAction extends Injectable
         $res->processor = __METHOD__;
         $di = Di::getDefault();
         if ($di !== null) {
-            $tempDir = $di->getShared(ConfigProvider::SERVICE_NAME)->path('www.uploadDir');
+            $tempDir = Directories::getDir(Directories::WWW_UPLOAD_DIR);
         } else {
             $tempDir = '/tmp';
         }
