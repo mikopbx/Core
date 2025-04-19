@@ -49,6 +49,18 @@ const adviceWorker = {
     $adviceBellButton: $('#show-advice-button'),
 
     /**
+     * Storage key for raw advice data
+     * @type {string}
+     */
+    storageKeyRawAdvice: 'rawAdviceData',
+
+    /**
+     * Storage key for bell state
+     * @type {string}
+     */
+    storageKeyBellState: 'adviceBellState',
+
+    /**
      * Initializes the advice worker.
      */
     initialize() {
@@ -56,30 +68,104 @@ const adviceWorker = {
         EventBus.subscribe('advice', data => {
             adviceWorker.cbAfterResponse(data);
         });
-        window.addEventListener('ConfigDataChanged', adviceWorker.cbOnDataChanged);
-        PbxApi.AdviceGetList(adviceWorker.channelId);
+        PbxApi.AdviceGetList();
     },
-    
+
     /**
-     * Event handler for language or data change.
+     * Translates advice message using the translation key and parameters
+     * @param {object} messageData - Message object with template key and params
+     * @returns {string} - Translated message
      */
-    cbOnDataChanged() {
-        sessionStorage.removeItem(`previousAdvice${globalWebAdminLanguage}`);
-        sessionStorage.removeItem(`previousAdviceBell${globalWebAdminLanguage}`);
+    translateMessage(messageData) {
+        return globalTranslate[messageData.messageTpl](messageData.messageParams);
+    },
+
+    /**
+     * Generate HTML advice content from raw advice data
+     * @param {object} adviceData - Raw advice data
+     * @returns {object} - Object containing HTML and count of messages
+     */
+    generateAdviceHtml(adviceData) {
+        let htmlMessages = '';
+        let countMessages = 0;
+        let iconBellClass = '';
+        
+        htmlMessages += `<div class="ui header">${globalTranslate.adv_PopupHeader}</div>`;
+        htmlMessages += '<div class="ui relaxed divided list">';
+
+        if (adviceData.needUpdate !== undefined && adviceData.needUpdate.length > 0) {
+            $(window).trigger('SecurityWarning', [adviceData]);
+        }
+
+        if (adviceData.error !== undefined && adviceData.error.length > 0) {
+            $.each(adviceData.error, (key, value) => {
+                htmlMessages += '<div class="item">';
+                htmlMessages += '<i class="frown outline red icon"></i>';
+                htmlMessages += adviceWorker.translateMessage(value);
+                htmlMessages += '</div>';
+                countMessages += 1;
+            });
+        }
+        
+        if (adviceData.warning !== undefined && adviceData.warning.length > 0) {
+            $.each(adviceData.warning, (key, value) => {
+                htmlMessages += '<div class="item yellow">';
+                htmlMessages += '<i class="meh outline yellow icon"></i>';
+                htmlMessages += adviceWorker.translateMessage(value);
+                htmlMessages += '</div>';
+                countMessages += 1;
+            });
+        }
+        
+        if (adviceData.info !== undefined && adviceData.info.length > 0) {
+            $.each(adviceData.info, (key, value) => {
+                htmlMessages += '<div class="item">';
+                htmlMessages += '<i class="smile outline blue icon"></i>';
+                htmlMessages += adviceWorker.translateMessage(value);
+                htmlMessages += '</div>';
+                countMessages += 1;
+            });
+        }
+
+        htmlMessages += '</div>';
+
+        // Determine bell icon class
+        if (adviceData.error !== undefined && adviceData.error.length > 0) {
+            iconBellClass = 'red icon bell';
+        } else if (adviceData.warning !== undefined && adviceData.warning.length > 0) {
+            iconBellClass = 'yellow icon bell';
+        } else if (adviceData.info !== undefined && adviceData.info.length > 0) {
+            iconBellClass = 'blue icon bell';
+        } else {
+            iconBellClass = 'grey icon bell outline';
+        }
+
+        return {
+            html: htmlMessages,
+            count: countMessages,
+            iconClass: iconBellClass
+        };
     },
 
     /**
      * Shows old advice until receiving an update from the station.
      */
     showPreviousAdvice() {
-        const previousAdviceBell = sessionStorage.getItem(`previousAdviceBell${globalWebAdminLanguage}`);
-        if (previousAdviceBell) {
-            adviceWorker.$adviceBellButton.html(previousAdviceBell);
+        // Get raw bell state
+        const bellState = sessionStorage.getItem(adviceWorker.storageKeyBellState);
+        if (bellState) {
+            adviceWorker.$adviceBellButton.html(bellState);
         }
-        const previousAdvice = sessionStorage.getItem(`previousAdvice${globalWebAdminLanguage}`);
-        if (previousAdvice) {
-            adviceWorker.$advice.html(previousAdvice);
-            adviceWorker.$adviceBellButton.popup({
+
+        // Get and process raw advice data
+        const rawAdviceData = sessionStorage.getItem(adviceWorker.storageKeyRawAdvice);
+        if (rawAdviceData) {
+            try {
+                const adviceData = JSON.parse(rawAdviceData);
+                const adviceResult = adviceWorker.generateAdviceHtml(adviceData);
+                
+                adviceWorker.$advice.html(adviceResult.html);
+                adviceWorker.$adviceBellButton.popup({
                     position: 'bottom left',
                     popup: adviceWorker.$advice,
                     delay: {
@@ -89,6 +175,18 @@ const adviceWorker = {
                     on: 'click',
                     movePopup: false,
                 });
+                
+                // If bell has a class that requires animation, restart it
+                if (adviceResult.count > 0) {
+                    adviceWorker.$adviceBellButton.find('i')
+                        .transition('set looping')
+                        .transition('pulse', '1000ms');
+                }
+            } catch (e) {
+                console.error('Error parsing cached advice data', e);
+                // Clear invalid cache
+                sessionStorage.removeItem(adviceWorker.storageKeyRawAdvice);
+            }
         }
     },
 
@@ -97,72 +195,27 @@ const adviceWorker = {
      * @param {object} response - Response object from the API.
      */
     cbAfterResponse(response) {
-        if (response === false) {
+        if (response.result === false) {
             return;
         }
+        
         adviceWorker.$advice.html('');
+        
         if (response.data.advice !== undefined) {
-            const advice = response.data.advice;
-            let htmlMessages = '';
-            let countMessages = 0;
-            let iconBellClass = '';
-            htmlMessages += `<div class="ui header">${globalTranslate.adv_PopupHeader}</div>`;
-            htmlMessages += '<div class="ui relaxed divided list">';
-
-            if (advice.needUpdate !== undefined
-                && advice.needUpdate.length > 0) {
-                $(window).trigger('SecurityWarning', [advice]);
-            }
-
-            if (advice.error !== undefined
-                && advice.error.length > 0) {
-                $.each(advice.error, (key, value) => {
-                    htmlMessages += '<div class="item">';
-                    htmlMessages += '<i class="frown outline red icon"></i>';
-                    htmlMessages += `${value}`;
-                    htmlMessages += '</div>';
-                    countMessages += 1;
-                });
-            }
-            if (advice.warning !== undefined
-                && advice.warning.length > 0) {
-                $.each(advice.warning, (key, value) => {
-                    htmlMessages += '<div class="item yellow">';
-                    htmlMessages += '<i class="meh outline yellow icon"></i>';
-                    htmlMessages += `${value}`;
-                    htmlMessages += '</div>';
-                    countMessages += 1;
-                });
-            }
-            if (advice.info !== undefined
-                && advice.info.length > 0) {
-                $.each(advice.info, (key, value) => {
-                    htmlMessages += '<div class="item">';
-                    htmlMessages += '<i class="smile outline blue icon"></i>';
-                    htmlMessages += `${value}`;
-                    htmlMessages += '</div>';
-                    countMessages += 1;
-                });
-            }
-
-            if (advice.error !== undefined
-                && advice.error.length > 0) {
-                iconBellClass = 'red icon bell';
-            } else if (advice.warning !== undefined
-                && advice.warning.length > 0) {
-                iconBellClass = 'yellow icon bell';
-
-            } else if (advice.info !== undefined
-                && advice.info.length > 0) {
-                iconBellClass = 'blue icon bell';
-            }
-            htmlMessages += '</div>';
-            adviceWorker.$advice.html(htmlMessages);
-            sessionStorage.setItem(`previousAdvice${globalWebAdminLanguage}`, htmlMessages);
-
-            if (countMessages > 0) {
+            const adviceData = response.data.advice;
+            
+            // Store raw advice data for later use
+            sessionStorage.setItem(adviceWorker.storageKeyRawAdvice, JSON.stringify(adviceData));
+            
+            // Generate HTML and update UI
+            const adviceResult = adviceWorker.generateAdviceHtml(adviceData);
+            
+            adviceWorker.$advice.html(adviceResult.html);
+            
+            if (adviceResult.count > 0) {
+                const bellHtml = `<i class="${adviceResult.iconClass}"></i>${adviceResult.count}`;
                 adviceWorker.$adviceBellButton
-                    .html(`<i class="${iconBellClass}"></i>${countMessages}`)
+                    .html(bellHtml)
                     .popup({
                         position: 'bottom left',
                         popup: adviceWorker.$advice,
@@ -178,9 +231,13 @@ const adviceWorker = {
                     .transition('pulse', '1000ms');
             } else {
                 adviceWorker.$adviceBellButton
-                    .html(`<i class="grey icon bell"></i>`)
+                    .html(`<i class="grey icon bell"></i>`);
             }
-            sessionStorage.setItem(`previousAdviceBell${globalWebAdminLanguage}`, adviceWorker.$adviceBellButton.html());
+            
+            // Cache the bell state
+            sessionStorage.setItem(adviceWorker.storageKeyBellState, adviceWorker.$adviceBellButton.html());
+            
+            // Set timeout for next update
             adviceWorker.timeoutHandle = window.setTimeout(
                 adviceWorker.worker,
                 adviceWorker.timeOut,
@@ -188,8 +245,11 @@ const adviceWorker = {
         } else if (response.result === true
             && response.data.advice !== undefined
             && response.data.advice.length === 0) {
-            sessionStorage.removeItem(`previousAdvice${globalWebAdminLanguage}`);
-            sessionStorage.removeItem(`previousAdviceBell${globalWebAdminLanguage}`);
+            
+            // Clear cache if there are no advice messages
+            sessionStorage.removeItem(adviceWorker.storageKeyRawAdvice);
+            sessionStorage.removeItem(adviceWorker.storageKeyBellState);
+            
             adviceWorker.$adviceBellButton
                 .html('<i class="grey icon bell outline"></i>');
         }

@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,13 @@ namespace MikoPBX\Core\Workers;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAmiPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckConnection;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckCorruptedFiles;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckFirewalls;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckModulesUpdates;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSIPPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHConfig;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHPasswords;
@@ -36,7 +38,7 @@ use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckUpdates;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckWebPasswords;
 use MikoPBX\PBXCoreREST\Lib\Advice\GetAdviceListAction;
 use Throwable;
-
+use RuntimeException;
 require_once 'Globals.php';
 
 /**
@@ -44,8 +46,12 @@ require_once 'Globals.php';
  */
 class WorkerPrepareAdvice extends WorkerRedisBase
 {
-
     private const int PROCESS_CHECK_INTERVAL = 100000; // 100ms
+
+    /**
+     * Number of worker processes that должен запустить WorkerSafeScriptsCore
+     */
+    public int $maxProc = 2;
 
     /**
      * Array of advice types with their cache times.
@@ -63,22 +69,22 @@ class WorkerPrepareAdvice extends WorkerRedisBase
         ['type' => CheckStorage::class, 'cacheTime' => 3600, 'priority' => 2],
         ['type' => CheckUpdates::class, 'cacheTime' => 86400, 'priority' => 5],
         ['type' => CheckSSHConfig::class, 'cacheTime' => 3600, 'priority' => 1],
+        ['type' => CheckModulesUpdates::class, 'cacheTime' => 86400, 'priority' => 5],
     ];
 
     // Array of generated advice
     public array $messages;
-
 
     /**
      * Get check interval for worker monitoring
      */
     public static function getCheckInterval(): int
     {
-        return 15; // Check every 15 seconds§
+        return 15; // Check every 15 seconds
     }
 
     /**
-     * Starts processing advice types.
+     * Starts processing advice types
      *
      * @param array $argv The command-line arguments passed to the worker.
      *
@@ -86,37 +92,43 @@ class WorkerPrepareAdvice extends WorkerRedisBase
      */
     public function start(array $argv): void
     {
-        $this->setProcessType(self::PROCESS_TYPES['MAIN']);
-
-        while ($this->needRestart === false) {
+        // Process advice types until shutdown
+        while ($this->needRestart === false && !$this->isShuttingDown) {
             try {
-                // Process any pending advice types
-                $this->processAdviceTypes();
-                
-                // Send heartbeat if needed
-                $this->checkHeartbeat();
-                
                 // Process signals
                 pcntl_signal_dispatch();
                 
-                // Short sleep to prevent CPU overuse
-                usleep(self::PROCESS_CHECK_INTERVAL);
+                // Process any pending advice types
+                $this->processAdviceTypes();
+                
+                // Send heartbeat
+                $this->checkHeartbeat();
+                
+                // Sleep to prevent CPU overuse
+                sleep(5); // Process advice every 5 seconds
+                
             } catch (Throwable $e) {
                 CriticalErrorsHandler::handleExceptionWithSyslog($e);
                 sleep(1);
             }
         }
+        
+        SystemMessages::sysLogMsg(
+            static::class,
+            "Worker exiting gracefully",
+            LOG_NOTICE
+        );
     }
 
     /**
-     * Processes advice types with limited parallelism.
+     * Processes advice types.
      *
      * @return void
      */
     private function processAdviceTypes(): void
     {
         $adviceTypes = self::ARR_ADVICE_TYPES;
-        $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
+        $managedCache = $this->getDI()->get(ManagedCacheProvider::SERVICE_NAME);
         $filteredAdviceTypes = [];
         
         // Filter out advice types that don't need processing based on cache status
@@ -126,19 +138,9 @@ class WorkerPrepareAdvice extends WorkerRedisBase
             
             // Skip if already cached with sufficient TTL
             if ($managedCache->has($cacheKey)) {
-                $ttl = $managedCache->getAdapter()->ttl($cacheKey);
-                if ($ttl > 60 || $ttl === -1) {
-                    // Skip - already cached
-                    continue;
-                }
-            }
-            
-            // Skip if another process is already handling this advice
-            $lockKey = $cacheKey . ':lock';
-            if ($managedCache->has($lockKey)) {
+                // Skip - already cached
                 continue;
             }
-            
             $filteredAdviceTypes[] = $adviceType;
         }
         
@@ -152,143 +154,22 @@ class WorkerPrepareAdvice extends WorkerRedisBase
             return $a['priority'] <=> $b['priority'];
         });
         
-        // Maximum number of concurrent worker processes
-        $maxWorkers = 3;
-        $runningWorkers = [];
-        $adviceQueue = $filteredAdviceTypes;
+        // Process one advice type per call - this allows for graceful shutdown between each advice
+        $adviceType = array_shift($filteredAdviceTypes);
         
-        while (!empty($adviceQueue) || !empty($runningWorkers)) {
-            // Start new workers if we have capacity
-            while (count($runningWorkers) < $maxWorkers && !empty($adviceQueue)) {
-                $adviceType = array_shift($adviceQueue);
-                SystemMessages::sysLogMsg(__METHOD__, "Starting advice processing: {$adviceType['type']}", LOG_DEBUG);
-                
-                $pid = pcntl_fork();
-                if ($pid == -1) {
-                    // Error during fork
-                    SystemMessages::sysLogMsg(__METHOD__, "Failed to fork process for {$adviceType['type']}", LOG_ERR);
-                } elseif ($pid == 0) {
-                    // Child process
-                    try {
-                        $this->setForked();
-                        $this->setProcessType(self::PROCESS_TYPES['WORKER']);
-                        $this->processAdvice($adviceType);
-                    } catch (Throwable $e) {
-                        CriticalErrorsHandler::handleExceptionWithSyslog($e);
-                    }
-                    exit(0); // Exit the child process
-                } else {
-                    // Parent process - store worker information
-                    $runningWorkers[$pid] = [
-                        'type' => $adviceType['type'],
-                        'start_time' => microtime(true)
-                    ];
-                }
-            }
-            
-            // Check if any child has finished
-            if (!empty($runningWorkers)) {
-                $pid = pcntl_waitpid(-1, $status, WNOHANG);
-                if ($pid > 0) {
-                    // Worker completed
-                    $runtime = microtime(true) - $runningWorkers[$pid]['start_time'];
-                    $adviceType = $runningWorkers[$pid]['type'];
-                    
-                    if (pcntl_wifexited($status)) {
-                        $exitCode = pcntl_wexitstatus($status);
-                        if ($exitCode !== 0) {
-                            SystemMessages::sysLogMsg(
-                                __METHOD__, 
-                                "Advice {$adviceType} completed with error (exit code {$exitCode})",
-                                LOG_WARNING
-                            );
-                        } else {
-                            SystemMessages::sysLogMsg(
-                                __METHOD__, 
-                                "Advice {$adviceType} completed successfully in {$runtime}s",
-                                LOG_DEBUG
-                            );
-                        }
-                    } else {
-                        SystemMessages::sysLogMsg(
-                            __METHOD__, 
-                            "Advice {$adviceType} terminated abnormally",
-                            LOG_WARNING
-                        );
-                    }
-                    
-                    unset($runningWorkers[$pid]);
-                } else {
-                    // Check for hanging processes
-                    foreach ($runningWorkers as $workerPid => $workerInfo) {
-                        $runtime = microtime(true) - $workerInfo['start_time'];
-                        if ($runtime > 60) { // 1 minute timeout
-                            SystemMessages::sysLogMsg(
-                                __METHOD__, 
-                                "Killing hanging advice process for {$workerInfo['type']} (runtime: {$runtime}s)",
-                                LOG_WARNING
-                            );
-                            posix_kill($workerPid, SIGKILL);
-                            pcntl_waitpid($workerPid, $status, WNOHANG);
-                            unset($runningWorkers[$workerPid]);
-                        }
-                    }
-                    
-                    // Short sleep to prevent CPU hogging
-                    usleep(100000); // 100ms
-                }
-            }
-        }
-    }
-    
-    /**
-     * Override the parent setForked method to also reinitialize the ManagedCache after fork
-     */
-    protected function setForked(): void
-    {
-        parent::setForked();
-        // Recreate cache adapter after fork to avoid Redis connection issues
-        $this->reinitializeManagedCache();
-    }
-    
-    /**
-     * Reinitialize the ManagedCache Redis adapter after fork
-     * This prevents 'unserialize(): Error at offset 0 of x bytes' errors
-     */
-    private function reinitializeManagedCache(): void
-    {
-        try {
-            $di = $this->getDI();
-            if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
-                // Get the current instance
-                $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-                
-                // Close the Redis connection if possible
-                $redisAdapter = $managedCache->getAdapter();
-                if (method_exists($redisAdapter, 'close')) {
-                    $redisAdapter->close();
-                }
-                                
-                // Remove the service from DI to force recreation
-                $di->remove(ManagedCacheProvider::SERVICE_NAME);
-                
-                // Create a new service provider and register it
-                $cacheProvider = new ManagedCacheProvider();
-                $cacheProvider->register($di);
-                
-                SystemMessages::sysLogMsg(
-                    __METHOD__,
-                    "Reinitialized ManagedCache Redis adapter after fork",
-                    LOG_DEBUG
-                );
-            }
-        } catch (\Throwable $e) {
+        // Check if shutting down before starting a task
+        if ($this->isShuttingDown) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
-                "Error reinitializing ManagedCache after fork: " . $e->getMessage(),
-                LOG_WARNING
+                "Worker is shutting down, skipping advice processing: {$adviceType['type']}",
+                LOG_DEBUG
             );
+            return;
         }
+        
+        // Process the advice
+        SystemMessages::sysLogMsg(__METHOD__, "Processing advice: {$adviceType['type']}", LOG_DEBUG);
+        $this->processAdvice($adviceType);
     }
 
     /**
@@ -299,61 +180,39 @@ class WorkerPrepareAdvice extends WorkerRedisBase
     private function processAdvice(array $adviceType): void
     {
         $start = microtime(true);
-        $managedCache = $this->getDI()->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $currentAdviceClass = $adviceType['type'];
-        $cacheKey = self::getCacheKey($currentAdviceClass);
-        
-        // First check if cache exists and hasn't expired
-        if ($managedCache->has($cacheKey)) {
-            // Check if advice is already in cache with remaining TTL > 60 seconds
-            // This avoids regenerating advice that's already cached but about to expire
-            $ttl = $managedCache->getAdapter()->ttl($cacheKey);
-            if ($ttl > 60 || $ttl === -1) {
-                SystemMessages::sysLogMsg(
-                    __METHOD__, 
-                    "Skip advice processing: $cacheKey (cached for " . ($ttl === -1 ? "permanent" : "{$ttl}s") . ")",
-                    LOG_DEBUG
-                );
-                return;
-            }
-        }
-        
         // Set a lock to prevent multiple processes from generating the same advice
-        $lockKey = $cacheKey . ':lock';
-        if ($managedCache->has($lockKey)) {
-            SystemMessages::sysLogMsg(
-                __METHOD__, 
-                "Skip advice processing: $cacheKey (already in progress)",
-                LOG_DEBUG
-            );
+        $lockKey = $adviceType['type'] . ':lock';
+
+        if ($this->getDI()->get(MutexProvider::SERVICE_NAME)->isLocked($lockKey)) {
             return;
         }
-        
-        // Set a lock with a short TTL to prevent race conditions
-        $managedCache->set($lockKey, '1', 60);
-        
+
         try {
-            SystemMessages::sysLogMsg(__METHOD__, "Start advice processing: $cacheKey", LOG_DEBUG);
-            $checkObj = new $currentAdviceClass();
-            $newAdvice = $checkObj->process();
-            
-            // Use pipeline to set cache in a single operation
-            if (method_exists($managedCache, 'pipeline')) {
-                $pipeline = $managedCache->pipeline();
-                $pipeline->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
-                $pipeline->del($lockKey);
-                $pipeline->exec();
-            } else {
-                $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
-                $managedCache->delete($lockKey);
-            }
-            
-            // Send advice to the browser
-            GetAdviceListAction::main();
+            $this->getDI()->get(MutexProvider::SERVICE_NAME)->synchronized(
+                $lockKey,
+                function () use ($adviceType) {
+                    // Check if we're shutting down before starting processing
+                    if ($this->isShuttingDown) {
+                        return;
+                    }
+                    
+                    $currentAdviceClass = $adviceType['type'];
+                    $cacheKey = self::getCacheKey($currentAdviceClass);
+                    SystemMessages::sysLogMsg(__METHOD__, "Start advice processing: $cacheKey", LOG_DEBUG);
+                    $checkObj = new $currentAdviceClass();
+                    $newAdvice = $checkObj->process();
+                    $managedCache = $this->getDI()->get(ManagedCacheProvider::SERVICE_NAME);
+                    $managedCache->set($cacheKey, $newAdvice, $adviceType['cacheTime']);
+                    // Send advice to the browser
+                    GetAdviceListAction::main();
+                },
+                3,
+                30
+            );
+        } catch (RuntimeException $e) {
+           // Ignore - ensures that the lock is already acquired
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            // Remove lock in case of error
-            $managedCache->delete($lockKey);
         }
         
         $timeElapsedSecs = round(microtime(true) - $start, 2);
@@ -376,7 +235,6 @@ class WorkerPrepareAdvice extends WorkerRedisBase
     {
         return 'WorkerPrepareAdvice:' . $currentAdviceType;
     }
-
 }
 
 // Start a worker process

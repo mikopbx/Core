@@ -28,7 +28,7 @@ const EventBus = {
     * EventSource object for the connection check.
     * @type {EventSource}
     */
-    eventSource: null,
+    socket: null,
 
     /**
      * The identifier for the PUB/SUB channel used to subscribe to advice updates.
@@ -54,36 +54,45 @@ const EventBus = {
      * Utilizes the EventSource API to listen for messages on a specified channel.
      */
     startListenPushNotifications() {
-        const lastEventIdKey = `${EventBus.channelId}-lastEventId`;
-        let lastEventId = localStorage.getItem(lastEventIdKey);
         let subPath = `/pbxcore/api/nchan/sub/${EventBus.channelId}`;
-        subPath += lastEventId ? `?last_event_id=${lastEventId}` : '';
-
+    
         // Close existing connection if any
-        if (EventBus.eventSource) {
-            EventBus.eventSource.close();
+        if (EventBus.socket) {
+            EventBus.socket.close();
         }
-
-        EventBus.eventSource = new EventSource(subPath);
-
-        EventBus.eventSource.addEventListener('message', e => {
-            const message = JSON.parse(e.data);
+    
+        // Create a WebSocket connection
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}${subPath}?msg_id=-1`;
+        EventBus.socket = new WebSocket(wsUrl);
+    
+        // Handle messages
+        EventBus.socket.onmessage = (event) => {
+            const message = JSON.parse(event.data);
             console.debug(message);
             EventBus.publish(message.type, message.data);
-            localStorage.setItem(lastEventIdKey, e.lastEventId);
-        });
-
-        EventBus.eventSource.addEventListener('error', e => {
+        };
+    
+        // Handle errors
+        EventBus.socket.onerror = (error) => {
+            console.error('WebSocket Error:', error);
             EventBus.publish('connection-status', false);
-            // Schedule reconnection after 2 seconds
+        };
+    
+        // Handle connection break
+        EventBus.socket.onclose = (event) => {
+            EventBus.publish('connection-status', false);
+            
+            // Schedule reconnection in 2 seconds
             setTimeout(() => {
                 EventBus.startListenPushNotifications();
             }, 2000);
-        });
-
-        EventBus.eventSource.addEventListener('open', e => {
+        };
+    
+        // Handle connection open
+        EventBus.socket.onopen = () => {
             EventBus.publish('connection-status', true);
-        });
+        };
     },
 
     /**
@@ -112,7 +121,5 @@ const EventBus = {
 
 // When the document is ready, initialize the event bus
 $(document).ready(() => {
-    if (!globalDebugMode) {
-        EventBus.initialize();
-    }
+    EventBus.initialize();
 });

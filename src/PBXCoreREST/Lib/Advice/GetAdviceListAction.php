@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,11 @@
 namespace MikoPBX\PBXCoreREST\Lib\Advice;
 
 use MikoPBX\Common\Providers\ManagedCacheProvider;
-use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Workers\WorkerPrepareAdvice;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Common\Providers\EventBusProvider;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
-use MikoPBX\Core\System\SystemMessages;
-
 /**
  * Get active calls based on CDR data.
  *
@@ -48,32 +45,13 @@ class GetAdviceListAction extends Injectable
         $res->success = true;
         $result = [];
         $di = Di::getDefault();
-        $translation = $di->get(TranslationProvider::SERVICE_NAME);
         $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
         foreach (WorkerPrepareAdvice::ARR_ADVICE_TYPES as $adviceType) {
             $cacheKey = WorkerPrepareAdvice::getCacheKey($adviceType['type']);
             $advice = [];
-            
-            // Защитная обработка для случаев повреждения данных в кеше
-            try {
-                $cachedData = $managedCache->get($cacheKey);
-                if ($cachedData !== null) {
-                    $advice = $cachedData;
-                }
-            } catch (\Throwable $e) {
-                // Если произошла ошибка десериализации, логируем и продолжаем
-                SystemMessages::sysLogMsg(
-                    __METHOD__, 
-                    "Error getting advice from cache ({$cacheKey}): " . $e->getMessage(),
-                    LOG_WARNING
-                );
-                // Удаляем повреждённый кеш
-                try {
-                    $managedCache->delete($cacheKey);
-                } catch (\Throwable $e) {
-                    // Игнорируем ошибки при очистке кеша
-                }
-                continue;
+            $cachedData = $managedCache->get($cacheKey);
+            if ($cachedData !== null) {
+                $advice = $cachedData;
             }
             
             foreach ($advice as $key => $messages) {
@@ -82,12 +60,7 @@ class GetAdviceListAction extends Injectable
                 }
                 foreach ($messages as $message) {
                     if (isset($message['messageTpl'])) {
-                        if (array_key_exists('messageParams', $message)) {
-                            $advice = $translation->_($message['messageTpl'], $message['messageParams']);
-                        } else {
-                            $advice = $translation->_($message['messageTpl']);
-                        }
-                        $result[$key] = array_merge($result[$key], [$advice]);
+                        $result[$key] = array_merge($result[$key], [$message]);
                     }
                 }
                 if ($key === 'needUpdate') {
