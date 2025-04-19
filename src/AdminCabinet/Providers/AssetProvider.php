@@ -295,25 +295,13 @@ class AssetProvider implements ServiceProviderInterface
                 );
             }
             $scriptArray = json_encode($arrStr);
-            $proxyCode = "
-                const globalTranslateArray = $scriptArray;
-                
-                globalTranslate = new Proxy(globalTranslateArray, {
-                    get: function(target, prop, receiver) {
-                    // Check if the property exists in the target
-                    if (prop in target) {
-                        return target[prop];
-                    }
-                    // Return the key itself if no translation is found
-                    return prop;
-                    }
-                });
-                ";
+            $proxyCode = "const globalTranslateArray = $scriptArray;";
             file_put_contents($fileName, $proxyCode);
         }
 
         $langJSFile = "js/cache/localization-$language-$version.min.js";
         $this->footerCollectionLoc->addJs($langJSFile, true);
+        $this->footerCollectionLoc->addJs('js/pbx/main/global-translate.js', true);
     }
 
     /**
