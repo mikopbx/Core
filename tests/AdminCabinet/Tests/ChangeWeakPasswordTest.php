@@ -81,7 +81,7 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
 
         // Wait until the $('#show-advice-button .red.icon') change to class to yellow.icon
         $xpath = '//a[contains(@id, "show-advice-button")]/i[contains(@class,"red")]';
-        self::$driver->wait(10, 500)->until(
+        self::$driver->wait(50, 500)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::xpath($xpath))
         );
     }

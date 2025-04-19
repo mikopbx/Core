@@ -73,7 +73,6 @@ abstract class CreateIVRMenuTest extends MikoPBXTestsBase
         $this->fillMenuItems($params['menuItems']);
 
         // Advanced options
-        $this->openAccordionOnThePage();
         $this->fillAdvancedOptions($params);
     }
 
