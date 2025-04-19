@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -144,14 +144,14 @@ class Fail2BanConf extends Injectable
         $lofFileName = "$log_dir/fail2ban.log";
         Util::mwMkdir($log_dir);
         $conf = '[' . 'Definition' . ']' . PHP_EOL .
-                'allowipv6 = auto' . PHP_EOL .
-                'loglevel = INFO' . PHP_EOL .
-                "logtarget = $lofFileName" . PHP_EOL .
-                'syslogsocket = auto' . PHP_EOL .
-                'socket = /var/run/fail2ban/fail2ban.sock' . PHP_EOL .
-                'pidfile = /var/run/fail2ban/fail2ban.pid' . PHP_EOL .
-                'dbfile = /var/lib/fail2ban/fail2ban.sqlite3' . PHP_EOL .
-                'dbpurgeage = 1d' . PHP_EOL;
+            'allowipv6 = auto' . PHP_EOL .
+            'loglevel = INFO' . PHP_EOL .
+            "logtarget = $lofFileName" . PHP_EOL .
+            'syslogsocket = auto' . PHP_EOL .
+            'socket = /var/run/fail2ban/fail2ban.sock' . PHP_EOL .
+            'pidfile = /var/run/fail2ban/fail2ban.pid' . PHP_EOL .
+            'dbfile = /var/lib/fail2ban/fail2ban.sqlite3' . PHP_EOL .
+            'dbpurgeage = 1d' . PHP_EOL;
         Util::fileWriteContent('/etc/fail2ban/fail2ban.conf', $conf);
         if (!file_exists($lofFileName)) {
             file_put_contents($lofFileName, '');
@@ -253,7 +253,7 @@ class Fail2BanConf extends Injectable
             $rmPath = Util::which('rm');
             if (filetype($res_file) !== 'link') {
                 Processes::mwExec("$mvPath '$res_file'/* '$dir_db'");
-                unlink($res_file);
+                Processes::mwExec("$rmPath -rf $res_file");
                 $create_link = true;
             } elseif (readlink($res_file) === "$old_dir_db") {
                 Processes::mwExec("$rmPath -rf $res_file");
@@ -263,7 +263,7 @@ class Fail2BanConf extends Injectable
                     Processes::mwExec("$mvPath '$old_dir_db'/* '$dir_db'");
                 }
             }
-        }else{
+        } else {
             $create_link = true;
         }
 
@@ -272,7 +272,7 @@ class Fail2BanConf extends Injectable
         }
 
         $filename = basename(self::FAIL2BAN_DB_PATH);
-        if(file_exists("$dir_db/$filename")) {
+        if (file_exists("$dir_db/$filename")) {
             $sqlite3Path = Util::which('sqlite3');
             Processes::mwExec("$sqlite3Path $dir_db/$filename 'vacuum'");
         }
@@ -322,10 +322,10 @@ class Fail2BanConf extends Injectable
             "ignoreip = 127.0.0.1 $user_whitelist\n\n";
         $syslog_file = SyslogConf::getSyslogFile();
         $commonParams = "enabled = true" . PHP_EOL .
-                        "maxretry = $max_retry\n" .
-                        "findtime = $find_time\n" .
-                        "bantime = $ban_time\n" .
-                        "logencoding = utf-8" . PHP_EOL;
+            "maxretry = $max_retry\n" .
+            "findtime = $find_time\n" .
+            "bantime = $ban_time\n" .
+            "logencoding = utf-8" . PHP_EOL;
 
         foreach ($jails as $jail => $action) {
             $config .= "[$jail]\n" .
@@ -367,22 +367,22 @@ class Fail2BanConf extends Injectable
 
         // Construct the configuration string
         $conf = "[INCLUDES]" . PHP_EOL .
-                "before = iptables.conf" . PHP_EOL .
-                "[Definition]" . PHP_EOL .
-                "actionstart = <iptables> -N f2b-<name>" . PHP_EOL .
-                "              <iptables> -A f2b-<name> -j <returntype>" . PHP_EOL .
-                "              <iptables> -I <chain> -p tcp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
-                "              <iptables> -I <chain> -p udp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
-                "actionstop = <iptables> -D <chain> -p tcp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
-                "             <iptables> -D <chain> -p udp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
-                "             <actionflush>" . PHP_EOL .
-                "             <iptables> -X f2b-<name>" . PHP_EOL .
-                "actioncheck = <iptables> -n -L <chain> | grep -q 'f2b-<name>[ \\t]'" . PHP_EOL .
-                "actionban = <iptables> -I f2b-<name> 1 -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
-                "            <iptables> -I f2b-<name> 1 -s <ip> -p udp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
-                "actionunban = <iptables> -D f2b-<name> -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
-                "              <iptables> -D f2b-<name> -s <ip> -p udp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
-                "[Init]" . PHP_EOL . PHP_EOL;
+            "before = iptables.conf" . PHP_EOL .
+            "[Definition]" . PHP_EOL .
+            "actionstart = <iptables> -N f2b-<name>" . PHP_EOL .
+            "              <iptables> -A f2b-<name> -j <returntype>" . PHP_EOL .
+            "              <iptables> -I <chain> -p tcp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+            "              <iptables> -I <chain> -p udp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+            "actionstop = <iptables> -D <chain> -p tcp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+            "             <iptables> -D <chain> -p udp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+            "             <actionflush>" . PHP_EOL .
+            "             <iptables> -X f2b-<name>" . PHP_EOL .
+            "actioncheck = <iptables> -n -L <chain> | grep -q 'f2b-<name>[ \\t]'" . PHP_EOL .
+            "actionban = <iptables> -I f2b-<name> 1 -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+            "            <iptables> -I f2b-<name> 1 -s <ip> -p udp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+            "actionunban = <iptables> -D f2b-<name> -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+            "              <iptables> -D f2b-<name> -s <ip> -p udp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+            "[Init]" . PHP_EOL . PHP_EOL;
 
         // Write the configuration string to the configuration file
         file_put_contents("$path/miko-iptables-multiport-all.conf", $conf);
@@ -419,26 +419,26 @@ class Fail2BanConf extends Injectable
 
         // Construct the Dropbear SSH server configuration string
         $conf = $commonConf .
-            "_daemon = (authpriv.warn )?dropbear" . PHP_EOL.
+            "_daemon = (authpriv.warn )?dropbear" . PHP_EOL .
             'prefregex = ^%(__prefix_line)s<F-CONTENT>(?:[Ll]ogin|[Bb]ad|[Ee]xit).+</F-CONTENT>$' . PHP_EOL .
             'failregex = ^[Ll]ogin attempt for nonexistent user (\'.*\' )?from <HOST>:\d+$' . PHP_EOL .
             '            ^[Bb]ad (PAM )?password attempt for .+ from <HOST>(:\d+)?$' . PHP_EOL .
             '            ^[Ee]xit before auth \(user \'.+\', \d+ fails\): Max auth tries reached - user \'.+\' from <HOST>:\d+\s*$' . PHP_EOL .
             '            ^[Ee]xit before auth from \<<HOST>:\d+\>:\s*Exited normally$' . PHP_EOL .
-            "ignoreregex =".PHP_EOL;
+            "ignoreregex =" . PHP_EOL;
 
         // Write the configuration to the Dropbear SSH server file
         file_put_contents("$filterPath/dropbear.conf", $conf);
 
         // Construct the Asterisk AMI configuration string
         $conf = $commonConf .
-                "_daemon = asterisk" . PHP_EOL . PHP_EOL .
-                "__pid_re = (?:\[\d+\])" . PHP_EOL .
-                "_c_ooooo = (\[C-\d+[a-z]*\]?)" . PHP_EOL . PHP_EOL .
-                "log_prefix= (?:NOTICE|SECURITY)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?" . PHP_EOL . PHP_EOL .
-                "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed to authenticate as '[^']*'\$" . PHP_EOL .
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s(?:\sHost)? <HOST> failed to authenticate as '[^']*'\$" . PHP_EOL . PHP_EOL .
-                "ignoreregex =" . PHP_EOL . PHP_EOL;
+            "_daemon = asterisk" . PHP_EOL . PHP_EOL .
+            "__pid_re = (?:\[\d+\])" . PHP_EOL .
+            "_c_ooooo = (\[C-\d+[a-z]*\]?)" . PHP_EOL . PHP_EOL .
+            "log_prefix= (?:NOTICE|SECURITY)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?" . PHP_EOL . PHP_EOL .
+            "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed to authenticate as '[^']*'\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s(?:\sHost)? <HOST> failed to authenticate as '[^']*'\$" . PHP_EOL . PHP_EOL .
+            "ignoreregex =" . PHP_EOL . PHP_EOL;
         // Write the configuration to the Asterisk AMI file
         file_put_contents("$filterPath/asterisk-ami.conf", $conf);
 
@@ -446,22 +446,22 @@ class Fail2BanConf extends Injectable
         // Construct the Asterisk security configuration string
 
         $conf = $commonConf .
-                "_daemon = asterisk" . PHP_EOL . PHP_EOL .
-                "__pid_re = (?:\[\d+\])" . PHP_EOL .
-                "_c_ooooo = (\[C-\d+[a-z]*\]?)" . PHP_EOL . PHP_EOL .
-                "log_prefix= (?:NOTICE|SECURITY)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?" . PHP_EOL . PHP_EOL .
-                "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Registration from '[^']*' failed for '<HOST>(:\d+)?' - (Wrong password|Username/auth name mismatch|No matching peer found|Not a local domain|Device does not match ACL|Peer is not supposed to register|ACL error \(permit/deny\)|Not a local domain)\$" . PHP_EOL .
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s No registration for peer '[^']*' \(from <HOST>\)\$" . PHP_EOL .
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed MD5 authentication for '[^']*' \([^)]+\)\$" . PHP_EOL .
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Failed to authenticate (user|device) [^@]+@<HOST>\S*\$" . PHP_EOL .
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s (?:handle_request_subscribe: )?Sending fake auth rejection for (device|user) \d*<sip:[^@]+@<HOST>>;tag=\w+\S*\$" . PHP_EOL .
-                '            ^(%(__prefix_line)s|\[\]\s*WARNING%(__pid_re)s:?(?:\[C-[\da-f]*\])? )Ext\. s: "Rejecting unknown SIP connection from <HOST>"$' . PHP_EOL .
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s <HOST> tried to authenticate with nonexistent user" . PHP_EOL .
-                "			^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Request (?:'[^']*' )?from '(?:[^']*|.*?)' failed for '<HOST>(?::\d+)?'\s\(callid: [^\)]*\) - (?:No matching endpoint found|Not match Endpoint(?: Contact)? ACL|(?:Failed|Error) to authenticate)\s*\$" . PHP_EOL .
-                "			^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s\s*(anonymous:\s)?Call\s(from)*\s*\((\w*:)?<HOST>:\d+\) to extension '\S*' rejected because extension not found in context 'public-direct-dial'\.\$" . PHP_EOL .
-                '            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s SecurityEvent="(?:FailedACL|InvalidAccountID|ChallengeResponseFailed|InvalidPassword)"(?:(?:,(?!RemoteAddress=)\w+="[^"]*")*|.*?),RemoteAddress="IPV[46]/[^/"]+/<HOST>/\d+"(?:,(?!RemoteAddress=)\w+="[^"]*")*$' . PHP_EOL .
-                "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s ^hacking attempt detected '<HOST>'\$" . PHP_EOL . PHP_EOL .
-                'ignoreregex = Service="AMI"' . PHP_EOL . PHP_EOL;
+            "_daemon = asterisk" . PHP_EOL . PHP_EOL .
+            "__pid_re = (?:\[\d+\])" . PHP_EOL .
+            "_c_ooooo = (\[C-\d+[a-z]*\]?)" . PHP_EOL . PHP_EOL .
+            "log_prefix= (?:NOTICE|SECURITY)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?" . PHP_EOL . PHP_EOL .
+            "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Registration from '[^']*' failed for '<HOST>(:\d+)?' - (Wrong password|Username/auth name mismatch|No matching peer found|Not a local domain|Device does not match ACL|Peer is not supposed to register|ACL error \(permit/deny\)|Not a local domain)\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s No registration for peer '[^']*' \(from <HOST>\)\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed MD5 authentication for '[^']*' \([^)]+\)\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Failed to authenticate (user|device) [^@]+@<HOST>\S*\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s (?:handle_request_subscribe: )?Sending fake auth rejection for (device|user) \d*<sip:[^@]+@<HOST>>;tag=\w+\S*\$" . PHP_EOL .
+            '            ^(%(__prefix_line)s|\[\]\s*WARNING%(__pid_re)s:?(?:\[C-[\da-f]*\])? )Ext\. s: "Rejecting unknown SIP connection from <HOST>"$' . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s <HOST> tried to authenticate with nonexistent user" . PHP_EOL .
+            "			^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Request (?:'[^']*' )?from '(?:[^']*|.*?)' failed for '<HOST>(?::\d+)?'\s\(callid: [^\)]*\) - (?:No matching endpoint found|Not match Endpoint(?: Contact)? ACL|(?:Failed|Error) to authenticate)\s*\$" . PHP_EOL .
+            "			^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s\s*(anonymous:\s)?Call\s(from)*\s*\((\w*:)?<HOST>:\d+\) to extension '\S*' rejected because extension not found in context 'public-direct-dial'\.\$" . PHP_EOL .
+            '            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s SecurityEvent="(?:FailedACL|InvalidAccountID|ChallengeResponseFailed|InvalidPassword)"(?:(?:,(?!RemoteAddress=)\w+="[^"]*")*|.*?),RemoteAddress="IPV[46]/[^/"]+/<HOST>/\d+"(?:,(?!RemoteAddress=)\w+="[^"]*")*$' . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s ^hacking attempt detected '<HOST>'\$" . PHP_EOL . PHP_EOL .
+            'ignoreregex = Service="AMI"' . PHP_EOL . PHP_EOL;
 
         // Write the configuration to the Asterisk security file
         file_put_contents("$filterPath/asterisk-main.conf", $conf);
