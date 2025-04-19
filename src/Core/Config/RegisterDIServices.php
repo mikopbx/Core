@@ -44,7 +44,8 @@ use MikoPBX\Common\Providers\{AmiConnectionCommand,
     MessagesProvider,
     UrlProvider,
     LanguageProvider,
-    WhoopsErrorHandlerProvider};
+    WhoopsErrorHandlerProvider,
+    MutexProvider};
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use Phalcon\Di\Di;
 
@@ -80,6 +81,7 @@ class RegisterDIServices
             // Inject caches and message queues
             RedisClientProvider::class,
             ManagedCacheProvider::class,
+            MutexProvider::class,
 
             // Inject Translations
             MessagesProvider::class,

@@ -41,7 +41,8 @@ use MikoPBX\Common\Providers\{AclProvider,
     SessionProvider,
     LanguageProvider,
     TranslationProvider,
-    WhoopsErrorHandlerProvider
+    WhoopsErrorHandlerProvider,
+    MutexProvider
 };
 use MikoPBX\PBXCoreREST\Providers\{
     DispatcherProvider,
@@ -86,6 +87,7 @@ class RegisterDIServices
             // Inject caches and message queues
             RedisClientProvider::class,
             ManagedCacheProvider::class,
+            MutexProvider::class,
 
             // Inject Queue connection
             BeanstalkConnectionModelsProvider::class,

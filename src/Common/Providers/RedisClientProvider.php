@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace MikoPBX\Common\Providers;
 
+use Malkusch\Lock\Mutex\RedisMutex;
+use Phalcon\Di\Di;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Storage\Adapter\Redis as AdapterRedis;
@@ -65,5 +67,4 @@ class RedisClientProvider implements ServiceProviderInterface
             }
         );
     }
-
 } 
