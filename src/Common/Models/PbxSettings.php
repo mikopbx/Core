@@ -99,8 +99,8 @@ class PbxSettings extends ModelsBase
      */
     public static function getValueByKey(string $key, bool $useCache = true): string
     {
+        $value = '';
         try {
-            $value = '';
             if ($useCache) {
                 $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
                 $value = $redis->hget(self::CACHE_KEY, $key)??'';
@@ -116,20 +116,17 @@ class PbxSettings extends ModelsBase
                     $value = $currentSettings->value;
                 }
             }
-
-            // If value is not found in cache, get it from default values
-            if (empty($value)) {
-                $arrOfDefaultValues = self::getDefaultArrayValues();
-                if (array_key_exists($key, $arrOfDefaultValues)) {
-                    $value = $arrOfDefaultValues[$key];
-                }
-            }
-            return $value;
         } catch (\Throwable $e) {
             CriticalErrorsHandler::handleException($e);
         }
-
-        return '';
+        // If value is not found in cache, get it from default values
+        if (empty($value)) {
+            $arrOfDefaultValues = self::getDefaultArrayValues();
+            if (array_key_exists($key, $arrOfDefaultValues)) {
+                $value = $arrOfDefaultValues[$key];
+            }
+        }
+        return $value;
     }
 
     /**

@@ -165,4 +165,8 @@ trait PbxSettingsConstantsTrait
     public const string EXTERNAL_SIP_HOST_NAME = 'ExternalSipHostName';
     public const string EXTERNAL_SIP_IP_ADDR = 'ExternalSipIpAddr';
     public const string AUTO_UPDATE_EXTERNAL_IP = 'autoUpdateExternalIp';
+
+
+    // Constants for worker actions
+    public const string PBX_SETTINGS_WAS_RESET = 'PBXSettingsWasReset';
 }

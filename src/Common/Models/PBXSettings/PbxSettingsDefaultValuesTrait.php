@@ -127,6 +127,7 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::AUTO_UPDATE_EXTERNAL_IP => '0',
             PbxSettings::EXTERNAL_SIP_HOST_NAME => '',
             PbxSettings::EXTERNAL_SIP_IP_ADDR => '',
+            PbxSettings::PBX_SETTINGS_WAS_RESET => '0',
         ];
     }
 }

@@ -20,10 +20,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Core\System\Directories;
-use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
 use MikoPBX\PBXCoreREST\Lib\System\GetDateAction;
 use MikoPBX\PBXCoreREST\Lib\System\RebootAction;
@@ -91,6 +88,9 @@ class SystemManagementProcessor extends Injectable
                     $res = RestoreDefaultSettingsAction::main();
                     sleep(1);
                 } while ($ch <= 10 && !$res->success);
+                if ($res->success) {
+                    PbxSettings::setValueByKey(PbxSettings::PBX_SETTINGS_WAS_RESET, '1');
+                }
                 break;
             case 'convertAudioFile':
                 $res = ConvertAudioFileAction::moveSoundFileAccordingToCategory($data['category'], $data['temp_filename']);

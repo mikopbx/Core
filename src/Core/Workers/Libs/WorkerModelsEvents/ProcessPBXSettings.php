@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAllSystemWorkersAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
@@ -290,6 +291,16 @@ class ProcessPBXSettings extends Injectable
                 ReloadRestAPIWorkerAction::class,
             ],
         ];
+
+    // All settings were reset
+        $tables[] = [
+            'keys' => [
+                PbxSettings::PBX_SETTINGS_WAS_RESET,
+            ],
+            'actions' => [
+                ReloadAllSystemWorkersAction::class,
+            ],
+        ];  
 
         // LicenseSettings
         $tables[] = [
