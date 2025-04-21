@@ -325,21 +325,17 @@ const keyCheck = {
             } else {
                 row += `<div class="ui positive message">${product.name}`;
                 if (product.expired.length > 0) {
-                    let expiredText = globalTranslate.lic_ExpiredAfter;
-                    expiredText = expiredText.replace('%expired%', product.expired);
+                    let expiredText = globalTranslate.lic_ExpiredAfter({expired: product.expired});
                     row += `<br><small>${expiredText}</small>`;
                 }
                 row += '<br><span class="features">';
                 $.each(productValue.feature, (index, featureValue) => {
-                    let featureInfo = globalTranslate.lic_FeatureInfo;
+                    
                     let feature = featureValue;
                     if (featureValue['@attributes'] !== undefined) {
                         feature = featureValue['@attributes'];
                     }
-                    featureInfo = featureInfo.replace('%name%', feature.name);
-                    featureInfo = featureInfo.replace('%count%', feature.count);
-                    featureInfo = featureInfo.replace('%counteach%', feature.counteach);
-                    featureInfo = featureInfo.replace('%captured%', feature.captured);
+                    let featureInfo = globalTranslate.lic_FeatureInfo({name: feature.name, count: feature.count, counteach: feature.counteach, captured: feature.captured});
                     row += `${featureInfo}<br>`;
                 });
                 row += '</span>';
