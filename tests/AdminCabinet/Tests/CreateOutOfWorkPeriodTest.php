@@ -3,8 +3,6 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
-use MikoPBX\Tests\AdminCabinet\Tests\Data\OutOfWorkPeriodsDataFactory;
-use MikoPBX\Tests\AdminCabinet\Tests\Traits\LoginTrait;
 use MikoPBX\Tests\AdminCabinet\Tests\Traits\OutOfWorkPeriodsTrait;
 
 /**

@@ -57,21 +57,18 @@ class GetAvailableModulesAction  extends Injectable
         $cacheKey = "ModulesManagementProcessor:GetAvailableModules:$WebUiLanguage";
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
         if ($managedCache->has($cacheKey)) {
-            $body = $managedCache->get($cacheKey);
-        } else {
-            $res = $di->get(MutexProvider::SERVICE_NAME)
-                ->synchronized('getAvailableModules',
+            $res->data = $managedCache->get($cacheKey);
+            $res->success = true;
+            return $res;
+        }
+        return $di->get(MutexProvider::SERVICE_NAME)
+            ->synchronized('getAvailableModules',
                  function () use ($managedCache, $cacheKey, $WebUiLanguage) {
                     return self::getAvailableModulesOnline($managedCache, $cacheKey, $WebUiLanguage);
                  },
                  10,
                  30
                 );
-        }
-        $res->data = json_decode($body ?? '', true) ?? [];
-        $res->success = true;
-
-        return $res;
     }
 
     /**
@@ -99,13 +96,16 @@ class GetAvailableModulesAction  extends Injectable
                         'PBXVER' => $PBXVersion,
                         'LANGUAGE' => $WebUiLanguage,
                     ],
-                    'timeout' => 5,
+                    'timeout' => 15,
                 ]
             );
             $code = $request->getStatusCode();
             if ($code === Response::OK) {
                 $body = $request->getBody()->getContents();
-                $managedCache->set($cacheKey, $body, 3600);
+                $res->data = json_decode($body ?? '', true) ?? [];
+                if (is_array($res->data)) {
+                    $managedCache->set($cacheKey, $body, 3600);
+                }
             }
         } catch (\Throwable $e) {
             $code = Response::INTERNAL_SERVER_ERROR;
