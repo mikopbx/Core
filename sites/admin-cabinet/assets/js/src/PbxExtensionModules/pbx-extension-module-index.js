@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global SemanticLocalization, PbxExtensionStatus, keyCheck */
+/* global SemanticLocalization, PbxExtensionStatus, keyCheck, marketplace */
 
 /**
  * Represents list of extension modules.
@@ -64,8 +64,10 @@ const extensionModules = {
             history: true,
             historyType: 'hash',
             onVisible(){
-                if ($(this).data('tab')==='licensing'){
+                if ($(this).data('tab') === 'licensing'){
                     PbxApi.LicenseGetLicenseInfo(keyCheck.cbAfterGetLicenseInfo);
+                } else if ($(this).data('tab') === 'marketplace') {
+                    marketplace.initialize();
                 }
             }
         });
