@@ -114,6 +114,7 @@ class SyslogConf extends Injectable
     {
         $mvPath     = Util::which('mv');
         $chmodPath   = Util::which('chmod');
+        $gzipPath    = Util::which('gzip');
         $di          = Di::getDefault();
         $logFile     = self::getSyslogFile($serviceName);
         $textScript  =  '#!/bin/sh' . PHP_EOL .
@@ -128,6 +129,10 @@ class SyslogConf extends Injectable
                         '  if [ -f "$srcFilename" ];then' . PHP_EOL .
                         '    dstFilename="${logName}.${dstId}"' . PHP_EOL .
                         '    ' . $mvPath . ' -f "$srcFilename" "$dstFilename"' . PHP_EOL .
+                        '    # Compress all rotated logs except the most recent one' . PHP_EOL .
+                        '    if [ "$dstId" -gt 1 ]; then' . PHP_EOL .
+                        '      ' . $gzipPath . ' -f "$dstFilename"' . PHP_EOL .
+                        '    fi' . PHP_EOL .
                         '  fi' . PHP_EOL .
                         'done' . PHP_EOL .
                         PHP_EOL;
