@@ -69,7 +69,6 @@ const EventBus = {
         // Handle messages
         EventBus.socket.onmessage = (event) => {
             const message = JSON.parse(event.data);
-            console.debug(message);
             EventBus.publish(message.type, message.data);
         };
     

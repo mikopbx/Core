@@ -34,57 +34,43 @@
  */
                 
 globalTranslate = new Proxy(globalTranslateArray, {
-  get: function get(target, prop, receiver) {
-    // Check if the property exists in the translation array
-    if (prop in target) {
-      // Get the translation string
-      var translation = target[prop];
-      
-      // For lists of months and other arrays used in the calendar configuration,
-      // return strings directly
-      if (['months', 'monthsShort', 'days', 'January', 'February', 'March', 'April', 'May', 
-           'June', 'July', 'August', 'September', 'October', 'November', 'December',
-           'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-           'ShortDaySunday', 'ShortDayMonday', 'ShortDayTuesday', 'ShortDayWednesday', 
-           'ShortDayThursday', 'ShortDayFriday', 'ShortDaySaturday', 
-           'Today', 'Now'].includes(prop)) {
-        return translation;
-      }
-
-      // Create a function that handles parameter substitution
-      var translationFn = function translationFn() {
-        var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-        // If no parameters or translation doesn't have placeholders, return original translation
-        if (arguments.length === 0 || !translation.includes('%')) {
+    get: function(target, prop, receiver) {
+      // Check if the property exists in the translation array
+      if (prop in target) {
+        // Get the translation string
+        let translation = target[prop];
+        
+        // Create a function that handles parameter substitution
+        const translationFn = function(params = {}) {
+          // If no parameters or translation doesn't have placeholders, return original translation
+          if (arguments.length === 0 || !translation.includes('%')) {
+            return translation;
+          }
+          
+          // Replace all placeholders with corresponding values from params
+          let result = translation;
+          for (let key in params) {
+            result = result.replace(`%${key}%`, params[key]);
+          }
+          return result;
+        };
+        
+        // Make the function also behave like a string when not called as a function
+        translationFn.toString = function() {
           return translation;
-        }
-
-        // Replace all placeholders with corresponding values from params
-        var result = translation;
-        for (var key in params) {
-          result = result.replace("%".concat(key, "%"), params[key]);
-        }
-        return result;
+        };
+        
+        return translationFn;
+      }
+      
+      // For missing translations, return a similar function that returns the key
+      const missingFn = function() {
+        return prop;
       };
-
-      // Make the function also behave like a string when not called as a function
-      translationFn.toString = function () {
-        return translation;
+      missingFn.toString = function() {
+        return prop;
       };
-
-      return translationFn;
+      
+      return missingFn;
     }
-
-    // For missing translations, return a similar function that returns the key
-    var missingFn = function missingFn() {
-      return prop;
-    };
-
-    missingFn.toString = function () {
-      return prop;
-    };
-
-    return missingFn;
-  }
-});
+  });
