@@ -108,10 +108,6 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
                 $dbFileName = "$dbDir/module.db";
                 $dbFileExistBeforeAttachToConnection = file_exists($dbFileName);
 
-                if ($dbFileExistBeforeAttachToConnection) { 
-                    SystemMessages::sysLogMsg(__CLASS__, 'Database file exists: ' . $dbFileName, LOG_DEBUG);
-                }
-
                 // Log
                 $logDir = "{$config->path('core.logsDir')}/$moduleUniqueId/db";
                 $logFileName = "$logDir/queries.log";

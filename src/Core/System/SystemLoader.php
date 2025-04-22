@@ -20,19 +20,20 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
 use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
+use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\NginxConf;
-use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\RedisConf;
-use MikoPBX\Core\System\Configs\SentryConf;
 use MikoPBX\Core\System\Configs\SSHConf;
+use MikoPBX\Core\System\Configs\SentryConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VmToolsConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
@@ -179,6 +180,11 @@ class SystemLoader extends Injectable
         $storage->configure();
         $this->echoStartMsg(' - Mount storage disk...');
         $this->echoResultMsg();
+
+         // Recreate database connections
+         $this->echoStartMsg(' - Recreate modules database connections...');
+         ModulesDBConnectionsProvider::recreateModulesDBConnections();
+         $this->echoResultMsg();
 
         // Additional tasks for T2SDELinux
         if ($itIsT2SDELinux) {
