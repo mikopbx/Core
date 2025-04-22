@@ -26,7 +26,7 @@ echo " - Start ${0}";
 
 # Show current vesion from file/offload/version if it exists
 if [ -f /offload/version ]; then
-  echo " - Current version: $(trim(file_get_contents('/offload/version')))"
+  echo " - Current version: $(cat /etc/version | xargs)"
 fi
 
 # Starting the syslog daemon with specific options
