@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ use Facebook\WebDriver\WebDriverBy;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 use MikoPBX\Tests\AdminCabinet\Tests\Data\EmployeeDataFactory;
-use MikoPBX\Tests\AdminCabinet\Tests\Traits\LoginTrait;
 
 /**
  * Test class for checking dropdowns behavior before and after extension creation
@@ -57,6 +56,12 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         $extensionTPL = sprintf('%s <%s>', $this->employeeData['username'], $this->employeeData['number']);
 
         // Check Incoming Routes dropdown
+        if (self::$driver->executeScript('return sessionStorage.hasOwnProperty("/pbxcore/api/extensions/getForSelect?type=routing")')) {
+            $this->annotate("sessionStorage has Item before click on Incoming routes dropdown", 'info');
+        } else {
+            $this->annotate("sessionStorage not has Item before click on Incoming routes dropdown", 'info');
+        }
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
 
@@ -66,6 +71,12 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         }
 
         // Check Extensions dropdown
+        if (self::$driver->executeScript('return sessionStorage.hasOwnProperty("/pbxcore/api/extensions/getForSelect?type=all")')) {
+            $this->annotate("sessionStorage has Item before click on Extensions dropdown", 'info');
+        } else {
+            $this->annotate("sessionStorage not has Item before click on Extensions dropdown", 'info');
+        }
+
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
@@ -108,6 +119,18 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
      */
     public function testDropdownsAfterCreation(): void
     {
+        if (self::$driver->executeScript('return sessionStorage.hasOwnProperty("/pbxcore/api/extensions/getForSelect?type=routing")')) {
+            $this->annotate("sessionStorage has Item after creation extension on Incoming routes dropdown", 'info');
+        } else {
+            $this->annotate("sessionStorage not has Item after creation extension on Incoming routes dropdown", 'info');
+        }
+
+        if (self::$driver->executeScript('return sessionStorage.hasOwnProperty("/pbxcore/api/extensions/getForSelect?type=all")')) {
+            $this->annotate("sessionStorage has Item after creation extension on Extensions dropdown", 'info');
+        } else {
+            $this->annotate("sessionStorage not has Item after creation extension on Extensions dropdown", 'info');
+        }
+
         $extensionTPL = sprintf('%s <%s>', $this->employeeData['username'], $this->employeeData['number']);
 
         // Check Incoming Routes dropdown
@@ -116,6 +139,8 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
 
         $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $extensionTPL);
         if (!$elementFound) {
+            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=routing")');
+            $this->annotate("sessionStorage Item after creation extension on Incoming routes dropdown: " . $debug, 'info');
             $this->fail('Not found menuitem ' . $extensionTPL . ' after creating it on Incoming routes modify');
         }
 
@@ -126,6 +151,8 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         $this->changeTabOnCurrentPage('routing');
         $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $extensionTPL);
         if (!$elementFound) {
+            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=all")');
+            $this->annotate("sessionStorage Item after creation extension on Extensions dropdown: " . $debug, 'info');
             $this->fail('Not found menuitem ' . $extensionTPL . ' after creating it on Extension routing tab');
         }
     }

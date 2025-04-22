@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -92,6 +92,8 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if (!$elementFound) {
+            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=routing")');    
+            $this->annotate("sessionStorage Item after creation extension on Incoming routes dropdown: " . $debug, 'info');
             $this->fail('Not found menuitem ' . $this->queueData['extension'] . ' after creating it on Incoming routes modify ' . PHP_EOL);
         }
 
@@ -104,6 +106,8 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if (!$elementFound) {
+            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=all")');
+            $this->annotate("sessionStorage Item after creation extension on Extensions dropdown: " . $debug, 'info');
             $this->fail('Not found menuitem ' . $this->queueData['extension'] . ' after creating it on Extension routing tab ' . PHP_EOL);
         }
 
@@ -122,6 +126,8 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if ($elementFound) {
+            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=routing")');
+            $this->annotate("sessionStorage Item after deletion extension on Incoming routes dropdown: " . $debug, 'info');
             $this->fail('Found menuitem ' . $this->queueData['extension'] . ' before creating it on Incoming routes modify ' . PHP_EOL);
         }
 
@@ -134,6 +140,8 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if ($elementFound) {
+            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=all")');
+            $this->annotate("sessionStorage Item after deletion extension on Extensions dropdown: " . $debug, 'info');
             $this->fail('Found menuitem ' . $this->queueData['extension'] . ' before creating it on Extension routing tab ' . PHP_EOL);
         }
     }
