@@ -32,20 +32,22 @@ use MikoPBX\AdminCabinet\Controllers\GeneralSettingsController;
 use MikoPBX\AdminCabinet\Controllers\IncomingRoutesController;
 use MikoPBX\AdminCabinet\Controllers\IvrMenuController;
 use MikoPBX\AdminCabinet\Controllers\NetworkController;
-use MikoPBX\AdminCabinet\Controllers\OutboundRoutesController;
 use MikoPBX\AdminCabinet\Controllers\OutOffWorkTimeController;
+use MikoPBX\AdminCabinet\Controllers\OutboundRoutesController;
 use MikoPBX\AdminCabinet\Controllers\ProvidersController;
 use MikoPBX\AdminCabinet\Controllers\SoundFilesController;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\EventBusProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Di\Di;
+use Phalcon\Encryption\Security\Random;
 use Phalcon\Events\Event;
 use Phalcon\Events\Manager;
 use Phalcon\Messages\Message;
@@ -53,9 +55,8 @@ use Phalcon\Messages\MessageInterface;
 use Phalcon\Mvc\Model;
 use Phalcon\Mvc\Model\Relation;
 use Phalcon\Mvc\Model\Resultset;
-use Phalcon\Mvc\Model\Resultset\Simple;
 use Phalcon\Mvc\Model\ResultsetInterface;
-use Phalcon\Encryption\Security\Random;
+use Phalcon\Mvc\Model\Resultset\Simple;
 use Phalcon\Mvc\Url;
 
 /**
@@ -195,6 +196,7 @@ class ModelsBase extends Model
             $changedFields = array_keys($this->getSnapshotData());
         }
         $this->sendChangesToBackend($action, $changedFields);
+        $this->sendChangesToFrontend($action, $changedFields);
     }
 
     /**
@@ -226,6 +228,30 @@ class ModelsBase extends Model
             ]
         );
         $queue->publish($jobData);
+    }
+
+
+    /**
+     * Sends changed fields and class to Fronted event bus
+     *
+     * @param string $action
+     * @param $changedFields
+     */
+    private function sendChangesToFrontend(string $action, $changedFields): void
+    {
+        if ($this instanceof PbxSettings) {
+            $idProperty = 'key';
+        } else {
+            $idProperty = 'id';
+        }
+        $this->di->getShared(EventBusProvider::SERVICE_NAME)->publish('models-changed',
+            [
+                'model' => get_class($this),
+                'recordId' => $this->$idProperty,
+                'action' => $action,
+                'changedFields' => $changedFields,
+            ]
+        );
     }
 
     /**

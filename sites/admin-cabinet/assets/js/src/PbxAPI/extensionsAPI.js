@@ -31,7 +31,14 @@ const Extensions = {
      * Adds an event listener for 'ConfigDataChanged' event.
      */
     initialize() {
-        window.addEventListener('ConfigDataChanged', Extensions.cbOnDataChanged);
+        EventBus.subscribe('models-changed', data => {
+            if (data.model === 'MikoPBX\\Common\\Models\\Extensions' 
+                && (data.changedFields.includes('callerid') || data.changedFields.includes('number'))
+            ) {
+                console.log('Extensions.cbOnDataChanged', data);
+                Extensions.cbOnDataChanged(data);
+            }
+        });
     },
 
     /**
