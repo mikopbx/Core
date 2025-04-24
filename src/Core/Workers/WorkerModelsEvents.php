@@ -96,7 +96,7 @@ class WorkerModelsEvents extends WorkerBase
     // Array of planned reload actions that need to be started
     private array $plannedReloadActions = [];
 
-    private int $timeout = 2;
+    private int $timeout = 5;
 
     // Array of core conf objects
     private array $arrAsteriskConfObjects;
@@ -435,14 +435,24 @@ class WorkerModelsEvents extends WorkerBase
             // Check if enough time has passed since the last change
             $actionsListForImmediateReload = $this->getActionsListForImmediateReload();
 
+            if ((time() - $this->last_change) < $this->timeout ){
+                $continueWaiting = true;
+                foreach ($this->plannedReloadActions as $actionClassName => $actionParameters) {
+                    if (in_array($actionClassName, $actionsListForImmediateReload, true)) {
+                        SystemMessages::sysLogMsg(__METHOD__, "Immediate reload action $actionClassName received. Reloading now.", LOG_DEBUG);
+                        $continueWaiting = false;
+                        break;
+                    }
+                }
+                if ($continueWaiting) {
+                    SystemMessages::sysLogMsg(__METHOD__, "Wait more time before starting the reload.", LOG_DEBUG);
+                    return;
+                }
+            }
+
             $executedActions = [];
             // Process changes for each method in priority order
             foreach ($this->reloadActions as $actionClassName) {
-                if ((time() - $this->last_change) < $this->timeout && !in_array($actionClassName, $actionsListForImmediateReload, true)) {
-                    // SystemMessages::sysLogMsg(__METHOD__, "Wait more time before starting the reload.", LOG_DEBUG);
-                    return;
-                }
-
                 // Skip if there is no change for this method
                 if (!array_key_exists($actionClassName, $this->plannedReloadActions)) {
                     continue;

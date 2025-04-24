@@ -39,6 +39,8 @@ use Phalcon\Di\Injectable;
  */
 class System extends Injectable
 {
+    const string BOOTING_FILE_PATH = '/var/run/mikopbx-booting';
+
     /**
      * Returns the directory where logs are stored.
      * @deprecated use Directories::getDir(Directories::CORE_LOGS_DIR);
@@ -234,6 +236,31 @@ class System extends Injectable
         }
         if (file_exists($tmpFile)) {
             unlink($tmpFile);
+        }
+    }
+
+/**
+     * Check if the system is booting
+     *
+     * @return boolean
+     */
+    public static function isBooting(): bool
+    {
+        return file_exists(self::BOOTING_FILE_PATH);
+    }
+
+    /**
+     * Set the system as booting
+     *
+     * @param boolean $booting
+     * @return void
+     */
+    public static function setBooting(bool $booting): void
+    {
+        if ($booting) {
+            file_put_contents(self::BOOTING_FILE_PATH, 'true');
+        } else {
+            unlink(self::BOOTING_FILE_PATH);
         }
     }
 }

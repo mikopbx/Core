@@ -44,6 +44,7 @@ use MikoPBX\Common\Providers\EventBusProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\System;
 use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Db\Adapter\AdapterInterface;
 use Phalcon\Di\Di;
@@ -113,6 +114,12 @@ class ModelsBase extends Model
         $this->keepSnapshots(true);
         $this->addExtensionModulesRelations();
 
+
+        // Do not track changes if system is booting
+        if (System::isBooting()) {
+            return;
+        }
+        
         $eventsManager = new Manager();
 
         $eventsManager->attach(
@@ -130,7 +137,8 @@ class ModelsBase extends Model
             }
         );
 
-        $this->setEventsManager($eventsManager);
+       
+        $this->setEventsManager($eventsManager);      
     }
 
     /**
@@ -195,6 +203,7 @@ class ModelsBase extends Model
         if ($action === 'afterDelete') {
             $changedFields = array_keys($this->getSnapshotData());
         }
+
         $this->sendChangesToBackend($action, $changedFields);
         $this->sendChangesToFrontend($action, $changedFields);
     }

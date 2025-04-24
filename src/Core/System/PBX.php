@@ -23,7 +23,6 @@ use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{AclConf,
     AsteriskConf,
@@ -366,7 +365,7 @@ class PBX extends Injectable
      */
     public function configure(): array
     {
-        if ( ! $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting) {
+        if (!System::isBooting()) {
             $this->stop();
         }
         self::updateSavePeriod();
@@ -377,7 +376,7 @@ class PBX extends Injectable
         $configClassObj->hookModulesMethod(AsteriskConfigInterface::GENERATE_CONFIG);
 
         self::dialplanReload();
-        if ($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting) {
+        if (System::isBooting()) {
             $message = '   |- dialplan reload';
             SystemMessages::echoToTeletype($message);
             SystemMessages::echoWithSyslog($message);
@@ -407,7 +406,7 @@ class PBX extends Injectable
         if ($di === null) {
             return;
         }
-        if ($di->getShared(RegistryProvider::SERVICE_NAME)->booting !== true) {
+        if (!System::isBooting()) {
             $extensions = new ExtensionsConf();
             $extensions->generateConfig();
             $asterisk = Util::which('asterisk');

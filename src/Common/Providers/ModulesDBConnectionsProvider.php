@@ -53,8 +53,6 @@ class ModulesDBConnectionsProvider extends DatabaseProviderBase implements Servi
         $registeredDBServices = [];
         $config = $di->getShared(ConfigProvider::SERVICE_NAME);
         $modulesDir = Directories::getDir(Directories::CORE_MODULES_DIR);
-
-        SystemMessages::sysLogMsg(__CLASS__, 'Modules directory: ' . $modulesDir, LOG_DEBUG);
         
         $results = glob($modulesDir . '/*/module.json', GLOB_NOSORT);
 

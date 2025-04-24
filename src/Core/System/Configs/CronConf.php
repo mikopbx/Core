@@ -22,8 +22,8 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Modules\Config\SystemConfigInterface;
@@ -47,7 +47,7 @@ class CronConf extends Injectable
      */
     public function reStart(): int
     {
-        $booting = $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting ?? false;
+        $booting = System::isBooting();
         $this->generateConfig($booting);
         if (Util::isSystemctl()) {
             $systemctl = Util::which('systemctl');

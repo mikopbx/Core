@@ -464,17 +464,18 @@ class Util
      *
      * @param string $text The text to translate.
      * @param bool $cliLang Whether to use CLI language or web language (default: true).
+     * @param array $parameters The parameters to replace in the text.
      *
      * @return string The translated text.
      */
-    public static function translate(string $text, bool $cliLang = true): string
+    public static function translate(string $text, bool $cliLang = true, array $parameters=[]): string
     {
         $di = Di::getDefault();
         if ($di !== null) {
             if (!$cliLang) {
                 $di->setShared(LanguageProvider::PREFERRED_LANG_WEB, true);
             }
-            $text = $di->getShared(TranslationProvider::SERVICE_NAME)->_($text);
+            $text = $di->getShared(TranslationProvider::SERVICE_NAME)->_($text, $parameters);
             if (!$cliLang) {
                 $di->remove(LanguageProvider::PREFERRED_LANG_WEB);
             }

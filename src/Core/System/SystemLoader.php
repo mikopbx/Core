@@ -21,7 +21,6 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
-use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
 use MikoPBX\Core\System\Configs\BeanstalkConf;
@@ -125,7 +124,7 @@ class SystemLoader extends Injectable
         $itIsT2SDELinux = Util::isT2SdeLinux();
 
         // Mark the registry as booting
-        $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = true;
+        System::setBooting(true);
 
         // Start the ACPID daemon
         if (!$this->isDocker) {
@@ -299,7 +298,6 @@ class SystemLoader extends Injectable
         } else {
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
-        $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
 
         return true;
     }
@@ -311,8 +309,7 @@ class SystemLoader extends Injectable
      */
     public function startMikoPBX(): bool
     {
-        $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = true;
-
+    
         // Start the NATS queue daemon
         $this->echoStartMsg(' - Start nats queue daemon...');
         $natsConf = new NatsConf();
@@ -358,7 +355,7 @@ class SystemLoader extends Injectable
         $nginx->reStart();
         $this->echoResultMsg();
 
-        $this->di->getShared(RegistryProvider::SERVICE_NAME)->booting = false;
+        System::setBooting(false);
 
         // Display network information
         $headerMessage = "All services are fully loaded welcome";

@@ -33,7 +33,6 @@ use MikoPBX\Common\Models\{Codecs,
     Users};
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\{ Network, Processes, SystemMessages, Util};
@@ -576,7 +575,7 @@ class SIPConf extends AsteriskConfigClass
         $this->saveConfig($conf, $this->description);
 
         // Asterisk has to be restarted to apply the changes over ami
-        if ($this->di->getShared(RegistryProvider::SERVICE_NAME)->booting !== true) {
+        if ($this->booting !== true) {
             $this->updateAsteriskDatabase();
         }
     }

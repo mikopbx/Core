@@ -21,9 +21,10 @@ namespace MikoPBX\Core\Workers\Cron;
 
 require_once 'Globals.php';
 
+use Fiber;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Core\Workers\WorkerRedisBase;
-use MikoPBX\Common\Providers\{PBXConfModulesProvider};
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, SystemMessages, Util};
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
@@ -33,15 +34,15 @@ use MikoPBX\Core\Workers\WorkerCheckFail2BanAlive;
 use MikoPBX\Core\Workers\WorkerLogRotate;
 use MikoPBX\Core\Workers\WorkerMarketplaceChecker;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
-use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerNotifyAdministrator;
+use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerPrepareAdvice;
+use MikoPBX\Core\Workers\WorkerRedisBase;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
-use Fiber;
-use Throwable;
 use RuntimeException;
+use Throwable;
 
 /**
  * Class WorkerSafeScriptsCore
@@ -602,6 +603,14 @@ class WorkerSafeScriptsCore extends WorkerBase
         PBX::waitFullyBooted();
 
         while (true) {
+
+            // If the system is booting, do not start the workers.
+            if (System::isBooting()) {
+                sleep(5);
+                continue;
+            }
+
+
             // Prepare the list of workers to be started.
             $arrWorkers = $this->prepareWorkersList();
             

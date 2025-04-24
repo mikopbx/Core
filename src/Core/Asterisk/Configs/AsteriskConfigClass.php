@@ -24,10 +24,10 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\MikoPBXConfig;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use Phalcon\Config\Config;
@@ -91,10 +91,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
         $this->mikoPBXConfig = new MikoPBXConfig();
         $this->generalSettings = PbxSettings::getAllPbxSettings();
         $this->messages = [];
-
-        if ($this->getDI()->has(RegistryProvider::SERVICE_NAME)) {
-            $this->booting = $this->getDI()->getShared(RegistryProvider::SERVICE_NAME)->booting === true;
-        }
+        $this->booting = System::isBooting();
     }
 
     /**

@@ -56,7 +56,7 @@ class GetAvailableModulesAction  extends Injectable
         $WebUiLanguage = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
         $cacheKey = "ModulesManagementProcessor:GetAvailableModules:$WebUiLanguage";
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        if ($managedCache->has($cacheKey)) {
+        if ($managedCache->has($cacheKey) && is_array($managedCache->get($cacheKey))) {
             $res->data = $managedCache->get($cacheKey);
             $res->success = true;
             return $res;
@@ -104,7 +104,7 @@ class GetAvailableModulesAction  extends Injectable
                 $body = $request->getBody()->getContents();
                 $res->data = json_decode($body ?? '', true) ?? [];
                 if (is_array($res->data)) {
-                    $managedCache->set($cacheKey, $body, 3600);
+                    $managedCache->set($cacheKey, $res->data, 3600);
                 }
             }
         } catch (\Throwable $e) {

@@ -58,6 +58,26 @@ class NginxConf extends Injectable
             Processes::killByName('nginx');
             Processes::mwExec($nginxPath);
         }
+        
+        // Get web port from settings
+        $webPort = (string)PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
+        
+        // Wait for Nginx to start completely (max 10 seconds)
+        $maxAttempts = 20;
+        $attempt = 0;
+        while ($attempt < $maxAttempts) {
+            $newPid = self::getPid();
+            if (!empty($newPid)) {
+                // Check if Nginx is responding
+                $checkResult = [];
+                Processes::mwExec("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:$webPort/ --connect-timeout 1", $checkResult);
+                if (!empty($checkResult) && (int)$checkResult[0] > 0) {
+                    break;
+                }
+            }
+            $attempt++;
+            usleep(500000); // 0.5 seconds
+        }
     }
 
     /**

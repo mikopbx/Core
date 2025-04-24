@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -90,8 +90,10 @@ class Notifications
         $adminMail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
 
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $cacheKey = 'SendAdminNotification:' . md5($adminMail . $subject . implode('', $messages));
+        $cacheKey = 'SendAdminNotification:' . md5($adminMail . $subject . json_encode($messages));
         $cacheTime = 3600 * 24; // 1 day
+
+        SystemMessages::sysLogMsg(__METHOD__, 'Sending admin notification: ' . json_encode($messages), LOG_DEBUG);
 
         // Check if the message is not urgent and has been sent recently from cache.
         if (!$urgent &&  $managedCache->has($cacheKey)) {
@@ -102,7 +104,7 @@ class Notifications
         $subject = Util::translate($subject, false);
         $text = '';
         foreach ($messages as $message) {
-            $text .= '<br>' . Util::translate($message, false);
+            $text .= '<br>' . Util::translate($message['messageTpl'], false, $message['messageParams'] ?? []);
         }
         $text .= '<br><br>' . SystemMessages::getInfoMessage("The MikoPBX connection information");
         $text = str_replace(PHP_EOL, '<br>', $text);
