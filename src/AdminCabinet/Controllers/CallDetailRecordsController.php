@@ -24,6 +24,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\CDRConfigInterface;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Models\Extensions;
 
 class CallDetailRecordsController extends BaseController
 {
@@ -36,6 +37,30 @@ class CallDetailRecordsController extends BaseController
      */
     public function indexAction(): void
     {
+    }
+
+    /**
+     * Get the date of the latest CDR record.
+     * Used to set initial date for the date range picker.
+     * 
+     * @return void
+     */
+    public function getLatestRecordDateAction(): void
+    {
+        $parameters = [
+            'columns' => 'MAX(start) as latest_date',
+            'limit' => 1
+        ];
+        
+        $result = $this->selectCDRRecordsWithFilters($parameters);
+        $latestDate = null;
+        
+        if (!empty($result) && isset($result[0]['latest_date'])) {
+            $latestDate = $result[0]['latest_date'];
+        }
+        
+        $this->view->latestDate = $latestDate;
+        $this->view->success = true;
     }
 
     /**
@@ -193,6 +218,10 @@ class CallDetailRecordsController extends BaseController
 
             return;
         }
+        
+        // Store the original search phrase for employee name search
+        $originalSearchPhrase = $searchPhrase;
+        $employeeNumbers = [];
 
         // Search date ranges
         if (preg_match_all("/\d{2}\/\d{2}\/\d{4}/", $searchPhrase, $matches)) {
@@ -204,6 +233,7 @@ class CallDetailRecordsController extends BaseController
                 $parameters['bind']['dateFromPhrase1'] = $requestedDate;
                 $parameters['bind']['dateFromPhrase2'] = $tomorrowDate;
                 $searchPhrase = str_replace($matches[0][0], "", $searchPhrase);
+                $originalSearchPhrase = str_replace($matches[0][0], "", $originalSearchPhrase);
             } elseif (count($matches[0]) === 2) {
                 $parameters['conditions'] .= 'start BETWEEN :dateFromPhrase1: AND :dateFromPhrase2:';
                 $date = DateTime::createFromFormat('d/m/Y', $matches[0][0]);
@@ -217,6 +247,30 @@ class CallDetailRecordsController extends BaseController
                     '',
                     $searchPhrase
                 );
+                $originalSearchPhrase = str_replace(
+                    [$matches[0][0], $matches[0][1]],
+                    '',
+                    $originalSearchPhrase
+                );
+            }
+        }
+        
+        // Look for employee name in the search phrase
+        $cleanSearchPhrase = trim($originalSearchPhrase);
+        if (!empty($cleanSearchPhrase)) {
+            $cleanSearchPhrase = mb_strtolower($cleanSearchPhrase, 'UTF-8');
+            // Search for employee by name and get their numbers
+            $extensionsParams = [
+                'conditions' => 'search_index LIKE :SearchPhrase:',
+                'bind' => [
+                    'SearchPhrase' => "%$cleanSearchPhrase%"
+                ],
+                'columns' => 'number'
+            ];
+            
+            $extensionsResult = Extensions::find($extensionsParams);
+            foreach ($extensionsResult as $extension) {
+                $employeeNumbers[] = $extension->number;
             }
         }
 
@@ -313,6 +367,29 @@ class CallDetailRecordsController extends BaseController
                 $parameters['bind']['SearchPhrase1'] = $searchPhrase;
                 $parameters['bind']['SearchPhrase2'] = $searchPhrase;
             }
+            if ($needCloseAnd) {
+                $parameters['conditions'] .= ')';
+            }
+        } elseif (count($employeeNumbers) > 0) {
+            // If no phone numbers were found in the search phrase but employee numbers were found
+            $needCloseAnd = false;
+            if ($parameters['conditions'] !== '') {
+                $parameters['conditions'] .= ' AND (';
+                $needCloseAnd = true;
+            }
+            
+            // Add conditions for each employee number
+            $employeeConditions = [];
+            foreach ($employeeNumbers as $index => $number) {
+                $employeeConditions[] = "src_num = :EmployeeNum{$index}src: OR dst_num = :EmployeeNum{$index}dst:";
+                $parameters['bind']["EmployeeNum{$index}src"] = $number;
+                $parameters['bind']["EmployeeNum{$index}dst"] = $number;
+            }
+            
+            if (!empty($employeeConditions)) {
+                $parameters['conditions'] .= '(' . implode(' OR ', $employeeConditions) . ')';
+            }
+            
             if ($needCloseAnd) {
                 $parameters['conditions'] .= ')';
             }

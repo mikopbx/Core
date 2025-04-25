@@ -57,7 +57,7 @@ const callDetailRecords = {
      * Initializes the call detail records.
      */
     initialize() {
-        callDetailRecords.initializeDateRangeSelector();
+        callDetailRecords.fetchLatestCDRDate();
 
         callDetailRecords.$globalSearch.on('keyup', (e) => {
             if (e.keyCode === 13
@@ -86,6 +86,11 @@ const callDetailRecords = {
             sDom: 'rtip',
             deferRender: true,
             pageLength: callDetailRecords.calculatePageLength(),
+            language: {
+                ...SemanticLocalization.dataTableLocalisation,
+                emptyTable: callDetailRecords.getEmptyTableMessage(),
+                zeroRecords: callDetailRecords.getEmptyTableMessage()
+            },
 
             /**
              * Constructs the CDR row.
@@ -119,7 +124,6 @@ const callDetailRecords = {
             drawCallback() {
                 Extensions.updatePhonesRepresent('need-update');
             },
-            language: SemanticLocalization.dataTableLocalisation,
             ordering: false,
         });
         callDetailRecords.dataTable = callDetailRecords.$cdrTable.DataTable();
@@ -160,6 +164,45 @@ const callDetailRecords = {
                 Extensions.updatePhonesRepresent('need-update');
             }
         });
+    },
+
+    /**
+     * Fetches the latest CDR date from the server and sets up date range picker
+     */
+    fetchLatestCDRDate() {
+        $.ajax({
+            url: `${globalRootUrl}call-detail-records/getLatestRecordDate`,
+            type: 'GET',
+            success: function(response) {
+                if (response.success && response.data.latest_date) {
+                    const latestDate = moment(response.data.latest_date);
+                    callDetailRecords.initializeDateRangeSelector(latestDate);
+                } else {
+                    callDetailRecords.initializeDateRangeSelector();
+                }
+            },
+            error: function() {
+                callDetailRecords.initializeDateRangeSelector();
+            }
+        });
+    },
+
+    /**
+     * Gets a styled empty table message
+     * @returns {string} HTML message for empty table
+     */
+    getEmptyTableMessage() {
+        return `
+        <div class="ui placeholder segment">
+            <div class="ui icon header">
+                <i class="phone slash icon"></i>
+                ${globalTranslate.cdr_NoRecordsFound}
+            </div>
+            <div class="ui divider"></div>
+            <div>
+                ${globalTranslate.cdr_TryChangingDate}
+            </div>
+        </div>`;
     },
 
     /**
@@ -240,8 +283,9 @@ const callDetailRecords = {
     },
     /**
      * Initializes the date range selector.
+     * @param {moment} latestDate - Optional latest record date
      */
-    initializeDateRangeSelector() {
+    initializeDateRangeSelector(latestDate = null) {
         const options = {};
 
         options.ranges = {
@@ -268,12 +312,34 @@ const callDetailRecords = {
             monthNames: SemanticLocalization.calendarText.months,
             firstDay: 1,
         };
-        options.startDate = moment();
-        options.endDate = moment();
+
+        // If we have a latest date, use that month for the date range
+        if (latestDate) {
+            // Set date range to match the month of the latest record
+            const startOfMonth = moment(latestDate).startOf('month');
+            const endOfMonth = moment(latestDate).endOf('month');
+            
+            // If it's the current month, just use today's date
+            if (moment().isSame(latestDate, 'month')) {
+                options.startDate = moment();
+                options.endDate = moment();
+            } else {
+                options.startDate = startOfMonth;
+                options.endDate = endOfMonth;
+            }
+        } else {
+            options.startDate = moment();
+            options.endDate = moment();
+        }
+
         callDetailRecords.$dateRangeSelector.daterangepicker(
             options,
             callDetailRecords.cbDateRangeSelectorOnSelect,
         );
+        
+        // Immediately apply the filter with the new date range
+        const text = `${options.startDate.format('DD/MM/YYYY')} ${options.endDate.format('DD/MM/YYYY')} ${callDetailRecords.$globalSearch.val()}`;
+        callDetailRecords.applyFilter(text);
     },
 
 
