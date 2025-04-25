@@ -206,7 +206,7 @@ trait FormInteractionTrait
         }
     }
 
-   
+
 
     /**
      * Private helper methods
@@ -226,12 +226,12 @@ trait FormInteractionTrait
         $this->logTestAction("Select dropdown", ['name' => $name, 'value' => $value]);
 
         try {
-            // Get semantic UI dropdown element
+            // Находим dropdown
             $dropdownXpath = sprintf(
                 '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
-                '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
-                '//div[contains(@class, "dropdown")][@id="%1$s"] | ' .
-                '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]]',
+                    '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
+                    '//div[contains(@class, "dropdown")][@id="%1$s"] | ' .
+                    '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]]',
                 $name
             );
 
@@ -245,82 +245,89 @@ trait FormInteractionTrait
                 return null;
             }
 
-            if ($dropdown) {
-                $elementSource = $dropdown->getAttribute('outerHTML');
-            }
+            $selectedItemXpath = './/div[contains(@class, "item") and contains(@class, "active") and contains(@class, "selected")]';
+            $selectedItem = $this->findElementSafely($selectedItemXpath, $dropdown);
 
-            // Check if the desired value is already selected
-            try {
-                $selectedItem = $dropdown->findElement(
-                    WebDriverBy::xpath('.//div[contains(@class, "item") and contains(@class, "active selected")]')
-                );
-                
+            if ($selectedItem) {
                 $currentValue = $selectedItem->getAttribute('data-value');
                 $currentText = $selectedItem->getText();
 
-                // If current value or text matches desired value, no need to proceed
                 if ($currentValue === $value || $currentText === $value || stripos($currentText, $value) !== false) {
-                    return $currentValue ?: $selectedItem->getAttribute('data-text') ?: $currentText;
+                    return $currentValue ?: $currentText;
                 }
-            } catch (\Exception $e) {
-                // No selection found or error getting current selection - proceed with new selection
             }
 
-            
-            // Click to open dropdown
-            $this->scrollIntoView($dropdown);
-            $dropdown->click();
+            $inputXpath = sprintf('.//input[@name="%s" and @type="hidden"]', $name);
+            $input = $this->findElementSafely($inputXpath, $dropdown);
 
-            // Wait for dropdown menu to be visible
-            $this->waitForDropdownMenu();
-            
-            // Try to use search input if available
-            $this->fillDropdownSearch($name, $value);
-            
-            // First try to find exact match by data-value or text()
-            $exactMenuXpath = sprintf(
-                '//div[contains(@class, "menu") and contains(@class, "visible")]' .
-                '//div[contains(@class, "item") and (@data-value="%1$s" or normalize-space(text())="%1$s")]',
+            if ($input) {
+                $inputValue = $input->getAttribute('value');
+                if ($inputValue === $value) {
+                    return $inputValue;
+                }
+            }
+
+            $isDropdownVisible = strpos($dropdown->getAttribute('class'), 'active visible') !== false;
+            if (!$isDropdownVisible) {
+                $this->scrollIntoView($dropdown);
+                $dropdown->click();
+                $this->waitForDropdownMenu();
+            }
+
+            $this->fillDropdownSearch($dropdown, $value);
+
+            $itemFound = false;
+
+            $exactValueXpath = sprintf(
+                './/div[contains(@class, "menu")]//div[contains(@class, "item") and @data-value="%s"]',
                 $value
             );
-            
-            $menuItem = $this->findElementSafely($exactMenuXpath);
-            
-            // If exact match not found, try partial text match
-            if (!$menuItem) {
-                $partialMenuXpath = sprintf(
-                    '//div[contains(@class, "menu") and contains(@class, "visible")]' .
-                    '//div[contains(@class, "item") and contains(normalize-space(text()),"%s")]',
+            $menuItem = $this->findElementSafely($exactValueXpath, $dropdown);
+
+            if ($menuItem) {
+                $itemFound = true;
+            } else {
+                $exactTextXpath = sprintf(
+                    './/div[contains(@class, "menu")]//div[contains(@class, "item") and normalize-space(text())="%s"]',
                     $value
                 );
-                
-                $menuItem = $this->findElementSafely($partialMenuXpath);
+                $menuItem = $this->findElementSafely($exactTextXpath, $dropdown);
+
+                if ($menuItem) {
+                    $itemFound = true;
+                } else {
+                    $partialTextXpath = sprintf(
+                        './/div[contains(@class, "menu")]//div[contains(@class, "item") and contains(normalize-space(text()),"%s")]',
+                        $value
+                    );
+                    $menuItem = $this->findElementSafely($partialTextXpath, $dropdown);
+
+                    if ($menuItem) {
+                        $itemFound = true;
+                    }
+                }
             }
-            
-            if (!$menuItem && !$skipIfNotExist) {
-                // Close dropdown before throwing exception
-                try {
+
+            if (!$itemFound && !$skipIfNotExist) {
+                if ($isDropdownVisible) {
                     $dropdown->click();
-                } catch (\Exception $e) {
-                    // Ignore errors on closing
                 }
                 throw new RuntimeException("Menu item '{$value}' not found in dropdown '{$name}'");
             }
-            
-            if ($menuItem) {
+
+            if ($itemFound) {
                 $dataValue = $menuItem->getAttribute('data-value');
-                
-                // Scroll and click the found menu item
+
                 $this->scrollIntoView($menuItem);
                 $menuItem->click();
                 $this->waitForAjax();
-                
-                return $dataValue ?: $menuItem->getAttribute('data-text') ?: $menuItem->getText();
+
+                return $dataValue ?: $menuItem->getText();
             }
-            
+
             return null;
         } catch (\Exception $e) {
-            $this->handleActionError('select dropdown item', "{$name} with value {$value}", $e, $elementSource??'');
+            $this->handleActionError('select dropdown item', "{$name} with value {$value}", $e);
             return null;
         }
     }
@@ -337,79 +344,72 @@ trait FormInteractionTrait
         $this->logTestAction("Check dropdown element", ['name' => $name, 'value' => $value]);
 
         try {
-            // Find Semantic UI dropdown
-            $xpath = sprintf(
+            $dropdownXpath = sprintf(
                 '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
-                '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
-                '//div[contains(@class, "dropdown")][@id="%1$s"] | ' .
-                '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]]',
+                    '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
+                    '//div[contains(@class, "dropdown")][@id="%1$s"] | ' .
+                    '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]]',
                 $name
             );
 
-            $dropdown = $this->findElementSafely($xpath);
-            
+            $dropdown = $this->findElementSafely($dropdownXpath);
+
             if (!$dropdown) {
                 return false;
             }
-            
-            // First check if it's already selected
-            try {
-                $selectedItem = $dropdown->findElement(
-                    WebDriverBy::xpath('.//div[contains(@class, "item") and contains(@class, "active selected")]')
-                );
-                
+
+            $selectedItemXpath = './/div[contains(@class, "item") and contains(@class, "active") and contains(@class, "selected")]';
+            $selectedItem = $this->findElementSafely($selectedItemXpath, $dropdown);
+
+            if ($selectedItem) {
                 $currentValue = $selectedItem->getAttribute('data-value');
                 $currentText = $selectedItem->getText();
-                
-                // If already selected, return true
+
                 if ($currentValue === $value || $currentText === $value || stripos($currentText, $value) !== false) {
                     return true;
                 }
-            } catch (\Exception $e) {
-                // Not selected, continue checking
             }
 
-            // Click to open dropdown
-            $this->scrollIntoView($dropdown);
-            $dropdown->click();
+            $isDropdownVisible = strpos($dropdown->getAttribute('class'), 'active visible') !== false;
+            if (!$isDropdownVisible) {
+                $this->scrollIntoView($dropdown);
+                $dropdown->click();
+                $this->waitForDropdownMenu();
+            }
 
-            // Wait for dropdown menu to be visible
-            $this->waitForDropdownMenu();
-            
-            // Try to use search input if available
-            $this->fillDropdownSearch($name, $value);
-            
-            // Look for item by both data-value and text content
-            $exactMenuXpath = sprintf(
-                '//div[contains(@class, "menu") and contains(@class, "visible")]' .
-                '//div[contains(@class, "item") and (@data-value="%1$s" or normalize-space(text())="%1$s")]',
+            $this->fillDropdownSearch($dropdown, $value);
+
+            $exactValueXpath = sprintf(
+                './/div[contains(@class, "menu")]//div[contains(@class, "item") and @data-value="%s"]',
                 $value
             );
-            
-            $menuItem = $this->findElementSafely($exactMenuXpath);
-            
-            // If exact match not found, try partial text match
-            if (!$menuItem) {
-                $partialMenuXpath = sprintf(
-                    '//div[contains(@class, "menu") and contains(@class, "visible")]' .
-                    '//div[contains(@class, "item") and contains(normalize-space(text()),"%s")]',
-                    $value
-                );
-                
-                $menuItem = $this->findElementSafely($partialMenuXpath);
+
+            $exactTextXpath = sprintf(
+                './/div[contains(@class, "menu")]//div[contains(@class, "item") and normalize-space(text())="%s"]',
+                $value
+            );
+
+            $partialTextXpath = sprintf(
+                './/div[contains(@class, "menu")]//div[contains(@class, "item") and contains(normalize-space(text()),"%s")]',
+                $value
+            );
+
+            $itemExists = (
+                $this->findElementSafely($exactValueXpath, $dropdown) !== null ||
+                $this->findElementSafely($exactTextXpath, $dropdown) !== null ||
+                $this->findElementSafely($partialTextXpath, $dropdown) !== null
+            );
+
+            if ($isDropdownVisible) {
+                try {
+                    $dropdown->click();
+                } catch (\Exception $e) {
+                }
             }
 
-            // Close dropdown after check regardless of result
-            try {
-                $dropdown->click();
-            } catch (\Exception $e) {
-                // Ignore errors on closing
-                self::annotate("Failed to close dropdown: " . $e->getMessage(), 'warning');
-            }
-
-            return $menuItem !== null;
+            return $itemExists;
         } catch (\Exception $e) {
-            self::annotate("Element check failed: " . $e->getMessage(), 'warning');
+            $this->handleActionError('check dropdown element', "{$name} with value {$value}", $e);
             return false;
         }
     }
@@ -424,9 +424,9 @@ trait FormInteractionTrait
     {
         $xpath = sprintf(
             '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")]/input[contains(@class,"search")] | ' .
-            '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")]/input[contains(@class,"search")] | ' .
-            '//div[@id="%1$s"]/input[contains(@class,"search")] | ' .
-            '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]]/input[contains(@class,"search")]',
+                '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")]/input[contains(@class,"search")] | ' .
+                '//div[@id="%1$s"]/input[contains(@class,"search")] | ' .
+                '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]]/input[contains(@class,"search")]',
             $name
         );
 
@@ -436,7 +436,7 @@ trait FormInteractionTrait
                 $searchInput->click();
                 $searchInput->clear();
                 $searchInput->sendKeys($value);
-                
+
                 // Small delay to allow filtering to occur
                 usleep(300000); // 300ms
             } catch (\Exception $e) {
@@ -459,5 +459,4 @@ trait FormInteractionTrait
             )
         );
     }
-
 }
