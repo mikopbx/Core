@@ -64,7 +64,6 @@ class SentryConf extends Injectable
             file_put_contents(self::CONF_FILE, $conf);
 
         } elseif (file_exists(self::CONF_FILE)) {
-            $this->logger->writeInfo('Sentry conf file exists, deleting it ' . self::CONF_FILE);
             unlink(self::CONF_FILE);
         }
     }
