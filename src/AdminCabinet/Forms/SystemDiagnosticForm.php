@@ -47,7 +47,7 @@ class SystemDiagnosticForm extends BaseForm
         $this->add($filenames);
         $this->add(new Hidden('filename', ['value' => $options['filename']]));
         $this->add(new Text('filter', ['value' => $options['filter']]));
-        $this->add(new Numeric('lines', ['value' => '1500']));
+        $this->add(new Numeric('lines', ['value' => '5000']));
         $this->add(new Numeric('offset', ['value' => '0']));
     }
 }
