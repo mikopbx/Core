@@ -119,4 +119,23 @@
     </div>
     <div class="ui clearing hidden divider"></div>
 </div>
+
+<div class="ui small modal" id="reset-license-confirm-modal">
+    <div class="header">
+        {{ t._('lic_ResetLicenseConfirmHeader') }}
+    </div>
+    <div class="content">
+        <p>{{ t._('lic_ResetLicenseConfirmText') }}</p>
+    </div>
+    <div class="actions">
+        <div class="ui black deny button">
+            {{ t._('lic_Cancel') }}
+        </div>
+        <div class="ui negative right labeled icon button" id="confirm-reset-license-button">
+            {{ t._('lic_ResetLicenseConfirm') }}
+            <i class="trash icon"></i>
+        </div>
+    </div>
+</div>
+
 {{ close('form') }}
