@@ -57,7 +57,7 @@ class WorkerNotifyAdministrator extends WorkerBase
                 ]);
                 $errorMessages = $restResponse->data['advice']['error'] ?? [];
                 if ($restResponse->success and $errorMessages !== []) {
-                    Notifications::sendAdminNotification('adv_ThereIsSomeTroublesWithMikoPBX', $errorMessages);
+                    Notifications::sendAdminNotification(['messageTpl' => 'adv_ThereIsSomeTroublesWithMikoPBX'], $errorMessages);
                 }
                 // Store the current timestamp in the cache to track the last error check
                 $managedCache->set($cacheKey, time(), 3600); // Check every hour

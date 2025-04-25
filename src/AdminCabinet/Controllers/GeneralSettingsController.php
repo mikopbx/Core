@@ -109,12 +109,12 @@ class GeneralSettingsController extends BaseController
         if (!$this->request->isPost()) {
             return;
         }
-        $data = $this->request->getPost();
+        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
 
-        $passwordCheckFail = $this->getSimplePasswords($data);
+        $passwordCheckFail = $this->getSimplePasswords($postData);
         if (!empty($passwordCheckFail)) {
             foreach ($passwordCheckFail as $settingsKey) {
-                $this->flash->error($this->translation->_('gs_SetPasswordError', ['password' => $data[$settingsKey]]));
+                $this->flash->error($this->translation->_('gs_SetPasswordError', ['password' => $postData[$settingsKey]]));
             }
             $this->view->success = false;
             $this->view->passwordCheckFail = $passwordCheckFail;
@@ -123,7 +123,7 @@ class GeneralSettingsController extends BaseController
 
         $this->db->begin();
 
-        list($result, $messages) = $this->updatePBXSettings($data);
+        list($result, $messages) = $this->updatePBXSettings($postData);
         if (!$result) {
             $this->view->success = false;
             $this->view->messages = $messages;
@@ -131,7 +131,7 @@ class GeneralSettingsController extends BaseController
             return;
         }
 
-        list($result, $messages) = $this->updateCodecs($data['codecs']);
+        list($result, $messages) = $this->updateCodecs($postData['codecs']);
         if (!$result) {
             $this->view->success = false;
             $this->view->messages = $messages;
@@ -140,9 +140,9 @@ class GeneralSettingsController extends BaseController
         }
 
         list($result, $messages) = $this->createParkingExtensions(
-            $data[PbxSettings::PBX_CALL_PARKING_START_SLOT],
-            $data[PbxSettings::PBX_CALL_PARKING_END_SLOT],
-            $data[PbxSettings::PBX_CALL_PARKING_EXT],
+            $postData[PbxSettings::PBX_CALL_PARKING_START_SLOT],
+            $postData[PbxSettings::PBX_CALL_PARKING_END_SLOT],
+            $postData[PbxSettings::PBX_CALL_PARKING_EXT],
         );
 
         if (!$result) {
@@ -250,22 +250,10 @@ class GeneralSettingsController extends BaseController
     private function updatePBXSettings(array $data): array
     {
         $messages = ['error' => []];
-        $pbxSettings = PbxSettings::getDefaultArrayValues();
-
-        // Process SSHPassword and set SSHPasswordHash accordingly
-        if (isset($data[PbxSettings::SSH_PASSWORD])) {
-            if (
-                $data[PbxSettings::SSH_PASSWORD] === $pbxSettings[PbxSettings::SSH_PASSWORD]
-                || $data[PbxSettings::SSH_PASSWORD] === GeneralSettingsEditForm::HIDDEN_PASSWORD
-            ) {
-                $data[PbxSettings::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettings::WEB_ADMIN_PASSWORD]);
-            } else {
-                $data[PbxSettings::SSH_PASSWORD_HASH_STRING] = md5($data[PbxSettings::SSH_PASSWORD]);
-            }
-        }
+        $defaultPbxSettings = PbxSettings::getDefaultArrayValues();
 
         // Update PBX settings
-        foreach ($pbxSettings as $key => $value) {
+        foreach ($defaultPbxSettings as $key => $defaultValue) {
             switch ($key) {
                 case PbxSettings::PBX_RECORD_CALLS:
                 case PbxSettings::PBX_RECORD_CALLS_INNER:
@@ -282,13 +270,10 @@ class GeneralSettingsController extends BaseController
                     $newValue = ($data[$key] === 'on') ? '1' : '0';
                     break;
                 case PbxSettings::SSH_PASSWORD:
-                    // Set newValue as WebAdminPassword if SSHPassword is the same as the default value
-                    if ($data[$key] === $value) {
-                        $newValue = $data[PbxSettings::WEB_ADMIN_PASSWORD];
-                    } elseif ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                    if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $data[$key];
                     } else {
-                        continue 2;
+                        continue;
                     }
                     break;
                 case PbxSettings::SEND_METRICS:
@@ -305,7 +290,7 @@ class GeneralSettingsController extends BaseController
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $this->security->hash($data[$key]);
                     } else {
-                        continue 2;
+                        continue;
                     }
                     break;
                 default:
@@ -314,8 +299,25 @@ class GeneralSettingsController extends BaseController
 
             if (array_key_exists($key, $data)) {
                 PbxSettings::setValueByKey($key, $newValue, $messages['error']);
+                 
+                // If SSHPassword is set, set SSHPasswordHashString
+                if ($key === PbxSettings::SSH_PASSWORD) {
+                    PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue), $messages['error']);
+                }
             }
         }
+
+         // Set newValue as WebAdminPassword if SSHPassword user inputted password
+         if (PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD) === $defaultPbxSettings[PbxSettings::SSH_PASSWORD] 
+         && $data[PbxSettings::WEB_ADMIN_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+            PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD, $data[PbxSettings::WEB_ADMIN_PASSWORD], $messages['error']);
+         } 
+         
+         // Set newValue as SSHPassword if WebAdminPassword user inputted password
+         if (PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD) === $defaultPbxSettings[PbxSettings::WEB_ADMIN_PASSWORD] 
+         && $data[PbxSettings::SSH_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+            PbxSettings::setValueByKey(PbxSettings::WEB_ADMIN_PASSWORD, $this->security->hash($data[PbxSettings::SSH_PASSWORD]), $messages['error']);
+         }
 
         // Reset a cloud provision flag
         PbxSettings::setValueByKey(PbxSettings::CLOUD_PROVISIONING, '1', $messages['error']);

@@ -53,7 +53,7 @@ class CheckSSHConfig extends Injectable
             $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchFilesHash'];
         }
         if(isset($messages['error'])){
-            Notifications::sendAdminNotification('adv_SSHPasswordWasChangedSubject', ['adv_SSHPasswordWasChangedBody'], true);
+            Notifications::sendAdminNotification(['messageTpl' => 'adv_SSHPasswordWasChangedSubject'], ['messageTpl' => 'adv_SSHPasswordWasChangedBody'], true);
         }
         return $messages;
     }

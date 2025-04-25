@@ -68,7 +68,14 @@ const adviceWorker = {
         EventBus.subscribe('advice', data => {
             adviceWorker.cbAfterResponse(data);
         });
-        PbxApi.AdviceGetList();
+        EventBus.subscribe('models-changed', data => {
+            if (data.model === 'MikoPBX\\Common\\Models\\PbxSettings' 
+                && (data.recordId === 'WebAdminPassword' || data.recordId === 'SSHPassword')
+            ) {
+                PbxApi.AdviceGetList(adviceWorker.cbAfterResponse);
+            }
+        });
+        PbxApi.AdviceGetList(adviceWorker.cbAfterResponse);
     },
 
     /**

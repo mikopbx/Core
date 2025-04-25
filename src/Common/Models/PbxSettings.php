@@ -99,32 +99,39 @@ class PbxSettings extends ModelsBase
      */
     public static function getValueByKey(string $key, bool $useCache = true): string
     {
-        $value = '';
+        $value = 'UNKNOWN KEY ADD IT TO DEFAULT VALUES';
+        $keyExistsInRedis = false;
+        $keyExistsInDB = false;
+        
         try {
             if ($useCache) {
                 $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
-                $value = $redis->hget(self::CACHE_KEY, $key)??'';
+                $keyExistsInRedis = $redis->hexists(self::CACHE_KEY, $key);
+                
+                if ($keyExistsInRedis) {
+                    $value = $redis->hget(self::CACHE_KEY, $key);
+                }
             }
             
-            // If value is not found in cache, get it from DB
-            if (empty($value)) {
+            if (!$keyExistsInRedis) {
                 $currentSettings = PbxSettings::findFirstByKey($key);
-                if ($currentSettings !== null) {
-                    if ($useCache) {
-                        $redis->hset(self::CACHE_KEY, $currentSettings->key, $currentSettings->value);
-                    }
+                
+                if ($currentSettings) {
                     $value = $currentSettings->value;
+                    $keyExistsInDB = true;
                 }
             }
         } catch (\Throwable $e) {
             CriticalErrorsHandler::handleException($e);
         }
-        // If value is not found in cache, get it from default values
-        if (empty($value)) {
+        
+        if (!$keyExistsInRedis && !$keyExistsInDB) {
             $arrOfDefaultValues = self::getDefaultArrayValues();
             if (array_key_exists($key, $arrOfDefaultValues)) {
                 $value = $arrOfDefaultValues[$key];
             }
+        } elseif ($useCache) {
+            $redis->hset(self::CACHE_KEY, $key, $value);
         }
         return $value;
     }

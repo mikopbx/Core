@@ -74,13 +74,13 @@ class Notifications
     /**
      * Send an admin notification.
      *
-     * @param string $subject The subject of the notification.
+     * @param array $subject The subject of the notification.
      * @param array $messages An array of messages to be included in the notification.
      * @param bool $urgent (optional) Set to true for urgent notifications to bypass caching.
      *
      * @return void
      */
-    public static function sendAdminNotification(string $subject, array $messages, bool $urgent = false): void
+    public static function sendAdminNotification(array $subject, array $messages, bool $urgent = false): void
     {
         // Prevent sending the same message twice.
         $di = Di::getDefault();
@@ -90,7 +90,7 @@ class Notifications
         $adminMail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
 
         $managedCache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        $cacheKey = 'SendAdminNotification:' . md5($adminMail . $subject . json_encode($messages));
+        $cacheKey = 'SendAdminNotification:' . md5($adminMail . json_encode($subject) . json_encode($messages));
         $cacheTime = 3600 * 24; // 1 day
 
         SystemMessages::sysLogMsg(__METHOD__, 'Sending admin notification: ' . json_encode($messages), LOG_DEBUG);
@@ -101,10 +101,14 @@ class Notifications
         }
 
         // Translate the subject and messages to the desired language.
-        $subject = Util::translate($subject, false);
+        $subject = Util::translate($subject['messageTpl'], false, $subject['messageParams'] ?? []);
         $text = '';
         foreach ($messages as $message) {
-            $text .= '<br>' . Util::translate($message['messageTpl'], false, $message['messageParams'] ?? []);
+            if (is_array($message)) {
+                $text .= '<br>' . Util::translate($message['messageTpl'], false, $message['messageParams'] ?? []);
+            } else {
+                $text .= '<br>' . Util::translate($message, false);
+            }
         }
         $text .= '<br><br>' . SystemMessages::getInfoMessage("The MikoPBX connection information");
         $text = str_replace(PHP_EOL, '<br>', $text);
