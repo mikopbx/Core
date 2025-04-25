@@ -66,6 +66,8 @@ const extensionModules = {
             onVisible(){
                 if ($(this).data('tab') === 'licensing'){
                     PbxApi.LicenseGetLicenseInfo(keyCheck.cbAfterGetLicenseInfo);
+                } else if ($(this).data('tab') === 'marketplace') {
+                    marketplace.initialize();
                 }
             }
         });

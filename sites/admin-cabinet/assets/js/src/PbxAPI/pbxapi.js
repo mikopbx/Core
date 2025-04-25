@@ -98,7 +98,6 @@ const PbxApi = {
     licenseResetKey: `${Config.pbxUrl}/pbxcore/api/license/resetKey`, // Reset license key settings.
     licenseProcessUserRequest: `${Config.pbxUrl}/pbxcore/api/license/processUserRequest`, // Update license key, get new one, activate coupon
     licenseGetLicenseInfo: `${Config.pbxUrl}/pbxcore/api/license/getLicenseInfo`, // Retrieves license information from the license server.
-    licenseGetMikoPBXFeatureStatus: `${Config.pbxUrl}/pbxcore/api/license/getMikoPBXFeatureStatus`, // Checks whether the license system is working properly or not.
     licenseCaptureFeatureForProductId: `${Config.pbxUrl}/pbxcore/api/license/captureFeatureForProductId`, // Tries to capture a feature for a product.
     licenseSendPBXMetrics: `${Config.pbxUrl}/pbxcore/api/license/sendPBXMetrics`, // Make an API call to send PBX metrics
 
@@ -1469,11 +1468,20 @@ const PbxApi = {
      *
      * @returns {void}
      */
-    AdviceGetList() {
+    AdviceGetList(callback) {
         $.api({
             url: PbxApi.adviceGetList,
             on: 'now',
             successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError(response) {
+                callback(response);
+            },
         });
     },
 
@@ -1583,28 +1591,6 @@ const PbxApi = {
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response.data);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
-
-    /**
-     * Checks whether the license system is working properly or not.
-     *
-     * @param {function} callback - The callback function to handle the result.
-     */
-    LicenseGetMikoPBXFeatureStatus(callback) {
-        $.api({
-            url: PbxApi.licenseGetMikoPBXFeatureStatus,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess() {
-                callback(true);
             },
             onFailure(response) {
                 callback(response);

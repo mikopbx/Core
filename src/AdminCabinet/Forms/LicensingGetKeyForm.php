@@ -36,10 +36,47 @@ class LicensingGetKeyForm extends BaseForm
     {
         parent::initialize($entity, $options);
 
-        $this->add(new Text('companyname'));
-        $this->add(new Text('email'));
-        $this->add(new Text('contact'));
-        $this->add(new Numeric('inn'));
-        $this->add(new Text('telefone'));
+        // Company name field
+        $companyName = new Text('companyname');
+        $companyName->setAttributes([
+            'placeholder' => $this->translation->_('lic_CompanyNameExample'),
+            'class' => 'form-control'
+        ]);
+        $this->add($companyName);
+
+        // Email field
+        $email = new Text('email');
+        $email->setAttributes([
+            'placeholder' => $this->translation->_('lic_EmailExample'),
+            'class' => 'form-control',
+            'type' => 'email'
+        ]);
+        $this->add($email);
+
+        // Contact person field
+        $contact = new Text('contact');
+        $contact->setAttributes([
+            'placeholder' => $this->translation->_('lic_ContactExample'),
+            'class' => 'form-control'
+        ]);
+        $this->add($contact);
+
+        // INN field
+        $inn = new Numeric('inn');
+        $inn->setAttributes([
+            'placeholder' => $this->translation->_('lic_InnExample'),
+            'class' => 'form-control',
+            'minlength' => '10',
+            'maxlength' => '12'
+        ]);
+        $this->add($inn);
+
+        // Phone field
+        $phone = new Text('telefone');
+        $phone->setAttributes([
+            'placeholder' => $this->translation->_('lic_PhoneExample'),
+            'class' => 'form-control'
+        ]);
+        $this->add($phone);
     }
 }

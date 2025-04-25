@@ -51,6 +51,9 @@ const keyCheck = {
     $activateCouponButton: $('#coupon-activation-button'),
     $manageKeyButton: $('#manage-license-button'),
 
+    $resetConfirmModal: $('#reset-license-confirm-modal'),
+    $confirmResetButton: $('#confirm-reset-license-button'),
+
     /**
      * Validation rules for the form fields before submission.
      *
@@ -112,6 +115,17 @@ const keyCheck = {
         keyCheck.$accordions.accordion();
         keyCheck.$licenseDetailInfo.hide();
 
+        // Initialize confirmation modal
+        keyCheck.$resetConfirmModal.modal({
+            closable: false,
+            onDeny: () => {
+                return true;
+            },
+            onApprove: () => {
+                return false;
+            }
+        });
+
         // Set input mask for coupon code field
         keyCheck.$coupon.inputmask('MIKOUPD-*****-*****-*****-*****', {
             onBeforePaste: keyCheck.cbOnCouponBeforePaste,
@@ -127,12 +141,6 @@ const keyCheck = {
 
         keyCheck.$email.inputmask('email');
 
-        // Restore previous license error message to prevent blinking
-        // const previousKeyMessage = sessionStorage.getItem(`previousKeyMessage${globalWebAdminLanguage}`);
-        // if (previousKeyMessage && globalPBXLicense.length>0) {
-        //     UserMessage.showLicenseError(globalTranslate.lic_LicenseProblem, JSON.parse(previousKeyMessage),true)
-        // }
-
         // Handle save key button click
         keyCheck.$saveKeyButton.on('click', () => {
             if (keyCheck.$licKey.inputmask('unmaskedvalue').length===20){
@@ -144,11 +152,17 @@ const keyCheck = {
             }
         });
 
-        // Handle reset button click
+        // Update reset button click handler
         keyCheck.$resetButton.on('click', () => {
+            keyCheck.$resetConfirmModal.modal('show');
+        });
+
+        // Handle confirm reset button click
+        keyCheck.$confirmResetButton.on('click', () => {
             keyCheck.$formObj.addClass('loading disabled');
-            keyCheck.$resetButton.addClass('loading disabled');
+            keyCheck.$confirmResetButton.addClass('loading disabled');
             PbxApi.LicenseResetLicenseKey(keyCheck.cbAfterResetLicenseKey);
+            keyCheck.$resetConfirmModal.modal('hide');
         });
 
         // Handle activate coupon button click
@@ -168,10 +182,9 @@ const keyCheck = {
 
         // Check if a license key is present
         if (globalPBXLicense.length === 28) {
-            keyCheck.$filledLicenseKeyPlaceholder.html(`${globalPBXLicense} <i class="spinner loading icon"></i>`);
+            keyCheck.$filledLicenseKeyPlaceholder.html(globalPBXLicense);
             keyCheck.$filledLicenseKeyHeader.show();
             keyCheck.$manageKeyButton.attr('href',Config.keyManagementUrl);
-            PbxApi.LicenseGetMikoPBXFeatureStatus(keyCheck.cbAfterGetMikoPBXFeatureStatus);
             keyCheck.$emptyLicenseKeyInfo.hide();
             keyCheck.$filledLicenseKeyInfo.show();
         } else {
@@ -186,41 +199,11 @@ const keyCheck = {
      * @param {boolean} response - The response indicating the success of the license key reset.
      */
     cbAfterResetLicenseKey(response) {
-        // Remove the loading and disabled classes from the form
+        // Remove the loading and disabled classes
         keyCheck.$formObj.removeClass('loading disabled');
-        keyCheck.$resetButton.removeClass('loading disabled');
+        keyCheck.$confirmResetButton.removeClass('loading disabled');
         if (response !== false) {
-            // If the response is not false, indicating a successful license key reset,
-            // reload the window to apply the changes
             window.location.reload();
-        }
-    },
-
-    /**
-     * Callback function triggered after getting the MikoPBX feature status.
-     * @param {boolean|Object} response - The response indicating the MikoPBX feature status.
-     */
-    cbAfterGetMikoPBXFeatureStatus(response) {
-        // Remove the loading spinner and any previous AJAX messages
-        $('.spinner.loading.icon').remove();
-        if (response === true) {
-            // MikoPBX feature status is true (valid)
-            keyCheck.$formObj.removeClass('error').addClass('success');
-            keyCheck.$filledLicenseKeyPlaceholder.html(`${globalPBXLicense} <i class="check green icon"></i>`)
-            keyCheck.$filledLicenseKeyHeader.show();
-            sessionStorage.removeItem(`previousKeyMessage${globalWebAdminLanguage}`);
-        } else {
-            // MikoPBX feature status is false or an error occurred
-            if (response === false || response.messages === undefined) {
-                // Failed to check license status (response is false or no messages available)
-                UserMessage.showMultiString(globalTranslate.lic_FailedCheckLicenseNotPbxResponse, globalTranslate.lic_LicenseProblem);
-                keyCheck.$filledLicenseKeyHeader.show();
-            } else {
-                // Failed to check license status with error messages
-                //sessionStorage.setItem(`previousKeyMessage${globalWebAdminLanguage}`, JSON.stringify(response.messages));
-                //UserMessage.showLicenseError(globalTranslate.lic_LicenseProblem, response.messages, true);
-                keyCheck.$filledLicenseKeyHeader.show();
-            }
         }
     },
 
@@ -305,6 +288,7 @@ const keyCheck = {
             products = [];
             products.push(licenseData.product);
         }
+        $('#productDetails tbody').empty();
         $.each(products, (key, productValue) => {
             if (productValue === undefined) {
                 return;

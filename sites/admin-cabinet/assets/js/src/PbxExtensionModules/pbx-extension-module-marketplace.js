@@ -55,11 +55,29 @@ const marketplace = {
      */
     $btnUpdateAllModules: $('#update-all-modules-button'),
 
+    /**
+     * Reset the table by destroying DataTable instance and clearing content
+     */
+    resetTable() {
+        // Destroy DataTable if it exists
+        if ($.fn.DataTable.isDataTable(marketplace.$marketplaceTable)) {
+            marketplace.$marketplaceTable.DataTable().destroy();
+        }
+        // Clear table content
+        marketplace.$marketplaceTable.find('tbody').empty();
+        // Hide table and show loader
+        marketplace.$marketplaceTable.hide();
+        marketplace.$marketplaceLoader.show();
+        marketplace.$btnUpdateAllModules.hide();
+        marketplace.$noNewModulesSegment.hide();
+    },
 
     /**
      * Initialize extensionModulesShowAvailable class
      */
     initialize() {
+        // Reset table before fetching new data
+        marketplace.resetTable();
         PbxApi.ModulesGetAvailable(marketplace.cbParseModuleUpdates);
     },
 
@@ -138,9 +156,15 @@ const marketplace = {
             });
         }
 
-        if ($('tr.new-module-row').length>0){
+        if ($('tr.new-module-row').length > 0) {
             marketplace.$noNewModulesSegment.hide();
-            marketplace.initializeDataTable();
+            // Only initialize if DataTable is not already initialized
+            if (!$.fn.DataTable.isDataTable(marketplace.$marketplaceTable)) {
+                marketplace.initializeDataTable();
+            } else {
+                // If table is already initialized, just redraw it
+                marketplace.$marketplaceTable.DataTable().draw();
+            }
         } else {
             marketplace.$noNewModulesSegment.show();
         }

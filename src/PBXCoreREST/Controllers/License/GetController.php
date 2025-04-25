@@ -40,9 +40,6 @@ class GetController extends BaseController
      * Retrieves license information from the license server.
      * @Get("/getLicenseInfo")
      *
-     * Checks whether the license system is working properly or not.
-     * @Get("/getMikoPBXFeatureStatus")
-     *
      * Make an API call to send PBX metrics
      * @Get("/sendPBXMetrics")
      *
