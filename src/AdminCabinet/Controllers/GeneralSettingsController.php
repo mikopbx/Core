@@ -255,6 +255,8 @@ class GeneralSettingsController extends BaseController
         // Update PBX settings
         foreach ($defaultPbxSettings as $key => $defaultValue) {
             switch ($key) {
+                case PbxSettings::SSH_ID_RSA_PUB:
+                    continue 2;
                 case PbxSettings::PBX_RECORD_CALLS:
                 case PbxSettings::PBX_RECORD_CALLS_INNER:
                 case PbxSettings::AJAM_ENABLED:

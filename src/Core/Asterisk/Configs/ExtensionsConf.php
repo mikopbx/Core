@@ -132,7 +132,7 @@ class ExtensionsConf extends AsteriskConfigClass
         // internal-originate context for AMI originate
         $conf .= '[internal-originate]' . PHP_EOL .
             'exten => '.self::ALL_EXTENSION.',1,Set(pt1c_cid=${FILTER(\*\#\+1234567890,${pt1c_cid})})' . PHP_EOL . "\t" .
-            'same => n,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${pt1c_cid})' . PHP_EOL . "\t" .
+            'same => n,Set(MASTER_CHANNEL(ORIGINATE_DST_EXTEN)=${IF($["${pt1c_dst}x" == "x"]?${pt1c_cid}:${pt1c_dst})})' . PHP_EOL . "\t" .
             'same => n,Set(number=${FILTER(\*\#\+1234567890,${EXTEN})})' . PHP_EOL . "\t" .
             'same => n,ExecIf($["${EXTEN}" != "${number}"]?Goto(${CONTEXT},${number},$[${PRIORITY} + 1]))' . PHP_EOL . "\t" .
             'same => n,Set(__IS_ORGNT=${EMPTY})' . PHP_EOL . "\t" .
