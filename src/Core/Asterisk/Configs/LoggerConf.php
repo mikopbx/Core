@@ -54,7 +54,7 @@ class LoggerConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $logDir = Directories::getDir(Directories::AST_LOG_DIR);
+        $logDir = Directories::getDir(Directories::CORE_LOGS_DIR). '/asterisk/';
 
         // Create the log directory if it doesn't exist
         Util::mwMkdir($logDir);

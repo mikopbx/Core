@@ -174,8 +174,8 @@ class Fail2BanConf extends Injectable
         $text_config = $log_dir . "fail2ban.log {
     nocreate
     nocopytruncate
+    compress
     delaycompress
-    nomissingok
     start 0
     rotate 9
     size {$max_size}M
@@ -186,7 +186,7 @@ class Fail2BanConf extends Injectable
     endscript
     create 640 www www 
 }";
-        $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
+        $varEtcDir  = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         $path_conf   = $varEtcDir . '/fail2ban_logrotate.conf';
         file_put_contents($path_conf, $text_config);
         $mb10 = $max_size * 1024 * 1024;

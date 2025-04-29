@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -115,8 +115,8 @@ class PBX extends Injectable
         $text_config = "$log_dir$fileName {
     nocreate
     nocopytruncate
+    compress
     delaycompress
-    nomissingok
     start 0
     rotate 9
     size {$max_size}M
@@ -126,7 +126,7 @@ class PBX extends Injectable
         $asterisk -rx 'logger reload' > /dev/null 2> /dev/null
     endscript
 }";
-        $varEtcDir  = $di->getShared('config')->path('core.varEtcDir');
+        $varEtcDir  = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         $path_conf   = $varEtcDir . '/asterisk_logrotate_' . $fileName . '.conf';
         file_put_contents($path_conf, $text_config);
         $mb10 = $max_size * 1024 * 1024;

@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,8 +81,8 @@ class PHPConf extends Injectable
         $text_config = $f_name . " {
     nocreate
     nocopytruncate
+    compress
     delaycompress
-    nomissingok
     start 0
     rotate 9
     size {$max_size}M
@@ -94,7 +94,7 @@ class PHPConf extends Injectable
         // TODO::Add restart PHP-FPM after rotation
         $di     = Di::getDefault();
         if ($di !== null) {
-            $varEtcDir = $di->getConfig()->path('core.varEtcDir');
+            $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         } else {
             $varEtcDir = '/var/etc';
         }

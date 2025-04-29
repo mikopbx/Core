@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -102,7 +102,7 @@ class AsteriskConf extends AsteriskConfigClass
      */
     public static function getLogFile(): string
     {
-        return Directories::getDir(Directories::AST_LOG_DIR) . '/asterisk-cli.log';
+        return Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/asterisk-cli.log';
     }
 
     /**
@@ -118,8 +118,8 @@ class AsteriskConf extends AsteriskConfigClass
         $text_config = $f_name . " {
     nocreate
     nocopytruncate
+    compress
     delaycompress
-    nomissingok
     start 0
     rotate 2
     size {$max_size}M
