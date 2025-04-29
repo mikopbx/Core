@@ -123,6 +123,7 @@ const callDetailRecords = {
              */
             drawCallback() {
                 Extensions.updatePhonesRepresent('need-update');
+                callDetailRecords.togglePaginationControls();
             },
             ordering: false,
         });
@@ -167,23 +168,34 @@ const callDetailRecords = {
     },
 
     /**
+     * Toggles the pagination controls visibility based on data size
+     */
+    togglePaginationControls() {
+        const info = callDetailRecords.dataTable.page.info();
+        if (info.pages <= 1) {
+            $(callDetailRecords.dataTable.table().container()).find('.dataTables_paginate').hide();
+        } else {
+            $(callDetailRecords.dataTable.table().container()).find('.dataTables_paginate').show();
+        }
+    },
+
+    /**
      * Fetches the latest CDR date from the server and sets up date range picker
      */
     fetchLatestCDRDate() {
-        $.ajax({
+        $.api({
             url: `${globalRootUrl}call-detail-records/getLatestRecordDate`,
-            type: 'GET',
-            success: function(response) {
-                if (response.success && response.data.latest_date) {
-                    const latestDate = moment(response.data.latest_date);
+            on: 'now',
+            onSuccess(response) {
+                if (response.success && response.latestDate) {
+                    const latestDate = moment(response.latestDate);
                     callDetailRecords.initializeDateRangeSelector(latestDate);
                 } else {
                     callDetailRecords.initializeDateRangeSelector();
                 }
             },
-            error: function() {
-                callDetailRecords.initializeDateRangeSelector();
-            }
+            onError() {
+            },
         });
     },
 
@@ -316,11 +328,11 @@ const callDetailRecords = {
         // If we have a latest date, use that month for the date range
         if (latestDate) {
             // Set date range to match the month of the latest record
-            const startOfMonth = moment(latestDate).startOf('month');
-            const endOfMonth = moment(latestDate).endOf('month');
+            const startOfMonth = moment(latestDate).startOf('day');
+            const endOfMonth = moment(latestDate).endOf('day');
             
             // If it's the current month, just use today's date
-            if (moment().isSame(latestDate, 'month')) {
+            if (moment().isSame(latestDate, 'day')) {
                 options.startDate = moment();
                 options.endDate = moment();
             } else {

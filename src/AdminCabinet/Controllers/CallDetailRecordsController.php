@@ -220,7 +220,6 @@ class CallDetailRecordsController extends BaseController
         }
         
         // Store the original search phrase for employee name search
-        $originalSearchPhrase = $searchPhrase;
         $employeeNumbers = [];
 
         // Search date ranges
@@ -233,7 +232,6 @@ class CallDetailRecordsController extends BaseController
                 $parameters['bind']['dateFromPhrase1'] = $requestedDate;
                 $parameters['bind']['dateFromPhrase2'] = $tomorrowDate;
                 $searchPhrase = str_replace($matches[0][0], "", $searchPhrase);
-                $originalSearchPhrase = str_replace($matches[0][0], "", $originalSearchPhrase);
             } elseif (count($matches[0]) === 2) {
                 $parameters['conditions'] .= 'start BETWEEN :dateFromPhrase1: AND :dateFromPhrase2:';
                 $date = DateTime::createFromFormat('d/m/Y', $matches[0][0]);
@@ -247,23 +245,20 @@ class CallDetailRecordsController extends BaseController
                     '',
                     $searchPhrase
                 );
-                $originalSearchPhrase = str_replace(
-                    [$matches[0][0], $matches[0][1]],
-                    '',
-                    $originalSearchPhrase
-                );
             }
         }
         
+        // Search phone numbers
+        $searchPhrase = trim(str_replace(['(', ')', '-', '+'], '', $searchPhrase));
+
         // Look for employee name in the search phrase
-        $cleanSearchPhrase = trim($originalSearchPhrase);
-        if (!empty($cleanSearchPhrase)) {
-            $cleanSearchPhrase = mb_strtolower($cleanSearchPhrase, 'UTF-8');
+        if (!empty($searchPhrase)) {
+            $searchPhrase = mb_strtolower($searchPhrase, 'UTF-8');
             // Search for employee by name and get their numbers
             $extensionsParams = [
                 'conditions' => 'search_index LIKE :SearchPhrase:',
                 'bind' => [
-                    'SearchPhrase' => "%$cleanSearchPhrase%"
+                    'SearchPhrase' => "%$searchPhrase%"
                 ],
                 'columns' => 'number'
             ];
@@ -274,8 +269,6 @@ class CallDetailRecordsController extends BaseController
             }
         }
 
-        // Search phone numbers
-        $searchPhrase = str_replace(['(', ')', '-', '+'], '', $searchPhrase);
 
         if (preg_match_all("/\d+/", $searchPhrase, $matches)) {
             $needCloseAnd = false;
@@ -387,7 +380,7 @@ class CallDetailRecordsController extends BaseController
             }
             
             if (!empty($employeeConditions)) {
-                $parameters['conditions'] .= '(' . implode(' OR ', $employeeConditions) . ')';
+                $parameters['conditions'] .= '((' . implode(' OR ', $employeeConditions) . ') AND disposition = "ANSWERED")';
             }
             
             if ($needCloseAnd) {
