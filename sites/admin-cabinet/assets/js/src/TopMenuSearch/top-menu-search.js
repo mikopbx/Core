@@ -64,10 +64,18 @@ const topMenuSearch = {
                 menu: topMenuSearch.customDropdownMenu,
             },
         });
-        // $('#top-menu-search .search.link.icon').on('click', (e) => {
-        // 	$(e.target).parent().find('.text').trigger('click');
-        // });
+
+        // Subscribe to the old ConfigDataChanged event
         window.addEventListener('ConfigDataChanged', topMenuSearch.cbOnDataChanged);
+
+        // Subscribe to the models-changed event
+        EventBus.subscribe('models-changed', data => {
+            if (data.model === 'MikoPBX\\Common\\Models\\Extensions' 
+                && (data.changedFields.includes('callerid') || data.changedFields.includes('number'))
+            ) {
+                topMenuSearch.cbOnDataChanged();
+            }
+        });
     },
 
     /**

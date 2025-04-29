@@ -35,7 +35,6 @@ const Extensions = {
             if (data.model === 'MikoPBX\\Common\\Models\\Extensions' 
                 && (data.changedFields.includes('callerid') || data.changedFields.includes('number'))
             ) {
-                console.log('Extensions.cbOnDataChanged', data);
                 Extensions.cbOnDataChanged(data);
             }
         });

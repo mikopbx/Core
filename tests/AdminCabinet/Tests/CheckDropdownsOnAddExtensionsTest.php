@@ -65,10 +65,8 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
 
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $extensionTPL);
-        if ($elementFound) {
-            $this->fail('Found menuitem ' . $extensionTPL . ' before creating it on Incoming routes modify');
-        }
+        $elementIsAbsent = $this->checkIfElementNotExistOnDropdownMenu('extension', $extensionTPL);
+        $this->assertTrue($elementIsAbsent, 'Menuitem ' . $extensionTPL . ' should not exist before creating it');
 
         // Check Extensions dropdown
         if (self::$driver->executeScript('return sessionStorage.hasOwnProperty("/pbxcore/api/extensions/getForSelect?type=all")')) {
@@ -81,10 +79,9 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
         $this->changeTabOnCurrentPage('routing');
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $extensionTPL);
-        if ($elementFound) {
-            $this->fail('Found menuitem ' . $extensionTPL . ' before creating it on Extension routing tab');
-        }
+
+        $elementIsAbsent = $this->checkIfElementNotExistOnDropdownMenu('fwd_forwarding', $extensionTPL);
+        $this->assertTrue($elementIsAbsent, 'Menuitem ' . $extensionTPL . ' should not exist before creating it on Extension routing tab');
     }
 
     /**

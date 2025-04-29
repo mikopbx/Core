@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalWebAdminLanguage, sessionStorage, $, globalTranslate */
+/* global globalRootUrl, globalWebAdminLanguage, sessionStorage, $, i18n */
 
 /**
  * Advice Worker module.
@@ -84,7 +84,7 @@ const adviceWorker = {
      * @returns {string} - Translated message
      */
     translateMessage(messageData) {
-        return globalTranslate[messageData.messageTpl](messageData.messageParams);
+        return i18n(messageData.messageTpl, messageData.messageParams);
     },
 
     /**

@@ -20,10 +20,7 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests\Traits;
 
-use Facebook\WebDriver\Exception\NoSuchElementException;
-use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\WebDriverBy;
-use Facebook\WebDriver\WebDriverExpectedCondition;
 use MikoPBX\Tests\AdminCabinet\Tests\Utils\CookieManager;
 use RuntimeException;
 
@@ -189,23 +186,44 @@ trait LoginTrait
     }
 
     /**
-     * Check if user is currently logged in
+     * Wait for the login process to complete
      *
-     * @return bool
+     * This method waits for the main menu element to appear after login,
+     * indicating that the user has been successfully authenticated and
+     * the application interface is fully loaded.
+     *
+     * @param int $timeoutInSeconds Maximum time to wait for the menu to appear
+     * @return bool True if login completed successfully, false otherwise
      */
-    private function isUserLoggedIn(): bool
+    private function isUserLoggedIn(int $timeoutInSeconds = 30): bool
     {
         try {
-            self::$driver->wait(15, 500)->until(
-                WebDriverExpectedCondition::visibilityOfElementLocated(
-                    WebDriverBy::id("top-menu-search")
-                )
-            );
+            // Create a WebDriverWait instance with appropriate timeout and polling interval
+            $wait = new \Facebook\WebDriver\WebDriverWait(self::$driver, $timeoutInSeconds, 500);
+
+            // Use a custom expected condition with exception handling inside
+            $wait->until(function ($driver) {
+                try {
+                    $element = $driver->findElement(WebDriverBy::cssSelector("#top-menu-search"));
+                    return $element->isDisplayed();
+                } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+                    // Return false to continue polling
+                    return false;
+                } catch (\Facebook\WebDriver\Exception\StaleElementReferenceException $e) {
+                    // Handle case when element was found but became stale
+                    return false;
+                }
+            });
+
+            // If we got here, the element was found and is displayed
             return true;
-        } catch (NoSuchElementException|TimeoutException $e) {
+        } catch (\Facebook\WebDriver\Exception\TimeOutException $e) {
+            // Timed out waiting for login to complete
+            self::annotate('Login process timed out after ' . $timeoutInSeconds . ' seconds');
             return false;
         } catch (\Exception $e) {
-            self::annotate('Warning: Error checking login status: ' . $e->getMessage());
+            // Log other unexpected exceptions
+            self::annotate('Warning: Error during login process: ' . $e->getMessage());
             return false;
         }
     }

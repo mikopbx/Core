@@ -11,6 +11,7 @@ use MikoPBX\Tests\AdminCabinet\Lib\Traits\AssertionTrait;
 use MikoPBX\Tests\AdminCabinet\Lib\Traits\ElementInteractionTrait;
 use MikoPBX\Tests\AdminCabinet\Lib\Traits\FormInteractionTrait;
 use MikoPBX\Tests\AdminCabinet\Lib\Traits\NavigationTrait;
+use MikoPBX\Tests\AdminCabinet\Lib\Traits\DropdownInteractionTrait;
 use MikoPBX\Tests\AdminCabinet\Tests\Traits\LoginTrait;
 use MikoPBX\Tests\AdminCabinet\Lib\Traits\ScreenshotTrait;
 use MikoPBX\Tests\AdminCabinet\Lib\Exceptions\TestException;
@@ -22,6 +23,7 @@ use RuntimeException;
 class MikoPBXTestsBase extends BrowserStackTest
 {
     use ElementInteractionTrait;
+    use DropdownInteractionTrait;
     use FormInteractionTrait;
     use NavigationTrait;
     use LoginTrait;
@@ -39,10 +41,8 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     public static function setUpBeforeClass(): void
     {
-        error_log("[BrowserStack] Starting setUpBeforeClass in MikoPBXTestsBase");
         parent::setUpBeforeClass();
         self::$isLoggedIn = false;
-        error_log("[BrowserStack] Completed setUpBeforeClass in MikoPBXTestsBase");
     }
 
     /**
@@ -53,18 +53,14 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     protected function setUp(): void
     {
-        error_log("[BrowserStack] Starting setUp in MikoPBXTestsBase");
+
         parent::setUp();
         // Perform login if not already logged in
         if (!self::$isLoggedIn) {
-            error_log("[BrowserStack] Performing login");
             // Get login credentials from data provider
             $loginData = $this->loginDataProvider();
             $this->loginOnMikoPBX($loginData[0][0]);
             self::$isLoggedIn = true;
-            error_log("[BrowserStack] Login completed");
-        } else {
-            error_log("[BrowserStack] Skipping login - already logged in");
         }
     }
 

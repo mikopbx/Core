@@ -37,35 +37,32 @@ trait ElementInteractionTrait
         ]
     ];
 
-    /**
-     * Element states for wait conditions
-     */
-    protected const ELEMENT_STATES = [
-        'present' => 'presence',
-        'visible' => 'visibility',
-        'clickable' => 'clickable',
-        'invisible' => 'invisibility',
-        'selected' => 'selected',
-        'enabled' => 'enabled'
-    ];
-
 
     /**
-     * Find element safely without throwing exception
+     * Safely find a WebDriver element without throwing exceptions
      *
-     * @param string $xpath Element xpath
-     * @return \Facebook\WebDriver\WebDriverElement|null
+     * @param string $xpath XPath expression to locate the element
+     * @param \Facebook\WebDriver\WebDriverElement|null $context Optional parent element to search within
+     * @return \Facebook\WebDriver\WebDriverElement|null Found element or null if not found or any error
      */
-    protected function findElementSafely(string $xpath): ?\Facebook\WebDriver\WebDriverElement
+    protected function findElementSafely(string $xpath, ?\Facebook\WebDriver\WebDriverElement $context = null): ?\Facebook\WebDriver\WebDriverElement
     {
         try {
-            return self::$driver->findElement(WebDriverBy::xpath($xpath));
-        } catch (\Facebook\WebDriver\Exception\NoSuchElementException) {
+            $elements = [];
+
+            if ($context) {
+                $elements = $context->findElements(WebDriverBy::xpath($xpath));
+            } else {
+                $elements = self::$driver->findElements(WebDriverBy::xpath($xpath));
+            }
+
+            return count($elements) > 0 ? $elements[0] : null;
+        } catch (\Exception $e) {
+            // Здесь ловим любые другие исключения, которые могут возникнуть
+            $this->annotate("Exception in findElementSafelyUsingFindElements: " . $e->getMessage(), 'debug');
             return null;
         }
     }
-
-
     /**
      * Get current record ID from form
      *
