@@ -40,6 +40,7 @@ const extensionStatusLoopWorker = {
     timeOutHandle: 0,
     
     $statusLabel: $('#status'),
+    $endpointListField: $('#endpoint-list-field'),
 
     /**
      * initialize() - Initializes the objects and starts them.
@@ -79,7 +80,9 @@ const extensionStatusLoopWorker = {
     cbRefreshExtensionStatus(response) {
         extensionStatusLoopWorker.timeoutHandle =
             window.setTimeout(extensionStatusLoopWorker.worker, extensionStatusLoopWorker.timeOut);
-        if (response.length === 0 || response === false) return;
+        if (response.length === 0 || response === false) {
+            return;
+        }
         const $status = extensionStatusLoopWorker.$statusLabel;
 
         // Iterate over the response data and create HTML table rows for each peer
@@ -96,14 +99,14 @@ const extensionStatusLoopWorker = {
 
         if ('Status' in response && response.Status.toUpperCase().indexOf('REACHABLE') >= 0) {
             $status.removeClass('grey').addClass('green');
+            $status.html(globalTranslate.ex_Online);
+            extensionStatusLoopWorker.$endpointListField.show();
         } else {
             $status.removeClass('green').addClass('grey');
-        }
-        if ($status.hasClass('green')) {
-            $status.html(globalTranslate.ex_Online);
-        } else {
             $status.html(globalTranslate.ex_Offline);
+            extensionStatusLoopWorker.$endpointListField.hide();
         }
+
         extensionStatusLoopWorker.updateEndpointList(response);
     },
 

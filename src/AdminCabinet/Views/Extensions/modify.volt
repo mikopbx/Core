@@ -91,7 +91,10 @@
             </div>
         </div>
     </div>
-    <div id='endpoint-list' class="ui horizontal list"></div>
+    <div id='endpoint-list-field' class="field">
+        <label>{{ t._('ex_Endpoints') }}</label>
+        <div id='endpoint-list' class="ui horizontal list"></div>
+    </div>
 
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralTabFields')]) }}
 

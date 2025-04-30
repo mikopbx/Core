@@ -391,6 +391,7 @@ return [
     'ex_EmailAddress' => 'Адрес электронной почты',
     'ex_ThisEmailAlreadyRegisteredForOtherUser' => 'Введенный адрес уже зарегистрирован для',
     'ex_Language' => 'Язык интерфейса и оповещений',
+    'ex_Endpoints' => 'Подключенные устройства',
     'ex_Number' => 'Внутренний номер',
     'ex_ThisNumberIsNotFree' => 'Номер уже есть в базе данных',
     'ex_ThisNumberOverlapWithParkingSlots' => 'Пересечение с диапазоном номеров парковки',
