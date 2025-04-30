@@ -5,7 +5,7 @@
 
 <input type="file" name="update-file" accept=".zip" style="display: none!important;"/>
 
-<table class="ui celled selectable unstackable table" id="new-modules-table" style="display: none;">
+<table class="ui celled selectable unstackable very compact table" id="new-modules-table" style="display: none;">
     <thead>
     <tr>
         <th>{{ t._('ext_TableColumnDescription') }}</th>
