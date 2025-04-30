@@ -104,5 +104,80 @@ const extensionStatusLoopWorker = {
         } else {
             $status.html(globalTranslate.ex_Offline);
         }
+        extensionStatusLoopWorker.updateEndpointList(response);
     },
+
+    /**
+     * updateEndpointList() - Refreshes list endpoints.
+     * @param {Object} data - The response object from PbxApi.GetPeerStatus.
+     */
+    updateEndpointList(data){
+        const $endpointList = $('#endpoint-list');
+        // Extract all UserAgent and ViaAddress keys from the data
+        const userAgentKeys = Object.keys(data).filter(key => key.startsWith('UserAgent'));
+        const viaAddressKeys = Object.keys(data).filter(key => key.startsWith('ViaAddress'));
+
+        // Create an array of unique identifiers (UserAgent + IP) from the new data
+        const newIds = userAgentKeys.map((userAgentKey, index) => {
+            const userAgent = data[userAgentKey];
+            const viaAddressKey = viaAddressKeys[index];
+            const viaAddress = data[viaAddressKey];
+            const ip = extensionStatusLoopWorker.extractIP(viaAddress);
+            // Composite identifier: UserAgent + IP
+            return `${userAgent}|${ip}`;
+        });
+
+        // Remove elements that are not present in the new data
+        $endpointList.find('.item').each(function () {
+            const $item = $(this);
+            const id = $item.data('id');
+            if (!newIds.includes(id)) {
+                // Remove the item if its ID is not in the new data
+                $item.remove();
+            }
+        });
+
+        // Add new elements that are not yet in the DOM
+        userAgentKeys.forEach((userAgentKey, index) => {
+            const userAgent = data[userAgentKey];
+            const viaAddressKey = viaAddressKeys[index];
+            const viaAddress = data[viaAddressKey];
+            const ip = extensionStatusLoopWorker.extractIP(viaAddress);
+
+            if (userAgent && viaAddress) {
+                const id = `${userAgent}|${ip}`;
+
+                // Check if an element with this identifier already exists in the DOM
+                const $existingItem = $endpointList.find(`[data-id="${id}"]`);
+                if ($existingItem.length === 0) {
+                    // Create a new item if it doesn't exist
+                    const $itemDiv = $('<div>')
+                        .addClass('item')
+                        .attr('data-id', id);
+
+                    const $labelDiv = $('<div>').addClass('ui teal label').text(userAgent);
+                    const $detailDiv = $('<div>').addClass('detail').text(ip);
+
+                    $labelDiv.append($detailDiv);
+                    $itemDiv.append($labelDiv);
+                    $endpointList.append($itemDiv);
+                } else {
+                    // Update the existing item if the IP has changed
+                    const $detailDiv = $existingItem.find('.detail');
+                    if ($detailDiv.text() !== ip) {
+                        $detailDiv.text(ip);
+                    }
+                }
+            }
+        });
+    },
+
+    /**
+     * extractIP() - Get IP from string.
+     * @param {Object} viaAddress - address:port.
+     */
+    extractIP(viaAddress) {
+        const match = viaAddress.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);
+        return match ? match[0] : viaAddress;
+    }
 };

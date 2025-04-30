@@ -284,6 +284,9 @@ class ExtensionsController extends BaseController
             PBXCoreRESTClientProvider::HTTP_METHOD_GET,
             ['id' => $id]
         ]);
+        $this->assets->collection('headerCSS')
+            ->addCss('css/vendor/semantic/list.min.css', true);
+
         if ($restAnswer->success) {
             $getRecordStructure = (object)$restAnswer->data;
         } else {
