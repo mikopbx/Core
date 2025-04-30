@@ -25,7 +25,7 @@
 
     {% for provider in providerlist %}
         {% if loop.first %}
-            <table class="ui selectable unstackable table" id="providers-table">
+            <table class="ui selectable unstackable very compact table" id="providers-table">
             <thead>
             <tr>
                 <th></th>
