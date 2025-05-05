@@ -432,6 +432,10 @@ const generalSettingsModify = {
             Form.$submitButton.removeClass('disabled');
             generalSettingsModify.generateErrorMessageHtml(response);
         } else {
+            generalSettingsModify.$formObj.form('set value', 'WebAdminPassword', generalSettingsModify.hiddenPassword);
+            generalSettingsModify.$formObj.form('set value', 'WebAdminPasswordRepeat', generalSettingsModify.hiddenPassword);
+            generalSettingsModify.$formObj.form('set value', 'SSHPassword', generalSettingsModify.hiddenPassword);
+            generalSettingsModify.$formObj.form('set value', 'SSHPasswordRepeat', generalSettingsModify.hiddenPassword);
             $('.password-validate').remove();
         }
         generalSettingsModify.checkDeleteAllConditions();

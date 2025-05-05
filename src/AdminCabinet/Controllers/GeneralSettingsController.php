@@ -110,7 +110,7 @@ class GeneralSettingsController extends BaseController
             return;
         }
         $postData = self::sanitizeData($this->request->getPost(), $this->filter);
-
+        
         // No need to sanitize these fields
         $postData[PbxSettings::WEB_ADMIN_PASSWORD] = $this->request->getPost(PbxSettings::WEB_ADMIN_PASSWORD);
         $postData[PbxSettings::SSH_PASSWORD] = $this->request->getPost(PbxSettings::SSH_PASSWORD);
@@ -279,7 +279,10 @@ class GeneralSettingsController extends BaseController
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $data[$key];
                         PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue),  $messages['error']);
-                    } elseif($data[PbxSettings::WEB_ADMIN_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                    } elseif(
+                        $data[PbxSettings::WEB_ADMIN_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD
+                        && PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD) === $defaultPbxSettings[PbxSettings::SSH_PASSWORD]) 
+                    {
                         $newValue = $data[PbxSettings::WEB_ADMIN_PASSWORD];
                         PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue),  $messages['error']);
                     } else {
@@ -299,7 +302,8 @@ class GeneralSettingsController extends BaseController
                 case PbxSettings::WEB_ADMIN_PASSWORD:
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $this->security->hash($data[$key]);
-                    } elseif ($data[PbxSettings::SSH_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                    } elseif ($data[PbxSettings::SSH_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD 
+                        && PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD) === $defaultPbxSettings[PbxSettings::WEB_ADMIN_PASSWORD]) {
                         $newValue = $this->security->hash($data[PbxSettings::SSH_PASSWORD]);
                     } else {
                         continue;
