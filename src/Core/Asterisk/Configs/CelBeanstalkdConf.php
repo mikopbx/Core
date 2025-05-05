@@ -45,7 +45,7 @@ class CelBeanstalkdConf extends AsteriskConfigClass
                 "host = 127.0.0.1" . PHP_EOL .
                 "port = " . $config->port . PHP_EOL .
                 "priority = 1" . PHP_EOL .
-                "tube = {self::BEANSTALK_TUBE}" . PHP_EOL;
+                "tube = ".self::BEANSTALK_TUBE . PHP_EOL;
 
         // Write the configuration content to the file
         $this->saveConfig($conf, $this->description);
