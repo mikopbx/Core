@@ -427,8 +427,21 @@ class BaseController extends Controller
                 // Recursively sanitize array values
                 $data[$key] = self::sanitizeData($value, $filter);
             } elseif (is_string($value)) {
+                // Check if the string is valid JSON
+                $jsonDecoded = json_decode($value, true);
+                if (json_last_error() === JSON_ERROR_NONE && $value !== '') {
+                    // If it's valid JSON, sanitize its content and re-encode
+                    if (is_array($jsonDecoded)) {
+                        // Sanitize the JSON's content recursively
+                        $sanitizedJson = self::sanitizeData($jsonDecoded, $filter);
+                        $data[$key] = json_encode($sanitizedJson);
+                    } else {
+                        // For non-array JSON values (simple values), keep as is
+                        $data[$key] = $value;
+                    }
+                } 
                 // Check if the string starts with 'http'
-                if (stripos($value, 'http') === 0) {
+                else if (stripos($value, 'http') === 0) {
                     // If the string starts with 'http', sanitize it as a URL
                     $data[$key] = $filter->sanitize($value, FILTER::FILTER_URL);
                 } else {
