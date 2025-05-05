@@ -43,6 +43,12 @@ const EventBus = {
     subscribers: {},
 
     /**
+     * Counter for consecutive 403 errors
+     * @type {number}
+     */
+    forbidden403Count: 0,
+
+    /**
      * Initializes the event bus.
      */
     initialize() {
@@ -70,6 +76,8 @@ const EventBus = {
         EventBus.socket.onmessage = (event) => {
             const message = JSON.parse(event.data);
             EventBus.publish(message.type, message.data);
+            // Reset error counter on successful message
+            EventBus.forbidden403Count = 0;
         };
     
         // Handle errors
@@ -82,6 +90,23 @@ const EventBus = {
         EventBus.socket.onclose = (event) => {
             EventBus.publish('connection-status', false);
             
+            // Check if this was a 403 Forbidden error
+            if (event.code === 1006 || event.code === 1008) {
+                // Increment error counter
+                EventBus.forbidden403Count++;
+                console.warn(`WebSocket authentication error: ${EventBus.forbidden403Count} consecutive 403 errors`);
+                
+                // If we've had 3 consecutive 403 errors, reload the page
+                if (EventBus.forbidden403Count >= 3) {
+                    console.warn('Three consecutive 403 errors detected. Reloading page due to possible authentication loss.');
+                    window.location.reload();
+                    return;
+                }
+            } else {
+                // Reset counter for other types of errors
+                EventBus.forbidden403Count = 0;
+            }
+            
             // Schedule reconnection in 2 seconds
             setTimeout(() => {
                 EventBus.startListenPushNotifications();
@@ -91,6 +116,8 @@ const EventBus = {
         // Handle connection open
         EventBus.socket.onopen = () => {
             EventBus.publish('connection-status', true);
+            // Reset error counter on successful connection
+            EventBus.forbidden403Count = 0;
         };
     },
 
