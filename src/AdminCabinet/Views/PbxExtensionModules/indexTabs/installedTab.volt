@@ -5,7 +5,7 @@
 
 {% for module in modulelist %}
     {% if loop.first %}
-        <table class="ui selectable unstackable table" id="installed-modules-table">
+        <table class="ui selectable unstackable very compact table" id="installed-modules-table">
         <thead>
         <tr>
             <th></th>

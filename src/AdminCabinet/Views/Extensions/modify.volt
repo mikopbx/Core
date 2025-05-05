@@ -66,7 +66,7 @@
                 <label>{{ t._('ex_Secret') }}</label>
                 <div class="ui action input">
                     {{ form.render('sip_secret') }}
-                    <div class="ui teal icon button" id="generate-new-password">
+                    <div class="ui basic icon button" id="generate-new-password">
                         <i class="refresh icon"></i>
                     </div>
                 </div>
@@ -90,6 +90,10 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div id='endpoint-list-field' class="field">
+        <label>{{ t._('ex_Endpoints') }}</label>
+        <div id='endpoint-list' class="ui horizontal list"></div>
     </div>
 
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralTabFields')]) }}
