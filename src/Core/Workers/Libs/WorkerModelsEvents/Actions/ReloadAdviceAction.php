@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAmiPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckFirewalls;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSIPPasswords;
@@ -80,6 +81,7 @@ class ReloadAdviceAction implements ReloadActionInterface
             }
             foreach ($cacheKeys as $cacheKey => $value) {
                 $managedCache->delete($cacheKey);
+                SystemMessages::sysLogMsg(__METHOD__, "Cache key $cacheKey deleted on reload advice", LOG_DEBUG);
             }
         }
     }

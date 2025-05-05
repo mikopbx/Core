@@ -111,6 +111,10 @@ class GeneralSettingsController extends BaseController
         }
         $postData = self::sanitizeData($this->request->getPost(), $this->filter);
 
+        // No need to sanitize these fields
+        $postData[PbxSettings::WEB_ADMIN_PASSWORD] = $this->request->getPost(PbxSettings::WEB_ADMIN_PASSWORD);
+        $postData[PbxSettings::SSH_PASSWORD] = $this->request->getPost(PbxSettings::SSH_PASSWORD);
+
         $passwordCheckFail = $this->getSimplePasswords($postData);
         if (!empty($passwordCheckFail)) {
             foreach ($passwordCheckFail as $settingsKey) {
@@ -274,6 +278,10 @@ class GeneralSettingsController extends BaseController
                 case PbxSettings::SSH_PASSWORD:
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $data[$key];
+                        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue),  $messages['error']);
+                    } elseif($data[PbxSettings::WEB_ADMIN_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                        $newValue = $data[PbxSettings::WEB_ADMIN_PASSWORD];
+                        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue),  $messages['error']);
                     } else {
                         continue;
                     }
@@ -291,6 +299,8 @@ class GeneralSettingsController extends BaseController
                 case PbxSettings::WEB_ADMIN_PASSWORD:
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         $newValue = $this->security->hash($data[$key]);
+                    } elseif ($data[PbxSettings::SSH_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                        $newValue = $this->security->hash($data[PbxSettings::SSH_PASSWORD]);
                     } else {
                         continue;
                     }
@@ -301,25 +311,8 @@ class GeneralSettingsController extends BaseController
 
             if (array_key_exists($key, $data)) {
                 PbxSettings::setValueByKey($key, $newValue, $messages['error']);
-                 
-                // If SSHPassword is set, set SSHPasswordHashString
-                if ($key === PbxSettings::SSH_PASSWORD) {
-                    PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue), $messages['error']);
-                }
             }
         }
-
-         // Set newValue as WebAdminPassword if SSHPassword user inputted password
-         if (PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD) === $defaultPbxSettings[PbxSettings::SSH_PASSWORD] 
-         && $data[PbxSettings::WEB_ADMIN_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
-            PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD, $data[PbxSettings::WEB_ADMIN_PASSWORD], $messages['error']);
-         } 
-         
-         // Set newValue as SSHPassword if WebAdminPassword user inputted password
-         if (PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD) === $defaultPbxSettings[PbxSettings::WEB_ADMIN_PASSWORD] 
-         && $data[PbxSettings::SSH_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
-            PbxSettings::setValueByKey(PbxSettings::WEB_ADMIN_PASSWORD, $this->security->hash($data[PbxSettings::SSH_PASSWORD]), $messages['error']);
-         }
 
         // Reset a cloud provision flag
         PbxSettings::setValueByKey(PbxSettings::CLOUD_PROVISIONING, '1', $messages['error']);
