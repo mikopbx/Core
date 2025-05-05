@@ -20,7 +20,6 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-use Facebook\WebDriver\WebDriverBy;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;

@@ -78,12 +78,33 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
         $this->assertInputFieldValueEqual('WebAdminPassword', $params['checkPassword'], true);
         $this->assertInputFieldValueEqual('WebAdminPasswordRepeat', $params['checkPassword'], true);
 
-
-        // Wait until the $('#show-advice-button .red.icon') change to class to yellow.icon
-        $xpath = '//a[contains(@id, "show-advice-button")]/i[contains(@class,"red")]';
-        self::$driver->wait(50, 500)->until(
-            WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::xpath($xpath))
-        );
+        // Check if the red icon exists before waiting for it to disappear
+        $redIconXpath = '//a[contains(@id, "show-advice-button")]/i[contains(@class,"red")]';
+        
+        try {
+            $redIconElements = self::$driver->findElements(WebDriverBy::xpath($redIconXpath));
+            
+            if (count($redIconElements) > 0) {
+                // Only wait for the element to become invisible if it actually exists
+                self::$driver->wait(20, 500)->until(
+                    WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::xpath($redIconXpath))
+                );
+            }
+            
+            // Check for yellow icon presence, but don't fail the test if it's not there
+            // This is just for additional information
+            $yellowIconXpath = '//a[contains(@id, "show-advice-button")]/i[contains(@class,"yellow")]';
+            $yellowIconElements = self::$driver->findElements(WebDriverBy::xpath($yellowIconXpath));
+            if (count($yellowIconElements) > 0) {
+                self::annotate("Success: Yellow icon is present as expected after password change");
+            } else {
+                self::annotate("Note: Yellow icon is not present after password change, but test continues");
+            }
+            
+        } catch (\Exception $e) {
+            // If we can't find the element, log it but don't fail the test
+            self::fail("Note: Red icon element not found or other issue occurred: " . $e->getMessage());
+        }
     }
 
     // Change password field
