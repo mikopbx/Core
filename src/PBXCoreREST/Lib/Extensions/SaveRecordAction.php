@@ -432,6 +432,8 @@ class SaveRecordAction extends Injectable
      */
     private static function sanitizeCallerId(string $callerId): string
     {
+        // The letter Ё is not displayed correctly on some devices
+        $callerId = str_replace(['Ё','ё'], ['E', 'e'], $callerId);
         // Allow letters from any language, numbers, spaces, and common phone symbols.
         return preg_replace('/[^\p{L}\p{N}\s\+\-\.\@]/u', '', $callerId);
     }
