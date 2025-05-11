@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -277,16 +277,19 @@ class GeneralSettingsController extends BaseController
                     break;
                 case PbxSettings::SSH_PASSWORD:
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                        // User changed SSH password
                         $newValue = $data[$key];
-                        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue),  $messages['error']);
+                        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue), $messages['error']);
                     } elseif(
                         $data[PbxSettings::WEB_ADMIN_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD
-                        && PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD) === $defaultPbxSettings[PbxSettings::SSH_PASSWORD]) 
-                    {
+                        && PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD) === $defaultPbxSettings[PbxSettings::SSH_PASSWORD]
+                    ) {
+                        // Пользователь изменил Web пароль И текущий SSH пароль равен дефолтному
                         $newValue = $data[PbxSettings::WEB_ADMIN_PASSWORD];
-                        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue),  $messages['error']);
+                        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue), $messages['error']);
                     } else {
-                        continue;
+                        // User did not change SSH password, continue processing other settings
+                        continue 2; // Use continue 2 to skip to the next iteration of the outer loop
                     }
                     break;
                 case PbxSettings::SEND_METRICS:
@@ -301,12 +304,15 @@ class GeneralSettingsController extends BaseController
                     break;
                 case PbxSettings::WEB_ADMIN_PASSWORD:
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
+                        // User changed Web password
                         $newValue = $this->security->hash($data[$key]);
                     } elseif ($data[PbxSettings::SSH_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD 
                         && PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD) === $defaultPbxSettings[PbxSettings::WEB_ADMIN_PASSWORD]) {
+                        // User changed SSH password AND current Web password equals default
                         $newValue = $this->security->hash($data[PbxSettings::SSH_PASSWORD]);
                     } else {
-                        continue;
+                        // User did not change Web password, continue processing other settings
+                        continue 2; // Use continue 2 to skip to the next iteration of the outer loop
                     }
                     break;
                 default:
