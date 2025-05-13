@@ -540,8 +540,12 @@ class Network extends Injectable
 
         // If no DNS servers were found, use default ones and add them to named_dns
         if (count($dns) === 0) {
-            $resolv_conf .= "nameserver 4.4.4.4\n";
-            $named_dns[] .= "8.8.8.8";
+            $resolv_conf .= "nameserver 77.88.8.8  # Yandex DNS\n";
+            $resolv_conf .= "nameserver 1.1.1.1    # Cloudflare\n";
+            $resolv_conf .= "nameserver 8.8.8.8    # Google DNS\n";
+            $named_dns[] = "77.88.8.8";
+            $named_dns[] = "1.1.1.1";
+            $named_dns[] = "8.8.8.8";
         }
 
         // Check if systemctl is available
@@ -635,7 +639,7 @@ class Network extends Injectable
      */
     public function generatePdnsdConfig(array $named_dns): void
     {
-        $tempDir = $this->di->getShared('config')->path('core.tempDir');
+        $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR);
         $cache_dir = $tempDir . '/pdnsd/cache';
         Util::mwMkdir($cache_dir);
 
