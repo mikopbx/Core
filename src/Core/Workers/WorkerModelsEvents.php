@@ -161,10 +161,6 @@ class WorkerModelsEvents extends WorkerBase
             if ($state) {
                 $this->plannedReloadActions = $state['plannedReloadActions'] ?? [];
                 $this->last_change = $state['last_change'] ?? time() - $this->timeout;
-                
-                $savedTime = $state['timestamp'] ?? 0;
-                $timeDifference = time() - $savedTime;
-                
                 // Delete old keys since we've loaded the state
                 foreach ($keys as $key) {
                     if ($key !== $latestKey) {
@@ -386,7 +382,9 @@ class WorkerModelsEvents extends WorkerBase
             pcntl_signal_dispatch();
             
             // Wait for events with a short timeout
-            $this->beanstalkClient->wait(3);
+            $this->beanstalkClient->wait(1);
+
+            $this->startReload();
         }
         
         // Save state before exit
@@ -430,7 +428,6 @@ class WorkerModelsEvents extends WorkerBase
                 $continueWaiting = true;
                 foreach ($this->plannedReloadActions as $actionClassName => $actionParameters) {
                     if (in_array($actionClassName, $actionsListForImmediateReload, true)) {
-                        SystemMessages::sysLogMsg(__METHOD__, "Immediate reload action $actionClassName received. Reloading now.", LOG_DEBUG);
                         $continueWaiting = false;
                         break;
                     }
