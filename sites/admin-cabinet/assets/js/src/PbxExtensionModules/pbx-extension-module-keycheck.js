@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -309,7 +309,7 @@ const keyCheck = {
             } else {
                 row += `<div class="ui positive message">${product.name}`;
                 if (product.expired.length > 0) {
-                    let expiredText = globalTranslate.lic_ExpiredAfter({expired: product.expired});
+                    let expiredText = i18n('lic_ExpiredAfter', {expired: product.expired});
                     row += `<br><small>${expiredText}</small>`;
                 }
                 row += '<br><span class="features">';
@@ -319,7 +319,7 @@ const keyCheck = {
                     if (featureValue['@attributes'] !== undefined) {
                         feature = featureValue['@attributes'];
                     }
-                    let featureInfo = globalTranslate.lic_FeatureInfo({name: feature.name, count: feature.count, counteach: feature.counteach, captured: feature.captured});
+                    let featureInfo = i18n('lic_FeatureInfo', {name: feature.name, count: feature.count, counteach: feature.counteach, captured: feature.captured});
                     row += `${featureInfo}<br>`;
                 });
                 row += '</span>';
