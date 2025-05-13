@@ -73,7 +73,7 @@ class InstallFromPackageAction extends ModuleInstallationBase
 
         // Singleton the installation process
         try{
-            $res = $mutex->synchronized(
+            $res = $mutex->synchronized(ModuleInstallationBase::MODULE_MANIPULATION_MUTEX_KEY,
                 function () use ($res): PBXApiResult {
 
                     // Wait until file upload and merge
