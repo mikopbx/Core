@@ -125,7 +125,6 @@ class WorkerModelsEvents extends WorkerBase
             
             $workerKey = self::REDIS_PREFIX . self::class . ':' . getmypid();
             $this->managedCache->set($workerKey, $state, self::REDIS_TTL);
-            SystemMessages::sysLogMsg(__METHOD__, "Worker state saved to Redis with key: $workerKey", LOG_DEBUG);
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
@@ -142,7 +141,6 @@ class WorkerModelsEvents extends WorkerBase
             $keys = $this->managedCache->getAdapter()->keys($keyPattern);
             
             if (empty($keys)) {
-                SystemMessages::sysLogMsg(__METHOD__, "No previous worker state found in Redis", LOG_DEBUG);
                 return;
             }
             
@@ -166,13 +164,6 @@ class WorkerModelsEvents extends WorkerBase
                 
                 $savedTime = $state['timestamp'] ?? 0;
                 $timeDifference = time() - $savedTime;
-                
-                SystemMessages::sysLogMsg(
-                    __METHOD__, 
-                    "Worker state restored from Redis key: $latestKey. State was saved $timeDifference seconds ago. " . 
-                    "Found " . count($this->plannedReloadActions) . " planned actions.", 
-                    LOG_DEBUG
-                );
                 
                 // Delete old keys since we've loaded the state
                 foreach ($keys as $key) {
