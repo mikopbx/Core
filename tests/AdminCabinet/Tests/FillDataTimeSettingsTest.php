@@ -61,7 +61,7 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         // Save the settings
         $this->submitForm('time-settings-form');
 
-        sleep(10); // Wait for the nginx will be restarted
+        sleep(30); // Wait for the nginx will be restarted
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/time-settings/modify/');
 
