@@ -434,21 +434,21 @@ const extension = {
             // If so, clear the 'fwd_ringlength' field and set 'fwd_forwarding' to -1
             extension.$formObj.form('set value', 'fwd_ringlength', 0);
             extension.$fwd_forwarding.dropdown('set text', '-').dropdown('set value', -1);
-            extension.$formObj.form('set value', 'fwd_forwarding', -1);
+            //extension.$formObj.form('set value', 'fwd_forwarding', -1);
         }
 
         // Check if forwarding when busy was set to the mobile number
         if (extension.$formObj.form('get value', 'fwd_forwardingonbusy') === extension.defaultMobileNumber) {
             // If so, set 'fwd_forwardingonbusy' to -1
             extension.$fwd_forwardingonbusy.dropdown('set text', '-').dropdown('set value', -1);
-            extension.$formObj.form('set value', 'fwd_forwardingonbusy', -1);
+            //extension.$formObj.form('set value', 'fwd_forwardingonbusy', -1);
         }
 
         // Check if forwarding when unavailable was set to the mobile number
         if (extension.$formObj.form('get value', 'fwd_forwardingonunavailable') === extension.defaultMobileNumber) {
             // If so, set 'fwd_forwardingonunavailable' to -1
             extension.$fwd_forwardingonunavailable.dropdown('set text', '-').dropdown('set value', -1);
-            extension.$formObj.form('set value', 'fwd_forwardingonunavailable', -1);
+            //extension.$formObj.form('set value', 'fwd_forwardingonunavailable', -1);
         }
 
         // Clear the default mobile number
