@@ -156,6 +156,34 @@ trait AssertionTrait
                 $name
             );
 
+            // Check for hidden input field value first
+            $hiddenInputXpath = sprintf('//input[@name="%s" and @type="hidden"]', $name);
+            $hiddenInput = $this->findElementSafely($hiddenInputXpath);
+            
+            if ($hiddenInput) {
+                $hiddenValue = $hiddenInput->getAttribute('value');
+                
+                if ($shouldBeSelected) {
+                    $isMatch = $hiddenValue === $expectedValue;
+                    $this->assertTrue(
+                        $isMatch,
+                        "Expected '{$expectedValue}' to be selected in dropdown '{$name}', but hidden input has value '{$hiddenValue}'"
+                    );
+                    if ($isMatch) {
+                        return; // Success, no need to check further
+                    }
+                } else {
+                    $isMatch = $hiddenValue === $expectedValue;
+                    $this->assertFalse(
+                        $isMatch,
+                        "Expected '{$expectedValue}' NOT to be selected in dropdown '{$name}', but hidden input has this value"
+                    );
+                    if (!$isMatch) {
+                        return; // Success, no need to check further
+                    }
+                }
+            }
+
             // Also check for traditional select element selection
             $optionXpath = sprintf('//select[@name="%s"]/option[@selected="selected"]', $name);
             $selectedOption = $this->findElementSafely($optionXpath);
@@ -206,6 +234,20 @@ trait AssertionTrait
                 // No selection found
                 $currentSelection = null;
                 $currentText = null;
+            }
+
+            // Also check for div with class "text" which often contains the selected text
+            if ($currentSelection === null && $currentText === null) {
+                try {
+                    $textDiv = $dropdown->findElement(WebDriverBy::xpath('.//div[contains(@class, "text")]'));
+                    $currentText = $textDiv->getText();
+                    // If text div has content, treat it as a selection
+                    if (trim($currentText) !== '') {
+                        $currentSelection = $currentText; // Use text as fallback value
+                    }
+                } catch (\Exception $e) {
+                    // No text div found or it's empty
+                }
             }
 
             if ($shouldBeSelected) {

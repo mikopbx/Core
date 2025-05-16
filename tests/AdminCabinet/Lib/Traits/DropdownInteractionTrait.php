@@ -84,7 +84,7 @@ trait DropdownInteractionTrait
             self::$driver->wait($waitTime, 100)->until(
                 function () use ($dropdown) {
                     try {
-                        return strpos($dropdown->getAttribute('class'), 'visible') !== false;
+                        return strpos($dropdown->getAttribute('class'), 'active visible') !== false;
                     } catch (StaleElementReferenceException $e) {
                         // Элемент стал устаревшим - вероятно, DOM обновился
                         return false;
@@ -101,10 +101,12 @@ trait DropdownInteractionTrait
                         $menuXpath = './/div[contains(@class, "menu")]';
                         $menu = $dropdown->findElement(WebDriverBy::xpath($menuXpath));
                         return $menu->isDisplayed();
-                    } catch (StaleElementReferenceException $e) {
-                        // Элемент стал устаревшим - вероятно, DOM обновился
+                    } catch (NoSuchElementException | StaleElementReferenceException $e) {
+                        // Тихо игнорируем ожидаемые исключения во время ожидания
                         return false;
                     } catch (\Exception $e) {
+                        // Для других исключений логируем только в debug
+                        $this->annotate("Waiting for menu to appear: " . $e->getMessage(), 'debug');
                         return false;
                     }
                 }
@@ -114,7 +116,12 @@ trait DropdownInteractionTrait
             usleep(300000); // 300ms
 
             return true;
+        } catch (TimeoutException $e) {
+            // Для таймаута логируем как warning, так как это реальная проблема
+            $this->annotate("Timeout waiting for dropdown to open: " . $e->getMessage(), 'warning');
+            return false;
         } catch (\Exception $e) {
+            // Для других неожиданных исключений тоже логируем как warning
             $this->annotate("Error waiting for dropdown to open: " . $e->getMessage(), 'warning');
             return false;
         }
@@ -563,8 +570,10 @@ trait DropdownInteractionTrait
                 $this->scrollIntoView($dropdown);
                 $dropdown->click();
 
-                // Ждем небольшую паузу для открытия меню
-                usleep(500000); // 500ms
+                // Ждем, пока dropdown откроется (до 30 секунд)
+                if (!$this->waitForDropdownToOpen($dropdown, 30)) {
+                    throw new RuntimeException("Dropdown '{$name}' failed to open after 30 seconds");
+                }
             }
 
             // 4. Ищем элемент в меню с нужным значением

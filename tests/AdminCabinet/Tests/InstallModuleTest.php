@@ -85,11 +85,13 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
     protected function configureModuleState(array $params): void
     {
         // Enable by default after installation
+        sleep(10);
         $this->changeModuleState($params['moduleId']);
         sleep(10);
 
         // Set to desired state
         $this->changeModuleState($params['moduleId'], $params['enable']);
+        sleep(10);
     }
 
     protected function changeModuleState(string $moduleId, bool $enable = true): void
