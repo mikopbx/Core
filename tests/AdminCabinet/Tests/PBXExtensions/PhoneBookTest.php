@@ -35,4 +35,9 @@ class PhoneBookTest extends InstallModuleTest
     {
         return ModuleDataFactory::getModuleData('phonebook');
     }
+
+    public function testInstallModule(): void
+    {
+        parent::testInstallModule();
+    }
 }

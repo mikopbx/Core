@@ -72,14 +72,35 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
 
     protected function verifyInstallation(array $params): void
     {
-        $wait = new WebDriverWait(self::$driver, self::INSTALLATION_TIMEOUT);
-        $deleteButton = $wait->until(
-            WebDriverExpectedCondition::visibilityOfElementLocated(
-                WebDriverBy::xpath($this->getDeleteButtonXPath($params['moduleId']))
-            )
-        );
+        $startTime = time();
+        $timeout = self::INSTALLATION_TIMEOUT;
+        $success = false;
 
-        $this->assertTrue($deleteButton->isDisplayed(), "Module {$params['moduleId']} was not installed properly");
+        while (time() - $startTime < $timeout) {
+            try {
+                // Refresh the page to handle Nginx restarts
+                self::$driver->navigate()->refresh();
+                $this->waitForAjax();
+
+                // Wait a few seconds for page to load properly
+                sleep(self::STATE_CHECK_INTERVAL);
+
+                // Try to find the delete button
+                $deleteButton = self::$driver->findElement(
+                    WebDriverBy::xpath($this->getDeleteButtonXPath($params['moduleId']))
+                );
+                
+                if ($deleteButton->isDisplayed()) {
+                    $success = true;
+                    break;
+                }
+            } catch (\Exception $e) {
+                // If element not found or other error, continue trying
+                sleep(self::STATE_CHECK_INTERVAL);
+            }
+        }
+
+        $this->assertTrue($success, "Module {$params['moduleId']} was not installed properly after {$timeout} seconds");
     }
 
     protected function configureModuleState(array $params): void

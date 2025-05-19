@@ -35,4 +35,9 @@ class SmartIVRTest extends InstallModuleTest
     {
         return ModuleDataFactory::getModuleData('smart.ivr');
     }
+
+    public function testInstallModule(): void
+    {
+        parent::testInstallModule();
+    }
 }

@@ -35,4 +35,9 @@ class AutoprovisionTest extends InstallModuleTest
     {
         return ModuleDataFactory::getModuleData('autoprovision');
     }
+
+    public function testInstallModule(): void
+    {
+        parent::testInstallModule();
+    }
 }

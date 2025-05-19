@@ -35,4 +35,9 @@ class BackupTest extends InstallModuleTest
     {
         return ModuleDataFactory::getModuleData('backup');
     }
+
+    public function testInstallModule(): void
+    {
+        parent::testInstallModule();
+    }
 }

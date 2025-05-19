@@ -35,4 +35,9 @@ class UsersGroupsTest extends InstallModuleTest
     {
         return ModuleDataFactory::getModuleData('users.groups');
     }
+
+    public function testInstallModule(): void
+    {
+        parent::testInstallModule();
+    }
 }

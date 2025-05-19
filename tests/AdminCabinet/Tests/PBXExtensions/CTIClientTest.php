@@ -35,4 +35,9 @@ class CTIClientTest extends InstallModuleTest
     {
         return ModuleDataFactory::getModuleData('cti.client');
     }
+
+    public function testInstallModule(): void
+    {
+        parent::testInstallModule();
+    }
 }

@@ -35,4 +35,9 @@ class DockerTest extends InstallModuleTest
     {
         return ModuleDataFactory::getModuleData('docker');
     }
+
+    public function testInstallModule(): void
+    {
+        parent::testInstallModule();
+    }
 }
