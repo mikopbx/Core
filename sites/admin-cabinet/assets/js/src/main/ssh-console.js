@@ -50,43 +50,81 @@ const sshConsole = {
      * Initializes the SSH console functionality.
      */
     initialize() {
-        if (!sshConsole.$menuLink) {
+        if (!sshConsole.$menuLink.length) {
             return;
         }
         let connectionAddress = sshConsole.$menuLink.attr('data-value');
         const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor) && !(navigator.userAgent.match(/Opera|OPR\//));
+        
         if (isChrome) {
-            sshConsole.detect(
-                'chrome-extension://iodihamcpbpeioajjeobimgagajmlibd',
-                () => {
-                    sshConsole.link = `chrome-extension://iodihamcpbpeioajjeobimgagajmlibd/html/nassh.html#${connectionAddress}`;
-                    sshConsole.target = '_blank';
-                },
-                () => {
-                    sshConsole.link = 'https://chrome.google.com/webstore/detail/iodihamcpbpeioajjeobimgagajmlibd';
-                    sshConsole.target = '_blank';
-                },
-            );
+            // Extension ID for Secure Shell App
+            const extensionId = 'iodihamcpbpeioajjeobimgagajmlibd';
+            
+            // Configure links regardless of extension status
+            // We'll just redirect to the appropriate place when clicked
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                // Chrome with runtime API available - try to detect extension
+                sshConsole.detectExtension(
+                    extensionId,
+                    () => {
+                        // Extension is installed
+                        sshConsole.link = `chrome-extension://${extensionId}/html/nassh.html#${connectionAddress}`;
+                        sshConsole.target = '_blank';
+                    },
+                    () => {
+                        // Extension is not installed, redirect to Chrome Web Store
+                        sshConsole.link = `https://chrome.google.com/webstore/detail/${extensionId}`;
+                        sshConsole.target = '_blank';
+                    }
+                );
+            } else {
+                // Chrome runtime API not available, assume extension not installed
+                sshConsole.link = `https://chrome.google.com/webstore/detail/${extensionId}`;
+                sshConsole.target = '_blank';
+            }
+            
             $('body').on('click', `a[href$="${globalRootUrl}console/index/"]`, (e) => {
                 e.preventDefault();
                 window.open(sshConsole.link, sshConsole.target);
             });
         } else {
+            // Not Chrome - hide the SSH console link
             sshConsole.$menuLink.hide();
         }
     },
 
     /**
-     * Detects if the SSH console extension is installed.
-     * @param {string} base - Base URL of the SSH console extension.
-     * @param {Function} ifInstalled - Callback function to execute if the extension is installed.
-     * @param {Function} ifNotInstalled - Callback function to execute if the extension is not installed.
+     * Detects if the SSH console extension is installed using chrome.runtime API.
+     * @param {string} extensionId - Extension ID to check
+     * @param {Function} ifInstalled - Callback function to execute if the extension is installed
+     * @param {Function} ifNotInstalled - Callback function to execute if the extension is not installed
      */
-    detect(base, ifInstalled, ifNotInstalled) {
-        $.get(`${base}/html/nassh.html`)
-            .done(ifInstalled)
-            .fail(ifNotInstalled);
-    },
+    detectExtension(extensionId, ifInstalled, ifNotInstalled) {
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+            try {
+                // Try to communicate with the extension
+                chrome.runtime.sendMessage(
+                    extensionId, 
+                    { message: 'ping' }, 
+                    response => {
+                        if (chrome.runtime.lastError) {
+                            // Extension is not installed or disabled
+                            ifNotInstalled();
+                        } else {
+                            // Extension is installed
+                            ifInstalled();
+                        }
+                    }
+                );
+            } catch (e) {
+                // Error occurred, assume extension is not installed
+                ifNotInstalled();
+            }
+        } else {
+            // Chrome runtime API not available, assume extension is not installed
+            ifNotInstalled();
+        }
+    }
 };
 
 /**
