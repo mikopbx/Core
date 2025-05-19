@@ -335,6 +335,9 @@ const keyCheck = {
      * @param success
      */
     cbAfterFormProcessing(response, success) {
+        keyCheck.$formObj.removeClass('loading');
+        keyCheck.$saveKeyButton.removeClass('loading disabled');
+        keyCheck.$activateCouponButton.removeClass('loading disabled');
         if (success === true) {
             if (typeof response.data.PBXLicense !== 'undefined') {
                 globalPBXLicense = response.data.PBXLicense;
@@ -372,9 +375,6 @@ const keyCheck = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-        keyCheck.$formObj.removeClass('loading');
-        keyCheck.$saveKeyButton.removeClass('loading disabled');
-        keyCheck.$activateCouponButton.removeClass('loading disabled');
         const formData = keyCheck.$formObj.form('get values');
         PbxApi.LicenseProcessUserRequest(formData, keyCheck.cbAfterFormProcessing);
     },
