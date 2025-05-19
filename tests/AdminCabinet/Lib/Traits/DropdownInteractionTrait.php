@@ -84,7 +84,7 @@ trait DropdownInteractionTrait
             self::$driver->wait($waitTime, 100)->until(
                 function () use ($dropdown) {
                     try {
-                        return strpos($dropdown->getAttribute('class'), 'active visible') !== false;
+                        return (strpos($dropdown->getAttribute('class'), 'active') !== false && strpos($dropdown->getAttribute('class'), 'visible') !== false);
                     } catch (StaleElementReferenceException $e) {
                         // Элемент стал устаревшим - вероятно, DOM обновился
                         return false;
@@ -99,8 +99,13 @@ trait DropdownInteractionTrait
                 function () use ($dropdown) {
                     try {
                         $menuXpath = './/div[contains(@class, "menu")]';
-                        $menu = $dropdown->findElement(WebDriverBy::xpath($menuXpath));
-                        return $menu->isDisplayed();
+                        $menus = $dropdown->findElements(WebDriverBy::xpath($menuXpath));
+                        foreach ($menus as $menu) {
+                            if ($menu->isDisplayed()) {
+                                return true;
+                            }
+                        }
+                        return false;
                     } catch (NoSuchElementException | StaleElementReferenceException $e) {
                         // Тихо игнорируем ожидаемые исключения во время ожидания
                         return false;

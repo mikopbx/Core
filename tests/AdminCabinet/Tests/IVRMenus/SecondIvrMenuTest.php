@@ -32,4 +32,9 @@ class SecondIvrMenuTest extends CreateIVRMenuTest
     {
         return IVRMenuDataFactory::getIVRMenuData('second.ivr.menu');
     }
+
+    public function testCreateIVRMenu(): void
+    {
+        parent::testCreateIVRMenu();
+    }
 }

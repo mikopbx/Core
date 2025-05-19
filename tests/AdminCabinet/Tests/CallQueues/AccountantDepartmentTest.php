@@ -25,11 +25,17 @@ use MikoPBX\Tests\AdminCabinet\Tests\Data\CallQueueDataFactory;
 
 /**
  * Test class for creating Accountant department Call Queue
+ * docker exec -it mikopbx_php83 /bin/sh -c "/offload/rootfs/usr/www/vendor/bin/phpunit --configuration /offload/rootfs/usr/www/tests/AdminCabinet/debug-unit.xml /offload/rootfs/usr/www/tests/AdminCabinet/Tests/CallQueues/AccountantDepartmentTest.php"
  */
 class AccountantDepartmentTest extends CreateCallQueueTest
 {
     protected function getCallQueueData(): array
     {
         return CallQueueDataFactory::getCallQueueData('accountant.department');
+    }
+
+    public function testCreateCallQueue(): void
+    {
+        parent::testCreateCallQueue();
     }
 }

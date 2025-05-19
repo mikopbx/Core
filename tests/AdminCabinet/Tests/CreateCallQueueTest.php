@@ -22,7 +22,6 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
-use MikoPBX\Tests\AdminCabinet\Tests\Traits\LoginTrait;
 
 /**
  * Base class for Call Queue creation tests
