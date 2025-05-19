@@ -43,7 +43,7 @@ class IVRMenuDataFactory
             'timeout' => 15,
             'timeout_extension' => '202',
             'allow_enter_any_internal_extension' => true,
-            'extension' => 20021
+            'extension' => 30021
         ],
         'main.ivr.menu' => [
             'description' => 'First level IVR menu, with agents numbers and another IVR menu included',
