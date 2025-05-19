@@ -58,6 +58,12 @@ const extensionsIndex = {
     dataTable: {},
 
     /**
+     * Timeout reference for retry attempts
+     * @type {number}
+     */
+    retryTimeout: null,
+
+    /**
      * The document body.
      * @type {jQuery}
      */
@@ -231,6 +237,22 @@ const extensionsIndex = {
             ajax: {
                 url: `${globalRootUrl}extensions/getNewRecords`,
                 type: 'POST',
+                error: function(xhr, textStatus, error) {
+                    // Suppress the default error alert
+                    console.log('DataTable request failed, will retry in 3 seconds');
+                    
+                    // Clear any existing retry timeout
+                    if (extensionsIndex.retryTimeout) {
+                        clearTimeout(extensionsIndex.retryTimeout);
+                    }
+                    
+                    // Set up retry after 3 seconds
+                    extensionsIndex.retryTimeout = setTimeout(function() {
+                        extensionsIndex.dataTable.ajax.reload(null, false);
+                    }, 3000);
+                    
+                    return false; // Prevent default error handling
+                }
             },
             paging: true,
             // stateSave: true,
@@ -284,6 +306,11 @@ const extensionsIndex = {
                     on: 'manual',
                 });
             },
+            // Disable DataTables error alerts completely
+            fnInitComplete: function() {
+                // Override DataTables error event handler
+                $.fn.dataTable.ext.errMode = 'none';
+            }
         });
 
         // Set the select input value to the saved value if it exists
