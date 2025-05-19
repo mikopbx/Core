@@ -1,6 +1,5 @@
 <div class="ui large scrolling modal module-detail-popup" id="module-details-template">
     <i class="close icon"></i>
-    <div class="ui top right attached label"> <i class="icon download"></i><span class="module-count-installed">{# countOfInstallations #}</span></div>
     <div class="ui basic segment">
         <div class="ui inverted active dimmer">
             <div class="ui text loader">Loading</div>
@@ -26,13 +25,14 @@
         <div class="equal width middle aligned row">
             <div class="column" >{{ t._('ext_ModuleLastRelease') }}: <b class="module-latest-release"></b></div>
             <div class="column">{{ t._('ext_ModulePublisher') }}: <b class="module-publisher"></b></div>
+            <div class="column">{{ t._('ext_ModuleInstallations') }}: </i><span class="module-count-installed">{# countOfInstallations #}</span></div>
             <div class="column module-commercial">{# commercial #}</div>
             <div class="column">
                 <a class="ui icon labeled blue button download main-install-button"  data-uniqid = "">
                     <i class="icon download"></i>
                     <span class="percent"></span>
-                    <span class="button-text">{{ t._('ext_InstallModuleShort') }}</span>
-                    (<span class="module-latest-release-size"></span>)
+                    <div class="button-text">{{ t._('ext_InstallModuleShort') }}</div>
+                    {#(<span class="module-latest-release-size"></span>)#}
                 </a>
                 {# sizeInfo #}
             </div>

@@ -301,8 +301,3 @@ const marketplace = {
     },
 
 };
-
-// When the document is ready, initialize the external modules table and fetch a list of available modules from the repo
-$(document).ready(() => {
-    marketplace.initialize();
-});

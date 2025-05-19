@@ -1078,6 +1078,7 @@ return [
     'ext_ModulePublisher' => 'Разработчик',
     'ext_ModuleDescriptionTab' => 'Описание модуля',
     'ext_ModuleChangelogTab' => 'История версий',
+    'ext_ModuleInstallations' => 'Установлено',
     'ext_UsefulLinks' => 'Полезные ссылки',
     'ext_ExternalDescription' => 'Подробное описание, документация',
     'ext_CommercialModule' => 'Платный модуль',

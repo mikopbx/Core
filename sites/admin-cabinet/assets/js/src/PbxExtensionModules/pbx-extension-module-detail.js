@@ -163,7 +163,7 @@ const extensionModuleDetail = {
             }
 
             // Screenshots
-            if (repoData.screenshots !== undefined && repoData.screenshots.length>0) {
+            if (repoData.screenshots && repoData.screenshots.length>0) {
                 const screenshotsView = extensionModuleDetail.prepareScreenshotsView(repoData.screenshots);
                 $newPopup.find('.module-screenshots').html(screenshotsView);
             } else {
@@ -181,7 +181,7 @@ const extensionModuleDetail = {
             // Initialize the image slider for screenshots, if any
             extensionModuleDetail.initializeSlider($newPopup);
 
-            // Total count of installations
+            // Eula
             if (repoData.eula) {
                 $newPopup.find('.module-eula').html(UserMessage.convertToText(repoData.eula));
             } else {
