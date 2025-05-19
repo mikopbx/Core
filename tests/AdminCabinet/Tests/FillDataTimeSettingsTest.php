@@ -67,6 +67,9 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         // Save the settings
         $this->submitForm('time-settings-form');
 
+        // Wait for 15 seconds until Nginx is restarted
+        sleep(10);
+
         // Wait for the system to be ready after services restart
         if (!$this->waitForSystemReady()) {
             self::annotate("Warning: System did not respond within expected timeframe", 'warning');
