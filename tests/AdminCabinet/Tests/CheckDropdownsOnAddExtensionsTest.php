@@ -151,6 +151,9 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
             $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=all")');
             $this->annotate("sessionStorage Item after creation extension on Extensions dropdown: " . $debug, 'info');
             $this->fail('Not found menuitem ' . $extensionTPL . ' after creating it on Extension routing tab');
+        } else {
+            $this->annotate("Found menuitem " . $extensionTPL . ' after creating it on Extension routing tab', 'info');
+            $this->assertTrue(true);
         }
     }
 
