@@ -4,17 +4,20 @@ build:
       image: default-bionic
       environment:
         php:
-          version: 8.2
+          version: 8.3.12
           pecl_extensions:
             - phalcon-5.8.0
             - mailparse
       dependencies:
         after:
             - composer require --dev phalcon/ide-stubs:v5.8.0
+            - composer require phpstan/phpstan --dev
+
       tests:
         override:
           - php-scrutinizer-run
           - js-scrutinizer-run
+          - command: vendor/bin/phpstan analyse src --level=0
 checks:
   php:
     fix_php_opening_tag: false
