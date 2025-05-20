@@ -32,4 +32,9 @@ class ProviderDeleteTest extends CreateSIPProviderTest
     {
         return SIPProviderDataFactory::getSIPProviderData('provider.delete');
     }
+
+    public function testCreateSIPProvider(): void
+    {
+        parent::testCreateSIPProvider();
+    }
 }

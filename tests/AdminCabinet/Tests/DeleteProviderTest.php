@@ -94,7 +94,7 @@ class DeleteProviderTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params['mango.delete'] = [SIPProviderDataFactory::getSIPProviderData('mango.delete')];
+        $params['provider.delete'] = [SIPProviderDataFactory::getSIPProviderData('provider.delete')];
         $params['voxlink.iax.delete'] = [IAXProviderDataFactory::getIAXProviderData('voxlink.iax.delete')];
         return $params;
     }

@@ -21,7 +21,6 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
-use MikoPBX\Tests\AdminCabinet\Tests\Traits\LoginTrait;
 use MikoPBX\Tests\AdminCabinet\Tests\Traits\IncomingCallRulesTrait;
 
 /**
@@ -29,7 +28,6 @@ use MikoPBX\Tests\AdminCabinet\Tests\Traits\IncomingCallRulesTrait;
  */
 abstract class CreateIncomingCallRuleTest extends MikoPBXTestsBase
 {
-    use LoginTrait;
     use IncomingCallRulesTrait;
     private static bool $isTableCleared = false;
 

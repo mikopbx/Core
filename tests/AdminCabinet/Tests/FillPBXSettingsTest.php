@@ -5,7 +5,6 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 use MikoPBX\Tests\AdminCabinet\Tests\Data\PBXSettingsDataFactory;
-use MikoPBX\Tests\AdminCabinet\Tests\Traits\LoginTrait;
 use MikoPBX\Tests\AdminCabinet\Tests\Traits\TabNavigationTrait;
 
 /**

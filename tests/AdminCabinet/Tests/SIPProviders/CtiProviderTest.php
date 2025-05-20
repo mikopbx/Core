@@ -32,4 +32,9 @@ class CtiProviderTest extends CreateSIPProviderTest
     {
         return SIPProviderDataFactory::getSIPProviderData('cti.provider');
     }
+
+    public function testCreateSIPProvider(): void
+    {
+        parent::testCreateSIPProvider();
+    }
 }

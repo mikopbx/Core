@@ -32,4 +32,9 @@ class VoxlinkIaxTest extends CreateIAXProviderTest
     {
         return IAXProviderDataFactory::getIAXProviderData('voxlink.iax');
     }
+
+    public function testCreateIAXProvider(): void
+    {
+        parent::testCreateIAXProvider();
+    }
 }

@@ -32,4 +32,9 @@ class PctelTest extends CreateSIPProviderTest
     {
         return SIPProviderDataFactory::getSIPProviderData('pctel');
     }
+
+    public function testCreateSIPProvider(): void
+    {
+        parent::testCreateSIPProvider();
+    }
 }

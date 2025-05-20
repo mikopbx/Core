@@ -32,4 +32,9 @@ class VoxlinkIaxDeleteTest extends CreateIAXProviderTest
     {
         return IAXProviderDataFactory::getIAXProviderData('voxlink.iax.delete');
     }
+
+    public function testCreateIAXProvider(): void
+    {
+        parent::testCreateIAXProvider();
+    }
 }

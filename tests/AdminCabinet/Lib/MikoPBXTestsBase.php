@@ -3,9 +3,6 @@
 namespace MikoPBX\Tests\AdminCabinet\Lib;
 
 use Exception;
-use Facebook\WebDriver\WebDriverBy;
-use Facebook\WebDriver\WebDriverExpectedCondition;
-use Facebook\WebDriver\WebDriverWait;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\Traits\AssertionTrait;
 use MikoPBX\Tests\AdminCabinet\Lib\Traits\ElementInteractionTrait;

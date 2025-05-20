@@ -3,14 +3,12 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
-use MikoPBX\Tests\AdminCabinet\Tests\Traits\LoginTrait;
 
 /**
  * Base class for IAX provider creation tests
  */
 abstract class CreateIAXProviderTest extends MikoPBXTestsBase
 {
-    use LoginTrait;
 
     protected function setUp(): void
     {

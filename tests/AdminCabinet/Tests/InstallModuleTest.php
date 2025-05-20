@@ -7,7 +7,6 @@ use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverWait;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
-use MikoPBX\Tests\AdminCabinet\Tests\Traits\LoginTrait;
 use MikoPBX\Tests\AdminCabinet\Tests\Traits\ModuleXPathsTrait;
 
 abstract class InstallModuleTest extends MikoPBXTestsBase
@@ -47,8 +46,39 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
 
     protected function navigateToModules(): void
     {
-        $this->clickSidebarMenuItemByHref("/admin-cabinet/pbx-extension-modules/index/");
-        $this->changeTabOnCurrentPage('marketplace');
+        $maxAttempts = 5;
+        $attempt = 0;
+        $placeholderVisible = true;
+        
+        while ($attempt < $maxAttempts && $placeholderVisible) {
+            if ($attempt > 0) {
+                sleep(5);
+                self::annotate("Retrying modules page navigation, attempt {$attempt}");
+            }
+            
+            $this->clickSidebarMenuItemByHref("/admin-cabinet/pbx-extension-modules/index/");
+            $this->changeTabOnCurrentPage('marketplace');
+            $this->waitForAjax();
+            
+            try {
+                $placeholder = self::$driver->findElement(WebDriverBy::id('no-new-modules-segment'));
+                $placeholderVisible = $placeholder->isDisplayed();
+            } catch (\Exception $e) {
+                // Placeholder not found or not visible, we can proceed
+                $placeholderVisible = false;
+            }
+            
+            $attempt++;
+            
+            if (!$placeholderVisible) {
+                self::annotate("Modules loaded successfully");
+                break;
+            }
+        }
+        
+        if ($placeholderVisible) {
+            self::annotate("Warning: Marketplace data may not be fully loaded after {$maxAttempts} attempts", 'warning');
+        }
     }
 
     protected function installModule(array $params): void

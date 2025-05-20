@@ -32,4 +32,9 @@ class MangoOfficeTest extends CreateSIPProviderTest
     {
         return SIPProviderDataFactory::getSIPProviderData('mango.office');
     }
+    
+    public function testCreateSIPProvider(): void
+    {
+        parent::testCreateSIPProvider();
+    }
 }
