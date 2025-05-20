@@ -41,15 +41,15 @@ class IAXProviderDataFactory
             'noregister' => true,
             'manualattributes' => '',
         ],
-        'voxlink.iax.delete' => [
+        'provider.iax.delete' => [
             'type' => 'iax',
             'uniqid' => 'IAX-1683372823',
-            'description' => 'VoxlinkIAX for delete',
-            'host' => 'vox.link2.ru',
-            'username' => 'line1',
-            'password' => 'voxvoxSecret',
-            'qualify' => true,
-            'noregister' => true,
+            'description' => 'Provider IAX for delete',
+            'host' => 'iax.delete.ru',
+            'username' => 'providerName',
+            'password' => 'providerPassword',
+            'qualify' => false,
+            'noregister' => false,
             'manualattributes' => '',
             'possibleToDelete' => true
         ]

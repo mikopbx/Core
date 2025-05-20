@@ -119,6 +119,20 @@ trait LoginTrait
         $this->cookieManager->clearAll();
 
         $this->waitForAjax();
+        
+        // Check if login form exists, if not - try to refresh up to 5 times
+        $maxRefreshAttempts = 5;
+        $refreshAttempt = 0;
+        $formFound = $this->isLoginFormPresent();
+        
+        while (!$formFound && $refreshAttempt < $maxRefreshAttempts) {
+            self::annotate('Login form not found, refreshing page. Attempt ' . ($refreshAttempt + 1));
+            self::$driver->navigate()->refresh();
+            sleep(5); // Wait 5 seconds between attempts
+            $this->waitForAjax();
+            $formFound = $this->isLoginFormPresent();
+            $refreshAttempt++;
+        }
 
         // First attempt with primary password
         $this->changeInputField('login', $params['login']);
@@ -227,6 +241,22 @@ trait LoginTrait
             return false;
         }
     }
+
+    /**
+     * Check if login form is present on the page
+     *
+     * @return bool
+     */
+    private function isLoginFormPresent(): bool
+    {
+        try {
+            $loginForm = self::$driver->findElement(WebDriverBy::id('login-form'));
+            return $loginForm->isDisplayed();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
     /**
      * Provide test login credentials
      *
