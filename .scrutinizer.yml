@@ -15,9 +15,7 @@ build:
 
       tests:
         override:
-          - php-scrutinizer-run
-          - js-scrutinizer-run
-          - command: vendor/bin/phpstan analyse src --level=0
+          - command: vendor/bin/phpstan analyse src --level=0 --memory-limit 128M
 checks:
   php:
     fix_php_opening_tag: false

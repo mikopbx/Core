@@ -86,7 +86,7 @@ class PbxExtensionsProcessor extends Injectable
         // Try process request over additional modules
         $processor = new PbxExtensionsProcessor();
         foreach ($processor->additionalProcessors as [$moduleUniqueId, $moduleConfigObject, $callBack]) {
-            if (stripos($module, $moduleUniqueId) === 0) {
+            if (strcasecmp($module, $moduleUniqueId) === 0) {
                 $res = $moduleConfigObject->$callBack($request);
                 break;
             }

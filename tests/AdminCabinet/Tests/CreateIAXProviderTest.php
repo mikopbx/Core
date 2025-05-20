@@ -45,7 +45,6 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
     protected function createIAXProvider(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
-        $this->clickDeleteButtonOnRowWithText($params['description']);
         $this->clickButtonByHref('/admin-cabinet/providers/modifyiax');
 
         $this->fillBasicFields($params);

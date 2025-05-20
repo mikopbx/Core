@@ -26,6 +26,12 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
 
     abstract protected function getModuleData(): array;
 
+    /**
+     * Installs a module and verifies its installation.
+     *
+     * This method navigates to the modules page, installs the specified module,
+     * verifies its installation, and configures its state.
+     */
     public function testInstallModule(): void
     {
         $params = $this->getModuleData();
@@ -44,6 +50,13 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
         }
     }
 
+    /**
+     * Navigates to the modules page and waits for the placeholder to be visible.
+     *
+     * This method attempts to navigate to the modules page and wait for the placeholder
+     * to be visible. It retries the navigation up to 5 times if the placeholder is not
+     * visible initially.
+     */
     protected function navigateToModules(): void
     {
         $maxAttempts = 5;
@@ -81,6 +94,12 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
         }
     }
 
+    /**
+     * Installs a module.
+     *
+     * This method clicks the install button and waits for the modal to be visible.
+     * It then clicks the approve button and waits for the AJAX request to complete.
+     */
     protected function installModule(array $params): void
     {
         $xpath = $this->getInstallButtonXPath($params['moduleId']);
@@ -100,11 +119,19 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
         $this->waitForAjax();
     }
 
+    /**
+     * Verifies the installation of a module.
+     *
+     * This method waits for the module to be installed by checking the delete button.
+     * It retries the check up to 5 times if the button is not found.
+     */
     protected function verifyInstallation(array $params): void
     {
         $startTime = time();
         $timeout = self::INSTALLATION_TIMEOUT;
         $success = false;
+        $this->changeTabOnCurrentPage('installed');
+        sleep(15); //Wait until page reload or Nginx restart and then start checking
 
         while (time() - $startTime < $timeout) {
             try {
@@ -133,6 +160,11 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
         $this->assertTrue($success, "Module {$params['moduleId']} was not installed properly after {$timeout} seconds");
     }
 
+    /**
+     * Configures the state of a module.
+     *
+     * This method enables the module by default and then sets it to the desired state.
+     */
     protected function configureModuleState(array $params): void
     {
         // Enable by default after installation
@@ -145,6 +177,11 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
         sleep(10);
     }
 
+    /**
+     * Changes the state of a module.
+     *
+     * This method toggles the state of a module by clicking the checkbox.
+     */
     protected function changeModuleState(string $moduleId, bool $enable = true): void
     {
         $xpath = $this->getToggleCheckboxXPath($moduleId);

@@ -79,6 +79,7 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
         // Create Call queue
         $createCallQueue = new AccountantDepartmentForDropDownTest();
         $createCallQueue->testCreateCallQueue();
+        sleep(5); //Wait intil system process the creation
 
         // Look at the current call queue content after creating
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
