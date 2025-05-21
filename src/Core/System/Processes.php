@@ -369,14 +369,19 @@ class Processes
      * 4. Gracefully shuts down old workers
      * 
      */
-    public static function restartAllWorkers(): void
+    public static function restartAllWorkers(bool $softRestart = false): void
     {
         $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
         $php = Util::which('php');
                 
         // First restart WorkerSafeScriptsCore itself
         // This will trigger the full restart pipeline
-        $workerSafeScripts = "$php -f $workerSafeScriptsPath restart > /dev/null 2> /dev/null";
+        if ($softRestart) {
+            $workerSafeScripts = "$php -f $workerSafeScriptsPath soft-restart > /dev/null 2> /dev/null";
+        } else {
+            $workerSafeScripts = "$php -f $workerSafeScriptsPath restart > /dev/null 2> /dev/null";
+        }
+        
         self::mwExec($workerSafeScripts);
     }
 

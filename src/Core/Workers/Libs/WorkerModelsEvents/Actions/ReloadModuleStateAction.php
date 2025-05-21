@@ -57,7 +57,7 @@ class ReloadModuleStateAction implements ReloadActionInterface
             $this->handleModuleConfigChanges($configClassObj, $moduleRecord);
         }
 
-        Processes::restartAllWorkers();
+        Processes::restartAllWorkers(true);
     }
 
     /**

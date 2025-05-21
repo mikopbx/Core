@@ -14,6 +14,6 @@ class ReloadAllSystemWorkersAction implements ReloadActionInterface
      */
     public function execute(array $parameters = []): void
     {
-        Processes::restartAllWorkers();
+        Processes::restartAllWorkers(true);
     }
 }

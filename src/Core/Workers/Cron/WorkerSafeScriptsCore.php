@@ -165,9 +165,11 @@ class WorkerSafeScriptsCore extends WorkerBase
      * Restarts all registered workers with improved pipeline.
      * Uses parallel processing with Fibers for efficiency.
      *
+     * @param bool $softRestart Whether to perform a soft restart (only SIGUSR1, no forced termination)
+     * @param int $gracefulTimeout Timeout in seconds to wait for workers to terminate after SIGUSR1
      * @throws Throwable
      */
-    public function restart(): void
+    public function restart(bool $softRestart = false, int $gracefulTimeout = 30): void
     {
         // Get all workers that need to be restarted
         $arrWorkers = $this->prepareWorkersList();
@@ -218,7 +220,8 @@ class WorkerSafeScriptsCore extends WorkerBase
         SystemMessages::sysLogMsg(
             static::class,
             sprintf(
-                "Starting restart process for %d worker instances. Regular workers: %d, Pool workers: %d", 
+                "Starting %s restart process for %d worker instances. Regular workers: %d, Pool workers: %d", 
+                $softRestart ? "soft" : "full",
                 $totalWorkers,
                 count($runningWorkers),
                 count($workerPools)
@@ -424,9 +427,8 @@ class WorkerSafeScriptsCore extends WorkerBase
         );
         
         $gracefulShutdownStart = time();
-        $gracefulShutdownTimeout = 30; // Increased timeout to allow job completion
         
-        while (time() - $gracefulShutdownStart < $gracefulShutdownTimeout) {
+        while (time() - $gracefulShutdownStart < $gracefulTimeout) {
             $allShutdown = true;
             
             // Check regular workers
@@ -459,6 +461,16 @@ class WorkerSafeScriptsCore extends WorkerBase
             }
             
             sleep(1);
+        }
+        
+        // For soft restart, we skip the forced termination step
+        if ($softRestart) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Soft restart completed - letting remaining workers finish naturally",
+                LOG_NOTICE
+            );
+            return;
         }
         
         // STEP 4: Force terminate any remaining processes
@@ -536,6 +548,20 @@ class WorkerSafeScriptsCore extends WorkerBase
             "Worker restart completed - new instances are running with updated code", 
             LOG_NOTICE
         );
+    }
+
+    /**
+     * Performs a soft restart of workers by sending SIGUSR1 signals only.
+     * Workers will finish their current tasks before shutting down.
+     * New workers are started to handle new requests.
+     *
+     * @param int $gracefulTimeout Timeout in seconds to wait for workers to finish tasks
+     * @throws Throwable
+     */
+    public function softRestart(int $gracefulTimeout = 180): void
+    {
+        // Delegate to restart with softRestart=true and extended timeout
+        $this->restart(true, $gracefulTimeout);
     }
 
     /**
@@ -1021,6 +1047,10 @@ try {
         } elseif ($argv[1] === 'restart' || $argv[1] === 'reload') {
             $worker->restart();
             SystemMessages::sysLogMsg($workerClassname, "Normal exit after restart ended", LOG_DEBUG);
+        } elseif ($argv[1] === 'soft-restart') {
+            // Perform a soft restart which only sends SIGUSR1
+            $worker->softRestart();
+            SystemMessages::sysLogMsg($workerClassname, "Normal exit after soft restart ended", LOG_DEBUG);
         }
     }
 } catch (Throwable $e) {
