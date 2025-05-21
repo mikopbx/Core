@@ -26,21 +26,6 @@
 const SoundFilesSelector = {
 
     /**
-     * Initializes the sound files selector.
-     */
-    initialize() {
-        window.addEventListener('ConfigDataChanged', SoundFilesSelector.cbOnDataChanged);
-    },
-
-    /**
-     * Callback function for data change event.
-     * Clears the session storage cache.
-     */
-    cbOnDataChanged() {
-        sessionStorage.removeItem(`${globalRootUrl}sound-files/getSoundFiles/custom`);
-    },
-
-    /**
      * Retrieves the dropdown settings with an empty field for sound files.
      * @param {function} cbOnChange - The onchange callback function.
      * @returns {object} - The dropdown settings.
@@ -62,7 +47,7 @@ const SoundFilesSelector = {
             ignoreCase: true,
             fullTextSearch: true,
             filterRemoteData: true,
-            saveRemoteData: true,
+            saveRemoteData: false,
             forceSelection: false,
             // direction: 'downward',
             hideDividers: 'empty',
@@ -88,7 +73,7 @@ const SoundFilesSelector = {
             ignoreCase: true,
             fullTextSearch: true,
             filterRemoteData: true,
-            saveRemoteData: true,
+            saveRemoteData: false,
             forceSelection: false,
             // direction: 'downward',
             hideDividers: 'empty',
@@ -129,8 +114,3 @@ const SoundFilesSelector = {
         return formattedResponse;
     },
 }
-
-// When the document is ready, initialize the sound files selector
-$(document).ready(() => {
-    SoundFilesSelector.initialize();
-});

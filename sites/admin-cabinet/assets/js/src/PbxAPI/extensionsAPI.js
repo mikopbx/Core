@@ -25,37 +25,6 @@
  * @module Extensions
  */
 const Extensions = {
-
-    /**
-     * Initializes the Extensions object.
-     * Adds an event listener for 'ConfigDataChanged' event.
-     */
-    initialize() {
-        EventBus.subscribe('models-changed', data => {
-            if (data.model === 'MikoPBX\\Common\\Models\\Extensions' 
-                && (data.changedFields.includes('callerid') || data.changedFields.includes('number'))
-            ) {
-                Extensions.cbOnDataChanged(data);
-            }
-        });
-    },
-
-    /**
-     * Callback function that is triggered when ConfigDataChanged event is fired.
-     * This function drops all caches if data changes.
-     */
-    cbOnDataChanged() {
-        const pattern = '/pbxcore/api/extensions/getForSelect';
-        for (let i = 0; i < sessionStorage.length; i++) {
-            const key = sessionStorage.key(i);
-            // Check if the key matches the pattern
-            if (key && key.startsWith(pattern)) {
-                console.debug('Delete key', key);
-                sessionStorage.removeItem(key);
-            }
-        }
-    },
-
     /**
      * Formats the dropdown results by adding necessary data.
      *
@@ -104,7 +73,7 @@ const Extensions = {
                 urlData: {
                     type: 'all'
                 },
-                // cache: false,
+                cache: false,
                 // throttle: 400,
                 onResponse(response) {
                     return Extensions.formatDropdownResults(response, true);
@@ -117,7 +86,7 @@ const Extensions = {
             ignoreCase: true,
             fullTextSearch: true,
             filterRemoteData: true,
-            saveRemoteData: true,
+            saveRemoteData: false,
             forceSelection: false,
             // direction: 'downward',
             hideDividers: 'empty',
@@ -139,6 +108,7 @@ const Extensions = {
                 urlData: {
                     type: 'all'
                 },
+                cache: false,
                 onResponse(response) {
                     return Extensions.formatDropdownResults(response, false);
                 },
@@ -146,7 +116,7 @@ const Extensions = {
             ignoreCase: true,
             fullTextSearch: true,
             filterRemoteData: true,
-            saveRemoteData: true,
+            saveRemoteData: false,
             forceSelection: false,
             hideDividers: 'empty',
             onChange(value) {
@@ -170,7 +140,7 @@ const Extensions = {
                 urlData: {
                     type: 'routing'
                 },
-                // cache: false,
+                cache: false,
                 // throttle: 400,
                 onResponse(response) {
                     return Extensions.formatDropdownResults(response, false);
@@ -179,7 +149,7 @@ const Extensions = {
             ignoreCase: true,
             fullTextSearch: true,
             filterRemoteData: true,
-            saveRemoteData: true,
+            saveRemoteData: false,
             forceSelection: false,
             // direction: 'downward',
             hideDividers: 'empty',
@@ -204,7 +174,7 @@ const Extensions = {
                 urlData: {
                     type: 'internal'
                 },
-                // cache: false,
+                cache: false,
                 // throttle: 400,
                 onResponse(response) {
                     return Extensions.formatDropdownResults(response, false);
@@ -213,7 +183,7 @@ const Extensions = {
             ignoreCase: true,
             fullTextSearch: true,
             filterRemoteData: true,
-            saveRemoteData: true,
+            saveRemoteData: false,
             forceSelection: false,
             // direction: 'downward',
             hideDividers: 'empty',
@@ -238,7 +208,7 @@ const Extensions = {
                 urlData: {
                     type: 'internal'
                 },
-                // cache: false,
+                cache: false,
                 // throttle: 400,
                 onResponse(response) {
                     return Extensions.formatDropdownResults(response, true);
@@ -251,7 +221,7 @@ const Extensions = {
             ignoreCase: true,
             fullTextSearch: true,
             filterRemoteData: true,
-            saveRemoteData: true,
+            saveRemoteData: false,
             forceSelection: false,
             // direction: 'downward',
             hideDividers: 'empty',
@@ -435,10 +405,3 @@ const Extensions = {
     },
 
 };
-
-/**
- *  Initialize Extension object on document ready
- */
-$(document).ready(() => {
-    Extensions.initialize();
-});

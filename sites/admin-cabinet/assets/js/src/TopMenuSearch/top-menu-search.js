@@ -37,7 +37,7 @@ const topMenuSearch = {
         topMenuSearch.$input.dropdown({
             apiSettings: {
                 url: `${globalRootUrl}top-menu-search/getForSelect`,
-                // cache: false,
+                cache: false,
                 // throttle: 400,
                 onResponse(response) {
                     return topMenuSearch.formatDropdownResults(response);
@@ -50,7 +50,7 @@ const topMenuSearch = {
             showOnFocus: true,
             fullTextSearch: true,
             filterRemoteData: true,
-            saveRemoteData: true,
+            saveRemoteData: false,
             allowCategorySelection: true,
             // Whether search selection will force currently selected choice when element is blurred.
             forceSelection: false,
@@ -63,21 +63,8 @@ const topMenuSearch = {
             templates: {
                 menu: topMenuSearch.customDropdownMenu,
             },
-        });
-
-        // Subscribe to the old ConfigDataChanged event
-        window.addEventListener('ConfigDataChanged', topMenuSearch.cbOnDataChanged);
-
-        // Subscribe to the models-changed event
-        EventBus.subscribe('models-changed', data => {
-            if (data.model === 'MikoPBX\\Common\\Models\\Extensions' 
-                && (data.changedFields.includes('callerid') || data.changedFields.includes('number'))
-            ) {
-                topMenuSearch.cbOnDataChanged();
-            }
-        });
+        }); 
     },
-
     /**
      * Formats the dropdown menu as HTML view.
      * @param {object} response - The response from the server.
