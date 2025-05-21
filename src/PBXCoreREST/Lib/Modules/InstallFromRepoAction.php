@@ -52,7 +52,6 @@ class InstallFromRepoAction extends ModuleInstallationBase
       parent::__construct($asyncChannelId, $moduleUniqueId);
     }
 
-
     /**
      * Main entry point to install a new module.
      * This function handles the entire process of installing a new module, including
@@ -121,6 +120,8 @@ class InstallFromRepoAction extends ModuleInstallationBase
             $res->success = false;
             $res->messages['error'][] = $e->getMessage();
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
+        } finally {
+            $this->unifiedModulesEvents->pushMessageToBrowser( self::STAGE_VII_FINAL_STATUS, $res->getResult());
         }
     }
 
