@@ -63,7 +63,7 @@ class Processes
     /**
      * Valid process actions
      */
-    private const VALID_ACTIONS = ['start', 'stop', 'restart', 'status'];
+    private const VALID_ACTIONS = ['start', 'stop', 'restart', 'status', 'soft-restart'];
 
 
     /**
@@ -71,6 +71,11 @@ class Processes
      */
     private const LOCK_FILE_DIR = '/var/run/php-workers';
     private const PID_FILE_SUFFIX = '.pid';
+
+    /**
+     * Graceful shutdown timeout in seconds
+     */
+    private const GRACEFUL_SHUTDOWN_TIMEOUT = 180; // 3 minutes
 
     /**
      * Cleans up stale PID files in the workers directory
@@ -368,20 +373,25 @@ class Processes
      * 3. Starts new instances of each worker
      * 4. Gracefully shuts down old workers
      * 
+     * @param bool $softRestart If true, performs a soft restart (SIGUSR1 only)
      */
     public static function restartAllWorkers(bool $softRestart = false): void
     {
         $workerSafeScriptsPath = Util::getFilePathByClassName(WorkerSafeScriptsCore::class);
         $php = Util::which('php');
                 
-        // First restart WorkerSafeScriptsCore itself
-        // This will trigger the full restart pipeline
-        if ($softRestart) {
-            $workerSafeScripts = "$php -f $workerSafeScriptsPath soft-restart > /dev/null 2> /dev/null";
-        } else {
-            $workerSafeScripts = "$php -f $workerSafeScriptsPath restart > /dev/null 2> /dev/null";
-        }
+        // Set the restart mode
+        $restartMode = $softRestart ? 'soft-restart' : 'restart';
         
+        // Log the restart mode
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            "Initiating " . ($softRestart ? "soft" : "full") . " restart of all workers",
+            LOG_NOTICE
+        );
+        
+        // Execute the restart command
+        $workerSafeScripts = "$php -f $workerSafeScriptsPath $restartMode > /dev/null 2> /dev/null";
         self::mwExec($workerSafeScripts);
     }
 
@@ -437,8 +447,12 @@ class Processes
             }
         }
 
+        // Check if it's a soft restart
+        $softRestart = ($action === 'soft-restart');
+        $actualAction = $softRestart ? 'restart' : $action;
+
         self::handleWorkerAction(
-            $action,
+            $actualAction,
             $activeProcesses,
             $command,
             $paramForPHPWorker,
@@ -446,7 +460,8 @@ class Processes
             $currentProcCount,
             $neededProcCount,
             $processes,
-            $className
+            $className,
+            $softRestart
         );
     }
 
@@ -462,6 +477,7 @@ class Processes
      * @param int $neededProcCount Needed process count
      * @param array $processes Process IDs array
      * @param string $className Worker class name
+     * @param bool $softRestart Whether to perform a soft restart
      */
     private static function handleWorkerAction(
         string $action,
@@ -472,7 +488,8 @@ class Processes
         int $currentProcCount,
         int $neededProcCount,
         array $processes,
-        string $className = ''
+        string $className = '',
+        bool $softRestart = false
     ): void {
         switch ($action) {
             case 'restart':
@@ -482,7 +499,8 @@ class Processes
                     $command,
                     $paramForPHPWorker,
                     $className,
-                    $neededProcCount
+                    $neededProcCount,
+                    $softRestart
                 );
                 break;
             case 'stop':
@@ -510,6 +528,7 @@ class Processes
      * @param string $paramForPHPWorker Worker parameters
      * @param string $workerClass Worker class name
      * @param int $neededProcCount Number of instances needed
+     * @param bool $softRestart Whether to perform a soft restart (SIGUSR1 only)
      */
     private static function handleRestartAction(
         string $activeProcesses,
@@ -517,13 +536,15 @@ class Processes
         string $command,
         string $paramForPHPWorker,
         string $workerClass = '',
-        int $neededProcCount = 1
+        int $neededProcCount = 1,
+        bool $softRestart = false
     ): void {
         // Отладочное логирование
         SystemMessages::sysLogMsg(
             __METHOD__,
             sprintf(
-                "Restarting worker: %s, neededProcCount=%d, activeProcesses=%s",
+                "%s worker: %s, neededProcCount=%d, activeProcesses=%s",
+                $softRestart ? "Soft restarting" : "Restarting",
                 $workerClass,
                 $neededProcCount,
                 $activeProcesses
@@ -532,26 +553,51 @@ class Processes
         );
 
         if ($activeProcesses !== '') {
+            // Always send SIGUSR1 for graceful shutdown
             SystemMessages::sysLogMsg(
                 __METHOD__,
                 sprintf("SEND signal: %s", "SIGUSR1 $activeProcesses"),
-                LOG_WARNING
+                LOG_NOTICE
             );
-
-            // Send SIGUSR1 first to initiate graceful shutdown
+            
             self::mwExec("$kill -SIGUSR1 $activeProcesses > /dev/null 2>&1");
             
-            // Wait for 2 seconds to allow worker to handle SIGUSR1
-            sleep(2);
-
-            SystemMessages::sysLogMsg(
-                __METHOD__,
-                sprintf("SEND signal: %s", "SIGTERM $activeProcesses"),
-                LOG_WARNING
-            );
-
-            // Then send SIGTERM
-            self::mwExecBg("$kill -SIGTERM $activeProcesses");
+            // For regular restart, wait and then follow up with SIGTERM if needed
+            if (!$softRestart) {
+                // Wait for graceful shutdown, with increased timeout
+                $gracefulShutdownStart = time();
+                $allShutdown = false;
+                
+                while (time() - $gracefulShutdownStart < self::GRACEFUL_SHUTDOWN_TIMEOUT) {
+                    // Check if processes are still running
+                    $stillRunning = false;
+                    foreach (explode(' ', $activeProcesses) as $pid) {
+                        if (!empty($pid) && posix_kill((int)$pid, 0)) {
+                            $stillRunning = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!$stillRunning) {
+                        $allShutdown = true;
+                        break;
+                    }
+                    
+                    // Sleep briefly before checking again
+                    sleep(2);
+                }
+                
+                // If processes are still running after timeout, send SIGTERM
+                if (!$allShutdown) {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        sprintf("SEND signal: %s", "SIGTERM $activeProcesses"),
+                        LOG_WARNING
+                    );
+                    
+                    self::mwExecBg("$kill -SIGTERM $activeProcesses");
+                }
+            }
         }
 
         // Запуск воркеров с поддержкой пула

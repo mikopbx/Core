@@ -165,403 +165,63 @@ class WorkerSafeScriptsCore extends WorkerBase
      * Restarts all registered workers with improved pipeline.
      * Uses parallel processing with Fibers for efficiency.
      *
-     * @param bool $softRestart Whether to perform a soft restart (only SIGUSR1, no forced termination)
-     * @param int $gracefulTimeout Timeout in seconds to wait for workers to terminate after SIGUSR1
+     * @param bool $softRestart Whether to perform a soft restart (only SIGUSR1, no SIGTERM)
      * @throws Throwable
      */
-    public function restart(bool $softRestart = false, int $gracefulTimeout = 30): void
+    public function restart(bool $softRestart = false): void
     {
         // Get all workers that need to be restarted
         $arrWorkers = $this->prepareWorkersList();
         
-        // Collect all running workers and their forks
-        $runningWorkers = [];
-        $workerPools = [];
+        // Log restart mode
+        SystemMessages::sysLogMsg(
+            static::class,
+            $softRestart ? "Starting SOFT restart process (SIGUSR1 only)" : "Starting FULL restart process",
+            LOG_NOTICE
+        );
         
-        // Create tasks for collecting PIDs
+        // Collect all running workers
+        $runningWorkers = [];
+        
+        // Create tasks for collecting PIDs and initiating restarts
         $pidCollectionTasks = [];
         foreach ($arrWorkers as $workerType => $workersWithCurrentType) {
             foreach ($workersWithCurrentType as $worker) {
-                $pidCollectionTasks[] = function() use ($worker, &$runningWorkers, &$workerPools) {
-                    // Check if worker uses pool
-                    $maxProc = $this->getWorkerInstanceCount($worker);
-                    
-                    if ($maxProc > 1) {
-                        // This is a pool worker - collect all instances
-                        $pattern = "$worker";
-                        $poolPids = Processes::getPidOfProcess($pattern);
-                        if (!empty($poolPids)) {
-                            $workerPools[$worker] = [
-                                'maxProc' => $maxProc,
-                                'pids' => array_filter(explode(' ', $poolPids))
-                            ];
-                        }
-                    } else {
-                        // Regular single worker
-                        $mainPid = Processes::getPidOfProcess($worker);
-                        if (!empty($mainPid)) {
-                            $runningWorkers[$worker] = $mainPid;
-                        }
+                $pidCollectionTasks[] = function() use ($worker, &$runningWorkers, $softRestart) {
+                    $pid = Processes::getPidOfProcess($worker);
+                    if (!empty($pid)) {
+                        $runningWorkers[$worker] = $pid;
+                        
+                        // For API workers, prioritize and handle specially
+                        $isApiWorker = strpos($worker, 'WorkerApiCommands') !== false;
+                        
+                        SystemMessages::sysLogMsg(
+                            static::class,
+                            sprintf("Restarting worker: %s %s", 
+                                $worker, 
+                                $isApiWorker ? "(API worker - prioritized)" : ""
+                            ),
+                            LOG_NOTICE
+                        );
+                        
+                        // Use processPHPWorker with the appropriate action and parameters
+                        $action = $softRestart ? 'soft-restart' : 'restart';
+                        Processes::processPHPWorker($worker, 'start', $action);
                     }
                     Fiber::suspend();
                 };
             }
         }
         
-        // Execute PID collection in parallel
+        // Execute PID collection and restart in parallel
         $this->executeParallel($pidCollectionTasks);
-        
-        // Count total workers to restart
-        $totalWorkers = count($runningWorkers) + array_sum(array_map(function($pool) {
-            return count($pool['pids']);
-        }, $workerPools));
-        
-        // Log the start of restart process with detailed information
-        SystemMessages::sysLogMsg(
-            static::class,
-            sprintf(
-                "Starting %s restart process for %d worker instances. Regular workers: %d, Pool workers: %d", 
-                $softRestart ? "soft" : "full",
-                $totalWorkers,
-                count($runningWorkers),
-                count($workerPools)
-            ),
-            LOG_NOTICE
-        );
-        
-        // Детально логируем обнаруженные пулы воркеров
-        foreach ($workerPools as $worker => $poolInfo) {
-            SystemMessages::sysLogMsg(
-                static::class,
-                sprintf(
-                    "Detected worker pool: %s, maxProc: %d, running PIDs: %s",
-                    $worker,
-                    $poolInfo['maxProc'],
-                    implode(',', $poolInfo['pids'])
-                ),
-                LOG_NOTICE
-            );
-        }
-        
-        // STEP 1: Start new worker instances first
-        // This ensures new workers are ready to take jobs before old ones exit
-        $startTasks = [];
-        $startedWorkers = [];
-
-        // Приоритизируем запуск WorkerApiCommands - они самые критичные для UI
-        foreach ($arrWorkers as $workerType => $workersWithCurrentType) {
-            // Сортируем воркеры так, чтобы API-воркеры запускались первыми
-            $sortedWorkers = $workersWithCurrentType;
-            usort($sortedWorkers, function($a, $b) {
-                $isApiWorkerA = strpos($a, 'WorkerApiCommands') !== false;
-                $isApiWorkerB = strpos($b, 'WorkerApiCommands') !== false;
-                
-                if ($isApiWorkerA && !$isApiWorkerB) {
-                    return -1; // A должен быть раньше B
-                } elseif (!$isApiWorkerA && $isApiWorkerB) {
-                    return 1; // B должен быть раньше A
-                }
-                return 0; // Порядок не важен
-            });
-            
-            foreach ($sortedWorkers as $worker) {
-                $maxProc = $this->getWorkerInstanceCount($worker);
-                
-                // Если это API-воркер, создаем все экземпляры сразу (не в фоновом режиме)
-                // и дожидаемся полной их инициализации перед продолжением
-                if (strpos($worker, 'WorkerApiCommands') !== false) {
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "Starting ALL instances of critical worker {$worker} synchronously",
-                        LOG_NOTICE
-                    );
-                    
-                    // Для WorkerApiCommands создаем все инстансы сразу, но используем стандартный механизм
-                    for ($i = 1; $i <= $maxProc; $i++) {
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "Starting critical worker instance {$i}/{$maxProc}: {$worker}",
-                            LOG_NOTICE
-                        );
-                        
-                        // Используем стандартный механизм запуска, но с правильными параметрами instanceId
-                        // Это гарантирует, что процесс будет корректно запущен и залогирован
-                        Processes::processPHPWorker($worker, 'start');
-                        
-                        // Дополнительно проверим, что воркер действительно запущен
-                        sleep(1);
-                        $pidFile = Processes::getPidFilePath($worker, $i);
-                        if (file_exists($pidFile)) {
-                            $pid = trim(file_get_contents($pidFile));
-                            SystemMessages::sysLogMsg(
-                                static::class,
-                                sprintf("Worker %s instance %d started with PID %s", $worker, $i, $pid),
-                                LOG_NOTICE
-                            );
-                        } else {
-                            SystemMessages::sysLogMsg(
-                                static::class,
-                                sprintf("WARNING: PID file not found for %s instance %d", $worker, $i),
-                                LOG_WARNING
-                            );
-                        }
-                    }
-                    
-                    // Ждем дополнительное время, чтобы воркеры полностью инициализировались
-                    sleep(3); 
-                    $startedWorkers[$worker] = true;
-                    
-                    // Проверяем, что все воркеры действительно запустились
-                    $allWorkersRunning = true;
-                    for ($i = 1; $i <= $maxProc; $i++) {
-                        $pidFile = Processes::getPidFilePath($worker, $i);
-                        if (!file_exists($pidFile)) {
-                            $allWorkersRunning = false;
-                            SystemMessages::sysLogMsg(
-                                static::class,
-                                "WARNING: PID file not found for {$worker} instance {$i}",
-                                LOG_WARNING
-                            );
-                        }
-                    }
-                    
-                    if (!$allWorkersRunning) {
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "ERROR: Not all instances of {$worker} started correctly!",
-                            LOG_ERR
-                        );
-                    } else {
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "All {$maxProc} instances of {$worker} started successfully",
-                            LOG_NOTICE
-                        );
-                    }
-                } else if ($maxProc > 1) {
-                    // Это пул воркеров, но не API-воркеры
-                    // Добавляем их в список задач для запуска
-                    for ($i = 1; $i <= $maxProc; $i++) {
-                        $startTasks[] = function() use ($worker, $i, &$startedWorkers) {
-                            SystemMessages::sysLogMsg(
-                                static::class,
-                                "Starting new instance {$i} of pool worker {$worker}",
-                                LOG_NOTICE
-                            );
-                            Processes::processPHPWorker($worker, 'start');
-                            $startedWorkers[$worker] = true;
-                            Fiber::suspend();
-                        };
-                    }
-                } else {
-                    // Обычный одиночный воркер
-                    $startTasks[] = function() use ($worker, &$startedWorkers) {
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "Starting new instance of {$worker}",
-                            LOG_NOTICE
-                        );
-                        Processes::processPHPWorker($worker, 'start');
-                        $startedWorkers[$worker] = true;
-                        Fiber::suspend();
-                    };
-                }
-            }
-        }
-        
-        // Start remaining new instances in parallel
-        if (!empty($startTasks)) {
-            $this->executeParallel($startTasks);
-        }
-        
-        // Wait for new instances to initialize and become ready to process jobs
-        SystemMessages::sysLogMsg(
-            static::class,
-            "Started new worker instances, waiting for them to initialize",
-            LOG_NOTICE
-        );
-        sleep(5); // Give more time for proper initialization
-        
-        // STEP 2: Signal old workers to gracefully shutdown
-        // They will finish current jobs and then exit
-        $shutdownTasks = [];
-        
-        // Handle regular workers
-        foreach ($runningWorkers as $worker => $pid) {
-            $shutdownTasks[] = function() use ($pid, $worker) {
-                if (posix_kill((int)$pid, SIGUSR1)) {
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "Sent SIGUSR1 to {$worker} (PID: {$pid})",
-                        LOG_DEBUG
-                    );
-                }
-                Fiber::suspend();
-            };
-        }
-        
-        // Handle worker pools
-        foreach ($workerPools as $worker => $poolInfo) {
-            foreach ($poolInfo['pids'] as $pid) {
-                $shutdownTasks[] = function() use ($pid, $worker) {
-                    if (posix_kill((int)$pid, SIGUSR1)) {
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "Sent SIGUSR1 to {$worker} pool instance (PID: {$pid})",
-                            LOG_DEBUG
-                        );
-                    }
-                    Fiber::suspend();
-                };
-            }
-        }
-        
-        // Execute graceful shutdown signals in parallel
-        $this->executeParallel($shutdownTasks);
-        
-        // STEP 3: Wait for graceful shutdown with sufficient timeout
-        SystemMessages::sysLogMsg(
-            static::class,
-            "Waiting for workers to complete active tasks (graceful shutdown)",
-            LOG_NOTICE
-        );
-        
-        $gracefulShutdownStart = time();
-        
-        while (time() - $gracefulShutdownStart < $gracefulTimeout) {
-            $allShutdown = true;
-            
-            // Check regular workers
-            foreach ($runningWorkers as $worker => $pid) {
-                if (posix_kill((int)$pid, 0)) {
-                    // Process still exists
-                    $allShutdown = false;
-                    break;
-                }
-            }
-            
-            // Check pool workers
-            foreach ($workerPools as $worker => $poolInfo) {
-                foreach ($poolInfo['pids'] as $pid) {
-                    if (posix_kill((int)$pid, 0)) {
-                        // Process still exists
-                        $allShutdown = false;
-                        break 2;
-                    }
-                }
-            }
-            
-            if ($allShutdown) {
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "All workers have gracefully shutdown",
-                    LOG_NOTICE
-                );
-                break;
-            }
-            
-            sleep(1);
-        }
-        
-        // For soft restart, we skip the forced termination step
-        if ($softRestart) {
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Soft restart completed - letting remaining workers finish naturally",
-                LOG_NOTICE
-            );
-            return;
-        }
-        
-        // STEP 4: Force terminate any remaining processes
-        $terminateTasks = [];
-        
-        // Regular workers
-        foreach ($runningWorkers as $worker => $pid) {
-            if (posix_kill((int)$pid, 0)) {
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    "Worker {$worker} (PID: {$pid}) didn't shut down gracefully, sending SIGTERM",
-                    LOG_WARNING
-                );
-                
-                $terminateTasks[] = function() use ($pid) {
-                    posix_kill((int)$pid, SIGTERM);
-                    Fiber::suspend();
-                };
-            }
-        }
-        
-        // Pool worker instances
-        foreach ($workerPools as $worker => $poolInfo) {
-            foreach ($poolInfo['pids'] as $pid) {
-                if (posix_kill((int)$pid, 0)) {
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "Worker {$worker} pool instance (PID: {$pid}) didn't shut down gracefully, sending SIGTERM",
-                        LOG_WARNING
-                    );
-                    
-                    $terminateTasks[] = function() use ($pid) {
-                        posix_kill((int)$pid, SIGTERM);
-                        Fiber::suspend();
-                    };
-                }
-            }
-        }
-        
-        // Execute termination in parallel if needed
-        if (!empty($terminateTasks)) {
-            $this->executeParallel($terminateTasks);
-            // Give processes time to terminate
-            sleep(2);
-            
-            // Final check and SIGKILL if necessary for regular workers
-            foreach ($runningWorkers as $worker => $pid) {
-                if (posix_kill((int)$pid, 0)) {
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "Worker {$worker} (PID: {$pid}) still alive, sending SIGKILL",
-                        LOG_WARNING
-                    );
-                    posix_kill((int)$pid, SIGKILL);
-                }
-            }
-            
-            // Final check and SIGKILL if necessary for pool workers
-            foreach ($workerPools as $worker => $poolInfo) {
-                foreach ($poolInfo['pids'] as $pid) {
-                    if (posix_kill((int)$pid, 0)) {
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "Worker {$worker} pool instance (PID: {$pid}) still alive, sending SIGKILL",
-                            LOG_WARNING
-                        );
-                        posix_kill((int)$pid, SIGKILL);
-                    }
-                }
-            }
-        }
         
         SystemMessages::sysLogMsg(
             static::class, 
-            "Worker restart completed - new instances are running with updated code", 
+            $softRestart ? "Worker soft restart completed - existing processes will restart after completing tasks" : 
+                "Worker restart completed - new instances are running with updated code", 
             LOG_NOTICE
         );
-    }
-
-    /**
-     * Performs a soft restart of workers by sending SIGUSR1 signals only.
-     * Workers will finish their current tasks before shutting down.
-     * New workers are started to handle new requests.
-     *
-     * @param int $gracefulTimeout Timeout in seconds to wait for workers to finish tasks
-     * @throws Throwable
-     */
-    public function softRestart(int $gracefulTimeout = 180): void
-    {
-        // Delegate to restart with softRestart=true and extended timeout
-        $this->restart(true, $gracefulTimeout);
     }
 
     /**
@@ -1048,8 +708,7 @@ try {
             $worker->restart();
             SystemMessages::sysLogMsg($workerClassname, "Normal exit after restart ended", LOG_DEBUG);
         } elseif ($argv[1] === 'soft-restart') {
-            // Perform a soft restart which only sends SIGUSR1
-            $worker->softRestart();
+            $worker->restart(true);
             SystemMessages::sysLogMsg($workerClassname, "Normal exit after soft restart ended", LOG_DEBUG);
         }
     }
