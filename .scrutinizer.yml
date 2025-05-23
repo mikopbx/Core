@@ -15,7 +15,7 @@ build:
 
       tests:
         override:
-          - command: vendor/bin/phpstan analyse src --level=0 --memory-limit 128M
+          - command: vendor/bin/phpstan analyse src --memory-limit 120M --level=0 
 checks:
   php:
     fix_php_opening_tag: false

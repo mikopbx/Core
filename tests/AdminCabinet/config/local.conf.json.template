@@ -35,6 +35,7 @@
         }
     },
     "MIKO_LICENSE_KEY": "",
+    "SSH_RSA_KEYS_SET": "",
     "environments": [
         {
             "browser": "chrome",

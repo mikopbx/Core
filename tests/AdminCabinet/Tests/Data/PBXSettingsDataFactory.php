@@ -34,7 +34,7 @@ class PBXSettingsDataFactory
             PbxSettings::PBX_LANGUAGE => 'en-en',
             PbxSettings::PBX_RECORD_CALLS => true,
             PbxSettings::SEND_METRICS => false,
-            PbxSettings::SSH_AUTHORIZED_KEYS => 'ssh-rsa AAAAB3NzaC1yc2EAAA...',
+            PbxSettings::SSH_AUTHORIZED_KEYS => '{SSH_RSA_KEYS_SET}',
             'codec_alaw' => true,
             'codec_ulaw' => false,
             'codec_g726' => true,
@@ -58,6 +58,7 @@ class PBXSettingsDataFactory
         array_walk_recursive($settings, function (&$value) {
             if (is_string($value)) {
                 $value = str_replace('{date}', date("Y-m-d H:i:s"), $value);
+                $value = str_replace('{SSH_RSA_KEYS_SET}', $GLOBALS['SSH_RSA_KEYS_SET'], $value);
             }
         });
 
