@@ -42,7 +42,7 @@ echo;
 
 
 # Set the trap for specific signals to call the cleanup function
-for sig in SIGINT SIGTERM SIGHUP SIGQUIT EXIT; do
+for sig in INT TERM HUP QUIT EXIT; do
   trap cleanup "$sig";
 done
 
