@@ -81,7 +81,7 @@ fi
 
 tests="$initTests $tests"
 for file in $tests; do
-  /usr/bin/timeout 300 /usr/bin/php -f "${file}";
+  /usr/bin/timeout 300 /usr/bin/env -S php -f "${file}";
 done
 
 if [ ! "${2}x" == "x" ]; then

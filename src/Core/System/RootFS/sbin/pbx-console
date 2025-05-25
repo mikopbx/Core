@@ -85,7 +85,7 @@ services)
    start-all)
      # If safe script exists, start it
      if [ -f "$safeScript" ]; then
-       /usr/bin/php -f "$safeScript" start
+       /usr/bin/env -S php -f "$safeScript" start
      else
         echo 'Safe script not found.';
      fi
@@ -93,7 +93,7 @@ services)
    restart-all)
      # If safe script exists, restart it
      if [ -f "$safeScript" ]; then
-       /usr/bin/php -f "$safeScript" restart
+       /usr/bin/env -S php -f "$safeScript" restart
      else
         echo 'Safe script not found.';
      fi

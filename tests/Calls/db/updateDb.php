@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/env -S php -f
 <?php
 require_once 'Globals.php';
 $dbUpdater = new \MikoPBX\Core\System\Upgrade\UpdateDatabase();

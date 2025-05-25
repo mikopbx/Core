@@ -102,7 +102,7 @@ class DialplanApplicationConf extends AsteriskConfigClass
         $agiBinDir = $this->config->path('asterisk.astagidir');
 
         // Create PHP script file for the application
-        $text_app     = "#!/usr/bin/php\n";
+        $text_app     = "#!/usr/bin/env -S php -f\n";
         $text_app     .= base64_decode($app['applicationlogic']);
         file_put_contents("$agiBinDir/{$app['uniqid']}.php", $text_app);
         chmod("$agiBinDir/{$app['uniqid']}.php", 0755);
