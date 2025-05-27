@@ -5,8 +5,9 @@
   ~ Written by Nikolay Beketov, 5 2020
   ~
   -->
-
- <phpunit backupGlobals="false"
+ <phpunit 
+          bootstrap="../../vendor/autoload.php"
+          backupGlobals="false"
           backupStaticAttributes="false"
           verbose="true"
           colors="true"
@@ -14,6 +15,7 @@
           convertNoticesToExceptions="true"
           convertWarningsToExceptions="true"
           processIsolation="true"
-          stopOnFailure="false">
+          stopOnFailure="false" 
+          >
 
 </phpunit>

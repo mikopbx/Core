@@ -451,6 +451,8 @@ class BaseController extends Controller
 
         if ($processor === PbxExtensionsProcessor::class) {
             $requestMessage['module'] = $moduleName;
+            $requestMessage['input'] = file_get_contents('php://input');
+            $requestMessage['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'];
         }
 
         $requestMessage['debug'] = $this->request->isDebugRequest();

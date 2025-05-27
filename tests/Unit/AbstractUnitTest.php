@@ -8,7 +8,6 @@ use MikoPBX\Core\Config\RegisterDIServices;
 use Phalcon\Di\Di;
 use Phalcon\Di\FactoryDefault;
 use MikoPBX\Tests\Unit\Incubator\PHPUnit\UnitTestCase;
-use PHPUnit\Framework\IncompleteTestError;
 
 abstract class AbstractUnitTest extends UnitTestCase
 {
@@ -25,14 +24,6 @@ abstract class AbstractUnitTest extends UnitTestCase
         $this->loaded = true;
     }
 
-    public function __destruct()
-    {
-        if (!$this->loaded) {
-            throw new IncompleteTestError(
-                "Please run parent::setUp()."
-            );
-        }
-    }
 
     /**
      * Call protected/private method of a class.

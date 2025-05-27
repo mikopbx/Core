@@ -52,9 +52,7 @@ class ModulesControllerBase extends BaseController
         $priority = max(PheanstalkInterface::DEFAULT_PRIORITY, $this->request->getRequestPriority());
         // Old style modules, we can remove it after 2025
         $_REQUEST['ip_srv'] = $_SERVER['SERVER_ADDR'];
-
-        $payload = file_get_contents('php://input');
-
+        $payload = $_REQUEST;
 
         $this->sendRequestToBackendWorker(PbxExtensionsProcessor::class, $actionName, $payload, $moduleName, $maxTimeout, $priority);
 
