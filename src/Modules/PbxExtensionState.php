@@ -28,6 +28,7 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Modules\Config\SystemConfigInterface;
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
 use Throwable;
@@ -137,6 +138,9 @@ class PbxExtensionState extends Injectable
                 return false;
             }
         }
+        // Recreate database connections
+        ModulesDBConnectionsProvider::recreateModulesDBConnections();
+
         $success = $this->makeBeforeEnableTest();
         if ( ! $success) {
             return false;

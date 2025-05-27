@@ -19,12 +19,13 @@
  */
 
 namespace MikoPBX\AdminCabinet\Controllers;
+use Phalcon\Tag;
 
 class ErrorsController extends BaseController
 {
     public function initialize(): void
     {
-        $this->tag->setTitle('Oops!');
+        Tag::setTitle('Oops!');
         parent::initialize();
     }
 
