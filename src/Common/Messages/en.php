@@ -1249,4 +1249,5 @@ The coupon can be activated once, after which it becomes redeemed.',
     'ir_RuleDescriptionWithoutNumber_v2' => 'Call to <b>any number</b> via&nbsp&nbsp&nbsp<b>%provider%</b> will be forwarded to&nbsp&nbsp&nbsp<b>%callerid%</b>',
     'ir_RuleDescriptionWithoutProvider_v2' => 'A call without being linked to a provider to the number <b>%number%</b> will be forwarded to&nbsp&nbsp&nbsp<b>%callerid%</b>',
     'ir_RuleDescriptionWithoutNumberAndWithoutProvider_v2' => 'A call without being linked to a provider to <b>any number</b> will be directed to&nbsp&nbsp&nbsp<b>%callerid%</b>',
+    'gs_SIPAuthPrefix' => 'Auth Username prefix for authorization. The prefix will be added to the end of Username.',
 ];
