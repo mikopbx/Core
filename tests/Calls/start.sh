@@ -37,6 +37,7 @@ if [ "${1}x" = 'x' ]; then
   sqlite3 "$dumpConfFile" .dump | grep m_LanInterfaces | grep 'INTO m_LanInterfaces' | sqlite3 "$testConfFile"
   cp "$testConfFile" "$confFile"
   echo_info 'Restart services...';
+  /usr/bin/redis-cli FLUSHALL > /dev/null 2> /dev/null;
   php -f "$dirName/db/updateDb.php" > /dev/null 2> /dev/null;
   sleep 5;
   echo_info 'Wait booted asterisk...';

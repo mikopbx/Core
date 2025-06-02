@@ -1,15 +1,19 @@
 #!/usr/bin/php
 <?php
 require_once 'Globals.php';
-$dbUpdater = new \MikoPBX\Core\System\Upgrade\UpdateDatabase();
-$dbUpdater->updateDatabaseStructure();
-\MikoPBX\Core\System\PBX::sipReload();
-\MikoPBX\Core\System\PBX::dialplanReload();
-\MikoPBX\Core\System\PBX::managerReload();
-\MikoPBX\Core\System\PBX::modulesReload();
-\MikoPBX\Core\System\PBX::featuresReload();
-\MikoPBX\Core\System\PBX::voicemailReload();
-\MikoPBX\Core\System\PBX::coreReload();
+use MikoPBX\Core\System\Upgrade\UpdateDatabase;
+use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\PBX;
 
-$cmd = \MikoPBX\Core\System\Util::which('pbx-console');
+$dbUpdater = new UpdateDatabase();
+$dbUpdater->updateDatabaseStructure();
+PBX::sipReload();
+PBX::dialplanReload();
+PBX::managerReload();
+PBX::modulesReload();
+PBX::featuresReload();
+PBX::voicemailReload();
+PBX::coreReload();
+
+$cmd = Util::which('pbx-console');
 shell_exec("$cmd services restart-all");

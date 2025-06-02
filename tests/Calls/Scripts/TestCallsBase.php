@@ -225,7 +225,7 @@ class TestCallsBase {
         $this->cleanCdr();
 
         $this->initSampleCdr();
-        if(count($rules) === 0 ){
+        if(empty($rules)){
             $this->originateWait();
         }else{
             $this->invokeRules($rules);
