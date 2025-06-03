@@ -35,10 +35,12 @@ if [ "${1}x" = 'x' ]; then
   echo_info "Copy tests config...";
   sqlite3 "$testConfFile" 'delete from m_LanInterfaces';
   sqlite3 "$dumpConfFile" .dump | grep m_LanInterfaces | grep 'INTO m_LanInterfaces' | sqlite3 "$testConfFile"
-  cp "$testConfFile" "$confFile"
-  echo_info 'Restart services and update test db...';
+  rm -rf "$confFile"*;
+  cp "$testConfFile" "$confFile";
+  echo_info 'Clear redis...';
   /usr/bin/redis-cli FLUSHALL > /dev/null 2> /dev/null;
-  php -f "$dirName/db/updateDb.php" > /dev/null 2> /dev/null;
+  echo_info 'Restart services and update test db...';
+  php -f "$dirName/db/updateDb.php";
   sleep 5;
   echo_info 'Wait booted asterisk...';
   asterisk -rx 'core waitfullybooted' > /dev/null 2> /dev/null;
