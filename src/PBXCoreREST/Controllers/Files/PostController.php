@@ -106,6 +106,19 @@ class PostController extends BaseController
                 'resumableTotalChunks' => $this->request->getPost('resumableTotalChunks'),
                 'resumableTotalSize'   => $this->request->getPost('resumableTotalSize'),
             ];
+
+            $identifier = preg_replace(['#[/\\\\]#','/\.\./'], ['',''], $data['resumableIdentifier'])??'';
+            $identifier = trim($identifier);
+            if (!preg_match('/^[a-zA-Z0-9_-]+$/', $identifier)) {
+                $this->sendError(Response::BAD_REQUEST, 'FILE Invalid identifier');
+                return;
+            }
+            if (strlen($identifier) > 255) {
+                $this->sendError(Response::BAD_REQUEST, 'FILE Identifier too long');
+                return;
+            }
+            $data['resumableIdentifier'] = $identifier;
+
             foreach ($this->request->getUploadedFiles() as $file) {
                 $data['files'][]= [
                     'file_path' => $file->getTempName(),
