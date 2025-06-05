@@ -98,8 +98,3 @@ const extensionsStatusLoopWorker = {
         });
     },
 };
-
-// When the document is ready, initialize the extension status worker.
-$(document).ready(() => {
-    extensionsStatusLoopWorker.initialize();
-});

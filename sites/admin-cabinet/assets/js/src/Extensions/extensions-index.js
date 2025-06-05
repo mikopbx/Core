@@ -301,10 +301,14 @@ const extensionsIndex = {
             drawCallback() {
                 // Initialize the input mask for mobile numbers.
                 extensionsIndex.initializeInputmask($('input.mobile-number-input'));
+                
                 // Set up popups.
                 $('.clipboard').popup({
                     on: 'manual',
                 });
+
+                // Initialize the extension status worker.
+                extensionsStatusLoopWorker.initialize();
             },
             // Disable DataTables error alerts completely
             fnInitComplete: function() {
