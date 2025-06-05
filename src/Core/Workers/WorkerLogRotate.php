@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,7 +71,8 @@ class WorkerLogRotate extends WorkerBase
     }
 
     /**
-     * Performs log rotation on log files in the module's log folder.
+     * Performs log rotation on log files in the module's log folder recursively.
+     * Compresses all versions except current and first rotated version.
      *
      * @param string $moduleUniqid The unique ID of the module.
      * @return void
@@ -83,10 +84,20 @@ class WorkerLogRotate extends WorkerBase
             return;
         }
 
-        $results = glob($logPath . '*.log', GLOB_NOSORT);
+        // Find all *.log and *.out files recursively
+        $logFiles = $this->findLogFilesRecursively($logPath);
+        
+        if (empty($logFiles)) {
+            return;
+        }
+
+        // Create single config for all log files
         $textConfig = '';
-        foreach ($results as $file) {
-            $textConfig .= $file . ' {
+        foreach ($logFiles as $file) {
+            $textConfig .= $file . PHP_EOL;
+        }
+        
+        $textConfig .= '{
     start 0
     rotate 9
     size 10M
@@ -94,15 +105,48 @@ class WorkerLogRotate extends WorkerBase
     daily
     missingok
     notifempty
+    compress
+    delaycompress
+    compresscmd /bin/gzip
+    compressext .gz
 }' . PHP_EOL;
-            $pathConf = '/tmp/' . pathinfo($file)['filename'] . '.conf';
-            file_put_contents($pathConf, $textConfig);
-            $logrotate = Util::which('logrotate');
-            Processes::mwExec("$logrotate '$pathConf' > /dev/null 2> /dev/null");
-            if (file_exists($pathConf)) {
-                unlink($pathConf);
+
+        $pathConf = '/tmp/logrotate_' . $moduleUniqid . '.conf';
+        file_put_contents($pathConf, $textConfig);
+        
+        $logrotate = Util::which('logrotate');
+        Processes::mwExec("$logrotate '$pathConf' > /dev/null 2> /dev/null");
+        
+        if (file_exists($pathConf)) {
+            unlink($pathConf);
+        }
+    }
+
+    /**
+     * Recursively finds all *.log and *.out files in the given directory.
+     *
+     * @param string $directory The directory to search in.
+     * @return array Array of full file paths.
+     */
+    private function findLogFilesRecursively(string $directory): array
+    {
+        $logFiles = [];
+        
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::LEAVES_ONLY
+        );
+        
+        foreach ($iterator as $file) {
+            if ($file->isFile()) {
+                $extension = strtolower($file->getExtension());
+                if ($extension === 'log' || $extension === 'out') {
+                    $logFiles[] = $file->getPathname();
+                }
             }
         }
+        
+        return $logFiles;
     }
 }
 
