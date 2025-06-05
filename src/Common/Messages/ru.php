@@ -1283,4 +1283,6 @@ return [
     'ex_SearchByEmail' => 'Поиск по электронной почте',
     'ex_SearchByID' => 'Поиск по внутреннему идентификатору сотрудника',
     'ex_SearchByCustomPhrase' => 'Полнотекстовый поиск',
+    'cdr_NoRecordsFound' => 'Записей не найдено',
+    'cdr_TryChangingDate' => 'Попробуйте изменить интервал дат',
 ];
