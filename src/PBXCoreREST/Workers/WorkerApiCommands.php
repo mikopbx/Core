@@ -693,13 +693,6 @@ class WorkerApiCommands extends WorkerRedisBase
         ];
 
         try {
-            // Set descriptive process title
-            cli_set_process_title(sprintf(
-                '%s_job_%s_%s',
-                static::class,
-                $jobId,
-                $request['action'] ?? 'unknown'
-            ));
 
             // Замер времени подготовки к обработке запроса
             $perfMetrics['processing_stages']['prepare'] = [
