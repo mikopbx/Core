@@ -74,9 +74,18 @@ function i18n(key, params = null) {
   for (let paramKey in params) {
       const placeholder = `%${paramKey}%`;
       if (result.includes(placeholder)) {
-          result = result.replace(new RegExp(placeholder, 'g'), params[paramKey]);
+          // Clean parameter value from quotes and escaping
+          let paramValue = params[paramKey];
+          if (typeof paramValue === 'string') {
+              // Remove surrounding quotes (single or double) first
+              paramValue = paramValue.replace(/^['"]|['"]$/g, '');
+          }
+          result = result.replace(new RegExp(placeholder, 'g'), paramValue);
       }
   }
+  
+  // Remove escaping from the final result (PHP adds \' and \" when creating JS localization file)
+  result = result.replace(/\\'/g, "'").replace(/\\"/g, '"');
   
   return result;
 }
