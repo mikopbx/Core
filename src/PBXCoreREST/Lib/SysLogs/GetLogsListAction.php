@@ -49,7 +49,7 @@ class GetLogsListAction extends Injectable
         $entries = Util::flattenArray($entries);
         $defaultFound = false;
         foreach ($entries as $entry) {
-            $fileSize = filesize($entry);
+            $fileSize = file_exists($entry)?filesize($entry):0;
             $now = time();
             if (
                 $fileSize === 0
