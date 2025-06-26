@@ -136,8 +136,9 @@ class AsteriskManager
      */
     public function pingAMIListener(string $pingTube = 'CdrConnector'): bool
     {
+        $pingTubePong = $pingTube."Pong";
         // Set event filter.
-        $params = ['Operation' => 'Add', 'Filter' => 'Event: UserEvent'];
+        $params = ['Operation' => 'Add', 'Filter' => "UserEvent: $pingTubePong"];
         $this->sendRequestTimeout('Filter', $params);
         // Send the ping.
         $req        = '';
@@ -180,10 +181,9 @@ class AsteriskManager
 
             if ($type === '' && count($this->ping()) === 0) {
                 $timeout = true;
-            } elseif (
-                'event' === $type
-                && $parameters['Event'] === 'UserEvent'
-                && "{$pingTube}Pong" === $parameters['UserEvent']
+            } elseif ( 'event' === $type
+                       && $parameters['Event'] === 'UserEvent'
+                       && $pingTubePong === $parameters['UserEvent']
             ) {
                 // Response received.
                 $result = true;
