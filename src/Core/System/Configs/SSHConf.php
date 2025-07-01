@@ -32,21 +32,55 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class SSHConf extends Injectable
+class SSHConf extends SystemConfigClass
 {
+    public const string PROC_NAME = 'dropbear';
+
+
     // Client keep-alive interval in seconds
     private const int CLIENT_KEEP_ALIVE_INTERVAL = 60;
 
     // Client idle timeout in seconds
     private const int CLIENT_IDLE_TIMEOUT = 1800;
 
+    /**
+     * Generates the Monit configuration file for monitoring the current service.
+     *
+     * This method:
+     * - Sets up the start command by calling setStartCommand()
+     * - Constructs a stop command using BusyBox to send SIGQUIT to the process
+     * - Defines dependencies (e.g., on php_timezone)
+     * - Specifies user permissions for starting/stopping the service
+     *
+     * The generated configuration is saved to a file in the Monit configuration directory,
+     * with a filename based on the service priority and name.
+     *
+     * @return bool Always returns true after successfully writing the configuration file.
+     */
+    public function generateMonitConf(): bool
+    {
+        $this->setStartCommand();
+
+        $busyboxPath = Util::which('busybox');
+        $confPath = $this->getMainMonitConfFile();
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
+            '    depends on loopback'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    if failed port 22 protocol ssh then restart'.PHP_EOL.
+            '    if 5 restarts within 5 cycles then timeout'.PHP_EOL;
+        $this->saveFileContent($confPath, $conf);
+        return true;
+    }
 
     /**
      * Configures SSH settings based on current system settings.
      *
      * @return bool Returns true if configuration is successful, false otherwise.
      */
-    public function configure(): bool
+    public function configure(): void
     {
         $lofFile = '/var/log/lastlog';
         if (!file_exists($lofFile)) {
@@ -54,33 +88,46 @@ class SSHConf extends Injectable
         }
         $this->generateDropbearKeys();
         $sshLogin = $this->getCreateSshUser();
-        $sshPort  = escapeshellcmd(PbxSettings::getValueByKey(PbxSettings::SSH_PORT));
 
         // Update root password and restart SSH server
         $this->updateShellPassword($sshLogin);
 
-        // Killing existing Dropbear processes before restart
-        Processes::killByName('dropbear');
-        usleep(500000); // Delay to ensure process has stopped
+        $this->setStartCommand();
 
+        $this->generateAuthorizedKeys($sshLogin);
+        $this->fixRights($sshLogin);
+    }
+
+    /**
+     * Constructs the start command for the service based on current system settings.
+     *
+     * This method builds the full command line to start the Dropbear SSH server,
+     * taking into account:
+     * - The configured SSH port
+     * - Whether password authentication is disabled
+     * - Keep-alive and idle timeout options
+     *
+     * The resulting command is stored in $this->startCommand for later use
+     * (e.g., by generateMonitConf() when creating Monit configuration).
+     *
+     * @return void
+     */
+    private function setStartCommand()
+    {
+        $sshPort  = escapeshellcmd(PbxSettings::getValueByKey(PbxSettings::SSH_PORT));
         $sshPasswordDisabled = PbxSettings::getValueByKey(PbxSettings::SSH_DISABLE_SSH_PASSWORD) === '1';
         $options = $sshPasswordDisabled ? '-s' : '';
-        $dropbear = Util::which('dropbear');
+        $dropBear = Util::which(self::PROC_NAME);
 
         // Adding keep-alive and idle timeout options to Dropbear configuration
-        $command = sprintf(
-            "%s -p '%s' %s -K %d -I %d -c /etc/rc/hello > /var/log/dropbear_start.log",
-            $dropbear,
+        $this->startCommand = sprintf(
+            "%s -p '%s' %s -K %d -I %d -c /etc/rc/hello",
+            $dropBear,
             $sshPort,
             $options,
             self::CLIENT_KEEP_ALIVE_INTERVAL,
             self::CLIENT_IDLE_TIMEOUT
         );
-        $result = Processes::mwExec($command);
-
-        $this->generateAuthorizedKeys($sshLogin);
-        $this->fixRights($sshLogin);
-        return $result === 0;
     }
 
     /**

@@ -37,31 +37,42 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class NginxConf extends Injectable
+class NginxConf extends SystemConfigClass
 {
+    public const string PROC_NAME = 'nginx';
     public const string  MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
-    private const string PID_FILE = '/var/run/nginx.pid';
+    private const string PID_FILE = '/var/run/'.self::PROC_NAME.'.pid';
+    private const string CONF_PATH_DIR = '/etc/nginx/mikopbx/conf.d';
+    private const string CONF_PATH = self::CONF_PATH_DIR. '/http-server.conf';
+    private const string CONF_PATH_SSL = self::CONF_PATH_DIR. '/https-server.conf';
+
+    /**
+     * Starts the service by reinitializing configurations and restarting the monitoring service.
+     *
+     * This method is a wrapper around {@see self::reStart()} and is used to start or restart
+     * the service with full reinitialization of settings and time synchronization.
+     *
+     * @return bool Returns true if the start operation was successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        $this->generateConf();
+        return $this->reStart();
+    }
 
     /**
      * Restart Nginx gracefully
      * https://www.cyberciti.biz/faq/howto-unix-linux-gracefully-reload-restart-nginx-webserver/
      **/
-    public function reStart(): void
+    public function reStart(): bool
     {
-        $pid = self::getPid();
-        if (!empty($pid)) {
-            $kill = Util::which('kill');
-            // reload Nginx workers gracefully
-            Processes::mwExec("$kill -SIGHUP $pid ");
-        } else {
-            $nginxPath = Util::which('nginx');
-            Processes::killByName('nginx');
-            Processes::mwExec($nginxPath);
-        }
+        $this->generateMonitConf();
+        $monitResult = $this->monitRestart();
         
         // Get web port from settings
-        $webPort = (string)PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
-        
+        $webPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
+
+        $waitResult = false;
         // Wait for Nginx to start completely (max 10 seconds)
         $maxAttempts = 20;
         $attempt = 0;
@@ -72,12 +83,15 @@ class NginxConf extends Injectable
                 $checkResult = [];
                 Processes::mwExec("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:$webPort/ --connect-timeout 1", $checkResult);
                 if (!empty($checkResult) && (int)$checkResult[0] > 0) {
+                    $waitResult = true;
                     break;
                 }
             }
             $attempt++;
             usleep(500000); // 0.5 seconds
         }
+
+        return $monitResult && $waitResult;
     }
 
     /**
@@ -107,9 +121,6 @@ class NginxConf extends Injectable
      */
     public function generateConf(bool $not_ssl = false, int $level = 0): void
     {
-        $configPath      = '/etc/nginx/mikopbx/conf.d';
-        $httpConfigFile  = "$configPath/http-server.conf";
-        $httpsConfigFile = "$configPath/https-server.conf";
         $dns_server      = '127.0.0.1';
 
         $net = new Network();
@@ -122,10 +133,10 @@ class NginxConf extends Injectable
         }
 
         // HTTP
-        $WEBPort      = (string)PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
-        $WEBHTTPSPort = (string)PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
+        $WEBPort      = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
+        $WEBHTTPSPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
 
-        $config = file_get_contents("$httpConfigFile.original");
+        $config = file_get_contents(self::CONF_PATH.".original");
 
         // Define the placeholders that will be replaced in the configuration string.
         $placeholders = ['<DNS>', '<WEBPort>'];
@@ -147,11 +158,11 @@ class NginxConf extends Injectable
                 . '    ' . $includeRow . PHP_EOL;
             $config    = str_replace($includeRow, $conf_data, $config);
         }
-        file_put_contents($httpConfigFile, $config);
+        file_put_contents(self::CONF_PATH, $config);
 
         // SSL
-        $WEBHTTPSPublicKey  = (string)PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
-        $WEBHTTPSPrivateKey = (string)PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
+        $WEBHTTPSPublicKey  = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
+        $WEBHTTPSPrivateKey = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
         if (
             $not_ssl === false
             && ! empty($WEBHTTPSPublicKey)
@@ -161,7 +172,7 @@ class NginxConf extends Injectable
             $private_filename = '/etc/ssl/private/nginx.key';
             file_put_contents($public_filename, $WEBHTTPSPublicKey);
             file_put_contents($private_filename, $WEBHTTPSPrivateKey);
-            $config = file_get_contents("$httpsConfigFile.original");
+            $config = file_get_contents(self::CONF_PATH_SSL.".original");
 
             // Define the placeholders that will be replaced in the configuration string.
             $placeholders = ['<DNS>', '<WEBHTTPSPort>'];
@@ -173,9 +184,9 @@ class NginxConf extends Injectable
             // This operation updates DNS and Web https Port settings in the configuration.
             $config = str_replace($placeholders, $replacementValues, $config);
 
-            file_put_contents($httpsConfigFile, $config);
-        } elseif (file_exists($httpsConfigFile)) {
-            unlink($httpsConfigFile);
+            file_put_contents(self::CONF_PATH_SSL, $config);
+        } elseif (file_exists(self::CONF_PATH_SSL)) {
+            unlink(self::CONF_PATH_SSL);
         }
 
         // Test work
@@ -187,6 +198,26 @@ class NginxConf extends Injectable
         }
         // Add additional rules from modules
         $this->generateModulesConfigs();
+    }
+
+    public function generateMonitConf(): bool
+    {
+        $binPath = Util::which(self::PROC_NAME);
+        $confPath = $this->getMainMonitConfFile();
+
+        $this->startCommand = $binPath;
+        $stopCommand = "$binPath -s stop";
+
+        $conf = 'check file '.self::PROC_NAME.'-conf with path '.self::CONF_PATH .PHP_EOL.
+            'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
+            '    depends on '.self::PROC_NAME.'-conf'.PHP_EOL.
+            '    depends on '.PHPConf::PROC_NAME.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$stopCommand.'"'.PHP_EOL.
+            '        as uid root and gid root';
+        $this->saveFileContent($confPath, $conf);
+        return true;
     }
 
     /**
@@ -231,5 +262,20 @@ class NginxConf extends Injectable
             Processes::mwExec("$rm $confFileName");
             SystemMessages::sysLogMsg('nginx', 'Failed test config file for module' . $moduleUniqueId, LOG_ERR);
         }
+    }
+
+    /**
+     * Attempts to start the service via Monit when a failure is detected.
+     *
+     * This method is typically used as a fallback action to manually restart
+     * the service using Monit if it fails unexpectedly. The current implementation
+     * does not wait for the service to fully start, but the timeout parameter
+     * may be used in extended implementations.
+     *
+     * @return void
+     */
+    public function monitFailStartAction(): void
+    {
+        sleep(1);
     }
 }

@@ -21,6 +21,9 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
 /**
@@ -30,16 +33,45 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class ACPIDConf extends Injectable
+class ACPIDConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'acpid';
+
+    /**
+     * Priority level used to sort configuration objects when generating configs.
+     * Lower values mean higher priority.
+     */
+    public int $priority = 1;
 
     /**
      * Restarts Beanstalk server
      */
     public function reStart(): bool
     {
-        $conf   = "-c '/etc/acpi/events' -n -f";
-        return Processes::safeStartDaemon(self::PROC_NAME, $conf);
+        if(Util::isDocker()){
+            return true;
+        }
+        $this->generateMonitConf();
+        return $this->monitRestart();
+    }
+
+    public function generateMonitConf(): bool
+    {
+        if(Util::isDocker()){
+            return true;
+        }
+        $binPath = Util::which(self::PROC_NAME);
+        $busyboxPath = Util::which('busybox');
+        $confPath = $this->getMainMonitConfFile();
+
+        $this->startCommand = "$binPath -c '/etc/acpi/events' -n --pidfile /var/run/".self::PROC_NAME.'.pid';
+        $stopCommand = "/bin/sh -c '$busyboxPath kill -TERM `$busyboxPath cat /var/run/".self::PROC_NAME.".pid`'";
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
+                '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+                '        as uid root and gid root'.PHP_EOL.
+                '    stop program = "'.$stopCommand.'"'.PHP_EOL.
+                '        as uid root and gid root';
+        $this->saveFileContent($confPath, $conf);
+        return true;
     }
 }

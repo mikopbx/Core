@@ -22,7 +22,6 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di\Injectable;
 
 /**
  * Class NTPConf
@@ -31,14 +30,81 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class NTPConf extends Injectable
+class NTPConf extends SystemConfigClass
 {
+    public const string PROC_NAME = 'ntpd';
+
+    /**
+     * Generates the Monit configuration file for monitoring the NTP daemon (ntpd).
+     *
+     * This method:
+     * - Applies necessary service configuration via configure()
+     * - Locates required binaries (ntpd and busybox)
+     * - Constructs the start command with options (e.g., -N for standalone mode)
+     * - Builds a Monit configuration block to monitor, start and stop the service
+     * - Saves the configuration to a file based on the service's priority and name
+     *
+     * @return bool Always returns true after successfully writing the configuration file.
+     */
+    public function generateMonitConf(): bool{
+        $this->configure();
+        $busyboxPath = Util::which('busybox');
+        $ntpdPath = Util::which(self::PROC_NAME);
+        $confPath = $this->getMainMonitConfFile();
+        $options = "-N";
+        $this->startCommand = "$ntpdPath $options";
+
+        $conf = 'check process '.self::PROC_NAME.' matching "'.$this->startCommand.'"'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '        as uid root and gid root';
+
+        $this->saveFileContent($confPath, $conf);
+        return true;
+    }
+
+    /**
+     * Starts the service by reinitializing configurations and restarting the monitoring service.
+     *
+     * This method is a wrapper around {@see self::reStart()} and is used to start or restart
+     * the service with full reinitialization of settings and time synchronization.
+     *
+     * @return bool Returns true if the start operation was successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        return $this->reStart();
+    }
+
+    /**
+     * Restarts the service with initial configuration and time synchronization.
+     *
+     * This method first reconfigures the instance and generates the Monit configuration file.
+     * If manual time settings are not enabled, it restarts the Monit service and synchronizes the system time
+     * using ntpd in the background.
+     *
+     * @return bool Returns true if the restart was successful, false otherwise.
+     */
+    public function reStart(): bool
+    {
+        $this->generateMonitConf();
+        $result = true;
+        $manual_time = PbxSettings::getValueByKey(PbxSettings::PBX_MANUAL_TIME_SETTINGS);
+        if ($manual_time !== '1') {
+            $result = $this->monitRestart();
+            $ntpdPath = Util::which('ntpd');
+            Processes::mwExecBg("$ntpdPath -q");
+        }
+        return $result;
+    }
+
     /**
      * Configures the NTP daemon conf file.
      *
      * @return void
      */
-    public static function configure(): void
+    public function configure(): void
     {
         $ntp_servers = PbxSettings::getValueByKey(PbxSettings::NTP_SERVER);
         $ntp_servers = preg_split('/\r\n|\r|\n| /', $ntp_servers);
@@ -49,24 +115,12 @@ class NTPConf extends Injectable
             }
         }
         if ($ntp_conf === '') {
-            $ntp_conf = 'server 0.pool.ntp.org
-server 1.pool.ntp.org
-server 2.pool.ntp.org';
+            $ntp_conf = 'server 0.pool.ntp.org'.PHP_EOL.
+                        'server 1.pool.ntp.org'.PHP_EOL.
+                        'server 2.pool.ntp.org';
         }
         Util::fileWriteContent('/etc/ntp.conf', $ntp_conf);
-        if (Util::isSystemctl()) {
-            $systemctl = Util::which('systemctl');
-            Processes::mwExec("$systemctl restart ntp");
-        } else {
-            // T2SDE or Docker
-            Processes::killByName("ntpd");
-            usleep(500000);
-            $manual_time = PbxSettings::getValueByKey(PbxSettings::PBX_MANUAL_TIME_SETTINGS);
-            if ($manual_time !== '1') {
-                $ntpdPath = Util::which('ntpd');
-                Processes::mwExec($ntpdPath);
-                Processes::mwExecBg("$ntpdPath -q");
-            }
-        }
+        Processes::killByName(self::PROC_NAME);
+        usleep(500000);
     }
 }

@@ -24,7 +24,6 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Di;
-use Phalcon\Di\Injectable;
 
 /**
  * Class SyslogConf
@@ -33,11 +32,26 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class SyslogConf extends Injectable
+class SyslogConf extends SystemConfigClass
 {
     public const string CONF_FILE   = '/etc/rsyslog.conf';
     public const string PROC_NAME   = 'rsyslogd';
     public const string SYS_LOG_LINK = '/var/log/messages';
+
+    /**
+     * Priority level used to sort configuration objects when generating configs.
+     * Lower values mean higher priority.
+     */
+    public int $priority = 3;
+    /**
+     * Start the service.
+     *
+     * @return bool True if successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        return $this->reStart();
+    }
 
     /**
      * Restarts syslog daemon.
@@ -60,8 +74,26 @@ class SyslogConf extends Injectable
 
         RedisConf::generateSyslogConf();
         CronConf::generateSyslogConf();
+        MonitConf::generateSyslogConf();
 
-        return Processes::safeStartDaemon(self::PROC_NAME, '-n');
+        $this->generateMonitConf();
+        return $this->monitRestart();
+    }
+
+    /**
+     * Attempts to start the service via Monit when a failure is detected.
+     *
+     * This method is typically used as a fallback action to manually restart
+     * the service using Monit if it fails unexpectedly. The current implementation
+     * does not wait for the service to fully start, but the timeout parameter
+     * may be used in extended implementations.
+     *
+     * @return void
+     */
+    public function monitFailStartAction(): void
+    {
+        $binPath = Util::which(self::PROC_NAME);
+        Processes::mwExecBg($binPath);
     }
 
     /**
@@ -87,6 +119,37 @@ class SyslogConf extends Injectable
         Util::fileWriteContent(self::CONF_FILE, $conf);
         Util::createUpdateSymlink($log_fileMessages, self::SYS_LOG_LINK);
         Util::mwMkdir('/etc/rsyslog.d');
+    }
+
+    /**
+     * Generates a Monit configuration file for the current system service.
+     *
+     * This method creates a basic Monit configuration to monitor the process lifecycle:
+     * - Defines the PID file location
+     * - Specifies commands to start and stop the service
+     * - Sets execution permissions (as root user/group)
+     * - Adds 'noalert' and 'unmonitor' directives to disable alerts and active monitoring
+     *
+     * The configuration is saved to the default Monit configuration directory.
+     *
+     * @return bool Always returns true after writing the configuration file.
+     */
+    public function generateMonitConf(): bool
+    {
+        if(!file_exists(self::CONF_FILE)){
+            return true;
+        }
+        $busyboxPath = Util::which('busybox');
+        $binPath     = Util::which(self::PROC_NAME);
+        $confPath    = $this->getMainMonitConfFile();
+
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid '.PHP_EOL.
+            '    start program = "'.$binPath.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '        as uid root and gid root';
+        $this->saveFileContent($confPath, $conf);
+        return true;
     }
 
     /**

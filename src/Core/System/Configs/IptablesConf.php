@@ -41,9 +41,6 @@ class IptablesConf extends Injectable
     // Indicates if the firewall is enabled.
     private bool $firewall_enable;
 
-    // The Fail2Ban configuration object.
-    private Fail2BanConf $fail2ban;
-
     // Various port settings.
     private string $sipPort;
     private string $tlsPort;
@@ -66,8 +63,6 @@ class IptablesConf extends Injectable
         $defaultRTPTo           = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO);
         $this->maxReqSec        = intval(PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_MAX_REQ));
         $this->rtpPorts         = "$defaultRTPFrom:$defaultRTPTo";
-        // Initialize the Fail2Ban configuration.
-        $this->fail2ban = new Fail2BanConf();
     }
 
     /**
@@ -104,10 +99,7 @@ class IptablesConf extends Injectable
      */
     public function applyConfig(): void
     {
-        $this->fail2ban->fail2banStop();
         $this->dropAllRules();
-        $this->fail2ban->fail2banMakeDirs();
-
         if ($this->firewall_enable) {
             $arr_command   = [];
             $arr_command[] = $this->getIptablesInputRule('', '-m conntrack --ctstate ESTABLISHED,RELATED');
@@ -140,36 +132,11 @@ class IptablesConf extends Injectable
             );
 
             $dropCommand = $this->getIptablesInputRule('', '', 'DROP');
-            if (Util::isSystemctl()) {
-                Util::mwMkdir('/etc/iptables');
-                file_put_contents(self::IP_TABLE_MIKO_CONF, implode("\n", $arr_command));
-                file_put_contents(
-                    self::IP_TABLE_MIKO_CONF,
-                    "\n" . implode("\n", $arr_commands_custom),
-                    FILE_APPEND
-                );
-                file_put_contents(
-                    self::IP_TABLE_MIKO_CONF,
-                    "\n" . $dropCommand,
-                    FILE_APPEND
-                );
-                $systemctlPath = Util::which('systemctl');
-                Processes::mwExec("$systemctlPath restart mikopbx_iptables");
-            } else {
-                // T2SDE or Docker
-                Processes::mwExecCommands($arr_command, $out, 'firewall');
-                Processes::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
-                // Drop everything else
-                Processes::mwExec($dropCommand);
-            }
-        }
-
-        // Setup fail2ban
-        if ($this->fail2ban->fail2ban_enable) {
-            $this->fail2ban->writeConfig();
-            $this->fail2ban->fail2banStart();
-        } else {
-            $this->fail2ban->fail2banStop();
+            // T2SDE or Docker
+            Processes::mwExecCommands($arr_command, $out, 'firewall');
+            Processes::mwExecCommands($arr_commands_custom, $out, 'firewall_additional');
+            // Drop everything else
+            Processes::mwExec($dropCommand);
         }
     }
 

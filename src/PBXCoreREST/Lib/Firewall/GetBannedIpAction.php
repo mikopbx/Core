@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Firewall;
 
+use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -56,7 +57,7 @@ class GetBannedIpAction extends Injectable
         $groupedResults = [];
         $sep = '"|"';
         $sepSpace = '" "';
-        $fail2banPath = Util::which('fail2ban-client');
+        $fail2banPath = Util::which(Fail2BanConf::FB_CLIENT_BIN);
         $awkPath      = Util::which('awk');
 
         try {

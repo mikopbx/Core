@@ -33,9 +33,20 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class NatsConf extends Injectable
+class NatsConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'gnatsd';
+    private string $conf_file = '';
+
+    /**
+     * Start the service.
+     *
+     * @return bool True if successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        return $this->reStart();
+    }
 
     /**
      * Restarts the gnats server.
@@ -43,6 +54,36 @@ class NatsConf extends Injectable
      * @return bool
      */
     public function reStart(): bool
+    {
+        $this->configure();
+        $this->generateMonitConf();
+        return $this->monitRestart();
+    }
+
+    public function generateMonitConf(): bool
+    {
+        if(empty($this->conf_file)){
+            $this->configure();
+        }
+
+        $binPath = Util::which(self::PROC_NAME);
+        $busyboxPath = Util::which('busybox');
+        $confPath = $this->getMainMonitConfFile();
+
+        $this->startCommand = "/bin/sh -c '$busyboxPath nohup $binPath --config $this->conf_file > /dev/null 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid && sleep 1'";
+        $stopCommand = "/bin/sh -c '$busyboxPath kill -TERM `$busyboxPath cat /var/run/".self::PROC_NAME.".pid`'";
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid '.PHP_EOL.
+            '    depends on loopback'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$stopCommand.'"'.PHP_EOL.
+            '        as uid root and gid root';
+
+        $this->saveFileContent($confPath, $conf);
+        return true;
+    }
+
+    private function configure():void
     {
         $config = $this->getDI()->get('config')->gnats;
 
@@ -55,7 +96,7 @@ class NatsConf extends Injectable
         $sessionsDir = Directories::getDir(Directories::CORE_TEMP_DIR) . '/nats_cache';
         Util::mwMkdir($sessionsDir);
 
-        $pid_file = '/var/run/gnatsd.pid';
+        $pid_file = '/var/run/'.self::PROC_NAME.'.pid';
         $settings = [
             'port'             => $config->port,
             'http_port'        => $config->httpPort,
@@ -74,26 +115,25 @@ class NatsConf extends Injectable
         foreach ($settings as $key => $val) {
             $config .= "$key: $val\n";
         }
-        $conf_file = "$confDir/natsd.conf";
-        Util::fileWriteContent($conf_file, $config);
+        $this->conf_file = "$confDir/natsd.conf";
+        Util::fileWriteContent($this->conf_file, $config);
 
         $lic = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
         file_put_contents("$sessionsDir/license.key", $lic);
+    }
 
-        if (file_exists($pid_file)) {
-            $killAllPath = Util::which('killall');
-            $killPath = Util::which('kill');
-            $catPath = Util::which('cat');
-            Processes::mwExec("$killAllPath safe-" . self::PROC_NAME);
-            Processes::mwExec("$killPath $($catPath $pid_file)");
-        }
-        $outFile = "$logDir/gnats_process.log";
-        $args = "--config $conf_file";
-        $result = Processes::safeStartDaemon(self::PROC_NAME, $args, 20, 1000000, $outFile);
-        if (!$result) {
-            sleep(10);
-            $result = Processes::safeStartDaemon(self::PROC_NAME, $args, 20, 1000000, $outFile);
-        }
-        return $result;
+    /**
+     * Attempts to start the service via Monit when a failure is detected.
+     *
+     * This method is typically used as a fallback action to manually restart
+     * the service using Monit if it fails unexpectedly. The current implementation
+     * does not wait for the service to fully start, but the timeout parameter
+     * may be used in extended implementations.
+     *
+     * @return void
+     */
+    public function monitFailStartAction(): void
+    {
+        sleep(2);
     }
 }

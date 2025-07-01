@@ -25,7 +25,9 @@ use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
 use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
+use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
+use MikoPBX\Core\System\Configs\MonitConf;
 use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\NginxConf;
@@ -126,26 +128,25 @@ class SystemLoader extends Injectable
         // Mark the registry as booting
         System::setBooting(true);
 
-        // Start the ACPID daemon
+        $this->echoStartMsg(PHP_EOL);
+        $this->echoStartMsg(' - Start redis daemon...');
+        $redisConf = new RedisConf();
+        $redisStatus = $redisConf->start();
+        $this->echoResultMsg($redisStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+
+        $this->echoStartMsg(' - Start monit daemon...');
+        $monit = new MonitConf();
+        $this->echoResultMsg($monit->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         if (!$this->isDocker) {
-            $this->echoStartMsg(PHP_EOL);
-            $this->echoStartMsg(' - Start acpid daemon...');
+            // Wait start the ACPID daemon
+            $this->echoStartMsg(' - Wait acpid daemon...');
             $ACPIDConf = new ACPIDConf();
-            $ACPIDStatus = $ACPIDConf->reStart();
-            $this->echoResultMsg($ACPIDStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+            $this->echoResultMsg($ACPIDConf->monitWaitStart() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         }
         // Start the Beanstalkd daemon
         $this->echoStartMsg(' - Start beanstalkd daemon...');
         $beanstalkConf = new BeanstalkConf();
-        $beanstalkStatus = $beanstalkConf->reStart();
-        $this->echoResultMsg($beanstalkStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
-
-        // Start the Redis daemon
-        $this->echoStartMsg(' - Start redis daemon...');
-        $redisConf = new RedisConf();
-        $redisStatus = $redisConf->reStart();
-        $this->echoResultMsg($redisStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
-
+        $this->echoResultMsg($beanstalkConf->monitWaitStart() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         // Configure Sentry error logger
         $this->echoStartMsg(' - Configuring sentry error logger ...');
         if (!$this->isRecoveryMode) {
@@ -195,7 +196,8 @@ class SystemLoader extends Injectable
         // Start the syslogd daemon
         $this->echoStartMsg(' - Start syslogd daemon...');
         $syslogConf = new SyslogConf();
-        $syslogStatus = $syslogConf->reStart();
+        $syslogStatus = $syslogConf->start();
+        $monit->reStart();
         $this->echoResultMsg($syslogStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Update the database structure
@@ -218,7 +220,7 @@ class SystemLoader extends Injectable
         $this->echoStartMsg(' - Configuring VM tools...');
         if (!$this->isRecoveryMode) {
             $vmwareTools = new VmToolsConf();
-            $resultVMTools = $vmwareTools->configure();
+            $resultVMTools = $vmwareTools->start();
             $this->echoResultMsg((string)$resultVMTools);
         } else {
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
@@ -255,22 +257,24 @@ class SystemLoader extends Injectable
         $firewall->applyConfig();
         $this->echoResultMsg();
 
+        $this->echoStartMsg(' - Configuring Fail2ban...');
+        $fail2ban = new Fail2BanConf();
+        $fail2ban->reStart();
+        $this->echoResultMsg();
+        
         // Configure NTP
         $this->echoStartMsg(' - Configuring ntpd...');
         if (!$this->isRecoveryMode) {
-            NTPConf::configure();
-            $this->echoResultMsg();
+            $ntpConf = new NTPConf();
+            $this->echoResultMsg($ntpConf->monitWaitStart() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         } else {
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
-        // Do not need to set Debian SSH service
-        if (!Util::isSystemctl()) {
-            $this->echoStartMsg(' - Configuring SSH console...');
-            $sshConf = new SSHConf();
-            $resSsh = $sshConf->configure();
-            $this->echoResultMsg((string)$resSsh);
-        }
+        $this->echoStartMsg(' - Configuring SSH console...');
+        $sshConf = new SSHConf();
+        $resSsh = $sshConf->configure();
+        $this->echoResultMsg((string)$resSsh);
 
         // Start cloud provisioning
         if (!$this->isDocker && !$this->isRecoveryMode) {
@@ -313,14 +317,15 @@ class SystemLoader extends Injectable
         // Start the NATS queue daemon
         $this->echoStartMsg(' - Start nats queue daemon...');
         $natsConf = new NatsConf();
-        $natsStatus = $natsConf->reStart();
+        $natsStatus = $natsConf->start();
         $this->echoResultMsg($natsStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
 
         // Start the PHP-FPM daemon
         $this->echoStartMsg(' - Start php-fpm daemon...');
-        PHPConf::reStart();
-        $this->echoResultMsg();
+        $phpConf = new PHPConf();
+        $phpStatus = $phpConf->start();
+        $this->echoResultMsg($phpStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Configure Asterisk and start it
         $this->echoStartMsg(' - Configuring Asterisk...' . PHP_EOL);
@@ -345,14 +350,13 @@ class SystemLoader extends Injectable
         // Configure and restart cron tasks
         $this->echoStartMsg(' - Configuring Cron tasks...');
         $cron = new CronConf();
-        $cron->reStart();
+        $cron->start();
         $this->echoResultMsg();
 
         // Start the Nginx daemon
         $this->echoStartMsg(' - Start Nginx daemon...');
         $nginx = new NginxConf();
-        $nginx->generateConf();
-        $nginx->reStart();
+        $nginx->start();
         $this->echoResultMsg();
 
         System::setBooting(false);

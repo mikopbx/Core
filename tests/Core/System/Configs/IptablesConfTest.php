@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Tests\Core\System\Configs;
 
+use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Tests\Unit\AbstractUnitTest;
 
@@ -29,6 +30,9 @@ class IptablesConfTest extends AbstractUnitTest
     {
         $firewall = new IptablesConf();
         $firewall->applyConfig();
+
+        $fail2ban = new Fail2BanConf();
+        $fail2ban->reStart();
     }
 
     public function testUpdateFirewallRules()

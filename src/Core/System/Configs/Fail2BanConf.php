@@ -31,7 +31,6 @@ use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Di;
-use Phalcon\Di\Injectable;
 use SQLite3;
 
 /**
@@ -41,8 +40,12 @@ use SQLite3;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class Fail2BanConf extends Injectable
+class Fail2BanConf extends SystemConfigClass
 {
+    public const string PROC_NAME = 'fail2ban';
+    public const string FB_CONF_PATH = '/etc/fail2ban/fail2ban.conf';
+    public const string FB_CLIENT_BIN = 'fail2ban-client';
+    public const string FB_SERVER_BIN = 'fail2ban-server';
     private const string FILTER_PATH     = '/etc/fail2ban/filter.d';
     private const string ACTION_PATH     = '/etc/fail2ban/action.d';
     private const string JAILS_DIR       = '/etc/fail2ban/jail.d';
@@ -50,16 +53,86 @@ class Fail2BanConf extends Injectable
     public const string FAIL2BAN_DB_PATH = '/var/lib/fail2ban/fail2ban.sqlite3';
     public const string FAIL2BAN_DB_DIR_PATH = '/var/lib/fail2ban';
 
-    public bool $fail2ban_enable;
+    public bool $fail2banEnable = true;
 
     /**
      * Fail2Ban constructor.
-     * 
+     *
      */
     public function __construct()
     {
+        $this->fail2banEnable = self::fail2BanEnable();
+    }
+
+    /**
+     * Restarts Fail2Ban server
+     */
+    public function reStart(): bool
+    {
+        $result = true;
+        $fail2banPath = Util::which(self::FB_CLIENT_BIN);
+
+        $this->generateMonitConf();
+        if ($this->fail2banEnable){
+            $this->fail2banMakeDirs();
+            $this->writeConfig();
+            $result = $this->monitRestart();
+        }else{
+            Processes::mwExec("$fail2banPath -x stop");
+        }
+
+        return $result;
+    }
+
+    /**
+     * Generates a Monit configuration file for monitoring the Fail2Ban service.
+     *
+     * This method:
+     * - Locates the Fail2Ban client binary (fail2ban-client)
+     * - Constructs commands to start and stop the service
+     * - Creates a Monit configuration that:
+     *   - Monitors the Fail2Ban configuration file
+     *   - Depends on the config file being present
+     *   - Defines how to start/stop the service as root
+     *
+     * The configuration is saved to a file in the Monit configuration directory,
+     * with a filename based on the service priority and name.
+     *
+     * @return bool Always returns true after successfully writing the configuration file.
+     */
+    public function generateMonitConf(): bool
+    {
+        if(!$this->fail2banEnable){
+            $this->deleteMonitConf();
+            return false;
+        }
+        $binPath = Util::which(self::FB_CLIENT_BIN);
+        $confPath = $this->getMainMonitConfFile();
+        $this->startCommand = "$binPath -x start";
+
+        $conf = 'check file '.self::PROC_NAME.'-conf with path '.self::FB_CONF_PATH .PHP_EOL.
+            'check process '.self::PROC_NAME.' with pidfile /var/run/fail2ban/'.self::PROC_NAME.'.pid'.PHP_EOL.
+            '    depends on '.self::PROC_NAME.'-conf'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'."$binPath -x stop".'"'.PHP_EOL.
+            '        as uid root and gid root';
+        $this->saveFileContent($confPath, $conf);
+        return true;
+    }
+
+    /**
+     * Checks if Fail2Ban is enabled in the system settings.
+     *
+     * This static method retrieves the Fail2Ban enabled flag from the PBX settings
+     * and returns a boolean value indicating whether Fail2Ban is active.
+     *
+     * @return bool True if Fail2Ban is enabled, false otherwise.
+     */
+    public static function fail2BanEnable():bool
+    {
         $fail2ban_enable       = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
-        $this->fail2ban_enable = ($fail2ban_enable === '1');
+        return intval($fail2ban_enable) === 1;
     }
 
     /**
@@ -68,49 +141,11 @@ class Fail2BanConf extends Injectable
     public static function checkFail2ban(): void
     {
         $fail2ban = new self();
-        if (
-            $fail2ban->fail2ban_enable
-            && ! $fail2ban->fail2banIsRunning()
-        ) {
-            $fail2ban->fail2banStart();
+        if ($fail2ban->fail2banEnable &&
+            !$fail2ban->fail2banIsRunning() ) {
+            // Need start...
+            $fail2ban->reStart();
         }
-    }
-
-    /**
-     * Check fail2ban service status
-     *
-     * @return bool
-     */
-    private function fail2banIsRunning(): bool
-    {
-        $fail2banPath = Util::which('fail2ban-client');
-        $res_ping     = Processes::mwExec("$fail2banPath ping");
-        $res_stat     = Processes::mwExec("$fail2banPath status");
-
-        $result = false;
-        if ($res_ping === 0 && $res_stat === 0) {
-            $result = true;
-        }
-
-        return $result;
-    }
-
-    /**
-     * Start fail2ban service
-     */
-    public function fail2banStart(): void
-    {
-        if (Util::isSystemctl()) {
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("$systemctlPath restart fail2ban");
-            return;
-        }
-        // T2SDE or Docker
-        Processes::killByName('fail2ban-server');
-        $fail2banPath = Util::which('fail2ban-client');
-        $cmd_start    = "$fail2banPath -x start";
-        $command      = "($cmd_start;) > /dev/null 2>&1 &";
-        Processes::mwExec($command);
     }
 
     /**
@@ -118,43 +153,18 @@ class Fail2BanConf extends Injectable
      */
     public static function reloadFail2ban(): void
     {
-        $fail2banPath = Util::which('fail2ban-client');
+        $fail2banPath = Util::which(self::FB_CLIENT_BIN);
         if (file_exists(self::PID_FILE)) {
             $pid = file_get_contents(self::PID_FILE);
         } else {
-            $pid = Processes::getPidOfProcess('fail2ban-server');
+            $pid = Processes::getPidOfProcess(self::FB_SERVER_BIN);
         }
         $fail2ban = new self();
-        if ($fail2ban->fail2ban_enable && !empty($pid)) {
-            $fail2ban->generateConf();
+        if ($fail2ban->fail2banEnable && !empty($pid)) {
+            $fail2ban->writeConfig();
             $fail2ban->generateModulesFilters();
-            $fail2ban->generateModulesJailsLocal();
             // Reload the configuration without restarting Fail2Ban.
             Processes::mwExecBg("$fail2banPath reload");
-        }
-    }
-
-    /**
-     * Generating the fail2ban.conf config
-     * @return void
-     */
-    private function generateConf(): void
-    {
-        $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/fail2ban';
-        $lofFileName = "$log_dir/fail2ban.log";
-        Util::mwMkdir($log_dir);
-        $conf = '[' . 'Definition' . ']' . PHP_EOL .
-            'allowipv6 = auto' . PHP_EOL .
-            'loglevel = INFO' . PHP_EOL .
-            "logtarget = $lofFileName" . PHP_EOL .
-            'syslogsocket = auto' . PHP_EOL .
-            'socket = /var/run/fail2ban/fail2ban.sock' . PHP_EOL .
-            'pidfile = /var/run/fail2ban/fail2ban.pid' . PHP_EOL .
-            'dbfile = /var/lib/fail2ban/fail2ban.sqlite3' . PHP_EOL .
-            'dbpurgeage = 1d' . PHP_EOL;
-        Util::fileWriteContent('/etc/fail2ban/fail2ban.conf', $conf);
-        if (!file_exists($lofFileName)) {
-            file_put_contents($lofFileName, '');
         }
     }
 
@@ -164,7 +174,7 @@ class Fail2BanConf extends Injectable
     public static function logRotate(): void
     {
         $di           = Di::getDefault();
-        $fail2banPath = Util::which('fail2ban-client');
+        $fail2banPath = Util::which(Fail2BanConf::FB_CLIENT_BIN);
 
         if ($di === null) {
             return;
@@ -199,7 +209,6 @@ class Fail2BanConf extends Injectable
         Processes::mwExecBg("$logrotatePath $options '$path_conf' > /dev/null 2> /dev/null");
     }
 
-
     /**
      * Checks whether BANS table exists in DB or not
      *
@@ -207,82 +216,37 @@ class Fail2BanConf extends Injectable
      *
      * @return bool
      */
-    public function tableBanExists(SQLite3 $db): bool
+    public static function tableBanExists(SQLite3 $db): bool
     {
         $q_check      = 'SELECT name FROM sqlite_master WHERE type = "table" AND name="bans"';
         $result_check = $db->query($q_check);
 
-        return (false !== $result_check && $result_check->fetchArray(SQLITE3_ASSOC) !== false);
+        return false !== $result_check && $result_check->fetchArray(SQLITE3_ASSOC) !== false;
     }
 
     /**
-     * Shutdown fail2ban service
-     */
-    public function fail2banStop(): void
-    {
-        if (Util::isSystemctl()) {
-            $systemctlPath = Util::which('systemctl');
-            Processes::mwExec("$systemctlPath stop fail2ban");
-        } else {
-            $fail2banPath = Util::which('fail2ban-client');
-            Processes::mwExec("$fail2banPath -x stop");
-        }
-    }
-
-    /**
-     * Creates the necessary directories and files for Fail2Ban.
+     * Check fail2ban service status
      *
-     * @return string Returns the path to the Fail2Ban database file.
+     * @return bool
      */
-    public function fail2banMakeDirs(): string
+    private function fail2banIsRunning(): bool
     {
-        $res_file = self::FAIL2BAN_DB_DIR_PATH;
-        $old_dir_db = '/cf/fail2ban';
-        $dir_db     = $this->di->getShared('config')->path('core.fail2banDbDir');
-        if (empty($dir_db)) {
-            $dir_db = '/var/spool/fail2ban';
-        }
-        // Create working directories.
-        Util::mwMkdir(dirname($res_file));
-        Util::mwMkdir($dir_db);
+        $fail2banPath = Util::which(Fail2BanConf::FB_CLIENT_BIN);
+        $res_ping     = Processes::mwExec("$fail2banPath ping");
+        $res_stat     = Processes::mwExec("$fail2banPath status");
 
-        $create_link = false;
-        // Symbolic link to the database.
-        if (file_exists($res_file)) {
-            $mvPath = Util::which('mv');
-            $rmPath = Util::which('rm');
-            if (filetype($res_file) !== 'link') {
-                Processes::mwExec("$mvPath '$res_file'/* '$dir_db'");
-                Processes::mwExec("$rmPath -rf $res_file");
-                $create_link = true;
-            } elseif (readlink($res_file) === "$old_dir_db") {
-                Processes::mwExec("$rmPath -rf $res_file");
-                $create_link = true;
-                if (file_exists("$old_dir_db")) {
-                    // Move the file to the new location.
-                    Processes::mwExec("$mvPath '$old_dir_db'/* '$dir_db'");
-                }
-            }
-        } else {
-            $create_link = true;
+        $result = false;
+        if ($res_ping === 0 && $res_stat === 0) {
+            $result = true;
         }
 
-        if ($create_link === true) {
-            Util::createUpdateSymlink("$dir_db", $res_file);
-        }
-
-        $filename = basename(self::FAIL2BAN_DB_PATH);
-        if (file_exists("$dir_db/$filename")) {
-            $sqlite3Path = Util::which('sqlite3');
-            Processes::mwExec("$sqlite3Path $dir_db/$filename 'vacuum'");
-        }
-        return $res_file;
+        return $result;
     }
 
     /**
      * Writes the Fail2Ban configuration to the jail.local file.
      */
-    public function writeConfig(): void
+    private function writeConfig(): void
     {
         // Initialize properties
         $this->generateConf();
@@ -352,6 +316,79 @@ class Fail2BanConf extends Injectable
     }
 
     /**
+     * Generating the fail2ban.conf config
+     * @return void
+     */
+    private function generateConf(): void
+    {
+        $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/fail2ban';
+        $lofFileName = "$log_dir/fail2ban.log";
+        Util::mwMkdir($log_dir);
+        $conf = '[' . 'Definition' . ']' . PHP_EOL .
+            'allowipv6 = auto' . PHP_EOL .
+            'loglevel = INFO' . PHP_EOL .
+            "logtarget = $lofFileName" . PHP_EOL .
+            'syslogsocket = auto' . PHP_EOL .
+            'socket = /var/run/fail2ban/fail2ban.sock' . PHP_EOL .
+            'pidfile = /var/run/fail2ban/fail2ban.pid' . PHP_EOL .
+            'dbfile = /var/lib/fail2ban/fail2ban.sqlite3' . PHP_EOL .
+            'dbpurgeage = 1d' . PHP_EOL;
+        Util::fileWriteContent(self::FB_CONF_PATH, $conf);
+        if (!file_exists($lofFileName)) {
+            file_put_contents($lofFileName, '');
+        }
+    }
+
+    /**
+     * Creates the necessary directories and files for Fail2Ban.
+     *
+     * @return void
+     */
+    private function fail2banMakeDirs(): void
+    {
+        $res_file = self::FAIL2BAN_DB_DIR_PATH;
+        $old_dir_db = '/cf/fail2ban';
+        $dir_db     = $this->di->getShared('config')->path('core.fail2banDbDir');
+        if (empty($dir_db)) {
+            $dir_db = '/var/spool/fail2ban';
+        }
+        // Create working directories.
+        Util::mwMkdir(dirname($res_file));
+        Util::mwMkdir($dir_db);
+
+        $create_link = false;
+        // Symbolic link to the database.
+        if (file_exists($res_file)) {
+            $mvPath = Util::which('mv');
+            $rmPath = Util::which('rm');
+            if (filetype($res_file) !== 'link') {
+                Processes::mwExec("$mvPath '$res_file'/* '$dir_db'");
+                Processes::mwExec("$rmPath -rf $res_file");
+                $create_link = true;
+            } elseif (readlink($res_file) === "$old_dir_db") {
+                Processes::mwExec("$rmPath -rf $res_file");
+                $create_link = true;
+                if (file_exists("$old_dir_db")) {
+                    // Move the file to the new location.
+                    Processes::mwExec("$mvPath '$old_dir_db'/* '$dir_db'");
+                }
+            }
+        } else {
+            $create_link = true;
+        }
+
+        if ($create_link === true) {
+            Util::createUpdateSymlink("$dir_db", $res_file);
+        }
+
+        $filename = basename(self::FAIL2BAN_DB_PATH);
+        if (file_exists("$dir_db/$filename")) {
+            $sqlite3Path = Util::which('sqlite3');
+            Processes::mwExec("$sqlite3Path $dir_db/$filename 'vacuum'");
+        }
+    }
+
+    /**
      * Generate the actions for iptables and write it to a configuration file.
      *
      * This function constructs the configuration string for iptables based on predefined commands.
@@ -387,7 +424,6 @@ class Fail2BanConf extends Injectable
         // Write the configuration string to the configuration file
         file_put_contents("$path/miko-iptables-multiport-all.conf", $conf);
     }
-
 
     /**
      * Generate the jail configurations for various services.
@@ -599,4 +635,5 @@ class Fail2BanConf extends Injectable
         // Return an array of the properties.
         return array($max_retry, $find_time, $ban_time, $user_whitelist);
     }
+
 }

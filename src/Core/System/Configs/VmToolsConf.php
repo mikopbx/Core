@@ -28,31 +28,94 @@ use MikoPBX\Core\System\Util;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class VmToolsConf
+class VmToolsConf extends SystemConfigClass
 {
+    public const string PROC_NAME = 'vm-tools';
     public const string VMWARE = 'vmware';
+
+    private $confObject = null;
+
+    /**
+     * Start the service monitored by Monit through a configuration object.
+     *
+     * This method checks if a configuration object (`$this->confObject`) is available.
+     * If so, it:
+     * - Restarts the service via Monit using `monitRestart()`
+     * - Regenerates the Monit configuration file using `generateMonitConf()`
+     *
+     * @return bool True if the restart was successful (or no config object exists), false otherwise.
+     */
+    public function start(): bool
+    {
+        return $this->reStart();
+    }
+
+    /**
+     * Restarts the service monitored by Monit through a configuration object.
+     *
+     * This method checks if a configuration object (`$this->confObject`) is available.
+     * If so, it:
+     * - Restarts the service via Monit using `monitRestart()`
+     * - Regenerates the Monit configuration file using `generateMonitConf()`
+     *
+     * @return bool True if the restart was successful (or no config object exists), false otherwise.
+     */
+    public function reStart(): bool
+    {
+        $this->configure();
+        $result = true;
+        if ($this->confObject) {
+            $result = $this->monitRestart();
+            $this->generateMonitConf();
+        }
+        return $result;
+    }
 
     /**
      * Configure VM tools.
      *
      * @return bool
      */
-    public function configure(): bool
+    private function configure(): bool
     {
-        $result = true;
         if (Util::isDocker()) {
-            return $result;
+            return true;
         }
+        $result = true;
         $vars = [
             self::VMWARE => VMWareToolsConf::class
         ];
         $vendor = $this->getCpuVendor();
         $className = $vars[$vendor] ?? '';
         if (class_exists($className)) {
-            $tools = new $className();
-            $result = $tools->configure();
+            $this->confObject = new $className();
+            $result = $this->confObject->configure();
         }
         return $result;
+    }
+
+    /**
+     * Generates and saves the Monit configuration using an external configuration object.
+     *
+     * This method checks if a configuration object (`$this->confObject`) is available.
+     * If it is, it generates the Monit configuration by calling `getMonitConf()` on that object,
+     * passing in the current class constant `self::VMWARE` as a parameter (likely representing
+     * a service or platform name), then saves the result to a file.
+     *
+     * @return bool True if the configuration was successfully generated and saved, false otherwise.
+     */
+    public function generateMonitConf(): bool
+    {
+        if(!$this->confObject){
+            $this->configure();
+        }
+        if(!$this->confObject){
+            return false;
+        }
+        $confPath = $this->getMainMonitConfFile();
+        $conf = $this->confObject->getMonitConf(self::VMWARE);
+        $this->saveFileContent($confPath, $conf);
+        return true;
     }
 
     /**

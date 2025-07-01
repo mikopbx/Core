@@ -52,9 +52,8 @@ class Fail2BanUnbanAction extends Injectable
             $res->success = false;
             $res->messages[]="Not valid ip '$ip'.";
         }
-        $fail2ban        = new Fail2BanConf();
-        if ($fail2ban->fail2ban_enable) {
-            $fail2ban = Util::which('fail2ban-client');
+        if (Fail2BanConf::fail2BanEnable()) {
+            $fail2ban = Util::which(Fail2BanConf::FB_CLIENT_BIN);
             $res->success  = (Processes::mwExec("$fail2ban unban $ip") === 0);
         } else {
             $res = self::fail2banUnbanDb($ip);
@@ -86,8 +85,7 @@ class Fail2BanUnbanAction extends Injectable
         }
         $db      = new SQLite3($path_db);
         $db->busyTimeout(3000);
-        $fail2ban = new Fail2BanConf();
-        if (false === $fail2ban->tableBanExists($db)) {
+        if (false === Fail2BanConf::tableBanExists($db)) {
             // Database table does not exist. No ban.
             $res->success = true;
             return $res;

@@ -32,6 +32,8 @@ use MikoPBX\Core\System\Util;
  */
 class VMWareToolsConf
 {
+    public const string PROC_NAME = 'vmtoolsd';
+
     /**
      * Configure and start VMWareTools.
      *
@@ -39,8 +41,6 @@ class VMWareToolsConf
      */
     public function configure(): bool
     {
-        Processes::killByName("vmtoolsd");
-
         $conf = "[logging]\n"
             . "log = false\n"
             . "vmtoolsd.level = none\n"
@@ -51,11 +51,34 @@ class VMWareToolsConf
         if (!file_exists($dirVM)) {
             Util::mwMkdir($dirVM);
         }
-
         file_put_contents("$dirVM/tools.conf", $conf);
-        $vmtoolsd = Util::which('vmtoolsd');
-        $result = Processes::mwExec("$vmtoolsd --background=/var/run/vmtoolsd.pid > /dev/null 2> /dev/null");
+        return true;
+    }
 
-        return $result === 0;
+    /**
+     * Generates a Monit configuration block for the specified process.
+     *
+     * This method returns a string containing the full Monit configuration
+     * for monitoring a process, including:
+     * - PID file path
+     * - Command to start the process in the background
+     * - Command to stop the process using BusyBox
+     * - Execution permissions (as root user/group)
+     *
+     * @param string $procName The name of the process to use in the Monit configuration.
+     *
+     * @return string The generated Monit configuration block as a string.
+     */
+    public function getMonitConf(string $procName): string
+    {
+        $this->configure();
+        $busyboxPath = Util::which('busybox');
+        $binPath = Util::which(self::PROC_NAME);
+        return 'check process '.$procName.' with pidfile "/var/run/'.self::PROC_NAME.'.pid"'.PHP_EOL.
+            '    depends on loopback'.PHP_EOL.
+            '    start program = "'."$binPath --background=/var/run/".self::PROC_NAME.".pid".'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '        as uid root and gid root';
     }
 }

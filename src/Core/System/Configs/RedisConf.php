@@ -23,7 +23,6 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di\Injectable;
 
 /**
  * Class RedisConf
@@ -32,13 +31,22 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class RedisConf extends Injectable
+class RedisConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'redis-server';
-
     public const string CONF_FILE = '/etc/redis.conf';
 
     public string $port = '';
+
+    /**
+     * Starts the Redis server.
+     *
+     * @return bool
+     */
+    public function start(): bool
+    {
+        return $this->reStart();
+    }
 
     /**
      * Restarts the Redis server.
@@ -47,23 +55,27 @@ class RedisConf extends Injectable
      */
     public function reStart(): bool
     {
-        $mainRunner = 'safe-' . self::PROC_NAME;
-        Processes::killByName($mainRunner);
+        $result = false;
         Processes::killByName(self::PROC_NAME);
-
         $ch = 0;
         do {
             $ch++;
             // Wait for Redis to finish its work
             sleep(1);
-            $pid1 = Processes::getPidOfProcess($mainRunner);
             $pid2 = Processes::getPidOfProcess(self::PROC_NAME);
-        } while (!empty($pid1 . $pid2) && $ch < 30);
+        } while (!empty($pid2) && $ch < 30);
 
         $this->configure();
-        Processes::safeStartDaemon(self::PROC_NAME, self::CONF_FILE);
+        $this->generateMonitConf();
 
-        $result = false;
+        $pidMonit = Processes::getPidOfProcess(MonitConf::PROC_NAME);
+        if(empty($pidMonit)){
+            $redisServer = Util::which(self::PROC_NAME);
+            Processes::mwExecBg("$redisServer ". self::CONF_FILE);
+        }else{
+            $this->monitRestart();
+        }
+
         $redisCli = Util::which('redis-cli');
         for ($i = 1; $i <= 60; $i++) {
             if (Processes::mwExec("$redisCli -p $this->port info") === 0) {
@@ -73,6 +85,31 @@ class RedisConf extends Injectable
             sleep(1);
         }
         return $result;
+    }
+
+    /**
+     * Generates the Monit configuration file for the Redis process.
+     *
+     * This method creates a Monit configuration entry to monitor the Redis service.
+     * It defines how to start and stop the service, sets appropriate user permissions,
+     * and saves the configuration file to the designated directory.
+     *
+     * @return bool Always returns true after successfully generating and saving the configuration file.
+     */
+    public function generateMonitConf(): bool{
+
+        $redisPath   = Util::which(self::PROC_NAME);
+        $busyboxPath = Util::which('busybox');
+        $confPath    = $this->getMainMonitConfFile();
+
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/redis.pid '.PHP_EOL.
+            '    start program = "'.$redisPath.' '.self::CONF_FILE.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '        as uid root and gid root';
+
+        $this->saveFileContent($confPath, $conf);
+        return true;
     }
 
     /**
@@ -90,6 +127,7 @@ class RedisConf extends Injectable
         $conf  .= "loglevel warning" . PHP_EOL;
         $conf  .= "syslog-enabled yes" . PHP_EOL;
         $conf  .= "syslog-ident redis" . PHP_EOL;
+        $conf  .= "daemonize yes" . PHP_EOL;
         # Connection settings
         $conf  .= "timeout 0" . PHP_EOL;
         $conf  .= "tcp-keepalive 60" . PHP_EOL;

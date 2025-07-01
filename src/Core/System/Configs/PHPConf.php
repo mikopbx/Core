@@ -34,8 +34,12 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class PHPConf extends Injectable
+class PHPConf extends SystemConfigClass
 {
+    public const string PROC_NAME = 'php-fpm';
+    private const string CONF_PATH = '/etc/php.ini';
+    private const string CONF_TIME_ZONE = '/etc/php.d/01-timezone.ini';
+
     /**
      * Relocates PHP error log to the storage mount.
      *
@@ -53,7 +57,6 @@ class PHPConf extends Injectable
         Processes::mwExec("$cat $src_log_file 2> /dev/null >$options $dst_log_file");
         Util::createUpdateSymlink($dst_log_file, $src_log_file);
     }
-
 
     /**
      * Returns the PHP error log file path.
@@ -122,9 +125,17 @@ class PHPConf extends Injectable
             $cat = Util::which('cat');
             Processes::mwExec("export TZ='$($cat /etc/TZ)'");
         }
-        $etcPhpIniPath = '/etc/php.d/01-timezone.ini';
-        $contents = 'date.timezone="' . $timezone . '"';
-        file_put_contents($etcPhpIniPath, $contents);
+        file_put_contents(self::CONF_TIME_ZONE, 'date.timezone="' . $timezone . '"');
+    }
+
+    /**
+     * Start the service.
+     *
+     * @return bool True if successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        return $this->reStart();
     }
 
     /**
@@ -132,16 +143,43 @@ class PHPConf extends Injectable
      *
      * @return void
      */
-    public static function reStart(): void
+    public function reStart(): bool
     {
-        $php_fpm = Util::which('php-fpm');
+        $this->generateMonitConf();
+        return $this->monitRestart();
+    }
 
-        // Send graceful shutdown signal
-        Processes::mwExec('kill -SIGQUIT "$(cat /var/run/php-fpm.pid)"');
-        usleep(100000);
+    /**
+     * Generates the Monit configuration file for monitoring the current service.
+     *
+     * This method constructs a Monit configuration entry that defines:
+     * - The process name and PID file path
+     * - Start command using the binary with configuration parameter
+     * - Stop command using SIGTERM via BusyBox
+     * - Execution permissions (as root user/group)
+     *
+     * The configuration is saved to a file in the Monit configuration directory,
+     * with a filename generated based on the service priority and name.
+     *
+     * @return bool Always returns true after successfully writing the configuration file.
+     */
+    public function generateMonitConf(): bool
+    {
+        $binPath = Util::which(self::PROC_NAME);
+        $busyboxPath = Util::which('busybox');
+        $confPath = $this->getMainMonitConfFile();
 
-        // Forcefully terminate
-        Processes::killByName('php-fpm');
-        Processes::mwExec("$php_fpm -c /etc/php.ini");
+        $this->startCommand = "$binPath -c ".self::CONF_PATH;
+        $stopCommand = "/bin/sh -c '$busyboxPath kill -SIGQUIT `$busyboxPath cat /var/run/".self::PROC_NAME.".pid`'";
+
+        $conf = 'check file php_timezone with path '.self::CONF_TIME_ZONE .PHP_EOL.
+            'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
+            '    depends on php_timezone'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$stopCommand.'"'.PHP_EOL.
+            '        as uid root and gid root';
+        $this->saveFileContent($confPath, $conf);
+        return true;
     }
 }

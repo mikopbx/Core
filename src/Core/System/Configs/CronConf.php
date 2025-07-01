@@ -27,7 +27,6 @@ use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Workers\Cron\WorkerSafeScriptsCore;
 use MikoPBX\Modules\Config\SystemConfigInterface;
-use Phalcon\Di\Injectable;
 
 /**
  * Class CronConf
@@ -36,29 +35,64 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\Core\System\Configs
  */
-class CronConf extends Injectable
+class CronConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'crond';
 
     /**
-     * Setups crond and restarts it.
+     * Start the service.
      *
-     * @return int Returns 0 on success.
+     * @return bool True if successful, false otherwise.
      */
-    public function reStart(): int
+    public function start(): bool
+    {
+        return $this->reStart();
+    }
+
+    /**
+     * Setups cron and restarts it.
+     *
+     * @return bool Returns 0 on success.
+     */
+    public function reStart(): bool
     {
         $booting = System::isBooting();
         $this->generateConfig($booting);
-        if (Util::isSystemctl()) {
-            $systemctl = Util::which('systemctl');
-            Processes::mwExec("$systemctl restart " . self::PROC_NAME);
-        } else {
-            // T2SDE or Docker
-            $cronPath = Util::which(self::PROC_NAME);
-            Processes::killByName(self::PROC_NAME);
-            Processes::mwExec("$cronPath -S -l 0");
-        }
-        return 0;
+
+        $this->generateMonitConf();
+        return $this->monitRestart();
+    }
+
+    /**
+     * Generates a Monit configuration file for the current system service.
+     *
+     * This method creates a Monit configuration entry to monitor, start and stop the service.
+     * The generated config includes:
+     * - PID file path definition
+     * - Start command with background execution and PID saving
+     * - Stop command using busybox killall
+     * - Execution permissions (as root user/group)
+     *
+     * The configuration is saved to the default Monit configuration directory.
+     *
+     * @return bool Always returns true after writing the configuration file.
+     */
+    public function generateMonitConf(): bool{
+
+        $busyboxPath = Util::which('busybox');
+        $binPath = Util::which(self::PROC_NAME);
+        $confPath = $this->getMainMonitConfFile();
+        $options = "-f -S -l 0";
+        $startCommand = "/bin/sh -c '$busyboxPath nohup $binPath $options > /dev/null 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid'";
+
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid '.PHP_EOL.
+            '    start program = "'.$startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
+            '        as uid root and gid root';
+
+        $this->saveFileContent($confPath, $conf);
+        return true;
     }
 
     /**
@@ -125,9 +159,9 @@ class CronConf extends Injectable
     public static function generateSyslogConf(): void
     {
         Util::mwMkdir('/etc/rsyslog.d');
-        $log_fileRedis       = SyslogConf::getSyslogFile(self::PROC_NAME);
-        $pathScriptRedis     = SyslogConf::createRotateScript(self::PROC_NAME);
-        $confSyslogD = '$outchannel log_' . self::PROC_NAME . ',' . $log_fileRedis . ',10485760,' . $pathScriptRedis . PHP_EOL .
+        $log_file       = SyslogConf::getSyslogFile(self::PROC_NAME);
+        $pathScript     = SyslogConf::createRotateScript(self::PROC_NAME);
+        $confSyslogD = '$outchannel log_' . self::PROC_NAME . ',' . $log_file . ',10485760,' . $pathScript . PHP_EOL .
             'if $programname == "' . self::PROC_NAME . '" then :omfile:$log_' . self::PROC_NAME . PHP_EOL .
             'if $programname == "' . self::PROC_NAME . '" then stop' . PHP_EOL;
         file_put_contents('/etc/rsyslog.d/' . self::PROC_NAME . '.conf', $confSyslogD);

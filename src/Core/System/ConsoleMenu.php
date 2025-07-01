@@ -27,7 +27,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Config\RegisterDIServices;
-use MikoPBX\Core\System\{Configs\IptablesConf, Configs\NginxConf};
+use MikoPBX\Core\System\{Configs\Fail2BanConf, Configs\IptablesConf, Configs\NginxConf};
 use MikoPBX\Service\Main;
 use Phalcon\Di\Di;
 use PhpSchool\CliMenu\Action\GoBackAction;
@@ -542,6 +542,9 @@ class ConsoleMenu
             PbxSettings::setValueByKey(PbxSettings::PBX_FIREWALL_ENABLED, $enable);
             PbxSettings::setValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED, $enable);
             IptablesConf::reloadFirewall();
+
+            $fail2ban = new Fail2BanConf();
+            $fail2ban->reStart();
             echo "Firewall is {$action}d...";
         }
         $this->start();

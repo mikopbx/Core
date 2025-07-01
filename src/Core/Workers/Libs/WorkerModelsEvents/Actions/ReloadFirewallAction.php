@@ -2,6 +2,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
+use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 
 class ReloadFirewallAction implements ReloadActionInterface
@@ -16,5 +17,8 @@ class ReloadFirewallAction implements ReloadActionInterface
     {
         IptablesConf::updateFirewallRules();
         IptablesConf::reloadFirewall();
+
+        $fail2ban = new Fail2BanConf();
+        $fail2ban->reStart();
     }
 }
