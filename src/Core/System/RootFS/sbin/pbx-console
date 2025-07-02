@@ -201,10 +201,8 @@ EOL
       enable-agi)
         echo "Enabling Xdebug for AGI..."
         echo "Restarting the Asterisk daemon..."
-        killall safe_asterisk
-        killall asterisk
         "${pbxConsole}" xdebug enable-cli ${ipDebugger}
-        nohup safe_asterisk -f > /dev/null 2>&1 &
+        monit restart asterisk
         echo "Done"
         ;;
     esac

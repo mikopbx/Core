@@ -28,6 +28,9 @@ fi
 
 /bin/touch /tmp/freeoffload;
 
+killprocess_by_name 'safe-monit' -TERM 3;
+killprocess_by_name 'monit' -TERM 3;
+
 # Kill the pdnsd process using the function killprocess_by_name
 killprocess_by_name 'pdnsd' -9 0;
 

@@ -31,6 +31,7 @@ use MikoPBX\Core\System\Configs\MonitConf;
 use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\NginxConf;
+use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\RedisConf;
 use MikoPBX\Core\System\Configs\SSHConf;
@@ -333,13 +334,13 @@ class SystemLoader extends Injectable
         $pbx->configure();
 
         $this->echoStartMsg(' - Start Asterisk...');
-        $pbx->start();
-        $this->echoResultMsg();
+        $astStatus = $pbx->start();
+        $this->echoResultMsg($astStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Wait for Asterisk to fully boot and reload SIP settings
         $this->echoStartMsg(' - Wait asterisk fully booted...');
-        $asteriskResult = PBX::waitFullyBooted();
-        $this->echoResultMsg((string)$asteriskResult);
+        $asteriskResult = PbxConf::waitFullyBooted();
+        $this->echoResultMsg($asteriskResult ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         if ($asteriskResult) {
             $this->echoStartMsg(' - Reload SIP settings in AstDB...');
             $sip = new SIPConf();

@@ -174,3 +174,6 @@ _pbxConsoleCommands()
 }
 
 complete -F _pbxConsoleCommands pbx-console
+
+# shellcheck source=/etc/bash_completion.d/*
+. /etc/bash_completion.d/*

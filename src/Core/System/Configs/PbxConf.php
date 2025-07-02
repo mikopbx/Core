@@ -1,0 +1,460 @@
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace MikoPBX\Core\System\Configs;
+
+use MikoPBX\Common\Models\Codecs;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\Asterisk\CdrDb;
+use MikoPBX\Core\Asterisk\Configs\{AclConf,
+    AsteriskConf,
+    AsteriskConfigClass,
+    AsteriskConfigInterface,
+    ConferenceConf,
+    ExtensionsConf,
+    FeaturesConf,
+    HttpConf,
+    IAXConf,
+    IndicationConf,
+    ManagerConf,
+    ModulesConf,
+    MusicOnHoldConf,
+    RtpConf,
+    SIPConf,
+    VoiceMailConf};
+use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Workers\WorkerCallEvents;
+use MikoPBX\Modules\Config\SystemConfigInterface;
+use Phalcon\Di\Di;
+
+/**
+ * Class PBX
+ *
+ * @package MikoPBX\Core\System
+ */
+class PbxConf extends SystemConfigClass
+{
+    public const string PROC_NAME = 'asterisk';
+    public string $configPath = '/etc/asterisk/asterisk.conf';
+    public string $runDirPath = '/var/asterisk/run';
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->configPath = Directories::getDir(Directories::AST_ETC_DIR).'/asterisk.conf';
+        if(!file_exists($this->runDirPath)){
+            Util::mwMkdir($this->runDirPath);
+        }
+        chmod($this->runDirPath, 0770);
+    }
+
+    public function generateMonitConf(): bool
+    {
+        $binPath = Util::which(self::PROC_NAME);
+        $confPath = $this->getMainMonitConfFile();
+        $conf = 'check file '.self::PROC_NAME.'-conf with path '.$this->configPath.PHP_EOL.
+                'check process '.self::PROC_NAME.' with pidfile /var/asterisk/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
+                '    depends on '.self::PROC_NAME.'-conf'.PHP_EOL.
+                '    start program = "'."$binPath -F".'"'.PHP_EOL.
+                '    stop program = "'."$binPath -rx 'core stop now'".'"'.PHP_EOL;
+        $this->saveFileContent($confPath, $conf);
+        return true;
+    }
+
+    /**
+     * Stops the Asterisk process.
+     */
+    private function stop(): void
+    {
+        $asterisk = Util::which(self::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'core stop now'");
+        Processes::processWorker('', '', WorkerCallEvents::class, 'stop');
+        Processes::killByName(self::PROC_NAME);
+    }
+
+    /**
+     * Configures Asterisk by generating all configuration files and (re)starts the Asterisk process.
+     * @return array The result of the configuration process.
+     */
+    public function configure(): array
+    {
+        if (!System::isBooting()) {
+            $this->stop();
+        }
+        self::updateSavePeriod();
+        /**
+         * Create configuration files.
+         */
+        $configClassObj = new AsteriskConfigClass();
+        $configClassObj->hookModulesMethod(AsteriskConfigInterface::GENERATE_CONFIG);
+
+        self::dialplanReload();
+        if (System::isBooting()) {
+            $message = '   |- dialplan reload';
+            SystemMessages::echoToTeletype($message);
+            SystemMessages::echoWithSyslog($message);
+            SystemMessages::echoResult($message);
+            SystemMessages::teletypeEchoResult($message);
+        }
+        // Create the call history database.
+        /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
+        $connection = $this->di->get(CDRDatabaseProvider::SERVICE_NAME);
+        if ( ! $connection->tableExists('cdr')) {
+            CDRDatabaseProvider::recreateDBConnections();
+        } else {
+            CdrDb::checkDb();
+        }
+        $result=[];
+        $result['result'] = 'Success';
+
+        return $result;
+    }
+
+    /**
+     * Starts the Asterisk process.
+     */
+    public function start(): bool
+    {
+        $result = $this->monitWaitStart();
+        // Send notifications to modules
+        PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::ON_AFTER_PBX_STARTED);
+        return $result;
+    }
+
+    /**
+     * Rotates the PBX log files.
+     */
+    public static function logRotate(): void
+    {
+        self::rotatePbxLog('messages');
+        self::rotatePbxLog('security_log');
+        self::rotatePbxLog('error');
+        self::rotatePbxLog('verbose');
+    }
+
+    /**
+     * Rotates the specified PBX log file.
+     * @param string $fileName The name of the log file to rotate.
+     */
+    private static function rotatePbxLog(string $fileName): void
+    {
+        $di           = Di::getDefault();
+        $asterisk = Util::which(self::PROC_NAME);
+        if ($di === null) {
+            return;
+        }
+        $max_size    = 10;
+        $log_dir     = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
+        $text_config = "$log_dir$fileName {
+    nocreate
+    nocopytruncate
+    compress
+    delaycompress
+    start 0
+    rotate 9
+    size {$max_size}M
+    missingok
+    noolddir
+    postrotate
+        $asterisk -rx 'logger reload' > /dev/null 2> /dev/null
+    endscript
+}";
+        $varEtcDir  = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
+        $path_conf   = $varEtcDir . '/asterisk_logrotate_' . $fileName . '.conf';
+        file_put_contents($path_conf, $text_config);
+        $mb10 = $max_size * 1024 * 1024;
+
+        $options = '';
+        if (Util::mFileSize("$log_dir$fileName") > $mb10) {
+            $options = '-f';
+        }
+        $logrotate = Util::which('logrotate');
+        Processes::mwExecBg("$logrotate $options '$path_conf' > /dev/null 2> /dev/null");
+    }
+
+    /**
+     * Refreshes the features configs and reloads the features module.
+     */
+    public static function featuresReload(): void
+    {
+        $featuresConf = new FeaturesConf();
+        $featuresConf->generateConfig();
+        $arr_out      = [];
+        $asterisk = Util::which(self::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'module reload features'", $arr_out);
+    }
+
+    /**
+     * Reloads the Asterisk core.
+     */
+    public static function coreReload(): void
+    {
+        $featuresConf = new FeaturesConf();
+        $featuresConf->generateConfig();
+
+        $asteriskConf = new AsteriskConf();
+        $asteriskConf->generateConfig();
+
+        $indicationConf = new IndicationConf();
+        $indicationConf->generateConfig();
+
+        $arr_out      = [];
+        $asterisk = Util::which(self::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'core reload'", $arr_out);
+    }
+
+    /**
+     * Restarts the Asterisk core.
+     */
+    public static function coreRestart(): void
+    {
+        $asteriskConf = new AsteriskConf();
+        $asteriskConf->generateConfig();
+
+        $indicationConf = new IndicationConf();
+        $indicationConf->generateConfig();
+
+        $asterisk = Util::which(self::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'core restart now'");
+    }
+
+    /**
+     * Reloads the Asterisk manager interface module.
+     */
+    public static function managerReload(): void
+    {
+        $managerCong = new ManagerConf();
+        $managerCong->generateConfig();
+
+        $httpConf = new HttpConf();
+        $httpConf->generateConfig();
+
+        $arr_out      = [];
+        $asterisk = Util::which(self::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'module reload manager'", $arr_out);
+        Processes::mwExec("$asterisk -rx 'module reload http'", $arr_out);
+    }
+
+    /**
+     * Reloads the Asterisk music on hold module.
+     */
+    public static function musicOnHoldReload(): void
+    {
+        $o = new MusicOnHoldConf();
+        $o->generateConfig();
+        $asterisk = Util::which(self::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'moh reload'");
+    }
+
+    /**
+     * Reloads the Asterisk music on hold module.
+     */
+    public static function confBridgeReload(): void
+    {
+        $o = new ConferenceConf();
+        $o->generateConfig();
+        $asterisk = Util::which(self::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'module reload app_confbridge'");
+    }
+
+    /**
+     * Reloads the Asterisk voicemail module.
+     */
+    public static function voicemailReload(): void
+    {
+        $o = new VoiceMailConf();
+        $o->generateConfig();
+        $arr_out      = [];
+        $asterisk = Util::which(self::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'voicemail reload'", $arr_out);
+    }
+
+    /**
+     * Reloads the Asterisk modules.
+     * @return array
+     */
+    public static function modulesReload(): array
+    {
+        $pbx = new ModulesConf();
+        $pbx->generateConfig();
+        $arr_out      = [];
+        $asterisk = Util::which(self::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'core restart now'", $arr_out);
+
+        return [
+            'result' => 'Success',
+            'data'   => '',
+        ];
+    }
+
+    /**
+     * Checks if a codec exists and creates it if not.
+     * @param string $name The name of the codec.
+     * @param string $desc The description of the codec.
+     * @param string $type The type of the codec.
+     */
+    public static function checkCodec(string $name, string $desc, string $type): void
+    {
+        $codec = Codecs::findFirst('name="' . $name . '"');
+        if ($codec === null) {
+            $codec              = new Codecs();
+            $codec->name        = $name;
+            $codec->type        = $type;
+            $codec->description = $desc;
+            $codec->save();
+        }
+    }
+
+    /**
+     * Refreshes the SIP configurations and reloads the PJSIP module.
+     */
+    public static function sipReload():void
+    {
+        $di     = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        $sip = new SIPConf();
+        $needRestart = $sip->needAsteriskRestart();
+        $sip->generateConfig();
+
+        $acl = new AclConf();
+        $acl->generateConfig();
+
+        $asterisk = Util::which(self::PROC_NAME);
+        if ($needRestart === false) {
+            Processes::mwExec("$asterisk -rx 'module reload acl'");
+            Processes::mwExec("$asterisk -rx 'core reload'");
+        } else {
+            SystemMessages::sysLogMsg('SIP RELOAD', 'Need reload asterisk',LOG_INFO);
+            // Terminate channels.
+            Processes::mwExec("$asterisk -rx 'channel request hangup all'");
+            usleep(500000);
+            Processes::mwExec("$asterisk -rx 'core restart now'");
+        }
+    }
+
+    /**
+     * Updates the RTP config file.
+     */
+    public static function rtpReload(): void
+    {
+        $rtp = new RtpConf();
+        $rtp->generateConfig();
+        $asterisk = Util::which(self::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'module reload res_rtp_asterisk'");
+    }
+
+    /**
+     * Refreshes the IAX configurations and reloads the iax2 module.
+     */
+    public static function iaxReload(): void
+    {
+        $iax    = new IAXConf();
+        $iax->generateConfig();
+        $asterisk = Util::which(self::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'iax2 reload'");
+    }
+
+    /**
+     * Waits for Asterisk to fully boot.
+     * @return bool True if Asterisk has fully booted, false otherwise.
+     */
+    public static function waitFullyBooted(): bool
+    {
+        $time_start = microtime(true);
+        $result     = false;
+        $out        = [];
+        $options = '';
+
+        $timeout  = Util::which('timeout');
+        $asterisk = Util::which(self::PROC_NAME);
+        while (true) {
+            $execResult = Processes::mwExec(
+                "$timeout $options 1 $asterisk -rx'core waitfullybooted'",
+                $out
+            );
+            if ($execResult === 0 && implode('', $out) === 'Asterisk has fully booted.') {
+                $result = true;
+                break;
+            }
+            sleep(1);
+            $time = microtime(true) - $time_start;
+            if ($time > 60) {
+                SystemMessages::sysLogMsg(__CLASS__, 'Error: Asterisk has not booted');
+                break;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Refreshes the extensions.conf file and reloads the Asterisk dialplan.
+     */
+    public static function dialplanReload(): void
+    {
+        $di = Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        if (!System::isBooting()) {
+            $extensions = new ExtensionsConf();
+            $extensions->generateConfig();
+            $asterisk = Util::which(self::PROC_NAME);
+            Processes::mwExec("$asterisk -rx 'dialplan reload'");
+            Processes::mwExec("$asterisk -rx 'module reload pbx_lua.so'");
+        }
+    }
+
+    /**
+     * Save information on the period of storage of conversation recordings.
+     * @param string $value
+     * @return void
+     */
+    public static function updateSavePeriod(string $value = ''):void{
+        if(empty($value)){
+            $value = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD);
+        }
+        $filename   = '/var/etc/record-save-period';
+        file_put_contents($filename, $value);
+    }
+
+    /**
+     * Attempts to start the service via Monit when a failure is detected.
+     *
+     * This method is typically used as a fallback action to manually restart
+     * the service using Monit if it fails unexpectedly. The current implementation
+     * does not wait for the service to fully start, but the timeout parameter
+     * may be used in extended implementations.
+     *
+     * @return void
+     */
+    public function monitFailStartAction(): void
+    {
+        sleep(1);
+    }
+
+}
