@@ -38,31 +38,6 @@ class Network extends Injectable
     public const string INTERNET_FLAG_FILE = '/var/etc/internet_flag';
 
     /**
-     * Starts the SIP dump process.
-     */
-    public static function startSipDump(): void
-    {
-        $use = PbxSettings::getValueByKey('USE_PCAP_SIP_DUMP');
-        if ($use !== '1') {
-            return;
-        }
-
-        Processes::killByName('pcapsipdump');
-        $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/pcapsipdump';
-        Util::mwMkdir($log_dir);
-
-        $network = new Network();
-        $arr_eth = $network->getInterfacesNames();
-        $pcapsipdumpPath = Util::which('pcapsipdump');
-        foreach ($arr_eth as $eth) {
-            $pid_file = "/var/run/pcapsipdump_$eth.pid";
-            Processes::mwExecBg(
-                $pcapsipdumpPath . ' -T 120 -P ' . $pid_file . ' -i ' . $eth . ' -m \'^(INVITE|REGISTER)$\' -L ' . $log_dir . '/dump.db'
-            );
-        }
-    }
-
-    /**
      * Retrieves the names of all PCI network interfaces.
      *
      * @return array An array containing the names of the network interfaces.

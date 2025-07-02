@@ -80,7 +80,6 @@ class PBX extends Injectable
      */
     public function start(): void
     {
-        Network::startSipDump();
         $safe_asterisk = Util::which('safe_asterisk');
         // The "-n" option disables color highlighting in Asterisk CLI.
         Processes::mwExecBg("$safe_asterisk -f");
