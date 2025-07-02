@@ -27,6 +27,7 @@ use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use DateTime;
@@ -72,9 +73,9 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         }
         $this->saveConfig($config, $this->description);
         $arr_out      = [];
-        $pid = Processes::getPidOfProcess('asterisk');
+        $pid = Processes::getPidOfProcess(PBX::PROC_NAME);
         if (!empty($pid)) {
-            $asterisk = Util::which('asterisk');
+            $asterisk = Util::which(PBX::PROC_NAME);
             Processes::mwExec("$asterisk -rx 'module reload res_calendar'", $arr_out);
         }
     }

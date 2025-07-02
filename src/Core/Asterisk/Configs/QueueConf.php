@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Core\System\{Processes, Util};
+use MikoPBX\Core\System\{PBX, Processes, Util};
 
 /**
  * Class QueueConf
@@ -46,7 +46,7 @@ class QueueConf extends AsteriskConfigClass
         $queue = new self();
         $queue->generateConfig();
         $out          = [];
-        $asterisk = Util::which('asterisk');
+        $asterisk = Util::which(PBX::PROC_NAME);
         Processes::mwExec("$asterisk -rx 'queue reload all '", $out);
     }
 

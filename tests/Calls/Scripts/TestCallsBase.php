@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\CallDetailRecordsTmp;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\Asterisk\AsteriskManager;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
@@ -406,7 +407,7 @@ class TestCallsBase {
         self::printInfo("Copying configuration files...");
         Processes::mwExec("cp -R {$confDir}/* {$rootDir}/asterisk/");
 
-        $cmdAsterisk = Util::which('asterisk');
+        $cmdAsterisk = Util::which(PBX::PROC_NAME);
         self::printInfo("Reload dialplan... ");
         Processes::mwExec("{$cmdAsterisk} -C '{$astConf}' -rx 'dialplan reload'");
         // Processes::mwExec("asterisk -C '{$astConf}' -rx 'module reload res_pjsip.so'");

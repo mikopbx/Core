@@ -62,7 +62,7 @@ TestCallsBase::printInfo("Copy pjsip.conf...");
 file_put_contents("$dirName/asterisk/pjsip.conf", $config);
 
 TestCallsBase::printInfo("Reload res_pjsip...");
-$cmdAsterisk = Util::which('asterisk');
+$cmdAsterisk = Util::which(PBX::PROC_NAME);
 Processes::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'module reload res_pjsip.so'");
 Processes::mwExec("{$cmdAsterisk} -C '$astConf' -rx 'pjsip send register *all'");
 

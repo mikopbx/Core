@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
@@ -110,7 +111,7 @@ class CronConf extends SystemConfigClass
         $WorkerSafeScripts     = "$phpPath -f $workerSafeScriptsPath start > /dev/null 2> /dev/null";
 
         $restart_night =  PbxSettings::getValueByKey(PbxSettings::RESTART_EVERY_NIGHT);
-        $asterisk  = Util::which('asterisk');
+        $asterisk  = Util::which(PBX::PROC_NAME);
         $ntpd      = Util::which('ntpd');
         $dump      = Util::which('dump-conf-db');
         $checkIpPath   = Util::which('check-out-ip');

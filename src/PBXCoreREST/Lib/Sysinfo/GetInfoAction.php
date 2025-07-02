@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Sysinfo;
 
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -343,7 +344,7 @@ class GetInfoAction extends Injectable
      */
     private static function getAsteriskInfo(): string
     {
-        $asterisk = Util::which('asterisk');
+        $asterisk = Util::which(PBX::PROC_NAME);
 
         $content = '────────────────────────────────── asterisk registrations ────────────────────────────────';
         $content .= PHP_EOL . PHP_EOL;

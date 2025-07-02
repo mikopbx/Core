@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
@@ -61,7 +62,7 @@ class HepConf extends AsteriskConfigClass
      */
     public static function reload(): void
     {
-        $asterisk = Util::which('asterisk');
+        $asterisk = Util::which(PBX::PROC_NAME);
         Processes::mwExec("$asterisk -rx 'module reload res_hep.so'", $out);
     }
 }

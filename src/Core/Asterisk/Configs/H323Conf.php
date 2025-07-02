@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 
+use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
@@ -72,7 +73,7 @@ class H323Conf extends AsteriskConfigClass
         $h323 = new H323Conf();
         $h323->generateConfig();
 
-        $asterisk = Util::which('asterisk');
+        $asterisk = Util::which(PBX::PROC_NAME);
         Processes::mwExec("$asterisk -rx 'module reload ".self::MODULE_NAME."'");
     }
 
