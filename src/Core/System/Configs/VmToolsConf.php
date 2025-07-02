@@ -113,7 +113,7 @@ class VmToolsConf extends SystemConfigClass
             return false;
         }
         $confPath = $this->getMainMonitConfFile();
-        $conf = $this->confObject->getMonitConf(self::VMWARE);
+        $conf = $this->confObject->getMonitConf(self::PROC_NAME);
         $this->saveFileContent($confPath, $conf);
         return true;
     }

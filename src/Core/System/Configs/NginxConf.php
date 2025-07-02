@@ -232,7 +232,7 @@ class NginxConf extends SystemConfigClass
         Processes::mwExec("$nginx -t", $out);
         $res = implode($out);
 
-        return (false === stripos($res, 'test failed'));
+        return false === stripos($res, 'test failed');
     }
 
     /**
