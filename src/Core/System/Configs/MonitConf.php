@@ -67,9 +67,9 @@ class MonitConf extends SystemConfigClass
         $isStarted = Processes::safeStartDaemon(self::PROC_NAME, '-I', 40);
         $isReady = false;
         if($isStarted){
-            $redisCli = Util::which(self::PROC_NAME);
+            $binPath = Util::which(self::PROC_NAME);
             for ($i = 1; $i <= 60; $i++) {
-                if (Processes::mwExec("$redisCli status") === 0) {
+                if (Processes::mwExec("$binPath status") === 0) {
                     $isReady = true;
                     break;
                 }
