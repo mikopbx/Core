@@ -12,6 +12,11 @@ MikoPBX is an open-source PBX (Private Branch Exchange) system for small busines
 - Development documentation: https://github.com/mikopbx/DevelopementDocs
 - Module template: https://github.com/mikopbx/ModuleTemplate
 
+## Code Style Guides
+
+📖 **[PHP Style Guide](PHP-STYLE-GUIDE.md)** - Comprehensive PHP coding standards with real examples
+📖 **[JavaScript Style Guide](src/AdminCabinet/JS-STYLE-GUIDE.md)** - Frontend JavaScript patterns and best practices
+
 ## Development Commands
 
 ### Installation and Dependencies

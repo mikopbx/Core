@@ -569,3 +569,18 @@ SoundFilesSelector.initialize(
 8. **Error Handling** - Show user-friendly messages via UserMessage
 9. **Loading States** - Show loading indicators during operations
 10. **Responsive Design** - Test on various screen sizes
+
+## JavaScript Code Style
+
+For detailed JavaScript coding standards and real-world examples from the project, see:
+📖 **[JavaScript Style Guide](JS-STYLE-GUIDE.md)**
+
+Key principles:
+- Modular object-oriented structure with `initialize()` pattern
+- jQuery objects prefixed with `$`
+- Consistent API communication through PbxApi
+- Centralized form handling with validation
+- Proper error handling and user feedback
+- SessionStorage for caching with error handling
+- Event delegation for dynamic elements
+- Loading states for all async operations
