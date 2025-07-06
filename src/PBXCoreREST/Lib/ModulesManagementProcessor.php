@@ -103,7 +103,7 @@ class ModulesManagementProcessor extends Injectable
                     $res = EnableModuleAction::main($moduleUniqueID, $asyncChannelId);
                     break;
                 case 'disableModule':
-                    $asyncChannelId = $request['asyncChannelId'];
+                    $asyncChannelId = $request['asyncChannelId']??'internal-request';
                     $moduleUniqueID = $data['uniqid'];
                     $reason = $data['reason']??'';
                     $reasonText = $data['reasonText']??'';
