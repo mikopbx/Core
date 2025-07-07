@@ -195,18 +195,22 @@ class System extends Injectable
      */
     public static function setupLocales(): void
     {
-        $busyBoxPath = Util::which('busybox');
-        Processes::mwExec("$busyBoxPath mount -o remount,rw /offload 2> /dev/null");
-        $locales = ['en_US', 'en_GB', 'ru_RU'];
-        $localeDefPath = Util::which('localedef');
-        $localePath = Util::which('locale');
-        foreach ($locales as $locale) {
-            if (Processes::mwExec("$localePath -a | grep $locale") === 0) {
-                continue;
+        $pid = pcntl_fork();
+        if($pid === 0){
+            $busyBoxPath = Util::which('busybox');
+            Processes::mwExec("$busyBoxPath mount -o remount,rw /offload 2> /dev/null");
+            $locales = ['en_US', 'en_GB', 'ru_RU'];
+            $localeDefPath = Util::which('localedef');
+            $localePath = Util::which('locale');
+            foreach ($locales as $locale) {
+                if (Processes::mwExec("$localePath -a | grep $locale") === 0) {
+                    continue;
+                }
+                shell_exec("$localeDefPath -i $locale -f UTF-8 $locale.UTF-8");
             }
-            shell_exec("$localeDefPath -i $locale -f UTF-8 $locale.UTF-8");
+            Processes::mwExec("$busyBoxPath mount -o remount,ro /offload 2> /dev/null");
+            exit(0);
         }
-        Processes::mwExec("$busyBoxPath mount -o remount,ro /offload 2> /dev/null");
     }
 
     /**

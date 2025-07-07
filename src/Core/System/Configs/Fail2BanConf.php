@@ -27,6 +27,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use MikoPBX\Modules\Config\SystemConfigInterface;
@@ -62,6 +63,29 @@ class Fail2BanConf extends SystemConfigClass
     public function __construct()
     {
         $this->fail2banEnable = self::fail2BanEnable();
+        $binPath = Util::which(self::FB_CLIENT_BIN);
+        $this->startCommand = "$binPath -x start";
+    }
+
+    /**
+     * Start the service.
+     *
+     * @return bool True if successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        if(System::isBooting()){
+            $result = true;
+            if ($this->fail2banEnable){
+                $this->fail2banMakeDirs();
+                $this->writeConfig();
+                Processes::mwExec($this->startCommand);
+                $result = $this->monitWaitStart();
+            }
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
     }
 
     /**
@@ -106,13 +130,10 @@ class Fail2BanConf extends SystemConfigClass
             $this->deleteMonitConf();
             return false;
         }
+
         $binPath = Util::which(self::FB_CLIENT_BIN);
         $confPath = $this->getMainMonitConfFile();
-        $this->startCommand = "$binPath -x start";
-
-        $conf = 'check file '.self::PROC_NAME.'-conf with path '.self::FB_CONF_PATH .PHP_EOL.
-            'check process '.self::PROC_NAME.' with pidfile /var/run/fail2ban/'.self::PROC_NAME.'.pid'.PHP_EOL.
-            '    depends on '.self::PROC_NAME.'-conf'.PHP_EOL.
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/fail2ban/'.self::PROC_NAME.'.pid'.PHP_EOL.
             '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
             '    stop program = "'."$binPath -x stop".'"'.PHP_EOL.

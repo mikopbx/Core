@@ -40,6 +40,15 @@ class CronConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'crond';
 
+    public function __construct()
+    {
+        parent::__construct();
+        $busyboxPath = Util::which('busybox');
+        $binPath = Util::which(self::PROC_NAME);
+        $options = "-f -S -l 0";
+        $this->startCommand = "/bin/sh -c '$busyboxPath nohup $binPath $options > /dev/null 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid'";
+    }
+
     /**
      * Start the service.
      *
@@ -47,7 +56,15 @@ class CronConf extends SystemConfigClass
      */
     public function start(): bool
     {
-        return $this->reStart();
+        $booting = System::isBooting();
+        if($booting){
+            $this->generateConfig($booting);
+            Processes::mwExecBg($this->startCommand);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
     }
 
     /**
@@ -80,18 +97,13 @@ class CronConf extends SystemConfigClass
      */
     public function generateMonitConf(): bool{
 
-        $busyboxPath = Util::which('busybox');
-        $binPath = Util::which(self::PROC_NAME);
         $confPath = $this->getMainMonitConfFile();
-        $options = "-f -S -l 0";
-        $startCommand = "/bin/sh -c '$busyboxPath nohup $binPath $options > /dev/null 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid'";
-
+        $busyboxPath = Util::which('busybox');
         $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid '.PHP_EOL.
-            '    start program = "'.$startCommand.'"'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
             '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
             '        as uid root and gid root';
-
         $this->saveFileContent($confPath, $conf);
         return true;
     }

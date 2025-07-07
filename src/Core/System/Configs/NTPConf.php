@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -33,6 +34,17 @@ use MikoPBX\Core\System\Util;
 class NTPConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'ntpd';
+    private bool $manualTime = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $ntpdPath = Util::which(self::PROC_NAME);
+        $options = "-N";
+        $this->startCommand = "$ntpdPath $options";
+
+        $this->manualTime = PbxSettings::getValueByKey(PbxSettings::PBX_MANUAL_TIME_SETTINGS) === '1';
+    }
 
     /**
      * Generates the Monit configuration file for monitoring the NTP daemon (ntpd).
@@ -49,11 +61,7 @@ class NTPConf extends SystemConfigClass
     public function generateMonitConf(): bool{
         $this->configure();
         $busyboxPath = Util::which('busybox');
-        $ntpdPath = Util::which(self::PROC_NAME);
         $confPath = $this->getMainMonitConfFile();
-        $options = "-N";
-        $this->startCommand = "$ntpdPath $options";
-
         $conf = 'check process '.self::PROC_NAME.' matching "'.$this->startCommand.'"'.PHP_EOL.
             '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
@@ -74,7 +82,17 @@ class NTPConf extends SystemConfigClass
      */
     public function start(): bool
     {
-        return $this->reStart();
+        if(System::isBooting()){
+            $result = true;
+            if (!$this->manualTime) {
+                $this->configure();
+                Processes::mwExecBg($this->startCommand);
+                $result = $this->monitWaitStart();
+            }
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
     }
 
     /**
@@ -90,8 +108,7 @@ class NTPConf extends SystemConfigClass
     {
         $this->generateMonitConf();
         $result = true;
-        $manual_time = PbxSettings::getValueByKey(PbxSettings::PBX_MANUAL_TIME_SETTINGS);
-        if ($manual_time !== '1') {
+        if (!$this->manualTime) {
             $result = $this->monitRestart();
             $ntpdPath = Util::which('ntpd');
             Processes::mwExecBg("$ntpdPath -q");

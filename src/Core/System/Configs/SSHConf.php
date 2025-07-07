@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Injectable;
 
@@ -76,11 +77,38 @@ class SSHConf extends SystemConfigClass
     }
 
     /**
+     * Starts the service by reinitializing configurations and restarting the monitoring service.
+     *
+     * This method is a wrapper around {@see self::reStart()} and is used to start or restart
+     * the service with full reinitialization of settings and time synchronization.
+     *
+     * @return bool Returns true if the start operation was successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        if(System::isBooting()){
+            $this->configure();
+            Processes::mwExecBg($this->startCommand);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
+    }
+
+    public function reStart(): bool
+    {
+        $this->generateMonitConf();
+        $this->configure();
+        return $this->monitRestart();
+    }
+
+    /**
      * Configures SSH settings based on current system settings.
      *
      * @return bool Returns true if configuration is successful, false otherwise.
      */
-    public function configure(): void
+    private function configure(): void
     {
         $lofFile = '/var/log/lastlog';
         if (!file_exists($lofFile)) {

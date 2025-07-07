@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System\Configs;
 
 
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -33,6 +34,26 @@ use MikoPBX\Core\System\Util;
 class VMWareToolsConf
 {
     public const string PROC_NAME = 'vmtoolsd';
+    public string $startCommand = '';
+
+    public function __construct()
+    {
+        $binPath = Util::which(self::PROC_NAME);
+        $this->startCommand = "$binPath --background=/var/run/".self::PROC_NAME.".pid";
+    }
+
+    /**
+     * Start the service.
+     *
+     * @return bool True if successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        if(System::isBooting()){
+            Processes::mwExecBg($this->startCommand);
+        }
+        return true;
+    }
 
     /**
      * Configure and start VMWareTools.
@@ -73,10 +94,8 @@ class VMWareToolsConf
     {
         $this->configure();
         $busyboxPath = Util::which('busybox');
-        $binPath = Util::which(self::PROC_NAME);
         return 'check process '.$procName.' with pidfile "/var/run/'.self::PROC_NAME.'.pid"'.PHP_EOL.
-            '    depends on loopback'.PHP_EOL.
-            '    start program = "'."$binPath --background=/var/run/".self::PROC_NAME.".pid".'"'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
             '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
             '        as uid root and gid root';

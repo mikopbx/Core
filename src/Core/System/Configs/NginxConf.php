@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
@@ -47,6 +48,20 @@ class NginxConf extends SystemConfigClass
     private const string CONF_PATH_SSL = self::CONF_PATH_DIR. '/https-server.conf';
 
     /**
+     * Constructor for the class.
+     *
+     * Initializes the parent class and sets up the start command for the process.
+     * - Determines the binary path of the process using `Util::which(self::PROC_NAME)`.
+     * - Constructs the start command with necessary parameters, including the configuration file path and PID file location.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $binPath = Util::which(self::PROC_NAME);
+        $this->startCommand = $binPath;
+    }
+
+    /**
      * Starts the service by reinitializing configurations and restarting the monitoring service.
      *
      * This method is a wrapper around {@see self::reStart()} and is used to start or restart
@@ -57,7 +72,13 @@ class NginxConf extends SystemConfigClass
     public function start(): bool
     {
         $this->generateConf();
-        return $this->reStart();
+        if(System::isBooting()){
+            Processes::mwExec($this->startCommand, $out, $ret);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
     }
 
     /**
@@ -70,8 +91,20 @@ class NginxConf extends SystemConfigClass
         $monitResult = $this->monitRestart();
         
         // Get web port from settings
-        $webPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
+        $waitResult = $this->monitWaitStart();
 
+        return $monitResult && $waitResult;
+    }
+
+    /**
+     * Waits for the service to start within a timeout period.
+     *
+     * @param int $timeout Maximum number of seconds to wait.
+     * @return bool True if the service started within the timeout.
+     */
+    public function monitWaitStart(int $timeout = 20): bool
+    {
+        $webPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
         $waitResult = false;
         // Wait for Nginx to start completely (max 10 seconds)
         $maxAttempts = 20;
@@ -88,10 +121,10 @@ class NginxConf extends SystemConfigClass
                 }
             }
             $attempt++;
-            usleep(500000); // 0.5 seconds
+            usleep(500000);
         }
 
-        return $monitResult && $waitResult;
+        return $waitResult;
     }
 
     /**
@@ -105,7 +138,7 @@ class NginxConf extends SystemConfigClass
         if (!empty($filePid)) {
             $pid = Processes::getPidOfProcess("^$filePid ");
         } else {
-            $nginxPath = Util::which('nginx');
+            $nginxPath = Util::which(self::PROC_NAME);
             $pid       = Processes::getPidOfProcess($nginxPath);
         }
         return $pid;
@@ -131,8 +164,6 @@ class NginxConf extends SystemConfigClass
                 break;
             }
         }
-
-        // HTTP
         $WEBPort      = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
         $WEBHTTPSPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
 
@@ -193,7 +224,7 @@ class NginxConf extends SystemConfigClass
         $currentConfigIsGood = $this->testCurrentNginxConfig();
         if ($level < 1 && ! $currentConfigIsGood) {
             ++$level;
-            SystemMessages::sysLogMsg('nginx', 'Failed test config file. SSL will be disable...', LOG_ERR);
+            SystemMessages::sysLogMsg(self::PROC_NAME, 'Failed test config file. SSL will be disable...', LOG_ERR);
             $this->generateConf(true, $level);
         }
         // Add additional rules from modules
@@ -205,13 +236,8 @@ class NginxConf extends SystemConfigClass
         $binPath = Util::which(self::PROC_NAME);
         $confPath = $this->getMainMonitConfFile();
 
-        $this->startCommand = $binPath;
         $stopCommand = "$binPath -s stop";
-
-        $conf = 'check file '.self::PROC_NAME.'-conf with path '.self::CONF_PATH .PHP_EOL.
-            'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
-            '    depends on '.self::PROC_NAME.'-conf'.PHP_EOL.
-            '    depends on '.PHPConf::PROC_NAME.PHP_EOL.
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
             '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
             '    stop program = "'.$stopCommand.'"'.PHP_EOL.
@@ -227,7 +253,7 @@ class NginxConf extends SystemConfigClass
      */
     private function testCurrentNginxConfig(): bool
     {
-        $nginx = Util::which('nginx');
+        $nginx = Util::which(self::PROC_NAME);
         $out       = [];
         Processes::mwExec("$nginx -t", $out);
         $res = implode($out);
@@ -260,7 +286,7 @@ class NginxConf extends SystemConfigClass
             }
             // Config test failed. Rollback the config.
             Processes::mwExec("$rm $confFileName");
-            SystemMessages::sysLogMsg('nginx', 'Failed test config file for module' . $moduleUniqueId, LOG_ERR);
+            SystemMessages::sysLogMsg(self::PROC_NAME, 'Failed test config file for module' . $moduleUniqueId, LOG_ERR);
         }
     }
 
