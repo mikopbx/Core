@@ -28,6 +28,7 @@ display_help() {
     echo "    - stop-all         Stop all PBX services"
     echo "    - start-all        Start all PBX services"
     echo "    - restart-all      Restart all PBX services"
+    echo "    - status           Show status of all PBX workers"
     echo "  service <name>      Kill a specific PBX service"
     echo "  debug <name> <ip>   Debug a specific script"
     echo "  xdebug <action> <ip>   Debug whole system"
@@ -60,8 +61,8 @@ fi
 # First command line argument is treated as a subcommand
 subcmd=$1;
 
-# Get the name of the safe script from the cron jobs
-safeScript=$(crontab -l | cut -d ' ' -f8 | grep Safe);
+# Direct path to WorkerSafeScriptsCore
+safeScript="/usr/www/src/Core/Workers/Cron/WorkerSafeScriptsCore.php";
 
 # Case switch for the subcommand
 case "${subcmd}" in
@@ -71,45 +72,112 @@ services)
    # Case switch for the action when subcommand is services
    case "${action}" in
    stop-all)
-      # Get process IDs (PIDs) of PHP Worker services
-      pids=$(ps | grep php | grep Worker | awk '{print $1}');
+      echo 'Stopping all PBX services.';
+      # Get all worker PIDs including instances (e.g., WorkerApiCommands-1, WorkerApiCommands-2)
+      # Look for PHP processes containing Worker class names
+      pids=$(ps -A -o pid,args | grep -E '/usr/bin/php.*Worker[A-Za-z]+\.php' | grep -v grep | awk '{print $1}');
 
-      # If PIDs exist, kill the processes
+      # If PIDs exist, send SIGUSR1 first for graceful shutdown
       if [ -n "${pids}" ]; then
-        echo 'Killing all PBX services.';
-        kill ${pids};
+        echo "Sending graceful shutdown signal to workers: ${pids}";
+        for pid in ${pids}; do
+          kill -USR1 ${pid} 2>/dev/null || true;
+        done
+        
+        # Wait a bit for graceful shutdown
+        sleep 3;
+        
+        # Force kill any remaining processes
+        remaining=$(ps -A -o pid,args | grep -E '/usr/bin/php.*Worker[A-Za-z]+\.php' | grep -v grep | awk '{print $1}');
+        if [ -n "${remaining}" ]; then
+          echo "Force stopping remaining workers: ${remaining}";
+          for pid in ${remaining}; do
+            kill -TERM ${pid} 2>/dev/null || true;
+          done
+        fi
+        echo 'All PBX services stopped.';
       else
-        echo 'PBX services not started.';
+        echo 'No PBX services running.';
       fi
       ;;
    start-all)
      # If safe script exists, start it
      if [ -f "$safeScript" ]; then
-       /usr/bin/php -f "$safeScript" start
+       echo 'Starting all PBX services via WorkerSafeScriptsCore.';
+       /usr/bin/php -f "$safeScript" start > /dev/null 2>&1
+       echo 'PBX services started.';
      else
-        echo 'Safe script not found.';
+        echo "Safe script not found at: ${safeScript}";
      fi
      ;;
    restart-all)
      # If safe script exists, restart it
      if [ -f "$safeScript" ]; then
-       /usr/bin/php -f "$safeScript" restart
+       echo 'Restarting all PBX services via WorkerSafeScriptsCore.';
+       /usr/bin/php -f "$safeScript" restart > /dev/null 2>&1
+       echo 'PBX services restarted.';
      else
-        echo 'Safe script not found.';
+        echo "Safe script not found at: ${safeScript}";
      fi
+     ;;
+   status)
+     echo 'PBX Workers Status:';
+     echo '==================';
+     # Get all PHP worker processes with details
+     ps -A -o pid,ppid,args | grep -E '/usr/bin/php.*Worker[A-Za-z]+\.php' | grep -v grep | while read line; do
+       pid=$(echo "$line" | awk '{print $1}');
+       ppid=$(echo "$line" | awk '{print $2}');
+       # Extract worker name from the command line
+       worker=$(echo "$line" | grep -oE 'Worker[A-Za-z]+\.php' | sed 's/\.php//');
+       # Check for instance ID
+       instance=$(echo "$line" | grep -oE -- '--instance-id=[0-9]+' | cut -d= -f2);
+       if [ -z "$instance" ]; then
+         echo "PID: ${pid} PPID: ${ppid} Worker: ${worker}";
+       else
+         echo "PID: ${pid} PPID: ${ppid} Worker: ${worker} Instance: ${instance}";
+       fi
+     done
+     
+     # Count workers
+     total=$(ps -A -o pid,args | grep -E '/usr/bin/php.*Worker[A-Za-z]+\.php' | grep -v grep | wc -l);
+     echo "==================";
+     echo "Total workers running: ${total}";
      ;;
   esac
   ;;
 service)
-  # Get PIDs of specific service passed as second argument
-  pids=$(ps | grep "$2" | grep -v grep | grep -v "$0" | awk '{print $1}');
+  serviceName=$2;
+  
+  # Handle worker instance numbers (e.g. WorkerApiCommands-1, WorkerApiCommands-2)
+  # Look for exact worker class name or with instance suffix
+  pids=$(ps -A -o pid,args | grep -E "php.*${serviceName}\.php" | grep -v grep | grep -v "$0" | awk '{print $1}');
 
   # If PIDs exist, kill the service
   if [ -n "${pids}" ]; then
-    echo "Killing PBX service ${2}.";
-    echo "${pids}" | xargs kill
+    echo "Stopping PBX service ${serviceName}.";
+    echo "Found PIDs: ${pids}";
+    
+    # Try graceful shutdown first
+    for pid in ${pids}; do
+      echo "Sending SIGUSR1 to PID ${pid}";
+      kill -USR1 ${pid} 2>/dev/null || true;
+    done
+    
+    # Wait a bit for graceful shutdown
+    sleep 2;
+    
+    # Check if processes are still running
+    remaining=$(ps -A -o pid,args | grep -E "php.*${serviceName}\.php" | grep -v grep | grep -v "$0" | awk '{print $1}');
+    if [ -n "${remaining}" ]; then
+      echo "Force stopping remaining processes: ${remaining}";
+      for pid in ${remaining}; do
+        kill -TERM ${pid} 2>/dev/null || true;
+      done
+    fi
+    
+    echo "PBX service ${serviceName} stopped.";
   else
-    echo "PBX service ${2} not started.";
+    echo "PBX service ${serviceName} not running.";
   fi
   ;;
 debug)
@@ -126,8 +194,9 @@ debug)
   fi
 
   # Stop cron and specific service
+  echo "Stopping cron and ${scriptName} for debug...";
   "${pbxConsole}" cron stop;
-  "${pbxConsole}" service "${scriptName}" stop;
+  "${pbxConsole}" service "${scriptName}";
 
   # Configure xdebug environment variable for PHP
   # Adjusted for Xdebug 3

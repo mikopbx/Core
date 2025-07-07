@@ -11,6 +11,7 @@ use MikoPBX\Core\Workers\WorkerRedisBase;
 use MikoPBX\PBXCoreREST\Lib\Modules\ModuleInstallationBase;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
+use MikoPBX\PBXCoreREST\Lib\PerformanceMetrics;
 use RuntimeException;
 use Throwable;
 
@@ -23,7 +24,7 @@ require_once 'Globals.php';
  * Provides functionality for job retries, error handling, and cleanup of failed jobs.
  *
  * Features:
- * - Request processing in forked subprocesses
+ * - Request processing with worker pool support
  * - Job retry mechanism with maximum attempts
  * - Response handling with large payload support
  * - Process monitoring and cleanup
@@ -122,7 +123,7 @@ class WorkerApiCommands extends WorkerRedisBase
                     // Connect to Redis
                     $this->redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
                     
-                    // Периодически проверяем состояние очереди (каждую минуту)
+                    // Periodically check queue state (every minute)
                     static $lastQueueCheckTime = 0;
                     if (time() - $lastQueueCheckTime > 60) {
                         $this->checkQueueState();
@@ -170,7 +171,7 @@ class WorkerApiCommands extends WorkerRedisBase
                         continue;
                     }
 
-                    // Логируем, какой воркер взял задачу в обработку
+                    // Log which worker is processing the job
                     SystemMessages::sysLogMsg(
                         static::class,
                         sprintf(
@@ -183,10 +184,10 @@ class WorkerApiCommands extends WorkerRedisBase
                         LOG_DEBUG
                     );
                     
-                    // Сохраняем информацию о том, какой воркер обрабатывает задачу
+                    // Save information about which worker is processing the job
                     $this->redis->setex(
                         'api:job:worker:' . $jobId,
-                        300, // 5 минут TTL
+                        300, // 5 minutes TTL
                         json_encode([
                             'instance_id' => $this->instanceId,
                             'pid' => getmypid(),
@@ -225,23 +226,23 @@ class WorkerApiCommands extends WorkerRedisBase
     }
 
     /**
-     * Проверяем и логируем состояние очереди Redis
+     * Check and log Redis queue state
      */
     private function checkQueueState(): void
     {
         try {
-            // Получаем длину основной очереди
+            // Get main queue length
             $queueLength = $this->redis->lLen(self::REDIS_API_QUEUE);
             
-            // Проверяем все ключи с ответами
+            // Check all response keys
             $responseKeys = $this->redis->keys(self::REDIS_API_RESPONSE_PREFIX . '*');
             $responseCount = count($responseKeys);
             
-            // Проверяем ожидающие запросы
+            // Check pending requests
             $jobsInProgressKeys = $this->redis->keys('api:job:worker:*');
             $jobsInProgress = count($jobsInProgressKeys);
             
-            // Логируем информацию о состоянии очереди
+            // Log queue state information
             SystemMessages::sysLogMsg(
                 static::class,
                 sprintf(
@@ -255,7 +256,7 @@ class WorkerApiCommands extends WorkerRedisBase
                 LOG_INFO
             );
             
-            // Если есть задачи в очереди, но нет воркеров, которые их обрабатывают, выводим предупреждение
+            // If there are tasks in queue but no workers processing them, show warning
             if ($queueLength > 0 && $jobsInProgress === 0) {
                 SystemMessages::sysLogMsg(
                     static::class,
@@ -266,8 +267,8 @@ class WorkerApiCommands extends WorkerRedisBase
                     LOG_WARNING
                 );
                 
-                // Дополнительно проверяем, какие задачи находятся в очереди
-                $queueItems = $this->redis->lRange(self::REDIS_API_QUEUE, 0, 5); // Первые 5 элементов
+                // Additionally check which tasks are in the queue
+                $queueItems = $this->redis->lRange(self::REDIS_API_QUEUE, 0, 5); // First 5 items
                 foreach ($queueItems as $index => $queueItem) {
                     $item = json_decode($queueItem, true);
                     if (is_array($item)) {
@@ -659,7 +660,7 @@ class WorkerApiCommands extends WorkerRedisBase
     }
 
     /**
-     * Process a job directly (without additional forking)
+     * Process a job directly
      * 
      * @param string $jobId Unique job identifier
      * @param string $requestData Job request data
@@ -669,7 +670,33 @@ class WorkerApiCommands extends WorkerRedisBase
         $request = json_decode($requestData, true);
         $res = new PBXApiResult();
         
-        // Log job start with details
+        $this->logJobStart($jobId, $request);
+        
+        // Initialize performance metrics
+        $metrics = new PerformanceMetrics($jobId, $request);
+
+        try {
+            // Prepare and validate processor
+            $processor = $this->prepareProcessor($request, $res, $metrics);
+
+            // Execute request
+            $res = $this->executeRequest($request, $res, $processor, $metrics);
+            
+        } catch (Throwable $e) {
+            $this->handleJobFailure($jobId, $e, $res);
+        } finally {
+            $this->finalizeJob($jobId, $request, $res, $metrics);
+        }
+    }
+    
+    /**
+     * Log job start information
+     * 
+     * @param string $jobId Job identifier
+     * @param array $request Request data
+     */
+    private function logJobStart(string $jobId, array $request): void
+    {
         SystemMessages::sysLogMsg(
             static::class,
             sprintf(
@@ -681,151 +708,109 @@ class WorkerApiCommands extends WorkerRedisBase
             ),
             LOG_INFO
         );
+    }
+    
+    /**
+     * Prepare and validate processor
+     * 
+     * @param array $request Request data
+     * @param PBXApiResult $res Result object
+     * @param PerformanceMetrics $metrics Performance metrics
+     * @return string Processor class name
+     * @throws RuntimeException If processor is invalid
+     */
+    private function prepareProcessor(array $request, PBXApiResult $res, PerformanceMetrics $metrics): string
+    {
+        $metrics->startStage('prepare');
         
-        // Сбор метрик производительности
-        $perfMetrics = [
-            'request_received_at' => microtime(true),
-            'processing_stages' => [],
-            'job_id' => $jobId,
-            'action' => $request['action'] ?? 'unknown',
-            'processor' => $request['processor'] ?? 'unknown',
-            'pid' => getmypid()
-        ];
+        $res->processor = $this->getProcessor($request);
+        $processor = $res->processor;
 
-        try {
-
-            // Замер времени подготовки к обработке запроса
-            $perfMetrics['processing_stages']['prepare'] = [
-                'start' => microtime(true)
-            ];
-            
-            $res->processor = $this->getProcessor($request);
-            $processor = $res->processor;
-
-            if (!method_exists($processor, 'callback')) {
-                throw new RuntimeException("Unknown processor - {$processor}");
-            }
-            
-            $perfMetrics['processing_stages']['prepare']['end'] = microtime(true);
-            $perfMetrics['processing_stages']['prepare']['duration'] = 
-                $perfMetrics['processing_stages']['prepare']['end'] - 
-                $perfMetrics['processing_stages']['prepare']['start'];
-
-            // Log processor details
-            SystemMessages::sysLogMsg(
-                static::class,
-                sprintf(
-                    "Job %s using processor: %s (prepare: %.3fs, PID: %d)",
-                    $jobId,
-                    $processor,
-                    $perfMetrics['processing_stages']['prepare']['duration'],
-                    getmypid()
-                ),
-                LOG_DEBUG
-            );
-
-            // Замер времени выполнения запроса
-            $perfMetrics['processing_stages']['execution'] = [
-                'start' => microtime(true)
-            ];
-            
-            // Process request
-            if (($request['async'] ?? false) === true) {
-                $this->handleAsyncRequest($request, $res, $processor);
-            } else {
-                $res = $processor::callback($request);
-            }
-            
-            $perfMetrics['processing_stages']['execution']['end'] = microtime(true);
-            $perfMetrics['processing_stages']['execution']['duration'] = 
-                $perfMetrics['processing_stages']['execution']['end'] - 
-                $perfMetrics['processing_stages']['execution']['start'];
-
-            // Log processor execution time
-            SystemMessages::sysLogMsg(
-                static::class,
-                sprintf(
-                    "Job %s execution completed: %s::%s (execution: %.3fs, PID: %d)",
-                    $jobId,
-                    $processor,
-                    $request['action'] ?? 'unknown',
-                    $perfMetrics['processing_stages']['execution']['duration'],
-                    getmypid()
-                ),
-                LOG_INFO
-            );
-        } catch (Throwable $e) {
-            // Log detailed error information
-            SystemMessages::sysLogMsg(
-                static::class,
-                sprintf(
-                    "Job %s execution failed: %s (%s:%d, PID: %d)",
-                    $jobId,
-                    $e->getMessage(),
-                    $e->getFile(),
-                    $e->getLine(),
-                    getmypid()
-                ),
-                LOG_ERR
-            );
-            
-            // Handle errors during processing
-            $this->handleJobError($jobId, $e);
-            $this->handleProcessingError($e, $res);
-        } finally {
-
-            // Завершающий расчет метрик
-            $perfMetrics['request_completed_at'] = microtime(true);
-            $perfMetrics['total_processing_time'] = 
-                $perfMetrics['request_completed_at'] - $perfMetrics['request_received_at'];
-            
-            // Замер времени на подготовку ответа
-            $perfMetrics['processing_stages']['response_preparation'] = [
-                'start' => microtime(true)
-            ];
-            
-            // Добавляем метрики в ответ
-            $result = $res->getResult();
-            $result['_performance'] = $perfMetrics;
-            
-            // Always send a response
-            $this->sendResponse($jobId, $request, $result);
-            
-            $perfMetrics['processing_stages']['response_preparation']['end'] = microtime(true);
-            $perfMetrics['processing_stages']['response_preparation']['duration'] = 
-                $perfMetrics['processing_stages']['response_preparation']['end'] - 
-                $perfMetrics['processing_stages']['response_preparation']['start'];
-            
-            // Log job completion metrics
-            SystemMessages::sysLogMsg(
-                static::class,
-                sprintf(
-                    "Job %s completed: action=%s, total=%.3fs, success=%s, PID=%d",
-                    $jobId,
-                    $request['action'] ?? 'unknown',
-                    $perfMetrics['total_processing_time'],
-                    $res->success ? 'true' : 'false',
-                    getmypid()
-                ),
-                $res->success ? LOG_INFO : LOG_WARNING
-            );
-            
-            // Логируем информацию о выполнении для запросов, которые выполняются более 0.5 секунды
-            if ($perfMetrics['total_processing_time'] > 0.5) {
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    sprintf(
-                        "Long-running request: %s (%.3fs) - execution: %.3fs, response prep: %.3fs, PID: %d",
-                        $request['action'] ?? 'unknown',
-                        $perfMetrics['total_processing_time'],
-                        $perfMetrics['processing_stages']['execution']['duration'] ?? 0,
-                        $perfMetrics['processing_stages']['response_preparation']['duration'] ?? 0,
-                        getmypid()
-                    ),
-                    LOG_NOTICE
-                );
-            }
+        if (!method_exists($processor, 'callback')) {
+            throw new RuntimeException("Unknown processor - {$processor}");
         }
+        
+        $metrics->endStage('prepare');
+        $metrics->logPreparationComplete($processor);
+        
+        return $processor;
+    }
+    
+    /**
+     * Execute the API request
+     * 
+     * @param array $request Request data
+     * @param PBXApiResult $res Result object
+     * @param string $processor Processor class name
+     * @param PerformanceMetrics $metrics Performance metrics
+     * @return PBXApiResult Request result
+     */
+    private function executeRequest(array $request, PBXApiResult $res, string $processor, PerformanceMetrics $metrics): PBXApiResult
+    {
+        $metrics->startStage('execution');
+        
+        if (($request['async'] ?? false) === true) {
+            $this->handleAsyncRequest($request, $res, $processor);
+        } else {
+            $res = $processor::callback($request);
+        }
+        
+        $metrics->endStage('execution');
+        $metrics->logExecutionComplete($processor);
+        
+        return $res;
+    }
+    
+    /**
+     * Handle job failure
+     * 
+     * @param string $jobId Job identifier
+     * @param Throwable $e Exception
+     * @param PBXApiResult $res Result object
+     */
+    private function handleJobFailure(string $jobId, Throwable $e, PBXApiResult $res): void
+    {
+        SystemMessages::sysLogMsg(
+            static::class,
+            sprintf(
+                "Job %s execution failed: %s (%s:%d, PID: %d)",
+                $jobId,
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine(),
+                getmypid()
+            ),
+            LOG_ERR
+        );
+        
+        $this->handleJobError($jobId, $e);
+        $this->handleProcessingError($e, $res);
+    }
+    
+    /**
+     * Finalize job processing
+     * 
+     * @param string $jobId Job identifier
+     * @param array $request Request data
+     * @param PBXApiResult $res Result object
+     * @param PerformanceMetrics $metrics Performance metrics
+     */
+    private function finalizeJob(string $jobId, array $request, PBXApiResult $res, PerformanceMetrics $metrics): void
+    {
+        $metrics->startStage('response_preparation');
+        
+        // Finalize metrics and add to response
+        $metrics->finalize();
+        $result = $res->getResult();
+        $result['_performance'] = $metrics->getMetrics();
+        
+        // Always send a response
+        $this->sendResponse($jobId, $request, $result);
+        
+        $metrics->endStage('response_preparation');
+        
+        // Log completion
+        $metrics->logJobCompletion($res->success);
     }
 }
 

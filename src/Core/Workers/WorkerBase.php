@@ -82,17 +82,10 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     private const string LOG_FORMAT_NORMAL_SHUTDOWN = '[%s][%s][RUNNING->SHUTDOWN] Clean exit from %s (%.3fs, PID:%d, Parent:%d)';
     private const string LOG_FORMAT_NORMAL_EXIT = '[%s][%s] Successfully executed (%.3fs, PID:%d, Parent:%d)';
     private const string LOG_FORMAT_ERROR_SHUTDOWN = '[%s][%s][SHUTDOWN-ERROR] %s from %s (%.3fs, PID:%d, Parent:%d)';
-    private const string LOG_FORMAT_NORMAL_EXIT_FORK = '[%s][FORK] Successfully executed (%.3fs, PID:%d, PPID:%d)';
-    private const string LOG_FORMAT_NORMAL_SHUTDOWN_FORK = '[%s][FORK][RUNNING->SHUTDOWN] Clean exit from %s (%.3fs, PID:%d, PPID:%d)';
     private const string LOG_FORMAT_PING_ERROR = '[%s][%s][PING-ERROR] %s from %s (%.3fs, PID:%d, Parent:%d)';
 
 
     protected const string LOG_NAMESPACE_SEPARATOR = '\\';
-    /**
-     * Process type identifiers
-     */
-    private const string PROCESS_TYPE_MAIN = 'MAIN';
-    private const string PROCESS_TYPE_FORK = 'FORK';
 
     /**
      * Maximum number of processes that can be created
@@ -136,19 +129,6 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
      */
     protected int $workerState = self::STATE_STARTING;
 
-    /**
-     * Flag indicating whether the worker is a forked process
-     *
-     * @var bool
-     */
-    private bool $isForked = false;
-
-    /**
-     * Parent PID
-     *
-     * @var int
-     */
-    private int $parentPid;
 
 
     /**
@@ -162,7 +142,6 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
         try {
             // Initialize basic properties first
             $this->workerStartTime = microtime(true);
-            $this->parentPid = posix_getppid();
             $this->workerState = self::STATE_STARTING;
 
             // Parse command line arguments for instance ID
@@ -232,7 +211,6 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
         $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
         $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
         $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
-        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
 
         $oldLogStateStr = self::WORKER_STATES[$oldState] ?? 'UNDEFINED';
         $newLogStateStr = self::WORKER_STATES[$state] ?? 'UNDEFINED';
@@ -247,12 +225,12 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             sprintf(
                 self::LOG_FORMAT_STATE,
                 $workerName,
-                $processType,
+                'MAIN',
                 $logState,
                 $namespacePath,
                 $timeElapsed,
                 getmypid(),
-                $this->parentPid
+                posix_getppid()
             ),
             LOG_DEBUG
         );
@@ -268,8 +246,7 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
         return [
             'state' => $this->workerState,
             'uptime' => microtime(true) - $this->workerStartTime,
-            'memory' => memory_get_usage(true),
-            'is_forked' => $this->isForked
+            'memory' => memory_get_usage(true)
         ];
     }
 
@@ -280,12 +257,6 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
      */
     public function getPidFile(): string
     {
-        if (isset($this->isForked) && $this->isForked === true) {
-            $pid = getmypid();
-            // For forked processes, include both instance ID and PID
-            return Processes::getForkedPidFilePath(static::class, $pid, $this->instanceId);
-        }
-        
         // For regular processes or pool instances, include instance ID
         return Processes::getPidFilePath(static::class, $this->instanceId);
     }
@@ -341,17 +312,16 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     {
         $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
         $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
-        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
 
         SystemMessages::sysLogMsg(
             static::class,
             sprintf(
-                $this->isForked ? self::LOG_FORMAT_NORMAL_EXIT_FORK : self::LOG_FORMAT_NORMAL_EXIT,
+                self::LOG_FORMAT_NORMAL_EXIT,
                 $workerName,
-                $processType,
+                'MAIN',
                 $timeElapsed,
                 getmypid(),
-                $this->parentPid
+                posix_getppid()
             ),
             LOG_DEBUG
         );
@@ -368,20 +338,19 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
         $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
         $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
         $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
-        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
 
         SystemMessages::sysLogMsg(
             static::class,
             sprintf(
                 self::LOG_FORMAT_SIGNAL,
                 $workerName,
-                $processType,
+                'MAIN',
                 self::WORKER_STATES[$this->workerState] ?? 'UNKNOWN',
                 $this->getSignalString($signal),
                 $namespacePath,
                 $timeElapsed,
                 getmypid(),
-                $this->parentPid
+                posix_getppid()
             ),
             LOG_DEBUG
         );
@@ -390,16 +359,6 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             case SIGUSR1:
                 $this->setWorkerState(self::STATE_RESTARTING);
 
-                // For child processes, exit cleanly
-                if ($this->isForked) {
-                    // Redis-based workers should clean up connections
-                    if ($this instanceof WorkerRedisBase) {
-                        if ($this->redis) {
-                            $this->redis->close();
-                        }
-                    }
-                    exit(0);
-                }
 
                 // Call handler for graceful shutdown implementation
                 $this->handleSignalUsr1();
@@ -483,18 +442,17 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     {
         $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
         $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
-        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
 
         SystemMessages::sysLogMsg(
             $processTitle,
             sprintf(
-                $this->isForked ? self::LOG_FORMAT_NORMAL_SHUTDOWN_FORK : self::LOG_FORMAT_NORMAL_SHUTDOWN,
+                self::LOG_FORMAT_NORMAL_SHUTDOWN,
                 $workerName,
-                $processType,
+                'MAIN',
                 $namespacePath,
                 $timeElapsedSecs,
                 getmypid(),
-                $this->parentPid
+                posix_getppid()
             ),
             LOG_DEBUG
         );
@@ -511,7 +469,6 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
     {
         $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
         $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
-        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
         $errorMessage = $error['message'] ?? 'Unknown error';
 
         SystemMessages::sysLogMsg(
@@ -519,12 +476,12 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
             sprintf(
                 self::LOG_FORMAT_ERROR_SHUTDOWN,
                 $workerName,
-                $processType,
+                'MAIN',
                 $errorMessage,
                 $namespacePath,
                 $timeElapsedSecs,
                 getmypid(),
-                $this->parentPid
+                posix_getppid()
             ),
             LOG_ERR
         );
@@ -535,29 +492,13 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
      */
     private function cleanupPidFile(): void
     {
-        try {
-            $pid = getmypid();
-            if ($pid === false) {
-                return;
-            }
-
-            // Determine which PID file to remove
-            $pidFile = $this->getPidFile();
-
-            // Only remove the file if it exists and contains our PID
-            if (file_exists($pidFile)) {
-                $storedPid = file_get_contents($pidFile);
-                if ($storedPid === (string)$pid) {
-                    unlink($pidFile);
-                }
-            }
-        } catch (Throwable $e) {
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Failed to cleanup PID file: " . $e->getMessage(),
-                LOG_WARNING
-            );
+        $pid = getmypid();
+        if ($pid === false) {
+            return;
         }
+
+        $pidFile = $this->getPidFile();
+        Processes::removePidFile($pidFile, $pid);
     }
 
 
@@ -569,7 +510,6 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
      */
     public function pingCallBack(BeanstalkClient $message): void
     {
-        $processType = $this->isForked ? self::PROCESS_TYPE_FORK : self::PROCESS_TYPE_MAIN;
         $workerName = basename(str_replace(self::LOG_NAMESPACE_SEPARATOR, '/', static::class));
         $namespacePath = implode('.', array_slice(explode(self::LOG_NAMESPACE_SEPARATOR, static::class), 0, -1));
         $timeElapsed = round(microtime(true) - $this->workerStartTime, 3);
@@ -581,12 +521,12 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
                 sprintf(
                     self::LOG_FORMAT_PING_ERROR,
                     $workerName,
-                    $processType,
+                    'MAIN',
                     $e->getMessage(),
                     $namespacePath,
                     $timeElapsed,
                     getmypid(),
-                    $this->parentPid
+                    posix_getppid()
                 ),
                 LOG_WARNING
             );
@@ -628,32 +568,15 @@ abstract class WorkerBase extends Injectable implements WorkerInterface
         return Text::camelize("ping_$workerClassName", '\\');
     }
 
-    /**
-     * Sets flag for forked process after pcntl_fork()
-     */
-    protected function setForked(): void
-    {
-        $this->isForked = true;
-        $this->parentPid = posix_getppid();
-        // Reset the worker start time for forked process
-        $this->workerStartTime = microtime(true);
-    }
 
     /**
-     * Destructor - ensures PID file is saved on object destruction
+     * Destructor - cleanup on object destruction
      */
     public function __destruct()
     {
-        try {
-            if ($this->workerState !== self::STATE_STOPPING) {
-                $this->savePidFile();
-            }
-        } catch (Throwable $e) {
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Destructor failed: " . $e->getMessage(),
-                LOG_WARNING
-            );
+        // Only cleanup PID file if we're stopping
+        if ($this->workerState === self::STATE_STOPPING) {
+            $this->cleanupPidFile();
         }
     }
 }

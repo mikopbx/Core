@@ -245,14 +245,6 @@ abstract class WorkerRedisBase extends WorkerBase
         exit(0);
     }
 
-    /**
-     * Safely handle Redis connections after fork
-     */
-    protected function setForked(): void
-    {
-        parent::setForked();
-        $this->updateWorkerStatus();
-    }
 
     /**
      * Check if heartbeat should be sent

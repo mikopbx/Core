@@ -93,13 +93,13 @@ class Processes
             // Read PID from file
             $pid = @file_get_contents($file);
             if ($pid === false) {
-                @unlink($file);
+                self::removePidFile($file);
                 continue;
             }
 
             // Check if process is still running
             if (!self::isProcessRunning($pid)) {
-                @unlink($file);
+                self::removePidFile($file);
             }
         }
     }
@@ -122,19 +122,6 @@ class Processes
         return self::LOCK_FILE_DIR . "/$name" . self::PID_FILE_SUFFIX;
     }
 
-    /**
-     * Gets the path to the PID file for a forked process
-     *
-     * @param string $className The class name
-     * @param int $pid Process ID
-     * @param int $instanceNum The instance number
-     * @return string Path to the forked process PID file
-     */
-    public static function getForkedPidFilePath(string $className, int $pid, int $instanceNum = 1): string
-    {
-        $basePidFile = self::getPidFilePath($className, $instanceNum);
-        return sprintf('%s.%d', $basePidFile, $pid);
-    }
 
     /**
      * Saves a PID to a file with proper locking
@@ -153,26 +140,18 @@ class Processes
                 throw new RuntimeException("Could not create PID directory: $pidDir");
             }
 
-            // Use exclusive file creation to avoid race conditions
-            $handle = fopen($pidFile, 'c+');
-            if ($handle === false) {
-                throw new RuntimeException("Could not open PID file: $pidFile");
+            // Use atomic write: write to temp file then rename
+            $tempFile = $pidFile . '.tmp.' . uniqid('', true);
+            
+            if (file_put_contents($tempFile, (string)$pid, LOCK_EX) === false) {
+                throw new RuntimeException("Could not write to temp PID file: $tempFile");
             }
 
-            if (!flock($handle, LOCK_EX | LOCK_NB)) {
-                fclose($handle);
-                throw new RuntimeException("Could not acquire lock on PID file: $pidFile");
+            // Atomic rename - this will overwrite existing file if present
+            if (!rename($tempFile, $pidFile)) {
+                @unlink($tempFile);
+                throw new RuntimeException("Could not atomically create PID file: $pidFile");
             }
-
-            // Write PID to file
-            if (ftruncate($handle, 0) === false || fwrite($handle, (string)$pid) === false) {
-                flock($handle, LOCK_UN);
-                fclose($handle);
-                throw new RuntimeException("Could not write to PID file: $pidFile");
-            }
-
-            flock($handle, LOCK_UN);
-            fclose($handle);
 
         } catch (Throwable $e) {
             SystemMessages::sysLogMsg(
@@ -181,6 +160,39 @@ class Processes
                 LOG_WARNING
             );
             throw new RuntimeException('PID file operation failed', 0, $e);
+        }
+    }
+
+    /**
+     * Removes a PID file if it exists and belongs to the specified process
+     *
+     * @param string $pidFile Path to the PID file
+     * @param int|null $expectedPid Expected PID (if null, removes without checking)
+     * @return bool True if file was removed, false otherwise
+     */
+    public static function removePidFile(string $pidFile, ?int $expectedPid = null): bool
+    {
+        if (!file_exists($pidFile)) {
+            return false;
+        }
+
+        try {
+            // If expectedPid is provided, verify it matches
+            if ($expectedPid !== null) {
+                $storedPid = @file_get_contents($pidFile);
+                if ($storedPid === false || (int)$storedPid !== $expectedPid) {
+                    return false;
+                }
+            }
+
+            return @unlink($pidFile);
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Failed to remove PID file {$pidFile}: " . $e->getMessage(),
+                LOG_WARNING
+            );
+            return false;
         }
     }
 
@@ -433,11 +445,11 @@ class Processes
         $processes = array_filter(explode(' ', $activeProcesses));
         $currentProcCount = count($processes);
         
-        // Определяем количество нужных экземпляров из maxProc класса
-        $neededProcCount = 1; // По умолчанию 1 процесс
+        // Determine the needed instance count from class maxProc property
+        $neededProcCount = 1; // Default to 1 process
         
         if (class_exists($className)) {
-            // Получаем значение maxProc из класса
+            // Get maxProc value from class
             $reflectionClass = new \ReflectionClass($className);
             if ($reflectionClass->hasProperty('maxProc')) {
                 $defaultProperties = $reflectionClass->getDefaultProperties();
@@ -539,7 +551,7 @@ class Processes
         int $neededProcCount = 1,
         bool $softRestart = false
     ): void {
-        // Отладочное логирование
+        // Debug logging
         SystemMessages::sysLogMsg(
             __METHOD__,
             sprintf(
@@ -600,7 +612,7 @@ class Processes
             }
         }
 
-        // Запуск воркеров с поддержкой пула
+        // Start workers with pool support
         if ($neededProcCount > 1) {
             SystemMessages::sysLogMsg(
                 __METHOD__,
@@ -608,7 +620,7 @@ class Processes
                 LOG_NOTICE
             );
             
-            // Запускаем необходимое количество экземпляров
+            // Start the required number of instances
             for ($i = 1; $i <= $neededProcCount; $i++) {
                 $instanceParam = " --instance-id={$i}";
                 
@@ -620,7 +632,7 @@ class Processes
                 
                 self::mwExecBg("{$command} {$paramForPHPWorker}{$instanceParam}");
                 
-                // Небольшая задержка между запусками экземпляров для предотвращения конфликтов
+                // Small delay between instance launches to prevent conflicts
                 usleep(250000); // 250ms
             }
         } else {
@@ -665,7 +677,7 @@ class Processes
             return;
         }
 
-        // Добавляем отладочное логирование
+        // Add debug logging
         SystemMessages::sysLogMsg(
             __METHOD__,
             sprintf(
@@ -678,16 +690,16 @@ class Processes
         );
 
         if ($neededProcCount > $currentProcCount) {
-            // Запускаем новые экземпляры с указанием instance ID
+            // Start new instances with instance ID
             for ($i = 0; $i < $neededProcCount; $i++) {
                 $instanceParam = '';
-                // Если мы запускаем больше одного экземпляра, добавляем параметр instanceId
+                // If we're starting more than one instance, add instanceId parameter
                 if ($neededProcCount > 1) {
-                    $instanceId = $i + 1; // Нумеруем с 1
+                    $instanceId = $i + 1; // Number starting from 1
                     $instanceParam = " --instance-id={$instanceId}";
                 }
                 
-                // Отладочное логирование
+                // Debug logging
                 SystemMessages::sysLogMsg(
                     __METHOD__,
                     sprintf(
