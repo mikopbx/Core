@@ -26,8 +26,6 @@ use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 /**
  * Class LanInterfaces
  *
- * @method static findFirstByInternet(string $value)
- *
  * @package MikoPBX\Common\Models
  */
 class LanInterfaces extends ModelsBase

@@ -230,8 +230,8 @@ class UpdateDatabase extends Injectable
 
         // Find auto incremental column, usually it is ID column
         $keyFiled = $metaData->getIdentityField($model);
-        if ($keyFiled) {
-            if (isset($indexes[$keyFiled])) {
+        if ($keyFiled !== null && is_string($keyFiled)) {
+            if (array_key_exists($keyFiled, $indexes)) {
                 unset($indexes[$keyFiled]);
             }
             $table_structure[$keyFiled] = [

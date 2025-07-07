@@ -46,7 +46,7 @@ class NetworkController extends BaseController
 
         $arrEth[] = $template;
 
-        $internetInterface = LanInterfaces::findFirstByInternet('1');
+        $internetInterface = LanInterfaces::findFirst(['internet = :internet:', 'bind' => ['internet' => '1']]);
         if ($internetInterface === null) {
             $internetInterface = new LanInterfaces();
             $internetInterface->id = 1;
