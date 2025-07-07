@@ -38,7 +38,8 @@
         "browserstack/browserstack-local": "^v1.1.0",
         "phpunit/phpunit": "^9.0",
         "phalcon/ide-stubs": "^5.0.0",
-        "squizlabs/php_codesniffer": "*"
+        "squizlabs/php_codesniffer": "*",
+        "phpstan/phpstan": "^1.10"
     },
     "autoload": {
         "psr-4": {
