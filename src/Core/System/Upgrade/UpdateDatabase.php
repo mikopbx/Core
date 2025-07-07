@@ -231,7 +231,9 @@ class UpdateDatabase extends Injectable
         // Find auto incremental column, usually it is ID column
         $keyFiled = $metaData->getIdentityField($model);
         if ($keyFiled) {
-            unset($indexes[$keyFiled]);
+            if (isset($indexes[$keyFiled])) {
+                unset($indexes[$keyFiled]);
+            }
             $table_structure[$keyFiled] = [
                 'type'          => Column::TYPE_INTEGER,
                 'notNull'       => true,
@@ -245,7 +247,9 @@ class UpdateDatabase extends Injectable
         // Some exceptions
         if ($modelClassName === PbxSettings::class) {
             $keyFiled = 'key';
-            unset($indexes[$keyFiled]);
+            if (isset($indexes[$keyFiled])) {
+                unset($indexes[$keyFiled]);
+            }
             $table_structure[$keyFiled] = [
                 'type'          => Column::TYPE_VARCHAR,
                 'notNull'       => true,

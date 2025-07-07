@@ -85,7 +85,7 @@ class GeneralSettingsController extends BaseController
 
         // If SSH is disabled, remove the SSH_PASSWORD key
         if ($data[PbxSettings::SSH_DISABLE_SSH_PASSWORD] === 'on') {
-            unset($checkPasswordFields[PbxSettings::SSH_PASSWORD]);
+            $checkPasswordFields = array_diff($checkPasswordFields, [PbxSettings::SSH_PASSWORD]);
         }
 
         // Loop through and check passwords

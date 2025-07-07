@@ -179,7 +179,7 @@ LUA;
         $di->set(
             self::SERVICE_NAME,
             function () use ($di) {
-                $mutex = new self($di);
+                $mutex = new self();
                 $mutex->redis = $di->get(RedisClientProvider::SERVICE_NAME);
                 return $mutex;
             }

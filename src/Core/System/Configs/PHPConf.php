@@ -141,7 +141,7 @@ class PHPConf extends SystemConfigClass
     /**
      * Restarts php-fpm.
      *
-     * @return void
+     * @return bool
      */
     public function reStart(): bool
     {
