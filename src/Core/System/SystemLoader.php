@@ -265,7 +265,7 @@ class SystemLoader extends Injectable
         
         // Configure NTP
         $this->echoStartMsg(' - Configuring ntpd...');
-        if (!$this->isRecoveryMode) {
+        if (!$this->isDocker && !$this->isRecoveryMode) {
             $ntpConf = new NTPConf();
             $this->echoResultMsg($ntpConf->monitWaitStart() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         } else {

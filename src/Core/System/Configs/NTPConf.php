@@ -47,11 +47,20 @@ class NTPConf extends SystemConfigClass
      * @return bool Always returns true after successfully writing the configuration file.
      */
     public function generateMonitConf(): bool{
+        // Skip NTP service in Docker containers - time is inherited from host
+        if (Util::isDocker()) {
+            $confPath = $this->getMainMonitConfFile();
+            // Write empty config to ensure old configs are removed
+            $this->saveFileContent($confPath, '');
+            return true;
+        }
+        
         $this->configure();
         $busyboxPath = Util::which('busybox');
         $ntpdPath = Util::which(self::PROC_NAME);
         $confPath = $this->getMainMonitConfFile();
         $options = "-N";
+        
         $this->startCommand = "$ntpdPath $options";
 
         $conf = 'check process '.self::PROC_NAME.' matching "'.$this->startCommand.'"'.PHP_EOL.
@@ -88,6 +97,12 @@ class NTPConf extends SystemConfigClass
      */
     public function reStart(): bool
     {
+        // Skip NTP service entirely in Docker containers
+        if (Util::isDocker()) {
+            $this->generateMonitConf(); // This will write empty config
+            return true;
+        }
+        
         $this->generateMonitConf();
         $result = true;
         $manual_time = PbxSettings::getValueByKey(PbxSettings::PBX_MANUAL_TIME_SETTINGS);
@@ -106,6 +121,11 @@ class NTPConf extends SystemConfigClass
      */
     public function configure(): void
     {
+        // Skip configuration in Docker containers
+        if (Util::isDocker()) {
+            return;
+        }
+        
         $ntp_servers = PbxSettings::getValueByKey(PbxSettings::NTP_SERVER);
         $ntp_servers = preg_split('/\r\n|\r|\n| /', $ntp_servers);
         $ntp_conf = '';
