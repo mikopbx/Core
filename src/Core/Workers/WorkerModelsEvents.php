@@ -318,6 +318,7 @@ class WorkerModelsEvents extends WorkerBase
         return [
             ReloadAdviceAction::class,
             ReloadAllSystemWorkersAction::class,
+            ReloadModuleStateAction::class,
         ];
     }
 

@@ -6,6 +6,7 @@ namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\Workers\Pool\WorkerPoolManager;
 use Redis;
 use RuntimeException;
 use Throwable;
@@ -53,6 +54,20 @@ abstract class WorkerRedisBase extends WorkerBase
      * Flag indicating that worker is in shutdown mode
      */
     protected bool $isShuttingDown = false;
+    
+    /**
+     * Worker pool manager instance
+     *
+     * @var WorkerPoolManager|null
+     */
+    protected ?WorkerPoolManager $poolManager = null;
+    
+    /**
+     * Worker key in the pool
+     *
+     * @var string|null
+     */
+    protected ?string $workerKey = null;
 
     /**
      * Initialize Redis-based worker with heartbeat management
@@ -65,6 +80,12 @@ abstract class WorkerRedisBase extends WorkerBase
             parent::__construct();
             // Set last heartbeat time
             $this->lastHeartbeatTime = microtime(true);
+            
+            // Register in pool if maxProc > 1
+            if ($this->maxProc > 1) {
+                $this->registerInPool();
+            }
+            
             // Initial heartbeat
             $this->updateWorkerStatus();
 
@@ -186,6 +207,11 @@ abstract class WorkerRedisBase extends WorkerBase
             // Set status and heartbeat with TTL
             $this->redis->setex($statusKey, self::REDIS_STATUS_TTL, json_encode($status));
             $this->redis->setex($heartbeatKey, self::REDIS_HEARTBEAT_TTL, (string)time());
+            
+            // Update pool heartbeat if in pool
+            if ($this->maxProc > 1) {
+                $this->updatePoolHeartbeat();
+            }
         } catch (Throwable $e) {
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
@@ -204,6 +230,11 @@ abstract class WorkerRedisBase extends WorkerBase
         
         // Clean up Redis keys
         $this->cleanupRedisKeys();
+        
+        // Unregister from pool if needed
+        if ($this->maxProc > 1) {
+            $this->unregisterFromPool();
+        }
         
         SystemMessages::sysLogMsg(
             static::class,
@@ -241,5 +272,88 @@ abstract class WorkerRedisBase extends WorkerBase
     protected function shouldExit(): bool
     {
         return $this->isShuttingDown;
+    }
+    
+    /**
+     * Register worker in the pool
+     *
+     * @return void
+     */
+    protected function registerInPool(): void
+    {
+        try {
+            $this->poolManager = new WorkerPoolManager();
+            $this->workerKey = $this->poolManager->registerWorker(
+                static::class,
+                getmypid(),
+                $this->instanceId
+            );
+            
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf("Worker registered in pool: instance %d, PID %d", $this->instanceId, getmypid()),
+                LOG_INFO
+            );
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Failed to register in pool: " . $e->getMessage(),
+                LOG_WARNING
+            );
+        }
+    }
+    
+    /**
+     * Unregister worker from the pool
+     *
+     * @return void
+     */
+    protected function unregisterFromPool(): void
+    {
+        try {
+            if ($this->poolManager !== null) {
+                $this->poolManager->unregisterWorker(static::class, getmypid());
+                
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    sprintf("Worker unregistered from pool: PID %d", getmypid()),
+                    LOG_INFO
+                );
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Failed to unregister from pool: " . $e->getMessage(),
+                LOG_WARNING
+            );
+        }
+    }
+    
+    /**
+     * Update worker heartbeat in the pool
+     *
+     * @return void
+     */
+    protected function updatePoolHeartbeat(): void
+    {
+        try {
+            if ($this->poolManager !== null) {
+                $this->poolManager->updateHeartbeat(static::class, getmypid());
+            }
+        } catch (Throwable $e) {
+            // Silently ignore heartbeat errors to avoid log spam
+        }
+    }
+    
+    /**
+     * Clean up on destruction
+     */
+    public function __destruct()
+    {
+        parent::__destruct();
+        
+        if ($this->maxProc > 1) {
+            $this->unregisterFromPool();
+        }
     }
 }

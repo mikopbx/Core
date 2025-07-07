@@ -26,6 +26,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\{BeanstalkClient, PBX, Processes, SystemMessages, Util};
+use MikoPBX\Core\Workers\Pool\WorkerPoolManager;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
@@ -551,14 +552,6 @@ class WorkerSafeScriptsCore extends WorkerBase
                     $defaultProperties = $reflectionClass->getDefaultProperties();
                     if (isset($defaultProperties['maxProc'])) {
                         $maxProc = (int)$defaultProperties['maxProc'];
-                        
-                        // Добавляем логирование для отладки
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            sprintf("Worker %s has maxProc=%d", $workerClassName, $maxProc),
-                            LOG_DEBUG
-                        );
-                        
                         return $maxProc;
                     }
                 }
@@ -584,27 +577,25 @@ class WorkerSafeScriptsCore extends WorkerBase
     private function checkWorkerPool(string $workerClassName, int $targetCount): void
     {
         try {
-            // Инициализируем Redis соединение при необходимости
-            if (!isset($this->redis) || !$this->redis) {
-                $this->redis = $this->di->get('redis');
+            $poolManager = new WorkerPoolManager();
+            
+            // Clean orphan processes first
+            $killedOrphans = $poolManager->cleanOrphanProcesses($workerClassName);
+            if (!empty($killedOrphans)) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    sprintf("Cleaned %d orphan processes for %s: %s", 
+                        count($killedOrphans), 
+                        $workerClassName, 
+                        implode(', ', $killedOrphans)
+                    ),
+                    LOG_WARNING
+                );
             }
             
-            $runningInstances = [];
-            
-            // Get all instances of this worker
-            for ($i = 1; $i <= $targetCount; $i++) {
-                // Check if worker with this instance ID is running
-                $pidFile = Processes::getPidFilePath($workerClassName, $i);
-                if (file_exists($pidFile)) {
-                    $pid = trim(file_get_contents($pidFile));
-                    if (!empty($pid) && posix_kill((int)$pid, 0)) {
-                        $runningInstances[$i] = (int)$pid;
-                    }
-                }
-            }
-            
-            // Count currently running instances
-            $runningCount = count($runningInstances);
+            // Get active workers from pool
+            $activeWorkers = $poolManager->getActiveWorkers($workerClassName);
+            $runningCount = count($activeWorkers);
             
             SystemMessages::sysLogMsg(
                 static::class,
@@ -612,9 +603,45 @@ class WorkerSafeScriptsCore extends WorkerBase
                 LOG_DEBUG
             );
             
-            // Start missing instances with their specific instance-id
+            // Determine which instances are missing
+            $runningInstanceIds = array_column($activeWorkers, 'instance_id');
+            
+            // Check for duplicates before starting new instances
+            $instanceCounts = array_count_values($runningInstanceIds);
+            foreach ($instanceCounts as $instanceId => $count) {
+                if ($count > 1) {
+                    SystemMessages::sysLogMsg(
+                        static::class,
+                        "Duplicate instance $instanceId detected for $workerClassName, cleaning up",
+                        LOG_WARNING
+                    );
+                    
+                    // Get all workers with this instance ID
+                    $duplicates = array_filter($activeWorkers, function($w) use ($instanceId) {
+                        return $w['instance_id'] == $instanceId;
+                    });
+                    
+                    // Sort by start time (keep newest)
+                    usort($duplicates, function($a, $b) {
+                        return $b['start_time'] <=> $a['start_time'];
+                    });
+                    
+                    // Kill older duplicates
+                    for ($j = 1; $j < count($duplicates); $j++) {
+                        $pid = $duplicates[$j]['pid'];
+                        $poolManager->unregisterWorker($workerClassName, $pid);
+                        posix_kill($pid, SIGTERM);
+                    }
+                }
+            }
+            
+            // Re-check active workers after cleanup
+            $activeWorkers = $poolManager->getActiveWorkers($workerClassName);
+            $runningInstanceIds = array_column($activeWorkers, 'instance_id');
+            
+            // Start missing instances
             for ($i = 1; $i <= $targetCount; $i++) {
-                if (!isset($runningInstances[$i])) {
+                if (!in_array($i, $runningInstanceIds)) {
                     SystemMessages::sysLogMsg(
                         static::class,
                         "Starting worker instance $i for $workerClassName",
@@ -628,54 +655,14 @@ class WorkerSafeScriptsCore extends WorkerBase
                 }
             }
             
-            // Check if any instances are stale
-            foreach ($runningInstances as $instanceId => $pid) {
-                // We can detect stale workers by checking their heartbeat in Redis
-                $heartbeatKey = WorkerRedisBase::REDIS_HEARTBEAT_KEY_PREFIX . $workerClassName;
-                $statusKey = WorkerRedisBase::REDIS_STATUS_KEY_PREFIX . $workerClassName;
-                
-                // Most workers update general heartbeat and status keys
-                if (class_exists($workerClassName) && is_subclass_of($workerClassName, WorkerRedisBase::class)) {
-                    // For Redis-based workers, we can check their heartbeat
-                    $lastHeartbeat = $this->redis->get($heartbeatKey);
-                    $status = $this->redis->get($statusKey);
-                    
-                    $isStale = false;
-                    
-                    if ($lastHeartbeat === false) {
-                        // No heartbeat found, check status
-                        if ($status === false) {
-                            $isStale = true;
-                        } else {
-                            $status = json_decode($status, true);
-                            if (!isset($status['updated_at']) || (microtime(true) - $status['updated_at']) > 30) {
-                                $isStale = true;
-                            }
-                        }
-                    } else if ((time() - (int)$lastHeartbeat) > 30) {
-                        // Heartbeat too old
-                        $isStale = true;
-                    }
-                    
-                    if ($isStale) {
-                        SystemMessages::sysLogMsg(
-                            static::class,
-                            "Worker instance $workerClassName #$instanceId (PID: $pid) appears stale, terminating",
-                            LOG_WARNING
-                        );
-                        
-                        // Try graceful shutdown first
-                        posix_kill((int)$pid, SIGUSR1);
-                        
-                        // Wait a bit and check if it's still running
-                        sleep(1);
-                        
-                        // If still running, force terminate
-                        if (posix_kill((int)$pid, 0)) {
-                            posix_kill((int)$pid, SIGTERM);
-                        }
-                    }
-                }
+            // Clean dead workers from pool
+            $cleanedCount = $poolManager->cleanDeadWorkers();
+            if ($cleanedCount > 0) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "Cleaned $cleanedCount dead workers from pool",
+                    LOG_DEBUG
+                );
             }
             
         } catch (Throwable $e) {

@@ -165,3 +165,28 @@ Additional documentation available in the development docs repository:
 - `api/rest-api.md` - REST API documentation
 - `module-developement/module-class.md` - Module class implementation guide
 - `module-developement/module-installer.md` - Module installer implementation guide
+
+## Code Snippets
+
+- `require_once 'Globals.php'; usually we add this line to CLI PHP scripts to load all dependecies`
+
+## Command Line Utilities
+
+### pbx-console CLI Utility
+
+Usage: `/sbin/pbx-console <subcommand> [options]`
+
+Subcommands:
+- `services <action>` - Manage PBX services
+  - `stop-all` - Stop all PBX services
+  - `start-all` - Start all PBX services
+  - `restart-all` - Restart all PBX services
+- `service <name>` - Kill a specific PBX service
+- `cron <action>` - Manage cron
+  - `stop` - Stop cron
+  - `restart` - Restart cron
+  - `start` - Start cron
+  - `show` - Show the status of cron
+
+Example Usage:
+- `/sbin/pbx-console services restart-all`

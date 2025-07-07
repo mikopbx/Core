@@ -8,3 +8,4 @@ sites/admin-cabinet/assets/js/cache
 src/AdminCabinet/Views/Modules
 .DS_Store
 *.cache
+CLAUDE.local.md

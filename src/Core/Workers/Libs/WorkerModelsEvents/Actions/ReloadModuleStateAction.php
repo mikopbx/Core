@@ -8,8 +8,10 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
+use MikoPBX\Modules\Cache\ModulesStateCache;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Modules\Config\SystemConfigInterface;
+use MikoPBX\Core\System\SystemMessages;
 
 /**
  * Handles actions to reload module state when PBX extensions or module settings change.
@@ -50,14 +52,59 @@ class ReloadModuleStateAction implements ReloadActionInterface
         ModulesDBConnectionsProvider::recreateModulesDBConnections();
 
         // Hook module methods if they change system configs
-        $className = str_replace('Module', '', $moduleRecord['uniqid']);
-        $configClassName = "Modules\\{$moduleRecord['uniqid']}\\Lib\\{$className}Conf";
-        if (class_exists($configClassName)) {
-            $configClassObj = new $configClassName();
-            $this->handleModuleConfigChanges($configClassObj, $moduleRecord);
+        // Only process module config if moduleRecord contains data (not a deletion)
+        if (!empty($moduleRecord['uniqid'])) {
+            $className = str_replace('Module', '', $moduleRecord['uniqid']);
+            $configClassName = "Modules\\{$moduleRecord['uniqid']}\\Lib\\{$className}Conf";
+            if (class_exists($configClassName)) {
+                $configClassObj = new $configClassName();
+                $this->handleModuleConfigChanges($configClassObj, $moduleRecord);
+            }
         }
 
-        Processes::restartAllWorkers(true);
+        // Check if modules state has changed before restarting workers
+        $modulesStateCache = new ModulesStateCache();
+        
+        // Get current and cached hashes for comparison
+        $cachedHash = $modulesStateCache->getCachedStateHash();
+        $currentHash = $modulesStateCache->calculateCurrentStateHash();
+        
+        // If cache is empty (null), this is initialization, not a change
+        if ($cachedHash === null) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                'Initializing modules state cache',
+                LOG_INFO
+            );
+            $modulesStateCache->updateCachedState();
+            
+            // Don't restart workers on initialization
+            return;
+        }
+        
+        // Check if state actually changed
+        if ($cachedHash !== $currentHash) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                sprintf('Modules state has changed (old: %s, new: %s), restarting all workers', 
+                    $cachedHash, 
+                    $currentHash
+                ),
+                LOG_INFO
+            );
+            
+            // Update cache with new state
+            $modulesStateCache->updateCachedState();
+            
+            // Restart workers
+            Processes::restartAllWorkers(true);
+        } else {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                'Modules state has not changed, skipping workers restart',
+                LOG_DEBUG
+            );
+        }
     }
 
     /**
@@ -79,6 +126,16 @@ class ReloadModuleStateAction implements ReloadActionInterface
             // Invoke the action for the PBX module state with the module settings data
             $moduleRecord[self::MODULE_SETTINGS_KEY] = $moduleSettings->toArray();
             WorkerModelsEvents::invokeAction(ReloadModuleStateAction::class, $moduleRecord, 50);
+        } else if ($moduleRecord['action'] === 'afterDelete') {
+            // Module was deleted, we need to check if state changed and restart workers
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Module with ID {$moduleRecord['recordId']} was deleted, checking state change",
+                LOG_INFO
+            );
+            
+            // Execute reload directly without module data
+            $this->executeReloder([]);
         }
     }
 
