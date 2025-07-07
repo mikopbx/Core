@@ -219,7 +219,7 @@ class SystemLoader extends Injectable
 
         // Configure VM tools
         $this->echoStartMsg(' - Configuring VM tools...');
-        if (!$this->isRecoveryMode) {
+        if (!$this->isDocker && !$this->isRecoveryMode) {
             $vmwareTools = new VmToolsConf();
             $resultVMTools = $vmwareTools->start();
             $this->echoResultMsg((string)$resultVMTools);

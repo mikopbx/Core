@@ -106,6 +106,14 @@ class VmToolsConf extends SystemConfigClass
      */
     public function generateMonitConf(): bool
     {
+        // Skip VM tools service in Docker containers
+        if (Util::isDocker()) {
+            $confPath = $this->getMainMonitConfFile();
+            // Write empty config to ensure old configs are removed
+            $this->saveFileContent($confPath, '');
+            return true;
+        }
+        
         if(!$this->confObject){
             $this->configure();
         }
