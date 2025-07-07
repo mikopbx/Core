@@ -60,7 +60,9 @@ class Application extends BaseApplication
         PbxExtensionUtils::registerEnabledModulesInApp($this);
 
         try {
-            echo $this->handle($_SERVER['REQUEST_URI'])->getContent();
+            $response = $this->handle($_SERVER['REQUEST_URI']);
+            $content = $response->getContent();
+            echo $content ?? '';
         } catch (\Throwable $e) {
             CriticalErrorsHandler::handleException($e);
         }
