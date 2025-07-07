@@ -1,0 +1,12 @@
+parameters:
+    level: 0
+    paths:
+        - src
+    excludePaths:
+        - src/AdminCabinet/assets/js/vendor/*
+        - tests
+    parallel:
+        jobSize: 20
+        processTimeout: 300.0
+    editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
+    tmpDir: %currentWorkingDirectory%/build/phpstan
