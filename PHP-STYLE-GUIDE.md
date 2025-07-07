@@ -907,6 +907,20 @@ foreach ($settings as $key => $value) {
 }
 ```
 
+### Directory Access
+
+```php
+// CORRECT: Use Directories utility class
+use MikoPBX\Core\System\Directories;
+
+$cacheDir = Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR);
+$logsDir = Directories::getDir(Directories::CORE_LOGS_DIR);
+$tmpDir = Directories::getDir(Directories::CORE_TEMP_DIR);
+
+// INCORRECT: Don't access config directly for directories
+// $cacheDir = $this->di->getShared('config')->path('www.downloadCacheDir');
+```
+
 ### Event Bus Usage
 
 ```php
