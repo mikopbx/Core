@@ -52,6 +52,11 @@ class StorageManagementProcessor extends Injectable
                 $res->success = true;
                 $res->data    = $st->getAllHdd();
                 break;
+            case 'usage':
+                $st           = new Storage();
+                $res->success = true;
+                $res->data    = $st->getStorageUsageByCategory();
+                break;
             case 'mount':
                 $res->success = Storage::mountDisk($data['dev'], $data['format'], $data['dir']);
                 break;

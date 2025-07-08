@@ -41,6 +41,7 @@ use MikoPBX\AdminCabinet\Controllers\PbxExtensionModulesController;
 use MikoPBX\AdminCabinet\Controllers\ProvidersController;
 use MikoPBX\AdminCabinet\Controllers\RestartController;
 use MikoPBX\AdminCabinet\Controllers\SoundFilesController;
+use MikoPBX\AdminCabinet\Controllers\StorageController;
 use MikoPBX\AdminCabinet\Controllers\SystemDiagnosticController;
 use MikoPBX\AdminCabinet\Controllers\TimeSettingsController;
 use MikoPBX\AdminCabinet\Controllers\UpdateController;
@@ -182,6 +183,13 @@ class Elements extends Injectable
                     SystemDiagnosticController::class => [
                         'caption' => 'mm_SystemDiagnostic',
                         'iconclass' => 'stethoscope',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
+                    ],
+                    StorageController::class => [
+                        'caption' => 'mm_Storage',
+                        'iconclass' => 'hdd outline',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',

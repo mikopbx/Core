@@ -30,12 +30,13 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Core\System\Configs\SentryConf;
 use MikoPBX\Core\System\Network;
+use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Assets\Collection;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
-use Phalcon\Mvc\Dispatcher;
 
+use Phalcon\Mvc\Dispatcher;
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -370,6 +371,27 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionACE
                 ->addJs('js/vendor/ace/ace.js', true)
                 ->addJs('js/vendor/ace/mode-julia.js', true);
+        }
+    }
+
+    /**
+     * Makes assets for the Storage controller
+     *
+     * @param string $action
+     */
+    private function makeStorageAssets(string $action): void
+    {
+        if ($action === 'index') {
+            $this->headerCollectionCSS
+                ->addCss('css/vendor/semantic/slider.min.css', true)
+                ->addCss('css/Storage/storage-progress.css', true);
+            $this->footerCollectionJS
+                ->addJs('js/vendor/semantic/slider.min.js', true)
+                ->addJs('js/vendor/semantic/progress.min.js', true)
+                ->addJs('js/vendor/semantic/tab.min.js', true)
+                ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/PbxAPI/storageAPI.js', true)
+                ->addJs('js/pbx/Storage/storage-index.js', true);
         }
     }
 
@@ -713,6 +735,16 @@ class AssetProvider implements ServiceProviderInterface
     private function makeFirewallAssets(string $action): void
     {
         if ($action === 'index') {
+            // Add general Firewall styles
+            $this->headerCollectionCSS
+                ->addCss('css/Firewall/firewall.css', true);
+            
+            // Add Docker-specific styles if running in Docker environment
+            if (Util::isDocker()) {
+                $this->headerCollectionCSS
+                    ->addCss('css/Firewall/docker-styles.css', true);
+            }
+            
             $this->footerCollectionJS
                 ->addJs('js/pbx/Firewall/firewall-index.js', true);
         } elseif ($action === 'modify') {

@@ -29,6 +29,10 @@
             <file>Tests/CustomFileChangeTest.php</file>
         </testsuite>
 
+        <testsuite name="StorageRetentionPeriod">
+            <file>Tests/StorageRetentionPeriodTest.php</file>
+        </testsuite>
+
         <testsuite name="AudioFilesBeforeCreate">
             <file>Tests/CheckDropdownBeforeCreateAudioFileTest.php</file>
         </testsuite>
@@ -76,7 +80,6 @@
             <file>Tests/ChangeCallQueueTest.php</file>
             <file>Tests/CheckDropdownsOnDeleteQueueTest.php</file>
         </testsuite>
-
 
         <testsuite name="IVR Menu">
             <directory>Tests/IVRMenus</directory>

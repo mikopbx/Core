@@ -1354,14 +1354,20 @@ class Storage extends Injectable
             if (count($disk_data) === 3) {
                 $m_size = round((intval($disk_data[1]) + intval($disk_data[2])) / 1024, 1);
 
+                $used_space = round($disk_data[1] / 1024, 1);
+                $free_space = round($disk_data[2] / 1024, 1);
+                $usage_percentage = ($m_size > 0) ? round(($used_space / $m_size) * 100, 1) : 0;
+                
                 // Add Docker disk information to the result
                 $res_disks[] = [
                     'id' => $disk_data[0],
                     'size' => "" . $m_size,
                     'size_text' => "" . $m_size . " Mb",
                     'vendor' => 'Debian',
-                    'mounted' => '/storage/usbdisk',
-                    'free_space' => round($disk_data[2] / 1024, 1),
+                    'mounted' => '/storage/usbdisk1',
+                    'free_space' => $free_space,
+                    'used_space' => $used_space,
+                    'usage_percentage' => $usage_percentage,
                     'partitions' => [],
                     'sys_disk' => true,
                 ];
@@ -1423,6 +1429,9 @@ class Storage extends Injectable
                     }
                 }
 
+                $used_space = $mb_size - $free_space;
+                $usage_percentage = ($mb_size > 0) ? round(($used_space / $mb_size) * 100, 1) : 0;
+                
                 // Add HDD device information to the result
                 $res_disks[] = [
                     'id' => $disk,
@@ -1431,12 +1440,249 @@ class Storage extends Injectable
                     'vendor' => $temp_vendor,
                     'mounted' => $mounted,
                     'free_space' => round($free_space, 1),
+                    'used_space' => round($used_space, 1),
+                    'usage_percentage' => $usage_percentage,
                     'partitions' => $arr_disk_info,
                     'sys_disk' => $sys_disk,
                 ];
             }
         }
         return $res_disks;
+    }
+
+    /**
+     * Get storage usage breakdown by categories.
+     *
+     * @return array An array with storage usage information by category.
+     */
+    public function getStorageUsageByCategory(): array
+    {
+        $result = [
+            'total_size' => 0,
+            'used_space' => 0,
+            'free_space' => 0,
+            'usage_percentage' => 0,
+            'categories' => [
+                'call_recordings' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'cdr_database' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'system_logs' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'modules' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'backups' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'system_caches' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                'other' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+            ]
+        ];
+        
+        // Get storage disk info using media mount point from Directories
+        $storageDir = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
+        if (!is_dir($storageDir)) {
+            return $result;
+        }
+        
+        // Get total disk info
+        $disks = $this->getAllHdd(true);
+        foreach ($disks as $disk) {
+            if (strpos($disk['mounted'], $storageDir) === 0) {
+                $result['total_size'] = floatval($disk['size']);
+                $result['used_space'] = floatval($disk['used_space']);
+                $result['free_space'] = floatval($disk['free_space']);
+                $result['usage_percentage'] = floatval($disk['usage_percentage']);
+                break;
+            }
+        }
+        
+        if ($result['total_size'] == 0) {
+            return $result;
+        }
+        
+        // Define paths for each category using Directories class
+        $categoryPaths = $this->getStorageCategoryPaths();
+        
+        // Calculate size for each category
+        foreach ($categoryPaths as $category => $paths) {
+            $categorySize = 0;
+            $existingPaths = [];
+            
+            foreach ($paths as $path) {
+                if ($category === 'cdr_database') {
+                    // For CDR database, calculate individual files
+                    if (is_file($path)) {
+                        $size = filesize($path) / (1024 * 1024); // Convert bytes to MB
+                        $categorySize += $size;
+                        $existingPaths[] = $path;
+                    }
+                } elseif ($category === 'system_logs') {
+                    // For system logs, exclude CDR database files from astlogs
+                    if (is_dir($path)) {
+                        if ($path === '/storage/usbdisk1/mikopbx/astlogs') {
+                            // Calculate astlogs size excluding asterisk/cdr.db* files
+                            $size = $this->getDirectorySizeExcludingFiles($path, ['asterisk/cdr.db', 'asterisk/cdr.db-shm', 'asterisk/cdr.db-wal']);
+                        } else {
+                            $size = $this->getDirectorySizeMb($path);
+                        }
+                        $categorySize += $size;
+                        $existingPaths[] = $path;
+                    }
+                } else {
+                    // For other categories, use standard directory calculation
+                    if (is_dir($path)) {
+                        $size = $this->getDirectorySizeMb($path);
+                        $categorySize += $size;
+                        $existingPaths[] = $path;
+                    }
+                }
+            }
+            
+            $result['categories'][$category]['size'] = round($categorySize, 1);
+            $result['categories'][$category]['paths'] = $existingPaths;
+        }
+        
+        // Calculate "other" category (everything else)
+        $categorizedSize = 0;
+        foreach (['call_recordings', 'cdr_database', 'system_logs', 'modules', 'backups', 'system_caches'] as $category) {
+            $categorizedSize += $result['categories'][$category]['size'];
+        }
+        $result['categories']['other']['size'] = round($result['used_space'] - $categorizedSize, 1);
+        
+        // Calculate percentages
+        foreach ($result['categories'] as $category => &$data) {
+            if ($result['total_size'] > 0) {
+                $data['percentage'] = round(($data['size'] / $result['total_size']) * 100, 1);
+            }
+        }
+        
+        // Sort categories by size (largest first)
+        uasort($result['categories'], function($a, $b) {
+            return $b['size'] <=> $a['size'];
+        });
+        
+        return $result;
+    }
+    
+    /**
+     * Get storage category paths using Directories class.
+     *
+     * @return array Array of category paths
+     */
+    private function getStorageCategoryPaths(): array
+    {
+        // Call recordings (записи разговоров)
+        $recordingPaths = [
+            Directories::getDir(Directories::AST_MONITOR_DIR),
+        ];
+        
+        // Check if voicemail archive exists and add it
+        $voicemailArchive = dirname(Directories::getDir(Directories::AST_MONITOR_DIR)) . '/voicemailarchive';
+        if (is_dir($voicemailArchive)) {
+            $recordingPaths[] = $voicemailArchive;
+        }
+        
+        // CDR database files (история разговоров - журнал)
+        $astLogDir = Directories::getDir(Directories::AST_LOG_DIR);
+        $cdrFiles = [
+            $astLogDir . '/asterisk/cdr.db',
+            $astLogDir . '/asterisk/cdr.db-shm',
+            $astLogDir . '/asterisk/cdr.db-wal',
+        ];
+        
+        // System logs paths (системные логи)
+        $systemLogPaths = [
+            Directories::getDir(Directories::CORE_LOGS_DIR),
+            $astLogDir, // Will exclude CDR files in calculation
+            Directories::getDir(Directories::CORE_FAIL2AN_DB_DIR),
+        ];
+        
+        // Modules (дополнительные модули)
+        $modulesPaths = [
+            Directories::getDir(Directories::CORE_MODULES_DIR),
+        ];
+        
+        // Check if python-src exists and add it
+        $pythonSrc = dirname(Directories::getDir(Directories::CORE_MODULES_DIR)) . '/python-src';
+        if (is_dir($pythonSrc)) {
+            $modulesPaths[] = $pythonSrc;
+        }
+        
+        // Backups (резервные копии)
+        $backupPaths = [
+            Directories::getDir(Directories::CORE_CONF_BACKUP_DIR),
+        ];
+        
+        // Check if general backup directory exists
+        $generalBackup = dirname(Directories::getDir(Directories::CORE_CONF_BACKUP_DIR));
+        if (is_dir($generalBackup) && $generalBackup !== Directories::getDir(Directories::CORE_CONF_BACKUP_DIR)) {
+            $backupPaths[] = $generalBackup;
+        }
+        
+        // System caches (системные кеши)
+        $cachePaths = [
+            Directories::getDir(Directories::CORE_TEMP_DIR),
+            Directories::getDir(Directories::WWW_UPLOAD_DIR),
+            Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR),
+            Directories::getDir(Directories::APP_ASSETS_CACHE_DIR),
+            Directories::getDir(Directories::APP_VOLT_CACHE_DIR),
+            Directories::getDir(Directories::APP_VIEW_CACHE_DIR),
+        ];
+        
+        return [
+            'call_recordings' => $recordingPaths,
+            'cdr_database' => $cdrFiles,
+            'system_logs' => $systemLogPaths,
+            'modules' => $modulesPaths,
+            'backups' => $backupPaths,
+            'system_caches' => $cachePaths,
+        ];
+    }
+    
+    /**
+     * Get directory size in MB.
+     *
+     * @param string $path Directory path
+     * @return float Size in MB
+     */
+    private function getDirectorySizeMb(string $path): float
+    {
+        $duCmd = Util::which('du');
+        $out = [];
+        
+        // Use du command to get directory size in KB
+        Processes::mwExec("$duCmd -sk \"$path\" 2>/dev/null | awk '{print $1}'", $out);
+        
+        if (!empty($out[0]) && is_numeric($out[0])) {
+            // Convert KB to MB
+            return floatval($out[0]) / 1024;
+        }
+        
+        return 0.0;
+    }
+
+    /**
+     * Get directory size in MB excluding specific files.
+     *
+     * @param string $path Directory path
+     * @param array $excludeFiles Array of file paths to exclude (relative to $path)
+     * @return float Size in MB
+     */
+    private function getDirectorySizeExcludingFiles(string $path, array $excludeFiles): float
+    {
+        $duCmd = Util::which('du');
+        $out = [];
+        
+        // Build exclude options for du command
+        $excludeOptions = '';
+        foreach ($excludeFiles as $excludeFile) {
+            $excludeOptions .= " --exclude=\"$excludeFile\"";
+        }
+        
+        // Use du command to get directory size in KB excluding specified files
+        Processes::mwExec("$duCmd -sk $excludeOptions \"$path\" 2>/dev/null | awk '{print $1}'", $out);
+        
+        if (!empty($out[0]) && is_numeric($out[0])) {
+            // Convert KB to MB
+            return floatval($out[0]) / 1024;
+        }
+        
+        return 0.0;
     }
 
     /**

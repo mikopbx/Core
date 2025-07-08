@@ -1,0 +1,143 @@
+/* macOS Style Storage Progress Bar */
+.storage-header {
+    margin-bottom: 20px;
+}
+
+.storage-subtitle {
+    color: #666;
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+/* macOS Progress Bar */
+.macos-progress-bar {
+    height: 22px;
+    background: #f0f0f0;
+    border-radius: 11px;
+    overflow: hidden;
+    display: flex;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+}
+
+.progress-segment {
+    height: 100%;
+    float: left;
+    transition: width 0.5s ease;
+}
+
+/* Category Colors */
+.call-recordings-segment, .call-recordings-color {
+    background-color: #F59E0B; /* Orange - Записи разговоров */
+}
+
+.cdr-database-segment, .cdr-database-color {
+    background-color: #8B5CF6; /* Purple - История разговоров (журнал) */
+}
+
+.system-logs-segment, .system-logs-color {
+    background-color: #3B82F6; /* Blue - Системные логи */
+}
+
+.modules-segment, .modules-color {
+    background-color: #10B981; /* Green - Дополнительные модули */
+}
+
+.backups-segment, .backups-color {
+    background-color: #06B6D4; /* Cyan - Резервные копии */
+}
+
+.system-caches-segment, .system-caches-color {
+    background-color: #EF4444; /* Red - Системные кеши */
+}
+
+.other-segment, .other-color {
+    background-color: #6B7280; /* Gray - Прочее */
+}
+
+/* Legend */
+.storage-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-text {
+    font-size: 0.9em;
+    color: #666;
+}
+
+/* Categories List */
+.storage-categories {
+    margin-top: 20px;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.category-item:hover {
+    background-color: #f8f9fa;
+}
+
+.category-item i {
+    font-size: 1.3em;
+    color: #666;
+    margin-right: 12px;
+    width: 20px;
+}
+
+.category-info {
+    flex: 1;
+}
+
+.category-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.category-size {
+    font-size: 0.95em;
+    color: #666;
+}
+
+/* Hover effects */
+.progress-segment {
+    position: relative;
+    cursor: pointer;
+}
+
+.progress-segment:hover {
+    opacity: 0.85;
+}
+
+/* Tooltip styling */
+.storage-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    pointer-events: none;
+    z-index: 1000;
+    white-space: nowrap;
+}
