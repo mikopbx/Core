@@ -21,6 +21,7 @@ namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Configs\DnsConf;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetExternalIpInfoAction;
 use Phalcon\Di\Injectable;
@@ -434,7 +435,10 @@ class Network extends Injectable
             /**
              * Generate the resolv.conf file for DNS configuration.
              */
-            $this->resolvConfGenerate();
+            $dnsConf = new DnsConf();
+            $dnsConf->resolveConfGenerate($this->getHostDNS());
+            $dnsConf->reStart();
+
             if (Util::isT2SdeLinux()) {
                 /**
                  * Configure the loopback interface for T2SDE Linux.
@@ -469,85 +473,6 @@ class Network extends Injectable
                 Processes::mwExecCommands($arr_commands, $out, 'net_stop');
             }
         }
-    }
-
-    /**
-     * Generates the resolv.conf file based on system configuration.
-     */
-    public function resolvConfGenerate(): void
-    {
-        if (Util::isDocker()) {
-            return;
-        }
-
-        // Initialize resolv.conf content
-        $resolv_conf = '';
-
-        // Get hostname information
-        $data_hostname = self::getHostName();
-
-        // Append domain to resolv.conf if it is not empty
-        if (trim($data_hostname['domain']) !== '') {
-            $resolv_conf .= "domain {$data_hostname['domain']}\n";
-        }
-
-        // Append local nameserver to resolv.conf
-        $resolv_conf .= "nameserver 127.0.0.1\n";
-
-        // Initialize an array to store named DNS servers
-        $named_dns = [];
-
-        // Retrieve host DNS settings
-        $dns = $this->getHostDNS();
-
-        // Iterate over each DNS server
-        foreach ($dns as $ns) {
-            // Skip empty DNS servers
-            if (trim($ns) === '') {
-                continue;
-            }
-            // Add the DNS server to the named_dns array
-            $named_dns[] = $ns;
-
-            // Append the DNS server to resolv.conf
-            $resolv_conf .= "nameserver $ns\n";
-        }
-
-        // If no DNS servers were found, use default ones and add them to named_dns
-        if (count($dns) === 0) {
-            $resolv_conf .= "nameserver 77.88.8.8  # Yandex DNS\n";
-            $resolv_conf .= "nameserver 1.1.1.1    # Cloudflare\n";
-            $resolv_conf .= "nameserver 8.8.8.8    # Google DNS\n";
-            $named_dns[] = "77.88.8.8";
-            $named_dns[] = "1.1.1.1";
-            $named_dns[] = "8.8.8.8";
-        }
-
-        // Check if systemctl is available
-        if (Util::isSystemctl()) {
-
-            // Generate resolved.conf content for systemd-resolved
-            $s_resolv_conf = "[Resolve]\n"
-                . "DNS=127.0.0.1\n";
-
-            // Append domain to resolved.conf if it is not empty
-            if (trim($data_hostname['domain']) !== '') {
-                $s_resolv_conf .= "Domains={$data_hostname['domain']}\n";
-            }
-
-            // Write resolved.conf content to the file
-            file_put_contents('/etc/systemd/resolved.conf', $s_resolv_conf);
-
-            // Restart systemd-resolved service
-            $systemctl = Util::which('systemctl');
-            Processes::mwExec("$systemctl restart systemd-resolved");
-        } else {
-            // Write resolv.conf content to the file
-            file_put_contents('/etc/resolv.conf', $resolv_conf);
-        }
-
-        // Generate pdnsd configuration using named_dns
-        $this->generatePdnsdConfig($named_dns);
     }
 
     /**
@@ -605,77 +530,6 @@ class Network extends Injectable
         }
 
         return $dns;
-    }
-
-    /**
-     * Generates the pdnsd configuration file and restarts the pdnsd service if necessary.
-     *
-     * @param array $named_dns An array of named DNS servers.
-     */
-    public function generatePdnsdConfig(array $named_dns): void
-    {
-        $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR);
-        $cache_dir = $tempDir . '/pdnsd/cache';
-        Util::mwMkdir($cache_dir);
-
-        $conf = 'global {' . "\n" .
-            '	perm_cache=10240;' . "\n" .
-            '	cache_dir="' . $cache_dir . '";' . "\n" .
-            '	pid_file = /var/run/pdnsd.pid;' . "\n" .
-            '	run_as="nobody";' . "\n" .
-            '	server_ip = 127.0.0.1;' . "\n" .
-            '	status_ctl = on;' . "\n" .
-            '	query_method=udp_tcp;' . "\n" .
-            '	min_ttl=15m;' . "\n" .
-            '	max_ttl=1w;' . "\n" .
-            '	timeout=10;' . "\n" .
-            '	neg_domain_pol=on;' . "\n" .
-            '	run_as=root;' . "\n" .
-            '	daemon=on;' . "\n" .
-            '}' . "\n" .
-            'server {' . "\n" .
-            '	label = "main";' . "\n" .
-            '	ip = ' . implode(', ', $named_dns) . ';' . "\n" .
-            '	interface=lo;' . "\n" .
-            '	uptest=if;' . "\n" .
-            '	interval=10m;' . "\n" .
-            '	purge_cache=off;' . "\n" .
-            '}';
-
-        $pdnsdConfFile = '/etc/pdnsd.conf';
-
-        // Update the pdnsd.conf file if it has changed
-        $savedConf = '';
-        if (file_exists($pdnsdConfFile)) {
-            $savedConf = file_get_contents($pdnsdConfFile);
-        }
-        if ($savedConf !== $conf) {
-            file_put_contents($pdnsdConfFile, $conf);
-        }
-        $pdnsd = Util::which('pdnsd');
-        $pid = Processes::getPidOfProcess($pdnsd);
-
-        // Check if pdnsd process is running and the configuration has not changed
-        if (!empty($pid) && $savedConf === $conf) {
-
-            // Perform additional check if the DNS server is working
-            $resultResolve = gethostbynamel('lic.miko.ru');
-            if ($resultResolve !== false) {
-                // Configuration has not changed and the DNS server is working,
-                // no need to restart or reload the service
-                return;
-            }
-            // Perform a reload of the DNS server
-        }
-
-        // If pdnsd process is running, terminate the process
-        if (!empty($pid)) {
-            $kill = Util::which('kill');
-            Processes::mwExec("$kill '$pid'");
-        }
-
-        // Start the pdnsd service with the updated configuration
-        Processes::mwExec("$pdnsd -c /etc/pdnsd.conf -4");
     }
 
     /**
@@ -995,7 +849,11 @@ class Network extends Injectable
         // Create Network object and configure settings
         $network = new Network();
         $network->hostnameConfigure();
-        $network->resolvConfGenerate();
+
+        $dnsConf = new DnsConf();
+        $dnsConf->resolveConfGenerate($network->getHostDNS());
+        $dnsConf->reStart();
+
         $network->loConfigure();
         $network->lanConfigure();
         $network->configureLanInDocker();

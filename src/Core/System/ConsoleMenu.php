@@ -27,7 +27,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Config\RegisterDIServices;
-use MikoPBX\Core\System\{Configs\Fail2BanConf, Configs\IptablesConf, Configs\NginxConf};
+use MikoPBX\Core\System\{Configs\DnsConf, Configs\Fail2BanConf, Configs\IptablesConf, Configs\NginxConf};
 use MikoPBX\Service\Main;
 use Phalcon\Di\Di;
 use PhpSchool\CliMenu\Action\GoBackAction;
@@ -141,7 +141,11 @@ class ConsoleMenu
 
                     echo Util::translate('The LAN interface will now be configured ...');
                     $network->updateNetSettings($data);
-                    $network->resolvConfGenerate();
+
+                    $dnsConf = new DnsConf();
+                    $dnsConf->resolveConfGenerate($network->getHostDNS());
+                    $dnsConf->reStart();
+
                     $network->lanConfigure();
                     $nginxConf = new NginxConf();
                     $nginxConf->reStart();

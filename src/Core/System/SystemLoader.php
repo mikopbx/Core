@@ -25,6 +25,7 @@ use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
 use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
+use MikoPBX\Core\System\Configs\DnsConf;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\MonitConf;
@@ -231,8 +232,10 @@ class SystemLoader extends Injectable
         $this->echoResultMsg();
 
         // Generate resolv.conf
-        $this->echoStartMsg(' - Configuring resolv.conf...');
-        $network->resolvConfGenerate();
+        $this->echoStartMsg(' - Configuring DNS service...');
+        $dnsConf = new DnsConf();
+        $dnsConf->resolveConfGenerate($network->getHostDNS());
+        $this->echoResultMsg($dnsConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         $this->echoResultMsg();
 
         // Configure LAN interface

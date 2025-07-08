@@ -22,9 +22,7 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
-use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-use Phalcon\Di\Injectable;
 
 /**
  * Class ACPIDConf
