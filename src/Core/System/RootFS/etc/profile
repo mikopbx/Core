@@ -176,4 +176,8 @@ _pbxConsoleCommands()
 complete -F _pbxConsoleCommands pbx-console
 
 # shellcheck source=/etc/bash_completion.d/*
-. /etc/bash_completion.d/*
+for script in /etc/bash_completion.d/*; do
+    if [ -r "$script" ]; then
+        . "$script"
+    fi
+done
