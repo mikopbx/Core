@@ -144,6 +144,10 @@ class SystemConfigClass extends Injectable implements SystemConfigInterface
      */
     public function saveFileContent(string $confPath, string $conf): void
     {
+        if(!file_exists(MonitConf::CONF_DIR_PATH)){
+            Util::mwMkdir(MonitConf::CONF_DIR_PATH);
+            chmod(MonitConf::CONF_DIR_PATH, 0700);
+        }
         file_put_contents($confPath, $conf);
         chmod($confPath, 0700);
 
