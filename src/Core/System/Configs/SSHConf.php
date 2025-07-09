@@ -61,7 +61,7 @@ class SSHConf extends SystemConfigClass
     public function generateMonitConf(): bool
     {
         $this->setStartCommand();
-
+        $port = PbxSettings::getValueByKey(PbxSettings::SSH_PORT);
         $busyboxPath = Util::which('busybox');
         $confPath = $this->getMainMonitConfFile();
         $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
@@ -70,7 +70,7 @@ class SSHConf extends SystemConfigClass
             '        as uid root and gid root'.PHP_EOL.
             '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
-            '    if failed port 22 protocol ssh then restart'.PHP_EOL.
+            "    if failed port $port protocol ssh then restart".PHP_EOL.
             '    if 5 restarts within 5 cycles then timeout'.PHP_EOL;
         $this->saveFileContent($confPath, $conf);
         return true;
