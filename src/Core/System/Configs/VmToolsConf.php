@@ -19,6 +19,8 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -47,7 +49,17 @@ class VmToolsConf extends SystemConfigClass
      */
     public function start(): bool
     {
-        return $this->reStart();
+        $result = true;
+        if(System::isBooting()) {
+            $this->configure();
+            if ($this->confObject) {
+                $this->confObject->start();
+                $result = $this->monitWaitStart();
+            }
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
     }
 
     /**
@@ -67,6 +79,7 @@ class VmToolsConf extends SystemConfigClass
         if ($this->confObject) {
             $result = $this->monitRestart();
             $this->generateMonitConf();
+
         }
         return $result;
     }

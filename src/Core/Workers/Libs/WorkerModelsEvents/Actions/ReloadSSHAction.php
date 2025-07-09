@@ -15,6 +15,6 @@ class ReloadSSHAction implements ReloadActionInterface
     public function execute(array $parameters = []): void
     {
         $sshConf = new SSHConf();
-        $sshConf->configure();
+        $sshConf->reStart();
     }
 }

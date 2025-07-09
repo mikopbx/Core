@@ -23,6 +23,7 @@ namespace MikoPBX\Core\System\Configs;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -39,6 +40,13 @@ class PHPConf extends SystemConfigClass
     public const string PROC_NAME = 'php-fpm';
     private const string CONF_PATH = '/etc/php.ini';
     private const string CONF_TIME_ZONE = '/etc/php.d/01-timezone.ini';
+
+    public function __construct()
+    {
+        parent::__construct();
+        $binPath = Util::which(self::PROC_NAME);
+        $this->startCommand = "$binPath -c ".self::CONF_PATH;
+    }
 
     /**
      * Relocates PHP error log to the storage mount.
@@ -135,7 +143,13 @@ class PHPConf extends SystemConfigClass
      */
     public function start(): bool
     {
-        return $this->reStart();
+        if(System::isBooting()){
+            Processes::mwExecBg($this->startCommand);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
     }
 
     /**
@@ -165,16 +179,12 @@ class PHPConf extends SystemConfigClass
      */
     public function generateMonitConf(): bool
     {
-        $binPath = Util::which(self::PROC_NAME);
         $busyboxPath = Util::which('busybox');
         $confPath = $this->getMainMonitConfFile();
 
-        $this->startCommand = "$binPath -c ".self::CONF_PATH;
         $stopCommand = "/bin/sh -c '$busyboxPath kill -SIGQUIT `$busyboxPath cat /var/run/".self::PROC_NAME.".pid`'";
 
-        $conf = 'check file php_timezone with path '.self::CONF_TIME_ZONE .PHP_EOL.
-            'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
-            '    depends on php_timezone'.PHP_EOL.
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
             '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
             '    stop program = "'.$stopCommand.'"'.PHP_EOL.

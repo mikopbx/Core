@@ -68,16 +68,16 @@ class PbxConf extends SystemConfigClass
             Util::mwMkdir($this->runDirPath);
         }
         chmod($this->runDirPath, 0770);
+        $binPath = Util::which(self::PROC_NAME);
+        $this->startCommand = "$binPath -F";
     }
 
     public function generateMonitConf(): bool
     {
         $binPath = Util::which(self::PROC_NAME);
         $confPath = $this->getMainMonitConfFile();
-        $conf = 'check file '.self::PROC_NAME.'-conf with path '.$this->configPath.PHP_EOL.
-                'check process '.self::PROC_NAME.' with pidfile /var/asterisk/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
-                '    depends on '.self::PROC_NAME.'-conf'.PHP_EOL.
-                '    start program = "'."$binPath -F".'"'.PHP_EOL.
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/asterisk/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
+                '    start program = "'.$binPath.'"'.PHP_EOL.
                 '    stop program = "'."$binPath -rx 'core stop now'".'"'.PHP_EOL;
         $this->saveFileContent($confPath, $conf);
         return true;
@@ -100,9 +100,6 @@ class PbxConf extends SystemConfigClass
      */
     public function configure(): array
     {
-        if (!System::isBooting()) {
-            $this->stop();
-        }
         self::updateSavePeriod();
         /**
          * Create configuration files.
@@ -117,6 +114,8 @@ class PbxConf extends SystemConfigClass
             SystemMessages::echoWithSyslog($message);
             SystemMessages::echoResult($message);
             SystemMessages::teletypeEchoResult($message);
+        }else{
+            $this->stop();
         }
         // Create the call history database.
         /** @var \Phalcon\Db\Adapter\Pdo\Sqlite $connection */
@@ -137,6 +136,9 @@ class PbxConf extends SystemConfigClass
      */
     public function start(): bool
     {
+        if (System::isBooting()) {
+            Processes::mwExec($this->startCommand);
+        }
         $result = $this->monitWaitStart();
         // Send notifications to modules
         PBXConfModulesProvider::hookModulesMethod(SystemConfigInterface::ON_AFTER_PBX_STARTED);

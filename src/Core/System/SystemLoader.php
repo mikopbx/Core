@@ -25,6 +25,7 @@ use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
 use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
+use MikoPBX\Core\System\Configs\DnsConf;
 use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
@@ -39,6 +40,7 @@ use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\Configs\SentryConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VmToolsConf;
+use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
 use Phalcon\Di\Injectable;
@@ -146,18 +148,17 @@ class SystemLoader extends Injectable
         $redisStatus = $redisConf->start();
         $this->echoResultMsg($redisStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
-        $this->echoStartMsg(' - Start monit daemon...');
-        $monit = new MonitConf();
-        $this->echoResultMsg($monit->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         if (!$this->isDocker) {
             // Wait start the ACPID daemon
             $this->echoStartMsg(' - Wait acpid daemon...');
             $ACPIDConf = new ACPIDConf();
+            $ACPIDConf->start();
             $this->echoResultMsg($ACPIDConf->monitWaitStart() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         }
         // Start the Beanstalkd daemon
         $this->echoStartMsg(' - Start beanstalkd daemon...');
         $beanstalkConf = new BeanstalkConf();
+        $beanstalkConf->start();
         $this->echoResultMsg($beanstalkConf->monitWaitStart() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         // Configure Sentry error logger
         $this->echoStartMsg(' - Configuring sentry error logger ...');
@@ -205,16 +206,17 @@ class SystemLoader extends Injectable
             $this->echoResultMsg();
         }
 
-        // Start the syslogd daemon
+        // Start the syslog daemon
         $this->echoStartMsg(' - Start syslogd daemon...');
         $syslogConf = new SyslogConf();
         $syslogStatus = $syslogConf->start();
-        $monit->reStart();
         $this->echoResultMsg($syslogStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Update the database structure
+        $this->echoStartMsg(' - Start update database...');
         $dbUpdater = new UpdateDatabase();
         $dbUpdater->updateDatabaseStructure();
+        $this->echoResultMsg();
 
         // Create directories required by modules after DB upgrade
         $this->echoStartMsg(' - Create modules links and folders...');
@@ -228,14 +230,11 @@ class SystemLoader extends Injectable
         $this->echoStartMsg(' - Update configs...');
         $this->echoResultMsg();
 
-        // Configure VM tools
-        $this->echoStartMsg(' - Configuring VM tools...');
         if (!$this->isDocker && !$this->isRecoveryMode) {
+            // Configure VM tools
+            $this->echoStartMsg(' - Configuring VM tools...');
             $vmwareTools = new VmToolsConf();
-            $resultVMTools = $vmwareTools->start();
-            $this->echoResultMsg((string)$resultVMTools);
-        } else {
-            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+            $this->echoResultMsg($vmwareTools->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         }
 
         // Configure the system hostname
@@ -245,8 +244,10 @@ class SystemLoader extends Injectable
         $this->echoResultMsg();
 
         // Generate resolv.conf
-        $this->echoStartMsg(' - Configuring resolv.conf...');
-        $network->resolvConfGenerate();
+        $this->echoStartMsg(' - Configuring DNS service...');
+        $dnsConf = new DnsConf();
+        $dnsConf->resolveConfGenerate($network->getHostDNS());
+        $this->echoResultMsg($dnsConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         $this->echoResultMsg();
 
         // Configure LAN interface
@@ -271,22 +272,20 @@ class SystemLoader extends Injectable
 
         $this->echoStartMsg(' - Configuring Fail2ban...');
         $fail2ban = new Fail2BanConf();
-        $fail2ban->reStart();
-        $this->echoResultMsg();
-        
+        $this->echoResultMsg($fail2ban->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+
         // Configure NTP
         $this->echoStartMsg(' - Configuring ntpd...');
         if (!$this->isDocker && !$this->isRecoveryMode) {
             $ntpConf = new NTPConf();
-            $this->echoResultMsg($ntpConf->monitWaitStart() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+            $this->echoResultMsg($ntpConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         } else {
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
         $this->echoStartMsg(' - Configuring SSH console...');
         $sshConf = new SSHConf();
-        $resSsh = $sshConf->configure();
-        $this->echoResultMsg((string)$resSsh);
+        $this->echoResultMsg($sshConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Start cloud provisioning
         if (!$this->isDocker && !$this->isRecoveryMode) {
@@ -325,28 +324,25 @@ class SystemLoader extends Injectable
      */
     public function startMikoPBX(): bool
     {
-    
+
         // Start the NATS queue daemon
         $this->echoStartMsg(' - Start nats queue daemon...');
         $natsConf = new NatsConf();
         $natsStatus = $natsConf->start();
         $this->echoResultMsg($natsStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
-
         // Start the PHP-FPM daemon
         $this->echoStartMsg(' - Start php-fpm daemon...');
         $phpConf = new PHPConf();
-        $phpStatus = $phpConf->start();
-        $this->echoResultMsg($phpStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+        $this->echoResultMsg($phpConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Configure Asterisk and start it
         $this->echoStartMsg(' - Configuring Asterisk...' . PHP_EOL);
-        $pbx = new PBX();
+        $pbx = new PbxConf();
         $pbx->configure();
 
         $this->echoStartMsg(' - Start Asterisk...');
-        $astStatus = $pbx->start();
-        $this->echoResultMsg($astStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+        $this->echoResultMsg($pbx->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Wait for Asterisk to fully boot and reload SIP settings
         $this->echoStartMsg(' - Wait asterisk fully booted...');
@@ -358,18 +354,19 @@ class SystemLoader extends Injectable
             $sip->updateAsteriskDatabase();
             $this->echoResultMsg();
         }
-
         // Configure and restart cron tasks
         $this->echoStartMsg(' - Configuring Cron tasks...');
         $cron = new CronConf();
-        $cron->start();
-        $this->echoResultMsg();
+        $this->echoResultMsg($cron->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Start the Nginx daemon
         $this->echoStartMsg(' - Start Nginx daemon...');
         $nginx = new NginxConf();
-        $nginx->start();
-        $this->echoResultMsg();
+        $this->echoResultMsg($nginx->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+
+        $this->echoStartMsg(' - Start monit daemon...');
+        $monit = new MonitConf();
+        $this->echoResultMsg($monit->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Update Docker network filters configurations
         if ($this->isDocker) {

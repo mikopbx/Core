@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
 use Phalcon\Di\Injectable;
@@ -45,7 +46,14 @@ class NatsConf extends SystemConfigClass
      */
     public function start(): bool
     {
-        return $this->reStart();
+        if(System::isBooting()){
+            $this->configure();
+            Processes::mwExec($this->startCommand);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
     }
 
     /**
@@ -65,12 +73,9 @@ class NatsConf extends SystemConfigClass
         if(empty($this->conf_file)){
             $this->configure();
         }
-
-        $binPath = Util::which(self::PROC_NAME);
         $busyboxPath = Util::which('busybox');
         $confPath = $this->getMainMonitConfFile();
 
-        $this->startCommand = "/bin/sh -c '$busyboxPath nohup $binPath --config $this->conf_file > /dev/null 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid && sleep 1'";
         $stopCommand = "/bin/sh -c '$busyboxPath kill -TERM `$busyboxPath cat /var/run/".self::PROC_NAME.".pid`'";
         $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid '.PHP_EOL.
             '    depends on loopback'.PHP_EOL.
@@ -86,8 +91,13 @@ class NatsConf extends SystemConfigClass
     private function configure():void
     {
         $config = $this->getDI()->get('config')->gnats;
-
         $confDir = '/etc/nats';
+        $this->conf_file = "$confDir/natsd.conf";
+
+        $busyboxPath = Util::which('busybox');
+        $binPath = Util::which(self::PROC_NAME);
+        $this->startCommand = "/bin/sh -c '$busyboxPath nohup $binPath --config $this->conf_file > /dev/null 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid && sleep 1'";
+
         Util::mwMkdir($confDir);
 
         $logDir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nats';
@@ -115,7 +125,6 @@ class NatsConf extends SystemConfigClass
         foreach ($settings as $key => $val) {
             $config .= "$key: $val\n";
         }
-        $this->conf_file = "$confDir/natsd.conf";
         Util::fileWriteContent($this->conf_file, $config);
 
         $lic = PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);

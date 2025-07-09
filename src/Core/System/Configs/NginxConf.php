@@ -29,6 +29,7 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
@@ -52,6 +53,20 @@ class NginxConf extends SystemConfigClass
     private const string CONF_PATH_SSL = self::CONF_PATH_DIR . '/https-server.conf';
 
     /**
+     * Constructor for the class.
+     *
+     * Initializes the parent class and sets up the start command for the process.
+     * - Determines the binary path of the process using `Util::which(self::PROC_NAME)`.
+     * - Constructs the start command with necessary parameters, including the configuration file path and PID file location.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $binPath = Util::which(self::PROC_NAME);
+        $this->startCommand = $binPath;
+    }
+
+    /**
      * Starts the service by reinitializing configurations and restarting the monitoring service.
      *
      * This method is a wrapper around {@see self::reStart()} and is used to start or restart
@@ -62,7 +77,13 @@ class NginxConf extends SystemConfigClass
     public function start(): bool
     {
         $this->generateConf();
-        return $this->reStart();
+        if(System::isBooting()){
+            Processes::mwExec($this->startCommand, $out, $ret);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
     }
 
     /**
@@ -75,6 +96,19 @@ class NginxConf extends SystemConfigClass
         $monitResult = $this->monitRestart();
 
         // Get web port from settings
+        $waitResult = $this->monitWaitStart();
+
+        return $monitResult && $waitResult;
+    }
+
+    /**
+     * Waits for the service to start within a timeout period.
+     *
+     * @param int $timeout Maximum number of seconds to wait.
+     * @return bool True if the service started within the timeout.
+     */
+    public function monitWaitStart(int $timeout = 20): bool
+    {
         $webPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
 
         $waitResult = false;
@@ -96,10 +130,10 @@ class NginxConf extends SystemConfigClass
                 }
             }
             $attempt++;
-            usleep(500000); // 0.5 seconds
+            usleep(500000);
         }
 
-        return $monitResult && $waitResult;
+        return $waitResult;
     }
 
     /**
@@ -116,11 +150,11 @@ class NginxConf extends SystemConfigClass
                 $filePid = trim($pidContent);
             }
         }
-        
+
         if (!empty($filePid)) {
             $pid = Processes::getPidOfProcess("^$filePid ");
         } else {
-            $nginxPath = Util::which('nginx');
+            $nginxPath = Util::which(self::PROC_NAME);
             $pid       = Processes::getPidOfProcess($nginxPath);
         }
         return $pid;
@@ -157,10 +191,10 @@ class NginxConf extends SystemConfigClass
         if (Util::isDocker()) {
             // Synchronize firewall data to Redis
             DockerNetworkFilterService::updateAllConfigurations();
-            
+
             // Get Redis/Lua configuration
             $redisVars = $this->generateRedisLuaConfig();
-            
+
             // Insert after resolver line
             $config = str_replace("resolver <DNS>;\n", "resolver <DNS>;\n\n$redisVars", $config);
         }
@@ -205,7 +239,7 @@ class NginxConf extends SystemConfigClass
             if (Util::isDocker()) {
                 // Redis configuration is already synced above, just add Lua directives
                 $redisVars = $this->generateRedisLuaConfig();
-                
+
                 // Insert after resolver line
                 $config = str_replace("resolver <DNS>;\n", "resolver <DNS>;\n\n$redisVars", $config);
             }
@@ -229,13 +263,13 @@ class NginxConf extends SystemConfigClass
         $currentConfigIsGood = $this->testCurrentNginxConfig();
         if ($level < 1 && ! $currentConfigIsGood) {
             ++$level;
-            SystemMessages::sysLogMsg('nginx', 'Failed test config file. SSL will be disable...', LOG_ERR);
+            SystemMessages::sysLogMsg(self::PROC_NAME, 'Failed test config file. SSL will be disable...', LOG_ERR);
             $this->generateConf(true, $level);
         }
         // Add additional rules from modules
         $this->generateModulesConfigs();
     }
-    
+
     /**
      * Handle fail2ban actions for Nginx in Docker environments
      *
@@ -249,28 +283,28 @@ class NginxConf extends SystemConfigClass
         if (!Util::isDocker()) {
             return;
         }
-        
+
         switch ($action) {
             case 'ban':
                 // Get ban time from fail2ban settings
                 $banTime = Fail2BanConf::getBanTime();
-                
+
                 // Add IP to Redis blocked list for HTTP category
                 DockerNetworkFilterService::addBlockedIp($ip, 'http', $banTime);
                 SystemMessages::sysLogMsg('fail2ban-nginx', "Banned IP: $ip for $banTime seconds", LOG_WARNING);
                 break;
-                
+
             case 'unban':
                 // Remove IP from Redis blocked list for HTTP category
                 DockerNetworkFilterService::removeBlockedIp($ip, 'http');
                 SystemMessages::sysLogMsg('fail2ban-nginx', "Unbanned IP: $ip", LOG_INFO);
                 break;
-                
+
             default:
                 throw new \InvalidArgumentException("Invalid action: $action");
         }
     }
-    
+
     /**
      * Generate Redis configuration variables for Nginx Lua
      *
@@ -284,7 +318,7 @@ class NginxConf extends SystemConfigClass
         $redisHost = $configService->path('redis.host') ?? '127.0.0.1';
         $redisPort = $configService->path('redis.port') ?? 6379;
         $redisDb = RedisClientProvider::DATABASE_INDEX;
-        
+
         // Build configuration
         $redisVars = "    # Redis configuration for Lua\n";
         $redisVars .= "    set \$redis_host '$redisHost';\n";
@@ -293,7 +327,7 @@ class NginxConf extends SystemConfigClass
         $redisVars .= "    \n";
         $redisVars .= "    # IP filtering via Lua\n";
         $redisVars .= "    access_by_lua_file /etc/nginx/mikopbx/lua/ip-filter-redis.lua;\n";
-        
+
         return $redisVars;
     }
 
@@ -302,16 +336,11 @@ class NginxConf extends SystemConfigClass
         $binPath = Util::which(self::PROC_NAME);
         $confPath = $this->getMainMonitConfFile();
 
-        $this->startCommand = $binPath;
         $stopCommand = "$binPath -s stop";
-
-        $conf = 'check file ' . self::PROC_NAME . '-conf with path ' . self::CONF_PATH . PHP_EOL .
-            'check process ' . self::PROC_NAME . ' with pidfile /var/run/' . self::PROC_NAME . '.pid' . PHP_EOL .
-            '    depends on ' . self::PROC_NAME . '-conf' . PHP_EOL .
-            '    depends on ' . PHPConf::PROC_NAME . PHP_EOL .
-            '    start program = "' . $this->startCommand . '"' . PHP_EOL .
-            '        as uid root and gid root' . PHP_EOL .
-            '    stop program = "' . $stopCommand . '"' . PHP_EOL .
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
+            '        as uid root and gid root'.PHP_EOL.
+            '    stop program = "'.$stopCommand.'"'.PHP_EOL.
             '        as uid root and gid root';
         $this->saveFileContent($confPath, $conf);
         return true;
@@ -324,7 +353,7 @@ class NginxConf extends SystemConfigClass
      */
     private function testCurrentNginxConfig(): bool
     {
-        $nginx = Util::which('nginx');
+        $nginx = Util::which(self::PROC_NAME);
         $out       = [];
         Processes::mwExec("$nginx -t", $out);
         $res = implode($out);
@@ -357,7 +386,7 @@ class NginxConf extends SystemConfigClass
             }
             // Config test failed. Rollback the config.
             Processes::mwExec("$rm $confFileName");
-            SystemMessages::sysLogMsg('nginx', 'Failed test config file for module' . $moduleUniqueId, LOG_ERR);
+            SystemMessages::sysLogMsg(self::PROC_NAME, 'Failed test config file for module' . $moduleUniqueId, LOG_ERR);
         }
     }
 

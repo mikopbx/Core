@@ -38,6 +38,14 @@ class RedisConf extends SystemConfigClass
 
     public string $port = '';
 
+    public function __construct()
+    {
+        parent::__construct();
+
+        $redisServer = Util::which(self::PROC_NAME);
+        $this->startCommand = "$redisServer ". self::CONF_FILE;
+    }
+
     /**
      * Starts the Redis server.
      *
@@ -70,8 +78,7 @@ class RedisConf extends SystemConfigClass
 
         $pidMonit = Processes::getPidOfProcess(MonitConf::PROC_NAME);
         if(empty($pidMonit)){
-            $redisServer = Util::which(self::PROC_NAME);
-            Processes::mwExecBg("$redisServer ". self::CONF_FILE);
+            Processes::mwExecBg($this->startCommand);
         }else{
             $this->monitRestart();
         }
@@ -98,12 +105,11 @@ class RedisConf extends SystemConfigClass
      */
     public function generateMonitConf(): bool{
 
-        $redisPath   = Util::which(self::PROC_NAME);
         $busyboxPath = Util::which('busybox');
         $confPath    = $this->getMainMonitConfFile();
 
         $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/redis.pid '.PHP_EOL.
-            '    start program = "'.$redisPath.' '.self::CONF_FILE.'"'.PHP_EOL.
+            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
             '    stop program = "'.$busyboxPath.' killall '.self::PROC_NAME.'"'.PHP_EOL.
             '        as uid root and gid root';

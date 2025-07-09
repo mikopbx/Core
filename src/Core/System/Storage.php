@@ -31,6 +31,7 @@ use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Config\RegisterDIServices;
+use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\System\Configs\PHPConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
@@ -480,7 +481,7 @@ class Storage extends Injectable
         $sysLog->reStart();
 
         // Configure PBX
-        $pbx = new PBX();
+        $pbx = new PbxConf();
         $pbx->configure();
 
         // Restart processes related to storage

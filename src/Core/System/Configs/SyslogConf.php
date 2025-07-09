@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Di;
 
@@ -43,6 +44,13 @@ class SyslogConf extends SystemConfigClass
      * Lower values mean higher priority.
      */
     public int $priority = 3;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->startCommand = Util::which(self::PROC_NAME);
+    }
+
     /**
      * Start the service.
      *
@@ -61,8 +69,8 @@ class SyslogConf extends SystemConfigClass
         $this->generateConfigFile();
         $pidSyslogD = Processes::getPidOfProcess('syslogd', self::PROC_NAME);
         if (!empty($pidSyslogD)) {
-            $logreadPath = Util::which('logread');
-            Processes::mwExec("$logreadPath  2>/dev/null >> " . self::SYS_LOG_LINK);
+            $logReadPath = Util::which('logread');
+            Processes::mwExec("$logReadPath  2>/dev/null >> " . self::SYS_LOG_LINK);
             $oldLogPath = self::SYS_LOG_LINK;
             if (!is_link($oldLogPath)) {
                 $newLogPath = self::getSyslogFile();
@@ -71,13 +79,19 @@ class SyslogConf extends SystemConfigClass
             }
             Processes::killByName('syslogd');
         }
-
         RedisConf::generateSyslogConf();
         CronConf::generateSyslogConf();
         MonitConf::generateSyslogConf();
 
         $this->generateMonitConf();
-        return $this->monitRestart();
+        $pidSyslogD = Processes::getPidOfProcess(self::PROC_NAME);
+        if(System::isBooting() && empty($pidSyslogD)){
+            Processes::mwExec($this->startCommand);
+            $result = $this->monitWaitStart();
+        }else{
+            $result = $this->monitRestart();
+        }
+        return $result;
     }
 
     /**

@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Core\System\Configs\DnsConf;
 
 /**
  * Class Udhcpc
@@ -125,8 +126,8 @@ class Udhcpc extends Network
             $named_dns = explode(' ', $env_vars['dns']);
         }
         if ($is_inet === '1') {
-            // Only generate pdnsd config if this interface is for internet.
-            $this->generatePdnsdConfig($named_dns);
+            $dnsConf = new DnsConf();
+            $dnsConf->reStart();
         }
 
         // Save information to the database.
@@ -235,8 +236,8 @@ class Udhcpc extends Network
             $named_dns = explode(' ', $env_vars['dns']);
         }
         if ($is_inet === 1) {
-            // Only generate pdnsd config if this interface is for internet.
-            $this->generatePdnsdConfig($named_dns);
+            $dnsConf = new DnsConf();
+            $dnsConf->reStart();
         }
 
         // Save information to the database.

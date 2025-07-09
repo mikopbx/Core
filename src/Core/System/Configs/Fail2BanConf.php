@@ -29,6 +29,7 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
@@ -68,6 +69,29 @@ class Fail2BanConf extends SystemConfigClass
     public function __construct()
     {
         $this->fail2banEnable = self::fail2BanEnable();
+        $binPath = Util::which(self::FB_CLIENT_BIN);
+        $this->startCommand = "$binPath -x start";
+    }
+
+    /**
+     * Start the service.
+     *
+     * @return bool True if successful, false otherwise.
+     */
+    public function start(): bool
+    {
+        if(System::isBooting()){
+            $result = true;
+            if ($this->fail2banEnable){
+                $this->fail2banMakeDirs();
+                $this->writeConfig();
+                Processes::mwExec($this->startCommand);
+                $result = $this->monitWaitStart();
+            }
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
     }
 
     /**
@@ -112,13 +136,10 @@ class Fail2BanConf extends SystemConfigClass
             $this->deleteMonitConf();
             return false;
         }
+
         $binPath = Util::which(self::FB_CLIENT_BIN);
         $confPath = $this->getMainMonitConfFile();
-        $this->startCommand = "$binPath -x start";
-
-        $conf = 'check file '.self::PROC_NAME.'-conf with path '.self::FB_CONF_PATH .PHP_EOL.
-            'check process '.self::PROC_NAME.' with pidfile /var/run/fail2ban/'.self::PROC_NAME.'.pid'.PHP_EOL.
-            '    depends on '.self::PROC_NAME.'-conf'.PHP_EOL.
+        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/fail2ban/'.self::PROC_NAME.'.pid'.PHP_EOL.
             '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
             '    stop program = "'."$binPath -x stop".'"'.PHP_EOL.
@@ -425,7 +446,7 @@ class Fail2BanConf extends SystemConfigClass
                 "actionban = /etc/rc/fail2ban_asterisk ban <ip>" . PHP_EOL .
                 "actionunban = /etc/rc/fail2ban_asterisk unban <ip>" . PHP_EOL .
                 "[Init]" . PHP_EOL . PHP_EOL;
-            
+
             // Also create action for Nginx in Docker
             $nginxConf = "[Definition]" . PHP_EOL .
                 "actionstart = /bin/true" . PHP_EOL .
@@ -684,7 +705,7 @@ class Fail2BanConf extends SystemConfigClass
         if (!Util::isDocker()) {
             return;
         }
-        
+
         // Check if fail2ban is enabled
         $fail2banEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
         if ($fail2banEnabled !== '1') {
@@ -701,11 +722,11 @@ class Fail2BanConf extends SystemConfigClass
             case 'ban':
                 self::banIpAsterisk($ip);
                 break;
-                
+
             case 'unban':
                 self::unbanIpAsterisk($ip);
                 break;
-                
+
             default:
                 echo "Invalid action: $action\n";
         }
@@ -724,31 +745,31 @@ class Fail2BanConf extends SystemConfigClass
             SystemMessages::sysLogMsg('fail2ban-asterisk', "Skipped ban for localhost IP: $ip", LOG_INFO);
             return;
         }
-        
+
         // Check if IP is whitelisted
         if (DockerNetworkFilterService::isIpWhitelisted($ip)) {
             SystemMessages::sysLogMsg('fail2ban-asterisk', "Skipped ban for whitelisted IP: $ip", LOG_INFO);
             return;
         }
-        
+
         // Get ban time from fail2ban settings
         $banTime = self::getBanTime();
-        
+
         // Add IP to Redis blocked list for AMI and SIP categories
         DockerNetworkFilterService::addBlockedIp($ip, 'ami', $banTime);
         DockerNetworkFilterService::addBlockedIp($ip, 'sip', $banTime);
-        
+
         // Log the ban
         SystemMessages::sysLogMsg('fail2ban-asterisk', "Banned IP: $ip", LOG_WARNING);
-        
+
         // Regenerate ACL configuration files from Redis
         self::generateAsteriskAclConfigFromRedis();
         DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
-        
+
         // Reload PJSIP
         WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
-        
-        // Reload manager  
+
+        // Reload manager
         WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
     }
 
@@ -763,18 +784,18 @@ class Fail2BanConf extends SystemConfigClass
         // Remove IP from Redis blocked list for AMI and SIP categories
         DockerNetworkFilterService::removeBlockedIp($ip, 'ami');
         DockerNetworkFilterService::removeBlockedIp($ip, 'sip');
-        
+
         // Log the unban
         SystemMessages::sysLogMsg('fail2ban-asterisk', "Unbanned IP: $ip", LOG_INFO);
-        
+
         // Regenerate ACL configuration files from Redis
         self::generateAsteriskAclConfigFromRedis();
         DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
-        
+
         // Reload PJSIP
         WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
-        
-        // Reload manager  
+
+        // Reload manager
         WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
     }
 
@@ -787,12 +808,12 @@ class Fail2BanConf extends SystemConfigClass
     {
         // Check if fail2ban is enabled
         $fail2banEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
-        
+
         // Define paths using Directories constants
         $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
         $aclFile = $asteriskEtcDir . '/fail2ban_dynamic_acl.conf';
         $managerDenyFile = $asteriskEtcDir . '/manager_fail2ban_deny.conf';
-        
+
         if ($fail2banEnabled !== '1') {
             // Remove ACL files if fail2ban is disabled
             if (file_exists($aclFile)) {
@@ -803,46 +824,46 @@ class Fail2BanConf extends SystemConfigClass
             }
             return;
         }
-        
+
         // Get blocked IPs from Redis (AMI and SIP categories)
         $amiBlockedIps = DockerNetworkFilterService::getBlockedIps('ami');
         $sipBlockedIps = DockerNetworkFilterService::getBlockedIps('sip');
         $blockedIps = array_unique(array_merge($amiBlockedIps, $sipBlockedIps));
-        
+
         // Generate ACL file for acl.conf
         $content = "; Fail2ban dynamic ACL - DO NOT EDIT MANUALLY\n";
         $content .= "; This file is automatically generated by fail2ban\n";
         $content .= "; Last updated: " . date('Y-m-d H:i:s') . "\n";
         $content .= "; Blocked IPs: " . count($blockedIps) . "\n\n";
-        
+
         // Always permit localhost first
         $content .= "; Always allow localhost access\n";
         $content .= "permit=127.0.0.1/255.255.255.255\n";
         $content .= "permit=::1\n\n";
-        
+
         if (!empty($blockedIps)) {
             $content .= "; Blocked IPs by fail2ban\n";
             foreach ($blockedIps as $ip) {
                 $content .= "deny=$ip/255.255.255.255\n";
             }
         }
-        
+
         file_put_contents($aclFile, $content);
-        
+
         // Generate deny rules for manager.conf
         $managerContent = "; Fail2ban deny rules for manager.conf - DO NOT EDIT MANUALLY\n";
         $managerContent .= "; This file is automatically generated by fail2ban\n";
         $managerContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
-        
+
         if (!empty($blockedIps)) {
             foreach ($blockedIps as $ip) {
                 $managerContent .= "deny=$ip/255.255.255.255\n";
             }
         }
-        
+
         file_put_contents($managerDenyFile, $managerContent);
     }
-    
+
     /**
      * Get ban time from fail2ban settings
      *
@@ -852,11 +873,11 @@ class Fail2BanConf extends SystemConfigClass
     {
         // Get fail2ban rules from database
         $res = Fail2BanRules::findFirst();
-        
+
         // Return ban time or default value (12 hours)
         return $res !== null ? (int)$res->bantime : 43200;
     }
-    
+
     /**
      * Check if an IP address is a localhost address
      *
@@ -871,22 +892,22 @@ class Fail2BanConf extends SystemConfigClass
             '::1',
             'localhost'
         ];
-        
+
         // Direct match
         if (in_array($ip, $localhostPatterns)) {
             return true;
         }
-        
+
         // Check if IP is in 127.0.0.0/8 network
         if (strpos($ip, '127.') === 0) {
             return true;
         }
-        
+
         // Check if it's any loopback network
         if (preg_match('/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/', $ip)) {
             return true;
         }
-        
+
         return false;
     }
 

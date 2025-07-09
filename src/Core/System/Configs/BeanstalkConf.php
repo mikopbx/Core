@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -42,6 +43,38 @@ class BeanstalkConf extends SystemConfigClass
      */
     public int $priority = 2;
 
+    /**
+     * Constructor for the class.
+     *
+     * Initializes the parent class and sets up the start command for the process.
+     * - Determines the binary path of the process using `Util::which(self::PROC_NAME)`.
+     * - Constructs the start command with necessary parameters, including the configuration file path and PID file location.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $config  = $this->getDI()->get('config')->beanstalk;
+        $options = "-l $config->host -p $config->port -z " . self::JOB_DATA_SIZE_LIMIT;
+        $binPath = Util::which(self::PROC_NAME);
+        $busyboxPath = Util::which('busybox');
+        $this->startCommand = "/bin/sh -c '$busyboxPath nohup $binPath $options > /dev/null 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid'";
+    }
+
+    /**
+     * Starts the server.
+     *
+     * @return bool
+     */
+    public function start(): bool
+    {
+        if(System::isBooting()){
+            $result = true;
+            Processes::mwExec($this->startCommand);
+        }else{
+            $result = $this->reStart();
+        }
+        return $result;
+    }
     /**
      * Restarts Beanstalk server.
      *
@@ -88,14 +121,8 @@ class BeanstalkConf extends SystemConfigClass
      */
     public function generateMonitConf(): bool{
 
-        $config  = $this->getDI()->get('config')->beanstalk;
-        $beansTalkPath = Util::which(self::PROC_NAME);
         $busyboxPath = Util::which('busybox');
         $confPath = $this->getMainMonitConfFile();
-
-        $options = "-l $config->host -p $config->port -z " . self::JOB_DATA_SIZE_LIMIT;
-        $this->startCommand = "/bin/sh -c '$busyboxPath nohup $beansTalkPath $options > /dev/null 2>&1 & $busyboxPath echo $! > /var/run/".self::PROC_NAME.".pid'";
-
         $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid '.PHP_EOL.
             '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
