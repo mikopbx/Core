@@ -15,7 +15,7 @@ MikoPBX is an open-source PBX (Private Branch Exchange) system for small busines
 ## Code Style Guides
 
 📖 **[PHP Style Guide](PHP-STYLE-GUIDE.md)** - Comprehensive PHP coding standards with real examples
-📖 **[JavaScript Style Guide](src/AdminCabinet/JS-STYLE-GUIDE.md)** - Frontend JavaScript patterns and best practices
+📖 **[JavaScript Style Guide](sites/admin-cabinet/assets/js/JS-STYLE-GUIDE.md)** - Frontend JavaScript patterns and best practices
 
 ## Development Commands
 
@@ -59,6 +59,7 @@ composer generate-modules-tests
 1. **Dependency Injection**: The system uses Phalcon's DI container with service providers pattern. Services are registered in:
    - `src/Common/Providers/` - Common services (DB, models, CDR, etc.)
    - `src/Core/Providers/` - Core services (config, license, Asterisk managers)
+   - See [`src/Common/Providers/CLAUDE.md`](src/Common/Providers/CLAUDE.md) for detailed provider documentation
 
 2. **Worker System**: Background job processing using Beanstalkd queue and Redis for IPC:
    - Base class: `src/Core/Workers/WorkerBase.php`
@@ -78,14 +79,16 @@ composer generate-modules-tests
    - Stage-based generation (pre-generate → generate → post-generate)
    - See [`src/Core/Asterisk/CLAUDE.md`](src/Core/Asterisk/CLAUDE.md) for Asterisk integration details
 
-5. **Event System**: NATS-based pub/sub messaging:
-   - EventBusProvider publishes events to REST API
-   - Real-time communication between components
+5. **Event System**: Nginx nchan-based pub/sub messaging:
+   - EventBusProvider publishes events via REST API to nchan channels
+   - WebSocket connections for real-time browser updates
+   - See [`src/Common/Providers/CLAUDE.md`](src/Common/Providers/CLAUDE.md#event-system-architecture) for event system details
 
 6. **Database Architecture**:
    - SQLite for main DB and CDR storage
    - Models in `src/Common/Models/`
    - Separate CDR database for performance
+   - See [`src/Common/Models/CLAUDE.md`](src/Common/Models/CLAUDE.md) for comprehensive models documentation
 
 7. **REST API**: Queue-based REST API architecture:
    - Controllers handle HTTP requests
@@ -106,6 +109,10 @@ src/
 ├── AdminCabinet/     # Web administration interface (MVC)
 │   └── CLAUDE.md     # Admin cabinet development guide
 ├── Common/           # Shared components, models, translations
+│   ├── Providers/    # 
+│   │   └── CLAUDE.md # Detailed providers documentation
+│   └── Models/
+│       └── CLAUDE.md # Models documentation
 ├── Core/             # Core PBX functionality
 │   ├── Asterisk/     # Asterisk configuration and management
 │   │   └── CLAUDE.md # Asterisk integration guide
@@ -156,6 +163,7 @@ The PBX runs multiple system services managed by monit:
 - **[REST API Development](src/PBXCoreREST/CLAUDE.md)** - Add new API endpoints and processors
 - **[Admin UI Development](src/AdminCabinet/CLAUDE.md)** - Extend the web administration interface
 - **[Asterisk Integration](src/Core/Asterisk/CLAUDE.md)** - Work with Asterisk configuration and AMI
+- **[Models Documentation](src/Common/Models/CLAUDE.md)** - Comprehensive guide to all database models
 
 ### Development Resources
 
@@ -170,23 +178,10 @@ Additional documentation available in the development docs repository:
 
 - `require_once 'Globals.php'; usually we add this line to CLI PHP scripts to load all dependecies`
 
-## Command Line Utilities
+## Translation Guidelines
 
-### pbx-console CLI Utility
+- When adding translations, it is enough to add them only to Russian, the system will translate them into other languages automatically after placing them in the repository using the service. weblate.mikopbx.com
 
-Usage: `/sbin/pbx-console <subcommand> [options]`
+## Frontend Development
 
-Subcommands:
-- `services <action>` - Manage PBX services
-  - `stop-all` - Stop all PBX services
-  - `start-all` - Start all PBX services
-  - `restart-all` - Restart all PBX services
-- `service <name>` - Kill a specific PBX service
-- `cron <action>` - Manage cron
-  - `stop` - Stop cron
-  - `restart` - Restart cron
-  - `start` - Start cron
-  - `show` - Show the status of cron
-
-Example Usage:
-- `/sbin/pbx-console services restart-all`
+- To include new JS or CSS we add it into AssetProvider

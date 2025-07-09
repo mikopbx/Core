@@ -622,6 +622,123 @@ try {
 }
 ```
 
+### Multi-Model Queries with JOINs
+
+When working with related models, use the Query Builder for complex queries with JOINs:
+
+```php
+// CORRECT: Using Query Builder with proper model references
+$parameters = [
+    'models' => [
+        'Extensions' => Extensions::class,
+    ],
+    'conditions' => 'Extensions.is_general_user_number = "1" AND Sip.weakSecret = "2"',
+    'columns' => [
+        'id' => 'Extensions.id',
+        'username' => 'Extensions.callerid',
+        'number' => 'Extensions.number',
+        'secret' => 'Sip.secret',
+    ],
+    'order' => 'number',
+    'joins' => [
+        'Sip' => [
+            0 => Sip::class,
+            1 => 'Sip.extension = Extensions.number',
+            2 => 'Sip',
+            3 => 'INNER',
+        ],
+        'Users' => [
+            0 => Users::class,
+            1 => 'Users.id = Extensions.userid',
+            2 => 'Users',
+            3 => 'INNER',
+        ],
+    ],
+];
+
+$queryResult = $this->di->get('modelsManager')->createBuilder($parameters)
+    ->getQuery()
+    ->execute();
+
+// Processing results
+foreach ($queryResult as $record) {
+    // Access columns as defined in 'columns' array
+    $extensionId = $record->id;
+    $username = $record->username;
+    $number = $record->number;
+    $secret = $record->secret;
+}
+```
+
+**Key points for multi-model queries:**
+
+1. **Main model declaration**: Always specify the main model in the `models` array
+2. **Join syntax**: Each join requires an array with 4 elements:
+   - `[0]` - Model class name
+   - `[1]` - Join condition
+   - `[2]` - Alias (usually same as model name)
+   - `[3]` - Join type (INNER, LEFT, RIGHT)
+3. **Column aliasing**: Use the `columns` array to specify which columns to select and their aliases
+4. **Condition references**: Use table aliases in conditions (e.g., `Sip.weakSecret`)
+
+```php
+// Example: Complex query with multiple conditions and filters
+$categories = ['WEB', 'SSH', 'AMI'];
+
+$parameters = [
+    'models' => [
+        'NetworkFilters' => NetworkFilters::class,
+    ],
+    'conditions' => 'NetworkFilters.deny IS NOT NULL AND NetworkFilters.deny != :empty: ' .
+                   'AND FirewallRules.category IN ({categories:array}) ' .
+                   'AND FirewallRules.action = :action:',
+    'bind' => [
+        'empty' => '',
+        'categories' => $categories,
+        'action' => 'allow'
+    ],
+    'joins' => [
+        'FirewallRules' => [
+            0 => FirewallRules::class,
+            1 => 'FirewallRules.networkfilterid = NetworkFilters.id',
+            2 => 'FirewallRules',
+            3 => 'INNER',
+        ],
+    ],
+];
+
+$filters = $this->di->get('modelsManager')->createBuilder($parameters)
+    ->getQuery()
+    ->execute();
+```
+
+**Common pitfalls to avoid:**
+
+1. **INCORRECT**: Using `find()` method directly with joins
+```php
+// This won't work properly
+$filters = NetworkFilters::find([
+    'conditions' => 'NetworkFilters.deny IS NOT NULL',
+    'joins' => [...] // joins in find() may not work as expected
+]);
+```
+
+2. **INCORRECT**: Missing main model in models array
+```php
+// Missing main model declaration
+$parameters = [
+    'conditions' => 'Extensions.number = "100"',
+    'joins' => [...]
+];
+```
+
+3. **CORRECT**: Always use Query Builder for complex joins
+```php
+$builder = $this->di->get('modelsManager')->createBuilder($parameters);
+$query = $builder->getQuery();
+$result = $query->execute();
+```
+
 ## 10. Background Workers
 
 ### Worker Implementation
