@@ -26,9 +26,14 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
+use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use Phalcon\Di\Di;
 use SQLite3;
@@ -50,6 +55,7 @@ class Fail2BanConf extends SystemConfigClass
     private const string ACTION_PATH     = '/etc/fail2ban/action.d';
     private const string JAILS_DIR       = '/etc/fail2ban/jail.d';
     private const string PID_FILE        = '/var/run/fail2ban/fail2ban.pid';
+    // These paths are static for fail2ban service itself
     public const string FAIL2BAN_DB_PATH = '/var/lib/fail2ban/fail2ban.sqlite3';
     public const string FAIL2BAN_DB_DIR_PATH = '/var/lib/fail2ban';
 
@@ -275,10 +281,18 @@ class Fail2BanConf extends SystemConfigClass
         ];
 
         // Define jails and their corresponding actions
-        $jails        = [
-            'dropbear'    => 'miko-iptables-multiport-all[name=SSH, port="' . implode(',', $sshPort) . '"]',
-            'mikopbx-www' => 'miko-iptables-multiport-all[name=HTTP, port="' . implode(',', $httpPorts) . '"]',
-        ];
+        $jails = [];
+        if (Util::isDocker()) {
+            $jails = [
+                'dropbear'    => 'miko-iptables-multiport-all[name=SSH, port="' . implode(',', $sshPort) . '"]',
+                'mikopbx-www' => 'miko-nginx-docker[name=HTTP, port="' . implode(',', $httpPorts) . '"]',
+            ];
+        } else {
+            $jails = [
+                'dropbear'    => 'miko-iptables-multiport-all[name=SSH, port="' . implode(',', $sshPort) . '"]',
+                'mikopbx-www' => 'miko-iptables-multiport-all[name=HTTP, port="' . implode(',', $httpPorts) . '"]',
+            ];
+        }
         $this->generateModulesJailsLocal($max_retry, $find_time, $ban_time);
 
         // Generate the Fail2Ban configuration
@@ -402,24 +416,45 @@ class Fail2BanConf extends SystemConfigClass
         // Define the path to the configuration file
         $path = self::ACTION_PATH;
 
-        // Construct the configuration string
-        $conf = "[INCLUDES]" . PHP_EOL .
-            "before = iptables.conf" . PHP_EOL .
-            "[Definition]" . PHP_EOL .
-            "actionstart = <iptables> -N f2b-<name>" . PHP_EOL .
-            "              <iptables> -A f2b-<name> -j <returntype>" . PHP_EOL .
-            "              <iptables> -I <chain> -p tcp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
-            "              <iptables> -I <chain> -p udp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
-            "actionstop = <iptables> -D <chain> -p tcp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
-            "             <iptables> -D <chain> -p udp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
-            "             <actionflush>" . PHP_EOL .
-            "             <iptables> -X f2b-<name>" . PHP_EOL .
-            "actioncheck = <iptables> -n -L <chain> | grep -q 'f2b-<name>[ \\t]'" . PHP_EOL .
-            "actionban = <iptables> -I f2b-<name> 1 -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
-            "            <iptables> -I f2b-<name> 1 -s <ip> -p udp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
-            "actionunban = <iptables> -D f2b-<name> -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
-            "              <iptables> -D f2b-<name> -s <ip> -p udp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
-            "[Init]" . PHP_EOL . PHP_EOL;
+        if (Util::isDocker()) {
+            // For Docker, create an action that blocks IPs via Asterisk ACL
+            $conf = "[Definition]" . PHP_EOL .
+                "actionstart = /bin/true" . PHP_EOL .
+                "actionstop = /bin/true" . PHP_EOL .
+                "actioncheck = /bin/true" . PHP_EOL .
+                "actionban = /etc/rc/fail2ban_asterisk ban <ip>" . PHP_EOL .
+                "actionunban = /etc/rc/fail2ban_asterisk unban <ip>" . PHP_EOL .
+                "[Init]" . PHP_EOL . PHP_EOL;
+            
+            // Also create action for Nginx in Docker
+            $nginxConf = "[Definition]" . PHP_EOL .
+                "actionstart = /bin/true" . PHP_EOL .
+                "actionstop = /bin/true" . PHP_EOL .
+                "actioncheck = /bin/true" . PHP_EOL .
+                "actionban = /etc/rc/fail2ban_nginx ban <ip>" . PHP_EOL .
+                "actionunban = /etc/rc/fail2ban_nginx unban <ip>" . PHP_EOL .
+                "[Init]" . PHP_EOL . PHP_EOL;
+            file_put_contents("$path/miko-nginx-docker.conf", $nginxConf);
+        } else {
+            // Construct the configuration string for non-Docker environments
+            $conf = "[INCLUDES]" . PHP_EOL .
+                "before = iptables.conf" . PHP_EOL .
+                "[Definition]" . PHP_EOL .
+                "actionstart = <iptables> -N f2b-<name>" . PHP_EOL .
+                "              <iptables> -A f2b-<name> -j <returntype>" . PHP_EOL .
+                "              <iptables> -I <chain> -p tcp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+                "              <iptables> -I <chain> -p udp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+                "actionstop = <iptables> -D <chain> -p tcp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+                "             <iptables> -D <chain> -p udp -m multiport --dports <port> -j f2b-<name>" . PHP_EOL .
+                "             <actionflush>" . PHP_EOL .
+                "             <iptables> -X f2b-<name>" . PHP_EOL .
+                "actioncheck = <iptables> -n -L <chain> | grep -q 'f2b-<name>[ \\t]'" . PHP_EOL .
+                "actionban = <iptables> -I f2b-<name> 1 -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+                "            <iptables> -I f2b-<name> 1 -s <ip> -p udp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+                "actionunban = <iptables> -D f2b-<name> -s <ip> -p tcp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+                "              <iptables> -D f2b-<name> -s <ip> -p udp -m multiport --dports <port> -j <blocktype>" . PHP_EOL .
+                "[Init]" . PHP_EOL . PHP_EOL;
+        }
 
         // Write the configuration string to the configuration file
         file_put_contents("$path/miko-iptables-multiport-all.conf", $conf);
@@ -634,6 +669,225 @@ class Fail2BanConf extends SystemConfigClass
 
         // Return an array of the properties.
         return array($max_retry, $find_time, $ban_time, $user_whitelist);
+    }
+
+    /**
+     * Fail2ban integration for Docker - manages IP blocking via Asterisk ACL
+     *
+     * @param string $action The action to perform (ban/unban)
+     * @param string $ip The IP address to ban/unban
+     * @return void
+     */
+    public static function fail2banAction(string $action, string $ip): void
+    {
+        // Skip in non-Docker environments - they use regular iptables
+        if (!Util::isDocker()) {
+            return;
+        }
+        
+        // Check if fail2ban is enabled
+        $fail2banEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
+        if ($fail2banEnabled !== '1') {
+            return;
+        }
+
+        // Validate IP address
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+            echo "Invalid IP address: $ip\n";
+            return;
+        }
+
+        switch ($action) {
+            case 'ban':
+                self::banIpAsterisk($ip);
+                break;
+                
+            case 'unban':
+                self::unbanIpAsterisk($ip);
+                break;
+                
+            default:
+                echo "Invalid action: $action\n";
+        }
+    }
+
+    /**
+     * Ban IP address via Redis for Asterisk
+     *
+     * @param string $ip IP address to ban
+     * @return void
+     */
+    private static function banIpAsterisk(string $ip): void
+    {
+        // Check if IP is localhost (always protected)
+        if (self::isLocalhostAddress($ip)) {
+            SystemMessages::sysLogMsg('fail2ban-asterisk', "Skipped ban for localhost IP: $ip", LOG_INFO);
+            return;
+        }
+        
+        // Check if IP is whitelisted
+        if (DockerNetworkFilterService::isIpWhitelisted($ip)) {
+            SystemMessages::sysLogMsg('fail2ban-asterisk', "Skipped ban for whitelisted IP: $ip", LOG_INFO);
+            return;
+        }
+        
+        // Get ban time from fail2ban settings
+        $banTime = self::getBanTime();
+        
+        // Add IP to Redis blocked list for AMI and SIP categories
+        DockerNetworkFilterService::addBlockedIp($ip, 'ami', $banTime);
+        DockerNetworkFilterService::addBlockedIp($ip, 'sip', $banTime);
+        
+        // Log the ban
+        SystemMessages::sysLogMsg('fail2ban-asterisk', "Banned IP: $ip", LOG_WARNING);
+        
+        // Regenerate ACL configuration files from Redis
+        self::generateAsteriskAclConfigFromRedis();
+        DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
+        
+        // Reload PJSIP
+        WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
+        
+        // Reload manager  
+        WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
+    }
+
+    /**
+     * Unban IP address via Redis for Asterisk
+     *
+     * @param string $ip IP address to unban
+     * @return void
+     */
+    private static function unbanIpAsterisk(string $ip): void
+    {
+        // Remove IP from Redis blocked list for AMI and SIP categories
+        DockerNetworkFilterService::removeBlockedIp($ip, 'ami');
+        DockerNetworkFilterService::removeBlockedIp($ip, 'sip');
+        
+        // Log the unban
+        SystemMessages::sysLogMsg('fail2ban-asterisk', "Unbanned IP: $ip", LOG_INFO);
+        
+        // Regenerate ACL configuration files from Redis
+        self::generateAsteriskAclConfigFromRedis();
+        DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
+        
+        // Reload PJSIP
+        WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
+        
+        // Reload manager  
+        WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
+    }
+
+    /**
+     * Generate ACL configuration file for Asterisk from fail2ban data
+     *
+     * @return void
+     */
+    public static function generateAsteriskAclConfigFromRedis(): void
+    {
+        // Check if fail2ban is enabled
+        $fail2banEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
+        
+        // Define paths using Directories constants
+        $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
+        $aclFile = $asteriskEtcDir . '/fail2ban_dynamic_acl.conf';
+        $managerDenyFile = $asteriskEtcDir . '/manager_fail2ban_deny.conf';
+        
+        if ($fail2banEnabled !== '1') {
+            // Remove ACL files if fail2ban is disabled
+            if (file_exists($aclFile)) {
+                unlink($aclFile);
+            }
+            if (file_exists($managerDenyFile)) {
+                unlink($managerDenyFile);
+            }
+            return;
+        }
+        
+        // Get blocked IPs from Redis (AMI and SIP categories)
+        $amiBlockedIps = DockerNetworkFilterService::getBlockedIps('ami');
+        $sipBlockedIps = DockerNetworkFilterService::getBlockedIps('sip');
+        $blockedIps = array_unique(array_merge($amiBlockedIps, $sipBlockedIps));
+        
+        // Generate ACL file for acl.conf
+        $content = "; Fail2ban dynamic ACL - DO NOT EDIT MANUALLY\n";
+        $content .= "; This file is automatically generated by fail2ban\n";
+        $content .= "; Last updated: " . date('Y-m-d H:i:s') . "\n";
+        $content .= "; Blocked IPs: " . count($blockedIps) . "\n\n";
+        
+        // Always permit localhost first
+        $content .= "; Always allow localhost access\n";
+        $content .= "permit=127.0.0.1/255.255.255.255\n";
+        $content .= "permit=::1\n\n";
+        
+        if (!empty($blockedIps)) {
+            $content .= "; Blocked IPs by fail2ban\n";
+            foreach ($blockedIps as $ip) {
+                $content .= "deny=$ip/255.255.255.255\n";
+            }
+        }
+        
+        file_put_contents($aclFile, $content);
+        
+        // Generate deny rules for manager.conf
+        $managerContent = "; Fail2ban deny rules for manager.conf - DO NOT EDIT MANUALLY\n";
+        $managerContent .= "; This file is automatically generated by fail2ban\n";
+        $managerContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
+        
+        if (!empty($blockedIps)) {
+            foreach ($blockedIps as $ip) {
+                $managerContent .= "deny=$ip/255.255.255.255\n";
+            }
+        }
+        
+        file_put_contents($managerDenyFile, $managerContent);
+    }
+    
+    /**
+     * Get ban time from fail2ban settings
+     *
+     * @return int Ban time in seconds
+     */
+    public static function getBanTime(): int
+    {
+        // Get fail2ban rules from database
+        $res = Fail2BanRules::findFirst();
+        
+        // Return ban time or default value (12 hours)
+        return $res !== null ? (int)$res->bantime : 43200;
+    }
+    
+    /**
+     * Check if an IP address is a localhost address
+     *
+     * @param string $ip IP address to check
+     * @return bool True if the address is localhost
+     */
+    private static function isLocalhostAddress(string $ip): bool
+    {
+        // List of localhost addresses
+        $localhostPatterns = [
+            '127.0.0.1',
+            '::1',
+            'localhost'
+        ];
+        
+        // Direct match
+        if (in_array($ip, $localhostPatterns)) {
+            return true;
+        }
+        
+        // Check if IP is in 127.0.0.0/8 network
+        if (strpos($ip, '127.') === 0) {
+            return true;
+        }
+        
+        // Check if it's any loopback network
+        if (preg_match('/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/', $ip)) {
+            return true;
+        }
+        
+        return false;
     }
 
 }

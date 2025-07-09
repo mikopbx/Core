@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\Fail2BanEditForm;
 use MikoPBX\Common\Models\{Fail2BanRules, PbxSettings};
+use MikoPBX\Core\System\Util;
 
 class Fail2BanController extends BaseController
 {
@@ -49,6 +50,9 @@ class Fail2BanController extends BaseController
             ]
         );
         $this->view->submitMode = null;
+        
+        // Pass Docker environment flag to view
+        $this->view->isDocker = Util::isDocker();
     }
 
     /**

@@ -80,7 +80,6 @@ const PbxApi = {
     syslogDownloadLogFile: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogFile`, //  Prepares a downloadable link for a log file with the provided name.
     syslogEraseFile: `${Config.pbxUrl}/pbxcore/api/syslog/eraseFile`, // Erase file content.
 
-
     // FilesManagementProcessor
     filesUploadFile: `${Config.pbxUrl}/pbxcore/api/files/uploadFile`, // Upload files into the system by chunks
     filesStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/files/statusUploadFile`, // Returns Status of uploading and merging process
@@ -100,6 +99,10 @@ const PbxApi = {
     licenseGetLicenseInfo: `${Config.pbxUrl}/pbxcore/api/license/getLicenseInfo`, // Retrieves license information from the license server.
     licenseCaptureFeatureForProductId: `${Config.pbxUrl}/pbxcore/api/license/captureFeatureForProductId`, // Tries to capture a feature for a product.
     licenseSendPBXMetrics: `${Config.pbxUrl}/pbxcore/api/license/sendPBXMetrics`, // Make an API call to send PBX metrics
+
+    // StorageManagementProcessor
+    storageList: `${Config.pbxUrl}/pbxcore/api/storage/list`, // Get list of all storage devices with usage information.
+    storageGetUsage: `${Config.pbxUrl}/pbxcore/api/storage/usage`, // Get detailed storage usage breakdown by categories.
 
     // Extensions
     extensionsGetPhonesRepresent: `${Config.pbxUrl}/pbxcore/api/extensions/getPhonesRepresent`, // Returns CallerID names for the numbers list.

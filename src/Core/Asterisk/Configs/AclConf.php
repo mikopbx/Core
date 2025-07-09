@@ -22,6 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\Sip;
+use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -87,6 +88,26 @@ class AclConf extends AsteriskConfigClass
     protected function generateConfigProtected(): void
     {
         $conf_acl = '';
+        
+        // Add fail2ban global ACL first (if in Docker)
+        if (Util::isDocker()) {
+            $conf_acl .= "; Fail2ban Global ACL for Docker\n";
+            $conf_acl .= "[acl_fail2ban]\n";
+            $conf_acl .= "; This ACL is automatically updated by fail2ban\n";
+            
+            $asteriskEtcDir = \MikoPBX\Core\System\Directories::getDir(\MikoPBX\Core\System\Directories::AST_ETC_DIR);
+            $conf_acl .= "#tryinclude $asteriskEtcDir/fail2ban_dynamic_acl.conf\n\n";
+            
+            // Add NetworkFilters deny ACL
+            $conf_acl .= "; NetworkFilters Global Deny ACL for Docker\n";
+            $conf_acl .= "[acl_network_filters_deny]\n";
+            $conf_acl .= "; This ACL is automatically generated from NetworkFilters database\n";
+            $conf_acl .= "#tryinclude $asteriskEtcDir/network_filters_deny_acl.conf\n\n";
+            
+            // Generate the NetworkFilters deny ACL file
+            DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
+        }
+        
         foreach ($this->dataPeers as $peer) {
             $manual_attributes = Util::parseIniSettings($peer['manualattributes'] ?? '');
             $deny   = (trim($peer['deny']) === '') ? '0.0.0.0/0.0.0.0' : $peer['deny'];
@@ -96,6 +117,13 @@ class AclConf extends AsteriskConfigClass
                 'permit' => $permit,
             ];
             $conf_acl .= "[acl_$peer[extension]]".PHP_EOL;
+            
+            // In Docker, also apply fail2ban and network_filters_deny ACLs to each peer
+            if (Util::isDocker()) {
+                $conf_acl .= "acl=acl_fail2ban\n";
+                $conf_acl .= "acl=acl_network_filters_deny\n";
+            }
+            
             $conf_acl .= Util::overrideConfigurationArray($options, $manual_attributes, 'acl');
         }
 

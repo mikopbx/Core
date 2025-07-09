@@ -51,7 +51,7 @@ class RedisConf extends SystemConfigClass
     /**
      * Restarts the Redis server.
      *
-     * @return void
+     * @return bool
      */
     public function reStart(): bool
     {

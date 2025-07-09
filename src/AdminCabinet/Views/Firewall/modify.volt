@@ -23,13 +23,21 @@
 <div class="field">
     <h4 class="ui  header">{{ t._('fw_Rules') }}</h4>
     {% for name, value in firewallRules %}
-        <div class="ui segment">
+        {% set shortName = value['shortName'] is defined ? value['shortName'] : name %}
+        {% set isLimited = isDocker and (shortName not in dockerSupportedServices) %}
+        <div class="ui segment {% if isLimited %}docker-limited-segment{% endif %}">
             <div class="field">
                 <div class="ui toggle checkbox rules">
                     <input type="checkbox"
                            name="rule_{{ name|upper }}" {% if value['action']=='allow' %} checked {% endif %}
                            tabindex="0" class="hidden">
-                    <label>{{ t._('fw_'~name|lower~'Description') }}</label>
+                    <label>
+                        {{ t._('fw_'~name|lower~'Description') }}
+                        <i class="small info circle icon service-info-icon" 
+                           data-service="{{ name }}"
+                           data-action="{{ value['action'] }}"
+                           {% if isLimited %}data-limited="true"{% endif %}></i>
+                    </label>
                 </div>
             </div>
         </div>
@@ -57,3 +65,12 @@
 
 {{ partial("partials/submitbutton",['indexurl':'firewall/index/']) }}
 {{ close('form') }}
+
+<script>
+    // Pass service port information and settings to JavaScript
+    window.servicePortInfo = {{ servicePortInfo }};
+    window.isDocker = {{ isDocker ? 'true' : 'false' }};
+    window.dockerSupportedServices = {{ dockerSupportedServices | json_encode }};
+    window.currentNetwork = '{{ network }}';
+    window.currentSubnet = '{{ subnet }}';
+</script>

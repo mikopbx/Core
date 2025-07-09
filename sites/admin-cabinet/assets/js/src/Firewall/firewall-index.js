@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate */
+/* global globalRootUrl, globalTranslate, firewallTooltips */
 
 /**
  * The `firewallTable` object contains methods and variables for managing the Firewall system.
@@ -48,6 +48,53 @@ const firewallTable = {
                 onChecked: firewallTable.enableFirewall,
                 onUnchecked: firewallTable.disableFirewall,
             });
+            
+        // Initialize Docker-specific UI elements
+        firewallTable.initializeDockerUI();
+    },
+    
+    // Initialize Docker-specific UI elements
+    initializeDockerUI() {
+        // Check if we have port information
+        if (!window.servicePortInfo || !window.serviceNameMapping) {
+            return;
+        }
+        
+        // Initialize tooltips for all service cells in the table
+        $('td.marks').each(function() {
+            const $cell = $(this);
+            
+            // Find service name from the header
+            const columnIndex = $cell.index();
+            const $headerCell = $cell.closest('table').find('thead th').eq(columnIndex);
+            const serviceName = $headerCell.find('span').text() || '';
+            
+            if (serviceName) {
+                // Get the category key from the display name
+                const categoryKey = window.serviceNameMapping[serviceName] || serviceName;
+                const portInfo = window.servicePortInfo[categoryKey] || [];
+                const action = $cell.attr('data-action') || 'allow';
+                const network = $cell.attr('data-network') || '';
+                const isLimited = $cell.hasClass('docker-limited');
+                
+                // Generate tooltip content using unified generator
+                const tooltipContent = firewallTooltips.generateContent(
+                    categoryKey,
+                    action,
+                    network,
+                    window.isDocker,
+                    isLimited,
+                    portInfo,
+                    isDocker && isLimited // Show copy button for Docker limited services
+                );
+                
+                // Initialize tooltip
+                firewallTooltips.initializeTooltip($cell, {
+                    html: tooltipContent,
+                    position: 'top center'
+                });
+            }
+        });
     },
 
     // Enable the firewall by making an HTTP request to the server.
@@ -78,10 +125,17 @@ const firewallTable = {
     cbAfterEnabled(sendEvent = false) {
         firewallTable.$statusToggle.find('label').text(globalTranslate.fw_StatusEnabled);
         firewallTable.$statusToggle.checkbox('set checked');
-        $('i.icon.checkmark.green[data-value="off"]')
+        
+        // For supported services, change green checkmarks to red crosses
+        $('td.marks:not(.docker-limited) i.icon.checkmark.green[data-value="off"]')
             .removeClass('checkmark green')
             .addClass('close red');
-        $('i.icon.corner.close').hide();
+        
+        // For limited services in Docker, keep green checkmark but hide corner close
+        $('td.docker-limited i.icon.corner.close').hide();
+        
+        // For all other services, hide corner close
+        $('td.marks:not(.docker-limited) i.icon.corner.close').hide();
 
         if (sendEvent) {
             const event = document.createEvent('Event');
@@ -94,10 +148,15 @@ const firewallTable = {
     cbAfterDisabled(sendEvent = false) {
         firewallTable.$statusToggle.find('label').text(globalTranslate.fw_StatusDisabled);
         firewallTable.$statusToggle.checkbox('set unchecked');
+        
+        // For all services, change red crosses to green checkmarks
         $('i.icon.close.red[data-value="off"]')
             .removeClass('close red')
             .addClass('checkmark green');
+        
+        // Show corner close for all services when firewall is disabled
         $('i.icon.corner.close').show();
+        
         if (sendEvent) {
             const event = document.createEvent('Event');
             event.initEvent('ConfigDataChanged', false, true);

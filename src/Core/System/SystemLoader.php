@@ -25,6 +25,7 @@ use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
 use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
+use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\MonitConf;
@@ -58,6 +59,13 @@ class SystemLoader extends Injectable
      * @var string
      */
     private string $stageMessage = '';
+
+    /**
+     * Time when the current stage started (microtime)
+     *
+     * @var float
+     */
+    private float $stageStartTime = 0.0;
 
     /**
      * Check if the system is running in Docker
@@ -94,6 +102,7 @@ class SystemLoader extends Injectable
     {
         SystemMessages::echoStartMsg($message);
         $this->stageMessage = $message;
+        $this->stageStartTime = microtime(true);
     }
 
     /**
@@ -103,8 +112,10 @@ class SystemLoader extends Injectable
      */
     private function echoResultMsg(string $result = SystemMessages::RESULT_DONE): void
     {
-        SystemMessages::echoResultMsg($this->stageMessage, $result);
+        $elapsedTime = round(microtime(true) - $this->stageStartTime, 3);
+        SystemMessages::echoResultMsgWithTime($this->stageMessage, $result, $elapsedTime);
         $this->stageMessage = '';
+        $this->stageStartTime = 0.0;
     }
 
     /**
@@ -359,6 +370,13 @@ class SystemLoader extends Injectable
         $nginx = new NginxConf();
         $nginx->start();
         $this->echoResultMsg();
+
+        // Update Docker network filters configurations
+        if ($this->isDocker) {
+            $this->echoStartMsg(' - Updating Docker network filters configurations...');
+            DockerNetworkFilterService::updateAllConfigurations();
+            $this->echoResultMsg();
+        }
 
         System::setBooting(false);
 

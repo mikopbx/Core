@@ -114,29 +114,31 @@ const fail2BanIndex = {
             PbxApi.FirewallUnBanIp(unbannedIp, fail2BanIndex.cbAfterUnBanIp);
         });
 
-        // Initialize records save period slider
-        fail2BanIndex.$maxReqSlider
-            .slider({
-                min: 0,
-                max: 4,
-                step: 1,
-                smooth: true,
-                interpretLabel: function (value) {
-                    let labels = [
-                        globalTranslate.f2b_MaxReqSec10,
-                        globalTranslate.f2b_MaxReqSec30,
-                        globalTranslate.f2b_MaxReqSec100,
-                        globalTranslate.f2b_MaxReqSec300,
-                        globalTranslate.gs_StoreAllPossibleRecords,
-                    ];
-                    return labels[value];
-                },
-                onChange: fail2BanIndex.cbAfterSelectMaxReqSlider,
-            })
-        ;
-        const maxReq = fail2BanIndex.$formObj.form('get value', 'PBXFirewallMaxReqSec');
-        fail2BanIndex.$maxReqSlider
-            .slider('set value', fail2BanIndex.maxReqValue.indexOf(maxReq), false);
+        // Initialize records save period slider only if it exists (not in Docker)
+        if (fail2BanIndex.$maxReqSlider.length > 0) {
+            fail2BanIndex.$maxReqSlider
+                .slider({
+                    min: 0,
+                    max: 4,
+                    step: 1,
+                    smooth: true,
+                    interpretLabel: function (value) {
+                        let labels = [
+                            globalTranslate.f2b_MaxReqSec10,
+                            globalTranslate.f2b_MaxReqSec30,
+                            globalTranslate.f2b_MaxReqSec100,
+                            globalTranslate.f2b_MaxReqSec300,
+                            globalTranslate.gs_StoreAllPossibleRecords,
+                        ];
+                        return labels[value];
+                    },
+                    onChange: fail2BanIndex.cbAfterSelectMaxReqSlider,
+                })
+            ;
+            const maxReq = fail2BanIndex.$formObj.form('get value', 'PBXFirewallMaxReqSec');
+            fail2BanIndex.$maxReqSlider
+                .slider('set value', fail2BanIndex.maxReqValue.indexOf(maxReq), false);
+        }
     },
 
     /**

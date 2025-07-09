@@ -23,6 +23,7 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\FirewallEditForm;
 use MikoPBX\AdminCabinet\Library\Cidr;
 use MikoPBX\Common\Models\{FirewallRules, LanInterfaces, NetworkFilters, PbxSettings};
+use MikoPBX\Core\System\Util;
 
 class FirewallController extends BaseController
 {
@@ -128,6 +129,60 @@ class FirewallController extends BaseController
 
         $this->view->rulesTable         = $networksTable;
         $this->view->PBXFirewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
+        $this->view->isDocker           = Util::isDocker();
+        
+        // Define which services are fully supported in Docker
+        // Only these services use Redis-based blocking in Docker environments
+        // WEB - HTTP/HTTPS traffic (Nginx)
+        // SSH - SSH access
+        // AMI - Asterisk Manager Interface
+        // SIP & RTP - SIP protocol and RTP media for VoIP
+        $this->view->dockerSupportedServices = ['WEB', 'SSH', 'AMI', 'SIP & RTP'];
+        
+        // All other services (including those added by modules) will be marked as limited
+        // This includes: IAX, AJAM, ICMP, CTI, Zabbix, and any custom services from modules
+        
+        // Get port information for all services to display in tooltips
+        $servicePortInfo = [];
+        $serviceNameMapping = []; // Map display names to categories
+        $defaultRules = FirewallRules::getDefaultRules();
+        $protectedPorts = FirewallRules::getProtectedPortSet();
+        
+        foreach ($defaultRules as $category => $categoryData) {
+            $ports = [];
+            foreach ($categoryData['rules'] as $rule) {
+                $portFrom = is_string($rule['portfrom']) && isset($protectedPorts[$rule['portfrom']]) 
+                    ? $protectedPorts[$rule['portfrom']] 
+                    : $rule['portfrom'];
+                $portTo = is_string($rule['portto']) && isset($protectedPorts[$rule['portto']]) 
+                    ? $protectedPorts[$rule['portto']] 
+                    : $rule['portto'];
+                    
+                if ($rule['protocol'] === 'icmp') {
+                    $ports[] = [
+                        'protocol' => 'ICMP'
+                    ];
+                } elseif ($portFrom == $portTo) {
+                    $ports[] = [
+                        'port' => $portFrom,
+                        'protocol' => strtoupper($rule['protocol'])
+                    ];
+                } else {
+                    $ports[] = [
+                        'range' => "$portFrom-$portTo",
+                        'protocol' => strtoupper($rule['protocol'])
+                    ];
+                }
+            }
+            $servicePortInfo[$category] = $ports;
+            
+            // Create mapping from display name to category
+            $displayName = empty($categoryData['shortName']) ? $category : $categoryData['shortName'];
+            $serviceNameMapping[$displayName] = $category;
+        }
+        
+        $this->view->servicePortInfo = json_encode($servicePortInfo);
+        $this->view->serviceNameMapping = json_encode($serviceNameMapping);
     }
 
 
@@ -158,6 +213,50 @@ class FirewallController extends BaseController
         );
         $this->view->firewallRules = $firewallRules;
         $this->view->represent     = $networkFilter->getRepresent();
+        
+        // Pass Docker status and supported services
+        $this->view->isDocker = Util::isDocker();
+        $this->view->dockerSupportedServices = ['WEB', 'SSH', 'AMI', 'SIP & RTP'];
+        
+        // Get port information for tooltips
+        $servicePortInfo = [];
+        $protectedPorts = FirewallRules::getProtectedPortSet();
+        
+        foreach ($firewallRules as $category => $categoryData) {
+            $ports = [];
+            foreach ($categoryData['rules'] as $rule) {
+                $portFrom = is_string($rule['portfrom']) && isset($protectedPorts[$rule['portfrom']]) 
+                    ? $protectedPorts[$rule['portfrom']] 
+                    : $rule['portfrom'];
+                $portTo = is_string($rule['portto']) && isset($protectedPorts[$rule['portto']]) 
+                    ? $protectedPorts[$rule['portto']] 
+                    : $rule['portto'];
+                    
+                if ($rule['protocol'] === 'icmp') {
+                    $ports[] = [
+                        'protocol' => 'ICMP',
+                        'description' => $this->translation->_('fw_ICMPDescription')
+                    ];
+                } elseif ($portFrom == $portTo) {
+                    $ports[] = [
+                        'port' => $portFrom,
+                        'protocol' => strtoupper($rule['protocol']),
+                        'description' => $this->getPortDescription($category, $portFrom, $rule['protocol'])
+                    ];
+                } else {
+                    $ports[] = [
+                        'range' => "$portFrom-$portTo",
+                        'protocol' => strtoupper($rule['protocol']),
+                        'description' => $this->getPortDescription($category, "$portFrom-$portTo", $rule['protocol'])
+                    ];
+                }
+            }
+            $servicePortInfo[$category] = $ports;
+        }
+        
+        $this->view->servicePortInfo = json_encode($servicePortInfo);
+        $this->view->network = $permitParts[0];
+        $this->view->subnet = $permitParts[1];
     }
 
 
@@ -453,5 +552,47 @@ class FirewallController extends BaseController
         }
 
         return -1; // In all other cases, move $a before $b
+    }
+    
+    /**
+     * Get port description based on service category and port
+     *
+     * @param string $category Service category
+     * @param string $port Port number or range
+     * @param string $protocol Protocol type
+     * @return string Port description
+     */
+    private function getPortDescription(string $category, string $port, string $protocol): string
+    {
+        $descriptions = [
+            'SIP' => [
+                '5060' => 'fw_PortDescSIPSignaling',
+                '5061' => 'fw_PortDescSIPTLS',
+                '10000-20000' => 'fw_PortDescRTPMedia'
+            ],
+            'IAX' => [
+                '4569' => 'fw_PortDescIAXProtocol'
+            ],
+            'WEB' => [
+                '80' => 'fw_PortDescHTTP',
+                '443' => 'fw_PortDescHTTPS'
+            ],
+            'SSH' => [
+                '22' => 'fw_PortDescSSH'
+            ],
+            'AMI' => [
+                '5038' => 'fw_PortDescAMI'
+            ],
+            'AJAM' => [
+                '8088' => 'fw_PortDescAJAMHTTP',
+                '8089' => 'fw_PortDescAJAMHTTPS'
+            ]
+        ];
+        
+        if (isset($descriptions[$category][$port])) {
+            return $this->translation->_($descriptions[$category][$port]);
+        }
+        
+        return '';
     }
 }

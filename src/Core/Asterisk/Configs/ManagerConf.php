@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\Util;
 
 /**
  * Class ManagerConf
@@ -100,6 +102,16 @@ class ManagerConf extends AsteriskConfigClass
                 $conf .= '[' . $user['username'] . "]\n";
                 $conf .= 'secret=' . $user['secret'] . "\n";
 
+                // In Docker, we need to apply deny rules directly, not through ACL
+                if (Util::isDocker()) {
+                    // Include fail2ban deny rules
+                    $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
+                    $conf .= "#tryinclude $asteriskEtcDir/manager_fail2ban_deny.conf\n";
+                    
+                    // Include network filters deny rules
+                    $conf .= "#tryinclude $asteriskEtcDir/manager_network_filters_deny.conf\n";
+                }
+
                 if (trim($user['deny']) !== '') {
                     $conf .= 'deny=' . $user['deny'] . "\n";
                 }
@@ -156,6 +168,10 @@ class ManagerConf extends AsteriskConfigClass
         // Configuration for phpagi user
         $conf .= '[phpagi]' . "\n";
         $conf .= 'secret=phpagi' . "\n";
+        
+        // phpagi is internal user, no need for fail2ban ACL
+        // It only connects from localhost
+        
         $conf .= 'deny=0.0.0.0/0.0.0.0' . "\n";
         $conf .= 'permit=127.0.0.1/255.255.255.255' . "\n";
         $conf .= 'read=all' . "\n";

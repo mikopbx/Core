@@ -746,10 +746,18 @@ class AssetProvider implements ServiceProviderInterface
             }
             
             $this->footerCollectionJS
+                ->addJs('js/pbx/Firewall/firewall-tooltips.js', true)
                 ->addJs('js/pbx/Firewall/firewall-index.js', true);
         } elseif ($action === 'modify') {
+            // Add Docker-specific styles if running in Docker environment
+            if (Util::isDocker()) {
+                $this->headerCollectionCSS
+                    ->addCss('css/Firewall/docker-styles.css', true);
+            }
+            
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/Firewall/firewall-tooltips.js', true)
                 ->addJs('js/pbx/Firewall/firewall-modify.js', true);
         }
     }

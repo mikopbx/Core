@@ -19,6 +19,7 @@
     {{ form.render('whitelist') }}
 </div>
 
+{% if not isDocker %}
 <div class="field">
     <label>{{ t._('f2b_PBXFirewallMaxReqSec') }}</label>
     <div class="ui">
@@ -28,6 +29,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
 
     {{ partial("partials/submitbutton") }}

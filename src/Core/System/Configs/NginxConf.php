@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,19 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
+use MikoPBX\Core\System\Configs\Fail2BanConf;
+use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
 use MikoPBX\Modules\Config\SystemConfigInterface;
-use Phalcon\Di\Injectable;
+use Phalcon\Di\Di;
 
 /**
  * Class NginxConf
@@ -41,10 +46,10 @@ class NginxConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'nginx';
     public const string  MODULES_LOCATIONS_PATH = '/etc/nginx/mikopbx/modules_locations';
-    private const string PID_FILE = '/var/run/'.self::PROC_NAME.'.pid';
+    private const string PID_FILE = '/var/run/' . self::PROC_NAME . '.pid';
     private const string CONF_PATH_DIR = '/etc/nginx/mikopbx/conf.d';
-    private const string CONF_PATH = self::CONF_PATH_DIR. '/http-server.conf';
-    private const string CONF_PATH_SSL = self::CONF_PATH_DIR. '/https-server.conf';
+    private const string CONF_PATH = self::CONF_PATH_DIR . '/http-server.conf';
+    private const string CONF_PATH_SSL = self::CONF_PATH_DIR . '/https-server.conf';
 
     /**
      * Starts the service by reinitializing configurations and restarting the monitoring service.
@@ -68,7 +73,7 @@ class NginxConf extends SystemConfigClass
     {
         $this->generateMonitConf();
         $monitResult = $this->monitRestart();
-        
+
         // Get web port from settings
         $webPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
 
@@ -81,7 +86,10 @@ class NginxConf extends SystemConfigClass
             if (!empty($newPid)) {
                 // Check if Nginx is responding
                 $checkResult = [];
-                Processes::mwExec("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:$webPort/ --connect-timeout 1", $checkResult);
+                Processes::mwExec(
+                    "curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:$webPort/ --connect-timeout 1",
+                    $checkResult
+                );
                 if (!empty($checkResult) && (int)$checkResult[0] > 0) {
                     $waitResult = true;
                     break;
@@ -101,7 +109,14 @@ class NginxConf extends SystemConfigClass
      */
     private static function getPid(): string
     {
-        $filePid = trim(file_get_contents(self::PID_FILE));
+        $filePid = '';
+        if (file_exists(self::PID_FILE)) {
+            $pidContent = file_get_contents(self::PID_FILE);
+            if ($pidContent !== false) {
+                $filePid = trim($pidContent);
+            }
+        }
+        
         if (!empty($filePid)) {
             $pid = Processes::getPidOfProcess("^$filePid ");
         } else {
@@ -136,7 +151,19 @@ class NginxConf extends SystemConfigClass
         $WEBPort      = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
         $WEBHTTPSPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
 
-        $config = file_get_contents(self::CONF_PATH.".original");
+        $config = file_get_contents(self::CONF_PATH . ".original");
+
+        // Add dynamic IP filtering via Lua for Docker environments
+        if (Util::isDocker()) {
+            // Synchronize firewall data to Redis
+            DockerNetworkFilterService::updateAllConfigurations();
+            
+            // Get Redis/Lua configuration
+            $redisVars = $this->generateRedisLuaConfig();
+            
+            // Insert after resolver line
+            $config = str_replace("resolver <DNS>;\n", "resolver <DNS>;\n\n$redisVars", $config);
+        }
 
         // Define the placeholders that will be replaced in the configuration string.
         $placeholders = ['<DNS>', '<WEBPort>'];
@@ -172,7 +199,16 @@ class NginxConf extends SystemConfigClass
             $private_filename = '/etc/ssl/private/nginx.key';
             file_put_contents($public_filename, $WEBHTTPSPublicKey);
             file_put_contents($private_filename, $WEBHTTPSPrivateKey);
-            $config = file_get_contents(self::CONF_PATH_SSL.".original");
+            $config = file_get_contents(self::CONF_PATH_SSL . ".original");
+
+            // Add dynamic IP filtering via Lua for Docker environments (SSL)
+            if (Util::isDocker()) {
+                // Redis configuration is already synced above, just add Lua directives
+                $redisVars = $this->generateRedisLuaConfig();
+                
+                // Insert after resolver line
+                $config = str_replace("resolver <DNS>;\n", "resolver <DNS>;\n\n$redisVars", $config);
+            }
 
             // Define the placeholders that will be replaced in the configuration string.
             $placeholders = ['<DNS>', '<WEBHTTPSPort>'];
@@ -199,6 +235,67 @@ class NginxConf extends SystemConfigClass
         // Add additional rules from modules
         $this->generateModulesConfigs();
     }
+    
+    /**
+     * Handle fail2ban actions for Nginx in Docker environments
+     *
+     * @param string $action The action to perform (ban/unban)
+     * @param string $ip The IP address to ban/unban
+     * @return void
+     */
+    public static function fail2banNginxAction(string $action, string $ip): void
+    {
+        // Skip in non-Docker environments - they use regular iptables
+        if (!Util::isDocker()) {
+            return;
+        }
+        
+        switch ($action) {
+            case 'ban':
+                // Get ban time from fail2ban settings
+                $banTime = Fail2BanConf::getBanTime();
+                
+                // Add IP to Redis blocked list for HTTP category
+                DockerNetworkFilterService::addBlockedIp($ip, 'http', $banTime);
+                SystemMessages::sysLogMsg('fail2ban-nginx', "Banned IP: $ip for $banTime seconds", LOG_WARNING);
+                break;
+                
+            case 'unban':
+                // Remove IP from Redis blocked list for HTTP category
+                DockerNetworkFilterService::removeBlockedIp($ip, 'http');
+                SystemMessages::sysLogMsg('fail2ban-nginx', "Unbanned IP: $ip", LOG_INFO);
+                break;
+                
+            default:
+                throw new \InvalidArgumentException("Invalid action: $action");
+        }
+    }
+    
+    /**
+     * Generate Redis configuration variables for Nginx Lua
+     *
+     * @return string The nginx configuration directives for Redis/Lua
+     */
+    private function generateRedisLuaConfig(): string
+    {
+        // Get Redis configuration
+        $di = Di::getDefault();
+        $configService = $di->getShared(ConfigProvider::SERVICE_NAME);
+        $redisHost = $configService->path('redis.host') ?? '127.0.0.1';
+        $redisPort = $configService->path('redis.port') ?? 6379;
+        $redisDb = RedisClientProvider::DATABASE_INDEX;
+        
+        // Build configuration
+        $redisVars = "    # Redis configuration for Lua\n";
+        $redisVars .= "    set \$redis_host '$redisHost';\n";
+        $redisVars .= "    set \$redis_port '$redisPort';\n";
+        $redisVars .= "    set \$redis_db '$redisDb';\n";
+        $redisVars .= "    \n";
+        $redisVars .= "    # IP filtering via Lua\n";
+        $redisVars .= "    access_by_lua_file /etc/nginx/mikopbx/lua/ip-filter-redis.lua;\n";
+        
+        return $redisVars;
+    }
 
     public function generateMonitConf(): bool
     {
@@ -208,13 +305,13 @@ class NginxConf extends SystemConfigClass
         $this->startCommand = $binPath;
         $stopCommand = "$binPath -s stop";
 
-        $conf = 'check file '.self::PROC_NAME.'-conf with path '.self::CONF_PATH .PHP_EOL.
-            'check process '.self::PROC_NAME.' with pidfile /var/run/'.self::PROC_NAME.'.pid'.PHP_EOL.
-            '    depends on '.self::PROC_NAME.'-conf'.PHP_EOL.
-            '    depends on '.PHPConf::PROC_NAME.PHP_EOL.
-            '    start program = "'.$this->startCommand.'"'.PHP_EOL.
-            '        as uid root and gid root'.PHP_EOL.
-            '    stop program = "'.$stopCommand.'"'.PHP_EOL.
+        $conf = 'check file ' . self::PROC_NAME . '-conf with path ' . self::CONF_PATH . PHP_EOL .
+            'check process ' . self::PROC_NAME . ' with pidfile /var/run/' . self::PROC_NAME . '.pid' . PHP_EOL .
+            '    depends on ' . self::PROC_NAME . '-conf' . PHP_EOL .
+            '    depends on ' . PHPConf::PROC_NAME . PHP_EOL .
+            '    start program = "' . $this->startCommand . '"' . PHP_EOL .
+            '        as uid root and gid root' . PHP_EOL .
+            '    stop program = "' . $stopCommand . '"' . PHP_EOL .
             '        as uid root and gid root';
         $this->saveFileContent($confPath, $conf);
         return true;
@@ -277,5 +374,76 @@ class NginxConf extends SystemConfigClass
     public function monitFailStartAction(): void
     {
         sleep(1);
+    }
+
+     /**
+     * Returns the Nginx log file path.
+     *
+     * @return array The log files path.
+     */
+    public static function getLogFiles(): array
+    {
+        $logdir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nginx';
+        Util::mwMkdir($logdir);
+        return [
+            '/var/log/nginx/access.log' => "$logdir/access.log",
+            '/var/log/nginx/error.log' => "$logdir/error.log",
+        ];
+    }
+
+     /**
+     * Relocates Nginx logs to the storage mount.
+     *
+     * @return void
+     */
+    public static function setupLog(): void
+    {
+        $logFiles = self::getLogFiles();
+
+        foreach ($logFiles as $src_log_file => $dst_log_file) {
+            if (! file_exists($src_log_file)) {
+                file_put_contents($src_log_file, '');
+            }
+            $options = file_exists($dst_log_file) ? '>' : '';
+            $cat = Util::which('cat');
+            Processes::mwExec("$cat $src_log_file 2> /dev/null >$options $dst_log_file");
+            Util::createUpdateSymlink($dst_log_file, $src_log_file);
+        }
+    }
+
+    /**
+     * Rotates the Nginx logs.
+     *
+     * @return void
+     */
+    public static function logRotate(): void
+    {
+        $logrotate = Util::which('logrotate');
+
+        $max_size    = 10;
+        foreach (self::getLogFiles() as $f_name) {
+            $text_config = $f_name . " {
+        nocreate
+        nocopytruncate
+        compress
+        delaycompress
+        start 0
+        rotate 9
+        size {$max_size}M
+        missingok
+        noolddir
+        postrotate
+        endscript
+    }";
+            $path_conf   = '/var/etc/nginx_logrotate_' . basename($f_name) . '.conf';
+            file_put_contents($path_conf, $text_config);
+            $mb10 = $max_size * 1024 * 1024;
+
+            $options = '';
+            if (Util::mFileSize($f_name) > $mb10) {
+                $options = '-f';
+            }
+            Processes::mwExecBg("$logrotate $options '$path_conf' > /dev/null 2> /dev/null");
+        }
     }
 }

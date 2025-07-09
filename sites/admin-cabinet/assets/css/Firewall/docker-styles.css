@@ -1,0 +1,99 @@
+/**
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ *
+ * Docker environment specific styles for Firewall section
+ */
+
+/* Docker limited services */
+.docker-limited {
+    position: relative;
+}
+
+/* Add subtle visual indicator for limited services - header */
+th.firewall-category.docker-limited {
+    border-left: 2px dashed #ddd;
+}
+
+/* Add subtle visual indicator for limited services - cells */
+td.center.aligned.marks.docker-limited {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-left: 2px dashed #ddd;
+}
+
+/* Limited services in Docker show with corner close icon */
+td.docker-limited .icon.corner.close {
+    opacity: 0.9;
+}
+
+/* Tooltip styling for Docker environment */
+.ui.popup.docker-info {
+    font-size: 0.9em;
+    max-width: 300px;
+}
+
+/* Detailed tooltip for limited services */
+td.docker-limited.marks .ui.popup .header {
+    font-weight: bold;
+    margin-bottom: 0.5em;
+}
+
+td.docker-limited.marks .ui.popup pre {
+    background-color: #f4f4f4;
+    padding: 0.5em;
+    border-radius: 3px;
+    overflow-x: auto;
+}
+
+td.docker-limited.marks .ui.popup .ui.list {
+    margin: 0.5em 0;
+}
+
+/* Styles for firewall modify form */
+.docker-limited-segment {
+    background-color: rgba(0, 0, 0, 0.02);
+    border: 1px dashed #ddd !important;
+}
+
+.service-info-icon {
+    color: #2185d0;
+    cursor: pointer;
+    margin-left: 0.5em;
+}
+
+.service-info-icon:hover {
+    color: #1678c2;
+}
+
+.docker-limited-segment .service-info-icon {
+    color: #fbbd08;
+}
+
+/* Tooltip styles for all firewall popups */
+.ui.popup .ui.segment {
+    position: relative;
+    margin-top: 0.5em;
+}
+
+.ui.popup pre {
+    background-color: #f4f4f4;
+    padding: 1em;
+    border-radius: 3px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin: 0;
+}
+
+.ui.popup .copy-command.label {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.ui.popup .copy-command.label:hover {
+    background-color: #e8e8e8 !important;
+}
+
+.ui.popup .ui.list {
+    margin: 0.5em 0;
+}

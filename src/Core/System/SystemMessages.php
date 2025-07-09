@@ -206,6 +206,69 @@ class SystemMessages extends Injectable
     }
 
     /**
+     * Echoes the result message for a stage with timing information.
+     *
+     * @param string $message The message to echo.
+     * @param string $result The result of the stage.
+     * @param float $elapsedTime Time elapsed in seconds.
+     */
+    public static function echoResultMsgWithTime(string $message, string $result = SystemMessages::RESULT_DONE, float $elapsedTime = 0.0): void
+    {
+        SystemMessages::teletypeEchoResultWithTime($message, $result, $elapsedTime);
+        SystemMessages::echoResultWithTime($message, $result, $elapsedTime);
+    }
+
+    /**
+     * Echoes a result message with progress dots and timing information.
+     *
+     * @param string $message The result message to echo.
+     * @param string $result The result status (DONE by default).
+     * @param float $elapsedTime Time elapsed in seconds.
+     *
+     * @return void
+     */
+    public static function teletypeEchoResultWithTime(string $message, string $result = self::RESULT_DONE, float $elapsedTime = 0.0): void
+    {
+        $timeStr = $elapsedTime > 0 ? " ({$elapsedTime}s)" : '';
+        $len = max(0, 80 - strlen($message) - 9 - strlen($timeStr));
+        $spaces = str_repeat('.', $len);
+        $formattedResult = self::getFormattedResult($result);
+        // Insert timing before the newline in formatted result
+        $formattedResultWithTime = str_replace(" \n", "$timeStr \n", $formattedResult);
+        self::echoToTeletype($spaces . $formattedResultWithTime);
+    }
+
+    /**
+     * Echoes a result message with progress dots and timing information.
+     *
+     * @param string $message The result message to echo.
+     * @param string $result The result status (DONE by default).
+     * @param float $elapsedTime Time elapsed in seconds.
+     *
+     * @return void
+     */
+    public static function echoResultWithTime(string $message, string $result = self::RESULT_DONE, float $elapsedTime = 0.0): void
+    {
+        $cols = self::getCountCols();
+        if (!is_numeric($cols)) {
+            // Failed to retrieve the screen width.
+            return;
+        }
+        $timeStr = $elapsedTime > 0 ? " ({$elapsedTime}s)" : '';
+        $len = $cols - strlen($message) - 8 - strlen($timeStr);
+        if ($len < 2) {
+            // Incorrect screen width.
+            return;
+        }
+
+        $spaces = str_repeat('.', $len);
+        $formattedResult = self::getFormattedResult($result);
+        // Insert timing before the newline in formatted result
+        $formattedResultWithTime = str_replace(" \n", "$timeStr \n", $formattedResult);
+        echo $spaces . $formattedResultWithTime;
+    }
+
+    /**
      * Retrieves the information message containing available web interface addresses.
      * @param string $header Message header
      * @param bool $showCredentials Optional, if true the message will have the login information

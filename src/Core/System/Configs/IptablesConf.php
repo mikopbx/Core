@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -99,6 +99,11 @@ class IptablesConf extends Injectable
      */
     public function applyConfig(): void
     {
+        // Skip iptables configuration in Docker containers - networking is handled by Docker
+        if (Util::isDocker()) {
+            return;
+        }
+        
         $this->dropAllRules();
         if ($this->firewall_enable) {
             $arr_command   = [];
@@ -147,6 +152,10 @@ class IptablesConf extends Injectable
      */
     private function dropAllRules(): void
     {
+        // Skip in Docker containers
+        if (Util::isDocker()) {
+            return;
+        }
         $iptablesPath = Util::which('iptables');
         Processes::mwExec("$iptablesPath -F INPUT");
         Processes::mwExec("$iptablesPath -X INPUT");
