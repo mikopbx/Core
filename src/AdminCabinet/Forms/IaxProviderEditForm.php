@@ -20,9 +20,12 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
+use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
+use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -63,17 +66,50 @@ class IaxProviderEditForm extends BaseForm
         // Host
         $this->add(new Text('host'));
 
+        // Port
+        $this->add(new Numeric('port'));
+
+        // Registration Type
+        $regTypeArray = [
+            Iax::REGISTRATION_TYPE_OUTBOUND => $this->translation->_('iax_REG_TYPE_OUTBOUND'),
+            Iax::REGISTRATION_TYPE_INBOUND => $this->translation->_('iax_REG_TYPE_INBOUND'),
+            Iax::REGISTRATION_TYPE_NONE => $this->translation->_('iax_REG_TYPE_NONE'),
+        ];
+
+        $regTypeValue = $entity->registration_type;
+        if (empty($regTypeValue)) {
+            // Legacy support: if registration_type is not set, use noregister field
+            $regTypeValue = ($entity->noregister === '0') ? Iax::REGISTRATION_TYPE_OUTBOUND : Iax::REGISTRATION_TYPE_NONE;
+        }
+        $regType = new Select(
+            'registration_type',
+            $regTypeArray,
+            [
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'value' => $regTypeValue,
+                'class' => 'ui selection dropdown',
+            ]
+        );
+        $this->add($regType);
+
+        // Receive calls without auth
+        $this->addCheckBox('receive_calls_without_auth', intval($entity->receive_calls_without_auth) === 1);
+
         // Qualify
         $this->addCheckBox(
             'qualify',
             intval($entity->qualify) === 1
         );
 
-        // Noregister
-        $this->addCheckBox(
-            'noregister',
-            intval($entity->noregister) === 1
-        );
+        // Noregister (hidden for backward compatibility)
+        $this->add(new Hidden('noregister'));
+
+        // Network filter ID (will be populated by JavaScript from network filter selection)
+        $this->add(new Hidden('networkfilterid'));
 
         // Manualattributes
         $this->addTextArea('manualattributes', $entity->getManualAttributes() ?? '', 80);

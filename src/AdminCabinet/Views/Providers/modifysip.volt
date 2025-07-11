@@ -29,14 +29,17 @@
     <label for="secret">{{ t._('pr_ProviderPassword') }}</label>
     <div class="ui action input">
         {{ form.render('secret') }}
-        <div class="ui icon button" id="generate-new-password">
-            <i class="refresh icon "></i>
+        <div class="ui tiny basic icon left attached buttons">
+            <button class="ui button popuped" id="show-hide-password" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipShowPassword') }}">
+                <i class="eye icon"></i>
+            </button>
+            <button class="ui button popuped" id="generate-new-password" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipGeneratePassword') }}">
+                <i class="refresh icon"></i>
+            </button>
+            <button class="ui button popuped clipboard" data-clipboard-text="{{ form.getValue('secret') }}" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipCopyPassword') }}">
+                <i class="copy icon"></i>
+            </button>
         </div>
-        <a class="ui button clipboard" data-clipboard-text="{{ secret }}" data-variation="basic" data-content="{{ t._('bt_ToolTipCopyPassword') }}">
-            <i class="icons">
-                <i class="icon copy "></i>
-            </i>
-        </a>
     </div>
 </div>
 

@@ -19,11 +19,10 @@
 
 namespace MikoPBX\Common\Models;
 
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use Phalcon\Mvc\Model\Relation;
-use Phalcon\Encryption\Security\Random;
+use MikoPBX\Common\Library\PasswordGenerator;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Mvc\Model\Relation;
 
 /**
  * Class Sip
@@ -339,19 +338,12 @@ class Sip extends ModelsBase
     /**
      * Generates a random SIP password.
      *
+     * @param int $length Password length (default: 16)
      * @return string The generated SIP password.
      */
-    public static function generateSipPassword(): string
+    public static function generateSipPassword(int $length = 16): string
     {
-        $random = new Random();
-        $passwordLength = 16;
-        try {
-            $password = $random->base64Safe($passwordLength);
-        } catch (\Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $password = md5(microtime(true));
-        }
-        return $password;
+        return PasswordGenerator::generateSipPassword($length);
     }
 
     /**

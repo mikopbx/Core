@@ -97,13 +97,98 @@ const provider = {
     },
 
     /**
+     * Generate password based on provider type
+     * @returns {string} Generated password
+     */
+    generatePassword() {
+        if (provider.providerType === 'SIP') {
+            return provider.generateSipPassword();
+        } else if (provider.providerType === 'IAX') {
+            return provider.generateIaxPassword();
+        }
+        return provider.generateSipPassword(); // Default fallback
+    },
+
+    /**
+     * Generate SIP password (base64-safe characters, 16 chars)
+     * @param {number} length Password length
+     * @returns {string} Generated password
+     */
+    generateSipPassword(length = 16) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+        let password = '';
+        for (let i = 0; i < length; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+    },
+
+    /**
+     * Generate IAX password (hex characters, 32 chars)
+     * @param {number} length Password length
+     * @returns {string} Generated password
+     */
+    generateIaxPassword(length = 32) {
+        const chars = 'abcdef0123456789';
+        let password = '';
+        for (let i = 0; i < length; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+    },
+
+    /**
+     * Initialize IAX warning message handling
+     */
+    initializeIaxWarningMessage() {
+        const $warningMessage = $('#elReceiveCalls').next('.warning.message');
+        const $checkboxInput = $('#receive_calls_without_auth');
+        
+        // Function to update warning message state
+        function updateWarningState() {
+            if ($checkboxInput.prop('checked')) {
+                $warningMessage.removeClass('hidden');
+            } else {
+                $warningMessage.addClass('hidden');
+            }
+        }
+        
+        // Initialize warning state
+        updateWarningState();
+        
+        // Handle checkbox changes - using the already initialized checkbox
+        $('#receive_calls_without_auth.checkbox').checkbox({
+            onChecked: function() {
+                $warningMessage.removeClass('hidden').transition('fade in');
+            },
+            onUnchecked: function() {
+                $warningMessage.transition('fade out', function() {
+                    $warningMessage.addClass('hidden');
+                });
+            }
+        });
+        
+        // Re-initialize warning state when accordion opens
+        provider.$accordions.accordion({
+            onOpen: function() {
+                // Small delay to ensure DOM is settled
+                setTimeout(updateWarningState, 50);
+            }
+        });
+    },
+
+    /**
      * Initialize the provider form.
      */
     initialize() {
         provider.$checkBoxes.checkbox();
-        provider.$accordions.accordion();
         provider.$dropDowns.dropdown();
         provider.updateHostsTableView();
+        
+        // Initialize accordion separately for IAX
+        if (provider.providerType !== 'IAX') {
+            provider.$accordions.accordion();
+        }
         /**
          * Callback function called when the qualify toggle changes.
          */
@@ -137,8 +222,29 @@ const provider = {
         provider.updateVisibilityElements();
 
         $('#registration_type').on('change', provider.updateVisibilityElements);
+        
+        // Trigger initial update for IAX providers
+        if (provider.providerType === 'IAX') {
+            provider.updateVisibilityElements();
+            provider.initializeIaxWarningMessage();
+        }
 
         $('#disablefromuser input').on('change', provider.updateVisibilityElements);
+
+        // Show/hide password toggle
+        $('#show-hide-password').on('click', (e) => {
+            e.preventDefault();
+            const $button = $(e.currentTarget);
+            const $icon = $button.find('i');
+            
+            if (provider.$secret.attr('type') === 'password') {
+                provider.$secret.attr('type', 'text');
+                $icon.removeClass('eye').addClass('eye slash');
+            } else {
+                provider.$secret.attr('type', 'password');
+                $icon.removeClass('eye slash').addClass('eye');
+            }
+        });
 
         $('#generate-new-password').on('click', (e) => {
             /**
@@ -146,20 +252,18 @@ const provider = {
              * @param {Event} e - The click event.
              */
             e.preventDefault();
-            const chars = 'abcdef1234567890';
-            let pass = '';
-            for (let x = 0; x < 32; x += 1) {
-                const i = Math.floor(Math.random() * chars.length);
-                pass += chars.charAt(i);
-            }
-            provider.$secret.val(pass);
+            const password = provider.generatePassword();
+            provider.$secret.val(password);
             provider.$secret.trigger('change');
         });
 
         provider.$secret.on('change', () => {
-            $('#elSecret a.ui.button.clipboard').attr('data-clipboard-text', provider.$secret.val())
+            $('#elSecret .ui.button.clipboard').attr('data-clipboard-text', provider.$secret.val())
         });
 
+        // Initialize all tooltip popups
+        $('.popuped').popup();
+        
         const clipboard = new ClipboardJS('.clipboard');
         $('.clipboard').popup({
             on: 'manual',
@@ -183,15 +287,13 @@ const provider = {
      * Update the visibility of elements based on the provider type and registration type.
      */
     updateVisibilityElements() {
-        if (provider.providerType !== 'SIP') {
-            return;
-        }
-
         // Get element references
         let elHost = $('#elHost');
         let elUsername = $('#elUsername');
         let elSecret = $('#elSecret');
-        let elAdditionalHost = $('#elAdditionalHosts');
+        let elPort = $('#elPort');
+        let elReceiveCalls = $('#elReceiveCalls');
+        let elNetworkFilter = $('#elNetworkFilter');
         let regType = $('#registration_type').val();
         let elUniqId = $('#uniqid');
         let genPassword = $('#generate-new-password');
@@ -199,45 +301,153 @@ const provider = {
         let valUserName = $('#username');
         let valSecret = provider.$secret;
 
-        // Reset username if necessary
-        if (valUserName.val() === elUniqId.val() && regType !== 'outbound') {
-            valUserName.val('');
-        }
-        valUserName.removeAttr('readonly');
-
-        // Update element visibility based on registration type
-        if (regType === 'outbound') {
-            elHost.show();
-            elUsername.show();
-            elSecret.show();
-            elAdditionalHost.show();
-            genPassword.hide();
-        } else if (regType === 'inbound') {
-            valUserName.val(elUniqId.val());
-            valUserName.attr('readonly', '');
-            if (valSecret.val().trim() === '') {
-                valSecret.val('id=' + $('#id').val() + '-' + elUniqId.val())
+        if (provider.providerType === 'SIP') {
+            let elAdditionalHost = $('#elAdditionalHosts');
+            
+            // Reset username if necessary
+            if (valUserName.val() === elUniqId.val() && regType !== 'outbound') {
+                valUserName.val('');
             }
-            elHost.hide();
-            elUsername.show();
-            elSecret.show();
-            genPassword.show();
-        } else if (regType === 'none') {
-            elHost.show();
-            elUsername.hide();
-            elSecret.hide();
-        }
+            valUserName.removeAttr('readonly');
 
-        // Update element visibility based on 'disablefromuser' checkbox
-        let el = $('#disablefromuser');
-        let fromUser = $('#divFromUser');
-        if (el.checkbox('is checked')) {
-            fromUser.hide();
-            fromUser.removeClass('visible');
-        } else {
-            fromUser.show();
-            fromUser.addClass('visible');
+            // Update element visibility based on registration type
+            if (regType === 'outbound') {
+                elHost.show();
+                elUsername.show();
+                elSecret.show();
+                elAdditionalHost.show();
+                genPassword.hide();
+            } else if (regType === 'inbound') {
+                valUserName.val(elUniqId.val());
+                valUserName.attr('readonly', '');
+                if (valSecret.val().trim() === '') {
+                    valSecret.val('id=' + $('#id').val() + '-' + elUniqId.val())
+                }
+                elHost.hide();
+                elUsername.show();
+                elSecret.show();
+                genPassword.show();
+            } else if (regType === 'none') {
+                elHost.show();
+                elUsername.hide();
+                elSecret.hide();
+            }
 
+            // Update element visibility based on 'disablefromuser' checkbox
+            let el = $('#disablefromuser');
+            let fromUser = $('#divFromUser');
+            if (el.checkbox('is checked')) {
+                fromUser.hide();
+                fromUser.removeClass('visible');
+            } else {
+                fromUser.show();
+                fromUser.addClass('visible');
+            }
+        } else if (provider.providerType === 'IAX') {
+            // Handle IAX provider visibility
+            valUserName.removeAttr('readonly');
+            
+            // Get label elements
+            let labelHost = $('label[for="host"]');
+            let labelPort = $('label[for="port"]');
+            let labelUsername = $('label[for="username"]');
+            let labelSecret = $('label[for="secret"]');
+            let valPort = $('#port');
+            let valQualify = $('#qualify');
+            let copyButton = $('#elSecret .button.clipboard');
+            let showHideButton = $('#show-hide-password');
+            
+            // Set default values for hidden fields
+            // Always enable qualify for IAX (NAT keepalive)
+            if (valQualify.length > 0) {
+                valQualify.prop('checked', true);
+                valQualify.val('1');
+            }
+            
+            // Set empty network filter ID (no restrictions by default)
+            $('#networkfilterid').val('');
+            
+            // Update element visibility based on registration type
+            if (regType === 'outbound') {
+                // OUTBOUND: We register to provider
+                elHost.show();
+                elPort.show();
+                elUsername.show();
+                elSecret.show();
+                elReceiveCalls.hide(); // Not relevant for outbound
+                // Make host required for outbound
+                elHost.addClass('required');
+                
+                // Hide generate and copy buttons for outbound
+                genPassword.hide();
+                copyButton.hide();
+                // Show/hide button is always visible
+                showHideButton.show();
+                
+                // Update labels for outbound
+                labelHost.text(globalTranslate.pr_ProviderHostOrIPAddress || 'Provider Host/IP');
+                labelPort.text(globalTranslate.pr_ProviderPort || 'Provider Port');
+                labelUsername.text(globalTranslate.pr_ProviderLogin || 'Login');
+                labelSecret.text(globalTranslate.pr_ProviderPassword || 'Password');
+                
+                // Set default port if empty
+                if (valPort.val() === '' || valPort.val() === '0') {
+                    valPort.val('4569');
+                }
+            } else if (regType === 'inbound') {
+                // INBOUND: Provider connects to us
+                // For incoming connections, use uniqid as username
+                valUserName.val(elUniqId.val());
+                valUserName.attr('readonly', '');
+                if (valSecret.val().trim() === '') {
+                    valSecret.val('id=' + $('#id').val() + '-' + elUniqId.val())
+                }
+                elHost.show();
+                elPort.hide(); // Port not needed for inbound connections
+                elUsername.show();
+                elSecret.show();
+                elReceiveCalls.show(); // Show for inbound connections
+                // Make host required for inbound
+                elHost.addClass('required');
+                
+                // Show all buttons for inbound
+                genPassword.show();
+                copyButton.show();
+                showHideButton.show();
+                // Update clipboard text when password changes
+                copyButton.attr('data-clipboard-text', valSecret.val());
+                
+                // Update labels for inbound
+                labelHost.text(globalTranslate.pr_RemoteHostOrIPAddress || 'Remote Host/IP');
+                labelUsername.text(globalTranslate.pr_AuthenticationUsername || 'Authentication Username');
+                labelSecret.text(globalTranslate.pr_AuthenticationPassword || 'Authentication Password');
+            } else if (regType === 'none') {
+                // NONE: Static peer-to-peer connection
+                elHost.show();
+                elPort.show();
+                elUsername.show();
+                elSecret.show();
+                elReceiveCalls.show(); // Show for static connections too
+                // Make host required for none
+                elHost.addClass('required');
+                
+                // Hide generate and copy buttons for none type
+                genPassword.hide();
+                copyButton.hide();
+                // Show/hide button is always visible
+                showHideButton.show();
+                
+                // Update labels for none (peer-to-peer)
+                labelHost.text(globalTranslate.pr_PeerHostOrIPAddress || 'Peer Host/IP');
+                labelPort.text(globalTranslate.pr_PeerPort || 'Peer Port');
+                labelUsername.text(globalTranslate.pr_PeerUsername || 'Peer Username');
+                labelSecret.text(globalTranslate.pr_PeerPassword || 'Peer Password');
+                
+                // Set default port if empty
+                if (valPort.val() === '' || valPort.val() === '0') {
+                    valPort.val('4569');
+                }
+            }
         }
     },
 

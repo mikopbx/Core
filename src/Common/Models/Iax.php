@@ -20,20 +20,26 @@
 
 namespace MikoPBX\Common\Models;
 
-use Phalcon\Mvc\Model\Relation;
+use MikoPBX\Common\Library\PasswordGenerator;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Mvc\Model\Relation;
 
 /**
  * Class Iax
  *
  * @method static mixed findFirstByUniqid(array|string|int $parameters = null)
  * @property Providers Providers
+ * @property NetworkFilters NetworkFilters
  *
  * @package MikoPBX\Common\Models
  */
 class Iax extends ModelsBase
 {
+    // Registration type constants
+    public const REGISTRATION_TYPE_OUTBOUND = 'outbound';
+    public const REGISTRATION_TYPE_INBOUND = 'inbound';
+    public const REGISTRATION_TYPE_NONE = 'none';
     /**
      * @Primary
      * @Identity
@@ -104,6 +110,34 @@ class Iax extends ModelsBase
      */
     public ?string $description = '';
 
+    /**
+     * Registration type (outbound, inbound, none)
+     *
+     * @Column(type="string", nullable=true, default="outbound")
+     */
+    public ?string $registration_type = 'outbound';
+
+    /**
+     * Allow receiving calls without authentication (0 or 1)
+     *
+     * @Column(type="string", length=1, nullable=true, default="0")
+     */
+    public ?string $receive_calls_without_auth = '0';
+
+    /**
+     * Network filter ID for IP-based restrictions
+     *
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $networkfilterid = '';
+
+    /**
+     * IAX port
+     *
+     * @Column(type="integer", nullable=true)
+     */
+    public ?string $port = '';
+
 
     /**
      * Initialize the model.
@@ -124,6 +158,18 @@ class Iax extends ModelsBase
                 ],
             ]
         );
+        $this->belongsTo(
+            'networkfilterid',
+            NetworkFilters::class,
+            'id',
+            [
+                'alias' => 'NetworkFilters',
+                'foreignKey' => [
+                    'allowNulls' => true,
+                    'action' => Relation::NO_ACTION,
+                ],
+            ]
+        );
     }
 
     /**
@@ -134,6 +180,17 @@ class Iax extends ModelsBase
     public function getManualAttributes(): string
     {
         return base64_decode((string)$this->manualattributes);
+    }
+
+    /**
+     * Generates a random password for IAX
+     *
+     * @param int $length Password length (default: 32)
+     * @return string
+     */
+    public static function generateIaxPassword(int $length = 32): string
+    {
+        return PasswordGenerator::generateIaxPassword($length);
     }
 
     /**

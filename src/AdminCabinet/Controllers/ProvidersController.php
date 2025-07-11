@@ -21,7 +21,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\{IaxProviderEditForm, SipProviderEditForm};
-use MikoPBX\Common\Models\{Iax, Providers, Sip, SipHosts};
+use MikoPBX\Common\Models\{Iax, NetworkFilters, Providers, Sip, SipHosts};
 use Phalcon\Filter\Filter;
 
 class ProvidersController extends BaseController
@@ -138,7 +138,12 @@ class ProvidersController extends BaseController
             $provider->Iax = new Iax();
             $provider->Iax->uniqid = $uniqId;
             $provider->Iax->disabled = '0';
-            $provider->Iax->qualify = '1';
+            $provider->Iax->qualify = '1'; // Always enable qualify for IAX
+            $provider->Iax->port = '4569';
+            $provider->Iax->registration_type = Iax::REGISTRATION_TYPE_OUTBOUND;
+            $provider->Iax->networkfilterid = ''; // No network filter by default
+            $provider->Iax->receive_calls_without_auth = '0'; // Auth required by default
+            $provider->Iax->secret = Iax::generateIaxPassword();
         } elseif ($idIsEmpty) {
             $uniqId = Iax::generateUniqueID('IAX-TRUNK-');
             $oldProvider = $provider;
@@ -156,11 +161,14 @@ class ProvidersController extends BaseController
             $provider->Iax->description = '';
             $provider->Iax->id     = '';
             $provider->Iax->uniqid = $uniqId;
-            $provider->Iax->secret = md5(microtime());
+            $provider->Iax->secret = Iax::generateIaxPassword();
         }
         $options = ['note' => $provider->note];
         $this->view->form = new IaxProviderEditForm($provider->Iax, $options);
         $this->view->represent = $provider->getRepresent();
+        
+        // Get network filters for the dropdown
+        $this->view->networkFilters = NetworkFilters::find();
     }
 
     /**
@@ -324,11 +332,25 @@ class ProvidersController extends BaseController
                     if (array_key_exists($name, $data)) {
                         $providerByType->$name = ($data[$name] === 'on') ? 1 : 0;
                     } else {
-                        $providerByType->$name = 0;
+                        // Set default values for hidden/removed fields
+                        if ($name === 'qualify' && $type === 'iax') {
+                            // Always enable qualify for IAX (NAT keepalive)
+                            $providerByType->$name = 1;
+                        } else {
+                            $providerByType->$name = 0;
+                        }
                     }
                     break;
                 case 'qualifyfreq':
                     $providerByType->$name = (int)$data[$name];
+                    break;
+                case 'networkfilterid':
+                    // Set default empty value for network filter (no restrictions)
+                    if (array_key_exists($name, $data)) {
+                        $providerByType->$name = $data[$name];
+                    } else {
+                        $providerByType->$name = '';
+                    }
                     break;
                 case 'manualattributes':
                     if (array_key_exists($name, $data)) {
