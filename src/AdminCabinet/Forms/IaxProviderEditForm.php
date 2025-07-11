@@ -21,6 +21,7 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\Iax;
+use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
@@ -61,7 +62,10 @@ class IaxProviderEditForm extends BaseForm
         $this->add(new Text('username'));
 
         // Secret
-        $this->add(new Password('secret'));
+        $this->add(new Password('secret', [
+            'autocomplete' => 'new-password',
+            'data-no-password-manager' => 'true'
+        ]));
 
         // Host
         $this->add(new Text('host'));
@@ -108,13 +112,44 @@ class IaxProviderEditForm extends BaseForm
         // Noregister (hidden for backward compatibility)
         $this->add(new Hidden('noregister'));
 
-        // Network filter ID (will be populated by JavaScript from network filter selection)
-        $this->add(new Hidden('networkfilterid'));
+        // Network Filter
+        $networkfilterid = new Select(
+            'networkfilterid',
+            $this->prepareNetworkFilters(),
+            [
+                'using' => ['id', 'name'],
+                'useEmpty' => false,
+                'value' => $entity->networkfilterid,
+                'class' => 'ui selection dropdown network-filter-select',
+            ]
+        );
+        $this->add($networkfilterid);
 
         // Manualattributes
-        $this->addTextArea('manualattributes', $entity->getManualAttributes() ?? '', 80);
+        $placeholderText = "language = ru\ncodecpriority = host\ntrunktimestamps = yes\ntrunk = yes";
+        $this->addTextArea('manualattributes', $entity->getManualAttributes() ?? '', 80, [
+            'placeholder' => $placeholderText
+        ]);
 
         // Note
         $this->addTextArea('note', $options['note'] ?? '', 80, ['class' => 'confidential-field']);
+    }
+
+    /**
+     * Prepare network filters for the dropdown
+     * @return array Array of network filters including 'none' option
+     */
+    private function prepareNetworkFilters(): array
+    {
+        $networks = [];
+        $networks['none'] = $this->translation->_('pr_NoNetworkFilter');
+        
+        $arrNetworkFilters = NetworkFilters::find(['order' => 'permit']);
+        
+        foreach ($arrNetworkFilters as $network) {
+            $networks[$network->id] = "{$network->description} ({$network->permit})";
+        }
+        
+        return $networks;
     }
 }

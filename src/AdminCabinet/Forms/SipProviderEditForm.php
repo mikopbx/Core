@@ -20,6 +20,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
@@ -63,7 +64,10 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Text('username'));
 
         // Secret
-        $this->add(new Password('secret'));
+        $this->add(new Password('secret', [
+            'autocomplete' => 'new-password',
+            'data-no-password-manager' => 'true'
+        ]));
 
         // Host
         $this->add(new Text('host'));
@@ -170,10 +174,45 @@ class SipProviderEditForm extends BaseForm
         // Receive_calls_without_auth
         $this->addCheckBox('receive_calls_without_auth', intval($entity->receive_calls_without_auth) === 1);
 
+        // Network Filter
+        $networkfilterid = new Select(
+            'networkfilterid',
+            $this->prepareNetworkFilters(),
+            [
+                'using' => [
+                    'id',
+                    'name',
+                ],
+                'useEmpty' => false,
+                'value' => $entity->networkfilterid,
+                'class' => 'ui selection dropdown network-filter-select',
+            ]
+        );
+        $this->add($networkfilterid);
+
         // Manualattributes
-        $this->addTextArea('manualattributes', $entity->getManualAttributes() ?? '', 65);
+        $placeholderText = "[registration-auth]\nusername=962xxxxx030@ip.beeline.ru\n\n[endpoint-auth]\nusername=962xxxxx030@ip.beeline.ru";
+        $this->addTextArea('manualattributes', $entity->getManualAttributes() ?? '', 65, [
+            'placeholder' => $placeholderText
+        ]);
 
         // Note
         $this->addTextArea('note', $options['note'] ?? '', 80, ['class' => 'confidential-field']);
+    }
+
+    /**
+     * Prepares network filters for the dropdown.
+     *
+     * @return array An array of network filters with their IDs and representations.
+     */
+    private function prepareNetworkFilters(): array
+    {
+        $arrNetworkFilters = [];
+        $networkFilters = NetworkFilters::getAllowedFiltersForType(['SIP']);
+        $arrNetworkFilters['none'] = $this->translation->_('pr_NoNetworkFilter');
+        foreach ($networkFilters as $filter) {
+            $arrNetworkFilters[$filter->id] = $filter->getRepresent();
+        }
+        return $arrNetworkFilters;
     }
 }

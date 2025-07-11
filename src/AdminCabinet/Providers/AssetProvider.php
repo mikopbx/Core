@@ -534,7 +534,14 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/debugger-info.js', true)
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/Providers/provider-modify-status-worker.js', true)
-                ->addJs('js/pbx/Providers/provider-modify.js', true);
+                ->addJs('js/pbx/Providers/provider-base-modify.js', true);
+                
+            // Load specific provider type JavaScript
+            if ($action === 'modifysip') {
+                $this->footerCollectionJS->addJs('js/pbx/Providers/provider-sip-modify.js', true);
+            } else {
+                $this->footerCollectionJS->addJs('js/pbx/Providers/provider-iax-modify.js', true);
+            }
         }
     }
 
@@ -828,6 +835,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Extensions/input-mask-patterns.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true)
+                ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/Extensions/extension-modify-avatar.js', true)
                 ->addJs('js/pbx/Extensions/extension-modify-status-worker.js', true)
                 ->addJs('js/pbx/Extensions/extension-modify.js', true);
@@ -932,6 +940,7 @@ class AssetProvider implements ServiceProviderInterface
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/AsteriskManagers/manager-modify.js', true);
 
             $this->semanticCollectionCSS->addCss('css/AsteriskManagers/manager-modify.css', true);

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate, PbxApi, DebuggerInfo, provider */
+/* global globalTranslate, PbxApi, DebuggerInfo */
 
 
 /**
@@ -24,7 +24,7 @@
  *
  * @module providersStatusLoopWorker
  */
-const providersStatusLoopWorker = {
+const providersStatusLoopWorker = { 
 
     /**
      * Time in milliseconds before fetching new status request.
@@ -51,9 +51,22 @@ const providersStatusLoopWorker = {
     $status: $('#status'),
 
     /**
+     * Provider type determined from the page URL
+     * @type {string}
+     */
+    providerType: '',
+
+    /**
      * Initializes the providers status loop worker.
      */
     initialize() {
+        // Determine provider type from the URL
+        if (window.location.pathname.includes('modifysip')) {
+            providersStatusLoopWorker.providerType = 'SIP';
+        } else if (window.location.pathname.includes('modifyiax')) {
+            providersStatusLoopWorker.providerType = 'IAX';
+        }
+        
         DebuggerInfo.initialize();
         providersStatusLoopWorker.restartWorker();
     },
@@ -71,7 +84,7 @@ const providersStatusLoopWorker = {
      */
     worker() {
         window.clearTimeout(providersStatusLoopWorker.timeoutHandle);
-        switch (provider.providerType) {
+        switch (providersStatusLoopWorker.providerType) {
             case 'SIP':
                 PbxApi.GetSipProvidersStatuses(providersStatusLoopWorker.cbRefreshProvidersStatus);
                 break;

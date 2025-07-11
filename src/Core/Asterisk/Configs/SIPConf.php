@@ -741,8 +741,8 @@ class SIPConf extends AsteriskConfigClass
                 $reg_strings .= $this->generateProviderRegistration($provider, $manual_attributes);
             }
 
-            // Generate provider authentication configuration if registration type is not none
-            if ($provider['registration_type'] !== Sip::REG_TYPE_NONE) {
+            // Generate provider authentication configuration if registration type is not none and auth is required
+            if ($provider['registration_type'] !== Sip::REG_TYPE_NONE && $provider['receive_calls_without_auth'] !== '1') {
                 $prov_config .= $this->generateProviderAuth($provider, $manual_attributes);
             }
 
@@ -1077,9 +1077,9 @@ class SIPConf extends AsteriskConfigClass
         if (!empty($provider['outbound_proxy'])) {
             $options['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
         }
-        if ($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND) {
+        if ($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND && $provider['receive_calls_without_auth'] !== '1') {
             $options['outbound_auth'] = "{$provider['uniqid']}-AUTH";
-        } elseif ($provider['registration_type'] === Sip::REG_TYPE_INBOUND) {
+        } elseif ($provider['registration_type'] === Sip::REG_TYPE_INBOUND && $provider['receive_calls_without_auth'] !== '1') {
             $options['auth'] = "{$provider['uniqid']}-AUTH";
         }
         self::getToneZone($options, $language);

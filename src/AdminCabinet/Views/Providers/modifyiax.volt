@@ -14,25 +14,29 @@
 </div>
 
 <div class="field max-width-500">
-    <label for="registration_type">{{ t._('iax_registration_type') }}</label>
+    <label for="registration_type">
+        {{ t._('iax_registration_type') }}
+        <i class="small info circle icon field-info-icon" 
+           data-field="registration_type"></i>
+    </label>
     {{ form.render('registration_type') }}
 </div>
 <div id='elHost' class="field required max-width-500">
-    <label for="host">{{ t._('pr_ProviderHostOrIPAddress') }}</label>
+    <label for="host">
+        <span id="hostLabelText">{{ t._('pr_ProviderHostOrIPAddress') }}</span>
+        <i class="small info circle icon field-info-icon" 
+           data-field="provider_host"></i>
+    </label>
     {{ form.render('host') }}
-</div>
-<div id='elPort' class="field max-width-200">
-    <label for="port">{{ t._('pr_IAXPort') }}</label>
-    {{ form.render('port') }}
 </div>
 
 <div id='elUsername' class="field max-width-500">
-    <label for="username">{{ t._('pr_ProviderLogin') }}</label>
+    <label for="username"><span id="usernameLabelText">{{ t._('pr_ProviderLogin') }}</span></label>
     {{ form.render('username') }}
 </div>
 
 <div id='elSecret' class="field max-width-500">
-    <label for="secret">{{ t._('pr_ProviderPassword') }}</label>
+    <label for="secret"><span id="secretLabelText">{{ t._('pr_ProviderPassword') }}</span></label>
     <div class="ui action input">
         {{ form.render('secret') }}
         <div class="ui tiny basic icon left attached buttons ">
@@ -61,35 +65,59 @@
     </div>
 
     <div class="content field">
-        <h3 class="ui dividing header ">{{ t._("pr_RegistrationSettings") }}</h3>
         
-        <div id='elReceiveCalls' class="field max-width-400">
-            <div class="ui segment">
-                <div class="field">
-                    <div class="ui toggle checkbox" id="receive_calls_without_auth">
-                        {{ form.render('receive_calls_without_auth') }}
-                        <label>{{ t._('pr_ReceiveCallsWithoutAuth') }}</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class='ui icon warning message hidden'>
-            <i class="exclamation triangle icon"></i>
-            <div class="content">
-                <div class="header">{{ t._('pr_SecurityWarning') }}</div>
-                <p>{{ t._('pr_ReceiveCallsWithoutAuthWarning') }}</p>
+        <!-- Группа: Сетевые настройки -->
+        <h4 class="ui dividing header ">{{ t._('pr_NetworkSettings') }}</h4>
+        
+        <div id='elPort' class="field">
+            <label for="port">
+                <span id="portLabelText">{{ t._('pr_IAXPort') }}</span>
+                <i class="small info circle icon field-info-icon" 
+                   data-field="iax_port"></i>
+            </label>
+            <div class="field max-width-200">
+                {{ form.render('port') }}
             </div>
         </div>
         
-        {# Network filter field is hidden, will be set to default value #}
-        {{ form.render('networkfilterid') }}
+        <!-- Группа: Настройки безопасности -->
+        <h4 class="ui dividing header ">{{ t._('pr_SecuritySettings') }}</h4>
+        
+        <div id='elReceiveCalls' class="field">
+            <div class="ui toggle checkbox" id="receive_calls_without_auth">
+                {{ form.render('receive_calls_without_auth') }}
+                <label>
+                    {{ t._('pr_ReceiveCallsWithoutAuth') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="receive_calls_without_auth"></i>
+                </label>
+            </div>
+        </div>
+        
+        <div id="elNetworkFilter" class="field">
+            <label>
+                {{ t._('pr_NetworkFilter') }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="network_filter"></i>
+            </label>
+            <div class="ten wide field">
+                {{ form.render('networkfilterid') }}
+            </div>
+        </div>
 
-        {{ form.render('noregister') }}
-
-        <h4 class="ui dividing header ">{{ t._("pr_ManualAdditionalAtributes") }}</h4>
+        <!-- Группа: Дополнительные параметры -->
+        <h4 class="ui dividing header ">{{ t._('pr_AdditionalParameters') }}</h4>
+        
         <div class="field">
+            <label>
+                {{ t._("pr_ManualAdditionalIAXAtributes") }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="manual_attributes"></i>
+            </label>
             {{ form.render('manualattributes') }}
         </div>
+
+        {{ form.render('noregister') }}
 
         {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('AdvancedFields')]) }}
     </div>

@@ -28,6 +28,18 @@ body {
     background: #f1f4f5;
 }
 
+/* Field help tooltips (similar to firewall style) */
+.field-info-icon {
+    color: #2185d0;
+    cursor: pointer;
+    margin-left: 0.5em;
+    font-size: 0.9em;
+}
+
+.field-info-icon:hover {
+    color: #1678c2;
+}
+
 /* Search field */
 #top-menu-search {
     min-width: 500px;
@@ -275,8 +287,7 @@ span.features {
 }
 
 .item.logo img {
-    margin-right: 50px;
-!important;
+    margin-right: 50px !important;
 }
 
 /* Main logo on the auth page */

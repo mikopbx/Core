@@ -132,9 +132,13 @@ class IAXConf extends AsteriskConfigClass
                 'transfer' => 'mediaonly',
                 'disallow' => 'all',
                 'username' => $provider['username'],
-                'trunk' => 'yes',
-                'secret' => $provider['secret']
+                'trunk' => 'yes'
             ];
+            
+            // Add secret only if authentication is required
+            if ($provider['receive_calls_without_auth'] !== '1') {
+                $options['secret'] = $provider['secret'];
+            }
             
             // Configure based on registration type
             switch ($registrationType) {

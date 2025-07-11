@@ -24,7 +24,7 @@
  *
  * @module provider
  */
-const provider = {
+const provider = { 
 
     /**
      * jQuery object for the form.
@@ -48,15 +48,19 @@ const provider = {
     $qualifyToggle: $('#qualify'),
     $qualifyFreqToggle: $('#qualify-freq'),
     $additionalHostInput: $('#additional-host input'),
-    hostInputValidation: /^((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(\d|[1-2]\d|3[0-2]))?|[a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+)$/gm,
+    hostInputValidation: new RegExp(
+        '^(((\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])\\.){3}'
+        + '(\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])'
+        + '(\\/(\d|[1-2]\d|3[0-2]))?'
+        + '|[a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\\.[a-zA-Z]{2,})+)$',
+        'gm'
+    ),
     hostRow: '#save-provider-form .host-row',
 
     /**
-     * Validation rules for the form fields before submission.
-     *
-     * @type {object}
+     * Validation rules for outbound registration
      */
-    validateRules: {
+    outboundValidationRules: {
         description: {
             identifier: 'description',
             rules: [
@@ -70,18 +74,26 @@ const provider = {
             identifier: 'host',
             rules: [
                 {
-                    type: 'checkHostProvider',
+                    type: 'empty',
                     prompt: globalTranslate.pr_ValidationProviderHostIsEmpty,
                 },
             ],
         },
         username: {
             identifier: 'username',
-            optional: true,
             rules: [
                 {
-                    type: 'minLength[2]',
-                    prompt: globalTranslate.pr_ValidationProviderLoginNotSingleSimbol,
+                    type: 'empty',
+                    prompt: globalTranslate.pr_ValidationProviderLoginIsEmpty,
+                },
+            ],
+        },
+        secret: {
+            identifier: 'secret',
+            rules: [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.pr_ValidationProviderPasswordEmpty,
                 },
             ],
         },
@@ -89,52 +101,173 @@ const provider = {
             identifier: 'port',
             rules: [
                 {
+                    type: 'empty',
+                    prompt: globalTranslate.pr_ValidationProviderPortIsEmpty,
+                },
+                {
                     type: 'integer[1..65535]',
-                    prompt: globalTranslate.pr_ValidationProviderPortRange,
+                    prompt: globalTranslate.pr_ValidationProviderPortInvalid,
                 },
             ],
         },
     },
 
     /**
-     * Generate password based on provider type
-     * @returns {string} Generated password
+     * Validation rules for inbound registration
+     */
+    inboundValidationRules: {
+        description: {
+            identifier: 'description',
+            rules: [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.pr_ValidationProviderNameIsEmpty,
+                },
+            ],
+        },
+        host: {
+            identifier: 'host',
+            optional: true,
+            rules: [],
+        },
+        username: {
+            identifier: 'username',
+            rules: [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.pr_ValidationProviderLoginIsEmpty,
+                },
+            ],
+        },
+        secret: {
+            identifier: 'secret',
+            rules: [
+                {
+                    type: 'checkSecret',
+                    prompt: globalTranslate.pr_ValidationProviderPasswordEmpty,
+                },
+                {
+                    type: 'minLength[8]',
+                    prompt: globalTranslate.pr_ValidationProviderPasswordTooShort,
+                },
+                {
+                    type: 'checkPasswordStrength',
+                    prompt: globalTranslate.pr_ValidationProviderPasswordWeak,
+                },
+            ],
+        },
+        port: {
+            identifier: 'port',
+            optional: true,
+            rules: [],
+        },
+    },
+
+    /**
+     * Validation rules for none registration
+     */
+    noneValidationRules: {
+        description: {
+            identifier: 'description',
+            rules: [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.pr_ValidationProviderNameIsEmpty,
+                },
+            ],
+        },
+        host: {
+            identifier: 'host',
+            rules: [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.pr_ValidationProviderHostIsEmpty,
+                },
+            ],
+        },
+        username: {
+            identifier: 'username',
+            optional: true,
+            rules: [],
+        },
+        secret: {
+            identifier: 'secret',
+            optional: true,
+            rules: [],
+        },
+        port: {
+            identifier: 'port',
+            rules: [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.pr_ValidationProviderPortIsEmpty,
+                },
+                {
+                    type: 'integer[1..65535]',
+                    prompt: globalTranslate.pr_ValidationProviderPortInvalid,
+                },
+            ],
+        },
+    },
+
+    /**
+     * Get validation rules for the form fields based on registration type.
+     *
+     * @returns {object} Validation rules
+     */
+    getValidateRules() {
+        const regType = $('#registration_type').val();
+        
+        // Select appropriate validation rules based on registration type
+        let baseRules;
+        switch (regType) {
+            case 'outbound':
+                baseRules = { ...provider.outboundValidationRules };
+                break;
+            case 'inbound':
+                baseRules = { ...provider.inboundValidationRules };
+                break;
+            case 'none':
+                baseRules = { ...provider.noneValidationRules };
+                break;
+            default:
+                baseRules = { ...provider.outboundValidationRules };
+        }
+        
+        // Add additional hosts validation (common for all types)
+        baseRules.additional_hosts = {
+            identifier: 'additional-host',
+            optional: true,
+            rules: [
+                {
+                    type: 'regExp',
+                    value: provider.hostInputValidation,
+                    prompt: globalTranslate.pr_ValidationAdditionalHostInvalid
+                        || 'Please enter a valid IP address or hostname',
+                },
+            ],
+        };
+        
+        return baseRules;
+    },
+
+    /**
+     * Generate password using REST API
      */
     generatePassword() {
-        if (provider.providerType === 'SIP') {
-            return provider.generateSipPassword();
-        } else if (provider.providerType === 'IAX') {
-            return provider.generateIaxPassword();
-        }
-        return provider.generateSipPassword(); // Default fallback
-    },
-
-    /**
-     * Generate SIP password (base64-safe characters, 16 chars)
-     * @param {number} length Password length
-     * @returns {string} Generated password
-     */
-    generateSipPassword(length = 16) {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-        let password = '';
-        for (let i = 0; i < length; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return password;
-    },
-
-    /**
-     * Generate IAX password (hex characters, 32 chars)
-     * @param {number} length Password length
-     * @returns {string} Generated password
-     */
-    generateIaxPassword(length = 32) {
-        const chars = 'abcdef0123456789';
-        let password = '';
-        for (let i = 0; i < length; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return password;
+        // For IAX use longer password (base64Safe(32) will produce ~44 chars)
+        const length = provider.providerType === 'IAX' ? 32 : 16;
+        
+        PbxApi.PasswordGenerate(length, (password) => {
+            // Use Fomantic UI Form API
+            provider.$formObj.form('set value', 'secret', password);
+            
+            // Update clipboard button attribute
+            $('#elSecret .ui.button.clipboard').attr('data-clipboard-text', password);
+            
+            // Mark form as changed
+            Form.dataChanged();
+        });
     },
 
     /**
@@ -176,6 +309,62 @@ const provider = {
             }
         });
     },
+    
+    /**
+     * Initialize real-time validation feedback
+     */
+    initializeRealtimeValidation() {
+        // Enable inline validation for better UX
+        provider.$formObj.form('setting', 'inline', true);
+        
+        // Password strength indicator using existing PasswordScore module
+        if (provider.$secret.length > 0 && typeof PasswordScore !== 'undefined') {
+            // Create progress bar for password strength if it doesn't exist
+            let $passwordProgress = $('#password-strength-progress');
+            if ($passwordProgress.length === 0) {
+                const $secretField = provider.$secret.closest('.field');
+                $passwordProgress = $('<div class="ui tiny progress" id="password-strength-progress"><div class="bar"></div></div>');
+                $secretField.append($passwordProgress);
+            }
+            
+            // Update password strength on input
+            provider.$secret.on('input', () => {
+                PasswordScore.checkPassStrength({
+                    pass: provider.$secret.val(),
+                    bar: $passwordProgress,
+                    section: $passwordProgress
+                });
+            });
+        }
+        
+        // Enhanced validation messages for IAX providers
+        if (provider.providerType === 'IAX') {
+            // Add helper text for IAX-specific fields
+            const $portField = $('#port').closest('.field');
+            if ($portField.find('.ui.pointing.label').length === 0) {
+                $portField.append('<div class="ui pointing label" style="display: none;">Default IAX port is 4569</div>');
+            }
+            
+            // Show port helper on focus
+            $('#port').on('focus', function() {
+                const $label = $(this).closest('.field').find('.ui.pointing.label');
+                if ($(this).val() === '' || $(this).val() === '4569') {
+                    $label.show();
+                }
+            }).on('blur', function() {
+                $(this).closest('.field').find('.ui.pointing.label').hide();
+            });
+        }
+        
+        // Validate on blur for immediate feedback
+        provider.$formObj.find('input[type="text"], input[type="password"]').on('blur', function() {
+            const fieldName = $(this).attr('name');
+            const validateRules = provider.getValidateRules();
+            if (fieldName && validateRules[fieldName]) {
+                provider.$formObj.form('validate field', fieldName);
+            }
+        });
+    },
 
     /**
      * Initialize the provider form.
@@ -189,6 +378,9 @@ const provider = {
         if (provider.providerType !== 'IAX') {
             provider.$accordions.accordion();
         }
+        
+        // Initialize real-time validation feedback
+        provider.initializeRealtimeValidation();
         /**
          * Callback function called when the qualify toggle changes.
          */
@@ -221,15 +413,43 @@ const provider = {
 
         provider.updateVisibilityElements();
 
-        $('#registration_type').on('change', provider.updateVisibilityElements);
+        $('#registration_type').on('change', () => {
+            provider.updateVisibilityElements();
+            // Remove all validation error prompts without clearing field values
+            provider.$formObj.find('.field').removeClass('error');
+            provider.$formObj.find('.ui.error.message').remove();
+            provider.$formObj.find('.prompt').remove();
+            // Update validation rules for dynamic fields
+            Form.validateRules = provider.getValidateRules();
+            // Mark form as changed to enable save button
+            Form.dataChanged();
+            // Don't auto-submit, just check if form is valid to update UI
+            setTimeout(() => {
+                provider.$formObj.form('is valid');
+            }, 100);
+        });
         
         // Trigger initial update for IAX providers
         if (provider.providerType === 'IAX') {
             provider.updateVisibilityElements();
             provider.initializeIaxWarningMessage();
+            
+            // Re-validate form when receive_calls_without_auth changes
+            $('#receive_calls_without_auth.checkbox').checkbox('setting', 'onChange', function() {
+                // Just check if field is valid without triggering submit
+                const isValid = provider.$formObj.form('is valid', 'secret');
+                if (!isValid) {
+                    provider.$formObj.form('validate field', 'secret');
+                }
+                // Mark form as changed
+                Form.dataChanged();
+            });
         }
 
-        $('#disablefromuser input').on('change', provider.updateVisibilityElements);
+        $('#disablefromuser input').on('change', () => {
+            provider.updateVisibilityElements();
+            Form.dataChanged();
+        });
 
         // Show/hide password toggle
         $('#show-hide-password').on('click', (e) => {
@@ -252,14 +472,9 @@ const provider = {
              * @param {Event} e - The click event.
              */
             e.preventDefault();
-            const password = provider.generatePassword();
-            provider.$secret.val(password);
-            provider.$secret.trigger('change');
+            provider.generatePassword();
         });
 
-        provider.$secret.on('change', () => {
-            $('#elSecret .ui.button.clipboard').attr('data-clipboard-text', provider.$secret.val())
-        });
 
         // Initialize all tooltip popups
         $('.popuped').popup();
@@ -281,6 +496,11 @@ const provider = {
             console.error('Action:', e.action);
             console.error('Trigger:', e.trigger);
         });
+
+        // Prevent browser password manager for generated passwords
+        provider.$secret.on('focus', function() {
+            $(this).attr('autocomplete', 'new-password');
+        });
     },
 
     /**
@@ -293,7 +513,6 @@ const provider = {
         let elSecret = $('#elSecret');
         let elPort = $('#elPort');
         let elReceiveCalls = $('#elReceiveCalls');
-        let elNetworkFilter = $('#elNetworkFilter');
         let regType = $('#registration_type').val();
         let elUniqId = $('#uniqid');
         let genPassword = $('#generate-new-password');
@@ -304,8 +523,8 @@ const provider = {
         if (provider.providerType === 'SIP') {
             let elAdditionalHost = $('#elAdditionalHosts');
             
-            // Reset username if necessary
-            if (valUserName.val() === elUniqId.val() && regType !== 'outbound') {
+            // Reset username only when switching from inbound to other types
+            if (valUserName.val() === elUniqId.val() && regType !== 'inbound') {
                 valUserName.val('');
             }
             valUserName.removeAttr('readonly');
@@ -321,16 +540,22 @@ const provider = {
                 valUserName.val(elUniqId.val());
                 valUserName.attr('readonly', '');
                 if (valSecret.val().trim() === '') {
-                    valSecret.val('id=' + $('#id').val() + '-' + elUniqId.val())
+                    valSecret.val('id=' + $('#id').val() + '-' + elUniqId.val());
                 }
                 elHost.hide();
                 elUsername.show();
                 elSecret.show();
                 genPassword.show();
+                // Remove validation errors for hidden host field
+                provider.$formObj.form('remove prompt', 'host');
+                $('#host').closest('.field').removeClass('error');
             } else if (regType === 'none') {
                 elHost.show();
                 elUsername.hide();
                 elSecret.hide();
+                // Don't clear values, just remove validation prompts for hidden fields
+                provider.$formObj.form('remove prompt', 'username');
+                provider.$formObj.form('remove prompt', 'secret');
             }
 
             // Update element visibility based on 'disablefromuser' checkbox
@@ -375,8 +600,12 @@ const provider = {
                 elUsername.show();
                 elSecret.show();
                 elReceiveCalls.hide(); // Not relevant for outbound
-                // Make host required for outbound
+                
+                // Update required fields for outbound
                 elHost.addClass('required');
+                elPort.addClass('required');
+                elUsername.addClass('required');
+                elSecret.addClass('required');
                 
                 // Hide generate and copy buttons for outbound
                 genPassword.hide();
@@ -400,15 +629,26 @@ const provider = {
                 valUserName.val(elUniqId.val());
                 valUserName.attr('readonly', '');
                 if (valSecret.val().trim() === '') {
-                    valSecret.val('id=' + $('#id').val() + '-' + elUniqId.val())
+                    valSecret.val('id=' + $('#id').val() + '-' + elUniqId.val());
                 }
                 elHost.show();
                 elPort.hide(); // Port not needed for inbound connections
                 elUsername.show();
                 elSecret.show();
                 elReceiveCalls.show(); // Show for inbound connections
-                // Make host required for inbound
-                elHost.addClass('required');
+                
+                // Remove validation prompt for hidden port field
+                provider.$formObj.form('remove prompt', 'port');
+                
+                // Update required fields for inbound
+                elHost.removeClass('required'); // Host is optional for inbound
+                elPort.removeClass('required');
+                
+                // Remove host validation error since it's optional for inbound
+                provider.$formObj.form('remove prompt', 'host');
+                $('#host').closest('.field').removeClass('error');
+                elUsername.addClass('required');
+                elSecret.addClass('required'); // Will be validated based on receive_calls_without_auth
                 
                 // Show all buttons for inbound
                 genPassword.show();
@@ -428,8 +668,12 @@ const provider = {
                 elUsername.show();
                 elSecret.show();
                 elReceiveCalls.show(); // Show for static connections too
-                // Make host required for none
+                
+                // Update required fields for none
                 elHost.addClass('required');
+                elPort.addClass('required');
+                elUsername.addClass('required');
+                elSecret.addClass('required');
                 
                 // Hide generate and copy buttons for none type
                 genPassword.hide();
@@ -510,11 +754,9 @@ const provider = {
         result.data = provider.$formObj.form('get values');
 
         const arrAdditionalHosts = [];
-        $(provider.hostRow).each((index, obj) => {
+        $(provider.hostRow).each((_, obj) => {
             if ($(obj).attr('data-value')) {
-                arrAdditionalHosts.push({
-                    address: $(obj).attr('data-value'),
-                });
+                arrAdditionalHosts.push({ address: $(obj).attr('data-value') });
             }
         });
         result.data.additionalHosts = JSON.stringify(arrAdditionalHosts);
@@ -525,8 +767,8 @@ const provider = {
      * Callback function to be called after the form has been sent.
      * @param {Object} response - The response from the server after the form is sent
      */
-    cbAfterSendForm(response) {
-
+    cbAfterSendForm() {
+        // Response handled by Form module
     },
 
     /**
@@ -534,15 +776,127 @@ const provider = {
      */
     initializeForm() {
         Form.$formObj = provider.$formObj;
-        Form.$formObj.form.settings.rules.checkHostProvider = (value) => {
-            let enable;
-            if ($('#registration_type').val() === 'inbound') {
-                enable = true;
-            } else {
-                enable = value.trim() !== '';
+        
+        // Prevent auto-submit on validation
+        Form.$formObj.form({
+            on: 'blur',
+            inline: true,
+            keyboardShortcuts: false,
+            onSuccess: function(event) {
+                // Prevent auto-submit, only submit via button click
+                if (event) {
+                    event.preventDefault();
+                }
+                return false;
             }
-            return enable;
+        });
+        
+        // Custom validation rule for host field
+        Form.$formObj.form.settings.rules.checkHostProvider = (value) => {
+            const regType = $('#registration_type').val();
+            // For IAX, host is always required except for inbound
+            if (provider.providerType === 'IAX') {
+                if (regType === 'inbound') {
+                    // For inbound, host is optional (we accept connections)
+                    return true;
+                }
+                // For outbound and none, host is required
+                return value.trim() !== '';
+            }
+            // For SIP, use original logic
+            if (regType === 'inbound') {
+                return true;
+            }
+            return value.trim() !== '';
         };
+        
+        // Custom validation rule for username field
+        Form.$formObj.form.settings.rules.checkUsername = (value) => {
+            const regType = $('#registration_type').val();
+            
+            if (provider.providerType === 'IAX') {
+                // Username is always required for IAX
+                if (value.trim() === '') {
+                    return false;
+                }
+                // Check minimum length
+                return value.length >= 2;
+            }
+            
+            // For SIP
+            if (provider.providerType === 'SIP') {
+                // Username is not required when regType is 'none'
+                if (regType === 'none') {
+                    return true;
+                }
+                // For other types, check if empty
+                if (value.length === 0) {
+                    return false;
+                }
+                return value.length >= 2;
+            }
+            
+            return true;
+        };
+        
+        // Custom validation rule for secret field
+        Form.$formObj.form.settings.rules.checkSecret = (value) => {
+            const regType = $('#registration_type').val();
+            
+            if (provider.providerType === 'IAX') {
+                // For IAX, secret is required for outbound and none
+                if (regType === 'outbound' || regType === 'none') {
+                    return value.trim() !== '';
+                }
+                // For inbound, secret is required if receive_calls_without_auth is not checked
+                if (regType === 'inbound') {
+                    const receiveWithoutAuth = $('#receive_calls_without_auth').checkbox('is checked');
+                    if (!receiveWithoutAuth) {
+                        return value.trim() !== '';
+                    }
+                }
+            }
+            
+            // For SIP
+            if (provider.providerType === 'SIP') {
+                // Secret is not required when regType is 'none'
+                if (regType === 'none') {
+                    return true;
+                }
+                // For other types, secret is required if not empty
+                if (value.trim() === '') {
+                    return false;
+                }
+            }
+            
+            return true;
+        };
+        
+        // Custom validation rule for port field
+        Form.$formObj.form.settings.rules.checkPort = (value) => {
+            const regType = $('#registration_type').val();
+            
+            if (provider.providerType === 'IAX') {
+                // Port is not required for inbound
+                if (regType === 'inbound') {
+                    // Allow empty value for inbound
+                    return true;
+                }
+                // For outbound and none, port is required
+                if (!value || value.trim() === '') {
+                    return false;
+                }
+                const port = parseInt(value, 10);
+                return !isNaN(port) && port >= 1 && port <= 65535;
+            }
+            // For SIP, port is always required
+            if (!value || value.trim() === '') {
+                return false;
+            }
+            const port = parseInt(value, 10);
+            return !isNaN(port) && port >= 1 && port <= 65535;
+        };
+        
         switch (provider.providerType) {
             case 'SIP':
                 Form.url = `${globalRootUrl}providers/save/sip`; // Form submission URL
@@ -553,7 +907,7 @@ const provider = {
             default:
                 return;
         }
-        Form.validateRules = provider.validateRules; // Form validation rules
+        Form.validateRules = provider.getValidateRules(); // Form validation rules
         Form.cbBeforeSendForm = provider.cbBeforeSendForm; // Callback before form is sent
         Form.cbAfterSendForm = provider.cbAfterSendForm; // Callback after form is sent
         Form.initialize();
@@ -568,6 +922,37 @@ const provider = {
  */
 $.fn.form.settings.rules.username = function (noregister, username) {
     return !(username.length === 0 && noregister !== 'on');
+};
+
+/**
+ * Custom form validation rule for password strength
+ * @param {string} value - The password value
+ * @returns {boolean} - Whether the password meets strength requirements
+ */
+$.fn.form.settings.rules.checkPasswordStrength = function (value) {
+    // Get registration type
+    const regType = $('#registration_type').val();
+    
+    // Skip validation for outbound and none registration types
+    if (regType === 'outbound' || regType === 'none') {
+        return true;
+    }
+    
+    // For generated passwords, always pass
+    if (value.startsWith('id=') || value.length > 20) {
+        return true;
+    }
+    
+    // Check for minimum requirements
+    const hasLowerCase = /[a-z]/.test(value);
+    const hasUpperCase = /[A-Z]/.test(value);
+    const hasNumber = /[0-9]/.test(value);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value);
+    
+    // Password should have at least 3 of 4 character types
+    const strengthScore = [hasLowerCase, hasUpperCase, hasNumber, hasSpecialChar].filter(Boolean).length;
+    
+    return strengthScore >= 3;
 };
 
 /**

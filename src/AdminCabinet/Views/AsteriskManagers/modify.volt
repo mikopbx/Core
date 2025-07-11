@@ -1,7 +1,7 @@
 {{ form(['action' : 'asterisk-managers/save', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'save-ami-form']) }}
 {{ form.render('id') }}
 
-<div class="six wide field">
+<div class="max-width-500 field">
     <label>{{ t._('am_Username') }}</label>
     <div class="ui icon input username">
         <i class="search icon"></i>
@@ -11,9 +11,22 @@
         {{ t._("am_ErrorThisUsernameInNotAvailable") }}
     </div>
 </div>
-<div class="six wide field">
+<div class="max-width-500 field">
     <label>{{ t._('am_Secret') }}</label>
-    {{ form.render('secret') }}
+    <div class="ui action input">
+        {{ form.render('secret') }}
+        <div class="ui tiny basic icon left attached buttons">
+            <button class="ui button popuped" id="show-hide-password" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipShowPassword') }}">
+                <i class="eye icon"></i>
+            </button>
+            <button class="ui button popuped" id="generate-new-password" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipGeneratePassword') }}">
+                <i class="refresh icon"></i>
+            </button>
+            <button class="ui button popuped clipboard" data-clipboard-text="{{ form.getValue('secret') }}" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipCopyPassword') }}">
+                <i class="copy icon"></i>
+            </button>
+        </div>
+    </div>
 </div>
 <div class="field">
     <label>{{ t._('am_UserRights') }}</label>
