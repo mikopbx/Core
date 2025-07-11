@@ -1,6 +1,6 @@
 # JavaScript Style Guide for MikoPBX AdminCabinet
 
-This guide demonstrates the JavaScript coding standards and patterns used in MikoPBX AdminCabinet based on exemplary code from the project.
+This guide demonstrates the JavaScript coding standards and patterns used in MikoPBX AdminCabinet based on exemplary code from the project and incorporates best practices from the Airbnb JavaScript Style Guide.
 
 ## Table of Contents
 
@@ -14,6 +14,18 @@ This guide demonstrates the JavaScript coding standards and patterns used in Mik
 8. [Translation and i18n](#8-translation-and-i18n)
 9. [Storage and Caching](#9-storage-and-caching)
 10. [Error Handling and User Feedback](#10-error-handling-and-user-feedback)
+11. [ES6+ Features and Modern JavaScript](#11-es6-features-and-modern-javascript)
+12. [Variables and Constants](#12-variables-and-constants)
+13. [Functions and Arrow Functions](#13-functions-and-arrow-functions)
+14. [Arrays and Iterations](#14-arrays-and-iterations)
+15. [Objects and Destructuring](#15-objects-and-destructuring)
+16. [Strings and Template Literals](#16-strings-and-template-literals)
+17. [Comparison and Type Coercion](#17-comparison-and-type-coercion)
+18. [Code Style and Formatting](#18-code-style-and-formatting)
+19. [Fomantic-UI Components](#19-fomantic-ui-components)
+20. [Fomantic-UI Forms and Validation](#20-fomantic-ui-forms-and-validation)
+21. [Fomantic-UI Tables and Data Display](#21-fomantic-ui-tables-and-data-display)
+22. [Fomantic-UI Layout and Responsive Design](#22-fomantic-ui-layout-and-responsive-design)
 
 ## 1. Module Structure Pattern
 
@@ -780,6 +792,378 @@ initializeSlider(modalForm){
 }
 ```
 
+## 11. ES6+ Features and Modern JavaScript
+
+### Use ES6 modules when possible:
+
+```javascript
+// Bad - old style
+var Module = Module || {};
+
+// Good - ES6 modules (when build system supports)
+import { PbxApi } from './pbx-api';
+import Extensions from './extensions';
+
+export default moduleName;
+```
+
+### For current jQuery-based modules, follow consistent patterns:
+
+```javascript
+// Good - consistent module pattern for jQuery environment
+/* global globalRootUrl, globalTranslate, PbxApi */
+const moduleName = {
+    // Module code
+};
+
+// Initialize only after DOM ready
+$(document).ready(() => {
+    moduleName.initialize();
+});
+```
+
+## 12. Variables and Constants
+
+### Always use const or let, never var:
+
+```javascript
+// Bad
+var timeOut = 10000;
+var $element = $('#element');
+
+// Good
+const timeOut = 10000;
+const $element = $('#element');
+let counter = 0;
+```
+
+### Group declarations by type:
+
+```javascript
+const module = {
+    // Constants first
+    timeOut: 10000,
+    maxRetries: 3,
+    
+    // jQuery objects
+    $form: $('#form'),
+    $submitButton: $('#submit'),
+    
+    // Mutable state
+    currentIndex: 0,
+    isLoading: false,
+};
+```
+
+### Use descriptive names:
+
+```javascript
+// Bad
+const d = new Date();
+const yrs = calcAge(d);
+
+// Good
+const currentDate = new Date();
+const ageInYears = calcAge(currentDate);
+```
+
+## 13. Functions and Arrow Functions
+
+### Use arrow functions for callbacks and preserve context:
+
+```javascript
+// Bad - loses context
+$('.button').on('click', function() {
+    // 'this' refers to the button, not the module
+    module.handleClick(this);
+});
+
+// Good - preserves module context
+$('.button').on('click', (e) => {
+    // Can access module properties directly
+    module.handleClick($(e.currentTarget));
+});
+```
+
+### Use method shorthand in objects:
+
+```javascript
+// Bad
+const module = {
+    initialize: function() {
+        // code
+    },
+    handleClick: function(element) {
+        // code
+    }
+};
+
+// Good
+const module = {
+    initialize() {
+        // code
+    },
+    handleClick(element) {
+        // code
+    }
+};
+```
+
+### Default parameters:
+
+```javascript
+// Bad
+function createUser(name, role) {
+    role = role || 'user';
+    // code
+}
+
+// Good
+function createUser(name, role = 'user') {
+    // code
+}
+```
+
+## 14. Arrays and Iterations
+
+### Use array methods instead of loops:
+
+```javascript
+// Bad
+const enabledExtensions = [];
+for (let i = 0; i < extensions.length; i++) {
+    if (extensions[i].enabled) {
+        enabledExtensions.push(extensions[i]);
+    }
+}
+
+// Good
+const enabledExtensions = extensions.filter(ext => ext.enabled);
+```
+
+### Use spread operator for array operations:
+
+```javascript
+// Bad
+const items = Array.prototype.slice.call(arguments);
+
+// Good
+const items = [...arguments];
+
+// Copying arrays
+const membersCopy = [...members];
+
+// Converting NodeList to array
+const elements = [...document.querySelectorAll('.element')];
+```
+
+### Processing form data:
+
+```javascript
+// Good - using map for transformation
+const members = $('.member-row').map((index, element) => ({
+    id: $(element).attr('id'),
+    priority: index,
+    extension: $(element).find('.extension').val()
+})).get();
+```
+
+## 15. Objects and Destructuring
+
+### Use object shorthand:
+
+```javascript
+// Bad
+const extension = extension;
+const priority = priority;
+return {
+    extension: extension,
+    priority: priority
+};
+
+// Good
+return {
+    extension,
+    priority
+};
+```
+
+### Use destructuring for multiple values:
+
+```javascript
+// Bad
+function processResponse(response) {
+    const result = response.result;
+    const data = response.data;
+    const messages = response.messages;
+}
+
+// Good
+function processResponse(response) {
+    const { result, data, messages } = response;
+}
+
+// With default values
+function processResponse({ result = false, data = {}, messages = [] } = {}) {
+    // code
+}
+```
+
+### Dynamic property names:
+
+```javascript
+// Good
+const fieldName = 'extension';
+const errors = {
+    [fieldName]: 'Invalid extension number',
+    [`${fieldName}_duplicate`]: 'Extension already exists'
+};
+```
+
+## 16. Strings and Template Literals
+
+### Always use template literals for string interpolation:
+
+```javascript
+// Bad
+const message = 'Extension ' + extension + ' has been ' + action + '.';
+const html = '<div class="item">' + value + '</div>';
+
+// Good
+const message = `Extension ${extension} has been ${action}.`;
+const html = `<div class="item">${value}</div>`;
+```
+
+### Multi-line strings:
+
+```javascript
+// Bad
+const html = '<div class="ui segment">\n' +
+    '  <h3 class="header">' + title + '</h3>\n' +
+    '  <p>' + content + '</p>\n' +
+    '</div>';
+
+// Good
+const html = `
+    <div class="ui segment">
+        <h3 class="header">${title}</h3>
+        <p>${content}</p>
+    </div>
+`;
+```
+
+## 17. Comparison and Type Coercion
+
+### Always use strict equality:
+
+```javascript
+// Bad
+if (result == true) { }
+if (value != null) { }
+
+// Good
+if (result === true) { }
+if (value !== null) { }
+```
+
+### Be explicit with type checks:
+
+```javascript
+// Bad
+if (extensions.length) { }
+if (name) { }
+
+// Good
+if (extensions.length > 0) { }
+if (name !== '') { }
+if (typeof callback === 'function') { }
+```
+
+### Use shortcuts appropriately:
+
+```javascript
+// Good - for booleans
+if (isEnabled) { }
+if (!isDisabled) { }
+
+// Good - check for undefined/null
+const value = input ?? defaultValue; // Nullish coalescing
+const name = user.name || 'Anonymous'; // With fallback
+```
+
+## 18. Code Style and Formatting
+
+### Consistent spacing and indentation:
+
+```javascript
+// Good - 4 spaces for tab (or configure to match project)
+const module = {
+    initialize() {
+        if (condition) {
+            // code
+        }
+    }
+};
+```
+
+### Proper semicolon usage:
+
+```javascript
+// Always use semicolons
+const name = 'Module';
+import Extensions from './extensions';
+
+// Be careful with return statements
+// Bad
+return
+    result;
+
+// Good
+return result;
+```
+
+### Line length and wrapping:
+
+```javascript
+// Break long lines appropriately
+// Bad
+PbxApi.SystemSaveSettings(data, callbackSuccess, callbackError, additionalParams);
+
+// Good
+PbxApi.SystemSaveSettings(
+    data,
+    callbackSuccess,
+    callbackError,
+    additionalParams
+);
+
+// Good - logical grouping
+const isValid = 
+    hasValidExtension 
+    && hasValidPassword 
+    && (isAdmin || hasPermission);
+```
+
+### Comments and documentation:
+
+```javascript
+/**
+ * Process the queue members and prepare them for saving
+ * @param {jQuery} $rows - jQuery collection of member rows
+ * @returns {Array<Object>} Array of member objects with id and priority
+ */
+processQueueMembers($rows) {
+    // Filter out empty rows and transform to required format
+    return $rows
+        .filter((i, el) => $(el).attr('id'))
+        .map((index, element) => ({
+            id: $(element).attr('id'),
+            priority: index
+        }))
+        .get();
+}
+```
+
 ## Key Style Points Summary
 
 1. **Consistent naming**: camelCase for variables/functions, PascalCase for classes/APIs
@@ -792,8 +1176,72 @@ initializeSlider(modalForm){
 8. **Storage**: Use session/localStorage appropriately with try/catch
 9. **Event delegation**: Use for dynamically added elements
 10. **Modular structure**: Each file is a self-contained module with clear initialization
+11. **Modern JavaScript**: Use const/let, arrow functions, template literals
+12. **Strict equality**: Always use === and !==
+13. **Array methods**: Prefer map, filter, reduce over loops
+14. **Destructuring**: Use for cleaner code with objects and arrays
+15. **Template literals**: Use for all string interpolation
 
 ## Additional Patterns
+
+### Modern Error Handling Pattern
+
+```javascript
+// Use try-catch with async operations
+const module = {
+    async loadData() {
+        try {
+            const response = await $.ajax({
+                url: PbxApi.getDataUrl,
+                method: 'GET'
+            });
+            
+            if (response.result === true) {
+                this.processData(response.data);
+            } else {
+                throw new Error(response.messages?.error || 'Unknown error');
+            }
+        } catch (error) {
+            console.error('Failed to load data:', error);
+            UserMessage.showError(
+                error.message,
+                globalTranslate.mod_ErrorLoadingData
+            );
+        } finally {
+            this.$loadingIndicator.removeClass('loading');
+        }
+    }
+};
+```
+
+### Event Bus Pattern with Modern JS
+
+```javascript
+// Consistent event subscription pattern
+const module = {
+    subscriptions: [],
+    
+    initialize() {
+        // Store subscriptions for cleanup
+        this.subscriptions = [
+            EventBus.subscribe('models-changed', data => this.handleModelChange(data)),
+            EventBus.subscribe('status-update', data => this.handleStatusUpdate(data))
+        ];
+    },
+    
+    handleModelChange({ model, recordId, data }) {
+        // Use destructuring for event data
+        if (model === 'Extensions' && recordId === this.extensionId) {
+            this.updateExtensionData(data);
+        }
+    },
+    
+    destroy() {
+        // Clean up subscriptions
+        this.subscriptions.forEach(unsubscribe => unsubscribe());
+    }
+};
+```
 
 ### Drag and Drop Implementation
 
@@ -847,3 +1295,938 @@ prepareChangeLogView(repoData) {
     return html;
 }
 ```
+
+### Promise-based API Pattern
+
+```javascript
+// Modern promise-based API wrapper
+const ApiWrapper = {
+    /**
+     * Generic API call with promise support
+     * @param {string} url - API endpoint
+     * @param {Object} data - Request data
+     * @returns {Promise<Object>} Response data
+     */
+    call(url, data = {}) {
+        return new Promise((resolve, reject) => {
+            $.api({
+                url,
+                data,
+                on: 'now',
+                successTest: PbxApi.successTest,
+                onSuccess(response) {
+                    if (response.result === true) {
+                        resolve(response);
+                    } else {
+                        reject(new Error(response.messages?.error || 'API call failed'));
+                    }
+                },
+                onError(errorMessage, element, xhr) {
+                    reject(new Error(errorMessage || 'Network error'));
+                }
+            });
+        });
+    },
+    
+    // Usage example
+    async updateExtension(extensionData) {
+        try {
+            const response = await ApiWrapper.call(
+                `${globalRootUrl}extensions/save`,
+                extensionData
+            );
+            return response.data;
+        } catch (error) {
+            console.error('Failed to update extension:', error);
+            throw error;
+        }
+    }
+};
+```
+
+### State Management Pattern
+
+```javascript
+// Simple state management for complex modules
+const StateManager = {
+    state: {
+        extensions: [],
+        selectedExtension: null,
+        isLoading: false,
+        filters: {
+            type: 'all',
+            search: ''
+        }
+    },
+    
+    subscribers: [],
+    
+    setState(updates) {
+        // Merge updates with current state
+        this.state = { ...this.state, ...updates };
+        this.notifySubscribers();
+    },
+    
+    subscribe(callback) {
+        this.subscribers.push(callback);
+        // Return unsubscribe function
+        return () => {
+            const index = this.subscribers.indexOf(callback);
+            if (index > -1) {
+                this.subscribers.splice(index, 1);
+            }
+        };
+    },
+    
+    notifySubscribers() {
+        this.subscribers.forEach(callback => callback(this.state));
+    }
+};
+```
+
+### Debouncing and Throttling
+
+```javascript
+// Utility functions for performance optimization
+const Utils = {
+    /**
+     * Debounce function calls
+     * @param {Function} func - Function to debounce
+     * @param {number} wait - Wait time in milliseconds
+     * @returns {Function} Debounced function
+     */
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    },
+    
+    /**
+     * Throttle function calls
+     * @param {Function} func - Function to throttle
+     * @param {number} limit - Time limit in milliseconds
+     * @returns {Function} Throttled function
+     */
+    throttle(func, limit) {
+        let inThrottle;
+        return function(...args) {
+            if (!inThrottle) {
+                func.apply(this, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    }
+};
+
+// Usage example
+const searchModule = {
+    $searchInput: $('#search-input'),
+    
+    initialize() {
+        // Debounce search to avoid too many API calls
+        const debouncedSearch = Utils.debounce(
+            this.performSearch.bind(this),
+            300
+        );
+        
+        this.$searchInput.on('input', debouncedSearch);
+    },
+    
+    performSearch(event) {
+        const query = $(event.target).val();
+        if (query.length > 2) {
+            PbxApi.ExtensionsSearch(query, this.cbSearchResults);
+        }
+    }
+};
+```
+
+### Validation Helpers
+
+```javascript
+// Enhanced validation utilities
+const Validation = {
+    /**
+     * Validate email format
+     * @param {string} email - Email to validate
+     * @returns {boolean} Is valid
+     */
+    isValidEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    },
+    
+    /**
+     * Validate phone number
+     * @param {string} phone - Phone number to validate
+     * @returns {boolean} Is valid
+     */
+    isValidPhone(phone) {
+        const cleaned = phone.replace(/\D/g, '');
+        return cleaned.length >= 10;
+    },
+    
+    /**
+     * Custom validation rule for Semantic UI
+     * @returns {Object} Validation rule object
+     */
+    getCustomRules() {
+        return {
+            strongPassword: {
+                identifier: 'password',
+                rules: [{
+                    type: 'regExp',
+                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                    prompt: 'Password must be at least 8 characters with uppercase, lowercase, number and special character'
+                }]
+            }
+        };
+    }
+};
+```
+
+## 19. Fomantic-UI Components
+
+### Initialize Components Pattern
+
+```javascript
+// Good - Initialize all UI components in one place
+const UIComponents = {
+    initialize() {
+        // Initialize dropdowns with different configurations
+        $('.ui.dropdown').dropdown();
+        $('.ui.selection.dropdown').dropdown();
+        $('.ui.menu .ui.dropdown').dropdown({
+            on: 'hover'
+        });
+        
+        // Initialize other components
+        $('.ui.accordion').accordion();
+        $('.ui.checkbox').checkbox();
+        $('.ui.rating').rating();
+        $('.ui.tab').tab();
+        
+        // Initialize modals
+        $('.ui.modal').modal();
+        
+        // Initialize popups
+        $('.ui.popup').popup();
+    }
+};
+```
+
+### Dropdown Best Practices
+
+```javascript
+// Configure dropdowns with custom behaviors
+const DropdownHelpers = {
+    /**
+     * Initialize dropdown with clear on special value
+     */
+    initializeClearableDropdown($element, clearValue = -1) {
+        $element.dropdown({
+            onChange(value) {
+                if (parseInt(value, 10) === clearValue) {
+                    $element.dropdown('clear');
+                }
+            }
+        });
+    },
+    
+    /**
+     * Initialize combo dropdown (allows text input)
+     */
+    initializeComboDropdown($element) {
+        $element.dropdown({
+            action: 'combo',
+            allowAdditions: true,
+            hideAdditions: false
+        });
+    },
+    
+    /**
+     * Initialize searchable dropdown with API
+     */
+    initializeApiDropdown($element, apiUrl) {
+        $element.dropdown({
+            apiSettings: {
+                url: apiUrl,
+                cache: false
+            },
+            saveRemoteData: false
+        });
+    }
+};
+
+// Real-world example from project
+$('#extension-select').dropdown(Extensions.getDropdownSettingsWithEmpty());
+$('#sound-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
+```
+
+### Modal Management
+
+```javascript
+const ModalManager = {
+    /**
+     * Show modal with custom configuration
+     */
+    showModal(modalId, options = {}) {
+        const defaultOptions = {
+            closable: false,
+            onDeny() {
+                // Handle cancel
+                return true;
+            },
+            onApprove() {
+                // Handle save
+                return false; // Keep modal open for validation
+            }
+        };
+        
+        $(`#${modalId}`).modal({
+            ...defaultOptions,
+            ...options
+        }).modal('show');
+    },
+    
+    /**
+     * Show confirmation dialog
+     */
+    confirm(message, onConfirm, onCancel) {
+        $('#confirm-modal .content').html(message);
+        $('#confirm-modal').modal({
+            onApprove: onConfirm,
+            onDeny: onCancel
+        }).modal('show');
+    }
+};
+```
+
+### Accordion and Tab Management
+
+```javascript
+// Initialize accordions with callbacks
+$('.ui.accordion').accordion({
+    exclusive: false,
+    onOpening() {
+        // Load content if needed
+        const $content = $(this);
+        if ($content.hasClass('lazy')) {
+            loadAccordionContent($content);
+        }
+    }
+});
+
+// Tab initialization with history support
+$('.ui.tab').tab({
+    history: true,
+    historyType: 'hash',
+    onLoad(tabPath) {
+        // Update breadcrumb or other UI elements
+        updateBreadcrumb(tabPath);
+    }
+});
+```
+
+### Visibility and Sticky Components
+
+```javascript
+// Sticky menu implementation
+$('.main.menu').visibility({
+    type: 'fixed',
+    offset: 80
+});
+
+// Lazy loading images
+$('.lazy.image').visibility({
+    type: 'image',
+    transition: 'fade in',
+    duration: 1000,
+    onLoad(image) {
+        console.log('Image loaded:', image);
+    }
+});
+
+// Sticky sidebar
+$('.ui.sticky').sticky({
+    context: '.main.container',
+    offset: 50,
+    observeChanges: true
+});
+```
+
+## 20. Fomantic-UI Forms and Validation
+
+### Form Validation Setup
+
+```javascript
+const FormValidator = {
+    /**
+     * Initialize form with validation rules
+     */
+    initializeValidation($form, customRules = {}) {
+        const defaultRules = {
+            email: {
+                identifier: 'email',
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.validation_email_empty
+                    },
+                    {
+                        type: 'email',
+                        prompt: globalTranslate.validation_email_invalid
+                    }
+                ]
+            },
+            password: {
+                identifier: 'password',
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.validation_password_empty
+                    },
+                    {
+                        type: 'minLength[6]',
+                        prompt: globalTranslate.validation_password_short
+                    }
+                ]
+            }
+        };
+        
+        $form.form({
+            fields: { ...defaultRules, ...customRules },
+            inline: true,
+            on: 'blur',
+            onSuccess(event, fields) {
+                // Process form submission
+                event.preventDefault();
+                FormValidator.handleSubmit($form, fields);
+            }
+        });
+    },
+    
+    /**
+     * Custom validation rules
+     */
+    addCustomRules() {
+        // Add phone number validation
+        $.fn.form.settings.rules.phone = (value) => {
+            const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+            return phoneRegex.test(value) && value.replace(/\D/g, '').length >= 10;
+        };
+        
+        // Add IP address validation
+        $.fn.form.settings.rules.ipAddress = (value) => {
+            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipRegex.test(value)) return false;
+            
+            const parts = value.split('.');
+            return parts.every(part => parseInt(part) <= 255);
+        };
+    }
+};
+
+// Real-world validation example
+validateRules: {
+    name: {
+        identifier: 'name',
+        rules: [
+            {
+                type: 'empty',
+                prompt: globalTranslate.cq_ValidateNameEmpty,
+            },
+        ],
+    },
+    extension: {
+        identifier: 'extension',
+        rules: [
+            {
+                type: 'number',
+                prompt: globalTranslate.cq_ValidateExtensionNumber,
+            },
+            {
+                type: 'empty',
+                prompt: globalTranslate.cq_ValidateExtensionEmpty,
+            },
+            {
+                type: 'existRule[extension-error]',
+                prompt: globalTranslate.cq_ValidateExtensionDouble,
+            },
+        ],
+    },
+}
+```
+
+### Dynamic Form Fields
+
+```javascript
+const DynamicForm = {
+    /**
+     * Add dynamic form field
+     */
+    addField(container, fieldHtml) {
+        const $field = $(fieldHtml);
+        $(container).append($field);
+        
+        // Re-initialize UI components in new field
+        $field.find('.ui.dropdown').dropdown();
+        $field.find('.ui.checkbox').checkbox();
+        
+        // Re-validate form
+        $(container).closest('form').form('validate form');
+    },
+    
+    /**
+     * Remove field with animation
+     */
+    removeField($field) {
+        $field.transition('fade down', {
+            duration: 300,
+            onComplete() {
+                $field.remove();
+                // Update form validation
+                Form.dataChanged();
+            }
+        });
+    }
+};
+```
+
+### Form State Management
+
+```javascript
+const FormState = {
+    /**
+     * Save form state to session storage
+     */
+    saveState($form) {
+        const formData = $form.form('get values');
+        sessionStorage.setItem(
+            `form_${$form.attr('id')}`,
+            JSON.stringify(formData)
+        );
+    },
+    
+    /**
+     * Restore form state
+     */
+    restoreState($form) {
+        const savedData = sessionStorage.getItem(`form_${$form.attr('id')}`);
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                $form.form('set values', data);
+            } catch (e) {
+                console.error('Error restoring form state:', e);
+            }
+        }
+    },
+    
+    /**
+     * Clear saved state
+     */
+    clearState($form) {
+        sessionStorage.removeItem(`form_${$form.attr('id')}`);
+    }
+};
+```
+
+## 21. Fomantic-UI Tables and Data Display
+
+### Enhanced DataTable Integration
+
+```javascript
+const TableManager = {
+    /**
+     * Initialize Fomantic UI table with DataTables
+     */
+    initializeDataTable($table, customOptions = {}) {
+        const defaultOptions = {
+            lengthChange: false,
+            paging: false,
+            ordering: true,
+            info: false,
+            searching: true,
+            language: SemanticLocalization.dataTableLocalisation,
+            dom: '<"ui grid"<"eight wide column"l><"right aligned eight wide column"f>><"ui segment"t>',
+            drawCallback() {
+                // Re-initialize Fomantic UI components after draw
+                TableManager.initializeTableComponents($table);
+            }
+        };
+        
+        return $table.DataTable({
+            ...defaultOptions,
+            ...customOptions
+        });
+    },
+    
+    /**
+     * Initialize components within table
+     */
+    initializeTableComponents($table) {
+        $table.find('.ui.dropdown').dropdown();
+        $table.find('.ui.checkbox').checkbox();
+        $table.find('[data-tooltip]').popup();
+    }
+};
+```
+
+### Table Actions and Row Management
+
+```javascript
+const TableActions = {
+    /**
+     * Add action buttons to table rows
+     */
+    addRowActions($table) {
+        $table.on('click', '.edit.button', function(e) {
+            e.preventDefault();
+            const $row = $(this).closest('tr');
+            const id = $row.attr('id');
+            TableActions.editRow(id);
+        });
+        
+        $table.on('click', '.delete.button', function(e) {
+            e.preventDefault();
+            const $button = $(this);
+            $button.addClass('loading disabled');
+            
+            const $row = $button.closest('tr');
+            const id = $row.attr('id');
+            
+            TableActions.confirmDelete(id, () => {
+                TableActions.deleteRow($row);
+                $button.removeClass('loading disabled');
+            });
+        });
+    },
+    
+    /**
+     * Delete row with animation
+     */
+    deleteRow($row) {
+        $row.transition('fade out', {
+            duration: 500,
+            onComplete() {
+                $row.remove();
+                // Update table if empty
+                TableActions.checkEmptyTable();
+            }
+        });
+    },
+    
+    /**
+     * Check and show empty state
+     */
+    checkEmptyTable() {
+        const $tbody = $('table tbody');
+        if ($tbody.find('tr:not(.empty)').length === 0) {
+            $tbody.html(`
+                <tr class="empty">
+                    <td colspan="100%" class="center aligned">
+                        <div class="ui placeholder segment">
+                            <div class="ui icon header">
+                                <i class="search icon"></i>
+                                ${globalTranslate.table_no_records_found}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `);
+        }
+    }
+};
+```
+
+### Sortable Tables
+
+```javascript
+// Initialize sortable table with drag and drop
+const SortableTable = {
+    initialize($table) {
+        $table.tableDnD({
+            onDragClass: 'dragging',
+            dragHandle: '.drag.handle',
+            onDrop(table, row) {
+                // Update order in backend
+                const order = $(table).find('tbody tr').map((index, tr) => ({
+                    id: $(tr).attr('id'),
+                    priority: index
+                })).get();
+                
+                SortableTable.saveOrder(order);
+            }
+        });
+        
+        // Add visual feedback
+        $table.find('.drag.handle').hover(
+            function() { $(this).closest('tr').addClass('warning'); },
+            function() { $(this).closest('tr').removeClass('warning'); }
+        );
+    }
+};
+```
+
+## 22. Fomantic-UI Layout and Responsive Design
+
+### Responsive Menu Pattern
+
+```javascript
+const ResponsiveMenu = {
+    initialize() {
+        // Create sidebar for mobile
+        $('.ui.sidebar').sidebar({
+            context: '.bottom.segment',
+            dimPage: true,
+            transition: 'overlay'
+        });
+        
+        // Attach sidebar to menu button
+        $('.toc.item').on('click', function() {
+            $('.ui.sidebar').sidebar('toggle');
+        });
+        
+        // Handle visibility based on scroll
+        $('.masthead').visibility({
+            once: false,
+            onBottomPassed() {
+                $('.fixed.menu').transition('fade in');
+            },
+            onBottomPassedReverse() {
+                $('.fixed.menu').transition('fade out');
+            }
+        });
+    }
+};
+```
+
+### Grid and Layout Helpers
+
+```javascript
+const LayoutHelpers = {
+    /**
+     * Make columns equal height
+     */
+    equalizeHeights(selector) {
+        const $elements = $(selector);
+        let maxHeight = 0;
+        
+        // Reset heights
+        $elements.css('height', 'auto');
+        
+        // Find max height
+        $elements.each(function() {
+            const height = $(this).outerHeight();
+            if (height > maxHeight) {
+                maxHeight = height;
+            }
+        });
+        
+        // Apply max height
+        $elements.css('height', maxHeight);
+    },
+    
+    /**
+     * Handle responsive tables
+     */
+    makeTablesResponsive() {
+        $('table.ui.table').each(function() {
+            if (!$(this).parent().hasClass('ui.container')) {
+                $(this).wrap('<div class="ui container"></div>');
+            }
+            
+            $(this).addClass('unstackable');
+        });
+    }
+};
+```
+
+### Container and Spacing Utilities
+
+```javascript
+// Consistent spacing patterns
+const Spacing = {
+    applyStandardSpacing() {
+        // Main containers
+        $('.main.container').css({
+            'margin-top': '7em',
+            'margin-bottom': '7em'
+        });
+        
+        // Sections
+        $('.ui.vertical.stripe').css({
+            'padding': '8em 0em'
+        });
+        
+        // Headers
+        $('h1.ui.header').css('margin-top', '3em');
+        $('h2.ui.header').css('margin', '4em 0em 2em');
+        $('h3.ui.header').css('margin-top', '2em');
+    }
+};
+```
+
+### Loading States
+
+```javascript
+const LoadingStates = {
+    /**
+     * Show loading overlay
+     */
+    showLoading(element) {
+        const $element = $(element);
+        $element.addClass('loading');
+        
+        // Add dimmer if not exists
+        if (!$element.find('.ui.dimmer').length) {
+            $element.append(`
+                <div class="ui active inverted dimmer">
+                    <div class="ui text loader">${globalTranslate.loading}</div>
+                </div>
+            `);
+        }
+    },
+    
+    /**
+     * Hide loading overlay
+     */
+    hideLoading(element) {
+        const $element = $(element);
+        $element.removeClass('loading');
+        $element.find('.ui.dimmer').remove();
+    },
+    
+    /**
+     * Progress indicator
+     */
+    showProgress(element, percent, label) {
+        const $progress = $(element).find('.ui.progress');
+        $progress.progress({
+            percent: percent,
+            label: 'ratio',
+            text: {
+                ratio: label || '{value} of {total}'
+            }
+        });
+    }
+};
+```
+
+### Transitions and Animations
+
+```javascript
+const Animations = {
+    /**
+     * Animate element appearance
+     */
+    animateIn(elements, animation = 'fade up') {
+        $(elements).transition({
+            animation: animation,
+            interval: 100,
+            reverse: false
+        });
+    },
+    
+    /**
+     * Smooth scroll to element
+     */
+    scrollTo(target, offset = 0) {
+        $('html, body').animate({
+            scrollTop: $(target).offset().top - offset
+        }, 500);
+    },
+    
+    /**
+     * Flash message animation
+     */
+    flashMessage(message, type = 'info') {
+        const $message = $(`
+            <div class="ui ${type} message transition hidden">
+                ${message}
+            </div>
+        `);
+        
+        $('.main.container').prepend($message);
+        
+        $message.transition('fade down in', {
+            onComplete() {
+                setTimeout(() => {
+                    $message.transition('fade up out', {
+                        onComplete() {
+                            $message.remove();
+                        }
+                    });
+                }, 3000);
+            }
+        });
+    }
+};
+```
+
+### Best Practices Summary for Fomantic-UI
+
+1. **Initialize components after DOM ready**
+   ```javascript
+   $(document).ready(() => {
+       UIComponents.initialize();
+   });
+   ```
+
+2. **Use semantic class names**
+   ```javascript
+   // Good
+   $('.ui.form').form();
+   $('.ui.dropdown').dropdown();
+   
+   // Bad
+   $('form').form(); // Too generic
+   ```
+
+3. **Handle component state properly**
+   ```javascript
+   // Save state before destroying
+   const dropdownValue = $('#my-dropdown').dropdown('get value');
+   $('#my-dropdown').dropdown('destroy');
+   // ... recreate and restore
+   $('#my-dropdown').dropdown('set selected', dropdownValue);
+   ```
+
+4. **Use Fomantic callbacks effectively**
+   ```javascript
+   $('.ui.modal').modal({
+       onShow() {
+           // Initialize content
+       },
+       onVisible() {
+           // Focus first input
+           $(this).find('input:first').focus();
+       },
+       onHidden() {
+           // Clean up
+           $(this).find('form').form('clear');
+       }
+   });
+   ```
+
+5. **Optimize performance**
+   ```javascript
+   // Cache jQuery objects
+   const $dropdown = $('#heavy-dropdown');
+   
+   // Use appropriate initialization
+   $dropdown.dropdown({
+       apiSettings: {
+           cache: true,
+           throttle: 300
+       }
+   });
+   ```
