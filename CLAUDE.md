@@ -185,3 +185,12 @@ Additional documentation available in the development docs repository:
 ## Frontend Development
 
 - To include new JS or CSS we add it into AssetProvider
+
+## External Documentation Links
+
+### Core Technologies
+- 📖 **[Phalcon Framework](https://github.com/phalcon/cphalcon)** - High performance PHP framework documentation
+- 📖 **[Fomantic-UI](https://github.com/fomantic/fomantic-ui)** - Community fork of Semantic-UI framework
+- 📖 **[PHP Documentation](https://github.com/php/doc-en)** - Official PHP documentation (English)
+- 📖 **[Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript)** - JavaScript coding standards and best practices
+- 📖 **[Asterisk Documentation](https://github.com/asterisk/documentation)** - Official Asterisk PBX documentation

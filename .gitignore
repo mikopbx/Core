@@ -9,3 +9,4 @@ src/AdminCabinet/Views/Modules
 .DS_Store
 *.cache
 CLAUDE.local.md
+build
