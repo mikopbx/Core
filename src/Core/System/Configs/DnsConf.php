@@ -135,7 +135,6 @@ class DnsConf extends SystemConfigClass
         $config .= "user=www" . PHP_EOL;
         $config .= "group=www" . PHP_EOL;
         $config .= "strict-order" . PHP_EOL;
-        $config .= "log-queries" . PHP_EOL;
         $config .= "interface=lo" . PHP_EOL;
         $config .= "bind-interfaces" . PHP_EOL;
         $config .= "pid-file=/var/run/".self::PROC_NAME.".pid" . PHP_EOL;
