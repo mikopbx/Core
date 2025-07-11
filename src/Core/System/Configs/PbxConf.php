@@ -402,7 +402,7 @@ class PbxConf extends SystemConfigClass
                 $result = true;
                 break;
             }
-            sleep(1);
+            usleep(500000);
             $time = microtime(true) - $time_start;
             if ($time > 60) {
                 SystemMessages::sysLogMsg(__CLASS__, 'Error: Asterisk has not booted');

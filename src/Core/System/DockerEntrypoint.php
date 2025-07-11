@@ -53,6 +53,19 @@ class DockerEntrypoint extends Injectable
     }
 
     /**
+     * Outputs a formatted message to console
+     * @param string $message
+     * @param bool $newLine
+     */
+    private function echoMessage(string $message, bool $newLine = true): void
+    {
+        echo $message;
+        if ($newLine) {
+            echo PHP_EOL;
+        }
+    }
+
+    /**
      * Handles the shutdown event for the Docker container.
      * Logs the time taken since the worker start and any last-minute errors.
      */
@@ -61,10 +74,11 @@ class DockerEntrypoint extends Injectable
         $e = error_get_last();
         $delta = round(microtime(true) - $this->workerStartTime, 2);
         if ($e === null) {
-            SystemMessages::sysLogMsg(static::class, "shutdownHandler after $delta seconds", LOG_DEBUG);
+            // Don't output anything on normal startup completion
+            // The shutdown handler runs after the welcome message is displayed
         } else {
             $details = (string)print_r($e, true);
-            SystemMessages::sysLogMsg(static::class, "shutdownHandler after $delta seconds with error: $details", LOG_DEBUG);
+            SystemMessages::sysLogMsg(static::class, "Container stopped after $delta seconds with error: $details", LOG_ERR);
         }
     }
 
@@ -104,7 +118,8 @@ class DockerEntrypoint extends Injectable
     {
         $newUserId = getenv('ID_WWW_USER');
         $newGroupId = getenv('ID_WWW_GROUP');
-        SystemMessages::sysLogMsg(__METHOD__, ' - Check user id and group id for www', LOG_INFO);
+        // Output message only if we need to change permissions
+        $showMessage = false;
         $pidIdPath = '/cf/conf/user.id';
         $pidGrPath = '/cf/conf/group.id';
 
@@ -125,7 +140,11 @@ class DockerEntrypoint extends Injectable
         $chgrp = Util::which('chgrp');
         $currentUserId = trim(shell_exec("$grep '^$userID:' < /etc/shadow | $cut -d ':' -f 3")??'');
         if ($currentUserId !== '' && !empty($newUserId) && $currentUserId !== $newUserId) {
-            SystemMessages::sysLogMsg(__METHOD__, " - Old $userID user id: $currentUserId; New $userID user id: $newUserId", LOG_DEBUG);
+            if (!$showMessage) {
+                $this->echoMessage(' - Configuring user permissions...');
+                $showMessage = true;
+            }
+            $this->echoMessage("   Updating user ID: $currentUserId → $newUserId");
             $commands[] = "$sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
             $id = '';
             if (file_exists($pidIdPath)) {
@@ -139,7 +158,11 @@ class DockerEntrypoint extends Injectable
 
         $currentGroupId = trim(shell_exec("$grep '^$userID:' < /etc/group | $cut -d ':' -f 3")??'');
         if ($currentGroupId !== '' && !empty($newGroupId) && $currentGroupId !== $newGroupId) {
-            SystemMessages::sysLogMsg(__METHOD__, " - Old $userID group id: $currentGroupId; New $userID group id: $newGroupId", LOG_DEBUG);
+            if (!$showMessage) {
+                $this->echoMessage(' - Configuring user permissions...');
+                $showMessage = true;
+            }
+            $this->echoMessage("   Updating group ID: $currentGroupId → $newGroupId");
             $commands[] = "$sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
             $commands[] = "$sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/shadow";
 
@@ -163,6 +186,7 @@ class DockerEntrypoint extends Injectable
      */
     public function prepareDatabase(): array
     {
+        $this->echoMessage(' - Preparing database...');
         $sqlite3 = Util::which('sqlite3');
         $rm = Util::which('rm');
         $cp = Util::which('cp');
@@ -182,6 +206,7 @@ class DockerEntrypoint extends Injectable
      */
     private function getDefaultSettings(): void
     {
+        $this->echoMessage(' - Loading system settings...');
         // Get settings from mikopbx-settings.json
         $jsonString = file_get_contents(self::pathInc);
         try {
@@ -213,6 +238,7 @@ class DockerEntrypoint extends Injectable
      */
     private function applyEnvironmentSettings(): void
     {
+        $this->echoMessage(' - Applying environment variables...');
         $reflection = new ReflectionClass(PbxSettings::class);
         $constants = $reflection->getConstants();
 
@@ -245,6 +271,9 @@ class DockerEntrypoint extends Injectable
                 }
             }
         }
+        
+        // Add empty line after environment setup
+        $this->echoMessage('');
     }
 
     /**
@@ -267,7 +296,7 @@ class DockerEntrypoint extends Injectable
         $command = "$sqlite3 $dbPath \"UPDATE m_LanInterfaces SET $key='$newValue' WHERE internet='1'\"";
         $res = Processes::mwExec($command, $out);
         if ($res === 0) {
-            SystemMessages::sysLogMsg(__METHOD__, " - Update m_LanInterfaces.$key to '$newValue'", LOG_INFO);
+            SystemMessages::sysLogMsg(__METHOD__, " - Update m_LanInterfaces.$key to '$newValue'", LOG_DEBUG);
         } else {
             SystemMessages::sysLogMsg(__METHOD__, " - Update m_LanInterfaces.$key to '$newValue' failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
         }
@@ -285,7 +314,7 @@ class DockerEntrypoint extends Injectable
         }
         $newData = json_encode($this->jsonSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         file_put_contents(self::pathInc, $newData);
-        SystemMessages::sysLogMsg(__METHOD__, " - Update $path:$key to '$newValue' in /etc/inc/mikopbx-settings.json", LOG_INFO);
+        SystemMessages::sysLogMsg(__METHOD__, " - Update $path:$key to '$newValue' in /etc/inc/mikopbx-settings.json", LOG_DEBUG);
     }
 
     /**
@@ -302,12 +331,12 @@ class DockerEntrypoint extends Injectable
             $command = "$sqlite3 $dbPath \"UPDATE m_PbxSettings SET value='$newValue' WHERE key='$key'\"";
             $res = Processes::mwExec($command, $out);
             if ($res === 0) {
-                SystemMessages::sysLogMsg(__METHOD__, " - Update $key to '$newValue' in m_PbxSettings", LOG_INFO);
+                SystemMessages::sysLogMsg(__METHOD__, " - Update $key to '$newValue' in m_PbxSettings", LOG_DEBUG);
             } else {
                 SystemMessages::sysLogMsg(__METHOD__, " - Update $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
             }
         } elseif (!array_key_exists($key, $this->settings)) {
-            SystemMessages::sysLogMsg(__METHOD__, " - Unknown environment settings key:  $key", LOG_ERR);
+            $this->echoMessage("   Warning: Unknown environment variable '$key' - skipping");
         }
     }
 
@@ -325,6 +354,11 @@ class DockerEntrypoint extends Injectable
     }
 }
 
-SystemMessages::sysLogMsg(DockerEntrypoint::class, ' - Start Docker entrypoint (php)', LOG_DEBUG);
+// Record system boot start time
+$bootStartTime = microtime(true);
+file_put_contents('/tmp/system_boot_start_time', $bootStartTime);
+
+// Output startup message
+echo " - Starting MikoPBX in Docker container..." . PHP_EOL;
 $main = new DockerEntrypoint();
 $main->start();

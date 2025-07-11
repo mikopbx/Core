@@ -25,7 +25,6 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
-use Phalcon\Di\Injectable;
 
 /**
  * Class NatsConf
@@ -68,6 +67,15 @@ class NatsConf extends SystemConfigClass
         return $this->monitRestart();
     }
 
+    /**
+     * Generates the Monit configuration for the NATS service.
+     *
+     * This method creates a Monit configuration file for the NATS service,
+     * which is used to monitor and manage the service's state.
+     *
+     * @return bool True if the configuration was generated successfully, false otherwise.  
+     *
+     */
     public function generateMonitConf(): bool
     {
         if(empty($this->conf_file)){
@@ -88,6 +96,14 @@ class NatsConf extends SystemConfigClass
         return true;
     }
 
+    /**
+     * Configures the NATS service.
+     *
+     * This method sets up the configuration for the NATS service,
+     * including the configuration file, log directory, and session directory.
+     *
+     * @return void
+     */
     private function configure():void
     {
         $config = $this->getDI()->get('config')->gnats;

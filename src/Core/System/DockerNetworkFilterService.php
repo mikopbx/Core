@@ -25,7 +25,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\Configs;
-use MikoPBX\Core\System\Configs\NginxConf;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Di\Di;
@@ -329,6 +329,9 @@ class DockerNetworkFilterService extends Injectable
         // Generate fail2ban ACL for Asterisk
         Configs\Fail2BanConf::generateAsteriskAclConfigFromRedis();
         
+        // Generate fail2ban ACL for IAX
+        Configs\Fail2BanConf::generateIaxAclConfigFromRedis();
+        
         // Generate Nginx deny (for static includes, not used with Lua)
         self::generateNginxNetworkFiltersDeny();
         
@@ -389,12 +392,16 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function reloadServices(): void
     {
-        // Reload Asterisk PJSIP
-        WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
+        // Only reload Asterisk PJSIP if system is already running
+        // During boot, Asterisk will load the ACL files on startup
+        if (!System::isBooting()) {
+            // Reload Asterisk PJSIP to apply new ACL rules
+            WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
+        }
         
-        // Reload Nginx
-        $nginxConf = new NginxConf();
-        $nginxConf->reStart();
+        // Nginx doesn't need restart - it uses Redis dynamically via Lua script
+        // The Lua script reads firewall rules from Redis on each request
+        // with 10-second cache for performance
     }
     
     /**

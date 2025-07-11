@@ -31,15 +31,16 @@ use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Config\RegisterDIServices;
-use MikoPBX\Core\System\Configs\PbxConf;
+use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\PHPConf;
+use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
-use Phalcon\Di\Injectable;
 
+use Phalcon\Di\Injectable;
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -650,6 +651,7 @@ class Storage extends Injectable
             $this->updateConfigWithNewMountPoint("/storage/usbdisk1");
             $this->createWorkDirs();
             PHPConf::setupLog();
+            NginxConf::setupLog();
             return;
         }
 

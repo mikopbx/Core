@@ -32,6 +32,7 @@ use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Verify;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
@@ -81,17 +82,44 @@ class Fail2BanConf extends SystemConfigClass
     public function start(): bool
     {
         if(System::isBooting()){
-            $result = true;
-            if ($this->fail2banEnable){
-                $this->fail2banMakeDirs();
-                $this->writeConfig();
-                Processes::mwExec($this->startCommand);
-                $result = $this->monitWaitStart();
+            if (!$this->fail2banEnable){
+                return true; // If disabled, return success
             }
+            
+            $this->fail2banMakeDirs();
+            $this->writeConfig();
+            $this->generateModulesFilters();
+            
+            // Ensure /var/run/fail2ban directory exists
+            Util::mwMkdir('/var/run/fail2ban');
+            
+            // Ensure log files exist before starting fail2ban
+            $log_dir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/asterisk/';
+            Util::mwMkdir($log_dir);
+            $logFiles = ['security_log', 'error', 'messages'];
+            foreach ($logFiles as $logFile) {
+                $logPath = $log_dir . $logFile;
+                if (!file_exists($logPath)) {
+                    touch($logPath);
+                }
+            }
+            
+            // Also ensure syslog file exists
+            $syslog_file = SyslogConf::getSyslogFile();
+            if (!file_exists($syslog_file)) {
+                $syslogDir = dirname($syslog_file);
+                Util::mwMkdir($syslogDir);
+                touch($syslog_file);
+            }
+            
+            // Start fail2ban in background
+            Processes::mwExecBg($this->startCommand);
+            
+            // During boot, monit is not yet started, so we wait for fail2ban directly
+            return $this->waitForFail2BanStart(10);
         }else{
-            $result = $this->reStart();
+            return $this->reStart();
         }
-        return $result;
     }
 
     /**
@@ -139,7 +167,7 @@ class Fail2BanConf extends SystemConfigClass
 
         $binPath = Util::which(self::FB_CLIENT_BIN);
         $confPath = $this->getMainMonitConfFile();
-        $conf = 'check process '.self::PROC_NAME.' with pidfile /var/run/fail2ban/'.self::PROC_NAME.'.pid'.PHP_EOL.
+        $conf = 'check process '.self::PROC_NAME.' with pidfile '.self::PID_FILE.PHP_EOL.
             '    start program = "'.$this->startCommand.'"'.PHP_EOL.
             '        as uid root and gid root'.PHP_EOL.
             '    stop program = "'."$binPath -x stop".'"'.PHP_EOL.
@@ -160,19 +188,6 @@ class Fail2BanConf extends SystemConfigClass
     {
         $fail2ban_enable       = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
         return intval($fail2ban_enable) === 1;
-    }
-
-    /**
-     * Check fail2ban service and restart it died
-     */
-    public static function checkFail2ban(): void
-    {
-        $fail2ban = new self();
-        if ($fail2ban->fail2banEnable &&
-            !$fail2ban->fail2banIsRunning() ) {
-            // Need start...
-            $fail2ban->reStart();
-        }
     }
 
     /**
@@ -252,22 +267,33 @@ class Fail2BanConf extends SystemConfigClass
     }
 
     /**
-     * Check fail2ban service status
+     * Wait for Fail2Ban to start with timeout
      *
-     * @return bool
+     * @param int $timeout Maximum number of seconds to wait
+     * @return bool True if fail2ban started within timeout
      */
-    private function fail2banIsRunning(): bool
+    private function waitForFail2BanStart(int $timeout = 20): bool
     {
-        $fail2banPath = Util::which(Fail2BanConf::FB_CLIENT_BIN);
-        $res_ping     = Processes::mwExec("$fail2banPath ping");
-        $res_stat     = Processes::mwExec("$fail2banPath status");
-
-        $result = false;
-        if ($res_ping === 0 && $res_stat === 0) {
-            $result = true;
+        $fail2banPath = Util::which(self::FB_CLIENT_BIN);
+        if (empty($fail2banPath)) {
+            return false;
         }
-
-        return $result;
+        
+        $maxAttempts = $timeout * 2; // Check every 0.5 seconds
+        
+        // Give fail2ban a moment to create socket file
+        usleep(500000); // 0.5 second initial delay
+        
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            // Check if fail2ban responds to ping
+            $pingResult = Processes::mwExec("$fail2banPath ping 2>&1", $out);
+            if ($pingResult === 0) {
+                return true;
+            }
+            usleep(500000); // 0.5 second
+        }
+        
+        return false;
     }
 
     /**
@@ -621,15 +647,20 @@ class Fail2BanConf extends SystemConfigClass
             // Convert the module's unique id to a file-friendly format
             $fileName = Text::uncamelize($moduleUniqueId, '_');
 
-            // Construct the configuration string for the module
-            $config = "[$fileName]\n" .
-                "enabled = true\n" .
-                "logpath = $syslog_file\n" .
-                "maxretry = $max_retry\n" .
-                "findtime = $find_time\n" .
-                "bantime = $ban_time\n" .
-                "logencoding = utf-8\n" .
-                "action = iptables-allports[name=$moduleUniqueId, protocol=all]\n\n";
+            // If module provided jail configuration, use it; otherwise generate default configuration
+            if (!empty($moduleJailText)) {
+                $config = $moduleJailText;
+            } else {
+                // Construct the default configuration string for the module
+                $config = "[$fileName]\n" .
+                    "enabled = true\n" .
+                    "logpath = $syslog_file\n" .
+                    "maxretry = $max_retry\n" .
+                    "findtime = $find_time\n" .
+                    "bantime = $ban_time\n" .
+                    "logencoding = utf-8\n" .
+                    "action = iptables-allports[name=$moduleUniqueId, protocol=all]\n\n";
+            }
 
             // Write the configuration to the jail's configuration file
             file_put_contents(self::JAILS_DIR . "/" . $prefix . "$fileName.$extension", $config);
@@ -764,6 +795,7 @@ class Fail2BanConf extends SystemConfigClass
 
         // Regenerate ACL configuration files from Redis
         self::generateAsteriskAclConfigFromRedis();
+        self::generateIaxAclConfigFromRedis();
         DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
 
         // Reload PJSIP
@@ -771,6 +803,9 @@ class Fail2BanConf extends SystemConfigClass
 
         // Reload manager
         WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
+        
+        // Reload IAX
+        WorkerModelsEvents::invokeAction(ReloadIAXAction::class);
     }
 
     /**
@@ -790,6 +825,7 @@ class Fail2BanConf extends SystemConfigClass
 
         // Regenerate ACL configuration files from Redis
         self::generateAsteriskAclConfigFromRedis();
+        self::generateIaxAclConfigFromRedis();
         DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
 
         // Reload PJSIP
@@ -797,6 +833,9 @@ class Fail2BanConf extends SystemConfigClass
 
         // Reload manager
         WorkerModelsEvents::invokeAction(ReloadManagerAction::class);
+        
+        // Reload IAX
+        WorkerModelsEvents::invokeAction(ReloadIAXAction::class);
     }
 
     /**
@@ -911,4 +950,49 @@ class Fail2BanConf extends SystemConfigClass
         return false;
     }
 
+    /**
+     * Generate ACL configuration file for IAX from fail2ban data
+     *
+     * @return void
+     */
+    public static function generateIaxAclConfigFromRedis(): void
+    {
+        // Check if fail2ban is enabled
+        $fail2banEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
+
+        // Define paths using Directories constants
+        $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
+        $aclFile = $asteriskEtcDir . '/fail2ban_iax_dynamic_acl.conf';
+
+        if ($fail2banEnabled !== '1') {
+            // Remove ACL file if fail2ban is disabled
+            if (file_exists($aclFile)) {
+                unlink($aclFile);
+            }
+            return;
+        }
+
+        // Get blocked IPs from Redis for SIP category (IAX uses same blocking)
+        $blockedIps = DockerNetworkFilterService::getBlockedIps('sip');
+
+        // Generate ACL file for iax.conf
+        $content = "; Fail2ban dynamic ACL for IAX - DO NOT EDIT MANUALLY\n";
+        $content .= "; This file is automatically generated by fail2ban\n";
+        $content .= "; Last updated: " . date('Y-m-d H:i:s') . "\n";
+        $content .= "; Blocked IPs: " . count($blockedIps) . "\n\n";
+
+        // Always permit localhost first
+        $content .= "; Always allow localhost access\n";
+        $content .= "permit=127.0.0.1/255.255.255.255\n";
+        $content .= "permit=::1\n\n";
+
+        if (!empty($blockedIps)) {
+            $content .= "; Blocked IPs by fail2ban\n";
+            foreach ($blockedIps as $ip) {
+                $content .= "deny=$ip/255.255.255.255\n";
+            }
+        }
+
+        file_put_contents($aclFile, $content);
+    }
 }

@@ -31,7 +31,6 @@ use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\Workers\WorkerBeanstalkdTidyUp;
 use MikoPBX\Core\Workers\WorkerCallEvents;
 use MikoPBX\Core\Workers\WorkerCdr;
-use MikoPBX\Core\Workers\WorkerCheckFail2BanAlive;
 use MikoPBX\Core\Workers\WorkerLogRotate;
 use MikoPBX\Core\Workers\WorkerMarketplaceChecker;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
@@ -255,7 +254,6 @@ class WorkerSafeScriptsCore extends WorkerBase
                 [
                     WorkerMarketplaceChecker::class,
                     WorkerBeanstalkdTidyUp::class,
-                    WorkerCheckFail2BanAlive::class,
                     WorkerLogRotate::class,
                     WorkerRemoveOldRecords::class,
                     WorkerNotifyAdministrator::class,

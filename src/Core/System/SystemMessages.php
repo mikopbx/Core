@@ -229,7 +229,7 @@ class SystemMessages extends Injectable
      */
     public static function teletypeEchoResultWithTime(string $message, string $result = self::RESULT_DONE, float $elapsedTime = 0.0): void
     {
-        $timeStr = $elapsedTime > 0 ? " ({$elapsedTime}s)" : '';
+        $timeStr = sprintf(" (%.2fs)", $elapsedTime);
         $len = max(0, 80 - strlen($message) - 9 - strlen($timeStr));
         $spaces = str_repeat('.', $len);
         $formattedResult = self::getFormattedResult($result);
@@ -254,7 +254,7 @@ class SystemMessages extends Injectable
             // Failed to retrieve the screen width.
             return;
         }
-        $timeStr = $elapsedTime > 0 ? " ({$elapsedTime}s)" : '';
+        $timeStr = sprintf(" (%.2fs)", $elapsedTime);
         $len = $cols - strlen($message) - 8 - strlen($timeStr);
         if ($len < 2) {
             // Incorrect screen width.

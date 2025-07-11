@@ -23,6 +23,10 @@ use MikoPBX\Core\System\{Processes, Util, SystemLoader};
 
 require_once('Globals.php');
 
+// Record system boot start time
+$bootStartTime = microtime(true);
+file_put_contents('/tmp/system_boot_start_time', $bootStartTime);
+
 // Sleep if /tmp/ejectcd file exists
 if(file_exists('/tmp/ejectcd')){
     sleep(15);

@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ use MikoPBX\Core\System\Configs\ACPIDConf;
 use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\DnsConf;
-use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\MonitConf;
@@ -40,7 +39,6 @@ use MikoPBX\Core\System\Configs\SSHConf;
 use MikoPBX\Core\System\Configs\SentryConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VmToolsConf;
-use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
 use Phalcon\Di\Injectable;
@@ -70,6 +68,13 @@ class SystemLoader extends Injectable
     private float $stageStartTime = 0.0;
 
     /**
+     * Time when the system startup began (microtime)
+     *
+     * @var float
+     */
+    private float $systemStartTime = 0.0;
+
+    /**
      * Check if the system is running in Docker
      *
      * @var bool
@@ -92,6 +97,14 @@ class SystemLoader extends Injectable
     {
         $this->isDocker = Util::isDocker();
         $this->isRecoveryMode = Util::isRecoveryMode();
+        
+        // Read system boot start time from file, fallback to current time if not available
+        $bootTimeFile = '/tmp/system_boot_start_time';
+        if (file_exists($bootTimeFile)) {
+            $this->systemStartTime = (float)file_get_contents($bootTimeFile);
+        } else {
+            $this->systemStartTime = microtime(true);
+        }
     }
 
 
@@ -114,7 +127,11 @@ class SystemLoader extends Injectable
      */
     private function echoResultMsg(string $result = SystemMessages::RESULT_DONE): void
     {
-        $elapsedTime = round(microtime(true) - $this->stageStartTime, 3);
+        // Only calculate elapsed time if we have a valid start time
+        $elapsedTime = 0.0;
+        if ($this->stageStartTime > 0) {
+            $elapsedTime = round(microtime(true) - $this->stageStartTime, 2);
+        }
         SystemMessages::echoResultMsgWithTime($this->stageMessage, $result, $elapsedTime);
         $this->stageMessage = '';
         $this->stageStartTime = 0.0;
@@ -248,7 +265,6 @@ class SystemLoader extends Injectable
         $dnsConf = new DnsConf();
         $dnsConf->resolveConfGenerate($network->getHostDNS());
         $this->echoResultMsg($dnsConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
-        $this->echoResultMsg();
 
         // Configure LAN interface
         $this->echoStartMsg(' - Configuring LAN interface...');
@@ -311,6 +327,7 @@ class SystemLoader extends Injectable
             $network->updateExternalIp();
             $this->echoResultMsg();
         } else {
+            $this->echoStartMsg(' - Update external IP...');
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
@@ -364,10 +381,6 @@ class SystemLoader extends Injectable
         $nginx = new NginxConf();
         $this->echoResultMsg($nginx->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
-        $this->echoStartMsg(' - Start monit daemon...');
-        $monit = new MonitConf();
-        $this->echoResultMsg($monit->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
-
         // Update Docker network filters configurations
         if ($this->isDocker) {
             $this->echoStartMsg(' - Updating Docker network filters configurations...');
@@ -375,7 +388,23 @@ class SystemLoader extends Injectable
             $this->echoResultMsg();
         }
 
+        // Start the monit daemon
+        $this->echoStartMsg(' - Start monit daemon...');
+        $monit = new MonitConf();
+        $this->echoResultMsg($monit->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+
+
         System::setBooting(false);
+
+        // Calculate total startup time
+        $totalTime = round(microtime(true) - $this->systemStartTime, 2);
+        echo PHP_EOL . " - System startup completed in {$totalTime}s" . PHP_EOL;
+        
+        // Clean up boot time file
+        $bootTimeFile = '/tmp/system_boot_start_time';
+        if (file_exists($bootTimeFile)) {
+            unlink($bootTimeFile);
+        }
 
         // Display network information
         $headerMessage = "All services are fully loaded welcome";

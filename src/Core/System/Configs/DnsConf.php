@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,10 +61,6 @@ class DnsConf extends SystemConfigClass
      */
     public function resolveConfGenerate(array $dns = []): void
     {
-        if (Util::isDocker()) {
-            return;
-        }
-        
         if(empty($dns)){
             // Retrieve host DNS settings
             $netConf = new Network();
@@ -150,31 +146,26 @@ class DnsConf extends SystemConfigClass
     }
 
     /**
-     * Starts the Redis server.
+     * Starts the dnsmasq server.
      *
      * @return bool
      */
     public function start(): bool
     {
-        if (Util::isDocker()) {
-            return true;
-        }elseif(System::isBooting()){
+        if(System::isBooting()){
             Processes::mwExecBg($this->startCommand);
             $result = $this->monitWaitStart();
-        }else{
+        } else {
             $result = $this->reStart();
         }
         return $result;
     }
 
     /**
-     * Restarts Beanstalk server
+     * Restarts dnsmasq server
      */
     public function reStart(): bool
     {
-        if(Util::isDocker()){
-            return true;
-        }
         $this->resolveConfGenerate();
         $this->generateMonitConf();
         return $this->monitRestart();

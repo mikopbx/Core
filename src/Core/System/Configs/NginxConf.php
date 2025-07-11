@@ -112,7 +112,7 @@ class NginxConf extends SystemConfigClass
         $webPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
 
         $waitResult = false;
-        // Wait for Nginx to start completely (max 10 seconds)
+        // Wait for Nginx to start completely
         $maxAttempts = 20;
         $attempt = 0;
         while ($attempt < $maxAttempts) {
@@ -151,12 +151,23 @@ class NginxConf extends SystemConfigClass
             }
         }
 
+        $pid = '';
         if (!empty($filePid)) {
-            $pid = Processes::getPidOfProcess("^$filePid ");
-        } else {
+            $searchPattern = "^$filePid ";
+            $pid = Processes::getPidOfProcess($searchPattern);
+        } 
+        
+        if (empty($pid)) {
             $nginxPath = Util::which(self::PROC_NAME);
-            $pid       = Processes::getPidOfProcess($nginxPath);
+            // Search for nginx master process
+            $pid = Processes::getPidOfProcess("nginx: master process");
+            
+            // If not found, try searching by executable path
+            if (empty($pid)) {
+                $pid = Processes::getPidOfProcess($nginxPath);
+            }
         }
+        
         return $pid;
     }
 
@@ -189,9 +200,6 @@ class NginxConf extends SystemConfigClass
 
         // Add dynamic IP filtering via Lua for Docker environments
         if (Util::isDocker()) {
-            // Synchronize firewall data to Redis
-            DockerNetworkFilterService::updateAllConfigurations();
-
             // Get Redis/Lua configuration
             $redisVars = $this->generateRedisLuaConfig();
 
@@ -415,8 +423,8 @@ class NginxConf extends SystemConfigClass
         $logdir = Directories::getDir(Directories::CORE_LOGS_DIR) . '/nginx';
         Util::mwMkdir($logdir);
         return [
-            '/var/log/nginx/access.log' => "$logdir/access.log",
-            '/var/log/nginx/error.log' => "$logdir/error.log",
+            '/var/log/nginx_access.log' => "$logdir/access.log",
+            '/var/log/nginx_error.log' => "$logdir/error.log",
         ];
     }
 

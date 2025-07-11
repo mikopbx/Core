@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -53,6 +54,11 @@ class RedisConf extends SystemConfigClass
      */
     public function start(): bool
     {
+        if(System::isBooting()){
+            $this->configure();
+            Processes::mwExecBg($this->startCommand);
+            return $this->waitForRedisStart();
+        }
         return $this->reStart();
     }
 
@@ -63,15 +69,16 @@ class RedisConf extends SystemConfigClass
      */
     public function reStart(): bool
     {
-        $result = false;
         Processes::killByName(self::PROC_NAME);
-        $ch = 0;
-        do {
-            $ch++;
-            // Wait for Redis to finish its work
-            sleep(1);
-            $pid2 = Processes::getPidOfProcess(self::PROC_NAME);
-        } while (!empty($pid2) && $ch < 30);
+        
+        // Wait for Redis to completely stop
+        $maxAttempts = 30;
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            if (empty(Processes::getPidOfProcess(self::PROC_NAME))) {
+                break;
+            }
+            usleep(500000); // 0.5 second
+        }
 
         $this->configure();
         $this->generateMonitConf();
@@ -83,15 +90,28 @@ class RedisConf extends SystemConfigClass
             $this->monitRestart();
         }
 
+        return $this->waitForRedisStart();
+    }
+
+    /**
+     * Wait for Redis to start with timeout
+     *
+     * @param int $timeout Maximum number of seconds to wait
+     * @return bool True if Redis started within timeout
+     */
+    private function waitForRedisStart(int $timeout = 60): bool
+    {
         $redisCli = Util::which('redis-cli');
-        for ($i = 1; $i <= 60; $i++) {
-            if (Processes::mwExec("$redisCli -p $this->port info") === 0) {
-                $result = true;
-                break;
+        $maxAttempts = $timeout * 2; // Check every 0.5 seconds
+        
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            if (Processes::mwExec("$redisCli -p $this->port ping") === 0) {
+                return true;
             }
-            sleep(1);
+            usleep(500000); // 0.5 second
         }
-        return $result;
+        
+        return false;
     }
 
     /**
