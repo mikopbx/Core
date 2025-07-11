@@ -122,7 +122,7 @@ class DnsConf extends SystemConfigClass
     public function generateDnsConfig(array $named_dns, bool $needRestart = true): void
     {
         $config  = "listen-address=127.0.0.1" . PHP_EOL;
-        $config .= "no-dhcp-interface=" . PHP_EOL;
+        $config .= "no-dhcp-interface=*" . PHP_EOL;
         $config .= "cache-size=1000" . PHP_EOL;
         foreach ($named_dns as $dns) {
             $config .= "server=$dns" . PHP_EOL;
@@ -131,7 +131,6 @@ class DnsConf extends SystemConfigClass
         $config .= "user=www" . PHP_EOL;
         $config .= "group=www" . PHP_EOL;
         $config .= "strict-order" . PHP_EOL;
-        $config .= "log-queries" . PHP_EOL;
         $config .= "interface=lo" . PHP_EOL;
         $config .= "bind-interfaces" . PHP_EOL;
         $config .= "pid-file=/var/run/".self::PROC_NAME.".pid" . PHP_EOL;
