@@ -78,7 +78,8 @@ class ProvidersController extends BaseController
             $provider->Sip->disabled = '0';
             $provider->Sip->qualifyfreq = 60;
             $provider->Sip->qualify = '1';
-            $provider->Sip->secret = SIP::generateSipPassword();
+            // Don't set password for new providers - let user generate if needed
+            $provider->Sip->secret = '';
         } elseif ($idIsEmpty) {
             $uniqId = Sip::generateUniqueID('SIP-TRUNK-');
             $oldProvider = $provider;
@@ -96,7 +97,8 @@ class ProvidersController extends BaseController
             $provider->Sip->description = '';
             $provider->Sip->id     = '';
             $provider->Sip->uniqid = $uniqId;
-            $provider->Sip->secret = md5(microtime());
+            // Don't set password when copying - let user generate if needed
+            $provider->Sip->secret = '';
         }
 
         $providerHost = $provider->Sip->host;
@@ -143,7 +145,8 @@ class ProvidersController extends BaseController
             $provider->Iax->registration_type = Iax::REGISTRATION_TYPE_OUTBOUND;
             $provider->Iax->networkfilterid = ''; // No network filter by default
             $provider->Iax->receive_calls_without_auth = '0'; // Auth required by default
-            $provider->Iax->secret = Iax::generateIaxPassword();
+            // Don't set password for new providers - let user generate if needed
+            $provider->Iax->secret = '';
         } elseif ($idIsEmpty) {
             $uniqId = Iax::generateUniqueID('IAX-TRUNK-');
             $oldProvider = $provider;
@@ -161,7 +164,8 @@ class ProvidersController extends BaseController
             $provider->Iax->description = '';
             $provider->Iax->id     = '';
             $provider->Iax->uniqid = $uniqId;
-            $provider->Iax->secret = Iax::generateIaxPassword();
+            // Don't set password when copying - let user generate if needed
+            $provider->Iax->secret = '';
         }
         $options = ['note' => $provider->note];
         $this->view->form = new IaxProviderEditForm($provider->Iax, $options);

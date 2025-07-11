@@ -20,7 +20,8 @@
 
 namespace MikoPBX\Common\Models;
 
-use MikoPBX\Common\Library\PasswordGenerator;
+use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
+use Phalcon\Di\Di;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 use Phalcon\Mvc\Model\Relation;
@@ -183,14 +184,21 @@ class Iax extends ModelsBase
     }
 
     /**
-     * Generates a random password for IAX
+     * Generates a random password for IAX using REST API
      *
-     * @param int $length Password length (default: 32)
+     * @param int $length Password length (default: 16)
      * @return string
      */
-    public static function generateIaxPassword(int $length = 32): string
+    public static function generateIaxPassword(int $length = 16): string
     {
-        return PasswordGenerator::generateIaxPassword($length);
+        $di = Di::getDefault();
+        $response = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+            '/pbxcore/api/passwords/generate',
+            PBXCoreRESTClientProvider::HTTP_METHOD_GET,
+            ['length' => $length]
+        ]);
+        
+        return $response->data['password'] ?? '';
     }
 
     /**

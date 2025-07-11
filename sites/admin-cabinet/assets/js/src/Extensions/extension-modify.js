@@ -17,7 +17,7 @@
  */
 
 /* global globalRootUrl, globalTranslate, Extensions, Form,
- InputMaskPatterns, avatar, extensionStatusLoopWorker */
+ InputMaskPatterns, avatar, extensionStatusLoopWorker, ClipboardJS */
 
 
 /**
@@ -212,7 +212,40 @@ const extension = {
         $('#generate-new-password').on('click', (e) => {
             e.preventDefault();
             extension.generateNewSipPassword();
-            extension.$sip_secret.trigger('change');
+        });
+
+        // Show/hide password toggle
+        $('#show-hide-password').on('click', (e) => {
+            e.preventDefault();
+            const $button = $(e.currentTarget);
+            const $icon = $button.find('i');
+            
+            if (extension.$sip_secret.attr('type') === 'password') {
+                extension.$sip_secret.attr('type', 'text');
+                $icon.removeClass('eye').addClass('eye slash');
+            } else {
+                extension.$sip_secret.attr('type', 'password');
+                $icon.removeClass('eye slash').addClass('eye');
+            }
+        });
+
+        // Initialize clipboard for password copy
+        const clipboard = new ClipboardJS('.clipboard');
+        $('.clipboard').popup({
+            on: 'manual',
+        });
+
+        clipboard.on('success', (e) => {
+            $(e.trigger).popup('show');
+            setTimeout(() => {
+                $(e.trigger).popup('hide');
+            }, 1500);
+            e.clearSelection();
+        });
+
+        clipboard.on('error', (e) => {
+            console.error('Action:', e.action);
+            console.error('Trigger:', e.trigger);
         });
 
         // Set the "oncomplete" event handler for the extension number input
@@ -314,8 +347,14 @@ const extension = {
             }
         });
 
-        // Initialize popups for question icons
+        // Initialize popups for question icons and buttons
         $("i.question").popup();
+        $('.popuped').popup();
+
+        // Prevent browser password manager for generated passwords
+        extension.$sip_secret.on('focus', function() {
+            $(this).attr('autocomplete', 'new-password');
+        });
 
         // Initialize the extension form
         extension.initializeForm();
@@ -457,26 +496,17 @@ const extension = {
 
     /**
      * Generate a new SIP password.
-     * The generated password will consist of 32 characters from a set of predefined characters.
+     * The generated password will consist of 16 characters using base64-safe alphabet.
      */
     generateNewSipPassword() {
-        // Predefined characters to be used in the password
-        const chars = 'abcdef1234567890';
-
-        // Initialize the password string
-        let pass = '';
-
-        // Generate a 32 characters long password
-        for (let x = 0; x < 32; x += 1) {
-            // Select a random character from the predefined characters
-            const i = Math.floor(Math.random() * chars.length);
-
-            // Add the selected character to the password
-            pass += chars.charAt(i);
-        }
-
-        // Set the generated password as the SIP password
-        extension.$sip_secret.val(pass);
+        // Request 16 chars for unified password length
+        PbxApi.PasswordGenerate(16, (password) => {
+            extension.$formObj.form('set value', 'sip_secret', password);
+            // Update clipboard button attribute
+            $('.clipboard').attr('data-clipboard-text', password);
+            // Trigger form change to enable save button
+            Form.dataChanged();
+        });
     },
 
     /**

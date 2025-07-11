@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
+use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
@@ -44,12 +44,15 @@ class AsteriskManagerEditForm extends BaseForm
         $this->add(new Text('username'));
 
         // Secret
-        $this->add(new Text('secret', ["class" => "confidential-field"]));
+        $this->add(new Password('secret', [
+            'autocomplete' => 'new-password',
+            'data-no-password-manager' => 'true'
+        ]));
 
         // Rights
         foreach ($options['array_of_checkboxes'] as $checkBox) {
-            $this->addCheckBox($checkBox . '_read', str_contains($entity->$checkBox, 'read'));
-            $this->addCheckBox($checkBox . '_write', str_contains($entity->$checkBox, 'write'));
+            $this->addCheckBox($checkBox . '_read', str_contains($entity->$checkBox??'', 'read'));
+            $this->addCheckBox($checkBox . '_write', str_contains($entity->$checkBox??'', 'write'));
         }
 
         // Networkfilterid

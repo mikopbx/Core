@@ -33,7 +33,23 @@ use Phalcon\Di\ServiceProviderInterface;
 
 /**
  * Represents a client for making REST API requests to PBX Core.
+ * 
+ * Example of usage:
+ * 
+ * $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+ *           '/pbxcore/api/nchan/pub/' . self::CHANNEL_ID,
+ *           PBXCoreRESTClientProvider::HTTP_METHOD_POST,
+ *           ['type' => $type, 'data' => $data],
+ *           ['Content-Type' => 'application/json']  
+ *       ]);
  *
+ * $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+ *           '/pbxcore/api/extensions/getRecord',
+ *           PBXCoreRESTClientProvider::HTTP_METHOD_GET,
+ *           ['id' => $id]
+ *       ]);
+ * 
+ * 
  * @package MikoPBX\Common\Providers
  */
 class PBXCoreRESTClientProvider implements ServiceProviderInterface

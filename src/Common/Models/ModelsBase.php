@@ -467,9 +467,9 @@ class ModelsBase extends Model
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementIax');
                 } elseif ($this->disabled === '1') {
-                    $name .= "$this->description ({$this->t( 'mo_Disabled' )})";
+                    $name .= "IAX: $this->description ({$this->t( 'mo_Disabled' )})";
                 } else {
-                    $name .= $this->description;
+                    $name .= "IAX: $this->description";
                 }
                 break;
             case IvrMenu::class:
@@ -580,9 +580,9 @@ class ModelsBase extends Model
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementSip');
                 } elseif ($this->disabled === '1') {
-                    $name .= "$this->description ({$this->t( 'mo_Disabled' )})";
+                    $name .= "SIP: $this->description ({$this->t( 'mo_Disabled' )})";
                 } else {
-                    $name .= $this->description;
+                    $name .= "SIP: $this->description";
                 }
 
                 break;

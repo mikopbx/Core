@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, Form */
+/* global globalRootUrl,globalTranslate, Form, PbxApi, ClipboardJS */
 
 /**
  * Manager module.
@@ -52,6 +52,12 @@ const manager = {
      * @type {jQuery}
      */
     $username: $('#username'),
+
+    /**
+     * jQuery object for the secret input field.
+     * @type {jQuery}
+     */
+    $secret: $('#secret'),
 
     /**
      * Original username value.
@@ -108,6 +114,60 @@ const manager = {
             const newValue = manager.$formObj.form('get value', 'username');
             manager.checkAvailability(manager.originalName, newValue, 'username', userId);
         });
+
+        // Generate new password if field is empty
+        if (manager.$secret.val() === '') {
+            manager.generateNewPassword();
+        }
+
+        // Handle generate new password button
+        $('#generate-new-password').on('click', (e) => {
+            e.preventDefault();
+            manager.generateNewPassword();
+        });
+
+        // Show/hide password toggle
+        $('#show-hide-password').on('click', (e) => {
+            e.preventDefault();
+            const $button = $(e.currentTarget);
+            const $icon = $button.find('i');
+            
+            if (manager.$secret.attr('type') === 'password') {
+                manager.$secret.attr('type', 'text');
+                $icon.removeClass('eye').addClass('eye slash');
+            } else {
+                manager.$secret.attr('type', 'password');
+                $icon.removeClass('eye slash').addClass('eye');
+            }
+        });
+
+        // Initialize clipboard for password copy
+        const clipboard = new ClipboardJS('.clipboard');
+        $('.clipboard').popup({
+            on: 'manual',
+        });
+
+        clipboard.on('success', (e) => {
+            $(e.trigger).popup('show');
+            setTimeout(() => {
+                $(e.trigger).popup('hide');
+            }, 1500);
+            e.clearSelection();
+        });
+
+        clipboard.on('error', (e) => {
+            console.error('Action:', e.action);
+            console.error('Trigger:', e.trigger);
+        });
+
+        // Prevent browser password manager for generated passwords
+        manager.$secret.on('focus', function() {
+            $(this).attr('autocomplete', 'new-password');
+        });
+
+        // Initialize popups
+        $('.popuped').popup();
+
         manager.initializeForm();
         manager.originalName = manager.$formObj.form('get value', 'username');
     },
@@ -148,6 +208,20 @@ const manager = {
                     $(`#${cssClassName}-error`).removeClass('hidden');
                 }
             },
+        });
+    },
+
+    /**
+     * Generate a new AMI password.
+     */
+    generateNewPassword() {
+        // Request 16 chars for AMI password
+        PbxApi.PasswordGenerate(16, (password) => {
+            manager.$formObj.form('set value', 'secret', password);
+            // Update clipboard button attribute
+            $('.clipboard').attr('data-clipboard-text', password);
+            // Trigger form change to enable save button
+            Form.dataChanged();
         });
     },
 

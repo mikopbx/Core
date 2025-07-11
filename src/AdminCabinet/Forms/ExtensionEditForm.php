@@ -28,6 +28,7 @@ use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
+use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
@@ -100,12 +101,12 @@ class ExtensionEditForm extends BaseForm
 
         // SIP Secret
         $this->add(
-            new Text(
+            new Password(
                 'sip_secret',
                 [
                     "value" => $entity->sip_secret,
-                    "class" => "confidential-field",
-                    'autocomplete' => 'off'
+                    'autocomplete' => 'new-password',
+                    'data-no-password-manager' => 'true'
                 ]
             )
         );

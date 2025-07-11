@@ -27,6 +27,9 @@ const PbxApi = {
     // AdviceProcessor
     adviceGetList: `${Config.pbxUrl}/pbxcore/api/advice/getList`, // Generates a list of notifications about the system, firewall, passwords, and wrong settings.
 
+    // PasswordsManagementProcessor
+    passwordGenerate: `${Config.pbxUrl}/pbxcore/api/passwords/generate`, // Generate secure password
+
     // CdrDBProcessor
     pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`,  //  Get active channels. These are the unfinished calls (endtime IS NULL).
 
@@ -1485,6 +1488,36 @@ const PbxApi = {
             onError(response) {
                 callback(response);
             },
+        });
+    },
+
+    /**
+     * Generate secure password
+     * 
+     * @param {number} length - Password length (optional)
+     * @param {function} callback - The callback function that will receive the generated password
+     * @returns {void}
+     */
+    PasswordGenerate(length, callback) {
+        const params = {};
+        if (length) {
+            params.length = length;
+        }
+        
+        $.api({
+            url: PbxApi.passwordGenerate,
+            on: 'now',
+            method: 'GET',
+            data: params,
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                if (response.data && response.data.password) {
+                    callback(response.data.password);
+                }
+            },
+            onError() {
+                callback('');
+            }
         });
     },
 
