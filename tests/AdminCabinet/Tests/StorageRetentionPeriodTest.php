@@ -130,41 +130,6 @@ class StorageRetentionPeriodTest extends MikoPBXTestsBase
         self::annotate("Slider position {$position} test completed successfully");
     }
 
-    /**
-     * Submit form and wait for response
-     */
-    protected function submitForm(string $formId): void
-    {
-        self::annotate("Submitting form: {$formId}");
-        
-        // Find submit button
-        $submitButton = self::$driver->findElement(
-            WebDriverBy::xpath("//form[@id='{$formId}']//button[@type='submit']")
-        );
-        
-        // Click submit
-        $submitButton->click();
-        
-        // Wait for ajax completion
-        $this->waitForAjax();
-        
-        // Wait for success message
-        try {
-            $this->waitForCondition(
-                WebDriverExpectedCondition::presenceOfElementLocated(
-                    WebDriverBy::className('positive')
-                ),
-                5
-            );
-        } catch (\Exception $e) {
-            // If no success message, check if we're redirected
-            self::assertStringContainsString(
-                '/storage/index',
-                self::$driver->getCurrentURL(),
-                'Form submission should redirect to storage page'
-            );
-        }
-    }
 
     /**
      * Wait for element to be present

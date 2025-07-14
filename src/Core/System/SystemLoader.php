@@ -398,7 +398,8 @@ class SystemLoader extends Injectable
 
         // Calculate total startup time
         $totalTime = round(microtime(true) - $this->systemStartTime, 2);
-        echo PHP_EOL . " - System startup completed in {$totalTime}s" . PHP_EOL;
+        $message = PHP_EOL . " - System startup completed in {$totalTime}s" . PHP_EOL;
+        SystemMessages::echoToTeletype($message, true);
         
         // Clean up boot time file
         $bootTimeFile = '/tmp/system_boot_start_time';

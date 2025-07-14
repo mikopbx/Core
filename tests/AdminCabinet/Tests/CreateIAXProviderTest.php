@@ -87,9 +87,6 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
             $this->changeCheckBoxState('receive_calls_without_auth', $params['receive_calls_without_auth']);
         }
         
-        // noregister field is now hidden, managed by registration_type
-        // $this->changeCheckBoxState('noregister', $params['noregister']);
-        
         $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
     }
 
@@ -133,9 +130,6 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
         if (isset($params['receive_calls_without_auth'])) {
             $this->assertCheckBoxStageIsEqual('receive_calls_without_auth', $params['receive_calls_without_auth']);
         }
-        
-        // noregister field is now hidden, managed by registration_type
-        // $this->assertCheckBoxStageIsEqual('noregister', $params['noregister']);
         
         $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
     }

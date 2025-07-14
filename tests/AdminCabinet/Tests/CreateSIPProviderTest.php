@@ -92,7 +92,6 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
         } else {
             $this->changeInputField('secret', $params['password']);
         }
-        $this->selectDropdownItem('dtmfmode', $params['dtmfmode']);
     }
 
     /**
@@ -115,6 +114,7 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
 
         $this->changeInputField('fromdomain', $params['fromdomain']);
         $this->changeCheckBoxState('disablefromuser', $params['disablefromuser']);
+        $this->selectDropdownItem('dtmfmode', $params['dtmfmode']);
         $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
     }
 
@@ -147,7 +147,6 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
         } else {
             $this->assertInputFieldValueEqual('secret', $params['password']);
         }
-        $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
     }
 
     /**
@@ -170,6 +169,7 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
 
         $this->assertInputFieldValueEqual('fromdomain', $params['fromdomain']);
         $this->assertCheckBoxStageIsEqual('disablefromuser', $params['disablefromuser']);
+        $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
         $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
     }
 }

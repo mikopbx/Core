@@ -173,6 +173,10 @@ class WorkerSafeScriptsCore extends WorkerBase
         // Get all workers that need to be restarted
         $arrWorkers = $this->prepareWorkersList();
         
+        // Add WorkerSafeScriptsCore itself to the restart list
+        // This ensures it reloads module workers after installation
+        $arrWorkers[self::CHECK_BY_PID_NOT_ALERT][] = static::class;
+        
         // Log restart mode
         SystemMessages::sysLogMsg(
             static::class,
@@ -284,10 +288,13 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     public function start(array $argv): void
     {
+        // Signal handlers are registered automatically in parent constructor
+        // When SIGUSR1 is received, $this->needRestart will be set to true
+        
         // Wait for the system to fully boot.
         PBX::waitFullyBooted();
 
-        while (true) {
+        while (!$this->needRestart) {
 
             // If the system is booting, do not start the workers.
             if (System::isBooting()) {
@@ -323,6 +330,31 @@ class WorkerSafeScriptsCore extends WorkerBase
             
             // Sleep for a short interval before next check
             sleep(5);
+        }
+        
+        // If needRestart is true, perform graceful restart
+        if ($this->needRestart) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Received restart signal, performing graceful restart",
+                LOG_NOTICE
+            );
+            
+            // First, remove ourselves from the process list by changing process title
+            cli_set_process_title("WorkerSafeScriptsCore exiting");
+            
+            // Now start new instance using standard mechanism
+            // Since we changed our process title, getPidOfProcess won't find us
+            Processes::processPHPWorker(static::class, 'start', 'start');
+            
+            SystemMessages::sysLogMsg(
+                static::class,
+                "New instance started, exiting current instance",
+                LOG_NOTICE
+            );
+            
+            // Exit current instance
+            exit(0);
         }
     }
 
