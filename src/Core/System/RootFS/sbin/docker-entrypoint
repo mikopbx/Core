@@ -37,7 +37,10 @@ cleanup()
 . /sbin/shell_functions.sh;
 
 # Redirect input, output and error streams to the console
-exec </dev/console >/dev/console 2>/dev/console;
+# Check if console is available before redirecting
+if test -c /dev/console && test -r /dev/console && test -w /dev/console; then
+  exec </dev/console >/dev/console 2>/dev/console;
+fi
 echo;
 
 

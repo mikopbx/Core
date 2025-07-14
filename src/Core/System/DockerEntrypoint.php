@@ -347,7 +347,8 @@ class DockerEntrypoint extends Injectable
     {
         $rm = Util::which('rm');
         shell_exec("$rm -rf /tmp/*");
-        $commands = 'exec </dev/console >/dev/console 2>/dev/console;' .
+        $commands = 'if test -c /dev/console && test -r /dev/console && test -w /dev/console; then ' .
+            'exec </dev/console >/dev/console 2>/dev/console; fi; ' .
             '/etc/rc/bootup 2>/dev/null && ' .
             '/etc/rc/bootup_pbx 2>/dev/null';
         passthru($commands);
