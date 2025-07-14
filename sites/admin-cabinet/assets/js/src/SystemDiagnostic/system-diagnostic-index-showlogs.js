@@ -104,13 +104,21 @@ const systemDiagnosticLogs = {
         // Set the minimum height of the log container
         systemDiagnosticLogs.$dimmer.closest('div').css('min-height', `${aceHeight}px`);
 
-        // Initialize the dropdown menu for log files
+        // Initialize the dropdown menu for log files with tree support
+        // Initialize Semantic UI dropdown with custom menu generation
         systemDiagnosticLogs.$fileSelectDropDown.dropdown({
-                values: systemDiagnosticLogs.logsItems,
                 onChange: systemDiagnosticLogs.cbOnChangeFile,
                 ignoreCase: true,
                 fullTextSearch: true,
                 forceSelection: false,
+                preserveHTML: true,
+                allowCategorySelection: false,
+                match: 'text',
+                filterRemoteData: false,
+                action: 'activate',
+                templates: {
+                    menu: systemDiagnosticLogs.customDropdownMenu
+                }
         });
 
         // Initialize the ACE editor for log content
@@ -229,13 +237,139 @@ const systemDiagnosticLogs = {
     },
 
     /**
+     * Builds a hierarchical tree structure from flat file paths
+     * @param {Object} files - The files object from API response
+     * @param {string} defaultPath - The default selected file path
+     * @returns {Array} Tree structure for the dropdown
+     */
+    buildTreeStructure(files, defaultPath) {
+        const tree = {};
+        
+        // Build the tree structure
+        Object.entries(files).forEach(([key, fileData]) => {
+            // Use fileData.path as the actual file path
+            const filePath = fileData.path || key;
+            const parts = filePath.split('/');
+            let current = tree;
+            
+            parts.forEach((part, index) => {
+                if (index === parts.length - 1) {
+                    // This is a file
+                    current[part] = {
+                        type: 'file',
+                        path: filePath,
+                        size: fileData.size,
+                        default: fileData.default || (defaultPath === filePath)
+                    };
+                } else {
+                    // This is a directory
+                    if (!current[part]) {
+                        current[part] = {
+                            type: 'folder',
+                            children: {}
+                        };
+                    }
+                    current = current[part].children;
+                }
+            });
+        });
+        
+        // Convert tree to dropdown items
+        return this.treeToDropdownItems(tree, '');
+    },
+    
+    /**
+     * Converts tree structure to dropdown items with proper formatting
+     * @param {Object} tree - The tree structure
+     * @param {string} prefix - Prefix for indentation
+     * @returns {Array} Formatted dropdown items
+     */
+    treeToDropdownItems(tree, prefix) {
+        const items = [];
+        
+        // Sort entries: folders first, then files
+        const entries = Object.entries(tree).sort(([aKey, aVal], [bKey, bVal]) => {
+            if (aVal.type === 'folder' && bVal.type === 'file') return -1;
+            if (aVal.type === 'file' && bVal.type === 'folder') return 1;
+            return aKey.localeCompare(bKey);
+        });
+        
+        entries.forEach(([key, value]) => {
+            if (value.type === 'folder') {
+                // Add folder header
+                items.push({
+                    name: `${prefix}<i class="folder icon"></i> ${key}`,
+                    value: '',
+                    disabled: true,
+                    type: 'folder'
+                });
+                
+                // Add children with increased indentation
+                const childItems = this.treeToDropdownItems(value.children, prefix + '&nbsp;&nbsp;&nbsp;&nbsp;');
+                items.push(...childItems);
+            } else {
+                // Add file item
+                items.push({
+                    name: `${prefix}<i class="file outline icon"></i> ${key} (${value.size})`,
+                    value: value.path,
+                    selected: value.default,
+                    type: 'file'
+                });
+            }
+        });
+        
+        return items;
+    },
+    
+    /**
+     * Creates custom dropdown menu HTML for log files
+     * @param {Object} response - The response containing dropdown menu options
+     * @param {Object} fields - The fields in the response to use for the menu options
+     * @returns {string} The HTML string for the custom dropdown menu
+     */
+    customDropdownMenu(response, fields) {
+        const values = response[fields.values] || {};
+        let html = '';
+        
+        $.each(values, (index, option) => {
+            // For tree structure items
+            if (systemDiagnosticLogs.logsItems && systemDiagnosticLogs.logsItems[index]) {
+                const item = systemDiagnosticLogs.logsItems[index];
+                
+                if (item.type === 'folder') {
+                    // Folder item - disabled and with folder icon
+                    html += `<div class="disabled item" data-value="">${item.name}</div>`;
+                } else {
+                    // File item with proper value
+                    const selected = item.selected ? 'selected active' : '';
+                    html += `<div class="item ${selected}" data-value="${option[fields.value]}">${item.name}</div>`;
+                }
+            } else {
+                // Fallback to regular item
+                const maybeDisabled = (option[fields.disabled]) ? 'disabled ' : '';
+                html += `<div class="${maybeDisabled}item" data-value="${option[fields.value]}">${option[fields.name]}</div>`;
+            }
+        });
+        
+        return html;
+    },
+
+    /**
      * Callback function to format the dropdown menu structure based on the response.
      * @param {Object} response - The response data.
      */
     cbFormatDropdownResults(response) {
         if (response === false) {
+            systemDiagnosticLogs.$dimmer.removeClass('active');
             return;
         }
+        
+        // Check if response has the expected structure
+        if (!response.files) {
+            systemDiagnosticLogs.$dimmer.removeClass('active');
+            return;
+        }
+        
         // Check if there is a default value set for the filename input field
         let defVal = '';
         const fileName = systemDiagnosticLogs.$formObj.form('get value', 'filename');
@@ -243,25 +377,41 @@ const systemDiagnosticLogs = {
             defVal = fileName.trim();
         }
 
-        systemDiagnosticLogs.logsItems = [];
-        const files = response.files;
+        // Build tree structure from files
+        systemDiagnosticLogs.logsItems = systemDiagnosticLogs.buildTreeStructure(response.files, defVal);
 
-        // Iterate through each file and create the dropdown menu options
-        $.each(files, (index, item) => {
-
-            if (defVal !== '') {
-                item.default = (defVal === item.path);
+        // Create values array for dropdown with all items (including folders)
+        const dropdownValues = systemDiagnosticLogs.logsItems.map((item, index) => {
+            if (item.type === 'folder') {
+                return {
+                    name: item.name.replace(/<[^>]*>/g, ''), // Remove HTML tags for search
+                    value: '',
+                    disabled: true
+                };
+            } else {
+                return {
+                    name: item.name.replace(/<[^>]*>/g, ''), // Remove HTML tags for search
+                    value: item.value,
+                    selected: item.selected
+                };
             }
-            // Create an option object for each file
-            systemDiagnosticLogs.logsItems.push({
-                name: `${index} (${item.size})`,
-                value: item.path,
-                selected: item.default
-            });
         });
-
-        // Update the dropdown menu values with the newly formatted options
-        systemDiagnosticLogs.$fileSelectDropDown.dropdown('change values', systemDiagnosticLogs.logsItems);
+        
+        // Update dropdown with values
+        systemDiagnosticLogs.$fileSelectDropDown.dropdown('setup menu', {
+            values: dropdownValues
+        });
+        
+        // Set the default selected value if any
+        const selectedItem = systemDiagnosticLogs.logsItems.find(item => item.selected);
+        if (selectedItem) {
+            systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', selectedItem.value);
+            // Also set the text to show full path
+            systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', selectedItem.value);
+        }
+        
+        // Hide the dimmer after loading
+        systemDiagnosticLogs.$dimmer.removeClass('active');
     },
 
     /**
@@ -272,6 +422,10 @@ const systemDiagnosticLogs = {
         if (value.length === 0) {
             return;
         }
+        
+        // Set dropdown text to show the full file path
+        systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', value);
+        
         systemDiagnosticLogs.$formObj.form('set value', 'filename', value);
         systemDiagnosticLogs.updateLogFromServer();
     },

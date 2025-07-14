@@ -3,3 +3,25 @@
     line-height: 2em;
 }
 
+/* Tree structure styles for log files dropdown */
+#system-diagnostic-form .filenames-select.ui.dropdown .menu {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Folder items styling */
+#system-diagnostic-form .filenames-select.ui.dropdown .menu > .item.disabled {
+    font-weight: bold;
+    cursor: default;
+    opacity: 1 !important;
+}
+
+/* Icons styling */
+#system-diagnostic-form .filenames-select.ui.dropdown .menu > .item i.folder.icon {
+    color: #fbbd08;
+}
+
+#system-diagnostic-form .filenames-select.ui.dropdown .menu > .item i.file.icon {
+    color: #2185d0;
+}
+
