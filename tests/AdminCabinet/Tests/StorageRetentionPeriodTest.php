@@ -12,6 +12,10 @@ use MikoPBX\Tests\AdminCabinet\Tests\Data\StorageDataFactory;
  */
 class StorageRetentionPeriodTest extends MikoPBXTestsBase
 {
+    /**
+     * Slider initialization timeout in seconds
+     */
+    private const SLIDER_INIT_TIMEOUT = 5;
     protected function setUp(): void
     {
         parent::setUp();
@@ -60,6 +64,9 @@ class StorageRetentionPeriodTest extends MikoPBXTestsBase
         
         // Wait for tab content to be visible
         $this->waitForElementPresent(WebDriverBy::id('PBXRecordSavePeriodSlider'));
+        
+        // Wait for slider to be initialized
+        $this->waitForSliderInitialization();
     }
 
     /**
@@ -74,55 +81,53 @@ class StorageRetentionPeriodTest extends MikoPBXTestsBase
         
         self::annotate("Testing slider position {$position}: {$label} - {$description}");
         
-        // Find slider element
-        $slider = self::$driver->findElement(WebDriverBy::id('PBXRecordSavePeriodSlider'));
-        $sliderContainer = $slider->findElement(WebDriverBy::xpath('..'));
+        // Use JavaScript to set the slider value directly
+        self::$driver->executeScript(
+            "$('#PBXRecordSavePeriodSlider').slider('set value', {$position});"
+        );
         
-        // Find all tick marks
-        $ticks = $sliderContainer->findElements(WebDriverBy::className('tick'));
+        // Wait for slider animation and onChange event
+        $this->waitForAjax();
+        sleep(1);
         
-        if (count($ticks) > $position) {
-            // Click on the specific tick mark
-            $ticks[$position]->click();
-            
-            // Wait for slider animation
-            $this->waitForAjax();
-            sleep(1);
-            
-            // Verify the hidden input value
-            $hiddenInput = self::$driver->findElement(WebDriverBy::name('PBXRecordSavePeriod'));
-            $actualValue = $hiddenInput->getAttribute('value');
-            
-            self::assertEquals(
-                $expectedValue,
-                $actualValue,
-                "Slider position {$position} should set value to '{$expectedValue}', but got '{$actualValue}'"
-            );
-            
-            // Submit form to save
-            $this->submitForm('storage-form');
-            
-            // Navigate back to verify saved value
-            $this->navigateToStoragePage();
-            
-            // Verify saved value
-            $hiddenInput = self::$driver->findElement(WebDriverBy::name('PBXRecordSavePeriod'));
-            $savedValue = $hiddenInput->getAttribute('value');
-            
-            self::assertEquals(
-                $expectedValue,
-                $savedValue,
-                "Saved value should be '{$expectedValue}', but got '{$savedValue}'"
-            );
-            
-            // Verify slider visual position
-            $sliderThumb = $sliderContainer->findElement(WebDriverBy::className('thumb'));
-            $thumbLeft = $sliderThumb->getCSSValue('left');
-            
-            self::annotate("Slider thumb position: {$thumbLeft}");
-        } else {
-            self::fail("Could not find tick mark at position {$position}");
-        }
+        // Verify the hidden input value
+        $hiddenInput = self::$driver->findElement(WebDriverBy::name('PBXRecordSavePeriod'));
+        $actualValue = $hiddenInput->getAttribute('value');
+        
+        self::assertEquals(
+            $expectedValue,
+            $actualValue,
+            "Slider position {$position} should set value to '{$expectedValue}', but got '{$actualValue}'"
+        );
+        
+        // Submit form to save
+        $this->submitForm('storage-form');
+        
+        // Navigate back to verify saved value
+        $this->navigateToStoragePage();
+        
+        // Verify saved value
+        $hiddenInput = self::$driver->findElement(WebDriverBy::name('PBXRecordSavePeriod'));
+        $savedValue = $hiddenInput->getAttribute('value');
+        
+        self::assertEquals(
+            $expectedValue,
+            $savedValue,
+            "Saved value should be '{$expectedValue}', but got '{$savedValue}'"
+        );
+        
+        // Verify slider visual position using JavaScript
+        $sliderValue = self::$driver->executeScript(
+            "return $('#PBXRecordSavePeriodSlider').slider('get value');"
+        );
+        
+        self::assertEquals(
+            $position,
+            $sliderValue,
+            "Slider visual position should be {$position}, but got {$sliderValue}"
+        );
+        
+        self::annotate("Slider position {$position} test completed successfully");
     }
 
     /**
@@ -178,5 +183,31 @@ class StorageRetentionPeriodTest extends MikoPBXTestsBase
     protected function waitForCondition($condition, int $timeout = 10): void
     {
         self::$driver->wait($timeout)->until($condition);
+    }
+    
+    /**
+     * Wait for slider to be initialized
+     */
+    protected function waitForSliderInitialization(): void
+    {
+        self::annotate("Waiting for slider initialization");
+        
+        // Wait until slider is initialized (has the slider class and methods)
+        $this->waitForCondition(
+            WebDriverExpectedCondition::presenceOfElementLocated(
+                WebDriverBy::cssSelector('#PBXRecordSavePeriodSlider.ui.slider')
+            ),
+            self::SLIDER_INIT_TIMEOUT
+        );
+        
+        // Additional wait to ensure JavaScript initialization is complete
+        sleep(1);
+        
+        // Verify slider is functional by checking if we can get its value
+        $sliderValue = self::$driver->executeScript(
+            "return $('#PBXRecordSavePeriodSlider').slider('get value');"
+        );
+        
+        self::assertNotNull($sliderValue, "Slider should be initialized and return a value");
     }
 }

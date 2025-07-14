@@ -64,6 +64,12 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
         );
 
         $this->changeInputField('description', $params['description']);
+        
+        // Set registration type if provided
+        if (isset($params['registration_type'])) {
+            $this->selectDropdownItem('registration_type', $params['registration_type']);
+        }
+        
         $this->changeInputField('host', $params['host']);
         $this->changeInputField('username', $params['username']);
         $this->changeInputField('secret', $params['password']);
@@ -76,8 +82,14 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
     {
         $this->openAccordionOnThePage();
 
-        $this->changeCheckBoxState('qualify', $params['qualify']);
-        $this->changeCheckBoxState('noregister', $params['noregister']);
+        // Set receive_calls_without_auth if provided
+        if (isset($params['receive_calls_without_auth'])) {
+            $this->changeCheckBoxState('receive_calls_without_auth', $params['receive_calls_without_auth']);
+        }
+        
+        // noregister field is now hidden, managed by registration_type
+        // $this->changeCheckBoxState('noregister', $params['noregister']);
+        
         $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
     }
 
@@ -99,6 +111,12 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
     protected function verifyBasicFields(array $params): void
     {
         $this->assertInputFieldValueEqual('description', $params['description']);
+        
+        // Verify registration type if provided
+        if (isset($params['registration_type'])) {
+            $this->assertMenuItemSelected('registration_type', $params['registration_type']);
+        }
+        
         $this->assertInputFieldValueEqual('host', $params['host']);
         $this->assertInputFieldValueEqual('username', $params['username']);
         $this->assertInputFieldValueEqual('secret', $params['password']);
@@ -111,8 +129,14 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
     {
         $this->openAccordionOnThePage();
 
-        $this->assertCheckBoxStageIsEqual('qualify', $params['qualify']);
-        $this->assertCheckBoxStageIsEqual('noregister', $params['noregister']);
+        // Verify receive_calls_without_auth if provided
+        if (isset($params['receive_calls_without_auth'])) {
+            $this->assertCheckBoxStageIsEqual('receive_calls_without_auth', $params['receive_calls_without_auth']);
+        }
+        
+        // noregister field is now hidden, managed by registration_type
+        // $this->assertCheckBoxStageIsEqual('noregister', $params['noregister']);
+        
         $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
     }
 }

@@ -89,10 +89,6 @@ class IaxProviderEditForm extends BaseForm
             'registration_type',
             $regTypeArray,
             [
-                'using' => [
-                    'id',
-                    'name',
-                ],
                 'useEmpty' => false,
                 'value' => $regTypeValue,
                 'class' => 'ui selection dropdown',
@@ -117,7 +113,6 @@ class IaxProviderEditForm extends BaseForm
             'networkfilterid',
             $this->prepareNetworkFilters(),
             [
-                'using' => ['id', 'name'],
                 'useEmpty' => false,
                 'value' => $entity->networkfilterid,
                 'class' => 'ui selection dropdown network-filter-select',

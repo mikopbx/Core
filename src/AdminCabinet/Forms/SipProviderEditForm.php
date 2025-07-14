@@ -85,10 +85,6 @@ class SipProviderEditForm extends BaseForm
             'dtmfmode',
             $arrDTMFType,
             [
-                'using' => [
-                    'id',
-                    'name',
-                ],
                 'useEmpty' => false,
                 'value' => $entity->dtmfmode,
                 'class' => 'ui selection dropdown',
@@ -110,10 +106,6 @@ class SipProviderEditForm extends BaseForm
             'registration_type',
             $regTypeArray,
             [
-                'using' => [
-                    'id',
-                    'name',
-                ],
                 'useEmpty' => false,
                 'value' => $regTypeValue,
                 'class' => 'ui selection dropdown',
@@ -131,10 +123,6 @@ class SipProviderEditForm extends BaseForm
             'transport',
             $arrTransport,
             [
-                'using' => [
-                    'id',
-                    'name',
-                ],
                 'emptyText' => 'udp, tcp',
                 'emptyValue' => ' ',
                 'useEmpty' => true,
@@ -156,10 +144,14 @@ class SipProviderEditForm extends BaseForm
             "style" => "width: 80px;"]));
 
         // Fromuser
-        $this->add(new Text('fromuser'));
+        $this->add(new Text('fromuser', [
+            'placeholder' => $this->translation->_('pr_FromUserPlaceholder')
+        ]));
 
         // Fromdomain
-        $this->add(new Text('fromdomain'));
+        $this->add(new Text('fromdomain', [
+            'placeholder' => $this->translation->_('pr_FromDomainPlaceholder')
+        ]));
 
         // Noregister
         $cheskarr = ['value' => null];
@@ -179,10 +171,6 @@ class SipProviderEditForm extends BaseForm
             'networkfilterid',
             $this->prepareNetworkFilters(),
             [
-                'using' => [
-                    'id',
-                    'name',
-                ],
                 'useEmpty' => false,
                 'value' => $entity->networkfilterid,
                 'class' => 'ui selection dropdown network-filter-select',

@@ -37,8 +37,9 @@ class IAXProviderDataFactory
             'host' => 'vox.link.ru',
             'username' => 'line1',
             'password' => 'voxvoxSecret',
-            'qualify' => true,
-            'noregister' => true,
+            'registration_type' => 'outbound', // Исходящая регистрация
+            'noregister' => false,
+            'receive_calls_without_auth' => false,
             'manualattributes' => '',
         ],
         'provider.iax.delete' => [
@@ -48,10 +49,35 @@ class IAXProviderDataFactory
             'host' => 'iax.delete.ru',
             'username' => 'providerName',
             'password' => 'providerPassword',
-            'qualify' => false,
+            'registration_type' => 'outbound',
             'noregister' => false,
+            'receive_calls_without_auth' => false,
             'manualattributes' => '',
             'possibleToDelete' => true
+        ],
+        'provider.iax.inbound' => [
+            'type' => 'iax',
+            'uniqid' => 'IAX-1683372850',
+            'description' => 'Inbound IAX Provider',
+            'host' => 'test_INBOUND.miko.ru',
+            'username' => 'IAX-TRUNK-93BE1B99',
+            'password' => 'inboundSecret123',
+            'registration_type' => 'inbound', // Входящая регистрация
+            'noregister' => true,
+            'receive_calls_without_auth' => true,
+            'manualattributes' => 'language=ru',
+        ],
+        'provider.iax.noregistration' => [
+            'type' => 'iax',
+            'uniqid' => 'IAX-1683372875',
+            'description' => 'No Registration IAX Provider',
+            'host' => 'NO_REGISTRATION.miko.ru',
+            'username' => 'IAX-TRUNK-93BE1B99',
+            'password' => 'noRegSecret456',
+            'registration_type' => 'none', // Без регистрации (IP аутентификация)
+            'noregister' => true,
+            'receive_calls_without_auth' => true,
+            'manualattributes' => 'language=en',
         ]
     ];
 

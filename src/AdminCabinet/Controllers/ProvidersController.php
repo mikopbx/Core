@@ -351,7 +351,9 @@ class ProvidersController extends BaseController
                 case 'networkfilterid':
                     // Set default empty value for network filter (no restrictions)
                     if (array_key_exists($name, $data)) {
-                        $providerByType->$name = $data[$name];
+                        $value = $data[$name];
+                        // Convert 'none' to empty string for database
+                        $providerByType->$name = ($value === 'none') ? '' : $value;
                     } else {
                         $providerByType->$name = '';
                     }

@@ -36,14 +36,29 @@ class ProviderIAX extends ProviderBase {
         // IAX-specific initialization
         this.initializeIaxWarningMessage();
         this.initializeRealtimeValidation();
+        this.initializeRegistrationTypeHandlers();
         
         // Re-validate form when receive_calls_without_auth changes
+        const self = this;
         $('#receive_calls_without_auth.checkbox').checkbox('setting', 'onChange', () => {
-            // Just check if field is valid without triggering submit
-            const isValid = this.$formObj.form('is valid', 'secret');
-            if (!isValid) {
-                this.$formObj.form('validate field', 'secret');
+            // Get registration type to determine validation rules
+            const regType = $('#registration_type').val();
+            
+            // Clear any existing error on secret field
+            self.$formObj.form('remove prompt', 'secret');
+            self.$secret.closest('.field').removeClass('error');
+            
+            // For inbound registration, validate based on checkbox state
+            if (regType === 'inbound') {
+                const isChecked = $('#receive_calls_without_auth').checkbox('is checked');
+                if (!isChecked && self.$secret.val() === '') {
+                    // If unchecked and password is empty, show error
+                    setTimeout(() => {
+                        self.$formObj.form('validate field', 'secret');
+                    }, 100);
+                }
             }
+            
             // Mark form as changed
             Form.dataChanged();
         });
@@ -72,6 +87,7 @@ class ProviderIAX extends ProviderBase {
         updateWarningState();
         
         // Handle checkbox changes
+        const self = this;
         $('#receive_calls_without_auth.checkbox').checkbox({
             onChecked: function() {
                 $warningMessage.removeClass('hidden').transition('fade in');
@@ -128,13 +144,14 @@ class ProviderIAX extends ProviderBase {
         });
         
         // Validate on blur for immediate feedback
+        const self = this;
         this.$formObj.find('input[type="text"], input[type="password"]').on('blur', function() {
             const fieldName = $(this).attr('name');
-            const validateRules = this.getValidateRules();
+            const validateRules = self.getValidateRules();
             if (fieldName && validateRules[fieldName]) {
-                this.$formObj.form('validate field', fieldName);
+                self.$formObj.form('validate field', fieldName);
             }
-        }.bind(this));
+        });
     }
 
     /**
@@ -451,6 +468,90 @@ class ProviderIAX extends ProviderBase {
     }
 
     /**
+     * Initialize registration type change handlers
+     */
+    initializeRegistrationTypeHandlers() {
+        const self = this;
+        
+        // Handle registration type changes
+        $('#registration_type').dropdown('setting', 'onChange', (value) => {
+            // Update visibility of elements
+            self.updateVisibilityElements();
+            
+            // Update validation rules for the new registration type
+            Form.validateRules = self.getValidateRules();
+            
+            // Clear any validation errors
+            self.$formObj.find('.field.error').removeClass('error');
+            self.$formObj.find('.ui.error.message').empty();
+            self.$formObj.form('remove prompt', 'secret');
+            self.$formObj.form('remove prompt', 'host');
+            self.$formObj.form('remove prompt', 'port');
+            
+            // Mark form as changed
+            Form.dataChanged();
+        });
+    }
+
+    /**
+     * Override parent's initializeForm to handle dynamic validation rules
+     */
+    initializeForm() {
+        const self = this;
+        Form.$formObj = this.$formObj;
+        
+        // Get initial validation rules
+        const validationConfig = {
+            on: 'blur',
+            inline: true,
+            keyboardShortcuts: false,
+            fields: this.getValidateRules(),
+            onSuccess: function(event) {
+                // Prevent auto-submit, only submit via button click
+                if (event) {
+                    event.preventDefault();
+                }
+                return false;
+            }
+        };
+        
+        // Initialize form with validation
+        Form.$formObj.form(validationConfig);
+        
+        Form.url = `${globalRootUrl}providers/save/${this.providerType.toLowerCase()}`;
+        Form.validateRules = this.getValidateRules();
+        Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
+        Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
+        Form.initialize();
+        
+        // Override Form's submit button handler to use dynamic validation rules
+        Form.$submitButton.off('click').on('click', (e) => {
+            e.preventDefault();
+            if (Form.$submitButton.hasClass('loading')) return;
+            if (Form.$submitButton.hasClass('disabled')) return;
+
+            // Get current validation rules based on form state
+            const currentRules = self.getValidateRules();
+            
+            // Set up form validation with current rules and submit
+            Form.$formObj
+                .form({
+                    on: 'blur',
+                    fields: currentRules,
+                    onSuccess() {
+                        // Call submitForm() on successful validation
+                        Form.submitForm();
+                    },
+                    onFailure() {
+                        // Add error class to form on validation failure
+                        Form.$formObj.removeClass('error').addClass('error');
+                    },
+                });
+            Form.$formObj.form('validate form');
+        });
+    }
+
+    /**
      * Update the visibility of elements based on the registration type
      */
     updateVisibilityElements() {
@@ -498,7 +599,6 @@ class ProviderIAX extends ProviderBase {
             elSecret.show();
             elReceiveCalls.hide();
             elNetworkFilter.hide(); // Network filter not relevant for outbound
-            $('#networkfilterid').val('none'); // Reset to default
 
             // Update required fields
             elHost.addClass('required');
@@ -536,7 +636,7 @@ class ProviderIAX extends ProviderBase {
             elUsername.show();
             elSecret.show();
             elReceiveCalls.show();
-            elNetworkFilter.show(); // Network filter critical for inbound security
+            elNetworkFilter.show(); // Network filter available for security
 
             // Remove validation prompt for hidden port field
             this.$formObj.form('remove prompt', 'port');
@@ -568,7 +668,7 @@ class ProviderIAX extends ProviderBase {
             elUsername.show();
             elSecret.show();
             elReceiveCalls.show();
-            elNetworkFilter.show(); // Network filter critical for none type (no auth)
+            elNetworkFilter.show(); // Network filter available for security
 
             // Show informational message for password field
             this.showPasswordInfoMessage('iax');

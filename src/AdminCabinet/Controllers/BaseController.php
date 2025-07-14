@@ -105,7 +105,7 @@ class BaseController extends Controller
                 $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}");
                 break;
             default:
-                $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}{$this->actionName} ");
+                $title .= '|' . $this->translation->_("Breadcrumb{$this->controllerName}{$this->actionName}");
         }
         Tag::setTitle($title);
 
