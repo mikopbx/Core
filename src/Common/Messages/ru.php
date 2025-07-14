@@ -1538,7 +1538,6 @@ return [
     'pr_SecuritySettings' => 'Настройки безопасности',
     'pr_SIPHeaders' => 'SIP заголовки',
     'pr_AdditionalParameters' => 'Дополнительные параметры',
-    'pr_ManualAdditionalAtributes' => 'Дополнительные атрибуты PJSIP',
     'pr_ProviderPort' => 'Порт провайдера',
     'pr_RemoteHostOrIPAddress' => 'IP адрес удаленного сервера',
     'pr_AuthenticationUsername' => 'Имя пользователя для аутентификации',
