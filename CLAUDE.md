@@ -17,40 +17,6 @@ MikoPBX is an open-source PBX (Private Branch Exchange) system for small busines
 📖 **[PHP Style Guide](PHP-STYLE-GUIDE.md)** - Comprehensive PHP coding standards with real examples
 📖 **[JavaScript Style Guide](sites/admin-cabinet/assets/js/JS-STYLE-GUIDE.md)** - Frontend JavaScript patterns and best practices
 
-## Development Commands
-
-### Installation and Dependencies
-```bash
-composer install
-```
-
-### Code Quality and Linting
-```bash
-# Run PHP CodeSniffer (PSR-12 standard)
-composer phpcs
-
-# Run PHPStan static analysis
-vendor/bin/phpstan analyse src --memory-limit 120M --level=0
-```
-
-### Testing
-```bash
-# Run unit tests
-vendor/bin/phpunit -c tests/Unit/phpunit.xml
-
-# Run admin cabinet UI tests
-vendor/bin/phpunit -c tests/AdminCabinet/phpunit.xml
-
-# Run Asterisk call tests
-./tests/Calls/start.sh
-
-# Generate test data (see composer.json for full list)
-composer generate-extensions-tests
-composer generate-sip-providers-tests
-```
-
-## Architecture Overview
-
 ### Directory Structure
 
 ```
@@ -78,6 +44,41 @@ tests/                # Comprehensive test suite
 sites/               # Web assets and entry points
 resources/           # Static resources (DB, sounds, rootfs)
 ```
+
+## Docker Environment
+
+### Container Access
+Access the main PHP container for debugging:
+```bash
+# Interactive shell
+docker exec -it <containerId> /bin/sh
+
+# View system logs
+docker exec <containerId> tail -f /storage/usbdisk1/mikopbx/log/system/messages
+
+# Monitor specific processes
+docker exec <containerId> ps -ah | grep WorkerApiCommands
+
+# Search logs for specific patterns
+docker exec <containerId> tail -500 /storage/usbdisk1/mikopbx/log/system/messages | grep -E "soft|orphan|WorkerApiCommands"
+
+# PHPStan analysis
+docker exec <containerId> /offload/rootfs/usr/www/vendor/bin/phpstan analyse "/offload/rootfs/usr/www/src/Core/System/DockerNetworkFilterService.php"
+```
+
+### Important Paths
+- **Database**: `/cf/conf/mikopbx.db`
+- **System messages**: `/storage/usbdisk1/mikopbx/log/system/messages`
+- **PHP errors**: `/storage/usbdisk1/mikopbx/log/php/error.log`
+- **Nginx errors**: `/storage/usbdisk1/mikopbx/log/nginx/error.log`
+- **Asterisk logs**: `/storage/usbdisk1/mikopbx/log/asterisk/`
+- **Fail2ban logs**: `/storage/usbdisk1/mikopbx/log/fail2ban/fail2ban.log`
+
+### Test Directory Mapping
+Tests are automatically synchronized between host and container:
+- **Host**: `src/Core/tests`
+- **Container**: `/offload/rootfs/usr/www/tests`
+
 
 ### Core Components
 
@@ -132,8 +133,8 @@ resources/           # Static resources (DB, sounds, rootfs)
 ### System Services (managed by monit)
 
 - `asterisk` - Main PBX engine
-- `beanstalkd` - Job queue
-- `redis` - Cache and IPC
+- `beanstalkd` - Job queue for modules and CDR
+- `redis` - Cache and IPC and REST API queue
 - `php-fpm` - PHP process manager
 - `nginx` - Web server
 - `fail2ban` - Security service
@@ -142,8 +143,8 @@ resources/           # Static resources (DB, sounds, rootfs)
 
 ### Code Snippets
 ```php
-// For CLI PHP scripts
-require_once 'Globals.php'; // Loads all dependencies
+// For CLI PHP scripts and tests
+require_once 'Globals.php'; // Loads all dependencies 
 ```
 
 ### Translation Guidelines
@@ -169,3 +170,12 @@ require_once 'Globals.php'; // Loads all dependencies
 - 📖 **[Fomantic-UI](https://github.com/fomantic/fomantic-ui)** - Community fork of Semantic-UI
 - 📖 **[PHP Documentation](https://github.com/php/doc-en)** - Official PHP documentation
 - 📖 **[Asterisk Documentation](https://github.com/asterisk/documentation)** - Official Asterisk docs
+- 
+### Container
+MikoPBX runs in a single container which includes all services:
+- PHP 8.3 application
+- SQLite database
+- Redis cache
+- Beanstalkd queue
+- Asterisk PBX
+- Nginx web server

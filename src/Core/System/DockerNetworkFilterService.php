@@ -19,13 +19,14 @@
 
 namespace MikoPBX\Core\System;
 
+use MikoPBX\Common\Models\Fail2BanRules;
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\PbxSettingsConstants;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\Configs;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use Phalcon\Di\Di;
@@ -40,14 +41,15 @@ use Phalcon\Di\Injectable;
 class DockerNetworkFilterService extends Injectable
 {
     private const string ASTERISK_ACL_FILE = '/etc/asterisk/network_filters_deny_acl.conf';
-    private const string NGINX_DENY_FILE = '/etc/nginx/mikopbx/conf.d/network_filters_deny.conf';
     
     // Redis key prefixes and categories
     private const string REDIS_PREFIX = 'firewall:';
     private const string CATEGORY_HTTP = 'http';
     private const string CATEGORY_AMI = 'ami';
     private const string CATEGORY_SIP = 'sip';
+    private const string CATEGORY_IAX = 'iax';
     private const string CATEGORY_WHITELIST = 'whitelist';
+    private const string RATE_LIMIT_PREFIX = 'rate_limit:';
     
     /**
      * Get list of IPs to deny from NetworkFilters for specific categories
@@ -55,17 +57,9 @@ class DockerNetworkFilterService extends Injectable
      * @param array $categories Traffic categories to filter (e.g., ['SIP', 'WEB'])
      * @return array List of IP addresses/networks to deny
      */
-    public static function getNetworkFiltersDenyList(array $categories = []): array
+    private static function getNetworkFiltersDenyList(array $categories = []): array
     {
         $denyList = [];
-        
-        // Define localhost addresses that should never be blocked
-        $localhostAddresses = [
-            '127.0.0.1',
-            '127.0.0.0/8',
-            '::1',
-            'localhost'
-        ];
         
         if (empty($categories)) {
             // Get all NetworkFilters with deny rules
@@ -77,6 +71,7 @@ class DockerNetworkFilterService extends Injectable
                 ]
             ]);
             
+            /** @var NetworkFilters[] $filters */
             foreach ($filters as $filter) {
                 $denyIps = explode(',', $filter->deny);
                 foreach ($denyIps as $ip) {
@@ -93,17 +88,17 @@ class DockerNetworkFilterService extends Injectable
                     'NF' => NetworkFilters::class,
                 ],
                 'columns' => [
-                    'NF.deny',
+                    'NF.permit',
                 ],
-                'conditions' => 'NF.deny IS NOT NULL AND NF.deny != :empty: ' .
-                               'AND NF.deny != :zero_network: ' .
+                'conditions' => 'NF.permit IS NOT NULL AND NF.permit != :empty: ' .
+                               'AND NF.permit != :zero_network: ' .
                                'AND FR.category IN ({categories:array}) ' .
                                'AND FR.action = :action:',
                 'bind' => [
                     'empty' => '',
                     'zero_network' => '0.0.0.0/0',
                     'categories' => $categories,
-                    'action' => 'allow'
+                    'action' => 'block'
                 ],
                 'joins' => [
                     'FR' => [
@@ -118,8 +113,8 @@ class DockerNetworkFilterService extends Injectable
             $result = Di::getDefault()->get('modelsManager')->createBuilder($parameters)->getQuery()->execute();
             
             foreach ($result as $row) {
-                if (!empty($row->deny)) {
-                    $denyIps = explode(',', $row->deny);
+                if (!empty($row->permit)) {
+                    $denyIps = explode(',', $row->permit);
                     foreach ($denyIps as $ip) {
                         $ip = trim($ip);
                         if (!empty($ip) && !in_array($ip, $denyList) && !self::isLocalhostAddress($ip)) {
@@ -134,20 +129,77 @@ class DockerNetworkFilterService extends Injectable
     }
     
     /**
+     * Get list of permitted networks for specific categories
+     *
+     * @param array $categories Traffic categories to filter (e.g., ['WEB'])
+     * @return array List of IP addresses/networks that are permitted
+     */
+    private static function getNetworkFiltersPermitList(array $categories = []): array
+    {
+        $permitList = [];
+        
+        // Get NetworkFilters for specific categories with 'allow' action
+        $parameters = [
+            'models' => [
+                'NF' => NetworkFilters::class,
+            ],
+            'columns' => [
+                'NF.permit',
+            ],
+            'conditions' => 'NF.permit IS NOT NULL AND NF.permit != :empty: ' .
+                           'AND NF.permit != :zero_network: ' .
+                           'AND FR.category IN ({categories:array}) ' .
+                           'AND FR.action = :action:',
+            'bind' => [
+                'empty' => '',
+                'zero_network' => '0.0.0.0/0',
+                'categories' => $categories,
+                'action' => 'allow'
+            ],
+            'joins' => [
+                'FR' => [
+                    0 => FirewallRules::class,
+                    1 => 'NF.id = FR.networkfilterid',
+                    2 => 'FR',
+                    3 => 'INNER',
+                ],
+            ],
+        ];
+        
+        $result = Di::getDefault()->get('modelsManager')->createBuilder($parameters)->getQuery()->execute();
+        
+        foreach ($result as $row) {
+            if (!empty($row->permit)) {
+                $permitIps = explode(',', $row->permit);
+                foreach ($permitIps as $ip) {
+                    $ip = trim($ip);
+                    // Skip 0.0.0.0/0 as it would permit everyone
+                    if (!empty($ip) && !in_array($ip, $permitList) && $ip !== '0.0.0.0/0' && $ip !== '0.0.0.0') {
+                        $permitList[] = $ip;
+                    }
+                }
+            }
+        }
+        
+        return $permitList;
+    }
+    
+    /**
      * Get list of IPs that should never be blocked (whitelist)
      *
      * @return array List of whitelisted IP addresses/networks
      */
-    public static function getNetworkFiltersWhitelist(): array
+    private static function getNetworkFiltersWhitelist(): array
     {
         $whitelist = [];
         
-        // Get NetworkFilters marked as never_block_ip
+        // Get NetworkFilters marked as newer_block_ip
         $filters = NetworkFilters::find([
-            'conditions' => 'newer_block_ip = :never_block:',
-            'bind' => ['never_block' => '1']
+            'conditions' => 'newer_block_ip = :newer_block:',
+            'bind' => ['newer_block' => '1']
         ]);
         
+        /** @var NetworkFilters[] $filters */
         foreach ($filters as $filter) {
             if (!empty($filter->permit)) {
                 $permitIps = explode(',', $filter->permit);
@@ -157,6 +209,18 @@ class DockerNetworkFilterService extends Injectable
                     if (!empty($ip) && !in_array($ip, $whitelist) && $ip !== '0.0.0.0/0' && $ip !== '0.0.0.0') {
                         $whitelist[] = $ip;
                     }
+                }
+            }
+        }
+        
+        // Get whitelist from Fail2BanRules
+        $fail2banRule = Fail2BanRules::findFirst('id = 1');
+        if ($fail2banRule && !empty($fail2banRule->whitelist)) {
+            $fail2banWhitelist = explode(' ', $fail2banRule->whitelist);
+            foreach ($fail2banWhitelist as $ip) {
+                $ip = trim($ip);
+                if (!empty($ip) && !in_array($ip, $whitelist) && $ip !== '0.0.0.0/0' && $ip !== '0.0.0.0') {
+                    $whitelist[] = $ip;
                 }
             }
         }
@@ -176,7 +240,7 @@ class DockerNetworkFilterService extends Injectable
         }
         
         // Check if firewall is enabled
-        $firewallEnabled = PbxSettings::getValueByKey(PbxSettingsConstants::PBX_FIREWALL_ENABLED);
+        $firewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
         if ($firewallEnabled !== '1') {
             // Remove ACL file if firewall is disabled
             if (file_exists(self::ASTERISK_ACL_FILE)) {
@@ -193,7 +257,7 @@ class DockerNetworkFilterService extends Injectable
         // This is necessary because AclConf includes this file
         
         $content = "; NetworkFilters deny rules - DO NOT EDIT MANUALLY\n";
-        $content .= "; This file is automatically generated from Redis\n";
+        $content .= "; This file is automatically generated from database\n";
         $content .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
         
         // Always permit localhost first
@@ -201,15 +265,11 @@ class DockerNetworkFilterService extends Injectable
         $content .= "permit=127.0.0.1/255.255.255.255\n";
         $content .= "permit=::1\n\n";
         
-        // Get deny list from Redis for SIP and AMI categories
-        $sipDenyList = self::getBlockedIps(self::CATEGORY_SIP);
-        $amiDenyList = self::getBlockedIps(self::CATEGORY_AMI);
-        
-        // Merge and remove duplicates
-        $denyList = array_unique(array_merge($sipDenyList, $amiDenyList));
+        // Get deny list from database for SIP and AMI categories
+        $denyList = self::getNetworkFiltersDenyList(['SIP', 'AMI']);
         
         if (!empty($denyList)) {
-            $content .= "; Deny rules from Redis\n";
+            $content .= "; Deny rules from database\n";
             // Generate ACL rules
             foreach ($denyList as $ip) {
                 // Determine if it's a network or single IP
@@ -233,8 +293,11 @@ class DockerNetworkFilterService extends Injectable
         
         // Also generate deny rules for manager.conf
         $managerContent = "; NetworkFilters deny rules for manager.conf - DO NOT EDIT MANUALLY\n";
-        $managerContent .= "; This file is automatically generated from Redis\n";
+        $managerContent .= "; This file is automatically generated from database\n";
         $managerContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
+        
+        // Get deny list for AMI
+        $amiDenyList = self::getNetworkFiltersDenyList(['AMI']);
         
         if (!empty($amiDenyList)) {
             foreach ($amiDenyList as $ip) {
@@ -249,60 +312,38 @@ class DockerNetworkFilterService extends Injectable
         
         $managerDenyFile = $dir . '/manager_network_filters_deny.conf';
         file_put_contents($managerDenyFile, $managerContent);
-    }
-    
-    /**
-     * Generate Nginx deny configuration for NetworkFilters deny rules
-     *
-     * @return void
-     */
-    public static function generateNginxNetworkFiltersDeny(): void
-    {
-        if (!Util::isDocker()) {
-            return;
-        }
         
-        // Check if firewall is enabled
-        $firewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
-        if ($firewallEnabled !== '1') {
-            // Remove deny file if firewall is disabled
-            if (file_exists(self::NGINX_DENY_FILE)) {
-                unlink(self::NGINX_DENY_FILE);
-            }
-            return;
-        }
+        // Also generate deny rules for iax.conf
+        $iaxContent = "; NetworkFilters deny rules for iax.conf - DO NOT EDIT MANUALLY\n";
+        $iaxContent .= "; This file is automatically generated from database\n";
+        $iaxContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
         
-        // Always create the file when firewall is enabled, even if empty
-        // This is necessary because nginx config includes this file
+        // Always permit localhost first
+        $iaxContent .= "; Always allow localhost access\n";
+        $iaxContent .= "permit=127.0.0.1/255.255.255.255\n";
+        $iaxContent .= "permit=::1\n\n";
         
-        $config = "# NetworkFilters deny rules for Docker\n";
-        $config .= "# This file is automatically generated, do not edit manually\n\n";
+        // Get deny list from database for IAX category
+        $iaxDenyList = self::getNetworkFiltersDenyList(['IAX']);
         
-        // Always allow localhost first
-        $config .= "# Always allow localhost access\n";
-        $config .= "allow 127.0.0.1;\n";
-        $config .= "allow ::1;\n\n";
-        
-        // Get deny list for WEB category
-        $denyList = self::getNetworkFiltersDenyList(['WEB']);
-        
-        if (!empty($denyList)) {
-            $config .= "# Deny rules from NetworkFilters\n";
-            foreach ($denyList as $ip) {
-                $config .= "deny $ip;\n";
+        if (!empty($iaxDenyList)) {
+            $iaxContent .= "; Deny rules from database\n";
+            foreach ($iaxDenyList as $ip) {
+                // Determine if it's a network or single IP
+                if (strpos($ip, '/') !== false) {
+                    $iaxContent .= "deny=$ip\n";
+                } else {
+                    $iaxContent .= "deny=$ip/255.255.255.255\n";
+                }
             }
         } else {
-            $config .= "# No deny rules configured\n";
+            $iaxContent .= "; No deny rules configured\n";
         }
         
-        // Ensure directory exists
-        $dir = dirname(self::NGINX_DENY_FILE);
-        if (!is_dir($dir)) {
-            Util::mwMkdir($dir, true);
-        }
-        
-        file_put_contents(self::NGINX_DENY_FILE, $config);
+        $iaxDenyFile = $dir . '/network_filters_deny_iax_acl.conf';
+        file_put_contents($iaxDenyFile, $iaxContent);
     }
+    
     
     /**
      * Update all Docker network filters configurations
@@ -323,20 +364,19 @@ class DockerNetworkFilterService extends Injectable
         // Sync NetworkFilters deny rules to Redis
         self::syncNetworkFiltersDenyToRedis();
         
+        // Sync NetworkFilters permit rules to Redis (for WEB category)
+        self::syncNetworkFiltersPermitToRedis();
+        
         // Generate Asterisk ACL
         self::generateAsteriskNetworkFiltersDenyAcl();
         
-        // Generate fail2ban ACL for Asterisk
-        Configs\Fail2BanConf::generateAsteriskAclConfigFromRedis();
+        // Generate unified fail2ban ACL for all protocols
+        Configs\Fail2BanConf::generateUnifiedFail2BanAcl();
         
-        // Generate fail2ban ACL for IAX
-        Configs\Fail2BanConf::generateIaxAclConfigFromRedis();
-        
-        // Generate Nginx deny (for static includes, not used with Lua)
-        self::generateNginxNetworkFiltersDeny();
-        
-        // Reload services
-        self::reloadServices();
+        if (!System::isBooting()) {
+            // Reload Asterisk PJSIP to apply new ACL rules
+            WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
+        }
     }
     
     /**
@@ -358,7 +398,8 @@ class DockerNetworkFilterService extends Injectable
             $categoryMap = [
                 'WEB' => self::CATEGORY_HTTP,
                 'SIP' => self::CATEGORY_SIP,
-                'AMI' => self::CATEGORY_AMI
+                'AMI' => self::CATEGORY_AMI,
+                'IAX' => self::CATEGORY_IAX
             ];
             
             foreach ($categoryMap as $dbCategory => $redisCategory) {
@@ -386,23 +427,43 @@ class DockerNetworkFilterService extends Injectable
     }
     
     /**
-     * Reload affected services after configuration changes
+     * Sync NetworkFilters permit rules to Redis (for categories that need allow-only logic like WEB)
      *
      * @return void
      */
-    private static function reloadServices(): void
+    private static function syncNetworkFiltersPermitToRedis(): void
     {
-        // Only reload Asterisk PJSIP if system is already running
-        // During boot, Asterisk will load the ACL files on startup
-        if (!System::isBooting()) {
-            // Reload Asterisk PJSIP to apply new ACL rules
-            WorkerModelsEvents::invokeAction(ReloadPJSIPAction::class);
+        if (!Util::isDocker()) {
+            return;
         }
         
-        // Nginx doesn't need restart - it uses Redis dynamically via Lua script
-        // The Lua script reads firewall rules from Redis on each request
-        // with 10-second cache for performance
+        try {
+            $di = Di::getDefault();
+            $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
+            
+            // For WEB category, we need to sync permit rules
+            $permitList = self::getNetworkFiltersPermitList(['WEB']);
+            
+            // Clear existing permit entries for HTTP
+            $pattern = self::REDIS_PREFIX . 'permit:http:*';
+            $keys = $redis->keys($pattern);
+            foreach ($keys as $key) {
+                $redis->del($key);
+            }
+            
+            // Add new permit entries
+            foreach ($permitList as $network) {
+                $key = self::REDIS_PREFIX . 'permit:http:' . $network;
+                $redis->set($key, '1');
+            }
+            
+            SystemMessages::sysLogMsg(__CLASS__, "Synced " . count($permitList) . " permit rules for WEB category to Redis", LOG_INFO);
+            
+        } catch (\Exception $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to sync permit rules to Redis: " . $e->getMessage(), LOG_ERR);
+        }
     }
+    
     
     /**
      * Add blocked IP to Redis with category
@@ -495,8 +556,10 @@ class DockerNetworkFilterService extends Injectable
             $keys = $redis->keys($pattern);
             
             foreach ($keys as $key) {
-                // Extract IP from key
-                $ip = str_replace(self::REDIS_PREFIX . $category . ':', '', $key);
+                // Extract IP from key - remove both Redis client prefix and our prefix
+                // Redis client adds '_PH_REDIS_CLIENT:' prefix to all keys
+                $keyWithoutClientPrefix = str_replace(RedisClientProvider::CACHE_PREFIX, '', $key);
+                $ip = str_replace(self::REDIS_PREFIX . $category . ':', '', $keyWithoutClientPrefix);
                 if (!empty($ip)) {
                     $blockedIps[] = $ip;
                 }
@@ -508,97 +571,15 @@ class DockerNetworkFilterService extends Injectable
         return $blockedIps;
     }
     
-    /**
-     * Check if IP is blocked in a specific category
-     *
-     * @param string $ip IP address to check
-     * @param string $category Category (http, ami, sip)
-     * @return bool True if IP is blocked
-     */
-    public static function isIpBlocked(string $ip, string $category): bool
-    {
-        if (!Util::isDocker()) {
-            return false;
-        }
-        
-        try {
-            $di = Di::getDefault();
-            $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
-            
-            $key = self::REDIS_PREFIX . $category . ':' . $ip;
-            return $redis->exists($key) > 0;
-        } catch (\Exception $e) {
-            SystemMessages::sysLogMsg(__CLASS__, "Failed to check IP $ip: " . $e->getMessage(), LOG_ERR);
-            return false;
-        }
-    }
     
-    /**
-     * Add IP to whitelist in Redis
-     *
-     * @param string $ip IP address or network to whitelist
-     * @return bool Success status
-     */
-    public static function addToWhitelist(string $ip): bool
-    {
-        if (!Util::isDocker()) {
-            return false;
-        }
-        
-        try {
-            $di = Di::getDefault();
-            $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
-            
-            $key = self::REDIS_PREFIX . self::CATEGORY_WHITELIST;
-            $result = $redis->sadd($key, $ip);
-            
-            if ($result) {
-                SystemMessages::sysLogMsg(__CLASS__, "Added IP $ip to whitelist", LOG_INFO);
-            }
-            
-            return (bool)$result;
-        } catch (\Exception $e) {
-            SystemMessages::sysLogMsg(__CLASS__, "Failed to whitelist IP $ip: " . $e->getMessage(), LOG_ERR);
-            return false;
-        }
-    }
     
-    /**
-     * Remove IP from whitelist in Redis
-     *
-     * @param string $ip IP address or network to remove from whitelist
-     * @return bool Success status
-     */
-    public static function removeFromWhitelist(string $ip): bool
-    {
-        if (!Util::isDocker()) {
-            return false;
-        }
-        
-        try {
-            $di = Di::getDefault();
-            $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
-            
-            $key = self::REDIS_PREFIX . self::CATEGORY_WHITELIST;
-            $result = $redis->srem($key, $ip);
-            
-            if ($result) {
-                SystemMessages::sysLogMsg(__CLASS__, "Removed IP $ip from whitelist", LOG_INFO);
-            }
-            
-            return (bool)$result;
-        } catch (\Exception $e) {
-            SystemMessages::sysLogMsg(__CLASS__, "Failed to remove IP $ip from whitelist: " . $e->getMessage(), LOG_ERR);
-            return false;
-        }
-    }
     
     /**
      * Get whitelist from Redis
      *
      * @return array List of whitelisted IPs
      */
-    public static function getWhitelistFromRedis(): array
+    private static function getWhitelistFromRedis(): array
     {
         if (!Util::isDocker()) {
             return [];
@@ -623,13 +604,24 @@ class DockerNetworkFilterService extends Injectable
      *
      * @return void
      */
-    public static function syncWhitelistToRedis(): void
+    private static function syncWhitelistToRedis(): void
     {
         if (!Util::isDocker()) {
             return;
         }
         
         $whitelist = self::getNetworkFiltersWhitelist();
+        
+        // Always add localhost
+        $whitelist[] = '127.0.0.1';
+        $whitelist[] = '::1';
+        
+        // Add Docker network addresses
+        $dockerWhitelist = self::getDockerNetworkWhitelist();
+        $whitelist = array_merge($whitelist, $dockerWhitelist);
+        
+        // Remove duplicates
+        $whitelist = array_unique(array_filter($whitelist));
         
         try {
             $di = Di::getDefault();
@@ -645,7 +637,13 @@ class DockerNetworkFilterService extends Injectable
                 $redis->sadd($key, $ip);
             }
             
-            SystemMessages::sysLogMsg(__CLASS__, "Synced " . count($whitelist) . " whitelist entries to Redis", LOG_INFO);
+            SystemMessages::sysLogMsg(__CLASS__, 
+                sprintf("Synced %d whitelist entries to Redis (Docker: %s)", 
+                    count($whitelist), 
+                    implode(', ', $dockerWhitelist)
+                ), 
+                LOG_INFO
+            );
         } catch (\Exception $e) {
             SystemMessages::sysLogMsg(__CLASS__, "Failed to sync whitelist: " . $e->getMessage(), LOG_ERR);
         }
@@ -747,5 +745,150 @@ class DockerNetworkFilterService extends Injectable
         }
         
         return false;
+    }
+    
+    /**
+     * Get Docker network information for whitelist
+     * 
+     * @return array Network addresses to whitelist for Docker environment
+     */
+    private static function getDockerNetworkWhitelist(): array
+    {
+        if (!Util::isDocker()) {
+            return [];
+        }
+        
+        $whitelist = [];
+        
+        // Use existing Network class to get settings
+        $network = new Network();
+        $settings = $network->getGeneralNetSettings();
+        
+        // Process main internet interface
+        foreach ($settings as $interface) {
+            if ($interface['internet'] === '1' && $interface['disabled'] === '0') {
+                // Add gateway
+                if (!empty($interface['gateway'])) {
+                    $whitelist[] = $interface['gateway'];
+                    
+                    // Add .0 address (important for nginx logs in Docker!)
+                    $gatewayParts = explode('.', $interface['gateway']);
+                    if (count($gatewayParts) === 4) {
+                        $gatewayParts[3] = '0';
+                        $whitelist[] = implode('.', $gatewayParts);
+                    }
+                }
+                
+                // Add subnet in CIDR format
+                if (!empty($interface['ipaddr']) && !empty($interface['subnet'])) {
+                    // Calculate network address
+                    $subnet = is_numeric($interface['subnet']) 
+                        ? (int)$interface['subnet'] 
+                        : $network->netMaskToCidr($interface['subnet']);
+                    
+                    try {
+                        $calculator = new SubnetCalculator($interface['ipaddr'], $subnet);
+                        $whitelist[] = $calculator->getNetworkPortion() . '/' . $subnet;
+                    } catch (\Throwable $e) {
+                        SystemMessages::sysLogMsg(__CLASS__, 
+                            "Failed to calculate network CIDR for {$interface['ipaddr']}/{$subnet}: " . $e->getMessage(), 
+                            LOG_WARNING
+                        );
+                    }
+                }
+                
+                // Add interface IP itself
+                if (!empty($interface['ipaddr'])) {
+                    $whitelist[] = $interface['ipaddr'];
+                }
+                
+                break; // Only process main internet interface
+            }
+        }
+        
+        return array_unique(array_filter($whitelist));
+    }
+    
+    /**
+     * Add IP to rate limit block list
+     *
+     * @param string $ip IP address to block for rate limiting
+     * @param int $duration Block duration in seconds
+     * @return bool Success status
+     */
+    public static function blockIPForRateLimit(string $ip, int $duration = 300): bool
+    {
+        if (!Util::isDocker() && PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1') {
+            return false;
+        }
+        
+        // Check if IP is whitelisted
+        if (self::isLocalhostAddress($ip) || self::isIpWhitelisted($ip)) {
+            SystemMessages::sysLogMsg(__CLASS__, "Cannot rate limit whitelisted IP: $ip", LOG_WARNING);
+            return false;
+        }
+        
+        try {
+            $di = Di::getDefault();
+            $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
+            
+            $key = self::RATE_LIMIT_PREFIX . $ip;
+            $result = $redis->setex($key, $duration, '1');
+            
+            if ($result) {
+                SystemMessages::sysLogMsg(__CLASS__, "Rate limited IP $ip for $duration seconds", LOG_INFO);
+            }
+            
+            return (bool)$result;
+        } catch (\Exception $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to rate limit IP $ip: " . $e->getMessage(), LOG_ERR);
+            return false;
+        }
+    }
+    
+    /**
+     * Remove IP from rate limit block list
+     *
+     * @param string $ip IP address to unblock
+     * @return bool Success status
+     */
+    public static function unblockIPFromRateLimit(string $ip): bool
+    {
+        if (!Util::isDocker() && PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1') {
+            return false;
+        }
+        
+        try {
+            $di = Di::getDefault();
+            $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
+            
+            $key = self::RATE_LIMIT_PREFIX . $ip;
+            $result = $redis->del($key);
+            
+            if ($result) {
+                SystemMessages::sysLogMsg(__CLASS__, "Removed rate limit for IP $ip", LOG_INFO);
+            }
+            
+            return (bool)$result;
+        } catch (\Exception $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to remove rate limit for IP $ip: " . $e->getMessage(), LOG_ERR);
+            return false;
+        }
+    }
+    
+    /**
+     * Get rate limit settings
+     *
+     * @return array Rate limit configuration
+     */
+    public static function getRateLimitSettings(): array
+    {
+        return [
+            'enabled' => PbxSettings::getValueByKey('rate_limit_enabled') ?? '1',
+            'requests_per_minute' => intval(PbxSettings::getValueByKey('rate_limit_per_minute') ?? 60),
+            'requests_per_minute_auth' => intval(PbxSettings::getValueByKey('rate_limit_per_minute_auth') ?? 300),
+            'block_time' => intval(PbxSettings::getValueByKey('rate_limit_block_time') ?? 300),
+            'security_mode' => PbxSettings::getValueByKey('security_mode') ?? 'balanced'
+        ];
     }
 }

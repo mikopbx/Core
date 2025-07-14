@@ -364,11 +364,15 @@ class Fail2BanConf extends SystemConfigClass
             'asterisk_error'        => ['error', '_ERROR', $asteriskPorts],
             'asterisk_public'       => ['messages', '_PUBLIC', $asteriskPorts],
             'asterisk_ami'          => ['messages', '_AMI', $asteriskAMI],
+            'asterisk_iax'          => ['messages', '_IAX', [PbxSettings::getValueByKey(PbxSettings::IAX_PORT)]],
         ];
         foreach ($jails as $jail => [$logPrefix, $actionNamePrefix, $ports]) {
+            // Use specific filter for IAX jail
+            $filter = ($jail === 'asterisk_iax') ? 'asterisk-iax' : 'asterisk-main';
+            
             $config  .= "[$jail]" . PHP_EOL .
                 $commonParams .
-                "filter = asterisk-main" . PHP_EOL .
+                "filter = $filter" . PHP_EOL .
                 'action = miko-iptables-multiport-all[name=ASTERISK' . $actionNamePrefix . ', port="' . implode(',', $ports) . '"]' . PHP_EOL .
                 "logpath = $log_dir$logPrefix" . PHP_EOL . PHP_EOL;
         }
@@ -584,6 +588,29 @@ class Fail2BanConf extends SystemConfigClass
         // Write the configuration to the Asterisk security file
         file_put_contents("$filterPath/asterisk-main.conf", $conf);
 
+        // Construct the Asterisk IAX2 configuration string
+        $conf = $commonConf .
+            "_daemon = asterisk" . PHP_EOL . PHP_EOL .
+            "__pid_re = (?:\[\d+\])" . PHP_EOL .
+            "_c_ooooo = (\[C-\d+[a-z]*\]?)" . PHP_EOL . PHP_EOL .
+            "log_prefix= (?:NOTICE|SECURITY|WARNING)%(__pid_re)s:?%(_c_ooooo)s?:? \S+:\d*( in \w+:)?" . PHP_EOL . PHP_EOL .
+            "# IAX2-specific failure patterns" . PHP_EOL .
+            "failregex = ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> failed IAX2 authentication for user '[^']*'\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s IAX2 authentication failed for '[^']*' from <HOST>\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s No registration for IAX2 peer '[^']*' \(from <HOST>\)\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Host <HOST> denied by IAX2 ACL\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Call rejected, CallToken Support required but not provided by <HOST>\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s IAX2 Peer '[^']*' failed to authenticate from <HOST>\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s Rejected IAX2 connect attempt from <HOST>\$" . PHP_EOL .
+            '            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s SecurityEvent="(?:FailedACL|InvalidAccountID|ChallengeResponseFailed|InvalidPassword)",.*EventTV="[^"]*",Severity="[^"]*",Service="IAX2",.*RemoteAddress="IPV[46]/[^/]+/<HOST>/\d+"\$' . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s chan_iax2.c: Host <HOST> failed to authenticate as '[^']*'\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s chan_iax2.c: No authority found from <HOST>\$" . PHP_EOL .
+            "            ^(%(__prefix_line)s|\[\]\s*)%(log_prefix)s chan_iax2.c: Rejected connect attempt from <HOST>" . PHP_EOL . PHP_EOL .
+            "ignoreregex =" . PHP_EOL . PHP_EOL;
+
+        // Write the configuration to the Asterisk IAX2 file
+        file_put_contents("$filterPath/asterisk-iax.conf", $conf);
+
         // Generate the module filters
         $this->generateModulesFilters();
     }
@@ -786,16 +813,16 @@ class Fail2BanConf extends SystemConfigClass
         // Get ban time from fail2ban settings
         $banTime = self::getBanTime();
 
-        // Add IP to Redis blocked list for AMI and SIP categories
+        // Add IP to Redis blocked list for AMI, SIP and IAX categories
         DockerNetworkFilterService::addBlockedIp($ip, 'ami', $banTime);
         DockerNetworkFilterService::addBlockedIp($ip, 'sip', $banTime);
+        DockerNetworkFilterService::addBlockedIp($ip, 'iax', $banTime);
 
         // Log the ban
         SystemMessages::sysLogMsg('fail2ban-asterisk', "Banned IP: $ip", LOG_WARNING);
 
-        // Regenerate ACL configuration files from Redis
-        self::generateAsteriskAclConfigFromRedis();
-        self::generateIaxAclConfigFromRedis();
+        // Regenerate unified ACL configuration file from Redis
+        self::generateUnifiedFail2BanAcl();
         DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
 
         // Reload PJSIP
@@ -816,16 +843,16 @@ class Fail2BanConf extends SystemConfigClass
      */
     private static function unbanIpAsterisk(string $ip): void
     {
-        // Remove IP from Redis blocked list for AMI and SIP categories
+        // Remove IP from Redis blocked list for AMI, SIP and IAX categories
         DockerNetworkFilterService::removeBlockedIp($ip, 'ami');
         DockerNetworkFilterService::removeBlockedIp($ip, 'sip');
+        DockerNetworkFilterService::removeBlockedIp($ip, 'iax');
 
         // Log the unban
         SystemMessages::sysLogMsg('fail2ban-asterisk', "Unbanned IP: $ip", LOG_INFO);
 
-        // Regenerate ACL configuration files from Redis
-        self::generateAsteriskAclConfigFromRedis();
-        self::generateIaxAclConfigFromRedis();
+        // Regenerate unified ACL configuration file from Redis
+        self::generateUnifiedFail2BanAcl();
         DockerNetworkFilterService::generateAsteriskNetworkFiltersDenyAcl();
 
         // Reload PJSIP
@@ -839,68 +866,131 @@ class Fail2BanConf extends SystemConfigClass
     }
 
     /**
-     * Generate ACL configuration file for Asterisk from fail2ban data
+     * Generate ACL configuration files for all Asterisk services from fail2ban data
+     *
+     * Creates three separate ACL files for different protocols:
+     * - fail2ban_sip_acl.conf - Named ACL for PJSIP (used in acl.conf)
+     * - fail2ban_manager_deny.conf - Direct deny rules for manager.conf
+     * - fail2ban_iax_deny.conf - Direct deny rules for iax.conf
      *
      * @return void
      */
-    public static function generateAsteriskAclConfigFromRedis(): void
+    public static function generateUnifiedFail2BanAcl(): void
     {
         // Check if fail2ban is enabled
         $fail2banEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
 
         // Define paths using Directories constants
         $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
-        $aclFile = $asteriskEtcDir . '/fail2ban_dynamic_acl.conf';
-        $managerDenyFile = $asteriskEtcDir . '/manager_fail2ban_deny.conf';
+        $sipAclFile = $asteriskEtcDir . '/fail2ban_sip_acl.conf';
+        $managerDenyFile = $asteriskEtcDir . '/fail2ban_manager_deny.conf';
+        $iaxDenyFile = $asteriskEtcDir . '/fail2ban_iax_deny.conf';
+        
+        // Old files to be removed
+        $oldFiles = [
+            $asteriskEtcDir . '/fail2ban_dynamic_acl.conf',
+            $asteriskEtcDir . '/fail2ban_iax_dynamic_acl.conf',
+            $asteriskEtcDir . '/fail2ban_unified_acl.conf',
+            $asteriskEtcDir . '/manager_fail2ban_deny.conf'
+        ];
 
         if ($fail2banEnabled !== '1') {
-            // Remove ACL files if fail2ban is disabled
-            if (file_exists($aclFile)) {
-                unlink($aclFile);
+            // Remove all ACL files if fail2ban is disabled
+            foreach ($oldFiles as $file) {
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+            }
+            if (file_exists($sipAclFile)) {
+                unlink($sipAclFile);
             }
             if (file_exists($managerDenyFile)) {
                 unlink($managerDenyFile);
             }
+            if (file_exists($iaxDenyFile)) {
+                unlink($iaxDenyFile);
+            }
             return;
         }
 
-        // Get blocked IPs from Redis (AMI and SIP categories)
-        $amiBlockedIps = DockerNetworkFilterService::getBlockedIps('ami');
+        // Get blocked IPs from Redis for all categories
         $sipBlockedIps = DockerNetworkFilterService::getBlockedIps('sip');
-        $blockedIps = array_unique(array_merge($amiBlockedIps, $sipBlockedIps));
-
-        // Generate ACL file for acl.conf
-        $content = "; Fail2ban dynamic ACL - DO NOT EDIT MANUALLY\n";
-        $content .= "; This file is automatically generated by fail2ban\n";
-        $content .= "; Last updated: " . date('Y-m-d H:i:s') . "\n";
-        $content .= "; Blocked IPs: " . count($blockedIps) . "\n\n";
-
-        // Always permit localhost first
-        $content .= "; Always allow localhost access\n";
-        $content .= "permit=127.0.0.1/255.255.255.255\n";
-        $content .= "permit=::1\n\n";
-
-        if (!empty($blockedIps)) {
-            $content .= "; Blocked IPs by fail2ban\n";
-            foreach ($blockedIps as $ip) {
-                $content .= "deny=$ip/255.255.255.255\n";
+        $amiBlockedIps = DockerNetworkFilterService::getBlockedIps('ami');
+        $iaxBlockedIps = DockerNetworkFilterService::getBlockedIps('iax');
+        
+        // Generate SIP ACL file with named ACL section
+        $sipContent = "; Fail2ban ACL configuration for PJSIP - DO NOT EDIT MANUALLY\n";
+        $sipContent .= "; This file is automatically generated by fail2ban\n";
+        $sipContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
+        
+        $sipContent .= "; Named ACL for PJSIP endpoints\n";
+        $sipContent .= "[acl_fail2ban]\n";
+        $sipContent .= "; Always allow localhost access\n";
+        $sipContent .= "permit=127.0.0.1/255.255.255.255\n";
+        $sipContent .= "permit=::1\n";
+        
+        if (!empty($sipBlockedIps)) {
+            $sipContent .= "\n; Blocked IPs by fail2ban (SIP)\n";
+            foreach ($sipBlockedIps as $ip) {
+                // Check if IP contains subnet mask
+                if (strpos($ip, '/') !== false) {
+                    $sipContent .= "deny=$ip\n";
+                } else {
+                    $sipContent .= "deny=$ip/255.255.255.255\n";
+                }
             }
         }
 
-        file_put_contents($aclFile, $content);
+        file_put_contents($sipAclFile, $sipContent);
 
-        // Generate deny rules for manager.conf
+        // Generate deny rules for manager.conf (only AMI blocked IPs)
         $managerContent = "; Fail2ban deny rules for manager.conf - DO NOT EDIT MANUALLY\n";
         $managerContent .= "; This file is automatically generated by fail2ban\n";
         $managerContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
 
-        if (!empty($blockedIps)) {
-            foreach ($blockedIps as $ip) {
-                $managerContent .= "deny=$ip/255.255.255.255\n";
+        if (!empty($amiBlockedIps)) {
+            foreach ($amiBlockedIps as $ip) {
+                // Check if IP contains subnet mask
+                if (strpos($ip, '/') !== false) {
+                    $managerContent .= "deny=$ip\n";
+                } else {
+                    $managerContent .= "deny=$ip/255.255.255.255\n";
+                }
             }
         }
 
         file_put_contents($managerDenyFile, $managerContent);
+        
+        // Generate IAX deny rules file (since IAX doesn't support named ACLs)
+        $iaxContent = "; Fail2ban deny rules for iax.conf - DO NOT EDIT MANUALLY\n";
+        $iaxContent .= "; This file is automatically generated by fail2ban\n";
+        $iaxContent .= "; Last updated: " . date('Y-m-d H:i:s') . "\n\n";
+        
+        // Always permit localhost first
+        $iaxContent .= "; Always allow localhost access\n";
+        $iaxContent .= "permit=127.0.0.1/255.255.255.255\n";
+        $iaxContent .= "permit=::1\n";
+        
+        if (!empty($iaxBlockedIps)) {
+            $iaxContent .= "\n; Blocked IPs by fail2ban (IAX)\n";
+            foreach ($iaxBlockedIps as $ip) {
+                // Check if IP contains subnet mask
+                if (strpos($ip, '/') !== false) {
+                    $iaxContent .= "deny=$ip\n";
+                } else {
+                    $iaxContent .= "deny=$ip/255.255.255.255\n";
+                }
+            }
+        }
+        
+        file_put_contents($iaxDenyFile, $iaxContent);
+        
+        // Clean up old files
+        foreach ($oldFiles as $file) {
+            if (file_exists($file)) {
+                unlink($file);
+            }
+        }
     }
 
     /**
@@ -950,49 +1040,4 @@ class Fail2BanConf extends SystemConfigClass
         return false;
     }
 
-    /**
-     * Generate ACL configuration file for IAX from fail2ban data
-     *
-     * @return void
-     */
-    public static function generateIaxAclConfigFromRedis(): void
-    {
-        // Check if fail2ban is enabled
-        $fail2banEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
-
-        // Define paths using Directories constants
-        $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
-        $aclFile = $asteriskEtcDir . '/fail2ban_iax_dynamic_acl.conf';
-
-        if ($fail2banEnabled !== '1') {
-            // Remove ACL file if fail2ban is disabled
-            if (file_exists($aclFile)) {
-                unlink($aclFile);
-            }
-            return;
-        }
-
-        // Get blocked IPs from Redis for SIP category (IAX uses same blocking)
-        $blockedIps = DockerNetworkFilterService::getBlockedIps('sip');
-
-        // Generate ACL file for iax.conf
-        $content = "; Fail2ban dynamic ACL for IAX - DO NOT EDIT MANUALLY\n";
-        $content .= "; This file is automatically generated by fail2ban\n";
-        $content .= "; Last updated: " . date('Y-m-d H:i:s') . "\n";
-        $content .= "; Blocked IPs: " . count($blockedIps) . "\n\n";
-
-        // Always permit localhost first
-        $content .= "; Always allow localhost access\n";
-        $content .= "permit=127.0.0.1/255.255.255.255\n";
-        $content .= "permit=::1\n\n";
-
-        if (!empty($blockedIps)) {
-            $content .= "; Blocked IPs by fail2ban\n";
-            foreach ($blockedIps as $ip) {
-                $content .= "deny=$ip/255.255.255.255\n";
-            }
-        }
-
-        file_put_contents($aclFile, $content);
-    }
 }

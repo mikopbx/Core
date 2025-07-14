@@ -198,8 +198,9 @@ class NginxConf extends SystemConfigClass
 
         $config = file_get_contents(self::CONF_PATH . ".original");
 
-        // Add dynamic IP filtering via Lua for Docker environments
-        if (Util::isDocker()) {
+        // Add dynamic security filtering via Lua when firewall is enabled
+        $firewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
+        if ($firewallEnabled === '1') {
             // Get Redis/Lua configuration
             $redisVars = $this->generateRedisLuaConfig();
 
@@ -243,8 +244,8 @@ class NginxConf extends SystemConfigClass
             file_put_contents($private_filename, $WEBHTTPSPrivateKey);
             $config = file_get_contents(self::CONF_PATH_SSL . ".original");
 
-            // Add dynamic IP filtering via Lua for Docker environments (SSL)
-            if (Util::isDocker()) {
+            // Add dynamic security filtering via Lua when firewall is enabled (SSL)
+            if ($firewallEnabled === '1') {
                 // Redis configuration is already synced above, just add Lua directives
                 $redisVars = $this->generateRedisLuaConfig();
 
@@ -327,14 +328,21 @@ class NginxConf extends SystemConfigClass
         $redisPort = $configService->path('redis.port') ?? 6379;
         $redisDb = RedisClientProvider::DATABASE_INDEX;
 
+
         // Build configuration
         $redisVars = "    # Redis configuration for Lua\n";
         $redisVars .= "    set \$redis_host '$redisHost';\n";
         $redisVars .= "    set \$redis_port '$redisPort';\n";
         $redisVars .= "    set \$redis_db '$redisDb';\n";
         $redisVars .= "    \n";
-        $redisVars .= "    # IP filtering via Lua\n";
-        $redisVars .= "    access_by_lua_file /etc/nginx/mikopbx/lua/ip-filter-redis.lua;\n";
+        $redisVars .= "    # Security configuration\n";
+        $redisVars .= "    set \$is_docker '" . (Util::isDocker() ? '1' : '0') . "';\n";
+        $redisVars .= "    set \$security_mode 'balanced';\n";
+        $redisVars .= "    set \$rate_limit_enabled '1';\n";
+        $redisVars .= "    set \$session_check_required '0';\n";
+        $redisVars .= "    \n";
+        $redisVars .= "    # Security filtering via Lua\n";
+        $redisVars .= "    access_by_lua_file /etc/nginx/mikopbx/lua/unified-security.lua;\n";
 
         return $redisVars;
     }

@@ -89,11 +89,13 @@ class IAXConf extends AsteriskConfigClass
         $conf .= "jitterbuffer=no" . PHP_EOL;
         $conf .= "forcejitterbuffer=no" . PHP_EOL;
         
-        // In Docker environment, include dynamic fail2ban ACL
+        // In Docker environment, include dynamic fail2ban ACL and network filters
         if (Util::isDocker()) {
             $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
             $conf .= PHP_EOL . "; Fail2ban dynamic ACL for Docker" . PHP_EOL;
-            $conf .= "#tryinclude $asteriskEtcDir/fail2ban_iax_dynamic_acl.conf" . PHP_EOL;
+            $conf .= "#tryinclude $asteriskEtcDir/fail2ban_iax_deny.conf" . PHP_EOL;
+            $conf .= PHP_EOL . "; NetworkFilters deny ACL for Docker" . PHP_EOL;
+            $conf .= "#tryinclude $asteriskEtcDir/network_filters_deny_iax_acl.conf" . PHP_EOL;
         }
         
         $conf .= PHP_EOL;
@@ -185,8 +187,8 @@ class IAXConf extends AsteriskConfigClass
                     break;
             }
             
-            // Add network filter permits to options for INBOUND
-            if ($registrationType === Iax::REGISTRATION_TYPE_INBOUND && !empty($provider['networkfilterid'])) {
+            // Add network filter permits to options
+            if (!empty($provider['networkfilterid'])) {
                 $networkFilter = NetworkFilters::findFirstById($provider['networkfilterid']);
                 if ($networkFilter) {
                     $permit = trim($networkFilter->permit);
@@ -196,6 +198,9 @@ class IAXConf extends AsteriskConfigClass
                         $options['deny'] = '0.0.0.0/0.0.0.0';
                         $options['permit'] = implode('&', $permits);
                     }
+                    
+                    // In Docker environment, NetworkFilters deny rules are handled globally
+                    // via included ACL files, so we don't need to add deny rules here
                 }
             }
             
