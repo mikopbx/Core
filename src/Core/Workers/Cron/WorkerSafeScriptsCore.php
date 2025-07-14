@@ -170,6 +170,17 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     public function restart(bool $softRestart = false): void
     {
+        // Send SIGUSR1 to the main WorkerSafeScriptsCore process first
+        $mainProcessPid = Processes::getPidOfProcess(static::class . ' start');
+        if (!empty($mainProcessPid)) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Sending SIGUSR1 to main WorkerSafeScriptsCore process (PID: $mainProcessPid)",
+                LOG_NOTICE
+            );
+            posix_kill((int)$mainProcessPid, SIGUSR1);
+        }
+        
         // Get all workers that need to be restarted
         $arrWorkers = $this->prepareWorkersList();
         
@@ -284,10 +295,13 @@ class WorkerSafeScriptsCore extends WorkerBase
      */
     public function start(array $argv): void
     {
+        // Signal handlers are registered automatically in parent constructor
+        // When SIGUSR1 is received, $this->needRestart will be set to true
+        
         // Wait for the system to fully boot.
         PBX::waitFullyBooted();
 
-        while (true) {
+        while (!$this->needRestart) {
 
             // If the system is booting, do not start the workers.
             if (System::isBooting()) {
@@ -323,6 +337,30 @@ class WorkerSafeScriptsCore extends WorkerBase
             
             // Sleep for a short interval before next check
             sleep(5);
+        }
+        
+        // If needRestart is true, perform graceful restart
+        if ($this->needRestart) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Received restart signal, performing graceful restart",
+                LOG_NOTICE
+            );
+            
+            // Start a new instance of ourselves
+            $workerPath = Util::getFilePathByClassName(static::class);
+            $php = Util::which('php');
+            $command = "$php -f $workerPath start > /dev/null 2>&1 &";
+            shell_exec($command);
+            
+            SystemMessages::sysLogMsg(
+                static::class,
+                "New instance started, exiting current instance",
+                LOG_NOTICE
+            );
+            
+            // Exit current instance
+            exit(0);
         }
     }
 
