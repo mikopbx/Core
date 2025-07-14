@@ -63,6 +63,7 @@ const firewall = {
 
         firewall.initializeForm();
         firewall.initializeTooltips();
+        firewall.initializeDockerLimitedCheckboxes();
     },
 
     /**
@@ -101,6 +102,7 @@ const firewall = {
     initializeTooltips() {
         const self = this;
         
+        // Initialize tooltips for service rules
         $('.service-info-icon').each(function() {
             const $icon = $(this);
             const service = $icon.data('service');
@@ -135,10 +137,40 @@ const firewall = {
             $checkbox.data('tooltipIcon', $icon);
         });
         
+        // Initialize tooltips for special checkboxes
+        $('.special-checkbox-info').each(function() {
+            const $icon = $(this);
+            const type = $icon.data('type');
+            
+            // Find the checkbox for this type
+            const $checkbox = $icon.closest('.field').find(`input[name="${type}"]`);
+            
+            // Get initial state
+            const isChecked = $checkbox.prop('checked');
+            const network = `${window.currentNetwork}/${window.currentSubnet}`;
+            
+            // Generate initial tooltip content
+            const tooltipContent = firewallTooltips.generateSpecialCheckboxContent(
+                type,
+                network,
+                isChecked
+            );
+            
+            // Initialize tooltip
+            firewallTooltips.initializeTooltip($icon, {
+                html: tooltipContent,
+                position: 'top right'
+            });
+            
+            // Store reference to icon on checkbox for updates
+            $checkbox.data('specialTooltipIcon', $icon);
+        });
+        
         // Listen for checkbox changes to update tooltips
         $('#firewall-form .rules input[type="checkbox"]').on('change', function() {
             const $checkbox = $(this);
             const $icon = $checkbox.data('tooltipIcon');
+            const $specialIcon = $checkbox.data('specialTooltipIcon');
             
             if ($icon && $icon.length) {
                 const service = $icon.data('service');
@@ -161,8 +193,66 @@ const firewall = {
                 // Update tooltip
                 firewallTooltips.updateContent($icon, newContent);
             }
+            
+            if ($specialIcon && $specialIcon.length) {
+                const type = $specialIcon.data('type');
+                const isChecked = $checkbox.prop('checked');
+                const network = `${window.currentNetwork}/${window.currentSubnet}`;
+                
+                // Generate new tooltip content
+                const newContent = firewallTooltips.generateSpecialCheckboxContent(
+                    type,
+                    network,
+                    isChecked
+                );
+                
+                // Update tooltip
+                firewallTooltips.updateContent($specialIcon, newContent);
+            }
         });
     },
+    
+    /**
+     * Initialize Docker limited checkboxes - prevent them from being toggled
+     */
+    initializeDockerLimitedCheckboxes() {
+        if (!window.isDocker) {
+            return;
+        }
+        
+        $('.docker-limited-checkbox').each(function() {
+            const $checkbox = $(this);
+            const $input = $checkbox.find('input[type="checkbox"]');
+            
+            // Ensure checkbox is always checked
+            $input.prop('checked', true);
+            
+            // Add visual disabled state
+            $checkbox.addClass('disabled');
+            
+            // Prevent click events
+            $checkbox.on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Show a temporary message
+                const $label = $checkbox.find('label');
+                const $icon = $label.find('.service-info-icon');
+                
+                // Trigger the tooltip to show
+                $icon.popup('show');
+                
+                return false;
+            });
+            
+            // Prevent checkbox state changes
+            $input.on('change', function(e) {
+                e.preventDefault();
+                $(this).prop('checked', true);
+                return false;
+            });
+        });
+    }
 };
 
 // Custom form validation rule to check if a string is a valid IP address

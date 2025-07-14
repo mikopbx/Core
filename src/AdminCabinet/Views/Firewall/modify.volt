@@ -27,13 +27,15 @@
         {% set isLimited = isDocker and (shortName not in dockerSupportedServices) %}
         <div class="ui segment {% if isLimited %}docker-limited-segment{% endif %}">
             <div class="field">
-                <div class="ui toggle checkbox rules">
+                <div class="ui toggle checkbox rules {% if isLimited %}docker-limited-checkbox{% endif %}">
                     <input type="checkbox"
-                           name="rule_{{ name|upper }}" {% if value['action']=='allow' %} checked {% endif %}
+                           name="rule_{{ name|upper }}" 
+                           {% if isLimited or value['action']=='allow' %} checked {% endif %}
+                           {% if isLimited %} disabled {% endif %}
                            tabindex="0" class="hidden">
                     <label>
                         {{ t._('fw_'~name|lower~'Description') }}
-                        <i class="small info circle icon service-info-icon" 
+                        <i class="{% if isLimited %}yellow exclamation triangle{% else %}small info circle{% endif %} icon service-info-icon" 
                            data-service="{{ name }}"
                            data-action="{{ value['action'] }}"
                            {% if isLimited %}data-limited="true"{% endif %}></i>
@@ -47,7 +49,11 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox rules">
-            <label>{{ t._('fw_ItIsLocalNetwork') }}</label>
+            <label>
+                {{ t._('fw_ItIsLocalNetwork') }}
+                <i class="small info circle icon special-checkbox-info" 
+                   data-type="local_network"></i>
+            </label>
             {{ form.render('local_network') }}
         </div>
     </div>
@@ -55,7 +61,11 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox rules">
-            <label>{{ t._('fw_NewerBlockIp') }}</label>
+            <label>
+                {{ t._('fw_NewerBlockIp') }}
+                <i class="small info circle icon special-checkbox-info" 
+                   data-type="newer_block_ip"></i>
+            </label>
             {{ form.render('newer_block_ip') }}
         </div>
     </div>

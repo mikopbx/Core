@@ -49,6 +49,25 @@ td.docker-limited.marks .ui.popup .ui.list {
     margin: 0.5em 0;
 }
 
+/* Special checkbox info icons */
+.special-checkbox-info {
+    color: #2185d0;
+    cursor: pointer;
+    margin-left: 0.5em;
+}
+
+.special-checkbox-info:hover {
+    color: #1678c2;
+}
+
+/* Warning message in tooltips */
+.ui.popup .ui.warning.message {
+    background-color: #fff8db;
+    color: #b58105;
+    padding: 0.75em;
+    margin-top: 0.5em;
+}
+
 /* Styles for firewall modify form */
 .docker-limited-segment {
     background-color: rgba(0, 0, 0, 0.02);
@@ -67,6 +86,33 @@ td.docker-limited.marks .ui.popup .ui.list {
 
 .docker-limited-segment .service-info-icon {
     color: #fbbd08;
+}
+
+/* Docker limited checkbox styles */
+.docker-limited-checkbox {
+    opacity: 1 !important;
+}
+
+.docker-limited-checkbox.disabled label {
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+}
+
+/* Override Semantic UI disabled styles for Docker limited checkboxes */
+.docker-limited-checkbox.disabled input[type="checkbox"]:checked ~ label:before {
+    background-color: #2185d0 !important;
+    border-color: #2185d0 !important;
+}
+
+.docker-limited-checkbox.disabled input[type="checkbox"]:checked ~ label:after {
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+/* Yellow warning icon for Docker limited services */
+.service-info-icon.yellow.exclamation.triangle {
+    color: #fbbd08 !important;
+    font-size: 1.1em;
 }
 
 /* Tooltip styles for all firewall popups */
@@ -96,4 +142,23 @@ td.docker-limited.marks .ui.popup .ui.list {
 
 .ui.popup .ui.list {
     margin: 0.5em 0;
+}
+
+/* Special checkbox info icons */
+.special-checkbox-info {
+    color: #2185d0;
+    cursor: pointer;
+    margin-left: 0.5em;
+}
+
+.special-checkbox-info:hover {
+    color: #1678c2;
+}
+
+/* Warning message in tooltips */
+.ui.popup .ui.warning.message {
+    background-color: #fff8db;
+    color: #b58105;
+    padding: 0.75em;
+    margin-top: 0.5em;
 }

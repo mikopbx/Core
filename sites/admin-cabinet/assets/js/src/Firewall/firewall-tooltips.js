@@ -74,7 +74,10 @@ const firewallTooltips = {
         
         if (isDocker && isLimited) {
             // Docker limited service - always show host configuration
-            content += `<p><strong>${globalTranslate.fw_ConfigureOnHost || 'Configure rules on Docker host'}:</strong></p>`;
+            content += `<div class="ui warning message">`;
+            content += `<i class="warning icon"></i> ${globalTranslate.fw_DockerLimitedService || 'This service is always enabled in Docker environment. Firewall rules must be configured on the Docker host.'}`;
+            content += `</div>`;
+            content += `<p><strong>${globalTranslate.fw_DockerConfigureRules || 'Configure firewall rules on Docker host'}:</strong></p>`;
             content += '<div class="ui segment">';
             
             if (showCopyButton) {
@@ -225,5 +228,67 @@ const firewallTooltips = {
                 }, 100);
             }
         });
+    },
+    
+    /**
+     * Generate tooltip content for special checkboxes (newer_block_ip and local_network)
+     * @param {string} type - Type of checkbox ('newer_block_ip' or 'local_network')
+     * @param {string} network - Network address with subnet
+     * @param {boolean} isChecked - Whether checkbox is checked
+     * @returns {string} HTML content for tooltip
+     */
+    generateSpecialCheckboxContent(type, network, isChecked) {
+        let content = '<div class="content">';
+        
+        if (type === 'newer_block_ip') {
+            // Header
+            content += `<div class="header"><b>${globalTranslate.fw_NewerBlockIp || 'Never block IPs'}</b></div>`;
+            content += `<div class="ui divider"></div>`;
+            
+            // Description
+            content += `<p>${globalTranslate.fw_NewerBlockIpTooltip || 'IP addresses from this subnet will never be blocked by Fail2ban service, even after multiple failed login attempts. Use this option for trusted networks such as office network or VPN.'}</p>`;
+            
+            // Effect
+            content += `<div class="ui divider"></div>`;
+            content += `<p><strong>${globalTranslate.fw_Effect || 'Effect'}:</strong></p>`;
+            
+            if (isChecked) {
+                content += `<div class="ui segment">`;
+                content += `<i class="shield alternate icon"></i> ${globalTranslate.fw_Fail2banWillIgnore || 'Fail2ban will ignore failed authentication attempts from'} <strong>${network}</strong>`;
+                content += `</div>`;
+                content += `<p class="ui warning message">`;
+                content += `<i class="warning icon"></i> ${globalTranslate.fw_SecurityWarning || 'Warning: This reduces security for the specified network. Use only for trusted networks.'}`;
+                content += `</p>`;
+            } else {
+                content += `<p>${globalTranslate.fw_Fail2banWillMonitor || 'Fail2ban will monitor and may block IPs from'} <strong>${network}</strong> ${globalTranslate.fw_AfterFailedAttempts || 'after failed authentication attempts.'}</p>`;
+            }
+            
+        } else if (type === 'local_network') {
+            // Header
+            content += `<div class="header"><b>${globalTranslate.fw_ItIsLocalNetwork || 'Local network or VPN'}</b></div>`;
+            content += `<div class="ui divider"></div>`;
+            
+            // Description
+            content += `<p>${globalTranslate.fw_LocalNetworkTooltip || 'Specify this option for local networks or VPN where devices connect to MikoPBX directly without NAT. This affects SIP packet processing and allows proper device address detection in the local network.'}</p>`;
+            
+            // Effect
+            content += `<div class="ui divider"></div>`;
+            content += `<p><strong>${globalTranslate.fw_Effect || 'Effect'}:</strong></p>`;
+            
+            if (isChecked) {
+                content += `<div class="ui segment">`;
+                content += `<ul class="ui list">`;
+                content += `<li><i class="check icon"></i> ${globalTranslate.fw_DirectSIPRouting || 'SIP packets will be routed directly without NAT handling'}</li>`;
+                content += `<li><i class="check icon"></i> ${globalTranslate.fw_NoContactRewriting || 'Contact headers will not be rewritten'}</li>`;
+                content += `<li><i class="check icon"></i> ${globalTranslate.fw_LocalAddressDetection || 'Device addresses will be detected as local'}</li>`;
+                content += `</ul>`;
+                content += `</div>`;
+            } else {
+                content += `<p>${globalTranslate.fw_NATHandling || 'Network'} <strong>${network}</strong> ${globalTranslate.fw_WillBeHandledAsExternal || 'will be handled as external network with NAT traversal enabled.'}</p>`;
+            }
+        }
+        
+        content += '</div>';
+        return content;
     }
 };

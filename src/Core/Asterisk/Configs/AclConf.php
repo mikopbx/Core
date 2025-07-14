@@ -96,7 +96,7 @@ class AclConf extends AsteriskConfigClass
             $conf_acl .= "; This ACL is automatically updated by fail2ban\n";
             
             $asteriskEtcDir = \MikoPBX\Core\System\Directories::getDir(\MikoPBX\Core\System\Directories::AST_ETC_DIR);
-            $conf_acl .= "#tryinclude $asteriskEtcDir/fail2ban_dynamic_acl.conf\n\n";
+            $conf_acl .= "#tryinclude $asteriskEtcDir/fail2ban_sip_acl.conf\n\n";
             
             // Add NetworkFilters deny ACL
             $conf_acl .= "; NetworkFilters Global Deny ACL for Docker\n";

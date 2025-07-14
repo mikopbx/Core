@@ -133,14 +133,14 @@ class FirewallController extends BaseController
         
         // Define which services are fully supported in Docker
         // Only these services use Redis-based blocking in Docker environments
-        // WEB - HTTP/HTTPS traffic (Nginx)
-        // SSH - SSH access
+        // WEB - HTTP/HTTPS traffic (Nginx with Lua script)
         // AMI - Asterisk Manager Interface
         // SIP & RTP - SIP protocol and RTP media for VoIP
-        $this->view->dockerSupportedServices = ['WEB', 'SSH', 'AMI', 'SIP & RTP'];
+        // IAX - IAX2 protocol for VoIP
+        $this->view->dockerSupportedServices = ['WEB', 'AMI', 'SIP & RTP', 'IAX'];
         
         // All other services (including those added by modules) will be marked as limited
-        // This includes: IAX, AJAM, ICMP, CTI, Zabbix, and any custom services from modules
+        // This includes: AJAM, ICMP, CTI, Zabbix, and any custom services from modules
         
         // Get port information for all services to display in tooltips
         $servicePortInfo = [];
@@ -216,7 +216,7 @@ class FirewallController extends BaseController
         
         // Pass Docker status and supported services
         $this->view->isDocker = Util::isDocker();
-        $this->view->dockerSupportedServices = ['WEB', 'SSH', 'AMI', 'SIP & RTP'];
+        $this->view->dockerSupportedServices = ['WEB', 'AMI', 'SIP & RTP', 'IAX'];
         
         // Get port information for tooltips
         $servicePortInfo = [];

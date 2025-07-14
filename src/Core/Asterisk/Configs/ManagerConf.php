@@ -106,7 +106,7 @@ class ManagerConf extends AsteriskConfigClass
                 if (Util::isDocker()) {
                     // Include fail2ban deny rules
                     $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
-                    $conf .= "#tryinclude $asteriskEtcDir/manager_fail2ban_deny.conf\n";
+                    $conf .= "#tryinclude $asteriskEtcDir/fail2ban_manager_deny.conf\n";
                     
                     // Include network filters deny rules
                     $conf .= "#tryinclude $asteriskEtcDir/manager_network_filters_deny.conf\n";
