@@ -572,7 +572,6 @@ return [
     'fw_StatusEnabled' => 'Сетевой экран и защита от взлома включены',
     'fw_StatusDisabled' => 'Сетевой экран и защита от взлома отключены',
     'fw_DockerFirewallInfo' => 'В Docker-окружении защита применяется на уровне приложения',
-    'fw_DockerLimitedService' => 'Ограниченная защита в Docker-окружении',
     'fw_DockerEnvironmentNotice' => 'Docker-окружение',
     'fw_DockerLimitedServicesInfo' => 'Некоторые службы имеют ограниченную защиту в Docker-окружении. Полностью поддерживаются только протоколы HTTP, SSH, AMI и SIP.',
     'fw_DockerLimitedServiceTitle' => 'Ограничена в Docker',
