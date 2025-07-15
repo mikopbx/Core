@@ -128,7 +128,7 @@ const fail2BanIndex = {
                             globalTranslate.f2b_MaxReqSec30,
                             globalTranslate.f2b_MaxReqSec100,
                             globalTranslate.f2b_MaxReqSec300,
-                            globalTranslate.gs_StoreAllPossibleRecords,
+                            globalTranslate.f2b_MaxReqSecUnlimited,
                         ];
                         return labels[value];
                     },
