@@ -64,21 +64,21 @@ class GetLogFromFileAction extends Injectable
                 $grep = Util::which('grep');
             }
             $tail = Util::which('tail');
-            $filter = escapeshellarg($filter);
             $linesPlusOffset = $lines + $offset;
 
             $cacheDir = Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR);
             if (!file_exists($cacheDir)) {
                 Util::mwMkdir($cacheDir, true);
             }
-            $filenameTmp = $cacheDir . '/' . __FUNCTION__ . '_' . time() . '.log';
+            $filenameTmp = $cacheDir . '/' . __FUNCTION__ . '_' . uniqid(time() . '_', true) . '.log';
             
             // Check if the file is an archive
             $isArchive = false;
+            $decompressedFile = '';
             $fileExtension = pathinfo($filename, PATHINFO_EXTENSION);
             if (in_array($fileExtension, ['gz', 'zip', 'bz2', 'xz'])) {
                 $isArchive = true;
-                $decompressedFile = $cacheDir . '/' . basename($filename, '.' . $fileExtension);
+                $decompressedFile = $cacheDir . '/' . uniqid('decompressed_', true) . '_' . basename($filename, '.' . $fileExtension);
                 
                 // Decompress based on file extension
                 switch ($fileExtension) {
@@ -127,7 +127,20 @@ class GetLogFromFileAction extends Injectable
             if (empty($filter)) {
                 $cmd = "$tail -n $linesPlusOffset $fileToProcess";
             } else {
-                $cmd = "$grep --text -h -e " . str_replace('&', "' -e '", $filter) . " -F $fileToProcess | $tail -n $linesPlusOffset";
+                // Split filter by & and escape each part separately
+                $filterParts = explode('&', $filter);
+                $grepArgs = [];
+                foreach ($filterParts as $part) {
+                    $part = trim($part);
+                    if (!empty($part)) {
+                        $grepArgs[] = '-e ' . escapeshellarg($part);
+                    }
+                }
+                if (!empty($grepArgs)) {
+                    $cmd = "$grep --text -h " . implode(' ', $grepArgs) . " -F $fileToProcess | $tail -n $linesPlusOffset";
+                } else {
+                    $cmd = "$tail -n $linesPlusOffset $fileToProcess";
+                }
             }
             if ($offset > 0) {
                 $cmd .= " | $head -n $lines";
@@ -140,12 +153,30 @@ class GetLogFromFileAction extends Injectable
             Processes::mwExec($cmd);
             $res->data['cmd'] = $cmd;
             $res->data['filename'] = $filenameTmp;
-            $res->data['content'] = mb_convert_encoding('' . file_get_contents($filenameTmp), 'UTF-8', 'UTF-8');
-            unlink($filenameTmp);
+            
+            // Check if temporary file was created successfully
+            if (file_exists($filenameTmp)) {
+                $res->data['content'] = mb_convert_encoding('' . file_get_contents($filenameTmp), 'UTF-8', 'UTF-8');
+                // Use @ to suppress warning if file was already deleted by another process
+                @unlink($filenameTmp);
+            } else {
+                // If file wasn't created, try to execute command without redirection to get content directly
+                $cmdDirect = str_replace(" > $filenameTmp", "", $cmd);
+                $output = [];
+                $returnCode = 0;
+                exec($cmdDirect, $output, $returnCode);
+                
+                if ($returnCode === 0) {
+                    $res->data['content'] = mb_convert_encoding(implode("\n", $output), 'UTF-8', 'UTF-8');
+                } else {
+                    $res->data['content'] = '';
+                    $res->messages['warning'][] = 'No matching log entries found or command execution failed';
+                }
+            }
             
             // Clean up decompressed file if it was created
-            if ($isArchive && file_exists($decompressedFile)) {
-                unlink($decompressedFile);
+            if ($isArchive && !empty($decompressedFile) && file_exists($decompressedFile)) {
+                @unlink($decompressedFile);
             }
         }
 

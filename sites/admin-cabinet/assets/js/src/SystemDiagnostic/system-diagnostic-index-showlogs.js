@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 /* global ace, PbxApi, updateLogViewWorker, Ace, UserMessage */
-
+ 
 /**
  * Represents the system diagnostic logs object.
  *
@@ -259,7 +259,7 @@ const systemDiagnosticLogs = {
                         type: 'file',
                         path: filePath,
                         size: fileData.size,
-                        default: fileData.default || (defaultPath === filePath)
+                        default: (defaultPath && defaultPath === filePath) || (!defaultPath && fileData.default)
                     };
                 } else {
                     // This is a directory
@@ -373,12 +373,18 @@ const systemDiagnosticLogs = {
         // Check if there is a default value set for the filename input field
         let defVal = '';
         const fileName = systemDiagnosticLogs.$formObj.form('get value', 'filename');
-        if (systemDiagnosticLogs.logsItems.length === 0 && fileName !== '') {
+        if (fileName !== '') {
             defVal = fileName.trim();
         }
 
         // Build tree structure from files
         systemDiagnosticLogs.logsItems = systemDiagnosticLogs.buildTreeStructure(response.files, defVal);
+        
+        // Debug: log the filename and items to see what's happening
+        if (defVal) {
+            console.log('Looking for file:', defVal);
+            console.log('Available files:', Object.keys(response.files));
+        }
 
         // Create values array for dropdown with all items (including folders)
         const dropdownValues = systemDiagnosticLogs.logsItems.map((item, index) => {
@@ -405,13 +411,39 @@ const systemDiagnosticLogs = {
         // Set the default selected value if any
         const selectedItem = systemDiagnosticLogs.logsItems.find(item => item.selected);
         if (selectedItem) {
-            systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', selectedItem.value);
-            // Also set the text to show full path
-            systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', selectedItem.value);
+            // Use setTimeout to ensure dropdown is fully initialized
+            setTimeout(() => {
+                systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', selectedItem.value);
+                // Force refresh the dropdown to show the selected value
+                systemDiagnosticLogs.$fileSelectDropDown.dropdown('refresh');
+                // Also set the text to show full path
+                systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', selectedItem.value);
+                // Automatically load the log content when a file is pre-selected
+                systemDiagnosticLogs.$formObj.form('set value', 'filename', selectedItem.value);
+                systemDiagnosticLogs.updateLogFromServer();
+            }, 100);
+        } else if (defVal) {
+            // If we have a default value but no item was marked as selected,
+            // try to find and select it manually
+            const itemToSelect = systemDiagnosticLogs.logsItems.find(item => 
+                item.type === 'file' && item.value === defVal
+            );
+            if (itemToSelect) {
+                setTimeout(() => {
+                    systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', itemToSelect.value);
+                    systemDiagnosticLogs.$fileSelectDropDown.dropdown('refresh');
+                    systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', itemToSelect.value);
+                    systemDiagnosticLogs.$formObj.form('set value', 'filename', itemToSelect.value);
+                    systemDiagnosticLogs.updateLogFromServer();
+                }, 100);
+            } else {
+                // Hide the dimmer after loading only if no file is selected
+                systemDiagnosticLogs.$dimmer.removeClass('active');
+            }
+        } else {
+            // Hide the dimmer after loading only if no file is selected
+            systemDiagnosticLogs.$dimmer.removeClass('active');
         }
-        
-        // Hide the dimmer after loading
-        systemDiagnosticLogs.$dimmer.removeClass('active');
     },
 
     /**
