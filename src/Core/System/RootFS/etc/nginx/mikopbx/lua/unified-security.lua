@@ -33,10 +33,13 @@ local CATEGORY_WHITELIST = "whitelist"
 local RATE_LIMIT_PREFIX = "_PH_REDIS_CLIENT:rate_limit:"
 
 -- Rate limiting settings
-local rate_limit_requests = 60  -- requests per minute for anonymous
-local rate_limit_requests_auth = 300  -- requests per minute for authenticated
+local rate_limit_requests = 180  -- requests per minute for anonymous
+local rate_limit_requests_auth = 600  -- requests per minute for authenticated
+local rate_limit_requests_api = 120  -- requests per minute for API endpoints
 local rate_limit_window = 60  -- window in seconds
-local rate_limit_block_time = 300  -- block time in seconds
+local rate_limit_burst = 20  -- burst allowance
+local rate_limit_block_time = 300  -- block time in seconds (5 minutes)
+local rate_limit_progressive_multiplier = 2  -- multiply block time for repeat offenders
 
 -- ===== COMMON FUNCTIONS =====
 
@@ -159,49 +162,98 @@ end
 
 -- ===== RATE LIMITING =====
 
+-- Check if request is for static resource
+local function is_static_resource()
+    local uri = ngx.var.uri
+    local static_extensions = {
+        "%.css$", "%.js$", "%.jpg$", "%.jpeg$", "%.png$", "%.gif$", "%.ico$",
+        "%.svg$", "%.woff$", "%.woff2$", "%.ttf$", "%.eot$", "%.map$"
+    }
+    
+    for _, pattern in ipairs(static_extensions) do
+        if string.match(uri, pattern) then
+            return true
+        end
+    end
+    
+    return false
+end
+
 local function check_rate_limit(is_authenticated)
     if not rate_limit_enabled then
         return true
     end
     
-    -- Check if IP is already blocked for rate limiting
-    local rate_block_key = "rate_blocked:" .. client_ip
-    local is_rate_blocked = rate_limit_cache:get(rate_block_key)
-    
-    if is_rate_blocked == "1" then
-        return false
-    end
-    
-    -- Get current counter
-    local rate_key = "rate:" .. client_ip
-    local current_count = rate_limit_cache:get(rate_key)
-    
-    if current_count == nil then
-        -- Initialize counter
-        rate_limit_cache:set(rate_key, 1, rate_limit_window)
+    -- Skip rate limiting for static resources
+    if is_static_resource() then
         return true
     end
     
-    current_count = tonumber(current_count) + 1
-    rate_limit_cache:incr(rate_key, 1)
+    -- Check if IP is already blocked for rate limiting
+    local rate_block_key = "rate_blocked:" .. client_ip
+    local block_info = rate_limit_cache:get(rate_block_key)
     
-    -- Determine limit based on authentication
-    local limit = is_authenticated and rate_limit_requests_auth or rate_limit_requests
+    if block_info then
+        return false
+    end
     
-    if current_count > limit then
+    -- Progressive blocking check
+    local offense_key = "rate_offenses:" .. client_ip
+    local offense_count = tonumber(rate_limit_cache:get(offense_key) or "0")
+    
+    -- Get current counter using atomic increment
+    local rate_key = "rate:" .. client_ip
+    local current_count, err = rate_limit_cache:incr(rate_key, 1)
+    
+    if not current_count then
+        -- Key doesn't exist, initialize it
+        rate_limit_cache:set(rate_key, 1, rate_limit_window)
+        current_count = 1
+    end
+    
+    -- Determine limit based on request type
+    local limit = rate_limit_requests
+    if is_authenticated then
+        limit = rate_limit_requests_auth
+    elseif string.match(ngx.var.uri, "^/pbxcore/api/") then
+        limit = rate_limit_requests_api
+    end
+    
+    -- Add burst allowance
+    local effective_limit = limit + rate_limit_burst
+    
+    if current_count > effective_limit then
+        -- Calculate progressive block time
+        local block_time = rate_limit_block_time * (rate_limit_progressive_multiplier ^ offense_count)
+        if block_time > 3600 then -- Cap at 1 hour
+            block_time = 3600
+        end
+        
         -- Block IP for excessive requests
-        rate_limit_cache:set(rate_block_key, "1", rate_limit_block_time)
+        rate_limit_cache:set(rate_block_key, "1", block_time)
+        
+        -- Increment offense counter
+        offense_count = offense_count + 1
+        rate_limit_cache:set(offense_key, offense_count, 86400) -- Remember for 24 hours
         
         -- Also add to Redis for persistence
         local red = connect_to_redis()
         if red then
             local key = RATE_LIMIT_PREFIX .. client_ip
-            red:setex(key, rate_limit_block_time, "1")
+            red:setex(key, block_time, tostring(offense_count))
             red:set_keepalive(10000, 100)
         end
         
-        ngx.log(ngx.WARN, "Rate limit exceeded for IP: ", client_ip, " count: ", current_count)
+        ngx.log(ngx.WARN, "Rate limit exceeded for IP: ", client_ip, 
+                " count: ", current_count, "/", effective_limit, 
+                " offenses: ", offense_count, " block_time: ", block_time)
         return false
+    end
+    
+    -- Log warning when approaching limit
+    if current_count > (limit * 0.8) then
+        ngx.log(ngx.NOTICE, "IP approaching rate limit: ", client_ip, 
+                " count: ", current_count, "/", limit)
     end
     
     return true
