@@ -66,11 +66,15 @@ const extensionModules = {
             onVisible(){
                 if ($(this).data('tab') === 'licensing'){
                     PbxApi.LicenseGetLicenseInfo(keyCheck.cbAfterGetLicenseInfo);
-                } else if ($(this).data('tab') === 'marketplace') {
-                    marketplace.initialize();
                 }
+
             }
         });
+
+        // Initialize marketplace data loading immediately on page load
+        // This allows showing update badges on installed modules tab
+        // and avoids delay when switching to marketplace tab
+        marketplace.initialize();
 
         extensionModules.initializeDataTable();
 

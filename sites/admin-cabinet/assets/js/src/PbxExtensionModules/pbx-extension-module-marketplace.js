@@ -117,11 +117,21 @@ const marketplace = {
      * Callback function to process the list of modules received from the website.
      * @param {object} response - The response containing the list of modules.
      */
-    cbParseModuleUpdates(response) {
+    cbParseModuleUpdates(responseData, isSuccessful) {
         marketplace.$marketplaceLoader.hide();
 
-        if (response && Array.isArray(response.modules)) {
-            response.modules.forEach((obj) => {
+        // When success, responseData is response.data from API
+        // When failure, responseData is the full response object
+        if (!isSuccessful) {
+            marketplace.$noNewModulesSegment.show();
+            return;
+        }
+
+        // In success case, responseData is response.data which should contain modules
+        const modules = responseData?.modules || [];
+
+        if (Array.isArray(modules) && modules.length > 0) {
+            modules.forEach((obj) => {
                 // Check if this module is compatible with the PBX based on version number
                 const minAppropriateVersionPBX = obj.min_pbx_version;
                 const newModuleVersion = obj.version;
@@ -136,7 +146,7 @@ const marketplace = {
                 // Check if the module is already installed and offer an update
                 const $moduleRow = $(`tr.module-row[data-id=${obj.uniqid}]`);
                 if ($moduleRow.length > 0) {
-                    const installedVer = $moduleRow.find('td.version').text();
+                    const installedVer = $moduleRow.find('td.version').text().trim();
                     const versionCompareResult = marketplace.versionCompare(newModuleVersion, installedVer);
                     if (versionCompareResult > 0) {
                         marketplace.addUpdateButtonToRow(obj);
@@ -204,20 +214,80 @@ const marketplace = {
      * @param {Object} obj - The module object containing information.
      */
     addUpdateButtonToRow(obj) {
-        const $moduleRow = $(`tr[data-id=${obj.uniqid}]`);
+        const $moduleRow = $(`tr.module-row[data-id=${obj.uniqid}]`);
+        
+        // Check if we're working with a DataTable
+        const $table = $('#installed-modules-table');
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable($table)) {
+            const table = $table.DataTable();
+            
+            // Use jQuery element to find the row in DataTable instead of index
+            const dtRow = table.row($moduleRow);
+            
+            if (dtRow.any()) {
+                // Get the row node to work with
+                const $rowNode = $(dtRow.node());
+                
+                // Clone the row's last cell (action buttons cell)
+                const $lastCell = $rowNode.find('td:last').clone();
+                
+                // Remove download button if exists
+                $lastCell.find('a.download').remove();
+                
+                // Create update button
+                const dynamicButton = `<a href="#" class="ui basic icon button update popuped disable-if-no-internet" 
+                    data-content="${globalTranslate.ext_UpdateModule}"
+                    data-version ="${obj.version}"
+                    data-size = "${obj.size}"
+                    data-uniqid ="${obj.uniqid}" 
+                    data-releaseid ="${obj.release_id}">
+                    <i class="icon redo blue"></i> 
+                    </a>`;
+                
+                // Prepend button to action-buttons div
+                $lastCell.find('.action-buttons').prepend(dynamicButton);
+                
+                // Update the cell in DataTable using the row API
+                const cellIndex = $rowNode.find('td').length - 1; // Last cell
+                table.cell(dtRow, cellIndex).data($lastCell.html()).draw(false);
+                
+                // Re-initialize popups
+                setTimeout(() => {
+                    $(`tr.module-row[data-id=${obj.uniqid}] .popuped`).popup();
+                }, 100);
+            } else {
+                // If row not found in DataTable, use direct DOM manipulation
+                this.addUpdateButtonDirectly($moduleRow, obj);
+            }
+        } else {
+            // Fallback for non-DataTable scenario
+            this.addUpdateButtonDirectly($moduleRow, obj);
+        }
+        
+        marketplace.$btnUpdateAllModules.show();
+    },
+    
+    /**
+     * Adds update button directly to DOM without DataTable API
+     * @param {jQuery} $moduleRow - The module row jQuery element
+     * @param {Object} obj - The module object containing information
+     */
+    addUpdateButtonDirectly($moduleRow, obj) {
         const $currentDownloadButton = $moduleRow.find('a.download');
         $currentDownloadButton.remove();
-        const dynamicButton
-            = `<a href="#" class="ui basic icon button update popuped disable-if-no-internet" 
-			data-content="${globalTranslate.ext_UpdateModule}"
-			data-version ="${obj.version}"
-			data-size = "${obj.size}"
-			data-uniqid ="${obj.uniqid}" 
-			data-releaseid ="${obj.release_id}">
-			<i class="icon redo blue"></i> 
-			</a>`;
-        $moduleRow.find('.action-buttons').prepend(dynamicButton);
-        marketplace.$btnUpdateAllModules.show();
+        
+        const dynamicButton = `<a href="#" class="ui basic icon button update popuped disable-if-no-internet" 
+            data-content="${globalTranslate.ext_UpdateModule}"
+            data-version ="${obj.version}"
+            data-size = "${obj.size}"
+            data-uniqid ="${obj.uniqid}" 
+            data-releaseid ="${obj.release_id}">
+            <i class="icon redo blue"></i> 
+            </a>`;
+        
+        const $actionButtons = $moduleRow.find('.action-buttons');
+        $actionButtons.prepend(dynamicButton);
+        $moduleRow.find('.popuped').popup();
     },
 
     /**
@@ -292,3 +362,6 @@ const marketplace = {
     },
 
 };
+
+// Make marketplace globally accessible
+window.marketplace = marketplace;

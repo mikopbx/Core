@@ -82,6 +82,9 @@ class GetAvailableModulesAction  extends Injectable
         $res->processor = __METHOD__;
         $PBXVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
         $PBXVersion = (string)str_ireplace('-dev', '', $PBXVersion);
+        
+        SystemMessages::sysLogMsg(static::class, "Getting available modules for PBX version: $PBXVersion, language: $WebUiLanguage");
+        
         $body = '';
         $client = new GuzzleHttp\Client();
         try {
@@ -103,9 +106,12 @@ class GetAvailableModulesAction  extends Injectable
             if ($code === Response::OK) {
                 $body = $request->getBody()->getContents();
                 $res->data = json_decode($body ?? '', true) ?? [];
+                
                 if (is_array($res->data)) {
                     $managedCache->set($cacheKey, $res->data, 3600);
                 }
+            } else {
+                SystemMessages::sysLogMsg(static::class, "API request failed with code: $code");
             }
         } catch (\Throwable $e) {
             $code = Response::INTERNAL_SERVER_ERROR;
@@ -116,6 +122,7 @@ class GetAvailableModulesAction  extends Injectable
         if ($code !== Response::OK) {
             return $res;
         }
+        $res->success = true;
         return $res;
     }
 }
