@@ -83,8 +83,6 @@ class GetAvailableModulesAction  extends Injectable
         $PBXVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
         $PBXVersion = (string)str_ireplace('-dev', '', $PBXVersion);
         
-        SystemMessages::sysLogMsg(static::class, "Getting available modules for PBX version: $PBXVersion, language: $WebUiLanguage");
-        
         $body = '';
         $client = new GuzzleHttp\Client();
         try {
