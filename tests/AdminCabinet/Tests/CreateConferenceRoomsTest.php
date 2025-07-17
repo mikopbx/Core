@@ -19,9 +19,9 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
-
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
+use MikoPBX\Tests\AdminCabinet\Tests\Data\ConferenceRoomsDataFactory;
 
 /**
  * Class CreateConferenceRoomsTest
@@ -60,6 +60,11 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
         // Set the extension and name for the conference room
         $this->changeInputField('extension', $params['extension']);
         $this->changeInputField('name', $params['name']);
+        
+        // Set PIN code if provided
+        if (isset($params['pinCode'])) {
+            $this->changeInputField('pinCode', $params['pinCode']);
+        }
 
         // Save the conference room
         $this->submitForm('conference-room-form');
@@ -73,6 +78,11 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
         // Verify that the name and extension fields match the expected values
         $this->assertInputFieldValueEqual('name', $params['name']);
         $this->assertInputFieldValueEqual('extension', $params['extension']);
+        
+        // Verify PIN code if it was set
+        if (isset($params['pinCode'])) {
+            $this->assertInputFieldValueEqual('pinCode', $params['pinCode']);
+        }
     }
 
     /**
@@ -83,23 +93,35 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
-        $params['The first conference room <11112>'] = [
-            [
-                'name' => 'The first conference room',
-                'extension' => '11112',
-            ]
+        
+        // Get test data from factory for sales conference
+        $salesConference = ConferenceRoomsDataFactory::getConferenceRoomData('sales.conference');
+        $params['Sales Team Conference'] = [
+            $salesConference
         ];
-        $params['The second conference room <11113>'] = [
-            [
-                'name' => 'The second conference room',
-                'extension' => '11113',
-            ]
+        
+        // Get test data from factory for management conference with PIN
+        $mgmtConference = ConferenceRoomsDataFactory::getConferenceRoomData('management.conference');
+        $params['Management Conference with PIN'] = [
+            $mgmtConference
         ];
-        $params['The third conference room <11114>'] = [
-            [
-                'name' => 'The third conference room',
-                'extension' => '11114',
-            ]
+        
+        // Get test data from factory for support conference without PIN
+        $supportConference = ConferenceRoomsDataFactory::getConferenceRoomData('support.conference');
+        $params['Support Team Conference without PIN'] = [
+            $supportConference
+        ];
+        
+        // Get test data from factory for training room
+        $trainingConference = ConferenceRoomsDataFactory::getConferenceRoomData('training.conference');
+        $params['Training Room'] = [
+            $trainingConference
+        ];
+        
+        // Get test data from factory for partner conference
+        $partnerConference = ConferenceRoomsDataFactory::getConferenceRoomData('partner.conference');
+        $params['Partner Conference'] = [
+            $partnerConference
         ];
 
         return $params;
