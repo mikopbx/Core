@@ -22,6 +22,10 @@
             <file>Tests/ChangeWeakPasswordTest.php</file>
         </testsuite>
 
+        <testsuite name="DeleteAllSettingsTest">
+            <file>Tests/DeleteAllSettingsTest.php</file>
+        </testsuite>
+
         <testsuite name="PBXSettings">
             <file>Tests/FillDataTimeSettingsTest.php</file>
             <file>Tests/ChangeLicenseKeyTest.php</file>
@@ -45,6 +49,22 @@
             <file>Tests/CheckDropdownAfterCreateAudioFileTest.php</file>
             <file>Tests/DeleteAudioFileTest.php</file>
             <file>Tests/CheckDropdownAfterDeleteAudioFileTest.php</file>
+        </testsuite>
+
+        <testsuite name="ExtensionsBeforeCreate">
+            <file>Tests/CreateConferenceRoomsTest.php</file>
+            <file>Tests/CreateDialPlanApplicationTest.php</file>
+        </testsuite>
+
+        <testsuite name="Extensions">       
+            <directory>Tests/Extensions</directory>
+        </testsuite>
+
+         <testsuite name="ExtensionsAfterCreate">
+            <file>Tests/ChangeExtensionsSettingsTest.php</file>
+            <file>Tests/DeleteExtensionTest.php</file>
+            <file>Tests/DeleteExtensionFromDropDownTest.php</file>
+            <file>Tests/CheckDropdownsOnAddExtensionsTest.php</file>
         </testsuite>
 
         <testsuite name="Providers">
@@ -104,22 +124,6 @@
         
         <testsuite name="PBXExtensions"> 
             <directory>Tests/PBXExtensions</directory>
-        </testsuite>
-
-        <testsuite name="ExtensionsBeforeCreate">
-            <file>Tests/CreateConferenceRoomsTest.php</file>
-            <file>Tests/CreateDialPlanApplicationTest.php</file>
-        </testsuite>
-
-        <testsuite name="Extensions">       
-            <directory>Tests/Extensions</directory>
-        </testsuite>
-
-         <testsuite name="ExtensionsAfterCreate">
-            <file>Tests/ChangeExtensionsSettingsTest.php</file>
-            <file>Tests/DeleteExtensionTest.php</file>
-            <file>Tests/DeleteExtensionFromDropDownTest.php</file>
-            <file>Tests/CheckDropdownsOnAddExtensionsTest.php</file>
         </testsuite>
 
     </testsuites>

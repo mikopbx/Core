@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,55 @@ class EmployeeDataFactory
      * @var array
      */
     private static array $employeeData = [
+        'smith.james' => [
+            'number' => 201,
+            'email' => '',
+            'username' => 'Smith James',
+            'mobile' => '89261111111',
+            'secret' => '5b66b92d5714f921cfcde78a4fda0f58',
+            'sip_enableRecording' => true,
+            'sip_dtmfmode' => 'auto',
+            'sip_networkfilterid' => 'none',
+            'sip_transport' => 'udp',
+            'sip_manualattributes' => '',
+            'fwd_ringlength' => '45',
+            'fwd_forwardingonbusy' => '89261111111',
+            'fwd_forwarding' => '89261111111',
+            'fwd_forwardingonunavailable' => '89261111111',
+            'possibleToDelete' => false
+        ],
+        'brown.brandon' => [
+            'number' => 202,
+            'email' => '',
+            'username' => 'Brown Brandon',
+            'mobile' => '89161111111',
+            'secret' => 'e72b3aea6e4f2a8560adb33cb9bfa5dd',
+            'sip_enableRecording' => true,
+            'sip_dtmfmode' => 'auto',
+            'sip_networkfilterid' => 'none',
+            'sip_transport' => 'udp',
+            'sip_manualattributes' => '',
+            'fwd_ringlength' => '45',
+            'fwd_forwardingonbusy' => '89161111111',
+            'fwd_forwarding' => '89161111111',
+            'fwd_forwardingonunavailable' => '89161111111',
+        ],
+        'collins.melanie' => [
+            'number' => 203,
+            'email' => '',
+            'username' => 'Collins Melanie',
+            'mobile' => '89251111111',
+            'secret' => 'ce4fb0a6a238ddbcd059ecb30f884188',
+            'sip_enableRecording' => true,
+            'sip_dtmfmode' => 'auto',
+            'sip_networkfilterid' => 'none',
+            'sip_transport' => 'udp',
+            'sip_manualattributes' => '',
+            'fwd_ringlength' => '45',
+            'fwd_forwardingonbusy' => '89251111111',
+            'fwd_forwarding' => '89251111111',
+            'fwd_forwardingonunavailable' => '89251111111',
+        ],
         'eugeniy.makrchev' => [
             'number' => 235,
             'email' => 'emar@miko.ru',
@@ -314,13 +363,6 @@ callerid=2546456<234>',
                 'fwd_forwardingonunavailable' => '201',
                 'manualattributes' => '[endpoint]
 callerid=2546456<235>',
-        ],
-        'smith.james' => [
-            'number'   => 201,
-            'username' => 'Smith James',
-            'mobile'   => '89261111111',
-            'secret'   => '5b66b92d5714f921cfcde78a4fda0f58',
-            'possibleToDelete' => false
         ]
     ];
 
