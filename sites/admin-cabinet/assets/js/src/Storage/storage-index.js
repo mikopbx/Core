@@ -51,7 +51,9 @@ const storageIndex = {
     initialize() {
         // Enable tab navigation
         $('#storage-menu').find('.item').tab({
-            onVisible: function(tabPath) {
+                history: true,
+                historyType: 'hash',
+                   onVisible: function(tabPath) {
                 // Load storage data when storage info tab is activated
                 if (tabPath === 'storage-info') {
                     storageIndex.loadStorageData();

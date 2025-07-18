@@ -77,12 +77,12 @@ class StorageController extends BaseController
         // Handle response
         if ($this->request->isAjax()) {
             $this->view->success = $result;
-            $this->view->reload = 'storage/index';
+            $this->view->reload = 'storage/index#/storage-settings';
         } else {
             if ($result) {
                 $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
             }
-            $this->forward('storage/index');
+            $this->forward('storage/index#/storage-settings');
         }
     }
 }

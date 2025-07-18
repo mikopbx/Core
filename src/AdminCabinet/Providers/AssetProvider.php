@@ -388,7 +388,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/vendor/semantic/slider.min.js', true)
                 ->addJs('js/vendor/semantic/progress.min.js', true)
-                ->addJs('js/vendor/semantic/tab.min.js', true)
+                ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/PbxAPI/storageAPI.js', true)
                 ->addJs('js/pbx/Storage/storage-index.js', true);
@@ -729,6 +729,10 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/password-score.js', true)
                 ->addJs(
                     'js/pbx/GeneralSettings/general-settings-modify.js',
+                    true
+                )
+                ->addJs(
+                    'js/pbx/GeneralSettings/general-settings-delete-all.js',
                     true
                 );
         }
