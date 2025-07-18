@@ -250,7 +250,6 @@ class UpdateConfigsUpToVer20202754 extends Injectable implements UpgradeSystemCo
         $oldCacheDirs    = [
             "$mediaMountPoint/mikopbx/log/nats/license.key",
             "$mediaMountPoint/mikopbx/log/nats/*.cache",
-            "$mediaMountPoint/mikopbx/log/pdnsd/cache",
             "$mediaMountPoint/mikopbx/log/Module*",
             "$mediaMountPoint/mikopbx/php_session",
             "$mediaMountPoint/mikopbx/tmp/*",
