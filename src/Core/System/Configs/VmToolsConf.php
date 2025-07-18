@@ -54,7 +54,6 @@ class VmToolsConf extends SystemConfigClass
             $this->configure();
             if ($this->confObject) {
                 $this->confObject->start();
-                $result = $this->monitWaitStart();
             }
         }else{
             $result = $this->reStart();
