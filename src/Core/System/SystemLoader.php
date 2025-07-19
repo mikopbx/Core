@@ -148,7 +148,7 @@ class SystemLoader extends Injectable
         // Try restore config...
         $systemConfiguration = new SystemConfiguration();
         if ($systemConfiguration->isDefaultConf() && !$this->isRecoveryMode) {
-            $this->echoStartMsg(' - Try restore backup of settings... ');
+            $this->echoStartMsg(' - Restoring settings backup...');
             $systemConfiguration->tryRestoreConf();
             $this->echoResultMsg();
         }
@@ -160,25 +160,25 @@ class SystemLoader extends Injectable
         System::setBooting(true);
 
         $this->echoStartMsg(PHP_EOL);
-        $this->echoStartMsg(' - Start redis daemon...');
+        $this->echoStartMsg(' - Starting redis daemon...');
         $redisConf = new RedisConf();
         $redisStatus = $redisConf->start();
         $this->echoResultMsg($redisStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         if (!$this->isDocker) {
             // Wait start the ACPID daemon
-            $this->echoStartMsg(' - Wait acpid daemon...');
+            $this->echoStartMsg(' - Waiting for acpid daemon...');
             $ACPIDConf = new ACPIDConf();
             $ACPIDConf->start();
             $this->echoResultMsg($ACPIDConf->monitWaitStart() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         }
         // Start the Beanstalkd daemon
-        $this->echoStartMsg(' - Start beanstalkd daemon...');
+        $this->echoStartMsg(' - Starting beanstalkd daemon...');
         $beanstalkConf = new BeanstalkConf();
         $beanstalkConf->start();
         $this->echoResultMsg($beanstalkConf->monitWaitStart() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         // Configure Sentry error logger
-        $this->echoStartMsg(' - Configuring sentry error logger ...');
+        $this->echoStartMsg(' - Configuring sentry error logger...');
         if (!$this->isRecoveryMode) {
             $sentryConf = new SentryConf();
             $sentryConf->configure();
@@ -197,7 +197,7 @@ class SystemLoader extends Injectable
         }
 
         // Configure locales UTF-8
-        $this->echoStartMsg(' - Start update locales...');
+        $this->echoStartMsg(' - Updating locales...');
         System::setupLocales();
         $this->echoResultMsg();
 
@@ -207,44 +207,43 @@ class SystemLoader extends Injectable
             // Do not need to set on Docker or Debian linux
             $storage->saveFstab();
         }
+        $this->echoStartMsg(' - Mounting storage disk...');
         $storage->configure();
-        $this->echoStartMsg(' - Mount storage disk...');
         $this->echoResultMsg();
 
          // Recreate database connections
-         $this->echoStartMsg(' - Recreate modules database connections...');
+         $this->echoStartMsg(' - Recreating modules database connections...');
          ModulesDBConnectionsProvider::recreateModulesDBConnections();
          $this->echoResultMsg();
 
         // Additional tasks for T2SDELinux
         if ($itIsT2SDELinux) {
-            $this->echoStartMsg(' - Connect swap...');
+            $this->echoStartMsg(' - Connecting swap...');
             Processes::mwExecBg('/etc/rc/connect_swap');
             $this->echoResultMsg();
         }
 
         // Start the syslog daemon
-        $this->echoStartMsg(' - Start syslogd daemon...');
+        $this->echoStartMsg(' - Starting syslogd daemon...');
         $syslogConf = new SyslogConf();
         $syslogStatus = $syslogConf->start();
         $this->echoResultMsg($syslogStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Update the database structure
-        $this->echoStartMsg(' - Start update database...');
+        $this->echoStartMsg(' - Updating database structure...');
         $dbUpdater = new UpdateDatabase();
         $dbUpdater->updateDatabaseStructure();
         $this->echoResultMsg();
 
         // Create directories required by modules after DB upgrade
-        $this->echoStartMsg(' - Create modules links and folders...');
+        $this->echoStartMsg(' - Creating modules links and folders...');
         $storage->createWorkDirsAfterDBUpgrade();
         $this->echoResultMsg();
 
         // Update the system configuration and applications
-        $this->echoStartMsg(' - Update configs and applications...' . PHP_EOL);
+        $this->echoStartMsg(' - Updating system configuration...');
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
-        $this->echoStartMsg(' - Update configs...');
         $this->echoResultMsg();
 
         if (!$this->isDocker && !$this->isRecoveryMode) {
@@ -304,16 +303,16 @@ class SystemLoader extends Injectable
         $this->echoResultMsg($sshConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Start cloud provisioning
+        $this->echoStartMsg(' - Attempting cloud provisioning...');
         if (!$this->isDocker && !$this->isRecoveryMode) {
-            $this->echoStartMsg(' - Attempt to cloud provisioning...' . PHP_EOL);
             CloudProvisioning::start();
+            $this->echoResultMsg();
         } else {
-            $this->echoStartMsg(' - Attempt to cloud provisioning...');
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
         // Connect storage in a cloud if needed
-        $this->echoStartMsg(' - Auto connect storage for a cloud ...');
+        $this->echoStartMsg(' - Connecting cloud storage...');
         if (!$this->isDocker && !$this->isRecoveryMode) {
             $connectResult = Storage::connectStorageInCloud();
             $this->echoResultMsg($connectResult);
@@ -322,12 +321,11 @@ class SystemLoader extends Injectable
         }
 
         // Update external IP if needed
+        $this->echoStartMsg(' - Updating external IP...');
         if (!$this->isRecoveryMode) {
-            $this->echoStartMsg(' - Update external IP...');
             $network->updateExternalIp();
             $this->echoResultMsg();
         } else {
-            $this->echoStartMsg(' - Update external IP...');
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
@@ -343,13 +341,13 @@ class SystemLoader extends Injectable
     {
 
         // Start the NATS queue daemon
-        $this->echoStartMsg(' - Start nats queue daemon...');
+        $this->echoStartMsg(' - Starting nats queue daemon...');
         $natsConf = new NatsConf();
         $natsStatus = $natsConf->start();
         $this->echoResultMsg($natsStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Start the PHP-FPM daemon
-        $this->echoStartMsg(' - Start php-fpm daemon...');
+        $this->echoStartMsg(' - Starting php-fpm daemon...');
         $phpConf = new PHPConf();
         $this->echoResultMsg($phpConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
@@ -358,15 +356,15 @@ class SystemLoader extends Injectable
         $pbx = new PbxConf();
         $pbx->configure();
 
-        $this->echoStartMsg(' - Start Asterisk...');
+        $this->echoStartMsg(' - Starting Asterisk...');
         $this->echoResultMsg($pbx->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Wait for Asterisk to fully boot and reload SIP settings
-        $this->echoStartMsg(' - Wait asterisk fully booted...');
+        $this->echoStartMsg(' - Waiting for Asterisk to fully boot...');
         $asteriskResult = PbxConf::waitFullyBooted();
         $this->echoResultMsg($asteriskResult ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         if ($asteriskResult) {
-            $this->echoStartMsg(' - Reload SIP settings in AstDB...');
+            $this->echoStartMsg(' - Reloading SIP settings in AstDB...');
             $sip = new SIPConf();
             $sip->updateAsteriskDatabase();
             $this->echoResultMsg();
@@ -377,7 +375,7 @@ class SystemLoader extends Injectable
         $this->echoResultMsg($cron->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Start the Nginx daemon
-        $this->echoStartMsg(' - Start Nginx daemon...');
+        $this->echoStartMsg(' - Starting Nginx daemon...');
         $nginx = new NginxConf();
         $this->echoResultMsg($nginx->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
@@ -389,7 +387,7 @@ class SystemLoader extends Injectable
         }
 
         // Start the monit daemon
-        $this->echoStartMsg(' - Start monit daemon...');
+        $this->echoStartMsg(' - Starting monit daemon...');
         $monit = new MonitConf();
         $this->echoResultMsg($monit->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 

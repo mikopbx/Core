@@ -55,11 +55,13 @@ class SystemConfiguration extends Injectable
         $backupDir   = str_replace(['/storage/usbdisk1','/mountpoint'], ['',''], $confBackupDir);
         $confFile    = $this->configDBPath;
         foreach ($storages as $dev => $fs) {
-            SystemMessages::echoToTeletype(PHP_EOL."    - mount $dev ...".PHP_EOL, true);
+            SystemMessages::echoStartMsg(" - Mounting $dev...");
             Util::mwMkdir($tmpMountDir."/$dev");
             $res = Storage::mountDisk($dev, $fs, $tmpMountDir."/$dev");
             if (!$res) {
-                SystemMessages::echoToTeletype("    - fail mount $dev ...".PHP_EOL, true);
+                SystemMessages::echoResultMsg(SystemMessages::RESULT_FAILED);
+            } else {
+                SystemMessages::echoResultMsg(SystemMessages::RESULT_DONE);
             }
         }
 
@@ -73,21 +75,25 @@ class SystemConfiguration extends Injectable
             $gzip   = Util::which('gzip');
             $sqlite3= Util::which('sqlite3');
 
-            SystemMessages::echoToTeletype("    - Restore $lastBackUp ...".PHP_EOL, true);
+            SystemMessages::echoStartMsg(" - Restoring $lastBackUp...");
             shell_exec("$rm -rf $confFile*");
             shell_exec("$gzip -c -d $lastBackUp | sqlite3 $confFile");
             Processes::mwExec("$sqlite3 $confFile 'select * from m_Storage'", $out, $ret);
             if ($ret !== 0) {
-                SystemMessages::echoToTeletype("    - restore $lastBackUp failed...".PHP_EOL, true);
+                SystemMessages::echoResultMsg(SystemMessages::RESULT_FAILED);
                 copy(self::DEFAULT_CONFIG_DB, $confFile);
-            } elseif (!$this->isDefaultConf()) {
-                System::reboot();
+            } else {
+                SystemMessages::echoResultMsg(SystemMessages::RESULT_DONE);
+                if (!$this->isDefaultConf()) {
+                    System::reboot();
+                }
             }
         }
         $mount   = Util::which('umount');
         foreach ($storages as $dev => $fs) {
-            SystemMessages::echoToTeletype("    - umount $dev ...".PHP_EOL, true);
+            SystemMessages::echoStartMsg(" - Unmounting $dev...");
             shell_exec("$mount $dev");
+            SystemMessages::echoResultMsg(SystemMessages::RESULT_DONE);
         }
     }
 
