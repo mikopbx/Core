@@ -27,7 +27,10 @@
 # Он не должен зависеть от внешних зависимостей и других скриптов,
 # которых может не быть в исходной системе.
 
-if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
+# Setup console output redirection
+# Note: This script must be self-contained for updates, so we can't use pbx-env-detect
+# Use a simpler check that doesn't produce errors
+if [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ] && echo -n "" > /dev/ttyS0 2>/dev/null; then
   exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>/dev/console
 else
   exec </dev/console >/dev/console 2>/dev/console;

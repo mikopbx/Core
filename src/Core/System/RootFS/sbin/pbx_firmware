@@ -78,8 +78,19 @@ else
 
     # Copy the configuration to the storage and backup the system image
     echo " - Backup system partition to storage ...";
-    if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
-        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
+    # Check for serial port using new method if available
+    SERIAL_PORT=""
+    if [ -x "/sbin/pbx-env-detect" ]; then
+        SERIAL_PORTS=$(/sbin/pbx-env-detect --serial)
+        if [ -n "$SERIAL_PORTS" ]; then
+            SERIAL_PORT=$(echo $SERIAL_PORTS | cut -d' ' -f1)
+        fi
+    elif [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ] && echo -n "" > /dev/ttyS0 2>/dev/null; then
+        SERIAL_PORT="/dev/ttyS0"
+    fi
+    
+    if [ -n "$SERIAL_PORT" ]; then
+        /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
     else
         /bin/pv -p "/dev/${systemDevice}" | /bin/gzip | dd of="$backupImg" bs=4M >/dev/null 2>&1
     fi
@@ -157,8 +168,19 @@ if [ -r "${img_file}" ]; then
   fi
 
   echo " - Installing new image on $DISK"
-  if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
-    /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
+  # Check for serial port using new method if available
+  SERIAL_PORT=""
+  if [ -x "/sbin/pbx-env-detect" ]; then
+      SERIAL_PORTS=$(/sbin/pbx-env-detect --serial)
+      if [ -n "$SERIAL_PORTS" ]; then
+          SERIAL_PORT=$(echo $SERIAL_PORTS | cut -d' ' -f1)
+      fi
+  elif [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ] && echo -n "" > /dev/ttyS0 2>/dev/null; then
+      SERIAL_PORT="/dev/ttyS0"
+  fi
+  
+  if [ -n "$SERIAL_PORT" ]; then
+    /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
   else
     /bin/pv -p "${img_file}" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1;
   fi
@@ -171,8 +193,19 @@ if [ -r "${img_file}" ]; then
   if [ ! "$resultPv" = '0' ] || [ ! "$(/bin/lsblk -l "$DISK" | /bin/busybox grep -c part)" = '4' ]; then
     if [ -f "$backupImg" ]; then
       echo " - There are some errors, restoring system from backup to /dev/${systemDevice}"
-      if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
-        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee /dev/ttyS0 >/dev/null
+      # Check for serial port using new method if available
+      SERIAL_PORT=""
+      if [ -x "/sbin/pbx-env-detect" ]; then
+          SERIAL_PORTS=$(/sbin/pbx-env-detect --serial)
+          if [ -n "$SERIAL_PORTS" ]; then
+              SERIAL_PORT=$(echo $SERIAL_PORTS | cut -d' ' -f1)
+          fi
+      elif [ -c "/dev/ttyS0" ] && [ -w "/dev/ttyS0" ] && echo -n "" > /dev/ttyS0 2>/dev/null; then
+          SERIAL_PORT="/dev/ttyS0"
+      fi
+      
+      if [ -n "$SERIAL_PORT" ]; then
+        /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M 2>&1 | /bin/busybox tee $SERIAL_PORT >/dev/null
       else
         /bin/pv -p "$backupImg" | /bin/gunzip | dd of="$DISK" bs=4M >/dev/null 2>&1;
       fi
