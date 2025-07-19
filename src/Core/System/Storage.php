@@ -376,7 +376,7 @@ class Storage extends Injectable
 
         if (empty($validDisks)) {
             // If no valid disks were found, log a message and return 0
-            $message = '   |- ' . Util::translate('Valid disks not found...');
+            $message = ' - ' . Util::translate('Valid disks not found...');
             SystemMessages::echoWithSyslog($message);
             SystemMessages::echoToTeletype(PHP_EOL . $message);
             sleep(3);
@@ -457,18 +457,18 @@ class Storage extends Injectable
         MainDatabaseProvider::recreateDBConnections();
         $success = self::isStorageDiskMounted();
         if ($success === true && $automatic) {
-            SystemMessages::echoToTeletype(PHP_EOL . '   |- The data storage disk has been successfully mounted ... ');
+            SystemMessages::echoStartMsg(' - Storage disk mounted successfully, rebooting...');
             sleep(2);
             System::reboot();
             return true;
         }
 
         if ($automatic) {
-            SystemMessages::echoToTeletype(PHP_EOL . '   |- Storage disk was not mounted automatically ... ');
+            SystemMessages::echoStartMsg(' - Storage disk was not mounted automatically...');
         }
 
         fclose(STDERR);
-        echo('   |- Update database ... ' . PHP_EOL);
+        SystemMessages::echoStartMsg(' - Updating database...');
 
         // Update the database
         $dbUpdater = new UpdateDatabase();
@@ -490,9 +490,9 @@ class Storage extends Injectable
 
         // Check if the disk was mounted successfully
         if ($success === true) {
-            SystemMessages::echoWithSyslog("\n   |- " . Util::translate('Storage disk was mounted successfully...') . " \n\n");
+            SystemMessages::echoWithSyslog("\n - " . Util::translate('Storage disk was mounted successfully...') . "\n");
         } else {
-            SystemMessages::echoWithSyslog("\n   |- " . Util::translate('Failed to mount the disc...') . " \n\n");
+            SystemMessages::echoWithSyslog("\n - " . Util::translate('Failed to mount the disc...') . "\n");
         }
 
         sleep(3);

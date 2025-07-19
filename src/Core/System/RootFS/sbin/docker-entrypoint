@@ -56,4 +56,23 @@ trap 'cleanup' 2 15 1 3 EXIT
 php -f /offload/rootfs/usr/www/src/Core/System/DockerEntrypoint.php &
 
 # Enter an infinite loop to keep the script running
-while true; do sleep 1; done
+# Check for restart/reboot flags every second
+while true; do 
+  # Check if container restart is requested
+  if [ -f /tmp/rebooting ]; then
+    echo "Container restart requested..."
+    rm -f /tmp/rebooting
+    # Just exit, trap will handle cleanup
+    exit 0
+  fi
+  
+  # Check for shutdown
+  if [ -f /tmp/shutdown ]; then
+    echo "Container shutdown requested..."
+    rm -f /tmp/shutdown
+    # Just exit, trap will handle cleanup
+    exit 0
+  fi
+  
+  sleep 1
+done
