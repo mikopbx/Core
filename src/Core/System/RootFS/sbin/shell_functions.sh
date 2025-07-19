@@ -26,21 +26,102 @@
 # echoToTeletype: Prints a message to the console and the serial port if available.
 # Args:
 #   $1: Message to be printed.
+# Note: This function is kept for backward compatibility.
+#       New code should use echo_info, echo_error, etc.
 echoToTeletype()
 {
   local message="$1"
-  echo "$message";
-  local dev='/dev/ttyS0';
-  local serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
-  if [ "${serialInfo}x" = 'x' ]; then
-    return;
-  fi;
-  echo "$serialInfo" | /bin/grep unknown > /dev/null 2> /dev/null;
-  resultSetSerial="$?";
-  if [ ! "$resultSetSerial" = '0' ]; then
-     # Device ttys found
-     echo "$1" >> "$dev"
-  fi;
+  # Use the new unified message handler
+  if [ -x "/sbin/pbx-message" ]; then
+    /sbin/pbx-message -t info "$message"
+  else
+    # Fallback to old implementation if pbx-message is not available
+    echo "$message";
+    local dev='/dev/ttyS0';
+    local serialInfo="$(/bin/busybox setserial -g "$dev" 2> /dev/null)";
+    if [ "${serialInfo}x" = 'x' ]; then
+      return;
+    fi;
+    echo "$serialInfo" | /bin/grep unknown > /dev/null 2> /dev/null;
+    resultSetSerial="$?";
+    if [ ! "$resultSetSerial" = '0' ]; then
+       # Device ttys found
+       echo "$1" >> "$dev"
+    fi;
+  fi
+}
+
+# echo_info: Print an informational message
+# Args:
+#   $1: Message to be printed
+#   $2: Optional -s flag to also log to syslog
+echo_info()
+{
+  local message="$1"
+  local syslog_flag=""
+  if [ "$2" = "-s" ]; then
+    syslog_flag="-s"
+  fi
+  if [ -x "/sbin/pbx-message" ]; then
+    /sbin/pbx-message -t info $syslog_flag "$message"
+  else
+    echoToTeletype "$message"
+  fi
+}
+
+# echo_error: Print an error message
+# Args:
+#   $1: Message to be printed
+echo_error()
+{
+  local message="$1"
+  if [ -x "/sbin/pbx-message" ]; then
+    /sbin/pbx-message -t error -s -l err "$message"
+  else
+    echoToTeletype "ERROR: $message"
+  fi
+}
+
+# echo_start: Print a start message (with no newline)
+# Args:
+#   $1: Message to be printed
+echo_start()
+{
+  local message="$1"
+  if [ -x "/sbin/pbx-message" ]; then
+    /sbin/pbx-message -t start -n "$message"
+  else
+    echo -n " - $message"
+  fi
+}
+
+# echo_result: Print a result (DONE/FAIL/SKIP)
+# Args:
+#   $1: Result type (done, fail, skip)
+echo_result()
+{
+  local result="${1:-done}"
+  if [ -x "/sbin/pbx-message" ]; then
+    # Calculate dots for alignment
+    # This would need the previous message length, so for now just print the result
+    echo -n " "
+    /sbin/pbx-message -t "$result"
+  else
+    case "$result" in
+      done)
+        echo " DONE"
+        ;;
+      fail|failed)
+        echo " FAIL"
+        ;;
+      skip|skipped)
+        echo " SKIP"
+        ;;
+      *)
+        echo " $result"
+        ;;
+    esac
+  fi
 }
 
 # kill_by_pids: Kills processes by their PIDs.
