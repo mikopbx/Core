@@ -42,6 +42,8 @@ class SystemMessages extends Injectable
         self::RESULT_FAILED => " \033[31;1mFAIL\033[0m \n",  // Red for FAILED
         self::RESULT_SKIPPED => " \033[33;1mSKIP\033[0m \n", // Yellow for SKIPPED
     ];
+    
+    private static ?array $availableSerialPorts = null;
 
     /**
      * Echoes a result message with progress dots.
@@ -71,19 +73,49 @@ class SystemMessages extends Injectable
         if ($echoToConsole){
             echo $message;
         }
-        // Log to serial tty
-        for ($i = 0; $i <= 5; $i++) {
-            $device = "/dev/ttyS$i";
-            $setserial = Util::which('setserial');
-            $grep = Util::which('grep');
-            // Get the result of the command execution
-            $result = shell_exec("$setserial -g \"$device\" | $grep -v unknown 2> /dev/null");
-            // If the result is not empty
-            if (!empty($result)) {
-                // Perform the same
-                file_put_contents($device, $message, FILE_APPEND);
+        
+        // Get available serial ports (cached)
+        $serialPorts = self::getAvailableSerialPorts();
+        
+        // Write to available serial ports
+        foreach ($serialPorts as $device) {
+            @file_put_contents($device, $message, FILE_APPEND);
+        }
+    }
+    
+    /**
+     * Gets available serial ports and caches the result.
+     *
+     * @return array List of available serial port devices
+     */
+    private static function getAvailableSerialPorts(): array
+    {
+        if (self::$availableSerialPorts !== null) {
+            return self::$availableSerialPorts;
+        }
+        
+        self::$availableSerialPorts = [];
+        
+        // Use pbx-env-detect if available
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $serialPorts = trim(shell_exec("$pbxEnvDetect --serial 2>/dev/null") ?? '');
+            if (!empty($serialPorts)) {
+                self::$availableSerialPorts = explode(' ', $serialPorts);
+            }
+        } else {
+            // Fallback to old method
+            for ($i = 0; $i <= 5; $i++) {
+                $device = "/dev/ttyS$i";
+                
+                // Simply check if device exists and is writable
+                if (file_exists($device) && is_writable($device)) {
+                    self::$availableSerialPorts[] = $device;
+                }
             }
         }
+        
+        return self::$availableSerialPorts;
     }
 
     /**
@@ -141,7 +173,8 @@ class SystemMessages extends Injectable
      */
     public static function getCountCols(): string
     {
-        $cols = trim(shell_exec('tput cols')??'');
+        // Suppress error output from tput when $TERM is not set
+        $cols = trim(shell_exec('tput cols 2>/dev/null')??'');
         $len = is_numeric($cols) ? (int)$cols : 0;
 
         // If the count of columns is zero, set it to a default value of 80
@@ -151,7 +184,7 @@ class SystemMessages extends Injectable
             // Limit the count of columns to a maximum of 80
             $len = min($len, 80);
         }
-        return $len;
+        return (string)$len;
     }
 
     /**
@@ -163,9 +196,18 @@ class SystemMessages extends Injectable
      */
     public static function echoWithSyslog(string $message): void
     {
-        echo $message;
-        // Log the message to the system log with LOG_INFO level
-        self::sysLogMsg(static::class, $message, LOG_INFO);
+        // Use pbx-message if available
+        $pbxMessage = '/sbin/pbx-message';
+        if (file_exists($pbxMessage) && is_executable($pbxMessage)) {
+            // Use unified message handler with syslog flag
+            shell_exec("$pbxMessage -t info -s -l info " . escapeshellarg($message));
+        } else {
+            // Fallback to old implementation
+            echo $message;
+            self::echoToTeletype($message, false);
+            $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
+            $logger->log(LOG_INFO, trim($message));
+        }
     }
 
     /**
@@ -179,8 +221,14 @@ class SystemMessages extends Injectable
      */
     public static function sysLogMsg(string $ident, string $message, int $level = LOG_WARNING): void
     {
-        $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
-        $logger->log($level, "$message on $ident");
+        // Only add location info for non-SystemMessages calls
+        if ($ident !== static::class) {
+            $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
+            $logger->log($level, "$message on $ident");
+        } else {
+            $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
+            $logger->log($level, $message);
+        }
     }
 
 
@@ -191,8 +239,22 @@ class SystemMessages extends Injectable
      */
     public static function echoStartMsg(string $message): void
     {
-        SystemMessages::echoToTeletype($message);
-        SystemMessages::echoWithSyslog($message);
+        // Use pbx-message if available
+        $pbxMessage = '/sbin/pbx-message';
+        if (file_exists($pbxMessage) && is_executable($pbxMessage)) {
+            // Use unified message handler
+            shell_exec("$pbxMessage -t start " . escapeshellarg($message));
+            
+            // Log to syslog at debug level
+            $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
+            $logger->log(LOG_DEBUG, trim($message));
+        } else {
+            // Fallback to old implementation
+            echo $message;
+            self::echoToTeletype($message, false);
+            $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
+            $logger->log(LOG_DEBUG, trim($message));
+        }
     }
 
     /**
@@ -204,6 +266,16 @@ class SystemMessages extends Injectable
     {
         SystemMessages::teletypeEchoResult($message, $result);
         SystemMessages::echoResult($message, $result);
+        
+        // Log result to syslog (LOG_DEBUG to reduce noise)
+        $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
+        $resultText = match($result) {
+            self::RESULT_DONE => 'completed successfully',
+            self::RESULT_FAILED => 'failed',
+            self::RESULT_SKIPPED => 'skipped',
+            default => $result
+        };
+        $logger->log(LOG_DEBUG, trim($message) . " - $resultText");
     }
 
     /**
@@ -217,6 +289,16 @@ class SystemMessages extends Injectable
     {
         SystemMessages::teletypeEchoResultWithTime($message, $result, $elapsedTime);
         SystemMessages::echoResultWithTime($message, $result, $elapsedTime);
+        
+        // Log result to syslog with timing (LOG_DEBUG to reduce noise)
+        $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
+        $resultText = match($result) {
+            self::RESULT_DONE => 'completed successfully',
+            self::RESULT_FAILED => 'failed',
+            self::RESULT_SKIPPED => 'skipped',
+            default => $result
+        };
+        $logger->log(LOG_DEBUG, sprintf("%s - %s (%.2fs)", trim($message), $resultText, $elapsedTime));
     }
 
     /**
