@@ -1,0 +1,233 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+# Unified message handler for MikoPBX
+# Usage: pbx-message [options] message
+# Options:
+#   -t TYPE     Message type: info, error, start, result, done, fail, skip
+#   -s          Log to syslog
+#   -n          No newline at end
+#   -p PREFIX   Prefix for message (default: " - ")
+#   -l LEVEL    Syslog level (default: info)
+#   -i IDENT    Syslog identifier (default: pbx-message)
+
+# Default values
+MESSAGE_TYPE="info"
+LOG_TO_SYSLOG=""
+NO_NEWLINE=""
+PREFIX=" - "
+SYSLOG_LEVEL="info"
+SYSLOG_IDENT="pbx-message"
+MESSAGE=""
+
+# Cache file for serial port availability
+SERIAL_CACHE="/tmp/.pbx_serial_ports"
+SERIAL_CHECK_AGE=300  # Re-check every 5 minutes
+
+# ANSI color codes
+COLOR_GREEN="\033[32;1m"
+COLOR_RED="\033[31;1m"
+COLOR_YELLOW="\033[33;1m"
+COLOR_RESET="\033[0m"
+
+# Parse command line options
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -t|--type)
+            MESSAGE_TYPE="$2"
+            shift 2
+            ;;
+        -s|--syslog)
+            LOG_TO_SYSLOG="1"
+            shift
+            ;;
+        -n|--no-newline)
+            NO_NEWLINE="1"
+            shift
+            ;;
+        -p|--prefix)
+            PREFIX="$2"
+            shift 2
+            ;;
+        -l|--level)
+            SYSLOG_LEVEL="$2"
+            shift 2
+            ;;
+        -i|--ident)
+            SYSLOG_IDENT="$2"
+            shift 2
+            ;;
+        -*)
+            echo "Unknown option: $1" >&2
+            exit 1
+            ;;
+        *)
+            # Concatenate remaining arguments as message
+            if [ -z "$MESSAGE" ]; then
+                MESSAGE="$1"
+            else
+                MESSAGE="$MESSAGE $1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Function to check if we're in a Docker container
+is_docker() {
+    [ -f "/.dockerenv" ] || [ -n "$DOCKER_CONTAINER" ]
+}
+
+# Function to get available serial ports with caching
+get_serial_ports() {
+    # Check if cache exists and is recent
+    if [ -f "$SERIAL_CACHE" ]; then
+        CACHE_AGE=$(($(date +%s) - $(stat -c %Y "$SERIAL_CACHE" 2>/dev/null || echo 0)))
+        if [ "$CACHE_AGE" -lt "$SERIAL_CHECK_AGE" ]; then
+            cat "$SERIAL_CACHE"
+            return
+        fi
+    fi
+    
+    # Skip serial port detection in Docker
+    if is_docker; then
+        echo "" > "$SERIAL_CACHE"
+        return
+    fi
+    
+    # Find available serial ports without using setserial
+    SERIAL_PORTS=""
+    for i in 0 1 2 3 4 5; do
+        DEV="/dev/ttyS$i"
+        # Simply check if device exists and is writable
+        if [ -c "$DEV" ] && [ -w "$DEV" ]; then
+            # Try to write a null byte to verify it's really available
+            if echo -n "" > "$DEV" 2>/dev/null; then
+                SERIAL_PORTS="$SERIAL_PORTS $DEV"
+            fi
+        fi
+    done
+    
+    # Cache the results
+    echo "$SERIAL_PORTS" > "$SERIAL_CACHE"
+    echo "$SERIAL_PORTS"
+}
+
+# Function to output to console
+output_console() {
+    local msg="$1"
+    local newline="$2"
+    
+    if [ "$newline" = "1" ]; then
+        echo "$msg"
+    else
+        echo -n "$msg"
+    fi
+}
+
+# Function to output to serial ports
+output_serial() {
+    local msg="$1"
+    local newline="$2"
+    
+    SERIAL_PORTS=$(get_serial_ports)
+    if [ -n "$SERIAL_PORTS" ]; then
+        for port in $SERIAL_PORTS; do
+            if [ "$newline" = "1" ]; then
+                echo "$msg" >> "$port" 2>/dev/null
+            else
+                echo -n "$msg" >> "$port" 2>/dev/null
+            fi
+        done
+    fi
+}
+
+# Function to log to syslog
+log_syslog() {
+    local msg="$1"
+    local level="$2"
+    local ident="$3"
+    
+    # Remove ANSI color codes for syslog
+    clean_msg=$(echo "$msg" | sed 's/\x1b\[[0-9;]*m//g')
+    
+    if [ -n "$(/bin/busybox which logger 2>/dev/null)" ]; then
+        /bin/busybox logger -t "$ident" -p "daemon.$level" "$clean_msg"
+    fi
+}
+
+# Format message based on type
+format_message() {
+    local type="$1"
+    local msg="$2"
+    
+    case "$type" in
+        start|info)
+            echo "${PREFIX}${msg}"
+            ;;
+        error)
+            echo "${PREFIX}${COLOR_RED}ERROR: ${msg}${COLOR_RESET}"
+            ;;
+        done)
+            echo "${COLOR_GREEN}DONE${COLOR_RESET}"
+            ;;
+        fail|failed)
+            echo "${COLOR_RED}FAIL${COLOR_RESET}"
+            ;;
+        skip|skipped)
+            echo "${COLOR_YELLOW}SKIP${COLOR_RESET}"
+            ;;
+        result)
+            # For result type, just pass through the message
+            echo "$msg"
+            ;;
+        *)
+            echo "$msg"
+            ;;
+    esac
+}
+
+# Main execution
+if [ -z "$MESSAGE" ] && [ "$MESSAGE_TYPE" != "done" ] && [ "$MESSAGE_TYPE" != "fail" ] && [ "$MESSAGE_TYPE" != "skip" ]; then
+    # If no message and not a result type, read from stdin
+    MESSAGE=$(cat)
+fi
+
+# Format the message
+FORMATTED_MESSAGE=$(format_message "$MESSAGE_TYPE" "$MESSAGE")
+
+# Determine if we should add newline
+if [ -z "$NO_NEWLINE" ]; then
+    NEWLINE="1"
+else
+    NEWLINE=""
+fi
+
+# Output to console
+output_console "$FORMATTED_MESSAGE" "$NEWLINE"
+
+# Output to serial ports
+output_serial "$FORMATTED_MESSAGE" "$NEWLINE"
+
+# Log to syslog if requested
+if [ -n "$LOG_TO_SYSLOG" ]; then
+    log_syslog "$MESSAGE" "$SYSLOG_LEVEL" "$SYSLOG_IDENT"
+fi
+
+exit 0
