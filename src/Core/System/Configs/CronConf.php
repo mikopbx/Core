@@ -81,6 +81,16 @@ class CronConf extends SystemConfigClass
     }
 
     /**
+     * Stop the cron service via monit.
+     *
+     * @return bool True if the service was stopped successfully.
+     */
+    public function stop(): bool
+    {
+        return $this->monitStop();
+    }
+
+    /**
      * Generates a Monit configuration file for the current system service.
      *
      * This method creates a Monit configuration entry to monitor, start and stop the service.

@@ -160,4 +160,23 @@ class MonitConf extends SystemConfigClass
             'if $programname == "' . self::PROC_NAME . '" then stop' . PHP_EOL;
         file_put_contents('/etc/rsyslog.d/' . self::PROC_NAME . '.conf', $confSyslogD);
     }
+
+    /**
+     * Stops the monit service itself.
+     * This is useful when you need to prevent monit from restarting services.
+     * 
+     * @return void
+     */
+    public static function stopMonit(): void
+    {
+        SystemMessages::sysLogMsg(__METHOD__, 'Stopping monit service', LOG_INFO);
+        
+        $monit = Util::which('monit');
+        Processes::mwExec("$monit quit");
+        
+        // Give time for monit to stop
+        sleep(1);
+        
+        SystemMessages::sysLogMsg(__METHOD__, 'Monit service stopped', LOG_INFO);
+    }
 }

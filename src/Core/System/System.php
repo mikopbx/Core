@@ -121,13 +121,24 @@ class System extends Injectable
 
     /**
      * Reboots the system after calling system_reboot_cleanup()
+     * Works for both Docker containers and VM/Hardware installations
      *
      * @return void
      */
     public static function reboot(): void
     {
-        $pbx_reboot = Util::which('pbx_reboot');
-        Processes::mwExecBg("$pbx_reboot", "/dev/null", 1);
+        if (Util::isDocker()) {
+            // For Docker: Create flag file that docker-entrypoint monitors
+            touch('/tmp/rebooting');
+            SystemMessages::sysLogMsg(__METHOD__, 'Docker container restart initiated', LOG_INFO);
+            
+            // Give some time for logs to be written
+            sleep(1);
+        } else {
+            // For VM/Hardware: Use standard pbx_reboot
+            $pbx_reboot = Util::which('pbx_reboot');
+            Processes::mwExecBg("$pbx_reboot", "/dev/null", 1);
+        }
     }
 
     /**
@@ -142,11 +153,22 @@ class System extends Injectable
 
     /**
      * Shutdown the system.
+     * Works for both Docker containers and VM/Hardware installations.
      */
     public static function shutdown(): void
     {
-        $shutdown = Util::which('shutdown');
-        Processes::mwExec("$shutdown > /dev/null 2>&1");
+        if (Util::isDocker()) {
+            // For Docker: Create shutdown flag that docker-entrypoint monitors
+            touch('/tmp/shutdown');
+            SystemMessages::sysLogMsg(__METHOD__, 'Docker container shutdown initiated', LOG_INFO);
+            
+            // Give some time for logs to be written
+            sleep(1);
+        } else {
+            // For VM/Hardware: Use standard shutdown
+            $shutdown = Util::which('shutdown');
+            Processes::mwExec("$shutdown > /dev/null 2>&1");
+        }
     }
 
     /**

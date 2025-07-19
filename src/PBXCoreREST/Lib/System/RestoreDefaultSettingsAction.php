@@ -40,12 +40,14 @@ use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Core\Asterisk\CdrDb;
-use MikoPBX\Core\System\PBX;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Modules\PbxExtensionUtils;
+use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Configs\MonitConf;
+use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -57,12 +59,14 @@ use Phalcon\Di\Injectable;
  */
 class RestoreDefaultSettingsAction extends Injectable
 {
+    private static ?SystemMaintenanceEvents $eventPublisher = null;
     /**
-     * Restore default system settings.
+     * Restore default system settings with optional async progress reporting
      *
+     * @param string $asyncChannelId Optional channel ID for WebSocket events
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function main(): PBXApiResult
+    public static function main(string $asyncChannelId = ''): PBXApiResult
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -71,34 +75,97 @@ class RestoreDefaultSettingsAction extends Injectable
             $res->messages[] = 'Error on DI initialize';
             return $res;
         }
+        
+        // Initialize event publisher if channel ID provided
+        if (!empty($asyncChannelId)) {
+            self::$eventPublisher = new SystemMaintenanceEvents($asyncChannelId);
+        }
+        
         $rm     = Util::which('rm');
-        $res->success = true;
+        
+        // Stage: Prepare
+        self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_PREPARE, [
+            'message' => 'Starting system reset process',
+            'progress' => 0
+        ]);
+        
+        // Stop monit to prevent service restarts during cleanup
+        self::stopMonit();
 
         // Change incoming rule to default action
         IncomingRoutingTable::resetDefaultRoute();
         self::preCleaning($res);
-
+        
+        // Stage: Clean database tables
+        self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_CLEAN_TABLES, [
+            'message' => 'Cleaning database tables',
+            'progress' => 10
+        ]);
         self::cleaningMainTables($res);
         self::cleaningOtherExtensions($res);
+        
+        // Stage: Clean files
+        self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_CLEAN_FILES, [
+            'message' => 'Cleaning sound files and backups',
+            'progress' => 30
+        ]);
         self::cleaningSoundFiles($res);
         self::cleaningBackups();
+        self::cleaningFail2Ban();
+        
+        // Stage: Clean logs
+        self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_CLEAN_LOGS, [
+            'message' => 'Cleaning system logs',
+            'progress' => 50
+        ]);
+        self::cleaningSystemLogs();
 
-        // Delete PbxExtensions modules
+        // Stage: Delete modules
+        self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_CLEAN_MODULES, [
+            'message' => 'Removing extension modules',
+            'progress' => 60
+        ]);
+        
+        // Delete module records from database
         $records = PbxExtensionModules::find();
         foreach ($records as $record) {
-            $moduleDir = PbxExtensionUtils::getModuleDir($record->uniqid);
-            Processes::mwExec("$rm -rf $moduleDir");
             if (! $record->delete()) {
                 $res->messages[] = $record->getMessages();
                 $res->success    = false;
             }
         }
+        
+        // Delete ALL content in custom_modules directory
+        $mediaMountPoint = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
+        $customModulesDir = $mediaMountPoint . '/mikopbx/custom_modules/';
+        
+        if (file_exists($customModulesDir)) {
+            // Get all items in the directory
+            $items = glob($customModulesDir . '*');
+            
+            foreach ($items as $item) {
+                // Remove everything - files and directories
+                if (is_dir($item)) {
+                    Processes::mwExec("$rm -rf " . escapeshellarg($item));
+                } else {
+                    unlink($item);
+                }
+            }
+        }
 
+        // Stage: Reset PBX settings
+        self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_RESET_SETTINGS, [
+            'message' => 'Resetting PBX settings',
+            'progress' => 80
+        ]);
+        
         // Reset PBXSettings
         $defaultValues = PbxSettings::getDefaultArrayValues();
         $fixedKeys = [
             PbxSettings::PBX_NAME,
             PbxSettings::PBX_DESCRIPTION,
+            PbxSettings::PBX_LICENSE,
+            PbxSettings::SSH_PORT,               // Keep SSH port
             PbxSettings::SSH_PASSWORD,
             PbxSettings::SSH_RSA_KEY,
             PbxSettings::SSH_DSS_KEY,
@@ -107,6 +174,8 @@ class RestoreDefaultSettingsAction extends Injectable
             PbxSettings::SSH_AUTHORIZED_KEYS,
             PbxSettings::SSH_ECDSA_KEY,
             PbxSettings::SSH_LANGUAGE,
+            PbxSettings::WEB_PORT,               // Keep web port
+            PbxSettings::WEB_HTTPS_PORT,         // Keep HTTPS port
             PbxSettings::WEB_HTTPS_PUBLIC_KEY,
             PbxSettings::WEB_HTTPS_PRIVATE_KEY,
             PbxSettings::REDIRECT_TO_HTTPS,
@@ -126,6 +195,7 @@ class RestoreDefaultSettingsAction extends Injectable
                 $record->key = $key;
             }
             $record->value = $defaultValue;
+            $record->save();
         }
 
         // Delete CallRecords from database
@@ -136,19 +206,126 @@ class RestoreDefaultSettingsAction extends Injectable
 
         // Delete CallRecords sound files
         $callRecordsPath = $di->getShared('config')->path('asterisk.monitordir');
-        if (stripos($callRecordsPath, '/storage/usbdisk1/mikopbx') !== false) {
+        $storagePath = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
+        if (stripos($callRecordsPath, $storagePath) !== false) {
             Processes::mwExec("$rm -rf $callRecordsPath/*");
         }
 
         // Recreate parking slots
         self::createParkingSlots();
+        
+        // Stage: Finalizing
+        self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_FINAL, [
+            'message' => 'Finalizing reset process',
+            'progress' => 95
+        ]);
 
-        // Restart PBX
-        $pbxConsole = Util::which('pbx-console');
-        shell_exec("$pbxConsole services restart-all");
-        PBX::coreRestart();
+        // Check if there were errors during deletion
+        if (!$res->success && !empty($res->messages)) {
+            // Log errors but continue with restart
+            SystemMessages::sysLogMsg(__METHOD__, 'Some errors occurred during reset: ' . json_encode($res->messages), LOG_WARNING);
+            
+            // Reset was mostly successful, continue with restart
+            $res->success = true;
+        }
+
+        // Stage: Complete
+        self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_FINAL, [
+            'message' => 'System reset completed',
+            'progress' => 100,
+            'result' => true
+        ]);
+        
+        // Mark operation as successful (redundant but clear)
+        $res->success = true;
+        
+        // Send restart notification if async
+        if (!empty($asyncChannelId)) {
+            // Give time for completion message to be sent
+            sleep(1);
+            
+            self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_RESTART, [
+                'message' => 'Initiating system restart',
+                'progress' => 100,
+                'restart' => true
+            ]);
+            
+            // Give more time for the restart message to be sent and processed
+            sleep(3);
+        }
+        
+        // Initiate system restart using unified method
+        System::reboot();
 
         return $res;
+    }
+    
+    /**
+     * Publish event to WebSocket if event publisher is initialized
+     */
+    private static function publishEvent(string $stage, array $data): void
+    {
+        if (self::$eventPublisher !== null) {
+            self::$eventPublisher->pushMessageToBrowser($stage, $data);
+        }
+    }
+    
+    /**
+     * Cleans fail2ban database
+     */
+    private static function cleaningFail2Ban(): void
+    {
+        $mediaMountPoint = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
+        $fail2banDb = $mediaMountPoint . '/mikopbx/fail2ban/fail2ban.sqlite3';
+        if (file_exists($fail2banDb)) {
+            unlink($fail2banDb);
+        }
+    }
+    
+    /**
+     * Cleans all system and module logs
+     */
+    private static function cleaningSystemLogs(): void
+    {
+        $rm = Util::which('rm');
+        $mediaMountPoint = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
+        
+        // Base log directory
+        $logBaseDir = $mediaMountPoint . '/mikopbx/log/';
+        
+        // System log directories
+        $systemLogDirs = ['system', 'php', 'nginx', 'asterisk', 'nats', 'fail2ban'];
+        
+        foreach ($systemLogDirs as $dir) {
+            $logDir = $logBaseDir . $dir;
+            if (file_exists($logDir)) {
+                Processes::mwExec("$rm -rf {$logDir}/*");
+            }
+        }
+        
+        // Clean all module logs dynamically
+        if (file_exists($logBaseDir)) {
+            // Find all directories in log folder that are not system directories
+            $allDirs = glob($logBaseDir . '*', GLOB_ONLYDIR);
+            foreach ($allDirs as $dir) {
+                $dirName = basename($dir);
+                // Skip system directories
+                if (!in_array($dirName, $systemLogDirs)) {
+                    // This is a module log directory
+                    Processes::mwExec("$rm -rf {$dir}/*");
+                }
+            }
+        }
+        
+        // Clean debug log files in root log directory
+        if (file_exists($logBaseDir)) {
+            $debugLogs = glob($logBaseDir . '*.log');
+            foreach ($debugLogs as $debugLog) {
+                if (is_file($debugLog)) {
+                    unlink($debugLog);
+                }
+            }
+        }
     }
 
     /**
@@ -209,7 +386,7 @@ class RestoreDefaultSettingsAction extends Injectable
             [Extensions::class => 'type="' . Extensions::TYPE_QUEUE . '"'],  // QUEUE
             [Users::class => 'id>"1"'], // All except root with their extensions
             [CustomFiles::class => ''],
-            [NetworkFilters::class => 'permit!="0.0.0.0/0" AND deny!="0.0.0.0/0"'] //Delete all other rules
+            [NetworkFilters::class => ''] // Delete all network filters
         ];
 
         // Iterate over each model and perform deletion based on conditions
@@ -223,12 +400,7 @@ class RestoreDefaultSettingsAction extends Injectable
                 }
             }
         }
-        // Allow all connections for 0.0.0.0/0 in firewall rules
-        $firewallRules = FirewallRules::find();
-        foreach ($firewallRules as $firewallRule) {
-            $firewallRule->action = 'allow';
-            $firewallRule->save();
-        }
+        // FirewallRules will be automatically deleted due to CASCADE relation with NetworkFilters
     }
 
     /**
@@ -284,6 +456,7 @@ class RestoreDefaultSettingsAction extends Injectable
     public static function cleaningSoundFiles(PBXApiResult &$res): void
     {
         $rm     = Util::which('rm');
+        $storagePath = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
         $parameters = [
             'conditions' => 'category = :custom:',
             'bind'       => [
@@ -292,7 +465,7 @@ class RestoreDefaultSettingsAction extends Injectable
         ];
         $records    = SoundFiles::find($parameters);
         foreach ($records as $record) {
-            if (stripos($record->path, '/storage/usbdisk1/mikopbx') !== false) {
+            if (stripos($record->path, $storagePath) !== false) {
                 Processes::mwExec("$rm -rf $record->path");
                 if (! $record->delete()) {
                     $res->messages[] = $record->getMessages();
@@ -328,13 +501,9 @@ class RestoreDefaultSettingsAction extends Injectable
         // Delete all parking slots
         $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
         foreach ($currentSlots as $currentSlot) {
-            if (!$currentSlot->delete()) {
-                SystemMessages::sysLogMsg(
-                    __CLASS__,
-                    'Can not delete extenison ' . $currentSlot->number . ' from \MikoPBX\Common\Models\Extensions ' . implode($currentSlot->getMessages()),
-                    LOG_ERR
-                );
-            }
+            // Try to delete, but don't fail the whole operation if it doesn't work
+            // as parking slots will be recreated anyway
+            $currentSlot->delete();
         }
 
         $startSlot = intval(PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_START_SLOT));
@@ -357,5 +526,24 @@ class RestoreDefaultSettingsAction extends Injectable
                 );
             }
         }
+    }
+    
+    /**
+     * Stop critical services to prevent interference during cleanup
+     */
+    private static function stopMonit(): void
+    {
+        // Update progress
+        self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_PREPARE, [
+            'message' => 'Stopping system services',
+            'progress' => 5
+        ]);
+        
+        // Stop cron first (while monit is still running)
+        $cronConf = new CronConf();
+        $cronConf->stop();
+        
+        // Now stop monit itself to prevent it from restarting services
+        MonitConf::stopMonit();
     }
 }

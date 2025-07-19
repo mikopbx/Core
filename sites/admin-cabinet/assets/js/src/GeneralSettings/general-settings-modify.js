@@ -351,37 +351,6 @@ const generalSettingsModify = {
         }
         generalSettingsModify.initRules();
     },
-    /**
-     * Checks conditions for deleting all records.
-     * Compares the value of the 'deleteAllInput' field with a phrase.
-     * If they match, it triggers a system restore to default settings.
-     */
-    checkDeleteAllConditions() {
-
-        // Get the value of 'deleteAllInput' field.
-        const deleteAllInput = generalSettingsModify.$formObj.form('get value', 'deleteAllInput');
-
-        // If the entered phrase matches the phrase in 'globalTranslate.gs_EnterDeleteAllPhrase',
-        // call 'PbxApi.SystemRestoreDefaultSettings' to restore default settings.
-        if (deleteAllInput === globalTranslate.gs_EnterDeleteAllPhrase) {
-            PbxApi.SystemRestoreDefaultSettings(generalSettingsModify.cbAfterRestoreDefaultSettings);
-        }
-    },
-
-    /**
-     * Handle response after restoring default settings.
-     * @param {boolean|string} response - Response from the server after restoring default settings.
-     */
-    cbAfterRestoreDefaultSettings(response) {
-
-        // Check if the response is true, display a success message
-        // otherwise, display the response message.
-        if (response === true) {
-            UserMessage.showInformation(globalTranslate.gs_AllSettingsDeleted);
-        } else {
-            UserMessage.showMultiString(response);
-        }
-    },
 
     /**
      * Handle event after the select save period slider is changed.
@@ -438,7 +407,10 @@ const generalSettingsModify = {
             generalSettingsModify.$formObj.form('set value', 'SSHPasswordRepeat', generalSettingsModify.hiddenPassword);
             $('.password-validate').remove();
         }
-        generalSettingsModify.checkDeleteAllConditions();
+        // Check if delete all phrase was entered
+        if (typeof generalSettingsDeleteAll !== 'undefined') {
+            generalSettingsDeleteAll.checkDeleteConditions();
+        }
     },
 
     /**

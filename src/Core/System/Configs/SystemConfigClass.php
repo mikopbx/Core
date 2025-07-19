@@ -189,6 +189,17 @@ class SystemConfigClass extends Injectable implements SystemConfigInterface
     }
 
     /**
+     * Stops the service via Monit.
+     *
+     * @return bool True if stop command was executed successfully.
+     */
+    public function monitStop(): bool
+    {
+        shell_exec("$this->monitPath stop " . $this::PROC_NAME);
+        return true;
+    }
+
+    /**
      * Reload monit configs
      *
      * @return void

@@ -715,10 +715,12 @@ class AssetProvider implements ServiceProviderInterface
         if ($action === 'modify') {
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/semantic/slider.min.css', true)
-                ->addCss('css/vendor/semantic/progress.min.css', true);
+                ->addCss('css/vendor/semantic/progress.min.css', true)
+                ->addCss('css/vendor/semantic/modal.min.css', true);
             $this->semanticCollectionJS
                 ->addJs('js/vendor/semantic/slider.min.js', true)
-                ->addJs('js/vendor/semantic/progress.min.js', true);
+                ->addJs('js/vendor/semantic/progress.min.js', true)
+                ->addJs('js/vendor/semantic/modal.min.js', true);
 
             $this->footerCollectionJS
                 ->addJs('js/vendor/jquery.address.min.js', true)

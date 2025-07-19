@@ -23,6 +23,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
 use MikoPBX\PBXCoreREST\Lib\System\GetDateAction;
+use MikoPBX\PBXCoreREST\Lib\System\GetDeleteStatisticsAction;
 use MikoPBX\PBXCoreREST\Lib\System\RebootAction;
 use MikoPBX\PBXCoreREST\Lib\System\RestoreDefaultSettingsAction;
 use MikoPBX\PBXCoreREST\Lib\System\SendMailAction;
@@ -82,12 +83,22 @@ class SystemManagementProcessor extends Injectable
                 $res = UpgradeFromImageAction::main($imageFileLocation);
                 break;
             case 'restoreDefault':
-                $ch = 0;
-                do {
-                    $ch++;
-                    $res = RestoreDefaultSettingsAction::main();
-                    sleep(1);
-                } while ($ch <= 10 && !$res->success);
+                // Check if async channel ID is provided
+                $asyncChannelId = $data['asyncChannelId'] ?? '';
+                
+                if (!empty($asyncChannelId)) {
+                    // Async mode - process with WebSocket events
+                    $res = RestoreDefaultSettingsAction::main($asyncChannelId);
+                } else {
+                    // Sync mode - existing logic
+                    $ch = 0;
+                    do {
+                        $ch++;
+                        $res = RestoreDefaultSettingsAction::main();
+                        sleep(1);
+                    } while ($ch <= 10 && !$res->success);
+                }
+                
                 if ($res->success) {
                     PbxSettings::setValueByKey(PbxSettings::PBX_SETTINGS_WAS_RESET, '1');
                 }
@@ -97,6 +108,9 @@ class SystemManagementProcessor extends Injectable
                 if ($res->success && $res->data['filename'] !== '') {    
                     $res = ConvertAudioFileAction::main($res->data['filename']);
                 }
+                break;
+            case 'getDeleteStatistics':
+                $res = GetDeleteStatisticsAction::main();
                 break;
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;

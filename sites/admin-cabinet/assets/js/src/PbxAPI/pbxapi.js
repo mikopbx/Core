@@ -41,6 +41,7 @@ const PbxApi = {
     systemSetDateTime: `${Config.pbxUrl}/pbxcore/api/system/setDate`, // Updates the system date and time.
     systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/sendMail`, //  Sends an email notification.
     systemRestoreDefaultSettings: `${Config.pbxUrl}/pbxcore/api/system/restoreDefault`, // Restore default system settings
+    systemGetDeleteStatistics: `${Config.pbxUrl}/pbxcore/api/system/getDeleteStatistics`, // Get statistics about what will be deleted
     systemConvertAudioFile: `${Config.pbxUrl}/pbxcore/api/system/convertAudioFile`, // Convert the audio file to various codecs using Asterisk.
     systemUpdateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`, // Tries to send a test email.
     systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Upgrade the PBX using uploaded IMG file.
@@ -1450,20 +1451,43 @@ const PbxApi = {
     /**
      * Restore default system settings.
      *
+     * @param {string} asyncChannelId - The async channel ID for WebSocket events
      * @param {function} callback - The callback function to be called after the operation completes.
      *                              It will receive a boolean value indicating the success of the operation.
      * @returns {void}
      */
-    SystemRestoreDefaultSettings(callback) {
+    SystemRestoreDefaultSettings(asyncChannelId, callback) {
         $.api({
             url: PbxApi.systemRestoreDefaultSettings,
             on: 'now',
+            method: 'POST',
+            data: { asyncChannelId: asyncChannelId },
             successTest: PbxApi.successTest,
             onSuccess() {
                 callback(true);
             },
             onFailure(response) {
                 callback(response.messages);
+            },
+        });
+    },
+
+    /**
+     * Get statistics about what will be deleted during system restore.
+     *
+     * @param {function} callback - The callback function to be called after the operation completes.
+     * @returns {void}
+     */
+    SystemGetDeleteStatistics(callback) {
+        $.api({
+            url: PbxApi.systemGetDeleteStatistics,
+            on: 'now',
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response.data);
+            },
+            onFailure(response) {
+                callback(false);
             },
         });
     },
