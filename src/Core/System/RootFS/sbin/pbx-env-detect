@@ -1,0 +1,217 @@
+#!/bin/sh
+#
+# MikoPBX - free phone system for small business
+# Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+
+# Environment detection script for MikoPBX
+# Usage: pbx-env-detect [option]
+# Options:
+#   -t, --type        Return environment type (docker, vmware, vbox, kvm, xen, baremetal)
+#   -s, --serial      Return available serial ports
+#   -c, --console     Return console device
+#   -a, --all         Return all environment information
+
+# Cache file for environment detection
+ENV_CACHE="/tmp/.pbx_env_info"
+ENV_CHECK_AGE=3600  # Re-check every hour
+
+# Parse command line options
+OPTION="type"
+if [ $# -gt 0 ]; then
+    case "$1" in
+        -t|--type)
+            OPTION="type"
+            ;;
+        -s|--serial)
+            OPTION="serial"
+            ;;
+        -c|--console)
+            OPTION="console"
+            ;;
+        -a|--all)
+            OPTION="all"
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            echo "Usage: $0 [-t|--type] [-s|--serial] [-c|--console] [-a|--all]" >&2
+            exit 1
+            ;;
+    esac
+fi
+
+# Function to detect environment type
+detect_environment() {
+    # Check for Docker
+    if [ -f "/.dockerenv" ] || [ -n "$DOCKER_CONTAINER" ]; then
+        echo "docker"
+        return
+    fi
+    
+    # Check for virtualization using various methods
+    
+    # Method 1: Check DMI/SMBIOS information
+    if [ -r "/sys/devices/virtual/dmi/id/sys_vendor" ]; then
+        SYS_VENDOR=$(cat /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null | tr '[:upper:]' '[:lower:]')
+        case "$SYS_VENDOR" in
+            *vmware*)
+                echo "vmware"
+                return
+                ;;
+            *innotek*|*virtualbox*)
+                echo "vbox"
+                return
+                ;;
+            *qemu*|*kvm*)
+                echo "kvm"
+                return
+                ;;
+            *xen*)
+                echo "xen"
+                return
+                ;;
+        esac
+    fi
+    
+    # Method 2: Check for hypervisor
+    if [ -r "/sys/hypervisor/type" ]; then
+        HYPERVISOR=$(cat /sys/hypervisor/type 2>/dev/null | tr '[:upper:]' '[:lower:]')
+        case "$HYPERVISOR" in
+            xen)
+                echo "xen"
+                return
+                ;;
+        esac
+    fi
+    
+    # Method 3: Check CPU flags for virtualization
+    if [ -r "/proc/cpuinfo" ]; then
+        if grep -q "hypervisor" /proc/cpuinfo 2>/dev/null; then
+            # We're virtualized, but couldn't determine the type
+            echo "virtual"
+            return
+        fi
+    fi
+    
+    # Method 4: Check for specific files/directories
+    if [ -d "/proc/xen" ]; then
+        echo "xen"
+        return
+    fi
+    
+    # Method 5: Check loaded modules
+    if [ -r "/proc/modules" ]; then
+        if grep -q "vboxguest" /proc/modules 2>/dev/null; then
+            echo "vbox"
+            return
+        fi
+        if grep -q "vmw_balloon" /proc/modules 2>/dev/null; then
+            echo "vmware"
+            return
+        fi
+    fi
+    
+    # If we get here, assume bare metal
+    echo "baremetal"
+}
+
+# Function to detect available serial ports
+detect_serial_ports() {
+    SERIAL_PORTS=""
+    
+    # Skip serial port detection in Docker
+    ENV_TYPE=$(detect_environment)
+    if [ "$ENV_TYPE" = "docker" ]; then
+        echo ""
+        return
+    fi
+    
+    # Check for serial ports
+    for i in 0 1 2 3 4 5; do
+        DEV="/dev/ttyS$i"
+        # Check if device exists and is character device
+        if [ -c "$DEV" ] && [ -w "$DEV" ]; then
+            # Try to write a null byte to verify it's really available
+            if echo -n "" > "$DEV" 2>/dev/null; then
+                if [ -z "$SERIAL_PORTS" ]; then
+                    SERIAL_PORTS="$DEV"
+                else
+                    SERIAL_PORTS="$SERIAL_PORTS $DEV"
+                fi
+            fi
+        fi
+    done
+    
+    echo "$SERIAL_PORTS"
+}
+
+# Function to detect console device
+detect_console() {
+    # Default console
+    CONSOLE="/dev/console"
+    
+    # Check if we have a proper console
+    if [ -c "$CONSOLE" ] && [ -r "$CONSOLE" ] && [ -w "$CONSOLE" ]; then
+        echo "$CONSOLE"
+    else
+        # Fallback to null device
+        echo "/dev/null"
+    fi
+}
+
+# Function to get cached or fresh environment info
+get_env_info() {
+    # Check if cache exists and is recent
+    if [ -f "$ENV_CACHE" ]; then
+        CACHE_AGE=$(($(date +%s) - $(stat -c %Y "$ENV_CACHE" 2>/dev/null || echo 0)))
+        if [ "$CACHE_AGE" -lt "$ENV_CHECK_AGE" ]; then
+            cat "$ENV_CACHE"
+            return
+        fi
+    fi
+    
+    # Generate fresh environment info
+    ENV_TYPE=$(detect_environment)
+    SERIAL_PORTS=$(detect_serial_ports)
+    CONSOLE=$(detect_console)
+    
+    # Save to cache
+    cat > "$ENV_CACHE" << EOF
+ENV_TYPE=$ENV_TYPE
+SERIAL_PORTS=$SERIAL_PORTS
+CONSOLE=$CONSOLE
+EOF
+    
+    cat "$ENV_CACHE"
+}
+
+# Main execution
+case "$OPTION" in
+    type)
+        get_env_info | grep "^ENV_TYPE=" | cut -d'=' -f2
+        ;;
+    serial)
+        get_env_info | grep "^SERIAL_PORTS=" | cut -d'=' -f2
+        ;;
+    console)
+        get_env_info | grep "^CONSOLE=" | cut -d'=' -f2
+        ;;
+    all)
+        get_env_info
+        ;;
+esac
+
+exit 0
