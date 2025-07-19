@@ -52,10 +52,19 @@ class LoggerProvider implements ServiceProviderInterface
         $di->setShared(
             self::SERVICE_NAME,
             function () use ($logLevel, $ident){
+                // Check if we're in a Docker environment or if console output should be suppressed
+                $options = LOG_PID;
+                
+                // Only add LOG_PERROR if we're not in a clean boot environment
+                // This prevents duplicate output during system startup
+                if (!getenv('SUPPRESS_CONSOLE_LOGS') && !file_exists('/tmp/system_boot_start_time')) {
+                    $options |= LOG_PERROR;
+                }
+                
                 $adapter = new Syslog(
                     $ident,
                     [
-                        'option'   => LOG_PID | LOG_PERROR,
+                        'option'   => $options,
                         'facility' => LOG_DAEMON,
                     ]
                 );
