@@ -17,11 +17,24 @@
 # If not, see <https://www.gnu.org/licenses/>.
 #
 
-# Redirect output to the appropriate device based on serial port status
-if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
-  exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>&1
+# Setup console output redirection
+if [ -x "/sbin/pbx-env-detect" ]; then
+  # Use new environment detection
+  SERIAL_PORTS=$(/sbin/pbx-env-detect --serial)
+  if [ -n "$SERIAL_PORTS" ]; then
+    # Get first available serial port
+    FIRST_SERIAL=$(echo $SERIAL_PORTS | cut -d' ' -f1)
+    exec </dev/console > >(/bin/busybox tee $FIRST_SERIAL) 2>&1
+  else
+    exec </dev/console >/dev/console 2>/dev/console
+  fi
 else
-  exec </dev/console >/dev/console 2>/dev/console;
+  # Fallback to old method
+  if test -w /dev/ttyS0 && ! /bin/busybox setserial -g /dev/ttyS0 | /bin/grep -q unknown; then
+    exec </dev/console > >(/bin/busybox tee /dev/ttyS0) 2>&1
+  else
+    exec </dev/console >/dev/console 2>/dev/console;
+  fi
 fi
 
 # Calculate the MD5 hash of the buildtime file and save it in a variable
