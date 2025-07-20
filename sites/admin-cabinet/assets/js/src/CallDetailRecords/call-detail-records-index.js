@@ -52,6 +52,18 @@ const callDetailRecords = {
      * @type {Array}
      */
     players: [],
+    
+    /**
+     * Flag indicating if CDR database has any records
+     * @type {boolean}
+     */
+    hasCDRRecords: true,
+    
+    /**
+     * The empty database placeholder element
+     * @type {jQuery}
+     */
+    $emptyDatabasePlaceholder: $('#cdr-empty-database-placeholder'),
 
     /**
      * Initializes the call detail records.
@@ -189,12 +201,17 @@ const callDetailRecords = {
             onSuccess(response) {
                 if (response.success && response.latestDate) {
                     const latestDate = moment(response.latestDate);
+                    callDetailRecords.hasCDRRecords = true;
                     callDetailRecords.initializeDateRangeSelector(latestDate);
                 } else {
+                    // No records in database at all
+                    callDetailRecords.hasCDRRecords = false;
+                    callDetailRecords.showEmptyDatabasePlaceholder();
                     callDetailRecords.initializeDateRangeSelector();
                 }
             },
             onError() {
+                callDetailRecords.initializeDateRangeSelector();
             },
         });
     },
@@ -204,17 +221,34 @@ const callDetailRecords = {
      * @returns {string} HTML message for empty table
      */
     getEmptyTableMessage() {
+        // If database is empty, we don't show this message in table
+        if (!callDetailRecords.hasCDRRecords) {
+            return '';
+        }
+        
+        // Show filtered empty state message
         return `
         <div class="ui placeholder segment">
             <div class="ui icon header">
-                <i class="phone slash icon"></i>
-                ${globalTranslate.cdr_NoRecordsFound}
+                <i class="search icon"></i>
+                ${globalTranslate.cdr_FilteredEmptyTitle}
             </div>
-            <div class="ui divider"></div>
-            <div>
-                ${globalTranslate.cdr_TryChangingDate}
+            <div class="inline">
+                <div class="ui text">
+                    ${globalTranslate.cdr_FilteredEmptyDescription}
+                </div>
             </div>
         </div>`;
+    },
+    
+    /**
+     * Shows the empty database placeholder and hides the table
+     */
+    showEmptyDatabasePlaceholder() {
+        callDetailRecords.$cdrTable.closest('.dataTables_wrapper').hide();
+        $('.dataTables_paginate').hide();
+        $('#date-range-selector').closest('.ui.row').hide();
+        callDetailRecords.$emptyDatabasePlaceholder.show();
     },
 
     /**

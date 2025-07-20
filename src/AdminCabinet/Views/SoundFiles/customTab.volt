@@ -58,3 +58,15 @@
         </table>
     {% endif %}
 {% endfor %}
+
+{% if customFiles|length == 0 %}
+    {{ partial("partials/emptyTablePlaceholder", [
+        'icon': 'music',
+        'title': t._('sf_EmptyTableTitle'),
+        'description': t._('sf_EmptyTableDescription'),
+        'addButtonText': '<i class="add circle icon"></i> '~t._('sf_AddNewSoundFile'),
+        'addButtonLink': 'sound-files/modify/custom',
+        'showButton': isAllowed('save'),
+        'documentationLink': 'https://wiki.mikopbx.com/sound-files'
+    ]) }}
+{% endif %}

@@ -1,4 +1,4 @@
-{% if isAllowed('save') %}
+{% if isAllowed('save') and records|length > 0 %}
     {{ link_to("conference-rooms/modify", '<i class="add circle icon"></i> '~t._('cr_AddNewConferenceRoom'), "class": "ui blue button") }}
 {% endif %}
     {% for record in records %}
@@ -31,4 +31,16 @@
             </table>
         {% endif %}
     {% endfor %}
+
+{% if records|length == 0 %}
+    {{ partial("partials/emptyTablePlaceholder", [
+        'icon': 'phone volume',
+        'title': t._('cr_EmptyTableTitle'),
+        'description': t._('cr_EmptyTableDescription'),
+        'addButtonText': '<i class="add circle icon"></i> '~t._('cr_AddNewConferenceRoom'),
+        'addButtonLink': 'conference-rooms/modify',
+        'showButton': isAllowed('save'),
+        'documentationLink': 'https://wiki.mikopbx.com/conference-rooms'
+    ]) }}
+{% endif %}
 

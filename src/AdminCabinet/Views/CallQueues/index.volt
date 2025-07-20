@@ -1,4 +1,4 @@
-{% if isAllowed('save') %}
+{% if isAllowed('save') and callQueuesList|length > 0 %}
     {{ link_to("call-queues/modify", '<i class="add circle icon"></i> '~t._('cq_AddNewQueue'), "class": "ui blue button", 'id':'add-new-button') }}
 {% endif %}
     {% for queue in callQueuesList %}
@@ -48,3 +48,15 @@
             </table>
         {% endif %}
     {% endfor %}
+
+{% if callQueuesList|length == 0 %}
+    {{ partial("partials/emptyTablePlaceholder", [
+        'icon': 'users',
+        'title': t._('cq_EmptyTableTitle'),
+        'description': t._('cq_EmptyTableDescription'),
+        'addButtonText': '<i class="add circle icon"></i> '~t._('cq_AddNewQueue'),
+        'addButtonLink': 'call-queues/modify',
+        'showButton': isAllowed('save'),
+        'documentationLink': 'https://wiki.mikopbx.com/call-queues'
+    ]) }}
+{% endif %}

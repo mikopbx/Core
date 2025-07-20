@@ -126,14 +126,14 @@ class Elements extends Injectable
                     ],
                     IncomingRoutesController::class => [
                         'caption' => 'mm_IncomingRoutes',
-                        'iconclass' => 'map signs',
+                        'iconclass' => 'sign in',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
                     ],
                     OutboundRoutesController::class => [
                         'caption' => 'mm_OutboundRoutes',
-                        'iconclass' => 'random',
+                        'iconclass' => 'sign out',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',

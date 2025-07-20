@@ -1,6 +1,6 @@
  {% for user in amiUsers %}
         {% if loop.first %}
-            {% if isAllowed('save') %}
+            {% if isAllowed('save') and amiUsers|length > 0 %}
                 {{ link_to("asterisk-managers/modify", '<i class="add circle icon"></i> '~t._('am_AddNewUser'), "class": "ui blue button") }}
             {% endif %}
             <table class="ui  very compact unstackable table" id="ami-users-table">
@@ -80,13 +80,13 @@
 
 
 {% if amiUsers|length == 0  %}
-    <div class="ui placeholder segment">
-        <div class="ui icon header">
-            <i class="asterisk icon"></i>
-            {{ t._('am_NoAnyServersYet') }}
-        </div>
-        {% if isAllowed('save') %}
-            {{ link_to("asterisk-managers/modify", '<i class="add circle icon"></i> '~t._('am_AddNewUser'), "class": "ui blue button") }}
-        {% endif %}
-    </div>
+    {{ partial("partials/emptyTablePlaceholder", [
+        'icon': 'asterisk',
+        'title': t._('am_EmptyTableTitle'),
+        'description': t._('am_EmptyTableDescription'),
+        'addButtonText': '<i class="add circle icon"></i> '~t._('am_AddNewUser'),
+        'addButtonLink': 'asterisk-managers/modify',
+        'showButton': isAllowed('save'),
+        'documentationLink': 'https://wiki.mikopbx.com/asterisk-managers'
+    ]) }}
 {% endif %}

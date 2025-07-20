@@ -16,6 +16,16 @@
     </div>
 </div>
 <div class="ui hidden divider"></div>
+<div id="cdr-empty-database-placeholder" style="display: none;">
+    {{ partial("partials/emptyTablePlaceholder", [
+        'icon': 'history',
+        'title': t._('cdr_EmptyDatabaseTitle'),
+        'description': t._('cdr_EmptyDatabaseDescription'),
+        'showButton': false,
+        'documentationLink': 'https://wiki.mikopbx.com/call-detail-records'
+    ]) }}
+</div>
+
 <table id="cdr-table" class="ui small very compact single line unstackable table ">
     <thead>
     <tr>

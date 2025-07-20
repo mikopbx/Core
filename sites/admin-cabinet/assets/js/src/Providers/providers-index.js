@@ -28,12 +28,16 @@ const providers = {
 
     $deleteModalForm: $('#delete-modal-form'),
     $providersTable: $('#providers-table'),
+    $providersMenu: $('#providers-menu'),
 
     /**
      * Initializes the providers page.
      */
     initialize() {
         providers.$deleteModalForm.modal();
+        
+        // Initialize tabs
+        providers.$providersMenu.find('.item').tab();
 
         // Enable/disable provider checkbox handlers
         $('.provider-row .checkbox')

@@ -1,4 +1,4 @@
-{% if isAllowed('save') %}
+{% if isAllowed('save') and routingTable|length > 0 %}
     {{ link_to("outbound-routes/modify", '<i class="add circle icon"></i> '~t._('or_AddNewRule'), "class": "ui blue button") }}
     {% set modifyClass="" %}
 {% else %}
@@ -67,3 +67,15 @@
             </table>
         {% endif %}
     {% endfor %}
+
+{% if routingTable|length == 0 %}
+    {{ partial("partials/emptyTablePlaceholder", [
+        'icon': 'sign out alternate',
+        'title': t._('or_EmptyTableTitle'),
+        'description': t._('or_EmptyTableDescription'),
+        'addButtonText': '<i class="add circle icon"></i> '~t._('or_AddNewRule'),
+        'addButtonLink': 'outbound-routes/modify',
+        'showButton': isAllowed('save'),
+        'documentationLink': 'https://wiki.mikopbx.com/outbound-routes'
+    ]) }}
+{% endif %}

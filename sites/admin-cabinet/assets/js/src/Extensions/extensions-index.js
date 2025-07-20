@@ -261,7 +261,11 @@ const extensionsIndex = {
             pageLength: pageLength,
             scrollCollapse: true,
             // scroller: true,
-            language: SemanticLocalization.dataTableLocalisation,
+            language: {
+                ...SemanticLocalization.dataTableLocalisation,
+                emptyTable: ' ',  // Empty string to hide default message
+                zeroRecords: ' ' // Empty string to hide default message
+            },
             /**
              * Constructs the Extensions row.
              * @param {HTMLElement} row - The row element.
@@ -298,9 +302,22 @@ const extensionsIndex = {
             /**
              * Draw event - fired once the table has completed a draw.
              */
-            drawCallback() {
+            drawCallback(settings) {
                 // Initialize the input mask for mobile numbers.
                 extensionsIndex.initializeInputmask($('input.mobile-number-input'));
+                
+                // Check if table is empty and show placeholder
+                const api = new $.fn.dataTable.Api(settings);
+                const pageInfo = api.page.info();
+                const hasRecords = pageInfo.recordsTotal > 0 || pageInfo.recordsDisplay > 0;
+                
+                if (!hasRecords) {
+                    $('#extensions-table-container').hide();
+                    $('#extensions-placeholder').show();
+                } else {
+                    $('#extensions-table-container').show();
+                    $('#extensions-placeholder').hide();
+                }
                 
                 // Set up popups.
                 $('.clipboard').popup({

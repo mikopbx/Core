@@ -1,4 +1,4 @@
-{% if isAllowed('save') %}
+{% if isAllowed('save') and routingTable|length > 0 %}
     {{ link_to("incoming-routes/modify", '<i class="add circle icon"></i> '~t._('ir_AddNewRule'), "class": "ui blue button") }}
 {% endif %}
     {% for rule in routingTable %}
@@ -75,6 +75,19 @@
             </table>
         {% endif %}
     {% endfor %}
+
+{% if routingTable|length == 0 %}
+    {{ partial("partials/emptyTablePlaceholder", [
+        'icon': 'sign in alternate',
+        'title': t._('ir_EmptyTableTitle'),
+        'description': t._('ir_EmptyTableDescription'),
+        'addButtonText': '<i class="add circle icon"></i> '~t._('ir_AddNewRule'),
+        'addButtonLink': 'incoming-routes/modify',
+        'showButton': isAllowed('save'),
+        'documentationLink': 'https://wiki.mikopbx.com/incoming-routes'
+    ]) }}
+{% endif %}
+
 <div class="ui hidden divider"></div>
 {{ form(['action' : 'incoming-routes/save', 'method': 'post', 'role': 'form', 'class': 'ui grey segment form', 'id':'default-rule-form']) }}
     {% for element in form %}

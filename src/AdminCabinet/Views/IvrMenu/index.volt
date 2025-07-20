@@ -1,4 +1,4 @@
-{% if isAllowed('save') %}
+{% if isAllowed('save') and ivrmenu|length > 0 %}
     {{ link_to("ivr-menu/modify", '<i class="add circle icon"></i> '~t._('iv_AddNewIvrMenu'), "class": "ui blue button", 'id':'add-new-button') }}
 {% endif %}
     {% for record in ivrmenu %}
@@ -57,3 +57,15 @@
             </table>
         {% endif %}
     {% endfor %}
+
+{% if ivrmenu|length == 0 %}
+    {{ partial("partials/emptyTablePlaceholder", [
+        'icon': 'sitemap',
+        'title': t._('iv_EmptyTableTitle'),
+        'description': t._('iv_EmptyTableDescription'),
+        'addButtonText': '<i class="add circle icon"></i> '~t._('iv_AddNewIvrMenu'),
+        'addButtonLink': 'ivr-menu/modify',
+        'showButton': isAllowed('save'),
+        'documentationLink': 'https://wiki.mikopbx.com/ivr-menu'
+    ]) }}
+{% endif %}
