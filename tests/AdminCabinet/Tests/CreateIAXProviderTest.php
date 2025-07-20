@@ -71,7 +71,12 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
         }
         
         $this->changeInputField('host', $params['host']);
-        $this->changeInputField('username', $params['username']);
+        
+        // For inbound registration, username is automatically set to uniqid and is readonly
+        if (!isset($params['registration_type']) || $params['registration_type'] !== 'inbound') {
+            $this->changeInputField('username', $params['username']);
+        }
+        
         $this->changeInputField('secret', $params['password']);
     }
 
@@ -115,7 +120,14 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
         }
         
         $this->assertInputFieldValueEqual('host', $params['host']);
-        $this->assertInputFieldValueEqual('username', $params['username']);
+        
+        // For inbound registration, username should equal uniqid
+        if (isset($params['registration_type']) && $params['registration_type'] === 'inbound') {
+            $this->assertInputFieldValueEqual('username', $params['uniqid']);
+        } else {
+            $this->assertInputFieldValueEqual('username', $params['username']);
+        }
+        
         $this->assertInputFieldValueEqual('secret', $params['password']);
     }
 

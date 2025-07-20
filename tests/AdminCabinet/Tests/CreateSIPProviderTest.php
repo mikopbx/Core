@@ -89,7 +89,11 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
         }
         if ($params['registration_type'] === 'none') {
             $this->changeInputField('host', $params['host']);
-        } else {
+        }
+        // For inbound registration, username is automatically set to uniqid and is readonly
+        // so we skip setting it
+        
+        if ($params['registration_type'] !== 'none') {
             $this->changeInputField('secret', $params['password']);
         }
     }
@@ -114,7 +118,10 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
 
         $this->changeInputField('fromdomain', $params['fromdomain']);
         $this->changeCheckBoxState('disablefromuser', $params['disablefromuser']);
-        $this->selectDropdownItem('dtmfmode', $params['dtmfmode']);
+        
+        // Use safer dropdown selection for DTMF mode to prevent navigation issues
+        $this->selectDropdownItemWithFallback('dtmfmode', $params['dtmfmode'], true);
+        
         $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
     }
 
@@ -142,9 +149,15 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
             $this->assertInputFieldValueEqual('host', $params['host']);
             $this->assertInputFieldValueEqual('username', $params['username']);
         }
+        if ($params['registration_type'] === 'inbound') {
+            // For inbound registration, username should equal uniqid
+            $this->assertInputFieldValueEqual('username', $params['uniqid']);
+        }
         if ($params['registration_type'] === 'none') {
             $this->assertInputFieldValueEqual('host', $params['host']);
-        } else {
+        }
+        
+        if ($params['registration_type'] !== 'none') {
             $this->assertInputFieldValueEqual('secret', $params['password']);
         }
     }

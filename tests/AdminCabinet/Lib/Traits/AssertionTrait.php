@@ -73,6 +73,36 @@ trait AssertionTrait
     }
 
     /**
+     * Assert that ACE editor has specific value
+     *
+     * @param string $editorId ACE editor element ID
+     * @param string $expectedValue Expected value
+     */
+    protected function assertAceEditorValueEqual(
+        string $editorId,
+        string $expectedValue
+    ): void {
+        // Wait for the editor to be initialized
+        self::$driver->wait(5, 100)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(
+                WebDriverBy::xpath("//div[@id='{$editorId}']//textarea")
+            )
+        );
+        
+        // Get the actual value from ACE editor using JavaScript
+        $actualValue = self::$driver->executeScript(
+            "return ace.edit('{$editorId}').getValue();"
+        );
+        
+        // Compare values
+        $this->assertEquals(
+            $expectedValue,
+            $actualValue,
+            "ACE editor '{$editorId}' value mismatch"
+        );
+    }
+
+    /**
      * Assert that checkbox has specific state
      *
      * @param string $name Checkbox name

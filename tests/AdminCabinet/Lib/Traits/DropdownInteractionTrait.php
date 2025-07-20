@@ -546,6 +546,7 @@ trait DropdownInteractionTrait
     protected function selectDropdownItem(string $name, string $value, bool $skipIfNotExist = false): ?string
     {
         $this->logTestAction("Select dropdown", ['name' => $name, 'value' => $value]);
+        $this->annotate("Selecting dropdown '{$name}' with value '{$value}'", 'info');
 
         try {
             // 1. Находим dropdown
@@ -566,29 +567,149 @@ trait DropdownInteractionTrait
             }
 
             $dropdown = $elements[0];
+            
+            // Log dropdown details
+            $dropdownClass = $dropdown->getAttribute('class');
+            $dropdownId = $dropdown->getAttribute('id');
+            $this->annotate("Found dropdown: class='{$dropdownClass}', id='{$dropdownId}'", 'debug');
 
-            // 2. Проверяем, открыт ли dropdown
-            $isOpen = strpos($dropdown->getAttribute('class'), 'active visible') !== false;
+            // 2. Проверяем, является ли dropdown поисковым (с классом 'search')
+            $isSearchable = strpos($dropdownClass, 'search') !== false;
+            $this->annotate("Dropdown is searchable: " . ($isSearchable ? 'yes' : 'no'), 'debug');
 
-            // 3. Открываем dropdown, если он закрыт
+            // 3. Проверяем, открыт ли dropdown
+            $isOpen = strpos($dropdownClass, 'active visible') !== false;
+            $this->annotate("Dropdown is initially open: " . ($isOpen ? 'yes' : 'no'), 'debug');
+
+            // 4. Открываем dropdown, если он закрыт
             if (!$isOpen) {
                 $this->scrollIntoView($dropdown);
+                
+                // Записываем текущий URL перед кликом
+                $currentUrl = self::$driver->getCurrentURL();
+                $this->annotate("Current URL before dropdown click: {$currentUrl}", 'debug');
+                
                 $dropdown->click();
 
-                // Ждем, пока dropdown откроется (до 30 секунд)
-                if (!$this->waitForDropdownToOpen($dropdown, 30)) {
-                    throw new RuntimeException("Dropdown '{$name}' failed to open after 30 seconds");
+                // Ждем, пока dropdown откроется
+                if (!$this->waitForDropdownToOpen($dropdown, 10)) {
+                    throw new RuntimeException("Dropdown '{$name}' failed to open");
+                }
+                
+                // Проверяем, не изменился ли URL после клика
+                $newUrl = self::$driver->getCurrentURL();
+                if ($currentUrl !== $newUrl) {
+                    $this->annotate("WARNING: URL changed after dropdown click! From: {$currentUrl} To: {$newUrl}", 'error');
+                    throw new RuntimeException("Unexpected navigation occurred when opening dropdown '{$name}'");
                 }
             }
 
-            // 4. Ищем элемент в меню с нужным значением
-            $menuItemXpath = ".//div[contains(@class, 'menu')]//div[contains(@class, 'item') and @data-value='{$value}']";
-            $menuItems = $dropdown->findElements(WebDriverBy::xpath($menuItemXpath));
+            // 5. Для поисковых dropdown используем поиск
+            if ($isSearchable) {
+                $this->annotate("Using search functionality for dropdown", 'debug');
+                
+                // Находим поле поиска
+                $searchInputXpath = './/input[contains(@class,"search")]';
+                $searchInputs = $dropdown->findElements(WebDriverBy::xpath($searchInputXpath));
+                
+                if (!empty($searchInputs)) {
+                    $searchInput = $searchInputs[0];
+                    $this->annotate("Found search input, entering value: {$value}", 'debug');
+                    
+                    // Очищаем и вводим значение для поиска
+                    $searchInput->click();
+                    $searchInput->clear();
+                    $searchInput->sendKeys($value);
+                    
+                    // Ждем загрузки результатов (AJAX)
+                    $this->waitForAjax();
+                    
+                    // Дополнительная пауза для загрузки результатов
+                    usleep(500000); // 500ms
+                }
+            }
 
-            // Если не нашли по data-value, пробуем найти по тексту
-            if (empty($menuItems)) {
-                $menuItemXpath = ".//div[contains(@class, 'menu')]//div[contains(@class, 'item') and contains(text(), '{$value}')]";
-                $menuItems = $dropdown->findElements(WebDriverBy::xpath($menuItemXpath));
+            // 6. Ищем элемент в меню с нужным значением
+            $this->annotate("Searching for menu item with value: {$value}", 'debug');
+            
+            // Сначала убедимся, что меню видимо
+            $menuXpath = ".//div[contains(@class, 'menu') and contains(@class, 'visible')]";
+            $menus = $dropdown->findElements(WebDriverBy::xpath($menuXpath));
+            
+            if (empty($menus)) {
+                $this->annotate("No visible menu found, trying to find any menu", 'warning');
+                $menuXpath = ".//div[contains(@class, 'menu')]";
+                $menus = $dropdown->findElements(WebDriverBy::xpath($menuXpath));
+            }
+            
+            if (!empty($menus)) {
+                $menu = $menus[0];
+                $this->annotate("Found menu, searching for items", 'debug');
+                
+                // Используем более точные селекторы для поиска элементов
+                $menuItems = [];
+                
+                // Стратегия 1: Точное совпадение по data-value
+                $menuItemXpath = sprintf(".//div[contains(@class, 'item') and @data-value='%s' and not(contains(@class, 'disabled'))]", $value);
+                $menuItems = $menu->findElements(WebDriverBy::xpath($menuItemXpath));
+                
+                // Стратегия 2: Поиск по тексту, исключая элементы с ссылками
+                if (empty($menuItems)) {
+                    $this->annotate("No item found by data-value, searching by text", 'debug');
+                    $menuItemXpath = sprintf(
+                        ".//div[contains(@class, 'item') and normalize-space(text())='%s' and not(contains(@class, 'disabled')) and not(@href)]", 
+                        $value
+                    );
+                    $menuItems = $menu->findElements(WebDriverBy::xpath($menuItemXpath));
+                }
+                
+                // Стратегия 3: Частичное совпадение текста
+                if (empty($menuItems)) {
+                    $this->annotate("No exact text match, trying partial match", 'debug');
+                    $menuItemXpath = sprintf(
+                        ".//div[contains(@class, 'item') and contains(text(), '%s') and not(contains(@class, 'disabled')) and not(@href)]", 
+                        $value
+                    );
+                    $menuItems = $menu->findElements(WebDriverBy::xpath($menuItemXpath));
+                }
+                
+                // Стратегия 4: Для поисковых dropdown - более гибкий поиск
+                if (empty($menuItems) && $isSearchable) {
+                    $this->annotate("Still no items found, using flexible search for searchable dropdown", 'debug');
+                    
+                    // Ждем появления результатов поиска
+                    usleep(300000); // 300ms
+                    
+                    // Получаем все элементы и фильтруем
+                    $menuItemXpath = ".//div[contains(@class, 'item') and not(contains(@class, 'disabled'))]";
+                    $allItems = $menu->findElements(WebDriverBy::xpath($menuItemXpath));
+                    
+                    $this->annotate("Found " . count($allItems) . " total items in menu", 'debug');
+                    
+                    foreach ($allItems as $item) {
+                        // Пропускаем элементы с href (кроме # и пустых)
+                        $itemHref = $item->getAttribute('href');
+                        if ($itemHref && $itemHref !== '#' && $itemHref !== '') {
+                            $this->annotate("Skipping item with href: {$itemHref}", 'debug');
+                            continue;
+                        }
+                        
+                        $itemValue = $item->getAttribute('data-value');
+                        $itemText = trim($item->getText());
+                        
+                        $this->annotate("Checking item: data-value='{$itemValue}', text='{$itemText}'", 'debug');
+                        
+                        if ($itemValue === $value || $itemText === $value || 
+                            (is_string($itemText) && is_string($value) && stripos($itemText, $value) !== false)) {
+                            $menuItems = [$item];
+                            $this->annotate("Found matching item!", 'debug');
+                            break;
+                        }
+                    }
+                }
+            } else {
+                $menuItems = [];
+                $this->annotate("No menu found in dropdown!", 'error');
             }
 
             if (empty($menuItems)) {
@@ -604,21 +725,203 @@ trait DropdownInteractionTrait
             }
 
             $menuItem = $menuItems[0];
+            
+            // Проверяем атрибуты элемента перед кликом
+            $itemClass = $menuItem->getAttribute('class');
+            $itemHref = $menuItem->getAttribute('href');
+            $itemDataValue = $menuItem->getAttribute('data-value');
+            $this->annotate("About to click menu item: class='{$itemClass}', href='{$itemHref}', data-value='{$itemDataValue}'", 'debug');
+            
+            // Проверяем, что это не ссылка
+            if ($itemHref && $itemHref !== '#' && $itemHref !== '') {
+                $this->annotate("WARNING: Menu item has href attribute: {$itemHref}", 'warning');
+            }
 
-            // 5. Прокручиваем к элементу и кликаем
+            // 7. Прокручиваем к элементу и кликаем
             $this->scrollIntoView($menuItem);
+            
+            // Записываем URL перед кликом на элемент
+            $urlBeforeClick = self::$driver->getCurrentURL();
+            $this->annotate("URL before menu item click: {$urlBeforeClick}", 'debug');
+            
             $menuItem->click();
-
-            // 6. Небольшая пауза после клика
+            
+            // 8. Небольшая пауза после клика
             usleep(300000); // 300ms
+            
+            // Проверяем URL после клика
+            $urlAfterClick = self::$driver->getCurrentURL();
+            if ($urlBeforeClick !== $urlAfterClick) {
+                $this->annotate("WARNING: URL changed after menu item click! From: {$urlBeforeClick} To: {$urlAfterClick}", 'error');
+                throw new RuntimeException("Unexpected navigation occurred when selecting item '{$value}' in dropdown '{$name}'");
+            }
+            
+            // 9. Ждем AJAX для обработки выбора
+            $this->waitForAjax();
 
-            // 7. Возвращаем выбранное значение
+            // 10. Возвращаем выбранное значение
+            $this->annotate("Successfully selected dropdown item '{$value}'", 'info');
             return $value;
         } catch (\Exception $e) {
             if ($skipIfNotExist) {
                 $this->annotate("Error selecting dropdown item: " . $e->getMessage(), 'warning');
                 return null;
             }
+            throw $e;
+        }
+    }
+
+    /**
+     * Безопасно выбирает элемент из dropdown используя JavaScript
+     * Используется как альтернативный метод при проблемах с обычным выбором
+     *
+     * @param string $name Имя dropdown
+     * @param string $value Значение для выбора
+     * @return bool True если успешно, false в противном случае
+     */
+    protected function selectDropdownItemSafely(string $name, string $value): bool
+    {
+        $this->annotate("Using safe JavaScript method to select dropdown '{$name}' with value '{$value}'", 'info');
+        
+        try {
+            // JavaScript код для безопасного выбора элемента
+            $jsCode = <<<JS
+            (function() {
+                var dropdownName = arguments[0];
+                var targetValue = arguments[1];
+                
+                // Находим dropdown
+                var dropdown = null;
+                
+                // Пробуем разные способы найти dropdown
+                var selectors = [
+                    'div.dropdown[id="' + dropdownName + '"]',
+                    'div.dropdown:has(select[name="' + dropdownName + '"])',
+                    'div.dropdown:has(input[name="' + dropdownName + '"])',
+                    'div.ui.dropdown:has(input[type="hidden"][name="' + dropdownName + '"])'
+                ];
+                
+                for (var i = 0; i < selectors.length; i++) {
+                    var elements = document.querySelectorAll(selectors[i]);
+                    if (elements.length > 0) {
+                        dropdown = elements[0];
+                        break;
+                    }
+                }
+                
+                if (!dropdown) {
+                    return {success: false, error: 'Dropdown not found'};
+                }
+                
+                // Проверяем, есть ли у dropdown атрибут data-value
+                var currentValue = dropdown.getAttribute('data-value');
+                
+                // Если текущее значение уже равно целевому, ничего не делаем
+                if (currentValue === targetValue) {
+                    return {success: true, message: 'Value already selected'};
+                }
+                
+                // Используем Semantic UI API для установки значения
+                try {
+                    // Для Semantic UI dropdown
+                    if (window.$ && $.fn && $.fn.dropdown) {
+                        $(dropdown).dropdown('set selected', targetValue);
+                        
+                        // Проверяем, что значение установлено
+                        var newValue = $(dropdown).dropdown('get value');
+                        if (newValue === targetValue) {
+                            // Триггерим событие change
+                            $(dropdown).trigger('change');
+                            return {success: true, message: 'Value set using Semantic UI'};
+                        }
+                    }
+                } catch (e) {
+                    // Игнорируем ошибки Semantic UI
+                }
+                
+                // Альтернативный метод - прямая установка значения
+                var hiddenInput = dropdown.querySelector('input[name="' + dropdownName + '"][type="hidden"]');
+                var selectElement = dropdown.querySelector('select[name="' + dropdownName + '"]');
+                
+                if (hiddenInput) {
+                    hiddenInput.value = targetValue;
+                    // Триггерим событие
+                    var event = new Event('change', {bubbles: true});
+                    hiddenInput.dispatchEvent(event);
+                    return {success: true, message: 'Value set on hidden input'};
+                }
+                
+                if (selectElement) {
+                    selectElement.value = targetValue;
+                    // Триггерим событие
+                    var event = new Event('change', {bubbles: true});
+                    selectElement.dispatchEvent(event);
+                    return {success: true, message: 'Value set on select element'};
+                }
+                
+                return {success: false, error: 'Could not set value'};
+            })();
+JS;
+
+            $result = self::$driver->executeScript($jsCode, [$name, $value]);
+            
+            if (is_array($result)) {
+                if ($result['success']) {
+                    $this->annotate("Successfully selected value using JavaScript: " . ($result['message'] ?? ''), 'info');
+                    
+                    // Ждем обработки изменения
+                    $this->waitForAjax();
+                    
+                    return true;
+                } else {
+                    $this->annotate("Failed to select value using JavaScript: " . ($result['error'] ?? ''), 'warning');
+                    return false;
+                }
+            }
+            
+            return false;
+        } catch (\Exception $e) {
+            $this->annotate("Error in selectDropdownItemSafely: " . $e->getMessage(), 'error');
+            return false;
+        }
+    }
+
+    /**
+     * Выбирает элемент из dropdown с автоматическим fallback на безопасный метод
+     *
+     * @param string $name Имя dropdown
+     * @param string $value Значение для выбора
+     * @param bool $useSafeMethodFirst Использовать безопасный метод сразу
+     * @return string|null Выбранное значение или null
+     */
+    protected function selectDropdownItemWithFallback(string $name, string $value, bool $useSafeMethodFirst = false): ?string
+    {
+        // Для известных проблемных dropdown используем безопасный метод сразу
+        $problematicDropdowns = ['dtmfmode', 'sip_dtmfmode', 'registration_type'];
+        
+        if ($useSafeMethodFirst || in_array($name, $problematicDropdowns)) {
+            $this->annotate("Using safe method first for dropdown '{$name}'", 'info');
+            
+            if ($this->selectDropdownItemSafely($name, $value)) {
+                return $value;
+            }
+            
+            // Если безопасный метод не сработал, пробуем обычный
+            $this->annotate("Safe method failed, trying regular method", 'warning');
+        }
+        
+        try {
+            // Пробуем обычный метод
+            return $this->selectDropdownItem($name, $value);
+        } catch (\Exception $e) {
+            // Если обычный метод не сработал, пробуем безопасный
+            $this->annotate("Regular method failed with: " . $e->getMessage(), 'warning');
+            $this->annotate("Attempting safe JavaScript method as fallback", 'info');
+            
+            if ($this->selectDropdownItemSafely($name, $value)) {
+                return $value;
+            }
+            
             throw $e;
         }
     }

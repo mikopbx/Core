@@ -90,7 +90,10 @@ class CreateDialPlanApplicationTest extends MikoPBXTestsBase
         }
         $this->assertInputFieldValueEqual('extension', $params['extension']);
         $this->assertMenuItemSelected('type', $params['type']);
-        $this->assertInputFieldValueEqual('applicationlogic', $params['applicationlogic']);
+        
+        // Switch to code tab to check the ACE editor value
+        $this->changeTabOnCurrentPage('code');
+        $this->assertAceEditorValueEqual('application-code', $params['applicationlogic']);
     }
 
     /**
