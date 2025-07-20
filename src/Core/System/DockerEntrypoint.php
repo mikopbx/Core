@@ -167,47 +167,54 @@ class DockerEntrypoint extends Injectable
         $chown = Util::which('chown');
         $chgrp = Util::which('chgrp');
         $currentUserId = trim(shell_exec("$grep '^$userID:' < /etc/shadow | $cut -d ':' -f 3")??'');
-        if ($currentUserId !== '' && !empty($newUserId) && $currentUserId !== $newUserId) {
-            if (!$showMessage) {
-                $this->echoStartMsg(' - Configuring user permissions...');
-                $showMessage = true;
-            }
-            $this->echoMessage("   Updating user ID: $currentUserId → $newUserId");
-            $commands[] = "$sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
-            $id = '';
-            if (file_exists($pidIdPath)) {
-                $id = file_get_contents($pidIdPath);
-            }
-            if ($id !== $newUserId) {
-                $commands[] = "$find / -not -path '/proc/*' -user $currentUserId -exec $chown -h $userID {} \;";
-                file_put_contents($pidIdPath, $newUserId);
-            }
-        }
-
         $currentGroupId = trim(shell_exec("$grep '^$userID:' < /etc/group | $cut -d ':' -f 3")??'');
-        if ($currentGroupId !== '' && !empty($newGroupId) && $currentGroupId !== $newGroupId) {
-            if (!$showMessage) {
-                $this->echoStartMsg(' - Configuring user permissions...');
-                $showMessage = true;
+        
+        $needUserUpdate = ($currentUserId !== '' && !empty($newUserId) && $currentUserId !== $newUserId);
+        $needGroupUpdate = ($currentGroupId !== '' && !empty($newGroupId) && $currentGroupId !== $newGroupId);
+        
+        if ($needUserUpdate || $needGroupUpdate) {
+            $this->echoStartMsg(' - Configuring user permissions...');
+            
+            // Collect all updates first
+            if ($needUserUpdate) {
+                $commands[] = "$sed -i 's/$userID:x:$currentUserId:/$userID:x:$newUserId:/g' /etc/shadow*";
+                $id = '';
+                if (file_exists($pidIdPath)) {
+                    $id = file_get_contents($pidIdPath);
+                }
+                if ($id !== $newUserId) {
+                    $commands[] = "$find / -not -path '/proc/*' -user $currentUserId -exec $chown -h $userID {} \;";
+                    file_put_contents($pidIdPath, $newUserId);
+                }
             }
-            $this->echoMessage("   Updating group ID: $currentGroupId → $newGroupId");
-            $commands[] = "$sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
-            $commands[] = "$sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/shadow";
-
-            $id = '';
-            if (file_exists($pidGrPath)) {
-                $id = file_get_contents($pidGrPath);
+            
+            if ($needGroupUpdate) {
+                $commands[] = "$sed -i 's/$userID:x:$currentGroupId:/$userID:x:$newGroupId:/g' /etc/group";
+                $commands[] = "$sed -i 's/:$currentGroupId:Web/:$newGroupId:Web/g' /etc/shadow";
+                $id = '';
+                if (file_exists($pidGrPath)) {
+                    $id = file_get_contents($pidGrPath);
+                }
+                if ($id !== $newGroupId) {
+                    $commands[] = "$find / -not -path '/proc/*' -group $currentGroupId -exec $chgrp -h $newGroupId {} \;";
+                    file_put_contents($pidGrPath, $newGroupId);
+                }
             }
-            if ($id !== $newGroupId) {
-                $commands[] = "$find / -not -path '/proc/*' -group $currentGroupId -exec $chgrp -h $newGroupId {} \;";
-                file_put_contents($pidGrPath, $newGroupId);
+            
+            // Execute commands
+            if (!empty($commands)) {
+                passthru(implode('; ', $commands));
             }
-        }
-        if (!empty($commands)) {
-            passthru(implode('; ', $commands));
-        }
-        if ($showMessage) {
+            
             $this->echoResultMsg();
+            
+            // Show details after completion
+            if ($needUserUpdate) {
+                $this->echoMessage("   Updated user ID: $currentUserId → $newUserId");
+            }
+            if ($needGroupUpdate) {
+                $this->echoMessage("   Updated group ID: $currentGroupId → $newGroupId");
+            }
         }
     }
 
@@ -274,6 +281,7 @@ class DockerEntrypoint extends Injectable
         $this->echoStartMsg(' - Applying environment variables...');
         $reflection = new ReflectionClass(PbxSettings::class);
         $constants = $reflection->getConstants();
+        $appliedSettings = [];
 
         foreach ($constants as $name => $dbKey) {
             $envValue = getenv($name);
@@ -282,32 +290,44 @@ class DockerEntrypoint extends Injectable
                     case PbxSettings::BEANSTALK_PORT:
                     case PbxSettings::REDIS_PORT:
                     case PbxSettings::GNATS_PORT:
-                        $this->updateJsonSettings($dbKey, 'port', intval($envValue));
+                        if ($this->updateJsonSettings($dbKey, 'port', intval($envValue))) {
+                            $appliedSettings[] = "   Updated $name → " . intval($envValue);
+                        }
                         break;
                     case PbxSettings::GNATS_HTTP_PORT:
-                        $this->updateJsonSettings('gnats', 'httpPort', intval($envValue));
+                        if ($this->updateJsonSettings('gnats', 'httpPort', intval($envValue))) {
+                            $appliedSettings[] = "   Updated $name → " . intval($envValue);
+                        }
                         break;
                     case PbxSettings::ENABLE_USE_NAT:
                         if ($envValue === '1') {
                             $this->reconfigureNetwork("topology", LanInterfaces::TOPOLOGY_PRIVATE);
+                            $appliedSettings[] = "   Updated $name → 1 (NAT enabled)";
                         }
                         break;
                     case PbxSettings::EXTERNAL_SIP_HOST_NAME:
                         $this->reconfigureNetwork("exthostname", $envValue);
+                        $appliedSettings[] = "   Updated $name → $envValue";
                         break;
                     case PbxSettings::EXTERNAL_SIP_IP_ADDR:
                         $this->reconfigureNetwork("extipaddr", $envValue);
+                        $appliedSettings[] = "   Updated $name → $envValue";
                         break;
                     default:
-                        $this->updateDBSetting($dbKey, $envValue);
+                        if ($this->updateDBSetting($dbKey, $envValue)) {
+                            $appliedSettings[] = "   Updated $name → $envValue";
+                        }
                         break;
                 }
             }
         }
         
         $this->echoResultMsg();
-        // Add empty line after environment setup
-        $this->echoMessage('');
+        
+        // Show applied settings after DONE
+        foreach ($appliedSettings as $setting) {
+            $this->echoMessage($setting);
+        }
     }
 
     /**
@@ -340,23 +360,27 @@ class DockerEntrypoint extends Injectable
      * @param string $path The JSON path where the setting is stored.
      * @param string $key The setting key to update.
      * @param mixed $newValue The new value to set.
+     * @return bool True if the setting was updated, false otherwise.
      */
-    private function updateJsonSettings(string $path, string $key, mixed $newValue): void
+    private function updateJsonSettings(string $path, string $key, mixed $newValue): bool
     {
         if ($this->jsonSettings[$path][$key] ?? null !== $newValue) {
             $this->jsonSettings[$path][$key] = $newValue;
             $newData = json_encode($this->jsonSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
             file_put_contents(self::pathInc, $newData);
             SystemMessages::sysLogMsg(__METHOD__, " - Update $path:$key to '$newValue' in /etc/inc/mikopbx-settings.json", LOG_DEBUG);
+            return true;
         }
+        return false;
     }
 
     /**
      * Updates a specified setting directly in the database.
      * @param string $key The key of the setting to update.
      * @param string $newValue The new value for the setting.
+     * @return bool True if the setting was updated, false otherwise.
      */
-    private function updateDBSetting(string $key, string $newValue): void
+    private function updateDBSetting(string $key, string $newValue): bool
     {
         if (array_key_exists($key, $this->settings) && $this->settings[$key] !== $newValue) {
             $sqlite3 = Util::which('sqlite3');
@@ -366,12 +390,15 @@ class DockerEntrypoint extends Injectable
             $res = Processes::mwExec($command, $out);
             if ($res === 0) {
                 SystemMessages::sysLogMsg(__METHOD__, " - Update $key to '$newValue' in m_PbxSettings", LOG_DEBUG);
+                return true;
             } else {
                 SystemMessages::sysLogMsg(__METHOD__, " - Update $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
+                return false;
             }
         } elseif (!array_key_exists($key, $this->settings)) {
             $this->echoMessage("   Warning: Unknown environment variable '$key' - skipping");
         }
+        return false;
     }
 
     /**

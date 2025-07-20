@@ -144,7 +144,7 @@ Tests are automatically synchronized between host and container:
 ### Code Snippets
 ```php
 // For CLI PHP scripts and tests
-require_once 'Globals.php'; // Loads all dependencies 
+require_once 'Globals.php'; // !!!IMPORTANT!!! NO NEED ANY PATH 
 ```
 
 ### Translation Guidelines

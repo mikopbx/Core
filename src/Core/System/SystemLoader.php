@@ -159,7 +159,6 @@ class SystemLoader extends Injectable
         // Mark the registry as booting
         System::setBooting(true);
 
-        $this->echoStartMsg(PHP_EOL);
         $this->echoStartMsg(' - Starting redis daemon...');
         $redisConf = new RedisConf();
         $redisStatus = $redisConf->start();
@@ -352,7 +351,7 @@ class SystemLoader extends Injectable
         $this->echoResultMsg($phpConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Configure Asterisk and start it
-        $this->echoStartMsg(' - Configuring Asterisk...' . PHP_EOL);
+        $this->echoStartMsg(' - Initializing Asterisk configuration' . PHP_EOL);
         $pbx = new PbxConf();
         $pbx->configure();
 

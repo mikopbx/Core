@@ -196,18 +196,15 @@ class SystemMessages extends Injectable
      */
     public static function echoWithSyslog(string $message): void
     {
-        // Use pbx-message if available
-        $pbxMessage = '/sbin/pbx-message';
-        if (file_exists($pbxMessage) && is_executable($pbxMessage)) {
-            // Use unified message handler with syslog flag
-            shell_exec("$pbxMessage -t info -s -l info " . escapeshellarg($message));
-        } else {
-            // Fallback to old implementation
-            echo $message;
-            self::echoToTeletype($message, false);
-            $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
-            $logger->log(LOG_INFO, trim($message));
-        }
+        // Echo to console
+        echo $message;
+        
+        // Echo to serial ports
+        self::echoToTeletype($message, false);
+        
+        // Log the message to the system log with LOG_INFO level
+        $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
+        $logger->log(LOG_INFO, trim($message));
     }
 
     /**
@@ -239,22 +236,15 @@ class SystemMessages extends Injectable
      */
     public static function echoStartMsg(string $message): void
     {
-        // Use pbx-message if available
-        $pbxMessage = '/sbin/pbx-message';
-        if (file_exists($pbxMessage) && is_executable($pbxMessage)) {
-            // Use unified message handler
-            shell_exec("$pbxMessage -t start " . escapeshellarg($message));
-            
-            // Log to syslog at debug level
-            $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
-            $logger->log(LOG_DEBUG, trim($message));
-        } else {
-            // Fallback to old implementation
-            echo $message;
-            self::echoToTeletype($message, false);
-            $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
-            $logger->log(LOG_DEBUG, trim($message));
-        }
+        // Always echo to console first to ensure message appears
+        echo $message;
+        
+        // Echo to serial ports without console echo
+        self::echoToTeletype($message, false);
+        
+        // Log to syslog at debug level
+        $logger = Di::getDefault()->getShared(LoggerProvider::SERVICE_NAME);
+        $logger->log(LOG_DEBUG, trim($message));
     }
 
     /**
@@ -386,9 +376,15 @@ class SystemMessages extends Injectable
         }
 
         if ($showCredentials) {
-            $info .= PHP_EOL . self::showWebCredentials($lineWidth);
-            $info .= PHP_EOL . $borderLine;
-            $info .= PHP_EOL . self::showSSHCredentials($lineWidth);
+            $webCredentials = self::showWebCredentials($lineWidth);
+            if (!empty($webCredentials)) {
+                $info .= PHP_EOL . $webCredentials;
+                $info .= PHP_EOL . $borderLine;
+            }
+            $sshCredentials = self::showSSHCredentials($lineWidth);
+            if (!empty($sshCredentials)) {
+                $info .= PHP_EOL . $sshCredentials;
+            }
         }
 
         $info .= PHP_EOL . $emptyLine . PHP_EOL . $borderLine . PHP_EOL;
@@ -472,14 +468,18 @@ class SystemMessages extends Injectable
         $cloudInstanceId = PbxSettings::getValueByKey(PbxSettings::CLOUD_INSTANCE_ID);
         $webAdminPassword = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
         $defaultPassword = PbxSettings::getDefaultArrayValues()[PbxSettings::WEB_ADMIN_PASSWORD];
+        $adminUser = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LOGIN);
+        
+        $info = self::formatLine("Web credentials:", $lineWidth);
+        $info .= PHP_EOL . self::formatLine("   Login: $adminUser", $lineWidth);
+        
+        // Show actual password only if it's default or equals cloudInstanceId
         if ($cloudInstanceId === $webAdminPassword || $webAdminPassword === $defaultPassword) {
-            $adminUser = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LOGIN);
-            $info = self::formatLine("Web credentials:", $lineWidth);
-            $info .= PHP_EOL . self::formatLine("   Login: $adminUser", $lineWidth);
             $info .= PHP_EOL . self::formatLine("   Password: $webAdminPassword", $lineWidth);
         } else {
-            $info = '';
+            $info .= PHP_EOL . self::formatLine("   Password: ***********", $lineWidth);
         }
+        
         return $info;
     }
 
