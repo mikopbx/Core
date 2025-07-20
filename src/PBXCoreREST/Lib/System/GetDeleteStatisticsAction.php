@@ -27,6 +27,7 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\IvrMenu;
+use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\Providers;
@@ -90,17 +91,21 @@ class GetDeleteStatisticsAction
             // Count Conference Rooms
             $stats['conferenceRooms'] = ConferenceRooms::count();
             
-            // Count Dialplan Applications
-            $stats['dialplanApplications'] = DialplanApplications::count();
+            // Count Dialplan Applications (excluding system applications)
+            $systemDialplanApps = ['000063', '000064', '10003246'];
+            $stats['dialplanApplications'] = DialplanApplications::count("extension NOT IN ('" . implode("','", $systemDialplanApps) . "')");
             
             // Count Sound Files (custom only)
-            $stats['customSoundFiles'] = SoundFiles::count("category NOT IN ('en-us-greetings','mo-native-sounds','ru-ru-greetings','greetings','ru-ru-custom','en-gb-custom')");
+            $stats['customSoundFiles'] = SoundFiles::count("category = '" . SoundFiles::CATEGORY_CUSTOM . "'");
+            
+            // Count MOH (Music On Hold) files
+            $stats['mohFiles'] = SoundFiles::count("category = '" . SoundFiles::CATEGORY_MOH . "'");
             
             // Count Incoming Routes
             $stats['incomingRoutes'] = IncomingRoutingTable::count("priority != 9999");
             
             // Count Outgoing Routes
-            $stats['outgoingRoutes'] = OutWorkTimes::count();
+            $stats['outgoingRoutes'] = OutgoingRoutingTable::count();
             
             // Count Network Filters
             $stats['firewallRules'] = FirewallRules::count();

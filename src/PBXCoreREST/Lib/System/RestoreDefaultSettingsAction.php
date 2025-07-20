@@ -85,7 +85,7 @@ class RestoreDefaultSettingsAction extends Injectable
         
         // Stage: Prepare
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_PREPARE, [
-            'message' => 'Starting system reset process',
+            'messageKey' => 'gs_DeleteAllStageStarting',
             'progress' => 0
         ]);
         
@@ -98,7 +98,7 @@ class RestoreDefaultSettingsAction extends Injectable
         
         // Stage: Clean database tables
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_CLEAN_TABLES, [
-            'message' => 'Cleaning database tables',
+            'messageKey' => 'gs_DeleteAllStageCleaningTables',
             'progress' => 10
         ]);
         self::cleaningMainTables($res);
@@ -106,7 +106,7 @@ class RestoreDefaultSettingsAction extends Injectable
         
         // Stage: Clean files
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_CLEAN_FILES, [
-            'message' => 'Cleaning sound files and backups',
+            'messageKey' => 'gs_DeleteAllStageCleaningFiles',
             'progress' => 30
         ]);
         self::cleaningSoundFiles($res);
@@ -115,14 +115,14 @@ class RestoreDefaultSettingsAction extends Injectable
         
         // Stage: Clean logs
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_CLEAN_LOGS, [
-            'message' => 'Cleaning system logs',
+            'messageKey' => 'gs_DeleteAllStageCleaningLogs',
             'progress' => 50
         ]);
         self::cleaningSystemLogs();
 
         // Stage: Delete modules
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_CLEAN_MODULES, [
-            'message' => 'Removing extension modules',
+            'messageKey' => 'gs_DeleteAllStageRemovingModules',
             'progress' => 60
         ]);
         
@@ -155,7 +155,7 @@ class RestoreDefaultSettingsAction extends Injectable
 
         // Stage: Reset PBX settings
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_RESET_SETTINGS, [
-            'message' => 'Resetting PBX settings',
+            'messageKey' => 'gs_DeleteAllStageResettingSettings',
             'progress' => 80
         ]);
         
@@ -219,7 +219,7 @@ class RestoreDefaultSettingsAction extends Injectable
         
         // Stage: Finalizing
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_FINAL, [
-            'message' => 'Finalizing reset process',
+            'messageKey' => 'gs_DeleteAllStageFinalizing',
             'progress' => 95
         ]);
 
@@ -234,7 +234,7 @@ class RestoreDefaultSettingsAction extends Injectable
 
         // Stage: Complete
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_FINAL, [
-            'message' => 'System reset completed',
+            'messageKey' => 'gs_DeleteAllStageCompleted',
             'progress' => 100,
             'result' => true
         ]);
@@ -248,7 +248,7 @@ class RestoreDefaultSettingsAction extends Injectable
             sleep(1);
             
             self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_RESTART, [
-                'message' => 'Initiating system restart',
+                'messageKey' => 'gs_DeleteAllStageRestarting',
                 'progress' => 100,
                 'restart' => true
             ]);
@@ -519,7 +519,7 @@ class RestoreDefaultSettingsAction extends Injectable
         foreach ($numbers as $number) {
             $record = new Extensions();
             $record->type = Extensions::TYPE_PARKING;
-            $record->number = $number;
+            $record->number = (string)$number;
             $record->show_in_phonebook = '0';
             if (!$record->create()) {
                 SystemMessages::sysLogMsg(
@@ -538,7 +538,7 @@ class RestoreDefaultSettingsAction extends Injectable
     {
         // Update progress
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_PREPARE, [
-            'message' => 'Stopping system services',
+            'messageKey' => 'gs_DeleteAllStageStoppingServices',
             'progress' => 5
         ]);
         

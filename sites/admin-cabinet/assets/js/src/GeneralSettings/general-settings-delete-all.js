@@ -220,6 +220,16 @@ const generalSettingsDeleteAll = {
                 );
             }
             
+            // MOH (Music On Hold) files
+            if (data.mohFiles > 0) {
+                statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
+                    'moh', 
+                    globalTranslate.gs_StatMohFiles || 'Music On Hold', 
+                    data.mohFiles,
+                    'volume up icon'
+                );
+            }
+            
             // Routes
             const totalRoutes = (data.incomingRoutes || 0) + (data.outgoingRoutes || 0);
             if (totalRoutes > 0) {
@@ -389,7 +399,7 @@ const generalSettingsDeleteAll = {
                     <div class="bar">
                         <div class="progress">${stageDetails.progress}%</div>
                     </div>
-                    <div class="label">${stageDetails.message}</div>
+                    <div class="label">${stageDetails.messageKey ? globalTranslate[stageDetails.messageKey] || stageDetails.messageKey : stageDetails.message}</div>
                 </div>
             </div>
         `;
