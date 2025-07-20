@@ -175,6 +175,9 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
 
         // Create network filter
         $this->createTestNetworkFilter();
+        
+        // Modify codec settings (disable some and change priorities)
+        $this->modifyCodecSettings();
     }
 
     /**
@@ -389,6 +392,54 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
     }
 
     /**
+     * Modify codec settings to test reset functionality
+     */
+    private function modifyCodecSettings(): void
+    {
+        self::annotate("Modifying codec settings for reset test");
+        
+        // Navigate to General Settings
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/general-settings/modify/');
+        
+        // Click on Audio/Video codecs tab
+        $codecsTabXpath = "//a[@data-tab='codecs']";
+        $codecsTab = self::$driver->findElement(WebDriverBy::xpath($codecsTabXpath));
+        $codecsTab->click();
+        
+        // Wait for tab content to load
+        $this->waitForAjax();
+        
+        // Disable some audio codecs (opus, g722, ilbc)
+        $codecsToDisable = ['opus', 'g722', 'ilbc', 'h264', 'vp8'];
+        
+        foreach ($codecsToDisable as $codecName) {
+            try {
+                // Find the checkbox for this codec
+                $checkboxXpath = "//tr[contains(@class, 'codec-row')]//td[contains(., '$codecName')]/..//input[@type='checkbox']";
+                $checkbox = self::$driver->findElement(WebDriverBy::xpath($checkboxXpath));
+                
+                // If checked, click to uncheck
+                if ($checkbox->getAttribute('checked') !== null) {
+                    // Click the parent div to toggle
+                    $toggleDiv = self::$driver->findElement(
+                        WebDriverBy::xpath("//tr[contains(@class, 'codec-row')]//td[contains(., '$codecName')]/..//div[contains(@class, 'ui toggle checkbox')]")
+                    );
+                    $toggleDiv->click();
+                    self::annotate("Disabled codec: $codecName");
+                }
+            } catch (\Exception $e) {
+                self::annotate("Could not find codec to disable: $codecName");
+            }
+        }
+        
+        // Save the changes
+        $this->submitForm('general-settings-form');
+        $this->waitForAjax();
+        
+        self::annotate("Codec settings modified - some codecs disabled");
+    }
+
+    /**
      * Verify all test data was created successfully
      */
     private function verifyTestDataExists(): void
@@ -584,6 +635,9 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         $addButton = self::$driver->findElements(WebDriverBy::xpath("//a[@href='/admin-cabinet/extensions/modify']"));
         $this->assertGreaterThan(0, count($addButton), "Should be able to add new extensions");
+        
+        // Verify codecs were reset to defaults
+        $this->verifyCodecDefaults();
     }
 
     /**
@@ -978,6 +1032,118 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         } catch (\Exception $e) {
             return '';
         }
+    }
+
+    /**
+     * Verify codecs were reset to default values and priorities
+     */
+    private function verifyCodecDefaults(): void
+    {
+        self::annotate("Verifying codec defaults after reset");
+        
+        // Navigate to General Settings
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/general-settings/modify/');
+        
+        // Click on Audio/Video codecs tab
+        $codecsTabXpath = "//a[@data-tab='codecs']";
+        $codecsTab = self::$driver->findElement(WebDriverBy::xpath($codecsTabXpath));
+        $codecsTab->click();
+        
+        // Wait for tab content to load
+        $this->waitForAjax();
+        
+        // Expected codec order and all should be enabled
+        $expectedAudioCodecs = [
+            'alaw' => 'G.711 A-law',
+            'ulaw' => 'G.711 μ-law',
+            'opus' => 'Opus',
+            'g722' => 'G.722',
+            'g729' => 'G.729',
+            'ilbc' => 'iLBC',
+            'g726' => 'G.726',
+            'gsm' => 'GSM',
+            'adpcm' => 'ADPCM',
+            'lpc10' => 'LPC-10',
+            'speex' => 'Speex',
+            'slin' => 'Signed Linear PCM'
+        ];
+        
+        $expectedVideoCodecs = [
+            'h264' => 'H.264',
+            'h263' => 'H.263',
+            'h263p' => 'H.263+',
+            'vp8' => 'VP8',
+            'vp9' => 'VP9',
+            'jpeg' => 'JPEG',
+            'h261' => 'H.261'
+        ];
+        
+        // Verify audio codecs are all enabled
+        self::annotate("Checking audio codecs");
+        $audioCodecRows = self::$driver->findElements(
+            WebDriverBy::xpath("//h4[contains(text(), 'Audio codecs')]/following-sibling::table//tr[@class='codec-row']")
+        );
+        
+        $foundAudioCodecs = [];
+        foreach ($audioCodecRows as $index => $row) {
+            // Get codec name from the row
+            $codecNameElement = $row->findElement(WebDriverBy::xpath(".//td[3]"));
+            $codecDescription = trim($codecNameElement->getText());
+            
+            // Check if toggle is enabled
+            $toggleXpath = ".//div[contains(@class, 'ui toggle checkbox')]//input[@type='checkbox']";
+            $toggle = $row->findElement(WebDriverBy::xpath($toggleXpath));
+            $isEnabled = $toggle->getAttribute('checked') !== null;
+            
+            // Get the data-value which represents priority
+            $priority = $row->getAttribute('data-value');
+            
+            self::annotate("Audio codec: $codecDescription, Priority: $priority, Enabled: " . ($isEnabled ? 'Yes' : 'No'));
+            
+            // All codecs should be enabled after reset
+            $this->assertTrue($isEnabled, "Audio codec $codecDescription should be enabled after reset");
+            
+            // Check priority order (should match our expected order)
+            $expectedPriority = $index + 1;
+            $this->assertEquals($expectedPriority, intval($priority), "Audio codec $codecDescription should have priority $expectedPriority");
+            
+            $foundAudioCodecs[] = $codecDescription;
+        }
+        
+        // Verify video codecs are all enabled
+        self::annotate("Checking video codecs");
+        $videoCodecRows = self::$driver->findElements(
+            WebDriverBy::xpath("//h4[contains(text(), 'Video codecs')]/following-sibling::table//tr[@class='codec-row']")
+        );
+        
+        $foundVideoCodecs = [];
+        foreach ($videoCodecRows as $index => $row) {
+            // Get codec name from the row
+            $codecNameElement = $row->findElement(WebDriverBy::xpath(".//td[3]"));
+            $codecDescription = trim($codecNameElement->getText());
+            
+            // Check if toggle is enabled
+            $toggleXpath = ".//div[contains(@class, 'ui toggle checkbox')]//input[@type='checkbox']";
+            $toggle = $row->findElement(WebDriverBy::xpath($toggleXpath));
+            $isEnabled = $toggle->getAttribute('checked') !== null;
+            
+            // Get the data-value which represents priority
+            $priority = $row->getAttribute('data-value');
+            
+            self::annotate("Video codec: $codecDescription, Priority: $priority, Enabled: " . ($isEnabled ? 'Yes' : 'No'));
+            
+            // All codecs should be enabled after reset
+            $this->assertTrue($isEnabled, "Video codec $codecDescription should be enabled after reset");
+            
+            // Check priority order (should match our expected order)
+            $expectedPriority = $index + 1;
+            $this->assertEquals($expectedPriority, intval($priority), "Video codec $codecDescription should have priority $expectedPriority");
+            
+            $foundVideoCodecs[] = $codecDescription;
+        }
+        
+        self::annotate("Codec defaults verification completed");
+        self::annotate("Found " . count($foundAudioCodecs) . " audio codecs and " . count($foundVideoCodecs) . " video codecs, all enabled");
     }
 
 }

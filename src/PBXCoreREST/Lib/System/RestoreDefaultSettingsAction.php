@@ -23,10 +23,10 @@ namespace MikoPBX\PBXCoreREST\Lib\System;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\Common\Models\CallQueues;
+use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\IvrMenu;
@@ -197,6 +197,9 @@ class RestoreDefaultSettingsAction extends Injectable
             $record->value = $defaultValue;
             $record->save();
         }
+
+        // Reset codecs to default values
+        self::resetCodecsToDefaults();
 
         // Delete CallRecords from database
         $cdr = CdrDb::getPathToDB();
@@ -545,5 +548,86 @@ class RestoreDefaultSettingsAction extends Injectable
         
         // Now stop monit itself to prevent it from restarting services
         MonitConf::stopMonit();
+    }
+
+    /**
+     * Reset codecs to default values with proper priorities
+     * All codecs will be enabled after reset
+     */
+    private static function resetCodecsToDefaults(): void
+    {
+        // Define default audio codecs with priorities
+        $defaultAudioCodecs = [
+            'alaw' => ['priority' => 1, 'disabled' => '0', 'description' => 'G.711 A-law'],
+            'ulaw' => ['priority' => 2, 'disabled' => '0', 'description' => 'G.711 μ-law'],
+            'opus' => ['priority' => 3, 'disabled' => '0', 'description' => 'Opus'],
+            'g722' => ['priority' => 4, 'disabled' => '0', 'description' => 'G.722'],
+            'g729' => ['priority' => 5, 'disabled' => '0', 'description' => 'G.729'],
+            'ilbc' => ['priority' => 6, 'disabled' => '0', 'description' => 'iLBC'],
+            'g726' => ['priority' => 7, 'disabled' => '0', 'description' => 'G.726'],
+            'gsm' => ['priority' => 8, 'disabled' => '0', 'description' => 'GSM'],
+            'adpcm' => ['priority' => 9, 'disabled' => '0', 'description' => 'ADPCM'],
+            'lpc10' => ['priority' => 10, 'disabled' => '0', 'description' => 'LPC-10'],
+            'speex' => ['priority' => 11, 'disabled' => '0', 'description' => 'Speex'],
+            'slin' => ['priority' => 12, 'disabled' => '0', 'description' => 'Signed Linear PCM'],
+        ];
+
+        // Define default video codecs with priorities
+        $defaultVideoCodecs = [
+            'h264' => ['priority' => 1, 'disabled' => '0', 'description' => 'H.264'],
+            'h263' => ['priority' => 2, 'disabled' => '0', 'description' => 'H.263'],
+            'h263p' => ['priority' => 3, 'disabled' => '0', 'description' => 'H.263+'],
+            'vp8' => ['priority' => 4, 'disabled' => '0', 'description' => 'VP8'],
+            'vp9' => ['priority' => 5, 'disabled' => '0', 'description' => 'VP9'],
+            'jpeg' => ['priority' => 6, 'disabled' => '0', 'description' => 'JPEG'],
+            'h261' => ['priority' => 7, 'disabled' => '0', 'description' => 'H.261'],
+        ];
+
+        // Update audio codecs
+        foreach ($defaultAudioCodecs as $codecName => $codecData) {
+            $codec = Codecs::findFirst("name = '$codecName'");
+            if ($codec === null) {
+                // Create codec if it doesn't exist
+                $codec = new Codecs();
+                $codec->name = $codecName;
+                $codec->type = 'audio';
+            }
+            $codec->priority = (string)$codecData['priority'];
+            $codec->disabled = $codecData['disabled'];
+            $codec->description = $codecData['description'];
+            
+            if (!$codec->save()) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    'Failed to reset audio codec ' . $codecName . ': ' . implode(', ', $codec->getMessages()),
+                    LOG_WARNING
+                );
+            }
+        }
+
+        // Update video codecs
+        foreach ($defaultVideoCodecs as $codecName => $codecData) {
+            $codec = Codecs::findFirst("name = '$codecName'");
+            if ($codec === null) {
+                // Create codec if it doesn't exist
+                $codec = new Codecs();
+                $codec->name = $codecName;
+                $codec->type = 'video';
+            }
+            $codec->priority = (string)$codecData['priority'];
+            $codec->disabled = $codecData['disabled'];
+            $codec->description = $codecData['description'];
+            
+            if (!$codec->save()) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    'Failed to reset video codec ' . $codecName . ': ' . implode(', ', $codec->getMessages()),
+                    LOG_WARNING
+                );
+            }
+        }
+
+        // Log the codec reset
+        SystemMessages::sysLogMsg(__CLASS__, 'Codecs have been reset to default values', LOG_INFO);
     }
 }

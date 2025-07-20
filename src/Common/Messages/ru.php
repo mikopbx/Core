@@ -1575,4 +1575,5 @@ return [
     'pr_PeerPort' => 'Порт узла',
     'pr_PeerUsername' => 'Имя пользователя узла',
     'pr_PeerPassword' => 'Пароль узла',
+    'gs_SystemWillRestart' => 'Система будет перезапущена',
 ];
