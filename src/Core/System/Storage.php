@@ -643,7 +643,7 @@ class Storage extends Injectable
      */
     public function configure(): void
     {
-        $varEtcDir = $this->config->path(Directories::CORE_VAR_ETC_DIR);
+        $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
         $storage_dev_file = "$varEtcDir/storage_device";
         if (!Util::isT2SdeLinux()) {
             // Configure for non-T2Sde Linux
@@ -817,14 +817,20 @@ class Storage extends Injectable
         $downloadCacheDir = appPath('sites/pbxcore/files/cache');
         if (!$isLiveCd) {
             Util::mwMkdir($downloadCacheDir);
-            Util::createUpdateSymlink($this->config->path('www.downloadCacheDir'), $downloadCacheDir);
+            Util::createUpdateSymlink(Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR), $downloadCacheDir);
+        }
+        
+        // Ensure Volt cache directory exists
+        $voltCacheDir = Directories::getDir(Directories::APP_VOLT_CACHE_DIR);
+        if (!file_exists($voltCacheDir)) {
+            Util::mwMkdir($voltCacheDir);
         }
 
         $this->createAssetsSymlinks();
         $this->createViewSymlinks();
         $this->createAGIBINSymlinks($isLiveCd);
 
-        Util::createUpdateSymlink($this->config->path('www.uploadDir'), '/ultmp');
+        Util::createUpdateSymlink(Directories::getDir(Directories::WWW_UPLOAD_DIR), '/ultmp');
 
         $filePath = appPath('src/Core/Asterisk/Configs/lua/extensions.lua');
         Util::createUpdateSymlink($filePath, '/etc/asterisk/extensions.lua');
@@ -842,14 +848,16 @@ class Storage extends Injectable
      */
     public function clearCacheFiles(): void
     {
+        $assetsCacheDir = Directories::getDir(Directories::APP_ASSETS_CACHE_DIR);
+        
         $cacheDirs = [];
-        $cacheDirs[] = $this->config->path(Directories::WWW_UPLOAD_DIR);
-        $cacheDirs[] = $this->config->path(Directories::WWW_DOWNLOAD_CACHE_DIR);
-        $cacheDirs[] = $this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/js';
-        $cacheDirs[] = $this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/css';
-        $cacheDirs[] = $this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/img';
-        $cacheDirs[] = $this->config->path(Directories::APP_VIEW_CACHE_DIR);
-        $cacheDirs[] = $this->config->path(Directories::APP_VOLT_CACHE_DIR);
+        $cacheDirs[] = Directories::getDir(Directories::WWW_UPLOAD_DIR);
+        $cacheDirs[] = Directories::getDir(Directories::WWW_DOWNLOAD_CACHE_DIR);
+        $cacheDirs[] = $assetsCacheDir . '/js';
+        $cacheDirs[] = $assetsCacheDir . '/css';
+        $cacheDirs[] = $assetsCacheDir . '/img';
+        $cacheDirs[] = Directories::getDir(Directories::APP_VIEW_CACHE_DIR);
+        $cacheDirs[] = Directories::getDir(Directories::APP_VOLT_CACHE_DIR);
         $rmPath = Util::which('rm');
 
         // Clear cache files for each directory
@@ -876,7 +884,7 @@ class Storage extends Injectable
         $mv = Util::which('mv');
         $rm = Util::which('rm');
         $nice = Util::which('nice');
-        $tmpDir = $this->config->path(Directories::CORE_TEMP_DIR);
+        $tmpDir = Directories::getDir(Directories::CORE_TEMP_DIR);
         if (!file_exists($tmpDir)) {
             return;
         }
@@ -951,8 +959,11 @@ class Storage extends Injectable
 
         // Record the start time for timeout purposes.
         $startTime = time();
+        
+        // For Docker environments, reduce timeout
+        $maxWaitTime = Util::isDocker() ? 3 : 10;
 
-        // Loop for up to 10 seconds or until a non-empty UUID is found.
+        // Loop for up to maxWaitTime seconds or until a non-empty UUID is found.
         while (true) {
             // Retrieve the UUID for the disk.
             $uid = self::getUuid($disk);
@@ -963,8 +974,8 @@ class Storage extends Injectable
                 return true;
             }
 
-            // Exit the loop if 10 seconds have passed.
-            if ((time() - $startTime) >= 10) {
+            // Exit the loop if maxWaitTime seconds have passed.
+            if ((time() - $startTime) >= $maxWaitTime) {
                 break;
             }
 
@@ -984,7 +995,7 @@ class Storage extends Injectable
      */
     public function saveFstab(string $conf = ''): void
     {
-        $varEtcDir = $this->config->path(Directories::CORE_VAR_ETC_DIR);
+        $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
 
         // Create the mount point directory for additional disks
         Util::mwMkdir('/storage');
@@ -1144,17 +1155,19 @@ class Storage extends Injectable
      */
     public function createAssetsSymlinks(): void
     {
+        $assetsCacheDir = Directories::getDir(Directories::APP_ASSETS_CACHE_DIR);
+        
         // Create symlink for JS cache directory
         $jsCacheDir = appPath('sites/admin-cabinet/assets/js/cache');
-        Util::createUpdateSymlink($this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/js', $jsCacheDir);
+        Util::createUpdateSymlink($assetsCacheDir . '/js', $jsCacheDir);
 
         // Create symlink for CSS cache directory
         $cssCacheDir = appPath('sites/admin-cabinet/assets/css/cache');
-        Util::createUpdateSymlink($this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/css', $cssCacheDir);
+        Util::createUpdateSymlink($assetsCacheDir . '/css', $cssCacheDir);
 
         // Create symlink for image cache directory
         $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        Util::createUpdateSymlink($this->config->path(Directories::APP_ASSETS_CACHE_DIR) . '/img', $imgCacheDir);
+        Util::createUpdateSymlink($assetsCacheDir . '/img', $imgCacheDir);
     }
 
     /**
@@ -1165,7 +1178,7 @@ class Storage extends Injectable
     public function createViewSymlinks(): void
     {
         $viewCacheDir = appPath('src/AdminCabinet/Views/Modules');
-        Util::createUpdateSymlink($this->config->path(Directories::APP_VIEW_CACHE_DIR), $viewCacheDir);
+        Util::createUpdateSymlink(Directories::getDir(Directories::APP_VIEW_CACHE_DIR), $viewCacheDir);
     }
 
     /**
@@ -1176,7 +1189,7 @@ class Storage extends Injectable
      */
     public function createAGIBINSymlinks(bool $isLiveCd): void
     {
-        $agiBinDir = $this->config->path(Directories::AST_AGI_BIN_DIR);
+        $agiBinDir = Directories::getDir(Directories::AST_AGI_BIN_DIR);
         if ($isLiveCd && !str_starts_with($agiBinDir, '/offload/')) {
             Util::mwMkdir($agiBinDir);
         }
@@ -1216,8 +1229,8 @@ class Storage extends Injectable
         }
 
         // Add additional directories with WWW rights
-        $www_dirs[] = $this->config->path(Directories::CORE_TEMP_DIR);
-        $www_dirs[] = $this->config->path(Directories::CORE_LOGS_DIR);
+        $www_dirs[] = Directories::getDir(Directories::CORE_TEMP_DIR);
+        $www_dirs[] = Directories::getDir(Directories::CORE_LOGS_DIR);
 
         // Create empty log files with WWW rights
         $logFiles = [
@@ -1252,7 +1265,7 @@ class Storage extends Injectable
      */
     public function mountSwap(): void
     {
-        $tempDir = $this->config->path(Directories::CORE_TEMP_DIR);
+        $tempDir = Directories::getDir(Directories::CORE_TEMP_DIR);
         $swapFile = "$tempDir/swapfile";
 
         $swapOffCmd = Util::which('swapoff');
@@ -1384,7 +1397,7 @@ class Storage extends Injectable
         $disks    = $this->diskGetDevices();
 
         $cf_disk = '';
-        $varEtcDir = $this->config->path(Directories::CORE_VAR_ETC_DIR);
+        $varEtcDir = Directories::getDir(Directories::CORE_VAR_ETC_DIR);
 
         if (file_exists($varEtcDir . '/cfdevice')) {
             $cf_disk = trim(file_get_contents($varEtcDir . '/cfdevice'));
