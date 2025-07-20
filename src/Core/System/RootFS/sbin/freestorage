@@ -37,8 +37,7 @@ killprocess_by_name 'monit' -TERM 3;
 
 killprocess_by_name 'cron' -KILL 0;
 killprocess_by_name 'dropbear' -KILL 0;
-killprocess_by_name 'pdnsd' -KILL 0;
-killprocesses '/sbin/monitord' -KILL 1;
+killprocess_by_name 'monit' -KILL 0;
 killprocesses "$storage" -TERM 3;
 killprocesses "$storage" -KILL 1;
 

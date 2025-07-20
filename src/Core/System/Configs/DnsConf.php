@@ -110,7 +110,7 @@ class DnsConf extends SystemConfigClass
 
         file_put_contents('/etc/resolv.conf', $resolveConf);
 
-        // Generate pdnsd configuration using named_dns
+        // Generate configuration using named_dns
         $this->generateDnsConfig($named_dns);
     }
 
