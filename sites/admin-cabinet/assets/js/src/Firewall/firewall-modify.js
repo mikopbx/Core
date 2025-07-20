@@ -156,10 +156,11 @@ const firewall = {
                 isChecked
             );
             
-            // Initialize tooltip
+            // Initialize tooltip with compact width for special checkboxes
             firewallTooltips.initializeTooltip($icon, {
                 html: tooltipContent,
-                position: 'top right'
+                position: 'top right',
+                variation: 'very wide'
             });
             
             // Store reference to icon on checkbox for updates
@@ -206,8 +207,11 @@ const firewall = {
                     isChecked
                 );
                 
-                // Update tooltip
-                firewallTooltips.updateContent($specialIcon, newContent);
+                // Update tooltip with compact width
+                firewallTooltips.updateContent($specialIcon, newContent, {
+                    position: 'top right',
+                    variation: 'very wide'
+                });
             }
         });
     },

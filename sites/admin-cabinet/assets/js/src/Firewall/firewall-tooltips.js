@@ -210,10 +210,10 @@ const firewallTooltips = {
      * Update tooltip content dynamically
      * @param {jQuery} $element - Element with tooltip
      * @param {string} newContent - New HTML content
+     * @param {Object} additionalOptions - Additional options to merge
      */
-    updateContent($element, newContent) {
-        $element.popup('destroy');
-        $element.popup({
+    updateContent($element, newContent, additionalOptions = {}) {
+        const options = {
             html: newContent,
             position: 'top center',
             hoverable: true,
@@ -227,7 +227,13 @@ const firewallTooltips = {
                     $('.copy-command').off('click').on('click', firewallTooltips.copyToClipboard);
                 }, 100);
             }
-        });
+        };
+        
+        // Merge additional options
+        $.extend(options, additionalOptions);
+        
+        $element.popup('destroy');
+        $element.popup(options);
     },
     
     /**
