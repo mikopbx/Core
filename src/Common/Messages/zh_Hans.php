@@ -323,7 +323,6 @@ return [
     'ex_MobileNumber' => '手机号码',
     'ex_Secret' => 'SIP密码',
     'ex_ChangeAvatar' => '更改头像',
-    'ex_MobileSettings' => '行动装置的进阶设定',
     'ex_MobileDialstring' => '拨号线优先',
     'ex_SipSettings' => 'SIP设置',
     'ex_BusyLevel' => '最大并发通话数',

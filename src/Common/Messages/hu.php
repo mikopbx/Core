@@ -649,7 +649,6 @@ return [
     'ex_Secret' => 'SIP jelszó',
     'ex_ChangeAvatar' => 'Avatar módosítása',
     'ex_UserPhotography' => 'Alkalmazotti fotó',
-    'ex_MobileSettings' => 'További beállítások a mobilhoz',
     'ex_MobileDialstring' => 'Tárcsázási terv felülírása',
     'ex_SipSettings' => 'SIP beállítások',
     'ex_BusyLevel' => 'A párhuzamos beszélgetések maximális száma',

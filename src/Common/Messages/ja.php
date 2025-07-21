@@ -334,7 +334,6 @@ return [
     'ex_MobileNumber' => '携帯番号',
     'ex_Secret' => 'SIPのパスワード',
     'ex_ChangeAvatar' => 'アバターを変更する',
-    'ex_MobileSettings' => 'モバイルの詳細設定',
     'ex_MobileDialstring' => 'ダイヤル回線オーバーライド',
     'ex_SipSettings' => 'SIP設定',
     'ex_BusyLevel' => '同時通話の最大数',

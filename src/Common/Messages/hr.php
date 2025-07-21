@@ -413,7 +413,6 @@ return [
     'ex_Secret' => 'SIP lozinka',
     'ex_ChangeAvatar' => 'Promijeni avatar',
     'ex_UserPhotography' => 'Fotografija zaposlenika',
-    'ex_MobileSettings' => 'Dodatne postavke za mobitel',
     'ex_MobileDialstring' => 'Nadjačavanje niza za biranje',
     'ex_SipSettings' => 'SIP postavke',
     'ex_BusyLevel' => 'Maksimalan broj paralelnih razgovora',

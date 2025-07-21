@@ -307,7 +307,6 @@ return [
     'ex_MobileNumber' => 'Número de móvil',
     'ex_Secret' => 'Contraseña para SIP',
     'ex_ChangeAvatar' => 'Cambiar avatar',
-    'ex_MobileSettings' => 'Configuraciones avanzadas para dispositivos móviles',
     'ex_MobileDialstring' => 'Marcar anulación de línea',
     'ex_SipSettings' => 'Configuraciones SIP',
     'ex_BusyLevel' => 'Número máximo de llamadas concurrentes',

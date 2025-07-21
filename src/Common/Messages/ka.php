@@ -338,7 +338,6 @@ return [
     'ex_MobileNumber' => 'Მობილურის ნომერი',
     'ex_Secret' => 'SIP პაროლი',
     'ex_ChangeAvatar' => 'ავატარის შეცვლა',
-    'ex_MobileSettings' => 'მობილური ტელეფონის დამატებითი პარამეტრები',
     'ex_MobileDialstring' => 'აკრიფეთ სტრიქონი',
     'ex_SipSettings' => 'SIP პარამეტრები',
     'ex_BusyLevel' => 'პარალელური ზარების მაქსიმალური რაოდენობა',

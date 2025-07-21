@@ -677,7 +677,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ex_BusyLevel' => 'Paralel söhbətlərin maksimum sayı',
     'ex_SipSettings' => 'SIP parametrləri',
     'ex_MobileDialstring' => 'Yığma sətirinin ləğvi',
-    'ex_MobileSettings' => 'Mobil üçün əlavə parametrlər',
     'ex_ChangeAvatar' => 'Avatarı dəyişdirin',
     'ex_Secret' => 'SIP üçün parol',
     'ex_MobileNumber' => 'Mobil nömrə',

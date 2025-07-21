@@ -766,7 +766,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'BreadcrumbProvidersmodifysip' => 'Configurar provedor SIP',
     'ex_SipSettings' => 'Configurações SIP',
     'ex_MobileDialstring' => 'Substituição da linha de discagem',
-    'ex_MobileSettings' => 'Configurações avançadas para celular',
     'ex_ChangeAvatar' => 'Alterar avatar',
     'ex_Secret' => 'Senha para SIP',
     'ex_MobileNumber' => 'Número de celular',

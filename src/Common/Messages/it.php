@@ -334,7 +334,6 @@ return [
     'ex_ThisNumberIsNotFree' => 'Il numero è già nel database',
     'ex_MobileNumber' => 'Numero di cellulare',
     'ex_Secret' => 'Password per SIP',
-    'ex_MobileSettings' => 'Impostazioni avanzate per dispositivi mobili',
     'ex_MobileDialstring' => 'Sostituzione della linea di composizione',
     'ex_SipSettings' => 'Impostazioni SIP',
     'ex_BusyLevel' => 'Numero massimo di chiamate simultanee',

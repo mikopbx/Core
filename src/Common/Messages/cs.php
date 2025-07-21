@@ -329,7 +329,6 @@ return [
     'ex_MobileNumber' => 'Mobilní číslo',
     'ex_Secret' => 'Heslo pro SIP',
     'ex_ChangeAvatar' => 'Změnit avatar',
-    'ex_MobileSettings' => 'Pokročilá nastavení pro mobilní zařízení',
     'ex_MobileDialstring' => 'Přepsat telefonní linku',
     'ex_SipSettings' => 'Nastavení SIP',
     'ex_BusyLevel' => 'Maximální počet souběžných hovorů',
