@@ -77,9 +77,12 @@ class SystemMessages extends Injectable
         // Get available serial ports (cached)
         $serialPorts = self::getAvailableSerialPorts();
         
+        // Strip ANSI color codes before writing to serial ports
+        $cleanMessage = preg_replace('/\033\[[0-9;]*m/', '', $message);
+        
         // Write to available serial ports
         foreach ($serialPorts as $device) {
-            @file_put_contents($device, $message, FILE_APPEND);
+            @file_put_contents($device, $cleanMessage, FILE_APPEND);
         }
     }
     
@@ -153,7 +156,7 @@ class SystemMessages extends Injectable
             $result = self::RESULT_FAILED;
         }
         
-        // Map result to plain text without color codes
+        // Map result to plain text without color codes, with consistent width
         $plainTexts = [
             self::RESULT_DONE => " DONE \n",
             self::RESULT_FAILED => " FAIL \n",
@@ -163,7 +166,8 @@ class SystemMessages extends Injectable
         if (array_key_exists($result, $plainTexts)) {
             return $plainTexts[$result];
         } else {
-            return " $result \n"; // Plain text for unknown results
+            // Ensure consistent width for unknown results
+            return sprintf(" %-4s \n", substr($result, 0, 4));
         }
     }
 

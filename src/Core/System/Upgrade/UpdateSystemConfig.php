@@ -60,7 +60,7 @@ class UpdateSystemConfig extends Injectable
                 if (version_compare($previous_version, $releaseNumber, '<')) {
                     $processor = new $upgradeClass();
                     $processor->processUpdate();
-                    $message = ' - UpdateConfigs: Upgrade system up to ' . $releaseNumber . ' ';
+                    $message = '   |- UpdateConfigs: Upgrade system up to ' . $releaseNumber;
                     SystemMessages::echoStartMsg($message);
                     SystemMessages::echoResultMsg($message);
                 }

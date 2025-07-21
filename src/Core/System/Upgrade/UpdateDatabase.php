@@ -295,7 +295,7 @@ class UpdateDatabase extends Injectable
         $connectionService->begin();
 
         if (! $connectionService->tableExists($tableName)) {
-            $msg = ' - UpdateDatabase: Create new table: ' . $tableName . ' ';
+            $msg = '   |- UpdateDatabase: Create new table: ' . $tableName;
             SystemMessages::echoWithSyslog($msg);
             $result = $connectionService->createTable($tableName, '', $columnsNew);
             SystemMessages::echoResult($msg);
@@ -304,7 +304,7 @@ class UpdateDatabase extends Injectable
             $currentColumnsArr = $connectionService->describeColumns($tableName, '');
 
             if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
-                $msg = ' - UpdateDatabase: Upgrade table: ' . $tableName . ' ';
+                $msg = '   |- UpdateDatabase: Upgrade table: ' . $tableName;
                 SystemMessages::echoWithSyslog($msg);
                 // Create new table and copy all data
                 $currentStateColumnList = [];
