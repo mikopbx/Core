@@ -1023,7 +1023,7 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
      * @param string $dropdownId Dropdown ID
      * @return string Selected value
      */
-    private function getDropdownSelectedValue(string $dropdownId): string
+    protected function getDropdownSelectedValue(string $dropdownId): string
     {
         try {
             // Semantic UI dropdown - get the selected value from hidden input
