@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ class SystemMessages extends Injectable
     {
         $len = max(0, 80 - strlen($message) - 9);
         $spaces = str_repeat('.', $len);
-        $formattedResult = self::getFormattedResult($result);
+        $formattedResult = self::getFormattedResultForTeletype($result);
         self::echoToTeletype($spaces . $formattedResult);
     }
 
@@ -138,6 +138,33 @@ class SystemMessages extends Injectable
             $resultMessage = "\033[90m$result\033[0m \n"; // Grey for unknown results
         }
         return $resultMessage;
+    }
+    
+    /**
+     * Formats a result for teletype output without color codes.
+     * @param string $result The result string to format (DONE, FAILED, SKIPPED, etc.)
+     * @return string The formatted result without ANSI color codes
+     */
+    private static function getFormattedResultForTeletype(string $result = self::RESULT_DONE): string
+    {
+        if ($result === '1') {
+            $result = self::RESULT_DONE;
+        } elseif ($result === '0') {
+            $result = self::RESULT_FAILED;
+        }
+        
+        // Map result to plain text without color codes
+        $plainTexts = [
+            self::RESULT_DONE => " DONE \n",
+            self::RESULT_FAILED => " FAIL \n",
+            self::RESULT_SKIPPED => " SKIP \n",
+        ];
+        
+        if (array_key_exists($result, $plainTexts)) {
+            return $plainTexts[$result];
+        } else {
+            return " $result \n"; // Plain text for unknown results
+        }
     }
 
     /**
@@ -305,7 +332,7 @@ class SystemMessages extends Injectable
         $timeStr = sprintf(" (%.2fs)", $elapsedTime);
         $len = max(0, 80 - strlen($message) - 9 - strlen($timeStr));
         $spaces = str_repeat('.', $len);
-        $formattedResult = self::getFormattedResult($result);
+        $formattedResult = self::getFormattedResultForTeletype($result);
         // Insert timing before the newline in formatted result
         $formattedResultWithTime = str_replace(" \n", "$timeStr \n", $formattedResult);
         self::echoToTeletype($spaces . $formattedResultWithTime);

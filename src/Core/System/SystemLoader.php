@@ -304,8 +304,21 @@ class SystemLoader extends Injectable
         // Start cloud provisioning
         $this->echoStartMsg(' - Attempting cloud provisioning...');
         if (!$this->isDocker && !$this->isRecoveryMode) {
-            CloudProvisioning::start();
-            $this->echoResultMsg();
+            echo PHP_EOL; // Add newline before cloud providers list
+            $cloudResult = CloudProvisioning::start();
+            
+            // Update the stage message with more informative result
+            if ($cloudResult['success']) {
+                if (isset($cloudResult['alreadyDone'])) {
+                    $this->stageMessage = ' - Cloud provisioning (already configured)';
+                } else {
+                    $this->stageMessage = ' - Cloud provisioning on ' . $cloudResult['cloudId'];
+                }
+                $this->echoResultMsg(SystemMessages::RESULT_DONE);
+            } else {
+                $this->stageMessage = ' - Cloud provisioning (no cloud provider detected)';
+                $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+            }
         } else {
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }

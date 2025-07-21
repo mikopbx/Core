@@ -37,7 +37,7 @@ SYSLOG_IDENT="pbx-message"
 MESSAGE=""
 
 # Cache file for serial port availability
-SERIAL_CACHE="/tmp/.pbx_serial_ports"
+SERIAL_CACHE="/etc/.pbx_serial_ports"
 SERIAL_CHECK_AGE=300  # Re-check every 5 minutes
 
 # ANSI color codes

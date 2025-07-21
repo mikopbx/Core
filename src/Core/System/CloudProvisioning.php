@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,14 +42,15 @@ class CloudProvisioning
 {
     /**
      * Starts the cloud provisioning process.
+     * @return array Returns array with 'success' boolean and 'cloudId' string (if successful)
      */
-    public static function start(): void
+    public static function start(): array
     {
         if (self::checkItNeedToStartProvisioning() === false) {
-            $message = "  |- Provisioning was already completed.";
+            $message = "   |- Provisioning was already completed.";
             SystemMessages::echoToTeletype($message);
             SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
-            return;
+            return ['success' => true, 'cloudId' => 'Previously configured', 'alreadyDone' => true];
         }
 
         // Lists of possible cloud providers.
@@ -64,19 +65,23 @@ class CloudProvisioning
             VultrCloud::CloudID => new VultrCloud()
         ];
 
+        $provisioningSuccessful = false;
+        $successfulCloudId = '';
         foreach ($providers as $cloudId => $provider) {
             $message = "   |- Attempting to provision on $cloudId";
             SystemMessages::echoToTeletype($message);
             if ($provider->provision()) {
                 self::afterProvisioning($provider, $cloudId);
-                $message = " - Cloud provisioning on $cloudId...";
-                SystemMessages::echoToTeletype($message);
                 SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_DONE);
+                $provisioningSuccessful = true;
+                $successfulCloudId = $cloudId;
                 // Provisioning succeeded, break out of the loop
                 break;
             }
             SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
         }
+        
+        return ['success' => $provisioningSuccessful, 'cloudId' => $successfulCloudId];
     }
 
     /**

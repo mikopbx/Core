@@ -109,11 +109,9 @@ class PbxConf extends SystemConfigClass
 
         self::dialplanReload();
         if (System::isBooting()) {
-            $message = '   └─ reload dialplan...';
-            SystemMessages::echoToTeletype($message);
+            $message = '   |- reload dialplan...';
             SystemMessages::echoWithSyslog($message);
             SystemMessages::echoResult($message);
-            SystemMessages::teletypeEchoResult($message);
         }else{
             $this->stop();
         }

@@ -26,7 +26,7 @@
 #   -a, --all         Return all environment information
 
 # Cache file for environment detection
-ENV_CACHE="/tmp/.pbx_env_info"
+ENV_CACHE="/etc/.pbx_env_info"
 ENV_CHECK_AGE=3600  # Re-check every hour
 
 # Parse command line options
