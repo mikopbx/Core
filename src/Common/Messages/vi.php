@@ -406,7 +406,6 @@ return [
     'ex_MobileNumber' => 'Số điện thoại di động',
     'ex_Secret' => 'Mật khẩu cho SIP',
     'ex_ChangeAvatar' => 'Thay đổi hình đại diện',
-    'ex_MobileSettings' => 'Cài đặt nâng cao cho thiết bị di động',
     'ex_MobileDialstring' => 'Ghi đè dòng quay số',
     'ex_SipSettings' => 'Cài đặt SIP',
     'ex_BusyLevel' => 'Số lượng cuộc gọi đồng thời tối đa',

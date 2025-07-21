@@ -330,7 +330,6 @@ return [
     'ex_MobileNumber' => 'Mobilnummer',
     'ex_Secret' => 'Adgangskode til SIP',
     'ex_ChangeAvatar' => 'Skift avatar',
-    'ex_MobileSettings' => 'Avancerede indstillinger for mobil',
     'ex_MobileDialstring' => 'Oprettelse af opkaldslinje',
     'ex_SipSettings' => 'SIP-indstillinger',
     'ex_BusyLevel' => 'Maksimalt antal samtidige opkald',

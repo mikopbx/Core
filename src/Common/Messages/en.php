@@ -331,7 +331,6 @@ return [
     'ex_MobileNumber' => 'Mobile number',
     'ex_Secret' => 'Password for SIP',
     'ex_ChangeAvatar' => 'Change avatar',
-    'ex_MobileSettings' => 'Advanced settings for mobile',
     'ex_MobileDialstring' => 'Redefining the set string',
     'ex_SipSettings' => 'SIP settings',
     'ex_BusyLevel' => 'Maximum number of parallel calls',

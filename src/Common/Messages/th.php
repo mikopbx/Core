@@ -373,7 +373,6 @@ return [
     'ex_MobileNumber' => 'เบอร์มือถือ',
     'ex_ChangeAvatar' => 'เปลี่ยนอวตาร',
     'ex_UserPhotography' => 'รูปถ่ายพนักงาน',
-    'ex_MobileSettings' => 'การตั้งค่าเพิ่มเติมสำหรับมือถือ',
     'ex_MobileDialstring' => 'การแทนที่สตริงการเรียกเลขหมาย',
     'ex_SipSettings' => 'การตั้งค่าSIP',
     'ex_BusyLevel' => 'จำนวนการสนทนาคู่ขนานสูงสุด',

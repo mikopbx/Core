@@ -369,7 +369,6 @@ return [
     'ex_Secret' => 'Parola pentru SIP',
     'ex_ChangeAvatar' => 'Schimbă avatarul',
     'ex_UserPhotography' => 'Poza angajatului',
-    'ex_MobileSettings' => 'Setări suplimentare pentru mobil',
     'ex_MobileDialstring' => 'Suprascrierea șirului de apelare',
     'ex_SipSettings' => 'Setări SIP',
     'ex_BusyLevel' => 'Numărul maxim de conversații paralele',

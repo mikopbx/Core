@@ -328,7 +328,6 @@ return [
     'ex_MobileNumber' => 'Mobilfunknummer',
     'ex_Secret' => 'Passwort für SIP',
     'ex_ChangeAvatar' => 'Avatar ändern',
-    'ex_MobileSettings' => 'Erweiterte Einstellungen für Mobilfunknummer',
     'ex_MobileDialstring' => 'Mobilfunknummer (Wählstring) anpassen',
     'ex_SipSettings' => 'SIP Einstellungen',
     'ex_BusyLevel' => 'Maximale Anzahl von parallelen Anrufen',

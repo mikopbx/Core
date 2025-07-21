@@ -342,7 +342,6 @@ return [
     'ex_MobileNumber' => 'Мобільний номер',
     'ex_Secret' => 'Пароль для SIP',
     'ex_ChangeAvatar' => 'Змінити аватар',
-    'ex_MobileSettings' => 'Додаткові налаштування для мобільного',
     'ex_MobileDialstring' => 'Перевизначення рядка набору',
     'ex_BusyLevel' => 'Максимальна кількість паралельних розмов',
     'ex_DTMFMode' => 'Режим DTMF',

@@ -354,7 +354,6 @@ return [
     'ex_BusyLevel' => 'Número máximo de chamadas paralelas',
     'ex_SipSettings' => 'Configurações SIP',
     'ex_MobileDialstring' => 'Substituindo uma string de discagem',
-    'ex_MobileSettings' => 'Configurações adicionais para celular',
     'ex_ChangeAvatar' => 'Mudar Avatar',
     'ex_Secret' => 'Senha para SIP',
     'ex_MobileNumber' => 'Número de celular',

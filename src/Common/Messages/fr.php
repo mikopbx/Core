@@ -501,7 +501,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'ex_BusyLevel' => 'Nombre maximum d\'appels simultanés',
     'ex_SipSettings' => 'Paramètres SIP',
     'ex_MobileDialstring' => 'Remplacement de la ligne de numérotation',
-    'ex_MobileSettings' => 'Paramètres avancés pour mobile',
     'ex_ChangeAvatar' => 'Changer d\'avatar',
     'ex_Secret' => 'Mot de passe pour SIP',
     'ex_MobileNumber' => 'Numéro de portable',

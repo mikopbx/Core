@@ -771,7 +771,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'ex_MobileNumber' => 'Mobilnummer',
     'ex_Secret' => 'Lösenord för SIP',
     'ex_ChangeAvatar' => 'Byt avatar',
-    'ex_MobileSettings' => 'Avancerade inställningar för mobil',
     'ex_MobileDialstring' => 'Uppringning av uppringningsrad',
     'ex_SipSettings' => 'SIP-inställningar',
     'ex_BusyLevel' => 'Maximalt antal samtidiga samtal',

@@ -257,7 +257,6 @@ return [
     'ex_Secret' => 'SIP-salasana',
     'ex_ChangeAvatar' => 'Vaihda avataria',
     'ex_UserPhotography' => 'Työntekijän kuva',
-    'ex_MobileSettings' => 'Lisäasetukset mobiililaitteille',
     'ex_MobileDialstring' => 'Valintamerkkijonon ohitus',
     'ex_SipSettings' => 'SIP-asetukset',
     'ex_BusyLevel' => 'Rinnakkaisten keskustelujen enimmäismäärä',

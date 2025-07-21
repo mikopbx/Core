@@ -303,7 +303,6 @@ return [
     'ex_Secret' => 'Wachtwoord voor SIP',
     'ex_ChangeAvatar' => 'Wijzig avatar',
     'ex_UserPhotography' => 'Medewerker foto',
-    'ex_MobileSettings' => 'Aanvullende instellingen voor mobiel',
     'ex_MobileDialstring' => 'Kies string overschrijven',
     'ex_SipSettings' => 'SIP-instellingen',
     'ex_BusyLevel' => 'Maximaal aantal parallelle gesprekken',

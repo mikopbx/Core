@@ -26,7 +26,6 @@ return [
     'cq_ThisNumberIsNotFree' => 'Αυτός ο αριθμός είναι απασχολημένος',
     'cq_ValidateNoExtensions' => 'Δεν επιλέχθηκε μέλος ουράς',
     'er_PageNotFound' => 'Η σελίδα δεν βρέθηκε',
-    'ex_MobileSettings' => 'Πρόσθετες ρυθμίσεις για κινητά',
     'ex_ChangeAvatar' => 'Αλλαγή avatar',
     'am_Write' => 'Ρεκόρ',
     'gs_WebAdminPassword' => 'Κωδικός πρόσβασης',
