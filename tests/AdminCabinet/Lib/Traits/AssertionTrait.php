@@ -3,6 +3,7 @@
 namespace MikoPBX\Tests\AdminCabinet\Lib\Traits;
 
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverExpectedCondition;
 use RuntimeException;
 
 /**
