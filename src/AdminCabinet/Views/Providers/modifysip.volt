@@ -65,7 +65,7 @@
 
     <div class="content field">
         
-        <!-- Группа: Сетевые настройки -->
+        <!-- Group: Network settings -->
         <h4 class="ui dividing header ">{{ t._('pr_NetworkSettings') }}</h4>
         
         <div class="field max-width-500">
@@ -139,11 +139,11 @@
             </div>
         </div>
 
-        <!-- Группа: NAT и подключение -->
+        <!-- Group: NAT and connection -->
         <h4 class="ui dividing header ">{{ t._('pr_NATConnection') }}</h4>
         {{ partial("partials/natqualify") }}
 
-        <!-- Группа: Настройки безопасности -->
+        <!-- Group: Security settings -->
         <h4 class="ui dividing header ">{{ t._('pr_SecuritySettings') }}</h4>
         
         <div id='elReceiveCalls' class="field">
@@ -168,7 +168,7 @@
             </div>
         </div>
 
-        <!-- Группа: SIP заголовки -->
+        <!-- Group: SIP headers -->
         <h4 class="ui dividing header ">
             {{ t._('pr_SIPHeaders') }}
             <i class="small info circle icon field-info-icon" 
@@ -193,7 +193,7 @@
             </div>
         </div>
 
-        <!-- Группа: Дополнительные параметры -->
+        <!-- Group: Additional parameters -->
         <h4 class="ui dividing header ">{{ t._('pr_AdditionalParameters') }}</h4>
         
         <div class="field">

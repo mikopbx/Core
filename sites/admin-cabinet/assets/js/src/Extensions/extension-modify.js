@@ -358,6 +358,9 @@ const extension = {
 
         // Initialize the extension form
         extension.initializeForm();
+        
+        // Initialize tooltips for advanced settings
+        extension.initializeTooltips();
     },
     /**
      * Callback after paste mobile number from clipboard
@@ -565,6 +568,269 @@ const extension = {
         Form.cbAfterSendForm = extension.cbAfterSendForm; // Callback after form is sent
         Form.initialize();
     },
+    
+    /**
+     * Initialize tooltips for advanced settings fields
+     */
+    initializeTooltips() {
+        // Define tooltip configurations for each field
+        const tooltipConfigs = {
+            mobile_dialstring: extension.buildTooltipContent({
+                header: globalTranslate.ex_MobileDialstringTooltip_header,
+                description: globalTranslate.ex_MobileDialstringTooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.ex_MobileDialstringTooltip_usage_header,
+                        definition: null
+                    },
+                    {
+                        term: globalTranslate.ex_MobileDialstringTooltip_usage_format,
+                        definition: globalTranslate.ex_MobileDialstringTooltip_usage_format_desc
+                    },
+                    {
+                        term: globalTranslate.ex_MobileDialstringTooltip_usage_provider,
+                        definition: globalTranslate.ex_MobileDialstringTooltip_usage_provider_desc
+                    },
+                    {
+                        term: globalTranslate.ex_MobileDialstringTooltip_usage_forward,
+                        definition: globalTranslate.ex_MobileDialstringTooltip_usage_forward_desc
+                    }
+                ],
+                examplesHeader: globalTranslate.ex_MobileDialstringTooltip_examples_header,
+                examples: globalTranslate.ex_MobileDialstringTooltip_examples 
+                    ? globalTranslate.ex_MobileDialstringTooltip_examples.split('|') 
+                    : [],
+                note: globalTranslate.ex_MobileDialstringTooltip_note
+            }),
+            
+            sip_enableRecording: extension.buildTooltipContent({
+                header: globalTranslate.ex_SipEnableRecordingTooltip_header,
+                description: globalTranslate.ex_SipEnableRecordingTooltip_desc,
+                note: globalTranslate.ex_SipEnableRecordingTooltip_note
+            }),
+            
+            sip_dtmfmode: extension.buildTooltipContent({
+                header: globalTranslate.ex_SipDtmfmodeTooltip_header,
+                description: globalTranslate.ex_SipDtmfmodeTooltip_desc,
+                list: {
+                    auto: globalTranslate.ex_SipDtmfmodeTooltip_list_auto_desc,
+                    rfc4733: globalTranslate.ex_SipDtmfmodeTooltip_list_rfc4733_desc,
+                    info: globalTranslate.ex_SipDtmfmodeTooltip_list_info_desc,
+                    inband: globalTranslate.ex_SipDtmfmodeTooltip_list_inband_desc,
+                    auto_info: globalTranslate.ex_SipDtmfmodeTooltip_list_auto_info_desc
+                }
+            }),
+            
+            sip_transport: extension.buildTooltipContent({
+                header: globalTranslate.ex_SipTransportTooltip_header,
+                description: globalTranslate.ex_SipTransportTooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.ex_SipTransportTooltip_protocols_header,
+                        definition: null
+                    },
+                    {
+                        term: globalTranslate.ex_SipTransportTooltip_udp_tcp,
+                        definition: globalTranslate.ex_SipTransportTooltip_udp_tcp_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipTransportTooltip_udp,
+                        definition: globalTranslate.ex_SipTransportTooltip_udp_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipTransportTooltip_tcp,
+                        definition: globalTranslate.ex_SipTransportTooltip_tcp_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipTransportTooltip_tls,
+                        definition: globalTranslate.ex_SipTransportTooltip_tls_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipTransportTooltip_recommendations_header,
+                        definition: null
+                    }
+                ],
+                list2: [
+                    globalTranslate.ex_SipTransportTooltip_rec_compatibility
+                ]
+            }),
+            
+            sip_networkfilterid: extension.buildTooltipContent({
+                header: globalTranslate.ex_SipNetworkfilteridTooltip_header,
+                description: globalTranslate.ex_SipNetworkfilteridTooltip_desc,
+                warning: {
+                    header: globalTranslate.ex_SipNetworkfilteridTooltip_warning_header,
+                    text: globalTranslate.ex_SipNetworkfilteridTooltip_warning
+                }
+            }),
+            
+            sip_manualattributes: extension.buildTooltipContent({
+                header: globalTranslate.ex_SipManualattributesTooltip_header,
+                description: globalTranslate.ex_SipManualattributesTooltip_desc,
+                list: {
+                    rtp_timeout: globalTranslate.ex_SipManualattributesTooltip_list_rtp_timeout_desc,
+                    rtp_timeout_hold: globalTranslate.ex_SipManualattributesTooltip_list_rtp_timeout_hold_desc,
+                    max_audio_streams: globalTranslate.ex_SipManualattributesTooltip_list_max_audio_streams_desc,
+                    device_state_busy_at: globalTranslate.ex_SipManualattributesTooltip_list_device_state_busy_at_desc,
+                    max_contacts: globalTranslate.ex_SipManualattributesTooltip_list_max_contacts_desc,
+                    remove_existing: globalTranslate.ex_SipManualattributesTooltip_list_remove_existing_desc
+                },
+                examples: [
+                    '[endpoint]',
+                    'rtp_timeout = 300',
+                    'rtp_timeout_hold = 300',
+                    'max_audio_streams = 2',
+                    'device_state_busy_at = 3',
+                    '',
+                    '[aor]',
+                    'max_contacts=10',
+                    'remove_existing = yes',
+                    '',
+                    '[acl]',
+                    'permit=192.168.1.100',
+                    'permit=192.168.1.101'
+
+                ],
+                warning: {
+                    header: globalTranslate.ex_SipManualattributesTooltip_warning_header,
+                    text: globalTranslate.ex_SipManualattributesTooltip_warning
+                }
+            })
+        };
+        
+        // Initialize tooltip for each field info icon
+        $('.field-info-icon').each((index, element) => {
+            const $icon = $(element);
+            const fieldName = $icon.data('field');
+            const content = tooltipConfigs[fieldName];
+            
+            if (content) {
+                $icon.popup({
+                    html: content,
+                    position: 'top right',
+                    hoverable: true,
+                    delay: {
+                        show: 300,
+                        hide: 100
+                    },
+                    variation: 'flowing'
+                });
+            }
+        });
+    },
+    
+    /**
+     * Build HTML content for tooltip popup
+     * @param {Object} config - Configuration object for tooltip content
+     * @returns {string} - HTML string for tooltip content
+     */
+    buildTooltipContent(config) {
+        if (!config) return '';
+        
+        let html = '';
+        
+        // Add header if exists
+        if (config.header) {
+            html += `<div class="header"><strong>${config.header}</strong></div>`;
+            html += '<div class="ui divider"></div>';
+        }
+        
+        // Add description if exists
+        if (config.description) {
+            html += `<p>${config.description}</p>`;
+        }
+        
+        // Add list items if exist
+        if (config.list) {
+            if (Array.isArray(config.list) && config.list.length > 0) {
+                html += '<ul>';
+                config.list.forEach(item => {
+                    if (typeof item === 'string') {
+                        html += `<li>${item}</li>`;
+                    } else if (item.term && item.definition === null) {
+                        // Header item without definition
+                        html += `</ul><p><strong>${item.term}</strong></p><ul>`;
+                    } else if (item.term && item.definition) {
+                        html += `<li><strong>${item.term}:</strong> ${item.definition}</li>`;
+                    }
+                });
+                html += '</ul>';
+            } else if (typeof config.list === 'object') {
+                // Old format - object with key-value pairs
+                html += '<ul>';
+                Object.entries(config.list).forEach(([term, definition]) => {
+                    html += `<li><strong>${term}:</strong> ${definition}</li>`;
+                });
+                html += '</ul>';
+            }
+        }
+        
+        // Add additional lists (list2, list3, etc.)
+        for (let i = 2; i <= 10; i++) {
+            const listName = `list${i}`;
+            if (config[listName] && config[listName].length > 0) {
+                html += '<ul>';
+                config[listName].forEach(item => {
+                    if (typeof item === 'string') {
+                        html += `<li>${item}</li>`;
+                    } else if (item.term && item.definition === null) {
+                        html += `</ul><p><strong>${item.term}</strong></p><ul>`;
+                    } else if (item.term && item.definition) {
+                        html += `<li><strong>${item.term}:</strong> ${item.definition}</li>`;
+                    }
+                });
+                html += '</ul>';
+            }
+        }
+        
+        // Add warning if exists
+        if (config.warning) {
+            html += '<div class="ui small orange message">';
+            if (config.warning.header) {
+                html += `<div class="header">`;
+                html += `<i class="exclamation triangle icon"></i> `;
+                html += config.warning.header;
+                html += `</div>`;
+            }
+            html += config.warning.text;
+            html += '</div>';
+        }
+        
+        // Add code examples if exist
+        if (config.examples && config.examples.length > 0) {
+            if (config.examplesHeader) {
+                html += `<p><strong>${config.examplesHeader}:</strong></p>`;
+            }
+            html += '<div class="ui segment" style="background-color: #f8f8f8; border: 1px solid #e0e0e0;">';
+            html += '<pre style="margin: 0; font-size: 0.9em; line-height: 1.4em;">';
+            
+            // Process examples with syntax highlighting for sections
+            config.examples.forEach((line, index) => {
+                if (line.trim().startsWith('[') && line.trim().endsWith(']')) {
+                    // Section header
+                    if (index > 0) html += '\n';
+                    html += `<span style="color: #0084b4; font-weight: bold;">${line}</span>`;
+                } else if (line.includes('=')) {
+                    // Parameter line
+                    const [param, value] = line.split('=', 2);
+                    html += `\n<span style="color: #7a3e9d;">${param}</span>=<span style="color: #cf4a4c;">${value}</span>`;
+                } else {
+                    // Regular line
+                    html += line ? `\n${line}` : '';
+                }
+            });
+            
+            html += '</pre>';
+            html += '</div>';
+        }
+        
+        // Add note if exists
+        if (config.note) {
+            html += `<p><em>${config.note}</em></p>`;
+        }
+        
+        return html;
+    }
 };
 
 

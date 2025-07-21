@@ -112,41 +112,67 @@
             {{ t._('AdvancedOptions') }}
         </div>
         <div class="content">
-            <h3 class="ui dividing header ">{{ t._("ex_MobileSettings") }}</h3>
+            <!-- Group: Network settings -->
+            <h4 class="ui dividing header ">{{ t._('ex_NetworkSettings') }}</h4>
             <div class="field">
-                <label>{{ t._('ex_MobileDialstring') }}</label>
-                <div class="five wide field">
-                    {{ form.render('mobile_dialstring') }}
-                </div>
-            </div>
-            <h3 class="ui dividing header ">{{ t._("gs_PBXRecordCalls") }}</h3>
-            <div class="ten wide field">
-                <div class="ui toggle checkbox">
-                    {{ form.render('sip_enableRecording') }}
-                    <label for="sip_enableRecording">{{ t._('ex_enableRecording') }}</label>
-                </div>
-            </div>
-            <h3 class="ui dividing header ">{{ t._("ex_SipSettings") }}</h3>
-            <div class="field">
-                <label>{{ t._('ex_DTMFMode') }}</label>
-                <div class="five wide field">
-                    {{ form.render('sip_dtmfmode') }}
-                </div>
-            </div>
-            <div class="field">
-                <label>{{ t._('ex_Transport') }}</label>
+                <label>{{ t._('ex_Transport') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="sip_transport"></i>
+                </label>
                 <div class="five wide field">
                     {{ form.render('sip_transport') }}
                 </div>
             </div>
+              <!-- Group: Security settings -->
+            <h4 class="ui dividing header ">{{ t._('ex_SecuritySettings') }}</h4>
             <div class="field">
-                <label>{{ t._('ex_NetworkFilter') }}</label>
+                <label>{{ t._('ex_NetworkFilter') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="sip_networkfilterid"></i>
+                </label>
                 <div class="ten wide field">
                     {{ form.render('sip_networkfilterid') }}
                 </div>
             </div>
-            <h3 class="ui dividing header ">{{ t._("ex_ManualAdditionalAttributes") }}</h3>
+
+             <!-- Group: Additional parameters -->
+        <h4 class="ui dividing header ">{{ t._('ex_AdditionalParameters') }}</h4>
             <div class="field">
+                <label>{{ t._('ex_MobileDialstring') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="mobile_dialstring"></i>
+                </label>
+                <div class="five wide field">
+                    {{ form.render('mobile_dialstring') }}
+                </div>
+            </div>
+
+            <div class="ten wide field">
+                <div class="ui toggle checkbox">
+                    {{ form.render('sip_enableRecording') }}
+                    <label for="sip_enableRecording">{{ t._('ex_enableRecording') }}
+                        <i class="small info circle icon field-info-icon" 
+                           data-field="sip_enableRecording"></i>
+                    </label>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>{{ t._('ex_DTMFMode') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="sip_dtmfmode"></i>
+                </label>
+                <div class="five wide field">
+                    {{ form.render('sip_dtmfmode') }}
+                </div>
+            </div>
+            
+            <div class="field">
+                  <label>
+                {{ t._('ex_ManualAdditionalAttributes') }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="sip_manualattributes"></i>
+            </label>
                 {{ form.render('sip_manualattributes') }}
             </div>
 

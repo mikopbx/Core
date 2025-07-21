@@ -43,7 +43,7 @@ Parameters:
     {% endif %}
     {% if documentationLink and (showDocumentationLink is not defined or showDocumentationLink) %}
         <div style="margin-top: 1em;">
-            <a href="{{ documentationLink }}" target="_blank" class="ui basic tiny button">
+            <a href="{{ documentationLink }}" target="_blank" class="ui basic tiny button prevent-word-wrap">
                 <i class="question circle outline icon"></i>
                 {{ t._('et_ReadDocumentation') }}
             </a>
