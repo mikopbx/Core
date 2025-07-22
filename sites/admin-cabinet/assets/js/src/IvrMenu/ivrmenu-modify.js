@@ -132,6 +132,9 @@ const ivrMenu = {
 
         // Get the default extension value
         ivrMenu.defaultExtension = ivrMenu.$formObj.form('get value', 'extension');
+        
+        // Initialize tooltips
+        ivrMenu.initializeTooltips();
     },
     /**
      * Create ivr menu items on the form
@@ -344,6 +347,171 @@ const ivrMenu = {
         Form.cbAfterSendForm = ivrMenu.cbAfterSendForm; // Callback after form is sent
         Form.initialize();
     },
+    
+    /**
+     * Initialize tooltips for form fields
+     */
+    initializeTooltips() {
+        // Define tooltip configurations for each field
+        const tooltipConfigs = {
+            number_of_repeat: ivrMenu.buildTooltipContent({
+                header: globalTranslate.iv_NumberOfRepeatTooltip_header,
+                description: globalTranslate.iv_NumberOfRepeatTooltip_desc,
+                note: globalTranslate.iv_NumberOfRepeatTooltip_note
+            }),
+            
+            timeout: ivrMenu.buildTooltipContent({
+                header: globalTranslate.iv_TimeoutTooltip_header,
+                description: globalTranslate.iv_TimeoutTooltip_desc,
+                list: [
+                    globalTranslate.iv_TimeoutTooltip_list1,
+                    globalTranslate.iv_TimeoutTooltip_list2,
+                    globalTranslate.iv_TimeoutTooltip_list3
+                ],
+                note: globalTranslate.iv_TimeoutTooltip_note
+            }),
+            
+            timeout_extension: ivrMenu.buildTooltipContent({
+                header: globalTranslate.iv_TimeoutExtensionTooltip_header,
+                description: globalTranslate.iv_TimeoutExtensionTooltip_desc,
+                list: [
+                    globalTranslate.iv_TimeoutExtensionTooltip_list1,
+                    globalTranslate.iv_TimeoutExtensionTooltip_list2,
+                    globalTranslate.iv_TimeoutExtensionTooltip_list3
+                ],
+                note: globalTranslate.iv_TimeoutExtensionTooltip_note
+            }),
+            
+            allow_enter_any_internal_extension: ivrMenu.buildTooltipContent({
+                header: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_header,
+                description: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list_header,
+                        definition: null
+                    },
+                    globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list1,
+                    globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list2,
+                    globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list3,
+                    globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list4
+                ],
+                note: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_note
+            }),
+            
+            extension: ivrMenu.buildTooltipContent({
+                header: globalTranslate.iv_ExtensionTooltip_header,
+                description: globalTranslate.iv_ExtensionTooltip_desc,
+                note: globalTranslate.iv_ExtensionTooltip_note
+            })
+        };
+        
+        // Initialize popup for each icon
+        $('.field-info-icon').each((index, element) => {
+            const $icon = $(element);
+            const fieldName = $icon.data('field');
+            const content = tooltipConfigs[fieldName];
+            
+            if (content) {
+                $icon.popup({
+                    html: content,
+                    position: 'top right',
+                    hoverable: true,
+                    delay: {
+                        show: 300,
+                        hide: 100
+                    },
+                    variation: 'flowing'
+                });
+            }
+        });
+    },
+    
+    /**
+     * Build HTML content for tooltip popup
+     * @param {Object} config - The configuration object for the tooltip
+     * @returns {string} - The HTML content for the tooltip
+     */
+    buildTooltipContent(config) {
+        if (!config) return '';
+        
+        let html = '';
+        
+        // Add header if exists
+        if (config.header) {
+            html += `<div class="header"><strong>${config.header}</strong></div>`;
+            html += '<div class="ui divider"></div>';
+        }
+        
+        // Add description if exists
+        if (config.description) {
+            html += `<p>${config.description}</p>`;
+        }
+        
+        // Add list items if exist
+        if (config.list) {
+            if (Array.isArray(config.list) && config.list.length > 0) {
+                html += '<ul>';
+                config.list.forEach(item => {
+                    if (typeof item === 'string') {
+                        html += `<li>${item}</li>`;
+                    } else if (item.term && item.definition === null) {
+                        // Header item without definition
+                        html += `</ul><p><strong>${item.term}</strong></p><ul>`;
+                    } else if (item.term && item.definition) {
+                        html += `<li><strong>${item.term}:</strong> ${item.definition}</li>`;
+                    }
+                });
+                html += '</ul>';
+            } else if (typeof config.list === 'object') {
+                // Handle key-value pairs for list
+                html += '<dl>';
+                Object.entries(config.list).forEach(([key, value]) => {
+                    html += `<dt><strong>${key}:</strong></dt>`;
+                    html += `<dd>${value}</dd>`;
+                });
+                html += '</dl>';
+            }
+        }
+        
+        // Add additional lists (list2-list10) if exist
+        for (let i = 2; i <= 10; i++) {
+            const listKey = `list${i}`;
+            if (config[listKey] && Array.isArray(config[listKey]) && config[listKey].length > 0) {
+                html += '<ul>';
+                config[listKey].forEach(item => {
+                    html += `<li>${item}</li>`;
+                });
+                html += '</ul>';
+            }
+        }
+        
+        // Add warning if exists
+        if (config.warning) {
+            html += '<div class="ui small orange message">';
+            if (config.warning.header) {
+                html += `<div class="header">${config.warning.header}</div>`;
+            }
+            html += `<p>${config.warning.text}</p>`;
+            html += '</div>';
+        }
+        
+        // Add examples if exist
+        if (config.examples && Array.isArray(config.examples) && config.examples.length > 0) {
+            if (config.examplesHeader) {
+                html += `<p><strong>${config.examplesHeader}:</strong></p>`;
+            }
+            html += '<pre style="background-color: #f4f4f4; padding: 5px; border-radius: 3px;">';
+            html += config.examples.join('\n');
+            html += '</pre>';
+        }
+        
+        // Add note if exists
+        if (config.note) {
+            html += `<p><em>${config.note}</em></p>`;
+        }
+        
+        return html;
+    }
 };
 
 /**

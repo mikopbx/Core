@@ -44,25 +44,35 @@
 
 <div class="inline field">
     {{ form.render('number_of_repeat') }}
-    <label for="number_of_repeat">{{ t._('iv_NumberOfRepeat') }}</label>
+    <label for="number_of_repeat">{{ t._('iv_NumberOfRepeat') }}
+        <i class="small info circle icon field-info-icon" data-field="number_of_repeat"></i>
+    </label>
 </div>
 <div class="inline field">
     {{ form.render('timeout') }}
-    <label for="timeout">{{ t._('iv_TimeoutToRedirect') }}</label>
+    <label for="timeout">{{ t._('iv_TimeoutToRedirect') }}
+        <i class="small info circle icon field-info-icon" data-field="timeout"></i>
+    </label>
 </div>
 <div class="field">
-    <label for="timeout_extension">{{ t._('iv_TimeoutExtension') }}</label>
+    <label for="timeout_extension">{{ t._('iv_TimeoutExtension') }}
+        <i class="small info circle icon field-info-icon" data-field="timeout_extension"></i>
+    </label>
     {{ form.render('timeout_extension') }}
 </div>
 
 <div class="field">
     <div class="ui toggle checkbox">
         {{ form.render('allow_enter_any_internal_extension') }}
-        <label for="allow_enter_any_internal_extension">{{ t._('iv_AllowEnterAnyInternalExtension') }}</label>
+        <label for="allow_enter_any_internal_extension">{{ t._('iv_AllowEnterAnyInternalExtension') }}
+            <i class="small info circle icon field-info-icon" data-field="allow_enter_any_internal_extension"></i>
+        </label>
     </div>
 </div>
 <div class="field">
-    <label for="extension">{{ t._('iv_Extensions') }}</label>
+    <label for="extension">{{ t._('iv_Extensions') }}
+        <i class="small info circle icon field-info-icon" data-field="extension"></i>
+    </label>
     <div class="field max-width-250">
         <div class="ui icon input extension">
             <i class="search icon"></i>
