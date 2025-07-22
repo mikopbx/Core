@@ -153,6 +153,9 @@ const callQueue = {
 
         // Initialize the form
         callQueue.initializeForm();
+        
+        // Initialize tooltips for advanced settings
+        callQueue.initializeTooltips();
 
         // Set the default extension number
         callQueue.defaultExtension = callQueue.$formObj.form('get value','extension');
@@ -307,6 +310,222 @@ const callQueue = {
      */
     cbAfterSendForm(response) {
         callQueue.defaultNumber = callQueue.$formObj.form('get value','extension');
+    },
+
+    /**
+     * Build HTML content for tooltip popup
+     * @param {Object} config - Configuration object for tooltip content
+     * @returns {string} - HTML string for tooltip content
+     */
+    buildTooltipContent(config) {
+        if (!config) return '';
+        
+        let html = '';
+        
+        // Add header if exists
+        if (config.header) {
+            html += `<div class="header"><strong>${config.header}</strong></div>`;
+            html += '<div class="ui divider"></div>';
+        }
+        
+        // Add description if exists
+        if (config.description) {
+            html += `<p>${config.description}</p>`;
+        }
+        
+        // Add list items if exist
+        if (config.list) {
+            if (Array.isArray(config.list) && config.list.length > 0) {
+                html += '<ul>';
+                config.list.forEach(item => {
+                    if (typeof item === 'string') {
+                        html += `<li>${item}</li>`;
+                    } else if (item.term && item.definition === null) {
+                        // Header item without definition
+                        html += `</ul><p><strong>${item.term}</strong></p><ul>`;
+                    } else if (item.term && item.definition) {
+                        html += `<li><strong>${item.term}:</strong> ${item.definition}</li>`;
+                    }
+                });
+                html += '</ul>';
+            } else if (typeof config.list === 'object') {
+                // Old format - object with key-value pairs
+                html += '<ul>';
+                Object.entries(config.list).forEach(([term, definition]) => {
+                    html += `<li><strong>${term}:</strong> ${definition}</li>`;
+                });
+                html += '</ul>';
+            }
+        }
+        
+        // Add additional lists (list2, list3, etc.)
+        for (let i = 2; i <= 10; i++) {
+            const listName = `list${i}`;
+            if (config[listName] && config[listName].length > 0) {
+                html += '<ul>';
+                config[listName].forEach(item => {
+                    if (typeof item === 'string') {
+                        html += `<li>${item}</li>`;
+                    } else if (item.term && item.definition === null) {
+                        html += `</ul><p><strong>${item.term}</strong></p><ul>`;
+                    } else if (item.term && item.definition) {
+                        html += `<li><strong>${item.term}:</strong> ${item.definition}</li>`;
+                    }
+                });
+                html += '</ul>';
+            }
+        }
+        
+        // Add warning if exists
+        if (config.warning) {
+            html += '<div class="ui small orange message">';
+            if (config.warning.header) {
+                html += `<div class="header">`;
+                html += `<i class="exclamation triangle icon"></i> `;
+                html += config.warning.header;
+                html += `</div>`;
+            }
+            html += config.warning.text;
+            html += '</div>';
+        }
+        
+        // Add code examples if exist
+        if (config.examples && config.examples.length > 0) {
+            if (config.examplesHeader) {
+                html += `<p><strong>${config.examplesHeader}:</strong></p>`;
+            }
+            html += '<div class="ui segment" style="background-color: #f8f8f8; border: 1px solid #e0e0e0;">';
+            html += '<pre style="margin: 0; font-size: 0.9em; line-height: 1.4em;">';
+            
+            // Process examples with syntax highlighting for sections
+            config.examples.forEach((line, index) => {
+                if (line.trim().startsWith('[') && line.trim().endsWith(']')) {
+                    // Section header
+                    if (index > 0) html += '\n';
+                    html += `<span style="color: #0084b4; font-weight: bold;">${line}</span>`;
+                } else if (line.includes('=')) {
+                    // Parameter line
+                    const [param, value] = line.split('=', 2);
+                    html += `\n<span style="color: #7a3e9d;">${param}</span>=<span style="color: #cf4a4c;">${value}</span>`;
+                } else {
+                    // Regular line
+                    html += line ? `\n${line}` : '';
+                }
+            });
+            
+            html += '</pre>';
+            html += '</div>';
+        }
+        
+        // Add note if exists
+        if (config.note) {
+            html += `<p class="ui small"><i class="info circle icon"></i> ${config.note}</p>`;
+        }
+        
+        return html;
+    },
+
+    /**
+     * Initialize tooltips for form fields
+     */
+    initializeTooltips() {
+        // Define tooltip configurations for each field
+        const tooltipConfigs = {
+            callerid_prefix: callQueue.buildTooltipContent({
+                header: globalTranslate.cq_CallerIDPrefixTooltip_header,
+                description: globalTranslate.cq_CallerIDPrefixTooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.cq_CallerIDPrefixTooltip_how_it_works,
+                        definition: null
+                    },
+                    globalTranslate.cq_CallerIDPrefixTooltip_example,
+                    {
+                        term: globalTranslate.cq_CallerIDPrefixTooltip_purposes,
+                        definition: null
+                    },
+                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_identify,
+                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_priority,
+                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_stats
+                ],
+                examplesHeader: globalTranslate.cq_CallerIDPrefixTooltip_examples_header,
+                examples: globalTranslate.cq_CallerIDPrefixTooltip_examples 
+                    ? globalTranslate.cq_CallerIDPrefixTooltip_examples.split('|') 
+                    : [],
+                note: globalTranslate.cq_CallerIDPrefixTooltip_note
+            }),
+            
+            seconds_to_ring_each_member: callQueue.buildTooltipContent({
+                header: globalTranslate.cq_SecondsToRingEachMemberTooltip_header,
+                description: globalTranslate.cq_SecondsToRingEachMemberTooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_strategies_header,
+                        definition: null
+                    },
+                    {
+                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall,
+                        definition: globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall_desc
+                    },
+                    {
+                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_linear,
+                        definition: globalTranslate.cq_SecondsToRingEachMemberTooltip_linear_desc
+                    },
+                    {
+                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_recommendations_header,
+                        definition: null
+                    },
+                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_short,
+                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_medium,
+                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_long
+                ],
+                note: globalTranslate.cq_SecondsToRingEachMemberTooltip_note
+            }),
+            
+            seconds_for_wrapup: callQueue.buildTooltipContent({
+                header: globalTranslate.cq_SecondsForWrapupTooltip_header,
+                description: globalTranslate.cq_SecondsForWrapupTooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.cq_SecondsForWrapupTooltip_purposes_header,
+                        definition: null
+                    },
+                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_notes,
+                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_crm,
+                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_prepare,
+                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_break,
+                    {
+                        term: globalTranslate.cq_SecondsForWrapupTooltip_recommendations_header,
+                        definition: null
+                    },
+                    globalTranslate.cq_SecondsForWrapupTooltip_rec_none,
+                    globalTranslate.cq_SecondsForWrapupTooltip_rec_short,
+                    globalTranslate.cq_SecondsForWrapupTooltip_rec_medium,
+                    globalTranslate.cq_SecondsForWrapupTooltip_rec_long
+                ],
+                note: globalTranslate.cq_SecondsForWrapupTooltip_note
+            })
+        };
+        
+        // Initialize tooltip for each field info icon
+        $('.field-info-icon').each((index, element) => {
+            const $icon = $(element);
+            const fieldName = $icon.data('field');
+            const content = tooltipConfigs[fieldName];
+            
+            if (content) {
+                $icon.popup({
+                    html: content,
+                    position: 'top right',
+                    hoverable: true,
+                    delay: {
+                        show: 300,
+                        hide: 100
+                    },
+                    variation: 'flowing'
+                });
+            }
+        });
     },
 
     /**

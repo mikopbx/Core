@@ -74,7 +74,9 @@
         </div>
 
         <div class="field">
-            <label for="callerid_prefix">{{ t._('cq_CallerIDPrefix') }}</label>
+            <label for="callerid_prefix">{{ t._('cq_CallerIDPrefix') }}
+                <i class="small info circle icon field-info-icon" data-field="callerid_prefix"></i>
+            </label>
             <div class="field max-width-200">
                 {{ form.render('callerid_prefix') }}
             </div>
@@ -85,13 +87,16 @@
 
         <div class="inline field">
             {{ form.render('seconds_to_ring_each_member') }}
-            <label>{{ t._('cq_SecRingToEachMembers') }}</label>
-
+            <label>{{ t._('cq_SecRingToEachMembers') }}
+                <i class="small info circle icon field-info-icon" data-field="seconds_to_ring_each_member"></i>
+            </label>
         </div>
 
         <div class="inline field">
             {{ form.render('seconds_for_wrapup') }}
-            <label for="seconds_for_wrapup">{{ t._('cq_WrapupTime') }}</label>
+            <label for="seconds_for_wrapup">{{ t._('cq_WrapupTime') }}
+                <i class="small info circle icon field-info-icon" data-field="seconds_for_wrapup"></i>
+            </label>
         </div>
 
         <div class="field">
