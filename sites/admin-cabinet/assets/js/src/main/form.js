@@ -57,6 +57,36 @@ const Form = {
     afterSubmitIndexUrl: '',
     afterSubmitModifyUrl: '',
     oldFormValues: [],
+    
+    /**
+     * REST API configuration
+     * @type {object}
+     */
+    apiSettings: {
+        /**
+         * Enable REST API mode
+         * @type {boolean}
+         */
+        enabled: false,
+        
+        /**
+         * API object with methods (e.g., ConferenceRoomsAPI)
+         * @type {object|null}
+         */
+        apiObject: null,
+        
+        /**
+         * Method name for saving records
+         * @type {string}
+         */
+        saveMethod: 'saveRecord',
+        
+        /**
+         * HTTP method for API calls (can be overridden in cbBeforeSendForm)
+         * @type {string|null}
+         */
+        httpMethod: null
+    },
     initialize() {
         // Set up custom form validation rules
         Form.$formObj.form.settings.rules.notRegExp = Form.notRegExpValidateRule;
@@ -97,10 +127,16 @@ const Form = {
                     const translateKey = `bt_${value}`;
                     Form.$submitModeInput.val(value);
                     Form.$submitButton
-                        .html(`<i class="save icon"></i> ${globalTranslate[translateKey]}`)
-                        .click();
+                        .html(`<i class="save icon"></i> ${globalTranslate[translateKey]}`);
+                    // Removed .click() to prevent automatic form submission
+                    
+                    // Save selected mode
+                    Form.saveSubmitMode(value);
                 },
             });
+            
+            // Restore saved submit mode
+            Form.restoreSubmitMode();
         }
 
         // Prevent form submission on enter keypress
@@ -170,130 +206,166 @@ const Form = {
      * Submits the form to the server.
      */
     submitForm() {
-        $.api({
-            url: Form.url,
-            on: 'now',
-            method: 'POST',
-            processData: Form.processData,
-            contentType: Form.contentType,
-            keyboardShortcuts: Form.keyboardShortcuts,
-
-            /**
-             * Executes before sending the request.
-             * @param {object} settings - The API settings object.
-             * @returns {object} - The modified API settings object.
-             */
-            beforeSend(settings) {
-                // Add 'loading' class to the submit button
-                Form.$submitButton.addClass('loading');
-
-                // Call cbBeforeSendForm function and handle the result
-                const cbBeforeSendResult = Form.cbBeforeSendForm(settings);
-                if (cbBeforeSendResult === false) {
-                    // If cbBeforeSendForm returns false, remove 'loading' class and perform a 'shake' transition on the submit button
-                    Form.$submitButton
-                        .transition('shake')
-                        .removeClass('loading');
-                } else {
-                    // Iterate over cbBeforeSendResult data, trim string values, and exclude sensitive information from being modified
-                    $.each(cbBeforeSendResult.data, (index, value) => {
-                        if (index.indexOf('ecret') > -1 || index.indexOf('assword') > -1) return;
-                        if (typeof value === 'string') cbBeforeSendResult.data[index] = value.trim();
-                    });
+        // Add 'loading' class to the submit button
+        Form.$submitButton.addClass('loading');
+        
+        // Get form data
+        let formData = Form.$formObj.form('get values');
+        
+        // Call cbBeforeSendForm
+        const settings = { data: formData };
+        const cbBeforeSendResult = Form.cbBeforeSendForm(settings);
+        
+        if (cbBeforeSendResult === false) {
+            // If cbBeforeSendForm returns false, abort submission
+            Form.$submitButton
+                .transition('shake')
+                .removeClass('loading');
+            return;
+        }
+        
+        // Update formData if cbBeforeSendForm modified it
+        if (cbBeforeSendResult && cbBeforeSendResult.data) {
+            formData = cbBeforeSendResult.data;
+            
+            // Trim string values, excluding sensitive fields
+            $.each(formData, (index, value) => {
+                if (index.indexOf('ecret') > -1 || index.indexOf('assword') > -1) return;
+                if (typeof value === 'string') formData[index] = value.trim();
+            });
+        }
+        
+        // Choose submission method based on configuration
+        if (Form.apiSettings.enabled && Form.apiSettings.apiObject) {
+            // REST API submission
+            const apiObject = Form.apiSettings.apiObject;
+            const saveMethod = Form.apiSettings.saveMethod;
+            
+            if (apiObject && typeof apiObject[saveMethod] === 'function') {
+                // If httpMethod is specified, pass it in the data
+                if (Form.apiSettings.httpMethod) {
+                    formData._method = Form.apiSettings.httpMethod;
                 }
-                return cbBeforeSendResult;
-            },
-
-            /**
-             * Executes when the request is successful.
-             * @param {object} response - The response object.
-             */
-            onSuccess(response) {
-                // Remove any existing AJAX messages
-                $('.ui.message.ajax').remove();
-
-                // Iterate over response message and handle errors
-                $.each(response.message, (index, value) => {
-                    if (index === 'error') {
-                        // If there is an error, perform a 'shake' transition on the submit button and add an error message after the form
-                        Form.$submitButton.transition('shake').removeClass('loading');
-                        Form.$formObj.after(`<div class="ui ${index} message ajax">${value}</div>`);
-                    }
+                
+                apiObject[saveMethod](formData, (response) => {
+                    Form.handleSubmitResponse(response);
                 });
-                // Dispatch 'ConfigDataChanged' event
-                const event = new CustomEvent('ConfigDataChanged', {
-                    bubbles: false,
-                    cancelable: true
-                });
-                window.dispatchEvent(event);
-
-                // Call cbAfterSendForm function
-                Form.cbAfterSendForm(response);
-
-                // Check response conditions and perform necessary actions
-                if (Form.checkSuccess(response)) {
-                    const submitMode = Form.$submitModeInput.val();
-                    const reloadPath = Form.getReloadPath(response);
-
-                    // Redirect based on submitMode and other conditions
-                    switch (submitMode) {
-                        case 'SaveSettings':
-                            // Redirect to the specified URL if conditions are met
-                            if (reloadPath.length > 0) {
-                                window.location = globalRootUrl + reloadPath;
-                            }
-                            break;
-                        case 'SaveSettingsAndAddNew':
-                            if (Form.afterSubmitModifyUrl.length > 1) {
-                                window.location = Form.afterSubmitModifyUrl;
-                            } else {
-                                const emptyUrl = window.location.href.split('modify');
-                                let action = 'modify';
-                                let prefixData = emptyUrl[1].split('/');
-                                if (prefixData.length > 0) {
-                                    action = action + prefixData[0];
-                                }
-                                if (emptyUrl.length > 1) {
-                                    window.location = `${emptyUrl[0]}${action}/`;
-                                }
-                            }
-                            break;
-                        case 'SaveSettingsAndExit':
-                            if (Form.afterSubmitIndexUrl.length > 1) {
-                                window.location = Form.afterSubmitIndexUrl;
-                            } else {
-                                Form.redirectToAction('index');
-                            }
-                            break;
-                        default:
-                            if (reloadPath.length > 0) {
-                                // Redirect to the specified URL if conditions are met
-                                window.location = globalRootUrl + reloadPath;
-                            }
-                            break;
-                    }
-                    if (Form.enableDirrity) {
-                        // Initialize dirrity if conditions are met
-                        Form.initializeDirrity();
-                    }
-                }
-                // Remove 'loading' class from the submit button
-                Form.$submitButton.removeClass('loading');
-            },
-
-            /**
-             * Executes when the request fails.
-             * @param {object} response - The response object.
-             */
-            onFailure(response) {
-                // Add the response message after the form and perform a 'shake' transition on the submit button
-                Form.$formObj.after(response);
+            } else {
+                console.error('API object or method not found');
                 Form.$submitButton
                     .transition('shake')
                     .removeClass('loading');
-            },
-
-        });
+            }
+        } else {
+            // Traditional form submission
+            $.api({
+                url: Form.url,
+                on: 'now',
+                method: 'POST',
+                processData: Form.processData,
+                contentType: Form.contentType,
+                keyboardShortcuts: Form.keyboardShortcuts,
+                data: formData,
+                onSuccess(response) {
+                    Form.handleSubmitResponse(response);
+                },
+                onFailure(response) {
+                    Form.$formObj.after(response);
+                    Form.$submitButton
+                        .transition('shake')
+                        .removeClass('loading');
+                }
+            });
+        }
+    },
+    
+    /**
+     * Handles the response after form submission (unified for both traditional and REST API)
+     * @param {object} response - The response object
+     */
+    handleSubmitResponse(response) {
+        // Remove loading state
+        Form.$submitButton.removeClass('loading');
+        
+        // Remove any existing AJAX messages
+        $('.ui.message.ajax').remove();
+        
+        // Check if submission was successful
+        if (Form.checkSuccess(response)) {
+            // Success
+            // Dispatch 'ConfigDataChanged' event
+            const event = new CustomEvent('ConfigDataChanged', {
+                bubbles: false,
+                cancelable: true
+            });
+            window.dispatchEvent(event);
+            
+            // Call cbAfterSendForm
+            if (Form.cbAfterSendForm) {
+                Form.cbAfterSendForm(response);
+            }
+            
+            // Handle submit mode
+            const submitMode = Form.$submitModeInput.val();
+            const reloadPath = Form.getReloadPath(response);
+            
+            switch (submitMode) {
+                case 'SaveSettings':
+                    if (reloadPath.length > 0) {
+                        window.location = globalRootUrl + reloadPath;
+                    }
+                    break;
+                case 'SaveSettingsAndAddNew':
+                    if (Form.afterSubmitModifyUrl.length > 1) {
+                        window.location = Form.afterSubmitModifyUrl;
+                    } else {
+                        const emptyUrl = window.location.href.split('modify');
+                        let action = 'modify';
+                        let prefixData = emptyUrl[1].split('/');
+                        if (prefixData.length > 0) {
+                            action = action + prefixData[0];
+                        }
+                        if (emptyUrl.length > 1) {
+                            window.location = `${emptyUrl[0]}${action}/`;
+                        }
+                    }
+                    break;
+                case 'SaveSettingsAndExit':
+                    if (Form.afterSubmitIndexUrl.length > 1) {
+                        window.location = Form.afterSubmitIndexUrl;
+                    } else {
+                        Form.redirectToAction('index');
+                    }
+                    break;
+                default:
+                    if (reloadPath.length > 0) {
+                        window.location = globalRootUrl + reloadPath;
+                    }
+                    break;
+            }
+            
+            // Re-initialize dirty checking if enabled
+            if (Form.enableDirrity) {
+                Form.initializeDirrity();
+            }
+        } else {
+            // Error
+            Form.$submitButton.transition('shake');
+            
+            // Show error messages
+            if (response.messages) {
+                if (response.messages.error) {
+                    Form.showErrorMessages(response.messages.error);
+                }
+            } else if (response.message) {
+                // Legacy format support
+                $.each(response.message, (index, value) => {
+                    if (index === 'error') {
+                        Form.$formObj.after(`<div class="ui ${index} message ajax">${value}</div>`);
+                    }
+                });
+            }
+        }
     },
     /**
      * Checks if the response is successful
@@ -337,6 +409,79 @@ const Form = {
      */
     specialCharactersExistValidateRule(value) {
         return value.match(/[()$^;#"><,.%№@!+=_]/) === null;
+    },
+    
+    /**
+     * Shows error messages (unified error display)
+     * @param {string|array|object} errors - Error messages
+     */
+    showErrorMessages(errors) {
+        if (Array.isArray(errors)) {
+            const errorText = errors.join('<br>');
+            Form.$formObj.after(`<div class="ui error message ajax">${errorText}</div>`);
+        } else if (typeof errors === 'object') {
+            // Field-specific errors
+            $.each(errors, (field, message) => {
+                const $field = Form.$formObj.find(`[name="${field}"]`);
+                if ($field.length) {
+                    $field.closest('.field').addClass('error');
+                    $field.after(`<div class="ui pointing red label">${message}</div>`);
+                }
+            });
+        } else {
+            Form.$formObj.after(`<div class="ui error message ajax">${errors}</div>`);
+        }
+    },
+    
+    /**
+     * Gets unique key for storing submit mode
+     * @returns {string} - Unique key for localStorage
+     */
+    getSubmitModeKey() {
+        // Use form ID or URL path for uniqueness
+        const formId = Form.$formObj.attr('id') || '';
+        const pathName = window.location.pathname.replace(/\//g, '_');
+        return `submitMode_${formId || pathName}`;
+    },
+    
+    /**
+     * Saves submit mode to localStorage
+     * @param {string} mode - Submit mode value
+     */
+    saveSubmitMode(mode) {
+        try {
+            localStorage.setItem(Form.getSubmitModeKey(), mode);
+        } catch (e) {
+            console.warn('Unable to save submit mode:', e);
+        }
+    },
+    
+    /**
+     * Restores submit mode from localStorage
+     */
+    restoreSubmitMode() {
+        try {
+            const savedMode = localStorage.getItem(Form.getSubmitModeKey());
+            if (savedMode && Form.$dropdownSubmit.length > 0) {
+                // Check if the saved mode exists in dropdown options
+                const dropdownValues = [];
+                Form.$dropdownSubmit.find('.item').each(function() {
+                    dropdownValues.push($(this).attr('data-value'));
+                });
+                
+                if (dropdownValues.includes(savedMode)) {
+                    // Set saved value
+                    Form.$submitModeInput.val(savedMode);
+                    Form.$dropdownSubmit.dropdown('set selected', savedMode);
+                    
+                    // Update button text
+                    const translateKey = `bt_${savedMode}`;
+                    Form.$submitButton.html(`<i class="save icon"></i> ${globalTranslate[translateKey]}`);
+                }
+            }
+        } catch (e) {
+            console.warn('Unable to restore submit mode:', e);
+        }
     }
 };
 
