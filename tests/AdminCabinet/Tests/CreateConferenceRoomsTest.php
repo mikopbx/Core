@@ -28,7 +28,7 @@ use MikoPBX\Tests\AdminCabinet\Tests\Data\ConferenceRoomsDataFactory;
  *
  * This class contains tests for adding conference rooms.
  */
-class CreateConferenceRoomsTest extends MikoPBXTestsBase
+abstract class CreateConferenceRoomsTest extends MikoPBXTestsBase
 {
 
     /**
@@ -44,11 +44,26 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
     }
     /**
      * Test adding a conference room.
-     * @dataProvider additionProvider
+     */
+    public function testCreateConferenceRoom(): void
+    {
+        $this->createConferenceRoom($this->getConferenceRoomData());
+    }
+
+    /**
+     * Get conference room test data
+     * Must be implemented by child classes
+     *
+     * @return array
+     */
+    abstract protected function getConferenceRoomData(): array;
+
+    /**
+     * Create a conference room with given parameters
      *
      * @param array $params The parameters for the conference room.
      */
-    public function testAddConference(array $params): void
+    protected function createConferenceRoom(array $params): void
     {
         // Navigate to the conference rooms page and delete any existing rooms with the same name
         $this->clickSidebarMenuItemByHref('/admin-cabinet/conference-rooms/index/');
@@ -83,47 +98,5 @@ class CreateConferenceRoomsTest extends MikoPBXTestsBase
         if (isset($params['pinCode'])) {
             $this->assertInputFieldValueEqual('pinCode', $params['pinCode']);
         }
-    }
-
-    /**
-     * Dataset provider for conference room parameters.
-     *
-     * @return array
-     */
-    public function additionProvider(): array
-    {
-        $params = [];
-        
-        // Get test data from factory for sales conference
-        $salesConference = ConferenceRoomsDataFactory::getConferenceRoomData('sales.conference');
-        $params['Sales Team Conference'] = [
-            $salesConference
-        ];
-        
-        // Get test data from factory for management conference with PIN
-        $mgmtConference = ConferenceRoomsDataFactory::getConferenceRoomData('management.conference');
-        $params['Management Conference with PIN'] = [
-            $mgmtConference
-        ];
-        
-        // Get test data from factory for support conference without PIN
-        $supportConference = ConferenceRoomsDataFactory::getConferenceRoomData('support.conference');
-        $params['Support Team Conference without PIN'] = [
-            $supportConference
-        ];
-        
-        // Get test data from factory for training room
-        $trainingConference = ConferenceRoomsDataFactory::getConferenceRoomData('training.conference');
-        $params['Training Room'] = [
-            $trainingConference
-        ];
-        
-        // Get test data from factory for partner conference
-        $partnerConference = ConferenceRoomsDataFactory::getConferenceRoomData('partner.conference');
-        $params['Partner Conference'] = [
-            $partnerConference
-        ];
-
-        return $params;
     }
 }
