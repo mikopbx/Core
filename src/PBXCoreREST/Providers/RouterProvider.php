@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,6 +54,8 @@ use MikoPBX\PBXCoreREST\Controllers\
     DialplanApplications\PostController as DialplanApplicationsPostController,
     ConferenceRooms\GetController as ConferenceRoomsGetController,
     ConferenceRooms\PostController as ConferenceRoomsPostController,
+    ConferenceRooms\PutController as ConferenceRoomsPutController,
+    ConferenceRooms\DeleteController as ConferenceRoomsDeleteController,
     Users\GetController as UsersGetController,
     Nchan\GetController as NchanGetController,
     License\GetController as LicenseGetController,
@@ -178,9 +180,12 @@ class RouterProvider implements ServiceProviderInterface
 
             [IvrMenuGetController::class, 'callAction', '/pbxcore/api/ivr-menu/{actionName}', 'get', '/'],
             [IvrMenuPostController::class, 'callAction', '/pbxcore/api/ivr-menu/{actionName}', 'post', '/'],
-
-            [ConferenceRoomsGetController::class, 'callAction', '/pbxcore/api/conference-rooms/{actionName}', 'get', '/'],
-            [ConferenceRoomsPostController::class, 'callAction', '/pbxcore/api/conference-rooms/{actionName}', 'post', '/'],
+            
+            [ConferenceRoomsGetController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}', 'get', '/'],
+            [ConferenceRoomsGetController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
+            [ConferenceRoomsPostController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}', 'post', '/'],
+            [ConferenceRoomsPutController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
+            [ConferenceRoomsDeleteController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
 
             [DialplanApplicationsGetController::class, 'callAction', '/pbxcore/api/dialplan-applications/{actionName}', 'get', '/'],
             [DialplanApplicationsPostController::class, 'callAction', '/pbxcore/api/dialplan-applications/{actionName}', 'post', '/'],

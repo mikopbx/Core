@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,59 +20,80 @@
 namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 
 use MikoPBX\Common\Models\ConferenceRooms;
-use MikoPBX\Common\Providers\MainDatabaseProvider;
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di\Di;
-use Phalcon\Di\Injectable;
-/**
- *  Class DeleteRecord
- *  Delete a conference room and all its dependencies.
- *
- * @package MikoPBX\PBXCoreREST\Lib\ConferenceRooms
- */
-class DeleteRecordAction extends Injectable
-{
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
 
+/**
+ * Action for deleting conference room record
+ * 
+ * @api {delete} /pbxcore/api/v2/conference-rooms/deleteRecord/:id Delete conference room
+ * @apiVersion 2.0.0
+ * @apiName DeleteRecord
+ * @apiGroup ConferenceRooms
+ * 
+ * @apiParam {String} id Record ID to delete
+ * 
+ * @apiSuccess {Boolean} result Operation result
+ * @apiSuccess {Object} data Deletion result
+ * @apiSuccess {String} data.deleted_id ID of deleted record
+ */
+class DeleteRecordAction
+{
     /**
-     * Deletes the conference room record with its dependent tables.
-     *
-     * @param string $id The ID of the conference room to be deleted.
-     * @return PBXApiResult Result of the delete operation.
+     * Delete conference room record
+     * 
+     * @param string $id - Record ID to delete
+     * @return PBXApiResult
      */
     public static function main(string $id): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $res->success = true;
-
-        $di = Di::getDefault();
-        $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
-
-        // Find the room by ID
-        $record = ConferenceRooms::findFirstByUniqid($id);
-        if ($record===null){
-            $res->messages['error'][] = 'ConferenceRoom with id '.$id.' does not exist';
-            $res->success = false;
-            return  $res;
+        
+        if (empty($id)) {
+            $res->messages['error'][] = 'Record ID is required';
+            return $res;
         }
-
-        $db->begin();
-
-        // Delete associated extensions
-        $extension = $record->Extensions;
-        if ($extension!==null && !$extension->delete()) {
-            $res->messages['error'][] = implode(PHP_EOL, $extension->getMessages());
-            $res->success = false;
+        
+        try {
+            // Find record by uniqid or id
+            $room = ConferenceRooms::findFirst([
+                'conditions' => 'uniqid = :uniqid: OR id = :id:',
+                'bind' => ['uniqid' => $id, 'id' => $id]
+            ]);
+            
+            if (!$room) {
+                $res->messages['error'][] = 'api_ConferenceRoomNotFound';
+                return $res;
+            }
+            
+            // Delete in transaction using BaseActionHelper
+            BaseActionHelper::executeInTransaction(function() use ($room) {
+                // Delete related extension
+                $extension = Extensions::findFirstByNumber($room->extension);
+                if ($extension) {
+                    if (!$extension->delete()) {
+                        throw new \Exception('Failed to delete extension: ' . implode(', ', $extension->getMessages()));
+                    }
+                }
+                
+                // Delete conference room itself
+                if (!$room->delete()) {
+                    throw new \Exception('Failed to delete conference room: ' . implode(', ', $room->getMessages()));
+                }
+                
+                return true;
+            });
+            
+            
+            $res->success = true;
+            $res->data = ['deleted_id' => $id];
+            
+        } catch (\Exception $e) {
+            $res->messages['error'][] = $e->getMessage();
         }
-
-        if (!$res->success) {
-            $db->rollback();
-        } else {
-            $db->commit();
-        }
-
-        $res->data['id'] = $id;
+        
         return $res;
     }
-
 }

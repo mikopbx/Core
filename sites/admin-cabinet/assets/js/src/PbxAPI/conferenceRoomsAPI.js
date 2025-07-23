@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,27 +16,115 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalTranslate */
+/* global globalRootUrl, PbxApi, globalTranslate */
 
 /**
- * This module encapsulates a collection of functions related to conference rooms.
- *
- * @module Call queues
+ * ConferenceRoomsAPI - REST API for conference room management
+ * 
+ * Uses unified approach with centralized endpoint definitions.
+ * This provides:
+ * - Single point of API URL management
+ * - Easy API version switching (v2 -> v3)
+ * - Consistent endpoint usage throughout code
+ * - Simplified debugging and support
  */
-
-const ConferenceRoomsAPI= {
+const ConferenceRoomsAPI = {
     /**
-     * Deletes the conference room record with its dependent tables.
-     *
-     * @param {string} id - id of deleting conference room record.
-     * @param {function} callback - The callback function to handle the API response.
+     * API endpoints
+     */
+    apiUrl: `${Config.pbxUrl}/pbxcore/api/v2/conference-rooms/`,
+    
+    // Endpoint definitions for unification
+    endpoints: {
+        getList: `${Config.pbxUrl}/pbxcore/api/v2/conference-rooms/getList`,
+        getRecord: `${Config.pbxUrl}/pbxcore/api/v2/conference-rooms/getRecord`,
+        saveRecord: `${Config.pbxUrl}/pbxcore/api/v2/conference-rooms/saveRecord`,
+        deleteRecord: `${Config.pbxUrl}/pbxcore/api/v2/conference-rooms/deleteRecord`
+    },
+    
+    /**
+     * Get record by ID
+     * @param {string} id - Record ID or empty string for new
+     * @param {function} callback - Callback function
+     */
+    getRecord(id, callback) {
+        const recordId = (!id || id === '') ? 'new' : id;
+        
+        $.api({
+            url: `${this.endpoints.getRecord}/${recordId}`,
+            method: 'GET',
+            on: 'now',
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: 'Network error'}});
+            }
+        });
+    },
+    
+    /**
+     * Get list of all records
+     * @param {function} callback - Callback function
+     */
+    getList(callback) {
+        $.api({
+            url: this.endpoints.getList,
+            method: 'GET',
+            on: 'now',
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, data: []});
+            }
+        });
+    },
+    
+    /**
+     * Save record
+     * @param {object} data - Data to save
+     * @param {function} callback - Callback function
+     */
+    saveRecord(data, callback) {
+        const method = data.id ? 'PUT' : 'POST';
+        const url = data.id ? 
+            `${this.endpoints.saveRecord}/${data.id}` : 
+            this.endpoints.saveRecord;
+        
+        $.api({
+            url: url,
+            method: method,
+            data: data,
+            on: 'now',
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: 'Network error'}});
+            }
+        });
+    },
+    
+    /**
+     * Delete record
+     * @param {string} id - Record ID
+     * @param {function} callback - Callback function
      */
     deleteRecord(id, callback) {
         $.api({
-            url: PbxApi.conferenceRoomsDeleteRecord,
+            url: `${this.endpoints.deleteRecord}/${id}`,
             on: 'now',
-            method: 'POST',
-            data: {id},
+            method: 'DELETE',
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response);
@@ -46,7 +134,7 @@ const ConferenceRoomsAPI= {
             },
             onError() {
                 callback(false);
-            },
+            }
         });
-    },
-}
+    }
+};

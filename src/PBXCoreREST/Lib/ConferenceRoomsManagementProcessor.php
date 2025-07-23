@@ -1,8 +1,7 @@
 <?php
-
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,23 +19,32 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\DeleteRecordAction;
+use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\{
+    GetRecordAction,
+    GetListAction,
+    SaveRecordAction,
+    DeleteRecordAction
+};
 use Phalcon\Di\Injectable;
 
 /**
- * Class ConferenceRoomsManagementProcessor
+ * Conference rooms management processor
  *
+ * Handles all conference room management operations including:
+ * - getRecord: Get single conference room by ID or create new structure
+ * - getList: Get list of all conference rooms
+ * - saveRecord: Create or update conference room
+ * - deleteRecord: Delete conference room
+ * 
  * @package MikoPBX\PBXCoreREST\Lib
- *
  */
 class ConferenceRoomsManagementProcessor extends Injectable
 {
     /**
-     * Processes Conference Rooms management requests
+     * Processes conference room management requests
      *
-     * @param array $request
-     *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @param array $request Request data with 'action' and 'data' fields
+     * @return PBXApiResult API response object with success status and data
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -45,20 +53,34 @@ class ConferenceRoomsManagementProcessor extends Injectable
 
         $action = $request['action'];
         $data = $request['data'];
+        
         switch ($action) {
+            case 'getRecord':
+                $recordId = $data['id'] ?? null;
+                $res = GetRecordAction::main($recordId);
+                break;
+                
+            case 'getList':
+                $res = GetListAction::main($data);
+                break;
+                
+            case 'saveRecord':
+                $res = SaveRecordAction::main($data);
+                break;
+                
             case 'deleteRecord':
                 if (!empty($data['id'])) {
                     $res = DeleteRecordAction::main($data['id']);
                 } else {
-                    $res->messages['error'][] = 'Empty ID in POST/GET data';
+                    $res->messages['error'][] = 'Empty ID in request data';
                 }
                 break;
+                
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }
 
         $res->function = $action;
-
         return $res;
     }
 }

@@ -338,12 +338,16 @@ class AssetProvider implements ServiceProviderInterface
     private function makeConferenceRoomsAssets(string $action): void
     {
         if ($action === 'index') {
+            $this->headerCollectionCSS
+            ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
+                ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/pbx/PbxAPI/conferenceRoomsAPI.js', true)
                 ->addJs('js/pbx/ConferenceRooms/conference-rooms-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/PbxAPI/conferenceRoomsAPI.js', true)
                 ->addJs('js/pbx/ConferenceRooms/conference-room-modify.js', true);
         }
     }

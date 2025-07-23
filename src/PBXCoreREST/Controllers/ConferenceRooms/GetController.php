@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,27 +23,47 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\ConferenceRoomsManagementProcessor;
 
 /**
- * Handles the GET requests for conference rooms data.
- *
- * @RoutePrefix("/pbxcore/api/conference-rooms")
- *
+ * GET controller for conference rooms management
+ * 
+ * @RoutePrefix("/pbxcore/api/v2/conference-rooms")
+ * 
  * @examples
+ * curl http://127.0.0.1/pbxcore/api/v2/conference-rooms/getRecord/CONFERENCE-123ABC
+ * curl http://127.0.0.1/pbxcore/api/v2/conference-rooms/getRecord/new
+ * curl http://127.0.0.1/pbxcore/api/v2/conference-rooms/getList
+ * 
+ * @package MikoPBX\PBXCoreREST\Controllers\ConferenceRooms
  */
 class GetController extends BaseController
 {
-
     /**
      * Handles the call to different actions based on the action name
      *
-     * @param string $actionName The name of the action.
-     *
-     *
+     * @param string $actionName The name of the action
+     * @param string|null $id Optional ID parameter for record operations
+     * 
+     * Get conference room record by ID, if ID is 'new' or empty returns structure with default data
+     * @Get("/getRecord/{id}")
+     * 
+     * Retrieves the list of all conference rooms
+     * @Get("/getList")
+     * 
+     * @param string $actionName
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
         $requestData = $this->request->get();
-        $this->sendRequestToBackendWorker(ConferenceRoomsManagementProcessor::class, $actionName, $requestData);
+        
+        if (!empty($id)){
+            $requestData['id'] = $id;
+        }
+        
+        // Send request to Worker
+        $this->sendRequestToBackendWorker(
+            ConferenceRoomsManagementProcessor::class, 
+            $actionName, 
+            $requestData
+        );
     }
-
 }

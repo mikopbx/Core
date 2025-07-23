@@ -62,6 +62,13 @@ class PBXApiResult
      * @var string
      */
     public string $function;
+    
+    /**
+     * Reload path for frontend navigation after successful operation
+     *
+     * @var string
+     */
+    public string $reload = '';
 
     /**
      * Creates a new instance of PBXApiResult.
@@ -83,7 +90,7 @@ class PBXApiResult
      */
     public function getResult(): array
     {
-        return [
+        $result = [
             'result'    => $this->success,
             'data'      => $this->data,
             'messages'  => $this->messages,
@@ -91,5 +98,12 @@ class PBXApiResult
             'processor' => $this->processor,
             'pid'       => getmypid(),
         ];
+        
+        // Include reload path if set
+        if (!empty($this->reload)) {
+            $result['reload'] = $this->reload;
+        }
+        
+        return $result;
     }
 }

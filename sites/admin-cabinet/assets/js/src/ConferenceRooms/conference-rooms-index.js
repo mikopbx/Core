@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,64 +15,173 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global globalRootUrl, ConferenceRoomsAPI, Extensions, globalTranslate, UserMessage */
+
+/* global globalRootUrl, ConferenceRoomsAPI, Extensions, globalTranslate, UserMessage, SemanticLocalization */
 
 /**
- * Module handling interactions with the conference room table.
- * @module conferenceTable
+ * Модуль управления таблицей конференций
  */
 const conferenceTable = {
-
     $conferencesTable: $('#conference-rooms-table'),
+    dataTable: {},
 
     /**
-     * Initializes module functionality.
-     * Specifically, it adds a double click event handler to the rows of the conference table.
+     * Conference table management module
      */
     initialize() {
-
-        // Attach double-click event handler to each cell in the conference room table
-        // The handler redirects to a URL specific to the conference room for editing
-        $('.record-row td').on('dblclick', (e) => {
-            const id = $(e.target).closest('tr').attr('id');
-            window.location = `${globalRootUrl}conference-rooms/modify/${id}`;
-        });
-
-        // Set up delete functionality on delete button click.
-        $('body').on('click', 'a.delete', (e) => {
-            e.preventDefault();
-            $(e.target).addClass('disabled');
-            // Get the conference room  ID from the closest table row.
-            const rowId = $(e.target).closest('tr').attr('id');
-
-            // Remove any previous AJAX messages.
-            $('.message.ajax').remove();
-
-            // Call the PbxApi method to delete the conference room record.
-            ConferenceRoomsAPI.deleteRecord(rowId, conferenceTable.cbAfterDeleteRecord);
-        });
+        // Initially show placeholder until data loads
+        conferenceTable.toggleEmptyPlaceholder(true);
+        
+        conferenceTable.initializeDataTable();
     },
-
+    
     /**
-     * Callback function executed after deleting a record.
-     * @param {Object} response - The response object from the API.
+     * Initialize DataTable
      */
-    cbAfterDeleteRecord(response){
-        if (response.result === true) {
-            // Remove the deleted record's table row.
-            conferenceTable.$conferencesTable.find(`tr[id=${response.data.id}]`).remove();
-            // Call the callback function for data change.
-            Extensions.cbOnDataChanged();
-        } else {
-            // Show an error message if deletion was not successful.
-            UserMessage.showError(response.messages.error, globalTranslate.cr_ImpossibleToDeleteConferenceRoom);
-        }
-        $('a.delete').removeClass('disabled');
+    initializeDataTable() {
+        conferenceTable.dataTable = conferenceTable.$conferencesTable.DataTable({
+            ajax: {
+                url: ConferenceRoomsAPI.endpoints.getList,
+                dataSrc: function(json) {
+                    console.log('API Response:', json); // Debug log
+                    
+                    // Manage empty state
+                    conferenceTable.toggleEmptyPlaceholder(
+                        !json.result || !json.data || json.data.length === 0
+                    );
+                    return json.result ? json.data : [];
+                }
+            },
+            columns: [
+                {
+                    data: 'name',
+                    render: function(data, type, row) {
+                        return `<strong>${data}</strong>`;
+                    }
+                },
+                {
+                    data: 'extension',
+                    className: 'center aligned'
+                },
+                {
+                    data: 'pinCode',
+                    className: 'center aligned hide-on-mobile',
+                    responsivePriority: 2,
+                    render: function(data) {
+                        return data || '—';
+                    }
+                },
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    className: 'right aligned action-buttons', // Added class for identification
+                    responsivePriority: 1,
+                    render: function(data, type, row) {
+                        return `<div class="ui basic icon buttons">
+                            <a href="${globalRootUrl}conference-rooms/modify/${row.uniqid}" 
+                               class="ui button popuped" 
+                               data-content="${globalTranslate.bt_ToolTipEdit}">
+                                <i class="edit icon"></i>
+                            </a>
+                            <a href="#" 
+                               data-value="${row.uniqid}" 
+                               class="ui button delete two-steps-delete popuped" 
+                               data-content="${globalTranslate.bt_ToolTipDelete}">
+                                <i class="trash red icon"></i>
+                            </a>
+                        </div>`;
+                    }
+                }
+            ],
+            order: [[0, 'asc']],
+            responsive: true,
+            searching: false,
+            paging: false,
+            info: false,
+            language: SemanticLocalization.dataTableLocalisation,
+            drawCallback: function() {
+                console.log('DataTable drawCallback triggered'); // Debug log
+                
+                // Initialize Semantic UI elements
+                conferenceTable.$conferencesTable.find('.popuped').popup();
+                
+                // Double-click for editing
+                conferenceTable.initializeDoubleClickEdit();
+            }
+        });
+        
+        // Handle deletion using DeleteSomething.js
+        // DeleteSomething.js automatically handles first click
+        // We only listen for second click (when two-steps-delete class is removed)
+        conferenceTable.$conferencesTable.on('click', 'a.delete:not(.two-steps-delete)', function(e) {
+            e.preventDefault();
+            const $button = $(this);
+            const roomId = $button.attr('data-value');
+            
+            // Add loading indicator and disable button
+            $button.addClass('loading disabled');
+            
+            ConferenceRoomsAPI.deleteRecord(roomId, conferenceTable.cbAfterDeleteRecord);
+        });
     },
+    
+    /**
+     * Callback after record deletion
+     */
+    cbAfterDeleteRecord(response) {
+        if (response.result === true) {
+            // Reload table
+            conferenceTable.dataTable.ajax.reload();
+            
+            // Update related components
+            if (typeof Extensions !== 'undefined' && Extensions.cbOnDataChanged) {
+                Extensions.cbOnDataChanged();
+            }
+            
+            UserMessage.showSuccess(globalTranslate.cr_ConferenceRoomDeleted);
+        } else {
+            UserMessage.showError(
+                response.messages?.error || 
+                globalTranslate.cr_ImpossibleToDeleteConferenceRoom
+            );
+        }
+        
+        // Remove loading indicator and restore button to initial state
+        $('a.delete').removeClass('loading disabled');
+    },
+    
+    /**
+     * Toggle empty table placeholder visibility
+     */
+    toggleEmptyPlaceholder(isEmpty) {
+        if (isEmpty) {
+            $('#conference-table-container').hide();
+            $('#add-new-button').hide();
+            $('#empty-table-placeholder').show();
+        } else {
+            $('#empty-table-placeholder').hide();
+            $('#add-new-button').show();
+            $('#conference-table-container').show();
+        }
+    },
+    
+  /**
+     * Initialize double-click for editing
+     * IMPORTANT: Exclude cells with action-buttons class to avoid conflict with delete-something.js
+     */
+    initializeDoubleClickEdit() {
+        conferenceTable.$conferencesTable.on('dblclick', 'tbody td:not(.action-buttons)', function() {
+            const data = conferenceTable.dataTable.row(this).data();
+            if (data && data.uniqid) {
+                window.location = `${globalRootUrl}conference-rooms/modify/${data.uniqid}`;
+            }
+        });
+    }
 };
 
 /**
- *  Initialize conference rooms table on document ready
+ *  Initialize on document ready
  */
 $(document).ready(() => {
     conferenceTable.initialize();

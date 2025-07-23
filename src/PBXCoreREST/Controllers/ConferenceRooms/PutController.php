@@ -23,36 +23,47 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\ConferenceRoomsManagementProcessor;
 
 /**
- * POST controller for conference rooms management
+ * PUT controller for conference rooms management
  * 
  * @RoutePrefix("/pbxcore/api/v2/conference-rooms")
  * 
  * @examples
- * curl -X POST http://127.0.0.1/pbxcore/api/v2/conference-rooms/saveRecord \
- *   -d "name=Sales Conference&extension=2001&pinCode=1234"
+ * curl -X PUT http://127.0.0.1/pbxcore/api/v2/conference-rooms/saveRecord/CONFERENCE-123ABC \
+ *   -d "name=Updated Conference&extension=2002&pinCode=5678"
  * 
  * @package MikoPBX\PBXCoreREST\Controllers\ConferenceRooms
  */
-class PostController extends BaseController
+class PutController extends BaseController
 {
     /**
      * Handles the call to different actions based on the action name
      * 
      * @param string $actionName The name of the action
+     * @param string|null $id Conference room ID for update operations
      * 
-     * Creates or updates conference room record
-     * @Post("/saveRecord")
+     * Updates existing conference room record
+     * @Put("/saveRecord/{id}")
      * 
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
-        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
+        if (empty($id)) {
+            $this->response->setJsonContent([
+                'result' => false,
+                'messages' => ['error' => ['Empty ID in request data']]
+            ]);
+            $this->response->send();
+            return;
+        }
+
+        $putData = self::sanitizeData($this->request->getPut(), $this->filter);
+        $putData['id'] = $id;
         
         $this->sendRequestToBackendWorker(
             ConferenceRoomsManagementProcessor::class,
             $actionName,
-            $postData
+            $putData
         );
     }
     
