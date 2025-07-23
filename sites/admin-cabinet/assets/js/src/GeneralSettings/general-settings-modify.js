@@ -59,17 +59,6 @@ const generalSettingsModify = {
     hiddenPassword: 'xxxxxxx',
 
     /**
-     * jQuery object for the records retention period slider.
-     * @type {jQuery}
-     */
-    $recordsSavePeriodSlider: $('#PBXRecordSavePeriodSlider'),
-
-    /**
-     * Possible period values for the records retention.
-     */
-    saveRecordsPeriod: ['30', '90', '180', '360', '1080', ''],
-
-    /**
      * Validation rules for the form fields before submission.
      *
      * @type {object}
@@ -329,11 +318,6 @@ const generalSettingsModify = {
         });
         generalSettingsModify.showHideSSHPassword();
 
-        // Set the initial value for the records save period slider
-        const recordSavePeriod = generalSettingsModify.$formObj.form('get value', 'PBXRecordSavePeriod');
-        generalSettingsModify.$recordsSavePeriodSlider
-            .slider('set value', generalSettingsModify.saveRecordsPeriod.indexOf(recordSavePeriod), false);
-
         // Add event listener to handle tab activation
         $(window).on('GS-ActivateTab', (event, nameTab) => {
             $('#general-settings-menu').find('.item').tab('change tab', nameTab);
@@ -350,22 +334,6 @@ const generalSettingsModify = {
             generalSettingsModify.$sshPasswordSegment.show();
         }
         generalSettingsModify.initRules();
-    },
-
-    /**
-     * Handle event after the select save period slider is changed.
-     * @param {number} value - The selected value from the slider.
-     */
-    cbAfterSelectSavePeriodSlider(value) {
-
-        // Get the save period corresponding to the slider value.
-        const savePeriod = generalSettingsModify.saveRecordsPeriod[value];
-
-        // Set the form value for 'PBXRecordSavePeriod' to the selected save period.
-        generalSettingsModify.$formObj.form('set value', 'PBXRecordSavePeriod', savePeriod);
-
-        // Trigger change event to acknowledge the modification
-        Form.dataChanged();
     },
 
     /**

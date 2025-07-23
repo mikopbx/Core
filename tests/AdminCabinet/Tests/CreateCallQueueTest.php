@@ -60,7 +60,7 @@ abstract class CreateCallQueueTest extends MikoPBXTestsBase
     /**
      * Create Call Queue
      */
-    protected function createCallQueue(array $params): void
+    public function createCallQueue(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
         $this->clickDeleteButtonOnRowWithText($params['name']);

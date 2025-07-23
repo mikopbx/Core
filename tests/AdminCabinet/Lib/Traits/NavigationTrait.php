@@ -197,11 +197,58 @@ trait NavigationTrait
         $this->logTestAction("Click button", ['href' => $href]);
 
         try {
+            // First, try to find any visible button with the exact href
             $xpath = sprintf('//a[@href="%s"]', $href);
-            $button = $this->waitForElement($xpath);
-            $this->scrollIntoView($button);
-            $button->click();
-            $this->waitForAjax();
+            $buttons = self::$driver->findElements(WebDriverBy::xpath($xpath));
+            
+            // Look for a visible button
+            foreach ($buttons as $button) {
+                if ($button->isDisplayed()) {
+                    $this->scrollIntoView($button);
+                    $button->click();
+                    $this->waitForAjax();
+                    return;
+                }
+            }
+            
+            // If no visible button found, try to find any button with the href (including hidden ones)
+            if (!empty($buttons)) {
+                $button = $buttons[0];
+                $this->scrollIntoView($button);
+                $button->click();
+                $this->waitForAjax();
+                return;
+            }
+            
+            // Fallback: try to find button with partial href match (for dynamic URLs)
+            $fallbackXpath = sprintf('//a[contains(@href, "%s")]', $href);
+            $fallbackButtons = self::$driver->findElements(WebDriverBy::xpath($fallbackXpath));
+            
+            foreach ($fallbackButtons as $button) {
+                if ($button->isDisplayed()) {
+                    $this->scrollIntoView($button);
+                    $button->click();
+                    $this->waitForAjax();
+                    return;
+                }
+            }
+            
+            // Last resort: try to click hidden buttons if they exist
+            if (!empty($fallbackButtons)) {
+                foreach ($fallbackButtons as $button) {
+                    try {
+                        $this->scrollIntoView($button);
+                        $button->click();
+                        $this->waitForAjax();
+                        return;
+                    } catch (\Exception $ex) {
+                        // Continue to next button
+                    }
+                }
+            }
+            
+            throw new \RuntimeException(sprintf('No clickable button found with href "%s"', $href));
+            
         } catch (\Exception $e) {
             $this->handleActionError('click button', $href, $e);
         }

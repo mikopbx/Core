@@ -42,9 +42,7 @@ const conferenceTable = {
         conferenceTable.dataTable = conferenceTable.$conferencesTable.DataTable({
             ajax: {
                 url: ConferenceRoomsAPI.endpoints.getList,
-                dataSrc: function(json) {
-                    console.log('API Response:', json); // Debug log
-                    
+                dataSrc: function(json) {                    
                     // Manage empty state
                     conferenceTable.toggleEmptyPlaceholder(
                         !json.result || !json.data || json.data.length === 0

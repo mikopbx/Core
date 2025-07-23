@@ -53,7 +53,10 @@
 
         <testsuite name="ExtensionsBeforeCreate">
             <file>Tests/CreateConferenceRoomsTest.php</file>
-            <file>Tests/CreateDialPlanApplicationTest.php</file>
+        </testsuite>
+
+        <testsuite name="DialPlanApplications">       
+            <directory>Tests/DialPlanApplications</directory>
         </testsuite>
 
         <testsuite name="Extensions">       

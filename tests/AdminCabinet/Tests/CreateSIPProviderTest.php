@@ -59,7 +59,7 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
     /**
      * Create SIP provider
      */
-    protected function createSIPProvider(array $params): void
+    public function createSIPProvider(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickButtonByHref('/admin-cabinet/providers/modifysip');

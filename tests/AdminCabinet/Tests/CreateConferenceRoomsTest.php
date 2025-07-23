@@ -21,7 +21,6 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
-use MikoPBX\Tests\AdminCabinet\Tests\Data\ConferenceRoomsDataFactory;
 
 /**
  * Class CreateConferenceRoomsTest
