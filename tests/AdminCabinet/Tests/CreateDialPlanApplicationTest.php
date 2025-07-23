@@ -20,11 +20,11 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverExpectedCondition;
 use GuzzleHttp\Exception\GuzzleException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
-use MikoPBX\Tests\AdminCabinet\Tests\Data\DialplanApplicationsDataFactory;
 
-class CreateDialPlanApplicationTest extends MikoPBXTestsBase
+abstract class CreateDialPlanApplicationTest extends MikoPBXTestsBase
 {
     /**
      * Set up before each test
@@ -38,16 +38,14 @@ class CreateDialPlanApplicationTest extends MikoPBXTestsBase
         $this->setSessionName("Test: Creating dialplan application");
     }
 
+
     /**
-     * Test creating a new dialplan application.
-     *
-     * @dataProvider additionProvider
+     * Create a dialplan application with given parameters
      *
      * @param array $params The parameters for the new application.
      */
-    public function testCreateNewApplication(array $params): void
+    protected function createDialplanApplication(array $params): void
     {
-
         // Navigate to the dialplan applications page
         $this->clickSidebarMenuItemByHref("/admin-cabinet/dialplan-applications/index/");
 
@@ -97,44 +95,19 @@ class CreateDialPlanApplicationTest extends MikoPBXTestsBase
     }
 
     /**
-     * Dataset provider for dialplan application parameters.
+     * Test method for individual dialplan application tests
+     */
+    public function testCreateDialplanApplication(): void
+    {
+        $this->createDialplanApplication($this->getDialplanApplicationData());
+    }
+
+    /**
+     * Get dialplan application test data
+     * Must be implemented by child classes
      *
      * @return array
      */
-    public function additionProvider(): array
-    {
-        $params = [];
-        
-        // Get test data from factory for plaintext application
-        $timeAnnouncement = DialplanApplicationsDataFactory::getApplicationData('time.announcement');
-        $params['Time Announcement Application'] = [
-            $timeAnnouncement
-        ];
-        
-        // Get test data from factory for echo test
-        $echoTest = DialplanApplicationsDataFactory::getApplicationData('echo.test');
-        $params['Echo Test Application'] = [
-            $echoTest
-        ];
-        
-        // Get test data from factory for PHP AGI application
-        $weatherService = DialplanApplicationsDataFactory::getApplicationData('weather.service');
-        $params['Weather Service PHP AGI'] = [
-            $weatherService
-        ];
-        
-        // Get test data from factory for callback service
-        $callbackService = DialplanApplicationsDataFactory::getApplicationData('callback.service');
-        $params['Callback Service'] = [
-            $callbackService
-        ];
-        
-        // Get test data from factory for custom PHP logic
-        $customPhp = DialplanApplicationsDataFactory::getApplicationData('custom.php.logic');
-        $params['Custom PHP Logic'] = [
-            $customPhp
-        ];
+    abstract protected function getDialplanApplicationData(): array;
 
-        return $params;
-    }
 }
