@@ -51,12 +51,12 @@
             <file>Tests/CheckDropdownAfterDeleteAudioFileTest.php</file>
         </testsuite>
 
-        <testsuite name="ExtensionsBeforeCreate">
-            <file>Tests/CreateConferenceRoomsTest.php</file>
+        <testsuite name="ConferenceRooms">
+            <directory>Tests/ConferenceRooms</directory>
         </testsuite>
 
-        <testsuite name="DialPlanApplications">       
-            <directory>Tests/DialPlanApplications</directory>
+        <testsuite name="DialplanApplications">
+            <directory>Tests/DialplanApplications</directory>
         </testsuite>
 
         <testsuite name="Extensions">       
