@@ -284,28 +284,6 @@ const generalSettingsModify = {
         // Enable dropdown with sound file selection
         $('#general-settings-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
 
-        // Initialize records save period slider
-        generalSettingsModify.$recordsSavePeriodSlider
-            .slider({
-                min: 0,
-                max: 5,
-                step: 1,
-                smooth: true,
-                interpretLabel: function (value) {
-                    let labels = [
-                        globalTranslate.gs_Store1MonthOfRecords,
-                        globalTranslate.gs_Store3MonthsOfRecords,
-                        globalTranslate.gs_Store6MonthsOfRecords,
-                        globalTranslate.gs_Store1YearOfRecords,
-                        globalTranslate.gs_Store3YearsOfRecords,
-                        globalTranslate.gs_StoreAllPossibleRecords,
-                    ];
-                    return labels[value];
-                },
-                onChange: generalSettingsModify.cbAfterSelectSavePeriodSlider,
-            })
-        ;
-
         // Initialize the form
         generalSettingsModify.initializeForm();
 
