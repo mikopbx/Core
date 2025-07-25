@@ -21,6 +21,7 @@
 namespace MikoPBX\PBXCoreREST\Controllers\UserPageTracker;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\UserPageTrackerLib;
 
 /**
  * Handles the POST requests for user page tracker data.
@@ -59,15 +60,20 @@ class PostController extends BaseController
         $pageName = $data['pageName'];
         $expire = $data['expire']??300;
 
-        $keyUser = "pageTracker:user:{$userId}:viewing:{$pageName}";
-        $keyPage = "pageTracker:page:{$pageName}:viewers";
+        // Use unified page tracker mechanism
+        $pageTracker = new UserPageTrackerLib();
+        
+        $success = false;
         if ($actionName === 'pageView') {
-            $this->redis->set($keyUser, time(), ['EX' => $expire]);
-            $this->redis->sAdd($keyPage, $userId);
-            $this->redis->expire($keyPage, $expire);
+            $success = $pageTracker->recordPageView($userId, $pageName, $expire);
         } elseif ($actionName === 'pageLeave') {
-            $this->redis->del($keyUser);
-            $this->redis->sRem($keyPage, $userId);
+            $success = $pageTracker->recordPageLeave($userId, $pageName);
+        }
+        
+        if (!$success) {
+            $this->response->setStatusCode(500, 'Internal Server Error');
+            $this->response->setJsonContent(['error' => 'Failed to update page tracking']);
+            $this->response->send();
         }
     }
 }
