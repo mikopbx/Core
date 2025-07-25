@@ -144,6 +144,7 @@ const providersStatusLoopWorker = {
 /**
  *  Initialize providers status worker on document ready
  */
-$(document).ready(() => {
-    providersStatusLoopWorker.initialize();
-});
+// Disabled - using new provider-status-monitor.js with EventBus
+// $(document).ready(() => {
+//     providersStatusLoopWorker.initialize();
+// });
