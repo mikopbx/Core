@@ -1777,4 +1777,12 @@ return [
     'pr_PeerPassword' => 'Пароль узла',
     'gs_SystemWillRestart' => 'Система будет перезапущена',
     'et_ReadDocumentation' => 'Ознакомиться с документацией',
+    // Provider status monitoring
+    'pr_Status' => 'Статус',
+    'pr_ColumnStatus' => 'Статус',
+    'pr_CheckingProviderStatuses' => 'Проверка статусов провайдеров...',
+    'pr_OneProviderStatusChanged' => 'Статус провайдера изменился',
+    'pr_MultipleProviderStatusesChanged' => 'Изменились статусы %s провайдеров',
+    'pr_StatusCheckFailed' => 'Не удалось проверить статус провайдера',
+    'pr_StatusCheckRequested' => 'Запрошена проверка статуса',
 ];

@@ -65,7 +65,8 @@ use MikoPBX\PBXCoreREST\Controllers\
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController,
     UserPageTracker\PostController as UserPageTrackerPostController,
-    Passwords\GetController as PasswordsGetController
+    Passwords\GetController as PasswordsGetController,
+    Providers\GetController as ProvidersGetController
 };
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
@@ -231,6 +232,10 @@ class RouterProvider implements ServiceProviderInterface
             [SoundFilesPostController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}', 'post', '/'],
             [SoundFilesPutController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}/{id:[0-9]+}', 'put', '/'],
             [SoundFilesDeleteController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}/{id:[0-9]+}', 'delete', '/'],
+
+            // Providers routes
+            [ProvidersGetController::class, 'callAction', '/pbxcore/api/providers/{actionName}', 'get', '/'],
+
 
         ];
     }

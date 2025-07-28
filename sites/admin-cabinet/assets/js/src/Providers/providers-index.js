@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SemanticLocalization */
+/* global globalRootUrl, SemanticLocalization, ProviderStatusMonitor */
 
 
 /**
@@ -101,6 +101,33 @@ const providers = {
             }
         });
         providers.initializeDataTable();
+        
+        // Initialize provider status monitor
+        if (typeof ProviderStatusMonitor !== 'undefined') {
+            ProviderStatusMonitor.initialize();
+            
+            // Request initial status update
+            providers.requestInitialStatus();
+        }
+    },
+    
+    /**
+     * Request initial provider status on page load
+     */
+    requestInitialStatus() {
+        $.api({
+            url: '/pbxcore/api/providers/getStatuses',
+            on: 'now',
+            onSuccess(response) {
+                // Manually trigger status update
+                if (response && response.data && typeof ProviderStatusMonitor !== 'undefined') {
+                    ProviderStatusMonitor.updateAllProviderStatuses(response.data);
+                }
+            },
+            onFailure() {
+                console.error('Failed to request initial provider status');
+            }
+        });
     },
 
     /**

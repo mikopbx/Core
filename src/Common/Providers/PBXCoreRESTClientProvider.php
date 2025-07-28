@@ -102,6 +102,22 @@ class PBXCoreRESTClientProvider implements ServiceProviderInterface
             // Send the request and get the response
             $response = $client->request($method, $url, $requestData);
             $body = (string)$response->getBody();
+            
+            // Special handling for nchan endpoints
+            if (strpos($url, '/nchan/pub/') !== false) {
+                // nchan endpoints return plain text, not JSON
+                // Success is indicated by HTTP 201 status code
+                if ($response->getStatusCode() === 201) {
+                    $res->success = true;
+                    $res->data = ['body' => $body];
+                    $res->messages = ['info' => ['Message published successfully']];
+                } else {
+                    $res->success = false;
+                    $res->messages = ['error' => ['Failed to publish message, status: ' . $response->getStatusCode()]];
+                }
+                return $res;
+            }
+            
             $result = json_decode($body, true);
             $res->data = $result['data'] ?? [];
             $res->messages = $result['messages'] ?? ['error' => 'Unable to parse response from core rest api'];
