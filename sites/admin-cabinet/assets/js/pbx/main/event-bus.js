@@ -93,9 +93,9 @@ var EventBus = {
       if (event.code === 1006 || event.code === 1008) {
         // Increment error counter
         EventBus.forbidden403Count++;
-        console.warn("WebSocket authentication error: ".concat(EventBus.forbidden403Count, " consecutive 403 errors")); // If we've had 15 consecutive 403 errors, reload the page
+        console.warn("WebSocket authentication error: ".concat(EventBus.forbidden403Count, " consecutive 403 errors")); // If we've had 3 consecutive 403 errors, reload the page
 
-        if (EventBus.forbidden403Count >= 15) {
+        if (EventBus.forbidden403Count >= 3) {
           console.warn('Three consecutive 403 errors detected. Reloading page due to possible authentication loss.');
           window.location.reload();
           return;

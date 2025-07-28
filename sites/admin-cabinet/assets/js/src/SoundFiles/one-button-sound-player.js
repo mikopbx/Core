@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl */
+/* global globalRootUrl, SoundFilesAPI */
 
 /**
  * The oneButtonPlayer object handles the functionality of a one-button sound player.
@@ -56,6 +56,10 @@ class sndPlayerOneBtn {
         const audioPlayer = `<audio id="audio-player-${id}" preload="auto"><source src="" type="audio/mp3"></audio>`;
         this.$pButton.after(audioPlayer);
         this.html5Audio = document.getElementById(`audio-player-${id}`);
+        
+        // Bind callback functions to preserve context
+        this.cbCanPlayThrough = this.cbCanPlayThrough.bind(this);
+        this.cbTimeUpdate = this.cbTimeUpdate.bind(this);
         $(`#${this.soundSelectorClass}`).on('change', () => {
             this.updateAudioSource();
         });
@@ -82,20 +86,16 @@ class sndPlayerOneBtn {
         const audioFileId = $('form').form('get value', this.soundSelectorClass);
         if (audioFileId !== '' && audioFileId !== "-1") {
             const _this = this;
-            $.api({
-                url: `${globalRootUrl}sound-files/getpathbyid/${audioFileId}`,
-                on: 'now',
-                onSuccess(response) {
-                    if (response.message !== undefined) {
-                        _this.html5Audio.getElementsByTagName('source')[0].src
-                            = `/pbxcore/api/cdr/v2/playback?view=${response.message}`;
-                        _this.html5Audio.pause();
-                        _this.html5Audio.load();
-                        _this.html5Audio.oncanplaythrough = this.cbCanPlayThrough;
-                    }
-                },
-                onError() {
-                },
+            
+            // Use REST API to get sound file details
+            SoundFilesAPI.getRecord(audioFileId, (response) => {
+                if (response.result && response.data && response.data.path) {
+                    _this.html5Audio.getElementsByTagName('source')[0].src
+                        = `/pbxcore/api/cdr/v2/playback?view=${response.data.path}`;
+                    _this.html5Audio.pause();
+                    _this.html5Audio.load();
+                    _this.html5Audio.oncanplaythrough = _this.cbCanPlayThrough;
+                }
             });
         }
     }

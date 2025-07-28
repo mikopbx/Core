@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, sessionStorage */
+/* global globalRootUrl, sessionStorage, SoundFilesAPI */
 
 /**
  * Represents a sound files selector.
@@ -33,9 +33,12 @@ const SoundFilesSelector = {
     getDropdownSettingsWithEmpty(cbOnChange = null) {
         return {
             apiSettings: {
-                url: `${globalRootUrl}sound-files/getSoundFiles/custom`,
-                // cache: false,
-                // throttle: 400,
+                url: SoundFilesAPI.endpoints.getForSelect,
+                method: 'GET',
+                beforeSend(settings) {
+                    settings.data = { category: 'custom' };
+                    return settings;
+                },
                 onResponse(response) {
                     return SoundFilesSelector.formatDropdownResults(response, true);
                 },
@@ -63,9 +66,12 @@ const SoundFilesSelector = {
     getDropdownSettingsWithoutEmpty(cbOnChange = null) {
         return {
             apiSettings: {
-                url: `${globalRootUrl}sound-files/getSoundFiles/custom`,
-                // cache: false,
-                // throttle: 400,
+                url: SoundFilesAPI.endpoints.getForSelect,
+                method: 'GET',
+                beforeSend(settings) {
+                    settings.data = { category: 'custom' };
+                    return settings;
+                },
                 onResponse(response) {
                     return SoundFilesSelector.formatDropdownResults(response, false);
                 },
@@ -102,9 +108,9 @@ const SoundFilesSelector = {
             });
         }
 
-        if (response) {
+        if (response && response.result) {
             formattedResponse.success = true;
-            $.each(response.results, (index, item) => {
+            $.each(response.data, (index, item) => {
                 formattedResponse.results.push({
                     name: item.name,
                     value: item.value

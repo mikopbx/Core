@@ -1,0 +1,84 @@
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
+
+use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+
+/**
+ * Action for getting sound files list formatted for dropdown selects
+ * 
+ * @api {get} /pbxcore/api/v2/sound-files/getForSelect Get sound files for select dropdown
+ * @apiVersion 2.0.0
+ * @apiName GetForSelect
+ * @apiGroup SoundFiles
+ * 
+ * @apiParam {String} [category=custom] Category filter (custom/moh)
+ * 
+ * @apiSuccess {Boolean} result Operation result
+ * @apiSuccess {Array} data List of sound files
+ * @apiSuccess {String} data.name Display name
+ * @apiSuccess {String} data.value File ID
+ */
+class GetForSelectAction
+{
+    /**
+     * Get sound files list for dropdown select
+     * 
+     * @param array $data Request parameters
+     * @return PBXApiResult
+     */
+    public static function main(array $data): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        
+        try {
+            $category = $data['category'] ?? SoundFiles::CATEGORY_CUSTOM;
+            
+            // Validate category
+            if (!in_array($category, [SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH], true)) {
+                $category = SoundFiles::CATEGORY_CUSTOM;
+            }
+            
+            // Get files by category
+            $soundFiles = SoundFiles::find([
+                'conditions' => 'category = :category:',
+                'bind' => ['category' => $category]
+            ]);
+            
+            $soundFilesList = [];
+            foreach ($soundFiles as $soundFile) {
+                $soundFilesList[] = [
+                    'name' => $soundFile->getRepresent(),
+                    'value' => $soundFile->id
+                ];
+            }
+            
+            $res->data = $soundFilesList;
+            $res->success = true;
+            
+        } catch (\Exception $e) {
+            $res->messages['error'][] = $e->getMessage();
+        }
+        
+        return $res;
+    }
+}

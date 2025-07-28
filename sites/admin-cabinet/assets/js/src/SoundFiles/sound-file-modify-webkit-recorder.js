@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global MediaStreamRecorder, StereoAudioRecorder, PbxApi, sndPlayer */
+/* global MediaStreamRecorder, StereoAudioRecorder, PbxApi, sndPlayer, soundFileModifyRest */
 
 /**
  * WebKit sound recorder module.
@@ -160,16 +160,16 @@ const webkitRecorder = {
      */
     cbOnStopMediaRecorder() {
         console.log('data available after MediaStreamRecorder.stop() called.');
-        soundFileModify.blob = new Blob(webkitRecorder.chunks);
+        soundFileModifyRest.blob = new Blob(webkitRecorder.chunks);
         console.log('recorder stopped');
-        const fileURL = URL.createObjectURL(soundFileModify.blob);
+        const fileURL = URL.createObjectURL(soundFileModifyRest.blob);
         sndPlayer.UpdateSource(fileURL);
         const blobFile = new File([webkitRecorder.chunks[0]], 'blob' + new Date().getTime() + '.wav');
-        PbxApi.FilesUploadFile(blobFile, soundFileModify.cbUploadResumable);
+        PbxApi.FilesUploadFile(blobFile, soundFileModifyRest.cbUploadResumable);
         webkitRecorder.$recordLabel.removeClass('red');
         webkitRecorder.$stopButton.addClass('disabled');
         webkitRecorder.$recordButton.removeClass('disabled');
-        soundFileModify.$soundFileInput.val('');
+        soundFileModifyRest.$soundFileInput.val('');
     },
 
     /**

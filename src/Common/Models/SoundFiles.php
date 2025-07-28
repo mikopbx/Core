@@ -60,6 +60,12 @@ class SoundFiles extends ModelsBase
      */
     public ?string $category = '';
 
+    /**
+     * Optional description of the sound file
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $description = '';
 
     /**
      * Initialize the model.
