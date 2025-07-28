@@ -25,6 +25,8 @@ abstract class WorkerRedisBase extends WorkerBase
     protected const int REDIS_HEARTBEAT_INTERVAL = 5;
     protected const int REDIS_STATUS_TTL = 300;
     protected const int REDIS_HEARTBEAT_TTL = 10;
+    protected const int MAX_MEMORY_PERCENT = 80;
+    protected const int HEALTH_UPDATE_INTERVAL = 60;
 
     /**
      * Redis keys for status tracking
@@ -44,7 +46,7 @@ abstract class WorkerRedisBase extends WorkerBase
      * Current process type
      */
     protected string $processType = self::PROCESS_TYPES['MAIN'];
-    
+
     /**
      * Last heartbeat time
      */
@@ -54,14 +56,19 @@ abstract class WorkerRedisBase extends WorkerBase
      * Flag indicating that worker is in shutdown mode
      */
     protected bool $isShuttingDown = false;
-    
+
+    /**
+     * Last health check time
+     */
+    protected int $lastHealthCheck = 0;
+
     /**
      * Worker pool manager instance
      *
      * @var WorkerPoolManager|null
      */
     protected ?WorkerPoolManager $poolManager = null;
-    
+
     /**
      * Worker key in the pool
      *
@@ -80,12 +87,12 @@ abstract class WorkerRedisBase extends WorkerBase
             parent::__construct();
             // Set last heartbeat time
             $this->lastHeartbeatTime = microtime(true);
-            
+
             // Register in pool if maxProc > 1
             if ($this->maxProc > 1) {
                 $this->registerInPool();
             }
-            
+
             // Initial heartbeat
             $this->updateWorkerStatus();
 
@@ -120,10 +127,10 @@ abstract class WorkerRedisBase extends WorkerBase
                         // Main process - mark for shutdown but let child processes finish current jobs
                         $this->setWorkerState(self::STATE_STOPPING);
                         $this->isShuttingDown = true;
-                        
+
                         // Update status to indicate stopping state
                         $this->updateWorkerStatus();
-                        
+
                         SystemMessages::sysLogMsg(
                             static::class,
                             "Main process received shutdown signal, current jobs will finish before exit",
@@ -150,7 +157,7 @@ abstract class WorkerRedisBase extends WorkerBase
                 );
             }
         });
-        
+
         pcntl_signal(SIGTERM, function ($signal) {
             // Immediate termination
             $this->cleanupRedisKeys();
@@ -190,15 +197,22 @@ abstract class WorkerRedisBase extends WorkerBase
     {
         try {
             $this->redis = $this->di->get('redis');
-            
+            $currentTime = microtime(true);
+            $memoryUsage = memory_get_usage(true);
+
+            // Perform health check if needed
+            $this->performHealthCheck($memoryUsage, $currentTime);
+
             $status = [
                 'pid' => getmypid(),
                 'class' => static::class,
                 'state' => $this->workerState,
                 'start_time' => $this->workerStartTime,
-                'updated_at' => microtime(true),
-                'memory_usage' => memory_get_usage(true),
-                'shutting_down' => $this->isShuttingDown
+                'updated_at' => $currentTime,
+                'memory_usage' => $memoryUsage,
+                'shutting_down' => $this->isShuttingDown,
+                'uptime' => round($currentTime - $this->workerStartTime, 1),
+                'instance_id' => $this->instanceId ?? 1
             ];
 
             $statusKey = self::REDIS_STATUS_KEY_PREFIX . static::class;
@@ -207,7 +221,7 @@ abstract class WorkerRedisBase extends WorkerBase
             // Set status and heartbeat with TTL
             $this->redis->setex($statusKey, self::REDIS_STATUS_TTL, json_encode($status));
             $this->redis->setex($heartbeatKey, self::REDIS_HEARTBEAT_TTL, (string)time());
-            
+
             // Update pool heartbeat if in pool
             if ($this->maxProc > 1) {
                 $this->updatePoolHeartbeat();
@@ -224,18 +238,18 @@ abstract class WorkerRedisBase extends WorkerBase
     {
         $this->setWorkerState(self::STATE_STOPPING);
         $this->isShuttingDown = true;
-        
+
         // Update status before exiting
         $this->updateWorkerStatus();
-        
+
         // Clean up Redis keys
         $this->cleanupRedisKeys();
-        
+
         // Unregister from pool if needed
         if ($this->maxProc > 1) {
             $this->unregisterFromPool();
         }
-        
+
         SystemMessages::sysLogMsg(
             static::class,
             "Worker gracefully shutting down",
@@ -257,7 +271,7 @@ abstract class WorkerRedisBase extends WorkerBase
             $this->lastHeartbeatTime = $now;
         }
     }
-    
+
     /**
      * Check if worker is in shutdown mode and should exit after current job
      */
@@ -265,7 +279,7 @@ abstract class WorkerRedisBase extends WorkerBase
     {
         return $this->isShuttingDown;
     }
-    
+
     /**
      * Register worker in the pool
      *
@@ -280,7 +294,7 @@ abstract class WorkerRedisBase extends WorkerBase
                 getmypid(),
                 $this->instanceId
             );
-            
+
             SystemMessages::sysLogMsg(
                 static::class,
                 sprintf("Worker registered in pool: instance %d, PID %d", $this->instanceId, getmypid()),
@@ -294,7 +308,7 @@ abstract class WorkerRedisBase extends WorkerBase
             );
         }
     }
-    
+
     /**
      * Unregister worker from the pool
      *
@@ -305,7 +319,7 @@ abstract class WorkerRedisBase extends WorkerBase
         try {
             if ($this->poolManager !== null) {
                 $this->poolManager->unregisterWorker(static::class, getmypid());
-                
+
                 SystemMessages::sysLogMsg(
                     static::class,
                     sprintf("Worker unregistered from pool: PID %d", getmypid()),
@@ -320,7 +334,7 @@ abstract class WorkerRedisBase extends WorkerBase
             );
         }
     }
-    
+
     /**
      * Update worker heartbeat in the pool
      *
@@ -336,14 +350,70 @@ abstract class WorkerRedisBase extends WorkerBase
             // Silently ignore heartbeat errors to avoid log spam
         }
     }
-    
+
+    /**
+     * Perform health check during status update
+     */
+    protected function performHealthCheck(int $memoryUsage, float $currentTime): void
+    {
+        $currentTimeInt = (int) $currentTime;
+
+        if ($currentTimeInt - $this->lastHealthCheck < self::HEALTH_UPDATE_INTERVAL) {
+            return;
+        }
+
+        $memoryLimit = $this->parseMemoryLimit(ini_get('memory_limit'));
+        $memoryPercent = ($memoryUsage / $memoryLimit) * 100;
+
+        // Check if memory usage is too high
+        if ($memoryPercent > self::MAX_MEMORY_PERCENT) {
+            SystemMessages::sysLogMsg(
+                static::class,
+                sprintf(
+                    "High memory usage detected: %.1f%% (%.2f MB / %.2f MB), requesting restart",
+                    $memoryPercent,
+                    $memoryUsage / 1024 / 1024,
+                    $memoryLimit / 1024 / 1024
+                ),
+                LOG_WARNING
+            );
+            $this->needRestart = true;
+        }
+
+        $this->lastHealthCheck = $currentTimeInt;
+    }
+
+
+    /**
+     * Parse memory limit string to bytes
+     */
+    protected function parseMemoryLimit(string $limit): int
+    {
+        $unit = strtolower(substr($limit, -1));
+        $value = (int) $limit;
+
+        switch ($unit) {
+            case 'g':
+                $value *= 1024 * 1024 * 1024;
+                break;
+            case 'm':
+                $value *= 1024 * 1024;
+                break;
+            case 'k':
+                $value *= 1024;
+                break;
+        }
+
+        return $value;
+    }
+
     /**
      * Clean up on destruction
      */
     public function __destruct()
     {
         parent::__destruct();
-        
+
         if ($this->maxProc > 1) {
             $this->unregisterFromPool();
         }

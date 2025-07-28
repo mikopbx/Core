@@ -61,7 +61,8 @@ use MikoPBX\PBXCoreREST\Controllers\
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController,
     UserPageTracker\PostController as UserPageTrackerPostController,
-    Passwords\GetController as PasswordsGetController
+    Passwords\GetController as PasswordsGetController,
+    Providers\GetController as ProvidersGetController
 };
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
@@ -220,6 +221,8 @@ class RouterProvider implements ServiceProviderInterface
             [UserPageTrackerPostController::class, 'callAction', '/pbxcore/api/user-page-tracker/{actionName}', 'post', '/'],
             
             [PasswordsGetController::class, 'callAction', '/pbxcore/api/passwords/{actionName}', 'get', '/'],
+            
+            [ProvidersGetController::class, 'callAction', '/pbxcore/api/providers/{actionName}', 'get', '/'],
 
         ];
     }

@@ -63,11 +63,14 @@ class EventBusProvider implements ServiceProviderInterface
      */
     public function publish(string $type, array $data): void
     {
+        $url = '/pbxcore/api/nchan/pub/' . self::CHANNEL_ID;
+        $payload = ['type' => $type, 'data' => $data];
+        
         $di = Di::getDefault();
-        $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-            '/pbxcore/api/nchan/pub/' . self::CHANNEL_ID,
+        $response = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+            $url,
             PBXCoreRESTClientProvider::HTTP_METHOD_POST,
-            ['type' => $type, 'data' => $data],
+            $payload,
             ['Content-Type' => 'application/json']  
         ]);
     }

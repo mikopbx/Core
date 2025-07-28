@@ -530,8 +530,8 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/debugger-info.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
-                ->addJs('js/pbx/Providers/providers-index.js', true)
-                ->addJs('js/pbx/Providers/providers-status-worker.js', true);
+                ->addJs('js/pbx/Providers/provider-status-monitor.js', true)
+                ->addJs('js/pbx/Providers/providers-index.js', true);
         } elseif ($action === 'modifysip' || $action === 'modifyiax') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
