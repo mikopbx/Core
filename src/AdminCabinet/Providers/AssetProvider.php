@@ -325,6 +325,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/CallQueues/callqueue-modify.js', true)
+                ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true);
         }
@@ -416,8 +417,9 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/range/range.min.js', true)
                 ->addJs('js/vendor/jquery.address.min.js', true)
+                ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-index-player.js', true)
-                ->addJs('js/pbx/SoundFiles/sound-files-index.js', true);
+                ->addJs('js/pbx/SoundFiles/sound-files-index-rest.js', true);
         } elseif ($action === 'modify') {
             $this->headerCollectionCSS->addCss('css/vendor/range/range.css');
 
@@ -432,10 +434,11 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/range/range.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/vendor/resumable.js', true)
+                ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-file-modify-player.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-file-modify-upload-worker.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-file-modify-webkit-recorder.js', true)
-                ->addJs('js/pbx/SoundFiles/sound-file-modify.js', true);
+                ->addJs('js/pbx/SoundFiles/sound-file-modify-rest.js', true);
         }
     }
 
@@ -611,6 +614,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/OutOffWorkTime/out-of-work-time-modify.js', true)
+                ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true);
         }
@@ -682,6 +686,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/IvrMenu/ivrmenu-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/IvrMenu/ivrmenu-modify.js', true);
@@ -698,11 +703,13 @@ class AssetProvider implements ServiceProviderInterface
         if ($action === 'index') {
             $this->footerCollectionJS->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-modify.js', true);
@@ -729,6 +736,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/vendor/jquery.tablednd.js', true)
+                ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/main/form.js', true)
@@ -800,6 +808,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/datatable/responsive/dataTables.responsive.min.js', true)
                 ->addJs('js/vendor/datatable/responsive/responsive.semanticui.min.js', true)
+                ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/main/form.js', true)

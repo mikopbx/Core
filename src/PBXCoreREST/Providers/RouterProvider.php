@@ -56,6 +56,10 @@ use MikoPBX\PBXCoreREST\Controllers\
     ConferenceRooms\PostController as ConferenceRoomsPostController,
     ConferenceRooms\PutController as ConferenceRoomsPutController,
     ConferenceRooms\DeleteController as ConferenceRoomsDeleteController,
+    SoundFiles\GetController as SoundFilesGetController,
+    SoundFiles\PostController as SoundFilesPostController,
+    SoundFiles\PutController as SoundFilesPutController,
+    SoundFiles\DeleteController as SoundFilesDeleteController,
     Users\GetController as UsersGetController,
     Nchan\GetController as NchanGetController,
     License\GetController as LicenseGetController,
@@ -220,6 +224,13 @@ class RouterProvider implements ServiceProviderInterface
             [UserPageTrackerPostController::class, 'callAction', '/pbxcore/api/user-page-tracker/{actionName}', 'post', '/'],
             
             [PasswordsGetController::class, 'callAction', '/pbxcore/api/passwords/{actionName}', 'get', '/'],
+            
+            // Sound Files routes
+            [SoundFilesGetController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}', 'get', '/'],
+            [SoundFilesGetController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}/{id}', 'get', '/'],
+            [SoundFilesPostController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}', 'post', '/'],
+            [SoundFilesPutController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}/{id:[0-9]+}', 'put', '/'],
+            [SoundFilesDeleteController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}/{id:[0-9]+}', 'delete', '/'],
 
         ];
     }

@@ -35,8 +35,8 @@ class IndexSoundPlayer {
             // Prevent double processing
             return;
         }
-        this.$pButton = $row.find('i.play'); // play button
-        this.$dButton = $row.find('i.download'); // download button
+        this.$pButton = $row.find('button.play-button'); // play button
+        this.$dButton = $row.find('button.download-button'); // download button
         this.$slider = $row.find('div.cdr-player');
         this.$spanDuration = $row.find('span.cdr-duration');
         this.html5Audio.removeEventListener('timeupdate', this.cbOnMetadataLoaded, false);
@@ -53,7 +53,10 @@ class IndexSoundPlayer {
         // Download button event listener
         this.$dButton.on('click', (e) => {
             e.preventDefault();
-            window.location = $(e.target).attr('data-value');
+            const downloadUrl = this.$dButton.attr('data-value');
+            if (downloadUrl) {
+                window.location = downloadUrl;
+            }
         });
 
         // Loaded metadata event listener
@@ -121,7 +124,7 @@ class IndexSoundPlayer {
             const $row = $(this).closest('tr');
             $row.find('div.cdr-player').range('set value', rangePosition);
             if (rangePosition === 100) {
-                $row.find('i.pause').removeClass('pause').addClass('play');
+                $row.find('button.play-button i.pause').removeClass('pause').addClass('play');
             }
         }
     }
@@ -134,12 +137,12 @@ class IndexSoundPlayer {
             // Start playing the audio
             this.html5Audio.play();
             // Update the play button icon to pause
-            this.$pButton.removeClass('play').addClass('pause');
+            this.$pButton.find('i').removeClass('play').addClass('pause');
         } else {
             // Pause the audio
             this.html5Audio.pause();
             // Update the play button icon to play
-            this.$pButton.removeClass('pause').addClass('play');
+            this.$pButton.find('i').removeClass('pause').addClass('play');
         }
     }
 }
