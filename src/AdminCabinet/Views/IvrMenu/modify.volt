@@ -91,6 +91,4 @@
 {{ close('form') }}
 
 
-<script type="application/javascript">
-    var ivrActions = '{{ ivractions|json_encode }}';
-</script>
+{# IVR actions data will be loaded via REST API in JavaScript #}

@@ -1,5 +1,3 @@
-"use strict";
-
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -18,39 +16,133 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalTranslate */
+/* global globalRootUrl, PbxApi, globalTranslate, Config */
 
 /**
- * This module encapsulates a collection of functions related to Call queues.
- *
- * @module Call queues
+ * IvrMenuAPI - REST API for IVR menu management
+ * 
+ * Uses unified approach with centralized endpoint definitions.
+ * This provides:
+ * - Single point of API URL management
+ * - Easy API version switching (v2 -> v3)
+ * - Consistent endpoint usage throughout code
+ * - Simplified debugging and support
  */
-var IVRMenuAPI = {
-  /**
-   * Deletes the ivr menu record with its dependent tables.
-   *
-   * @param {string} id - id of deleting ivr menu record.
-   * @param {function} callback - The callback function to handle the API response.
-   */
-  deleteRecord: function deleteRecord(id, callback) {
-    $.api({
-      url: PbxApi.ivrMenuDeleteRecord,
-      on: 'now',
-      method: 'POST',
-      data: {
-        id: id
-      },
-      successTest: PbxApi.successTest,
-      onSuccess: function onSuccess(response) {
-        callback(response);
-      },
-      onFailure: function onFailure(response) {
-        callback(response);
-      },
-      onError: function onError() {
-        callback(false);
-      }
-    });
-  }
+const IvrMenuAPI = {
+    /**
+     * API endpoints
+     */
+    apiUrl: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/`,
+    
+    // Endpoint definitions for unification
+    endpoints: {
+        getList: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/getList`,
+        getRecord: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/getRecord`,
+        saveRecord: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/saveRecord`,
+        deleteRecord: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/deleteRecord`
+    },
+    
+    /**
+     * Get record by ID
+     * @param {string} id - Record ID or empty string for new
+     * @param {function} callback - Callback function
+     */
+    getRecord(id, callback) {
+        const recordId = (!id || id === '') ? 'new' : id;
+        
+        $.api({
+            url: `${this.endpoints.getRecord}/${recordId}`,
+            method: 'GET',
+            on: 'now',
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: 'Network error'}});
+            }
+        });
+    },
+    
+    /**
+     * Get list of all records
+     * @param {function} callback - Callback function
+     */
+    getList(callback) {
+        $.api({
+            url: this.endpoints.getList,
+            method: 'GET',
+            on: 'now',
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, data: []});
+            }
+        });
+    },
+    
+    /**
+     * Save record
+     * @param {object} data - Data to save
+     * @param {function} callback - Callback function
+     */
+    saveRecord(data, callback) {
+        const method = data.id ? 'PUT' : 'POST';
+        const url = data.id ? 
+            `${this.endpoints.saveRecord}/${data.id}` : 
+            this.endpoints.saveRecord;
+        
+        $.api({
+            url: url,
+            method: method,
+            data: data,
+            on: 'now',
+            beforeSend(settings) {
+                // If actions field exists, send as JSON to avoid URL encoding
+                if (data.actions) {
+                    settings.contentType = 'application/json';
+                    settings.data = JSON.stringify(data);
+                }
+                return settings;
+            },
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: 'Network error'}});
+            }
+        });
+    },
+    
+    /**
+     * Delete record
+     * @param {string} id - Record ID
+     * @param {function} callback - Callback function
+     */
+    deleteRecord(id, callback) {
+        $.api({
+            url: `${this.endpoints.deleteRecord}/${id}`,
+            on: 'now',
+            method: 'DELETE',
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback(false);
+            }
+        });
+    }
 };
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9QYnhBUEkvaXZyTWVudUFQSS5qcyJdLCJuYW1lcyI6WyJJVlJNZW51QVBJIiwiZGVsZXRlUmVjb3JkIiwiaWQiLCJjYWxsYmFjayIsIiQiLCJhcGkiLCJ1cmwiLCJQYnhBcGkiLCJpdnJNZW51RGVsZXRlUmVjb3JkIiwib24iLCJtZXRob2QiLCJkYXRhIiwic3VjY2Vzc1Rlc3QiLCJvblN1Y2Nlc3MiLCJyZXNwb25zZSIsIm9uRmFpbHVyZSIsIm9uRXJyb3IiXSwibWFwcGluZ3MiOiI7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTs7QUFFQTs7QUFFQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBRUEsSUFBTUEsVUFBVSxHQUFFO0FBQ2Q7QUFDSjtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0lDLEVBQUFBLFlBUGMsd0JBT0RDLEVBUEMsRUFPR0MsUUFQSCxFQU9hO0FBQ3ZCQyxJQUFBQSxDQUFDLENBQUNDLEdBQUYsQ0FBTTtBQUNGQyxNQUFBQSxHQUFHLEVBQUVDLE1BQU0sQ0FBQ0MsbUJBRFY7QUFFRkMsTUFBQUEsRUFBRSxFQUFFLEtBRkY7QUFHRkMsTUFBQUEsTUFBTSxFQUFFLE1BSE47QUFJRkMsTUFBQUEsSUFBSSxFQUFFO0FBQUNULFFBQUFBLEVBQUUsRUFBRkE7QUFBRCxPQUpKO0FBS0ZVLE1BQUFBLFdBQVcsRUFBRUwsTUFBTSxDQUFDSyxXQUxsQjtBQU1GQyxNQUFBQSxTQU5FLHFCQU1RQyxRQU5SLEVBTWtCO0FBQ2hCWCxRQUFBQSxRQUFRLENBQUNXLFFBQUQsQ0FBUjtBQUNILE9BUkM7QUFTRkMsTUFBQUEsU0FURSxxQkFTUUQsUUFUUixFQVNrQjtBQUNoQlgsUUFBQUEsUUFBUSxDQUFDVyxRQUFELENBQVI7QUFDSCxPQVhDO0FBWUZFLE1BQUFBLE9BWkUscUJBWVE7QUFDTmIsUUFBQUEsUUFBUSxDQUFDLEtBQUQsQ0FBUjtBQUNIO0FBZEMsS0FBTjtBQWdCSDtBQXhCYSxDQUFsQiIsInNvdXJjZXNDb250ZW50IjpbIi8qXG4gKiBNaWtvUEJYIC0gZnJlZSBwaG9uZSBzeXN0ZW0gZm9yIHNtYWxsIGJ1c2luZXNzXG4gKiBDb3B5cmlnaHQgwqkgMjAxNy0yMDIzIEFsZXhleSBQb3J0bm92IGFuZCBOaWtvbGF5IEJla2V0b3ZcbiAqXG4gKiBUaGlzIHByb2dyYW0gaXMgZnJlZSBzb2Z0d2FyZTogeW91IGNhbiByZWRpc3RyaWJ1dGUgaXQgYW5kL29yIG1vZGlmeVxuICogaXQgdW5kZXIgdGhlIHRlcm1zIG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBhcyBwdWJsaXNoZWQgYnlcbiAqIHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb247IGVpdGhlciB2ZXJzaW9uIDMgb2YgdGhlIExpY2Vuc2UsIG9yXG4gKiAoYXQgeW91ciBvcHRpb24pIGFueSBsYXRlciB2ZXJzaW9uLlxuICpcbiAqIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0IHdpbGwgYmUgdXNlZnVsLFxuICogYnV0IFdJVEhPVVQgQU5ZIFdBUlJBTlRZOyB3aXRob3V0IGV2ZW4gdGhlIGltcGxpZWQgd2FycmFudHkgb2ZcbiAqIE1FUkNIQU5UQUJJTElUWSBvciBGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRS4gIFNlZSB0aGVcbiAqIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGZvciBtb3JlIGRldGFpbHMuXG4gKlxuICogWW91IHNob3VsZCBoYXZlIHJlY2VpdmVkIGEgY29weSBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgYWxvbmcgd2l0aCB0aGlzIHByb2dyYW0uXG4gKiBJZiBub3QsIHNlZSA8aHR0cHM6Ly93d3cuZ251Lm9yZy9saWNlbnNlcy8+LlxuICovXG5cbi8qIGdsb2JhbCBQYnhBcGksIGdsb2JhbFRyYW5zbGF0ZSAqL1xuXG4vKipcbiAqIFRoaXMgbW9kdWxlIGVuY2Fwc3VsYXRlcyBhIGNvbGxlY3Rpb24gb2YgZnVuY3Rpb25zIHJlbGF0ZWQgdG8gQ2FsbCBxdWV1ZXMuXG4gKlxuICogQG1vZHVsZSBDYWxsIHF1ZXVlc1xuICovXG5cbmNvbnN0IElWUk1lbnVBUEk9IHtcbiAgICAvKipcbiAgICAgKiBEZWxldGVzIHRoZSBpdnIgbWVudSByZWNvcmQgd2l0aCBpdHMgZGVwZW5kZW50IHRhYmxlcy5cbiAgICAgKlxuICAgICAqIEBwYXJhbSB7c3RyaW5nfSBpZCAtIGlkIG9mIGRlbGV0aW5nIGl2ciBtZW51IHJlY29yZC5cbiAgICAgKiBAcGFyYW0ge2Z1bmN0aW9ufSBjYWxsYmFjayAtIFRoZSBjYWxsYmFjayBmdW5jdGlvbiB0byBoYW5kbGUgdGhlIEFQSSByZXNwb25zZS5cbiAgICAgKi9cbiAgICBkZWxldGVSZWNvcmQoaWQsIGNhbGxiYWNrKSB7XG4gICAgICAgICQuYXBpKHtcbiAgICAgICAgICAgIHVybDogUGJ4QXBpLml2ck1lbnVEZWxldGVSZWNvcmQsXG4gICAgICAgICAgICBvbjogJ25vdycsXG4gICAgICAgICAgICBtZXRob2Q6ICdQT1NUJyxcbiAgICAgICAgICAgIGRhdGE6IHtpZH0sXG4gICAgICAgICAgICBzdWNjZXNzVGVzdDogUGJ4QXBpLnN1Y2Nlc3NUZXN0LFxuICAgICAgICAgICAgb25TdWNjZXNzKHJlc3BvbnNlKSB7XG4gICAgICAgICAgICAgICAgY2FsbGJhY2socmVzcG9uc2UpO1xuICAgICAgICAgICAgfSxcbiAgICAgICAgICAgIG9uRmFpbHVyZShyZXNwb25zZSkge1xuICAgICAgICAgICAgICAgIGNhbGxiYWNrKHJlc3BvbnNlKTtcbiAgICAgICAgICAgIH0sXG4gICAgICAgICAgICBvbkVycm9yKCkge1xuICAgICAgICAgICAgICAgIGNhbGxiYWNrKGZhbHNlKTtcbiAgICAgICAgICAgIH0sXG4gICAgICAgIH0pO1xuICAgIH0sXG59Il19

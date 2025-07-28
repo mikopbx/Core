@@ -24,25 +24,47 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\IvrMenuManagementProcessor;
 
 /**
- * Handles the GET requests for ivr menu data.
- *
- * @RoutePrefix("/pbxcore/api/ivr-menu")
- *
+ * GET controller for IVR menu management
+ * 
+ * @RoutePrefix("/pbxcore/api/v2/ivr-menu")
+ * 
  * @examples
+ * curl http://127.0.0.1/pbxcore/api/v2/ivr-menu/getRecord/IVR-123ABC
+ * curl http://127.0.0.1/pbxcore/api/v2/ivr-menu/getRecord/new
+ * curl http://127.0.0.1/pbxcore/api/v2/ivr-menu/getList
+ * 
+ * @package MikoPBX\PBXCoreREST\Controllers\IvrMenu
  */
 class GetController extends BaseController
 {
     /**
      * Handles the call to different actions based on the action name
      *
-     * @param string $actionName The name of the action.
-     *
-     *
+     * @param string $actionName The name of the action
+     * @param string|null $id Optional ID parameter for record operations
+     * 
+     * Get IVR menu record by ID, if ID is 'new' or empty returns structure with default data
+     * @Get("/getRecord/{id}")
+     * 
+     * Retrieves the list of all IVR menus
+     * @Get("/getList")
+     * 
+     * @param string $actionName
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
         $requestData = $this->request->get();
-        $this->sendRequestToBackendWorker(IvrMenuManagementProcessor::class, $actionName, $requestData);
+        
+        if (!empty($id)){
+            $requestData['id'] = $id;
+        }
+        
+        // Send request to Worker
+        $this->sendRequestToBackendWorker(
+            IvrMenuManagementProcessor::class, 
+            $actionName, 
+            $requestData
+        );
     }
 }

@@ -50,6 +50,8 @@ use MikoPBX\PBXCoreREST\Controllers\
     CallQueues\PostController as CallQueuesPostController,
     IvrMenu\GetController as IvrMenuGetController,
     IvrMenu\PostController as IvrMenuPostController,
+    IvrMenu\PutController as IvrMenuPutController,
+    IvrMenu\DeleteController as IvrMenuDeleteController,
     DialplanApplications\GetController as DialplanApplicationsGetController,
     DialplanApplications\PostController as DialplanApplicationsPostController,
     ConferenceRooms\GetController as ConferenceRoomsGetController,
@@ -183,8 +185,11 @@ class RouterProvider implements ServiceProviderInterface
             [CallQueuesGetController::class, 'callAction', '/pbxcore/api/call-queues/{actionName}', 'get', '/'],
             [CallQueuesPostController::class, 'callAction', '/pbxcore/api/call-queues/{actionName}', 'post', '/'],
 
-            [IvrMenuGetController::class, 'callAction', '/pbxcore/api/ivr-menu/{actionName}', 'get', '/'],
-            [IvrMenuPostController::class, 'callAction', '/pbxcore/api/ivr-menu/{actionName}', 'post', '/'],
+            [IvrMenuGetController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}', 'get', '/'],
+            [IvrMenuGetController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
+            [IvrMenuPostController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}', 'post', '/'],
+            [IvrMenuPutController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
+            [IvrMenuDeleteController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
             
             [ConferenceRoomsGetController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}', 'get', '/'],
             [ConferenceRoomsGetController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],

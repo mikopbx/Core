@@ -16,27 +16,123 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalTranslate */
+/* global globalRootUrl, PbxApi, globalTranslate, Config */
 
 /**
- * This module encapsulates a collection of functions related to Call queues.
- *
- * @module Call queues
+ * IvrMenuAPI - REST API for IVR menu management
+ * 
+ * Uses unified approach with centralized endpoint definitions.
+ * This provides:
+ * - Single point of API URL management
+ * - Easy API version switching (v2 -> v3)
+ * - Consistent endpoint usage throughout code
+ * - Simplified debugging and support
  */
-
-const IVRMenuAPI= {
+const IvrMenuAPI = {
     /**
-     * Deletes the ivr menu record with its dependent tables.
-     *
-     * @param {string} id - id of deleting ivr menu record.
-     * @param {function} callback - The callback function to handle the API response.
+     * API endpoints
+     */
+    apiUrl: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/`,
+    
+    // Endpoint definitions for unification
+    endpoints: {
+        getList: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/getList`,
+        getRecord: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/getRecord`,
+        saveRecord: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/saveRecord`,
+        deleteRecord: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/deleteRecord`
+    },
+    
+    /**
+     * Get record by ID
+     * @param {string} id - Record ID or empty string for new
+     * @param {function} callback - Callback function
+     */
+    getRecord(id, callback) {
+        const recordId = (!id || id === '') ? 'new' : id;
+        
+        $.api({
+            url: `${this.endpoints.getRecord}/${recordId}`,
+            method: 'GET',
+            on: 'now',
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: 'Network error'}});
+            }
+        });
+    },
+    
+    /**
+     * Get list of all records
+     * @param {function} callback - Callback function
+     */
+    getList(callback) {
+        $.api({
+            url: this.endpoints.getList,
+            method: 'GET',
+            on: 'now',
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, data: []});
+            }
+        });
+    },
+    
+    /**
+     * Save record
+     * @param {object} data - Data to save
+     * @param {function} callback - Callback function
+     */
+    saveRecord(data, callback) {
+        const method = data.id ? 'PUT' : 'POST';
+        const url = data.id ? 
+            `${this.endpoints.saveRecord}/${data.id}` : 
+            this.endpoints.saveRecord;
+        
+        $.api({
+            url: url,
+            method: method,
+            data: data,
+            on: 'now',
+            beforeSend(settings) {
+                // If actions field exists, send as JSON to avoid URL encoding
+                if (data.actions) {
+                    settings.contentType = 'application/json';
+                    settings.data = JSON.stringify(data);
+                }
+                return settings;
+            },
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: 'Network error'}});
+            }
+        });
+    },
+    
+    /**
+     * Delete record
+     * @param {string} id - Record ID
+     * @param {function} callback - Callback function
      */
     deleteRecord(id, callback) {
         $.api({
-            url: PbxApi.ivrMenuDeleteRecord,
+            url: `${this.endpoints.deleteRecord}/${id}`,
             on: 'now',
-            method: 'POST',
-            data: {id},
+            method: 'DELETE',
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response);
@@ -46,7 +142,7 @@ const IVRMenuAPI= {
             },
             onError() {
                 callback(false);
-            },
+            }
         });
-    },
-}
+    }
+};

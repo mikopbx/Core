@@ -20,60 +20,82 @@
 namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
 use MikoPBX\Common\Models\IvrMenu;
-use MikoPBX\Common\Providers\MainDatabaseProvider;
+use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di\Di;
-use Phalcon\Di\Injectable;
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
 
 /**
- *  Class DeleteRecord
- *  Delete an ivr menu and all its dependencies including actions.
- *
- * @package MikoPBX\PBXCoreREST\Lib\IvrMenu
+ * Action for deleting IVR menu record
+ * 
+ * @api {delete} /pbxcore/api/v2/ivr-menu/deleteRecord/:id Delete IVR menu
+ * @apiVersion 2.0.0
+ * @apiName DeleteRecord
+ * @apiGroup IvrMenu
+ * 
+ * @apiParam {String} id Record ID to delete
+ * 
+ * @apiSuccess {Boolean} result Operation result
+ * @apiSuccess {Object} data Deletion result
+ * @apiSuccess {String} data.deleted_id ID of deleted record
  */
-class DeleteRecordAction extends Injectable
+class DeleteRecordAction
 {
-
     /**
-     * Deletes the ivr menu record with its dependent tables.
-     *
-     * @param string $id The ID of the queue to be deleted.
-     * @return PBXApiResult Result of the delete operation.
+     * Delete IVR menu record
+     * 
+     * @param string $id - Record ID to delete
+     * @return PBXApiResult
      */
     public static function main(string $id): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $res->success = true;
-
-        $di = Di::getDefault();
-        $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
-
-        // Find the queue by ID
-        $record = IvrMenu::findFirstByUniqid($id);
-        if ($record===null){
-            $res->messages['error'][] = 'IvrMenu with id '.$id.' does not exist';
-            $res->success = false;
-            return  $res;
+        
+        if (empty($id)) {
+            $res->messages['error'][] = 'Record ID is required';
+            return $res;
         }
-
-        $db->begin();
-
-        // Delete associated extensions
-        $extension = $record->Extensions;
-        if ($extension!==null && !$extension->delete()) {
-            $res->messages['error'][] = implode(PHP_EOL, $extension->getMessages());
-            $res->success = false;
+        
+        try {
+            // Find record by uniqid or id
+            $ivrMenu = IvrMenu::findFirst([
+                'conditions' => 'uniqid = :uniqid: OR id = :id:',
+                'bind' => ['uniqid' => $id, 'id' => $id]
+            ]);
+            
+            if (!$ivrMenu) {
+                $res->messages['error'][] = 'api_IvrMenuNotFound';
+                return $res;
+            }
+            
+            // Delete in transaction using BaseActionHelper
+            BaseActionHelper::executeInTransaction(function() use ($ivrMenu) {
+                // Delete related extension
+                $extension = Extensions::findFirstByNumber($ivrMenu->extension);
+                if ($extension) {
+                    if (!$extension->delete()) {
+                        throw new \Exception('Failed to delete extension: ' . implode(', ', $extension->getMessages()));
+                    }
+                }
+                
+                // IVR menu actions will be deleted automatically due to CASCADE relation
+                
+                // Delete IVR menu itself
+                if (!$ivrMenu->delete()) {
+                    throw new \Exception('Failed to delete IVR menu: ' . implode(', ', $ivrMenu->getMessages()));
+                }
+                
+                return true;
+            });
+            
+            $res->success = true;
+            $res->data = ['deleted_id' => $id];
+            
+        } catch (\Exception $e) {
+            $res->messages['error'][] = $e->getMessage();
         }
-
-        if (!$res->success) {
-            $db->rollback();
-        } else {
-            $db->commit();
-        }
-
-        $res->data['id'] = $id;
+        
         return $res;
     }
-
 }

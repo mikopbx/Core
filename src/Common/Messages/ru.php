@@ -915,6 +915,13 @@ return [
     'iv_ImpossibleToDeleteIVRMenu' => 'Невозможно удалить IVR меню, на него есть активные ссылки',
     'iv_EmptyTableTitle' => 'Создайте интерактивное голосовое меню',
     'iv_EmptyTableDescription' => 'IVR позволяет абонентам выбирать нужное направление с помощью тонального набора',
+    'iv_IvrMenuDeleted' => 'IVR меню успешно удалено',
+    'iv_ValidateTimeout' => 'Таймаут должен быть от 1 до 99 секунд',
+    'iv_ValidateRepeatCount' => 'Количество повторов должно быть от 1 до 99',
+    'iv_ValidateExtensionFormat' => 'Номер должен содержать от 2 до 8 цифр',
+    'iv_ValidateDigitsIsEmpty' => 'Не указаны цифры для действия',
+    'iv_DigitsPlaceholder' => 'Цифры',
+    'iv_IvrMenuNotFound' => 'IVR меню не найдено',
     
     // Tooltips для IVR меню
     'iv_NumberOfRepeatTooltip_header' => 'Количество повторов голосового приветствия',

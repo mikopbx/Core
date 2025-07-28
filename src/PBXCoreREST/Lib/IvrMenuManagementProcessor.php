@@ -20,23 +20,32 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\IvrMenu\DeleteRecordAction;
+use MikoPBX\PBXCoreREST\Lib\IvrMenu\{
+    GetRecordAction,
+    GetListAction,
+    SaveRecordAction,
+    DeleteRecordAction
+};
 use Phalcon\Di\Injectable;
 
 /**
- * Class IvrMenuManagementProcessor
+ * IVR menu management processor
  *
+ * Handles all IVR menu management operations including:
+ * - getRecord: Get single IVR menu by ID or create new structure
+ * - getList: Get list of all IVR menus
+ * - saveRecord: Create or update IVR menu
+ * - deleteRecord: Delete IVR menu
+ * 
  * @package MikoPBX\PBXCoreREST\Lib
- *
  */
 class IvrMenuManagementProcessor extends Injectable
 {
     /**
-     * Processes IvrMenu management requests
+     * Processes IVR menu management requests
      *
-     * @param array $request
-     *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @param array $request Request data with 'action' and 'data' fields
+     * @return PBXApiResult API response object with success status and data
      */
     public static function callBack(array $request): PBXApiResult
     {
@@ -45,20 +54,34 @@ class IvrMenuManagementProcessor extends Injectable
 
         $action = $request['action'];
         $data = $request['data'];
+        
         switch ($action) {
+            case 'getRecord':
+                $recordId = $data['id'] ?? null;
+                $res = GetRecordAction::main($recordId);
+                break;
+                
+            case 'getList':
+                $res = GetListAction::main($data);
+                break;
+                
+            case 'saveRecord':
+                $res = SaveRecordAction::main($data);
+                break;
+                
             case 'deleteRecord':
                 if (!empty($data['id'])) {
                     $res = DeleteRecordAction::main($data['id']);
                 } else {
-                    $res->messages['error'][] = 'Empty ID in POST/GET data';
+                    $res->messages['error'][] = 'Empty ID in request data';
                 }
                 break;
+                
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }
 
         $res->function = $action;
-
         return $res;
     }
 }

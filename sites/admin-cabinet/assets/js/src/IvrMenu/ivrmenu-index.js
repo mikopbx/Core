@@ -16,81 +16,213 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SemanticLocalization, UserMessage,  */
+/* global globalRootUrl, IvrMenuAPI, Extensions, globalTranslate, UserMessage, SemanticLocalization */
 
 /**
- * Define object which manage IVR (Interactive Voice Menu) list
- *
- * @module ivrMenuIndex
+ * IVR menu table management module
  */
 const ivrMenuIndex = {
-    $ivrTable: $('#ivr-menu-table'),
-    initialize() {
-
-        // Add double click listener to table cells
-        $('.menu-row td').on('dblclick', (e) => {
-            // When cell is double clicked, navigate to corresponding modify page
-            const id = $(e.target).closest('tr').attr('id');
-            window.location = `${globalRootUrl}ivr-menu/modify/${id}`;
-        });
-
-        // Initialize the data table
-        ivrMenuIndex.initializeDataTable();
-
-        // Set up delete functionality on delete button click.
-        $('body').on('click', 'a.delete', (e) => {
-            e.preventDefault();
-            $(e.target).addClass('disabled');
-            // Get the ivr menu  ID from the closest table row.
-            const rowId = $(e.target).closest('tr').attr('id');
-
-            // Remove any previous AJAX messages.
-            $('.message.ajax').remove();
-
-            // Call the PbxApi method to delete the IVR menu record.
-            IVRMenuAPI.deleteRecord(rowId, ivrMenuIndex.cbAfterDeleteRecord);
-        });
-    },
+    $ivrMenuTable: $('#ivr-menu-table'),
+    dataTable: {},
 
     /**
-     * Initialize data tables on table
+     * Initialize the module
+     */
+    initialize() {
+        // Initially show placeholder until data loads
+        ivrMenuIndex.toggleEmptyPlaceholder(true);
+        
+        ivrMenuIndex.initializeDataTable();
+    },
+    
+    /**
+     * Initialize DataTable
      */
     initializeDataTable() {
-        ivrMenuIndex.$ivrTable.DataTable({
-            lengthChange: false, // Disable ability to change number of entries shown
-            paging: false, // Disable pagination
+        ivrMenuIndex.dataTable = ivrMenuIndex.$ivrMenuTable.DataTable({
+            ajax: {
+                url: IvrMenuAPI.endpoints.getList,
+                dataSrc: function(json) {
+                    // Manage empty state
+                    ivrMenuIndex.toggleEmptyPlaceholder(
+                        !json.result || !json.data || json.data.length === 0
+                    );
+                    return json.result ? json.data : [];
+                }
+            },
             columns: [
-                null,
-                null,
-                null,
-                null,
-                null,
-                {orderable: false, searchable: false},
+                {
+                    data: 'extension',
+                    className: 'centered collapsing'
+                },
+                {
+                    data: 'name',
+                    className: 'collapsing'
+                },
+                {
+                    data: 'actions',
+                    className: 'collapsing',
+                    render: function(data) {
+                        if (!data || data.length === 0) {
+                            return '<small>—</small>';
+                        }
+                        const actionsHtml = data.map(action => 
+                            `${action.digits} - ${action.represent}`
+                        ).join('<br>');
+                        return `<small>${actionsHtml}</small>`;
+                    }
+                },
+                {
+                    data: 'timeoutExtensionRepresent',
+                    className: 'hide-on-mobile collapsing',
+                    render: function(data) {
+                        return data ? `<small>${data}</small>` : '<small>—</small>';
+                    }
+                },
+                {
+                    data: 'description',
+                    className: 'hide-on-mobile',
+                    orderable: false,
+                    // No collapsing class - this column will stretch to fill remaining space
+                    render: function(data) {
+                        if (!data || data.trim() === '') {
+                            return '—';
+                        }
+                        // Create popup button for description like in original
+                        return `<div class="ui basic icon button popuped" 
+                                    data-content="${data.replace(/"/g, '&quot;')}" 
+                                    data-position="top right" 
+                                    data-variation="wide">
+                                    <i class="file text icon"></i>
+                                </div>`;
+                    }
+                },
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    className: 'right aligned collapsing',
+                    render: function(data, type, row) {
+                        return `<div class="ui tiny basic icon buttons action-buttons">
+                            <a href="${globalRootUrl}ivr-menu/modify/${row.uniqid}" 
+                               class="ui button edit popuped" 
+                               data-content="${globalTranslate.bt_ToolTipEdit}">
+                                <i class="icon edit blue"></i>
+                            </a>
+                            <a href="#" 
+                               data-value="${row.uniqid}" 
+                               class="ui button delete two-steps-delete popuped" 
+                               data-content="${globalTranslate.bt_ToolTipDelete}">
+                                <i class="icon trash red"></i>
+                            </a>
+                        </div>`;
+                    }
+                }
             ],
-            order: [1, 'asc'],
+            order: [[0, 'asc']],
+            lengthChange: false,
+            paging: false,
+            searching: true,
+            info: false,
             language: SemanticLocalization.dataTableLocalisation,
+            drawCallback: function() {
+                // Initialize Semantic UI elements
+                ivrMenuIndex.$ivrMenuTable.find('.popuped').popup();
+                
+                // Move Add New button to the correct DataTables grid position (like in original)
+                const $addButton = $('#add-new-button');
+                const $wrapper = $('#ivr-menu-table_wrapper');
+                const $leftColumn = $wrapper.find('.eight.wide.column').first();
+                
+                if ($addButton.length && $leftColumn.length) {
+                    // Move button to the left column of DataTables grid
+                    $leftColumn.append($addButton);
+                    $addButton.show();
+                }
+                
+                // Double-click for editing
+                ivrMenuIndex.initializeDoubleClickEdit();
+            }
         });
-
-        // Move the "Add New" button to the first eight-column div
-        $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
+        
+        
+        // Handle deletion using DeleteSomething.js
+        // DeleteSomething.js automatically handles first click
+        // We only listen for second click (when two-steps-delete class is removed)
+        ivrMenuIndex.$ivrMenuTable.on('click', 'a.delete:not(.two-steps-delete)', function(e) {
+            e.preventDefault();
+            const $button = $(this);
+            const menuId = $button.attr('data-value');
+            
+            // Add loading indicator and disable button
+            $button.addClass('loading disabled');
+            
+            IvrMenuAPI.deleteRecord(menuId, ivrMenuIndex.cbAfterDeleteRecord);
+        });
     },
-
+    
     /**
-     * Callback function executed after deleting a record.
-     * @param {Object} response - The response object from the API.
+     * Callback after record deletion
      */
-    cbAfterDeleteRecord(response){
+    cbAfterDeleteRecord(response) {
         if (response.result === true) {
-            // Remove the deleted record's table row.
-            ivrMenuIndex.$ivrTable.find(`tr[id=${response.data.id}]`).remove();
-            // Call the callback function for data change.
-            Extensions.cbOnDataChanged();
+            // Reload table
+            ivrMenuIndex.dataTable.ajax.reload();
+            
+            // Update related components
+            if (typeof Extensions !== 'undefined' && Extensions.cbOnDataChanged) {
+                Extensions.cbOnDataChanged();
+            }
+            
+            UserMessage.showSuccess(globalTranslate.iv_IvrMenuDeleted);
         } else {
-            // Show an error message if deletion was not successful.
-            UserMessage.showError(response.messages.error, globalTranslate.iv_ImpossibleToDeleteIVRMenu);
+            UserMessage.showError(
+                response.messages?.error || 
+                globalTranslate.iv_ImpossibleToDeleteIvrMenu
+            );
         }
-        $('a.delete').removeClass('disabled');
+        
+        // Remove loading indicator and restore button to initial state
+        $('a.delete').removeClass('loading disabled');
     },
+    
+    /**
+     * Toggle empty table placeholder visibility
+     */
+    toggleEmptyPlaceholder(isEmpty) {
+        if (isEmpty) {
+            $('#ivr-table-container').hide();
+            $('#add-new-button').hide();
+            $('#empty-table-placeholder').show();
+        } else {
+            $('#empty-table-placeholder').hide();
+            $('#add-new-button').show();
+            $('#ivr-table-container').show();
+        }
+    },
+    
+    /**
+     * Initialize double-click for editing
+     * IMPORTANT: Exclude cells with ui right aligned class to avoid conflict with delete-something.js
+     */
+    initializeDoubleClickEdit() {
+        ivrMenuIndex.$ivrMenuTable.on('dblclick', 'tbody td:not(.ui.right.aligned)', function() {
+            const data = ivrMenuIndex.dataTable.row(this).data();
+            if (data && data.uniqid) {
+                window.location = `${globalRootUrl}ivr-menu/modify/${data.uniqid}`;
+            }
+        });
+    },
+    
+    /**
+     * Cleanup event handlers
+     */
+    destroy() {
+        // Destroy DataTable if exists
+        if (ivrMenuIndex.dataTable) {
+            ivrMenuIndex.dataTable.destroy();
+        }
+    }
 };
 
 /**

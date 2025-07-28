@@ -16,23 +16,18 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, ivrActions, globalTranslate, Form, Extensions, SoundFilesSelector */
+/* global globalRootUrl, IvrMenuAPI, Form, globalTranslate, UserMessage, Extensions, SoundFilesSelector */
 
-
-const ivrMenu = {
-    /**
-     * jQuery object for the form.
-     * @type {jQuery}
-     */
+/**
+ * IVR menu edit form management module
+ */
+const ivrMenuModify = {
     $formObj: $('#ivr-menu-form'),
-
-    $dropDowns: $('#ivr-menu-form .ui.dropdown'),
     $number: $('#extension'),
-
-    $errorMessages: $('#form-error-messages'),
+    $actionsPlace: $('#actions-place'),
     $rowTemplate: $('#row-template'),
-    defaultExtension: '',
     actionsRowsCount: 0,
+    defaultExtension: '',
 
     /**
      * Validation rules for the form fields before submission.
@@ -57,26 +52,12 @@ const ivrMenu = {
                     prompt: globalTranslate.iv_ValidateExtensionIsEmpty,
                 },
                 {
-                    type: 'existRule',
-                    prompt: globalTranslate.iv_ValidateExtensionIsDouble,
+                    type: 'regExp[/^[0-9]{2,8}$/]',
+                    prompt: globalTranslate.iv_ValidateExtensionFormat
                 },
-            ],
-        },
-        timeout_extension: {
-            identifier: 'timeout_extension',
-            rules: [
                 {
-                    type: 'empty',
-                    prompt: globalTranslate.iv_ValidateTimeoutExtensionIsEmpty,
-                },
-            ],
-        },
-        audio_message_id: {
-            identifier: 'audio_message_id',
-            rules: [
-                {
-                    type: 'empty',
-                    prompt: globalTranslate.iv_ValidateAudioFileIsEmpty,
+                    type: 'existRule[extension-error]',
+                    prompt: globalTranslate.iv_ValidateExtensionDouble,
                 },
             ],
         },
@@ -84,198 +65,242 @@ const ivrMenu = {
             identifier: 'timeout',
             rules: [
                 {
-                    type: 'integer[0..99]',
-                    prompt: globalTranslate.iv_ValidateTimeoutOutOfRange,
-                },
-            ],
+                    type: 'integer[1..99]',
+                    prompt: globalTranslate.iv_ValidateTimeout
+                }
+            ]
         },
         number_of_repeat: {
             identifier: 'number_of_repeat',
             rules: [
                 {
-                    type: 'integer[0..99]',
-                    prompt: globalTranslate.iv_ValidateRepeatNumberOutOfRange,
-                },
-            ],
+                    type: 'integer[1..99]',
+                    prompt: globalTranslate.iv_ValidateRepeatCount
+                }
+            ]
         },
     },
 
     initialize() {
-        // Initialize dropdowns
-        ivrMenu.$dropDowns.dropdown();
+        // Add handler to dynamically check if the input number is available
+        let timeoutId;
+        ivrMenuModify.$number.on('input', () => {
+            // Clear the previous timer, if it exists
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            // Set a new timer with a delay of 0.5 seconds
+            timeoutId = setTimeout(() => {
+                // Get the newly entered number
+                const newNumber = ivrMenuModify.$formObj.form('get value', 'extension');
 
-        // Dynamic check to see if the selected number is available
-        ivrMenu.$number.on('change', () => {
-            const newNumber = ivrMenu.$formObj.form('get value', 'extension');
-            Extensions.checkAvailability(ivrMenu.defaultNumber, newNumber);
+                // Execute the availability check for the number
+                Extensions.checkAvailability(ivrMenuModify.defaultExtension, newNumber);
+            }, 500);
         });
-
-        // Add event listener for adding a new IVR action row
-        $('#add-new-ivr-action').on('click', (el) => {
-            ivrMenu.addNewActionRow();
-            ivrMenu.rebuildActionExtensionsDropdown();
-
-            // Trigger change event to acknowledge the modification
-            Form.dataChanged();
-
-            el.preventDefault();
-        })
-
-        // Initialize audio message dropdowns
-        $('#ivr-menu-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
-
-        // Initialize the form
-        ivrMenu.initializeForm();
-
-        // Build IVR menu actions
-        ivrMenu.buildIvrMenuActions();
-
-        // Get the default extension value
-        ivrMenu.defaultExtension = ivrMenu.$formObj.form('get value', 'extension');
         
-        // Initialize tooltips
-        ivrMenu.initializeTooltips();
+        // Initialize sound file selector
+        SoundFilesSelector.initialize(
+            '.audio-message-select',
+            'input[name="audio_message_id"]'
+        );
+        
+        // Initialize actions table
+        ivrMenuModify.initializeActionsTable();
+        
+        // Configure Form.js
+        Form.$formObj = ivrMenuModify.$formObj;
+        Form.url = '#'; // Not used with REST API
+        Form.validateRules = ivrMenuModify.validateRules;
+        Form.cbBeforeSendForm = ivrMenuModify.cbBeforeSendForm;
+        Form.cbAfterSendForm = ivrMenuModify.cbAfterSendForm;
+        
+        // Setup REST API
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = IvrMenuAPI;
+        Form.apiSettings.saveMethod = 'saveRecord';
+        
+        // Important settings for correct save modes operation
+        Form.afterSubmitIndexUrl = `${globalRootUrl}ivr-menu/index/`;
+        Form.afterSubmitModifyUrl = `${globalRootUrl}ivr-menu/modify/`;
+        
+        // Initialize Form with all standard features:
+        // - Dirty checking (change tracking)
+        // - Dropdown submit (SaveSettings, SaveSettingsAndAddNew, SaveSettingsAndExit)
+        // - Form validation
+        // - AJAX response handling
+        Form.initialize();
+        
+        // Load form data
+        ivrMenuModify.initializeForm();
     },
     /**
-     * Create ivr menu items on the form
+     * Load data into form
      */
-    buildIvrMenuActions() {
-        const objActions = JSON.parse(ivrActions);
-        objActions.forEach((element) => {
-            ivrMenu.addNewActionRow(element);
+    initializeForm() {
+        const recordId = ivrMenuModify.getRecordId();
+        
+        IvrMenuAPI.getRecord(recordId, (response) => {
+            if (response.result) {
+                ivrMenuModify.populateForm(response.data);
+                // Get the default extension from the form
+                ivrMenuModify.defaultExtension = ivrMenuModify.$formObj.form('get value', 'extension');
+                
+                // Populate actions table
+                ivrMenuModify.populateActionsTable(response.data.actions || []);
+            } else {
+                UserMessage.showError(response.messages?.error || 'Failed to load IVR menu data');
+            }
         });
-        if (objActions.length === 0) ivrMenu.addNewActionRow();
-
-        ivrMenu.rebuildActionExtensionsDropdown();
     },
-
+    
     /**
-     * Adds new form validation rules for a newly added action row.
-     * @param {string} newRowId - The ID of the newly added action row.
+     * Get record ID from URL
      */
-    addNewFormRules(newRowId) {
-
-        // Create the identifier for the digits field of the new row
-        const $digitsClass = `digits-${newRowId}`;
-
-        // Define the validation rules for the digits field
-        ivrMenu.validateRules[$digitsClass] = {
-            identifier: $digitsClass,
-            rules: [
-                {
-                    type: 'regExp[/^[0-9]{1,7}$/]',
-                    prompt: globalTranslate.iv_ValidateDigitsIsNotCorrect,
-                },
-                {
-                    type: 'checkDoublesDigits',
-                    prompt: globalTranslate.iv_ValidateDigitsIsNotCorrect,
-                },
-            ],
-
-        };
-
-        // Create the identifier for the extension field of the new row
-        const $extensionClass = `extension-${newRowId}`;
-
-        // Define the validation rules for the extension field
-        ivrMenu.validateRules[$extensionClass] = {
-            identifier: $extensionClass,
-            rules: [
-                {
-                    type: 'empty',
-                    prompt: globalTranslate.iv_ValidateExtensionIsNotCorrect,
-                },
-            ],
-
-        };
-    },
-
-    /**
-     * Adds a new action row to the IVR menu form.
-     * @param {Object} paramObj - Optional parameter object with initial values for the action row.
-     *                            If not provided, default values will be used.
-     */
-    addNewActionRow(paramObj) {
-        // Default parameter values
-        let param = {
-            id: '',
-            extension: '',
-            extensionRepresent: '',
-            digits: '',
-        };
-
-        // Override default values with the provided parameter object
-        if (paramObj !== undefined) {
-            param = paramObj;
+    getRecordId() {
+        const urlParts = window.location.pathname.split('/');
+        const modifyIndex = urlParts.indexOf('modify');
+        if (modifyIndex !== -1 && urlParts[modifyIndex + 1]) {
+            return urlParts[modifyIndex + 1];
         }
+        return '';
+    },
 
-        // Increment the actionsRowsCount
-        ivrMenu.actionsRowsCount += 1;
+    /**
+     * Initialize actions table
+     */
+    initializeActionsTable() {
+        // Add new action button
+        $('#add-new-ivr-action').on('click', (e) => {
+            e.preventDefault();
+            ivrMenuModify.addNewActionRow();
+            ivrMenuModify.rebuildActionExtensionsDropdown();
+        });
+    },
 
-        // Clone the row template and modify its attributes and content
-        const $actionTemplate = ivrMenu.$rowTemplate.clone();
+    /**
+     * Populate actions table
+     */
+    populateActionsTable(actions) {
+        // Clear existing actions except template
+        $('.action-row:not(#row-template)').remove();
+        ivrMenuModify.actionsRowsCount = 0;
+        
+        actions.forEach(action => {
+            ivrMenuModify.addNewActionRow({
+                digits: action.digits,
+                extension: action.extension,
+                extensionRepresent: action.extensionRepresent || ''
+            });
+        });
+        
+        ivrMenuModify.rebuildActionExtensionsDropdown();
+    },
+    
+    /**
+     * Add new action row using the existing template
+     */
+    addNewActionRow(param = {}) {
+        const defaultParam = {
+            digits: '',
+            extension: '',
+            extensionRepresent: ''
+        };
+        
+        const rowParam = $.extend({}, defaultParam, param);
+        ivrMenuModify.actionsRowsCount += 1;
+        
+        // Clone template
+        const $actionTemplate = ivrMenuModify.$rowTemplate.clone();
         $actionTemplate
             .removeClass('hidden')
-            .attr('id', `row-${ivrMenu.actionsRowsCount}`)
-            .attr('data-value', ivrMenu.actionsRowsCount)
+            .attr('id', `row-${ivrMenuModify.actionsRowsCount}`)
+            .attr('data-value', ivrMenuModify.actionsRowsCount)
             .attr('style', '');
-
-        // Set the attributes and values for digits input field
+            
+        // Set digits input
         $actionTemplate.find('input[name="digits-id"]')
-            .attr('id', `digits-${ivrMenu.actionsRowsCount}`)
-            .attr('name', `digits-${ivrMenu.actionsRowsCount}`)
-            .attr('value', param.digits);
-
-        // Set the attributes and values for extension input field
+            .attr('id', `digits-${ivrMenuModify.actionsRowsCount}`)
+            .attr('name', `digits-${ivrMenuModify.actionsRowsCount}`)
+            .attr('value', rowParam.digits);
+            
+        // Set extension input
         $actionTemplate.find('input[name="extension-id"]')
-            .attr('id', `extension-${ivrMenu.actionsRowsCount}`)
-            .attr('name', `extension-${ivrMenu.actionsRowsCount}`)
-            .attr('value', param.extension);
-
-        // Set the data-value attribute for the delete-action-row element
+            .attr('id', `extension-${ivrMenuModify.actionsRowsCount}`)
+            .attr('name', `extension-${ivrMenuModify.actionsRowsCount}`)
+            .attr('value', rowParam.extension);
+            
+        // Set delete button data-value
         $actionTemplate.find('div.delete-action-row')
-            .attr('data-value', ivrMenu.actionsRowsCount);
-
-        // Update the extensionRepresent content based on the provided value or default text
-        if (param.extensionRepresent.length > 0) {
-            $actionTemplate.find('div.default.text').removeClass('default').html(param.extensionRepresent);
-        } else {
-            $actionTemplate.find('div.default.text').html(globalTranslate.ex_SelectNumber);
+            .attr('data-value', ivrMenuModify.actionsRowsCount);
+            
+        // Update extension represent text if available
+        if (rowParam.extensionRepresent.length > 0) {
+            $actionTemplate.find('div.default.text')
+                .removeClass('default')
+                .html(rowParam.extensionRepresent);
         }
-
-        // Append the action template to the actions-place element
-        $('#actions-place').append($actionTemplate);
-
-        // Add new form rules for the newly added action row
-        ivrMenu.addNewFormRules(ivrMenu.actionsRowsCount);
+        
+        // Add validation rules for the new fields
+        ivrMenuModify.validateRules[`digits-${ivrMenuModify.actionsRowsCount}`] = {
+            identifier: `digits-${ivrMenuModify.actionsRowsCount}`,
+            depends: `extension-${ivrMenuModify.actionsRowsCount}`,
+            rules: [{
+                type: 'empty',
+                prompt: globalTranslate.iv_ValidateDigitsIsEmpty
+            }]
+        };
+        
+        ivrMenuModify.validateRules[`extension-${ivrMenuModify.actionsRowsCount}`] = {
+            identifier: `extension-${ivrMenuModify.actionsRowsCount}`,
+            depends: `digits-${ivrMenuModify.actionsRowsCount}`,
+            rules: [{
+                type: 'empty',
+                prompt: globalTranslate.iv_ValidateExtensionIsEmpty
+            }]
+        };
+        
+        // Append to actions place
+        ivrMenuModify.$actionsPlace.append($actionTemplate);
+        
+        // Acknowledge form modification
+        Form.dataChanged();
     },
-
+    
     /**
-     * Rebuilds the action extensions dropdown by initializing the dropdown settings for routing
-     * and attaching the cbOnExtensionSelect callback function to handle the extension selection event.
+     * Rebuild dropdown for action extensions
      */
     rebuildActionExtensionsDropdown() {
-        // Initialize the dropdown settings for routing with cbOnExtensionSelect callback function
-        $('#ivr-menu-form .forwarding-select').dropdown(Extensions.getDropdownSettingsForRouting(ivrMenu.cbOnExtensionSelect));
-
-        // Attach a click event handler to the delete-action-row elements
-        $('.delete-action-row').on('click', function (e) {
+        // Initialize dropdowns with routing settings
+        $('#ivr-menu-form .forwarding-select').dropdown(
+            Extensions.getDropdownSettingsForRouting(ivrMenuModify.cbOnExtensionSelect)
+        );
+        
+        // Attach delete handlers
+        $('.delete-action-row').off('click').on('click', function(e) {
             e.preventDefault();
-
-            // Get the 'data-value' attribute of the clicked element
             const id = $(this).attr('data-value');
-
-            // Remove the corresponding rules from validateRules object
-            delete ivrMenu.validateRules[`digits-${id}`];
-            delete ivrMenu.validateRules[`extension-${id}`];
-
-            // Remove the row with the corresponding id
+            
+            // Remove validation rules
+            delete ivrMenuModify.validateRules[`digits-${id}`];
+            delete ivrMenuModify.validateRules[`extension-${id}`];
+            
+            // Remove the row
             $(`#row-${id}`).remove();
-
-            // Trigger change event to acknowledge the modification
+            
+            // Acknowledge form modification
             Form.dataChanged();
         });
     },
+    
+    /**
+     * Callback when extension is selected in dropdown
+     */
+    cbOnExtensionSelect(text, value, $element) {
+        // Mark that data has changed
+        Form.dataChanged();
+    },
+
 
     /**
      * Callback function to be called before the form is sent
@@ -283,261 +308,79 @@ const ivrMenu = {
      * @returns {Object} - The updated settings of the form
      */
     cbBeforeSendForm(settings) {
-        // Copy the settings object to a new variable to avoid modifying the original
-        let result = settings;
-
-        // Get the form values from $formObj of ivrMenu
-        result.data = ivrMenu.$formObj.form('get values');
-
-        // Initialize an array to store actions
-        const arrActions = [];
-
-        // Iterate over each action row
-        $('.action-row').each((index, obj) => {
-            const rowId = $(obj).attr('data-value');
-
-            // If rowId is greater than 0, get the 'digits' and 'extension' values from the form and push them into the arrActions array
-            if (rowId > 0) {
-                arrActions.push({
-                    digits: ivrMenu.$formObj.form('get value', `digits-${rowId}`),
-                    extension: ivrMenu.$formObj.form('get value', `extension-${rowId}`),
-                });
+        // Collect actions data
+        const actions = [];
+        
+        // Iterate over each action row (excluding template)
+        $('.action-row:not(#row-template)').each(function() {
+            const rowId = $(this).attr('data-value');
+            
+            // Skip template row
+            if (rowId && parseInt(rowId) > 0) {
+                const digits = ivrMenuModify.$formObj.form('get value', `digits-${rowId}`);
+                const extension = ivrMenuModify.$formObj.form('get value', `extension-${rowId}`);
+                
+                // Only add if both values exist
+                if (digits && extension) {
+                    actions.push({
+                        digits: digits,
+                        extension: extension
+                    });
+                }
             }
         });
-
-        // If there are no action rows, set the result to false, display an error message and add error class to the form
-        if (arrActions.length === 0) {
-            result = false;
-            ivrMenu.$errorMessages.html(globalTranslate.iv_ValidateNoIVRExtensions);
-            ivrMenu.$formObj.addClass('error');
-        } else {
-
-            // Convert the arrActions array into a JSON string and assign it to 'actions' key in the result data object
-            result.data.actions = JSON.stringify(arrActions);
-        }
-
-        // Return the modified settings object or false
-        return result;
+        
+        // Add actions to form data
+        const formData = ivrMenuModify.$formObj.form('get values');
+        formData.actions = actions; // Pass as array, not JSON string
+        
+        settings.data = formData;
+        return settings;
     },
     /**
-     * Callback function that triggers when a number is selected from the dropdown menu.
-     * It generates a random number and triggers a change event.
-     */
-    cbOnExtensionSelect() {
-        // Trigger change event to acknowledge the modification
-        Form.dataChanged();
-    },
-
-    /**
-     * Callback function to be called after the form has been sent.
-     * @param {Object} response - The response from the server after the form is sent
+     * Callback after form submission
+     * Handles different save modes (SaveSettings, SaveSettingsAndAddNew, SaveSettingsAndExit)
      */
     cbAfterSendForm(response) {
-
+        if (response.result) {
+            if (response.data) {
+                ivrMenuModify.populateForm(response.data);
+            }
+            
+            // Update URL for new records
+            const currentId = $('#id').val();
+            if (!currentId && response.data && response.data.uniqid) {
+                const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.uniqid}`);
+                window.history.pushState(null, '', newUrl);
+            }
+        }
     },
 
     /**
-     * Initialize the form with custom settings
+     * Populate form with data
      */
-    initializeForm() {
-        Form.$formObj = ivrMenu.$formObj;
-        Form.url = `${globalRootUrl}ivr-menu/save`; // Form submission URL
-        Form.validateRules = ivrMenu.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = ivrMenu.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = ivrMenu.cbAfterSendForm; // Callback after form is sent
-        Form.initialize();
-    },
-    
-    /**
-     * Initialize tooltips for form fields
-     */
-    initializeTooltips() {
-        // Define tooltip configurations for each field
-        const tooltipConfigs = {
-            number_of_repeat: ivrMenu.buildTooltipContent({
-                header: globalTranslate.iv_NumberOfRepeatTooltip_header,
-                description: globalTranslate.iv_NumberOfRepeatTooltip_desc,
-                note: globalTranslate.iv_NumberOfRepeatTooltip_note
-            }),
-            
-            timeout: ivrMenu.buildTooltipContent({
-                header: globalTranslate.iv_TimeoutTooltip_header,
-                description: globalTranslate.iv_TimeoutTooltip_desc,
-                list: [
-                    globalTranslate.iv_TimeoutTooltip_list1,
-                    globalTranslate.iv_TimeoutTooltip_list2,
-                    globalTranslate.iv_TimeoutTooltip_list3
-                ],
-                note: globalTranslate.iv_TimeoutTooltip_note
-            }),
-            
-            timeout_extension: ivrMenu.buildTooltipContent({
-                header: globalTranslate.iv_TimeoutExtensionTooltip_header,
-                description: globalTranslate.iv_TimeoutExtensionTooltip_desc,
-                list: [
-                    globalTranslate.iv_TimeoutExtensionTooltip_list1,
-                    globalTranslate.iv_TimeoutExtensionTooltip_list2,
-                    globalTranslate.iv_TimeoutExtensionTooltip_list3
-                ],
-                note: globalTranslate.iv_TimeoutExtensionTooltip_note
-            }),
-            
-            allow_enter_any_internal_extension: ivrMenu.buildTooltipContent({
-                header: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_header,
-                description: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list_header,
-                        definition: null
-                    },
-                    globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list1,
-                    globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list2,
-                    globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list3,
-                    globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list4
-                ],
-                note: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_note
-            }),
-            
-            extension: ivrMenu.buildTooltipContent({
-                header: globalTranslate.iv_ExtensionTooltip_header,
-                description: globalTranslate.iv_ExtensionTooltip_desc,
-                note: globalTranslate.iv_ExtensionTooltip_note
-            })
-        };
+    populateForm(data) {
+        Form.$formObj.form('set values', data);
         
-        // Initialize popup for each icon
-        $('.field-info-icon').each((index, element) => {
-            const $icon = $(element);
-            const fieldName = $icon.data('field');
-            const content = tooltipConfigs[fieldName];
-            
-            if (content) {
-                $icon.popup({
-                    html: content,
-                    position: 'top right',
-                    hoverable: true,
-                    delay: {
-                        show: 300,
-                        hide: 100
-                    },
-                    variation: 'flowing'
-                });
-            }
-        });
-    },
-    
-    /**
-     * Build HTML content for tooltip popup
-     * @param {Object} config - The configuration object for the tooltip
-     * @returns {string} - The HTML content for the tooltip
-     */
-    buildTooltipContent(config) {
-        if (!config) return '';
+        // Initialize all forwarding dropdowns (including timeout_extension)
+        ivrMenuModify.rebuildActionExtensionsDropdown();
         
-        let html = '';
-        
-        // Add header if exists
-        if (config.header) {
-            html += `<div class="header"><strong>${config.header}</strong></div>`;
-            html += '<div class="ui divider"></div>';
+        if (Form.enableDirrity) {
+            Form.saveInitialValues();
         }
-        
-        // Add description if exists
-        if (config.description) {
-            html += `<p>${config.description}</p>`;
-        }
-        
-        // Add list items if exist
-        if (config.list) {
-            if (Array.isArray(config.list) && config.list.length > 0) {
-                html += '<ul>';
-                config.list.forEach(item => {
-                    if (typeof item === 'string') {
-                        html += `<li>${item}</li>`;
-                    } else if (item.term && item.definition === null) {
-                        // Header item without definition
-                        html += `</ul><p><strong>${item.term}</strong></p><ul>`;
-                    } else if (item.term && item.definition) {
-                        html += `<li><strong>${item.term}:</strong> ${item.definition}</li>`;
-                    }
-                });
-                html += '</ul>';
-            } else if (typeof config.list === 'object') {
-                // Handle key-value pairs for list
-                html += '<dl>';
-                Object.entries(config.list).forEach(([key, value]) => {
-                    html += `<dt><strong>${key}:</strong></dt>`;
-                    html += `<dd>${value}</dd>`;
-                });
-                html += '</dl>';
-            }
-        }
-        
-        // Add additional lists (list2-list10) if exist
-        for (let i = 2; i <= 10; i++) {
-            const listKey = `list${i}`;
-            if (config[listKey] && Array.isArray(config[listKey]) && config[listKey].length > 0) {
-                html += '<ul>';
-                config[listKey].forEach(item => {
-                    html += `<li>${item}</li>`;
-                });
-                html += '</ul>';
-            }
-        }
-        
-        // Add warning if exists
-        if (config.warning) {
-            html += '<div class="ui small orange message">';
-            if (config.warning.header) {
-                html += `<div class="header">${config.warning.header}</div>`;
-            }
-            html += `<p>${config.warning.text}</p>`;
-            html += '</div>';
-        }
-        
-        // Add examples if exist
-        if (config.examples && Array.isArray(config.examples) && config.examples.length > 0) {
-            if (config.examplesHeader) {
-                html += `<p><strong>${config.examplesHeader}:</strong></p>`;
-            }
-            html += '<pre style="background-color: #f4f4f4; padding: 5px; border-radius: 3px;">';
-            html += config.examples.join('\n');
-            html += '</pre>';
-        }
-        
-        // Add note if exists
-        if (config.note) {
-            html += `<p><em>${config.note}</em></p>`;
-        }
-        
-        return html;
     }
 };
 
 /**
- * Custom form rule to check if an element with id 'extension-error' has the class 'hidden'.
+ * Checks if the number is taken by another account
+ * @returns {boolean} True if the parameter has the 'hidden' class, false otherwise
  */
-$.fn.form.settings.rules.existRule = () => $('#extension-error').hasClass('hidden');
-
-
-/**
- * Custom form rule to check for duplicate digits values.
- * @param {string} value - The value to check for duplicates.
- * @returns {boolean} - True if there are no duplicates, false otherwise.
- */
-$.fn.form.settings.rules.checkDoublesDigits = (value) => {
-    let count = 0;
-    $("input[id^='digits']").each((index, obj) => {
-        if (ivrMenu.$formObj.form('get value', `${obj.id}`) === value) count += 1;
-    });
-
-    return (count === 1);
-};
+$.fn.form.settings.rules.existRule = (value, parameter) => $(`#${parameter}`).hasClass('hidden');
 
 /**
  *  Initialize IVR menu modify form on document ready
  */
 $(document).ready(() => {
-    ivrMenu.initialize();
+    ivrMenuModify.initialize();
 });
 

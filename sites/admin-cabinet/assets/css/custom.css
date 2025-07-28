@@ -573,3 +573,9 @@ a.ui.button.pbx-extensions-settings {
 .fullscreen-toggle-btn i {
     font-size: 1.2em;
 }
+
+/* Prevent IVR Menu table from expanding beyond container */
+#ivr-menu-table {
+    max-width: 100%;
+}
+

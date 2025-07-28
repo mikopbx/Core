@@ -686,6 +686,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/IvrMenu/ivrmenu-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/PbxAPI/ivrMenuAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
