@@ -51,7 +51,7 @@ class IvrMenuController extends BaseController
         $emptyIvrMenu->audio_message_id = '';
         $emptyIvrMenu->timeout = '7';
         $emptyIvrMenu->timeout_extension = '';
-        $emptyIvrMenu->allow_enter_any_internal_extension = '0';
+        $emptyIvrMenu->allow_enter_any_internal_extension = '1';
         $emptyIvrMenu->number_of_repeat = '3';
         $emptyIvrMenu->description = '';
         
@@ -59,8 +59,8 @@ class IvrMenuController extends BaseController
         $form = new IvrMenuEditForm(
             $emptyIvrMenu,
             [
-                'extensions' => ['' => 'Выберите номер'], // Minimal - loaded via Extensions API
-                'soundfiles' => ['' => 'Выберите звуковой файл'], // Minimal - loaded via SoundFiles API
+                'extensions' => ['' => 'Select number'], // Minimal - loaded via Extensions API
+                'soundfiles' => ['' => 'Select sound file'], // Minimal - loaded via SoundFiles API
             ]
         );
         

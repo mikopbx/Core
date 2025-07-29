@@ -1,8 +1,9 @@
 {{ form(['action' : 'ivr-menu/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'ivr-menu-form']) }}
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
+<input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}"/>
 <div class="ui ribbon label" id="ivr-menu-extension-number">
-    <i class="phone icon"></i> {{ extension }}
+    <i class="phone icon"></i> {{ extension|e }}
 </div>
 <h3 class="ui hidden header "></h3>
 <div class="field max-width-500">
@@ -13,7 +14,7 @@
     <label>{{ t._('iv_Description') }}</label>
     {{ form.render('description') }}
 </div>
-{{ partial("partials/playAddNewSound", ['label': t._('iv_PlaySound'), 'id':'audio_message_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
+{{ partial("partials/playAddNewSoundWithIcons", ['label': t._('iv_PlaySound'), 'id':'audio_message_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
 <div class="ui compact segment">
     <div class="ui top attached label">{{ t._('iv_Actions') }}</div>
     <div id="actions-place">
@@ -59,6 +60,11 @@
         <i class="small info circle icon field-info-icon" data-field="timeout_extension"></i>
     </label>
     {{ form.render('timeout_extension') }}
+    <div class="ui selection dropdown search timeout_extension-select">
+        <i class="dropdown icon"></i>
+        <div class="default text">{{ t._('ex_SelectExtension') }}</div>
+        <div class="menu"></div>
+    </div>
 </div>
 
 <div class="field">

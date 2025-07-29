@@ -54,7 +54,9 @@ class IvrMenuManagementProcessor extends Injectable
 
         $action = $request['action'];
         $data = $request['data'];
-        
+        // For debugging purposes, use proper system logging instead of error_log:
+        // SystemMessages::sysLogMsg(__CLASS__, "Processing action: {$action}", LOG_DEBUG);
+
         switch ($action) {
             case 'getRecord':
                 $recordId = $data['id'] ?? null;

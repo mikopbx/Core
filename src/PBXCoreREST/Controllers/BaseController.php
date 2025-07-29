@@ -40,6 +40,11 @@ use Throwable;
 class BaseController extends Controller
 {
     /**
+     * Indicates whether this controller requires CSRF protection
+     * Controllers can override this constant to opt-in to CSRF protection
+     */
+    public const bool REQUIRES_CSRF_PROTECTION = false;
+    /**
      * Send a request to the backend worker.
      *
      * @param string $processor The name of the processor.
@@ -480,8 +485,8 @@ class BaseController extends Controller
                     // If the string starts with 'http', sanitize it as a URL
                     $data[$key] = $filter->sanitize($value, FILTER::FILTER_URL);
                 } else {
-                    // Sanitize regular strings (trim and remove illegal characters)
-                    $data[$key] = $filter->sanitize($value, [FILTER::FILTER_STRING, FILTER::FILTER_TRIM]);
+                    // Use FILTER_STRING_LEGACY + trim (doesn't encode HTML entities)
+                    $data[$key] = $filter->sanitize($value, [FILTER::FILTER_STRING_LEGACY, FILTER::FILTER_TRIM]);
                 }
             } elseif (is_numeric($value)) {
                 // Sanitize numeric values as integers

@@ -482,6 +482,97 @@ const Form = {
         } catch (e) {
             console.warn('Unable to restore submit mode:', e);
         }
+    },
+
+    /**
+     * Auto-resize textarea based on content (similar to PHP BaseForm::addTextArea logic)
+     * @param {jQuery|string} textareaSelector - jQuery object or selector for textarea(s)
+     * @param {number} areaWidth - Width in characters for calculation (optional, will be calculated dynamically if not provided)
+     */
+    autoResizeTextArea(textareaSelector, areaWidth = null) {
+        const $textareas = $(textareaSelector);
+        
+        $textareas.each(function() {
+            const $textarea = $(this);
+            const value = $textarea.val();
+            const placeholder = $textarea.attr('placeholder') || '';
+            
+            // Calculate dynamic width if not provided
+            let calculatedWidth = areaWidth;
+            if (!calculatedWidth) {
+                calculatedWidth = Form.calculateTextareaWidth($textarea);
+            }
+            
+            let rows = 1;
+            let strings = [];
+            
+            if (placeholder && placeholder.length > 0) {
+                strings = placeholder.split('\n');
+            }
+            
+            if (value && value.length > 0) {
+                strings = value.split('\n');
+            }
+            
+            strings.forEach(string => {
+                rows += Math.ceil(string.length / calculatedWidth);
+            });
+            
+            const finalRows = Math.max(rows, 2);
+            $textarea.attr('rows', finalRows);
+        });
+    },
+
+    /**
+     * Calculate textarea width in characters based on actual CSS dimensions
+     * @param {jQuery} $textarea - jQuery textarea element
+     * @returns {number} - Approximate width in characters
+     */
+    calculateTextareaWidth($textarea) {
+        // Create a temporary element to measure character width
+        const $temp = $('<span>')
+            .css({
+                'font-family': $textarea.css('font-family'),
+                'font-size': $textarea.css('font-size'),
+                'font-weight': $textarea.css('font-weight'),
+                'letter-spacing': $textarea.css('letter-spacing'),
+                'visibility': 'hidden',
+                'position': 'absolute',
+                'white-space': 'nowrap'
+            })
+            .text('M') // Use 'M' as it's typically the widest character
+            .appendTo('body');
+        
+        const charWidth = $temp.width();
+        $temp.remove();
+        
+        // Get textarea's content width (excluding padding and borders)
+        const textareaWidth = $textarea.innerWidth() - 
+            parseInt($textarea.css('padding-left'), 10) - 
+            parseInt($textarea.css('padding-right'), 10);
+        
+        // Calculate approximate character count, with a small buffer for accuracy
+        const approximateCharWidth = Math.floor(textareaWidth / charWidth) - 2;
+        
+        // Ensure minimum width and reasonable maximum
+        return Math.max(20, Math.min(approximateCharWidth, 200));
+    },
+
+    /**
+     * Initialize auto-resize for textarea elements
+     * @param {string} selector - CSS selector for textareas to auto-resize
+     * @param {number} areaWidth - Width in characters for calculation (optional, will be calculated dynamically if not provided)
+     */
+    initAutoResizeTextAreas(selector = 'textarea', areaWidth = null) {
+        const $textareas = $(selector);
+        
+        // Initial resize
+        Form.autoResizeTextArea($textareas, areaWidth);
+        
+        // Add event listeners for dynamic resizing
+        $textareas.on('input paste keyup', function() {
+            Form.autoResizeTextArea($(this), areaWidth);
+        });
     }
 };
 

@@ -73,35 +73,15 @@ class IvrMenuEditForm extends BaseForm
             )
         );
 
-        // Timeoutextension
-        $extension = new Select(
-            'timeout_extension',
-            $options['extensions'],
-            [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
-        );
-        $this->add($extension);
+        // Timeout extension - Hidden field, dropdown will be populated via JS
+        $this->add(new Hidden('timeout_extension', [
+            'id' => 'timeout_extension'
+        ]));
 
-        // Audio_message_id
-        $audioMessage = new Select(
-            'audio_message_id',
-            $options['soundfiles'],
-            [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'class' => 'ui selection dropdown search audio-message-select',
-            ]
-        );
-        $this->add($audioMessage);
+        // Audio_message_id - Hidden field, dropdown will be populated via JS
+        $this->add(new Hidden('audio_message_id', [
+            'id' => 'audio_message_id'
+        ]));
 
         //Allow_enter_any_internal_extension
         $this->addCheckBox(

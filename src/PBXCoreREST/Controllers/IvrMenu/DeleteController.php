@@ -1,5 +1,4 @@
 <?php
-
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -24,17 +23,16 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\IvrMenuManagementProcessor;
 
 /**
- * POST controller for IVR menu management
+ * DELETE controller for IVR menu management
  * 
  * @RoutePrefix("/pbxcore/api/v2/ivr-menu")
  * 
  * @examples
- * curl -X POST http://127.0.0.1/pbxcore/api/v2/ivr-menu/saveRecord \
- *   -d "name=Main Menu&extension=2001&timeout=10"
+ * curl -X DELETE http://127.0.0.1/pbxcore/api/v2/ivr-menu/deleteRecord/IVR-123ABC
  * 
  * @package MikoPBX\PBXCoreREST\Controllers\IvrMenu
  */
-class PostController extends BaseController
+class DeleteController extends BaseController
 {
     /**
      * Enable CSRF protection for this controller
@@ -44,40 +42,30 @@ class PostController extends BaseController
      * Handles the call to different actions based on the action name
      * 
      * @param string $actionName The name of the action
+     * @param string|null $id IVR menu ID to delete
      * 
-     * Creates or updates IVR menu record
-     * @Post("/saveRecord")
+     * Deletes IVR menu record
+     * @Delete("/deleteRecord/{id}")
      * 
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
-        // Handle both JSON and form data
-        $contentType = $this->request->getContentType();
-        
-        if (strpos($contentType, 'application/json') !== false) {
-            // Handle JSON data
-            $rawBody = $this->request->getRawBody();
-            $postData = json_decode($rawBody, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                $this->response->setStatusCode(400, 'Bad Request');
-                $this->response->setJsonContent([
-                    'result' => false,
-                    'messages' => ['error' => ['Invalid JSON format']]
-                ]);
-                return;
-            }
-        } else {
-            // Handle form data
-            $postData = $this->request->getPost();
+        if (empty($id)) {
+            $this->response->setJsonContent([
+                'result' => false,
+                'messages' => ['error' => ['Empty ID in request data']]
+            ]);
+            $this->response->send();
+            return;
         }
         
-        $postData = self::sanitizeData($postData, $this->filter);
+        $deleteData = ['id' => $id];
         
         $this->sendRequestToBackendWorker(
             IvrMenuManagementProcessor::class,
             $actionName,
-            $postData
+            $deleteData
         );
     }
 }

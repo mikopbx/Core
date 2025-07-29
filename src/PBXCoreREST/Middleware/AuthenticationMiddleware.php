@@ -83,6 +83,141 @@ class AuthenticationMiddleware implements MiddlewareInterface
             return false;
         }
 
+        // CSRF protection for state-changing operations
+        if ($this->requiresCsrfProtection($request, $application) && !$this->validateCsrfToken($request, $application)) {
+            $this->halt(
+                $application,
+                $response::FORBIDDEN,
+                'CSRF token validation failed'
+            );
+            return false;
+        }
+
         return true;
+    }
+
+    /**
+     * Check if the request requires CSRF protection
+     *
+     * @param Request $request
+     * @param Micro $application
+     * @return bool
+     */
+    private function requiresCsrfProtection(Request $request, Micro $application): bool
+    {
+        // CSRF protection is required for state-changing HTTP methods
+        $method = $request->getMethod();
+        $protectedMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+        
+        if (!in_array($method, $protectedMethods)) {
+            return false;
+        }
+
+        // Skip CSRF for localhost and debug mode
+        if ($request->isLocalHostRequest() || $request->isDebugModeEnabled()) {
+            return false;
+        }
+
+        // Check if the controller opts into CSRF protection
+        try {
+            $router = $application->getRouter();
+            $controllerName = $router->getControllerName();
+            
+            if (!empty($controllerName)) {
+                // Build full controller class name
+                $controllerClass = "MikoPBX\\PBXCoreREST\\Controllers\\{$controllerName}";
+                
+                // Check if controller class exists and has CSRF protection enabled
+                if (class_exists($controllerClass)) {
+                    $reflection = new \ReflectionClass($controllerClass);
+                    
+                    // Check if controller has REQUIRES_CSRF_PROTECTION constant set to true
+                    if ($reflection->hasConstant('REQUIRES_CSRF_PROTECTION')) {
+                        return $reflection->getConstant('REQUIRES_CSRF_PROTECTION') === true;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // If we can't determine the controller, err on the side of caution
+            // and require CSRF protection for state-changing methods
+            error_log("CSRF check error: " . $e->getMessage());
+        }
+
+        // Default: no CSRF protection required (gradual migration)
+        return false;
+    }
+
+    /**
+     * Validate CSRF token from the request
+     *
+     * @param Request $request
+     * @param Micro $application
+     * @return bool
+     */
+    private function validateCsrfToken(Request $request, Micro $application): bool
+    {
+        try {
+            // Get security service
+            $security = $application->getDI()->getShared('security');
+            
+            // Get token key and expected value
+            $tokenKey = $security->getTokenKey();
+            $expectedToken = $security->getToken();
+            
+            // Get request data based on content type
+            $requestData = $this->getRequestData($request);
+            
+            // Check if token exists in request
+            if (!isset($requestData[$tokenKey])) {
+                return false;
+            }
+            
+            // Validate token
+            $providedToken = $requestData[$tokenKey];
+            return $security->checkToken($tokenKey, $providedToken);
+            
+        } catch (\Exception $e) {
+            // Log error but don't expose details
+            error_log("CSRF validation error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get request data based on content type and HTTP method
+     *
+     * @param Request $request
+     * @return array
+     */
+    private function getRequestData(Request $request): array
+    {
+        $contentType = $request->getContentType();
+        
+        // Handle JSON content type
+        if (strpos($contentType, 'application/json') !== false) {
+            $rawBody = $request->getRawBody();
+            return json_decode($rawBody, true) ?: [];
+        }
+        
+        // Handle form data based on HTTP method
+        $method = $request->getMethod();
+        switch ($method) {
+            case 'POST':
+                return $request->getPost();
+            case 'PUT':
+                return $request->getPut();
+            case 'PATCH':
+            case 'DELETE':
+                // For DELETE/PATCH, try POST data first, then raw body
+                $postData = $request->getPost();
+                if (!empty($postData)) {
+                    return $postData;
+                }
+                // Fallback to parsing raw body
+                parse_str($request->getRawBody(), $data);
+                return $data ?: [];
+            default:
+                return [];
+        }
     }
 }

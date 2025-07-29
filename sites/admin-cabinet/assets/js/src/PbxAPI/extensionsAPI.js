@@ -50,7 +50,9 @@ const Extensions = {
             formattedResponse.success = true;
             $.each(response.data, (index, item) => {
                 formattedResponse.results.push({
-                    name: item.name,
+                    // SECURITY: Sanitize name field to prevent XSS attacks in dropdown menus
+                    // Use SecurityUtils to safely handle extension representations with icons
+                    name: window.SecurityUtils ? window.SecurityUtils.sanitizeExtensionsApiContent(item.name) : item.name,
                     value: item.value,
                     type: item.type,
                     typeLocalized: item.typeLocalized,
@@ -144,6 +146,50 @@ const Extensions = {
                 // throttle: 400,
                 onResponse(response) {
                     return Extensions.formatDropdownResults(response, false);
+                },
+            },
+            ignoreCase: true,
+            fullTextSearch: true,
+            filterRemoteData: true,
+            saveRemoteData: false,
+            forceSelection: false,
+            // direction: 'downward',
+            hideDividers: 'empty',
+            onChange(value) {
+                if (cbOnChange !== null) cbOnChange(value);
+            },
+            templates: {
+                menu: Extensions.customDropdownMenu,
+            },
+        };
+    },
+
+    /**
+     * Constructs dropdown settings for routing extensions with exclusion support.
+     * @param {Function} cbOnChange - The function to call when the dropdown selection changes.
+     * @param {string[]} excludeExtensions - Array of extension values to exclude from dropdown.
+     * @returns {Object} The dropdown settings.
+     */
+    getDropdownSettingsForRoutingWithExclusion(cbOnChange = null, excludeExtensions = []) {
+        return {
+            apiSettings: {
+                url: PbxApi.extensionsGetForSelect,
+                urlData: {
+                    type: 'routing'
+                },
+                cache: false,
+                // throttle: 400,
+                onResponse(response) {
+                    const formattedResponse = Extensions.formatDropdownResults(response, false);
+                    
+                    // Filter out excluded extensions
+                    if (excludeExtensions.length > 0 && formattedResponse.results) {
+                        formattedResponse.results = formattedResponse.results.filter(item => {
+                            return !excludeExtensions.includes(item.value);
+                        });
+                    }
+                    
+                    return formattedResponse;
                 },
             },
             ignoreCase: true,
@@ -402,6 +448,74 @@ const Extensions = {
                 }
             }
         })
+    },
+
+    /**
+     * Fix HTML entities in dropdown text elements to properly display icons
+     * Handles both single and double-escaped HTML entities
+     * @param {string} selector - jQuery selector for dropdown text elements to fix
+     * @param {number} delay - Delay in milliseconds before applying fix (default: 50)
+     */
+    fixDropdownHtmlEntities(selector = '.ui.dropdown .text', delay = 50) {
+        setTimeout(() => {
+            $(selector).each(function() {
+                const $text = $(this);
+                const currentText = $text.html();
+                
+                if (currentText && (currentText.includes('&lt;') || currentText.includes('&amp;lt;'))) {
+                    let fixedText = currentText;
+                    
+                    // First, handle double-escaped entities (e.g., &amp;lt; -> &lt;)
+                    if (currentText.includes('&amp;lt;')) {
+                        fixedText = fixedText
+                            .replace(/&amp;lt;/g, '&lt;')
+                            .replace(/&amp;gt;/g, '&gt;')
+                            .replace(/&amp;quot;/g, '&quot;');
+                    }
+                    
+                    // Then restore HTML tags for icons only (safe tags) - handle nested icons
+                    if (fixedText.includes('&lt;i') && fixedText.includes('&gt;')) {
+                        fixedText = fixedText
+                            // Fix opening i tags with any class
+                            .replace(/&lt;i(\s+class="[^"]*")?&gt;/g, '<i$1>')
+                            // Fix closing i tags
+                            .replace(/&lt;\/i&gt;/g, '</i>');
+                    }
+                    
+                    $text.html(fixedText);
+                }
+            });
+        }, delay);
+    },
+
+    /**
+     * Safely process extension representation text to handle HTML entities
+     * @param {string} text - Text to process
+     * @param {boolean} allowIcons - Whether to allow <i> tags for icons
+     * @returns {string} Processed safe HTML
+     */
+    sanitizeExtensionRepresent(text, allowIcons = true) {
+        if (!text) return '';
+        
+        // Handle double-escaped HTML entities first
+        let fixedText = text;
+        if (text.includes('&amp;lt;')) {
+            fixedText = text
+                .replace(/&amp;lt;/g, '&lt;')
+                .replace(/&amp;gt;/g, '&gt;')
+                .replace(/&amp;quot;/g, '&quot;');
+        }
+        
+        // If we want to allow icons, convert safe icon tags back to HTML
+        if (allowIcons && fixedText.includes('&lt;i') && fixedText.includes('&gt;')) {
+            fixedText = fixedText
+                // Fix opening i tags with any class
+                .replace(/&lt;i(\s+class="[^"]*")?&gt;/g, '<i$1>')
+                // Fix closing i tags
+                .replace(/&lt;\/i&gt;/g, '</i>');
+        }
+        
+        return fixedText;
     },
 
 };

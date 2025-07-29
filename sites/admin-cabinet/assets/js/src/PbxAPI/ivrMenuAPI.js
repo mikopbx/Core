@@ -104,6 +104,11 @@ const IvrMenuAPI = {
             data: data,
             on: 'now',
             beforeSend(settings) {
+                // Add CSRF token to data
+                if (typeof globalCsrfTokenKey !== 'undefined' && typeof globalCsrfToken !== 'undefined') {
+                    data[globalCsrfTokenKey] = globalCsrfToken;
+                }
+                
                 // If actions field exists, send as JSON to avoid URL encoding
                 if (data.actions) {
                     settings.contentType = 'application/json';
@@ -129,10 +134,18 @@ const IvrMenuAPI = {
      * @param {function} callback - Callback function
      */
     deleteRecord(id, callback) {
+        const data = {};
+        
+        // Add CSRF token
+        if (typeof globalCsrfTokenKey !== 'undefined' && typeof globalCsrfToken !== 'undefined') {
+            data[globalCsrfTokenKey] = globalCsrfToken;
+        }
+        
         $.api({
             url: `${this.endpoints.deleteRecord}/${id}`,
             on: 'now',
             method: 'DELETE',
+            data: data,
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response);

@@ -25,6 +25,8 @@ const ivrMenuIndex = {
     $ivrMenuTable: $('#ivr-menu-table'),
     dataTable: {},
 
+
+
     /**
      * Initialize the module
      */
@@ -53,11 +55,19 @@ const ivrMenuIndex = {
             columns: [
                 {
                     data: 'extension',
-                    className: 'centered collapsing'
+                    className: 'centered collapsing',
+                    render: function(data) {
+                        // SECURITY: Properly escape extension data to prevent XSS
+                        return window.SecurityUtils.escapeHtml(data) || '—';
+                    }
                 },
                 {
                     data: 'name',
-                    className: 'collapsing'
+                    className: 'collapsing',
+                    render: function(data) {
+                        // SECURITY: Properly escape name data to prevent XSS
+                        return window.SecurityUtils.escapeHtml(data) || '—';
+                    }
                 },
                 {
                     data: 'actions',
@@ -66,9 +76,12 @@ const ivrMenuIndex = {
                         if (!data || data.length === 0) {
                             return '<small>—</small>';
                         }
-                        const actionsHtml = data.map(action => 
-                            `${action.digits} - ${action.represent}`
-                        ).join('<br>');
+                        // SECURITY: Escape digits and sanitize represent field allowing only safe icons
+                        const actionsHtml = data.map(action => {
+                            const safeDigits = window.SecurityUtils.escapeHtml(action.digits || '');
+                            const safeRepresent = window.SecurityUtils.sanitizeExtensionsApiContent(action.represent || '');
+                            return `${safeDigits} - ${safeRepresent}`;
+                        }).join('<br>');
                         return `<small>${actionsHtml}</small>`;
                     }
                 },
@@ -76,7 +89,12 @@ const ivrMenuIndex = {
                     data: 'timeoutExtensionRepresent',
                     className: 'hide-on-mobile collapsing',
                     render: function(data) {
-                        return data ? `<small>${data}</small>` : '<small>—</small>';
+                        // SECURITY: Sanitize timeout extension representation allowing only safe icons
+                        if (!data) {
+                            return '<small>—</small>';
+                        }
+                        const safeData = window.SecurityUtils.sanitizeExtensionsApiContent(data);
+                        return `<small>${safeData}</small>`;
                     }
                 },
                 {
@@ -88,9 +106,10 @@ const ivrMenuIndex = {
                         if (!data || data.trim() === '') {
                             return '—';
                         }
-                        // Create popup button for description like in original
+                        // Create popup button for description - properly escape all HTML
+                        const escapedData = window.SecurityUtils.escapeHtml(data); // Safe escaping
                         return `<div class="ui basic icon button popuped" 
-                                    data-content="${data.replace(/"/g, '&quot;')}" 
+                                    data-content="${escapedData}" 
                                     data-position="top right" 
                                     data-variation="wide">
                                     <i class="file text icon"></i>

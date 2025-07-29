@@ -31,6 +31,8 @@
 		var globalWebAdminLanguage = '{{ WebAdminLanguage }}';
 		var globalAvailableLanguages = '{{ AvailableLanguages }}';
     var globalCurrentPage = '{{ currentPage }}';
+    var globalCsrfTokenKey = '{{ security.getTokenKey() }}';
+    var globalCsrfToken = '{{ security.getToken() }}';
     </script>
 
     {{ assets.outputCombinedHeaderJs(controller, action) }}

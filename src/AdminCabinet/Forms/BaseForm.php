@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
+use MikoPBX\AdminCabinet\Library\SecurityHelper;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\TextArea;
 use Phalcon\Forms\Form;
@@ -62,7 +63,11 @@ abstract class BaseForm extends Form
             $rows += ceil(strlen($string) / $areaWidth);
         }
         $options["rows"] = max($rows, 2);
-        $options["value"] = $areaValue;
+        
+        // SECURITY: Escape HTML content to prevent XSS attacks in textarea values
+        // Use SecurityHelper to properly escape HTML while preserving user content integrity
+        $options["value"] = SecurityHelper::escapeHtml($areaValue);
+        
         $this->add(new TextArea($areaName, $options));
     }
 

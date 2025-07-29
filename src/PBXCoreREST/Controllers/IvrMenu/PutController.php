@@ -1,5 +1,4 @@
 <?php
-
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
@@ -24,17 +23,17 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\IvrMenuManagementProcessor;
 
 /**
- * POST controller for IVR menu management
+ * PUT controller for IVR menu management
  * 
  * @RoutePrefix("/pbxcore/api/v2/ivr-menu")
  * 
  * @examples
- * curl -X POST http://127.0.0.1/pbxcore/api/v2/ivr-menu/saveRecord \
- *   -d "name=Main Menu&extension=2001&timeout=10"
+ * curl -X PUT http://127.0.0.1/pbxcore/api/v2/ivr-menu/saveRecord/IVR-123ABC \
+ *   -d "name=Updated Menu&extension=2002&timeout=15"
  * 
  * @package MikoPBX\PBXCoreREST\Controllers\IvrMenu
  */
-class PostController extends BaseController
+class PutController extends BaseController
 {
     /**
      * Enable CSRF protection for this controller
@@ -44,21 +43,31 @@ class PostController extends BaseController
      * Handles the call to different actions based on the action name
      * 
      * @param string $actionName The name of the action
+     * @param string|null $id IVR menu ID for update operations
      * 
-     * Creates or updates IVR menu record
-     * @Post("/saveRecord")
+     * Updates existing IVR menu record
+     * @Put("/saveRecord/{id}")
      * 
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
+        if (empty($id)) {
+            $this->response->setJsonContent([
+                'result' => false,
+                'messages' => ['error' => ['Empty ID in request data']]
+            ]);
+            $this->response->send();
+            return;
+        }
+
         // Handle both JSON and form data
         $contentType = $this->request->getContentType();
         
         if (strpos($contentType, 'application/json') !== false) {
             // Handle JSON data
             $rawBody = $this->request->getRawBody();
-            $postData = json_decode($rawBody, true);
+            $putData = json_decode($rawBody, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $this->response->setStatusCode(400, 'Bad Request');
                 $this->response->setJsonContent([
@@ -69,15 +78,16 @@ class PostController extends BaseController
             }
         } else {
             // Handle form data
-            $postData = $this->request->getPost();
+            $putData = $this->request->getPut();
         }
         
-        $postData = self::sanitizeData($postData, $this->filter);
+        $putData = self::sanitizeData($putData, $this->filter);
+        $putData['id'] = $id;
         
         $this->sendRequestToBackendWorker(
             IvrMenuManagementProcessor::class,
             $actionName,
-            $postData
+            $putData
         );
     }
 }

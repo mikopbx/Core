@@ -191,7 +191,8 @@ class AssetProvider implements ServiceProviderInterface
         $this->headerCollectionJS
             //->addJs('js/vendor/requirejs.org/require.min.js', true,true,['data-main'=>'/admin-cabinet/assets/js/pbx/main/header.js'])
             ->addJs('js/pbx/main/header.js', true)
-            ->addJs('js/vendor/jquery.min.js', true);
+            ->addJs('js/vendor/jquery.min.js', true)
+            ->addJs('js/pbx/main/security-utils.js', true); // Global security utilities
 
         $this->footerCollectionJS
             ->addJs('js/pbx/Language/language-select.js', true);
