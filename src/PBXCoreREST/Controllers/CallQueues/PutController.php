@@ -24,40 +24,51 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\CallQueuesManagementProcessor;
 
 /**
- * POST controller for call queues management
+ * PUT controller for call queues management
  *
  * @RoutePrefix("/pbxcore/api/v2/call-queues")
  *
  * @examples
- * curl -X POST http://127.0.0.1/pbxcore/api/v2/call-queues/saveRecord \
- *   -d "name=Sales Queue&extension=2001&strategy=ringall"
+ * curl -X PUT http://127.0.0.1/pbxcore/api/v2/call-queues/saveRecord/QUEUE-123ABC \
+ *   -d "name=Updated Queue&extension=2002&strategy=leastrecent"
  *
  * @package MikoPBX\PBXCoreREST\Controllers\CallQueues
  */
-class PostController extends BaseController
+class PutController extends BaseController
 {
     /**
      * Enable CSRF protection for this controller
      */
     public const bool REQUIRES_CSRF_PROTECTION = true;
     /**
-     * Handle POST requests for call queue operations
+     * Handle PUT requests for call queue operations
      *
      * @param string $actionName The name of the action
+     * @param string|null $id Call queue ID for update operations
      *
-     * Creates new call queue record
-     * @Post("/saveRecord")
+     * Updates existing call queue record
+     * @Put("/saveRecord/{id}")
      *
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
-        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
+        if (empty($id)) {
+            $this->response->setJsonContent([
+                'result' => false,
+                'messages' => ['error' => ['Empty ID in request data']]
+            ]);
+            $this->response->send();
+            return;
+        }
+
+        $putData = self::sanitizeData($this->request->getPut(), $this->filter);
+        $putData['id'] = $id;
 
         $this->sendRequestToBackendWorker(
             CallQueuesManagementProcessor::class,
             $actionName,
-            $postData
+            $putData
         );
     }
 }

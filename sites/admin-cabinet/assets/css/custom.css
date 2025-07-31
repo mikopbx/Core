@@ -517,6 +517,11 @@ Limit fields width
 
 }
 
+@media only screen and (max-width: 1000px) {
+    .hide-on-tablet {
+        display: none;
+    }
+}
 
 @media only screen and (max-width: 768px) {
     #top-left-logo {
@@ -574,8 +579,8 @@ a.ui.button.pbx-extensions-settings {
     font-size: 1.2em;
 }
 
-/* Prevent IVR Menu table from expanding beyond container */
-#ivr-menu-table {
+/* Prevent DataTable tables from expanding beyond container */
+.datatable-width-constrained {
     max-width: 100%;
 }
 

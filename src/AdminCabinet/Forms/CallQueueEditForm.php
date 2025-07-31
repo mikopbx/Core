@@ -85,7 +85,7 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Numeric('seconds_for_wrapup', ["maxlength" => 2, "style" => "width: 80px;"]));
 
         // Recivecallswhileonacall
-        $this->addCheckBox('recive_calls_while_on_a_call', intval($entity->recive_calls_while_on_a_call) === 1);
+        $this->addCheckBox('recive_calls_while_on_a_call', intval($entity->recive_calls_while_on_a_call) === 1, true);
 
         // Callerhear
         $arrActions = [
@@ -108,10 +108,10 @@ class CallQueueEditForm extends BaseForm
         $this->add($callerhear);
 
         // Announceposition
-        $this->addCheckBox('announce_position', intval($entity->announce_position) === 1);
+        $this->addCheckBox('announce_position', intval($entity->announce_position) === 1, true);
 
         // Announceholdtime
-        $this->addCheckBox('announce_hold_time', intval($entity->announce_hold_time) === 1);
+        $this->addCheckBox('announce_hold_time', intval($entity->announce_hold_time) === 1, true);
 
         $periodicannouncesoundid = new Select(
             'periodic_announce_sound_id',
@@ -122,12 +122,12 @@ class CallQueueEditForm extends BaseForm
                     'name',
                 ],
                 'useEmpty' => true,
-                'class' => 'ui selection dropdown search periodic-announce-sound-id-select',
+                'class' => 'ui selection dropdown search periodic_announce_sound_id-select',
             ]
         );
         $this->add($periodicannouncesoundid);
 
-        $periodicannouncesoundid = new Select(
+        $mohSoundId = new Select(
             'moh_sound_id',
             $options['mohSoundFiles'],
             [
@@ -136,10 +136,10 @@ class CallQueueEditForm extends BaseForm
                     'name',
                 ],
                 'useEmpty' => true,
-                'class' => 'ui selection dropdown search periodic-announce-sound-id-select',
+                'class' => 'ui selection dropdown search moh_sound_id-select',
             ]
         );
-        $this->add($periodicannouncesoundid);
+        $this->add($mohSoundId);
 
         // Periodicannouncefrequency - Seconds between announcements
         $this->add(new Numeric('periodic_announce_frequency', ["maxlength" => 2, "style" => "width: 80px;"]));
@@ -167,7 +167,7 @@ class CallQueueEditForm extends BaseForm
                     'name',
                 ],
                 'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
+                'class' => 'ui selection dropdown search timeout_extension-select',
             ]
         );
         $this->add($extension);
@@ -182,7 +182,7 @@ class CallQueueEditForm extends BaseForm
                     'name',
                 ],
                 'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
+                'class' => 'ui selection dropdown search redirect_to_extension_if_empty-select',
             ]
         );
         $this->add($extension);

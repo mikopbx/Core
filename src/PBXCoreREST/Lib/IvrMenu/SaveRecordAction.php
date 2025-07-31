@@ -63,16 +63,18 @@ class SaveRecordAction
         $res->processor = __METHOD__;
         
         // Data sanitization
+        // SECURITY FIX: Remove html_escape from sanitization rules to prevent double escaping
+        // HTML escaping is handled at output level in DataStructure::createFromModel()
         $sanitizationRules = [
             'id' => 'int',
-            'name' => 'string|html_escape|max:100',
+            'name' => 'string|max:100',
             'extension' => 'string|regex:/^[0-9]{2,8}$/|max:8',
             'audio_message_id' => 'string|max:50|empty_to_null',
             'timeout' => 'int|min:1|max:99',
             'timeout_extension' => 'string|max:20|empty_to_null',
             'allow_enter_any_internal_extension' => 'bool',
             'number_of_repeat' => 'int|min:1|max:99',
-            'description' => 'string|html_escape|max:2000'
+            'description' => 'string|max:2000'
         ];
         
         // Extract only fields that have sanitization rules
@@ -80,6 +82,16 @@ class SaveRecordAction
         
         // Sanitize main fields
         $sanitizedData = BaseActionHelper::sanitizeData($fieldsToSanitize, $sanitizationRules);
+        
+        // SECURITY FIX: Decode HTML entities from frontend (e.g. &quot; -> ")
+        // Frontend sometimes sends already escaped data, so we need to decode it
+        // before storing in database to prevent double escaping
+        $textFieldsTodecode = ['name', 'description'];
+        foreach ($textFieldsTodecode as $field) {
+            if (isset($sanitizedData[$field])) {
+                $sanitizedData[$field] = BaseActionHelper::decodeHtmlEntities($sanitizedData[$field]);
+            }
+        }
         
         // Custom validation for timeout_extension using SystemSanitizer
         if (isset($sanitizedData['timeout_extension']) && !empty($sanitizedData['timeout_extension'])) {

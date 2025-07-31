@@ -296,3 +296,338 @@ $(document).ready(() => {
 - ✅ Правильную работу с контейнерами
 
 **Главное правило**: Минимальное вмешательство в работу Semantic UI и DataTables, использование только необходимых стилей и классов.
+
+## Продвинутые паттерны для MikoPBX
+
+### 1. Двухэтапная адаптивная визуализация
+
+Для оптимального использования пространства экрана используйте двухэтапное скрытие колонок:
+
+```css
+/* CSS медиа-запросы для двухэтапного скрытия */
+@media only screen and (max-width: 1000px) {
+    .hide-on-tablet {
+        display: none;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    .hide-on-mobile {
+        display: none;
+    }
+}
+```
+
+**HTML заголовки:**
+```html
+<th class="collapsing">{{ t._('MainColumn') }}</th>
+<th class="hide-on-tablet collapsing">{{ t._('SecondaryColumn') }}</th>
+<th class="hide-on-mobile">{{ t._('AdditionalColumn') }}</th>
+<th class="right aligned collapsing"></th>
+```
+
+**Поведение по экранам:**
+- **Десктоп (>1000px):** Все колонки видны
+- **Планшет (768-1000px):** Скрывается `.hide-on-tablet`
+- **Мобильный (<768px):** Скрывается `.hide-on-mobile` и `.hide-on-tablet`
+
+### 2. Стандартизированное отображение объектов в первой колонке
+
+Используйте метод `getRepresent()` модели с кастомизацией для таблиц:
+
+```php
+// В DataStructure::createForList()
+public static function createForList($model): array
+{
+    $data = self::createFromModel($model, []);
+    
+    // Кастомное представление без повторяющихся префиксов
+    $objectName = SecurityHelper::escapeHtml($model->name ?? '');
+    $data['represent'] = '<i class="appropriate-icon icon"></i> ' . $objectName . " <$model->extension>";
+    
+    return $data;
+}
+```
+
+**JavaScript render:**
+```javascript
+{
+    data: 'represent',
+    className: 'collapsing',
+    render: function(data, type, row) {
+        if (type === 'display') {
+            // Добавляем скрытый контент для поиска
+            const searchableContent = [
+                row.name || '',
+                row.extension || '',
+                row.uniqid || ''
+            ].join(' ').toLowerCase();
+            
+            return `${data || '—'}<span style="display:none;">${searchableContent}</span>`;
+        }
+        // Для поиска возвращаем все поля
+        return [data, row.name, row.extension, row.uniqid].filter(Boolean).join(' ');
+    }
+}
+```
+
+**Стандартные иконки по типам:**
+- `<i class="users icon"></i>` - Call Queues
+- `<i class="sitemap icon"></i>` - IVR Menu  
+- `<i class="phone volume icon"></i>` - Conference Rooms
+- `<i class="user icon"></i>` - Extensions
+- `<i class="server icon"></i>` - Providers
+
+### 3. Умное отображение больших текстовых полей
+
+Для описаний и комментариев используйте адаптивное ограничение строк:
+
+```javascript
+{
+    data: 'description',
+    className: 'hide-on-mobile',
+    orderable: false,
+    render: function(data, type, row) {
+        if (!data || data.trim() === '') return '—';
+
+        if (type === 'display') {
+            // Сохраняем переводы строк и разбиваем на строки
+            const safeDesc = SecurityUtils.escapeHtml(data);
+            const descriptionLines = safeDesc.split('\n').filter(line => line.trim() !== '');
+            
+            // Динамическое ограничение на основе связанных данных
+            const relatedItemsCount = (row.members && row.members.length) || 0;
+            const maxLines = Math.max(2, Math.min(6, relatedItemsCount || 3));
+            
+            if (descriptionLines.length <= maxLines) {
+                // Помещается - показываем с форматированием
+                const formattedDesc = descriptionLines.join('<br>');
+                return `<div class="description-text" style="line-height: 1.3;">${formattedDesc}</div>`;
+            } else {
+                // Не помещается - сокращаем с popup
+                const visibleLines = descriptionLines.slice(0, maxLines);
+                visibleLines[maxLines - 1] += '...';
+                
+                const truncatedDesc = visibleLines.join('<br>');
+                const fullDesc = descriptionLines.join('\n');
+                
+                return `<div class="description-text truncated popuped" 
+                             data-content="${fullDesc}" 
+                             data-position="top right" 
+                             data-variation="wide"
+                             style="cursor: help; border-bottom: 1px dotted #999; line-height: 1.3;">
+                    ${truncatedDesc}
+                </div>`;
+            }
+        }
+        return data; // Для поиска и сортировки
+    }
+}
+```
+
+### 4. Многоуровневое содержимое колонок
+
+Для отображения дополнительной информации над основным содержимым:
+
+```javascript
+{
+    data: 'complexField',
+    className: 'hide-on-tablet collapsing',
+    render: function(data, type, row) {
+        if (!data || data.length === 0) {
+            return '<small>—</small>';
+        }
+
+        if (type === 'display') {
+            // Дополнительная информация над основным содержимым
+            const additionalInfo = getAdditionalInfo(row.strategy);
+            
+            const mainContent = data.map(item => {
+                return SecurityUtils.sanitizeExtensionsApiContent(item.represent || item.extension);
+            }).join('<br>');
+
+            // Скрытый контент для поиска
+            const searchableContent = data.map(item => {
+                return [item.extension, item.represent || ''].join(' ');
+            }).join(' ').toLowerCase();
+
+            return `<div style="color: #999; font-size: 0.8em; margin-bottom: 3px;">${additionalInfo}</div>
+                    <small>${mainContent}</small>
+                    <span style="display:none;">${searchableContent}</span>`;
+        }
+        
+        // Для поиска
+        return data.map(item => {
+            return [item.extension, item.represent || ''].filter(Boolean).join(' ');
+        }).join(' ');
+    }
+}
+```
+
+### 5. Интеграция поиска и кнопки добавления
+
+Размещение в одной строке через DataTables wrapper:
+
+```javascript
+// В конфигурации DataTable
+searching: true,
+drawCallback: function() {
+    // Инициализация popup элементов
+    moduleTable.$table.find('.popuped').popup({
+        position: 'top right',
+        variation: 'wide',
+        hoverable: true,
+        delay: { show: 300, hide: 100 }
+    });
+
+    // Перемещение кнопки добавления в DataTables grid
+    const $addButton = $('#add-new-button');
+    const $wrapper = $('#module-table_wrapper');
+    const $leftColumn = $wrapper.find('.eight.wide.column').first();
+    
+    if ($addButton.length && $leftColumn.length) {
+        $leftColumn.append($addButton);
+        $addButton.show();
+    }
+
+    moduleTable.initializeDoubleClickEdit();
+}
+```
+
+### 6. Оптимизация поиска для сложных данных
+
+Обеспечение поиска по всем релевантным полям:
+
+```javascript
+// Для основной колонки объекта
+render: function(data, type, row) {
+    if (type === 'display') {
+        const searchableContent = [
+            row.name || '',
+            row.extension || '',
+            row.uniqid || ''
+        ].join(' ').toLowerCase();
+        
+        return `${data}<span style="display:none;">${searchableContent}</span>`;
+    }
+    return [data, row.name, row.extension, row.uniqid].filter(Boolean).join(' ');
+}
+
+// Для колонок со связанными объектами
+render: function(data, type, row) {
+    if (type === 'display') {
+        const searchableContent = data.map(item => {
+            return [item.extension, item.name || '', item.represent || ''].join(' ');
+        }).join(' ').toLowerCase();
+        
+        return `${displayContent}<span style="display:none;">${searchableContent}</span>`;
+    }
+    return data.map(item => [item.extension, item.name, item.represent].filter(Boolean).join(' ')).join(' ');
+}
+```
+
+### 7. Унифицированные переводы для стратегий и статусов
+
+Используйте систему переводов для пользовательских описаний:
+
+```php
+// В ru.php
+'module_strategy_option1_short' => 'Краткое описание опции 1',
+'module_strategy_option2_short' => 'Краткое описание опции 2',
+```
+
+```javascript
+// В JavaScript
+getStrategyDescription(strategy) {
+    const translationKey = `module_strategy_${strategy}_short`;
+    return globalTranslate[translationKey] || strategy;
+}
+```
+
+### 8. Стандартная обработка popup элементов
+
+```javascript
+// В drawCallback всех таблиц
+drawCallback: function() {
+    // Унифицированная инициализация popup
+    moduleTable.$table.find('.popuped').popup({
+        position: 'top right',
+        variation: 'wide',
+        hoverable: true,
+        delay: {
+            show: 300,
+            hide: 100
+        }
+    });
+    
+    // Остальная инициализация...
+}
+```
+
+### 9. CSS класс для ограничения ширины таблиц
+
+Добавляйте к таблицам для предотвращения чрезмерного растяжения:
+
+```html
+<table class="ui selectable unstackable compact table datatable-width-constrained" id="module-table">
+```
+
+### 10. Стандартные значения конфигурации DataTable
+
+```javascript
+// Базовая конфигурация для всех таблиц MikoPBX
+const baseConfig = {
+    order: [[0, 'asc']],
+    lengthChange: false,
+    paging: false,
+    info: true,
+    searching: true,
+    language: SemanticLocalization.dataTableLocalisation,
+    drawCallback: function() {
+        // Стандартная инициализация
+    }
+};
+```
+
+## Типовые паттерны колонок
+
+### Колонка объекта (первая колонка)
+```javascript
+{
+    data: 'represent',
+    className: 'collapsing',
+    render: standardObjectRender // С поиском по имени, номеру, ID
+}
+```
+
+### Колонка связанных объектов
+```javascript
+{
+    data: 'relatedObjects',
+    className: 'hide-on-tablet collapsing',
+    render: relatedObjectsRender // С дополнительной информацией и поиском
+}
+```
+
+### Колонка описания
+```javascript
+{
+    data: 'description',
+    className: 'hide-on-mobile',
+    orderable: false,
+    render: smartDescriptionRender // Адаптивное ограничение строк
+}
+```
+
+### Колонка действий
+```javascript
+{
+    data: null,
+    orderable: false,
+    searchable: false,
+    className: 'right aligned collapsing',
+    render: standardActionsRender // Редактирование и удаление
+}
+```
+
+Эти паттерны обеспечивают единообразие всех таблиц в MikoPBX, оптимальную функциональность и профессиональный внешний вид.
