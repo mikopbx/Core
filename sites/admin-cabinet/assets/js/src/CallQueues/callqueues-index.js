@@ -15,98 +15,283 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global globalRootUrl, SemanticLocalization, UserMessage, Extensions, CallQueuesAPI */
 
-/**
- * callQueuesTable module.
+/*
+ * Call queues table management module
  *
- *  Define an object for managing call queue tables
- * @module callQueuesTable
+ * Implements DataTable with Semantic UI following guidelines,
+ * comprehensive XSS protection using SecurityUtils, and follows
+ * MikoPBX standards for user interface (no success messages).
  */
-const callQueuesTable = {
-    $queuesTable: $('#queues-table'),
+
+/* global globalRootUrl, CallQueuesAPI, Extensions, globalTranslate, UserMessage, SemanticLocalization, SecurityUtils */
+
+const queueTable = {
+    $queuesTable: $('#call-queues-table'),
+    dataTable: {},
 
     /**
-     * Initialize the call queue table handlers and DataTable.
+     * Initialize the call queues index module
      */
     initialize() {
+        // Show placeholder until data loads
+        queueTable.toggleEmptyPlaceholder(true);
 
-        // Add a double-click handler to each cell in the queue row.
-        // This will redirect the user to the modify page for the clicked call queue.
-        $('.queue-row td').on('dblclick', (e) => {
-            const id = $(e.target).closest('tr').attr('id');
-            window.location = `${globalRootUrl}call-queues/modify/${id}`;
-        });
-
-        // Initialize the data table for the call queues table.
-        callQueuesTable.initializeDataTable();
-
-        // Set up delete functionality on delete button click.
-        $('body').on('click', 'a.delete', (e) => {
-            e.preventDefault();
-            $(e.target).addClass('disabled');
-            // Get the call queue ID from the closest table row.
-            const callQueueId = $(e.target).closest('tr').attr('id');
-
-            // Remove any previous AJAX messages.
-            $('.message.ajax').remove();
-
-            // Call the PbxApi method to delete the call queue record.
-            CallQueuesAPI.deleteRecord(callQueueId, callQueuesTable.cbAfterDeleteRecord);
-        });
-
+        queueTable.initializeDataTable();
     },
 
     /**
-     * Callback function executed after deleting a record.
-     * @param {Object} response - The response object from the API.
-     */
-    cbAfterDeleteRecord(response){
-        if (response.result === true) {
-            // Remove the deleted record's table row.
-            callQueuesTable.$queuesTable.find(`tr[id=${response.data.id}]`).remove();
-            // Call the callback function for data change.
-            Extensions.cbOnDataChanged();
-        } else {
-            // Show an error message if deletion was not successful.
-            UserMessage.showError(response.messages.error, globalTranslate.cq_ImpossibleToDeleteCallQueue);
-        }
-        $('a.delete').removeClass('disabled');
-    },
-
-    /**
-     * Initialize the DataTable for the call queues table.
-     * This adds additional functionality like sorting and pagination.
+     * Initialize DataTable with proper Semantic UI integration
+     *
+     * Following DataTable Semantic UI Guidelines to prevent sizing issues
+     * and ensure proper responsive behavior.
      */
     initializeDataTable() {
-
-        // Initialize DataTable on $queuesTable element with custom settings
-        callQueuesTable.$queuesTable.DataTable({
-            lengthChange: false,  // Disable user to change records per page
-            paging: false, // Disable pagination
-
-            // Define the characteristics of each column in the table
+        queueTable.dataTable = queueTable.$queuesTable.DataTable({
+            ajax: {
+                url: CallQueuesAPI.endpoints.getList,
+                dataSrc: function(json) {
+                    // Manage empty state
+                    queueTable.toggleEmptyPlaceholder(
+                        !json.result || !json.data || json.data.length === 0
+                    );
+                    return json.result ? json.data : [];
+                }
+            },
             columns: [
-                null,
-                null,
-                null,
-                null,
                 {
-                    orderable: false,  // This column is not orderable
-                    searchable: false  // This column is not searchable
+                    data: 'represent',
+                    className: 'collapsing', // Without 'ui' prefix as per guidelines
+                    render: function(data, type, row) {
+                        if (type === 'display') {
+                            // For display, show the represent with hidden searchable content
+                            const searchableContent = [
+                                row.name || '',
+                                row.extension || '',
+                                row.uniqid || ''
+                            ].join(' ').toLowerCase();
+                            
+                            return `${data || '—'}<span style="display:none;">${searchableContent}</span>`;
+                        }
+                        // For search and other operations, return plain text
+                        return [data, row.name, row.extension, row.uniqid].filter(Boolean).join(' ');
+                    }
                 },
+                {
+                    data: 'members',
+                    className: 'hide-on-tablet collapsing',
+                    render: function(data, type, row) {
+                        if (!data || data.length === 0) {
+                            return '<small>—</small>';
+                        }
+
+                        if (type === 'display') {
+                            // Get strategy description
+                            const strategyDesc = queueTable.getStrategyDescription(row.strategy);
+                            
+                            // SECURITY: Sanitize member representations allowing safe icons
+                            const membersList = data.map(member => {
+                                return SecurityUtils.sanitizeExtensionsApiContent(member.represent || member.extension);
+                            }).join('<br>');
+
+                            // Create searchable content with member extensions and names
+                            const searchableContent = data.map(member => {
+                                return [member.extension, member.represent || ''].join(' ');
+                            }).join(' ').toLowerCase();
+
+                            return `<div style="color: #999; font-size: 0.8em; margin-bottom: 3px;">${strategyDesc}</div>
+                                    <small>${membersList}</small>
+                                    <span style="display:none;">${searchableContent}</span>`;
+                        }
+                        
+                        // For search, return plain text with all member info
+                        return data.map(member => {
+                            return [member.extension, member.represent || ''].filter(Boolean).join(' ');
+                        }).join(' ');
+                    }
+                },
+                {
+                    data: 'description',
+                    className: 'hide-on-mobile',
+                    orderable: false,
+                    render: function(data, type, row) {
+                        if (!data || data.trim() === '') return '—';
+
+                        // SECURITY: Preserve line breaks but escape HTML
+                        const safeDesc = SecurityUtils.escapeHtml(data);
+                        const descriptionLines = safeDesc.split('\n').filter(line => line.trim() !== '');
+                        
+                        // Calculate available lines based on queue members count
+                        const membersCount = (row.members && row.members.length) || 0;
+                        const maxLines = Math.max(2, Math.min(6, membersCount || 3)); // Min 2 lines, max 6, default 3
+                        
+                        if (descriptionLines.length <= maxLines) {
+                            // Description fits in available lines - show with preserved formatting
+                            const formattedDesc = descriptionLines.join('<br>');
+                            return `<div class="description-text" style="line-height: 1.3;">${formattedDesc}</div>`;
+                        } else {
+                            // Description is too long - show truncated with popup
+                            const visibleLines = descriptionLines.slice(0, maxLines);
+                            const lastLine = visibleLines[maxLines - 1];
+                            visibleLines[maxLines - 1] = lastLine + '...';
+                            
+                            const truncatedDesc = visibleLines.join('<br>');
+                            const fullDesc = descriptionLines.join('\n'); // For popup data-content
+                            
+                            return `<div class="description-text truncated popuped" 
+                                         data-content="${fullDesc}" 
+                                         data-position="top right" 
+                                         data-variation="wide"
+                                         style="cursor: help; border-bottom: 1px dotted #999; line-height: 1.3;">
+                                ${truncatedDesc}
+                            </div>`;
+                        }
+                    }
+                },
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    className: 'right aligned collapsing', // Action buttons column
+                    render: function(data, type, row) {
+                        return `<div class="ui tiny basic icon buttons action-buttons">
+                            <a href="${globalRootUrl}call-queues/modify/${row.uniqid}"
+                               class="ui button edit popuped"
+                               data-content="${globalTranslate.bt_ToolTipEdit}">
+                                <i class="icon edit blue"></i>
+                            </a>
+                            <a href="#"
+                               data-value="${row.uniqid}"
+                               class="ui button delete two-steps-delete popuped"
+                               data-content="${globalTranslate.bt_ToolTipDelete}">
+                                <i class="icon trash red"></i>
+                            </a>
+                        </div>`;
+                    }
+                }
             ],
-            order: [1, 'asc'],  // By default, order by the second column ascending
-            language: SemanticLocalization.dataTableLocalisation, // Set localisation options
+            order: [[0, 'asc']],
+            lengthChange: false,
+            paging: false,
+            info: true,
+            searching: true,
+            language: SemanticLocalization.dataTableLocalisation,
+            drawCallback: function() {
+                // Initialize Semantic UI elements after table draw
+                queueTable.$queuesTable.find('.popuped').popup({
+                    position: 'top right',
+                    variation: 'wide',
+                    hoverable: true,
+                    delay: {
+                        show: 300,
+                        hide: 100
+                    }
+                });
+
+                // Move Add New button to the correct DataTables grid position (like in IVR Menu)
+                const $addButton = $('#add-new-button');
+                const $wrapper = $('#call-queues-table_wrapper');
+                const $leftColumn = $wrapper.find('.eight.wide.column').first();
+                
+                if ($addButton.length && $leftColumn.length) {
+                    // Move button to the left column of DataTables grid
+                    $leftColumn.append($addButton);
+                    $addButton.show();
+                }
+
+                // Initialize double-click editing
+                queueTable.initializeDoubleClickEdit();
+            }
         });
 
-        // Move the "add new" button to the first eight column div
-        $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
+        // Handle deletion using existing DeleteSomething.js integration
+        queueTable.$queuesTable.on('click', 'a.delete:not(.two-steps-delete)', function(e) {
+            e.preventDefault();
+            const $button = $(this);
+            const queueId = $button.attr('data-value');
+
+            // Add loading state
+            $button.addClass('loading disabled');
+
+            CallQueuesAPI.deleteRecord(queueId, queueTable.cbAfterDeleteRecord);
+        });
     },
+
+    /**
+     * Handle record deletion response (following MikoPBX standards - no success messages)
+     *
+     * @param {object|boolean} response API response
+     */
+    cbAfterDeleteRecord(response) {
+        if (response.result === true) {
+            // Just reload table data - NO success message (following MikoPBX standards)
+            queueTable.dataTable.ajax.reload();
+
+            // Update related components
+            if (typeof Extensions !== 'undefined' && Extensions.cbOnDataChanged) {
+                Extensions.cbOnDataChanged();
+            }
+
+            // NO UserMessage.showSuccess() call - following MikoPBX standards
+        } else {
+            // Only show error messages
+            const errorMessage = response.messages?.error || [globalTranslate.cq_ImpossibleToDeleteQueue];
+            UserMessage.showMultiString(errorMessage, globalTranslate.cq_DeletionError);
+        }
+
+        // Remove loading state
+        $('a.delete').removeClass('loading disabled');
+    },
+
+    /**
+     * Toggle empty table placeholder visibility
+     *
+     * @param {boolean} isEmpty Whether the table is empty
+     */
+    toggleEmptyPlaceholder(isEmpty) {
+        if (isEmpty) {
+            $('#queue-table-container').hide();
+            $('#add-new-button').hide();
+            $('#empty-table-placeholder').show();
+        } else {
+            $('#empty-table-placeholder').hide();
+            $('#add-new-button').show();
+            $('#queue-table-container').show();
+        }
+    },
+
+    /**
+     * Get human-readable description for queue strategy
+     *
+     * @param {string} strategy Technical strategy name
+     * @returns {string} User-friendly description from translations
+     */
+    getStrategyDescription(strategy) {
+        const translationKey = `cq_strategy_${strategy}_short`;
+        
+        // Use globalTranslate with fallback to strategy name
+        return globalTranslate[translationKey] || strategy;
+    },
+
+    /**
+     * Initialize double-click editing
+     *
+     * IMPORTANT: Exclude action buttons cells to avoid conflicts with DeleteSomething.js
+     */
+    initializeDoubleClickEdit() {
+        queueTable.$queuesTable.on('dblclick', 'tbody td:not(.right.aligned)', function() {
+            const data = queueTable.dataTable.row(this).data();
+            if (data && data.uniqid) {
+                window.location.href = `${globalRootUrl}call-queues/modify/${data.uniqid}`;
+            }
+        });
+    }
 };
 
-// Initialize the call queue table management object when the document is ready
+/**
+ * Initialize on document ready
+ */
 $(document).ready(() => {
-    callQueuesTable.initialize();
+    queueTable.initialize();
 });
 

@@ -325,7 +325,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/jquery.debounce-1.0.5.js', true)
                 ->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/main/form.js', true)
-                ->addJs('js/pbx/CallQueues/callqueue-modify.js', true)
+                ->addJs('js/pbx/PbxAPI/callQueuesAPI.js', true)
+                ->addJs('js/pbx/CallQueues/callqueue-modify-rest.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true);

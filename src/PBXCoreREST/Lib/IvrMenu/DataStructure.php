@@ -19,16 +19,15 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
-use MikoPBX\AdminCabinet\Library\SecurityHelper;
-use MikoPBX\Common\Models\Extensions;
-use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+
 
 /**
  * Data structure for IVR menu
  * 
  * @package MikoPBX\PBXCoreREST\Lib\IvrMenu
  */
-class DataStructure
+class DataStructure extends AbstractDataStructure
 {
     /**
      * Create complete data array from IvrMenu model including actions
@@ -38,47 +37,24 @@ class DataStructure
      */
     public static function createFromModel($model, bool $includeActions = true): array
     {
-        // Get timeout extension represent
-        $timeoutExtensionRepresent = '';
-        if (!empty($model->timeout_extension)) {
-            $timeoutExt = Extensions::findFirst([
-                'conditions' => 'number = :number:',
-                'bind' => ['number' => $model->timeout_extension]
-            ]);
-            if ($timeoutExt) {
-                $timeoutExtensionRepresent = $timeoutExt->getRepresent();
-            }
-        }
+        // Start with base structure including HTML-escaped text fields
+        $data = self::createBaseStructure($model);
         
-        // Get audio message represent
-        $audioMessageRepresent = '';
-        if (!empty($model->audio_message_id)) {
-            $audioMessage = \MikoPBX\Common\Models\SoundFiles::findFirst([
-                'conditions' => 'id = :id:',
-                'bind' => ['id' => $model->audio_message_id]
-            ]);
-            if ($audioMessage) {
-                $audioMessageRepresent = $audioMessage->getRepresent();
-            }
-        }
+        // Add IVR menu specific fields
+        $data['timeout'] = $model->timeout ?? '7';
+        $data['number_of_repeat'] = $model->number_of_repeat ?? '3';
         
-        $data = [
-            'id' => (string)$model->id,
-            'uniqid' => $model->uniqid,
-            'extension' => $model->extension,
-            // SECURITY: Sanitize user-provided fields to prevent XSS attacks
-            // Use SecurityHelper instead of decodeHtmlEntities to ensure proper escaping
-            'name' => SecurityHelper::escapeHtml($model->name ?? ''),
-            'audio_message_id' => $model->audio_message_id ?? '',
-            'audio_message_id_Represent' => $audioMessageRepresent,
-            'timeout' => $model->timeout ?? '7',
-            'timeout_extension' => $model->timeout_extension ?? '',
-            'timeout_extensionRepresent' => $timeoutExtensionRepresent,
-            'allow_enter_any_internal_extension' => ($model->allow_enter_any_internal_extension ?? '0') === '1',
-            'number_of_repeat' => $model->number_of_repeat ?? '3',
-            // SECURITY: Sanitize description field to prevent XSS attacks
-            'description' => SecurityHelper::escapeHtml($model->description ?? '')
-        ];
+        // Convert boolean fields for frontend consumption
+        $booleanFields = ['allow_enter_any_internal_extension'];
+        $data = self::formatBooleanFields($data + [
+            'allow_enter_any_internal_extension' => $model->allow_enter_any_internal_extension ?? '0'
+        ], $booleanFields);
+
+        // Add extension fields with representations using unified approach
+        $data = self::addExtensionField($data, 'timeout_extension', $model->timeout_extension);
+
+        // Add sound file field using unified approach with IVR-specific naming (audio_message_id_Represent)
+        $data = self::addSoundFileField($data, 'audio_message_id', $model->audio_message_id, '_Represent');
         
         if ($includeActions && !empty($model->id)) {
             // Add IVR actions
