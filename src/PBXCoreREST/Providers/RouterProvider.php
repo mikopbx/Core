@@ -48,6 +48,8 @@ use MikoPBX\PBXCoreREST\Controllers\
     Extensions\PostController as ExtensionsPostController,
     CallQueues\GetController as CallQueuesGetController,
     CallQueues\PostController as CallQueuesPostController,
+    CallQueues\PutController as CallQueuesPutController,
+    CallQueues\DeleteController as CallQueuesDeleteController,
     IvrMenu\GetController as IvrMenuGetController,
     IvrMenu\PostController as IvrMenuPostController,
     IvrMenu\PutController as IvrMenuPutController,
@@ -184,8 +186,11 @@ class RouterProvider implements ServiceProviderInterface
             [ExtensionsGetController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'get', '/'],
             [ExtensionsPostController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'post', '/'],
 
-            [CallQueuesGetController::class, 'callAction', '/pbxcore/api/call-queues/{actionName}', 'get', '/'],
-            [CallQueuesPostController::class, 'callAction', '/pbxcore/api/call-queues/{actionName}', 'post', '/'],
+            [CallQueuesGetController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}', 'get', '/'],
+            [CallQueuesGetController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
+            [CallQueuesPostController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}', 'post', '/'],
+            [CallQueuesPutController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
+            [CallQueuesDeleteController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
 
             [IvrMenuGetController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}', 'get', '/'],
             [IvrMenuGetController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],

@@ -517,6 +517,11 @@ Limit fields width
 
 }
 
+@media only screen and (max-width: 1000px) {
+    .hide-on-tablet {
+        display: none;
+    }
+}
 
 @media only screen and (max-width: 768px) {
     #top-left-logo {

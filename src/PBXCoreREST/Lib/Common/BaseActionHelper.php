@@ -117,8 +117,15 @@ class BaseActionHelper
                         // Use absint for positive integers
                         $value = $filter->absint($value);
                         break;
+                    case 'bool':
+                        // Convert various representations to boolean
+                        $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                        break;
                     case 'sanitize':
                         $value = TextFieldProcessor::sanitizeForStorage($value);
+                        break;
+                    case 'html_escape':
+                        $value = htmlspecialchars($value, ENT_QUOTES);
                         break;
                     case 'max':
                         if (is_string($value)) {

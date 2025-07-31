@@ -24,40 +24,49 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\CallQueuesManagementProcessor;
 
 /**
- * POST controller for call queues management
+ * DELETE controller for call queues management
  *
  * @RoutePrefix("/pbxcore/api/v2/call-queues")
  *
  * @examples
- * curl -X POST http://127.0.0.1/pbxcore/api/v2/call-queues/saveRecord \
- *   -d "name=Sales Queue&extension=2001&strategy=ringall"
+ * curl -X DELETE http://127.0.0.1/pbxcore/api/v2/call-queues/deleteRecord/QUEUE-123ABC
  *
  * @package MikoPBX\PBXCoreREST\Controllers\CallQueues
  */
-class PostController extends BaseController
+class DeleteController extends BaseController
 {
     /**
      * Enable CSRF protection for this controller
      */
     public const bool REQUIRES_CSRF_PROTECTION = true;
     /**
-     * Handle POST requests for call queue operations
+     * Handle DELETE requests for call queue operations
      *
      * @param string $actionName The name of the action
+     * @param string|null $id Call queue ID to delete
      *
-     * Creates new call queue record
-     * @Post("/saveRecord")
+     * Deletes call queue record
+     * @Delete("/deleteRecord/{id}")
      *
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
-        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
+        if (empty($id)) {
+            $this->response->setJsonContent([
+                'result' => false,
+                'messages' => ['error' => ['Empty ID in request data']]
+            ]);
+            $this->response->send();
+            return;
+        }
+
+        $deleteData = ['id' => $id];
 
         $this->sendRequestToBackendWorker(
             CallQueuesManagementProcessor::class,
             $actionName,
-            $postData
+            $deleteData
         );
     }
 }
