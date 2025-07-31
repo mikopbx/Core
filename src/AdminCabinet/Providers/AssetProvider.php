@@ -883,7 +883,9 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/ace/mode-php.js', true)
                 ->addJs('js/vendor/ace/mode-julia.js', true);
             $this->footerCollectionJS
+                ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/PbxAPI/dialplanApplicationsAPI.js', true)
                 ->addJs('js/pbx/DialplanApplications/dialplan-applications-modify.js', true);
         }
     }

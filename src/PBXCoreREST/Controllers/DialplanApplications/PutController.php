@@ -23,11 +23,11 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\DialplanApplicationsManagementProcessor;
 
 /**
- * POST controller for dialplan applications management
+ * PUT controller for dialplan applications management
  * 
  * @RoutePrefix("/pbxcore/api/v2/dialplan-applications")
  */
-class PostController extends BaseController
+class PutController extends BaseController
 {
     /**
      * Enable CSRF protection for this controller
@@ -37,41 +37,31 @@ class PostController extends BaseController
      * Handle the call to different actions based on the action name
      * 
      * @param string $actionName The name of the action
+     * @param string|null $id Dialplan application ID for update operations
      * 
-     * Creates or updates dialplan application record
-     * @Post("/saveRecord")
-     * 
-     * Deletes the dialplan applications record with its dependent tables
-     * @Post("/deleteRecord")
+     * Updates existing dialplan application record
+     * @Put("/saveRecord/{id}")
      * 
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
-        // Handle both form data and JSON data
-        $postData = [];
-        
-        if ($this->request->getContentType() === 'application/json') {
-            // Handle JSON requests
-            $rawBody = $this->request->getRawBody();
-            if (!empty($rawBody)) {
-                $jsonData = json_decode($rawBody, true);
-                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
-                    $postData = $jsonData;
-                }
-            }
-        } else {
-            // Handle form data
-            $postData = $this->request->getPost();
+        if (empty($id)) {
+            $this->response->setJsonContent([
+                'result' => false,
+                'messages' => ['error' => ['Empty ID in request data']]
+            ]);
+            $this->response->send();
+            return;
         }
-        
-        // Sanitize the data
-        $postData = self::sanitizeData($postData, $this->filter);
+
+        $putData = self::sanitizeData($this->request->getPut(), $this->filter);
+        $putData['id'] = $id;
         
         $this->sendRequestToBackendWorker(
             DialplanApplicationsManagementProcessor::class,
             $actionName,
-            $postData
+            $putData
         );
     }
 }

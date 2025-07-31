@@ -65,14 +65,14 @@ class SaveRecordAction
         // Data sanitization
         $sanitizationRules = [
             'id' => 'int',
-            'name' => 'string|html_escape|max:100',
+            'name' => 'string|sanitize|max:100',
             'extension' => 'string|regex:/^[0-9]{2,8}$/|max:8',
             'audio_message_id' => 'string|max:50|empty_to_null',
             'timeout' => 'int|min:1|max:99',
             'timeout_extension' => 'string|max:20|empty_to_null',
             'allow_enter_any_internal_extension' => 'bool',
             'number_of_repeat' => 'int|min:1|max:99',
-            'description' => 'string|html_escape|max:2000'
+            'description' => 'string|sanitize|max:2000'
         ];
         
         // Extract only fields that have sanitization rules

@@ -1,43 +1,31 @@
 {% if isAllowed('save') %}
     {{ link_to("dialplan-applications/modify", '<i class="add circle icon"></i> '~t._('da_AddNewDialplanApp'), "class": "ui blue button", "id":"add-new-button") }}
 {% endif %}
-    {% for record in apps %}
-        {% if loop.first %}
-            <table class="ui selectable compact unstackable table" id="dialplan-applications-table">
-            <thead>
+
+<div id="dialplan-applications-table-container">
+    <table class="ui selectable compact unstackable table datatable-width-constrained" id="dialplan-applications-table">
+        <thead>
             <tr>
-                <th>{{ t._('da_ColumnExtension') }}</th>
-                <th>{{ t._('da_ColumnName') }}</th>
-                <th >{{ t._('da_ColumnNote') }}</th>
-                <th></th>
+                <th class="collapsing">{{ t._('da_ColumnName') }}</th>
+                <th class="hide-on-mobile">{{ t._('da_ColumnNote') }}</th>
+                <th class="right aligned collapsing"></th>
             </tr>
-            </thead>
-            <tbody>
-        {% endif %}
-        <tr class="app-row" id="{{ record.uniqid }}">
-            <td>{{ record.extension }}</td>
-            <td>{% if record.type=='php' %}<i class="php icon"></i> {% endif %}{{ record.name }}</td>
-            <td>
-                {% if not (record.description is empty) and record.description|length>80 %}
-                    <div class="ui basic icon button" data-content="{{ record.description }}" data-variation="wide">
-                        <i class="file text icon"></i>
-                    </div>
-                {% else %}
-                    {{ record.description }}
-                {% endif %}
-            </td>
-            {{ partial("partials/tablesbuttons",
-                [
-                    'id': record.uniqid,
-                    'edit' : 'dialplan-applications/modify/',
-                    'delete': 'dialplan-applications/delete/'
-                ]) }}
-        </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be loaded via Ajax -->
+        </tbody>
+    </table>
+</div>
 
-        {% if loop.last %}
-
-            </tbody>
-            </table>
-        {% endif %}
-    {% endfor %}
+<div class="ui placeholder segment" id="empty-table-placeholder" style="display: none;">
+    <div class="ui icon header">
+        <i class="code icon"></i>
+        {{ t._('da_NoDialplanApplicationsFound') }}
+    </div>
+    {% if isAllowed('save') %}
+        <div class="inline">
+            {{ link_to("dialplan-applications/modify", t._('da_CreateFirstDialplanApp'), "class": "ui primary button") }}
+        </div>
+    {% endif %}
+</div>
 

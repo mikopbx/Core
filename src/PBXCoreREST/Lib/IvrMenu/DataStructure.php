@@ -66,9 +66,8 @@ class DataStructure
             'id' => (string)$model->id,
             'uniqid' => $model->uniqid,
             'extension' => $model->extension,
-            // SECURITY: Sanitize user-provided fields to prevent XSS attacks
-            // Use SecurityHelper instead of decodeHtmlEntities to ensure proper escaping
-            'name' => SecurityHelper::escapeHtml($model->name ?? ''),
+            // Data is already sanitized during storage, no additional escaping needed for API response
+            'name' => $model->name ?? '',
             'audio_message_id' => $model->audio_message_id ?? '',
             'audio_message_id_Represent' => $audioMessageRepresent,
             'timeout' => $model->timeout ?? '7',
@@ -76,8 +75,8 @@ class DataStructure
             'timeout_extensionRepresent' => $timeoutExtensionRepresent,
             'allow_enter_any_internal_extension' => ($model->allow_enter_any_internal_extension ?? '0') === '1',
             'number_of_repeat' => $model->number_of_repeat ?? '3',
-            // SECURITY: Sanitize description field to prevent XSS attacks
-            'description' => SecurityHelper::escapeHtml($model->description ?? '')
+            // Data is already sanitized during storage, no additional escaping needed for API response
+            'description' => $model->description ?? ''
         ];
         
         if ($includeActions && !empty($model->id)) {

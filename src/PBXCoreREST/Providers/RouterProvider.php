@@ -54,6 +54,8 @@ use MikoPBX\PBXCoreREST\Controllers\
     IvrMenu\DeleteController as IvrMenuDeleteController,
     DialplanApplications\GetController as DialplanApplicationsGetController,
     DialplanApplications\PostController as DialplanApplicationsPostController,
+    DialplanApplications\PutController as DialplanApplicationsPutController,
+    DialplanApplications\DeleteController as DialplanApplicationsDeleteController,
     ConferenceRooms\GetController as ConferenceRoomsGetController,
     ConferenceRooms\PostController as ConferenceRoomsPostController,
     ConferenceRooms\PutController as ConferenceRoomsPutController,
@@ -197,8 +199,11 @@ class RouterProvider implements ServiceProviderInterface
             [ConferenceRoomsPutController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
             [ConferenceRoomsDeleteController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
 
-            [DialplanApplicationsGetController::class, 'callAction', '/pbxcore/api/dialplan-applications/{actionName}', 'get', '/'],
-            [DialplanApplicationsPostController::class, 'callAction', '/pbxcore/api/dialplan-applications/{actionName}', 'post', '/'],
+            [DialplanApplicationsGetController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}', 'get', '/'],
+            [DialplanApplicationsGetController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
+            [DialplanApplicationsPostController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}', 'post', '/'],
+            [DialplanApplicationsPutController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
+            [DialplanApplicationsDeleteController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
 
             [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'get', '/'],
 
