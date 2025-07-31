@@ -23,7 +23,7 @@ use MikoPBX\Common\Models\IvrMenu;
 use MikoPBX\Common\Models\IvrMenuActions;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Common\SystemSanitizer;
 
 /**
@@ -50,7 +50,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\SystemSanitizer;
  * @apiSuccess {Object} data Saved IVR menu data
  * @apiSuccess {String} reload URL for page reload
  */
-class SaveRecordAction
+class SaveRecordAction extends AbstractSaveRecordAction
 {
     /**
      * Save IVR menu record
@@ -59,12 +59,9 @@ class SaveRecordAction
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        $res = self::createApiResult(__METHOD__);
         
-        // Data sanitization
-        // SECURITY FIX: Remove html_escape from sanitization rules to prevent double escaping
-        // HTML escaping is handled at output level in DataStructure::createFromModel()
+        // Define sanitization rules - no HTML escaping as it's handled at output level
         $sanitizationRules = [
             'id' => 'int',
             'name' => 'string|max:100',
@@ -77,41 +74,26 @@ class SaveRecordAction
             'description' => 'string|max:2000'
         ];
         
-        // Extract only fields that have sanitization rules
-        $fieldsToSanitize = array_intersect_key($data, $sanitizationRules);
-        
-        // Sanitize main fields
-        $sanitizedData = BaseActionHelper::sanitizeData($fieldsToSanitize, $sanitizationRules);
-        
-        // SECURITY FIX: Decode HTML entities from frontend (e.g. &quot; -> ")
-        // Frontend sometimes sends already escaped data, so we need to decode it
-        // before storing in database to prevent double escaping
-        $textFieldsTodecode = ['name', 'description'];
-        foreach ($textFieldsTodecode as $field) {
-            if (isset($sanitizedData[$field])) {
-                $sanitizedData[$field] = BaseActionHelper::decodeHtmlEntities($sanitizedData[$field]);
-            }
-        }
-        
-        // Custom validation for timeout_extension using SystemSanitizer
-        if (isset($sanitizedData['timeout_extension']) && !empty($sanitizedData['timeout_extension'])) {
-            if (!SystemSanitizer::isValidRoutingDestination($sanitizedData['timeout_extension'], 20)) {
-                $sanitizedData['timeout_extension'] = SystemSanitizer::sanitizeRoutingDestination($sanitizedData['timeout_extension'], 20);
-                // If still invalid after sanitization, reject it
-                if (!SystemSanitizer::isValidRoutingDestination($sanitizedData['timeout_extension'], 20)) {
-                    $res->messages['error'][] = 'Invalid timeout_extension value';
-                    return $res;
-                }
-            }
+        // Text fields for unified processing (no HTML decoding, just sanitization)
+        $textFields = ['name', 'description'];
+
+        try {
+            // Unified data sanitization using new approach - no HTML entity decoding
+            $sanitizedData = self::sanitizeInputData($data, $sanitizationRules, $textFields);
+
+            // Sanitize routing destination fields
+            $sanitizedData = self::sanitizeRoutingDestinations($sanitizedData, ['timeout_extension'], 20);
+
+        } catch (\Exception $e) {
+            $res->messages['error'][] = $e->getMessage();
+            return $res;
         }
         
         // Separately handle and sanitize actions data
         $actionsData = self::sanitizeActionsData($data['actions'] ?? []);
         $sanitizedData['actions'] = $actionsData;
         
-        $data = $sanitizedData;
-        
-        // Validate required fields
+        // Validate required fields using unified approach
         $validationRules = [
             'name' => [
                 ['type' => 'required', 'message' => 'IVR menu name is required']
@@ -121,15 +103,15 @@ class SaveRecordAction
                 ['type' => 'regex', 'pattern' => '/^[0-9]{2,8}$/', 'message' => 'Extension must be 2-8 digits']
             ]
         ];
-        $validationErrors = BaseActionHelper::validateData($data, $validationRules);
+        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
         if (!empty($validationErrors)) {
             $res->messages['error'] = $validationErrors;
             return $res;
         }
         
         // Get or create model
-        if (!empty($data['id'])) {
-            $ivrMenu = IvrMenu::findFirstById($data['id']);
+        if (!empty($sanitizedData['id'])) {
+            $ivrMenu = IvrMenu::findFirstById($sanitizedData['id']);
             if (!$ivrMenu) {
                 $res->messages['error'][] = 'api_IvrMenuNotFound';
                 return $res;
@@ -139,53 +121,44 @@ class SaveRecordAction
             $ivrMenu->uniqid = IvrMenu::generateUniqueID('IVR-');
         }
         
-        // Check extension uniqueness
-        if (!BaseActionHelper::checkUniqueness(
-            Extensions::class,
-            'number',
-            $data['extension'],
-            $ivrMenu->extension
-        )) {
+        // Check extension uniqueness using unified approach
+        if (!self::checkExtensionUniqueness($sanitizedData['extension'], $ivrMenu->extension)) {
             $res->messages['error'][] = 'Extension number already exists';
             return $res;
         }
         
         try {
-            // Save in transaction using BaseActionHelper
-            $savedIvrMenu = BaseActionHelper::executeInTransaction(function() use ($ivrMenu, $data) {
-                // Update/create Extension
-                $extension = Extensions::findFirstByNumber($ivrMenu->extension);
-                if (!$extension) {
-                    $extension = new Extensions();
-                    $extension->type = Extensions::TYPE_IVR_MENU;
-                    $extension->show_in_phonebook = 1;
-                    $extension->public_access = 1;
-                }
+            // Save in transaction using unified approach
+            $savedIvrMenu = self::executeInTransaction(function() use ($ivrMenu, $sanitizedData) {
+                // Update/create Extension using unified approach
+                self::createOrUpdateExtension(
+                    $sanitizedData['extension'],
+                    $sanitizedData['name'],
+                    Extensions::TYPE_IVR_MENU,
+                    $ivrMenu->extension
+                );
                 
-                $extension->number = $data['extension'];
-                $extension->callerid = $data['name'];
-                
-                if (!$extension->save()) {
-                    throw new \Exception(implode(', ', $extension->getMessages()));
-                }
-                
-                // Update IVR Menu
-                $ivrMenu->extension = $data['extension'];
-                $ivrMenu->name = $data['name'];
-                $ivrMenu->audio_message_id = $data['audio_message_id'] ?? '';
-                $ivrMenu->timeout = $data['timeout'] ?? '7';
-                $ivrMenu->timeout_extension = $data['timeout_extension'] ?? '';
-                $ivrMenu->allow_enter_any_internal_extension = ($data['allow_enter_any_internal_extension'] ?? false) ? '1' : '0';
-                $ivrMenu->number_of_repeat = $data['number_of_repeat'] ?? '3';
-                $ivrMenu->description = $data['description'] ?? '';
+                // Update IVR Menu with unified data handling
+                $ivrMenu->extension = $sanitizedData['extension'];
+                $ivrMenu->name = $sanitizedData['name'];
+                $ivrMenu->audio_message_id = $sanitizedData['audio_message_id'] ?? '';
+                $ivrMenu->timeout = $sanitizedData['timeout'] ?? '7';
+                $ivrMenu->timeout_extension = $sanitizedData['timeout_extension'] ?? '';
+                $ivrMenu->number_of_repeat = $sanitizedData['number_of_repeat'] ?? '3';
+                $ivrMenu->description = $sanitizedData['description'] ?? '';
+
+                // Convert boolean values using unified approach
+                $booleanFields = ['allow_enter_any_internal_extension'];
+                $convertedData = self::convertBooleanFields($sanitizedData, $booleanFields);
+                $ivrMenu->allow_enter_any_internal_extension = $convertedData['allow_enter_any_internal_extension'] ?? '0';
                 
                 if (!$ivrMenu->save()) {
                     throw new \Exception(implode(', ', $ivrMenu->getMessages()));
                 }
                 
                 // Update IVR Menu Actions
-                if (!empty($data['actions'])) {
-                    self::updateIvrMenuActions($ivrMenu->uniqid, $data['actions']);
+                if (!empty($sanitizedData['actions'])) {
+                    self::updateIvrMenuActions($ivrMenu->uniqid, $sanitizedData['actions']);
                 } else {
                     // Remove all existing actions if actions is empty
                     $existingActions = IvrMenuActions::find([
@@ -206,8 +179,12 @@ class SaveRecordAction
             // Add reload path for page refresh after save
             $res->reload = "ivr-menu/modify/{$savedIvrMenu->uniqid}";
             
+            // Log successful operation using unified approach
+            self::logSuccessfulSave('IVR menu', $savedIvrMenu->name, $savedIvrMenu->extension, __METHOD__);
+            
         } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
+            // Handle save error using unified approach
+            return self::handleSaveError($e, $res);
         }
         
         return $res;

@@ -534,8 +534,28 @@ const callQueueModifyRest = {
         // Set initialization flag to prevent change tracking
         callQueueModifyRest.isFormInitializing = true;
 
-        // Populate form fields using Semantic UI form (following IVR Menu pattern)
-        Form.$formObj.form('set values', data);
+        // Populate form fields using Semantic UI form, but handle text fields manually to prevent double-escaping
+        const dataForSemanticUI = {...data};
+        
+        // Remove text fields from Semantic UI processing to handle them manually
+        const textFields = ['name', 'description', 'callerid_prefix'];
+        textFields.forEach(field => {
+            delete dataForSemanticUI[field];
+        });
+        
+        // Populate non-text fields through Semantic UI
+        Form.$formObj.form('set values', dataForSemanticUI);
+        
+        // Manually populate text fields directly - REST API now returns raw data
+        textFields.forEach(fieldName => {
+            if (data[fieldName] !== undefined) {
+                const $field = $(`input[name="${fieldName}"], textarea[name="${fieldName}"]`);
+                if ($field.length) {
+                    // Use raw data from API - no decoding needed
+                    $field.val(data[fieldName]);
+                }
+            }
+        });
 
         // Handle extension-based dropdowns with representations (except timeout_extension)
         callQueueModifyRest.populateExtensionDropdowns(data);

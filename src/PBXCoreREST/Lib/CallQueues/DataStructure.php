@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\CallQueues;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\AdminCabinet\Library\SecurityHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 
 /**
  * Data structure for call queues with extension representations
@@ -31,13 +32,17 @@ use MikoPBX\AdminCabinet\Library\SecurityHelper;
  *
  * @package MikoPBX\PBXCoreREST\Lib\CallQueues
  */
-class DataStructure
+class DataStructure extends AbstractDataStructure
 {
     /**
      * Create data array from CallQueues model with representation fields
      *
      * This method generates all necessary representation fields for proper
      * dropdown display in the frontend, following the IVR Menu pattern.
+     * 
+     * Following "Store Clean, Escape at Edge" principle:
+     * Returns raw data that was sanitized on input. HTML escaping
+     * is the responsibility of the presentation layer.
      *
      * @param \MikoPBX\Common\Models\CallQueues $model Queue model instance
      * @param array $members Array of queue members with representations
@@ -45,102 +50,62 @@ class DataStructure
      */
     public static function createFromModel($model, array $members = []): array
     {
-        // Get timeout extension representation
-        $timeoutExtensionRepresent = '';
-        if (!empty($model->timeout_extension)) {
-            $timeoutExt = Extensions::findFirstByNumber($model->timeout_extension);
-            if ($timeoutExt) {
-                $timeoutExtensionRepresent = $timeoutExt->getRepresent();
-            }
-        }
 
-        // Get redirect extension representations
-        $redirectEmptyRepresent = '';
-        if (!empty($model->redirect_to_extension_if_empty)) {
-            $redirectExt = Extensions::findFirstByNumber($model->redirect_to_extension_if_empty);
-            if ($redirectExt) {
-                $redirectEmptyRepresent = $redirectExt->getRepresent();
-            }
-        }
+        // Start with base structure (raw data, no HTML escaping)
+        $data = self::createBaseStructure($model);
+        
+        // Add call queue specific fields
+        $data['strategy'] = $model->strategy;
+        
+        // Convert string fields to strings for API consistency
+        $stringFields = ['seconds_to_ring_each_member', 'seconds_for_wrapup'];
+        $data = self::convertNumericFieldsToStrings($data + [
+            'seconds_to_ring_each_member' => $model->seconds_to_ring_each_member,
+            'seconds_for_wrapup' => $model->seconds_for_wrapup,
+        ], $stringFields);
+        
+        // Convert boolean fields for frontend consumption
+        $booleanFields = ['recive_calls_while_on_a_call', 'announce_position', 'announce_hold_time'];
+        $data = self::formatBooleanFields($data + [
+            'recive_calls_while_on_a_call' => $model->recive_calls_while_on_a_call ?? '0',
+            'announce_position' => $model->announce_position ?? '0',
+            'announce_hold_time' => $model->announce_hold_time ?? '0',
+        ], $booleanFields);
+        
+        // Add other fields
+        $data['caller_hear'] = $model->caller_hear;
+        
+        // Convert integer fields
+        $integerFields = ['periodic_announce_frequency', 'timeout_to_redirect_to_extension', 
+                         'number_unanswered_calls_to_redirect', 'number_repeat_unanswered_to_redirect'];
+        $data = self::convertIntegerFields($data + [
+            'periodic_announce_frequency' => $model->periodic_announce_frequency,
+            'timeout_to_redirect_to_extension' => $model->timeout_to_redirect_to_extension,
+            'number_unanswered_calls_to_redirect' => $model->number_unanswered_calls_to_redirect,
+            'number_repeat_unanswered_to_redirect' => $model->number_repeat_unanswered_to_redirect,
+        ], $integerFields);
+        
+        // Add callerid_prefix (raw data - already sanitized on input)
+        $data['callerid_prefix'] = $model->callerid_prefix ?? '';
 
-        $redirectUnansweredRepresent = '';
-        if (!empty($model->redirect_to_extension_if_unanswered)) {
-            $redirectExt = Extensions::findFirstByNumber($model->redirect_to_extension_if_unanswered);
-            if ($redirectExt) {
-                $redirectUnansweredRepresent = $redirectExt->getRepresent();
-            }
-        }
+        // Add extension fields with representations using unified approach
+        $data = self::addMultipleExtensionFields($data, [
+            'timeout_extension' => $model->timeout_extension,
+            'redirect_to_extension_if_empty' => $model->redirect_to_extension_if_empty,
+            'redirect_to_extension_if_unanswered' => $model->redirect_to_extension_if_unanswered,
+            'redirect_to_extension_if_repeat_exceeded' => $model->redirect_to_extension_if_repeat_exceeded,
+        ]);
 
-        $redirectRepeatRepresent = '';
-        if (!empty($model->redirect_to_extension_if_repeat_exceeded)) {
-            $redirectExt = Extensions::findFirstByNumber($model->redirect_to_extension_if_repeat_exceeded);
-            if ($redirectExt) {
-                $redirectRepeatRepresent = $redirectExt->getRepresent();
-            }
-        }
+        // Add sound file fields with representations using unified approach
+        $data = self::addMultipleSoundFileFields($data, [
+            'periodic_announce_sound_id' => $model->periodic_announce_sound_id,
+            'moh_sound_id' => $model->moh_sound_id,
+        ]);
 
-        // Get sound file representations
-        $periodicAnnounceRepresent = '';
-        if (!empty($model->periodic_announce_sound_id)) {
-            $soundFile = SoundFiles::findFirstById($model->periodic_announce_sound_id);
-            if ($soundFile) {
-                $periodicAnnounceRepresent = $soundFile->getRepresent();
-            }
-        }
+        // Add members
+        $data['members'] = $members;
 
-        $mohSoundRepresent = '';
-        if (!empty($model->moh_sound_id)) {
-            $soundFile = SoundFiles::findFirstById($model->moh_sound_id);
-            if ($soundFile) {
-                $mohSoundRepresent = $soundFile->getRepresent();
-            }
-        }
-
-        return [
-            'id' => (string)$model->id,
-            'uniqid' => $model->uniqid,
-            // SECURITY: Sanitize user-provided fields to prevent XSS attacks
-            'name' => SecurityHelper::escapeHtml($model->name ?? ''),
-            'extension' => $model->extension,
-            'strategy' => $model->strategy,
-            'seconds_to_ring_each_member' => (string)$model->seconds_to_ring_each_member,
-            'seconds_for_wrapup' => (string)$model->seconds_for_wrapup,
-            
-            // Convert checkbox values to boolean for consistent frontend handling (following IVR Menu pattern)
-            'recive_calls_while_on_a_call' => ($model->recive_calls_while_on_a_call ?? '0') === '1',
-            'caller_hear' => $model->caller_hear,
-            'announce_position' => ($model->announce_position ?? '0') === '1',
-            'announce_hold_time' => ($model->announce_hold_time ?? '0') === '1',
-            'periodic_announce_frequency' => (int)$model->periodic_announce_frequency,
-            'timeout_to_redirect_to_extension' => (int)$model->timeout_to_redirect_to_extension,
-            'number_unanswered_calls_to_redirect' => (int)$model->number_unanswered_calls_to_redirect,
-            'number_repeat_unanswered_to_redirect' => (int)$model->number_repeat_unanswered_to_redirect,
-            'callerid_prefix' => SecurityHelper::escapeHtml($model->callerid_prefix ?? ''),
-            'description' => SecurityHelper::escapeHtml($model->description ?? ''),
-
-            // Extension fields with representations for dropdown display
-            'timeout_extension' => $model->timeout_extension ?? '',
-            'timeout_extensionRepresent' => $timeoutExtensionRepresent,
-
-            'redirect_to_extension_if_empty' => $model->redirect_to_extension_if_empty ?? '',
-            'redirect_to_extension_if_emptyRepresent' => $redirectEmptyRepresent,
-
-            'redirect_to_extension_if_unanswered' => $model->redirect_to_extension_if_unanswered ?? '',
-            'redirect_to_extension_if_unansweredRepresent' => $redirectUnansweredRepresent,
-
-            'redirect_to_extension_if_repeat_exceeded' => $model->redirect_to_extension_if_repeat_exceeded ?? '',
-            'redirect_to_extension_if_repeat_exceededRepresent' => $redirectRepeatRepresent,
-
-            // Sound file fields with representations
-            'periodic_announce_sound_id' => $model->periodic_announce_sound_id ?? '',
-            'periodic_announce_sound_idRepresent' => $periodicAnnounceRepresent,
-
-            'moh_sound_id' => $model->moh_sound_id ?? '',
-            'moh_sound_idRepresent' => $mohSoundRepresent,
-
-            // Members with representations
-            'members' => $members
-        ];
+        return $data;
     }
 
     /**
@@ -151,19 +116,23 @@ class DataStructure
      */
     public static function createForList($model): array
     {
-        $data = self::createFromModel($model, []);
+        // Use unified base method for list creation
+        $data = parent::createForList($model);
 
-        // Create custom represent field for queue display in table (without "Queue:" prefix)
-        $queueName = SecurityHelper::escapeHtml($model->name ?? '');
-        $data['represent'] = '<i class="users icon"></i> ' . $queueName . " <$model->extension>";
+        // Add call queue specific fields for list display
+        $data['strategy'] = $model->strategy;
+        $data['extension'] = $model->extension;
+
+        // Create custom represent field for queue display
+        // Note: The represent field contains HTML markup and will be escaped by the frontend when needed
+        $data['represent'] = '<i class="users icon"></i> ' . ($model->name ?? '') . " <{$model->extension}>";
 
         // Add members summary for list display
         $members = [];
         foreach ($model->CallQueueMembers as $member) {
-            $memberExt = Extensions::findFirstByNumber($member->extension);
             $members[] = [
                 'extension' => $member->extension,
-                'represent' => $memberExt ? $memberExt->getRepresent() : 'ERROR'
+                'represent' => self::getExtensionRepresentation($member->extension)
             ];
         }
 

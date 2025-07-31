@@ -24,8 +24,10 @@ use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\AdminCabinet\Library\SecurityHelper;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
 use MikoPBX\PBXCoreREST\Lib\Common\SystemSanitizer;
+use MikoPBX\PBXCoreREST\Lib\Common\TextFieldProcessor;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 
@@ -50,7 +52,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  * @apiSuccess {Object} data Saved call queue data with representations
  * @apiSuccess {String} reload URL for page reload
  */
-class SaveRecordAction
+class SaveRecordAction extends AbstractSaveRecordAction
 {
     /**
      * Save call queue record with comprehensive validation and proper logging
@@ -60,12 +62,9 @@ class SaveRecordAction
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        $res = self::createApiResult(__METHOD__);
 
-        // Data sanitization
-        // SECURITY FIX: Remove html_escape from sanitization rules to prevent double escaping
-        // HTML escaping is handled at output level in DataStructure::createFromModel()
+        // Define sanitization rules - no HTML escaping as it's handled at output level
         $sanitizationRules = [
             'id' => 'int',
             'name' => 'string|max:100',
@@ -92,56 +91,25 @@ class SaveRecordAction
             'members' => 'array'
         ];
 
-        // Extract and sanitize main fields
-        $fieldsToSanitize = array_intersect_key($data, $sanitizationRules);
-        $sanitizedData = BaseActionHelper::sanitizeData($fieldsToSanitize, $sanitizationRules);
-        
-        // SECURITY FIX: Decode HTML entities from frontend (e.g. &quot; -> ")
-        // Frontend sometimes sends already escaped data, so we need to decode it
-        // before storing in database to prevent double escaping
-        $textFieldsTodecode = ['name', 'description', 'callerid_prefix'];
-        foreach ($textFieldsTodecode as $field) {
-            if (isset($sanitizedData[$field])) {
-                $sanitizedData[$field] = BaseActionHelper::decodeHtmlEntities($sanitizedData[$field]);
-            }
-        }
-
-        // Custom validation for extension fields using SystemSanitizer
-        $extensionFields = [
-            'timeout_extension',
-            'redirect_to_extension_if_empty',
-            'redirect_to_extension_if_unanswered',
-            'redirect_to_extension_if_repeat_exceeded'
-        ];
-
-        foreach ($extensionFields as $field) {
-            if (isset($sanitizedData[$field]) && !empty($sanitizedData[$field])) {
-                if (!SystemSanitizer::isValidRoutingDestination($sanitizedData[$field], 20)) {
-                    $sanitizedData[$field] = SystemSanitizer::sanitizeRoutingDestination($sanitizedData[$field], 20);
-                    if (!SystemSanitizer::isValidRoutingDestination($sanitizedData[$field], 20)) {
-                        $res->messages['error'][] = "Invalid {$field} value";
-                        SystemMessages::sysLogMsg(__METHOD__,
-                            "Invalid extension field {$field}: " . $sanitizedData[$field],
-                            LOG_WARNING
-                        );
-                        return $res;
-                    }
-                }
-            }
-        }
-
-        // Check for dangerous content in text fields with proper logging
+        // Text fields for unified processing (no HTML decoding, just sanitization)
         $textFields = ['name', 'description', 'callerid_prefix'];
-        foreach ($textFields as $field) {
-            if (isset($sanitizedData[$field]) && SecurityHelper::containsDangerousContent($sanitizedData[$field])) {
-                $res->messages['error'][] = "Dangerous content detected in {$field}";
-                SystemMessages::sysLogMsg(__METHOD__,
-                    "Dangerous content detected in {$field} from IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown') .
-                    ", Content: " . substr($sanitizedData[$field], 0, 100),
-                    LOG_WARNING
-                );
-                return $res;
-            }
+
+        try {
+            // Unified data sanitization using new approach - no HTML entity decoding
+            $sanitizedData = self::sanitizeInputData($data, $sanitizationRules, $textFields);
+
+            // Sanitize routing destination fields
+            $routingFields = [
+                'timeout_extension',
+                'redirect_to_extension_if_empty',
+                'redirect_to_extension_if_unanswered',
+                'redirect_to_extension_if_repeat_exceeded'
+            ];
+            $sanitizedData = self::sanitizeRoutingDestinations($sanitizedData, $routingFields, 20);
+
+        } catch (\Exception $e) {
+            $res->messages['error'][] = $e->getMessage();
+            return $res;
         }
 
         // Sanitize members data
@@ -149,7 +117,7 @@ class SaveRecordAction
             $sanitizedData['members'] = self::sanitizeMembersData($data['members']);
         }
 
-        // Validate required fields
+        // Validate required fields using unified approach
         $validationRules = [
             'name' => [
                 ['type' => 'required', 'message' => 'Queue name is required']
@@ -160,7 +128,7 @@ class SaveRecordAction
             ]
         ];
 
-        $validationErrors = BaseActionHelper::validateData($sanitizedData, $validationRules);
+        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
         if (!empty($validationErrors)) {
             $res->messages['error'] = $validationErrors;
             return $res;
@@ -182,49 +150,38 @@ class SaveRecordAction
             $queue->uniqid = CallQueues::generateUniqueID(Extensions::TYPE_QUEUE.'-');
         }
 
-        // Check extension uniqueness
-        if (!BaseActionHelper::checkUniqueness(
-            Extensions::class,
-            'number',
-            $sanitizedData['extension'],
-            $queue->extension
-        )) {
+        // Check extension uniqueness using unified approach
+        if (!self::checkExtensionUniqueness($sanitizedData['extension'], $queue->extension)) {
             $res->messages['error'][] = 'Extension number already exists';
             return $res;
         }
 
         try {
-            // Save in transaction using BaseActionHelper
-            $savedQueue = BaseActionHelper::executeInTransaction(function() use ($queue, $sanitizedData) {
-                // Update/create Extension
-                $extension = Extensions::findFirstByNumber($queue->extension ?? '');
-                if (!$extension) {
-                    $extension = new Extensions();
-                    $extension->type = Extensions::TYPE_QUEUE;
-                    $extension->show_in_phonebook = '1';
-                    $extension->public_access = '1';
-                }
+            // Save in transaction using unified approach
+            $savedQueue = self::executeInTransaction(function() use ($queue, $sanitizedData) {
+                // Update/create Extension using unified approach
+                self::createOrUpdateExtension(
+                    $sanitizedData['extension'],
+                    $sanitizedData['name'],
+                    Extensions::TYPE_QUEUE,
+                    $queue->extension
+                );
 
-                $extension->number = $sanitizedData['extension'];
-                $extension->callerid = $sanitizedData['name'];
-
-                if (!$extension->save()) {
-                    throw new \Exception('Failed to save extension: ' . implode(', ', $extension->getMessages()));
-                }
-
-                // Update CallQueue
+                // Update CallQueue with unified data handling
                 $queue->extension = $sanitizedData['extension'];
                 $queue->name = $sanitizedData['name'];
                 $queue->strategy = $sanitizedData['strategy'] ?? 'ringall';
                 $queue->seconds_to_ring_each_member = $sanitizedData['seconds_to_ring_each_member'] ?? 15;
                 $queue->seconds_for_wrapup = $sanitizedData['seconds_for_wrapup'] ?? 15;
-                
-                // Convert boolean values to database format (following IVR Menu pattern)
-                // Note: Unchecked checkboxes don't send data, so they default to false
-                $queue->recive_calls_while_on_a_call = ($sanitizedData['recive_calls_while_on_a_call'] ?? false) ? '1' : '0';
                 $queue->caller_hear = $sanitizedData['caller_hear'] ?? 'ringing';
-                $queue->announce_position = ($sanitizedData['announce_position'] ?? false) ? '1' : '0';
-                $queue->announce_hold_time = ($sanitizedData['announce_hold_time'] ?? false) ? '1' : '0';
+
+                // Convert boolean values using unified approach
+                $booleanFields = ['recive_calls_while_on_a_call', 'announce_position', 'announce_hold_time'];
+                $convertedData = self::convertBooleanFields($sanitizedData, $booleanFields);
+                
+                $queue->recive_calls_while_on_a_call = $convertedData['recive_calls_while_on_a_call'] ?? '0';
+                $queue->announce_position = $convertedData['announce_position'] ?? '0';
+                $queue->announce_hold_time = $convertedData['announce_hold_time'] ?? '0';
                 $queue->periodic_announce_sound_id = $sanitizedData['periodic_announce_sound_id'] ?? null;
                 $queue->moh_sound_id = $sanitizedData['moh_sound_id'] ?? null;
                 $queue->periodic_announce_frequency = $sanitizedData['periodic_announce_frequency'] ?? 0;
@@ -293,16 +250,12 @@ class SaveRecordAction
             // Add reload path for page refresh after save
             $res->reload = "call-queues/modify/{$savedQueue->uniqid}";
 
-            // Log successful operation (following MikoPBX standards)
-            SystemMessages::sysLogMsg(__METHOD__,
-                "Call queue '{$savedQueue->name}' ({$savedQueue->extension}) saved successfully",
-                LOG_INFO
-            );
+            // Log successful operation using unified approach
+            self::logSuccessfulSave('Call queue', $savedQueue->name, $savedQueue->extension, __METHOD__);
 
         } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            // Use CriticalErrorsHandler for exceptions (following MikoPBX standards)
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            // Handle save error using unified approach
+            return self::handleSaveError($e, $res);
         }
 
         return $res;
