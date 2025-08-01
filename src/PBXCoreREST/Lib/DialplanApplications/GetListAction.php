@@ -21,7 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
 
 use MikoPBX\Common\Models\DialplanApplications;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetListAction;
 
 /**
  * Action for getting list of all dialplan applications
@@ -34,36 +34,24 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Array} data Array of dialplan applications
  */
-class GetListAction
+class GetListAction extends AbstractGetListAction
 {
     /**
-     * Get list of all dialplan applications
+     * Get list of all dialplan applications with search, ordering, and pagination
      * 
-     * @param array $data Filter parameters (not used yet)
+     * @param array $data Filter parameters (search, ordering, pagination)
      * @return PBXApiResult
      */
     public static function main(array $data = []): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        try {
-            $apps = DialplanApplications::find([
-                'order' => 'name ASC'
-            ]);
-            
-            $resultData = [];
-            foreach ($apps as $app) {
-                $resultData[] = DataStructure::createFromModel($app);
-            }
-            
-            $res->data = $resultData;
-            $res->success = true;
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        }
-        
-        return $res;
+        return self::executeStandardList(
+            DialplanApplications::class,       // Model class
+            DataStructure::class,              // DataStructure class
+            $data,                             // Request parameters
+            [],                                // Base query options
+            false,                             // Use createForList() for better performance
+            ['name', 'extension', 'type'],     // Allowed order fields
+            ['name', 'description', 'hint']    // Searchable fields
+        );
     }
 }

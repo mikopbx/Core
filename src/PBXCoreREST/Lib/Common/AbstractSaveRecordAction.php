@@ -35,6 +35,33 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  * - Extension uniqueness checking
  * - Transaction-based saving with proper error handling
  * - Security validation for dangerous content
+ * - Tab preservation for multi-tab forms
+ * 
+ * ## Tab Preservation Usage
+ * 
+ * For forms with multiple tabs, the client can send 'currentTab' parameter
+ * in request data. If present, the response will include 'redirectTab' field
+ * that Form.js can use to preserve the active tab after save:
+ * 
+ * ```javascript
+ * // Client sends:
+ * result.data.currentTab = dialplanApplicationModify.currentActiveTab;
+ * 
+ * // Server responds with:
+ * response.data.redirectTab = "code" // (sanitized tab name)
+ * 
+ * // Form.js uses redirectTab to construct proper redirect URL:
+ * Form.afterSubmitModifyUrl = globalRootUrl + 'module/modify/' + id + '#/' + response.data.redirectTab;
+ * ```
+ * 
+ * To use tab preservation in your save action:
+ * ```php
+ * $res->data = DataStructure::createFromModel($savedModel);
+ * $res->success = true;
+ * 
+ * // Add tab preservation support
+ * self::handleTabPreservation($data, $res);
+ * ```
  * 
  * Eliminates code duplication between CallQueues, IVR Menu, and other modules.
  */
@@ -255,6 +282,53 @@ abstract class AbstractSaveRecordAction
         $result->messages['error'][] = $exception->getMessage();
         CriticalErrorsHandler::handleExceptionWithSyslog($exception);
         return $result;
+    }
+
+    /**
+     * Handle tab preservation for forms with multiple tabs
+     * 
+     * If client sends 'currentTab' parameter, adds 'redirectTab' to response data
+     * and modifies the 'reload' URL to include the tab hash. This allows forms
+     * to stay on the same tab after save/update operations.
+     * 
+     * Security features:
+     * - Sanitizes tab names to prevent XSS (alphanumeric + hyphen/underscore only)
+     * - Ignores invalid or empty tab names
+     * - Safe for all types of client input
+     * 
+     * Examples:
+     * - "code" → "code" (valid) + adds "#/code" to reload URL
+     * - "main-settings" → "main-settings" (valid) + adds "#/main-settings" to reload URL
+     * - "code_editor" → "code_editor" (valid) + adds "#/code_editor" to reload URL
+     * - "<script>alert('xss')</script>" → "scriptalertxssscript" (sanitized)
+     * - "" → ignored (no changes)
+     * - "main" → ignored (default tab, no hash needed)
+     *
+     * @param array $requestData Original request data (may contain currentTab)
+     * @param PBXApiResult $result Result object to modify
+     * @return void
+     */
+    protected static function handleTabPreservation(array $requestData, PBXApiResult $result): void
+    {
+        if (!empty($requestData['currentTab']) && is_string($requestData['currentTab'])) {
+            // Sanitize tab name (alphanumeric + hyphen/underscore only)
+            $tabName = preg_replace('/[^a-zA-Z0-9\-_]/', '', $requestData['currentTab']);
+            
+            if (!empty($tabName) && $tabName !== 'main') {
+                // Ensure result->data is an array
+                if (!is_array($result->data)) {
+                    $result->data = [];
+                }
+                
+                // Add redirectTab to response for client-side redirect handling
+                $result->data['redirectTab'] = $tabName;
+                
+                // Modify reload URL to include tab hash
+                if (!empty($result->reload)) {
+                    $result->reload .= '#/' . $tabName;
+                }
+            }
+        }
     }
 
     /**

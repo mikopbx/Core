@@ -22,10 +22,8 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
 
 use MikoPBX\Common\Models\DialplanApplications;
-use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
 
 /**
  * Action for deleting dialplan application record
@@ -40,7 +38,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Object} data Deletion result
  */
-class DeleteRecordAction
+class DeleteRecordAction extends AbstractDeleteAction
 {
     /**
      * Delete dialplan application record
@@ -50,49 +48,12 @@ class DeleteRecordAction
      */
     public static function main(string $id): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        if (empty($id)) {
-            $res->messages['error'][] = 'Record ID is required';
-            return $res;
-        }
-        
-        try {
-            $app = DialplanApplications::findFirst([
-                'conditions' => 'uniqid = :uniqid: OR id = :id:',
-                'bind' => ['uniqid' => $id, 'id' => $id]
-            ]);
-            
-            if (!$app) {
-                $res->messages['error'][] = 'api_DialplanApplicationNotFound';
-                return $res;
-            }
-            
-            // Delete in transaction
-            BaseActionHelper::executeInTransaction(function() use ($app) {
-                // Delete related extension
-                $extension = Extensions::findFirstByNumber($app->extension);
-                if ($extension && !$extension->delete()) {
-                    throw new \Exception('Failed to delete extension: ' . implode(', ', $extension->getMessages()));
-                }
-                
-                // Delete dialplan application
-                if (!$app->delete()) {
-                    throw new \Exception('Failed to delete dialplan application: ' . implode(', ', $app->getMessages()));
-                }
-                
-                return true;
-            });
-            
-            $res->success = true;
-            $res->data = ['deleted_id' => $id];
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        }
-        
-        return $res;
+        return self::executeStandardDelete(
+            DialplanApplications::class,           // Model class
+            $id,                                   // ID to delete
+            'Dialplan application',                // Entity type for logging
+            'api_DialplanApplicationNotFound'      // Error message when not found
+            // No additional cleanup needed - extensions are handled automatically
+        );
     }
 }

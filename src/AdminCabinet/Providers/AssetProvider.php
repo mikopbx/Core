@@ -243,6 +243,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/ssh-console.js', true)
                 ->addJs('js/pbx/main/delete-something.js', true)
                 ->addJs('js/pbx/main/user-message.js', true)
+                ->addJs('js/pbx/main/form-elements.js', true)
                 ->addJs('js/pbx/main/sidebar-menu-show-active.js', true)
                 ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true)
                 ->addJs('js/pbx/WikiLinksReplacement/wiki-links-replacement-worker.js', true);

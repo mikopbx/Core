@@ -16,6 +16,7 @@ var dialplanApplicationModify = {
     defaultExtension: '',
     editor: null,
     currentActiveTab: 'main', // Track current active tab
+    isLoadingData: false, // Flag to prevent button reactivation during data loading
     
     /**
      * Form validation rules
@@ -132,11 +133,11 @@ var dialplanApplicationModify = {
     initializeAdaptiveTextarea: function() {
         // Set up adaptive resizing for description textarea
         $('textarea[name="description"]').on('input paste keyup', function() {
-            Form.autoResizeTextArea($(this)); // Use dynamic width calculation
+            FormElements.optimizeTextareaSize($(this));
         });
         
         // Initial resize after form data is loaded
-        Form.autoResizeTextArea('textarea[name="description"]'); // Use dynamic width calculation
+        FormElements.optimizeTextareaSize('textarea[name="description"]');
     },
 
     /**
@@ -156,8 +157,15 @@ var dialplanApplicationModify = {
                 
                 // Set ACE editor content (applicationlogic is not sanitized)
                 var codeContent = response.data.applicationlogic || '';
+                
+                // Set flag to prevent reactivating buttons during data load
+                dialplanApplicationModify.isLoadingData = true;
+                
                 dialplanApplicationModify.editor.getSession().setValue(codeContent);
                 dialplanApplicationModify.changeAceMode();
+                
+                // Clear loading flag after setting content
+                dialplanApplicationModify.isLoadingData = false;
                 
                 // Switch to main tab only for completely new records (no name and no extension)
                 // Hash history will preserve the tab for existing records
@@ -165,8 +173,10 @@ var dialplanApplicationModify = {
                     dialplanApplicationModify.$tabMenuItems.tab('change tab', 'main');
                 }
                 
-                // Auto-resize textarea after data is loaded
-                Form.autoResizeTextArea('textarea[name="description"]');
+                // Auto-resize textarea after data is loaded (with small delay for DOM update)
+                setTimeout(function() {
+                    FormElements.optimizeTextareaSize('textarea[name="description"]');
+                }, 100);
             } else {
                 var errorMessage = response.messages && response.messages.error ? 
                     response.messages.error.join(', ') : 
@@ -207,7 +217,10 @@ var dialplanApplicationModify = {
         
         // Track changes for Form.js
         dialplanApplicationModify.editor.getSession().on('change', function() {
-            Form.dataChanged();
+            // Ignore changes during data loading to prevent reactivating buttons
+            if (!dialplanApplicationModify.isLoadingData) {
+                Form.dataChanged();
+            }
         });
         
         dialplanApplicationModify.editor.setOptions({
@@ -376,8 +389,11 @@ var dialplanApplicationModify = {
     populateForm: function(data) {
         Form.$formObj.form('set values', data);
         if (Form.enableDirrity) {
-            Form.saveInitialValues();
+            Form.initializeDirrity();
         }
+        
+        // Auto-resize textarea after data is populated
+        FormElements.optimizeTextareaSize('textarea[name="description"]');
     }
 };
 

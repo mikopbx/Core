@@ -112,7 +112,7 @@ const ivrMenuModify = {
       
       // Setup auto-resize for description textarea with event handlers
       $('textarea[name="description"]').on('input paste keyup', function() {
-          Form.autoResizeTextArea($(this)); // Use dynamic width calculation
+          FormElements.optimizeTextareaSize($(this));
       });
       
       // Configure Form.js
@@ -488,7 +488,7 @@ const ivrMenuModify = {
       ivrMenuModify.rebuildActionExtensionsDropdown();
 
       // Auto-resize textarea after data is loaded
-      Form.autoResizeTextArea('textarea[name="description"]'); // Use dynamic width calculation
+      FormElements.optimizeTextareaSize('textarea[name="description"]');
       
       // NOTE: Form.initializeDirrity() will be called AFTER actions are populated
       // NOTE: isFormInitializing flag will be cleared in populateActionsTable()

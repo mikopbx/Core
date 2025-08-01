@@ -22,10 +22,9 @@
  use MikoPBX\Common\Models\DialplanApplications;
  use MikoPBX\Common\Models\Extensions;
  use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
- use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+ use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
  use MikoPBX\PBXCoreREST\Lib\Common\CodeSecurityValidator;
  use MikoPBX\Core\System\SystemMessages;
- use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  
  /**
   * Action for saving dialplan application record
@@ -48,7 +47,7 @@
   * @apiSuccess {Object} data Saved dialplan application data
   * @apiSuccess {String} reload URL for page reload
   */
- class SaveRecordAction
+ class SaveRecordAction extends AbstractSaveRecordAction
  {
      /**
       * Save dialplan application record
@@ -58,55 +57,45 @@
       */
      public static function main(array $data): PBXApiResult
      {
-         $res = new PBXApiResult();
-         $res->processor = __METHOD__;
+         $res = self::createApiResult(__METHOD__);
          
-         try {
-             // Enhanced sanitization preserving code integrity
-             $sanitizationRules = [
-                 'id' => 'int',
-                 'name' => 'string|sanitize|max:50',
-                 'extension' => 'string|max:64',
-                 'hint' => 'string|sanitize|max:255|empty_to_null',
-                 'type' => 'string',
-                 'description' => 'string|sanitize|max:2000|empty_to_null'
-                 // applicationlogic is handled separately to preserve syntax
-             ];
+        // Define sanitization rules - use 'sanitize' for text fields to follow "Store Raw, Escape at Edge"
+        $sanitizationRules = [
+            'id' => 'int',
+            'name' => 'string|sanitize|max:50',
+            'extension' => 'string|max:64',
+            'hint' => 'string|sanitize|max:255|empty_to_null',
+            'type' => 'string',
+            'description' => 'string|sanitize|max:2000|empty_to_null'
+            // applicationlogic is handled separately to preserve syntax
+        ];
+        
+        // Text fields for unified processing (no HTML decoding, just sanitization)
+        $textFields = ['name', 'hint', 'description'];
+
+        try {
+            // Sanitize only allowed fields, preserve applicationlogic separately
+            $allowedData = array_intersect_key($data, $sanitizationRules);
+            
+            // Unified data sanitization using new approach - no HTML entity decoding
+            $sanitizedData = self::sanitizeInputData($allowedData, $sanitizationRules, $textFields);
+            
+            // Re-add applicationlogic which was not sanitized (preserve code syntax)
+            if (isset($data['applicationlogic'])) {
+                $sanitizedData['applicationlogic'] = $data['applicationlogic'];
+            }
              
-             // Create data array with only allowed fields and preserve applicationlogic
-             $allowedData = [];
-             foreach ($data as $key => $value) {
-                 if ($key === 'applicationlogic') {
-                     // Preserve code syntax - only validate security
-                     $allowedData[$key] = $value;
-                 } elseif (isset($sanitizationRules[$key])) {
-                     $allowedData[$key] = $value;
-                 } else {
-                     // Only include known fields
-                     $allowedData[$key] = $value;
-                 }
-             }
-             
-             // Sanitize data using BaseActionHelper
-             $sanitizedData = BaseActionHelper::sanitizeData($allowedData, $sanitizationRules);
-             
-             // Re-add applicationlogic which was not sanitized
-             if (isset($data['applicationlogic'])) {
-                 $sanitizedData['applicationlogic'] = $data['applicationlogic'];
-             }
-             
-             // Validation rules
-             $validationRules = [
-                 'name' => [
-                     ['type' => 'required', 'message' => 'da_ValidateNameIsEmpty']
-                 ],
-                 'extension' => [
-                     ['type' => 'required', 'message' => 'da_ValidateExtensionIsEmpty'],
-                     ['type' => 'regex', 'pattern' => '/^[0-9#+\\*|X]{1,64}$/', 'message' => 'da_ValidateExtensionNumber']
-                 ]
-             ];
-             
-             $validationErrors = BaseActionHelper::validateData($sanitizedData, $validationRules);
+            // Validate required fields using unified approach
+            $validationRules = [
+                'name' => [
+                    ['type' => 'required', 'message' => 'da_ValidateNameIsEmpty']
+                ],
+                'extension' => [
+                    ['type' => 'required', 'message' => 'da_ValidateExtensionIsEmpty'],
+                    ['type' => 'regex', 'pattern' => '/^[0-9#+\\*|X]{1,64}$/', 'message' => 'da_ValidateExtensionNumber']
+                ]
+            ];
+            $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
              if (!empty($validationErrors)) {
                  $res->messages['error'] = $validationErrors;
                  return $res;
@@ -142,35 +131,21 @@
                  $app->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-APP-');
              }
              
-             // Check extension uniqueness
-             if (!BaseActionHelper::checkUniqueness(
-                 Extensions::class,
-                 'number',
-                 $sanitizedData['extension'],
-                 $app->extension ?? ''
-             )) {
+            // Check extension uniqueness using unified approach
+            if (!self::checkExtensionUniqueness($sanitizedData['extension'], $app->extension ?? null)) {
                  $res->messages['error'][] = 'da_ValidateExtensionDouble';
                  return $res;
              }
              
-             // Save in transaction
-             $savedApp = BaseActionHelper::executeInTransaction(function() use ($app, $sanitizedData) {
-                 // Handle Extension record
-                 $extension = Extensions::findFirstByNumber($app->extension ?? '');
-                 if (!$extension) {
-                     $extension = new Extensions();
-                     $extension->type = Extensions::TYPE_DIALPLAN_APPLICATION;
-                     $extension->show_in_phonebook = 1;
-                     $extension->public_access = 0;
-                     $extension->userid = null;
-                 }
-                 
-                 $extension->number = $sanitizedData['extension'];
-                 $extension->callerid = $sanitizedData['name'];
-                 
-                 if (!$extension->save()) {
-                     throw new \Exception('Failed to save extension: ' . implode(', ', $extension->getMessages()));
-                 }
+            // Save in transaction using unified approach
+            $savedApp = self::executeInTransaction(function() use ($app, $sanitizedData) {
+                // Create or update Extension using unified approach
+                self::createOrUpdateExtension(
+                    $sanitizedData['extension'],
+                    $sanitizedData['name'],
+                    Extensions::TYPE_DIALPLAN_APPLICATION,
+                    $app->extension ?? null
+                );
                  
                  // Update DialplanApplication
                  $app->extension = $sanitizedData['extension'];
@@ -192,14 +167,20 @@
                  return $app;
              });
              
-             $res->data = DataStructure::createFromModel($savedApp);
-             $res->success = true;
-             $res->reload = "dialplan-applications/modify/{$savedApp->uniqid}";
-             
-         } catch (\Exception $e) {
-             $res->messages['error'][] = $e->getMessage();
-             CriticalErrorsHandler::handleExceptionWithSyslog($e);
-         }
+            $res->data = DataStructure::createFromModel($savedApp);
+            $res->success = true;
+            $res->reload = "dialplan-applications/modify/{$savedApp->uniqid}";
+            
+            // Handle tab preservation for multi-tab forms
+            self::handleTabPreservation($data, $res);
+            
+            // Log successful operation using unified approach
+            self::logSuccessfulSave('Dialplan application', $savedApp->name, $savedApp->extension, __METHOD__);
+            
+        } catch (\Exception $e) {
+            // Handle save error using unified approach
+            return self::handleSaveError($e, $res);
+        }
          
          return $res;
      }

@@ -20,9 +20,8 @@
 namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
 
 use MikoPBX\Common\Models\DialplanApplications;
-use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction;
 
 /**
  * Action for getting dialplan application record
@@ -37,7 +36,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Object} data Dialplan application data
  */
-class GetRecordAction
+class GetRecordAction extends AbstractGetRecordAction
 {
     /**
      * Get dialplan application record
@@ -47,43 +46,16 @@ class GetRecordAction
      */
     public static function main(?string $id = null): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        try {
-            if (empty($id) || $id === 'new') {
-                // Create structure for new record
-                $newApp = new DialplanApplications();
-                $newApp->id = '';
-                $newApp->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-APP-');
-                $newApp->extension = Extensions::getNextFreeApplicationNumber();
-                $newApp->name = '';
-                $newApp->hint = '';
-                $newApp->applicationlogic = '';
-                $newApp->type = 'php';
-                $newApp->description = '';
-                
-                $res->data = DataStructure::createFromModel($newApp);
-                $res->success = true;
-            } else {
-                // Find existing record
-                $app = DialplanApplications::findFirst([
-                    'conditions' => 'uniqid = :uniqid: OR id = :id:',
-                    'bind' => ['uniqid' => $id, 'id' => $id]
-                ]);
-                
-                if ($app) {
-                    $res->data = DataStructure::createFromModel($app);
-                    $res->success = true;
-                } else {
-                    $res->messages['error'][] = 'api_DialplanApplicationNotFound';
-                }
-            }
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        }
-        
-        return $res;
+        return self::executeSimpleGetRecord(
+            $id,
+            DialplanApplications::class,      // Model class
+            DataStructure::class,             // DataStructure class  
+            'DIALPLAN-APP-',                  // Unique ID prefix
+            [                                 // Entity-specific defaults
+                'hint' => '',
+                'applicationlogic' => '',
+                'type' => 'php'
+            ]
+        );
     }
 }

@@ -22,7 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\PBXCoreREST\Lib\CallQueues\DeleteRecordAction;
 use MikoPBX\PBXCoreREST\Lib\CallQueues\GetRecordAction;
 use MikoPBX\PBXCoreREST\Lib\CallQueues\SaveRecordAction;
-use MikoPBX\Common\Models\CallQueues;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\GetListAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -52,7 +52,7 @@ class CallQueuesManagementProcessor extends Injectable
                 $res = GetRecordAction::main($data['id'] ?? '');
                 break;
             case 'getList':
-                $res = self::getList();
+                $res = GetListAction::main($data);
                 break;
             case 'saveRecord':
                 $res = SaveRecordAction::main($data);
@@ -70,35 +70,6 @@ class CallQueuesManagementProcessor extends Injectable
 
         $res->function = $action;
 
-        return $res;
-    }
-
-    /**
-     * Get list of all call queues with member representations
-     *
-     * @return PBXApiResult
-     */
-    private static function getList(): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-
-        try {
-            $queues = CallQueues::find(['order' => 'name ASC']);
-            
-            $queuesList = [];
-            foreach ($queues as $queue) {
-                $queuesList[] = \MikoPBX\PBXCoreREST\Lib\CallQueues\DataStructure::createForList($queue);
-            }
-            
-            $res->data = $queuesList;
-            $res->success = true;
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            \MikoPBX\Common\Handlers\CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        }
-        
         return $res;
     }
 }

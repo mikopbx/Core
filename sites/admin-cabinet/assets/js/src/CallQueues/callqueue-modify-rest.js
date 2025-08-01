@@ -488,7 +488,7 @@ const callQueueModifyRest = {
     initializeDescriptionTextarea() {
         // Setup auto-resize for description textarea with event handlers
         $('textarea[name="description"]').on('input paste keyup', function() {
-            Form.autoResizeTextArea($(this)); // Use dynamic width calculation
+            FormElements.optimizeTextareaSize($(this));
         });
     },
 
@@ -586,7 +586,7 @@ const callQueueModifyRest = {
         }
 
         // Auto-resize textarea after data is loaded
-        Form.autoResizeTextArea('textarea[name="description"]'); // Use dynamic width calculation
+        FormElements.optimizeTextareaSize('textarea[name="description"]');
     },
 
     /**
