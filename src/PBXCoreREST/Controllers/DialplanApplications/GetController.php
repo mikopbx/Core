@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,27 +23,42 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\DialplanApplicationsManagementProcessor;
 
 /**
- * Handles the GET requests for dialplan-applications data.
- *
- * @RoutePrefix("/pbxcore/api/dialplan-applications")
- *
- * @examples
+ * GET controller for dialplan applications management
+ * 
+ * @RoutePrefix("/pbxcore/api/v2/dialplan-applications")
  */
 class GetController extends BaseController
 {
-
     /**
-     * Handles the call to different actions based on the action name
+     * Enable CSRF protection for this controller
+     */
+    public const bool REQUIRES_CSRF_PROTECTION = true;
+    /**
+     * Handle the call to different actions based on the action name
      *
-     * @param string $actionName The name of the action.
-     *
-     *
+     * @param string $actionName The name of the action
+     * @param string|null $id Optional ID parameter for record operations
+     * 
+     * Get dialplan application record by ID, if ID is 'new' or empty returns structure with default data
+     * @Get("/getRecord/{id}")
+     * 
+     * Retrieves the list of all dialplan applications
+     * @Get("/getList")
+     * 
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
         $requestData = $this->request->get();
-        $this->sendRequestToBackendWorker(DialplanApplicationsManagementProcessor::class, $actionName, $requestData);
+        
+        if (!empty($id)) {
+            $requestData['id'] = $id;
+        }
+        
+        $this->sendRequestToBackendWorker(
+            DialplanApplicationsManagementProcessor::class, 
+            $actionName, 
+            $requestData
+        );
     }
-
 }

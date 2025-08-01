@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,33 +19,59 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\DialplanApplications;
 
-
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\DialplanApplicationsManagementProcessor;
 
 /**
- * Handles the POST requests for dialplan applications data.
- *
- * @RoutePrefix("/pbxcore/api/dialplan-applications")
- *
- * @examples
- *
+ * POST controller for dialplan applications management
+ * 
+ * @RoutePrefix("/pbxcore/api/v2/dialplan-applications")
  */
 class PostController extends BaseController
 {
     /**
-     * Handles the call to different actions based on the action name
-     *
+     * Enable CSRF protection for this controller
+     */
+    public const bool REQUIRES_CSRF_PROTECTION = true;
+    /**
+     * Handle the call to different actions based on the action name
+     * 
      * @param string $actionName The name of the action
-     *
-     * Deletes the dialplan applications record with its dependent tables.
+     * 
+     * Creates or updates dialplan application record
+     * @Post("/saveRecord")
+     * 
+     * Deletes the dialplan applications record with its dependent tables
      * @Post("/deleteRecord")
-     *
+     * 
      * @return void
      */
     public function callAction(string $actionName): void
     {
-        $data = $this->request->getPost();
-        $this->sendRequestToBackendWorker(DialplanApplicationsManagementProcessor::class, $actionName, $data);
+        // Handle both form data and JSON data
+        $postData = [];
+        
+        if ($this->request->getContentType() === 'application/json') {
+            // Handle JSON requests
+            $rawBody = $this->request->getRawBody();
+            if (!empty($rawBody)) {
+                $jsonData = json_decode($rawBody, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
+                    $postData = $jsonData;
+                }
+            }
+        } else {
+            // Handle form data
+            $postData = $this->request->getPost();
+        }
+        
+        // Sanitize the data
+        $postData = self::sanitizeData($postData, $this->filter);
+        
+        $this->sendRequestToBackendWorker(
+            DialplanApplicationsManagementProcessor::class,
+            $actionName,
+            $postData
+        );
     }
 }

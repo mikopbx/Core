@@ -243,6 +243,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/ssh-console.js', true)
                 ->addJs('js/pbx/main/delete-something.js', true)
                 ->addJs('js/pbx/main/user-message.js', true)
+                ->addJs('js/pbx/main/form-elements.js', true)
                 ->addJs('js/pbx/main/sidebar-menu-show-active.js', true)
                 ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true)
                 ->addJs('js/pbx/WikiLinksReplacement/wiki-links-replacement-worker.js', true);
@@ -325,7 +326,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/jquery.debounce-1.0.5.js', true)
                 ->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/main/form.js', true)
-                ->addJs('js/pbx/CallQueues/callqueue-modify.js', true)
+                ->addJs('js/pbx/PbxAPI/callQueuesAPI.js', true)
+                ->addJs('js/pbx/CallQueues/callqueue-modify-rest.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true);
@@ -883,7 +885,9 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/ace/mode-php.js', true)
                 ->addJs('js/vendor/ace/mode-julia.js', true);
             $this->footerCollectionJS
+                ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/PbxAPI/dialplanApplicationsAPI.js', true)
                 ->addJs('js/pbx/DialplanApplications/dialplan-applications-modify.js', true);
         }
     }

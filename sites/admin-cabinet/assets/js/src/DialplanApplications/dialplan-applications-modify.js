@@ -1,51 +1,25 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  */
 
-/* global globalRootUrl,globalTranslate, ace, Form, Extensions */
+/* global DialplanApplicationsAPI, Form, SecurityUtils, globalTranslate, Extensions, ace, UserMessage */
 
 /**
- * The DialplanApplication object.
- *  Manages the operations and behaviors of the Dialplan applications in the UI.
- *
- * @module DialplanApplication
+ * Dialplan application edit form management module with enhanced security
  */
-const dialplanApplication = {
-
-    $number: $('#extension'),
-    defaultExtension: '',
-
-    /**
-     * jQuery object for the form.
-     * @type {jQuery}
-     */
+var dialplanApplicationModify = {
     $formObj: $('#dialplan-application-form'),
-
+    $number: $('#extension'),
     $typeSelectDropDown: $('#dialplan-application-form .type-select'),
-
     $tabMenuItems: $('#application-code-menu .item'),
-
-    // Ace editor instance
-    editor: '',
-
+    defaultExtension: '',
+    editor: null,
+    currentActiveTab: 'main', // Track current active tab
+    isLoadingData: false, // Flag to prevent button reactivation during data loading
+    
     /**
-     * Validation rules for the form fields before submission.
-     *
-     * @type {object}
+     * Form validation rules
      */
     validateRules: {
         name: {
@@ -53,16 +27,20 @@ const dialplanApplication = {
             rules: [
                 {
                     type: 'empty',
-                    prompt: globalTranslate.da_ValidateNameIsEmpty,
+                    prompt: globalTranslate.da_ValidateNameIsEmpty
                 },
-            ],
+                {
+                    type: 'maxLength[50]',
+                    prompt: globalTranslate.da_ValidateNameTooLong || 'Name is too long (max 50 characters)'
+                }
+            ]
         },
         extension: {
             identifier: 'extension',
             rules: [
                 {
                     type: 'regExp',
-                    value: '/^(|[0-9#+\\*|X]{1,64})$/',
+                    value: '/^[0-9#+\\*|X]{1,64}$/',
                     prompt: globalTranslate.da_ValidateExtensionNumber,
                 },
                 {
@@ -72,57 +50,236 @@ const dialplanApplication = {
                 {
                     type: 'existRule[extension-error]',
                     prompt: globalTranslate.da_ValidateExtensionDouble,
-                },
-            ],
-        },
-    },
-
-    /**
-     * Initializes the DialplanApplication.
-     * Sets up tabs, dropdowns, form and Ace editor.
-     * Sets up change handlers for extension number and editor contents.
-     */
-    initialize() {
-        dialplanApplication.$tabMenuItems.tab();
-        if (dialplanApplication.$formObj.form('get value', 'name').length === 0) {
-            dialplanApplication.$tabMenuItems.tab('change tab', 'main');
+                }
+            ]
         }
-        dialplanApplication.$typeSelectDropDown.dropdown({
-            onChange: dialplanApplication.changeAceMode,
-        });
-
-        // Add handler to dynamically check if the input number is available
-        dialplanApplication.$number.on('change', () => {
-            const newNumber = dialplanApplication.$formObj.form('get value', 'extension');
-            Extensions.checkAvailability(dialplanApplication.defaultExtension, newNumber);
-        });
-
-        // Initialize UI components
-        dialplanApplication.initializeForm();
-        dialplanApplication.initializeAce();
-        dialplanApplication.changeAceMode();
-
-        dialplanApplication.defaultExtension = dialplanApplication.$formObj.form('get value', 'extension');
-
-        //  Add handlers for fullscreen mode buttons
-        $('.fullscreen-toggle-btn').on('click', function () {
-            const container = $(this).siblings('.application-code')[0];
-            dialplanApplication.toggleFullScreen(container);
-        });
-
-        // Add handler to recalculate sizes when exiting fullscreen mode
-        document.addEventListener('fullscreenchange', dialplanApplication.adjustEditorHeight);
     },
 
     /**
-     * Enable/disable fullscreen mode for a specific block.
-     *
-     * @param {HTMLElement} container - The container to expand to fullscreen.
+     * Update extension display in ribbon label
+     * 
+     * @param {string} extension - Extension number
      */
-    toggleFullScreen(container) {
+    updateExtensionDisplay: function(extension) {
+        var extensionDisplay = $('#extension-display');
+        extensionDisplay.text(extension || '');
+    },
+
+    /**
+     * Initialize the module
+     */
+    initialize: function() {
+        // Enable tab navigation with history support
+        dialplanApplicationModify.$tabMenuItems.tab({
+            history: true,
+            historyType: 'hash',
+            onVisible: function(tabPath) {
+                // Track current active tab
+                dialplanApplicationModify.currentActiveTab = tabPath;
+                
+                // Resize ACE editor when code tab becomes visible
+                if (tabPath === 'code' && dialplanApplicationModify.editor) {
+                    setTimeout(() => {
+                        dialplanApplicationModify.editor.resize();
+                    }, 100);
+                }
+            }
+        });
+        dialplanApplicationModify.$typeSelectDropDown.dropdown({
+            onChange: dialplanApplicationModify.changeAceMode
+        });
+        
+        // Extension availability check
+        var timeoutId;
+        dialplanApplicationModify.$number.on('input', function() {
+            if (timeoutId) clearTimeout(timeoutId);
+            
+            timeoutId = setTimeout(function() {
+                var newNumber = dialplanApplicationModify.$formObj.form('get value', 'extension');
+                Extensions.checkAvailability(dialplanApplicationModify.defaultExtension, newNumber);
+            }, 500);
+        });
+        
+        // Configure Form.js for REST API
+        Form.$formObj = dialplanApplicationModify.$formObj;
+        Form.url = '#'; // Not used with REST API
+        Form.validateRules = dialplanApplicationModify.validateRules;
+        Form.cbBeforeSendForm = dialplanApplicationModify.cbBeforeSendForm;
+        Form.cbAfterSendForm = dialplanApplicationModify.cbAfterSendForm;
+        
+        // REST API integration
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = DialplanApplicationsAPI;
+        Form.apiSettings.saveMethod = 'saveRecord';
+        
+        // Navigation URLs
+        Form.afterSubmitIndexUrl = globalRootUrl + 'dialplan-applications/index/';
+        Form.afterSubmitModifyUrl = globalRootUrl + 'dialplan-applications/modify/';
+        
+        Form.initialize();
+        
+        // Initialize adaptive textarea for description field
+        dialplanApplicationModify.initializeAdaptiveTextarea();
+        
+        // Initialize components
+        dialplanApplicationModify.initializeAce();
+        dialplanApplicationModify.initializeFullscreenHandlers();
+        dialplanApplicationModify.initializeForm();
+    },
+
+    /**
+     * Initialize adaptive textarea for description field
+     */
+    initializeAdaptiveTextarea: function() {
+        // Set up adaptive resizing for description textarea
+        $('textarea[name="description"]').on('input paste keyup', function() {
+            FormElements.optimizeTextareaSize($(this));
+        });
+        
+        // Initial resize after form data is loaded
+        FormElements.optimizeTextareaSize('textarea[name="description"]');
+    },
+
+    /**
+     * Load form data via REST API
+     */
+    initializeForm: function() {
+        var recordId = dialplanApplicationModify.getRecordId();
+        
+        DialplanApplicationsAPI.getRecord(recordId, function(response) {
+            if (response.result) {
+                // Data is already sanitized in API module
+                dialplanApplicationModify.populateForm(response.data);
+                dialplanApplicationModify.defaultExtension = response.data.extension;
+                
+                // Update extension number display in the ribbon label
+                dialplanApplicationModify.updateExtensionDisplay(response.data.extension);
+                
+                // Set ACE editor content (applicationlogic is not sanitized)
+                var codeContent = response.data.applicationlogic || '';
+                
+                // Set flag to prevent reactivating buttons during data load
+                dialplanApplicationModify.isLoadingData = true;
+                
+                dialplanApplicationModify.editor.getSession().setValue(codeContent);
+                dialplanApplicationModify.changeAceMode();
+                
+                // Clear loading flag after setting content
+                dialplanApplicationModify.isLoadingData = false;
+                
+                // Switch to main tab only for completely new records (no name and no extension)
+                // Hash history will preserve the tab for existing records
+                if (!response.data.name && !response.data.extension && !window.location.hash) {
+                    dialplanApplicationModify.$tabMenuItems.tab('change tab', 'main');
+                }
+                
+                // Auto-resize textarea after data is loaded (with small delay for DOM update)
+                setTimeout(function() {
+                    FormElements.optimizeTextareaSize('textarea[name="description"]');
+                }, 100);
+            } else {
+                var errorMessage = response.messages && response.messages.error ? 
+                    response.messages.error.join(', ') : 
+                    'Failed to load dialplan application data';
+                UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
+            }
+        });
+    },
+    
+    /**
+     * Get record ID from URL
+     * 
+     * @return {string} Record ID
+     */
+    getRecordId: function() {
+        var urlParts = window.location.pathname.split('/');
+        var modifyIndex = urlParts.indexOf('modify');
+        if (modifyIndex !== -1 && urlParts[modifyIndex + 1]) {
+            return urlParts[modifyIndex + 1];
+        }
+        return '';
+    },
+    
+    /**
+     * Initialize ACE editor with security considerations
+     */
+    initializeAce: function() {
+        var aceHeight = window.innerHeight - 380;
+        var rowsCount = Math.round(aceHeight / 16.3);
+        
+        $(window).on('load', function () {
+            $('.application-code').css('min-height', aceHeight + 'px');
+        });
+        
+        dialplanApplicationModify.editor = ace.edit('application-code');
+        dialplanApplicationModify.editor.setTheme('ace/theme/monokai');
+        dialplanApplicationModify.editor.resize();
+        
+        // Track changes for Form.js
+        dialplanApplicationModify.editor.getSession().on('change', function() {
+            // Ignore changes during data loading to prevent reactivating buttons
+            if (!dialplanApplicationModify.isLoadingData) {
+                Form.dataChanged();
+            }
+        });
+        
+        dialplanApplicationModify.editor.setOptions({
+            maxLines: rowsCount,
+            showPrintMargin: false,
+            showLineNumbers: false
+        });
+        
+        // Security: prevent code execution in editor
+        dialplanApplicationModify.editor.commands.addCommand({
+            name: 'preventCodeExecution',
+            bindKey: {win: 'Ctrl-E', mac: 'Command-E'},
+            exec: function() {
+                console.warn('Code execution prevented for security');
+                return false;
+            }
+        });
+    },
+    
+    /**
+     * Initialize fullscreen handlers
+     */
+    initializeFullscreenHandlers: function() {
+        $('.fullscreen-toggle-btn').on('click', function () {
+            var container = $(this).siblings('.application-code')[0];
+            dialplanApplicationModify.toggleFullScreen(container);
+        });
+
+        document.addEventListener('fullscreenchange', dialplanApplicationModify.adjustEditorHeight);
+    },
+
+    /**
+     * Cleanup event listeners to prevent memory leaks
+     */
+    cleanup: function() {
+        // Remove fullscreen event listener
+        document.removeEventListener('fullscreenchange', dialplanApplicationModify.adjustEditorHeight);
+        
+        // Cleanup other event listeners if needed
+        $(window).off('load');
+        $('.fullscreen-toggle-btn').off('click');
+        $('textarea[name="description"]').off('input paste keyup');
+        
+        // Cleanup ACE editor
+        if (dialplanApplicationModify.editor) {
+            dialplanApplicationModify.editor.destroy();
+            dialplanApplicationModify.editor = null;
+        }
+    },
+    
+    /**
+     * Toggle fullscreen mode
+     * 
+     * @param {HTMLElement} container - Container element
+     */
+    toggleFullScreen: function(container) {
         if (!document.fullscreenElement) {
-            container.requestFullscreen().catch(err => {
-                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            container.requestFullscreen().catch(function(err) {
+                console.error('Error attempting to enable full-screen mode: ' + err.message);
             });
         } else {
             document.exitFullscreen();
@@ -130,111 +287,127 @@ const dialplanApplication = {
     },
 
     /**
-     * Recalculate editor heights when the screen mode changes.
+     * Adjust editor height on fullscreen change
      */
-    adjustEditorHeight() {
-        dialplanApplication.editor.resize();
+    adjustEditorHeight: function() {
+        dialplanApplicationModify.editor.resize();
     },
-
+    
     /**
-     * Initializes the Ace editor instance.
-     * Sets up Ace editor with a monokai theme and custom options.
-     * Attaches change handler to the editor session.
+     * Change ACE editor mode based on type
      */
-    initializeAce() {
-        const applicationLogic = dialplanApplication.$formObj.form('get value', 'applicationlogic');
-        const aceHeight = window.innerHeight - 380;
-        const rowsCount = Math.round(aceHeight / 16.3);
-        $(window).load(function () {
-            $('.application-code').css('min-height', `${aceHeight}px`);
-        });
-        dialplanApplication.editor = ace.edit('application-code');
-        dialplanApplication.editor.getSession().setValue(applicationLogic);
-        dialplanApplication.editor.setTheme('ace/theme/monokai');
-        dialplanApplication.editor.resize();
-        dialplanApplication.editor.getSession().on('change', () => {
-            // Trigger change event to acknowledge the modification
-            Form.dataChanged();
-        });
-        dialplanApplication.editor.setOptions({
-            maxLines: rowsCount,
-            showPrintMargin: false,
-            showLineNumbers: false,
-        });
-    },
-
-    /**
-     * Changes the Ace editor mode and settings based on the 'type' form value.
-     * If the 'type' is 'php', PHP mode is set, and line numbers are shown.
-     * Otherwise, Julia mode is set, and line numbers are hidden.
-     * The editor theme is set to Monokai in all cases.
-     */
-    changeAceMode() {
-        // Retrieve 'type' value from the form
-        const mode = dialplanApplication.$formObj.form('get value', 'type');
-        let NewMode;
+    changeAceMode: function() {
+        var mode = dialplanApplicationModify.$formObj.form('get value', 'type');
+        var NewMode;
 
         if (mode === 'php') {
-            // If 'type' is 'php', set the editor mode to PHP and show line numbers
             NewMode = ace.require('ace/mode/php').Mode;
-            dialplanApplication.editor.setOptions({
-                showLineNumbers: true,
+            dialplanApplicationModify.editor.setOptions({
+                showLineNumbers: true
             });
         } else {
-            // If 'type' is not 'php', set the editor mode to Julia and hide line numbers
             NewMode = ace.require('ace/mode/julia').Mode;
-            dialplanApplication.editor.setOptions({
-                showLineNumbers: false,
+            dialplanApplicationModify.editor.setOptions({
+                showLineNumbers: false
             });
         }
 
-        // Set the new mode and theme for the editor
-        dialplanApplication.editor.session.setMode(new NewMode());
-        dialplanApplication.editor.setTheme('ace/theme/monokai');
+        dialplanApplicationModify.editor.session.setMode(new NewMode());
+        dialplanApplicationModify.editor.setTheme('ace/theme/monokai');
     },
-
+    
     /**
-     * Callback function to be called before the form is sent
-     * @param {Object} settings - The current settings of the form
-     * @returns {Object} - The updated settings of the form
+     * Callback before form submission
+     * 
+     * @param {object} settings - Form settings
+     * @return {object|false} Modified settings or false to cancel
      */
-    cbBeforeSendForm(settings) {
-        const result = settings;
-        result.data = dialplanApplication.$formObj.form('get values');
-        result.data.applicationlogic = dialplanApplication.editor.getValue();
+    cbBeforeSendForm: function(settings) {
+        var result = settings;
+        result.data = dialplanApplicationModify.$formObj.form('get values');
+        
+        // Add application logic from ACE editor (not sanitized)
+        result.data.applicationlogic = dialplanApplicationModify.editor.getValue();
+        
+        // Pass current active tab for redirect
+        result.data.currentTab = dialplanApplicationModify.currentActiveTab;
+        
+        // Additional client-side validation
+        if (!DialplanApplicationsAPI.validateApplicationData(result.data)) {
+            UserMessage.showError('Validation failed');
+            return false;
+        }
+        
         return result;
     },
-
+    
     /**
-     * Callback function to be called after the form has been sent.
-     * @param {Object} response - The response from the server after the form is sent
+     * Callback after form submission (no success messages - UI updates only)
+     * 
+     * @param {object} response - Server response
      */
-    cbAfterSendForm(response) {
-
+    cbAfterSendForm: function(response) {
+        if (response.result) {
+            if (response.data) {
+                // Data is already sanitized in API module
+                dialplanApplicationModify.populateForm(response.data);
+                
+                // Update extension number display in the ribbon label
+                dialplanApplicationModify.updateExtensionDisplay(response.data.extension);
+                
+                // Update ACE editor content
+                var codeContent = response.data.applicationlogic || '';
+                dialplanApplicationModify.editor.getSession().setValue(codeContent);
+                
+                // Handle redirect with tab preservation
+                if (response.data.redirectTab && response.data.redirectTab !== 'main') {
+                    // Update Form.js redirect URL to include hash
+                    var currentId = $('#id').val() || response.data.uniqid;
+                    if (currentId) {
+                        Form.afterSubmitModifyUrl = globalRootUrl + 'dialplan-applications/modify/' + currentId + '#/' + response.data.redirectTab;
+                    }
+                }
+            }
+            
+            // Update URL for new records 
+            var currentId = $('#id').val();
+            if (!currentId && response.data && response.data.uniqid) {
+                var hash = response.data.redirectTab && response.data.redirectTab !== 'main' ? '#/' + response.data.redirectTab : '';
+                var newUrl = window.location.href.replace(/modify\/?$/, 'modify/' + response.data.uniqid) + hash;
+                window.history.pushState(null, '', newUrl);
+            }
+            
+            // No success message - just silent update
+        }
     },
+    
     /**
-     * Initialize the form with custom settings
+     * Populate form with sanitized data
+     * 
+     * @param {object} data - Form data
      */
-    initializeForm() {
-        Form.$formObj = dialplanApplication.$formObj;
-        Form.url = `${globalRootUrl}dialplan-applications/save`; // Form submission URL
-        Form.validateRules = dialplanApplication.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = dialplanApplication.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = dialplanApplication.cbAfterSendForm; // Callback after form is sent
-        Form.initialize();
-    },
+    populateForm: function(data) {
+        Form.$formObj.form('set values', data);
+        if (Form.enableDirrity) {
+            Form.initializeDirrity();
+        }
+        
+        // Auto-resize textarea after data is populated
+        FormElements.optimizeTextareaSize('textarea[name="description"]');
+    }
 };
 
 /**
- * Checks if the number is taken by another account
- * @returns {boolean} True if the parameter has the 'hidden' class, false otherwise
+ * Custom validation rule for extension existence
  */
-$.fn.form.settings.rules.existRule = (value, parameter) => $(`#${parameter}`).hasClass('hidden');
+$.fn.form.settings.rules.existRule = function(value, parameter) { 
+    return $('#' + parameter).hasClass('hidden'); 
+};
 
 /**
- *  Initialize Dialplan Application modify form on document ready
+ * Initialize on document ready
  */
-$(document).ready(() => {
-    dialplanApplication.initialize();
+$(document).ready(function() {
+    dialplanApplicationModify.initialize();
 });
 

@@ -1,8 +1,7 @@
 <?php
-
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,61 +17,43 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
 
 use MikoPBX\Common\Models\DialplanApplications;
-use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di\Di;
-use Phalcon\Di\Injectable;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
 
 /**
- *  Class DeleteRecord
- *  Delete the dialplan application and all its dependencies.
- *
- * @package MikoPBX\PBXCoreREST\Lib\DialplanApplications
+ * Action for deleting dialplan application record
+ * 
+ * @api {delete} /pbxcore/api/v2/dialplan-applications/deleteRecord/:id Delete dialplan application
+ * @apiVersion 2.0.0
+ * @apiName DeleteRecord
+ * @apiGroup DialplanApplications
+ * 
+ * @apiParam {String} id Record ID to delete
+ * 
+ * @apiSuccess {Boolean} result Operation result
+ * @apiSuccess {Object} data Deletion result
  */
-class DeleteRecordAction extends Injectable
+class DeleteRecordAction extends AbstractDeleteAction
 {
     /**
-     * Deletes the dialplan application record with its dependent tables.
-     *
-     * @param string $id The ID of the dialplan application to be deleted.
-     * @return PBXApiResult Result of the delete operation.
+     * Delete dialplan application record
+     * 
+     * @param string $id Record ID to delete
+     * @return PBXApiResult
      */
     public static function main(string $id): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        $res->success = true;
-
-        $di = Di::getDefault();
-        $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
-
-        // Find the queue by ID
-        $record = DialplanApplications::findFirstByUniqid($id);
-        if ($record === null) {
-            $res->messages['error'][] = 'Dialplan application with id ' . $id . ' does not exist';
-            $res->success = false;
-            return  $res;
-        }
-
-        $db->begin();
-
-        // Delete associated extensions
-        $extension = $record->Extensions;
-        if ($extension !== null && !$extension->delete()) {
-            $res->messages['error'][] = implode(PHP_EOL, $extension->getMessages());
-            $res->success = false;
-        }
-
-        if (!$res->success) {
-            $db->rollback();
-        } else {
-            $db->commit();
-        }
-
-        $res->data['id'] = $id;
-        return $res;
+        return self::executeStandardDelete(
+            DialplanApplications::class,           // Model class
+            $id,                                   // ID to delete
+            'Dialplan application',                // Entity type for logging
+            'api_DialplanApplicationNotFound'      // Error message when not found
+            // No additional cleanup needed - extensions are handled automatically
+        );
     }
 }

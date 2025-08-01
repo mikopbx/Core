@@ -24,25 +24,46 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\CallQueuesManagementProcessor;
 
 /**
- * Handles the GET requests for call queues data.
+ * GET controller for call queues management
  *
- * @RoutePrefix("/pbxcore/api/call-queues")
+ * @RoutePrefix("/pbxcore/api/v2/call-queues")
  *
  * @examples
+ * curl http://127.0.0.1/pbxcore/api/v2/call-queues/getRecord/QUEUE-123ABC
+ * curl http://127.0.0.1/pbxcore/api/v2/call-queues/getRecord/new
+ * curl http://127.0.0.1/pbxcore/api/v2/call-queues/getList
+ *
+ * @package MikoPBX\PBXCoreREST\Controllers\CallQueues
  */
 class GetController extends BaseController
 {
     /**
-     * Handles the call to different actions based on the action name
+     * Handle GET requests for call queue operations
      *
-     * @param string $actionName The name of the action.
+     * @param string $actionName The name of the action
+     * @param string|null $id Optional ID parameter for record operations
      *
+     * Get call queue record by ID, if ID is 'new' or empty returns structure with default data
+     * @Get("/getRecord/{id}")
+     *
+     * Retrieve the list of all call queues with member representations
+     * @Get("/getList")
      *
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
         $requestData = $this->request->get();
-        $this->sendRequestToBackendWorker(CallQueuesManagementProcessor::class, $actionName, $requestData);
+
+        if (!empty($id)){
+            $requestData['id'] = $id;
+        }
+
+        // Send request to Worker following MikoPBX REST API architecture
+        $this->sendRequestToBackendWorker(
+            CallQueuesManagementProcessor::class,
+            $actionName,
+            $requestData
+        );
     }
 }

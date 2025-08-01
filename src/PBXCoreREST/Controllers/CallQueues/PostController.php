@@ -24,28 +24,40 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\CallQueuesManagementProcessor;
 
 /**
- * Handles the POST requests for call queues data.
+ * POST controller for call queues management
  *
- * @RoutePrefix("/pbxcore/api/call-queues")
+ * @RoutePrefix("/pbxcore/api/v2/call-queues")
  *
  * @examples
+ * curl -X POST http://127.0.0.1/pbxcore/api/v2/call-queues/saveRecord \
+ *   -d "name=Sales Queue&extension=2001&strategy=ringall"
  *
+ * @package MikoPBX\PBXCoreREST\Controllers\CallQueues
  */
 class PostController extends BaseController
 {
     /**
-     * Handles the call to different actions based on the action name
+     * Enable CSRF protection for this controller
+     */
+    public const bool REQUIRES_CSRF_PROTECTION = true;
+    /**
+     * Handle POST requests for call queue operations
      *
      * @param string $actionName The name of the action
      *
-     * Deletes the call queue record with its dependent tables.
-     * @Post("/deleteRecord")
+     * Creates new call queue record
+     * @Post("/saveRecord")
      *
      * @return void
      */
     public function callAction(string $actionName): void
     {
-        $data = $this->request->getPost();
-        $this->sendRequestToBackendWorker(CallQueuesManagementProcessor::class, $actionName, $data);
+        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
+
+        $this->sendRequestToBackendWorker(
+            CallQueuesManagementProcessor::class,
+            $actionName,
+            $postData
+        );
     }
 }

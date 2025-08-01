@@ -20,6 +20,9 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\CallQueues\DeleteRecordAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\GetRecordAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\SaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\GetListAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -45,6 +48,15 @@ class CallQueuesManagementProcessor extends Injectable
         $action = $request['action'];
         $data = $request['data'];
         switch ($action) {
+            case 'getRecord':
+                $res = GetRecordAction::main($data['id'] ?? '');
+                break;
+            case 'getList':
+                $res = GetListAction::main($data);
+                break;
+            case 'saveRecord':
+                $res = SaveRecordAction::main($data);
+                break;
             case 'deleteRecord':
                 if (!empty($data['id'])) {
                     $res = DeleteRecordAction::main($data['id']);
@@ -60,6 +72,4 @@ class CallQueuesManagementProcessor extends Injectable
 
         return $res;
     }
-
-
 }

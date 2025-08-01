@@ -30,23 +30,6 @@ use Phalcon\Filter\FilterFactory;
 class BaseActionHelper
 {
     /**
-     * Decode HTML entities recursively (handles double/triple encoding)
-     * @param string $str
-     * @return string
-     */
-    public static function decodeHtmlEntities(string $str): string
-    {
-        // Handle multiple levels of encoding like &amp;quot; -> &quot; -> "
-        $decoded = $str;
-        $attempts = 0;
-        while ($attempts < 3 && $decoded !== ($newDecoded = htmlspecialchars_decode($decoded, ENT_QUOTES))) {
-            $decoded = $newDecoded;
-            $attempts++;
-        }
-        return $decoded;
-    }
-
-    /**
      * Execute operation in transaction
      * 
      * @param callable $callback Function to execute in transaction
@@ -127,12 +110,19 @@ class BaseActionHelper
                 switch ($ruleType) {
                     case 'string':
                         // Only trim, don't use $filter->string() as it encodes HTML entities
-                        // HTML encoding will be done later by html_escape rule where needed
+                        // XSS sanitization will be done by 'sanitize' rule where needed
                         $value = $filter->trim($value);
                         break;
                     case 'int':
                         // Use absint for positive integers
                         $value = $filter->absint($value);
+                        break;
+                    case 'bool':
+                        // Convert various representations to boolean
+                        $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                        break;
+                    case 'sanitize':
+                        $value = TextFieldProcessor::sanitizeForStorage($value);
                         break;
                     case 'html_escape':
                         $value = htmlspecialchars($value, ENT_QUOTES);

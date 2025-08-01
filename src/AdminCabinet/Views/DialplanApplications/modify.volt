@@ -3,17 +3,17 @@
 {{ form.render('uniqid') }}
 {{ form.render('applicationlogic') }}
 <div class="ui ribbon label" id="dialplan-application-extension-number">
-    <i class="phone icon"></i> {{ extension }}
+    <i class="phone icon"></i> <span id="extension-display"></span>
 </div>
 <h3 class="ui hidden header "></h3>
 <div class="ui top attached tabular menu" id="application-code-menu">
-    <a class="item" data-tab="main">{{ t._('da_Main') }}</a>
-    <a class="item active" data-tab="code">{{ t._('da_Applicationlogic') }}</a>
+    <a class="item active" data-tab="main">{{ t._('da_Main') }}</a>
+    <a class="item" data-tab="code">{{ t._('da_Applicationlogic') }}</a>
     {{ partial("PbxExtensionModules/hookVoltBlock",
         ['arrayOfPartials':hookVoltBlock('TabularMenu')])
     }}
 </div>
-<div class="ui bottom attached tab segment" data-tab="main">
+<div class="ui bottom attached tab segment active" data-tab="main">
 
     <div class="field">
         <label>{{ t._('da_Name') }}</label>
@@ -49,7 +49,7 @@
 
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainTabFields')]) }}
 </div>
-<div class="ui bottom attached tab segment active" data-tab="code">
+<div class="ui bottom attached tab segment" data-tab="code">
     <div class="code-container">
         <div id="application-code" class="application-code"></div>
         <div class="fullscreen-toggle-btn">

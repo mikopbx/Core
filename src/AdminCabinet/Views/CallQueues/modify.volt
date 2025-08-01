@@ -1,15 +1,25 @@
 {{ form(['action' : 'call-queues/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'queue-form']) }}
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
+<input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}"/>
 <div class="ui ribbon label" id="queue-extension-number">
-    <i class="phone icon"></i> {{ extension }}
+    <i class="phone icon"></i> <span id="extension-display"></span>
 </div>
-<h3 class="ui dividing header ">{{ t._("cq_QueueSetup") }}</h3>
+<h3 class="ui hidden header "></h3>
 <div class="field max-width-500">
     <label for="name">{{ t._('cq_Name') }}</label>
     {{ form.render('name') }}
 </div>
-
+<div class="field max-width-200">
+    <label for="extension">{{ t._('cd_Extensions') }}</label>
+    <div class="ui icon input extension">
+        <i class="search icon"></i>
+        {{ form.render('extension') }}
+    </div>
+    <div class="ui top pointing red label hidden" id="extension-error">
+        {{ t._("cq_ThisNumberIsNotFree") }}
+    </div>
+</div>
 <div class="field max-width-800">
     <label for="description">{{ t._('cq_Description') }}</label>
     {{ form.render('description') }}
@@ -26,16 +36,8 @@
 <div class="ui basic compact segment">
     <table class="ui selectable small very compact unstackable table" id="extensionsTable">
         <tbody>
-        {% for extension in extensionsTable %}
-            <tr class="member-row" id="{{ extension['number'] }}">
-                <td class="dragHandle"><i class="sort grey icon"></i></td>
-                <td class="callerid">{{ extension['callerid'] }}</td>
-                <td class="right aligned collapsing">
-                    <div class="ui icon small button delete-row-button"><i class="icon trash red"></i></div>
-                </td>
-            </tr>
-        {% endfor %}
-        <tr class="member-row-tpl" style="display: none">
+        <!-- Member rows will be populated by JavaScript -->
+        <tr class="member-row-template" style="display: none">
             <td class="dragHandle"><i class="sort grey icon"></i></td>
             <td class="callerid"></td>
             <td class="right aligned collapsing">
@@ -60,18 +62,6 @@
     </div>
 
     <div class="content">
-        <div class="field">
-            <label for="extension">{{ t._('cd_Extensions') }}</label>
-            <div class="field max-width-200">
-                <div class="ui icon input extension">
-                    <i class="search icon"></i>
-                    {{ form.render('extension') }}
-                </div>
-                <div class="ui top pointing red label hidden" id="extension-error">
-                    {{ t._("cq_ThisNumberIsNotFree") }}
-                </div>
-            </div>
-        </div>
 
         <div class="field">
             <label for="callerid_prefix">{{ t._('cq_CallerIDPrefix') }}
