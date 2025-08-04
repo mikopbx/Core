@@ -54,6 +54,8 @@ interface WebUIConfigInterface
 
     public const string ON_AFTER_EXECUTE_ROUTE = 'onAfterExecuteRoute';
 
+    public const string ON_GET_CONTROLLER_PERMISSIONS = 'onGetControllerPermissions';
+
     /**
      * Authenticates a user over an external module.
      * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#authenticateuser
@@ -148,4 +150,16 @@ interface WebUIConfigInterface
      * @return void
      */
     public function onAfterExecuteRoute(Dispatcher $dispatcher): void;
+
+
+    /**
+     * Called from AclController to get custom permissions for a controller.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#ongetcontrollerpermissions
+     *
+     * @param string $controller The called controller name.
+     * @param array $permissions The permissions array for modifications.
+     *
+     * @return void
+     */
+    public function onGetControllerPermissions(string $controller, array &$permissions): void;
 }

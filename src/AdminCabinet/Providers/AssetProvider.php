@@ -318,6 +318,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->headerCollectionCSS
                 ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/pbx/PbxAPI/callQueuesAPI.js', true)
                 ->addJs('js/pbx/CallQueues/callqueues-index.js', true);
@@ -345,6 +346,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->headerCollectionCSS
             ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/pbx/PbxAPI/conferenceRoomsAPI.js', true)
                 ->addJs('js/pbx/ConferenceRooms/conference-rooms-index.js', true);
@@ -684,6 +686,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->headerCollectionCSS
                 ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/pbx/PbxAPI/ivrMenuAPI.js', true)
                 ->addJs('js/pbx/IvrMenu/ivrmenu-index.js', true);
@@ -876,6 +879,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->headerCollectionCSS
                 ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/pbx/PbxAPI/dialplanApplicationsAPI.js', true)
                 ->addJs('js/pbx/DialplanApplications/dialplan-applications-index.js', true);

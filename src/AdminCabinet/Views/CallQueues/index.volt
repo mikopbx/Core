@@ -20,8 +20,8 @@
     </table>
 </div>
 
-{# Empty state placeholder - initially shown, will be hidden by JavaScript when data loads #}
-<div id="empty-table-placeholder">
+{# Empty state placeholder - initially hidden, will be shown by JavaScript if no data #}
+<div id="empty-table-placeholder" style="display: none;">
     {{ partial("partials/emptyTablePlaceholder", [
         'icon': 'users',
         'title': t._('cq_EmptyTableTitle'),

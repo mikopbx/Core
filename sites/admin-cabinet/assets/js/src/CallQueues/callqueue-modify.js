@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,64 +16,106 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Extensions,Form, SoundFilesSelector */
-
+/* global globalRootUrl, globalTranslate, CallQueuesAPI, Extensions, Form, SoundFilesSelector, UserMessage, SecurityUtils */
 
 /**
- * callQueue module.
- * @module callQueue
+ * Modern Call Queue Form Management Module
+ * 
+ * Implements REST API v2 integration with hidden input pattern,
+ * following MikoPBX standards for secure form handling.
+ * 
+ * Features:
+ * - REST API integration using CallQueuesAPI
+ * - Hidden input pattern for dropdown values
+ * - XSS protection with SecurityUtils
+ * - Drag-and-drop members table management
+ * - Extension exclusion for timeout dropdown
+ * - No success messages following MikoPBX patterns
+ * 
+ * @module callQueueModifyRest
  */
-const callQueue = {
-
-    // Default extension number
-    defaultExtension: '',
-
-    // The input field for the extension number
-    $extension: $('#extension'),
-
-    // List of available members for this call queue
-    AvailableMembersList: [],
-
+const callQueueModifyRest = {
     /**
-     * jQuery object for the form.
+     * Form jQuery object
      * @type {jQuery}
      */
     $formObj: $('#queue-form'),
 
-    // The accordion UI components in the form
-    $accordions: $('#queue-form .ui.accordion'),
+    /**
+     * Extension number input field
+     * @type {jQuery}
+     */
+    $extension: $('#extension'),
 
-    // The dropdown UI components in the form
-    $dropDowns: $('#queue-form .dropdown'),
-
-    // The field for form error messages
-    $errorMessages: $('#form-error-messages'),
-
-    // The checkbox UI components in the form
-    $checkBoxes: $('#queue-form .checkbox'),
-
-    // The select for forwarding in the form
-    forwardingSelect: '#queue-form .forwarding-select',
-
-    // The button to delete a row
-    $deleteRowButton: $('.delete-row-button'),
-
-    // The dropdown for periodic announce sound selection
-    $periodicAnnounceDropdown: $('#queue-form .periodic-announce-sound-id-select'),
-
-    // The row of the member
-    memberRow: '#queue-form .member-row',
-
-    // The dropdown for extension selection
-    $extensionSelectDropdown: $('#extensionselect'),
-
-    // The table of extensions
+    /**
+     * Members table for drag-and-drop management
+     * @type {jQuery}
+     */
     $extensionsTable: $('#extensionsTable'),
 
     /**
-     * Validation rules for the form fields before submission.
-     *
-     * @type {object}
+     * Dropdown UI components
+     * @type {jQuery}
+     */
+    $dropDowns: $('#queue-form .dropdown'),
+
+    /**
+     * Accordion UI components
+     * @type {jQuery}
+     */
+    $accordions: $('#queue-form .ui.accordion'),
+
+    /**
+     * Checkbox UI components
+     * @type {jQuery}
+     */
+    $checkBoxes: $('#queue-form .checkbox'),
+
+    /**
+     * Error messages container
+     * @type {jQuery}
+     */
+    $errorMessages: $('#form-error-messages'),
+
+    /**
+     * Delete row buttons
+     * @type {jQuery}
+     */
+    $deleteRowButton: $('.delete-row-button'),
+
+    /**
+     * Extension select dropdown for adding members
+     * @type {jQuery}
+     */
+    $extensionSelectDropdown: $('#extensionselect'),
+
+    /**
+     * Available members list for queue management
+     * @type {Array}
+     */
+    availableMembersList: [],
+
+    /**
+     * Default extension number for availability checking
+     * @type {string}
+     */
+    defaultExtension: '',
+
+    /**
+     * Flag to prevent change tracking during form initialization
+     * @type {boolean}
+     */
+    isFormInitializing: false,
+
+    /**
+     * Member row selector
+     * @type {string}
+     */
+    memberRow: '#queue-form .member-row',
+
+    /**
+     * Validation rules for form fields
+     * @type {Object}
      */
     validateRules: {
         name: {
@@ -105,89 +147,187 @@ const callQueue = {
     },
 
     /**
-     * Initialize the call queue form
+     * Initialize the call queue form management module
      */
     initialize() {
-        // Get phone extensions and set available queue members
-        Extensions.getPhoneExtensions(callQueue.setAvailableQueueMembers);
-
         // Initialize UI components
-        callQueue.$accordions.accordion();
-        callQueue.$dropDowns.dropdown();
-        callQueue.$checkBoxes.checkbox();
-
-        // Set up periodic announce dropdown behaviour
-        callQueue.$periodicAnnounceDropdown.dropdown({
-            onChange(value) {
-                if (parseInt(value, 10) === -1) {
-                    callQueue.$periodicAnnounceDropdown.dropdown('clear');
-                }
-            },
-        });
-
-        // Initialize forwarding select
-        $(callQueue.forwardingSelect).dropdown(Extensions.getDropdownSettingsWithEmpty());
-
-        // Set up dynamic availability check for extension number
-        callQueue.$extension.on('change', () => {
-            const newNumber = callQueue.$formObj.form('get value', 'extension');
-            Extensions.checkAvailability(callQueue.defaultNumber, newNumber);
-        });
-
-        // Initialize drag and drop for extension table rows
-        callQueue.initializeDragAndDropExtensionTableRows();
-
-        // Set up row deletion from queue members table
-        callQueue.$deleteRowButton.on('click', (e) => {
-            e.preventDefault();
-            $(e.target).closest('tr').remove();
-            callQueue.reinitializeExtensionSelect();
-            callQueue.updateExtensionTableView();
-            Form.dataChanged();
-
-            return false;
-        });
-
-        // Initialize audio message select
-        $('#queue-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
-
-        // Initialize the form
-        callQueue.initializeForm();
+        callQueueModifyRest.initializeUIComponents();
         
-        // Initialize tooltips for advanced settings
-        callQueue.initializeTooltips();
+        // Initialize dropdowns with hidden input pattern
+        callQueueModifyRest.initializeDropdowns();
+        
+        // Initialize members table with drag-and-drop
+        callQueueModifyRest.initializeMembersTable();
+        
+        // Set up extension availability checking
+        callQueueModifyRest.initializeExtensionChecking();
+        
+        // Initialize sound file selectors
+        callQueueModifyRest.initializeSoundSelectors();
+        
+        // Setup auto-resize for description textarea
+        callQueueModifyRest.initializeDescriptionTextarea();
+        
+        // Load form data via REST API
+        callQueueModifyRest.loadFormData();
+        
+        // Initialize form with REST API settings
+        callQueueModifyRest.initializeForm();
+    },
 
-        // Set the default extension number
-        callQueue.defaultExtension = callQueue.$formObj.form('get value','extension');
+    /**
+     * Initialize basic UI components
+     */
+    initializeUIComponents() {
+        // Initialize Semantic UI components
+        callQueueModifyRest.$accordions.accordion();
+        callQueueModifyRest.$checkBoxes.checkbox();
+        
+        // Initialize basic dropdowns (non-extension ones)
+        callQueueModifyRest.$dropDowns.not('.forwarding-select').not('.extension-select').dropdown();
+    },
+
+    /**
+     * Initialize dropdowns with hidden input pattern following IVR Menu approach
+     */
+    initializeDropdowns() {
+        // Initialize timeout extension dropdown with exclusion
+        callQueueModifyRest.initializeTimeoutExtensionDropdown();
+        
+        // Initialize redirect_to_extension_if_empty dropdown
+        callQueueModifyRest.initializeExtensionDropdown('redirect_to_extension_if_empty');
+        
+        // Initialize other general forwarding dropdowns
+        $('.queue-form .forwarding-select').not('.timeout_extension-select').not('.redirect_to_extension_if_empty-select').dropdown(Extensions.getDropdownSettingsWithEmpty((value) => {
+            // Update corresponding hidden input when dropdown changes
+            const $dropdown = $(this);
+            const fieldName = $dropdown.data('field');
+            if (fieldName) {
+                $(`input[name="${fieldName}"]`).val(value);
+                if (!callQueueModifyRest.isFormInitializing) {
+                    $(`input[name="${fieldName}"]`).trigger('change');
+                    Form.dataChanged();
+                }
+            }
+        }));
+    },
+
+    /**
+     * Initialize timeout extension dropdown with current extension exclusion
+     */
+    initializeTimeoutExtensionDropdown() {
+        // Get current extension to exclude from timeout dropdown
+        const getCurrentExtension = () => {
+            return callQueueModifyRest.$formObj.form('get value', 'extension') || callQueueModifyRest.defaultExtension;
+        };
+        
+        // Initialize dropdown with exclusion
+        const initDropdown = () => {
+            const currentExtension = getCurrentExtension();
+            const excludeExtensions = currentExtension ? [currentExtension] : [];
+            
+            $('.timeout_extension-select').dropdown(Extensions.getDropdownSettingsForRoutingWithExclusion((value) => {
+                // Update hidden input when dropdown changes
+                $('input[name="timeout_extension"]').val(value);
+                
+                // Trigger change event only if not initializing
+                if (!callQueueModifyRest.isFormInitializing) {
+                    $('input[name="timeout_extension"]').trigger('change');
+                    Form.dataChanged();
+                }
+            }, excludeExtensions));
+        };
+        
+        // Initialize dropdown
+        initDropdown();
+        
+        // Re-initialize dropdown when extension number changes
+        callQueueModifyRest.$extension.on('change', () => {
+            // Small delay to ensure the value is updated
+            setTimeout(() => {
+                initDropdown();
+            }, 100);
+        });
+    },
+
+    /**
+     * Initialize extension dropdown (universal method for different extension fields)
+     * @param {string} fieldName - Name of the field (e.g., 'redirect_to_extension_if_empty')
+     */
+    initializeExtensionDropdown(fieldName) {
+        $(`.${fieldName}-select`).dropdown(Extensions.getDropdownSettingsWithEmpty((value) => {
+            // Update hidden input when dropdown changes
+            $(`input[name="${fieldName}"]`).val(value);
+            if (!callQueueModifyRest.isFormInitializing) {
+                $(`input[name="${fieldName}"]`).trigger('change');
+                Form.dataChanged();
+            }
+        }));
+    },
+
+    /**
+     * Initialize members table with drag-and-drop functionality
+     */
+    initializeMembersTable() {
+        // Initialize TableDnD for drag-and-drop (using jquery.tablednd.js)
+        callQueueModifyRest.$extensionsTable.tableDnD({
+            onDrop: function() {
+                // Trigger form change notification
+                if (!callQueueModifyRest.isFormInitializing) {
+                    Form.dataChanged();
+                }
+                
+                // Update member priorities based on new order (for backend processing)
+                callQueueModifyRest.updateMemberPriorities();
+            },
+            dragHandle: '.dragHandle'
+        });
+
+        // Initialize extension selector for adding new members
+        callQueueModifyRest.initializeExtensionSelector();
+        
+        // Set up delete button handlers
+        callQueueModifyRest.initializeDeleteButtons();
+    },
+
+    /**
+     * Initialize extension selector dropdown for adding members
+     */
+    initializeExtensionSelector() {
+        // Get phone extensions for member selection
+        Extensions.getPhoneExtensions(callQueueModifyRest.setAvailableQueueMembers);
     },
 
     /**
      * Set available members for the call queue
-     * @param {Object} arrResult - The list of available members
+     * @param {Object} arrResult - The list of available members from Extensions API
      */
     setAvailableQueueMembers(arrResult) {
-        // Loop through the result and populate AvailableMembersList
+        // Clear existing list
+        callQueueModifyRest.availableMembersList = [];
+        
+        // Populate available members list
         $.each(arrResult.results, (index, extension) => {
-            callQueue.AvailableMembersList.push({
+            callQueueModifyRest.availableMembersList.push({
                 number: extension.value,
                 callerid: extension.name,
             });
         });
 
-        // Reinitialize the extension select and update the view
-        callQueue.reinitializeExtensionSelect();
-        callQueue.updateExtensionTableView();
+        // Initialize member selection dropdown
+        callQueueModifyRest.reinitializeExtensionSelect();
+        callQueueModifyRest.updateMembersTableView();
     },
 
     /**
-     * Return the list of available members for the queue
-     * @returns {Array} - The list of available members
+     * Get available queue members not already selected
+     * @returns {Array} Available members for selection
      */
     getAvailableQueueMembers() {
         const result = [];
 
-        // Loop through available members and add to result if not already selected
-        callQueue.AvailableMembersList.forEach((member) => {
+        // Filter out already selected members
+        callQueueModifyRest.availableMembersList.forEach((member) => {
             if ($(`.member-row#${member.number}`).length === 0) {
                 result.push({
                     name: member.callerid,
@@ -195,363 +335,468 @@ const callQueue = {
                 });
             }
         });
-        // result.sort((a, b) => ((a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0)));
+        
         return result;
     },
 
     /**
-     * Reinitialize extension select with consideration for already selected members
+     * Reinitialize extension select dropdown with available members
      */
     reinitializeExtensionSelect() {
-        // Setup dropdown with available queue members
-        callQueue.$extensionSelectDropdown.dropdown({
+        callQueueModifyRest.$extensionSelectDropdown.dropdown({
             action: 'hide',
             forceSelection: false,
             onChange(value, text) {
-                // If a value is selected
                 if (value) {
-                    // Get the last template row, clone it and populate with the selected member data
-                    const $tr = $('.member-row-tpl').last();
-                    const $clone = $tr.clone(true);
-                    $clone
-                        .removeClass('member-row-tpl')
-                        .addClass('member-row')
-                        .show();
-                    $clone.attr('id', value);
-                    $clone.find('.number').html(value);
-                    $clone.find('.callerid').html(text);
-
-                    // Insert the new member row into the table
-                    if ($(callQueue.memberRow).last().length === 0) {
-                        $tr.after($clone);
-                    } else {
-                        $(callQueue.memberRow).last().after($clone);
+                    // Add selected member to table
+                    callQueueModifyRest.addMemberToTable(value, text);
+                    
+                    // Clear dropdown selection
+                    callQueueModifyRest.$extensionSelectDropdown.dropdown('clear');
+                    
+                    // Refresh available options
+                    callQueueModifyRest.reinitializeExtensionSelect();
+                    callQueueModifyRest.updateMembersTableView();
+                    
+                    if (!callQueueModifyRest.isFormInitializing) {
+                        Form.dataChanged();
                     }
-
-                    // Reinitialize the extension select and update the view
-                    callQueue.reinitializeExtensionSelect();
-                    callQueue.updateExtensionTableView();
-
-                    Form.dataChanged();
                 }
             },
-            // Set the values for the dropdown
-            values: callQueue.getAvailableQueueMembers(),
-
+            values: callQueueModifyRest.getAvailableQueueMembers(),
         });
     },
 
     /**
-     * Initialize Drag and Drop functionality for the extension table rows
+     * Add a member to the members table
+     * @param {string} extension - Extension number
+     * @param {string} callerid - Caller ID/Name
      */
-    initializeDragAndDropExtensionTableRows() {
-        callQueue.$extensionsTable.tableDnD({
-            onDragClass: 'hoveringRow',  // CSS class to be applied while a row is being dragged
-            dragHandle: '.dragHandle',  // Class of the handler to initiate the drag action
-            onDrop: () => { // Callback to be executed after a row has been dropped
-                // Trigger change event to acknowledge the modification
-                Form.dataChanged();
-            },
-        });
-    },
-
-    /**
-     * Display a placeholder if the table has zero rows
-     */
-    updateExtensionTableView() {
-        // Placeholder to be displayed
-        const dummy = `<tr class="dummy"><td colspan="4" class="center aligned">${globalTranslate.cq_AddQueueMembers}</td></tr>`;
-
-        if ($(callQueue.memberRow).length === 0) {
-            $('#extensionsTable tbody').append(dummy); // Add the placeholder if there are no rows
+    addMemberToTable(extension, callerid) {
+        // Get the template row and clone it
+        const $template = $('.member-row-template').last();
+        const $newRow = $template.clone(true);
+        
+        // Configure the new row
+        $newRow
+            .removeClass('member-row-template')
+            .addClass('member-row')
+            .attr('id', extension)
+            .show();
+        
+        // SECURITY: Sanitize content to prevent XSS attacks while preserving safe icons
+        const safeCallerid = SecurityUtils.sanitizeExtensionsApiContent(callerid);
+        
+        // Populate row data (only callerid, no separate number column)
+        $newRow.find('.callerid').html(safeCallerid);
+        
+        // Add to table
+        if ($(callQueueModifyRest.memberRow).length === 0) {
+            $template.after($newRow);
         } else {
-            $('#extensionsTable tbody .dummy').remove(); // Remove the placeholder if rows are present
+            $(callQueueModifyRest.memberRow).last().after($newRow);
+        }
+        
+        // Update priorities (for backend processing, not displayed)
+        callQueueModifyRest.updateMemberPriorities();
+    },
+
+    /**
+     * Update member priorities based on table order (for backend processing)
+     */
+    updateMemberPriorities() {
+        // Priorities are maintained for backend processing but not displayed in UI
+        // The order in the table determines the priority when saving
+        $(callQueueModifyRest.memberRow).each((index, row) => {
+            // Store priority as data attribute for backend processing
+            $(row).attr('data-priority', index + 1);
+        });
+    },
+
+    /**
+     * Initialize delete button handlers
+     */
+    initializeDeleteButtons() {
+        // Use event delegation for dynamically added buttons
+        callQueueModifyRest.$formObj.on('click', '.delete-row-button', (e) => {
+            e.preventDefault();
+            
+            // Remove the row
+            $(e.target).closest('tr').remove();
+            
+            // Update priorities and view
+            callQueueModifyRest.updateMemberPriorities();
+            callQueueModifyRest.reinitializeExtensionSelect();
+            callQueueModifyRest.updateMembersTableView();
+            
+            if (!callQueueModifyRest.isFormInitializing) {
+                Form.dataChanged();
+            }
+            
+            return false;
+        });
+    },
+
+    /**
+     * Update members table view with placeholder if empty
+     */
+    updateMembersTableView() {
+        const placeholder = `<tr class="placeholder-row"><td colspan="3" class="center aligned">${globalTranslate.cq_AddQueueMembers}</td></tr>`;
+
+        if ($(callQueueModifyRest.memberRow).length === 0) {
+            callQueueModifyRest.$extensionsTable.find('tbody .placeholder-row').remove();
+            callQueueModifyRest.$extensionsTable.find('tbody').append(placeholder);
+        } else {
+            callQueueModifyRest.$extensionsTable.find('tbody .placeholder-row').remove();
         }
     },
 
     /**
-     * Callback function to be called before the form is sent
-     * @param {Object} settings - The current settings of the form
-     * @returns {Object} - The updated settings of the form
+     * Initialize extension availability checking
+     */
+    initializeExtensionChecking() {
+        // Set up dynamic availability check for extension number
+        let timeoutId;
+        callQueueModifyRest.$extension.on('input', () => {
+            // Clear previous timeout
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            
+            // Set new timeout with delay
+            timeoutId = setTimeout(() => {
+                const newNumber = callQueueModifyRest.$formObj.form('get value', 'extension');
+                Extensions.checkAvailability(callQueueModifyRest.defaultExtension, newNumber);
+            }, 500);
+        });
+    },
+
+    /**
+     * Initialize sound file selectors
+     */
+    initializeSoundSelectors() {
+        // Initialize periodic announce selector (matches IVR pattern)
+        SoundFilesSelector.initializeWithIcons('periodic_announce_sound_id');
+        
+        // Initialize MOH sound selector (matches IVR pattern)
+        SoundFilesSelector.initializeWithIcons('moh_sound_id');
+    },
+
+    /**
+     * Initialize description textarea with auto-resize functionality
+     */
+    initializeDescriptionTextarea() {
+        // Setup auto-resize for description textarea with event handlers
+        $('textarea[name="description"]').on('input paste keyup', function() {
+            FormElements.optimizeTextareaSize($(this));
+        });
+    },
+
+    /**
+     * Load form data via REST API
+     */
+    loadFormData() {
+        const recordId = callQueueModifyRest.getRecordId();
+        
+        CallQueuesAPI.getRecord(recordId, (response) => {
+            if (response.result) {
+                callQueueModifyRest.populateForm(response.data);
+                
+                // Set default extension for availability checking
+                callQueueModifyRest.defaultExtension = callQueueModifyRest.$formObj.form('get value', 'extension');
+                
+                // Populate members table
+                callQueueModifyRest.populateMembersTable(response.data.members || []);
+            } else {
+                UserMessage.showError(response.messages?.error || 'Failed to load call queue data');
+            }
+        });
+    },
+
+    /**
+     * Get record ID from URL
+     * @returns {string} Record ID or empty string for new record
+     */
+    getRecordId() {
+        const urlParts = window.location.pathname.split('/');
+        const modifyIndex = urlParts.indexOf('modify');
+        if (modifyIndex !== -1 && urlParts[modifyIndex + 1]) {
+            return urlParts[modifyIndex + 1];
+        }
+        return '';
+    },
+
+    /**
+     * Populate form with data from REST API
+     * @param {Object} data - Form data from API
+     */
+    populateForm(data) {
+        // Set initialization flag to prevent change tracking
+        callQueueModifyRest.isFormInitializing = true;
+
+        // Populate form fields using Semantic UI form, but handle text fields manually to prevent double-escaping
+        const dataForSemanticUI = {...data};
+        
+        // Remove text fields from Semantic UI processing to handle them manually
+        const textFields = ['name', 'description', 'callerid_prefix'];
+        textFields.forEach(field => {
+            delete dataForSemanticUI[field];
+        });
+        
+        // Populate non-text fields through Semantic UI
+        Form.$formObj.form('set values', dataForSemanticUI);
+        
+        // Manually populate text fields directly - REST API now returns raw data
+        textFields.forEach(fieldName => {
+            if (data[fieldName] !== undefined) {
+                const $field = $(`input[name="${fieldName}"], textarea[name="${fieldName}"]`);
+                if ($field.length) {
+                    // Use raw data from API - no decoding needed
+                    $field.val(data[fieldName]);
+                }
+            }
+        });
+
+        // Handle extension-based dropdowns with representations (except timeout_extension)
+        callQueueModifyRest.populateExtensionDropdowns(data);
+        
+        // Handle sound file dropdowns with representations
+        callQueueModifyRest.populateSoundDropdowns(data);
+
+        // Re-initialize timeout extension dropdown with current extension exclusion (after form values are set)
+        callQueueModifyRest.initializeTimeoutExtensionDropdown();
+        
+        // Restore timeout extension dropdown AFTER re-initialization
+        if (data.timeout_extension && data.timeout_extensionRepresent) {
+            const currentExtension = data.extension || callQueueModifyRest.defaultExtension;
+            
+            // Only set if different from current extension (prevent circular reference)
+            if (data.timeout_extension !== currentExtension) {
+                callQueueModifyRest.populateExtensionDropdown('timeout_extension', data.timeout_extension, data.timeout_extensionRepresent);
+            }
+        }
+
+        // Fix HTML entities in dropdown text after initialization for safe content
+        // Note: This should be safe since we've already sanitized the content through SecurityUtils
+        Extensions.fixDropdownHtmlEntities('#queue-form .forwarding-select .text, #queue-form .timeout_extension-select .text');
+
+        // Update extension number in ribbon label
+        if (data.extension) {
+            $('#extension-display').text(data.extension);
+        }
+
+        // Auto-resize textarea after data is loaded
+        FormElements.optimizeTextareaSize('textarea[name="description"]');
+    },
+
+    /**
+     * Populate extension-based dropdowns with safe representations following IVR Menu approach
+     * @param {Object} data - Form data containing extension representations
+     */
+    populateExtensionDropdowns(data) {
+        // Handle extension dropdowns (excluding timeout_extension which is handled separately)
+        const extensionFields = [
+            'redirect_to_extension_if_empty',
+            'redirect_to_extension_if_unanswered', 
+            'redirect_to_extension_if_repeat_exceeded'
+        ];
+        
+        extensionFields.forEach((fieldName) => {
+            const value = data[fieldName];
+            const represent = data[`${fieldName}Represent`];
+            
+            if (value && represent) {
+                callQueueModifyRest.populateExtensionDropdown(fieldName, value, represent);
+            }
+        });
+    },
+
+    /**
+     * Populate specific extension dropdown with value and representation following IVR Menu approach
+     * @param {string} fieldName - Field name (e.g., 'timeout_extension')
+     * @param {string} value - Extension value (e.g., '1111')  
+     * @param {string} represent - Extension representation with HTML (e.g., '<i class="icon"></i> Name <1111>')
+     */
+    populateExtensionDropdown(fieldName, value, represent) {
+        const $dropdown = $(`.${fieldName}-select`);
+        
+        if ($dropdown.length) {
+            // SECURITY: Sanitize extension representation with XSS protection while preserving safe icons
+            const safeText = SecurityUtils.sanitizeExtensionsApiContent(represent);
+            
+            // Set the value and update display text (following IVR Menu pattern)
+            $dropdown.dropdown('set value', value);
+            $dropdown.find('.text').removeClass('default').html(safeText);
+            
+            // Update hidden input without triggering change event during initialization
+            $(`input[name="${fieldName}"]`).val(value);
+        }
+    },
+
+
+
+    /**
+     * Populate sound file dropdowns with safe representations
+     * @param {Object} data - Form data containing sound file representations
+     */
+    populateSoundDropdowns(data) {
+        // Handle periodic announce sound (matches IVR pattern)
+        if (data.periodic_announce_sound_id && data.periodic_announce_sound_idRepresent) {
+            SoundFilesSelector.setInitialValueWithIcon(
+                'periodic_announce_sound_id',
+                data.periodic_announce_sound_id,
+                data.periodic_announce_sound_idRepresent
+            );
+        }
+        
+        // Handle MOH sound (matches IVR pattern)
+        if (data.moh_sound_id && data.moh_sound_idRepresent) {
+            SoundFilesSelector.setInitialValueWithIcon(
+                'moh_sound_id',
+                data.moh_sound_id,
+                data.moh_sound_idRepresent
+            );
+        }
+    },
+
+    /**
+     * Populate members table with queue members
+     * @param {Array} members - Array of queue members
+     */
+    populateMembersTable(members) {
+        // Clear existing members (except template)
+        $('.member-row').remove();
+        
+        // Add each member to the table
+        members.forEach((member) => {
+            callQueueModifyRest.addMemberToTable(member.extension, member.represent || member.extension);
+        });
+        
+        // Update table view and member selection
+        callQueueModifyRest.updateMembersTableView();
+        callQueueModifyRest.reinitializeExtensionSelect();
+        
+        // Re-initialize dirty checking AFTER all form data is populated
+        if (Form.enableDirrity) {
+            Form.initializeDirrity();
+        }
+        
+        // Clear initialization flag
+        callQueueModifyRest.isFormInitializing = false;
+    },
+
+
+    /**
+     * Initialize form with REST API configuration
+     */
+    initializeForm() {
+        // Configure Form.js for REST API
+        Form.$formObj = callQueueModifyRest.$formObj;
+        Form.url = '#'; // Not used with REST API
+        Form.validateRules = callQueueModifyRest.validateRules;
+        Form.cbBeforeSendForm = callQueueModifyRest.cbBeforeSendForm;
+        Form.cbAfterSendForm = callQueueModifyRest.cbAfterSendForm;
+        
+        // Configure REST API settings
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = CallQueuesAPI;
+        Form.apiSettings.saveMethod = 'saveRecord';
+        
+        // Set redirect URLs for save modes
+        Form.afterSubmitIndexUrl = `${globalRootUrl}call-queues/index/`;
+        Form.afterSubmitModifyUrl = `${globalRootUrl}call-queues/modify/`;
+        
+        // Initialize form with all features
+        Form.initialize();
+    },
+
+    /**
+     * Callback before form submission - prepare data for API
+     * @param {Object} settings - Form submission settings
+     * @returns {Object|false} Updated settings or false to prevent submission
      */
     cbBeforeSendForm(settings) {
         let result = settings;
 
-        // Retrieve form values
-        result.data = callQueue.$formObj.form('get values');
+        // Get form values (following IVR Menu pattern)
+        result.data = callQueueModifyRest.$formObj.form('get values');
 
-        const arrMembers = [];
+        // Explicitly collect checkbox values to ensure boolean true/false values are sent to API
+        // This ensures unchecked checkboxes send false, not undefined
+        const checkboxFields = [
+            'recive_calls_while_on_a_call',
+            'announce_position', 
+            'announce_hold_time'
+        ];
+        
+        checkboxFields.forEach((fieldName) => {
+            const $checkbox = $(`.checkbox input[name="${fieldName}"]`);
+            if ($checkbox.length) {
+                result.data[fieldName] = $checkbox.closest('.checkbox').checkbox('is checked');
+            }
+        });
 
-        // Iterate through each member row and add to arrMembers
-        $(callQueue.memberRow).each((index, obj) => {
-            if ($(obj).attr('id')) {
-                arrMembers.push({
-                    number: $(obj).attr('id'),
-                    priority: index,
+        // Collect members data with priorities (based on table order)
+        const members = [];
+        $(callQueueModifyRest.memberRow).each((index, row) => {
+            const extension = $(row).attr('id');
+            if (extension) {
+                members.push({
+                    extension: extension,
+                    priority: index + 1,
                 });
             }
         });
 
-        // Validate if any members exist
-        if (arrMembers.length === 0) {
+        // Validate that members exist
+        if (members.length === 0) {
             result = false;
-            callQueue.$errorMessages.html(globalTranslate.cq_ValidateNoExtensions);
-            callQueue.$formObj.addClass('error');
-        } else {
-            result.data.members = JSON.stringify(arrMembers);
+            callQueueModifyRest.$errorMessages.html(globalTranslate.cq_ValidateNoExtensions);
+            callQueueModifyRest.$formObj.addClass('error');
+            return result;
         }
+
+        // Add members to form data
+        result.data.members = members;
 
         return result;
     },
 
     /**
-     * Callback function to be called after the form has been sent.
-     * @param {Object} response - The response from the server after the form is sent
+     * Callback after form submission
+     * @param {Object} response - API response
      */
     cbAfterSendForm(response) {
-        callQueue.defaultNumber = callQueue.$formObj.form('get value','extension');
-    },
-
-    /**
-     * Build HTML content for tooltip popup
-     * @param {Object} config - Configuration object for tooltip content
-     * @returns {string} - HTML string for tooltip content
-     */
-    buildTooltipContent(config) {
-        if (!config) return '';
-        
-        let html = '';
-        
-        // Add header if exists
-        if (config.header) {
-            html += `<div class="header"><strong>${config.header}</strong></div>`;
-            html += '<div class="ui divider"></div>';
-        }
-        
-        // Add description if exists
-        if (config.description) {
-            html += `<p>${config.description}</p>`;
-        }
-        
-        // Add list items if exist
-        if (config.list) {
-            if (Array.isArray(config.list) && config.list.length > 0) {
-                html += '<ul>';
-                config.list.forEach(item => {
-                    if (typeof item === 'string') {
-                        html += `<li>${item}</li>`;
-                    } else if (item.term && item.definition === null) {
-                        // Header item without definition
-                        html += `</ul><p><strong>${item.term}</strong></p><ul>`;
-                    } else if (item.term && item.definition) {
-                        html += `<li><strong>${item.term}:</strong> ${item.definition}</li>`;
-                    }
-                });
-                html += '</ul>';
-            } else if (typeof config.list === 'object') {
-                // Old format - object with key-value pairs
-                html += '<ul>';
-                Object.entries(config.list).forEach(([term, definition]) => {
-                    html += `<li><strong>${term}:</strong> ${definition}</li>`;
-                });
-                html += '</ul>';
+        if (response.result) {
+            // Update default extension for availability checking
+            callQueueModifyRest.defaultExtension = callQueueModifyRest.$formObj.form('get value', 'extension');
+            
+            // Update form with response data if available
+            if (response.data) {
+                callQueueModifyRest.populateForm(response.data);
+            }
+            
+            // Update URL for new records
+            const currentId = $('#id').val();
+            if (!currentId && response.data && response.data.uniqid) {
+                const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.uniqid}`);
+                window.history.pushState(null, '', newUrl);
             }
         }
-        
-        // Add additional lists (list2, list3, etc.)
-        for (let i = 2; i <= 10; i++) {
-            const listName = `list${i}`;
-            if (config[listName] && config[listName].length > 0) {
-                html += '<ul>';
-                config[listName].forEach(item => {
-                    if (typeof item === 'string') {
-                        html += `<li>${item}</li>`;
-                    } else if (item.term && item.definition === null) {
-                        html += `</ul><p><strong>${item.term}</strong></p><ul>`;
-                    } else if (item.term && item.definition) {
-                        html += `<li><strong>${item.term}:</strong> ${item.definition}</li>`;
-                    }
-                });
-                html += '</ul>';
-            }
-        }
-        
-        // Add warning if exists
-        if (config.warning) {
-            html += '<div class="ui small orange message">';
-            if (config.warning.header) {
-                html += `<div class="header">`;
-                html += `<i class="exclamation triangle icon"></i> `;
-                html += config.warning.header;
-                html += `</div>`;
-            }
-            html += config.warning.text;
-            html += '</div>';
-        }
-        
-        // Add code examples if exist
-        if (config.examples && config.examples.length > 0) {
-            if (config.examplesHeader) {
-                html += `<p><strong>${config.examplesHeader}:</strong></p>`;
-            }
-            html += '<div class="ui segment" style="background-color: #f8f8f8; border: 1px solid #e0e0e0;">';
-            html += '<pre style="margin: 0; font-size: 0.9em; line-height: 1.4em;">';
-            
-            // Process examples with syntax highlighting for sections
-            config.examples.forEach((line, index) => {
-                if (line.trim().startsWith('[') && line.trim().endsWith(']')) {
-                    // Section header
-                    if (index > 0) html += '\n';
-                    html += `<span style="color: #0084b4; font-weight: bold;">${line}</span>`;
-                } else if (line.includes('=')) {
-                    // Parameter line
-                    const [param, value] = line.split('=', 2);
-                    html += `\n<span style="color: #7a3e9d;">${param}</span>=<span style="color: #cf4a4c;">${value}</span>`;
-                } else {
-                    // Regular line
-                    html += line ? `\n${line}` : '';
-                }
-            });
-            
-            html += '</pre>';
-            html += '</div>';
-        }
-        
-        // Add note if exists
-        if (config.note) {
-            html += `<p class="ui small"><i class="info circle icon"></i> ${config.note}</p>`;
-        }
-        
-        return html;
-    },
-
-    /**
-     * Initialize tooltips for form fields
-     */
-    initializeTooltips() {
-        // Define tooltip configurations for each field
-        const tooltipConfigs = {
-            callerid_prefix: callQueue.buildTooltipContent({
-                header: globalTranslate.cq_CallerIDPrefixTooltip_header,
-                description: globalTranslate.cq_CallerIDPrefixTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.cq_CallerIDPrefixTooltip_how_it_works,
-                        definition: null
-                    },
-                    globalTranslate.cq_CallerIDPrefixTooltip_example,
-                    {
-                        term: globalTranslate.cq_CallerIDPrefixTooltip_purposes,
-                        definition: null
-                    },
-                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_identify,
-                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_priority,
-                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_stats
-                ],
-                examplesHeader: globalTranslate.cq_CallerIDPrefixTooltip_examples_header,
-                examples: globalTranslate.cq_CallerIDPrefixTooltip_examples 
-                    ? globalTranslate.cq_CallerIDPrefixTooltip_examples.split('|') 
-                    : [],
-                note: globalTranslate.cq_CallerIDPrefixTooltip_note
-            }),
-            
-            seconds_to_ring_each_member: callQueue.buildTooltipContent({
-                header: globalTranslate.cq_SecondsToRingEachMemberTooltip_header,
-                description: globalTranslate.cq_SecondsToRingEachMemberTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_strategies_header,
-                        definition: null
-                    },
-                    {
-                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall,
-                        definition: globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall_desc
-                    },
-                    {
-                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_linear,
-                        definition: globalTranslate.cq_SecondsToRingEachMemberTooltip_linear_desc
-                    },
-                    {
-                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_recommendations_header,
-                        definition: null
-                    },
-                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_short,
-                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_medium,
-                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_long
-                ],
-                note: globalTranslate.cq_SecondsToRingEachMemberTooltip_note
-            }),
-            
-            seconds_for_wrapup: callQueue.buildTooltipContent({
-                header: globalTranslate.cq_SecondsForWrapupTooltip_header,
-                description: globalTranslate.cq_SecondsForWrapupTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.cq_SecondsForWrapupTooltip_purposes_header,
-                        definition: null
-                    },
-                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_notes,
-                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_crm,
-                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_prepare,
-                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_break,
-                    {
-                        term: globalTranslate.cq_SecondsForWrapupTooltip_recommendations_header,
-                        definition: null
-                    },
-                    globalTranslate.cq_SecondsForWrapupTooltip_rec_none,
-                    globalTranslate.cq_SecondsForWrapupTooltip_rec_short,
-                    globalTranslate.cq_SecondsForWrapupTooltip_rec_medium,
-                    globalTranslate.cq_SecondsForWrapupTooltip_rec_long
-                ],
-                note: globalTranslate.cq_SecondsForWrapupTooltip_note
-            })
-        };
-        
-        // Initialize tooltip for each field info icon
-        $('.field-info-icon').each((index, element) => {
-            const $icon = $(element);
-            const fieldName = $icon.data('field');
-            const content = tooltipConfigs[fieldName];
-            
-            if (content) {
-                $icon.popup({
-                    html: content,
-                    position: 'top right',
-                    hoverable: true,
-                    delay: {
-                        show: 300,
-                        hide: 100
-                    },
-                    variation: 'flowing'
-                });
-            }
-        });
-    },
-
-    /**
-     * Initialize the form with custom settings
-     */
-    initializeForm() {
-        Form.$formObj = callQueue.$formObj;
-        Form.url = `${globalRootUrl}call-queues/save`;  // Form submission URL
-        Form.validateRules = callQueue.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = callQueue.cbBeforeSendForm;  // Callback before form is sent
-        Form.cbAfterSendForm = callQueue.cbAfterSendForm;  // Callback after form is sent
-        Form.initialize();
     },
 };
 
 /**
- * Checks if the number is taken by another account
- * @returns {boolean} True if the parameter has the 'hidden' class, false otherwise
+ * Custom validation rule for extension availability
+ * @param {string} value - Field value
+ * @param {string} parameter - Parameter for the rule
+ * @returns {boolean} True if valid, false otherwise
  */
 $.fn.form.settings.rules.existRule = (value, parameter) => $(`#${parameter}`).hasClass('hidden');
 
-
 /**
- *  Initialize Call Queues modify form on document ready
+ * Initialize call queue modify form on document ready
  */
 $(document).ready(() => {
-    callQueue.initialize();
+    callQueueModifyRest.initialize();
 });
-

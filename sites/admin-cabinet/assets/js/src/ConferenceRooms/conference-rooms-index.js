@@ -16,172 +16,69 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, ConferenceRoomsAPI, Extensions, globalTranslate, UserMessage, SemanticLocalization */
+/* global globalRootUrl, ConferenceRoomsAPI, Extensions, globalTranslate, UserMessage, SemanticLocalization, PbxDataTableIndex, SecurityUtils */
 
 /**
- * Модуль управления таблицей конференций
+ * Conference rooms table management module using unified base class
  */
-const conferenceTable = {
-    $conferencesTable: $('#conference-rooms-table'),
-    dataTable: {},
+const conferenceRoomsIndex = {
+    /**
+     * DataTable instance from base class
+     */
+    dataTableInstance: null,
 
     /**
-     * Conference table management module
+     * Initialize the module
      */
     initialize() {
-        // Initially show placeholder until data loads
-        conferenceTable.toggleEmptyPlaceholder(true);
-        
-        conferenceTable.initializeDataTable();
-    },
-    
-    /**
-     * Initialize DataTable
-     */
-    initializeDataTable() {
-        conferenceTable.dataTable = conferenceTable.$conferencesTable.DataTable({
-            ajax: {
-                url: ConferenceRoomsAPI.endpoints.getList,
-                dataSrc: function(json) {                    
-                    // Manage empty state
-                    conferenceTable.toggleEmptyPlaceholder(
-                        !json.result || !json.data || json.data.length === 0
-                    );
-                    return json.result ? json.data : [];
-                }
+        // Create instance of base class with Conference Rooms specific configuration
+        this.dataTableInstance = new PbxDataTableIndex({
+            tableId: 'conference-rooms-table',
+            apiModule: ConferenceRoomsAPI,
+            routePrefix: 'conference-rooms',
+            showSuccessMessages: true,
+            actionButtons: ['edit', 'delete'], // No copy for Conference Rooms
+            translations: {
+                deleteSuccess: globalTranslate.cr_ConferenceRoomDeleted,
+                deleteError: globalTranslate.cr_ImpossibleToDeleteConferenceRoom
             },
             columns: [
                 {
                     data: 'name',
-                    render: function(data, type, row) {
-                        return `<strong>${data}</strong>`;
+                    render: function(data) {
+                        // SECURITY: Properly escape room name to prevent XSS
+                        const safeName = window.SecurityUtils.escapeHtml(data);
+                        return `<strong>${safeName}</strong>`;
                     }
                 },
                 {
                     data: 'extension',
-                    className: 'center aligned'
+                    className: 'center aligned',
+                    render: function(data) {
+                        // SECURITY: Properly escape extension to prevent XSS
+                        return window.SecurityUtils.escapeHtml(data) || '—';
+                    }
                 },
                 {
                     data: 'pinCode',
                     className: 'center aligned hide-on-mobile',
                     responsivePriority: 2,
                     render: function(data) {
-                        return data || '—';
-                    }
-                },
-                {
-                    data: null,
-                    orderable: false,
-                    searchable: false,
-                    className: 'right aligned action-buttons', // Added class for identification
-                    responsivePriority: 1,
-                    render: function(data, type, row) {
-                        return `<div class="ui basic icon buttons">
-                            <a href="${globalRootUrl}conference-rooms/modify/${row.uniqid}" 
-                               class="ui button popuped" 
-                               data-content="${globalTranslate.bt_ToolTipEdit}">
-                                <i class="edit icon"></i>
-                            </a>
-                            <a href="#" 
-                               data-value="${row.uniqid}" 
-                               class="ui button delete two-steps-delete popuped" 
-                               data-content="${globalTranslate.bt_ToolTipDelete}">
-                                <i class="trash red icon"></i>
-                            </a>
-                        </div>`;
+                        // SECURITY: Properly escape PIN code to prevent XSS
+                        return window.SecurityUtils.escapeHtml(data) || '—';
                     }
                 }
-            ],
-            order: [[0, 'asc']],
-            responsive: true,
-            searching: false,
-            paging: false,
-            info: false,
-            language: SemanticLocalization.dataTableLocalisation,
-            drawCallback: function() {
-                console.log('DataTable drawCallback triggered'); // Debug log
-                
-                // Initialize Semantic UI elements
-                conferenceTable.$conferencesTable.find('.popuped').popup();
-                
-                // Double-click for editing
-                conferenceTable.initializeDoubleClickEdit();
-            }
+            ]
         });
         
-        // Handle deletion using DeleteSomething.js
-        // DeleteSomething.js automatically handles first click
-        // We only listen for second click (when two-steps-delete class is removed)
-        conferenceTable.$conferencesTable.on('click', 'a.delete:not(.two-steps-delete)', function(e) {
-            e.preventDefault();
-            const $button = $(this);
-            const roomId = $button.attr('data-value');
-            
-            // Add loading indicator and disable button
-            $button.addClass('loading disabled');
-            
-            ConferenceRoomsAPI.deleteRecord(roomId, conferenceTable.cbAfterDeleteRecord);
-        });
-    },
-    
-    /**
-     * Callback after record deletion
-     */
-    cbAfterDeleteRecord(response) {
-        if (response.result === true) {
-            // Reload table
-            conferenceTable.dataTable.ajax.reload();
-            
-            // Update related components
-            if (typeof Extensions !== 'undefined' && Extensions.cbOnDataChanged) {
-                Extensions.cbOnDataChanged();
-            }
-            
-            UserMessage.showSuccess(globalTranslate.cr_ConferenceRoomDeleted);
-        } else {
-            UserMessage.showError(
-                response.messages?.error || 
-                globalTranslate.cr_ImpossibleToDeleteConferenceRoom
-            );
-        }
-        
-        // Remove loading indicator and restore button to initial state
-        $('a.delete').removeClass('loading disabled');
-    },
-    
-    /**
-     * Toggle empty table placeholder visibility
-     */
-    toggleEmptyPlaceholder(isEmpty) {
-        if (isEmpty) {
-            $('#conference-table-container').hide();
-            $('#add-new-button').hide();
-            $('#empty-table-placeholder').show();
-        } else {
-            $('#empty-table-placeholder').hide();
-            $('#add-new-button').show();
-            $('#conference-table-container').show();
-        }
-    },
-    
-  /**
-     * Initialize double-click for editing
-     * IMPORTANT: Exclude cells with action-buttons class to avoid conflict with delete-something.js
-     */
-    initializeDoubleClickEdit() {
-        conferenceTable.$conferencesTable.on('dblclick', 'tbody td:not(.action-buttons)', function() {
-            const data = conferenceTable.dataTable.row(this).data();
-            if (data && data.uniqid) {
-                window.location = `${globalRootUrl}conference-rooms/modify/${data.uniqid}`;
-            }
-        });
+        // Initialize the base class
+        this.dataTableInstance.initialize();
     }
 };
 
 /**
- *  Initialize on document ready
+ * Initialize Conference Rooms table on document ready
  */
 $(document).ready(() => {
-    conferenceTable.initialize();
+    conferenceRoomsIndex.initialize();
 });
-
