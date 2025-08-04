@@ -315,7 +315,8 @@ class DockerEntrypoint extends Injectable
                         break;
                     default:
                         if ($this->updateDBSetting($dbKey, $envValue)) {
-                            $appliedSettings[] = "   Updated $name → $envValue";
+                            $action = array_key_exists($dbKey, $this->settings) ? 'Updated' : 'Created';
+                            $appliedSettings[] = "   $action $name → $envValue";
                         }
                         break;
                 }
@@ -382,21 +383,43 @@ class DockerEntrypoint extends Injectable
      */
     private function updateDBSetting(string $key, string $newValue): bool
     {
-        if (array_key_exists($key, $this->settings) && $this->settings[$key] !== $newValue) {
-            $sqlite3 = Util::which('sqlite3');
-            $dbPath =  self::PATH_DB;
-            $out = [];
-            $command = "$sqlite3 $dbPath \"UPDATE m_PbxSettings SET value='$newValue' WHERE key='$key'\"";
-            $res = Processes::mwExec($command, $out);
-            if ($res === 0) {
-                SystemMessages::sysLogMsg(__METHOD__, " - Update $key to '$newValue' in m_PbxSettings", LOG_DEBUG);
-                return true;
-            } else {
-                SystemMessages::sysLogMsg(__METHOD__, " - Update $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
-                return false;
+        $sqlite3 = Util::which('sqlite3');
+        $dbPath =  self::PATH_DB;
+        $out = [];
+        
+        if (array_key_exists($key, $this->settings)) {
+            // Update existing setting if value is different
+            if ($this->settings[$key] !== $newValue) {
+                $command = "$sqlite3 $dbPath \"UPDATE m_PbxSettings SET value='$newValue' WHERE key='$key'\"";
+                $res = Processes::mwExec($command, $out);
+                if ($res === 0) {
+                    SystemMessages::sysLogMsg(__METHOD__, " - Update $key to '$newValue' in m_PbxSettings", LOG_DEBUG);
+                    return true;
+                } else {
+                    SystemMessages::sysLogMsg(__METHOD__, " - Update $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
+                    return false;
+                }
             }
-        } elseif (!array_key_exists($key, $this->settings)) {
-            $this->echoMessage("   Warning: Unknown environment variable '$key' - skipping");
+        } else {
+            // Check if this is a valid PbxSettings constant
+            $reflection = new ReflectionClass(PbxSettings::class);
+            $constants = $reflection->getConstants();
+            $isValidConstant = in_array($key, $constants, true);
+            
+            if ($isValidConstant) {
+                // Insert new setting
+                $command = "$sqlite3 $dbPath \"INSERT INTO m_PbxSettings (key, value) VALUES ('$key', '$newValue')\"";
+                $res = Processes::mwExec($command, $out);
+                if ($res === 0) {
+                    SystemMessages::sysLogMsg(__METHOD__, " - Insert $key with value '$newValue' in m_PbxSettings", LOG_DEBUG);
+                    return true;
+                } else {
+                    SystemMessages::sysLogMsg(__METHOD__, " - Insert $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
+                    return false;
+                }
+            } else {
+                $this->echoMessage("   Warning: Unknown environment variable '$key' - skipping");
+            }
         }
         return false;
     }
