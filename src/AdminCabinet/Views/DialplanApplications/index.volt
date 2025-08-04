@@ -17,15 +17,14 @@
     </table>
 </div>
 
-<div class="ui placeholder segment" id="empty-table-placeholder" style="display: none;">
-    <div class="ui icon header">
-        <i class="code icon"></i>
-        {{ t._('da_NoDialplanApplicationsFound') }}
-    </div>
-    {% if isAllowed('save') %}
-        <div class="inline">
-            {{ link_to("dialplan-applications/modify", t._('da_CreateFirstDialplanApp'), "class": "ui primary button") }}
-        </div>
-    {% endif %}
+<div id="empty-table-placeholder" style="display: none;">
+    {{ partial("partials/emptyTablePlaceholder", [
+        'icon': 'code',
+        'title': t._('da_NoDialplanApplicationsFound'),
+        'description': t._('da_EmptyTableDescription'),
+        'addButtonText': '<i class="add circle icon"></i> '~t._('da_CreateFirstDialplanApp'),
+        'addButtonLink': 'dialplan-applications/modify',
+        'showButton': isAllowed('save')
+    ]) }}
 </div>
 

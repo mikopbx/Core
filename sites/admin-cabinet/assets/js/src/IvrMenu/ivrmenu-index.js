@@ -16,231 +16,104 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, IvrMenuAPI, Extensions, globalTranslate, UserMessage, SemanticLocalization */
+/* global globalRootUrl, IvrMenuAPI, Extensions, globalTranslate, UserMessage, SemanticLocalization, PbxDataTableIndex */
 
 /**
- * IVR menu table management module
+ * IVR menu table management module using unified base class
  */
 const ivrMenuIndex = {
-    $ivrMenuTable: $('#ivr-menu-table'),
-    dataTable: {},
-
-
+    /**
+     * DataTable instance from base class
+     */
+    dataTableInstance: null,
 
     /**
      * Initialize the module
      */
     initialize() {
-        // Initially show placeholder until data loads
-        ivrMenuIndex.toggleEmptyPlaceholder(true);
+        // Create temporary instance to get description renderer
+        const tempInstance = new PbxDataTableIndex({
+            tableId: 'temp',
+            apiModule: IvrMenuAPI,
+            routePrefix: 'ivr-menu',
+            columns: []
+        });
         
-        ivrMenuIndex.initializeDataTable();
-    },
-    
-    /**
-     * Initialize DataTable
-     */
-    initializeDataTable() {
-        ivrMenuIndex.dataTable = ivrMenuIndex.$ivrMenuTable.DataTable({
-            ajax: {
-                url: IvrMenuAPI.endpoints.getList,
-                dataSrc: function(json) {
-                    // Manage empty state
-                    ivrMenuIndex.toggleEmptyPlaceholder(
-                        !json.result || !json.data || json.data.length === 0
-                    );
-                    return json.result ? json.data : [];
+        // Create configuration with all columns including description
+        const columns = [
+            {
+                data: 'extension',
+                className: 'centered collapsing',
+                render: function(data) {
+                    // SECURITY: Properly escape extension data to prevent XSS
+                    return window.SecurityUtils.escapeHtml(data) || '—';
                 }
             },
-            columns: [
-                {
-                    data: 'extension',
-                    className: 'centered collapsing',
-                    render: function(data) {
-                        // SECURITY: Properly escape extension data to prevent XSS
-                        return window.SecurityUtils.escapeHtml(data) || '—';
-                    }
-                },
-                {
-                    data: 'name',
-                    className: 'collapsing',
-                    render: function(data) {
-                        // SECURITY: Properly escape name data to prevent XSS
-                        return window.SecurityUtils.escapeHtml(data) || '—';
-                    }
-                },
-                {
-                    data: 'actions',
-                    className: 'collapsing',
-                    render: function(data) {
-                        if (!data || data.length === 0) {
-                            return '<small>—</small>';
-                        }
-                        // SECURITY: Escape digits and sanitize represent field allowing only safe icons
-                        const actionsHtml = data.map(action => {
-                            const safeDigits = window.SecurityUtils.escapeHtml(action.digits || '');
-                            const safeRepresent = window.SecurityUtils.sanitizeExtensionsApiContent(action.represent || '');
-                            return `${safeDigits} - ${safeRepresent}`;
-                        }).join('<br>');
-                        return `<small>${actionsHtml}</small>`;
-                    }
-                },
-                {
-                    data: 'timeoutExtensionRepresent',
-                    className: 'hide-on-mobile collapsing',
-                    render: function(data) {
-                        // SECURITY: Sanitize timeout extension representation allowing only safe icons
-                        if (!data) {
-                            return '<small>—</small>';
-                        }
-                        const safeData = window.SecurityUtils.sanitizeExtensionsApiContent(data);
-                        return `<small>${safeData}</small>`;
-                    }
-                },
-                {
-                    data: 'description',
-                    className: 'hide-on-mobile',
-                    orderable: false,
-                    // No collapsing class - this column will stretch to fill remaining space
-                    render: function(data) {
-                        if (!data || data.trim() === '') {
-                            return '—';
-                        }
-                        // Create popup button for description - properly escape all HTML
-                        const escapedData = window.SecurityUtils.escapeHtml(data); // Safe escaping
-                        return `<div class="ui basic icon button popuped" 
-                                    data-content="${escapedData}" 
-                                    data-position="top right" 
-                                    data-variation="wide">
-                                    <i class="file text icon"></i>
-                                </div>`;
-                    }
-                },
-                {
-                    data: null,
-                    orderable: false,
-                    searchable: false,
-                    className: 'right aligned collapsing',
-                    render: function(data, type, row) {
-                        return `<div class="ui tiny basic icon buttons action-buttons">
-                            <a href="${globalRootUrl}ivr-menu/modify/${row.uniqid}" 
-                               class="ui button edit popuped" 
-                               data-content="${globalTranslate.bt_ToolTipEdit}">
-                                <i class="icon edit blue"></i>
-                            </a>
-                            <a href="#" 
-                               data-value="${row.uniqid}" 
-                               class="ui button delete two-steps-delete popuped" 
-                               data-content="${globalTranslate.bt_ToolTipDelete}">
-                                <i class="icon trash red"></i>
-                            </a>
-                        </div>`;
-                    }
+            {
+                data: 'name',
+                className: 'collapsing',
+                render: function(data) {
+                    // SECURITY: Properly escape name data to prevent XSS
+                    return window.SecurityUtils.escapeHtml(data) || '—';
                 }
-            ],
-            order: [[0, 'asc']],
-            lengthChange: false,
-            paging: false,
-            searching: true,
-            info: false,
-            language: SemanticLocalization.dataTableLocalisation,
-            drawCallback: function() {
-                // Initialize Semantic UI elements
-                ivrMenuIndex.$ivrMenuTable.find('.popuped').popup();
-                
-                // Move Add New button to the correct DataTables grid position (like in original)
-                const $addButton = $('#add-new-button');
-                const $wrapper = $('#ivr-menu-table_wrapper');
-                const $leftColumn = $wrapper.find('.eight.wide.column').first();
-                
-                if ($addButton.length && $leftColumn.length) {
-                    // Move button to the left column of DataTables grid
-                    $leftColumn.append($addButton);
-                    $addButton.show();
+            },
+            {
+                data: 'actions',
+                className: 'collapsing',
+                render: function(data) {
+                    if (!data || data.length === 0) {
+                        return '<small>—</small>';
+                    }
+                    // SECURITY: Escape digits and sanitize represent field allowing only safe icons
+                    const actionsHtml = data.map(action => {
+                        const safeDigits = window.SecurityUtils.escapeHtml(action.digits || '');
+                        const safeRepresent = window.SecurityUtils.sanitizeExtensionsApiContent(action.represent || '');
+                        return `${safeDigits} - ${safeRepresent}`;
+                    }).join('<br>');
+                    return `<small>${actionsHtml}</small>`;
                 }
-                
-                // Double-click for editing
-                ivrMenuIndex.initializeDoubleClickEdit();
+            },
+            {
+                data: 'timeoutExtensionRepresent',
+                className: 'hide-on-mobile collapsing',
+                render: function(data) {
+                    // SECURITY: Sanitize timeout extension representation allowing only safe icons
+                    if (!data) {
+                        return '<small>—</small>';
+                    }
+                    const safeData = window.SecurityUtils.sanitizeExtensionsApiContent(data);
+                    return `<small>${safeData}</small>`;
+                }
+            },
+            {
+                data: 'description',
+                className: 'hide-on-mobile',
+                orderable: false,
+                // Use the description renderer from temp instance
+                render: tempInstance.createDescriptionRenderer()
             }
+        ];
+        
+        // Create real instance of base class with IVR Menu specific configuration
+        this.dataTableInstance = new PbxDataTableIndex({
+            tableId: 'ivr-menu-table',
+            apiModule: IvrMenuAPI,
+            routePrefix: 'ivr-menu',
+            showSuccessMessages: true,
+            actionButtons: ['edit', 'delete'], // No copy for IVR Menu
+            translations: {
+                deleteSuccess: globalTranslate.iv_IvrMenuDeleted,
+                deleteError: globalTranslate.iv_ImpossibleToDeleteIvrMenu
+            },
+            descriptionSettings: {
+                maxLines: 3,
+                dynamicHeight: false
+            },
+            columns: columns
         });
         
-        
-        // Handle deletion using DeleteSomething.js
-        // DeleteSomething.js automatically handles first click
-        // We only listen for second click (when two-steps-delete class is removed)
-        ivrMenuIndex.$ivrMenuTable.on('click', 'a.delete:not(.two-steps-delete)', function(e) {
-            e.preventDefault();
-            const $button = $(this);
-            const menuId = $button.attr('data-value');
-            
-            // Add loading indicator and disable button
-            $button.addClass('loading disabled');
-            
-            IvrMenuAPI.deleteRecord(menuId, ivrMenuIndex.cbAfterDeleteRecord);
-        });
-    },
-    
-    /**
-     * Callback after record deletion
-     */
-    cbAfterDeleteRecord(response) {
-        if (response.result === true) {
-            // Reload table
-            ivrMenuIndex.dataTable.ajax.reload();
-            
-            // Update related components
-            if (typeof Extensions !== 'undefined' && Extensions.cbOnDataChanged) {
-                Extensions.cbOnDataChanged();
-            }
-            
-            UserMessage.showSuccess(globalTranslate.iv_IvrMenuDeleted);
-        } else {
-            UserMessage.showError(
-                response.messages?.error || 
-                globalTranslate.iv_ImpossibleToDeleteIvrMenu
-            );
-        }
-        
-        // Remove loading indicator and restore button to initial state
-        $('a.delete').removeClass('loading disabled');
-    },
-    
-    /**
-     * Toggle empty table placeholder visibility
-     */
-    toggleEmptyPlaceholder(isEmpty) {
-        if (isEmpty) {
-            $('#ivr-table-container').hide();
-            $('#add-new-button').hide();
-            $('#empty-table-placeholder').show();
-        } else {
-            $('#empty-table-placeholder').hide();
-            $('#add-new-button').show();
-            $('#ivr-table-container').show();
-        }
-    },
-    
-    /**
-     * Initialize double-click for editing
-     * IMPORTANT: Exclude cells with ui right aligned class to avoid conflict with delete-something.js
-     */
-    initializeDoubleClickEdit() {
-        ivrMenuIndex.$ivrMenuTable.on('dblclick', 'tbody td:not(.ui.right.aligned)', function() {
-            const data = ivrMenuIndex.dataTable.row(this).data();
-            if (data && data.uniqid) {
-                window.location = `${globalRootUrl}ivr-menu/modify/${data.uniqid}`;
-            }
-        });
-    },
-    
-    /**
-     * Cleanup event handlers
-     */
-    destroy() {
-        // Destroy DataTable if exists
-        if (ivrMenuIndex.dataTable) {
-            ivrMenuIndex.dataTable.destroy();
-        }
+        // Initialize the base class
+        this.dataTableInstance.initialize();
     }
 };
 
