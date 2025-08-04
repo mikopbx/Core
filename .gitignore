@@ -10,3 +10,5 @@ src/AdminCabinet/Views/Modules
 *.cache
 CLAUDE.local.md
 build
+.config.json
+docs
