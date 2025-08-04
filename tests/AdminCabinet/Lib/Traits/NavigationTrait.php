@@ -77,10 +77,13 @@ trait NavigationTrait
         $this->logTestAction("Click modify button", ['text' => $text]);
 
         try {
+            // Combined XPath pattern for both class="row" and role="row"
             $xpath = sprintf(
-                '//td[contains(text(),"%s")]/parent::tr[contains(@class, "row")]//a[contains(@href,"modify")]',
+                '//td[contains(text(),"%1$s")]/parent::tr[contains(@class, "row")]//a[contains(@href,"modify")] | ' .
+                '//td[contains(text(),"%1$s")]/parent::tr[contains(@role, "row")]//a[contains(@href,"modify")]',
                 $text
             );
+            
             try {
                 $element = self::$driver->findElement(WebDriverBy::xpath($xpath));
                 $actions = new WebDriverActions(self::$driver);
@@ -108,12 +111,19 @@ trait NavigationTrait
         $this->logTestAction("Click delete button", ['text' => $text, 'confirm' => $confirmDelete]);
 
         try {
+            // Combined XPath pattern for both class="row" and role="row"
             $xpath = sprintf(
-                '//td[contains(text(),"%s")]/ancestor::tr[contains(@class, "row")]//a[contains(@href,"delete")]',
+                '//td[contains(text(),"%1$s")]/ancestor::tr[contains(@class, "row")]//a[contains(@href,"delete")] | ' .
+                '//td[contains(text(),"%1$s")]/ancestor::tr[contains(@role, "row")]//a[contains(@href,"delete")]',
                 $text
             );
 
             $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
+            
+            if (empty($deleteButtons)) {
+                throw new RuntimeException("No delete buttons found with XPath: $xpath");
+            }
+            
             foreach ($deleteButtons as $deleteButton) {
                 $this->scrollIntoView($deleteButton);
                 $deleteButton->click();

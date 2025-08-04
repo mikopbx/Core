@@ -40,7 +40,9 @@ trait DropdownInteractionTrait
         '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
         '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
         '//div[contains(@class, "dropdown")][@id="%1$s"] | ' .
-        '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]]';
+        '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]] | ' .
+        '//input[@name="%1$s"]/following-sibling::div[contains(@class, "dropdown") and contains(@class, "%1$s-select")] | ' .
+        '//div[contains(@class, "dropdown") and contains(@class, "%1$s-select")]';
 
     /**
      * Находит dropdown элемент по имени
@@ -482,7 +484,9 @@ trait DropdownInteractionTrait
                 '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown") and contains(@class, "search")] | ' .
                 '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown") and contains(@class, "search")] | ' .
                 '//div[contains(@class, "dropdown") and contains(@class, "search")][@id="%1$s"] | ' .
-                '//div[contains(@class, "dropdown") and contains(@class, "search")][.//select[@name="%1$s"]]',
+                '//div[contains(@class, "dropdown") and contains(@class, "search")][.//select[@name="%1$s"]] | ' .
+                '//input[@name="%1$s"]/following-sibling::div[contains(@class, "dropdown") and contains(@class, "search")] | ' .
+                '//div[contains(@class, "dropdown") and contains(@class, "search") and contains(@class, "%1$s-select")]',
                 $name
             );
 
@@ -554,7 +558,9 @@ trait DropdownInteractionTrait
                 '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
                 '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
                 '//div[contains(@class, "dropdown")][@id="%1$s"] | ' .
-                '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]]',
+                '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]] | ' .
+                '//input[@name="%1$s"]/following-sibling::div[contains(@class, "dropdown") and contains(@class, "%1$s-select")] | ' .
+                '//div[contains(@class, "dropdown") and contains(@class, "%1$s-select")]',
                 $name
             );
 
@@ -624,6 +630,21 @@ trait DropdownInteractionTrait
                     // Ждем загрузки результатов (AJAX)
                     $this->waitForAjax();
                     
+                    // Для dropdown с динамической загрузкой ждем появления элементов
+                    try {
+                        self::$driver->wait(3, 300)->until(
+                            function () use ($dropdown) {
+                                $menuItems = $dropdown->findElements(
+                                    WebDriverBy::xpath(".//div[contains(@class, 'menu')]//div[contains(@class, 'item') and not(contains(@class, 'disabled'))]")
+                                );
+                                return count($menuItems) > 0;
+                            }
+                        );
+                        $this->annotate("Dynamic menu items loaded after search", 'debug');
+                    } catch (TimeoutException $e) {
+                        $this->annotate("No menu items appeared after search - might need manual refresh", 'warning');
+                    }
+                    
                     // Дополнительная пауза для загрузки результатов
                     usleep(500000); // 500ms
                 }
@@ -631,6 +652,21 @@ trait DropdownInteractionTrait
 
             // 6. Ищем элемент в меню с нужным значением
             $this->annotate("Searching for menu item with value: {$value}", 'debug');
+            
+            // Для динамических dropdown ждем загрузки элементов меню
+            if ($isSearchable) {
+                $this->annotate("Waiting for dynamic menu items to load", 'debug');
+                try {
+                    self::$driver->wait(5, 500)->until(
+                        function () use ($dropdown) {
+                            $menuItems = $dropdown->findElements(WebDriverBy::xpath(".//div[contains(@class, 'menu')]//div[contains(@class, 'item')]"));
+                            return count($menuItems) > 0;
+                        }
+                    );
+                } catch (TimeoutException $e) {
+                    $this->annotate("Timeout waiting for menu items to load", 'warning');
+                }
+            }
             
             // Сначала убедимся, что меню видимо
             $menuXpath = ".//div[contains(@class, 'menu') and contains(@class, 'visible')]";
@@ -798,7 +834,9 @@ trait DropdownInteractionTrait
                     'div.dropdown[id="' + dropdownName + '"]',
                     'div.dropdown:has(select[name="' + dropdownName + '"])',
                     'div.dropdown:has(input[name="' + dropdownName + '"])',
-                    'div.ui.dropdown:has(input[type="hidden"][name="' + dropdownName + '"])'
+                    'div.ui.dropdown:has(input[type="hidden"][name="' + dropdownName + '"])',
+                    'div.dropdown.' + dropdownName + '-select',
+                    'input[name="' + dropdownName + '"] + div.dropdown'
                 ];
                 
                 for (var i = 0; i < selectors.length; i++) {
