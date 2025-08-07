@@ -546,6 +546,8 @@ return [
     'ms_SMTPUseTLS' => 'Use TLS',
     'ms_SMTPCertCheck' => 'Validate server certificate',
     'ms_MailEnableNotifications' => 'Use mail notifications',
+    'prov_dropdownCategory_SIP' => 'SIP providers',
+    'prov_dropdownCategory_IAX' => 'IAX2 providers',
     'ms_SentTestEmailAfterSaveTo' => 'Send a test email to this address',
     'ms_MissedCallSubject' => 'Missed call - theme of the letter',
     'ms_MissedCallBody' => 'Missed call - the text of the letter',

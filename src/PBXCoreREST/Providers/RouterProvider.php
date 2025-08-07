@@ -62,6 +62,14 @@ use MikoPBX\PBXCoreREST\Controllers\
     ConferenceRooms\PostController as ConferenceRoomsPostController,
     ConferenceRooms\PutController as ConferenceRoomsPutController,
     ConferenceRooms\DeleteController as ConferenceRoomsDeleteController,
+    IncomingRoutes\GetController as IncomingRoutesGetController,
+    IncomingRoutes\PostController as IncomingRoutesPostController,
+    IncomingRoutes\PutController as IncomingRoutesPutController,
+    IncomingRoutes\DeleteController as IncomingRoutesDeleteController,
+    OutboundRoutes\GetController as OutboundRoutesGetController,
+    OutboundRoutes\PostController as OutboundRoutesPostController,
+    OutboundRoutes\PutController as OutboundRoutesPutController,
+    OutboundRoutes\DeleteController as OutboundRoutesDeleteController,
     SoundFiles\GetController as SoundFilesGetController,
     SoundFiles\PostController as SoundFilesPostController,
     SoundFiles\PutController as SoundFilesPutController,
@@ -210,6 +218,18 @@ class RouterProvider implements ServiceProviderInterface
             [DialplanApplicationsPutController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
             [DialplanApplicationsDeleteController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
 
+            [IncomingRoutesGetController::class, 'callAction', '/pbxcore/api/v2/incoming-routes/{actionName}', 'get', '/'],
+            [IncomingRoutesGetController::class, 'callAction', '/pbxcore/api/v2/incoming-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
+            [IncomingRoutesPostController::class, 'callAction', '/pbxcore/api/v2/incoming-routes/{actionName}', 'post', '/'],
+            [IncomingRoutesPutController::class, 'callAction', '/pbxcore/api/v2/incoming-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
+            [IncomingRoutesDeleteController::class, 'callAction', '/pbxcore/api/v2/incoming-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
+
+            [OutboundRoutesGetController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}', 'get', '/'],
+            [OutboundRoutesGetController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
+            [OutboundRoutesPostController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}', 'post', '/'],
+            [OutboundRoutesPutController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
+            [OutboundRoutesDeleteController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
+
             [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'get', '/'],
 
             [NchanGetController::class, 'callAction', '/pbxcore/api/nchan/{queueName}', 'get', '/'],
@@ -250,6 +270,9 @@ class RouterProvider implements ServiceProviderInterface
 
             // Providers routes
             [ProvidersGetController::class, 'callAction', '/pbxcore/api/providers/{actionName}', 'get', '/'],
+            
+            // Providers v2 routes
+            [ProvidersGetController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}', 'get', '/'],
 
 
         ];

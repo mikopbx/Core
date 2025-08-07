@@ -41,9 +41,9 @@ class DefaultIncomingRouteForm extends BaseForm
             switch ($key) {
                 case 'action' :
                 {
+                    // Simplified actions - only extension and playback
+                    // Special actions (busy, hangup, voicemail, did2user) are now in the extension dropdown
                     $arrDefaultActions = [
-                        IncomingRoutingTable::ACTION_BUSY       => $this->translation->_('ir_busy_signal'),
-                        IncomingRoutingTable::ACTION_HANGUP     => $this->translation->_('ir_hangup'),
                         IncomingRoutingTable::ACTION_EXTENSION  => $this->translation->_('ir_extension'),
                         IncomingRoutingTable::ACTION_PLAYBACK   => $this->translation->_('ir_playback'),
                     ];
@@ -65,37 +65,18 @@ class DefaultIncomingRouteForm extends BaseForm
                     break;
                 }
                 case 'audio_message_id' :{
-                    $audioMessage = new Select(
-                        'audio_message_id',
-                        $options['soundfiles'],
-                        [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => true,
-                            'class' => 'ui selection dropdown search audio-message-select',
-                        ]
-                    );
-                    $this->add($audioMessage);
+                    // Audio message - Hidden field, dropdown will be populated via JS
+                    $this->add(new Hidden('audio_message_id', [
+                        'id' => 'audio_message_id'
+                    ]));
+                    break;
                 }
                 case 'extension' :
                 {
-                    // Extension
-                    $extension = new Select(
-                        'extension',
-                        $options['extensions'],
-                        [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => true,
-                            'value' => $value,
-                            'class' => 'ui selection dropdown search forwarding-select',
-                        ]
-                    );
-                    $this->add($extension);
+                    // Extension - Hidden field, dropdown will be populated via JS
+                    $this->add(new Hidden('extension', [
+                        'id' => 'extension'
+                    ]));
                     break;
                 }
                 default:

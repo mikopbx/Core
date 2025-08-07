@@ -1,41 +1,40 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, Form */
-
+/* global globalRootUrl, globalTranslate, Form, OutboundRoutesAPI, ProvidersAPI, UserMessage, TooltipBuilder */
 
 /**
  * Object for managing outbound route settings
- *
  * @module outboundRoute
  */
 const outboundRoute = {
     /**
-     * jQuery object for the form.
+     * jQuery object for the form
      * @type {jQuery}
      */
     $formObj: $('#outbound-route-form'),
-
-    $providerDropDown: $('#providerid'),
-
+    
     /**
-     * Validation rules for the form fields before submission.
-     *
+     * jQuery object for provider dropdown
+     * @type {jQuery}
+     */
+    $providerDropDown: $('.ui.dropdown#provider-dropdown'),
+    
+    /**
+     * Route data from API
+     * @type {Object|null}
+     */
+    routeData: null,
+    
+    /**
+     * Validation rules for the form fields before submission
      * @type {object}
      */
     validateRules: {
@@ -48,7 +47,7 @@ const outboundRoute = {
                 },
             ],
         },
-        provider: {
+        providerid: {
             identifier: 'providerid',
             rules: [
                 {
@@ -72,7 +71,7 @@ const outboundRoute = {
             optional: true,
             rules: [
                 {
-                    type: 'integer[0..99]',
+                    type: 'integer[-1..20]',
                     prompt: globalTranslate.or_ValidateRestNumbers,
                 },
             ],
@@ -82,33 +81,166 @@ const outboundRoute = {
             optional: true,
             rules: [
                 {
-                    type: 'integer[0..99]',
+                    type: 'integer[0..30]',
                     prompt: globalTranslate.or_ValidateTrimFromBegin,
                 },
             ],
         },
-
         prepend: {
             identifier: 'prepend',
             optional: true,
             rules: [
                 {
                     type: 'regExp',
-                    value: '/^[0-9#w+]{0,20}$/',
+                    value: '/^[0-9#*+]{0,20}$/',
                     prompt: globalTranslate.or_ValidatePrepend,
                 },
             ],
         },
     },
-
+    
     /**
-     * Initializes the outbound route form.
+     * Initializes the outbound route form
      */
     initialize() {
-        outboundRoute.$providerDropDown.dropdown();
-        outboundRoute.initializeForm();
+        // Get route ID from form or URL
+        const routeId = this.getRouteId();
+        
+        // Initialize provider dropdown
+        this.initializeProviderDropdown();
+        
+        // Load route data
+        this.loadRouteData(routeId);
+        
+        this.initializeForm();
+        this.initializeTooltips();
     },
-
+    
+    /**
+     * Get route ID from form or URL
+     */
+    getRouteId() {
+        // Try to get from form first
+        let routeId = this.$formObj.form('get value', 'id');
+        
+        // If not in form, try to get from URL
+        if (!routeId) {
+            const urlParts = window.location.pathname.split('/');
+            const modifyIndex = urlParts.indexOf('modify');
+            if (modifyIndex !== -1 && urlParts[modifyIndex + 1]) {
+                routeId = urlParts[modifyIndex + 1];
+            }
+        }
+        
+        return routeId || 'new';
+    },
+    
+    /**
+     * Initialize provider dropdown with settings
+     */
+    initializeProviderDropdown() {
+        // Get dropdown settings for outbound routes (provider is required)
+        const providerSettings = ProvidersAPI.getDropdownSettings({
+            includeNone: false,  // No 'none' option for outbound routes
+            forceSelection: true, // Provider is mandatory
+            onChange: function(value) {
+                Form.dataChanged();
+            }
+        });
+        
+        // Clear any existing initialization
+        outboundRoute.$providerDropDown.dropdown('destroy');
+        
+        // Initialize fresh dropdown
+        outboundRoute.$providerDropDown.dropdown(providerSettings);
+    },
+    
+    /**
+     * Load route data from API
+     * @param {string} routeId - Route ID or 'new'
+     */
+    loadRouteData(routeId) {
+        // Check for copy parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const copySource = urlParams.get('copy');
+        
+        if (copySource) {
+            // Load source route data for copying
+            OutboundRoutesAPI.getRecordWithCopy('new', copySource, (response) => {
+                if (response.result) {
+                    // Clear the id to ensure it's treated as a new record
+                    const copyData = response.data;
+                    copyData.id = '';
+                    
+                    this.routeData = copyData;
+                    this.populateForm(copyData);
+                    
+                    // Mark form as changed for copy operation
+                    Form.dataChanged();
+                } else {
+                    const errorMessage = response.messages && response.messages.error ? 
+                        response.messages.error.join(', ') : 
+                        'Failed to load source data for copying';
+                    UserMessage.showError(errorMessage);
+                }
+            });
+            return;
+        }
+        
+        // Regular load
+        OutboundRoutesAPI.getRecord(routeId, (response) => {
+            if (response.result) {
+                this.routeData = response.data;
+                this.populateForm(response.data);
+            } else if (routeId !== 'new') {
+                UserMessage.showMultiString(response.messages);
+            }
+        });
+    },
+    
+    /**
+     * Populate form with route data
+     * @param {Object} data - Route data
+     */
+    populateForm(data) {
+        // Set form values (API uses 'provider', form field is 'providerid')
+        this.$formObj.form('set values', {
+            id: data.id || '',
+            rulename: data.rulename || '',
+            providerid: data.provider || '',
+            priority: data.priority || '',
+            numberbeginswith: data.numberbeginswith || '',
+            restnumbers: data.restnumbers === '-1' ? '' : (data.restnumbers || ''),
+            trimfrombegin: data.trimfrombegin || '0',
+            prepend: data.prepend || '',
+            note: data.note || ''
+        });
+        
+        // Set provider value after dropdown is initialized
+        if (data.provider) {
+            // Small delay to ensure dropdown is fully initialized
+            setTimeout(() => {
+                outboundRoute.$providerDropDown.dropdown('set selected', data.provider);
+                
+                // If we have provider name, update the text to show it
+                if (data.providerName) {
+                    const safeProviderText = window.SecurityUtils ? 
+                        window.SecurityUtils.sanitizeExtensionsApiContent(data.providerName) : 
+                        data.providerName;
+                    
+                    outboundRoute.$providerDropDown.find('.text')
+                        .removeClass('default')
+                        .html(safeProviderText);
+                }
+            }, 150);
+        }
+        
+        // Update page header if we have a representation
+        if (data.represent) {
+            $('.page-header .header').text(data.represent);
+        }
+    },
+    
     /**
      * Callback function to be called before the form is sent
      * @param {Object} settings - The current settings of the form
@@ -117,34 +249,240 @@ const outboundRoute = {
     cbBeforeSendForm(settings) {
         const result = settings;
         result.data = outboundRoute.$formObj.form('get values');
+        
+        // Convert providerid to provider for API consistency
+        if (result.data.providerid !== undefined) {
+            result.data.provider = result.data.providerid;
+            delete result.data.providerid;
+        }
+        
+        // Handle empty restnumbers
+        if (result.data.restnumbers === '') {
+            result.data.restnumbers = '-1';
+        }
+        
         return result;
     },
-
+    
     /**
-     * Callback function to be called after the form has been sent.
+     * Callback function to be called after the form has been sent
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-
+        if (response.result && response.data) {
+            // Update form with response data
+            outboundRoute.populateForm(response.data);
+            
+            // Update URL for new records
+            const currentId = $('#id').val();
+            if (!currentId && response.data.id) {
+                const newUrl = window.location.href.replace(/modify\/?$/, 'modify/' + response.data.id);
+                window.history.pushState(null, '', newUrl);
+            }
+        }
     },
-
+    
     /**
      * Initialize the form with custom settings
      */
     initializeForm() {
         Form.$formObj = outboundRoute.$formObj;
-        Form.url = `${globalRootUrl}outbound-routes/save`; // Form submission URL
-        Form.validateRules = outboundRoute.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = outboundRoute.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = outboundRoute.cbAfterSendForm; // Callback after form is sent
+        Form.url = '#'; // Not used with REST API
+        Form.validateRules = outboundRoute.validateRules;
+        Form.cbBeforeSendForm = outboundRoute.cbBeforeSendForm;
+        Form.cbAfterSendForm = outboundRoute.cbAfterSendForm;
+        
+        // REST API integration - use built-in Form support
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = OutboundRoutesAPI;
+        Form.apiSettings.saveMethod = 'saveRecord';
+        
+        // Navigation URLs
+        Form.afterSubmitIndexUrl = `${globalRootUrl}outbound-routes/index/`;
+        Form.afterSubmitModifyUrl = `${globalRootUrl}outbound-routes/modify/`;
+        
         Form.initialize();
     },
+    
+    /**
+     * Initialize tooltips for form fields
+     */
+    initializeTooltips() {
+        // Configuration for each field tooltip
+        const tooltipConfigs = {
+            numberbeginswith: {
+                header: globalTranslate.or_numberbeginswith_tooltip_header,
+                description: globalTranslate.or_numberbeginswith_tooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.or_numberbeginswith_tooltip_patterns_header,
+                        definition: null
+                    },
+                    globalTranslate.or_numberbeginswith_tooltip_pattern1,
+                    globalTranslate.or_numberbeginswith_tooltip_pattern2,
+                    globalTranslate.or_numberbeginswith_tooltip_pattern3,
+                    globalTranslate.or_numberbeginswith_tooltip_pattern4,
+                    globalTranslate.or_numberbeginswith_tooltip_pattern5,
+                    globalTranslate.or_numberbeginswith_tooltip_pattern6,
+                    globalTranslate.or_numberbeginswith_tooltip_pattern7
+                ],
+                list2: [
+                    {
+                        term: globalTranslate.or_numberbeginswith_tooltip_advanced_header,
+                        definition: null
+                    },
+                    globalTranslate.or_numberbeginswith_tooltip_advanced1,
+                    globalTranslate.or_numberbeginswith_tooltip_advanced2,
+                    globalTranslate.or_numberbeginswith_tooltip_advanced3
+                ],
+                list3: [
+                    {
+                        term: globalTranslate.or_numberbeginswith_tooltip_limitations_header,
+                        definition: null
+                    },
+                    globalTranslate.or_numberbeginswith_tooltip_limitation1,
+                    globalTranslate.or_numberbeginswith_tooltip_limitation2,
+                    globalTranslate.or_numberbeginswith_tooltip_limitation3
+                ],
+                warning: {
+                    text: globalTranslate.or_numberbeginswith_tooltip_warning
+                },
+                note: globalTranslate.or_numberbeginswith_tooltip_note
+            },
+            
+            restnumbers: {
+                header: globalTranslate.or_restnumbers_tooltip_header,
+                description: globalTranslate.or_restnumbers_tooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.or_restnumbers_tooltip_values_header,
+                        definition: null
+                    },
+                    globalTranslate.or_restnumbers_tooltip_value1,
+                    globalTranslate.or_restnumbers_tooltip_value2,
+                    globalTranslate.or_restnumbers_tooltip_value3
+                ],
+                list2: [
+                    {
+                        term: globalTranslate.or_restnumbers_tooltip_examples_header,
+                        definition: null
+                    },
+                    globalTranslate.or_restnumbers_tooltip_example1,
+                    globalTranslate.or_restnumbers_tooltip_example2,
+                    globalTranslate.or_restnumbers_tooltip_example3,
+                    globalTranslate.or_restnumbers_tooltip_example4,
+                    globalTranslate.or_restnumbers_tooltip_example5,
+                    globalTranslate.or_restnumbers_tooltip_example6
+                ],
+                list3: [
+                    {
+                        term: globalTranslate.or_restnumbers_tooltip_limitations_header,
+                        definition: null
+                    },
+                    globalTranslate.or_restnumbers_tooltip_limitation1,
+                    globalTranslate.or_restnumbers_tooltip_limitation2,
+                    globalTranslate.or_restnumbers_tooltip_limitation3
+                ],
+                note: globalTranslate.or_restnumbers_tooltip_note
+            },
+            
+            trimfrombegin: {
+                header: globalTranslate.or_trimfrombegin_tooltip_header,
+                description: globalTranslate.or_trimfrombegin_tooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.or_trimfrombegin_tooltip_why_header,
+                        definition: null
+                    },
+                    globalTranslate.or_trimfrombegin_tooltip_why1,
+                    globalTranslate.or_trimfrombegin_tooltip_why2,
+                    globalTranslate.or_trimfrombegin_tooltip_why3
+                ],
+                list2: [
+                    {
+                        term: globalTranslate.or_trimfrombegin_tooltip_examples_header,
+                        definition: null
+                    },
+                    globalTranslate.or_trimfrombegin_tooltip_example1,
+                    globalTranslate.or_trimfrombegin_tooltip_example2,
+                    globalTranslate.or_trimfrombegin_tooltip_example3,
+                    globalTranslate.or_trimfrombegin_tooltip_example4
+                ],
+                list3: [
+                    {
+                        term: globalTranslate.or_trimfrombegin_tooltip_limitation_header,
+                        definition: null
+                    },
+                    globalTranslate.or_trimfrombegin_tooltip_limitation1,
+                    globalTranslate.or_trimfrombegin_tooltip_limitation2
+                ],
+                note: globalTranslate.or_trimfrombegin_tooltip_note
+            },
+            
+            prepend: {
+                header: globalTranslate.or_prepend_tooltip_header,
+                description: globalTranslate.or_prepend_tooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.or_prepend_tooltip_usage_header,
+                        definition: null
+                    },
+                    globalTranslate.or_prepend_tooltip_usage1,
+                    globalTranslate.or_prepend_tooltip_usage2,
+                    globalTranslate.or_prepend_tooltip_usage3
+                ],
+                list2: [
+                    {
+                        term: globalTranslate.or_prepend_tooltip_examples_header,
+                        definition: null
+                    },
+                    globalTranslate.or_prepend_tooltip_example1,
+                    globalTranslate.or_prepend_tooltip_example2,
+                    globalTranslate.or_prepend_tooltip_example3
+                ],
+                list3: [
+                    {
+                        term: globalTranslate.or_prepend_tooltip_limitations_header,
+                        definition: null
+                    },
+                    globalTranslate.or_prepend_tooltip_limitation1,
+                    globalTranslate.or_prepend_tooltip_limitation2,
+                    globalTranslate.or_prepend_tooltip_limitation3
+                ],
+                note: globalTranslate.or_prepend_tooltip_note
+            },
+            
+            provider: {
+                header: globalTranslate.or_provider_tooltip_header,
+                description: globalTranslate.or_provider_tooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.or_provider_tooltip_important_header,
+                        definition: null
+                    },
+                    globalTranslate.or_provider_tooltip_important1,
+                    globalTranslate.or_provider_tooltip_important2,
+                    globalTranslate.or_provider_tooltip_important3
+                ],
+                list2: [
+                    {
+                        term: globalTranslate.or_provider_tooltip_priority_header,
+                        definition: null
+                    },
+                    globalTranslate.or_provider_tooltip_priority1,
+                    globalTranslate.or_provider_tooltip_priority2,
+                    globalTranslate.or_provider_tooltip_priority3
+                ],
+                note: globalTranslate.or_provider_tooltip_note
+            }
+        };
+        
+        // Use TooltipBuilder to initialize tooltips
+        TooltipBuilder.initialize(tooltipConfigs);
+    }
 };
 
-/**
- *  Initialize outbound route settings form on document ready
- */
+// Initialize on document ready
 $(document).ready(() => {
     outboundRoute.initialize();
 });
-

@@ -233,6 +233,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/config.js', true)
                 ->addJs('js/pbx/PbxAPI/pbxapi.js', true)
                 ->addJs('js/pbx/PbxAPI/extensionsAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/providersAPI.js', true)
+                ->addJs('js/pbx/main/TooltipBuilder.js', true)
                 ->addJs('js/pbx/main/event-bus.js', true)
                 ->addJs('js/pbx/main/user-page-tracker.js', true)
                 ->addJs('js/pbx/main/connection-check-worker.js', true)
@@ -633,11 +635,19 @@ class AssetProvider implements ServiceProviderInterface
     private function makeOutboundRoutesAssets(string $action): void
     {
         if ($action === 'index') {
+            $this->headerCollectionCSS
+                ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
-                ->addJs('js/vendor/jquery.tablednd.min.js', true)
+                ->addJs('js/vendor/jquery.tablednd.js', true)
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
+                ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/PbxAPI/outboundRoutesAPI.js', true)
                 ->addJs('js/pbx/OutboundRoutes/outbound-routes-index.js', true);
         } elseif ($action === 'modify') {
-            $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
+            $this->footerCollectionJS
+                ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/PbxAPI/outboundRoutesAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/providersAPI.js', true)
                 ->addJs('js/pbx/OutboundRoutes/outbound-route-modify.js', true);
         }
     }
@@ -708,15 +718,24 @@ class AssetProvider implements ServiceProviderInterface
     private function makeIncomingRoutesAssets(string $action): void
     {
         if ($action === 'index') {
-            $this->footerCollectionJS->addJs('js/vendor/jquery.tablednd.js', true)
+            $this->headerCollectionCSS
+                ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
+            $this->footerCollectionJS
+                ->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
+                ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/incomingRoutesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
+                ->addJs('js/pbx/IncomingRoutes/incoming-route-default.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/incomingRoutesAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/providersAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-modify.js', true);

@@ -1,7 +1,7 @@
  {% for user in amiUsers %}
         {% if loop.first %}
             {% if isAllowed('save') and amiUsers|length > 0 %}
-                {{ link_to("asterisk-managers/modify", '<i class="add circle icon"></i> '~t._('am_AddNewUser'), "class": "ui blue button") }}
+                {{ link_to("asterisk-managers/modify", '<i class="add circle icon"></i> '~t._('am_AddNewUser'), "class": "ui blue button", "id": "add-new-button") }}
             {% endif %}
             <table class="ui  very compact unstackable table" id="ami-users-table">
             <thead>

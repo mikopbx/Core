@@ -160,13 +160,17 @@ abstract class AbstractGetListAction
         array $allowedOrderFields = ['name', 'extension', 'id'],
         string $defaultOrder = 'name ASC'
     ): array {
-        if (empty($orderParams['order_by']) || empty($allowedOrderFields)) {
+        // Support both naming conventions for backward compatibility
+        $orderBy = $orderParams['order_by'] ?? $orderParams['order'] ?? null;
+        $orderDirection = $orderParams['order_direction'] ?? $orderParams['orderWay'] ?? null;
+        
+        if (empty($orderBy) || empty($allowedOrderFields)) {
             $queryOptions['order'] = $defaultOrder;
             return $queryOptions;
         }
 
-        $orderBy = $orderParams['order_by'];
-        $orderDirection = strtoupper($orderParams['order_direction'] ?? 'ASC');
+        // Convert to uppercase for comparison
+        $orderDirection = strtoupper($orderDirection ?? 'ASC');
 
         // Validate order field
         if (!in_array($orderBy, $allowedOrderFields)) {
@@ -269,6 +273,7 @@ abstract class AbstractGetListAction
      * @param array $allowedOrderFields Valid fields for ordering
      * @param array $searchableFields Fields that can be searched
      * @param callable|null $recordFilter Optional callback to filter individual records
+     * @param string|null $defaultOrder Default order clause (null to use first allowed field ASC)
      * @return PBXApiResult List operation result
      */
     public static function executeStandardList(
@@ -279,7 +284,8 @@ abstract class AbstractGetListAction
         bool $useFullData = false,
         array $allowedOrderFields = ['name', 'extension', 'id'],
         array $searchableFields = ['name', 'description'],
-        ?callable $recordFilter = null
+        ?callable $recordFilter = null,
+        ?string $defaultOrder = null
     ): PBXApiResult {
         $res = self::createListResult(debug_backtrace()[1]['class'] . '::' . debug_backtrace()[1]['function']);
 
@@ -289,8 +295,15 @@ abstract class AbstractGetListAction
             // Apply search filters
             $queryOptions = self::applySearchFilters($queryOptions, $requestParams, $searchableFields);
 
+            // Determine default order: use provided or construct from first allowed field
+            if ($defaultOrder === null && !empty($allowedOrderFields)) {
+                $defaultOrder = $allowedOrderFields[0] . ' ASC';
+            } elseif ($defaultOrder === null) {
+                $defaultOrder = 'id ASC'; // fallback to id if no fields specified
+            }
+
             // Apply ordering
-            $queryOptions = self::applyOrdering($queryOptions, $requestParams, $allowedOrderFields);
+            $queryOptions = self::applyOrdering($queryOptions, $requestParams, $allowedOrderFields, $defaultOrder);
 
             // Apply pagination if requested
             if (isset($requestParams['limit']) || isset($requestParams['offset'])) {

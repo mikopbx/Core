@@ -1,87 +1,155 @@
-# MikoPBX Outbound Routes REST API Migration Plan
+# MikoPBX Outbound Routes REST API V2 Migration Plan
 
 ## Project Overview
 
-This document contains a detailed plan for adapting the MikoPBX outbound routes management system to use a unified REST API architecture. The plan is based on the guide `docs/mikopbx-rest-migration-guide.md` and follows the principles of minimal changes to the user interface.
+This document contains a comprehensive plan for migrating the MikoPBX outbound routes management system to REST API V2 architecture. The plan is based on successful migration of incoming routes (commit e3f7b7c) and follows the established patterns from the unified REST API guide.
 
-## Current State
+## Current State Analysis
 
 ### Existing Architecture
 - **Model**: `src/Common/Models/OutgoingRoutingTable.php`
 - **AdminCabinet Controller**: `src/AdminCabinet/Controllers/OutboundRoutesController.php`
 - **Form**: `src/AdminCabinet/Forms/OutgoingRouteEditForm.php`
+- **JavaScript Files**: 
+  - `sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-routes-index.js` - List management
+  - `sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-route-modify.js` - Form handling
+- **View Templates**:
+  - `src/AdminCabinet/Views/OutboundRoutes/index.volt` - List view
+  - `src/AdminCabinet/Views/OutboundRoutes/modify.volt` - Edit form
 - **No REST API**: Currently no REST API implementation
-- **JavaScript**: Basic list management with drag-and-drop priority reordering
 
 ### OutgoingRoutingTable Model Fields
 ```php
-public $id;               // Primary key
-public ?string $rulename = '';          // Rule name
-public ?string $providerid = '';        // Provider ID
-public ?string $priority = '0';         // Rule priority
-public ?string $numberbeginswith = '';  // Pattern to match at beginning
-public ?string $restnumbers = '9';      // Number of digits in rest of number
-public ?string $trimfrombegin = '0';    // Digits to trim from beginning
-public ?string $prepend = '';           // Digits to prepend
-public ?string $note = '';              // Additional notes
+public $id;                              // Primary key (auto-increment)
+public ?string $rulename = '';           // Rule name (required)
+public ?string $providerid = '';         // Provider ID (required)
+public ?string $priority = '0';          // Rule priority (auto-calculated if empty)
+public ?string $numberbeginswith = '';   // Pattern to match at beginning
+public ?string $restnumbers = '9';       // Number of digits in rest of number (-1 for any)
+public ?string $trimfrombegin = '0';     // Digits to trim from beginning
+public ?string $prepend = '';            // Digits to prepend
+public ?string $note = '';               // Additional notes
 ```
 
 ### Model Relations
 - `belongsTo` → `Providers` (by providerid field)
 
+### Key Differences from Incoming Routes
+- No default route (ID=1) protection needed
+- Simpler data structure (no extension, timeout, audio_message_id)
+- No OutWorkTimesRouts dependencies
+- Pattern-based routing instead of DID-based
+- No welcome banner functionality needed
+
 ## Detailed Implementation Plan
 
-### Stage 1: Creating REST API Backend
+### Stage 1: REST API Backend Implementation
 
-#### 1.1 MikoPBX REST API Architecture
+#### 1.1 Create Management Processor
 
-**Important**: In MikoPBX REST API architecture, Action classes are executed in Workers without HTTP context. Therefore, they should not inherit from Injectable and work with $this->request directly.
+**File**: `src/PBXCoreREST/Lib/OutboundRoutesManagementProcessor.php`
 
-**Correct Flow**:
-```
-HTTP Request → Controller → Worker → Action → Database → Response
-```
-
-#### 1.2 Data Structure Class
-
-**File**: `src/PBXCoreREST/Lib/OutboundRoutes/DataStructure.php`
 ```php
 <?php
+declare(strict_types=1);
+
+namespace MikoPBX\PBXCoreREST\Lib;
+
+use MikoPBX\PBXCoreREST\Lib\OutboundRoutes\ChangePriorityAction;
+use MikoPBX\PBXCoreREST\Lib\OutboundRoutes\DeleteRecordAction;
+use MikoPBX\PBXCoreREST\Lib\OutboundRoutes\GetListAction;
+use MikoPBX\PBXCoreREST\Lib\OutboundRoutes\GetRecordAction;
+use MikoPBX\PBXCoreREST\Lib\OutboundRoutes\SaveRecordAction;
+
+/**
+ * Processor for outbound routes management operations
+ * Routes requests to appropriate action classes
+ */
+class OutboundRoutesManagementProcessor extends PBXApiProcessor
+{
+    /**
+     * Process API requests for outbound routes
+     * 
+     * @param PBXApiResult $res Result object to populate
+     * @return PBXApiResult Populated result object
+     */
+    public function getResultData(PBXApiResult $res): PBXApiResult
+    {
+        $res->processor = __METHOD__;
+        $action = $this->getActionName('OutboundRoutes');
+
+        $data = $this->getRequestData();
+        
+        switch ($action) {
+            case 'GetRecord':
+                $res = GetRecordAction::main($data);
+                break;
+            case 'GetList':
+                $res = GetListAction::main($data);
+                break;
+            case 'SaveRecord':
+                $res = SaveRecordAction::main($data);
+                break;
+            case 'DeleteRecord':
+                $res = DeleteRecordAction::main($data);
+                break;
+            case 'ChangePriority':
+                $res = ChangePriorityAction::main($data);
+                break;
+            default:
+                $res->messages['error'][] = "Unknown action: $action in " . __CLASS__;
+                break;
+        }
+        
+        $res->function = $action;
+        return $res;
+    }
+}
+```
+
+#### 1.2 Create Data Structure Class
+
+**File**: `src/PBXCoreREST/Lib/OutboundRoutes/DataStructure.php`
+
+```php
+<?php
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib\OutboundRoutes;
 
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 
 /**
- * Data structure for outbound routes
+ * Data structure transformation for outbound routes
  */
 class DataStructure
 {
     /**
-     * Create data structure from model
-     * 
-     * @param OutgoingRoutingTable $model
-     * @return array
+     * Create data structure from model for detailed view
      */
     public static function createFromModel(OutgoingRoutingTable $model): array
     {
         $provider = $model->Providers;
         $providerRepresent = '';
+        $providerName = '';
         $providerDisabled = false;
         
         if ($provider) {
             $providerRepresent = $provider->getRepresent();
+            $providerName = $provider->description ?: $provider->getRepresent();
             $modelType = ucfirst($provider->type);
             $provByType = $provider->$modelType;
-            $providerDisabled = (bool)$provByType->disabled;
+            $providerDisabled = $provByType ? (bool)$provByType->disabled : false;
         }
         
         return [
             'id' => $model->id,
             'rulename' => $model->rulename ?? '',
             'providerid' => $model->providerid ?? '',
-            'providerName' => $providerRepresent,
+            'providerRepresent' => $providerRepresent,
+            'providerName' => $providerName,
             'providerDisabled' => $providerDisabled,
-            'priority' => (int)$model->priority,
+            'priority' => (int)($model->priority ?? 0),
             'numberbeginswith' => $model->numberbeginswith ?? '',
             'restnumbers' => $model->restnumbers ?? '9',
             'trimfrombegin' => $model->trimfrombegin ?? '0',
@@ -92,10 +160,7 @@ class DataStructure
     }
     
     /**
-     * Create simplified structure for list
-     * 
-     * @param OutgoingRoutingTable $model
-     * @return array
+     * Create simplified structure for list view
      */
     public static function createForList(OutgoingRoutingTable $model): array
     {
@@ -107,71 +172,88 @@ class DataStructure
             $providerRepresent = $provider->getRepresent();
             $modelType = ucfirst($provider->type);
             $provByType = $provider->$modelType;
-            $providerDisabled = (bool)$provByType->disabled;
+            $providerDisabled = $provByType ? (bool)$provByType->disabled : false;
         }
+        
+        // Generate rule description
+        $ruleDescription = self::generateRuleDescription($model);
         
         return [
             'id' => $model->id,
-            'priority' => (int)$model->priority,
-            'rulename' => $model->getRepresent(),
+            'priority' => (int)($model->priority ?? 0),
+            'rulename' => $model->rulename ?? '',
             'provider' => $providerRepresent,
+            'providerName' => $providerRepresent,
             'numberbeginswith' => $model->numberbeginswith ?? '',
             'restnumbers' => $model->restnumbers ?? '9',
             'trimfrombegin' => $model->trimfrombegin ?? '0',
             'prepend' => $model->prepend ?? '',
             'note' => $model->note ?? '',
-            'disabled' => $providerDisabled
+            'disabled' => $providerDisabled,
+            'ruleDescription' => $ruleDescription
         ];
+    }
+    
+    /**
+     * Generate human-readable rule description
+     */
+    private static function generateRuleDescription(OutgoingRoutingTable $model): string
+    {
+        $numberbeginswith = $model->numberbeginswith ?? '';
+        $restnumbers = (int)($model->restnumbers ?? 0);
+        
+        // Will be translated on frontend
+        if (!$numberbeginswith && $restnumbers === 0) {
+            return 'or_RuleNotConfigured';
+        } elseif (!$numberbeginswith && $restnumbers < 0) {
+            return 'or_RuleAnyNumbers';
+        } elseif (!$numberbeginswith && $restnumbers > 0) {
+            return "or_RuleDescriptionBeginEmpty:{$restnumbers}";
+        } elseif ($numberbeginswith) {
+            if ($restnumbers > 0) {
+                return "or_RuleDescription:{$numberbeginswith}:{$restnumbers}";
+            } elseif ($restnumbers === 0) {
+                return "or_RuleDescriptionFullMatch:{$numberbeginswith}";
+            } elseif ($restnumbers < 0) {
+                return "or_RuleDescriptionBeginMatch:{$numberbeginswith}";
+            }
+        }
+        
+        return '';
     }
 }
 ```
 
-#### 1.3 Action Classes for Outbound Routes
+#### 1.3 Create Action Classes
 
 **File**: `src/PBXCoreREST/Lib/OutboundRoutes/GetRecordAction.php`
+
 ```php
 <?php
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib\OutboundRoutes;
 
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Action for getting outbound route record
- * 
- * @api {get} /pbxcore/api/v2/outbound-routes/getRecord/:id Get outbound route record
- * @apiVersion 2.0.0
- * @apiName GetRecord
- * @apiGroup OutboundRoutes
- * 
- * @apiParam {String} [id] Record ID or "new" for new record structure
- * 
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Object} data Outbound route data
- * @apiSuccess {String} data.id Record ID
- * @apiSuccess {String} data.rulename Rule name
- * @apiSuccess {String} data.providerid Provider ID
- * @apiSuccess {Number} data.priority Rule priority
- * @apiSuccess {String} data.numberbeginswith Pattern to match at beginning
- * @apiSuccess {String} data.restnumbers Number of digits in rest
- * @apiSuccess {String} data.trimfrombegin Digits to trim from beginning
- * @apiSuccess {String} data.prepend Digits to prepend
- * @apiSuccess {String} data.note Additional notes
+ * Get single outbound route record
  */
-class GetRecordAction
+class GetRecordAction extends \MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction
 {
     /**
-     * Get outbound route record
-     * @param string|null $id - Record ID or null for new record
-     * @return PBXApiResult
+     * Get outbound route record by ID
      */
-    public static function main(?string $id = null): PBXApiResult
+    public static function main(array $data): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         
+        $id = $data['id'] ?? null;
+        
         if (empty($id) || $id === 'new') {
-            // Create structure for new record
+            // Create new record structure
             $newRoute = new OutgoingRoutingTable();
             $newRoute->id = '';
             $newRoute->priority = (string)((int)OutgoingRoutingTable::maximum(['column' => 'priority']) + 1);
@@ -186,10 +268,32 @@ class GetRecordAction
             $res->data = DataStructure::createFromModel($newRoute);
             $res->success = true;
         } else {
+            // Handle copy-source parameter
+            $copySource = $data['copy-source'] ?? null;
+            if ($copySource) {
+                $sourceRoute = OutgoingRoutingTable::findFirstById($copySource);
+                if ($sourceRoute) {
+                    $newRoute = new OutgoingRoutingTable();
+                    foreach ($sourceRoute->toArray() as $key => $value) {
+                        if ($key !== 'id') {
+                            $newRoute->$key = $value;
+                        }
+                    }
+                    $newRoute->id = '';
+                    $newRoute->priority = (string)((int)OutgoingRoutingTable::maximum(['column' => 'priority']) + 1);
+                    $newRoute->note = '';
+                    
+                    $res->data = DataStructure::createFromModel($newRoute);
+                    $res->success = true;
+                    return $res;
+                }
+            }
+            
             // Find existing record
-            $route = OutgoingRoutingTable::findFirstByid($id);
+            $route = OutgoingRoutingTable::findFirstById($id);
             
             if ($route) {
+                // Handle special case for restnumbers
                 if ($route->restnumbers === '-1') {
                     $route->restnumbers = '';
                 }
@@ -206,39 +310,23 @@ class GetRecordAction
 ```
 
 **File**: `src/PBXCoreREST/Lib/OutboundRoutes/GetListAction.php`
+
 ```php
 <?php
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib\OutboundRoutes;
 
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Action for getting list of all outbound routes
- * 
- * @api {get} /pbxcore/api/v2/outbound-routes/getList Get all outbound routes
- * @apiVersion 2.0.0
- * @apiName GetList
- * @apiGroup OutboundRoutes
- * 
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Array} data Array of outbound routes
- * @apiSuccess {String} data.id Record ID
- * @apiSuccess {Number} data.priority Rule priority
- * @apiSuccess {String} data.rulename Rule display name
- * @apiSuccess {String} data.provider Provider name
- * @apiSuccess {String} data.numberbeginswith Pattern to match
- * @apiSuccess {String} data.restnumbers Number of digits
- * @apiSuccess {String} data.note Additional notes
- * @apiSuccess {Boolean} data.disabled Provider disabled status
+ * Get list of all outbound routes
  */
-class GetListAction
+class GetListAction extends \MikoPBX\PBXCoreREST\Lib\Common\AbstractGetListAction
 {
     /**
-     * Get list of all outbound routes
-     * 
-     * @param array $data - Filter parameters (not used yet)
-     * @return PBXApiResult
+     * Get list of all outbound routes sorted by priority
      */
     public static function main(array $data = []): PBXApiResult
     {
@@ -246,17 +334,16 @@ class GetListAction
         $res->processor = __METHOD__;
         
         try {
-            // Get all outbound routes sorted by priority
             $routes = OutgoingRoutingTable::find([
                 'order' => 'priority ASC'
             ]);
             
-            $data = [];
+            $routesList = [];
             foreach ($routes as $route) {
-                $data[] = DataStructure::createForList($route);
+                $routesList[] = DataStructure::createForList($route);
             }
             
-            $res->data = $data;
+            $res->data = $routesList;
             $res->success = true;
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
@@ -268,91 +355,65 @@ class GetListAction
 ```
 
 **File**: `src/PBXCoreREST/Lib/OutboundRoutes/SaveRecordAction.php`
+
 ```php
 <?php
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib\OutboundRoutes;
 
 use MikoPBX\Common\Models\OutgoingRoutingTable;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 
 /**
- * Action for saving outbound route record
- * 
- * @api {post} /pbxcore/api/v2/outbound-routes/saveRecord Create outbound route
- * @api {put} /pbxcore/api/v2/outbound-routes/saveRecord/:id Update outbound route
- * @apiVersion 2.0.0
- * @apiName SaveRecord
- * @apiGroup OutboundRoutes
- * 
- * @apiParam {String} [id] Record ID (for update)
- * @apiParam {String} rulename Rule name
- * @apiParam {String} providerid Provider ID
- * @apiParam {String} [numberbeginswith] Pattern to match at beginning
- * @apiParam {String} [restnumbers] Number of remaining digits
- * @apiParam {String} [trimfrombegin] Digits to trim from beginning
- * @apiParam {String} [prepend] Digits to prepend
- * @apiParam {String} [note] Additional notes
- * 
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Object} data Saved outbound route data
- * @apiSuccess {String} reload URL for page reload
+ * Save outbound route record
  */
 class SaveRecordAction
 {
     /**
-     * Save outbound route record
-     * 
-     * @param array $data - Record data
-     * @return PBXApiResult
+     * Save outbound route record (create or update)
      */
     public static function main(array $data): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         
-        $db = Util::getDbConnection();
+        $di = \Phalcon\Di\Di::getDefault();
+        $db = $di->get('db');
+        
         $db->begin();
         
         try {
             // Find or create record
             if (!empty($data['id'])) {
-                $route = OutgoingRoutingTable::findFirstByid($data['id']);
+                $route = OutgoingRoutingTable::findFirstById($data['id']);
                 if (!$route) {
                     throw new \Exception('Outbound route not found');
                 }
             } else {
                 $route = new OutgoingRoutingTable();
-                $route->priority = (string)((int)OutgoingRoutingTable::maximum(['column' => 'priority']) + 1);
+                // Auto-calculate priority for new routes
+                if (empty($data['priority'])) {
+                    $maxPriority = OutgoingRoutingTable::maximum(['column' => 'priority']);
+                    $route->priority = (string)((int)$maxPriority + 1);
+                }
             }
             
             // Update fields
-            if (isset($data['rulename'])) {
-                $route->rulename = $data['rulename'];
-            }
+            $fieldsToUpdate = [
+                'rulename', 'providerid', 'numberbeginswith',
+                'restnumbers', 'trimfrombegin', 'prepend', 'note', 'priority'
+            ];
             
-            if (isset($data['providerid'])) {
-                $route->providerid = $data['providerid'];
-            }
-            
-            if (isset($data['numberbeginswith'])) {
-                $route->numberbeginswith = $data['numberbeginswith'];
-            }
-            
-            if (isset($data['restnumbers'])) {
-                $route->restnumbers = ($data['restnumbers'] === '') ? '-1' : $data['restnumbers'];
-            }
-            
-            if (isset($data['trimfrombegin'])) {
-                $route->trimfrombegin = $data['trimfrombegin'];
-            }
-            
-            if (isset($data['prepend'])) {
-                $route->prepend = $data['prepend'];
-            }
-            
-            if (isset($data['note'])) {
-                $route->note = $data['note'];
+            foreach ($fieldsToUpdate as $field) {
+                if (isset($data[$field])) {
+                    if ($field === 'restnumbers' && $data[$field] === '') {
+                        $route->$field = '-1';
+                    } else {
+                        $route->$field = $data[$field];
+                    }
+                }
             }
             
             // Validate and save
@@ -377,6 +438,7 @@ class SaveRecordAction
         } catch (\Exception $e) {
             $db->rollback();
             $res->messages['error'][] = $e->getMessage();
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
         
         return $res;
@@ -385,45 +447,44 @@ class SaveRecordAction
 ```
 
 **File**: `src/PBXCoreREST/Lib/OutboundRoutes/DeleteRecordAction.php`
+
 ```php
 <?php
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib\OutboundRoutes;
 
 use MikoPBX\Common\Models\OutgoingRoutingTable;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 
 /**
- * Action for deleting outbound route record
- * 
- * @api {delete} /pbxcore/api/v2/outbound-routes/deleteRecord/:id Delete outbound route
- * @apiVersion 2.0.0
- * @apiName DeleteRecord
- * @apiGroup OutboundRoutes
- * 
- * @apiParam {String} id Record ID to delete
- * 
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {String} redirect URL for redirect after delete
+ * Delete outbound route record
  */
-class DeleteRecordAction
+class DeleteRecordAction extends \MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction
 {
     /**
-     * Delete outbound route record
-     * 
-     * @param string $id - Record ID
-     * @return PBXApiResult
+     * Delete outbound route by ID
      */
-    public static function main(string $id): PBXApiResult
+    public static function main(array $data): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         
-        $db = Util::getDbConnection();
+        $id = $data['id'] ?? null;
+        
+        if (empty($id)) {
+            $res->messages['error'][] = 'Empty ID in request data';
+            return $res;
+        }
+        
+        $di = \Phalcon\Di\Di::getDefault();
+        $db = $di->get('db');
+        
         $db->begin();
         
         try {
-            $route = OutgoingRoutingTable::findFirstByid($id);
+            $route = OutgoingRoutingTable::findFirstById($id);
             
             if (!$route) {
                 throw new \Exception('Outbound route not found');
@@ -445,6 +506,7 @@ class DeleteRecordAction
         } catch (\Exception $e) {
             $db->rollback();
             $res->messages['error'][] = $e->getMessage();
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
         
         return $res;
@@ -453,59 +515,80 @@ class DeleteRecordAction
 ```
 
 **File**: `src/PBXCoreREST/Lib/OutboundRoutes/ChangePriorityAction.php`
+
 ```php
 <?php
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib\OutboundRoutes;
 
 use MikoPBX\Common\Models\OutgoingRoutingTable;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 
 /**
- * Action for changing outbound routes priority
- * 
- * @api {post} /pbxcore/api/v2/outbound-routes/changePriority Change routes priority
- * @apiVersion 2.0.0
- * @apiName ChangePriority
- * @apiGroup OutboundRoutes
- * 
- * @apiParam {Object} priorityTable Object with route IDs as keys and new priorities as values
- * 
- * @apiSuccess {Boolean} result Operation result
+ * Change priority of outbound routes
  */
 class ChangePriorityAction
 {
     /**
-     * Change priority of outbound routes
-     * 
-     * @param array $priorityTable - Array with route IDs as keys and priorities as values
-     * @return PBXApiResult
+     * Update priorities for multiple routes
      */
-    public static function main(array $priorityTable): PBXApiResult
+    public static function main(array $data): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         
-        $db = Util::getDbConnection();
+        // Extract priorities from request data
+        $priorities = $data['priorities'] ?? $data;
+        
+        if (empty($priorities) || !is_array($priorities)) {
+            $res->messages['error'][] = 'No priority data provided';
+            return $res;
+        }
+        
+        $di = \Phalcon\Di\Di::getDefault();
+        $db = $di->get('db');
+        
         $db->begin();
         
         try {
-            $routes = OutgoingRoutingTable::find();
-            foreach ($routes as $route) {
-                if (array_key_exists($route->id, $priorityTable)) {
-                    $route->priority = (string)$priorityTable[$route->id];
-                    if (!$route->update()) {
-                        throw new \Exception('Failed to update route priority');
-                    }
+            $updatedCount = 0;
+            
+            foreach ($priorities as $routeId => $newPriority) {
+                $route = OutgoingRoutingTable::findFirstById($routeId);
+                
+                if (!$route) {
+                    continue; // Skip non-existent routes
                 }
+                
+                $route->priority = (string)$newPriority;
+                
+                if (!$route->update()) {
+                    $errorMessages = [];
+                    foreach ($route->getMessages() as $message) {
+                        $errorMessages[] = $message->getMessage();
+                    }
+                    throw new \Exception(
+                        "Failed to update route ID {$routeId}: " . implode(', ', $errorMessages)
+                    );
+                }
+                
+                $updatedCount++;
             }
             
             $db->commit();
+            
             $res->success = true;
+            $res->data = [
+                'updated' => $updatedCount,
+                'message' => "Successfully updated {$updatedCount} route priorities"
+            ];
             
         } catch (\Exception $e) {
             $db->rollback();
             $res->messages['error'][] = $e->getMessage();
+            CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
         
         return $res;
@@ -513,201 +596,273 @@ class ChangePriorityAction
 }
 ```
 
-**File**: `src/PBXCoreREST/Lib/OutboundRoutes/GetProvidersAction.php`
+#### 1.4 Create REST Controllers
+
+**File**: `src/PBXCoreREST/Controllers/OutboundRoutes/GetController.php`
+
 ```php
 <?php
-namespace MikoPBX\PBXCoreREST\Lib\OutboundRoutes;
+declare(strict_types=1);
 
-use MikoPBX\Common\Models\Providers;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-
-/**
- * Action for getting available providers list
- * 
- * @api {get} /pbxcore/api/v2/outbound-routes/getProviders Get available providers
- * @apiVersion 2.0.0
- * @apiName GetProviders
- * @apiGroup OutboundRoutes
- * 
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Array} data Array of providers
- * @apiSuccess {String} data.uniqid Provider unique ID
- * @apiSuccess {String} data.name Provider name
- * @apiSuccess {Boolean} data.disabled Provider disabled status
- */
-class GetProvidersAction
-{
-    /**
-     * Get list of available providers
-     * 
-     * @return PBXApiResult
-     */
-    public static function main(): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        try {
-            $providers = Providers::find();
-            $providersList = [];
-            
-            foreach ($providers as $provider) {
-                $modelType = ucfirst($provider->type);
-                $provByType = $provider->$modelType;
-                
-                $providersList[] = [
-                    'uniqid' => $provider->uniqid,
-                    'name' => $provider->getRepresent(),
-                    'disabled' => (bool)$provByType->disabled
-                ];
-            }
-            
-            // Sort by name and disabled status
-            usort($providersList, function($a, $b) {
-                if ($a['disabled'] !== $b['disabled']) {
-                    return $a['disabled'] ? 1 : -1;
-                }
-                return strcasecmp($a['name'], $b['name']);
-            });
-            
-            $res->data = $providersList;
-            $res->success = true;
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-        
-        return $res;
-    }
-}
-```
-
-#### 1.4 REST API Controller
-
-**File**: `src/PBXCoreREST/Controllers/OutboundRoutes/OutboundRoutesController.php`
-```php
-<?php
 namespace MikoPBX\PBXCoreREST\Controllers\OutboundRoutes;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\OutboundRoutesManagementProcessor;
 
 /**
- * Outbound Routes REST API Controller
+ * GET controller for outbound routes management
+ * 
+ * @RoutePrefix("/pbxcore/api/v2/outbound-routes")
  */
-class OutboundRoutesController extends BaseController
+class GetController extends BaseController
 {
     /**
-     * Get outbound route record
+     * Enable CSRF protection for this controller
+     */
+    public const bool REQUIRES_CSRF_PROTECTION = true;
+    
+    /**
+     * Handle the call to different actions based on the action name
+     *
+     * @param string $actionName The name of the action
+     * @param string|null $id Optional ID parameter for record operations
      * 
-     * @param string|null $id
+     * Get outbound route record by ID, if ID is 'new' or empty returns structure with default data
+     * @Get("/getRecord/{id}")
+     * 
+     * Retrieves the list of all outbound routes with provider data
+     * @Get("/getList")
+     * 
+     * @return void
      */
-    public function getRecordAction(string $id = null): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
-        $this->sendRequestToBackend(
-            \MikoPBX\PBXCoreREST\Lib\OutboundRoutes\GetRecordAction::class,
-            [$id]
-        );
-    }
-    
-    /**
-     * Get list of all outbound routes
-     */
-    public function getListAction(): void
-    {
-        $this->sendRequestToBackend(
-            \MikoPBX\PBXCoreREST\Lib\OutboundRoutes\GetListAction::class,
-            [$this->request->getQuery()]
-        );
-    }
-    
-    /**
-     * Save outbound route record
-     */
-    public function saveRecordAction(): void
-    {
-        $data = $this->request->getPost();
+        $requestData = $this->request->get();
         
-        // Get ID from route parameters if it's an update
-        $id = $this->dispatcher->getParam('id');
-        if ($id) {
-            $data['id'] = $id;
+        if (!empty($id)) {
+            $requestData['id'] = $id;
         }
         
-        $this->sendRequestToBackend(
-            \MikoPBX\PBXCoreREST\Lib\OutboundRoutes\SaveRecordAction::class,
-            [$data]
-        );
-    }
-    
-    /**
-     * Delete outbound route record
-     * 
-     * @param string $id
-     */
-    public function deleteRecordAction(string $id): void
-    {
-        $this->sendRequestToBackend(
-            \MikoPBX\PBXCoreREST\Lib\OutboundRoutes\DeleteRecordAction::class,
-            [$id]
-        );
-    }
-    
-    /**
-     * Change routes priority
-     */
-    public function changePriorityAction(): void
-    {
-        $priorityTable = $this->request->getPost();
-        
-        $this->sendRequestToBackend(
-            \MikoPBX\PBXCoreREST\Lib\OutboundRoutes\ChangePriorityAction::class,
-            [$priorityTable]
-        );
-    }
-    
-    /**
-     * Get available providers
-     */
-    public function getProvidersAction(): void
-    {
-        $this->sendRequestToBackend(
-            \MikoPBX\PBXCoreREST\Lib\OutboundRoutes\GetProvidersAction::class,
-            []
+        $this->sendRequestToBackendWorker(
+            OutboundRoutesManagementProcessor::class, 
+            $actionName, 
+            $requestData
         );
     }
 }
 ```
 
-### Stage 2: JavaScript Client Development
+**File**: `src/PBXCoreREST/Controllers/OutboundRoutes/PostController.php`
 
-#### 2.1 New JavaScript Files
+```php
+<?php
+declare(strict_types=1);
 
-**File**: `sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-routes-api.js`
+namespace MikoPBX\PBXCoreREST\Controllers\OutboundRoutes;
+
+use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\OutboundRoutesManagementProcessor;
+
+/**
+ * POST controller for outbound routes management
+ * 
+ * @RoutePrefix("/pbxcore/api/v2/outbound-routes")
+ */
+class PostController extends BaseController
+{
+    /**
+     * Enable CSRF protection for this controller
+     */
+    public const bool REQUIRES_CSRF_PROTECTION = true;
+    
+    /**
+     * Handle the call to different actions based on the action name
+     * 
+     * @param string $actionName The name of the action
+     * 
+     * Creates or updates outbound route record
+     * @Post("/saveRecord")
+     * 
+     * Deletes the outbound route record
+     * @Post("/deleteRecord")
+     * 
+     * Changes priority of outbound routes
+     * @Post("/changePriority")
+     * 
+     * @return void
+     */
+    public function callAction(string $actionName): void
+    {
+        // Handle both form data and JSON data
+        $postData = [];
+        
+        if ($this->request->getContentType() === 'application/json') {
+            // Handle JSON requests
+            $rawBody = $this->request->getRawBody();
+            if (!empty($rawBody)) {
+                $jsonData = json_decode($rawBody, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
+                    $postData = $jsonData;
+                }
+            }
+        } else {
+            // Handle form data
+            $postData = $this->request->getPost();
+        }
+        
+        // Sanitize the data
+        $postData = self::sanitizeData($postData, $this->filter);
+        
+        $this->sendRequestToBackendWorker(
+            OutboundRoutesManagementProcessor::class,
+            $actionName,
+            $postData
+        );
+    }
+}
+```
+
+**File**: `src/PBXCoreREST/Controllers/OutboundRoutes/PutController.php`
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace MikoPBX\PBXCoreREST\Controllers\OutboundRoutes;
+
+use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\OutboundRoutesManagementProcessor;
+
+/**
+ * PUT controller for outbound routes management
+ * 
+ * @RoutePrefix("/pbxcore/api/v2/outbound-routes")
+ */
+class PutController extends BaseController
+{
+    /**
+     * Enable CSRF protection for this controller
+     */
+    public const bool REQUIRES_CSRF_PROTECTION = true;
+    
+    /**
+     * Handle the call to different actions based on the action name
+     * 
+     * @param string $actionName The name of the action
+     * @param string|null $id Outbound route ID for update operations
+     * 
+     * Updates existing outbound route record
+     * @Put("/saveRecord/{id}")
+     * 
+     * @return void
+     */
+    public function callAction(string $actionName, ?string $id = null): void
+    {
+        if (empty($id)) {
+            $this->response->setJsonContent([
+                'result' => false,
+                'messages' => ['error' => ['Empty ID in request data']]
+            ]);
+            $this->response->send();
+            return;
+        }
+
+        $putData = self::sanitizeData($this->request->getPut(), $this->filter);
+        $putData['id'] = $id;
+        
+        $this->sendRequestToBackendWorker(
+            OutboundRoutesManagementProcessor::class,
+            $actionName,
+            $putData
+        );
+    }
+}
+```
+
+**File**: `src/PBXCoreREST/Controllers/OutboundRoutes/DeleteController.php`
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace MikoPBX\PBXCoreREST\Controllers\OutboundRoutes;
+
+use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Lib\OutboundRoutesManagementProcessor;
+
+/**
+ * DELETE controller for outbound routes management
+ * 
+ * @RoutePrefix("/pbxcore/api/v2/outbound-routes")
+ */
+class DeleteController extends BaseController
+{
+    /**
+     * Enable CSRF protection for this controller
+     */
+    public const bool REQUIRES_CSRF_PROTECTION = true;
+    
+    /**
+     * Handle the call to different actions based on the action name
+     * 
+     * @param string $actionName The name of the action
+     * @param string|null $id Outbound route ID to delete
+     * 
+     * Deletes outbound route record
+     * @Delete("/deleteRecord/{id}")
+     * 
+     * @return void
+     */
+    public function callAction(string $actionName, ?string $id = null): void
+    {
+        if (empty($id)) {
+            $this->response->setJsonContent([
+                'result' => false,
+                'messages' => ['error' => ['Empty ID in request data']]
+            ]);
+            $this->response->send();
+            return;
+        }
+        
+        $deleteData = ['id' => $id];
+        
+        $this->sendRequestToBackendWorker(
+            OutboundRoutesManagementProcessor::class,
+            $actionName,
+            $deleteData
+        );
+    }
+}
+```
+
+### Stage 2: JavaScript Client Implementation
+
+#### 2.1 Create API Module
+
+**File**: `sites/admin-cabinet/assets/js/src/PbxAPI/outboundRoutesAPI.js`
+
 ```javascript
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
  */
 
 /* global PbxApi */
 
 /**
- * outboundRoutesAPI - Module for REST API interaction
- * @module outboundRoutesAPI
+ * OutboundRoutesAPI - Module for outbound routes REST API interaction
+ * @module OutboundRoutesAPI
  */
-const outboundRoutesAPI = {
+const OutboundRoutesAPI = {
+    /**
+     * API endpoint base URL
+     */
+    baseUrl: `${PbxApi.apiUrl}/pbxcore/api/v2/outbound-routes`,
     
     /**
      * Get all outbound routes
@@ -715,18 +870,18 @@ const outboundRoutesAPI = {
      */
     getList(callback) {
         $.api({
-            url: `${PbxApi.apiUrl}/pbxcore/api/v2/outbound-routes/getList`,
+            url: `${this.baseUrl}/getList`,
             on: 'now',
             method: 'GET',
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(true, response.data);
+                callback(response);
             },
             onFailure(response) {
-                callback(false, response);
+                callback(response);
             },
             onError(errorMessage, element, xhr) {
-                callback(false, xhr);
+                callback({result: false, messages: {error: [errorMessage]}});
             },
         });
     },
@@ -737,8 +892,7 @@ const outboundRoutesAPI = {
      * @param {Function} callback - Callback function
      */
     getRecord(id, callback) {
-        const url = id ? `${PbxApi.apiUrl}/pbxcore/api/v2/outbound-routes/getRecord/${id}` 
-                      : `${PbxApi.apiUrl}/pbxcore/api/v2/outbound-routes/getRecord`;
+        const url = id ? `${this.baseUrl}/getRecord/${id}` : `${this.baseUrl}/getRecord`;
         
         $.api({
             url: url,
@@ -746,13 +900,13 @@ const outboundRoutesAPI = {
             method: 'GET',
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(true, response.data);
+                callback(response);
             },
             onFailure(response) {
-                callback(false, response);
+                callback(response);
             },
             onError(errorMessage, element, xhr) {
-                callback(false, xhr);
+                callback({result: false, messages: {error: [errorMessage]}});
             },
         });
     },
@@ -765,8 +919,8 @@ const outboundRoutesAPI = {
     saveRecord(record, callback) {
         const method = record.id ? 'PUT' : 'POST';
         const url = record.id 
-            ? `${PbxApi.apiUrl}/pbxcore/api/v2/outbound-routes/saveRecord/${record.id}`
-            : `${PbxApi.apiUrl}/pbxcore/api/v2/outbound-routes/saveRecord`;
+            ? `${this.baseUrl}/saveRecord/${record.id}`
+            : `${this.baseUrl}/saveRecord`;
         
         $.api({
             url: url,
@@ -775,13 +929,13 @@ const outboundRoutesAPI = {
             data: record,
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(true, response);
+                callback(response);
             },
             onFailure(response) {
-                callback(false, response);
+                callback(response);
             },
             onError(errorMessage, element, xhr) {
-                callback(false, xhr);
+                callback({result: false, messages: {error: [errorMessage]}});
             },
         });
     },
@@ -793,350 +947,52 @@ const outboundRoutesAPI = {
      */
     deleteRecord(id, callback) {
         $.api({
-            url: `${PbxApi.apiUrl}/pbxcore/api/v2/outbound-routes/deleteRecord/${id}`,
+            url: `${this.baseUrl}/deleteRecord/${id}`,
             on: 'now',
             method: 'DELETE',
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(true, response);
+                callback(response);
             },
             onFailure(response) {
-                callback(false, response);
+                callback(response);
             },
             onError(errorMessage, element, xhr) {
-                callback(false, xhr);
+                callback({result: false, messages: {error: [errorMessage]}});
             },
         });
     },
     
     /**
      * Change routes priority
-     * @param {Object} priorityData - Priority data
+     * @param {Object} priorityData - Priority data object {id: priority}
      * @param {Function} callback - Callback function
      */
     changePriority(priorityData, callback) {
         $.api({
-            url: `${PbxApi.apiUrl}/pbxcore/api/v2/outbound-routes/changePriority`,
+            url: `${this.baseUrl}/changePriority`,
             on: 'now',
             method: 'POST',
-            data: priorityData,
+            data: {priorities: priorityData},
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(true, response);
+                callback(response);
             },
             onFailure(response) {
-                callback(false, response);
+                callback(response);
             },
             onError(errorMessage, element, xhr) {
-                callback(false, xhr);
-            },
-        });
-    },
-    
-    /**
-     * Get available providers
-     * @param {Function} callback - Callback function
-     */
-    getProviders(callback) {
-        $.api({
-            url: `${PbxApi.apiUrl}/pbxcore/api/v2/outbound-routes/getProviders`,
-            on: 'now',
-            method: 'GET',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(true, response.data);
-            },
-            onFailure(response) {
-                callback(false, response);
-            },
-            onError(errorMessage, element, xhr) {
-                callback(false, xhr);
+                callback({result: false, messages: {error: [errorMessage]}});
             },
         });
     }
 };
 ```
 
-#### 2.2 Update Existing JavaScript Files
+#### 2.2 Update Index Page JavaScript
 
-**Update**: `sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-routes-index.js`
-```javascript
-/*
- * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
- */
+**File**: `sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-routes-index.js`
 
-/* global globalRootUrl, outboundRoutesAPI */
-
-/**
- * Object for managing list of outbound routes
- *
- * @module outboundRoutes
- */
-const outboundRoutes = {
-    /**
-     * jQuery object for the routes table
-     * @type {jQuery}
-     */
-    $routingTable: $('#routingTable'),
-    
-    /**
-     * Initializes the outbound routes list.
-     */
-    initialize() {
-        // Load routes from API
-        outboundRoutes.loadRoutes();
-    },
-    
-    /**
-     * Load routes from API and render table
-     */
-    loadRoutes() {
-        outboundRoutesAPI.getList((success, data) => {
-            if (success) {
-                outboundRoutes.renderRoutesTable(data);
-                outboundRoutes.initializeTableFeatures();
-            } else {
-                UserMessage.showError(globalTranslate.or_ErrorLoadingRoutes);
-            }
-        });
-    },
-    
-    /**
-     * Render routes table
-     * @param {Array} routes - Array of route objects
-     */
-    renderRoutesTable(routes) {
-        const $container = $('#outbound-routes-table-container');
-        $container.empty();
-        
-        if (routes.length === 0) {
-            outboundRoutes.renderEmptyTable($container);
-            return;
-        }
-        
-        let tableHtml = `
-            <table class="ui selectable compact unstackable table" id="routingTable">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>${globalTranslate.or_TableColumnName}</th>
-                        <th>${globalTranslate.or_TableColumnRule}</th>
-                        <th class="hide-on-mobile">${globalTranslate.or_TableColumnProvider}</th>
-                        <th class="hide-on-mobile">${globalTranslate.or_TableColumnNote}</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-        
-        routes.forEach(rule => {
-            const ruleDescription = outboundRoutes.getRuleDescription(rule);
-            const disabledClass = rule.disabled ? 'disabled' : '';
-            const negativeClass = !rule.provider ? 'ui negative' : '';
-            
-            tableHtml += `
-                <tr class="rule-row ${negativeClass}" id="${rule.id}" data-value="${rule.priority}">
-                    <td class="dragHandle"><i class="sort grey icon"></i></td>
-                    <td class="${disabledClass}">${rule.rulename}</td>
-                    <td class="${disabledClass}">${ruleDescription}</td>
-                    <td class="${disabledClass} hide-on-mobile">${rule.provider || ''}</td>
-                    <td class="${disabledClass} hide-on-mobile">
-                        ${rule.note ? `<div class="ui basic icon button" data-content="${rule.note}" data-variation="wide" data-position="top right">
-                            <i class="file text icon"></i>
-                        </div>` : ''}
-                    </td>
-                    <td class="right aligned collapsing">
-                        <div class="ui small basic icon buttons action-buttons">
-                            <a href="${globalRootUrl}outbound-routes/modify/${rule.id}" class="ui button" data-tooltip="${globalTranslate.bt_Edit}">
-                                <i class="icon pencil"></i>
-                            </a>
-                            <a href="${globalRootUrl}outbound-routes/modify?copy-source=${rule.id}" class="ui button" data-tooltip="${globalTranslate.bt_Copy}">
-                                <i class="icon copy"></i>
-                            </a>
-                            <button class="ui button delete-route" data-id="${rule.id}" data-tooltip="${globalTranslate.bt_Delete}">
-                                <i class="icon trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-        
-        tableHtml += `
-                </tbody>
-            </table>
-            ${routes.length > 0 ? `<a href="${globalRootUrl}outbound-routes/modify" class="ui blue button">
-                <i class="add circle icon"></i> ${globalTranslate.or_AddNewRule}
-            </a>` : ''}
-        `;
-        
-        $container.html(tableHtml);
-    },
-    
-    /**
-     * Get rule description based on pattern settings
-     * @param {Object} rule - Rule object
-     * @returns {string} Rule description
-     */
-    getRuleDescription(rule) {
-        const numberbeginswith = rule.numberbeginswith || '';
-        const restnumbers = parseInt(rule.restnumbers) || 0;
-        
-        if (!numberbeginswith && !rule.restnumbers) {
-            return globalTranslate.or_RuleNotConfigured;
-        } else if (!numberbeginswith && restnumbers < 0) {
-            return globalTranslate.or_RuleAnyNumbers;
-        } else if (!numberbeginswith && restnumbers > 0) {
-            return globalTranslate.or_RuleDescriptionBeginEmpty.replace('{restnumbers}', restnumbers);
-        } else {
-            if (restnumbers > 0) {
-                return globalTranslate.or_RuleDescription
-                    .replace('{numberbeginswith}', numberbeginswith)
-                    .replace('{restnumbers}', restnumbers);
-            } else if (restnumbers === 0) {
-                return globalTranslate.or_RuleDescriptionFullMatch.replace('{numberbeginswith}', numberbeginswith);
-            } else if (restnumbers === -1) {
-                return globalTranslate.or_RuleDescriptionBeginMatch.replace('{numberbeginswith}', numberbeginswith);
-            }
-        }
-        return '';
-    },
-    
-    /**
-     * Render empty table placeholder
-     * @param {jQuery} $container - Container element
-     */
-    renderEmptyTable($container) {
-        const emptyHtml = `
-            <div class="ui placeholder segment">
-                <div class="ui icon header">
-                    <i class="sign out alternate icon"></i>
-                    ${globalTranslate.or_EmptyTableTitle}
-                </div>
-                <div class="inline">
-                    <p>${globalTranslate.or_EmptyTableDescription}</p>
-                    ${UserMessage.isAllowed('save') ? `<a href="${globalRootUrl}outbound-routes/modify" class="ui blue button">
-                        <i class="add circle icon"></i> ${globalTranslate.or_AddNewRule}
-                    </a>` : ''}
-                </div>
-            </div>
-        `;
-        $container.html(emptyHtml);
-    },
-    
-    /**
-     * Initialize table features after rendering
-     */
-    initializeTableFeatures() {
-        // Initialize drag-and-drop
-        outboundRoutes.$routingTable = $('#routingTable');
-        if (outboundRoutes.$routingTable.length > 0) {
-            outboundRoutes.$routingTable.tableDnD({
-                onDrop: outboundRoutes.cbOnDrop,
-                onDragClass: 'hoveringRow',
-                dragHandle: '.dragHandle',
-            });
-        }
-        
-        // Initialize tooltips
-        $('.ui.button[data-tooltip]').popup();
-        $('.ui.basic.icon.button[data-content]').popup();
-        
-        // Double-click handler
-        $('.rule-row td').off('dblclick').on('dblclick', (e) => {
-            const id = $(e.target).closest('tr').attr('id');
-            if (id) {
-                window.location = `${globalRootUrl}outbound-routes/modify/${id}`;
-            }
-        });
-        
-        // Delete button handler
-        $('.delete-route').off('click').on('click', (e) => {
-            e.preventDefault();
-            const id = $(e.currentTarget).data('id');
-            outboundRoutes.deleteRoute(id);
-        });
-    },
-    
-    /**
-     * Delete route with confirmation
-     * @param {string} id - Route ID
-     */
-    deleteRoute(id) {
-        const $row = $(`#${id}`);
-        const ruleName = $row.find('td:nth-child(2)').text();
-        
-        UserMessage.showConfirm(
-            globalTranslate.or_ConfirmDelete.replace('{0}', ruleName),
-            globalTranslate.or_DeleteRoute,
-            'warning',
-            () => {
-                outboundRoutesAPI.deleteRecord(id, (success, response) => {
-                    if (success) {
-                        if (response.redirect) {
-                            window.location = `${globalRootUrl}${response.redirect}`;
-                        } else {
-                            outboundRoutes.loadRoutes();
-                        }
-                    } else {
-                        UserMessage.showError(globalTranslate.or_ErrorDeletingRoute);
-                    }
-                });
-            }
-        );
-    },
-
-    /**
-     * Callback function triggered when an outbound route is dropped in the list.
-     */
-    cbOnDrop() {
-        let priorityWasChanged = false;
-        const priorityData = {};
-        $('.rule-row').each((index, obj) => {
-            const ruleId = $(obj).attr('id');
-            const oldPriority = parseInt($(obj).attr('data-value'), 10);
-            const newPriority = obj.rowIndex;
-            if (oldPriority !== newPriority) {
-                priorityWasChanged = true;
-                priorityData[ruleId] = newPriority;
-            }
-        });
-        
-        if (priorityWasChanged) {
-            outboundRoutesAPI.changePriority(priorityData, (success) => {
-                if (!success) {
-                    UserMessage.showError(globalTranslate.or_ErrorChangingPriority);
-                    // Reload to restore correct order
-                    outboundRoutes.loadRoutes();
-                }
-            });
-        }
-    },
-};
-
-/**
- *  Initialize outbound routes table on document ready
- */
-$(document).ready(() => {
-    outboundRoutes.initialize();
-});
-```
-
-**Update**: `sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-route-modify.js`
 ```javascript
 /*
  * MikoPBX - free phone system for small business
@@ -1146,26 +1002,281 @@ $(document).ready(() => {
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with this program.
- * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, outboundRoutesAPI */
+/* global globalRootUrl, globalTranslate, OutboundRoutesAPI, PbxDataTableIndex, UserMessage, SecurityUtils */
+
+/**
+ * Object for managing outbound routes table
+ * @module outboundRoutes
+ */
+const outboundRoutes = {
+    /**
+     * DataTable instance from base class
+     */
+    dataTableInstance: null,
+    
+    /**
+     * Initialize the object
+     */
+    initialize() {
+        // Initialize the outbound routes table with REST API
+        this.initializeDataTable();
+        
+        // Handle empty table state
+        this.checkEmptyTableState();
+    },
+    
+    /**
+     * Initialize DataTable using base class
+     */
+    initializeDataTable() {
+        // Create instance of base class with Outbound Routes specific configuration
+        this.dataTableInstance = new PbxDataTableIndex({
+            tableId: 'outbound-routes-table',
+            apiModule: OutboundRoutesAPI,
+            routePrefix: 'outbound-routes',
+            showSuccessMessages: false,
+            actionButtons: ['edit', 'copy', 'delete'],
+            translations: {
+                deleteError: globalTranslate.or_ImpossibleToDeleteOutboundRoute
+            },
+            orderable: false, // Disable sorting globally
+            order: [], // No default order
+            onDataLoaded: this.onDataLoaded.bind(this),
+            columns: [
+                {
+                    // Drag handle column
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    className: 'collapsing dragHandle',
+                    render: function() {
+                        return '<i class="sort grey icon"></i>';
+                    }
+                },
+                {
+                    // Rule name column
+                    data: 'rulename',
+                    className: '',
+                    render: function(data, type, row) {
+                        const disabledClass = row.disabled ? 'disabled' : '';
+                        return `<div class="${disabledClass}">${SecurityUtils.escapeHtml(data)}</div>`;
+                    }
+                },
+                {
+                    // Rule description column
+                    data: null,
+                    className: '',
+                    render: function(data, type, row) {
+                        const disabledClass = row.disabled ? 'disabled' : '';
+                        let description = '';
+                        
+                        // Parse rule description from backend
+                        if (row.ruleDescription) {
+                            const parts = row.ruleDescription.split(':');
+                            const translationKey = parts[0];
+                            
+                            switch (translationKey) {
+                                case 'or_RuleNotConfigured':
+                                    description = globalTranslate.or_RuleNotConfigured;
+                                    break;
+                                case 'or_RuleAnyNumbers':
+                                    description = globalTranslate.or_RuleAnyNumbers;
+                                    break;
+                                case 'or_RuleDescriptionBeginEmpty':
+                                    description = globalTranslate.or_RuleDescriptionBeginEmpty
+                                        .replace('{restnumbers}', parts[1]);
+                                    break;
+                                case 'or_RuleDescription':
+                                    description = globalTranslate.or_RuleDescription
+                                        .replace('{numberbeginswith}', parts[1])
+                                        .replace('{restnumbers}', parts[2]);
+                                    break;
+                                case 'or_RuleDescriptionFullMatch':
+                                    description = globalTranslate.or_RuleDescriptionFullMatch
+                                        .replace('{numberbeginswith}', parts[1]);
+                                    break;
+                                case 'or_RuleDescriptionBeginMatch':
+                                    description = globalTranslate.or_RuleDescriptionBeginMatch
+                                        .replace('{numberbeginswith}', parts[1]);
+                                    break;
+                                default:
+                                    description = row.ruleDescription;
+                            }
+                        }
+                        
+                        return `<div class="${disabledClass}">${description}</div>`;
+                    }
+                },
+                {
+                    // Provider column
+                    data: 'provider',
+                    className: 'hide-on-mobile',
+                    render: function(data, type, row) {
+                        const disabledClass = row.disabled ? 'disabled' : '';
+                        const negativeClass = !data ? 'negative' : '';
+                        return `<div class="${disabledClass} ${negativeClass}">${SecurityUtils.escapeHtml(data || '')}</div>`;
+                    }
+                },
+                {
+                    // Note column
+                    data: 'note',
+                    className: 'hide-on-mobile',
+                    render: null // Will be set after instance creation
+                }
+            ],
+            onDrawCallback: this.cbDrawComplete.bind(this)
+        });
+        
+        // Set the note column renderer using the instance method
+        this.dataTableInstance.columns[4].render = this.dataTableInstance.createDescriptionRenderer();
+        
+        // Initialize the base class
+        this.dataTableInstance.initialize();
+    },
+    
+    /**
+     * Check if table is empty and show welcome message
+     */
+    checkEmptyTableState() {
+        // This will be handled by onDataLoaded callback
+    },
+    
+    /**
+     * Callback when data is loaded
+     */
+    onDataLoaded(data) {
+        if (!data || data.length === 0) {
+            this.showEmptyTableMessage();
+        } else {
+            this.hideEmptyTableMessage();
+        }
+    },
+    
+    /**
+     * Show empty table message
+     */
+    showEmptyTableMessage() {
+        const $container = $('#outbound-routes-table-container');
+        const $table = $('#outbound-routes-table_wrapper');
+        
+        if ($table.length) {
+            $table.hide();
+        }
+        
+        // Check if message already exists
+        if ($container.find('.empty-table-message').length === 0) {
+            const emptyHtml = `
+                <div class="ui placeholder segment empty-table-message">
+                    <div class="ui icon header">
+                        <i class="sign out alternate icon"></i>
+                        ${globalTranslate.or_EmptyTableTitle}
+                    </div>
+                    <div class="inline">
+                        <p>${globalTranslate.or_EmptyTableDescription}</p>
+                        <a href="${globalRootUrl}outbound-routes/modify" class="ui primary button">
+                            <i class="add circle icon"></i> ${globalTranslate.or_AddNewRule}
+                        </a>
+                    </div>
+                </div>
+            `;
+            $container.append(emptyHtml);
+        }
+    },
+    
+    /**
+     * Hide empty table message
+     */
+    hideEmptyTableMessage() {
+        $('#outbound-routes-table-container .empty-table-message').remove();
+        $('#outbound-routes-table_wrapper').show();
+    },
+    
+    /**
+     * Callback after table draw is complete
+     */
+    cbDrawComplete() {
+        // Initialize drag-and-drop on the table
+        $('#outbound-routes-table tbody').tableDnD({
+            onDrop: this.cbOnDrop.bind(this),
+            onDragClass: 'hoveringRow',
+            dragHandle: '.dragHandle'
+        });
+        
+        // Add row data attributes for priority tracking
+        $('#outbound-routes-table tbody tr').each(function() {
+            const data = $('#outbound-routes-table').DataTable().row(this).data();
+            if (data) {
+                $(this).attr('id', data.id);
+                $(this).attr('data-value', data.priority);
+                $(this).addClass('rule-row');
+            }
+        });
+    },
+    
+    /**
+     * Callback function triggered when an outbound route is dropped in the list
+     */
+    cbOnDrop() {
+        let priorityWasChanged = false;
+        const priorityData = {};
+        
+        $('#outbound-routes-table tbody tr').each((index, obj) => {
+            const ruleId = $(obj).attr('id');
+            const oldPriority = parseInt($(obj).attr('data-value'), 10);
+            const newPriority = index + 1; // Start from 1, not 0
+            
+            if (oldPriority !== newPriority) {
+                priorityWasChanged = true;
+                priorityData[ruleId] = newPriority;
+            }
+        });
+        
+        if (priorityWasChanged) {
+            // Use REST API to update priorities
+            OutboundRoutesAPI.changePriority(priorityData, (response) => {
+                if (response.result) {
+                    // Reload table to reflect new priorities
+                    this.dataTableInstance.dataTable.ajax.reload();
+                } else {
+                    UserMessage.showMultiString(response.messages);
+                }
+            });
+        }
+    }
+};
+
+// Initialize on document ready
+$(document).ready(() => {
+    outboundRoutes.initialize();
+});
+```
+
+#### 2.3 Update Modify Page JavaScript
+
+**File**: `sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-route-modify.js`
+
+```javascript
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ */
+
+/* global globalRootUrl, globalTranslate, Form, OutboundRoutesAPI, ProvidersAPI, UserMessage */
 
 /**
  * Object for managing outbound route settings
- *
  * @module outboundRoute
  */
 const outboundRoute = {
     /**
-     * jQuery object for the form.
+     * jQuery object for the form
      * @type {jQuery}
      */
     $formObj: $('#outbound-route-form'),
@@ -1181,10 +1292,9 @@ const outboundRoute = {
      * @type {Object|null}
      */
     routeData: null,
-
+    
     /**
-     * Validation rules for the form fields before submission.
-     *
+     * Validation rules for the form fields before submission
      * @type {object}
      */
     validateRules: {
@@ -1248,21 +1358,47 @@ const outboundRoute = {
             ],
         },
     },
-
+    
     /**
-     * Initializes the outbound route form.
+     * Initializes the outbound route form
      */
     initialize() {
-        // Get route ID from form
-        const routeId = outboundRoute.$formObj.form('get value', 'id') || 'new';
+        // Get route ID from form or URL
+        const routeId = this.getRouteId();
         
         // Load providers first
-        outboundRoute.loadProviders(() => {
+        this.loadProviders(() => {
             // Then load route data
-            outboundRoute.loadRouteData(routeId);
+            this.loadRouteData(routeId);
         });
         
-        outboundRoute.initializeForm();
+        this.initializeForm();
+    },
+    
+    /**
+     * Get route ID from form or URL
+     */
+    getRouteId() {
+        // Try to get from form first
+        let routeId = this.$formObj.form('get value', 'id');
+        
+        // If not in form, try to get from URL
+        if (!routeId) {
+            const urlParts = window.location.pathname.split('/');
+            const modifyIndex = urlParts.indexOf('modify');
+            if (modifyIndex !== -1 && urlParts[modifyIndex + 1]) {
+                routeId = urlParts[modifyIndex + 1];
+            }
+        }
+        
+        // Check for copy-source parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const copySource = urlParams.get('copy-source');
+        if (copySource) {
+            return `new?copy-source=${copySource}`;
+        }
+        
+        return routeId || 'new';
     },
     
     /**
@@ -1270,9 +1406,9 @@ const outboundRoute = {
      * @param {Function} callback - Callback after loading
      */
     loadProviders(callback) {
-        outboundRoutesAPI.getProviders((success, providers) => {
-            if (success) {
-                outboundRoute.updateProvidersDropdown(providers);
+        ProvidersAPI.getList((response) => {
+            if (response.result) {
+                this.updateProvidersDropdown(response.data);
             }
             if (callback) callback();
         });
@@ -1283,17 +1419,17 @@ const outboundRoute = {
      * @param {Array} providers - Array of provider objects
      */
     updateProvidersDropdown(providers) {
-        outboundRoute.$providerDropDown.empty();
-        outboundRoute.$providerDropDown.append('<option value=""></option>');
+        this.$providerDropDown.empty();
+        this.$providerDropDown.append('<option value=""></option>');
         
         providers.forEach(provider => {
             const disabledText = provider.disabled ? ` (${globalTranslate.mo_Disabled})` : '';
-            outboundRoute.$providerDropDown.append(
+            this.$providerDropDown.append(
                 `<option value="${provider.uniqid}">${provider.name}${disabledText}</option>`
             );
         });
         
-        outboundRoute.$providerDropDown.dropdown();
+        this.$providerDropDown.dropdown();
     },
     
     /**
@@ -1301,12 +1437,12 @@ const outboundRoute = {
      * @param {string} routeId - Route ID or 'new'
      */
     loadRouteData(routeId) {
-        outboundRoutesAPI.getRecord(routeId, (success, data) => {
-            if (success) {
-                outboundRoute.routeData = data;
-                outboundRoute.populateForm(data);
+        OutboundRoutesAPI.getRecord(routeId, (response) => {
+            if (response.result) {
+                this.routeData = response.data;
+                this.populateForm(response.data);
             } else if (routeId !== 'new') {
-                UserMessage.showError(globalTranslate.or_ErrorLoadingRoute);
+                UserMessage.showMultiString(response.messages);
             }
         });
     },
@@ -1316,24 +1452,25 @@ const outboundRoute = {
      * @param {Object} data - Route data
      */
     populateForm(data) {
-        outboundRoute.$formObj.form('set values', {
+        // Set form values
+        this.$formObj.form('set values', {
             id: data.id || '',
             rulename: data.rulename || '',
             providerid: data.providerid || '',
             priority: data.priority || '',
             numberbeginswith: data.numberbeginswith || '',
-            restnumbers: data.restnumbers || '',
+            restnumbers: data.restnumbers === '-1' ? '' : (data.restnumbers || ''),
             trimfrombegin: data.trimfrombegin || '0',
             prepend: data.prepend || '',
             note: data.note || ''
         });
         
-        // Update page title
+        // Update page header if we have a representation
         if (data.represent) {
             $('.page-header .header').text(data.represent);
         }
     },
-
+    
     /**
      * Callback function to be called before the form is sent
      * @param {Object} settings - The current settings of the form
@@ -1343,71 +1480,93 @@ const outboundRoute = {
         const result = settings;
         result.data = outboundRoute.$formObj.form('get values');
         
-        // Use REST API instead of old controller
-        result.url = `${globalRootUrl}pbxcore/api/v2/outbound-routes/saveRecord`;
-        if (result.data.id) {
-            result.url += `/${result.data.id}`;
-            result.method = 'PUT';
-        } else {
-            result.method = 'POST';
+        // Handle empty restnumbers
+        if (result.data.restnumbers === '') {
+            result.data.restnumbers = '-1';
         }
         
         return result;
     },
-
+    
     /**
-     * Callback function to be called after the form has been sent.
+     * Callback function to be called after the form has been sent
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-        if (response.reload) {
+        if (response.result && response.reload) {
             window.location = `${globalRootUrl}${response.reload}`;
         }
     },
-
+    
     /**
      * Initialize the form with custom settings
      */
     initializeForm() {
         Form.$formObj = outboundRoute.$formObj;
-        Form.url = `${globalRootUrl}outbound-routes/save`; // Will be overridden in cbBeforeSendForm
+        Form.url = `${globalRootUrl}outbound-routes/save`; // Fallback URL
         Form.validateRules = outboundRoute.validateRules;
         Form.cbBeforeSendForm = outboundRoute.cbBeforeSendForm;
         Form.cbAfterSendForm = outboundRoute.cbAfterSendForm;
         Form.initialize();
-    },
+        
+        // Override form submission to use REST API
+        this.$formObj.on('submit', (e) => {
+            e.preventDefault();
+            
+            if (!this.$formObj.form('is valid')) {
+                return false;
+            }
+            
+            const formData = this.$formObj.form('get values');
+            
+            // Show loading state
+            this.$formObj.addClass('loading');
+            
+            OutboundRoutesAPI.saveRecord(formData, (response) => {
+                this.$formObj.removeClass('loading');
+                
+                if (response.result) {
+                    if (response.reload) {
+                        window.location = `${globalRootUrl}${response.reload}`;
+                    } else {
+                        UserMessage.showInformation(globalTranslate.ms_SuccessfulSaved);
+                    }
+                } else {
+                    UserMessage.showMultiString(response.messages);
+                }
+            });
+            
+            return false;
+        });
+    }
 };
 
-/**
- *  Initialize outbound route settings form on document ready
- */
+// Initialize on document ready
 $(document).ready(() => {
     outboundRoute.initialize();
 });
 ```
 
-### Stage 3: Adapting AdminCabinet Controllers
-
-#### 3.1 Modify OutboundRoutesController
+### Stage 3: AdminCabinet Controller Updates
 
 **File**: `src/AdminCabinet/Controllers/OutboundRoutesController.php`
 
-The controller needs to be updated to work with the REST API while maintaining backward compatibility:
-
 ```php
 <?php
+declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\OutgoingRouteEditForm;
-use MikoPBX\Common\Models\{OutgoingRoutingTable, Providers};
-use Phalcon\Filter\Filter;
+use MikoPBX\Common\Models\OutgoingRoutingTable;
 
 class OutboundRoutesController extends BaseController
 {
     /**
-     * Builds the list of outgoing routes
-     * This method now serves as a view renderer only, data is loaded via REST API
+     * Builds the index page for outbound routes.
+     * Only renders view, data loaded via REST API
+     *
+     * @return void
      */
     public function indexAction(): void
     {
@@ -1417,66 +1576,44 @@ class OutboundRoutesController extends BaseController
 
     /**
      * Shows the edit form for an outbound route
+     * Only creates empty form, data loaded via REST API
      *
-     * @param string $ruleId The ID of the routing rule to edit.
+     * @param string $ruleId The ID of the routing rule to edit
      */
     public function modifyAction(string $ruleId = ''): void
     {
-        // Handle copy-source parameter
-        $idIsEmpty = false;
-        if (empty($ruleId)) {
-            $idIsEmpty = true;
-            $ruleId = $this->request->get('copy-source', Filter::FILTER_INT, '');
-        }
-
-        // For new routes or copies, provide empty form
-        if (empty($ruleId) || $idIsEmpty) {
-            $rule = new OutgoingRoutingTable();
-            $rule->id = '';
-            $rule->priority = '999'; // Default high priority
-            $rule->restnumbers = '9';
-            $rule->trimfrombegin = '0';
-        } else {
-            // For existing routes, just set the ID
-            // JavaScript will load the data via API
-            $rule = new OutgoingRoutingTable();
-            $rule->id = $ruleId;
-        }
-
-        // Provide empty providers list, will be loaded via API
-        $providersList = [];
-
-        $this->view->form = new OutgoingRouteEditForm($rule, $providersList);
+        // Create empty form - JS will populate via REST API
+        $emptyRoute = new OutgoingRoutingTable();
+        $form = new OutgoingRouteEditForm($emptyRoute, []);
+        
+        $this->view->form = $form;
+        $this->view->uniqid = $ruleId;
         $this->view->represent = '';
     }
 
     /**
-     * Legacy save action - redirects to REST API
-     * Kept for backward compatibility
+     * Save action - handled by REST API
+     * @deprecated Use REST API instead
      */
     public function saveAction(): void
     {
-        // This action is now handled by REST API
-        // Redirect to index if called directly
         $this->forward('outbound-routes/index');
     }
 
     /**
-     * Legacy delete action - redirects to REST API
-     * Kept for backward compatibility
+     * Delete action - handled by REST API
+     * @deprecated Use REST API instead
      *
-     * @param string $id The ID of the outgoing route to delete.
+     * @param string $id The ID of the outgoing route to delete
      */
     public function deleteAction(string $id = ''): void
     {
-        // This action is now handled by REST API
-        // Redirect to index if called directly
         $this->forward('outbound-routes/index');
     }
 
     /**
-     * Legacy change priority action - redirects to REST API
-     * Kept for backward compatibility
+     * Change priority action - handled by REST API
+     * @deprecated Use REST API instead
      */
     public function changePriorityAction(): void
     {
@@ -1488,281 +1625,203 @@ class OutboundRoutesController extends BaseController
 
 ### Stage 4: View Templates Updates
 
-The existing view templates need minimal changes since most functionality moves to JavaScript:
-
 #### 4.1 Update index.volt
 
 **File**: `src/AdminCabinet/Views/OutboundRoutes/index.volt`
 
 ```volt
-<div id="outbound-routes-table-container">
-    <!-- Table will be rendered here by JavaScript -->
-    <div class="ui active inverted dimmer">
-        <div class="ui text loader">{{ t._('Loading') }}</div>
-    </div>
-</div>
+{{ link_to("outbound-routes/modify", '<i class="add circle icon"></i> '~t._('or_AddNewRule'), "class": "ui blue button") }}
 
-<script type="text/javascript">
-    // Pass translations to JavaScript
-    const globalTranslate = {
-        or_TableColumnName: '{{ t._('or_TableColumnName') }}',
-        or_TableColumnRule: '{{ t._('or_TableColumnRule') }}',
-        or_TableColumnProvider: '{{ t._('or_TableColumnProvider') }}',
-        or_TableColumnNote: '{{ t._('or_TableColumnNote') }}',
-        or_AddNewRule: '{{ t._('or_AddNewRule') }}',
-        or_EmptyTableTitle: '{{ t._('or_EmptyTableTitle') }}',
-        or_EmptyTableDescription: '{{ t._('or_EmptyTableDescription') }}',
-        or_RuleNotConfigured: '{{ t._('or_RuleNotConfigured') }}',
-        or_RuleAnyNumbers: '{{ t._('or_RuleAnyNumbers') }}',
-        or_RuleDescriptionBeginEmpty: '{{ t._('or_RuleDescriptionBeginEmpty') }}',
-        or_RuleDescription: '{{ t._('or_RuleDescription') }}',
-        or_RuleDescriptionFullMatch: '{{ t._('or_RuleDescriptionFullMatch') }}',
-        or_RuleDescriptionBeginMatch: '{{ t._('or_RuleDescriptionBeginMatch') }}',
-        or_ErrorLoadingRoutes: '{{ t._('or_ErrorLoadingRoutes') }}',
-        or_ErrorDeletingRoute: '{{ t._('or_ErrorDeletingRoute') }}',
-        or_ErrorChangingPriority: '{{ t._('or_ErrorChangingPriority') }}',
-        or_ConfirmDelete: '{{ t._('or_ConfirmDelete') }}',
-        or_DeleteRoute: '{{ t._('or_DeleteRoute') }}',
-        bt_Edit: '{{ t._('bt_Edit') }}',
-        bt_Copy: '{{ t._('bt_Copy') }}',
-        bt_Delete: '{{ t._('bt_Delete') }}',
-        mo_Disabled: '{{ t._('mo_Disabled') }}'
-    };
-    
-    // Check if user has save permission
-    const UserMessage = {
-        isAllowed: function(action) {
-            return {{ isAllowed('save') ? 'true' : 'false' }};
-        },
-        showError: function(message) {
-            // Implement error display
-            console.error(message);
-        },
-        showConfirm: function(message, title, type, callback) {
-            if (confirm(message)) {
-                callback();
-            }
-        }
-    };
-</script>
+<div id="outbound-routes-table-container">
+    <table id="outbound-routes-table" class="ui selectable compact unstackable table">
+        <thead>
+        <tr>
+            <th></th>
+            <th>{{ t._('or_TableColumnName') }}</th>
+            <th>{{ t._('or_TableColumnRule') }}</th>
+            <th class="hide-on-mobile">{{ t._('or_TableColumnProvider') }}</th>
+            <th class="hide-on-mobile">{{ t._('or_TableColumnNote') }}</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
 ```
 
 #### 4.2 Update modify.volt
 
-No significant changes needed to `modify.volt` as it already works with the form object and JavaScript handles the data loading and submission.
+No changes needed - form structure remains the same.
 
-### Stage 5: REST API Routes Configuration
+### Stage 5: Router Configuration
 
-Add routes for the new REST API endpoints:
+**File**: `src/PBXCoreREST/Providers/RouterProvider.php`
 
-**File**: `src/PBXCoreREST/Config/RouterProvider.php` (add to existing routes)
+Add the following routes:
 
 ```php
-// Outbound Routes API v2
-$routes[] = [
-    'method' => 'get',
-    'route' => '/api/v2/outbound-routes/getList',
-    'handler' => [OutboundRoutesController::class, 'getListAction']
-];
+// Outbound Routes API V2
+// GET endpoints
+$router->addGet('/api/v2/outbound-routes/getList', [
+    'controller' => 'OutboundRoutes\GetController',
+    'action' => 'callAction',
+    'actionName' => 'GetList'
+]);
 
-$routes[] = [
-    'method' => 'get', 
-    'route' => '/api/v2/outbound-routes/getRecord[/{id}]',
-    'handler' => [OutboundRoutesController::class, 'getRecordAction']
-];
+$router->addGet('/api/v2/outbound-routes/getRecord/{id}', [
+    'controller' => 'OutboundRoutes\GetController',
+    'action' => 'callAction',
+    'actionName' => 'GetRecord'
+]);
 
-$routes[] = [
-    'method' => 'post',
-    'route' => '/api/v2/outbound-routes/saveRecord',
-    'handler' => [OutboundRoutesController::class, 'saveRecordAction']
-];
+$router->addGet('/api/v2/outbound-routes/getRecord', [
+    'controller' => 'OutboundRoutes\GetController',
+    'action' => 'callAction',
+    'actionName' => 'GetRecord'
+]);
 
-$routes[] = [
-    'method' => 'put',
-    'route' => '/api/v2/outbound-routes/saveRecord/{id}',
-    'handler' => [OutboundRoutesController::class, 'saveRecordAction']
-];
+// POST endpoints
+$router->addPost('/api/v2/outbound-routes/saveRecord', [
+    'controller' => 'OutboundRoutes\PostController',
+    'action' => 'callAction',
+    'actionName' => 'SaveRecord'
+]);
 
-$routes[] = [
-    'method' => 'delete',
-    'route' => '/api/v2/outbound-routes/deleteRecord/{id}',
-    'handler' => [OutboundRoutesController::class, 'deleteRecordAction']
-];
+$router->addPost('/api/v2/outbound-routes/changePriority', [
+    'controller' => 'OutboundRoutes\PostController',
+    'action' => 'callAction',
+    'actionName' => 'ChangePriority'
+]);
 
-$routes[] = [
-    'method' => 'post',
-    'route' => '/api/v2/outbound-routes/changePriority',
-    'handler' => [OutboundRoutesController::class, 'changePriorityAction']
-];
+// PUT endpoints
+$router->addPut('/api/v2/outbound-routes/saveRecord/{id}', [
+    'controller' => 'OutboundRoutes\PutController',
+    'action' => 'callAction',
+    'actionName' => 'SaveRecord'
+]);
 
-$routes[] = [
-    'method' => 'get',
-    'route' => '/api/v2/outbound-routes/getProviders',
-    'handler' => [OutboundRoutesController::class, 'getProvidersAction']
-];
+// DELETE endpoints
+$router->addDelete('/api/v2/outbound-routes/deleteRecord/{id}', [
+    'controller' => 'OutboundRoutes\DeleteController',
+    'action' => 'callAction',
+    'actionName' => 'DeleteRecord'
+]);
 ```
 
-### Stage 6: Testing Plan
+### Stage 6: Asset Provider Configuration
 
-#### 6.1 Unit Tests
+**File**: `src/AdminCabinet/Providers/AssetProvider.php`
 
-Create unit tests for new Action classes:
+Add JavaScript files to asset collections:
 
-**File**: `tests/Unit/PBXCoreREST/Lib/OutboundRoutes/GetListActionTest.php`
 ```php
-<?php
+// In the appropriate section for outbound routes:
 
-namespace MikoPBX\Tests\Unit\PBXCoreREST\Lib\OutboundRoutes;
+// API module
+$jsFiles[] = 'js/pbx/PbxAPI/outboundRoutesAPI.js';
+$jsFiles[] = 'js/pbx/PbxAPI/providersAPI.js';
 
-use MikoPBX\PBXCoreREST\Lib\OutboundRoutes\GetListAction;
-use MikoPBX\Tests\Unit\AbstractUnitTest;
-
-class GetListActionTest extends AbstractUnitTest
-{
-    public function testGetList()
-    {
-        $result = GetListAction::main();
-        
-        $this->assertTrue($result->success);
-        $this->assertIsArray($result->data);
-        
-        if (count($result->data) > 0) {
-            $firstRoute = $result->data[0];
-            $this->assertArrayHasKey('id', $firstRoute);
-            $this->assertArrayHasKey('priority', $firstRoute);
-            $this->assertArrayHasKey('rulename', $firstRoute);
-            $this->assertArrayHasKey('provider', $firstRoute);
-        }
+// Page-specific scripts
+if ($controller === 'OutboundRoutes') {
+    if ($action === 'index') {
+        $jsFiles[] = 'js/pbx/OutboundRoutes/outbound-routes-index.js';
+    } elseif ($action === 'modify') {
+        $jsFiles[] = 'js/pbx/OutboundRoutes/outbound-route-modify.js';
     }
 }
 ```
 
-#### 6.2 API Integration Tests
+### Stage 7: Transpile JavaScript Files
 
-Test REST API endpoints:
+Run babel transpiler for all new/modified JavaScript files:
 
-```php
-<?php
+```bash
+# API modules
+babel "sites/admin-cabinet/assets/js/src/PbxAPI/outboundRoutesAPI.js" \
+  --out-dir "sites/admin-cabinet/assets/js/pbx/PbxAPI" \
+  --source-maps inline --presets airbnb
 
-namespace MikoPBX\Tests\Integration\PBXCoreREST\Controllers\OutboundRoutes;
+babel "sites/admin-cabinet/assets/js/src/PbxAPI/providersAPI.js" \
+  --out-dir "sites/admin-cabinet/assets/js/pbx/PbxAPI" \
+  --source-maps inline --presets airbnb
 
-use MikoPBX\Tests\Integration\AbstractRestApiTest;
+# Page scripts
+babel "sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-routes-index.js" \
+  --out-dir "sites/admin-cabinet/assets/js/pbx/OutboundRoutes" \
+  --source-maps inline --presets airbnb
 
-class OutboundRoutesControllerTest extends AbstractRestApiTest
-{
-    public function testFullCycle()
-    {
-        // 1. Get list (should be empty or have existing routes)
-        $response = $this->apiClient->get('/pbxcore/api/v2/outbound-routes/getList');
-        $this->assertTrue($response['result']);
-        $initialCount = count($response['data']);
-        
-        // 2. Create new route
-        $newRoute = [
-            'rulename' => 'Test Route',
-            'providerid' => 'test-provider-id',
-            'numberbeginswith' => '7',
-            'restnumbers' => '10',
-            'trimfrombegin' => '1',
-            'prepend' => '8',
-            'note' => 'Test note'
-        ];
-        
-        $response = $this->apiClient->post('/pbxcore/api/v2/outbound-routes/saveRecord', $newRoute);
-        $this->assertTrue($response['result']);
-        $routeId = $response['data']['id'];
-        
-        // 3. Get created route
-        $response = $this->apiClient->get("/pbxcore/api/v2/outbound-routes/getRecord/{$routeId}");
-        $this->assertTrue($response['result']);
-        $this->assertEquals('Test Route', $response['data']['rulename']);
-        
-        // 4. Update route
-        $updateData = ['rulename' => 'Updated Test Route'];
-        $response = $this->apiClient->put("/pbxcore/api/v2/outbound-routes/saveRecord/{$routeId}", $updateData);
-        $this->assertTrue($response['result']);
-        
-        // 5. Delete route
-        $response = $this->apiClient->delete("/pbxcore/api/v2/outbound-routes/deleteRecord/{$routeId}");
-        $this->assertTrue($response['result']);
-        
-        // 6. Verify deletion
-        $response = $this->apiClient->get('/pbxcore/api/v2/outbound-routes/getList');
-        $this->assertEquals($initialCount, count($response['data']));
-    }
-}
+babel "sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-route-modify.js" \
+  --out-dir "sites/admin-cabinet/assets/js/pbx/OutboundRoutes" \
+  --source-maps inline --presets airbnb
 ```
 
-#### 6.3 Browser Testing Scenarios
+## Testing Strategy
 
-1. **List Page**:
-   - Load page and verify routes are displayed
-   - Test drag-and-drop priority reordering
-   - Test delete functionality with confirmation
-   - Test navigation to edit page
+### 1. Unit Tests
+- Test each Action class independently
+- Test DataStructure transformations
+- Test validation logic
 
-2. **Edit/Create Page**:
-   - Create new route with all fields
-   - Edit existing route
-   - Test form validation
-   - Test provider dropdown loading
-   - Test copy functionality
+### 2. Integration Tests
+- Test full CRUD cycle via REST API
+- Test priority change functionality
+- Test error handling
 
-3. **API Error Handling**:
-   - Test behavior when API is unavailable
-   - Test validation errors display
-   - Test concurrent editing scenarios
+### 3. Browser Testing
+- Verify list page loads and displays routes
+- Test drag-and-drop priority reordering
+- Test create/edit/delete operations
+- Verify form validation
+- Test copy functionality
+- Check empty state display
 
-### Stage 7: Migration Steps
+### 4. Regression Testing
+- Ensure existing functionality still works
+- Verify backward compatibility
+- Test with existing data
 
-1. **Deploy Backend**:
-   - Deploy new Action classes
-   - Deploy REST controller
-   - Update routes configuration
+## Migration Checklist
 
-2. **Deploy Frontend**:
-   - Deploy new JavaScript API module
-   - Deploy updated JavaScript files
-   - Deploy updated controller
+### Pre-Migration
+- [ ] Backup database
+- [ ] Document current routes configuration
+- [ ] Test in development environment
 
-3. **Testing**:
-   - Run unit tests
-   - Run integration tests
-   - Perform manual browser testing
+### Implementation
+- [ ] Create REST API backend classes
+- [ ] Create JavaScript API module
+- [ ] Update JavaScript UI code
+- [ ] Update AdminCabinet controller
+- [ ] Update view templates
+- [ ] Configure routes
+- [ ] Update asset provider
+- [ ] Transpile JavaScript files
 
-4. **Rollback Plan**:
-   - Keep old controller methods for backward compatibility
-   - Can revert JavaScript changes if issues arise
-   - Database structure remains unchanged
+### Post-Migration
+- [ ] Run unit tests
+- [ ] Run integration tests
+- [ ] Perform browser testing
+- [ ] Verify all functionality works
+- [ ] Monitor for errors in production
+
+## Rollback Plan
+
+If issues arise:
+1. Revert JavaScript files to previous versions
+2. Revert AdminCabinet controller changes
+3. REST API can remain (won't affect old code)
+4. Clear browser cache
+5. Restart web services
 
 ## Summary
 
-This migration plan provides a complete REST API implementation for OutboundRoutes while maintaining the existing user interface and workflow. The implementation follows MikoPBX architecture patterns and ensures smooth transition with minimal user impact.
+This migration plan provides a complete REST API V2 implementation for Outbound Routes following the patterns established in the Incoming Routes migration. The implementation ensures:
 
-### Key Benefits:
-1. **Unified API**: All CRUD operations through REST API
-2. **Better Testing**: Easier to test business logic separately
-3. **Modern Architecture**: Follows current MikoPBX patterns
-4. **Backward Compatibility**: Old URLs still work
-5. **Improved Maintainability**: Clear separation of concerns
+1. **Consistency**: Follows the same architecture as incoming routes
+2. **Maintainability**: Clear separation of concerns
+3. **Testability**: Easy to test each component
+4. **User Experience**: No visible changes for end users
+5. **Backward Compatibility**: Old URLs and functionality preserved
 
-### Files to be Created:
-1. `src/PBXCoreREST/Lib/OutboundRoutes/DataStructure.php`
-2. `src/PBXCoreREST/Lib/OutboundRoutes/GetRecordAction.php`
-3. `src/PBXCoreREST/Lib/OutboundRoutes/GetListAction.php`
-4. `src/PBXCoreREST/Lib/OutboundRoutes/SaveRecordAction.php`
-5. `src/PBXCoreREST/Lib/OutboundRoutes/DeleteRecordAction.php`
-6. `src/PBXCoreREST/Lib/OutboundRoutes/ChangePriorityAction.php`
-7. `src/PBXCoreREST/Lib/OutboundRoutes/GetProvidersAction.php`
-8. `src/PBXCoreREST/Controllers/OutboundRoutes/OutboundRoutesController.php`
-9. `sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-routes-api.js`
-
-### Files to be Modified:
-1. `src/AdminCabinet/Controllers/OutboundRoutesController.php`
-2. `sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-routes-index.js`
-3. `sites/admin-cabinet/assets/js/src/OutboundRoutes/outbound-route-modify.js`
-4. `src/AdminCabinet/Views/OutboundRoutes/index.volt`
-5. `src/PBXCoreREST/Config/RouterProvider.php`
-
-### Database Changes:
-None required - existing model structure is maintained
+The migration can be performed incrementally with minimal risk to existing functionality.
