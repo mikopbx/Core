@@ -1,5 +1,12 @@
 <div class="{{ fieldClass }}" id='{{ fieldID }}'>
-    <label for="{{ id }}">{{ label }}</label>
+    {% if label != '' %}
+        <label for="{{ id }}">{{ label }}
+            {% if id == 'audio_message_id' %}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="audio_message_id"></i>
+            {% endif %}
+        </label>
+    {% endif %}
     <div class="unstackable fields">
         <div class="twelve wide field">
             {{ form.render(id) }}

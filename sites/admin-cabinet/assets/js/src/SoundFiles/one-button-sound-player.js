@@ -60,6 +60,9 @@ class sndPlayerOneBtn {
         // Bind callback functions to preserve context
         this.cbCanPlayThrough = this.cbCanPlayThrough.bind(this);
         this.cbTimeUpdate = this.cbTimeUpdate.bind(this);
+        // Track the last loaded audio file ID to prevent duplicate loads
+        this.lastLoadedFileId = null;
+        
         $(`#${this.soundSelectorClass}`).on('change', () => {
             this.updateAudioSource();
         });
@@ -85,7 +88,13 @@ class sndPlayerOneBtn {
     updateAudioSource() {
         const audioFileId = $('form').form('get value', this.soundSelectorClass);
         if (audioFileId !== '' && audioFileId !== "-1") {
+            // Check if we've already loaded this file
+            if (this.lastLoadedFileId === audioFileId) {
+                return; // Skip duplicate load
+            }
+            
             const _this = this;
+            this.lastLoadedFileId = audioFileId; // Remember the loaded file
             
             // Use REST API to get sound file details
             SoundFilesAPI.getRecord(audioFileId, (response) => {
@@ -97,6 +106,9 @@ class sndPlayerOneBtn {
                     _this.html5Audio.oncanplaythrough = _this.cbCanPlayThrough;
                 }
             });
+        } else {
+            // Reset when no file is selected
+            this.lastLoadedFileId = null;
         }
     }
 

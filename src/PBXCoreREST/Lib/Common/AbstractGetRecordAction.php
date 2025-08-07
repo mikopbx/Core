@@ -51,10 +51,20 @@ abstract class AbstractGetRecordAction
      */
     protected static function findRecordById(string $modelClass, string $id)
     {
-        return $modelClass::findFirst([
-            'conditions' => 'uniqid = :uniqid: OR id = :id:',
-            'bind' => ['uniqid' => $id, 'id' => $id]
-        ]);
+        // Check if model has uniqid property
+        $modelInstance = new $modelClass();
+        if (property_exists($modelInstance, 'uniqid')) {
+            return $modelClass::findFirst([
+                'conditions' => 'uniqid = :uniqid: OR id = :id:',
+                'bind' => ['uniqid' => $id, 'id' => $id]
+            ]);
+        } else {
+            // For models without uniqid, only search by id
+            return $modelClass::findFirst([
+                'conditions' => 'id = :id:',
+                'bind' => ['id' => $id]
+            ]);
+        }
     }
 
     /**
@@ -76,16 +86,18 @@ abstract class AbstractGetRecordAction
         $model = new $modelClass();
         $model->id = '';
         
-        // Generate unique ID using model's method
-        if (method_exists($modelClass, 'generateUniqueID')) {
-            $model->uniqid = $modelClass::generateUniqueID($uniqueIdPrefix);
-        } else {
-            // Fallback to simple prefix + timestamp
-            $model->uniqid = $uniqueIdPrefix . time();
+        // Generate unique ID only if model has uniqid property
+        if (property_exists($model, 'uniqid')) {
+            if (method_exists($modelClass, 'generateUniqueID')) {
+                $model->uniqid = $modelClass::generateUniqueID($uniqueIdPrefix);
+            } else {
+                // Fallback to simple prefix + timestamp
+                $model->uniqid = $uniqueIdPrefix . time();
+            }
         }
         
         // Assign extension number if needed
-        if ($needsExtension) {
+        if ($needsExtension && property_exists($model, 'extension')) {
             $model->extension = Extensions::getNextFreeApplicationNumber();
         }
         

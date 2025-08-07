@@ -51,6 +51,8 @@ class PbxDataTableIndex {
      * @param {Function} [config.onDrawCallback] - Callback after table draw
      * @param {Function} [config.onPermissionsLoaded] - Callback after permissions loaded
      * @param {Function} [config.customDeleteHandler] - Custom delete handler
+     * @param {boolean} [config.orderable=true] - Enable/disable sorting for all columns
+     * @param {Array} [config.order=[[0, 'asc']]] - Default sort order
      */
     constructor(config) {
         // Core configuration
@@ -61,6 +63,10 @@ class PbxDataTableIndex {
         this.columns = config.columns || [];
         this.showSuccessMessages = config.showSuccessMessages || false;
         this.showInfo = config.showInfo || false;
+        
+        // Sorting configuration (backward compatible)
+        this.orderable = config.orderable !== undefined ? config.orderable : true;
+        this.order = config.order || [[0, 'asc']];
         
         // Permission state (loaded from server)
         this.permissions = {
@@ -146,6 +152,9 @@ class PbxDataTableIndex {
      * Initialize DataTable with common configuration
      */
     initializeDataTable() {
+        // Add the datatable-width-constrained class to the table
+        this.$table.addClass('datatable-width-constrained');
+        
         const processedColumns = this.processColumns();
         
         const config = {
@@ -160,7 +169,8 @@ class PbxDataTableIndex {
                 }
             },
             columns: processedColumns,
-            order: [[0, 'asc']],
+            order: this.order,
+            ordering: this.orderable,
             lengthChange: false,
             paging: false,
             searching: true,
@@ -183,6 +193,16 @@ class PbxDataTableIndex {
     processColumns() {
         const columns = [...this.columns];
         
+        // If sorting is globally disabled, ensure all columns respect it
+        if (!this.orderable) {
+            columns.forEach(col => {
+                // Preserve explicit orderable: false, but override true or undefined
+                if (col.orderable !== false) {
+                    col.orderable = false;
+                }
+            });
+        }
+        
         // Add standard action column if not already present
         if (!columns.find(col => col.isActionColumn)) {
             columns.push(this.createActionColumn());
@@ -203,12 +223,14 @@ class PbxDataTableIndex {
             isActionColumn: true,
             render: (data, type, row) => {
                 const buttons = [];
+                // Get the record ID - check for both uniqid and id fields
+                const recordId = row.uniqid || row.id || '';
                 
                 // Edit button
                 if (this.actionButtons.includes('edit') && 
                     (this.permissions.modify || this.permissions.edit)) {
                     buttons.push(`
-                        <a href="${globalRootUrl}${this.routePrefix}/modify/${row.uniqid}" 
+                        <a href="${globalRootUrl}${this.routePrefix}/modify/${recordId}" 
                            class="ui button edit popuped" 
                            data-content="${globalTranslate.bt_ToolTipEdit}">
                             <i class="icon edit blue"></i>
@@ -220,7 +242,7 @@ class PbxDataTableIndex {
                 if (this.actionButtons.includes('copy') && this.permissions.copy) {
                     buttons.push(`
                         <a href="#" 
-                           data-value="${row.uniqid}"
+                           data-value="${recordId}"
                            class="ui button copy popuped" 
                            data-content="${globalTranslate.bt_ToolTipCopy}">
                             <i class="icon copy outline blue"></i>
@@ -232,7 +254,7 @@ class PbxDataTableIndex {
                 this.customActionButtons.forEach(customButton => {
                     if (this.permissions.custom && this.permissions.custom[customButton.name]) {
                         const href = customButton.href || '#';
-                        const dataValue = customButton.includeId ? `data-value="${row.uniqid}"` : '';
+                        const dataValue = customButton.includeId ? `data-value="${recordId}"` : '';
                         buttons.push(`
                             <a href="${href}" 
                                ${dataValue}
@@ -248,7 +270,7 @@ class PbxDataTableIndex {
                 if (this.actionButtons.includes('delete') && this.permissions.delete) {
                     buttons.push(`
                         <a href="#" 
-                           data-value="${row.uniqid}" 
+                           data-value="${recordId}" 
                            class="ui button delete two-steps-delete popuped" 
                            data-content="${globalTranslate.bt_ToolTipDelete}">
                             <i class="icon trash red"></i>
@@ -492,8 +514,10 @@ class PbxDataTableIndex {
     initializeDoubleClickEdit() {
         this.$table.on('dblclick', 'tbody td:not(.right.aligned)', (e) => {
             const data = this.dataTable.row(e.currentTarget).data();
-            if (data && data.uniqid && (this.permissions.modify || this.permissions.edit)) {
-                window.location = `${globalRootUrl}${this.routePrefix}/modify/${data.uniqid}`;
+            // Get the record ID - check for both uniqid and id fields
+            const recordId = data && (data.uniqid || data.id);
+            if (recordId && (this.permissions.modify || this.permissions.edit)) {
+                window.location = `${globalRootUrl}${this.routePrefix}/modify/${recordId}`;
             }
         });
     }

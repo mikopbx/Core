@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\Providers\GetProviderStatusAction;
+use MikoPBX\PBXCoreREST\Lib\Providers\GetListAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -51,6 +52,12 @@ class ProvidersManagementProcessor extends Injectable
             case 'getStatuses':
                 // Get current provider statuses and publish to EventBus
                 $res = GetProviderStatusAction::main();
+                break;
+                
+            case 'getList':
+                // Get list of all providers organized by type
+                $includeDisabled = !empty($data['includeDisabled']) && $data['includeDisabled'] === 'true';
+                $res = GetListAction::main($includeDisabled);
                 break;
                 
             default:

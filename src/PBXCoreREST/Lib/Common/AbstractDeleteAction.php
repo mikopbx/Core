@@ -52,10 +52,20 @@ abstract class AbstractDeleteAction
      */
     protected static function findRecordById(string $modelClass, string $id)
     {
-        return $modelClass::findFirst([
-            'conditions' => 'uniqid = :uniqid: OR id = :id:',
-            'bind' => ['uniqid' => $id, 'id' => $id]
-        ]);
+        // Check if model has uniqid property
+        $modelInstance = new $modelClass();
+        if (property_exists($modelInstance, 'uniqid')) {
+            return $modelClass::findFirst([
+                'conditions' => 'uniqid = :uniqid: OR id = :id:',
+                'bind' => ['uniqid' => $id, 'id' => $id]
+            ]);
+        } else {
+            // For models without uniqid, only search by id
+            return $modelClass::findFirst([
+                'conditions' => 'id = :id:',
+                'bind' => ['id' => $id]
+            ]);
+        }
     }
 
     /**
@@ -210,7 +220,8 @@ abstract class AbstractDeleteAction
                 return $res;
             }
 
-            $entityName = $record->name ?? 'Unknown';
+            // Get entity name - check common fields
+            $entityName = $record->name ?? $record->rulename ?? $record->id ?? 'Unknown';
             $entityExtension = $record->extension ?? '';
 
             // Delete in transaction
