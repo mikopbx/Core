@@ -20,8 +20,6 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
@@ -72,65 +70,14 @@ class SipProviderEditForm extends BaseForm
         // Host
         $this->add(new Text('host'));
 
-        // Dtmfmode
-        $arrDTMFType = [
-            'auto' => $this->translation->_('auto'),
-            'inband' => $this->translation->_('inband'),
-            'info' => $this->translation->_('info'),
-            'rfc4733' => $this->translation->_('rfc4733'),
-            'auto_info' => $this->translation->_('auto_info'),
-        ];
+        // DTMF Mode - will be replaced with dropdown in JavaScript
+        $this->add(new Hidden('dtmfmode', ['value' => $entity->dtmfmode ?? 'auto']));
 
-        $dtmfmode = new Select(
-            'dtmfmode',
-            $arrDTMFType,
-            [
-                'useEmpty' => false,
-                'value' => $entity->dtmfmode,
-                'class' => 'ui selection dropdown',
-            ]
-        );
-        $this->add($dtmfmode);
+        // Registration type - will be replaced with dropdown in JavaScript
+        $this->add(new Hidden('registration_type', ['value' => $entity->registration_type ?? 'outbound']));
 
-        $regTypeArray = [
-            Sip::REG_TYPE_OUTBOUND => $this->translation->_('sip_REG_TYPE_OUTBOUND'),
-            Sip::REG_TYPE_INBOUND => $this->translation->_('sip_REG_TYPE_INBOUND'),
-            Sip::REG_TYPE_NONE => $this->translation->_('sip_REG_TYPE_NONE'),
-        ];
-
-        $regTypeValue = $entity->registration_type;
-        if (empty($regTypeValue)) {
-            $regTypeValue = ($entity->noregister === '0') ? Sip::REG_TYPE_OUTBOUND : Sip::REG_TYPE_NONE;
-        }
-        $regType = new Select(
-            'registration_type',
-            $regTypeArray,
-            [
-                'useEmpty' => false,
-                'value' => $regTypeValue,
-                'class' => 'ui selection dropdown',
-            ]
-        );
-        $this->add($regType);
-
-        // Transport
-        $arrTransport = [
-            Sip::TRANSPORT_UDP => Sip::TRANSPORT_UDP,
-            Sip::TRANSPORT_TCP => Sip::TRANSPORT_TCP,
-            Sip::TRANSPORT_TLS => Sip::TRANSPORT_TLS,
-        ];
-        $transport = new Select(
-            'transport',
-            $arrTransport,
-            [
-                'emptyText' => 'udp, tcp',
-                'emptyValue' => ' ',
-                'useEmpty' => true,
-                'value' => empty($entity->transport) ? ' ' : $entity->transport,
-                'class' => 'ui selection dropdown',
-            ]
-        );
-        $this->add($transport);
+        // Transport protocol - will be replaced with dropdown in JavaScript
+        $this->add(new Hidden('transport', ['value' => $entity->transport ?? 'UDP']));
 
         // Port
         $this->add(new Numeric('port'));
@@ -166,14 +113,15 @@ class SipProviderEditForm extends BaseForm
         // Receive_calls_without_auth
         $this->addCheckBox('receive_calls_without_auth', intval($entity->receive_calls_without_auth) === 1);
 
-        // Network Filter
+        // Network Filter - Changed from Select to Hidden
+        // Network filter dropdown - empty select, will be populated via REST API
         $networkfilterid = new Select(
             'networkfilterid',
-            $this->prepareNetworkFilters(),
+            [],
             [
                 'useEmpty' => false,
-                'value' => $entity->networkfilterid,
-                'class' => 'ui selection dropdown network-filter-select',
+                'value' => $entity->networkfilterid ?? 'none',
+                'class' => 'ui selection dropdown search network-filter-select',
             ]
         );
         $this->add($networkfilterid);
@@ -186,21 +134,5 @@ class SipProviderEditForm extends BaseForm
 
         // Note
         $this->addTextArea('note', $options['note'] ?? '', 80, ['class' => 'confidential-field']);
-    }
-
-    /**
-     * Prepares network filters for the dropdown.
-     *
-     * @return array An array of network filters with their IDs and representations.
-     */
-    private function prepareNetworkFilters(): array
-    {
-        $arrNetworkFilters = [];
-        $networkFilters = NetworkFilters::getAllowedFiltersForType(['SIP']);
-        $arrNetworkFilters['none'] = $this->translation->_('pr_NoNetworkFilter');
-        foreach ($networkFilters as $filter) {
-            $arrNetworkFilters[$filter->id] = $filter->getRepresent();
-        }
-        return $arrNetworkFilters;
     }
 }

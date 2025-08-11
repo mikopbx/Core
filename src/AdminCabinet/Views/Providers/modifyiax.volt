@@ -5,7 +5,7 @@
 {{ form.render('uniqid') }}
 {{ form.render('type') }}
 {{ form.render('disabled') }}
-{{ form.render('providerType') }}
+<input type="hidden" id="providerType" value="IAX" />
 
 
 <div class="required field max-width-500">
@@ -36,7 +36,11 @@
 </div>
 
 <div id='elSecret' class="field max-width-500">
-    <label for="secret"><span id="secretLabelText">{{ t._('pr_ProviderPassword') }}</span></label>
+    <label for="secret">
+        <span id="secretLabelText">{{ t._('pr_ProviderPassword') }}</span>
+        <i class="small info circle icon field-info-icon password-tooltip-icon" 
+           data-field="provider_password" style="display: none;"></i>
+    </label>
     <div class="ui action input">
         {{ form.render('secret') }}
         <div class="ui tiny basic icon left attached buttons ">
@@ -124,3 +128,10 @@
 </div>
 {{ partial("partials/submitbutton",['indexurl':'providers/index/']) }}
 {{ close('form') }}
+
+<script type="text/javascript">
+$(document).ready(function() {
+    const providerIAX = new ProviderIAX();
+    providerIAX.initialize();
+});
+</script>

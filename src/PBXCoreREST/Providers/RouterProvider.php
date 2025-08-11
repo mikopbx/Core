@@ -80,7 +80,12 @@ use MikoPBX\PBXCoreREST\Controllers\
     License\PostController as LicensePostController,
     UserPageTracker\PostController as UserPageTrackerPostController,
     Passwords\GetController as PasswordsGetController,
-    Providers\GetController as ProvidersGetController
+    Providers\GetController as ProvidersGetController,
+    Providers\PostController as ProvidersPostController,
+    Providers\PutController as ProvidersPutController,
+    Providers\DeleteController as ProvidersDeleteController,
+    NetworkFilters\GetController as NetworkFiltersGetController,
+    NetworkFilters\PostController as NetworkFiltersPostController
 };
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
@@ -273,6 +278,17 @@ class RouterProvider implements ServiceProviderInterface
             
             // Providers v2 routes
             [ProvidersGetController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}', 'get', '/'],
+            [ProvidersGetController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{type:[A-Z]+}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
+            [ProvidersGetController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{id}', 'get', '/'],
+            [ProvidersPostController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}', 'post', '/'],
+            [ProvidersPutController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{type:[A-Z]+}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
+            [ProvidersPutController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{id}', 'put', '/'],
+            [ProvidersDeleteController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{type:[A-Z]+}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
+            [ProvidersDeleteController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{id}', 'delete', '/'],
+            
+            // Network Filters v2 routes
+            [NetworkFiltersGetController::class, 'callAction', '/pbxcore/api/v2/network-filters/{actionName}', 'get', '/'],
+            [NetworkFiltersPostController::class, 'callAction', '/pbxcore/api/v2/network-filters/{actionName}', 'post', '/'],
 
 
         ];

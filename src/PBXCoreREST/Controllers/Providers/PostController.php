@@ -23,34 +23,38 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\ProvidersManagementProcessor;
 
 /**
- * Providers GET requests controller
- *
- * @RoutePrefix("/pbxcore/api/providers")
+ * POST controller for providers management
+ * 
+ * @RoutePrefix("/pbxcore/api/v2/providers")
  */
-class GetController extends BaseController
+class PostController extends BaseController
 {
     /**
-     * Calls the action handler based on the provided REST API action name
+     * Enable CSRF protection for this controller
+     */
+    public const bool REQUIRES_CSRF_PROTECTION = true;
+    
+    /**
+     * Handle the call to different actions based on the action name
      *
-     * @param string $actionName The name of the REST API action.
-     * @param string|null $type Provider type (SIP/IAX) from URL path
-     * @param string|null $id Provider ID from URL path 
-     *
+     * @param string $actionName The name of the action
+     * 
+     * Create a new provider record
+     * @Post("/saveRecord")
+     * 
      * @return void
      */
-    public function callAction(string $actionName, ?string $type = null, ?string $id = null): void
+    public function callAction(string $actionName): void
     {
-        // Merge GET parameters with path parameters
-        $requestData = $this->request->getQuery();
+        $postData = $this->request->getPost();
         
-        // Add path parameters if provided
-        if ($type !== null) {
-            $requestData['type'] = $type;
-        }
-        if ($id !== null) {
-            $requestData['id'] = $id;
-        }
+        // Sanitize input data
+        $sanitizedData = self::sanitizeData($postData, $this->filter);
         
-        $this->sendRequestToBackendWorker(ProvidersManagementProcessor::class, $actionName, $requestData);
+        $this->sendRequestToBackendWorker(
+            ProvidersManagementProcessor::class, 
+            $actionName, 
+            $sanitizedData
+        );
     }
 }

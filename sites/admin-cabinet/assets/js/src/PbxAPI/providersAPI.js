@@ -6,12 +6,13 @@
 /* global Config, SecurityUtils, PbxApi */
 
 /**
- * ProvidersAPI - REST API client for providers management
+ * ProvidersAPI - REST API v2 for providers management
  * 
- * Provides methods for retrieving provider information with support for:
- * - Getting categorized list of providers (SIP/IAX2)
- * - Provider status information
- * - Filtering enabled/disabled providers
+ * Provides centralized API methods with built-in security features:
+ * - Input sanitization for display
+ * - XSS protection
+ * - Consistent error handling
+ * - CSRF protection through session cookies
  */
 const ProvidersAPI = {
     /**
@@ -19,117 +20,159 @@ const ProvidersAPI = {
      */
     endpoints: {
         getList: '/pbxcore/api/v2/providers/getList',
-        getStatuses: '/pbxcore/api/providers/getStatuses'
+        getRecord: '/pbxcore/api/v2/providers/getRecord',
+        saveRecord: '/pbxcore/api/v2/providers/saveRecord',
+        deleteRecord: '/pbxcore/api/v2/providers/deleteRecord',
+        getStatuses: '/pbxcore/api/v2/providers/getStatuses',
+        updateStatus: '/pbxcore/api/v2/providers/updateStatus'
     },
     
     /**
-     * Get list of all providers organized by type
+     * Get record by ID with security processing
      * 
-     * @param {boolean} includeDisabled - Include disabled providers in the list
+     * @param {string} id - Record ID or empty string for new
+     * @param {string} type - Provider type (SIP or IAX)
      * @param {function} callback - Callback function
      */
-    getList: function(includeDisabled, callback) {
-        // Default to false if not specified
-        if (typeof includeDisabled === 'function') {
-            callback = includeDisabled;
-            includeDisabled = false;
+    getRecord: function(id, type, callback) {
+        const recordId = (!id || id === '') ? 'new' : id;
+        
+        // Use RESTful URL with path parameters: /getRecord/SIP/SIP-TRUNK-123
+        // Fall back to query parameters for 'new' records
+        let url;
+        if (recordId === 'new') {
+            // For new records, use query parameters
+            url = this.endpoints.getRecord + (type ? '?type=' + type : '');
+        } else {
+            // For existing records, use RESTful path: /getRecord/SIP/SIP-TRUNK-123
+            url = this.endpoints.getRecord + '/' + type + '/' + recordId;
         }
         
+        $.api({
+            url: url,
+            method: 'GET',
+            on: 'now',
+            onSuccess: (response) => {
+                if (response.result && response.data) {
+                    // Sanitize data for display
+                    response.data = this.sanitizeProviderData(response.data);
+                }
+                callback(response);
+            },
+            onFailure: (response) => {
+                callback(response);
+            },
+            onError: () => {
+                callback({result: false, messages: {error: ['Network error']}});
+            }
+        });
+    },
+    
+    /**
+     * Get list of all providers with security processing
+     * 
+     * @param {function} callback - Callback function
+     */
+    getList: function(callback) {
         $.api({
             url: this.endpoints.getList,
             method: 'GET',
             data: {
-                includeDisabled: includeDisabled ? 'true' : 'false'
+                includeDisabled: 'true'  // Always include disabled providers in admin panel
             },
             on: 'now',
-            onSuccess: function(response) {
+            onSuccess: (response) => {
                 if (response.result && response.data) {
-                    callback(response);
-                } else {
-                    callback({
-                        result: false,
-                        data: []
-                    });
+                    // Sanitize array of providers
+                    response.data = response.data.map(function(item) {
+                        return this.sanitizeProviderData(item);
+                    }.bind(this));
                 }
+                callback(response);
             },
-            onFailure: function(response) {
-                callback({
-                    result: false,
-                    data: [],
-                    messages: response.messages || {}
-                });
+            onFailure: (response) => {
+                callback(response);
             },
-            onError: function() {
-                callback({
-                    result: false,
-                    data: [],
-                    messages: {error: ['Network error']}
-                });
+            onError: () => {
+                callback({result: false, data: []});
             }
         });
     },
     
     /**
-     * Get list of providers formatted for dropdown
+     * Save provider record with validation and security
      * 
+     * @param {object} data - Data to save
      * @param {function} callback - Callback function
      */
-    getForDropdown: function(callback) {
-        this.getList(false, function(response) {
-            if (response.result && response.data) {
-                const formattedData = ProvidersAPI.formatForDropdown(response.data);
-                callback({
-                    result: true,
-                    data: formattedData
-                });
-            } else {
+    saveRecord: function(data, callback) {
+        // Client-side validation
+        if (!this.validateProviderData(data)) {
+            callback({
+                result: false, 
+                messages: {error: ['Client-side validation failed']}
+            });
+            return;
+        }
+        
+        // Convert boolean fields to 1/0 for form-encoded transmission
+        const booleanFields = ['disabled', 'qualify', 'disablefromuser', 'noregister', 'receive_calls_without_auth'];
+        const processedData = {...data};
+        
+        booleanFields.forEach(field => {
+            if (processedData.hasOwnProperty(field)) {
+                // Convert boolean to 1/0 for server
+                processedData[field] = processedData[field] ? '1' : '0';
+            }
+        });
+        
+        const method = processedData.id ? 'PUT' : 'POST';
+        const url = processedData.id ? 
+            this.endpoints.saveRecord + '/' + processedData.id : 
+            this.endpoints.saveRecord;
+        
+        $.api({
+            url: url,
+            method: method,
+            data: processedData,
+            on: 'now',
+            onSuccess: (response) => {
+                if (response.result && response.data) {
+                    response.data = this.sanitizeProviderData(response.data);
+                }
                 callback(response);
+            },
+            onFailure: (response) => {
+                callback(response);
+            },
+            onError: () => {
+                callback({result: false, messages: {error: ['Network error']}});
             }
         });
     },
     
     /**
-     * Format providers data for dropdown without categories
+     * Delete provider record
      * 
-     * @param {array} providers - Array of provider objects
-     * @param {boolean} includeNone - Whether to include 'none' option (default: true)
-     * @return {array} Formatted data for dropdown
+     * @param {string} id - Record ID
+     * @param {function} callback - Callback function
      */
-    formatForDropdown: function(providers, includeNone = true) {
-        const results = [];
-        
-        // Add 'none' option with proper translation (only if requested)
-        if (includeNone) {
-            results.push({
-                name: globalTranslate.ir_AnyProvider_v2 || 'Any provider',
-                value: 'none'
-            });
-        }
-        
-        // Sort providers by name
-        const sortedProviders = providers.slice().sort(function(a, b) {
-            return a.name.localeCompare(b.name);
-        });
-        
-        // Add all providers to results
-        sortedProviders.forEach(function(provider) {
-            // Provider name already contains icon from REST API
-            let displayName = provider.name;
-            
-            // Add visual indicators for disabled providers (but still allow selection)
-            if (provider.disabled) {
-                displayName += ' <span class="ui mini basic label">' + (globalTranslate.mo_Disabled || 'Disabled') + '</span>';
+    deleteRecord: function(id, callback) {
+        $.api({
+            url: this.endpoints.deleteRecord + '/' + id,
+            on: 'now',
+            method: 'DELETE',
+            successTest: PbxApi.successTest,
+            onSuccess: (response) => {
+                callback(response);
+            },
+            onFailure: (response) => {
+                callback(response);
+            },
+            onError: () => {
+                callback(false);
             }
-            
-            const item = {
-                name: displayName,
-                value: provider.uniqid
-            };
-            
-            results.push(item);
         });
-        
-        return results;
     },
     
     /**
@@ -142,112 +185,269 @@ const ProvidersAPI = {
             url: this.endpoints.getStatuses,
             method: 'GET',
             on: 'now',
-            onSuccess: function(response) {
+            onSuccess: (response) => {
                 callback(response);
             },
-            onFailure: function(response) {
+            onFailure: (response) => {
                 callback(response);
             },
-            onError: function() {
-                callback({
-                    result: false,
-                    messages: {error: ['Network error']}
-                });
+            onError: () => {
+                callback({result: false, data: {}});
             }
         });
     },
     
     /**
-     * Get dropdown settings for providers
-     * This uses Semantic UI's API settings to load data on-demand
+     * Update provider status (enable/disable)
      * 
-     * @param {function|object} cbOnChange - Callback for dropdown change event OR options object
-     * @param {object} options - Options object (can be first parameter if cbOnChange is object)
-     * @param {boolean} options.includeNone - Whether to include 'none' option (default: true)
-     * @param {boolean} options.forceSelection - Force user to select a value (default: false)
-     * @return {object} Dropdown settings object
+     * @param {object} data - Data with id, type, and disabled status
+     * @param {function} callback - Callback function
      */
-    getDropdownSettings: function(cbOnChange, options) {
+    updateStatus: function(data, callback) {
+        // Validate required fields
+        if (!data.id || !data.type) {
+            callback({
+                result: false, 
+                messages: {error: ['Provider ID and type are required']}
+            });
+            return;
+        }
+        
+        // Convert data to proper format
+        const updateData = {
+            id: data.id,
+            type: data.type.toUpperCase(),
+            disabled: !!data.disabled
+        };
+        
+        $.api({
+            url: this.endpoints.updateStatus,
+            method: 'POST',
+            data: updateData,
+            on: 'now',
+            onSuccess: (response) => {
+                callback(response);
+            },
+            onFailure: (response) => {
+                callback(response);
+            },
+            onError: () => {
+                callback({result: false, messages: {error: ['Network error']}});
+            }
+        });
+    },
+    
+    /**
+     * Sanitize provider data for secure display
+     * 
+     * @param {object} data - Provider data from API
+     * @return {object} Data ready for display
+     */
+    sanitizeProviderData: function(data) {
+        if (!data) return data;
+        
+        const sanitized = {
+            id: data.id,
+            uniqid: data.uniqid,
+            type: data.type || 'SIP',
+            note: data.note || '',
+            disabled: !!data.disabled
+        };
+        
+        // SIP-specific fields
+        if (data.type === 'SIP' || data.sipuid) {
+            Object.assign(sanitized, {
+                sipuid: data.sipuid || '',
+                username: data.username || '',
+                secret: data.secret || '',
+                host: data.host || '',
+                port: parseInt(data.port) || 5060,
+                transport: data.transport || 'UDP',
+                qualify: !!data.qualify,
+                qualifyfreq: parseInt(data.qualifyfreq) || 60,
+                registration_type: data.registration_type || 'outbound',
+                extension: data.extension || '',
+                description: data.description || '',
+                networkfilterid: data.networkfilterid || '',
+                manualattributes: data.manualattributes || '',
+                dtmfmode: data.dtmfmode || 'auto',
+                nat: data.nat || 'auto_force',
+                fromuser: data.fromuser || '',
+                fromdomain: data.fromdomain || '',
+                outbound_proxy: data.outbound_proxy || '',
+                disablefromuser: !!data.disablefromuser,
+                noregister: !!data.noregister,
+                receive_calls_without_auth: !!data.receive_calls_without_auth,
+                additionalHosts: data.additionalHosts || []
+            });
+        }
+        
+        // IAX-specific fields
+        if (data.type === 'IAX' || data.iaxuid) {
+            Object.assign(sanitized, {
+                iaxuid: data.iaxuid || '',
+                username: data.username || '',
+                secret: data.secret || '',
+                host: data.host || '',
+                qualify: !!data.qualify,
+                registration_type: data.registration_type || 'none',
+                description: data.description || '',
+                manualattributes: data.manualattributes || '',
+                noregister: !!data.noregister,
+                networkfilterid: data.networkfilterid || '',
+                port: data.port || '',
+                receive_calls_without_auth: !!data.receive_calls_without_auth
+            });
+        }
+        
+        return sanitized;
+    },
+    
+    /**
+     * Client-side validation
+     * 
+     * @param {object} data - Data to validate
+     * @return {boolean} Validation result
+     */
+    validateProviderData: function(data) {
+        // Check if this is a status-only update (contains only id, type, disabled)
+        const isStatusUpdate = data.id && data.type && data.hasOwnProperty('disabled') && 
+                              Object.keys(data).length === 3;
+        
+        if (isStatusUpdate) {
+            // Minimal validation for status updates
+            return data.type && ['SIP', 'IAX'].includes(data.type);
+        }
+        
+        // Type validation
+        if (!data.type || !['SIP', 'IAX'].includes(data.type)) {
+            return false;
+        }
+        
+        // Username validation (alphanumeric and basic symbols)
+        if (data.username && !/^[a-zA-Z0-9._-]*$/.test(data.username)) {
+            return false;
+        }
+        
+        // Host validation (domain or IP)
+        if (data.host) {
+            const hostPattern = /^([a-zA-Z0-9.-]+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/;
+            if (!hostPattern.test(data.host)) {
+                return false;
+            }
+        }
+        
+        // Port validation
+        if (data.port !== undefined && data.port !== null && data.port !== '') {
+            const port = parseInt(data.port);
+            if (isNaN(port) || port < 1 || port > 65535) {
+                return false;
+            }
+        }
+        
+        // Transport validation for SIP
+        if (data.type === 'SIP' && data.transport) {
+            if (!['UDP', 'TCP', 'TLS'].includes(data.transport)) {
+                return false;
+            }
+        }
+        
+        // Extension validation (numeric only)
+        if (data.extension && !/^[0-9]*$/.test(data.extension)) {
+            return false;
+        }
+        
+        return true;
+    },
+    
+    /**
+     * Get dropdown settings for provider selection - BACKWARD COMPATIBILITY
+     * This method maintains compatibility with existing forms that use the old API
+     * 
+     * @param {function|object} onChangeCallback - Callback when selection changes OR options object
+     * @param {object} options - Additional options (when first param is callback)
+     * @return {object} Semantic UI dropdown settings object
+     */
+    getDropdownSettings: function(onChangeCallback, options) {
         // Handle different parameter combinations
-        let callback = cbOnChange;
+        let callback = onChangeCallback;
         let settings = options || {};
         
         // If first parameter is an object, treat it as options
-        if (typeof cbOnChange === 'object' && cbOnChange !== null) {
-            settings = cbOnChange;
+        if (typeof onChangeCallback === 'object' && onChangeCallback !== null) {
+            settings = onChangeCallback;
             callback = settings.onChange;
         }
         
         // Default values
         const includeNone = settings.includeNone !== undefined ? settings.includeNone : true;
         const forceSelection = settings.forceSelection !== undefined ? settings.forceSelection : false;
-        
         return {
             apiSettings: {
-                url: Config.pbxUrl + ProvidersAPI.endpoints.getList,
+                // Use the new REST API v2 endpoint
+                url: this.endpoints.getList,
                 method: 'GET',
-                data: {
-                    includeDisabled: 'true'
-                },
                 cache: false,
-                beforeSend: function(settings) {
-                    settings.data = $.extend({}, settings.urlData, settings.data);
-                    return settings;
+                data: {
+                    includeDisabled: 'false'  // Only show enabled providers in dropdowns
                 },
                 onResponse: function(response) {
-                    const formattedResponse = {
-                        success: false,
-                        results: []
-                    };
-                    
-                    if (response && response.result && response.data) {
-                        formattedResponse.success = true;
-                        formattedResponse.results = ProvidersAPI.formatForDropdown(response.data, includeNone);
+                    if (!response || !response.result || !response.data) {
+                        return {
+                            success: false,
+                            results: []
+                        };
                     }
                     
-                    return formattedResponse;
-                }
-            },
-            onChange: function(value) {
-                // Update hidden input based on field name
-                $('input[name="provider"], input[name="providerid"]').val(value).trigger('change');
-                // Call custom callback if provided
-                if (callback) {
-                    callback(value);
+                    // Transform API response to dropdown format
+                    const results = response.data.map(function(provider) {
+                        // Use the 'name' field from server as-is, it already contains the icon
+                        // Server sends: "<i class=\"server icon\"></i> IAX: Test IAX Provider"
+                        
+                        return {
+                            value: provider.uniqid,      // Use uniqid as the value
+                            name: provider.name,          // Use server's name field as-is
+                            text: provider.name,          // Same for text display
+                            // Store additional data for future use
+                            providerType: provider.type,
+                            providerId: provider.id,
+                            host: provider.host || '',
+                            username: provider.username || ''
+                        };
+                    });
+                    
+                    // Add 'None' option at the beginning only if includeNone is true
+                    if (includeNone) {
+                        results.unshift({
+                            value: 'none',
+                            name: globalTranslate.ir_AnyProvider_v2 || 'Any provider',
+                            text: globalTranslate.ir_AnyProvider_v2 || 'Any provider'
+                        });
+                    }
+                    
+                    return {
+                        success: true,
+                        results: results
+                    };
                 }
             },
             ignoreCase: true,
             fullTextSearch: true,
             filterRemoteData: true,
-            saveRemoteData: false,
-            forceSelection: forceSelection,
-            allowAdditions: false,
+            saveRemoteData: true,
+            allowCategorySelection: false,
+            forceSelection: forceSelection,  // Use the forceSelection parameter
             hideDividers: 'empty',
-            preserveHTML: true,
-            templates: {
-                menu: ProvidersAPI.customDropdownMenu
+            direction: 'downward',
+            onChange: function(value, text, $choice) {
+                // Update hidden input fields for provider
+                $('input[name="provider"], input[name="providerid"]').val(value).trigger('change');
+                
+                // Call the provided callback if it exists
+                if (typeof callback === 'function') {
+                    callback(value, text, $choice);
+                }
             }
         };
-    },
-    
-    /**
-     * Creates custom dropdown menu without categories
-     * 
-     * @param {object} response - API response
-     * @param {object} fields - Field configuration
-     * @return {string} HTML for dropdown menu
-     */
-    customDropdownMenu: function(response, fields) {
-        const values = response[fields.values] || {};
-        let html = '';
-        
-        $.each(values, function(index, option) {
-            // Add regular item
-            html += '<div class="item" data-value="' + option[fields.value] + '">';
-            html += option[fields.name];
-            html += '</div>';
-        });
-        
-        return html;
     }
 };

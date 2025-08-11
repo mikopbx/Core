@@ -19,53 +19,81 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\Providers\GetProviderStatusAction;
-use MikoPBX\PBXCoreREST\Lib\Providers\GetListAction;
+use MikoPBX\PBXCoreREST\Lib\Providers\{
+    GetProviderStatusAction,
+    GetListAction,
+    GetRecordAction,
+    SaveRecordAction,
+    DeleteRecordAction,
+    UpdateStatusAction
+};
 use Phalcon\Di\Injectable;
 
 /**
- * Class ProvidersManagementProcessor
+ * Available actions for providers management
+ */
+enum ProviderAction: string
+{
+    case GET_LIST = 'getList';
+    case GET_RECORD = 'getRecord';
+    case SAVE_RECORD = 'saveRecord';
+    case DELETE_RECORD = 'deleteRecord';
+    case GET_STATUSES = 'getStatuses';
+    case UPDATE_STATUS = 'updateStatus';
+}
+
+/**
+ * Providers management processor
  * 
- * Processes provider management requests
+ * Handles all provider management operations including:
+ * - getList: Get list of all providers
+ * - getRecord: Get single provider by ID or create new structure
+ * - saveRecord: Create or update provider
+ * - deleteRecord: Delete provider
+ * - getStatuses: Get current provider registration statuses
  *
  * @package MikoPBX\PBXCoreREST\Lib
  */
 class ProvidersManagementProcessor extends Injectable
 {
     /**
-     * Processes provider management requests
+     * Process provider management requests
      *
-     * @param array $request The request data
-     *   - action: The action to be performed
-     *   - data: Additional data related to the action
-     *
-     * @return PBXApiResult An object containing the result of the API call.
+     * @param array $request Request data with 'action' and 'data' fields
+     * @return PBXApiResult API response object with success status and data
      */
     public static function callBack(array $request): PBXApiResult
     {
-        $action = $request['action'];
-        $data = $request['data'];
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        
-        switch ($action) {
-            case 'getStatuses':
-                // Get current provider statuses and publish to EventBus
-                $res = GetProviderStatusAction::main();
-                break;
-                
-            case 'getList':
-                // Get list of all providers organized by type
-                $includeDisabled = !empty($data['includeDisabled']) && $data['includeDisabled'] === 'true';
-                $res = GetListAction::main($includeDisabled);
-                break;
-                
-            default:
-                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
-                break;
-        }
 
-        $res->function = $action;
+        $actionString = $request['action'];
+        $data = $request['data'];
+        
+        // Try to match action with enum
+        $action = ProviderAction::tryFrom($actionString);
+        
+        if ($action === null) {
+            $res->messages['error'][] = "Unknown action - $actionString in " . __CLASS__;
+            $res->function = $actionString;
+            return $res;
+        }
+        
+        $res = match ($action) {
+            ProviderAction::GET_LIST => GetListAction::main(
+                !empty($data['includeDisabled']) && $data['includeDisabled'] === 'true'
+            ),
+            ProviderAction::GET_RECORD => GetRecordAction::main(
+                $data['id'] ?? null,
+                $data['type'] ?? 'SIP'
+            ),
+            ProviderAction::SAVE_RECORD => SaveRecordAction::main($data),
+            ProviderAction::DELETE_RECORD => DeleteRecordAction::main($data['id'] ?? ''),
+            ProviderAction::GET_STATUSES => GetProviderStatusAction::main(),
+            ProviderAction::UPDATE_STATUS => UpdateStatusAction::main($data),
+        };
+
+        $res->function = $actionString;
         return $res;
     }
 }

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, ProviderBase, PasswordScore */
+/* global globalRootUrl, globalTranslate, Form, ProviderBase, PasswordScore, TooltipBuilder, i18n */
 
 /**
  * IAX provider management form
@@ -256,33 +256,16 @@ class ProviderIAX extends ProviderBase {
         };
 
         const tooltipConfigs = {
-            'registration_type': this.buildTooltipContent(registrationTypeData),
-            'receive_calls_without_auth': this.buildTooltipContent(receiveCallsData),
-            'network_filter': this.buildTooltipContent(networkFilterData),
-            'provider_host': this.buildTooltipContent(providerHostData),
-            'iax_port': this.buildTooltipContent(portData),
-            'manual_attributes': this.buildTooltipContent(manualAttributesData)
+            'registration_type': registrationTypeData,
+            'receive_calls_without_auth': receiveCallsData,
+            'network_filter': networkFilterData,
+            'provider_host': providerHostData,
+            'iax_port': portData,
+            'manual_attributes': manualAttributesData
         };
         
-        // Initialize tooltips for each field with info icon
-        $('.field-info-icon').each((_, element) => {
-            const $icon = $(element);
-            const fieldName = $icon.data('field');
-            const content = tooltipConfigs[fieldName];
-            
-            if (content) {
-                $icon.popup({
-                    html: content,
-                    position: 'top right',
-                    hoverable: true,
-                    delay: {
-                        show: 300,
-                        hide: 100
-                    },
-                    variation: 'flowing'
-                });
-            }
-        });
+        // Initialize tooltips using TooltipBuilder
+        TooltipBuilder.initialize(tooltipConfigs);
     }
 
     /**
@@ -471,25 +454,37 @@ class ProviderIAX extends ProviderBase {
      * Initialize registration type change handlers
      */
     initializeRegistrationTypeHandlers() {
-        const self = this;
+        // Registration type handler is now in base class
+        // This method is kept for compatibility
+    }
+    
+    /**
+     * Initialize network filter dropdown with IAX category
+     */
+    initializeNetworkFilterDropdown() {
+        const $field = $('#networkfilterid');
+        if ($field.length === 0) return;
         
-        // Handle registration type changes
-        $('#registration_type').dropdown('setting', 'onChange', (value) => {
-            // Update visibility of elements
-            self.updateVisibilityElements();
-            
-            // Update validation rules for the new registration type
-            Form.validateRules = self.getValidateRules();
-            
-            // Clear any validation errors
-            self.$formObj.find('.field.error').removeClass('error');
-            self.$formObj.find('.ui.error.message').empty();
-            self.$formObj.form('remove prompt', 'secret');
-            self.$formObj.form('remove prompt', 'host');
-            self.$formObj.form('remove prompt', 'port');
-            
-            // Mark form as changed
-            Form.dataChanged();
+        // Get the dropdown element
+        let $dropdown = $field;
+        if ($field.is('select')) {
+            $dropdown = $field.hasClass('ui') ? $field : $field.closest('.ui.dropdown');
+            if ($dropdown.length === 0) {
+                $dropdown = $field;
+            }
+        }
+        
+        // Get current value
+        const currentValue = this.getCurrentNetworkFilterValue();
+        
+        // Use NetworkFiltersAPI to initialize the dropdown with IAX category
+        NetworkFiltersAPI.initializeDropdown($dropdown, {
+            currentValue: currentValue,
+            categories: ['IAX'], // Use IAX category instead of SIP
+            onChange: (value) => {
+                this.onNetworkFilterChange(value);
+                Form.dataChanged();
+            }
         });
     }
 
@@ -587,8 +582,8 @@ class ProviderIAX extends ProviderBase {
 
         valUserName.removeAttr('readonly');
 
-        // Hide any existing password info messages
-        this.hidePasswordInfoMessage();
+        // Hide password tooltip by default
+        this.hidePasswordTooltip();
 
         // Update element visibility based on registration type
         if (regType === 'outbound') {
@@ -656,6 +651,9 @@ class ProviderIAX extends ProviderBase {
             copyButton.show();
             showHideButton.show();
             copyButton.attr('data-clipboard-text', valSecret.val());
+            
+            // Restore network filter state if needed
+            this.restoreNetworkFilterState();
 
             // Update labels for inbound
             labelHostText.text(globalTranslate.pr_RemoteHostOrIPAddress || 'Remote Host/IP');
@@ -670,8 +668,8 @@ class ProviderIAX extends ProviderBase {
             elReceiveCalls.show();
             elNetworkFilter.show(); // Network filter available for security
 
-            // Show informational message for password field
-            this.showPasswordInfoMessage('iax');
+            // Show tooltip icon for password field
+            this.showPasswordTooltip();
 
             // Update required fields
             elHost.addClass('required');
@@ -683,6 +681,9 @@ class ProviderIAX extends ProviderBase {
             genPassword.hide();
             copyButton.hide();
             showHideButton.show();
+            
+            // Restore network filter state if needed
+            this.restoreNetworkFilterState();
 
             // Update labels for none (peer-to-peer)
             labelHostText.text(globalTranslate.pr_PeerHostOrIPAddress || 'Peer Host/IP');
@@ -697,9 +698,3 @@ class ProviderIAX extends ProviderBase {
         }
     }
 }
-
-// Initialize on document ready
-$(document).ready(() => {
-    const provider = new ProviderIAX();
-    provider.initialize();
-});

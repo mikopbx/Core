@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, TooltipBuilder, i18n, ProvidersAPI */
 
 /**
  * Base class for provider management forms
@@ -52,19 +52,42 @@ class ProviderBase {
      * Initialize the provider form
      */
     initialize() {
-        this.initializeUIComponents();
-        this.initializeEventHandlers();
-        this.initializeForm();
-        this.updateVisibilityElements();
+        // Get provider ID and type from form
+        const providerId = $('#id').val() || $('#uniqid').val() || '';
+        const providerType = this.providerType;
         
-        // Initialize all tooltip popups
-        $('.popuped').popup();
+        // Show loading state
+        this.showLoadingState();
         
-        this.initializeClipboard();
-        
-        // Prevent browser password manager for generated passwords
-        this.$secret.on('focus', function() {
-            $(this).attr('autocomplete', 'new-password');
+        // Load provider data from REST API
+        ProvidersAPI.getRecord(providerId, providerType, (response) => {
+            this.hideLoadingState();
+            
+            if (response.result && response.data) {
+                // Populate form with data
+                this.populateFormData(response.data);
+            } else {
+                // Provider data loading failed for existing provider
+                if (providerId && providerId !== 'new') {
+                    UserMessage.showMultiString(response.messages);
+                }
+            }
+            
+            // Continue with initialization
+            this.initializeUIComponents();
+            this.initializeEventHandlers();
+            this.initializeForm();
+            this.updateVisibilityElements();
+            
+            // Initialize all tooltip popups
+            $('.popuped').popup();
+            
+            this.initializeClipboard();
+            
+            // Prevent browser password manager for generated passwords
+            this.$secret.on('focus', function() {
+                $(this).attr('autocomplete', 'new-password');
+            });
         });
     }
 
@@ -76,6 +99,267 @@ class ProviderBase {
         this.$dropDowns.dropdown();
         this.$accordions.accordion();
         this.updateHostsTableView();
+        
+        // Initialize dynamic dropdowns
+        this.initializeRegistrationTypeDropdown();
+        if (this.providerType === 'SIP') {
+            this.initializeDtmfModeDropdown();
+            this.initializeTransportDropdown();
+        }
+        
+        // Initialize network filter dropdown
+        this.initializeNetworkFilterDropdown();
+    }
+    
+    /**
+     * Initialize registration type dropdown dynamically
+     */
+    initializeRegistrationTypeDropdown() {
+        const $field = $('#registration_type');
+        if ($field.length === 0) return;
+        
+        // Check if already inside a dropdown structure
+        const $existingDropdown = $field.closest('.ui.dropdown');
+        if ($existingDropdown.length > 0) {
+            // Already a dropdown, just ensure it's initialized
+            if (!$existingDropdown.hasClass('registration-type-dropdown')) {
+                $existingDropdown.addClass('registration-type-dropdown');
+            }
+            $existingDropdown.dropdown({
+                onChange: (value) => {
+                    this.updateVisibilityElements();
+                    // Clear validation errors
+                    this.$formObj.find('.field').removeClass('error');
+                    this.$formObj.find('.ui.error.message').remove();
+                    this.$formObj.find('.prompt').remove();
+                    // Update validation rules
+                    Form.validateRules = this.getValidateRules();
+                    Form.dataChanged();
+                }
+            });
+            return;
+        }
+        
+        const currentValue = $field.val() || 'outbound';
+        const isIAX = this.providerType === 'IAX';
+        
+        // Build options based on provider type
+        const options = [
+            { value: 'outbound', text: globalTranslate[isIAX ? 'iax_REG_TYPE_OUTBOUND' : 'sip_REG_TYPE_OUTBOUND'] || 'Outbound' },
+            { value: 'inbound', text: globalTranslate[isIAX ? 'iax_REG_TYPE_INBOUND' : 'sip_REG_TYPE_INBOUND'] || 'Inbound' },
+            { value: 'none', text: globalTranslate[isIAX ? 'iax_REG_TYPE_NONE' : 'sip_REG_TYPE_NONE'] || 'None' }
+        ];
+        
+        // Create dropdown HTML
+        const dropdownHtml = `
+            <div class="ui selection dropdown registration-type-dropdown">
+                <input type="hidden" name="registration_type" id="registration_type" value="${currentValue}">
+                <i class="dropdown icon"></i>
+                <div class="default text">${options.find(o => o.value === currentValue)?.text || currentValue}</div>
+                <div class="menu">
+                    ${options.map(opt => `<div class="item" data-value="${opt.value}">${opt.text}</div>`).join('')}
+                </div>
+            </div>
+        `;
+        
+        // Replace the field
+        $field.replaceWith(dropdownHtml);
+        
+        // Initialize dropdown
+        $('.registration-type-dropdown').dropdown({
+            onChange: (value) => {
+                this.updateVisibilityElements();
+                // Clear validation errors
+                this.$formObj.find('.field').removeClass('error');
+                this.$formObj.find('.ui.error.message').remove();
+                this.$formObj.find('.prompt').remove();
+                // Update validation rules
+                Form.validateRules = this.getValidateRules();
+                Form.dataChanged();
+            }
+        });
+    }
+    
+    /**
+     * Initialize DTMF mode dropdown for SIP providers
+     */
+    initializeDtmfModeDropdown() {
+        const $field = $('#dtmfmode');
+        if ($field.length === 0) return;
+        
+        // Check if already inside a dropdown structure
+        const $existingDropdown = $field.closest('.ui.dropdown');
+        if ($existingDropdown.length > 0) {
+            // Already a dropdown, just ensure it's initialized
+            if (!$existingDropdown.hasClass('dtmf-mode-dropdown')) {
+                $existingDropdown.addClass('dtmf-mode-dropdown');
+            }
+            $existingDropdown.dropdown({
+                onChange: () => Form.dataChanged()
+            });
+            return;
+        }
+        
+        const currentValue = $field.val() || 'auto';
+        
+        const options = [
+            { value: 'auto', text: globalTranslate.auto || 'auto' },
+            { value: 'rfc4733', text: globalTranslate.rfc4733 || 'rfc4733' },
+            { value: 'info', text: globalTranslate.info || 'info' },
+            { value: 'inband', text: globalTranslate.inband || 'inband' },
+            { value: 'auto_info', text: globalTranslate.auto_info || 'auto_info' }
+        ];
+        
+        const dropdownHtml = `
+            <div class="ui selection dropdown dtmf-mode-dropdown">
+                <input type="hidden" name="dtmfmode" id="dtmfmode" value="${currentValue}">
+                <i class="dropdown icon"></i>
+                <div class="default text">${options.find(o => o.value === currentValue)?.text || currentValue}</div>
+                <div class="menu">
+                    ${options.map(opt => `<div class="item" data-value="${opt.value}">${opt.text}</div>`).join('')}
+                </div>
+            </div>
+        `;
+        
+        $field.replaceWith(dropdownHtml);
+        
+        $('.dtmf-mode-dropdown').dropdown({
+            onChange: () => Form.dataChanged()
+        });
+    }
+    
+    /**
+     * Initialize transport protocol dropdown for SIP providers
+     */
+    initializeTransportDropdown() {
+        const $field = $('#transport');
+        if ($field.length === 0) return;
+        
+        // Check if already inside a dropdown structure
+        const $existingDropdown = $field.closest('.ui.dropdown');
+        if ($existingDropdown.length > 0) {
+            // Already a dropdown, just ensure it's initialized
+            if (!$existingDropdown.hasClass('transport-dropdown')) {
+                $existingDropdown.addClass('transport-dropdown');
+            }
+            $existingDropdown.dropdown({
+                onChange: () => Form.dataChanged()
+            });
+            return;
+        }
+        
+        const currentValue = $field.val() || 'UDP';
+        
+        const options = [
+            { value: 'UDP', text: 'UDP' },
+            { value: 'TCP', text: 'TCP' },
+            { value: 'TLS', text: 'TLS' }
+        ];
+        
+        const dropdownHtml = `
+            <div class="ui selection dropdown transport-dropdown">
+                <input type="hidden" name="transport" id="transport" value="${currentValue}">
+                <i class="dropdown icon"></i>
+                <div class="default text">${currentValue}</div>
+                <div class="menu">
+                    ${options.map(opt => `<div class="item" data-value="${opt.value}">${opt.text}</div>`).join('')}
+                </div>
+            </div>
+        `;
+        
+        $field.replaceWith(dropdownHtml);
+        
+        $('.transport-dropdown').dropdown({
+            onChange: () => Form.dataChanged()
+        });
+    }
+    
+    /**
+     * Initialize network filter dropdown
+     */
+    initializeNetworkFilterDropdown() {
+        const $field = $('#networkfilterid');
+        if ($field.length === 0) return;
+        
+        // Get the dropdown element
+        let $dropdown = $field;
+        if ($field.is('select')) {
+            $dropdown = $field.hasClass('ui') ? $field : $field.closest('.ui.dropdown');
+            if ($dropdown.length === 0) {
+                $dropdown = $field;
+            }
+        }
+        
+        // Get current value
+        const currentValue = this.getCurrentNetworkFilterValue();
+        
+        // Use NetworkFiltersAPI to initialize the dropdown
+        NetworkFiltersAPI.initializeDropdown($dropdown, {
+            currentValue: currentValue,
+            providerType: this.providerType,
+            onChange: (value) => {
+                this.onNetworkFilterChange(value);
+                Form.dataChanged();
+            }
+        });
+    }
+    
+    /**
+     * Get current network filter value from various sources
+     * @returns {string} Current network filter value
+     */
+    getCurrentNetworkFilterValue() {
+        // Try to get value from hidden input
+        let value = $('#networkfilterid').val();
+        
+        // If not found, try to get from form data or REST API
+        if (!value) {
+            // Check if we're editing existing provider
+            const providerId = $('#id').val();
+            if (providerId) {
+                // Value should be loaded from server when editing
+                value = $('#networkfilterid').attr('value') || 'none';
+            } else {
+                // Default for new providers
+                value = 'none';
+            }
+        }
+        
+        return value;
+    }
+    
+    /**
+     * Handle network filter change
+     * @param {string} value - Selected network filter value
+     */
+    onNetworkFilterChange(value) {
+        // Update hidden input value
+        $('#networkfilterid').val(value);
+        
+        // Can be overridden in child classes for specific behavior
+    }
+    
+    /**
+     * Save current network filter value to restore later
+     */
+    saveNetworkFilterState() {
+        const value = $('#networkfilterid').val();
+        if (value) {
+            sessionStorage.setItem(`${this.providerType}_networkfilter_value`, value);
+        }
+    }
+    
+    /**
+     * Restore previously saved network filter value
+     */
+    restoreNetworkFilterState() {
+        const savedValue = sessionStorage.getItem(`${this.providerType}_networkfilter_value`);
+        if (savedValue) {
+            const $dropdown = $('#networkfilterid').closest('.ui.dropdown');
+            if ($dropdown.length > 0) {
+                $dropdown.dropdown('set selected', savedValue);
+            }
+        }
     }
 
     /**
@@ -99,22 +383,6 @@ class ProviderBase {
             Form.dataChanged();
             return false;
         });
-        
-        $('#registration_type').on('change', () => {
-            self.updateVisibilityElements();
-            // Remove all validation error prompts without clearing field values
-            self.$formObj.find('.field').removeClass('error');
-            self.$formObj.find('.ui.error.message').remove();
-            self.$formObj.find('.prompt').remove();
-            // Update validation rules for dynamic fields
-            Form.validateRules = self.getValidateRules();
-            // Mark form as changed to enable save button
-            Form.dataChanged();
-            // Don't auto-submit, just check if form is valid to update UI
-            setTimeout(() => {
-                self.$formObj.form('is valid');
-            }, 100);
-        });
 
         // Show/hide password toggle
         $('#show-hide-password').on('click', (e) => {
@@ -122,18 +390,21 @@ class ProviderBase {
             const $button = $(e.currentTarget);
             const $icon = $button.find('i');
             
-            if (self.$secret.attr('type') === 'password') {
-                self.$secret.attr('type', 'text');
+            if (this.$secret.attr('type') === 'password') {
+                // Show password
                 $icon.removeClass('eye').addClass('eye slash');
+                this.$secret.attr('type', 'text');
             } else {
-                self.$secret.attr('type', 'password');
+                // Hide password
                 $icon.removeClass('eye slash').addClass('eye');
+                this.$secret.attr('type', 'password');
             }
         });
 
+        // Generate new password
         $('#generate-new-password').on('click', (e) => {
             e.preventDefault();
-            self.generatePassword();
+            this.generatePassword();
         });
     }
 
@@ -155,127 +426,62 @@ class ProviderBase {
         });
 
         clipboard.on('error', (e) => {
-            console.error('Action:', e.action);
-            console.error('Trigger:', e.trigger);
+            UserMessage.showError(globalTranslate.pr_ErrorOnProviderSave);
         });
     }
 
     /**
-     * Generate password using REST API
+     * Generate a new password
      */
     generatePassword() {
-        // For IAX use moderate password length (16 chars), for SIP use 16
-        const length = 16;
-        const self = this;
-        
-        PbxApi.PasswordGenerate(length, (password) => {
-            // Use Fomantic UI Form API
-            self.$formObj.form('set value', 'secret', password);
-            
-            // Update clipboard button attribute
-            $('#elSecret .ui.button.clipboard').attr('data-clipboard-text', password);
-            
-            // Mark form as changed
-            Form.dataChanged();
-        });
-    }
-
-    /**
-     * Updates the hosts table view based on the presence of additional hosts
-     */
-    updateHostsTableView() {
-        if ($(this.hostRow).length === 0) {
-            this.$additionalHostsDummy.show();
-        } else {
-            this.$additionalHostsDummy.hide();
-        }
-    }
-
-    /**
-     * Callback function when completing the host address input
-     */
-    cbOnCompleteHostAddress() {
-        const value = this.$formObj.form('get value', 'additional-host');
-
-        if (value) {
-            const validation = value.match(this.hostInputValidation);
-
-            // Validate the input value
-            if (validation === null || validation.length === 0) {
-                this.$additionalHostInput.transition('shake');
-                return;
-            }
-
-            // Check if the host address already exists
-            if ($(`.host-row[data-value="${value}"]`).length === 0) {
-                const $tr = $('.host-row-tpl').last();
-                const $clone = $tr.clone(true);
-                $clone
-                    .removeClass('host-row-tpl')
-                    .addClass('host-row')
-                    .show();
-                $clone.attr('data-value', value);
-                $clone.find('.address').html(value);
-                if ($(this.hostRow).last().length === 0) {
-                    $tr.after($clone);
-                } else {
-                    $(this.hostRow).last().after($clone);
-                }
-                this.updateHostsTableView();
+        PbxApi.PasswordGenerate(16, (password) => {
+            if (password) {
+                this.$secret.val(password);
+                this.$secret.trigger('change');
                 Form.dataChanged();
-            }
-            this.$additionalHostInput.val('');
-        }
-    }
-
-    /**
-     * Callback function to be called before the form is sent
-     * @param {Object} settings - The current settings of the form
-     * @returns {Object} - The updated settings of the form
-     */
-    cbBeforeSendForm(settings) {
-        const result = settings;
-        result.data = this.$formObj.form('get values');
-
-        const arrAdditionalHosts = [];
-        $(this.hostRow).each((_, obj) => {
-            if ($(obj).attr('data-value')) {
-                arrAdditionalHosts.push({ address: $(obj).attr('data-value') });
+                $('.clipboard').attr('data-clipboard-text', password);
             }
         });
-        result.data.additionalHosts = JSON.stringify(arrAdditionalHosts);
-        return result;
     }
 
     /**
-     * Callback function to be called after the form has been sent
+     * Update visibility of elements based on provider settings
+     * This method should be overridden in child classes
      */
-    cbAfterSendForm() {
-        // Response handled by Form module
+    updateVisibilityElements() {
+        // Override in child classes
+    }
+    
+    /**
+     * Show password tooltip icon when in 'none' registration mode
+     */
+    showPasswordTooltip() {
+        $('.password-tooltip-icon').show();
+    }
+    
+    /**
+     * Hide password tooltip icon
+     */
+    hidePasswordTooltip() {
+        $('.password-tooltip-icon').hide();
     }
 
     /**
-     * Initialize the form with custom settings
+     * Get validation rules based on provider settings
+     * This method should be overridden in child classes
+     * @returns {object} Validation rules
+     */
+    getValidateRules() {
+        // Override in child classes
+        return {};
+    }
+
+    /**
+     * Initialize form with validation and callbacks
      */
     initializeForm() {
-        const self = this;
         Form.$formObj = this.$formObj;
-        
-        // Prevent auto-submit on validation
-        Form.$formObj.form({
-            on: 'blur',
-            inline: true,
-            keyboardShortcuts: false,
-            onSuccess: function(event) {
-                // Prevent auto-submit, only submit via button click
-                if (event) {
-                    event.preventDefault();
-                }
-                return false;
-            }
-        });
-        
-        Form.url = `${globalRootUrl}providers/save/${this.providerType.toLowerCase()}`;
+        Form.url = `${globalRootUrl}providers/save`;
         Form.validateRules = this.getValidateRules();
         Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
         Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
@@ -283,153 +489,184 @@ class ProviderBase {
     }
 
     /**
-     * Get validation rules - must be implemented by subclasses
-     * @abstract
-     * @returns {object} Validation rules
+     * Callback before form submission
+     * @param {object} settings - Form settings
+     * @returns {object} Modified settings
      */
-    getValidateRules() {
-        throw new Error('getValidateRules must be implemented by subclass');
+    cbBeforeSendForm(settings) {
+        const result = settings;
+        result.data = this.$formObj.form('get values');
+        
+        // Convert additional hosts table to array
+        const additionalHosts = [];
+        $('#additional-hosts-table tbody tr:not(.dummy)').each((index, obj) => {
+            const host = $(obj).find('td:first').text().trim();
+            if (host) {
+                additionalHosts.push(host);
+            }
+        });
+        
+        if (additionalHosts.length > 0) {
+            result.data.additionalHosts = JSON.stringify(additionalHosts);
+        }
+        
+        // Save current network filter state
+        this.saveNetworkFilterState();
+        
+        return result;
     }
 
     /**
-     * Update visibility of elements - must be implemented by subclasses
-     * @abstract
+     * Callback after form submission
+     * @param {object} response - Server response
      */
-    updateVisibilityElements() {
-        throw new Error('updateVisibilityElements must be implemented by subclass');
+    cbAfterSendForm(response) {
+        // Can be overridden in child classes
     }
 
     /**
-     * Show informational message about password usage in "none" mode
-     * @param {string} providerType - Provider type (sip or iax)
+     * Handle completion of host address input
      */
-    showPasswordInfoMessage(providerType) {
-        const $secretField = this.$secret.closest('.field');
-        const messageKey = providerType === 'sip' ? 'pr_PasswordOptionalForNoneType' : 'iax_PasswordOptionalForNoneType';
+    cbOnCompleteHostAddress() {
+        const host = this.$additionalHostInput.val().trim();
         
-        // Remove existing info message
-        $secretField.find('.ui.info.message').remove();
+        // Validate the host
+        if (!host || !this.hostInputValidation.test(host)) {
+            this.$additionalHostInput.parent().addClass('error');
+            return;
+        }
         
-        // Add info message
-        const $infoMessage = $(`
-            <div class="ui info message">
-                <i class="info circle icon"></i>
-                ${globalTranslate[messageKey]}
-            </div>
-        `);
+        // Check for duplicates
+        let duplicate = false;
+        $('#additional-hosts-table tbody tr:not(.dummy)').each((index, obj) => {
+            if ($(obj).find('td:first').text().trim() === host) {
+                duplicate = true;
+                return false;
+            }
+        });
         
-        $secretField.append($infoMessage);
+        if (duplicate) {
+            this.$additionalHostInput.parent().addClass('error');
+            return;
+        }
+        
+        // Add new row
+        const $newRow = this.$additionalHostsDummy.clone();
+        $newRow.removeClass('dummy');
+        $newRow.find('td:first').text(host);
+        $newRow.find('.delete-row-button').on('click', (e) => {
+            e.preventDefault();
+            $(e.target).closest('tr').remove();
+            this.updateHostsTableView();
+            Form.dataChanged();
+            return false;
+        });
+        
+        this.$additionalHostsDummy.before($newRow);
+        this.$additionalHostInput.val('');
+        this.$additionalHostInput.parent().removeClass('error');
+        this.updateHostsTableView();
+        Form.dataChanged();
     }
 
     /**
-     * Hide informational message about password
+     * Update the visibility of hosts table
      */
-    hidePasswordInfoMessage() {
-        this.$secret.closest('.field').find('.ui.info.message').remove();
+    updateHostsTableView() {
+        const hasHosts = $('#additional-hosts-table tbody tr:not(.dummy)').length > 0;
+        if (hasHosts) {
+            $('#additional-hosts-table').show();
+        } else {
+            $('#additional-hosts-table').hide();
+        }
+    }
+    
+    /**
+     * Show loading state for the form
+     */
+    showLoadingState() {
+        this.$formObj.addClass('loading');
+    }
+    
+    /**
+     * Hide loading state for the form
+     */
+    hideLoadingState() {
+        this.$formObj.removeClass('loading');
+    }
+    
+    /**
+     * Populate form with data from API
+     * @param {object} data - Provider data from API
+     */
+    populateFormData(data) {
+        // Common fields
+        if (data.id) $('#id').val(data.id);
+        if (data.uniqid) $('#uniqid').val(data.uniqid);
+        if (data.description) $('#description').val(data.description);
+        if (data.note) $('#note').val(data.note);
+        
+        // Provider type specific fields
+        if (this.providerType === 'SIP' && data.Sip) {
+            const sipData = data.Sip;
+            $('#username').val(sipData.username || '');
+            $('#secret').val(sipData.secret || '');
+            $('#host').val(sipData.host || '');
+            $('#port').val(sipData.port || '5060');
+            $('#registration_type').val(sipData.registration_type || 'outbound');
+            $('#networkfilterid').val(sipData.networkfilterid || 'none');
+            $('#dtmfmode').val(sipData.dtmfmode || 'auto');
+            $('#transport').val(sipData.transport || 'UDP');
+            $('#fromuser').val(sipData.fromuser || '');
+            $('#fromdomain').val(sipData.fromdomain || '');
+            $('#outbound_proxy').val(sipData.outbound_proxy || '');
+            $('#manualattributes').val(sipData.manualattributes || '');
+            
+            // Checkboxes
+            if (sipData.qualify === '1') $('#qualify').prop('checked', true);
+            if (sipData.disablefromuser === '1') $('#disablefromuser').prop('checked', true);
+            if (sipData.receive_calls_without_auth === '1') $('#receive_calls_without_auth').prop('checked', true);
+            if (sipData.noregister === '1') $('#noregister').prop('checked', true);
+            
+            // Qualify frequency
+            $('#qualifyfreq').val(sipData.qualifyfreq || '60');
+            
+            // Additional hosts
+            if (data.additionalHosts && Array.isArray(data.additionalHosts)) {
+                data.additionalHosts.forEach((host) => {
+                    this.$additionalHostInput.val(host);
+                    this.cbOnCompleteHostAddress();
+                });
+            }
+        } else if (this.providerType === 'IAX' && data.Iax) {
+            const iaxData = data.Iax;
+            $('#username').val(iaxData.username || '');
+            $('#secret').val(iaxData.secret || '');
+            $('#host').val(iaxData.host || '');
+            $('#port').val(iaxData.port || '4569');
+            $('#registration_type').val(iaxData.registration_type || 'outbound');
+            $('#networkfilterid').val(iaxData.networkfilterid || 'none');
+            $('#manualattributes').val(iaxData.manualattributes || '');
+            
+            // Checkboxes
+            if (iaxData.qualify === '1') $('#qualify').prop('checked', true);
+            if (iaxData.receive_calls_without_auth === '1') $('#receive_calls_without_auth').prop('checked', true);
+            if (iaxData.noregister === '1') $('#noregister').prop('checked', true);
+        }
+        
+        // Disabled state
+        if (data.disabled === '1' || data.disabled === true) {
+            $('#disabled').val('1');
+        }
     }
 
     /**
      * Build HTML content for tooltips from structured data
      * @param {Object} tooltipData - Tooltip data object
      * @returns {string} HTML content for tooltip
+     * @deprecated Use TooltipBuilder.buildContent() instead
      */
     buildTooltipContent(tooltipData) {
-        if (!tooltipData) return '';
-        
-        let html = '';
-        
-        // Add header if exists
-        if (tooltipData.header) {
-            html += `<div class="header"><strong>${tooltipData.header}</strong></div>`;
-            html += '<div class="ui divider"></div>';
-        }
-        
-        // Add description if exists
-        if (tooltipData.description) {
-            html += `<p>${tooltipData.description}</p>`;
-        }
-        
-        // Add list items if exist
-        if (tooltipData.list && tooltipData.list.length > 0) {
-            html += '<ul>';
-            tooltipData.list.forEach(item => {
-                if (typeof item === 'string') {
-                    html += `<li>${item}</li>`;
-                } else if (item.term && item.definition === null) {
-                    // Header item without definition
-                    html += `</ul><p><strong>${item.term}</strong></p><ul>`;
-                } else if (item.term && item.definition) {
-                    html += `<li><strong>${item.term}:</strong> ${item.definition}</li>`;
-                }
-            });
-            html += '</ul>';
-        }
-        
-        // Add additional lists (list2, list3, etc.)
-        for (let i = 2; i <= 10; i++) {
-            const listName = `list${i}`;
-            if (tooltipData[listName] && tooltipData[listName].length > 0) {
-                html += '<ul>';
-                tooltipData[listName].forEach(item => {
-                    if (typeof item === 'string') {
-                        html += `<li>${item}</li>`;
-                    } else if (item.term && item.definition === null) {
-                        html += `</ul><p><strong>${item.term}</strong></p><ul>`;
-                    } else if (item.term && item.definition) {
-                        html += `<li><strong>${item.term}:</strong> ${item.definition}</li>`;
-                    }
-                });
-                html += '</ul>';
-            }
-        }
-        
-        // Add warning if exists
-        if (tooltipData.warning) {
-            html += '<div class="ui orange message">';
-            html += '<i class="exclamation triangle icon"></i>';
-            if (tooltipData.warning.header) {
-                html += `<strong>${tooltipData.warning.header}:</strong> `;
-            }
-            html += tooltipData.warning.text;
-            html += '</div>';
-        }
-        
-        // Add code examples if exist
-        if (tooltipData.examples && tooltipData.examples.length > 0) {
-            if (tooltipData.examplesHeader) {
-                html += `<p><strong>${tooltipData.examplesHeader}:</strong></p>`;
-            }
-            html += '<div class="ui segment" style="background-color: #f8f8f8; border: 1px solid #e0e0e0;">';
-            html += '<pre style="margin: 0; font-size: 0.9em; line-height: 1.4em;">';
-            
-            // Process examples with syntax highlighting for sections
-            tooltipData.examples.forEach((line, index) => {
-                if (line.trim().startsWith('[') && line.trim().endsWith(']')) {
-                    // Section header
-                    if (index > 0) html += '\n';
-                    html += `<span style="color: #0084b4; font-weight: bold;">${line}</span>`;
-                } else if (line.includes('=')) {
-                    // Parameter line
-                    const [param, value] = line.split('=', 2);
-                    html += `\n<span style="color: #7a3e9d;">${param}</span>=<span style="color: #cf4a4c;">${value}</span>`;
-                } else {
-                    // Regular line
-                    html += line ? `\n${line}` : '';
-                }
-            });
-            
-            html += '</pre>';
-            html += '</div>';
-        }
-        
-        // Add note if exists
-        if (tooltipData.note) {
-            html += `<p><em>${tooltipData.note}</em></p>`;
-        }
-        
-        return html;
+        return TooltipBuilder.buildContent(tooltipData);
     }
 }
-
-// Export for use in other modules
-window.ProviderBase = ProviderBase;

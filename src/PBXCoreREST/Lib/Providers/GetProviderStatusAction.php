@@ -17,6 +17,8 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib\Providers;
 
 use MikoPBX\Common\Providers\EventBusProvider;

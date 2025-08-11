@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, ProviderBase */
+/* global globalRootUrl, globalTranslate, Form, ProviderBase, TooltipBuilder, i18n */
 
 /**
  * SIP provider management form
@@ -406,39 +406,22 @@ class ProviderSIP extends ProviderBase {
         };
 
         const tooltipConfigs = {
-            'registration_type': this.buildTooltipContent(registrationTypeData),
-            'receive_calls_without_auth': this.buildTooltipContent(receiveCallsData),
-            'network_filter': this.buildTooltipContent(networkFilterData),
-            'outbound_proxy': this.buildTooltipContent(outboundProxyData),
-            'transport_protocol': this.buildTooltipContent(transportProtocolData),
-            'qualify_session': this.buildTooltipContent(qualifySessionData),
-            'from_redefinition': this.buildTooltipContent(fromRedefinitionData),
-            'sip_port': this.buildTooltipContent(sipPortData),
-            'manual_attributes': this.buildTooltipContent(manualAttributesData),
-            'provider_host': this.buildTooltipContent(providerHostData),
-            'additional_hosts': this.buildTooltipContent(additionalHostsData),
-            'dtmf_mode': this.buildTooltipContent(dtmfModeData)
+            'registration_type': registrationTypeData,
+            'receive_calls_without_auth': receiveCallsData,
+            'network_filter': networkFilterData,
+            'outbound_proxy': outboundProxyData,
+            'transport_protocol': transportProtocolData,
+            'qualify_session': qualifySessionData,
+            'from_redefinition': fromRedefinitionData,
+            'sip_port': sipPortData,
+            'manual_attributes': manualAttributesData,
+            'provider_host': providerHostData,
+            'additional_hosts': additionalHostsData,
+            'dtmf_mode': dtmfModeData
         };
         
-        // Initialize tooltips for each field with info icon
-        $('.field-info-icon').each((_, element) => {
-            const $icon = $(element);
-            const fieldName = $icon.data('field');
-            const content = tooltipConfigs[fieldName];
-            
-            if (content) {
-                $icon.popup({
-                    html: content,
-                    position: 'top right',
-                    hoverable: true,
-                    delay: {
-                        show: 300,
-                        hide: 100
-                    },
-                    variation: 'flowing'
-                });
-            }
-        });
+        // Initialize tooltips using TooltipBuilder
+        TooltipBuilder.initialize(tooltipConfigs);
     }
 
     /**
@@ -662,8 +645,8 @@ class ProviderSIP extends ProviderBase {
         }
         valUserName.removeAttr('readonly');
 
-        // Hide any existing password info messages
-        this.hidePasswordInfoMessage();
+        // Hide password tooltip by default
+        this.hidePasswordTooltip();
         
         // Update host label based on registration type
         this.updateHostLabel(regType);
@@ -699,6 +682,9 @@ class ProviderSIP extends ProviderBase {
             $('#host').closest('.field').removeClass('error');
             this.$formObj.form('remove prompt', 'port');
             $('#port').closest('.field').removeClass('error');
+            
+            // Restore network filter state if needed
+            this.restoreNetworkFilterState();
         } else if (regType === 'none') {
             elHost.show();
             elUsername.show();
@@ -708,8 +694,8 @@ class ProviderSIP extends ProviderBase {
             elNetworkFilter.show(); // Network filter critical for none type (no auth)
             genPassword.hide();
             
-            // Show informational message for password field
-            this.showPasswordInfoMessage('sip');
+            // Show tooltip icon for password field
+            this.showPasswordTooltip();
             
             // Update field requirements - make password optional in none mode
             $('#elSecret').removeClass('required');
@@ -717,6 +703,9 @@ class ProviderSIP extends ProviderBase {
             // Remove validation prompts for optional fields in none mode
             this.$formObj.form('remove prompt', 'username');
             this.$formObj.form('remove prompt', 'secret');
+            
+            // Restore network filter state if needed
+            this.restoreNetworkFilterState();
         }
 
         // Update element visibility based on 'disablefromuser' checkbox
@@ -731,9 +720,3 @@ class ProviderSIP extends ProviderBase {
         }
     }
 }
-
-// Initialize on document ready
-$(document).ready(() => {
-    const provider = new ProviderSIP();
-    provider.initialize();
-});

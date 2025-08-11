@@ -145,7 +145,7 @@ return [
     'bt_ApplyChangesToPBX' => 'Apply the changes',
     'bt_BackToList' => 'Back to list',
     'bt_Back' => 'Back',
-    'bt_ToolTipCopyPassword' => 'Password copied to clipboard',
+    'bt_ToolTipCopyPassword' => 'Copy password to clipboard',
     'bt_ToolTipEdit' => 'Edit',
     'bt_ToolTipRestore' => 'Restore',
     'bt_ToolTipDownload' => 'Download',
@@ -157,6 +157,17 @@ return [
     'pr_ProviderName' => 'Provider name',
     'pr_ProviderLogin' => 'Username',
     'pr_ProviderPassword' => 'Password',
+    'pr_PasswordOptionalForNoneType' => 'Password is optional for "No registration" mode, but may be required by some providers for incoming calls or additional security',
+    'provider_passwordTooltipData' => [
+        'header' => 'Password in "No Registration" Mode',
+        'description' => 'In IP authentication mode, the password is not mandatory since verification is done by IP address.',
+        'list' => [
+            'Leave the field empty if the provider does not require a password',
+            'Some providers may require a password for additional security',
+            'A password may be needed to authorize incoming calls'
+        ],
+        'note' => 'Check with your provider for authentication requirements'
+    ],
     'pr_ProviderHostOrIPAddress' => 'Provider host URL or IP address',
     'pr_DTMFMode' => 'DTMF Mode',
     'pr_RegistrationSettings' => 'Registration settings',

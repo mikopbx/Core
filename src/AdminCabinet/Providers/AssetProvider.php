@@ -540,22 +540,21 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/debugger-info.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
+                ->addJs('js/pbx/PbxAPI/providersAPI.js', true)
                 ->addJs('js/pbx/Providers/provider-status-monitor.js', true)
                 ->addJs('js/pbx/Providers/providers-index.js', true);
         } elseif ($action === 'modifysip' || $action === 'modifyiax') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true)
+                ->addJs('js/pbx/main/TooltipBuilder.js', true)
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
-                ->addJs('js/pbx/Providers/provider-modify-status-worker.js', true)
-                ->addJs('js/pbx/Providers/provider-base-modify.js', true);
-                
-            // Load specific provider type JavaScript
-            if ($action === 'modifysip') {
-                $this->footerCollectionJS->addJs('js/pbx/Providers/provider-sip-modify.js', true);
-            } else {
-                $this->footerCollectionJS->addJs('js/pbx/Providers/provider-iax-modify.js', true);
-            }
+                ->addJs('js/pbx/PbxAPI/providersAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
+                ->addJs('js/pbx/Providers/provider-base-modify.js', true)
+                ->addJs('js/pbx/Providers/provider-sip-modify.js', true)
+                ->addJs('js/pbx/Providers/provider-iax-modify.js', true);
         }
     }
 
