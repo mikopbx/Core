@@ -404,17 +404,19 @@ const provider = {
         // Set validation rules based on registration type
         provider.updateValidationRules(registrationType);
         
-        // Initialize Form object using standard pattern
+        // Initialize Form object using REST API
         Form.$formObj = provider.$formObj;
         Form.url = '#'; // Not used with REST API
         Form.validateRules = provider.validationRules;
         Form.cbBeforeSendForm = provider.cbBeforeSendForm;
         Form.cbAfterSendForm = provider.cbAfterSendForm;
         
-        // REST API integration - standard pattern
-        Form.apiSettings.enabled = true;
-        Form.apiSettings.apiObject = ProvidersAPI;
-        Form.apiSettings.saveMethod = 'saveRecord';
+        // Configure REST API settings
+        Form.apiSettings = {
+            enabled: true,
+            apiObject: ProvidersAPI,
+            saveMethod: 'saveRecord'
+        };
         
         // Navigation URLs
         Form.afterSubmitIndexUrl = globalRootUrl + 'providers/index/';
@@ -697,11 +699,17 @@ const provider = {
             // Update form with response data
             provider.populateForm(response.data);
             
-            // Update URL for new records
-            const currentId = $('#uniqid').val();
-            if (!currentId && response.data.id) {
-                const newUrl = window.location.href.replace(/modify\/?$/, 'modify' + provider.providerType.toLowerCase() + '/' + response.data.id);
-                window.history.pushState(null, '', newUrl);
+            // The Form.js will handle the reload automatically if response.reload is present
+            // For new records, REST API returns reload path like "providers/modifysip/SIP-TRUNK-xxx"
+            // This will be handled by Form.js in handleSubmitResponse method
+            
+            // If no reload path, update URL manually for new records
+            if (!response.reload) {
+                const currentId = $('#uniqid').val();
+                if (!currentId && response.data.uniqid) {
+                    const newUrl = window.location.href.replace(/modify\w*\/?$/, 'modify' + provider.providerType.toLowerCase() + '/' + response.data.uniqid);
+                    window.history.pushState(null, '', newUrl);
+                }
             }
         }
     },

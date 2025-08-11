@@ -96,12 +96,20 @@ class ProvidersController extends BaseController
     }
 
     /**
-     * Save action placeholder - actual saving handled by REST API
-     * @deprecated Use REST API instead
+     * Save action - deprecated, returns 404
+     * All saves are now handled through REST API v2
+     * @deprecated Use REST API v2 /pbxcore/api/v2/providers/saveRecord instead
      */
-    public function saveAction(string $type): void
+    public function saveAction(): void
     {
-        $this->forward('providers/index');
+        // Return 404 - this endpoint is deprecated
+        $this->response->setStatusCode(404, 'Not Found');
+        $this->response->setJsonContent([
+            'result' => false,
+            'messages' => ['error' => ['This endpoint is deprecated. Use REST API v2 instead']]
+        ]);
+        $this->response->send();
+        $this->view->disable();
     }
 
     /**

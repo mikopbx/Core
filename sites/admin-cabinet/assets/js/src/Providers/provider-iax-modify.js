@@ -513,7 +513,12 @@ class ProviderIAX extends ProviderBase {
         // Initialize form with validation
         Form.$formObj.form(validationConfig);
         
-        Form.url = `${globalRootUrl}providers/save/${this.providerType.toLowerCase()}`;
+        // Configure REST API settings
+        Form.apiSettings = {
+            enabled: true,
+            apiObject: ProvidersAPI,
+            saveMethod: 'saveRecord'
+        };
         Form.validateRules = this.getValidateRules();
         Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
         Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);

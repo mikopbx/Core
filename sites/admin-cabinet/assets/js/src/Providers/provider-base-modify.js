@@ -478,10 +478,11 @@ class ProviderBase {
 
     /**
      * Initialize form with validation and callbacks
+     * Note: This method is overridden in provider-modify.js to configure REST API
      */
     initializeForm() {
         Form.$formObj = this.$formObj;
-        Form.url = `${globalRootUrl}providers/save`;
+        // URL is not set here - child classes configure REST API
         Form.validateRules = this.getValidateRules();
         Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
         Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
